@@ -1,0 +1,30 @@
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+.alert {
+  display: flex;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  /* background-color: green; */
+  animation: blink 2s ease-in-out infinite;
+  z-index: 1100 !important;
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%); /* Center the alert horizontally */
+  width: auto; /* Width adjusts to content */
+  min-width: 60%;
+  max-width: 90%; /* Prevent the alert from being too wide on big screens */
+}
+
+@media (max-width: 413px) {
+  .alert {
+    min-width: 100%;
+  }
+}

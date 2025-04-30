@@ -1,0 +1,44 @@
+.mainContent{
+  box-sizing: border-box;
+  --position: fixed;
+  --left: 0px;
+z-index: 101;
+overflow: hidden;
+display: flex;
+flex-direction: column;
+-webkit-box-align: center;
+align-items: center;
+bottom: unset;
+width: 12rem;
+height: 100%;
+background: rgb(255, 255, 255);
+box-shadow: rgba(0, 0, 0, 0.15) 0px 2px 4px 0px;
+padding-top: 0px;
+}
+
+.sideBar{
+  
+  display: block;
+  position: relative;
+  z-index: 4;
+  max-height: 100%;
+  height: auto;
+  width: 100%;
+  overflow-y: auto;
+  margin: 3.5rem 0px 0px;
+
+}
+
+.questionBoxWrapper{
+  width: 100%;
+    outline: none;
+    opacity: 1;
+}
+
+.questionBox{
+  eight: 100%;
+    background-color: rgb(234, 244, 252);
+    user-select: none;
+    padding: 12px 16px 12px 0px;
+    display: block;
+}

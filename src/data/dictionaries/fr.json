@@ -1,0 +1,13 @@
+{
+  "navigation": {
+    "home": "Home",
+    "author": "Author",
+    "about": "About",
+    "istore": "IStore",
+    "ttrack": "TTrack"
+  },
+  "app-errors": {
+    "ERROR_USER_ALREADY_EXISTS": "Utilisateur avec cet e-mail existe déjà",
+    "ERROR_UNKNOWN": "Une erreur inconnue est survenue"
+  }
+}

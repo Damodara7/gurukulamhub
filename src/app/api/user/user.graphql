@@ -1,0 +1,31 @@
+type User @model {
+  id: ID!
+  username: String!
+  email: String!
+  # Other user fields...
+
+  @key(name: "usernameIndex", fields: ["username"], queryField: "getUserByUsername")
+}
+
+/*
+
+To create a secondary index on a DynamoDB table in AWS Amplify, you can specify the index configuration in your GraphQL schema using the @key directive. Here's how you can create an index on the username field of your User table:
+
+graphql
+Copy code
+type User @model {
+  id: ID!
+  username: String!
+  email: String!
+  # Other user fields...
+
+  @key(name: "usernameIndex", fields: ["username"], queryField: "getUserByUsername")
+}
+
+#In this schema:
+
+#@key: Specifies that you want to create a secondary index.
+#name: The name of the index.
+#fields: The field(s) on which the index is based. In this case, it's the username field.
+#queryField: (Optional) The name of the query field to be generated for fetching items by this index. Here, we've specified "getUserByUsername" as the query field, which corresponds to the getUserByUsername query we previously discussed.
+

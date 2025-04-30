@@ -1,0 +1,41 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../../../FileServer"
+		},
+		{
+			"path": "../../../../stockandsend"
+		},
+		{
+			"path": "../../../../tutoring/first-app"
+		}
+	],
+	"settings": {
+		"typescript.tsdk": "node_modules/typescript/lib",
+		"postman.telemetry.enabled": false,
+		"favorites.resources": [
+			{
+				"filePath": "src\\components",
+				"group": "Default"
+			},
+			{
+				"filePath": "src\\app\\api",
+				"group": "Default"
+			},
+			{
+				"filePath": "src\\views\\game",
+				"group": "Default"
+			}
+		],
+		"favorites.sortOrder": "DESC",
+		"favorites.groups": [
+			"Default",
+			"test",
+			"venkat"
+		],
+		"favorites.currentGroup": "Default"
+	}
+}

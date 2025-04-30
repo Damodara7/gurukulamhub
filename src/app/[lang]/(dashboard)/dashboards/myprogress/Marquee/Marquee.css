@@ -1,0 +1,159 @@
+/* stylelint-disable liberty/use-logical-spec */
+.marquee-section {
+  margin-block: 0rem;
+}
+
+.main__container {
+  max-width: 1000px;
+  margin-inline: auto;
+  background: rgb(124, 145, 175);
+  padding: 3rem;
+}
+
+.flashing-ad {
+  --width: 100px; /* Adjust width as needed */
+  --height: 100px; /* Adjust height as needed */
+  margin: 0;
+  padding: 0;
+  --background-color: red; /* Adjust background color */
+  animation: flash 2s infinite alternate; /* Animation properties */
+}
+
+.msg {
+  font-size: 90px;
+  font-weight: bold;
+  background: linear-gradient(to right, #7927b2, #fb3182);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  max-width: 350px;
+  text-transform: uppercase;
+  line-height: 0.77;
+}
+
+.bright-red-gradient {
+  background: linear-gradient(to right, #ff0000, #e31b1b);
+  width: 100%; /* Adjust width as needed */
+  height: 100%; /* Adjust height as needed */
+}
+
+.zoom-ad {
+  width: 200px; /* Adjust width as needed */
+  height: 200px; /* Adjust height as needed */
+  background-color: #ccc; /* Adjust background color */
+  margin: 50px auto; /* Optional centering */
+  animation: zoomInOut 2s ease-in-out infinite alternate; /* Animation properties */
+}
+
+@keyframes zoomInOut {
+  0% {
+    transform: scale(1);
+  } /* Start at original size */
+  50% {
+    transform: scale(1.5);
+  } /* Zoom in to 1.5x size */
+  100% {
+    transform: scale(1);
+  } /* Zoom back to original size */
+}
+
+@keyframes flash {
+  from {
+    opacity: 1;
+  } /* Start fully visible */
+  to {
+    opacity: 0;
+  } /* End completely transparent */
+}
+
+.grow-shrink-ad {
+  width: 100px; /* Adjust width as needed */
+  height: 100px; /* Adjust height as needed */
+  background-color: #d0d0d0; /* Adjust background color */
+  border-radius: 50%; /* Create a circular shape */
+  animation: growShrink 1s ease-in-out infinite alternate; /* Animation properties */
+}
+
+@keyframes growShrink {
+  0% {
+    transform: scale(1);
+  } /* Start at original size */
+  50% {
+    transform: scale(1.1);
+  } /* Grow to 110% size */
+  100% {
+    transform: scale(1);
+  } /* Shrink back to original size */
+}
+
+/* Marquee styles */
+.marquee {
+  --gap: 2rem;
+  position: relative;
+  display: flex;
+  width: 100vw;
+  overflow: hidden;
+  -webkit-user-select: none;
+  user-select: none;
+  gap: var(--gap);
+  -border: 2px dashed lightgray;
+  -background-image: url('http://localhost:3000/images/clouds.jpg');
+  background-size: contain;
+  background-color: rgb(77, 73, 75);
+}
+
+.marquee__content {
+  z-index: 1800 !important;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-around;
+  gap: var(--gap);
+  min-width: 100%;
+}
+
+.marquee__content img {
+  /* --max-width: 2rem; */
+  width: 100%;
+  object-fit: contain;
+  max-height: 80px;
+  max-width: 95vw;
+}
+
+.marquee__content > * {
+  flex: 0 0 auto;
+  color: white;
+  --background: #e8daef;
+  margin: 2px;
+  padding: 2px;
+  border-radius: 0.25rem;
+  text-align: center;
+}
+
+.marquee__item {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 'fit-content';
+}
+
+.marquee-ul {
+  padding-left: 0;
+}
+
+@keyframes scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(-100% - var(--gap)));
+  }
+}
+
+/* Enable animation */
+.enable-animation .marquee__content {
+  animation: scroll 16s linear infinite;
+}
+
+/* Pause on hover */
+.marquee:hover .marquee__content {
+  animation-play-state: paused;
+}

@@ -1,0 +1,10 @@
+{
+    "navigation": {
+      "home": "ఇంటికి",
+      "about": "మా గురించి"
+    },
+    "app-errors": {
+      "ERROR_USER_ALREADY_EXISTS": "Viniyogdarudu namodu cheskoni unnaru.",
+      "ERROR_UNKNOWN": "Theliyani Thappu jarigindi"
+    }
+  }

@@ -1,0 +1,393 @@
+import React, { useState } from 'react'
+import {
+  Box,
+  TextField,
+  Button,
+  Typography,
+  InputBase,
+  IconButton,
+  Grid,
+  Card,
+  CardContent,
+  FormControlLabel,
+  Switch
+} from '@mui/material'
+import AddCircleIcon from '@mui/icons-material/AddCircle'
+import RemoveCircleIcon from '@mui/icons-material/RemoveCircle'
+import SaveIcon from '@mui/icons-material/Save'
+import DeleteIcon from '@mui/icons-material/Delete'
+
+import DeleteConfirmationDialog from '@/components/dialogs/DeleteConfirmationDialog'
+import { toast } from 'react-toastify'
+import IconButtonTooltip from '@/components/IconButtonTooltip'
+
+const FillInBlanksQuestionTemplate = ({
+  id: questionUUID,
+  data,
+  mode = 'primary',
+  primaryQuestion = null,
+  saveQuestion,
+  deleteQuestion,
+  validationErrors=[]
+}) => {
+  const innerData = data?.data
+  const [id, setId] = useState(questionUUID)
+  const [language, setLanguage] = useState(data?.language)
+  const [status, setStatus] = useState(innerData?.status || 'draft')
+  const [hint, setHint] = useState(innerData?.hint || '')
+  const [hintMarks, setHintMarks] = useState(innerData?.hintMarks || -0.25)
+  const [marks, setMarks] = useState(innerData?.marks || 1)
+  const [timerSeconds, setTimerSeconds] = useState(innerData?.timerSeconds || 30)
+  const [skippable, setSkippable] = useState(innerData?.skippable || false) // by default non-skippable
+
+  const [questionParts, setQuestionParts] = useState(
+    innerData?.question || [{ id: 'part-1', type: 'text', content: '' }]
+  )
+
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false)
+  const [loading, setLoading] = useState({ save: false, delete: false })
+
+  const onDeleteQuestion = async () => {
+    setLoading(prev => ({ ...prev, delete: true }))
+    setOpenDeleteDialog(false)
+    try {
+      await deleteQuestion(data._id) // Assuming deleteQuestion is an async function
+    } catch (error) {
+      console.error('Error deleting question', error)
+    } finally {
+      setLoading(prev => ({ ...prev, delete: false }))
+    }
+  }
+
+  const handleDeleteClick = () => {
+    setOpenDeleteDialog(true)
+  }
+
+  const handleCloseDialog = () => {
+    setOpenDeleteDialog(false)
+  }
+
+  console.log('Mode is :', mode, data?.language)
+
+  const createPrimaryQuestionRequest = () => {
+    const primaryQuestionData = {
+      _id: data._id,
+      id: id,
+      data: {
+        language: language,
+        question: questionParts,
+        hint: hint,
+        hintMarks: +hintMarks,
+        marks: +marks,
+        timerSeconds: +timerSeconds,
+        skippable: skippable,
+        language: language,
+        status: status
+      }
+    }
+
+    const jsonData = JSON.stringify(primaryQuestionData, null, 2)
+    console.log(jsonData)
+    return jsonData // or you can save it to a file or send it to a server
+  }
+
+  const createSecondaryQuestionRequest = () => {
+    const secondaryQuestionData = {
+      _id: data._id,
+      id: id,
+      data: {
+        language: language,
+        question: questionParts,
+        hint: hint,
+        hintMarks: +hintMarks || +primaryQuestion?.data?.hintMarks,
+        marks: +marks || +primaryQuestion?.data?.marks,
+        timerSeconds: +timerSeconds || +primaryQuestion?.data?.timerSeconds,
+        skippable: skippable || primaryQuestion?.data?.skippable,
+        language: language,
+        status: status
+      }
+    }
+
+    const jsonData = JSON.stringify(secondaryQuestionData, null, 2)
+    console.log(jsonData)
+    return jsonData // or you can save it to a file or send it to a server
+  }
+
+  const handleMarksChange = event => {
+    setMarks(event.target.value)
+  }
+
+  const handleHintChange = event => {
+    setHint(event.target.value)
+  }
+
+  const handleHintMarksChange = event => {
+    setHintMarks(event.target.value)
+  }
+
+  const handleTimerChange = event => {
+    setTimerSeconds(event.target.value)
+  }
+
+  const onSaveQuestion = async () => {
+    setLoading(prev => ({ ...prev, save: true }))
+
+    if (questionParts.length === 0) {
+      toast.error('Please add at least one text part and one blank.')
+      setLoading(prev => ({ ...prev, save: false }))
+      return
+    }
+
+    // Check if any part has empty content
+    const hasEmptyParts = questionParts.some(part => part.content.trim() === '')
+    if (hasEmptyParts) {
+      toast.error('Please fill in all parts before saving.')
+      setLoading(prev => ({ ...prev, save: false }))
+      return
+    }
+
+    // Check if at least one blank part is added
+    const hasBlankPart = questionParts.some(part => part.type === 'blank')
+    if (!hasBlankPart) {
+      toast.error('Please add at least one blank.')
+      setLoading(prev => ({ ...prev, save: false }))
+      return
+    }
+
+    console.log({
+      questionParts
+    })
+
+    const saveQuestionObj = mode === 'primary' ? createPrimaryQuestionRequest() : createSecondaryQuestionRequest()
+
+    try {
+      await saveQuestion(saveQuestionObj) // Assuming saveQuestion is an async function
+    } catch (error) {
+      console.error('Error saving question', error)
+    } finally {
+      setLoading(prev => ({ ...prev, save: false }))
+    }
+  }
+
+  // Add a new blank
+  const handleAddBlank = () => {
+    const newBlankId = `part-${questionParts.length + 1}`
+    setQuestionParts([...questionParts, { id: newBlankId, type: 'blank', content: '' }])
+  }
+
+  // Add a new text part
+  const handleAddText = () => {
+    const newTextId = `part-${questionParts.length + 1}`
+    setQuestionParts([...questionParts, { id: newTextId, type: 'text', content: '' }])
+  }
+
+  // Remove a part
+  const handleRemovePart = id => {
+    setQuestionParts(questionParts.filter(part => part.id !== id))
+  }
+
+  // Update content of a part
+  const handlePartChange = (id, value) => {
+    setQuestionParts(questionParts.map(part => (part.id === id ? { ...part, content: value } : part)))
+  }
+
+  // Check if the last part is a text input
+  const isLastPartText = questionParts[questionParts.length - 1]?.type === 'text'
+
+  return (
+
+    <>
+    {/* <Card key={id}> */}
+      {/* <CardContent> */}
+        <Grid container spacing={2} alignItems='center'>
+          <Grid item xs={12} md={6} sx={{ marginBottom: '4px' }}>
+            <TextField disabled label='Question Id' variant='outlined' fullWidth value={id} />
+          </Grid>
+          <Grid item xs={12} md={6} sx={{ marginBottom: '4px' }}>
+            <TextField disabled label='Language ' variant='outlined' fullWidth value={language} />
+          </Grid>
+          <Grid item xs={12}>
+            <Typography variant='h4' gutterBottom>
+              Create Fill-in-the-Blanks Question
+            </Typography>
+
+            <Box
+              sx={{
+                display: 'flex',
+                //   flexWrap: "wrap",
+                flexDirection: 'column',
+                gap: 2,
+                mb: 3,
+                border: '1px dashed gray',
+                borderRadius: '8px',
+                p: 2
+              }}
+            >
+              {questionParts.map(part => (
+                <Box
+                  key={part.id}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2,
+                    backgroundColor: '#f9f9f9',
+                    p: 1,
+                    borderRadius: '4px'
+                  }}
+                >
+                  {part.type === 'text' ? (
+                    <TextField
+                      fullWidth
+                      variant='outlined'
+                      placeholder='Enter text'
+                      value={part.content}
+                      onChange={e => handlePartChange(part.id, e.target.value)}
+                    />
+                  ) : (
+                    <InputBase
+                      placeholder='Blank'
+                      value={part.content}
+                      onChange={e => handlePartChange(part.id, e.target.value)}
+                      sx={{
+                        borderBottom: '2px solid gray',
+                        flex: 1,
+                        p: 0.5
+                      }}
+                    />
+                  )}
+                  <IconButtonTooltip title='Remove' color='error' onClick={() => handleRemovePart(part.id)}>
+                    <RemoveCircleIcon />
+                  </IconButtonTooltip>
+                </Box>
+              ))}
+              <Box className='flex justify-end gap-2'>
+                <Button
+                  variant='text'
+                  color='primary'
+                  size='small'
+                  component='label'
+                  // style={{ color: 'white' }}
+                  startIcon={<AddCircleIcon />}
+                  onClick={handleAddText}
+                  disabled={isLastPartText} // Disable Add Text button
+                >
+                  Add Text
+                </Button>
+                <Button
+                  variant='text'
+                  size='small'
+                  component='label'
+                  // style={{ color: 'white' }}
+                  color='primary'
+                  startIcon={<AddCircleIcon />}
+                  onClick={handleAddBlank}
+                >
+                  Add Blank
+                </Button>
+              </Box>
+            </Box>
+          </Grid>
+
+          <Grid item xs={12} sx={{ marginBottom: '4px' }}>
+            <TextField
+              disabled={loading.save || loading.delete}
+              label='Hint'
+              variant='outlined'
+              fullWidth
+              value={hint}
+              onChange={handleHintChange}
+            />
+          </Grid>
+          {mode === 'primary' ? (
+            <>
+              <Grid item xs={6} sm={3}>
+                <TextField
+                  disabled={loading.save || loading.delete}
+                  label='Marks'
+                  type='number'
+                  InputProps={{ inputProps: { min: 0.25 } }}
+                  variant='outlined'
+                  fullWidth
+                  value={marks}
+                  onChange={handleMarksChange}
+                />
+              </Grid>
+              <Grid item xs={6} sm={3}>
+                <TextField
+                  disabled={loading.save || loading.delete}
+                  label='Hint Marks'
+                  variant='outlined'
+                  fullWidth
+                  type='number'
+                  InputProps={{ inputProps: { max: 0 } }}
+                  value={hintMarks}
+                  onChange={handleHintMarksChange}
+                />
+              </Grid>
+              <Grid item xs={6} sm={3}>
+                <TextField
+                  disabled={loading.save || loading.delete}
+                  label='Timer Seconds'
+                  variant='outlined'
+                  type='number'
+                  InputProps={{ inputProps: { min: 10 } }}
+                  fullWidth
+                  value={timerSeconds}
+                  onChange={handleTimerChange}
+                />
+              </Grid>
+              <Grid item xs={6} sm={3} textAlign='center'>
+                <FormControlLabel
+                  disabled={loading.save || loading.delete}
+                  control={<Switch value={skippable} onChange={e => setSkippable(e.target.checked)} />}
+                  label='Skippable'
+                />
+              </Grid>
+            </>
+          ) : (
+            ''
+          )}
+
+          <Grid item xs={12} className='flex items-center gap-3 mt-3'>
+            <Button
+              startIcon={<SaveIcon />}
+              fullWidth
+              variant='outlined'
+              component='label'
+              color='primary'
+              // style={{ color: 'white' }}
+              aria-label='add option'
+              onClick={onSaveQuestion}
+              disabled={loading.save || loading.delete}
+            >
+              {loading.save ? 'Saving...' : 'Save Q'}
+            </Button>
+            <Button
+              startIcon={<DeleteIcon />}
+              fullWidth
+              variant='outlined'
+              component='label'
+              color='error'
+              // style={{ color: 'white' }}
+              aria-label='delete option'
+              onClick={handleDeleteClick}
+              disabled={loading.save || loading.delete}
+            >
+              {loading.delete ? 'Deleting...' : 'Delete Q'}
+            </Button>
+          </Grid>
+        </Grid>
+        <DeleteConfirmationDialog
+          open={openDeleteDialog}
+          handleClose={handleCloseDialog}
+          handleConfirm={onDeleteQuestion}
+          title='Delete Question?'
+          description='Are you sure you want to delete this question? This action cannot be undone.'
+        />
+      {/* </CardContent> */}
+    {/* </Card> */}
+    </>
+  )
+}
+
+export default FillInBlanksQuestionTemplate

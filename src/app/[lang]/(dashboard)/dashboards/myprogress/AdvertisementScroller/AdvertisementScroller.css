@@ -1,0 +1,67 @@
+/* stylelint-disable liberty/use-logical-spec */
+.scroll {
+  position: fixed;
+  width: 90%;
+  /* background-color: $boxify-bg-light-dark; */
+  overflow: hidden;
+  z-index: 1;
+  margin: 0;
+  padding: 0;
+}
+
+.m-scroll {
+  overflow: hidden;
+  height: 100%;
+  white-space: nowrap;
+  animation: scrollText 30s infinite linear;
+  margin: 0;
+  font-size: 0;
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+  width: 100%;
+}
+
+spans {
+  display: inline-block;
+  margin: 0;
+  padding: 0;
+}
+
+@keyframes scrollText {
+  from {
+    transform: translateX(0%);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes animatedBackground {
+  from {
+    background-position: 0px 0;
+  }
+  to {
+    background-position: -562px 0;
+  }
+}
+
+#header-top {
+  position: fixed;
+  left: 20;
+  max-width: 90%;
+  border: 1px solid black;
+  --width: 100%;
+  background-image: url('http://localhost:3000/images/clouds.jpg');
+  background-size: contain;
+  -backgorund-image: url('http://localhost:3000/images/cards/activity-timeline.png');
+  background-repeat: repeat-x;
+  animation: animatedBackground 12s linear infinite;
+}
+
+/*Media query for xs and sm screen sizes */
+@media only screen and (max-width: 767px) {
+  #header-top {
+    --background-size: 10%; /*Adjusted background size for xs and sm screens*/
+  }
+}

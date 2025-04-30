@@ -1,0 +1,81 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "downlevelIteration": true,
+    "lib": [
+      "DOM",
+      "DOM.Iterable",
+      "ESNext"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ],
+      "@core/*": [
+        "./src/@core/*"
+      ],
+      "@layouts/*": [
+        "./src/@layouts/*"
+      ],
+      "@menu/*": [
+        "./src/@menu/*"
+      ],
+      "@assets/*": [
+        "./src/assets/*"
+      ],
+      "@components/*": [
+        "./src/components/*"
+      ],
+      "@configs/*": [
+        "./src/configs/*"
+      ],
+      "@views/*": [
+        "./src/views/*"
+      ],
+      "@reducers/*": [
+        "./src/reducers/*"
+      ]
+    }
+  },
+  "include": [
+    ".eslintrc.js",
+    "next.config.mjs",
+    "postcss.config.js",
+    "tailwind.config.js",
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "src/app/api/layout.js",
+    "src/auth.js",
+    "src/auth.config.js",
+    "src/lib/auth.js",
+    "src/app/services/mail.service.js",
+    "src/app/api/profile/route.js",
+    "src/app/services/profile.service.js",
+    "src/app/api/profile/[userId]/route.js",
+    "src/app/api/profile/referrer/route.js",
+    "src/utils/dbConnect-mongo.js"
+, "src/app/api/game/running/GameManager.js", "src/app/api/users/google-signin/route.js", "src/app/services/user.service.js", "src/app/services/login.service.js", "src/utils/email-templates/referrerNotificationTemplate.js", "src/app/services/locality.service.js", "src/components/game/RewardForm.jsx"  ],
+  "exclude": [
+    "node_modules",
+    "src/app/services/*.ts"
+  ]
+}

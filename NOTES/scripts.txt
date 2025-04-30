@@ -1,0 +1,2 @@
+1. node src\data\indian_zipcode_scripts\cities_script.js
+2. node src\data\indian_zipcode_scripts\loadPincodeData.js

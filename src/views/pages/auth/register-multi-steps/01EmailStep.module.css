@@ -1,0 +1,17 @@
+.animatedDiv {
+  inline-size: 0; /* Initially hidden width */
+  block-size: 100%;
+  background-color: lightblue;
+  animation: fadeInWidth 2s ease forwards; /* Animation for width change */
+  display: none; /* Initially hidden */
+}
+
+@keyframes fadeInWidth {
+  from {
+    inline-size: 0; /* Start with width 0 */
+    display: block; /* Show the div */
+  }
+  to {
+    inline-size: 100%; /* End with width 100% */
+  }
+}

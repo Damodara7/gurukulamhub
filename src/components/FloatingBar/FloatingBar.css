@@ -1,0 +1,279 @@
+button,
+input,
+optgroup,
+select,
+textarea {
+  font-family: inherit;
+  font-size: 100%;
+  font-weight: inherit;
+  line-height: inherit;
+  color: inherit;
+  margin: 0;
+  padding: 0;
+}
+/* Floating Bar */
+.post-floating-bar.freeze {
+  inset-block-end: 0 !important;
+  position: absolute !important;
+  transition: none !important;
+}
+
+.post-floating-bar.freeze > div {
+  box-shadow: none !important;
+}
+
+.post-floating-bar.active {
+  inset-block-end: 10px;
+}
+
+.post-floating-bar.animation {
+  -webkit-transition: 0.2s all;
+  -o-transition: 0.2s all;
+  transition: 0.2s all;
+  transition-timing-function: ease-in;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.flex-wrap {
+  flex-wrap: wrap;
+}
+
+.flex {
+  display: flex;
+}
+
+.right-0 {
+  inset-inline-end: 0;
+}
+.left-0 {
+  inset-inline-start: 0;
+}
+.fixed {
+  position: fixed;
+}
+
+.w-full {
+  inline-size: 100%;
+}
+.h-12 {
+  block-size: 3rem;
+}
+.z-50 {
+  z-index: 50;
+}
+
+/*Floating Tool Bar */
+
+/*********** FLOATING TOOL SET *****************/
+
+.shadow-xl {
+  --tw-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  --tw-shadow-colored: 0 20px 25px -5px var(--tw-shadow-color), 0 8px 10px -6px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.text-slate-800 {
+  --tw-text-opacity: 1;
+  color: rgb(30 41 59 / var(--tw-text-opacity));
+}
+.text-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+.py-1 {
+  padding-block: 0.25rem;
+}
+.px-5 {
+  padding-inline: 1.25rem;
+}
+.bg-white {
+  --tw-bg-opacity: 1;
+  background-color: rgb(255 255 255 / var(--tw-bg-opacity));
+}
+.border-slate-200 {
+  --tw-border-opacity: 1;
+  border-color: rgb(226 232 240 / var(--tw-border-opacity));
+}
+.border-1_2 {
+  border-width: 0.5px;
+}
+.rounded-full {
+  border-radius: 9999px;
+}
+.justify-center {
+  justify-content: center;
+}
+.items-center {
+  align-items: center;
+}
+.flex-wrap {
+  flex-wrap: wrap;
+}
+.shrink {
+  flex-shrink: 1;
+}
+.h-12 {
+  block-size: 3rem;
+}
+.flex {
+  display: flex;
+}
+.mx-auto {
+  margin-inline: auto;
+}
+.relative {
+  position: relative;
+}
+
+/********** End of Floating ToolSet **********/
+
+/* Vertical Bar */
+.bg-slate-200 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(226 232 240 / var(--tw-bg-opacity));
+}
+
+.w-px {
+  inline-size: 1px;
+}
+.h-5 {
+  block-size: 1.25rem;
+}
+.my-auto {
+  margin-block: auto;
+}
+.mx-2 {
+  margin-inline: 0.5rem;
+}
+/* End of Vertical BAr */
+
+/*Icon Tool*/
+
+.items-center {
+  align-items: center;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.w-8 {
+  inline-size: 2rem;
+}
+
+.outline-none {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+.p-2 {
+  padding: 0.5rem;
+}
+.rounded-full {
+  border-radius: 9999px;
+}
+
+*,
+:after,
+:before {
+  box-sizing: border-box;
+  border: 0 solid #e5e7eb;
+}
+
+[type='button'],
+[type='reset'],
+[type='submit'],
+button {
+  -webkit-appearance: button;
+  background-color: transparent;
+  background-image: none;
+}
+
+.z-50 {
+  z-index: 50;
+}
+.absolute {
+  position: absolute;
+}
+
+.hover\:bg-slate-100:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(241 245 249 / var(--tw-bg-opacity));
+}
+
+.focus\:outline-none:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+
+/*******SVG**********/
+
+.text-slate-800 {
+  --tw-text-opacity: 1;
+  color: rgb(30 41 59 / var(--tw-text-opacity));
+}
+.stroke-current {
+  stroke: currentColor;
+}
+.w-4 {
+  inline-size: 1rem;
+}
+.h-4 {
+  block-size: 1rem;
+}
+
+@media (min-width: 240px) {
+  .sm\:w-10 {
+    inline-size: 2.5rem;
+  }
+  .sm\:w-5 {
+    inline-size: 1.25rem;
+  }
+
+  .sm\:h-5 {
+    block-size: 1.25rem;
+  }
+}
+/****** Text Box ******/
+
+.text-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+/*** Floating tool set */
+
+.flex-col {
+  flex-direction: column;
+}
+
+.flex-row {
+  flex-direction: row;
+}
+
+.tracking-tight {
+  letter-spacing: -0.025em;
+}
+.uppercase {
+  text-transform: uppercase;
+}
+.font-semibold {
+  font-weight: 600;
+}
+.max-w-3xl {
+  max-inline-size: 48rem;
+}
+
+.fill-current {
+  fill: currentColor;
+}
+.w-6 {
+  inline-size: 1.5rem;
+}
+.h-6 {
+  block-size: 1.5rem;
+}
+.mr-2 {
+  margin-inline-end: 0.5rem;
+}

@@ -1,0 +1,15 @@
+export const PERMISSIONS_LOOKUP = {
+    VIEW: 'VIEW',
+    CREATE: 'CREATE',
+    UPDATE: 'UPDATE',
+    DELETE: 'DELETE',
+    PUBLISH: 'PUBLISH',
+    APPROVE: 'APPROVE',
+    REJECT: 'REJECT',
+    PLAY: 'PLAY',
+    CLONE: 'CLONE',
+    SHARE: 'SHARE',
+    DOWNLOAD: 'DOWNLOAD',
+    REFER: 'REFER',
+    RUN: 'RUN',
+}

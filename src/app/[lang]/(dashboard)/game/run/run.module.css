@@ -1,0 +1,74 @@
+/* GameDashboard.css */
+
+.toolbar {
+  transition: transform 0.3s ease;
+}
+
+.toolbar-hide {
+  transform: translateX(-100%);
+}
+
+.toolbar-show {
+  transform: translateX(0);
+}
+
+/* GameDashboard.css */
+
+.caret-toggle {
+  background-color: rgba(0, 0, 0, 0.7);
+  border-radius: 50%;
+  padding: 5px;
+  transition: background-color 0.5s ease;
+}
+
+.blink2 {
+  animation: blink2 1s infinite;
+}
+
+@keyframes blink2 {
+  0% {
+    background-color: rgba(0, 0, 0, 0.7);
+  }
+  50% {
+    background-color: rgba(255, 255, 255, 0.5);
+  }
+  100% {
+    background-color: rgba(0, 0, 0, 0.7);
+  }
+}
+
+/* SocketConnection.module.css */
+
+.statusIndicator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.blinkingLight {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  animation: blink 1s infinite;
+}
+
+.green {
+  background-color: green;
+}
+
+.red {
+  background-color: red;
+}
+
+@keyframes blink {
+  0% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.2;
+  }
+}
+

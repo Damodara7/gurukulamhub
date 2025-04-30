@@ -1,0 +1,369 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --border-radius: var(--mui-shape-borderRadius);
+  --border-color: var(--mui-palette-divider);
+  --primary-color: var(--mui-palette-primary-main);
+  --background-color: var(--mui-palette-background-default);
+  --background-color-rgb: var(--mui-palette-background-paperChannel);
+  --header-height: 64px;
+  --header-z-index: var(--mui-zIndex-appBar);
+  --footer-z-index: 10;
+  --customizer-z-index: var(--mui-zIndex-drawer);
+  --search-z-index: var(--mui-zIndex-tooltip);
+  --drawer-z-index: var(--mui-zIndex-drawer);
+  --backdrop-color: rgb(var(--mui-mainColorChannels-light) / 0.5);
+}
+
+[data-mui-color-scheme='dark'] {
+  --backdrop-color: rgb(21 16 43 / 0.6);
+}
+
+*,
+::before,
+::after {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  border-width: 0;
+  border-style: solid;
+  border-color: theme('borderColor.DEFAULT', currentColor);
+}
+
+html {
+  display: flex;
+  inline-size: 100%;
+  min-block-size: 100%;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* [type='button'], [type='reset'], [type='submit'], button {
+  -webkit-appearance: button;
+  background-image: none;
+  background-color: none !important;
+} */
+
+ul:not([class]) {
+  margin-block: 1rem;
+  padding-inline-start: 40px;
+}
+
+.full-viewport {
+  max-height: 100vh !important;
+}
+
+/* app/globals.css */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid rgba(0, 0, 0, 0.1);
+  border-top-color: #0070f3;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/*! Do note remove following style */
+/*
+  Fix the popout / submenu closing issue when using hover trigger to open the menu and using
+  perfectscrollbar where the bridge create with safe polygon by floating ui was not working
+*/
+[data-floating-ui-safe-polygon] .scrollbar-container {
+  pointer-events: auto;
+}
+[data-floating-ui-safe-polygon] .scrollbar-container .ps__rail-y {
+  pointer-events: none;
+}
+
+.ps__rail-y {
+  inset-inline-end: 0 !important;
+  inset-inline-start: auto !important;
+  & .ps__thumb-y {
+    inset-inline-end: 3px !important;
+    inset-inline-start: auto !important;
+    background-color: var(--mui-palette-divider);
+    inline-size: 6px;
+    &:hover,
+    &:focus,
+    &.ps--clicking {
+      background-color: var(--mui-palette-action-disabled) !important;
+    }
+  }
+  &:hover,
+  &:focus,
+  &.ps--clicking {
+    background-color: var(--mui-palette-action-hover) !important;
+  }
+  &:hover,
+  &:focus,
+  &.ps--clicking {
+    .ps__thumb-y {
+      background-color: var(--mui-palette-action-disabled) !important;
+    }
+  }
+}
+
+.ts-vertical-nav-root {
+  .ps__thumb-y {
+    inline-size: 4px;
+    &:hover,
+    &:focus,
+    &.ps--clicking {
+      inline-size: 6px;
+    }
+  }
+  .ps__rail-y {
+    inline-size: 10px;
+    &:hover,
+    &:focus,
+    &.ps--clicking {
+      background-color: transparent !important;
+      .ps__thumb-y {
+        inline-size: 6px;
+      }
+    }
+  }
+}
+
+:where([class^='ri-']) {
+  font-size: 1.5rem;
+}
+
+code {
+  font-family: inherit;
+  padding-block: 2px;
+  padding-inline: 4px;
+  border-radius: 4px;
+  font-size: 90%;
+  color: var(--mui-palette-info-main);
+  background-color: rgb(var(--mui-palette-info-mainChannel) / 0.08);
+  border: 0;
+}
+
+/* CSS variables. */
+:root {
+  --PhoneInput-color--focus: #03b2cb;
+  --PhoneInputInternationalIconPhone-opacity: 0.8;
+  --PhoneInputInternationalIconGlobe-opacity: 0.65;
+  --PhoneInputCountrySelect-marginRight: 0.35em;
+  --PhoneInputCountrySelectArrow-width: 0.3em;
+  --PhoneInputCountrySelectArrow-marginLeft: var(--PhoneInputCountrySelect-marginRight);
+  --PhoneInputCountrySelectArrow-borderWidth: 1px;
+  --PhoneInputCountrySelectArrow-opacity: 0.45;
+  --PhoneInputCountrySelectArrow-color: currentColor;
+  --PhoneInputCountrySelectArrow-color--focus: var(--PhoneInput-color--focus);
+  --PhoneInputCountrySelectArrow-transform: rotate(45deg);
+  --PhoneInputCountryFlag-aspectRatio: 1.5;
+  --PhoneInputCountryFlag-height: 1em;
+  --PhoneInputCountryFlag-borderWidth: 1px;
+  --PhoneInputCountryFlag-borderColor: rgba(0, 0, 0, 0.5);
+  --PhoneInputCountryFlag-borderColor--focus: var(--PhoneInput-color--focus);
+  --PhoneInputCountryFlag-backgroundColor--loading: rgba(0, 0, 0, 0.1);
+}
+
+.PhoneInput {
+  /* This is done to stretch the contents of this component. */
+  display: flex;
+  align-items: center;
+}
+
+.PhoneInputInput {
+  /* The phone number input stretches to fill all empty space */
+  flex: 1;
+  /* The phone number input should shrink
+	   to make room for the extension input */
+  min-inline-size: 0;
+}
+
+.PhoneInputCountryIcon {
+  inline-size: calc(var(--PhoneInputCountryFlag-height) * var(--PhoneInputCountryFlag-aspectRatio));
+  block-size: var(--PhoneInputCountryFlag-height);
+}
+
+.PhoneInputCountryIcon--square {
+  inline-size: var(--PhoneInputCountryFlag-height);
+}
+
+.PhoneInputCountryIcon--border {
+  /* Removed `background-color` because when an `<img/>` was still loading
+	   it would show a dark gray rectangle. */
+  /* For some reason the `<img/>` is not stretched to 100% width and height
+	   and sometime there can be seen white pixels of the background at top and bottom. */
+  background-color: var(--PhoneInputCountryFlag-backgroundColor--loading);
+  /* Border is added via `box-shadow` because `border` interferes with `width`/`height`. */
+  /* For some reason the `<img/>` is not stretched to 100% width and height
+	   and sometime there can be seen white pixels of the background at top and bottom,
+	   so an additional "inset" border is added. */
+  box-shadow:
+    0 0 0 var(--PhoneInputCountryFlag-borderWidth) var(--PhoneInputCountryFlag-borderColor),
+    inset 0 0 0 var(--PhoneInputCountryFlag-borderWidth) var(--PhoneInputCountryFlag-borderColor);
+}
+
+.PhoneInputCountryIconImg {
+  /* Fixes weird vertical space above the flag icon. */
+  /* https://gitlab.com/catamphetamine/react-phone-number-input/-/issues/7#note_348586559 */
+  display: block;
+  /* 3rd party <SVG/> flag icons won't stretch if they have `width` and `height`.
+	   Also, if an <SVG/> icon's aspect ratio was different, it wouldn't fit too. */
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.PhoneInputInternationalIconPhone {
+  opacity: var(--PhoneInputInternationalIconPhone-opacity);
+}
+
+.PhoneInputInternationalIconGlobe {
+  opacity: var(--PhoneInputInternationalIconGlobe-opacity);
+}
+
+/* Styling native country `<select/>`. */
+
+.PhoneInputCountry {
+  position: relative;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  margin-inline-end: var(--PhoneInputCountrySelect-marginRight);
+}
+
+.PhoneInputCountrySelect {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  block-size: 100%;
+  inline-size: 100%;
+  z-index: 1;
+  border: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.PhoneInputCountrySelect[disabled],
+.PhoneInputCountrySelect[readonly] {
+  cursor: default;
+}
+
+.PhoneInputCountrySelectArrow {
+  display: block;
+  content: '';
+  inline-size: var(--PhoneInputCountrySelectArrow-width);
+  block-size: var(--PhoneInputCountrySelectArrow-width);
+  margin-inline-start: var(--PhoneInputCountrySelectArrow-marginLeft);
+  border-style: solid;
+  border-color: var(--PhoneInputCountrySelectArrow-color);
+  border-block-start-width: 0;
+  border-block-end-width: var(--PhoneInputCountrySelectArrow-borderWidth);
+  border-inline-start-width: 0;
+  border-inline-end-width: var(--PhoneInputCountrySelectArrow-borderWidth);
+  transform: var(--PhoneInputCountrySelectArrow-transform);
+  opacity: var(--PhoneInputCountrySelectArrow-opacity);
+}
+
+.PhoneInputCountrySelect:focus + .PhoneInputCountryIcon + .PhoneInputCountrySelectArrow {
+  opacity: 1;
+  color: var(--PhoneInputCountrySelectArrow-color--focus);
+}
+
+.PhoneInputCountrySelect:focus + .PhoneInputCountryIcon--border {
+  box-shadow:
+    0 0 0 var(--PhoneInputCountryFlag-borderWidth) var(--PhoneInputCountryFlag-borderColor--focus),
+    inset 0 0 0 var(--PhoneInputCountryFlag-borderWidth) var(--PhoneInputCountryFlag-borderColor--focus);
+}
+
+.PhoneInputCountrySelect:focus + .PhoneInputCountryIcon .PhoneInputInternationalIconGlobe {
+  opacity: 1;
+  color: var(--PhoneInputCountrySelectArrow-color--focus);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #757575 !important;
+}
+*::-webkit-scrollbar-track {
+  -webkit-box-shadow: inset 0 0 6px rgba(145, 145, 145, 0.07);
+  background-color: #e0e0e0;
+  border-radius: 5px;
+}
+*::-webkit-scrollbar {
+  height: 10px;
+  width: 10px;
+  background-color: #cccccc;
+  border-radius: 5px;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: #9c9c9c;
+  border-radius: 5px;
+}
+
+/* Media query for xs and sm devices (width <= 600px) */
+@media screen and (max-width: 600px) {
+  *::-webkit-scrollbar {
+    height: 5px;
+    width: 5px;
+    background-color: #cccccc;
+    border-radius: 5px;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: #9c9c9c;
+    border-radius: 5px;
+  }
+
+  *::-webkit-scrollbar-track {
+    -webkit-box-shadow: inset 0 0 6px rgba(145, 145, 145, 0.07);
+    background-color: #e0e0e0;
+    border-radius: 5px;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: #757575 !important;
+  }
+}
+
+/* React Quill Styles */
+
+/* Quill sometimes does not style background colors as expected. 
+Add the following CSS to ensure background colors are applied properly */
+.ql-editor .ql-background {
+  background-color: initial !important;
+}
+
+/* Target the custom class and remove the border */
+.custom-quill-readOnly .ql-container {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Global CSS */
+IconButton {
+  /* width: 40px !important;
+  height: 40px !important; */
+  border-radius: 50% !important;
+}
