@@ -94,6 +94,7 @@ function PrimaryQuizBuilder({ quiz }) {
         variant='contained'
         component='label'
         style={{ color: 'white' }}
+        disabled={errors.length > 0}
       >
         Save Quiz
       </Button>

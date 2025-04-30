@@ -65,12 +65,12 @@ const SingleChoiceQuestionTemplate = ({
       ? innerData.options
       : mode === 'primary'
         ? [
-            { id: '1', text: 'Option 1', correct: true, image: '', file: null, mediaType: 'text' },
-            { id: '2', text: 'Option 2', correct: false, image: '', file: null, mediaType: 'text' }
+            { id: '1', text: '', correct: true, image: '', file: null, mediaType: 'text' },
+            { id: '2', text: '', correct: false, image: '', file: null, mediaType: 'text' }
           ]
         : primaryQuestion?.data?.options || [
-            { id: '1', text: 'Option 1', correct: true, image: '', file: null, mediaType: 'text' },
-            { id: '2', text: 'Option 2', correct: false, image: '', file: null, mediaType: 'text' }
+            { id: '1', text: '', correct: true, image: '', file: null, mediaType: 'text' },
+            { id: '2', text: '', correct: false, image: '', file: null, mediaType: 'text' }
           ]
   ) // Initial options
 

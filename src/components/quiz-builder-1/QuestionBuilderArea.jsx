@@ -9,7 +9,7 @@ import { useSession } from 'next-auth/react'
 import useUUID from '@/app/hooks/useUUID'
 import { toast } from 'react-toastify'
 
-const QuestionBuilderArea = forwardRef(({ quiz,  validationErrors = [], validateQuizQuestions}, ref) =>{
+const QuestionBuilderArea = forwardRef(({ quiz, validationErrors = [], validateQuizQuestions }, ref) => {
   const { data: session } = useSession()
   const [selectedQuestion, setSelectedQuestion] = useState(null)
   const [primaryQuestions, setPrimaryQuestions] = useState([])
@@ -31,6 +31,7 @@ const QuestionBuilderArea = forwardRef(({ quiz,  validationErrors = [], validate
         setPrimaryQuestions(result?.result || [])
         if (justCreatedQuestionId) {
           const justCreatedQuestion = result?.result?.find(question => question.id === justCreatedQuestionId)
+          // Skip validation after creating a new question
           setSelectedQuestion(justCreatedQuestion)
         }
       } else {
@@ -48,10 +49,6 @@ const QuestionBuilderArea = forwardRef(({ quiz,  validationErrors = [], validate
   useEffect(() => {
     fetchPrimaryQuestions(quiz._id) // Fetch primary questions after getting quiz data
   }, [quiz._id, refetch.primaryQuestions])
-
-  useEffect(()=>{
-    validateQuizQuestions()
-  },[primaryQuestions])
 
   function onClickNew() {
     setHasClickedNew(true)
@@ -81,9 +78,10 @@ const QuestionBuilderArea = forwardRef(({ quiz,  validationErrors = [], validate
       const result = await RestApi.post(`${API_URLS.v0.USERS_QUIZ_QUESTION}`, reqObj)
       if (result?.status === 'success') {
         console.log('Question Added result', result)
-        // toast.success('Question Added Successfully .')
-        await fetchPrimaryQuestions(quiz._id, pID)
-        setHasClickedNew(false)
+        setPrimaryQuestions(result?.result)
+        const createdQuestion = result?.result?.find(q => q.id === pID)
+        onSelectQuestion(createdQuestion)
+        validateQuizQuestions(primaryQuestions) // do not validate just created question
       } else {
         console.log('Error creating primary question:', result)
         // toast.error('Error:' + result.message)
@@ -105,8 +103,16 @@ const QuestionBuilderArea = forwardRef(({ quiz,  validationErrors = [], validate
     const result = await RestApi.put(API_URLS.v0.USERS_QUIZ_QUESTION, questionRequest)
     if (result?.status === 'success') {
       console.log('Question Added result', result)
-      setRefetch(prev => ({ ...prev, primaryQuestions: !prev.primaryQuestions }))
-      toast.success('Question Saved Successfully')
+      setPrimaryQuestions(result?.result)
+      const savedQuestion = result?.result?.find(q => q._id === questionRequest._id)
+      onSelectQuestion(savedQuestion)
+      const isValid = validateQuizQuestions(result?.result) // validate all questions
+
+      if (isValid) {
+        toast.success('Question Saved Successfully')
+      } else {
+        toast.success('Faild to save question due to the errors.')
+      }
     } else {
       // toast.error('Error:' + result?.message)
     }
@@ -116,15 +122,34 @@ const QuestionBuilderArea = forwardRef(({ quiz,  validationErrors = [], validate
     const result = await RestApi.del(`${API_URLS.v0.USERS_QUIZ_QUESTION}?id=${id}`)
     if (result?.status === 'success') {
       console.log('Question deleted result', result)
-      setRefetch(prev => ({ ...prev, primaryQuestions: !prev.primaryQuestions }))
       toast.success('Question deleted Successfully')
+
+      setPrimaryQuestions(result?.result)
+      validateQuizQuestions(result?.result) // validate all questions
+
+      const deletedQuestionIndex = primaryQuestions.findIndex(each => each._id === id)
+
+      if (deletedQuestionIndex >= 0) {
+        // Try to select the previous question first
+        if (deletedQuestionIndex > 0) {
+          onSelectQuestion(primaryQuestions[deletedQuestionIndex - 1])
+        }
+        // If no previous question, try to select the next one
+        else if (primaryQuestions.length > deletedQuestionIndex + 1) {
+          onSelectQuestion(primaryQuestions[deletedQuestionIndex + 1])
+        }
+        // If neither exists, select null
+        else {
+          onSelectQuestion(null)
+        }
+      }
     } else {
       // toast.error('Error:' + result?.message)
     }
   }
 
-  useImperativeHandle(ref, ()=>({
-    getQuizQuestions: ()=> primaryQuestions 
+  useImperativeHandle(ref, () => ({
+    getQuizQuestions: () => primaryQuestions
   }))
 
   return (
@@ -137,7 +162,7 @@ const QuestionBuilderArea = forwardRef(({ quiz,  validationErrors = [], validate
           onSelect={onSelectQuestion}
           hasClickedNew={hasClickedNew}
           loading={loading}
-          validationErrors = {validationErrors}
+          validationErrors={validationErrors}
         />
       </Box>
       <Box sx={{ flex: 3 }}>

@@ -54,8 +54,8 @@ export async function add(addRequestData) {
     console.log(`Add Sec Lang updated in Quiz Successfully.`);
 
     console.log(`${Artifact}` + ' added successfully!')
-    const allArtifacts = await getAllEvenDeleted()
-    return { status: 'success', result: allArtifacts.result, message: `${Artifact}` + ' Added Successfully' }
+    const allArtifacts = await ArtifactModel.find({quizId: addRequestData.quizId})
+    return { status: 'success', result: allArtifacts, message: `${Artifact}` + ' Added Successfully' }
   } catch (err) {
     console.error('Error adding' + `${Artifact}`, err)
     return { status: 'error', result: null, message: err.message }
@@ -110,8 +110,8 @@ export async function addMany(addRequestDataArray) {
       }
     }
 
-    const allArtifacts = await getAllEvenDeleted(); // Fetch updated data
-    return { status: 'success', result: allArtifacts.result, message: 'Artifacts added successfully' };
+    const allArtifacts = await ArtifactModel.find({quizId: quizId}); // Fetch updated data
+    return { status: 'success', result: allArtifacts, message: 'Artifacts added successfully' };
   } catch (err) {
     console.error('Error adding artifacts:', err);
     return { status: 'error', result: null, message: err.message };
@@ -130,9 +130,9 @@ export async function update(id, updateData) {
       console.error(`${Artifact}` + 'not found for update.')
       return { status: 'error', result: null, message: `${Artifact}` + 'not found for update.' }
     }
-    const allArtifacts = await getAllEvenDeleted()
+    const allArtifacts = await ArtifactModel.find({quizId: updatedArtifact.quizId})
     // if(allAds)
-    return { status: 'success', result: allArtifacts.result, message: `${Artifact}` + ' Updated Successfully' }
+    return { status: 'success', result: allArtifacts, message: `${Artifact}` + ' Updated Successfully' }
   } catch (err) {
     console.error('Error updating `${Artifact}`:', err)
     return { status: 'error', result: null, message: err.message }
@@ -144,14 +144,14 @@ export async function softDelete(id) {
   await connectMongo()
 
   try {
-    const updatedAd = await ArtifactModel.findByIdAndUpdate(id, { status: 'deleted' }) // Return updated document
-    if (!updatedAd) {
+    const updatedArtifact = await ArtifactModel.findByIdAndUpdate(id, { status: 'deleted' }) // Return updated document
+    if (!updatedArtifact) {
       console.error('`${Artifact}` not found for deletion.')
       return { status: 'error', result: null, message: '`${Artifact}` not found for deletion.' }
     }
-    const allAds = await getAll()
+    const allArtifacts = await ArtifactModel.find({quizId: updatedArtifact.quizId})
     // if(allAds)
-    return { status: 'success', result: allAds.result, message: '`${Artifact}` Marked Deleted Successfully' }
+    return { status: 'success', result: allArtifacts, message: '`${Artifact}` Marked Deleted Successfully' }
   } catch (err) {
     console.error('Error deleting `${Artifact}`:', err)
     return { status: 'error', result: null, message: err.message }
@@ -204,9 +204,10 @@ export async function deleteArtifact(id) {
 
     if (result) {
       console.log(`${Artifact} deleted successfully!` + result._id)
-      const allAds = await getAllEvenDeleted()
+      const allArtifacts = await ArtifactModel.find({quizId: quizId})
+      console.log(allArtifacts.length)
       // if(allAds)
-      return { status: 'success', result: allAds.result, message: '`${Artifact}` Deleted Successfully' }
+      return { status: 'success', result: allArtifacts, message: '`${Artifact}` Deleted Successfully' }
       // return   { status:"success", result:{}, message:"Quiz Deleted Successfully" };
     } else {
       return { status: 'error', result: {}, message: '`${Artifact}` Delete failed' }

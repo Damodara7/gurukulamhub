@@ -63,7 +63,7 @@ export async function POST(request) {
     if (newArtifact.status === 'success') {
       console.log('`${Artifact}` Creation Successfully ():')
       // Return the created advt data as JSON
-      var successResponse = ApiResponseUtils.createSuccessResponse(`New ${Artifact} created successfully`, newArtifact)
+      var successResponse = ApiResponseUtils.createSuccessResponse(`New ${Artifact} created successfully`, newArtifact.result)
       return ApiResponseUtils.sendSuccessResponse(successResponse)
     } else {
       console.log(`${Artifact}` + ' creation error.')
@@ -105,7 +105,7 @@ export async function PUT(request) {
     if (newArtifact.status === 'success') {
       console.log('`${Artifact}` Updated Successfully ():')
       // Return the created advt data as JSON
-      var successResponse = ApiResponseUtils.createSuccessResponse(`${Artifact} Updated successfully`)
+      var successResponse = ApiResponseUtils.createSuccessResponse(`${Artifact} Updated successfully`, newArtifact.result)
       return ApiResponseUtils.sendSuccessResponse(successResponse)
     } else {
       console.log(`${Artifact} updating error.`)
@@ -135,7 +135,7 @@ export async function DELETE(req) {
     if (deletedArtifact?.status === 'success') {
       console.log('`${Artifact}` deleted Successfully ():')
       // Return the created advt data as JSON
-      var successResponse = ApiResponseUtils.createSuccessResponse(`${Artifact} deleted successfully`, deletedArtifact)
+      var successResponse = ApiResponseUtils.createSuccessResponse(`${Artifact} deleted successfully`, deletedArtifact.result)
       return ApiResponseUtils.sendSuccessResponse(successResponse)
     } else {
       console.log('`${Artifact}` deletion error.')
