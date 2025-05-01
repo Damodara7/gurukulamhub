@@ -57,8 +57,8 @@ const MultipleChoiceQuestionTemplate = ({
   const [status, setStatus] = useState(innerData?.status || 'draft')
   const [hint, setHint] = useState(innerData?.hint || '')
   const [hintMarks, setHintMarks] = useState(innerData?.hintMarks)
-  const [marks, setMarks] = useState(innerData?.marks)
-  const [timerSeconds, setTimerSeconds] = useState(innerData?.timerSeconds)
+  const [marks, setMarks] = useState(innerData?.marks || '')
+  const [timerSeconds, setTimerSeconds] = useState(innerData?.timerSeconds || '')
   const [skippable, setSkippable] = useState(innerData?.skippable || false)
   const [options, setOptions] = useState(
     innerData?.options
@@ -101,6 +101,7 @@ const MultipleChoiceQuestionTemplate = ({
     const primaryQuestionData = {
       _id: data._id,
       id: id,
+      templateId: data.templateId,
       data: {
         language: language,
         question: question,
@@ -115,9 +116,9 @@ const MultipleChoiceQuestionTemplate = ({
       }
     }
 
-    const jsonData = JSON.stringify(primaryQuestionData, null, 2)
-    console.log(jsonData)
-    return jsonData
+    // const jsonData = JSON.stringify(primaryQuestionData, null, 2)
+    console.log(primaryQuestionData)
+    return primaryQuestionData
   }
 
   const createSecondaryQuestionRequest = () => {
@@ -717,6 +718,7 @@ const MultipleChoiceQuestionTemplate = ({
                 )}
               </Droppable>
             </DragDropContext>
+            {hasErrors && getErrorMessage('options') &&<Typography  className='text-center' variant='body1' color='error'>{getErrorMessage('options')}</Typography>}
           </Grid>
           {mode === 'primary' && (
             <Grid item xs={12} className='flex justify-end'>

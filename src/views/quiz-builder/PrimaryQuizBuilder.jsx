@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import QuizDetails from '@/components/quiz-builder-1/QuizDetails'
 import QuestionBuilderArea from '@/components/quiz-builder-1/QuestionBuilderArea'
 import { Box, Button, Snackbar, Alert } from '@mui/material'
@@ -14,8 +14,35 @@ function PrimaryQuizBuilder({ quiz }) {
   const builderAreaRef = useRef(null)
   const [errors, setErrors] = useState([])
   const [snackbar, setSnackbar] = useState({ open: false, message: '' })
+  const [questionsLength, setQuestionsLength] = useState(0) // Add state for questions length
 
-  function validateQuizQuestionsFunc() {
+  function validateQuizQuestionsFunc(questions=null) {
+    console.log({questions})
+    // If questions are passed, validate only those
+    if (questions) {
+      const validation = validateQuizQuestions(questions);
+      setErrors(validation.errors);
+  
+      if (!validation.isValid) {
+        // Count errors by question for better messaging
+        const errorCount = validation.errors.length;
+        const questionCount = new Set(validation.errors.map(e => e.questionId)).size;
+        
+        setSnackbar({
+          open: true,
+          message: `Found ${errorCount} issue${errorCount > 1 ? 's' : ''} across ${questionCount} question${questionCount > 1 ? 's' : ''}. Please check all highlighted fields.`,
+          severity: 'error',
+          autoHideDuration: 8000 // Show longer for multiple errors
+        });
+        
+        // Optional: Scroll to first error
+        const firstErrorElement = document.querySelector(`[data-question-id="${validation.errors[0].questionId}"]`);
+        firstErrorElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return validation.isValid;
+    }
+    
+    // Otherwise, use the existing logic to validate all questions from builder area
     if (builderAreaRef.current) {
       const quizQuestions = builderAreaRef.current.getQuizQuestions() || [];
       
@@ -86,6 +113,16 @@ function PrimaryQuizBuilder({ quiz }) {
     }
   }
 
+  // Add this useEffect to track questions length
+  useEffect(() => {
+    if (builderAreaRef.current) {
+      // Initial check
+      setQuestionsLength(builderAreaRef.current.getQuizQuestions()?.length || 0)
+      // You might want to add a way to update this when questions change
+      // This depends on how your QuestionBuilderArea component works
+    }
+  }, [builderAreaRef.current]) // Run when ref changes
+
   return (
     <Box className='flex flex-col gap-2'>
       <Button
@@ -94,7 +131,7 @@ function PrimaryQuizBuilder({ quiz }) {
         variant='contained'
         component='label'
         style={{ color: 'white' }}
-        disabled={errors.length > 0}
+        disabled={questionsLength === 0 || errors.length > 0}
       >
         Save Quiz
       </Button>

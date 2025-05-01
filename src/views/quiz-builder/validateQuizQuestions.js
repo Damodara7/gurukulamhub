@@ -235,11 +235,19 @@ export function validateQuizQuestions(questions) {
           })
         } else {
           const hasBlank = data?.question.some(part => part.type === 'blank')
+          const hasText = data?.question.some(part => part.type === 'text')
           if (!hasBlank) {
             questionErrors.push({
               questionId,
-              field: 'question',
+              field: 'question.blank',
               message: 'Fill-in-blank requires at least one blank part'
+            })
+          }
+          if (!hasText) {
+            questionErrors.push({
+              questionId,
+              field: 'question.text',
+              message: 'Fill-in-blank requires at least one question text part'
             })
           }
 
@@ -273,13 +281,13 @@ export function validateQuizQuestions(questions) {
     }
 
     // Validate timer
-    if (typeof data?.timerSeconds !== 'number' || data?.timerSeconds <= 0) {
-      questionErrors.push({
-        questionId,
-        field: 'timerSeconds',
-        message: 'Valid timer value required'
-      })
-    }
+    // if (typeof data?.timerSeconds !== 'number' || data?.timerSeconds <= 0) {
+    //   questionErrors.push({
+    //     questionId,
+    //     field: 'timerSeconds',
+    //     message: 'Valid timer value required'
+    //   })
+    // }
 
     if (questionErrors.length > 0) {
       errors.push(...questionErrors)

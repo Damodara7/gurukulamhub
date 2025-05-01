@@ -103,6 +103,7 @@ const SingleChoiceQuestionTemplate = ({
     const primaryQuestionData = {
       _id: data._id,
       id: id,
+      templateId: data.templateId,
       data: {
         language: language,
         question: question,
@@ -117,9 +118,9 @@ const SingleChoiceQuestionTemplate = ({
       }
     }
 
-    const jsonData = JSON.stringify(primaryQuestionData, null, 2)
-    console.log(jsonData)
-    return jsonData // or you can save it to a file or send it to a server
+    // const jsonData = JSON.stringify(primaryQuestionData, null, 2)
+    console.log(primaryQuestionData)
+    return primaryQuestionData // or you can save it to a file or send it to a server
   }
 
   const createSecondaryQuestionRequest = () => {
@@ -725,6 +726,7 @@ const SingleChoiceQuestionTemplate = ({
                                   label={<Typography variant='body2'>Correct</Typography>}
                                 />
                               </Box>
+                              
                             </div>
                           )
                         }
@@ -735,6 +737,7 @@ const SingleChoiceQuestionTemplate = ({
                 )}
               </Droppable>
             </DragDropContext>
+            {hasErrors && getErrorMessage('options') &&<Typography className='text-center' variant='body1' color='error'>{getErrorMessage('options')}</Typography>}
           </Grid>
           {mode === 'primary' && (
             <Grid item xs={12} className='flex justify-end'>

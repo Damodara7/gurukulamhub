@@ -164,9 +164,9 @@ export async function deleteArtifact(id) {
   try {
     const result = await ArtifactModel.findByIdAndDelete(id)
 
+    const quizId = result.quizId;
     // Delete Sec Lang in Quiz
     if (result.isPrimary === false) {
-      const quizId = result.quizId;
       const langCode = result.language.split('|')[0];
 
       // Find the quiz first to check the count of the language

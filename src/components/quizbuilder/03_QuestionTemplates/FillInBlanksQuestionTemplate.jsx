@@ -28,16 +28,16 @@ const FillInBlanksQuestionTemplate = ({
   primaryQuestion = null,
   saveQuestion,
   deleteQuestion,
-  validationErrors=[]
+  validationErrors = []
 }) => {
   const innerData = data?.data
   const [id, setId] = useState(questionUUID)
   const [language, setLanguage] = useState(data?.language)
   const [status, setStatus] = useState(innerData?.status || 'draft')
   const [hint, setHint] = useState(innerData?.hint || '')
-  const [hintMarks, setHintMarks] = useState(innerData?.hintMarks || -0.25)
-  const [marks, setMarks] = useState(innerData?.marks || 1)
-  const [timerSeconds, setTimerSeconds] = useState(innerData?.timerSeconds || 30)
+  const [hintMarks, setHintMarks] = useState(innerData?.hintMarks || '')
+  const [marks, setMarks] = useState(innerData?.marks || '')
+  const [timerSeconds, setTimerSeconds] = useState(innerData?.timerSeconds || '')
   const [skippable, setSkippable] = useState(innerData?.skippable || false) // by default non-skippable
 
   const [questionParts, setQuestionParts] = useState(
@@ -73,6 +73,7 @@ const FillInBlanksQuestionTemplate = ({
     const primaryQuestionData = {
       _id: data._id,
       id: id,
+      templateId: data.templateId,
       data: {
         language: language,
         question: questionParts,
@@ -86,9 +87,9 @@ const FillInBlanksQuestionTemplate = ({
       }
     }
 
-    const jsonData = JSON.stringify(primaryQuestionData, null, 2)
-    console.log(jsonData)
-    return jsonData // or you can save it to a file or send it to a server
+    // const jsonData = JSON.stringify(primaryQuestionData, null, 2)
+    console.log(primaryQuestionData)
+    return primaryQuestionData // or you can save it to a file or send it to a server
   }
 
   const createSecondaryQuestionRequest = () => {
@@ -132,27 +133,27 @@ const FillInBlanksQuestionTemplate = ({
   const onSaveQuestion = async () => {
     setLoading(prev => ({ ...prev, save: true }))
 
-    if (questionParts.length === 0) {
-      toast.error('Please add at least one text part and one blank.')
-      setLoading(prev => ({ ...prev, save: false }))
-      return
-    }
+    // if (questionParts.length === 0) {
+    //   toast.error('Please add at least one text part and one blank.')
+    //   setLoading(prev => ({ ...prev, save: false }))
+    //   return
+    // }
 
-    // Check if any part has empty content
-    const hasEmptyParts = questionParts.some(part => part.content.trim() === '')
-    if (hasEmptyParts) {
-      toast.error('Please fill in all parts before saving.')
-      setLoading(prev => ({ ...prev, save: false }))
-      return
-    }
+    // // Check if any part has empty content
+    // const hasEmptyParts = questionParts.some(part => part.content.trim() === '')
+    // if (hasEmptyParts) {
+    //   toast.error('Please fill in all parts before saving.')
+    //   setLoading(prev => ({ ...prev, save: false }))
+    //   return
+    // }
 
-    // Check if at least one blank part is added
-    const hasBlankPart = questionParts.some(part => part.type === 'blank')
-    if (!hasBlankPart) {
-      toast.error('Please add at least one blank.')
-      setLoading(prev => ({ ...prev, save: false }))
-      return
-    }
+    // // Check if at least one blank part is added
+    // const hasBlankPart = questionParts.some(part => part.type === 'blank')
+    // if (!hasBlankPart) {
+    //   toast.error('Please add at least one blank.')
+    //   setLoading(prev => ({ ...prev, save: false }))
+    //   return
+    // }
 
     console.log({
       questionParts
@@ -194,198 +195,246 @@ const FillInBlanksQuestionTemplate = ({
   // Check if the last part is a text input
   const isLastPartText = questionParts[questionParts.length - 1]?.type === 'text'
 
+  const getQuestionErrors = questionId => {
+    return validationErrors.filter(error => error.questionId === questionId)
+  }
+
+  const questionValidationErrors = getQuestionErrors(data._id)
+  const hasErrors = questionValidationErrors.length > 0
+
+  const getErrorMessage = field => {
+    const fieldErrorObj = questionValidationErrors?.find(each => each.field === field)
+    if (fieldErrorObj) {
+      return fieldErrorObj?.message || ''
+    }
+    return ''
+  }
+
   return (
-
     <>
-    {/* <Card key={id}> */}
+      {/* <Card key={id}> */}
       {/* <CardContent> */}
-        <Grid container spacing={2} alignItems='center'>
-          <Grid item xs={12} md={6} sx={{ marginBottom: '4px' }}>
-            <TextField disabled label='Question Id' variant='outlined' fullWidth value={id} />
-          </Grid>
-          <Grid item xs={12} md={6} sx={{ marginBottom: '4px' }}>
-            <TextField disabled label='Language ' variant='outlined' fullWidth value={language} />
-          </Grid>
-          <Grid item xs={12}>
-            <Typography variant='h4' gutterBottom>
-              Create Fill-in-the-Blanks Question
-            </Typography>
+      <Grid container spacing={2} alignItems='center'>
+        <Grid item xs={12} md={6} sx={{ marginBottom: '4px' }}>
+          <TextField disabled label='Question Id' variant='outlined' fullWidth value={id} />
+        </Grid>
+        <Grid item xs={12} md={6} sx={{ marginBottom: '4px' }}>
+          <TextField disabled label='Language ' variant='outlined' fullWidth value={language} />
+        </Grid>
+        <Grid item xs={12}>
+          <Typography variant='h4' gutterBottom>
+            Create Fill-in-the-Blanks Question
+          </Typography>
 
-            <Box
-              sx={{
-                display: 'flex',
-                //   flexWrap: "wrap",
-                flexDirection: 'column',
-                gap: 2,
-                mb: 3,
-                border: '1px dashed gray',
-                borderRadius: '8px',
-                p: 2
-              }}
-            >
-              {questionParts.map(part => (
-                <Box
-                  key={part.id}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 2,
-                    backgroundColor: '#f9f9f9',
-                    p: 1,
-                    borderRadius: '4px'
-                  }}
-                >
-                  {part.type === 'text' ? (
-                    <TextField
-                      fullWidth
-                      variant='outlined'
-                      placeholder='Enter text'
-                      value={part.content}
-                      onChange={e => handlePartChange(part.id, e.target.value)}
-                    />
-                  ) : (
+          <Box
+            sx={{
+              display: 'flex',
+              //   flexWrap: "wrap",
+              flexDirection: 'column',
+              gap: 2,
+              mb: 3,
+              border: '1px dashed gray',
+              borderRadius: '8px',
+              p: 2
+            }}
+          >
+            {questionParts.map(part => (
+              <Box
+                key={part.id}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 2,
+                  backgroundColor: '#f9f9f9',
+                  p: 1,
+                  borderRadius: '4px'
+                }}
+              >
+                {part.type === 'text' ? (
+                  <TextField
+                    fullWidth
+                    variant='outlined'
+                    placeholder='Enter text'
+                    value={part.content}
+                    error={hasErrors && getErrorMessage(`question.${part.id}.content`)}
+                    helperText={<span>{getErrorMessage(`question.${part.id}.content`)}</span>}
+                    onChange={e => handlePartChange(part.id, e.target.value)}
+                  />
+                ) : (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
                     <InputBase
                       placeholder='Blank'
+                      fullWidth
                       value={part.content}
                       onChange={e => handlePartChange(part.id, e.target.value)}
                       sx={{
-                        borderBottom: '2px solid gray',
+                        borderBottom: hasErrors ? '2px solid red' : '2px solid gray',
                         flex: 1,
                         p: 0.5
                       }}
                     />
-                  )}
-                  <IconButtonTooltip title='Remove' color='error' onClick={() => handleRemovePart(part.id)}>
-                    <RemoveCircleIcon />
-                  </IconButtonTooltip>
-                </Box>
-              ))}
-              <Box className='flex justify-end gap-2'>
-                <Button
-                  variant='text'
-                  color='primary'
-                  size='small'
-                  component='label'
-                  // style={{ color: 'white' }}
-                  startIcon={<AddCircleIcon />}
-                  onClick={handleAddText}
-                  disabled={isLastPartText} // Disable Add Text button
-                >
-                  Add Text
-                </Button>
-                <Button
-                  variant='text'
-                  size='small'
-                  component='label'
-                  // style={{ color: 'white' }}
-                  color='primary'
-                  startIcon={<AddCircleIcon />}
-                  onClick={handleAddBlank}
-                >
-                  Add Blank
-                </Button>
+                    {hasErrors && (
+                      <Typography color='error' variant='body2' sx={{ mt: 0.5, }}>
+                        {getErrorMessage(`question.${part.id}.content`)}
+                      </Typography>
+                    )}
+                  </Box>
+                )}
+                <IconButtonTooltip title='Remove' color='error' onClick={() => handleRemovePart(part.id)}>
+                  <RemoveCircleIcon />
+                </IconButtonTooltip>
               </Box>
+            ))}
+            {hasErrors && (
+              <>
+              {getErrorMessage(`question.blank`) &&<Typography color='error' variant='body2' sx={{ mt: 0.5, ml: 1 }}>
+                {getErrorMessage(`question.blank`)}
+              </Typography>}
+              {getErrorMessage(`question.text`) &&<Typography color='error' variant='body2' sx={{ mt: 0.5, ml: 1 }}>
+                {getErrorMessage(`question.text`)}
+              </Typography>}
+              </>
+            )}
+            <Box className='flex justify-end gap-2'>
+              <Button
+                variant='text'
+                color='primary'
+                size='small'
+                component='label'
+                // style={{ color: 'white' }}
+                startIcon={<AddCircleIcon />}
+                onClick={handleAddText}
+                disabled={isLastPartText} // Disable Add Text button
+              >
+                Add Text
+              </Button>
+              <Button
+                variant='text'
+                size='small'
+                component='label'
+                // style={{ color: 'white' }}
+                color='primary'
+                startIcon={<AddCircleIcon />}
+                onClick={handleAddBlank}
+              >
+                Add Blank
+              </Button>
             </Box>
-          </Grid>
-
-          <Grid item xs={12} sx={{ marginBottom: '4px' }}>
-            <TextField
-              disabled={loading.save || loading.delete}
-              label='Hint'
-              variant='outlined'
-              fullWidth
-              value={hint}
-              onChange={handleHintChange}
-            />
-          </Grid>
-          {mode === 'primary' ? (
-            <>
-              <Grid item xs={6} sm={3}>
-                <TextField
-                  disabled={loading.save || loading.delete}
-                  label='Marks'
-                  type='number'
-                  InputProps={{ inputProps: { min: 0.25 } }}
-                  variant='outlined'
-                  fullWidth
-                  value={marks}
-                  onChange={handleMarksChange}
-                />
-              </Grid>
-              <Grid item xs={6} sm={3}>
-                <TextField
-                  disabled={loading.save || loading.delete}
-                  label='Hint Marks'
-                  variant='outlined'
-                  fullWidth
-                  type='number'
-                  InputProps={{ inputProps: { max: 0 } }}
-                  value={hintMarks}
-                  onChange={handleHintMarksChange}
-                />
-              </Grid>
-              <Grid item xs={6} sm={3}>
-                <TextField
-                  disabled={loading.save || loading.delete}
-                  label='Timer Seconds'
-                  variant='outlined'
-                  type='number'
-                  InputProps={{ inputProps: { min: 10 } }}
-                  fullWidth
-                  value={timerSeconds}
-                  onChange={handleTimerChange}
-                />
-              </Grid>
-              <Grid item xs={6} sm={3} textAlign='center'>
-                <FormControlLabel
-                  disabled={loading.save || loading.delete}
-                  control={<Switch value={skippable} onChange={e => setSkippable(e.target.checked)} />}
-                  label='Skippable'
-                />
-              </Grid>
-            </>
-          ) : (
-            ''
-          )}
-
-          <Grid item xs={12} className='flex items-center gap-3 mt-3'>
-            <Button
-              startIcon={<SaveIcon />}
-              fullWidth
-              variant='outlined'
-              component='label'
-              color='primary'
-              // style={{ color: 'white' }}
-              aria-label='add option'
-              onClick={onSaveQuestion}
-              disabled={loading.save || loading.delete}
-            >
-              {loading.save ? 'Saving...' : 'Save Q'}
-            </Button>
-            <Button
-              startIcon={<DeleteIcon />}
-              fullWidth
-              variant='outlined'
-              component='label'
-              color='error'
-              // style={{ color: 'white' }}
-              aria-label='delete option'
-              onClick={handleDeleteClick}
-              disabled={loading.save || loading.delete}
-            >
-              {loading.delete ? 'Deleting...' : 'Delete Q'}
-            </Button>
-          </Grid>
+          </Box>
         </Grid>
-        <DeleteConfirmationDialog
-          open={openDeleteDialog}
-          handleClose={handleCloseDialog}
-          handleConfirm={onDeleteQuestion}
-          title='Delete Question?'
-          description='Are you sure you want to delete this question? This action cannot be undone.'
-        />
+      </Grid>
+
+      {/* Hint, Marks, Hint Marks, Skippable, Time in Seconds */}
+      <Grid container spacing={2} mt={2} alignItems='start'>
+        <Grid item xs={12} sx={{ marginBottom: '4px' }}>
+          <TextField
+            disabled={loading.save || loading.delete}
+            label='Hint'
+            variant='outlined'
+            fullWidth
+            value={hint}
+            onChange={handleHintChange}
+            error={hasErrors && getErrorMessage('hint')}
+            helperText={getErrorMessage('hint')}
+          />
+        </Grid>
+        {mode === 'primary' ? (
+          <>
+            <Grid item xs={6} md={4}>
+              <TextField
+                disabled={loading.save || loading.delete}
+                label='Marks'
+                type='number'
+                InputProps={{ inputProps: { min: 0.25 } }}
+                variant='outlined'
+                fullWidth
+                value={marks}
+                onChange={handleMarksChange}
+                error={hasErrors && getErrorMessage('marks')}
+                helperText={getErrorMessage('marks')}
+              />
+            </Grid>
+            <Grid item xs={6} md={4}>
+              <TextField
+                disabled={loading.save || loading.delete}
+                label='Hint Marks'
+                variant='outlined'
+                fullWidth
+                type='number'
+                InputProps={{ inputProps: { max: 0 } }}
+                value={hintMarks}
+                onChange={handleHintMarksChange}
+                error={hasErrors && getErrorMessage('hintMarks')}
+                helperText={getErrorMessage('hintMarks')}
+              />
+            </Grid>
+            <Grid item xs={6} md={4}>
+              <TextField
+                disabled={loading.save || loading.delete}
+                label='Timer Seconds'
+                variant='outlined'
+                type='number'
+                InputProps={{ inputProps: { min: 10 } }}
+                fullWidth
+                value={timerSeconds}
+                onChange={handleTimerChange}
+                error={hasErrors && getErrorMessage('timerSeconds')}
+                helperText={getErrorMessage('timerSeconds')}
+              />
+            </Grid>
+            <Grid item xs={12} textAlign='center' mb={3}>
+              <FormControlLabel
+                disabled={loading.save || loading.delete}
+                control={<Switch value={skippable} onChange={e => setSkippable(e.target.checked)} />}
+                label='Skippable'
+              />
+            </Grid>
+          </>
+        ) : (
+          ''
+        )}
+      </Grid>
+
+      {/* Actions */}
+      <Grid container spacing={2} mt={2} alignItems='center'>
+        <Grid item xs={12} className='flex items-center gap-3 mt-3'>
+          <Button
+            startIcon={<SaveIcon />}
+            fullWidth
+            variant='outlined'
+            component='label'
+            color='primary'
+            // style={{ color: 'white' }}
+            aria-label='add option'
+            onClick={onSaveQuestion}
+            disabled={loading.save || loading.delete}
+          >
+            {loading.save ? 'Saving...' : 'Save Q'}
+          </Button>
+          <Button
+            startIcon={<DeleteIcon />}
+            fullWidth
+            variant='outlined'
+            component='label'
+            color='error'
+            // style={{ color: 'white' }}
+            aria-label='delete option'
+            onClick={handleDeleteClick}
+            disabled={loading.save || loading.delete}
+          >
+            {loading.delete ? 'Deleting...' : 'Delete Q'}
+          </Button>
+        </Grid>
+      </Grid>
+      <DeleteConfirmationDialog
+        open={openDeleteDialog}
+        handleClose={handleCloseDialog}
+        handleConfirm={onDeleteQuestion}
+        title='Delete Question?'
+        description='Are you sure you want to delete this question? This action cannot be undone.'
+      />
       {/* </CardContent> */}
-    {/* </Card> */}
+      {/* </Card> */}
     </>
   )
 }

@@ -51,8 +51,8 @@ const TrueFalseQuestionTemplate = ({
   const [status, setStatus] = useState(innerData?.status || 'draft')
   const [hint, setHint] = useState(innerData?.hint || '')
   const [hintMarks, setHintMarks] = useState(innerData?.hintMarks)
-  const [marks, setMarks] = useState(innerData?.marks)
-  const [timerSeconds, setTimerSeconds] = useState(innerData?.timerSeconds)
+  const [marks, setMarks] = useState(innerData?.marks|| '')
+  const [timerSeconds, setTimerSeconds] = useState(innerData?.timerSeconds || '')
   const [skippable, setSkippable] = useState(innerData?.skippable || false) // default non-skippable
   const [correctOption, setCorrectOption] = useState(
     innerData?.correctOption
@@ -102,6 +102,7 @@ const TrueFalseQuestionTemplate = ({
     const questionData = {
       _id: data._id,
       id: id,
+      templateId: data.templateId,
       data: {
         language: language,
         question: question,
@@ -116,9 +117,9 @@ const TrueFalseQuestionTemplate = ({
       }
     }
 
-    const jsonData = JSON.stringify(questionData, null, 2)
-    console.log(jsonData)
-    return jsonData
+    // const jsonData = JSON.stringify(questionData, null, 2)
+    console.log(questionData)
+    return questionData
   }
 
   const onSaveQuestion = async () => {
@@ -507,6 +508,7 @@ const TrueFalseQuestionTemplate = ({
                 />
               </Box>
             ))}
+            {hasErrors && getErrorMessage('options') &&<Typography  className='text-center' variant='body1' color='error'>{getErrorMessage('options')}</Typography>}
           </Box>
         </Grid>
       </Grid>

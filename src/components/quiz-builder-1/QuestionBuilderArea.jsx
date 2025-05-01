@@ -16,6 +16,8 @@ const QuestionBuilderArea = forwardRef(({ quiz, validationErrors = [], validateQ
   const [loading, setLoading] = useState({ primaryQuestions: false, createNew: false })
   const [hasClickedNew, setHasClickedNew] = useState(false)
   const [refetch, setRefetch] = useState({ primaryQuestions: false })
+  const [initialValidationDone, setInitialValidationDone] = useState(false)
+  const [initialQuestionsFetched, setInitialQuestionsFetched] = useState(false)
 
   const { uuid, regenerateUUID, getUUID } = useUUID()
 
@@ -29,6 +31,7 @@ const QuestionBuilderArea = forwardRef(({ quiz, validationErrors = [], validateQ
       if (result.status === 'success') {
         console.log(`result: primary questions of quiz= ${quizId}...`, result)
         setPrimaryQuestions(result?.result || [])
+        setInitialQuestionsFetched(true)
         if (justCreatedQuestionId) {
           const justCreatedQuestion = result?.result?.find(question => question.id === justCreatedQuestionId)
           // Skip validation after creating a new question
@@ -50,14 +53,40 @@ const QuestionBuilderArea = forwardRef(({ quiz, validationErrors = [], validateQ
     fetchPrimaryQuestions(quiz._id) // Fetch primary questions after getting quiz data
   }, [quiz._id, refetch.primaryQuestions])
 
+  useEffect(() => {
+    if (!initialValidationDone && initialQuestionsFetched) {
+      console.log('....')
+      validateQuizQuestions()
+      setInitialValidationDone(true)
+    }
+  }, [primaryQuestions, initialValidationDone, initialQuestionsFetched])
+
+  // useEffect(()=>{
+  //   let questionsToValidate = primaryQuestions
+  //   if(primaryQuestions.length > 0){
+  //     questionsToValidate = questionsToValidate.filter(q=>q.id!==pID)
+  //   }
+  //   validateQuizQuestions(questionsToValidate)
+  // },[primaryQuestions])
+
   function onClickNew() {
     setHasClickedNew(true)
     setSelectedQuestion(null)
   }
 
-  function onSelectQuestion(question) {
+  function onSelectQuestion(question, isNew = false) {
+    if (selectedQuestion && selectedQuestion?._id === question?._id) {
+      return
+    }
     setSelectedQuestion(question)
     setHasClickedNew(false)
+    if (question) {
+      let questionsToValidate = [...primaryQuestions]
+      if (isNew) {
+        questionsToValidate=[...questionsToValidate, question].filter(q=>q._id!==question._id)
+      }
+      validateQuizQuestions(questionsToValidate)
+    }
   }
 
   async function onCreateQuestion(templateId) {
@@ -67,7 +96,38 @@ const QuestionBuilderArea = forwardRef(({ quiz, validationErrors = [], validateQ
       language: quiz.language.code + '|' + quiz.language.name,
       templateId: templateId,
       createdBy: session?.user?.email,
-      isPrimary: true
+      isPrimary: true,
+      data: {
+        // question
+        ...((templateId === 'single-choice' || templateId === 'multiple-choice' || templateId === 'true-or-false') && {
+          question: {
+            text: '',
+            image: '',
+            video: '',
+            mediaType: 'text'
+          }
+        }),
+        ...(templateId === 'fill-in-blank' && { question: [{ id: 'part-1', type: 'text', content: '' }] }),
+        //optiopns:
+        ...((templateId === 'single-choice' || templateId === 'multiple-choice') && {
+          options: [
+            { id: '1', text: '', correct: false, image: '', file: null, mediaType: 'text' },
+            { id: '2', text: '', correct: false, image: '', file: null, mediaType: 'text' }
+          ]
+        }),
+        ...(templateId === 'true-or-false' && {
+          options: [
+            { id: 'true', text: 'True', correct: true, image: '', file: null, mediaType: 'text' },
+            { id: 'false', text: 'False', correct: false, image: '', file: null, mediaType: 'text' }
+          ]
+        }),
+        // other fields
+        marks: '',
+        timerSeconds: '',
+        hint: '',
+        hintMarks: '',
+        skippable: false
+      }
     }
 
     console.log('ReqObj for creating primary Question', reqObj)
@@ -80,8 +140,8 @@ const QuestionBuilderArea = forwardRef(({ quiz, validationErrors = [], validateQ
         console.log('Question Added result', result)
         setPrimaryQuestions(result?.result)
         const createdQuestion = result?.result?.find(q => q.id === pID)
-        onSelectQuestion(createdQuestion)
-        validateQuizQuestions(primaryQuestions) // do not validate just created question
+        onSelectQuestion(createdQuestion, true)
+        // validateQuizQuestions(primaryQuestions) // do not validate just created question
       } else {
         console.log('Error creating primary question:', result)
         // toast.error('Error:' + result.message)
@@ -100,6 +160,11 @@ const QuestionBuilderArea = forwardRef(({ quiz, validationErrors = [], validateQ
 
   const onSaveQuestion = async questionRequest => {
     console.log('Saving question:', questionRequest)
+    const isValidQuestion = validateQuizQuestions([questionRequest])
+    if (!isValidQuestion) {
+      toast.error('Faild to save question due to the errors.')
+      return
+    }
     const result = await RestApi.put(API_URLS.v0.USERS_QUIZ_QUESTION, questionRequest)
     if (result?.status === 'success') {
       console.log('Question Added result', result)
@@ -111,7 +176,8 @@ const QuestionBuilderArea = forwardRef(({ quiz, validationErrors = [], validateQ
       if (isValid) {
         toast.success('Question Saved Successfully')
       } else {
-        toast.success('Faild to save question due to the errors.')
+        toast.success('Question Saved Successfully.')
+        toast.error('Solve the issues for other questions.')
       }
     } else {
       // toast.error('Error:' + result?.message)
@@ -125,7 +191,7 @@ const QuestionBuilderArea = forwardRef(({ quiz, validationErrors = [], validateQ
       toast.success('Question deleted Successfully')
 
       setPrimaryQuestions(result?.result)
-      validateQuizQuestions(result?.result) // validate all questions
+      validateQuizQuestions(result?.result || []) // validate all questions
 
       const deletedQuestionIndex = primaryQuestions.findIndex(each => each._id === id)
 
@@ -174,6 +240,7 @@ const QuestionBuilderArea = forwardRef(({ quiz, validationErrors = [], validateQ
               onDeleteQuestion={onDeleteQuestion}
               hasClickedNew={hasClickedNew}
               validationErrors={validationErrors}
+              questionsLength = {primaryQuestions?.length || 0}
             />
           )}
           {hasClickedNew && (

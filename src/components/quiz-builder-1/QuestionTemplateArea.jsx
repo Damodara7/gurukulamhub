@@ -2,7 +2,13 @@ import { Alert, Box, Typography } from '@mui/material'
 import React from 'react'
 import DynamicQuestionTemplate from '../quizbuilder/02_QuestionBuilder/DynamicQuestionTemplate'
 
-function QuestionTemplateArea({ selectedQuestion, onSaveQuestion, onDeleteQuestion, validationErrors = [] }) {
+function QuestionTemplateArea({
+  selectedQuestion,
+  onSaveQuestion,
+  onDeleteQuestion,
+  validationErrors = [],
+  questionsLength = 0
+}) {
   return (
     <>
       {selectedQuestion && (
@@ -17,8 +23,8 @@ function QuestionTemplateArea({ selectedQuestion, onSaveQuestion, onDeleteQuesti
         />
       )}
       {!selectedQuestion && (
-        <Alert icon={false} severity='info'>
-          Create New Question or Edit Question
+        <Alert icon={false} severity={questionsLength === 0 ? 'warning' : 'info'}>
+          {questionsLength > 0 ? `Create New Question or Edit Question` : `Create New Question`}
         </Alert>
       )}
     </>
