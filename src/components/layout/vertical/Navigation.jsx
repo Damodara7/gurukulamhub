@@ -9,7 +9,7 @@ import { styled, useColorScheme, useTheme } from '@mui/material/styles'
 // Component Imports
 import VerticalNav, { NavHeader, NavCollapseIcons } from '@menu/vertical-menu'
 import VerticalMenu from './VerticalMenu'
-import Logo from '@components/layout/shared/Logo'
+import NavLogo from '@components/layout/shared/NavLogo'
 
 // Hook Imports
 import useVerticalNav from '@menu/hooks/useVerticalNav'
@@ -103,7 +103,7 @@ const Navigation = props => {
     >
       {/* Nav Header including Logo & nav toggle icons  */}
       <NavHeader>
-        <Logo />
+        <NavLogo />
         {!(isCollapsed && !isHovered) && (
           <NavCollapseIcons
             lockedIcon={<i className='ri-radio-button-line text-xl' />}

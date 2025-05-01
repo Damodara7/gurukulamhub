@@ -59,7 +59,7 @@ const PhoneVerification = ({ phoneValid, phoneInput, country, onChange, setIsPho
   }, [phoneInput])
 
   useEffect(() => {
-    console.log({phoneValid, phoneInput, dbPhone})
+    console.log({ phoneValid, phoneInput, dbPhone })
     if (phoneValid && phoneInput === dbPhone) {
       setVerifyOtpStatus('success')
     }
@@ -93,7 +93,7 @@ const PhoneVerification = ({ phoneValid, phoneInput, country, onChange, setIsPho
       setErrorMessage('')
       await RestApi.post(API_URLS.v0.USERS_SEND_PHONE_OTP, {
         email: session?.user?.email,
-        name: session?.user?.name || 'GurukulamHub User',
+        name: session?.user?.name || ' User',
         countryDialCode: country,
         phone: phoneInput
       })

@@ -9,7 +9,7 @@ import { useParams } from 'next/navigation'
 import styled from '@emotion/styled'
 
 // Component Imports
-import SquizmeLogo from '@core/svg/Logo'
+import Logo from '@core/svg/Logo'
 
 // Config Imports
 import themeConfig from '@configs/themeConfig'
@@ -31,10 +31,10 @@ const LogoText = styled.span`
     `margin-inline-start ${transitionDuration}ms ease-in-out, opacity ${transitionDuration}ms ease-in-out`};
 
   ${({ isHovered, isCollapsed }) =>
-    isCollapsed && !isHovered ? 'opacity: 0; margin-inline-start: 0;' : 'opacity: 1; margin-inline-start: 10px;'}
+    isCollapsed && !isHovered ? 'opacity: 0; margin-inline-start: 0;' : 'opacity: 1; margin-inline-start: -8px;'}
 `
 
-const Logo = () => {
+const NavLogo = () => {
   // Refs
   const logoTextRef = useRef(null)
 
@@ -64,8 +64,8 @@ const Logo = () => {
   // You may return any JSX here to display a logo in the sidebar header
   // return <Img src='/next.svg' width={100} height={25} alt='logo' /> // for example
   return (
-    <Link href={getLocalizedUrl('/', locale)} className='flex items-center min-bs-[24px]'>
-      <SquizmeLogo className='text-[22px] text-primary' />
+    <Link href={getLocalizedUrl('/', locale)} className='flex items-center min-bs-[2px]'>
+      <Logo className='text-[0px] text-primary ' />
       <LogoText
         ref={logoTextRef}
         isHovered={isHovered}
@@ -78,4 +78,4 @@ const Logo = () => {
   )
 }
 
-export default Logo
+export default NavLogo
