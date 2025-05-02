@@ -232,9 +232,15 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
           <MenuItem href={`/${locale}/dashboards/myprogress`} icon={<i className='ri-bar-chart-2-line' />}>
             {dictionary['navigation'].myprogress}
           </MenuItem>
-          <MenuItem href={`/${locale}/pages/user-profile`}>{dictionary['navigation'].userProfile}</MenuItem>
-          <MenuItem href={`/${locale}/my-learning`}>{dictionary['navigation'].myLearning}</MenuItem>
-          <MenuItem href={`/${locale}/pages/dialog-examples`}>{dictionary['navigation'].refer}</MenuItem>
+          <MenuItem href={`/${locale}/pages/user-profile`} icon={<i className='ri-user-line' />}>
+            {dictionary['navigation'].userProfile}
+          </MenuItem>
+          <MenuItem href={`/${locale}/my-learning`} icon={<i className='ri-macbook-line' />}>
+            {dictionary['navigation'].myLearning}
+          </MenuItem>
+          <MenuItem href={`/${locale}/pages/dialog-examples`} icon={<i className='ri-user-received-line' />}>
+            {dictionary['navigation'].refer}
+          </MenuItem>
           {/* <SubMenu label={dictionary['navigation'].mysettings} icon={<i className='ri-earth-fill' />}>
             <MenuItem href={`/${locale}/pages/account-settings`}>{dictionary['navigation'].accountSettings}</MenuItem>
           </SubMenu> */}
