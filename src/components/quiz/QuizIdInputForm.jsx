@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Box, TextField, Button, Typography, Alert, Collapse, IconButton } from '@mui/material'
 import { Close } from '@mui/icons-material'
+import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
 
@@ -14,25 +15,22 @@ const QuizIdInputForm = ({ mode = 'play' }) => {
   const router = useRouter()
 
   // Function to validate MongoDB ObjectId
-  const isValidObjectId = (id) => {
+  const isValidObjectId = id => {
     return /^[0-9a-fA-F]{24}$/.test(id)
   }
 
-  const fetchQuizData = async (quizId) => {
+  const fetchQuizData = async quizId => {
     try {
-      const response = await fetch(`${API_URLS.v0.USERS_QUIZ}/${quizId}`)
-      if (!response.ok) {
-        throw new Error('Quiz not found')
-      }
-      return await response.json()
+      const response = await RestApi.get(`${API_URLS.v0.USERS_QUIZ}/${quizId}`)
+      return response
     } catch (error) {
       console.error('Error fetching quiz data:', error)
       throw error
     }
   }
 
-  const handleSubmit = async (e) => {
-    console.log('hello');
+  const handleSubmit = async e => {
+    console.log('hello')
     setError('')
     setLoading(true)
 
@@ -47,18 +45,16 @@ const QuizIdInputForm = ({ mode = 'play' }) => {
       }
 
       // Then verify quiz exists
-      const quizData = await fetchQuizData(quizId)
-      if (quizData?.status !== 'success') {
-        throw new Error("Invalid Quiz ID")
+      const quizDataRes = await fetchQuizData(quizId)
+      if (quizDataRes?.status !== 'success') {
+        throw new Error('Invalid Quiz ID')
       }
 
       // Redirect if all checks pass
       router.push(`/publicquiz/play/${quizId}`)
-    } 
-    catch (error) {
+    } catch (error) {
       setError(error instanceof Error ? error.message : 'An unknown error occurred')
-    } 
-    finally {
+    } finally {
       setLoading(false)
     }
   }
@@ -92,7 +88,6 @@ const QuizIdInputForm = ({ mode = 'play' }) => {
 
       {/* Form */}
       <form
-        
         className='flex flex-col items-center justify-between gap-2 p-4 rounded-lg shadow-lg'
         style={{
           backgroundColor: 'white',
@@ -156,7 +151,13 @@ const QuizIdInputForm = ({ mode = 'play' }) => {
           <Alert
             severity='error'
             action={
-              <IconButtonTooltip title='Close' aria-label='close' color='inherit' size='small' onClick={() => setError('')}>
+              <IconButtonTooltip
+                title='Close'
+                aria-label='close'
+                color='inherit'
+                size='small'
+                onClick={() => setError('')}
+              >
                 <Close fontSize='inherit' />
               </IconButtonTooltip>
             }

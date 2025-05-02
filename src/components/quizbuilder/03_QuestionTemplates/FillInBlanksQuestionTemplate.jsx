@@ -20,6 +20,7 @@ import DeleteIcon from '@mui/icons-material/Delete'
 import DeleteConfirmationDialog from '@/components/dialogs/DeleteConfirmationDialog'
 import { toast } from 'react-toastify'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
+import { blankRegex, textRegex, filterInput } from '@/utils/RegexUtil'
 
 const FillInBlanksQuestionTemplate = ({
   id: questionUUID,
@@ -188,8 +189,15 @@ const FillInBlanksQuestionTemplate = ({
   }
 
   // Update content of a part
-  const handlePartChange = (id, value) => {
-    setQuestionParts(questionParts.map(part => (part.id === id ? { ...part, content: value } : part)))
+  const handlePartChange = (id, type, value) => {
+    let filterValue = value
+    if (type === 'blank') {
+      filterValue = filterInput(value , blankRegex)
+    } else if (type === 'text') {
+      filterValue = filterInput(value , textRegex)
+    }
+    // alphanumeric characters and spaces
+    setQuestionParts(questionParts.map(part => (part.id === id ? { ...part, content: filterValue } : part)))
   }
 
   // Check if the last part is a text input
@@ -261,7 +269,7 @@ const FillInBlanksQuestionTemplate = ({
                     value={part.content}
                     error={hasErrors && !part.content.trim() && getErrorMessage(`question.${part.id}.content`)}
                     helperText={!part.content.trim() && <span>{getErrorMessage(`question.${part.id}.content`)}</span>}
-                    onChange={e => handlePartChange(part.id, e.target.value)}
+                    onChange={e => handlePartChange(part.id, part.type, e.target.value)}
                   />
                 ) : (
                   <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
@@ -269,7 +277,7 @@ const FillInBlanksQuestionTemplate = ({
                       placeholder='Blank'
                       fullWidth
                       value={part.content}
-                      onChange={e => handlePartChange(part.id, e.target.value)}
+                      onChange={e => handlePartChange(part.id, part.type, e.target.value)}
                       sx={{
                         borderBottom:
                           hasErrors && !part.content.trim() && getErrorMessage(`question.${part.id}.content`)
