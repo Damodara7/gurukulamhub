@@ -136,12 +136,12 @@ function PrimaryQuizBuilder({ quiz }) {
         Save Quiz
       </Button>
 
-      <Snackbar style={{zIndex: 10000}} open={snackbar.open} autoHideDuration={8000} onClose={() => setSnackbar({ ...snackbar, open: false })}>
-        <Alert severity={snackbar.severity}>{snackbar.message}</Alert>
+      <Snackbar anchorOrigin={{vertical: 'top', horizontal: 'center'}} style={{zIndex: 10000}} sx={{ top: { xs: 50, sm: 50 } }}  open={snackbar.open} autoHideDuration={8000} onClose={() => setSnackbar({ ...snackbar, open: false })}>
+        <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity}>{snackbar.message}</Alert>
       </Snackbar>
 
       <QuizDetails quiz={quiz} />
-      <QuestionBuilderArea ref={builderAreaRef} quiz={quiz} validateQuizQuestions={validateQuizQuestionsFunc} validationErrors={errors} />
+      <QuestionBuilderArea ref={builderAreaRef} quiz={quiz} setQuestionsLength={setQuestionsLength} validateQuizQuestions={validateQuizQuestionsFunc} validationErrors={errors} />
     </Box>
   )
 }

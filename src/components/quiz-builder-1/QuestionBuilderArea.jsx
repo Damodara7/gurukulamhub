@@ -9,7 +9,7 @@ import { useSession } from 'next-auth/react'
 import useUUID from '@/app/hooks/useUUID'
 import { toast } from 'react-toastify'
 
-const QuestionBuilderArea = forwardRef(({ quiz, validationErrors = [], validateQuizQuestions }, ref) => {
+const QuestionBuilderArea = forwardRef(({ quiz, validationErrors = [], validateQuizQuestions, setQuestionsLength }, ref) => {
   const { data: session } = useSession()
   const [selectedQuestion, setSelectedQuestion] = useState(null)
   const [primaryQuestions, setPrimaryQuestions] = useState([])
@@ -86,6 +86,9 @@ const QuestionBuilderArea = forwardRef(({ quiz, validationErrors = [], validateQ
         questionsToValidate=[...questionsToValidate, question].filter(q=>q._id!==question._id)
       }
       validateQuizQuestions(questionsToValidate)
+    }else{
+      setQuestionsLength(0)
+      validateQuizQuestions([])
     }
   }
 
@@ -117,7 +120,7 @@ const QuestionBuilderArea = forwardRef(({ quiz, validationErrors = [], validateQ
         }),
         ...(templateId === 'true-or-false' && {
           options: [
-            { id: 'true', text: 'True', correct: true, image: '', file: null, mediaType: 'text' },
+            { id: 'true', text: 'True', correct: false, image: '', file: null, mediaType: 'text' },
             { id: 'false', text: 'False', correct: false, image: '', file: null, mediaType: 'text' }
           ]
         }),
@@ -160,23 +163,28 @@ const QuestionBuilderArea = forwardRef(({ quiz, validationErrors = [], validateQ
 
   const onSaveQuestion = async questionRequest => {
     console.log('Saving question:', questionRequest)
-    const isValidQuestion = validateQuizQuestions([questionRequest])
-    if (!isValidQuestion) {
-      toast.error('Faild to save question due to the errors.')
-      return
-    }
+    // const isValidQuestion = validateQuizQuestions([questionRequest])
+    // if (!isValidQuestion) {
+    //   toast.error('Faild to save question due to the errors.')
+    //   return
+    // }
     const result = await RestApi.put(API_URLS.v0.USERS_QUIZ_QUESTION, questionRequest)
     if (result?.status === 'success') {
       console.log('Question Added result', result)
       setPrimaryQuestions(result?.result)
       const savedQuestion = result?.result?.find(q => q._id === questionRequest._id)
       onSelectQuestion(savedQuestion)
-      const isValid = validateQuizQuestions(result?.result) // validate all questions
+      // if(!isValidQuestion){
+      //   toast.error('Faild to save question due to the errors.')
+      //   return
+      // }
 
-      if (isValid) {
+      const isallQuestionsValid = validateQuizQuestions(result?.result) // validate all questions
+
+      if (isallQuestionsValid) {
         toast.success('Question Saved Successfully')
       } else {
-        toast.success('Question Saved Successfully.')
+        toast.error('Question Saved Successfully.')
         toast.error('Solve the issues for other questions.')
       }
     } else {

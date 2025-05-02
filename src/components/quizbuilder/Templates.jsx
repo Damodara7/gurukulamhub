@@ -18,7 +18,7 @@ import VideoAd from '@/views/apps/advertisements/VideoAd/VideoAd'
 import ImagePopup from '../ImagePopup'
 import ImageIcon from '@mui/icons-material/Image'
 import VideoLibraryIcon from '@mui/icons-material/VideoLibrary'
-import { CheckBoxOutlineBlankTwoTone, RadioButtonUnchecked } from '@mui/icons-material'
+import { CheckBoxOutlineBlankTwoTone, CheckBoxRounded, RadioButtonCheckedRounded, RadioButtonUnchecked } from '@mui/icons-material'
 
 export const SingleChoiceTemplate = ({ question }) => {
   const questionObj = question?.data?.question
@@ -87,7 +87,14 @@ export const SingleChoiceTemplate = ({ question }) => {
                 }}
               >
                 {/* Radio button without FormControlLabel */}
-                <Radio disabled checked={option.correct} color='success' size='small' defaultChecked={false} sx={{ mr: 2 }} />{' '}
+                <Radio
+                  disabled
+                  checked={option.correct}
+                  color='success'
+                  size='small'
+                  defaultChecked={false}
+                  sx={{ mr: 2 }}
+                />{' '}
                 {/* Margin-right to space from label */}
                 {/* Image or text label */}
                 {option.mediaType === 'image' && option.image ? (
@@ -176,7 +183,8 @@ export const MultipleChoiceTemplate = ({ question }) => {
                 cursor: 'default' // No interactivity
               }}
             >
-              <Checkbox checked={option.correct} color='success' disabled size='small' sx={{ mr: 2 }} /> {/* Checkbox is disabled */}
+              <Checkbox checked={option.correct} color='success' disabled size='small' sx={{ mr: 2 }} />{' '}
+              {/* Checkbox is disabled */}
               {/* Image or text label */}
               {option.mediaType === 'image' && option.image ? (
                 <Box
@@ -266,7 +274,8 @@ export const TrueOrFalseTemplate = ({ question }) => {
                   cursor: 'default' // No interactivity
                 }}
               >
-                <Radio checked={option.correct} color='success' disabled size='small' sx={{ mr: 2 }} /> {/* Disabled radio button */}
+                <Radio checked={option.correct} color='success' disabled size='small' sx={{ mr: 2 }} />{' '}
+                {/* Disabled radio button */}
                 <Typography variant='body1'>{option.text}</Typography> {/* Display option text */}
               </Box>
             </Grid>
@@ -298,7 +307,7 @@ export const FillInTheBlanksTemplate = ({ question }) => {
                 variant='outlined'
                 disabled
                 value={part.content}
-                style={{color: 'green', fontWeight: 'bold'}}
+                style={{ color: 'green', fontWeight: 'bold' }}
                 sx={{
                   minWidth: '100px', // Ensures consistent input size
                   maxWidth: '300px',
@@ -338,13 +347,12 @@ export const DummySingleChoiceTemplate = ({ question, title, questionNumber }) =
             textOverflow: 'ellipsis',
             overflow: 'hidden',
             whiteSpace: 'nowrap',
-            color: questionObj ? '#000' : 'error', // Text is clearly visible
+            color: questionObj && (questionObj.text || questionObj.image || questionObj.video) ? '#000' : 'red', // Text is clearly visible
             fontWeight: 'bold',
             position: 'relative',
             zIndex: 1 // Places text above icons
           }}
           variant='h6'
-          color={questionObj ? '' : 'error'}
         >
           {questionNumber}.{' '}
           {(questionObj?.mediaType === 'text' || questionObj?.mediaType === 'text-image') && questionObj?.text
@@ -401,17 +409,21 @@ export const DummySingleChoiceTemplate = ({ question, title, questionNumber }) =
                 alignItems: 'center',
                 gap: 1,
                 p: 1,
-                backgroundColor: 'lightblue',
+                backgroundColor: option.text.trim() ? 'lightblue' : 'rgba(240, 182, 182, 0.5)',
                 borderRadius: '4px',
                 width: '100%',
                 height: '40px',
-                cursor: 'pointer',
+                cursor: 'pointer'
               }}
             >
-              <RadioButtonUnchecked
-                size='small'
-                // color='primary'
-              />
+              {option.correct ? (
+                <RadioButtonCheckedRounded size='small' color='primary' />
+              ) : (
+                <RadioButtonUnchecked
+                  size='small'
+                  // color='primary'
+                />
+              )}
 
               {option.mediaType === 'image' && option?.image ? (
                 <Box
@@ -428,15 +440,16 @@ export const DummySingleChoiceTemplate = ({ question, title, questionNumber }) =
                 />
               ) : (
                 <Typography
-                  variant='body1'
+                  variant={option.text.trim() ? 'body1' : 'body2'}
                   sx={{
                     textOverflow: 'ellipsis',
                     overflow: 'hidden',
                     whiteSpace: 'nowrap',
-                    flex: 1
+                    flex: 1,
+                    color: option.text.trim() ? 'inherit' : 'red'
                   }}
                 >
-                  {option.text}
+                  {option.text.trim() || '* Empty'}
                 </Typography>
               )}
             </Box>
@@ -471,13 +484,12 @@ export const DummyMultipleChoiceTemplate = ({ question, title, questionNumber })
             textOverflow: 'ellipsis',
             overflow: 'hidden',
             whiteSpace: 'nowrap',
-            color: questionObj ? '#000' : 'error', // Text is clearly visible
+            color: questionObj && (questionObj.text || questionObj.image || questionObj.video) ? '#000' : 'red', // Text is clearly visible
             fontWeight: 'bold',
             position: 'relative',
             zIndex: 1 // Places text above icons
           }}
           variant='h6'
-          color={questionObj ? '' : 'error'}
         >
           {questionNumber}.{' '}
           {(questionObj?.mediaType === 'text' || questionObj?.mediaType === 'text-image') && questionObj?.text
@@ -534,16 +546,21 @@ export const DummyMultipleChoiceTemplate = ({ question, title, questionNumber })
                 alignItems: 'center',
                 gap: 1,
                 p: 1,
-                backgroundColor: 'lightblue',
+                backgroundColor: option.text.trim() ? 'lightblue' : 'rgba(240, 182, 182, 0.5)',
                 borderRadius: '4px',
                 width: '100%',
                 height: '40px',
-                cursor: 'pointer',
+                cursor: 'pointer'
               }}
             >
-              <CheckBoxOutlineBlankTwoTone
-                size='small'
-              />
+              {option.correct ? (
+                <CheckBoxRounded size='small' color='primary' />
+              ) : (
+                <CheckBoxOutlineBlankTwoTone
+                  size='small'
+                  // color='primary'
+                />
+              )}
 
               {option.mediaType === 'image' && option?.image ? (
                 <Box
@@ -560,15 +577,16 @@ export const DummyMultipleChoiceTemplate = ({ question, title, questionNumber })
                 />
               ) : (
                 <Typography
-                  variant='body1'
+                  variant={option.text.trim() ? 'body1' : 'body2'}
                   sx={{
                     textOverflow: 'ellipsis',
                     overflow: 'hidden',
                     whiteSpace: 'nowrap',
-                    flex: 1
+                    flex: 1,
+                    color: option.text.trim() ? 'inherit' : 'red'
                   }}
                 >
-                  {option.text}
+                  {option.text.trim() || '* Empty'}
                 </Typography>
               )}
             </Box>
@@ -597,16 +615,16 @@ export const DummyFillInTheBlanksTemplate = ({ question, title, questionNumber }
       >
         {/* {title} */}
         {/* Display Question */}
-        <Box mt={2}>
-          <Typography fontWeight='bold' variant='h6' component='span' mr={1}>
+        <Box mt={2} className='flex flex-wrap'>
+          <Typography color={questionObj.length === 0 && 'red'} fontWeight='bold' variant='h6' component='span' mr={1}>
             {questionNumber}.
           </Typography>
           {questionObj?.map((part, index) => (
-            <Box key={index} display='inline' sx={{ mr: 1 }}>
+            <Box key={index} className='flex flex-wrap' sx={{ mr: 1 }}>
               {part.type === 'text' ? (
                 // Display text part
-                <Typography fontWeight='bold' variant='h6' color={questionObj ? '' : 'error'} component='span'>
-                  {part.content}
+                <Typography fontWeight='bold' variant='h6' color={part.content.trim() ? '' : 'red'} component='span'>
+                  {part.content.trim() || '* Empty text'}
                 </Typography>
               ) : (
                 // Display blank space
@@ -615,38 +633,51 @@ export const DummyFillInTheBlanksTemplate = ({ question, title, questionNumber }
                   sx={{
                     display: 'inline-block',
                     borderBottom: '1px solid gray',
-                    bgcolor: 'rgba(0,0,0,0.05)',
-                    width: '120px',
+                    bgcolor: part.content.trim() ? 'rgba(0,0,0,0.05)' : 'rgba(240, 182, 182, 0.5)',
+                    color: part.content.trim() ? 'inherit' : 'red',
+                    width: '80px',
+                    textOverflow: 'ellipsis',
+                    overflow: 'hidden',
                     height: '24px',
                     verticalAlign: 'bottom',
+                    fontSize: '14px',
                     mx: 0.5
                   }}
                 >
+                  {part.content.trim() || '* blank'}
                   {/* Placeholder for blank */}
                 </Box>
               )}
             </Box>
           ))}
+          {questionObj.length === 0 && (
+            <Typography variant='h6' color='red' fontWeight='bold' component='span'>
+              * Question is not completed
+            </Typography>
+          )}
         </Box>
       </Typography>
 
       {/* Subtitle */}
-      <Typography variant='body2' fontSize='11px' color='text.secondary'>
+      <Typography variant='body2' mt={2} fontSize='11px' color='text.secondary'>
         Fill in the blanks
       </Typography>
 
-      <Grid container sx={{ width: '100%', marginBottom: '0px', marginLeft: 1, marginTop: '6px' }} spacing={2}>
+      {/* <Grid container sx={{ width: '100%', marginBottom: '0px', marginLeft: 1, marginTop: '6px' }} spacing={2}>
         <Typography variant='subtitle1' className='flex items-end'>
           Fill in the blank{' '}
           <Box sx={{ borderBottom: '1px solid gray', bgcolor: 'rgba(0,0,0,0.05)', mx: 2 }} width='120px' height={30} />
         </Typography>
-      </Grid>
+      </Grid> */}
     </CardContent>
   )
 }
 
 export const DummyTrueOrFalseTemplate = ({ question, title, questionNumber }) => {
   const questionObj = question?.data?.question
+  console.log(question)
+  const trueOption = question?.data?.options.find(op => op.id === 'true')
+  const falseOption = question?.data?.options.find(op => op.id === 'false')
   return (
     <CardContent sx={{ padding: '8px', paddingBottom: '0px' }} key={question._id}>
       <Box
@@ -669,13 +700,12 @@ export const DummyTrueOrFalseTemplate = ({ question, title, questionNumber }) =>
             textOverflow: 'ellipsis',
             overflow: 'hidden',
             whiteSpace: 'nowrap',
-            color: questionObj ? '#000' : 'error', // Text is clearly visible
+            color: questionObj && (questionObj.text || questionObj.image || questionObj.video) ? '#000' : 'red', // Text is clearly visible
             fontWeight: 'bold',
             position: 'relative',
             zIndex: 1 // Places text above icons
           }}
           variant='h6'
-          color={questionObj ? '' : 'error'}
         >
           {questionNumber}.{' '}
           {(questionObj?.mediaType === 'text' || questionObj?.mediaType === 'text-image') && questionObj?.text
@@ -727,10 +757,10 @@ export const DummyTrueOrFalseTemplate = ({ question, title, questionNumber }) =>
           <RadioGroup>
             <FormControlLabel
               value='false'
-              control={<Radio size='small' disabled />}
+              control={<Radio size='small' readOnly checked={trueOption.correct} />}
               label={'True'}
               sx={{
-                backgroundColor: 'lightgreen',
+                backgroundColor: trueOption?.text || trueOption?.image ? 'lightgreen' : '',
                 borderRadius: '4px',
                 mb: 1,
                 width: '100%',
@@ -741,10 +771,10 @@ export const DummyTrueOrFalseTemplate = ({ question, title, questionNumber }) =>
             />
             <FormControlLabel
               value='true'
-              control={<Radio size='small' disabled />}
+              control={<Radio size='small' readOnly checked={falseOption?.correct} />}
               label={'False'}
               sx={{
-                backgroundColor: 'lightcoral',
+                backgroundColor: falseOption?.text || falseOption?.image ? 'lightcoral' : '',
                 borderRadius: '4px',
                 mb: 1,
                 width: '100%',
