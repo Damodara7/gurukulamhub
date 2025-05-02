@@ -271,7 +271,10 @@ const FillInBlanksQuestionTemplate = ({
                       value={part.content}
                       onChange={e => handlePartChange(part.id, e.target.value)}
                       sx={{
-                        borderBottom: hasErrors ? '2px solid red' : '2px solid gray',
+                        borderBottom:
+                          hasErrors && !part.content.trim() && getErrorMessage(`question.${part.id}.content`)
+                            ? '2px solid red'
+                            : '2px solid gray',
                         flex: 1,
                         p: 0.5
                       }}
