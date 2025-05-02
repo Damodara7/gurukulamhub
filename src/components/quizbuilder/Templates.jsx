@@ -87,7 +87,7 @@ export const SingleChoiceTemplate = ({ question }) => {
                 }}
               >
                 {/* Radio button without FormControlLabel */}
-                <Radio disabled checked={false} size='small' defaultChecked={false} sx={{ mr: 2 }} />{' '}
+                <Radio disabled checked={option.correct} color='success' size='small' defaultChecked={false} sx={{ mr: 2 }} />{' '}
                 {/* Margin-right to space from label */}
                 {/* Image or text label */}
                 {option.mediaType === 'image' && option.image ? (
@@ -176,7 +176,7 @@ export const MultipleChoiceTemplate = ({ question }) => {
                 cursor: 'default' // No interactivity
               }}
             >
-              <Checkbox disabled size='small' sx={{ mr: 2 }} /> {/* Checkbox is disabled */}
+              <Checkbox checked={option.correct} color='success' disabled size='small' sx={{ mr: 2 }} /> {/* Checkbox is disabled */}
               {/* Image or text label */}
               {option.mediaType === 'image' && option.image ? (
                 <Box
@@ -266,7 +266,7 @@ export const TrueOrFalseTemplate = ({ question }) => {
                   cursor: 'default' // No interactivity
                 }}
               >
-                <Radio disabled checked={false} size='small' sx={{ mr: 2 }} /> {/* Disabled radio button */}
+                <Radio checked={option.correct} color='success' disabled size='small' sx={{ mr: 2 }} /> {/* Disabled radio button */}
                 <Typography variant='body1'>{option.text}</Typography> {/* Display option text */}
               </Box>
             </Grid>
@@ -296,8 +296,9 @@ export const FillInTheBlanksTemplate = ({ question }) => {
               <TextField
                 size='small'
                 variant='outlined'
-                value={part.answer} // Show answer if available, otherwise placeholder
                 disabled
+                value={part.content}
+                style={{color: 'green', fontWeight: 'bold'}}
                 sx={{
                   minWidth: '100px', // Ensures consistent input size
                   maxWidth: '300px',
