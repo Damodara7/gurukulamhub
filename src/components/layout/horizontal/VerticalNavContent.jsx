@@ -3,7 +3,7 @@ import PerfectScrollbar from 'react-perfect-scrollbar'
 
 // Component Imports
 import NavHeader from '@menu/components/vertical-menu/NavHeader'
-import Logo from '@components/layout/shared/Logo'
+import NavLogo from '@components/layout/shared/NavLogo'
 import NavCollapseIcons from '@menu/components/vertical-menu/NavCollapseIcons'
 
 // Hook Imports
@@ -22,7 +22,7 @@ const VerticalNavContent = ({ children }) => {
   return (
     <>
       <NavHeader>
-        <Logo />
+        <NavLogo />
         <NavCollapseIcons
           lockedIcon={<i className='ri-radio-button-line text-xl' />}
           unlockedIcon={<i className='ri-checkbox-blank-circle-line text-xl' />}

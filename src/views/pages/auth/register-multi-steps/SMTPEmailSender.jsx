@@ -13,7 +13,7 @@ const SMTPEmailSender = () => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          to: 'contact@gurukulamhub.com',
+          to: 'contact@.com',
           subject: 'Test Email',
           text: 'This is a test email sent from Next.js using SMTP.'
         })

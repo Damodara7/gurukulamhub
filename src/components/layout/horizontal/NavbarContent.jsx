@@ -5,7 +5,7 @@ import classnames from 'classnames'
 
 // Component Imports
 import NavToggle from './NavToggle'
-import Logo from '@components/layout/shared/Logo'
+import NavLogo from '@components/layout/shared/NavLogo'
 import NavSearch from '@components/layout/shared/search'
 import LanguageDropdown from '@components/layout/shared/LanguageDropdown'
 import ModeDropdown from '@components/layout/shared/ModeDropdown'
@@ -118,7 +118,7 @@ const NavbarContent = () => {
       <div className='flex items-center gap-4'>
         <NavToggle />
         {/* Hide Logo on Smaller screens */}
-        {!isBreakpointReached && <Logo />}
+        {!isBreakpointReached && <NavLogo />}
       </div>
 
       <div className='flex items-center'>

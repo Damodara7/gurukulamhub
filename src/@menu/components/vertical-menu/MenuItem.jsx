@@ -25,7 +25,7 @@ import { menuClasses } from '../../utils/menuClasses'
 import StyledMenuLabel from '../../styles/StyledMenuLabel'
 import StyledMenuPrefix from '../../styles/StyledMenuPrefix'
 import StyledMenuSuffix from '../../styles/StyledMenuSuffix'
-import StyledVerticalMenuItem from '../../styles/vertical/StyledVerticalMenuItem'
+import StyledItem from '../../styles/vertical/StyledVerticalMenuItem'
 
 const MenuItem = (props, ref) => {
   // Props
@@ -99,7 +99,7 @@ const MenuItem = (props, ref) => {
   }, [active])
 
   return (
-    <StyledVerticalMenuItem
+    <StyledItem
       ref={ref}
       className={classnames(
         menuClasses.menuItemRoot,
@@ -171,7 +171,7 @@ const MenuItem = (props, ref) => {
           </StyledMenuSuffix>
         )}
       </MenuButton>
-    </StyledVerticalMenuItem>
+    </StyledItem>
   )
 }
 

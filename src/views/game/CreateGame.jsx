@@ -108,7 +108,7 @@ function CreateGame({ mode = 'create', quizId = '', gameId }) {
     moderatorEmail: '',
     thumbnailUrl: 'https://www.triesoltech.com/squizmelogosvg@2x.967c6784.png',
     promoVideoUrl: 'https://youtu.be/mJahGSGPVNQ?si=bRn4BBZUxvsNb4Td',
-    sponsorName: 'gurukulamhub',
+    sponsorName: '',
     sponsorWebSite: '',
     sponsorPhone: '',
     totalRewardsValue: '',

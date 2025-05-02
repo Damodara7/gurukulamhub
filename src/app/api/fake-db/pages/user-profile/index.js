@@ -81,7 +81,7 @@ export const db = {
           ChipColor: 'error',
           chipText: 'Developer',
           title: 'Vue.js Developers',
-          avatar: '/images/logos/vue-bg.png'
+          avatar: '/images/s/vue-bg.png'
         },
         {
           members: 24,

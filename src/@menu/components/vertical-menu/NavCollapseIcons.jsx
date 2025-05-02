@@ -38,7 +38,7 @@ const NavCollapseIcons = props => {
   }
 
   return (
-    <IconButtonTooltip title='Toggle'>
+    <IconButtonTooltip title='close'>
       {isBreakpointReached ? (
         <span role='button' tabIndex={0} style={{ display: 'flex', cursor: 'pointer' }} onClick={handleClose} {...rest}>
           {closeIcon ?? <CloseIcon />}

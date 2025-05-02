@@ -3,7 +3,7 @@ const Logo = props => {
     <svg
       width={props?.width || '40'}
       height={props?.height || '40'}
-      viewBox='0 0 520 520'
+      viewBox='0 0 480 380'
       fill='none'
       xmlns='http://www.w3.org/2000/svg'
     >
