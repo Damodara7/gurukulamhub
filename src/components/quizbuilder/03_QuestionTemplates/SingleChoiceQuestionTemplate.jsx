@@ -200,7 +200,19 @@ const SingleChoiceQuestionTemplate = ({
   }
 
   const toggleQuestionMediaType = newType => {
-    setQuestion(prev => ({ ...prev, mediaType: newType }))
+    if (newType === 'text') {
+      setQuestion(prev => ({ ...prev, mediaType: newType, image: '', video: '' }))
+    } else if (newType === 'image') {
+      setQuestion(prev => ({ ...prev, mediaType: newType, text: '', video: '' }))
+    } else if (newType === 'video') {
+      setQuestion(prev => ({ ...prev, mediaType: newType, image: '', text: '' }))
+    } else if (newType === 'text-image') {
+      setQuestion(prev => ({ ...prev, mediaType: newType, video: '' }))
+    } else if (newType === 'text-video') {
+      setQuestion(prev => ({ ...prev, mediaType: newType, image: '' }))
+    } else {
+      setQuestion(prev => ({ ...prev, mediaType: newType }))
+    }
   }
 
   const handleMarksChange = event => {
@@ -322,8 +334,8 @@ const SingleChoiceQuestionTemplate = ({
                     multiline
                     minRows={3}
                     value={question.text}
-                    error={hasErrors && getErrorMessage('question.text')}
-                    helperText={<span>{getErrorMessage('question.text')}</span>}
+                    error={hasErrors && !question.text.trim() && getErrorMessage('question.text')}
+                    helperText={!question.text.trim() && <span>{getErrorMessage('question.text')}</span>}
                     onChange={e => handleQuestionChange('text', e.target.value)}
                   />
                 </Grid>
@@ -340,8 +352,8 @@ const SingleChoiceQuestionTemplate = ({
                       disabled={loading.save || loading.delete}
                       label='Question Image'
                       InputLabelProps={{ shrink: true }}
-                      error={hasErrors && getErrorMessage('question.image')}
-                      helperText={getErrorMessage('question.image')}
+                      error={hasErrors && !question.image && getErrorMessage('question.image')}
+                      helperText={!question.image && getErrorMessage('question.image')}
                       onChange={e => handleQuestionMediaUpload(e.target.files[0], 'image')}
                       inputProps={{
                         accept: 'image/*' // Accept images only
@@ -396,8 +408,8 @@ const SingleChoiceQuestionTemplate = ({
                     value={question.video}
                     onChange={e => handleQuestionChange('video', e.target.value)}
                     placeholder='Enter YouTube video URL'
-                    error={hasErrors && getErrorMessage('question.video')}
-                    helperText={getErrorMessage('question.video')}
+                    error={hasErrors && !question.video && getErrorMessage('question.video')}
+                    helperText={!question.video && getErrorMessage('question.video')}
                   />
                   {question.video && (
                     <Box className='flex flex-col mt-2 gap-1 items-center'>
@@ -416,7 +428,9 @@ const SingleChoiceQuestionTemplate = ({
         {/* Options */}
         <>
           <Grid item xs={12}>
-            <Typography mb={2} variant='h6'>Options:</Typography>
+            <Typography mb={2} variant='h6'>
+              Options:
+            </Typography>
             <DragDropContext onDragEnd={handleDragEnd}>
               <Droppable droppableId='options'>
                 {provided => (
@@ -458,17 +472,20 @@ const SingleChoiceQuestionTemplate = ({
                                       InputLabelProps={{ shrink: true }}
                                       error={
                                         hasErrors &&
+                                        !option.image &&
                                         (getErrorMessage(`options.${option.id}.image`) ||
                                           getErrorMessage(`options.${option.id}`))
                                       }
                                       helperText={
-                                        getErrorMessage(`options.${option.id}.image`) ||
-                                        getErrorMessage(`options.${option.id}`)
+                                        !option.image &&
+                                        (getErrorMessage(`options.${option.id}.image`) ||
+                                          getErrorMessage(`options.${option.id}`))
                                       }
                                       InputProps={{
                                         endAdornment: (
                                           <InputAdornment position='end'>
-                                            <IconButtonTooltip title='Text'
+                                            <IconButtonTooltip
+                                              title='Text'
                                               disabled={loading.save || loading.delete}
                                               onClick={() => toggleOptionMediaType(index, 'text')}
                                               edge='end'
@@ -524,17 +541,20 @@ const SingleChoiceQuestionTemplate = ({
                                     style={{ flex: 1 }}
                                     error={
                                       hasErrors &&
+                                      !option.text.trim() &&
                                       (getErrorMessage(`options.${option.id}.text`) ||
                                         getErrorMessage(`options.${option.id}`))
                                     }
                                     helperText={
-                                      getErrorMessage(`options.${option.id}.text`) ||
-                                      getErrorMessage(`options.${option.id}`)
+                                      !option.text.trim() &&
+                                      (getErrorMessage(`options.${option.id}.text`) ||
+                                        getErrorMessage(`options.${option.id}`))
                                     }
                                     InputProps={{
                                       endAdornment: (
                                         <InputAdornment position='end'>
-                                          <IconButtonTooltip title='Image'
+                                          <IconButtonTooltip
+                                            title='Image'
                                             disabled={loading.save || loading.delete}
                                             onClick={() => toggleOptionMediaType(index, 'image')}
                                             edge='end'
@@ -554,7 +574,8 @@ const SingleChoiceQuestionTemplate = ({
                                     InputProps={{
                                       endAdornment: (
                                         <InputAdornment position='end'>
-                                          <IconButtonTooltip title='Text'
+                                          <IconButtonTooltip
+                                            title='Text'
                                             disabled={loading.save || loading.delete}
                                             onClick={() => toggleOptionMediaType(index, 'text')}
                                             edge='end'
@@ -579,7 +600,8 @@ const SingleChoiceQuestionTemplate = ({
                                   label={<Typography variant='body2'>Correct</Typography>}
                                 />
                                 {index > 1 && (
-                                  <IconButtonTooltip title='Remove'
+                                  <IconButtonTooltip
+                                    title='Remove'
                                     disabled={loading.save || loading.delete}
                                     aria-label='remove option'
                                     onClick={() => removeOption(index)}
@@ -615,18 +637,22 @@ const SingleChoiceQuestionTemplate = ({
                                         accept: 'image/*' // Accept images only
                                       }}
                                       error={
-                                        hasErrors &&
+                                        hasErrors && !option.image &&
                                         (getErrorMessage(`options.${option.id}.image`) ||
                                           getErrorMessage(`options.${option.id}`))
                                       }
-                                      helperText={
-                                        getErrorMessage(`options.${option.id}.image`) ||
-                                        getErrorMessage(`options.${option.id}`)
+                                      helperText={ !option.image &&
+                                        (getErrorMessage(`options.${option.id}.image`) ||
+                                        getErrorMessage(`options.${option.id}`))
                                       }
                                       InputProps={{
                                         endAdornment: (
                                           <InputAdornment position='end'>
-                                            <IconButtonTooltip title='Text' onClick={() => toggleOptionMediaType(index, 'text')} edge='end'>
+                                            <IconButtonTooltip
+                                              title='Text'
+                                              onClick={() => toggleOptionMediaType(index, 'text')}
+                                              edge='end'
+                                            >
                                               <TextFieldsIcon color='primary' />
                                             </IconButtonTooltip>
                                           </InputAdornment>
@@ -677,18 +703,22 @@ const SingleChoiceQuestionTemplate = ({
                                     variant='outlined'
                                     style={{ flex: 1 }}
                                     error={
-                                      hasErrors &&
+                                      hasErrors && !option.text.trim() &&
                                       (getErrorMessage(`options.${option.id}.text`) ||
                                         getErrorMessage(`options.${option.id}`))
                                     }
-                                    helperText={
-                                      getErrorMessage(`options.${option.id}.text`) ||
-                                      getErrorMessage(`options.${option.id}`)
+                                    helperText={!option.text.trim() &&
+                                      (getErrorMessage(`options.${option.id}.text`) ||
+                                      getErrorMessage(`options.${option.id}`))
                                     }
                                     InputProps={{
                                       endAdornment: (
                                         <InputAdornment position='end'>
-                                          <IconButtonTooltip title='Image' onClick={() => toggleOptionMediaType(index, 'image')} edge='end'>
+                                          <IconButtonTooltip
+                                            title='Image'
+                                            onClick={() => toggleOptionMediaType(index, 'image')}
+                                            edge='end'
+                                          >
                                             <ImageIcon color='primary' />
                                           </IconButtonTooltip>
                                         </InputAdornment>
@@ -704,7 +734,11 @@ const SingleChoiceQuestionTemplate = ({
                                     InputProps={{
                                       endAdornment: (
                                         <InputAdornment position='end'>
-                                          <IconButtonTooltip title='Text' onClick={() => toggleOptionMediaType(index, 'text')} edge='end'>
+                                          <IconButtonTooltip
+                                            title='Text'
+                                            onClick={() => toggleOptionMediaType(index, 'text')}
+                                            edge='end'
+                                          >
                                             <TextFieldsIcon color='primary' />
                                           </IconButtonTooltip>
                                         </InputAdornment>
@@ -726,7 +760,6 @@ const SingleChoiceQuestionTemplate = ({
                                   label={<Typography variant='body2'>Correct</Typography>}
                                 />
                               </Box>
-                              
                             </div>
                           )
                         }
@@ -737,7 +770,11 @@ const SingleChoiceQuestionTemplate = ({
                 )}
               </Droppable>
             </DragDropContext>
-            {hasErrors && getErrorMessage('options') &&<Typography className='text-center' variant='body1' color='error'>{getErrorMessage('options')}</Typography>}
+            {hasErrors && getErrorMessage('options') && (
+              <Typography className='text-center' variant='body1' color='error'>
+                {getErrorMessage('options')}
+              </Typography>
+            )}
           </Grid>
           {mode === 'primary' && (
             <Grid item xs={12} className='flex justify-end'>
@@ -766,8 +803,8 @@ const SingleChoiceQuestionTemplate = ({
             fullWidth
             value={hint}
             onChange={handleHintChange}
-            error={hasErrors && getErrorMessage('hint')}
-            helperText={getErrorMessage('hint')}
+            error={hasErrors && !hint.trim() && getErrorMessage('hint')}
+            helperText={!hint.trim() && getErrorMessage('hint')}
           />
         </Grid>
         {mode === 'primary' ? (
@@ -782,8 +819,8 @@ const SingleChoiceQuestionTemplate = ({
                 fullWidth
                 value={marks}
                 onChange={handleMarksChange}
-                error={hasErrors && getErrorMessage('marks')}
-                helperText={getErrorMessage('marks')}
+                error={hasErrors && !marks && getErrorMessage('marks')}
+                helperText={!marks && getErrorMessage('marks')}
               />
             </Grid>
             <Grid item xs={6} md={4}>
@@ -796,8 +833,8 @@ const SingleChoiceQuestionTemplate = ({
                 InputProps={{ inputProps: { max: 0 } }}
                 value={hintMarks}
                 onChange={handleHintMarksChange}
-                error={hasErrors && getErrorMessage('hintMarks')}
-                helperText={getErrorMessage('hintMarks')}
+                error={hasErrors && !hintMarks && getErrorMessage('hintMarks')}
+                helperText={!hintMarks &&getErrorMessage('hintMarks')}
               />
             </Grid>
             <Grid item xs={6} md={4}>
@@ -810,8 +847,8 @@ const SingleChoiceQuestionTemplate = ({
                 fullWidth
                 value={timerSeconds}
                 onChange={handleTimerChange}
-                error={hasErrors && getErrorMessage('timerSeconds')}
-                helperText={getErrorMessage('timerSeconds')}
+                error={hasErrors && !timerSeconds && getErrorMessage('timerSeconds')}
+                helperText={!timerSeconds &&getErrorMessage('timerSeconds')}
               />
             </Grid>
             <Grid item xs={12} textAlign='center' mb={3}>

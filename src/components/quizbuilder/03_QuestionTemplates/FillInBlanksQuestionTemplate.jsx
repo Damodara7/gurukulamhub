@@ -256,8 +256,8 @@ const FillInBlanksQuestionTemplate = ({
                     variant='outlined'
                     placeholder='Enter text'
                     value={part.content}
-                    error={hasErrors && getErrorMessage(`question.${part.id}.content`)}
-                    helperText={<span>{getErrorMessage(`question.${part.id}.content`)}</span>}
+                    error={hasErrors && !part.content.trim() && getErrorMessage(`question.${part.id}.content`)}
+                    helperText={!part.content.trim() && <span>{getErrorMessage(`question.${part.id}.content`)}</span>}
                     onChange={e => handlePartChange(part.id, e.target.value)}
                   />
                 ) : (
@@ -273,8 +273,8 @@ const FillInBlanksQuestionTemplate = ({
                         p: 0.5
                       }}
                     />
-                    {hasErrors && (
-                      <Typography color='error' variant='body2' sx={{ mt: 0.5, }}>
+                    {hasErrors && !part.content.trim() && (
+                      <Typography color='error' variant='body2' sx={{ mt: 0.5 }}>
                         {getErrorMessage(`question.${part.id}.content`)}
                       </Typography>
                     )}
@@ -287,12 +287,16 @@ const FillInBlanksQuestionTemplate = ({
             ))}
             {hasErrors && (
               <>
-              {getErrorMessage(`question.blank`) &&<Typography color='error' variant='body2' sx={{ mt: 0.5, ml: 1 }}>
-                {getErrorMessage(`question.blank`)}
-              </Typography>}
-              {getErrorMessage(`question.text`) &&<Typography color='error' variant='body2' sx={{ mt: 0.5, ml: 1 }}>
-                {getErrorMessage(`question.text`)}
-              </Typography>}
+                {getErrorMessage(`question.blank`) && (
+                  <Typography color='error' variant='body2' sx={{ mt: 0.5, ml: 1 }}>
+                    {getErrorMessage(`question.blank`)}
+                  </Typography>
+                )}
+                {getErrorMessage(`question.text`) && (
+                  <Typography color='error' variant='body2' sx={{ mt: 0.5, ml: 1 }}>
+                    {getErrorMessage(`question.text`)}
+                  </Typography>
+                )}
               </>
             )}
             <Box className='flex justify-end gap-2'>
@@ -334,8 +338,8 @@ const FillInBlanksQuestionTemplate = ({
             fullWidth
             value={hint}
             onChange={handleHintChange}
-            error={hasErrors && getErrorMessage('hint')}
-            helperText={getErrorMessage('hint')}
+            error={hasErrors && !hint.trim() && getErrorMessage('hint')}
+            helperText={!hint.trim() && getErrorMessage('hint')}
           />
         </Grid>
         {mode === 'primary' ? (
@@ -350,8 +354,8 @@ const FillInBlanksQuestionTemplate = ({
                 fullWidth
                 value={marks}
                 onChange={handleMarksChange}
-                error={hasErrors && getErrorMessage('marks')}
-                helperText={getErrorMessage('marks')}
+                error={hasErrors && !marks && getErrorMessage('marks')}
+                helperText={!marks && getErrorMessage('marks')}
               />
             </Grid>
             <Grid item xs={6} md={4}>
@@ -364,8 +368,8 @@ const FillInBlanksQuestionTemplate = ({
                 InputProps={{ inputProps: { max: 0 } }}
                 value={hintMarks}
                 onChange={handleHintMarksChange}
-                error={hasErrors && getErrorMessage('hintMarks')}
-                helperText={getErrorMessage('hintMarks')}
+                error={hasErrors && !hintMarks && getErrorMessage('hintMarks')}
+                helperText={!hintMarks && getErrorMessage('hintMarks')}
               />
             </Grid>
             <Grid item xs={6} md={4}>
@@ -378,8 +382,8 @@ const FillInBlanksQuestionTemplate = ({
                 fullWidth
                 value={timerSeconds}
                 onChange={handleTimerChange}
-                error={hasErrors && getErrorMessage('timerSeconds')}
-                helperText={getErrorMessage('timerSeconds')}
+                error={hasErrors && !timerSeconds && getErrorMessage('timerSeconds')}
+                helperText={!timerSeconds && getErrorMessage('timerSeconds')}
               />
             </Grid>
             <Grid item xs={12} textAlign='center' mb={3}>

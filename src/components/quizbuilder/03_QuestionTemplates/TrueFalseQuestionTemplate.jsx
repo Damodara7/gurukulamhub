@@ -51,7 +51,7 @@ const TrueFalseQuestionTemplate = ({
   const [status, setStatus] = useState(innerData?.status || 'draft')
   const [hint, setHint] = useState(innerData?.hint || '')
   const [hintMarks, setHintMarks] = useState(innerData?.hintMarks)
-  const [marks, setMarks] = useState(innerData?.marks|| '')
+  const [marks, setMarks] = useState(innerData?.marks || '')
   const [timerSeconds, setTimerSeconds] = useState(innerData?.timerSeconds || '')
   const [skippable, setSkippable] = useState(innerData?.skippable || false) // default non-skippable
   const [correctOption, setCorrectOption] = useState(
@@ -154,7 +154,19 @@ const TrueFalseQuestionTemplate = ({
   }
 
   const toggleQuestionMediaType = newType => {
-    setQuestion(prev => ({ ...prev, mediaType: newType }))
+    if (newType === 'text') {
+      setQuestion(prev => ({ ...prev, mediaType: newType, image: '', video: '' }))
+    } else if (newType === 'image') {
+      setQuestion(prev => ({ ...prev, mediaType: newType, text: '', video: '' }))
+    } else if (newType === 'video') {
+      setQuestion(prev => ({ ...prev, mediaType: newType, image: '', text: '' }))
+    } else if (newType === 'text-image') {
+      setQuestion(prev => ({ ...prev, mediaType: newType, video: '' }))
+    } else if (newType === 'text-video') {
+      setQuestion(prev => ({ ...prev, mediaType: newType, image: '' }))
+    } else {
+      setQuestion(prev => ({ ...prev, mediaType: newType }))
+    }
   }
 
   // const handleOptionChange = event => {
@@ -241,7 +253,7 @@ const TrueFalseQuestionTemplate = ({
         {/* Question */}
         <Grid item xs={12} sx={{ marginBottom: '4px' }}>
           <Box sx={{ border: '1px dashed gray', borderRadius: '8px', p: 2 }}>
-            <Grid container spacing={3} alignItems='flex-start'>
+            <Grid container spacing={2} alignItems='flex-start'>
               {/* Media Type Toggle */}
               <Grid item xs={12}>
                 <FormControl fullWidth>
@@ -272,8 +284,8 @@ const TrueFalseQuestionTemplate = ({
                     multiline
                     minRows={3}
                     value={question.text}
-                    error={hasErrors && getErrorMessage('question.text')}
-                    helperText={<span>{getErrorMessage('question.text')}</span>}
+                    error={hasErrors && !question.text.trim() && getErrorMessage('question.text')}
+                    helperText={!question.text.trim() && <span>{getErrorMessage('question.text')}</span>}
                     onChange={e => handleQuestionChange('text', e.target.value)}
                   />
                 </Grid>
@@ -290,8 +302,8 @@ const TrueFalseQuestionTemplate = ({
                       disabled={loading.save || loading.delete}
                       label='Question Image'
                       InputLabelProps={{ shrink: true }}
-                      error={hasErrors && getErrorMessage('question.image')}
-                      helperText={getErrorMessage('question.image')}
+                      error={hasErrors && !question.image && getErrorMessage('question.image')}
+                      helperText={!question.image && getErrorMessage('question.image')}
                       onChange={e => handleQuestionMediaUpload(e.target.files[0], 'image')}
                       inputProps={{
                         accept: 'image/*' // Accept images only
@@ -346,8 +358,8 @@ const TrueFalseQuestionTemplate = ({
                     value={question.video}
                     onChange={e => handleQuestionChange('video', e.target.value)}
                     placeholder='Enter YouTube video URL'
-                    error={hasErrors && getErrorMessage('question.video')}
-                    helperText={getErrorMessage('question.video')}
+                    error={hasErrors && !question.video && getErrorMessage('question.video')}
+                    helperText={!question.video && getErrorMessage('question.video')}
                   />
                   {question.video && (
                     <Box className='flex flex-col mt-2 gap-1 items-center'>
@@ -382,18 +394,17 @@ const TrueFalseQuestionTemplate = ({
                       label={`Option ${index + 1}`}
                       InputLabelProps={{ shrink: true }}
                       error={
-                        hasErrors &&
-                        (getErrorMessage(`options.${option.id}.image`) ||
-                          getErrorMessage(`options.${option.id}`))
+                        hasErrors && !option.image &&
+                        (getErrorMessage(`options.${option.id}.image`) || getErrorMessage(`options.${option.id}`))
                       }
                       helperText={
-                        getErrorMessage(`options.${option.id}.image`) ||
-                        getErrorMessage(`options.${option.id}`)
+                        !option.image && (getErrorMessage(`options.${option.id}.image`) || getErrorMessage(`options.${option.id}`))
                       }
                       InputProps={{
                         endAdornment: (
                           <InputAdornment position='end'>
-                            <IconButtonTooltip title='Text'
+                            <IconButtonTooltip
+                              title='Text'
                               disabled={loading.save || loading.delete}
                               onClick={() => toggleOptionMediaType(index, 'text')}
                               edge='end'
@@ -447,19 +458,16 @@ const TrueFalseQuestionTemplate = ({
                     onBlur={e => handleOptionChange(index, 'text', e.target.value)}
                     variant='outlined'
                     error={
-                      hasErrors &&
-                      (getErrorMessage(`options.${option.id}.text`) ||
-                        getErrorMessage(`options.${option.id}`))
+                      hasErrors && !option.text.trim() &&
+                      (getErrorMessage(`options.${option.id}.text`) || getErrorMessage(`options.${option.id}`))
                     }
-                    helperText={
-                      getErrorMessage(`options.${option.id}.text`) ||
-                      getErrorMessage(`options.${option.id}`)
-                    }
+                    helperText={!option.text.trim() && (getErrorMessage(`options.${option.id}.text`) || getErrorMessage(`options.${option.id}`))}
                     style={{ flex: 1 }}
                     InputProps={{
                       endAdornment: (
                         <InputAdornment position='end'>
-                          <IconButtonTooltip title='Image'
+                          <IconButtonTooltip
+                            title='Image'
                             disabled={loading.save || loading.delete}
                             onClick={() => toggleOptionMediaType(index, 'image')}
                             edge='end'
@@ -479,7 +487,8 @@ const TrueFalseQuestionTemplate = ({
                     InputProps={{
                       endAdornment: (
                         <InputAdornment position='end'>
-                          <IconButtonTooltip title='Text'
+                          <IconButtonTooltip
+                            title='Text'
                             disabled={loading.save || loading.delete}
                             onClick={() => toggleOptionMediaType(index, 'text')}
                             edge='end'
@@ -508,7 +517,11 @@ const TrueFalseQuestionTemplate = ({
                 />
               </Box>
             ))}
-            {hasErrors && getErrorMessage('options') &&<Typography  className='text-center' variant='body1' color='error'>{getErrorMessage('options')}</Typography>}
+            {hasErrors && getErrorMessage('options') && (
+              <Typography className='text-center' variant='body1' color='error'>
+                {getErrorMessage('options')}
+              </Typography>
+            )}
           </Box>
         </Grid>
       </Grid>
@@ -523,8 +536,8 @@ const TrueFalseQuestionTemplate = ({
             fullWidth
             value={hint}
             onChange={handleHintChange}
-            error={hasErrors && getErrorMessage('hint')}
-            helperText={getErrorMessage('hint')}
+            error={hasErrors && !hint.trim() && getErrorMessage('hint')}
+            helperText={!hint.trim() && getErrorMessage('hint')}
           />
         </Grid>
         {mode === 'primary' ? (
@@ -539,8 +552,8 @@ const TrueFalseQuestionTemplate = ({
                 fullWidth
                 value={marks}
                 onChange={handleMarksChange}
-                error={hasErrors && getErrorMessage('marks')}
-                helperText={getErrorMessage('marks')}
+                error={hasErrors && !marks && getErrorMessage('marks')}
+                helperText={!marks && getErrorMessage('marks')}
               />
             </Grid>
             <Grid item xs={6} md={4}>
@@ -553,8 +566,8 @@ const TrueFalseQuestionTemplate = ({
                 InputProps={{ inputProps: { max: 0 } }}
                 value={hintMarks}
                 onChange={handleHintMarksChange}
-                error={hasErrors && getErrorMessage('hintMarks')}
-                helperText={getErrorMessage('hintMarks')}
+                error={hasErrors && !hintMarks && getErrorMessage('hintMarks')}
+                helperText={!hintMarks && getErrorMessage('hintMarks')}
               />
             </Grid>
             <Grid item xs={6} md={4}>
@@ -567,8 +580,8 @@ const TrueFalseQuestionTemplate = ({
                 fullWidth
                 value={timerSeconds}
                 onChange={handleTimerChange}
-                error={hasErrors && getErrorMessage('timerSeconds')}
-                helperText={getErrorMessage('timerSeconds')}
+                error={hasErrors && !timerSeconds && getErrorMessage('timerSeconds')}
+                helperText={!timerSeconds && getErrorMessage('timerSeconds')}
               />
             </Grid>
             <Grid item xs={12} textAlign='center' mb={3}>
