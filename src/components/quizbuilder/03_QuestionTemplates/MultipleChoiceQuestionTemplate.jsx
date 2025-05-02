@@ -274,6 +274,8 @@ const MultipleChoiceQuestionTemplate = ({
     return ''
   }
 
+  const hasAtleastOneCorrectOption = options?.filter(op => op.correct).length >= 1 || false;
+
   return (
     <>
       {/* <Card key={id}> */}
@@ -756,7 +758,7 @@ const MultipleChoiceQuestionTemplate = ({
                 )}
               </Droppable>
             </DragDropContext>
-            {hasErrors && getErrorMessage('options') && (
+            {hasErrors && !hasAtleastOneCorrectOption && getErrorMessage('options') && (
               <Typography className='text-center' variant='body1' color='error'>
                 {getErrorMessage('options')}
               </Typography>

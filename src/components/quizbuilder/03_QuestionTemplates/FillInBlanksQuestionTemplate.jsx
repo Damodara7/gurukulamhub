@@ -210,6 +210,9 @@ const FillInBlanksQuestionTemplate = ({
     return ''
   }
 
+  const hasAtleastOneBlank = questionParts.filter(p => p.type === 'blank').length >= 1 || false
+  const hasAtleastOneText = questionParts.filter(p => p.type === 'text').length >= 1 || false
+
   return (
     <>
       {/* <Card key={id}> */}
@@ -287,12 +290,12 @@ const FillInBlanksQuestionTemplate = ({
             ))}
             {hasErrors && (
               <>
-                {getErrorMessage(`question.blank`) && (
+                {!hasAtleastOneBlank && getErrorMessage(`question.blank`) && (
                   <Typography color='error' variant='body2' sx={{ mt: 0.5, ml: 1 }}>
                     {getErrorMessage(`question.blank`)}
                   </Typography>
                 )}
-                {getErrorMessage(`question.text`) && (
+                {!hasAtleastOneText && getErrorMessage(`question.text`) && (
                   <Typography color='error' variant='body2' sx={{ mt: 0.5, ml: 1 }}>
                     {getErrorMessage(`question.text`)}
                   </Typography>

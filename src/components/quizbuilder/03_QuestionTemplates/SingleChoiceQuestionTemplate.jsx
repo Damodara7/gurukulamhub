@@ -288,6 +288,8 @@ const SingleChoiceQuestionTemplate = ({
     return ''
   }
 
+  const hasExactlyOneCorrectOption = options?.filter(op => op.correct).length === 1 || false;
+
   return (
     <>
       {/* <Card key={id}> */}
@@ -637,13 +639,15 @@ const SingleChoiceQuestionTemplate = ({
                                         accept: 'image/*' // Accept images only
                                       }}
                                       error={
-                                        hasErrors && !option.image &&
+                                        hasErrors &&
+                                        !option.image &&
                                         (getErrorMessage(`options.${option.id}.image`) ||
                                           getErrorMessage(`options.${option.id}`))
                                       }
-                                      helperText={ !option.image &&
+                                      helperText={
+                                        !option.image &&
                                         (getErrorMessage(`options.${option.id}.image`) ||
-                                        getErrorMessage(`options.${option.id}`))
+                                          getErrorMessage(`options.${option.id}`))
                                       }
                                       InputProps={{
                                         endAdornment: (
@@ -703,13 +707,15 @@ const SingleChoiceQuestionTemplate = ({
                                     variant='outlined'
                                     style={{ flex: 1 }}
                                     error={
-                                      hasErrors && !option.text.trim() &&
+                                      hasErrors &&
+                                      !option.text.trim() &&
                                       (getErrorMessage(`options.${option.id}.text`) ||
                                         getErrorMessage(`options.${option.id}`))
                                     }
-                                    helperText={!option.text.trim() &&
+                                    helperText={
+                                      !option.text.trim() &&
                                       (getErrorMessage(`options.${option.id}.text`) ||
-                                      getErrorMessage(`options.${option.id}`))
+                                        getErrorMessage(`options.${option.id}`))
                                     }
                                     InputProps={{
                                       endAdornment: (
@@ -770,7 +776,7 @@ const SingleChoiceQuestionTemplate = ({
                 )}
               </Droppable>
             </DragDropContext>
-            {hasErrors && getErrorMessage('options') && (
+            {hasErrors && !hasExactlyOneCorrectOption && getErrorMessage('options') && (
               <Typography className='text-center' variant='body1' color='error'>
                 {getErrorMessage('options')}
               </Typography>
@@ -834,7 +840,7 @@ const SingleChoiceQuestionTemplate = ({
                 value={hintMarks}
                 onChange={handleHintMarksChange}
                 error={hasErrors && !hintMarks && getErrorMessage('hintMarks')}
-                helperText={!hintMarks &&getErrorMessage('hintMarks')}
+                helperText={!hintMarks && getErrorMessage('hintMarks')}
               />
             </Grid>
             <Grid item xs={6} md={4}>
@@ -848,7 +854,7 @@ const SingleChoiceQuestionTemplate = ({
                 value={timerSeconds}
                 onChange={handleTimerChange}
                 error={hasErrors && !timerSeconds && getErrorMessage('timerSeconds')}
-                helperText={!timerSeconds &&getErrorMessage('timerSeconds')}
+                helperText={!timerSeconds && getErrorMessage('timerSeconds')}
               />
             </Grid>
             <Grid item xs={12} textAlign='center' mb={3}>

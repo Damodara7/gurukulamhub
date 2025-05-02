@@ -238,6 +238,8 @@ const TrueFalseQuestionTemplate = ({
     return ''
   }
 
+  const hasExactlyOneCorrectOption = options?.filter(op => op.correct).length === 1 || false
+
   return (
     <>
       {/* <Card key={id}> */}
@@ -394,11 +396,13 @@ const TrueFalseQuestionTemplate = ({
                       label={`Option ${index + 1}`}
                       InputLabelProps={{ shrink: true }}
                       error={
-                        hasErrors && !option.image &&
+                        hasErrors &&
+                        !option.image &&
                         (getErrorMessage(`options.${option.id}.image`) || getErrorMessage(`options.${option.id}`))
                       }
                       helperText={
-                        !option.image && (getErrorMessage(`options.${option.id}.image`) || getErrorMessage(`options.${option.id}`))
+                        !option.image &&
+                        (getErrorMessage(`options.${option.id}.image`) || getErrorMessage(`options.${option.id}`))
                       }
                       InputProps={{
                         endAdornment: (
@@ -458,10 +462,14 @@ const TrueFalseQuestionTemplate = ({
                     onBlur={e => handleOptionChange(index, 'text', e.target.value)}
                     variant='outlined'
                     error={
-                      hasErrors && !option.text.trim() &&
+                      hasErrors &&
+                      !option.text.trim() &&
                       (getErrorMessage(`options.${option.id}.text`) || getErrorMessage(`options.${option.id}`))
                     }
-                    helperText={!option.text.trim() && (getErrorMessage(`options.${option.id}.text`) || getErrorMessage(`options.${option.id}`))}
+                    helperText={
+                      !option.text.trim() &&
+                      (getErrorMessage(`options.${option.id}.text`) || getErrorMessage(`options.${option.id}`))
+                    }
                     style={{ flex: 1 }}
                     InputProps={{
                       endAdornment: (
@@ -517,7 +525,7 @@ const TrueFalseQuestionTemplate = ({
                 />
               </Box>
             ))}
-            {hasErrors && getErrorMessage('options') && (
+            {hasErrors && !hasExactlyOneCorrectOption && getErrorMessage('options') && (
               <Typography className='text-center' variant='body1' color='error'>
                 {getErrorMessage('options')}
               </Typography>
