@@ -33,6 +33,7 @@ import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd'
 
 import VideoAd from '@views/apps/advertisements/VideoAd/VideoAd'
 import ImagePopup from '@/components/ImagePopup'
+import { filterInput, questionRegex } from '@/utils/RegexUtil'
 
 const MultipleChoiceQuestionTemplate = ({
   id: questionUUID,
@@ -170,7 +171,12 @@ const MultipleChoiceQuestionTemplate = ({
   }
 
   const handleQuestionChange = (key, value) => {
-    setQuestion(prev => ({ ...prev, [key]: value }))
+  let filterValue = value; 
+  if(key === 'text'){
+     filterValue = filterInput(value , questionRegex) // Allow only alphanumeric characters and some punctuation
+    }
+
+    setQuestion(prev => ({ ...prev, [key]: filterValue }))
   }
 
   const handleQuestionMediaUpload = (file, key) => {
@@ -310,7 +316,7 @@ const MultipleChoiceQuestionTemplate = ({
                     value={question.text}
                     error={hasErrors && getErrorMessage('question.text')}
                     helperText={<span>{getErrorMessage('question.text')}</span>}
-                    onChange={e => handleQuestionChange('text', e.target.value)}
+                    onChange={e => handleQuestionChange('text',e.target.value)}
                   />
                 </Grid>
               )}
