@@ -33,7 +33,7 @@ import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd'
 
 import VideoAd from '@views/apps/advertisements/VideoAd/VideoAd'
 import ImagePopup from '@/components/ImagePopup'
-import { filterInput, questionRegex } from '@/utils/RegexUtil'
+import { filterInput, excludeQuesstionChars } from '@/utils/regexUtil'
 
 const MultipleChoiceQuestionTemplate = ({
   id: questionUUID,
@@ -78,6 +78,7 @@ const MultipleChoiceQuestionTemplate = ({
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false)
   const [loading, setLoading] = useState({ save: false, delete: false })
 
+  
   const onDeleteQuestion = async () => {
     setLoading(prev => ({ ...prev, delete: true }))
     try {
@@ -171,9 +172,10 @@ const MultipleChoiceQuestionTemplate = ({
   }
 
   const handleQuestionChange = (key, value) => {
-  let filterValue = value; 
+  let filterValue = value;
+  
   if(key === 'text'){
-     filterValue = filterInput(value , questionRegex) // Allow only alphanumeric characters and some punctuation
+     filterValue = filterInput(value, excludeQuesstionChars) // Allow only alphanumeric characters and some punctuation
     }
 
     setQuestion(prev => ({ ...prev, [key]: filterValue }))
@@ -233,6 +235,7 @@ const MultipleChoiceQuestionTemplate = ({
   }
 
   const onSaveQuestion = async () => {
+
     setLoading(prev => ({ ...prev, save: true }))
 
     const saveQuestionObj = mode === 'primary' ? createPrimaryQuestionRequest() : createSecondaryQuestionRequest()

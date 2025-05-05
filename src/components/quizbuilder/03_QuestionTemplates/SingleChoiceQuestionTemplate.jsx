@@ -33,7 +33,7 @@ import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd'
 
 import VideoAd from '@views/apps/advertisements/VideoAd/VideoAd'
 import ImagePopup from '@/components/ImagePopup'
-import { filterInput, questionRegex } from '@/utils/RegexUtil'
+import { filterInput, excludeQuesstionChars } from '@/utils/regexUtil'
 
 const SingleChoiceQuestionTemplate = ({
   id: questionUUID,
@@ -186,7 +186,7 @@ const SingleChoiceQuestionTemplate = ({
   const handleQuestionChange = (key, value) => {
     let filterValue = value;
     if(key === 'text'){
-      filterValue = filterInput(value , questionRegex); // Allow only alphanumeric characters and some punctuation
+      filterValue = filterInput(value, excludeQuesstionChars) // Allow only alphanumeric characters and some punctuation
     }
     setQuestion(prev => ({ ...prev, [key]: filterValue }))
   }

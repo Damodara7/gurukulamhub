@@ -22,7 +22,9 @@ import DeleteIcon from '@mui/icons-material/Delete'
 import TextFieldsIcon from '@mui/icons-material/TextFields'
 import ImageIcon from '@mui/icons-material/Image'
 import InputAdornment from '@mui/material/InputAdornment'
-import  { filterInput, questionRegex } from '@/utils/RegexUtil';
+import { filterInput, excludeQuesstionChars } from '@/utils/regexUtil'
+
+
 import VideoAd from '@views/apps/advertisements/VideoAd/VideoAd'
 import ImagePopup from '@/components/ImagePopup'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
@@ -139,7 +141,7 @@ const TrueFalseQuestionTemplate = ({
   const handleQuestionChange = (key, value) => {
     let filterValue = value;
     if(key === 'text') {
-      filterValue = filterInput(value , questionRegex)// Allow only alphanumeric characters and some punctuation
+      filterValue = filterInput(value, excludeQuesstionChars)// Allow only alphanumeric characters and some punctuation
     }
     setQuestion(prev => ({ ...prev, [key]: filterValue }))
   }

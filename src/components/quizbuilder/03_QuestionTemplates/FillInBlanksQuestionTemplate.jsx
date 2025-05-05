@@ -20,7 +20,7 @@ import DeleteIcon from '@mui/icons-material/Delete'
 import DeleteConfirmationDialog from '@/components/dialogs/DeleteConfirmationDialog'
 import { toast } from 'react-toastify'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
-import { blankRegex, textRegex, filterInput } from '@/utils/RegexUtil'
+import { blankRegex, textRegex, filterInput, excludeBlankChars, excludesTextChars } from '@/utils/regexUtil'
 
 const FillInBlanksQuestionTemplate = ({
   id: questionUUID,
@@ -192,9 +192,9 @@ const FillInBlanksQuestionTemplate = ({
   const handlePartChange = (id, type, value) => {
     let filterValue = value
     if (type === 'blank') {
-      filterValue = filterInput(value , blankRegex)
+      filterValue = filterInput(value , excludeBlankChars)
     } else if (type === 'text') {
-      filterValue = filterInput(value , textRegex)
+      filterValue = filterInput(value , excludesTextChars)
     }
     // alphanumeric characters and spaces
     setQuestionParts(questionParts.map(part => (part.id === id ? { ...part, content: filterValue } : part)))
