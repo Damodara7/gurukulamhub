@@ -65,7 +65,7 @@ export default function QuestionsVerticalMenu({
           </IconButtonTooltip>
         )}
         
-        <Box sx={{ opacity: hasErrors ? 0.8 : 1 }}>
+        <Box sx={{ opacity: hasErrors ? 0.8 : 1, maxWidth: '250px', maxHeight: '250px', overflowY:'hidden' }}>
           {(() => {
             switch (question.templateId) {
               case 'single-choice':

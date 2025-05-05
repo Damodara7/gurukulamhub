@@ -18,7 +18,12 @@ import VideoAd from '@/views/apps/advertisements/VideoAd/VideoAd'
 import ImagePopup from '../ImagePopup'
 import ImageIcon from '@mui/icons-material/Image'
 import VideoLibraryIcon from '@mui/icons-material/VideoLibrary'
-import { CheckBoxOutlineBlankTwoTone, CheckBoxRounded, RadioButtonCheckedRounded, RadioButtonUnchecked } from '@mui/icons-material'
+import {
+  CheckBoxOutlineBlankTwoTone,
+  CheckBoxRounded,
+  RadioButtonCheckedRounded,
+  RadioButtonUnchecked
+} from '@mui/icons-material'
 
 export const SingleChoiceTemplate = ({ question }) => {
   const questionObj = question?.data?.question
@@ -30,13 +35,12 @@ export const SingleChoiceTemplate = ({ question }) => {
       <Box>
         {(questionObj?.mediaType === 'text' ||
           questionObj?.mediaType === 'text-image' ||
-          questionObj?.mediaType === 'text-video') &&
-          questionObj?.text && (
-            <Typography variant='h6' className='font-bold' color={questionObj ? '' : 'error'}>
-              {questionObj.text}
-            </Typography>
-          )}
-        {questionObj.mediaType === 'video' && (
+          questionObj?.mediaType === 'text-video') && (
+          <Typography variant='h6' className='font-bold' color={questionObj?.text?.trim() ? '' : 'error'}>
+            {questionObj?.text?.trim() || '* Question is not completed'}
+          </Typography>
+        )}
+        {questionObj?.mediaType === 'video' && (
           <Typography variant='h6' className='font-bold' color={questionObj ? '' : 'error'}>
             Watch the video carefully and answer the question.
           </Typography>
@@ -56,7 +60,7 @@ export const SingleChoiceTemplate = ({ question }) => {
             }}
           />
         )}{' '}
-        {(questionObj.mediaType === 'video' || questionObj.mediaType === 'text-video') && questionObj.video && (
+        {(questionObj?.mediaType === 'video' || questionObj?.mediaType === 'text-video') && questionObj.video && (
           <Box className='flex flex-col gap-1 items-center'>
             <Box className='flex flex-col gap-1 items-center'>
               <VideoAd url={questionObj.video || ''} showPause autoPlay={false} />
@@ -132,12 +136,14 @@ export const MultipleChoiceTemplate = ({ question }) => {
       {/* <Typography variant='h6' color={questionObj ? '' : 'error'}>
       {questionObj || '* Question is not completed!'}
     </Typography> */}
+      {(questionObj?.mediaType === 'text' ||
+        questionObj?.mediaType === 'text-image' ||
+        questionObj?.mediaType === 'text-video') && (
+        <Typography variant='h6' className='font-bold' color={questionObj?.text?.trim() ? '' : 'error'}>
+          {questionObj?.text?.trim() || '* Question is not completed'}
+        </Typography>
+      )}
       <Typography variant='h6' className='font-bold' color={questionObj ? '' : 'error'}>
-        {(questionObj?.mediaType === 'text' ||
-          questionObj?.mediaType === 'text-image' ||
-          questionObj?.mediaType === 'text-video') &&
-          questionObj?.text &&
-          questionObj.text}
         {questionObj.mediaType === 'video' && <span>Watch the video carefully and answer the question.</span>}
         {(questionObj?.mediaType === 'image' || questionObj?.mediaType === 'text-image') && questionObj?.image && (
           <Box
@@ -220,12 +226,14 @@ export const TrueOrFalseTemplate = ({ question }) => {
       {/* <Typography variant='h6' color={questionObj ? '' : 'error'}>
       {questionObj || '* Question is not completed!'}
     </Typography> */}
+      {(questionObj?.mediaType === 'text' ||
+        questionObj?.mediaType === 'text-image' ||
+        questionObj?.mediaType === 'text-video') && (
+        <Typography variant='h6' className='font-bold' color={questionObj?.text?.trim() ? '' : 'error'}>
+          {questionObj?.text?.trim() || '* Question is not completed'}
+        </Typography>
+      )}
       <Typography variant='h6' className='font-bold' color={questionObj ? '' : 'error'}>
-        {(questionObj?.mediaType === 'text' ||
-          questionObj?.mediaType === 'text-image' ||
-          questionObj?.mediaType === 'text-video') &&
-          questionObj?.text &&
-          questionObj.text}
         {questionObj?.mediaType === 'video' && <span>Watch the video carefully and answer the question.</span>}
         {(questionObj?.mediaType === 'image' || questionObj?.mediaType === 'text-image') && questionObj?.image && (
           <Box
@@ -293,6 +301,9 @@ export const FillInTheBlanksTemplate = ({ question }) => {
     <CardContent style={{ padding: '10px 15px' }}>
       {/* Render Question */}
       <Box mb={3}>
+        {questionObj?.length === 0 && <Typography variant='h6' className='font-bold' color={'error'}>
+          {'* Question is not completed'}
+        </Typography>}
         {questionObj?.map(part => (
           <Box key={part.id} display='inline-flex' alignItems='center' sx={{ mr: 1, mb: 1 }}>
             {part.type === 'text' ? (
@@ -601,7 +612,7 @@ export const DummyFillInTheBlanksTemplate = ({ question, title, questionNumber }
   const questionObj = question?.data?.question
 
   return (
-    <CardContent sx={{ padding: '8px', paddingBottom: '0px' }} key={question._id}>
+    <CardContent sx={{ padding: '8px', paddingBottom: '0px', width: '100%', height: '100%' }} key={question._id}>
       {/* Title Section */}
       <Typography
         variant='h6'
@@ -610,20 +621,20 @@ export const DummyFillInTheBlanksTemplate = ({ question, title, questionNumber }
         sx={{
           textOverflow: 'ellipsis',
           overflow: 'hidden',
-          whiteSpace: 'nowrap'
+          whiteSpace: 'nowrap',
         }}
       >
         {/* {title} */}
         {/* Display Question */}
         <Box mt={2} className='flex flex-wrap'>
-          <Typography color={questionObj.length === 0 && 'red'} fontWeight='bold' variant='h6' component='span' mr={1}>
+          <Typography maxWidth='100%' color={questionObj.length === 0 && 'red'} fontWeight='bold' variant='h6' component='span' mr={1}>
             {questionNumber}.
           </Typography>
           {questionObj?.map((part, index) => (
             <Box key={index} className='flex flex-wrap' sx={{ mr: 1 }}>
               {part.type === 'text' ? (
                 // Display text part
-                <Typography fontWeight='bold' variant='h6' color={part.content.trim() ? '' : 'red'} component='span'>
+                <Typography textOverflow='revert-layer' whiteSpace='wrap' component='span' display='inline-block' fontWeight='bold' variant='h6' color={part.content.trim() ? '' : 'red'}>
                   {part.content.trim() || '* Empty text'}
                 </Typography>
               ) : (
