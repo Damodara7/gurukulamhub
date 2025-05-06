@@ -301,29 +301,36 @@ export const FillInTheBlanksTemplate = ({ question }) => {
     <CardContent style={{ padding: '10px 15px' }}>
       {/* Render Question */}
       <Box mb={3}>
-        {questionObj?.length === 0 && <Typography variant='h6' className='font-bold' color={'error'}>
-          {'* Question is not completed'}
-        </Typography>}
+        {questionObj?.length === 0 && (
+          <Typography variant='h6' className='font-bold' color={'error'}>
+            {'* Question is not completed'}
+          </Typography>
+        )}
         {questionObj?.map(part => (
           <Box key={part.id} display='inline-flex' alignItems='center' sx={{ mr: 1, mb: 1 }}>
             {part.type === 'text' ? (
               // Render static text parts
-              <Typography variant='body1' component='span'>
-                {part.content}
+              <Typography variant='body1' component='span' color={part.content.trim() ? '' : 'red'} whiteSpace='wrap'>
+                {part.content.trim() || '* Empty text'}
               </Typography>
             ) : (
               // Render blanks with placeholders or pre-filled values
               <TextField
                 size='small'
                 variant='outlined'
-                disabled
-                value={part.content}
-                style={{ color: 'green', fontWeight: 'bold' }}
+                value={part.content.trim() || '* Empty text'}
+                style={{ fontWeight: 'bold' }}
+                error={!part.content.trim()}
                 sx={{
-                  minWidth: '100px', // Ensures consistent input size
+                  minWidth: '100px',
                   maxWidth: '300px',
                   marginBottom: '2px',
-                  backgroundColor: '#f0f0f0' // Light background for view mode
+                  backgroundColor: '#f0f0f0',
+                  '& .MuiOutlinedInput-root': {
+                    '& input': {
+                      color: part.content.trim() ? 'green' : 'red'
+                    }
+                  }
                 }}
               />
             )}
@@ -621,20 +628,35 @@ export const DummyFillInTheBlanksTemplate = ({ question, title, questionNumber }
         sx={{
           textOverflow: 'ellipsis',
           overflow: 'hidden',
-          whiteSpace: 'nowrap',
+          whiteSpace: 'nowrap'
         }}
       >
         {/* {title} */}
         {/* Display Question */}
         <Box mt={2} className='flex flex-wrap'>
-          <Typography maxWidth='100%' color={questionObj.length === 0 && 'red'} fontWeight='bold' variant='h6' component='span' mr={1}>
+          <Typography
+            maxWidth='100%'
+            color={questionObj.length === 0 && 'red'}
+            fontWeight='bold'
+            variant='h6'
+            component='span'
+            mr={1}
+          >
             {questionNumber}.
           </Typography>
           {questionObj?.map((part, index) => (
             <Box key={index} className='flex flex-wrap' sx={{ mr: 1 }}>
               {part.type === 'text' ? (
                 // Display text part
-                <Typography textOverflow='revert-layer' whiteSpace='wrap' component='span' display='inline-block' fontWeight='bold' variant='h6' color={part.content.trim() ? '' : 'red'}>
+                <Typography
+                  textOverflow='revert-layer'
+                  whiteSpace='wrap'
+                  component='span'
+                  display='inline-block'
+                  fontWeight='bold'
+                  variant='h6'
+                  color={part.content.trim() ? '' : 'red'}
+                >
                   {part.content.trim() || '* Empty text'}
                 </Typography>
               ) : (
