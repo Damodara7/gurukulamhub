@@ -1,9 +1,22 @@
-export const questionRegex = /[^a-zA-Z0-9.,?]/g // Removes ALL spaces and other unwanted chars
+export const excludeQuesstionChars = [
+  '~', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '-', '=', '{', '}', '|', '"', '<', '>', '/', "'", ';', '[', ']', '\\', '`' ]
 
-export const blankRegex = /[^a-zA-Z0-9\-]/g
+// Exclude these chars from the question text
 
-export const textRegex = /[^a-zA-Z0-9 ?+\-=*/()<>!., ]/g
+export const excludeBlankChars = [
+  '`', '~', '!', '@', '#', '$', '%', '^', '&', '*',  '(', ')', '_', '+', '=', '|', '\\', '{', '}', '[', ']', '"', "'", ':', ';', '<', '>', '/', '?' ];
+//Removes ALL spaces and other unwanted chars
 
-export const filterInput = (value, regex) => {
-  return value.trim().replace(regex, '') // First trim, then remove unwanted chars
+
+export const excludesTextChars = ['~', '`', '@', '#', '$', '^', '&', '_', '|', '\\', ':', ';', '[', ']', '{', '}']
+
+// Exclude these chars from the question text
+ 
+
+export const filterInput = (value, charArr) => {
+  if (!value) return '' // Handle null/undefined
+
+  return Array.from(value) // Convert to array to handle Unicode characters properly
+    .filter(char => !charArr.includes(char)) // Keep characters not in the exclusion list
+    .join('') // Combine back into string
 }
