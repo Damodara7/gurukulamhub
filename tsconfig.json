@@ -73,7 +73,7 @@
     "src/app/api/profile/[userId]/route.js",
     "src/app/api/profile/referrer/route.js",
     "src/utils/dbConnect-mongo.js"
-, "src/app/api/game/running/GameManager.js", "src/app/api/users/google-signin/route.js", "src/app/services/user.service.js", "src/app/services/login.service.js", "src/utils/email-templates/referrerNotificationTemplate.js", "src/app/services/locality.service.js", "src/components/game/RewardForm.jsx"  ],
+, "src/app/api/game.old/running/GameManager.js", "src/app/api/users/google-signin/route.js", "src/app/services/user.service.js", "src/app/services/login.service.js", "src/utils/email-templates/referrerNotificationTemplate.js", "src/app/services/locality.service.js", "src/components/game/RewardForm.jsx"  ],
   "exclude": [
     "node_modules",
     "src/app/services/*.ts"
