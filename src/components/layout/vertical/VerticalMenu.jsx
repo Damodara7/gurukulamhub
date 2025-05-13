@@ -79,6 +79,7 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
   const featurePermissions = [
     { key: 'hasHomeViewPermission', feature: FEATURES_LOOKUP.HOME },
     { key: 'hasPublicQuizzesViewPermission', feature: FEATURES_LOOKUP.PUBLIC_QUIZZES },
+    // { key: 'hasPublicGamesViewPermission', feature: FEATURES_LOOKUP.PUBLIC_GAMES },
     { key: 'hasPublicGamesViewPermission', feature: FEATURES_LOOKUP.PUBLIC_GAMES },
     { key: 'hasMyQuizzesViewPermission', feature: FEATURES_LOOKUP.MY_QUIZZES },
     { key: 'hasMyGamesViewPermission', feature: FEATURES_LOOKUP.MY_GAMES },
@@ -128,6 +129,7 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
     hasReviewGamesViewPermission,
     hasManageAdvtViewPermission,
     hasManageQuizzesViewPermission,
+    // hasManageGamesViewPermission,
     hasManageGamesViewPermission,
     hasManageEventsViewPermission,
     hasManageUsersViewPermission,
@@ -147,6 +149,7 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
   const hasAdminPagesViewPermission =
     hasManageAdvtViewPermission ||
     hasManageQuizzesViewPermission ||
+    // hasManageGamesViewPermission ||
     hasManageGamesViewPermission ||
     hasManageEventsViewPermission ||
     hasManageUsersViewPermission
@@ -194,10 +197,19 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
           <MenuItem href={`/${locale}/publicquiz/play`}>{dictionary['navigation'].play}</MenuItem>
         </SubMenu>
 
-        <SubMenu label={dictionary['navigation'].publicGames} icon={<i className='ri-gamepad-line' />}>
+        {/* <SubMenu label={dictionary['navigation'].publicGames} icon={<i className='ri-gamepad-line' />}>
           <MenuItem href={`/${locale}/game`}>{dictionary['navigation'].view}</MenuItem>
 
           <MenuItem href={`/${locale}/game/join`}>{dictionary['navigation'].join}</MenuItem>
+
+          <MenuItem href={`/${locale}/game/register`}>{dictionary['navigation'].register}</MenuItem>
+        </SubMenu> */}
+
+        <SubMenu label={dictionary['navigation'].publicGames} icon={<i className='ri-gamepad-line' />}>
+
+          <MenuItem href={`/${locale}/public-games`}>{dictionary['navigation'].all}</MenuItem>
+
+          <MenuItem href={`/${locale}/public-games/registered`}>{dictionary['navigation'].registered}</MenuItem>
         </SubMenu>
 
         <MenuSection label={dictionary['navigation'].mypages}>

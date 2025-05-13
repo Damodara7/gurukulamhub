@@ -5,12 +5,13 @@ export const excludeQuesstionChars = [
 
 export const excludeBlankChars = [
   '`', '~', '!', '@', '#', '$', '%', '^', '&', '*',  '(', ')', '_', '+', '=', '|', '\\', '{', '}', '[', ']', '"', "'", ':', ';', '<', '>', '/', '?' ];
-//Removes ALL spaces and other unwanted chars
+
+// Exclude these chars from the blank text
 
 
-export const excludesTextChars = ['~', '`', '@', '#', '$', '^', '&', '_', '|', '\\', ':', ';', '[', ']', '{', '}']
+export const excludesTextChars = ['~', '`', '@', '#', '$', '^', '&', '_', '|', '\\', ':', ';', '[', ']', '{', '}'];
 
-// Exclude these chars from the question text
+// Exclude these chars from the text
  
 
 export const filterInput = (value, charArr) => {
