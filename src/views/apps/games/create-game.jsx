@@ -53,7 +53,7 @@ function CreateGamePage() {
         // Convert rewards to proper format
         rewards: values.rewards.map(reward => ({
           ...reward,
-          numberOfCandidatesForThisPosition: Number(reward.numberOfCandidatesForThisPosition),
+          numberOfWinnersForThisPosition: Number(reward.numberOfWinnersForThisPosition),
           sponsors: reward.sponsors.map(sponsor => ({
             ...sponsor,
             rewardDetails: {

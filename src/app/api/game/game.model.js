@@ -52,11 +52,12 @@ const rewardSchema = new mongoose.Schema({
     type: Number,
     enum: [1, 2, 3, 4, 5]
   },
-  numberOfCandidatesForThisPosition: {
+  numberOfWinnersForThisPosition: {
     type: Number,
     default: 1,
     min: 1
   },
+  rewardValuePerWinner: Number,
   sponsors: [sponsorerSchema],
   winners: {
     type: [
