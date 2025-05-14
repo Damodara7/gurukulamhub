@@ -14,12 +14,12 @@ const GameCard = ({ game }) => {
 
   const handleView = () => {
     // Add your logic for the view action
-    router.push(`/en/public-games/${game.id}`)
+    router.push(`/public-games/${game._id}`)
   }
 
   const handleRegister = () => {
     // Add your logic for the register action
-    router.push(`/en/public-games/${game.id}/register`)
+    router.push(`/public-games/${game._id}/register`)
   }
 
   const handleJoin = () => {
@@ -33,12 +33,12 @@ const GameCard = ({ game }) => {
         component='img'
         height='180'
         image={game.thumbnailPoster}
-        alt={game.name}
+        alt={game.title}
         sx={{ objectFit: 'cover' }}
       />
       <CardContent sx={{ flex: 1 }}>
         <Typography variant='h6' noWrap>
-          {game.name}
+          {game.title}
         </Typography>
         <Typography variant='body2' color='text.secondary' noWrap>
           {game.info}
