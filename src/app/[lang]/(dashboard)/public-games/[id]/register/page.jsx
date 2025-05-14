@@ -1,5 +1,5 @@
 import React from 'react'
-import RegisterPage from '@/views/public-games/RegisterDetailsPage';
+import RegisterPage from '@/views/public-games/RegisteredGame';
 
 function page( { params}) {
   return (
