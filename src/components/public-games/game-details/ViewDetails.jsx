@@ -26,7 +26,7 @@ const ViewDetails = ({ game }) => {
             <strong>Description:</strong> {game.description}
           </Typography>
           <Typography>
-            <strong>Quiz ID:</strong> {game.quiz}
+            <strong>Quiz:</strong> {game.quiz.title}
           </Typography>
           <Typography>
             <strong>Start Time:</strong> {new Date(game.startTime).toLocaleString()}
