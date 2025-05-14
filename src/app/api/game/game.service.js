@@ -1,0 +1,412 @@
+import connectMongo from '@/utils/dbConnect-mongo'
+import Game from './game.model'
+import mongoose from 'mongoose'
+import User from '@/app/models/user.model'
+import Quiz from '../quiz/quiz.model'
+
+export const getById = async (id, filter={}) => {
+  await connectMongo()
+  try {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Invalid game ID format'
+      }
+    }
+
+    const game = await Game.findOne({_id: id, ...filter})
+      .populate('quiz', 'title description')
+      .populate('createdBy', 'email firstName lastName')
+      .lean()
+
+    if (!game) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Game not found'
+      }
+    }
+
+    return {
+      status: 'success',
+      result: game,
+      message: 'Game retrieved successfully'
+    }
+  } catch (error) {
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to retrieve game'
+    }
+  }
+}
+
+export const getAll = async (filter = {}) => {
+  await connectMongo()
+  try {
+    const games = await Game.find(filter)
+      .populate('quiz', 'title')
+      .populate('createdBy', 'email firstName lastName')
+      .sort({ createdAt: -1 })
+      .lean()
+
+    return {
+      status: 'success',
+      result: games,
+      message: `Found ${games.length} games`
+    }
+  } catch (error) {
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to retrieve games'
+    }
+  }
+}
+
+export const getAllByEmail = async email => {
+  await connectMongo()
+  try {
+    if (!email || !validator.isEmail(email)) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Valid email address is required'
+      }
+    }
+
+    const games = await Game.find({ creatorEmail: email })
+      .populate('quiz', 'title')
+      .populate('createdBy', 'email firstName lastName')
+      .sort({ startTime: -1 })
+      .lean()
+
+    return {
+      status: 'success',
+      result: games,
+      message: `Found ${games.length} games for ${email}`
+    }
+  } catch (error) {
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to retrieve games by email'
+    }
+  }
+}
+
+export const addOne = async gameData => {
+  await connectMongo()
+  try {
+    const user = await User.findOne({ email: gameData.creatorEmail })
+    gameData.createdBy = user._id
+    console.log({gameData})
+    // Validate required fields
+    const requiredFields = ['title', 'pin', 'quiz', 'startTime', 'duration', 'createdBy']
+    const missingFields = requiredFields.filter(field => !gameData[field])
+
+    if (missingFields.length > 0) {
+      return {
+        status: 'error',
+        result: null,
+        message: `Missing required fields: ${missingFields.join(', ')}`
+      }
+    }
+
+    // Check for existing pin
+    const existingGame = await Game.findOne({ pin: gameData.pin })
+    if (existingGame) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Game pin must be unique'
+      }
+    }
+
+    // Create new game instance
+    const newGame = new Game({ ...gameData })
+    // const newGame = new Game({
+    //   title: gameData.title,
+    //   pin: gameData.pin,
+    //   quiz: gameData.quiz,
+    //   description: gameData.description,
+    //   location: gameData.location,
+    //   startTime: gameData.startTime,
+    //   duration: gameData.duration,
+    //   promotionalVideoUrl: gameData.promotionalVideoUrl,
+    //   thumbnailPoster: gameData.thumbnailPoster,
+    //   requireRegistration: gameData.requireRegistration || false,
+    //   registrationEndTime: gameData.registrationEndTime,
+    //   maxPlayers: gameData.maxPlayers,
+    //   status: gameData.status || 'created',
+    //   rewards: gameData.rewards || [],
+    //   tags: gameData.tags || [],
+    //   createdBy: gameData.createdBy,
+    //   creatorEmail: gameData.creatorEmail
+    // });
+
+    // Calculate total reward value if rewards are provided
+    if (gameData.rewards?.length > 0) {
+      newGame.totalRewardValue = gameData.rewards.reduce((total, reward) => {
+        return total + reward.rewardValuePerWinner * reward.numberOfWinnersForThisPosition
+      }, 0)
+    }
+
+    // Validate and save the game
+    const validationError = newGame.validateSync()
+    if (validationError) {
+      const errors = Object.values(validationError.errors).map(err => err.message)
+      return {
+        status: 'error',
+        result: null,
+        message: `Validation failed: ${errors.join(', ')}`
+      }
+    }
+
+    const savedGame = await newGame.save()
+
+    return {
+      status: 'success',
+      result: savedGame,
+      message: 'Game created successfully'
+    }
+  } catch (error) {
+    // Handle duplicate key errors
+    if (error.code === 11000) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Duplicate game pin detected'
+      }
+    }
+
+    // Handle other errors
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to create game'
+    }
+  }
+}
+
+export const updateOne = async (gameId, updateData) => {
+  await connectMongo()
+  try {
+    // Find the existing game by ID
+    const existingGame = await Game.findById(gameId)
+    if (!existingGame) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Game not found'
+      }
+    }
+
+    // Check if pin is being updated to a non-unique value
+    if (updateData.pin !== undefined && updateData.pin !== existingGame.pin) {
+      const existingPinGame = await Game.findOne({ pin: updateData.pin })
+      if (existingPinGame) {
+        return {
+          status: 'error',
+          result: null,
+          message: 'Game pin must be unique'
+        }
+      }
+    }
+
+    // Apply updates to the existing game document
+    Object.keys(updateData).forEach(key => {
+      existingGame[key] = updateData[key]
+    })
+
+    // Recalculate total reward value if rewards are updated
+    if (updateData.rewards !== undefined) {
+      existingGame.totalRewardValue = updateData.rewards.reduce((total, reward) => {
+        return total + reward.rewardValuePerWinner * reward.numberOfWinnersForThisPosition
+      }, 0)
+    }
+
+    // Validate the updated game document
+    const validationError = existingGame.validateSync()
+    if (validationError) {
+      const errors = Object.values(validationError.errors).map(err => err.message)
+      return {
+        status: 'error',
+        result: null,
+        message: `Validation failed: ${errors.join(', ')}`
+      }
+    }
+
+    // Save the updated game
+    const updatedGame = await existingGame.save()
+
+    return {
+      status: 'success',
+      result: updatedGame,
+      message: 'Game updated successfully'
+    }
+  } catch (error) {
+    // Handle duplicate key errors (e.g., unique constraint violation)
+    if (error.code === 11000) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Duplicate game pin detected'
+      }
+    }
+
+    // Handle other potential errors
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to update game'
+    }
+  }
+}
+
+export const joinGame = async (gameId, userData) => {
+  await connectMongo()
+  try {
+    // Validate input
+    if (!userData?.user?._id || !userData?.email) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Missing user ID or email'
+      }
+    }
+
+    const game = await Game.findById(gameId)
+    if (!game) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Game not found'
+      }
+    }
+
+    // Check game status
+    const allowedStatuses = ['reg_open', 'lobby', 'live']
+    if (!allowedStatuses.includes(game.status)) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Game is not currently accepting participants'
+      }
+    }
+
+    // Check registration requirements
+    if (game.requireRegistration) {
+      if (game.registrationEndTime && new Date() > game.registrationEndTime) {
+        return {
+          status: 'error',
+          result: null,
+          message: 'Registration period has ended'
+        }
+      }
+
+      // Add to registered users if not already registered
+      const isRegistered = game.registeredUsers.some(u => u.user.toString() === userData.user._id.toString())
+
+      if (!isRegistered) {
+        game.registeredUsers.push({
+          user: userData.user._id,
+          email: userData.email,
+          registeredAt: new Date()
+        })
+      }
+    }
+
+    // Check player limits
+    if (game.maxPlayers && game.participatedUsers.length >= game.maxPlayers) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Maximum player limit reached'
+      }
+    }
+
+    // Check if already participating
+    const isParticipating = game.participatedUsers.some(u => u.user.toString() === userData.user._id.toString())
+
+    if (isParticipating) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'User is already participating in this game'
+      }
+    }
+
+    // Add to participated users
+    game.participatedUsers.push({
+      user: userData.user._id,
+      email: userData.email,
+      joinedAt: new Date(),
+      score: 0,
+      completed: false
+    })
+
+    await game.save()
+
+    return {
+      status: 'success',
+      result: game,
+      message: 'Successfully joined game'
+    }
+  } catch (error) {
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to join game'
+    }
+  }
+}
+
+export const updatePlayerProgress = async (gameId, playerId, updateData) => {
+  await connectMongo()
+  try {
+    const game = await Game.findById(gameId)
+    if (!game) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Game not found'
+      }
+    }
+
+    // Find player in participated users
+    const player = game.participatedUsers.find(p => p.user.toString() === playerId.toString())
+
+    if (!player) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Player not found in game'
+      }
+    }
+
+    // Update player data
+    if (updateData.score !== undefined) {
+      player.score = updateData.score
+    }
+    if (updateData.completed !== undefined) {
+      player.completed = updateData.completed
+      player.finishedAt = updateData.completed ? new Date() : null
+    }
+
+    await game.save()
+
+    return {
+      status: 'success',
+      result: game,
+      message: 'Player progress updated successfully'
+    }
+  } catch (error) {
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to update player progress'
+    }
+  }
+}

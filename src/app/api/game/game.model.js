@@ -1,4 +1,6 @@
 import mongoose from 'mongoose'
+import Quiz from '../quiz/quiz.model'
+import User from '@/app/models/user.model'
 
 const locationSchema = new mongoose.Schema({
   country: String,
@@ -8,7 +10,7 @@ const locationSchema = new mongoose.Schema({
 const registeredUserSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'user'
+    ref: 'users'
   },
   email: String,
   registeredAt: Date
@@ -16,7 +18,7 @@ const registeredUserSchema = new mongoose.Schema({
 const participatedUserSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'user'
+    ref: 'users'
   },
   email: String,
   joinedAt: Date,
@@ -30,7 +32,7 @@ const participatedUserSchema = new mongoose.Schema({
 const sponsorerSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'user'
+    ref: 'users'
   },
   email: String,
   rewardDetails: {
@@ -82,7 +84,7 @@ const gameSchema = new mongoose.Schema(
     },
     quiz: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'quiz',
+      ref: 'quizzes', //Need to be changed to "quiz"
       required: true
     },
     location: locationSchema,
@@ -138,10 +140,11 @@ const gameSchema = new mongoose.Schema(
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'user',
+      ref: 'users',
       required: true
     },
-    creatorEmail: String
+    creatorEmail: String,
+    tags: [String]
   },
   { timestamps: true }
 )

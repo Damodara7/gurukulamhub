@@ -142,8 +142,9 @@ const GameForm = ({ onSubmit, quizzes, onCancel }) => {
   }
   // ********* Reward Related Functions - END ***********
 
-  const handleSubmit = () => {
-    onSubmit(formData)
+  const handleSubmit = async () => {
+    console.log('Hello')
+    await onSubmit(formData)
   }
 
   return (
@@ -457,7 +458,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel }) => {
           </Button>
           <Button
             onClick={handleSubmit}
-            component='label'
+            // component='label'
             variant='contained'
             color='primary'
             style={{ color: 'white' }}
