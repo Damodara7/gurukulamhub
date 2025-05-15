@@ -26,7 +26,6 @@ const GameCard = ({ game }) => {
     console.log('inside the handle join');
   }
 
-
   return (
     <Card sx={{ maxWidth: 400, margin: 2, display: 'flex', flexDirection: 'column' }}>
       <CardMedia
@@ -48,8 +47,8 @@ const GameCard = ({ game }) => {
         <Grid container spacing={1}>
           {/* Start Time */}
           <Grid item xs={12} sm={6} sx={{ mt: 1 }}>
-            <CustomChipWithIcon 
-              icon={<EventIcon color='primary' />}
+            <CustomChipWithIcon
+              icon={<EventIcon color='success.main' />}
               label={`${new Date(game.startTime).toLocaleDateString()} ${new Date(game.startTime).toLocaleTimeString(
                 [],
                 { hour: '2-digit', minute: '2-digit' }
@@ -62,7 +61,7 @@ const GameCard = ({ game }) => {
           {/* Registration End Time */}
           <Grid item xs={12} sm={6} sx={{ mt: 1 }}>
             <CustomChipWithIcon
-              icon={<HourglassBottomIcon sx={{ color: 'error.main' }} />}
+              icon={<HourglassBottomIcon sx={{ color: 'secondary.main' }} />}
               label={`${new Date(game.registrationEndTime).toLocaleDateString()} ${new Date(
                 game.registrationEndTime
               ).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
@@ -79,7 +78,7 @@ const GameCard = ({ game }) => {
               title={`${game.location.city}, ${game.location.region}, ${game.location.country}`}
             />
           </Grid>
-
+          
           {/* Reward */}
           <Grid item xs={12} sm={6} sx={{ mt: 1 }}>
             <CustomChipWithIcon
@@ -93,13 +92,43 @@ const GameCard = ({ game }) => {
 
         {/* Buttons */}
         <Stack direction='row' spacing={2} mt={2}>
-          <Button variant='contained' color='primary' onClick={handleView}>
+          <Button
+            variant='contained'
+            color='primary'
+            onClick={handleView}
+            sx={{
+              '&:hover': {
+                color: 'white',
+                backgroundColor: 'primary.dark'
+              }
+            }}
+          >
             View
           </Button>
-          <Button variant='contained' color='primary' onClick={handleRegister}>
+          <Button
+            variant='contained'
+            color='primary'
+            onClick={handleRegister}
+            sx={{
+              '&:hover': {
+                color: 'white',
+                backgroundColor: 'primary.dark'
+              }
+            }}
+          >
             Register
           </Button>
-          <Button variant='contained' color='primary' onClick={handleJoin}>
+          <Button
+            variant='contained'
+            color='primary'
+            onClick={handleJoin}
+            sx={{
+              '&:hover': {
+                color: 'white',
+                backgroundColor: 'primary.dark'
+              }
+            }}
+          >
             Join
           </Button>
         </Stack>
