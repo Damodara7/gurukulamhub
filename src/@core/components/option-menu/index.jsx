@@ -63,8 +63,8 @@ const OptionMenu = props => {
 
   return (
     <>
-      <IconButtonTooltip
-      title={"Toggle"}
+      <IconButton
+      // title={"Toggle"}
       ref={anchorRef} size='small' onClick={handleToggle} {...iconButtonProps}>
         {typeof icon === 'string' ? (
           <i className={classnames(icon, iconClassName)} />
@@ -73,7 +73,7 @@ const OptionMenu = props => {
         ) : (
           <i className={classnames('ri-more-2-line', iconClassName)} />
         )}
-      </IconButtonTooltip>
+      </IconButton>
       <Popper
         open={open}
         anchorEl={anchorRef.current}
