@@ -2,7 +2,6 @@
 'use client'
 
 import { Tooltip, Chip } from '@mui/material'
-
 const CustomChipWithIcon = ({ icon, label, title, color = 'default', size = 'medium', mt = 0 }) => {
   return (
     <Tooltip title={title}>
