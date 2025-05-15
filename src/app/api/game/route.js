@@ -11,12 +11,14 @@ export async function GET(req) {
     // Convert searchParams to an object
     const queryParamsObj = Object.fromEntries(searchParams.entries())
 
-    const { id, email, ...rest } = queryParamsObj
+    const { id, pin, email, ...rest } = queryParamsObj
 
     let artifact
 
     if (id) {
-      artifact = await ArtifactService.getById(id, { ...rest })
+      artifact = await ArtifactService.getOne({ _id: id, ...rest })
+    } else if (pin) {
+      artifact = await ArtifactService.getOne({ pin: pin, ...rest })
     } else {
       if (email) {
         artifact = await ArtifactService.getAllByEmail(email)

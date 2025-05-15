@@ -133,6 +133,7 @@ export const authOptions = {
           // const result = await clientApi.getUserProfileByEmail(token.email)
           const { profile, user } = result?.result
           if (result?.status === 'success') {
+            token.id = user?._id
             token.roles = user?.roles
             token.geoRoles = user?.geoRoles
             token.referralToken = user?.referralToken

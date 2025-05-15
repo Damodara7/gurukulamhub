@@ -24,6 +24,7 @@ export async function getByEmail({ email }) {
 
     let user = await User.findOne({ email }).select('-password').lean()
     // console.log('profile: ', profile)
+    // console.log('user: ', user)
     return { status: 'success', result: { profile, user }, message: 'User profile successfully retrieved' };
   } catch (error) {
     console.error('getByEmail function -> Error fetching user profile: ', error)

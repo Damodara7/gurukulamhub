@@ -1,12 +1,13 @@
 import * as GameService from '../../game.service.js'
 import * as ApiResponseUtils from '@/utils/apiResponses'
 
-export async function POST(request, {params}) {
-  try {
-    const { id: gameId, playerId } = params
-    const updateData = await request.json()
+export async function POST(request, { params }) {
 
-    const result = await GameService.updatePlayerProgress(gameId, playerId, updateData)
+  try {
+    const { id: gameId } = params
+    const { user } = await request.json() // Get userId from request body
+
+    const result = await GameService.startGame(gameId, { id: user.id, email: user.email })
 
     if (result.status === 'success') {
       const successRes = ApiResponseUtils.createSuccessResponse(result.message, result.result)

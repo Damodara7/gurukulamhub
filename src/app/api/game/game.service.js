@@ -3,11 +3,12 @@ import Game from './game.model'
 import mongoose from 'mongoose'
 import User from '@/app/models/user.model'
 import Quiz from '../quiz/quiz.model'
+import QuestionsModel from '../question/question.model'
 
-export const getById = async (id, filter={}) => {
+export const getOne = async (filter = {}) => {
   await connectMongo()
   try {
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+    if (filter._id && !mongoose.Types.ObjectId.isValid(filter._id)) {
       return {
         status: 'error',
         result: null,
@@ -15,7 +16,7 @@ export const getById = async (id, filter={}) => {
       }
     }
 
-    const game = await Game.findOne({_id: id, ...filter})
+    const game = await Game.findOne({ ...filter })
       .populate('quiz', 'title description')
       .populate('createdBy', 'email firstName lastName')
       .lean()
@@ -101,7 +102,7 @@ export const addOne = async gameData => {
   try {
     const user = await User.findOne({ email: gameData.creatorEmail })
     gameData.createdBy = user._id
-    console.log({gameData})
+    console.log({ gameData })
     // Validate required fields
     const requiredFields = ['title', 'pin', 'quiz', 'startTime', 'duration', 'createdBy']
     const missingFields = requiredFields.filter(field => !gameData[field])
@@ -268,8 +269,11 @@ export const updateOne = async (gameId, updateData) => {
 export const joinGame = async (gameId, userData) => {
   await connectMongo()
   try {
+    const user = await User.findOne({ email: userData?.email })
+    userData.id = user._id
+
     // Validate input
-    if (!userData?.user?._id || !userData?.email) {
+    if (!userData?.id || !userData?.email) {
       return {
         status: 'error',
         result: null,
@@ -297,62 +301,46 @@ export const joinGame = async (gameId, userData) => {
     }
 
     // Check registration requirements
-    if (game.requireRegistration) {
-      if (game.registrationEndTime && new Date() > game.registrationEndTime) {
-        return {
-          status: 'error',
-          result: null,
-          message: 'Registration period has ended'
-        }
-      }
+    if (game.requireRegistration || !game.requireRegistration) {
+      //   if (game.registrationEndTime && new Date() > game.registrationEndTime) {
+      //     return {
+      //       status: 'error',
+      //       result: null,
+      //       message: 'Registration period has ended'
+      //     }
+      //   }
 
       // Add to registered users if not already registered
-      const isRegistered = game.registeredUsers.some(u => u.user.toString() === userData.user._id.toString())
+      const isRegistered = game.registeredUsers.some(u => u.user.toString() === userData.id.toString())
 
       if (!isRegistered) {
         game.registeredUsers.push({
-          user: userData.user._id,
+          user: userData.id,
           email: userData.email,
           registeredAt: new Date()
         })
+
+        await game.save()
+
+        return {
+          status: 'success',
+          result: game,
+          message: 'Successfully registered for game'
+        }
+      } else {
+        return {
+          status: 'success',
+          result: game,
+          message: 'User is already registered for this game'
+        }
       }
     }
 
-    // Check player limits
-    if (game.maxPlayers && game.participatedUsers.length >= game.maxPlayers) {
-      return {
-        status: 'error',
-        result: null,
-        message: 'Maximum player limit reached'
-      }
-    }
-
-    // Check if already participating
-    const isParticipating = game.participatedUsers.some(u => u.user.toString() === userData.user._id.toString())
-
-    if (isParticipating) {
-      return {
-        status: 'error',
-        result: null,
-        message: 'User is already participating in this game'
-      }
-    }
-
-    // Add to participated users
-    game.participatedUsers.push({
-      user: userData.user._id,
-      email: userData.email,
-      joinedAt: new Date(),
-      score: 0,
-      completed: false
-    })
-
-    await game.save()
-
+    // If no registration required, just return success
     return {
       status: 'success',
       result: game,
-      message: 'Successfully joined game'
+      message: 'No registration required for this game'
     }
   } catch (error) {
     return {
@@ -407,6 +395,93 @@ export const updatePlayerProgress = async (gameId, playerId, updateData) => {
       status: 'error',
       result: null,
       message: error.message || 'Failed to update player progress'
+    }
+  }
+}
+
+export const startGame = async (gameId, userData) => {
+  await connectMongo()
+  try {
+    const game = await Game.findById(gameId)
+      .populate('registeredUsers.user')
+      .populate('participatedUsers.user')
+      .populate('quiz')
+      .lean() // Add .lean() to get plain JavaScript object
+
+    if (!game) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Game not found'
+      }
+    }
+
+    const user = await User.findOne({ email: userData?.email })
+    if (!user) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'User not found'
+      }
+    }
+    userData.id = user._id
+
+    // Check if user is registered
+    const isUserRegistered = game.registeredUsers.some(ru => ru.user._id.toString() === userData.id.toString())
+
+    if (!isUserRegistered) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'User is not registered for this game'
+      }
+    }
+
+    // Check if user is already participating
+    const isAlreadyParticipating = game.participatedUsers?.some(pu => pu.user._id.toString() === userData.id.toString())
+
+    // Add current user to participatedUsers if not already there
+    if (!isAlreadyParticipating) {
+      game.participatedUsers.push({
+        user: userData.id,
+        email: userData.email || '',
+        joinedAt: new Date(),
+        score: 0,
+        completed: false,
+        finishedAt: null
+      })
+
+      // Need to use the model to save since we used lean()
+      await Game.updateOne(
+        { _id: gameId },
+        { $push: { participatedUsers: game.participatedUsers[game.participatedUsers.length - 1] } }
+      )
+    }
+
+    // Get questions
+    const quizId = game.quiz._id
+    const languageCode = game.quiz.language.code
+    const questions = await QuestionsModel.find({
+      quizId: quizId,
+      languageCode: languageCode
+    }).lean()
+
+    // Create clean response object
+    const response = {
+      ...game,
+      questions
+    }
+
+    return {
+      status: 'success',
+      result: response,
+      message: 'Game started successfully and user added to participants'
+    }
+  } catch (error) {
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to start game'
     }
   }
 }
