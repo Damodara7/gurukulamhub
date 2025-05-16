@@ -103,13 +103,13 @@ const GameList = ({ games, onApprove, onViewGame }) => {
                     {game.description}
                   </Typography>
 
-                  {game.tags?.length > 0 && (
+                  {/* {game.tags?.length > 0 && (
                     <Stack direction='row' flexWrap='wrap' gap={1} mb={2}>
                       {game.tags.map(tag => (
                         <Chip key={tag} label={tag} size='small' color='secondary' variant='outlined' />
                       ))}
                     </Stack>
-                  )}
+                  )} */}
 
                   <Stack spacing={1} mb={3}>
                     <Stack direction='row' alignItems='center' spacing={1}>

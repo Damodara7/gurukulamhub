@@ -44,7 +44,7 @@ const StartPlayGame = ({ game }) => {
 
   if (loading || status === 'loading') {
     return (
-      <Box display='flex' justifyContent='center' alignItems='center' height='100vh'>
+      <Box display='flex' justifyContent='center' alignItems='center' height='100%'>
         <CircularProgress />
       </Box>
     )
@@ -52,7 +52,7 @@ const StartPlayGame = ({ game }) => {
 
   if (error) {
     return (
-      <Box display='flex' justifyContent='center' alignItems='center' height='100vh'>
+      <Box display='flex' justifyContent='center' alignItems='center' height='100%'>
         <Typography color='error' variant='body1'>
           {error}
         </Typography>
@@ -65,7 +65,7 @@ const StartPlayGame = ({ game }) => {
   const {quiz, questions, ...restGameData} = data
 
   return (
-    <Box p={4} display='flex' justifyContent='center' alignItems='center' height='100%'>
+    <Box p={4} height='100%'>
       <PlayGameQuiz quiz={quiz} questions={questions} game={restGameData} />
     </Box>
   )

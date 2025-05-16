@@ -3,13 +3,12 @@
 import React, { useState, useEffect } from 'react'
 import * as RestApi from '@/utils/restApiUtil'
 import { useSession } from 'next-auth/react'
-import { toast } from 'react-hot-toast'
-
 import { useRouter } from 'next/navigation'
 import { API_URLS } from '@/configs/apiConfig'
 import { Box, Typography, Card, CardContent, TextField, Button, Alert, CircularProgress } from '@mui/material'
+import { toast } from 'react-toastify'
 
-const GamePinEmailInputFormPage = () => {
+const GamePinInputFormPage = () => {
   const [gamePin, setGamePin] = useState('')
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
@@ -56,7 +55,6 @@ const GamePinEmailInputFormPage = () => {
   }
 
   const handleSubmit = e => {
-    e.preventDefault()
     validateGame()
   }
 
@@ -84,7 +82,7 @@ const GamePinEmailInputFormPage = () => {
       {/* Game Entry Card */}
       <Card sx={{ width: '100%', maxWidth: '500px' }}>
         <CardContent>
-          <form onSubmit={handleSubmit}>
+          <form>
             {/* Game PIN Field */}
             <Box mb={4}>
               <TextField
@@ -120,7 +118,16 @@ const GamePinEmailInputFormPage = () => {
             )}
 
             {/* Submit Button */}
-            <Button type='submit' variant='contained' color='primary' fullWidth size='large' disabled={loading}>
+            <Button
+              onClick={handleSubmit}
+              component='label'
+              sx={{ color: 'white' }}
+              variant='contained'
+              color='primary'
+              fullWidth
+              size='large'
+              disabled={loading}
+            >
               {loading ? (
                 <>
                   <CircularProgress size={24} color='inherit' sx={{ mr: 2 }} />
@@ -137,4 +144,4 @@ const GamePinEmailInputFormPage = () => {
   )
 }
 
-export default GamePinEmailInputFormPage
+export default GamePinInputFormPage

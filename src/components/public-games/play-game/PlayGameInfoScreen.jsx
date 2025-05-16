@@ -109,7 +109,7 @@ const GamePlayInfoScreen = ({ game, setShouldStartGame }) => {
           mb: 3,
           p:1,
           alignItems: 'center',
-          animation: `${blink} 1.5s infinite`,
+          animation: `${blink} 1s infinite`,
           '& .MuiAlert-message': {
             width: '100%',
             display: 'flex',
@@ -135,7 +135,7 @@ const GamePlayInfoScreen = ({ game, setShouldStartGame }) => {
           <Box
             component='span'
             sx={{
-              animation: `${pulse} 2s infinite`,
+              animation: `${pulse} 1s infinite`,
               display: 'inline-flex'
             }}
           >

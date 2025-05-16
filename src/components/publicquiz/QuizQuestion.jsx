@@ -21,7 +21,7 @@ const QuizQuestion = ({
   handleNext
 }) => {
   return (
-    <Box sx={{ mt: 0, maxWidth: '600px', mx: 'auto' }}>
+    <Box sx={{ mt: 0, maxWidth: 'lg', mx: 'auto' }}>
       <Typography variant='h6' sx={{ marginBottom: 2, color: '#555' }}>
         {`Question ${currentQuestionIndex + 1} / ${questions.length}`}
       </Typography>

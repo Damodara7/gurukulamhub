@@ -95,10 +95,10 @@ const MultipleChoiceTemplate = ({ question, selectedAnswers, onAnswerSelect }) =
                       src={option.image}
                       alt={option.text}
                       style={{
-                        width: '200px',
                         minWidth: '100%',
                         maxWidth: '100%',
-                        height: '100px',
+                        height: '100%',
+                        maxHeight: '200px',
                         objectFit: 'fill',
                         borderRadius: '4px',
                         marginRight: 2,

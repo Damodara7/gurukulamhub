@@ -1,7 +1,7 @@
 'use client'
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Box, Typography, Alert, CardContent, useTheme, LinearProgress, Chip } from '@mui/material'
+import { Box, Typography, Alert, CardContent, useTheme, LinearProgress, Chip, Paper } from '@mui/material'
 import Loading from '@/components/Loading'
 import QuizQuestion from '@/components/publicquiz/QuizQuestion'
 import Timer, { formatTime } from '@/components/Timer'
@@ -10,49 +10,38 @@ import { API_URLS } from '@/configs/apiConfig'
 import { toast } from 'react-toastify'
 import './PlayGameQuiz'
 import GameEnded from '../GameEnded'
+import { AccessTime as TimeIcon } from '@mui/icons-material'
 
-const TimerChip = ({ remainingTime, duration }) => {
-  const percentage = (remainingTime / duration) * 100
-  const getColor = () => {
-    if (percentage > 50) return 'success'
+const getColor = (percentage) => {
+    if (percentage > 50) return 'primary'
     if (percentage > 25) return 'warning'
     return 'error'
   }
 
+const TimerChip = ({ remainingTime, duration }) => {
+  const progress = (remainingTime / duration) * 100
+
   return (
     <Chip
       label={formatTime(remainingTime)}
-      color={getColor()}
+      color={getColor(progress)}
+      variant='outlined'
       sx={{
-        fontWeight: 'bold',
-        fontSize: '1.2rem',
-        padding: '8px 16px',
-        borderRadius: '4px',
         transition: 'background-color 0.3s ease'
       }}
     />
   )
 }
 
-const ProgressBar = ({ remainingTime, duration }) => {
-  const percentage = (remainingTime / duration) * 100
-
+const ProgressBar = ({ progress }) => {
   return (
     <LinearProgress
       variant='determinate'
-      value={percentage}
+      value={progress}
+      color={getColor(progress)}
       sx={{
-        height: '10px',
-        borderRadius: '5px',
-        backgroundColor: '#e0e0e0',
-        '& .MuiLinearProgress-bar': {
-          borderRadius: '5px',
-          background: `linear-gradient(90deg, 
-              #4CAF50 ${percentage}%, 
-              #ffeb3b ${percentage}%, 
-              #f44336 100%)`,
-          transition: 'all 0.3s ease'
-        }
+        height: '8px',
+        transition: 'all 0.3s ease'
       }}
     />
   )
@@ -75,13 +64,13 @@ export default function PlayGameQuiz({ quiz, questions, game }) {
   const [remainingTime, setRemainingTime] = useState(0)
   const duration = game?.duration || 0
   const startTime = new Date(game?.startTime)
-//   const startTime = new Date(Date.now() + 5 * 60 * 1000)
+  //   const startTime = new Date(Date.now() + 5 * 60 * 1000)
 
   const calculateRemainingTime = () => {
     const now = new Date()
     const elapsed = Math.floor((now - startTime) / 1000)
     return Math.max(duration - elapsed, 0)
-}
+  }
 
   useEffect(() => {
     const initialRemaining = calculateRemainingTime()
@@ -185,16 +174,22 @@ export default function PlayGameQuiz({ quiz, questions, game }) {
     return <GameEnded game={game} onExit={handleExit} />
   }
 
+  const progress = (remainingTime / game.duration) * 100
+
   return (
-    <Box>
-      <Box sx={{ mx: 'auto', p: 3, width: { xs: '100%', sm: '100%' } }}>
-        <Box sx={{ mb: 3 }}>
-          <ProgressBar remainingTime={remainingTime} duration={duration} />
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
-            <Typography variant='body2'>Time Remaining: {formatTime(remainingTime)}</Typography>
-            <TimerChip remainingTime={remainingTime} duration={duration} />
+    <>
+      <Box sx={{ mx: 'auto', px: 2, width: { xs: '100%', sm: '100%' }, height: '100%' }}>
+        <Paper elevation={0} sx={{ p: 2, mb: 4 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant='h6' component='div'>
+              Time Remaining
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+              <TimerChip remainingTime={remainingTime} duration={game.duration} />
+            </Box>
           </Box>
-        </Box>
+          <ProgressBar progress={progress} />
+        </Paper>
 
         {questions.length > 0 ? (
           <QuizQuestion
@@ -216,6 +211,6 @@ export default function PlayGameQuiz({ quiz, questions, game }) {
           <Alert severity='error'>No questions available for this quiz</Alert>
         )}
       </Box>
-    </Box>
+    </>
   )
 }
