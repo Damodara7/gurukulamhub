@@ -1,6 +1,7 @@
 import mongoose from 'mongoose'
 import Quiz from '../quiz/quiz.model'
 import User from '@/app/models/user.model'
+import QuestionsModel from '../question/question.model'
 
 const locationSchema = new mongoose.Schema({
   country: String,
@@ -15,6 +16,27 @@ const registeredUserSchema = new mongoose.Schema({
   email: String,
   registeredAt: Date
 })
+const answerSchema = new mongoose.Schema({
+  question: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'questions'
+  },
+  answer: {
+    type: mongoose.Schema.Types.Mixed,
+    validate: {
+      validator: function (value) {
+        return typeof value === 'string' || (Array.isArray(value) && value.every(item => typeof item === 'string'))
+      },
+      message: 'Answer must be either a string or an array of strings'
+    }
+  },
+  marks: Number,
+  hintMarks: Number,
+  hintUsed: Boolean,
+  skipped: Boolean,
+  answerTime: Number, // Time taken in seconds
+  answeredAt: Date    // Timestamp when answered
+})
 const participatedUserSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -22,7 +44,8 @@ const participatedUserSchema = new mongoose.Schema({
   },
   email: String,
   joinedAt: Date,
-  score: Number,
+  score: { type: Number, default: 0 },
+  answers: { type: [answerSchema], default: [] },
   completed: {
     type: Boolean,
     default: false

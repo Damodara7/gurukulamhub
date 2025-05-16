@@ -270,6 +270,13 @@ export const joinGame = async (gameId, userData) => {
   await connectMongo()
   try {
     const user = await User.findOne({ email: userData?.email })
+    if (!user) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'User with this email does not exist.'
+      }
+    }
     userData.id = user._id
 
     // Validate input
@@ -351,7 +358,7 @@ export const joinGame = async (gameId, userData) => {
   }
 }
 
-export const updatePlayerProgress = async (gameId, playerId, updateData) => {
+export const updatePlayerProgress = async (gameId, { user, userAnswer, finish }) => {
   await connectMongo()
   try {
     const game = await Game.findById(gameId)
@@ -363,8 +370,12 @@ export const updatePlayerProgress = async (gameId, playerId, updateData) => {
       }
     }
 
-    // Find player in participated users
-    const player = game.participatedUsers.find(p => p.user.toString() === playerId.toString())
+    // Find player in participated users by user ID
+    const player = game.participatedUsers.find(
+      p =>
+        // p.user.toString() === user.id.toString() &&
+        p.email === user.email
+    )
 
     if (!player) {
       return {
@@ -374,15 +385,50 @@ export const updatePlayerProgress = async (gameId, playerId, updateData) => {
       }
     }
 
-    // Update player data
-    if (updateData.score !== undefined) {
-      player.score = updateData.score
-    }
-    if (updateData.completed !== undefined) {
-      player.completed = updateData.completed
-      player.finishedAt = updateData.completed ? new Date() : null
+    // Prepare answer data
+    const answerData = {
+      ...userAnswer
+      // question: userAnswer.questionId,
+      // answer: userAnswer.answer,
+      // marks: userAnswer.marks,
+      // hintMarks: userAnswer.hintMarks,
+      // hintUsed: userAnswer.hintUsed,
+      // skipped: userAnswer.skipped
+      // answerTime: userAnswer.answerTime
+      // answeredAt: userAnswer.answeredAt
     }
 
+    // Check if answer already exists for this question
+    const existingAnswerIndex = player.answers.findIndex(a => a.questions === userAnswer.question)
+
+    if (existingAnswerIndex > -1) {
+      // Update existing answer
+      const existingAnswer = player.answers[existingAnswerIndex]
+      player.score -= existingAnswer.marks // Remove old marks
+      player.answers[existingAnswerIndex] = answerData
+      // console.error('Question already answered!')
+      // return {status: 'error', message: 'Question already answered', result: null}
+    } else {
+      // Add new answer
+      player.answers.push(answerData)
+    }
+
+    // Update total score
+    player.score += answerData.marks
+
+    // Handle game completion
+    if (finish) {
+      player.completed = true
+      player.finishedAt = new Date()
+
+      // Optional: Calculate total time taken
+      if (!player.joinedAt) player.joinedAt = new Date()
+      const timeTaken = Math.floor((player.finishedAt - player.joinedAt) / 1000)
+      // You can store timeTaken if needed
+    }
+
+    // Validate and save changes
+    await game.validate()
     await game.save()
 
     return {

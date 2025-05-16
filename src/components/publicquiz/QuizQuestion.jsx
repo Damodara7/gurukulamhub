@@ -79,7 +79,7 @@ const QuizQuestion = ({
         )}
 
         <Button
-          onClick={isAnswerSelected ? handleNext : null}
+          onClick={isAnswerSelected ? ()=>handleNext() : null}
           disabled={!isAnswerSelected}
           variant='contained'
           component='label'
