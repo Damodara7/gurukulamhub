@@ -7,6 +7,7 @@ import { API_URLS } from '@/configs/apiConfig'
 import { CircularProgress, Box, Typography, useTheme } from '@mui/material'
 import PlayGameInfoScreen from '@/components/public-games/play-game/PlayGameInfoScreen'
 import StartPlayGame from '@/components/public-games/play-game/StartPlayGame'
+import GameEnded from '@/components/public-games/play-game/GameEnded'
 
 function PlayGamePage() {
   const params = useParams()
@@ -41,6 +42,10 @@ function PlayGamePage() {
     }
   }, [params?.id, router])
 
+  const handleExit = () => {
+    router.push('/public-games') // Or your exit path
+  }
+
   if (loading) {
     return (
       <Box p={4} display='flex' justifyContent='center'>
@@ -57,8 +62,12 @@ function PlayGamePage() {
     )
   }
 
+  if (new Date() > new Date(new Date(game.startTime).getTime() + game.duration * 1000)) {
+    return <GameEnded game={game} onExit={handleExit} />
+  }
+
   if (shouldStartGame) {
-    return <StartPlayGame game={game} />
+    return <StartPlayGame game={game} setGame={setGame} />
   }
 
   return <PlayGameInfoScreen game={game} setShouldStartGame={setShouldStartGame} />

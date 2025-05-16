@@ -93,6 +93,7 @@ const GamePinInputFormPage = () => {
                 onChange={e => setGamePin(e.target.value)}
                 placeholder='Enter game PIN'
                 required
+                helperText={'Ex: 574515'}
               />
             </Box>
 

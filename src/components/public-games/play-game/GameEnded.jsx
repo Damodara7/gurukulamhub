@@ -1,24 +1,47 @@
-import { Box, Container, Typography, Button } from '@mui/material';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import { Box, Container, Typography, Button } from '@mui/material'
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
+import { TimerOff as TimerIcon } from '@mui/icons-material';
+import Leaderboard from './Leaderboard'
 
-const GameEnded = ({ onExit }) => {
+const GameEnded = ({ onExit, game = null }) => {
   return (
-    <Container maxWidth="sm" sx={{ py: 8, textAlign: 'center' }}>
-      <EmojiEventsIcon
-        color="primary"
-        sx={{ fontSize: 100, mb: 3 }}
-      />
-      <Typography variant="h3" gutterBottom sx={{ fontWeight: 700 }}>
-        Game Ended
+    <Container maxWidth='lg' sx={{ py: 8, textAlign: 'center' }}>
+        <Typography
+        variant='h2'
+        sx={{
+          mb: 2,
+          fontWeight: 600,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 1
+        }}
+      >
+        <EmojiEventsIcon color='primary' sx={{ fontSize: 60, mb: 3 }} /> {game.title}
       </Typography>
-      <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 4 }}>
+      <Typography variant='h3' color='error' gutterBottom sx={{ fontWeight: 700 }}>
+        Game Ended!
+      </Typography>
+      {/* <TimerIcon 
+        sx={{ 
+          fontSize: 60,
+          color: 'primary.main',
+          bgcolor: 'action.hover',
+          p: 1.5,
+          borderRadius: '50%'
+        }} 
+      /> */}
+
+      {game && <Leaderboard game={game} />}
+
+      <Typography variant='subtitle1' color='text.secondary' sx={{ my: 4 }}>
         Thank you for participating.
       </Typography>
-      <Button variant="outlined" size="large" onClick={onExit} sx={{ px: 5 }}>
+      <Button variant='outlined' size='large' onClick={onExit} sx={{ px: 5 }}>
         Explore Available Games
       </Button>
     </Container>
-  );
-};
+  )
+}
 
-export default GameEnded;
+export default GameEnded
