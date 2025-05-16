@@ -19,11 +19,13 @@ const GameCard = ({ game }) => {
 
   const handleView = () => {
     // Add your logic for the view action
+    
     router.push(`/public-games/${game._id}`)
   }
 
   const handleRegister = () => {
     // Add your logic for the register action
+    console.log('hello')
     router.push(`/public-games/${game._id}/register`)
   }
 

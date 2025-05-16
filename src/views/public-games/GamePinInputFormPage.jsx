@@ -16,18 +16,68 @@ const GamePinInputFormPage = () => {
   const { data: session } = useSession()
   const router = useRouter()
 
-  const validateGame = async () => {
-    if (!gamePin || !email) return
 
+  // clear errors when inputs change 
+  useEffect(() => {
+    setError(null)
+  }
+  , [gamePin, email])
+
+  
+  // Validate game PIN is exactly 6 digits
+  const validateGamePin = pin => {
+    return /^\d{6}$/.test(pin)
+  }
+
+  // Basic Gmail validation
+  const validateEmail = email => {
+    return /^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(email.toLowerCase())
+  }
+
+  const handleGamePinChange = e => {
+    const value = e.target.value
+    // Only allow numbers and limit to 6 characters
+    if (/^\d*$/.test(value) && value.length <= 6) {
+      setGamePin(value)
+    }
+  }
+
+  const handleEmailChange = e => {
+    setEmail(e.target.value.toLowerCase().trim())
+  }
+
+  const validateGame = async () => {
+    setError(null)
+    // Client-side validation
+    if (!gamePin) {
+      setError('Game PIN is required')
+      return
+    }
+
+    if (!validateGamePin(gamePin)) {
+      setError('Game PIN must be 6 digits')
+      return
+    }
+
+    if (!email) {
+      setError('Email is required')
+      return
+    }
+
+    if (!validateEmail(email)) {
+      setError('Please enter a valid Gmail address')
+      return
+    }
+
+    if (!session?.user) {
+      setError('You must be logged in to join a game')
+      return
+    }
+   
     // Handle form submission
     try {
       setLoading(true)
-      setError(null)
 
-      // Basic validation
-      if (!session?.user) {
-        throw new Error('You must be logged in to join a game')
-      }
       // Validate game PIN
       const gameRes = await RestApi.get(`${API_URLS.v0.USERS_GAME}?pin=${gamePin}`)
       if (gameRes.status === 'success') {
@@ -90,9 +140,14 @@ const GamePinInputFormPage = () => {
                 label='Game PIN'
                 variant='outlined'
                 value={gamePin}
-                onChange={e => setGamePin(e.target.value)}
+                onChange={handleGamePinChange}
                 placeholder='Enter game PIN'
                 required
+                inputProps={{
+                  maxLength: 6,
+                  pattern: '[0-9]*',
+                  inputMode: 'numeric'
+                }}
                 helperText={'Ex: 574515'}
               />
             </Box>
@@ -105,9 +160,12 @@ const GamePinInputFormPage = () => {
                 variant='outlined'
                 type='email'
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                onChange={handleEmailChange}
                 placeholder='Enter your email'
                 required
+                inputProps={{
+                  pattern: '[a-zA-Z0-9._%+-]+@gmail\\.com'
+                }}
               />
             </Box>
 
