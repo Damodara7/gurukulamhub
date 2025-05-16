@@ -485,3 +485,27 @@ export const startGame = async (gameId, userData) => {
     }
   }
 }
+
+export const getLeaderboard = async gameId => {
+  try {
+    const game = await Game.findById(gameId)
+    if (!game) {
+      return { status: 'success', result: null, message: 'Game not found' }
+    }
+
+    const leaderboard = game.participatedUsers
+      // .filter(p => p.completed)
+      .map(p => ({
+        _id: p._id,
+        email: p.email,
+        score: p.score,
+        totalTime: p.answers.reduce((sum, a) => sum + a.answerTime, 0),
+        accuracy: (p.answers.filter(a => a.marks > 0).length / p.answers.length) * 100
+      }))
+      .sort((a, b) => b.score - a.score || a.totalTime - b.totalTime)
+
+    return { status: 'success', result: leaderboard, message: 'Game not found' }
+  } catch (error) {
+    return { status: 'success', result: null, message: error.message }
+  }
+}

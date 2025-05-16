@@ -179,7 +179,9 @@ export default function PlayGameQuiz({ quiz, questions, game }) {
   return (
     <>
       <Box sx={{ mx: 'auto', px: 2, width: { xs: '100%', sm: '100%' }, height: '100%' }}>
-        <Paper elevation={0} sx={{ p: 2, mb: 4 }}>
+        <Leaderboard game={game} key={currentQuestionIndex} duringPlay />
+
+        <Paper elevation={0} sx={{ p: 2, my: 4 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Typography variant='h6' component='div'>
               Time Remaining
