@@ -315,8 +315,6 @@ export default function PlayGameQuiz({ quiz, questions, game }) {
           <ProgressBar progress={progress} />
         </Paper>
 
-        <Leaderboard game={game} key={currentQuestion} />
-
         {questions.length > 0 ? (
           <QuizQuestion
             currentQuestion={currentQuestion}
