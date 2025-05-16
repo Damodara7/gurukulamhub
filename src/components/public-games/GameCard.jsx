@@ -62,25 +62,28 @@ const GameCard = ({ game }) => {
           {/* Start Time */}
           <Grid item xs={12} sm={6} sx={{ mt: 1 }}>
             <CustomChipWithIcon
-              icon={<EventIcon color='primary' />}
+              icon={<EventIcon />}
               label={`${new Date(game.startTime).toLocaleDateString()} ${new Date(game.startTime).toLocaleTimeString(
                 [],
                 { hour: '2-digit', minute: '2-digit' }
               )}`}
               title={new Date(game.startTime).toLocaleString()}
               color='primary'
+              iconSx={{ color: '#1976d2' }} // blue icon
+              chipSx={{ backgroundColor: 'rgba(25, 118, 210, 0.1)' }} // light blue background
             />
           </Grid>
 
           {/* Registration End Time */}
           <Grid item xs={12} sm={6} sx={{ mt: 1 }}>
             <CustomChipWithIcon
-              icon={<HourglassBottomIcon sx={{ color: 'secondary.main' }} />}
+              icon={<HourglassBottomIcon />}
               label={`${new Date(game.registrationEndTime).toLocaleDateString()} ${new Date(
                 game.registrationEndTime
               ).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
               title={new Date(game.registrationEndTime).toLocaleString()}
-              color='secondary'
+              iconSx={{ color: '#ff5252' }}
+              chipSx={{ backgroundColor: 'rgba(244, 67, 54, 0.15)' }}
             />
           </Grid>
 
@@ -88,61 +91,52 @@ const GameCard = ({ game }) => {
           <Grid item xs={12} sm={6} sx={{ mt: 1 }}>
             <CustomChipWithIcon
               icon={<LocationOnIcon sx={{ color: 'success.main' }} />}
-              label={`${game.location.city}, ${game.location.region}, ${game.location.country}`}
-              title={`${game.location.city}, ${game.location.region}, ${game.location.country}`}
+              label={(() => {
+                if (game.location?.city) {
+                  return game.location.city
+                }
+                if (game.location?.region) {
+                  return game.location.region
+                }
+                return game.location?.country || 'Location not specified'
+              })()}
+              title={(() => {
+                if (game.location?.city) {
+                  return `${game.location.city}${game.location.region ? `, ${game.location.region}` : ''}${
+                    game.location.country ? `, ${game.location.country}` : ''
+                  }`
+                }
+                if (game.location?.region) {
+                  return `${game.location.region}${game.location.country ? `, ${game.location.country}` : ''}`
+                }
+                return game.location?.country || 'Location not specified'
+              })()}
+              iconSx={{ color: '#4caf50' }}
+              chipSx={{ backgroundColor: 'rgba(76, 175, 80, 0.1)' }}
             />
           </Grid>
-          
+
           {/* Reward */}
           <Grid item xs={12} sm={6} sx={{ mt: 1 }}>
             <CustomChipWithIcon
               icon={<EmojiEventsIcon sx={{ color: '#FFD700' }} />}
               label={`₹${game.totalRewardValue}`}
               title={`₹${game.totalRewardValue}`}
-              color='success'
+              iconSx={{ color: '#FFD700' }} // gold icon
+              chipSx={{ backgroundColor: 'rgba(255, 215, 0, 0.15)' }} // light gold background
             />
           </Grid>
         </Grid>
 
         {/* Buttons */}
         <Stack direction='row' spacing={2} mt={2}>
-          <Button
-            variant='contained'
-            color='primary'
-            onClick={handleView}
-            sx={{
-              '&:hover': {
-                color: 'white',
-                backgroundColor: 'primary.dark'
-              }
-            }}
-          >
+          <Button variant='outlined' color='info' onClick={handleView}>
             View
           </Button>
-          <Button
-            variant='contained'
-            color='primary'
-            onClick={handleRegister}
-            sx={{
-              '&:hover': {
-                color: 'white',
-                backgroundColor: 'primary.dark'
-              }
-            }}
-          >
+          <Button variant='outlined' color='success' onClick={handleRegister}>
             Register
           </Button>
-          <Button
-            variant='contained'
-            color='primary'
-            onClick={handleJoin}
-            sx={{
-              '&:hover': {
-                color: 'white',
-                backgroundColor: 'primary.dark'
-              }
-            }}
-          >
+          <Button variant='outlined' color='primary' onClick={handleJoin}>
             Join
           </Button>
         </Stack>

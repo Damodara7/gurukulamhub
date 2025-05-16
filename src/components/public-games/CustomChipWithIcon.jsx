@@ -2,7 +2,7 @@
 'use client'
 
 import { Tooltip, Chip } from '@mui/material'
-const CustomChipWithIcon = ({ icon, label, title, color = 'default', size = 'medium', mt = 0 }) => {
+const CustomChipWithIcon = ({ icon, label, title, color = 'default', size = 'medium', mt = 0 , iconSx = {} , chipSx = {} }) => {
   return (
     <Tooltip title={title}>
       <Chip
@@ -17,7 +17,10 @@ const CustomChipWithIcon = ({ icon, label, title, color = 'default', size = 'med
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           display: 'flex',
-          alignItems: 'center'
+          // alignItems: 'center',
+
+          '& .MuiChip-icon': iconSx , // Apply icon styles
+          ...chipSx, // Apply chip styles
         }}
       />
     </Tooltip>
