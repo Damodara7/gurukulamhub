@@ -60,7 +60,7 @@ export default function Leaderboard({ game, duringPlay=false }) {
   }
 
   return (
-    <Box sx={{ mx: 'auto', maxWidth: 'md', px: {md: 10, xs: 3} }}>
+    <Box sx={{ mx: 'auto', maxWidth: duringPlay ? 'sm' : 'md', px: {md: 10, xs: 3} }}>
       <Typography variant="h6" sx={{ 
         mb: 2,
         fontWeight: 600,
@@ -70,7 +70,7 @@ export default function Leaderboard({ game, duringPlay=false }) {
       }}>
         <EmojiEvents color="primary" /> Leaderboard
       </Typography>
-
+  
       <TableContainer component={Paper} elevation={3}>
         <Table size={duringPlay ? 'small' :'medium'}>
           <TableHead>
@@ -78,20 +78,22 @@ export default function Leaderboard({ game, duringPlay=false }) {
               <TableCell>Rank</TableCell>
               <TableCell>Player</TableCell>
               <TableCell align='right'>Score</TableCell>
-              <TableCell align='right'>Time</TableCell>
-              <TableCell align='right'>Accuracy</TableCell>
+              {!duringPlay && <TableCell align='right'>Time</TableCell>}
+              {!duringPlay && <TableCell align='right'>Accuracy</TableCell>}
             </TableRow>
           </TableHead>
           <TableBody>
-            {leaderboard.map((player, index) => (
-              <TableRow key={player._id}>
-                <TableCell>{index + 1}</TableCell>
-                <TableCell>{player.email}</TableCell>
-                <TableCell align='right'>{player.score.toFixed(2)}</TableCell>
-                <TableCell align='right'>{formatTime(player.totalTime)}</TableCell>
-                <TableCell align='right'>{player.accuracy}%</TableCell>
-              </TableRow>
-            ))}
+            {leaderboard
+              .slice(0, duringPlay ? 5 : leaderboard.length)
+              .map((player, index) => (
+                <TableRow key={player._id}>
+                  <TableCell>{index + 1}</TableCell>
+                  <TableCell>{player.email}</TableCell>
+                  <TableCell align='right'>{player.score.toFixed(2)}</TableCell>
+                  {!duringPlay && <TableCell align='right'>{formatTime(player.totalTime)}</TableCell>}
+                  {!duringPlay &&  <TableCell align='right'>{player.accuracy}%</TableCell>}
+                </TableRow>
+              ))}
           </TableBody>
         </Table>
       </TableContainer>
