@@ -7,6 +7,9 @@ import { API_URLS } from '@/configs/apiConfig'
 import { useRouter } from 'next/navigation'
 import { toast } from 'react-toastify'
 import { useSession } from 'next-auth/react'
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
+
 
 function CreateGamePage() {
   const { data: session } = useSession()
@@ -111,7 +114,9 @@ function CreateGamePage() {
         <p className='text-muted-foreground'>Fill in the details below to create a new game</p>
       </div>
 
-      <GameForm onSubmit={handleSubmit} onCancel={handleCancel} quizzes={quizzes} />
+      <LocalizationProvider dateAdapter={AdapterDayjs}>
+        <GameForm onSubmit={handleSubmit} quizzes={quizzes} onCancel={handleCancel} />
+      </LocalizationProvider>
     </div>
   )
 }
