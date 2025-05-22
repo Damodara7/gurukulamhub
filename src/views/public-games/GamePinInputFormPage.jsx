@@ -16,14 +16,15 @@ const GamePinInputFormPage = () => {
   const { data: session } = useSession()
   const router = useRouter()
 
+  // Refs for the input fields
+  // const gamePinRef = React.useRef(null)
+  // const emailRef = React.useRef(null)
 
-  // clear errors when inputs change 
-  useEffect(() => {
-    setError(null)
-  }
-  , [gamePin, email])
+  // Clear errors when inputs are focused
+  // useEffect(() => {
+  //   setError(null)
+  // }, [gamePin , email])
 
-  
   // Validate game PIN is exactly 6 digits
   const validateGamePin = pin => {
     return /^\d{6}$/.test(pin)
@@ -73,7 +74,7 @@ const GamePinInputFormPage = () => {
       setError('You must be logged in to join a game')
       return
     }
-   
+
     // Handle form submission
     try {
       setLoading(true)
@@ -137,10 +138,12 @@ const GamePinInputFormPage = () => {
             <Box mb={4}>
               <TextField
                 fullWidth
+                // inputRef={gamePinRef} // Add ref here
                 label='Game PIN'
                 variant='outlined'
                 value={gamePin}
                 onChange={handleGamePinChange}
+                onFocus={() => setError(null)}
                 placeholder='Enter game PIN'
                 required
                 inputProps={{
@@ -156,11 +159,13 @@ const GamePinInputFormPage = () => {
             <Box mb={6}>
               <TextField
                 fullWidth
+                // inputRef={emailRef} // Add ref here
                 label='Email'
                 variant='outlined'
                 type='email'
                 value={email}
                 onChange={handleEmailChange}
+                onFocus={() => setError(null)}
                 placeholder='Enter your email'
                 required
                 inputProps={{

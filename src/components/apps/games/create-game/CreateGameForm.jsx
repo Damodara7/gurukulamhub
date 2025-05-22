@@ -36,6 +36,11 @@ import {
 } from '@mui/icons-material'
 
 import RewardDialog from '../RewardDialog'
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker'
+import dayjs from 'dayjs'
+
+
+
 
 // Reward position options
 const POSITION_OPTIONS = [1, 2, 3, 4, 5]
@@ -46,12 +51,12 @@ const initialFormData = {
   pin: Math.floor(100000 + Math.random() * 900000).toString(),
   description: '',
   quiz: '',
-  startTime: new Date(),
+  startTime: null,
   duration: 600, // 10 minutes in seconds
   promotionalVideoUrl: '',
   thumbnailPoster: '',
   requireRegistration: false,
-  registrationEndTime: new Date(),
+  registrationEndTime: null,
   maxPlayers: 100,
   tags: [],
   location: {
@@ -198,17 +203,22 @@ const GameForm = ({ onSubmit, quizzes, onCancel }) => {
       </Grid>
 
       {/* Date & Time */}
+
       <Grid item xs={12} md={6}>
-        <TextField
-          fullWidth
+        <DateTimePicker
+          sx={{ width: '100%' }}
           label='Start Time'
-          type='datetime-local'
-          value={formData.startTime.toISOString().slice(0, 16)}
-          onChange={e => handleDateChange('startTime', new Date(e.target.value))}
-          InputLabelProps={{
-            shrink: true
-          }}
-          required
+          value={formData.startTime ? dayjs(formData.startTime) : null}
+          onChange={newValue => handleDateChange('startTime', newValue ? newValue.toDate() : null)}
+          renderInput={params => (
+            <TextField
+              {...params}
+              required
+              InputLabelProps={{
+                shrink: true
+              }}
+            />
+          )}
         />
       </Grid>
 
@@ -244,16 +254,21 @@ const GameForm = ({ onSubmit, quizzes, onCancel }) => {
 
       {formData.requireRegistration && (
         <Grid item xs={12} md={6}>
-          <TextField
-            fullWidth
+          <DateTimePicker
+            sx={{ width: '100%' }}
             label='Registration End Time'
-            type='datetime-local'
-            value={formData.registrationEndTime.toISOString().slice(0, 16)}
-            onChange={e => handleDateChange('registrationEndTime', new Date(e.target.value))}
-            InputLabelProps={{
-              shrink: true
+            value={formData.registrationEndTime ? dayjs(formData.registrationEndTime) : null}
+            onChange={newValue => handleDateChange('registrationEndTime', newValue ? newValue.toDate() : null)}
+            renderInput={params => {
+              ;<TextField
+                {...params}
+                fullWidth
+                required
+                InputLabelProps={{
+                  shrink: true
+                }}
+              />
             }}
-            required
           />
         </Grid>
       )}
@@ -458,7 +473,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel }) => {
           </Button>
           <Button
             onClick={handleSubmit}
-            // component='label'
+            component='label'
             variant='contained'
             color='primary'
             style={{ color: 'white' }}
