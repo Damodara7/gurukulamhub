@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   Box,
   Button,
@@ -29,18 +29,22 @@ import {
 import {
   Add as AddIcon,
   Remove as RemoveIcon,
+  Delete as DeleteIcon,
   Close as CloseIcon,
   Edit as EditIcon,
   DateRange as DateRangeIcon,
-  AccessTime as AccessTimeIcon
+  AccessTime as AccessTimeIcon,
+  VideocamOff as VideocamOffIcon,
 } from '@mui/icons-material'
 
 import RewardDialog from '../RewardDialog'
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker'
 import dayjs from 'dayjs'
-
-
-
+import ReactPlayer from 'react-player'
+import CountryRegionDropdown from '@/views/pages/auth/register-multi-steps/CountryRegionDropdown'
+import * as RestApi from '@/utils/restApiUtil'
+import { API_URLS } from '@/configs/apiConfig'
+import Loading from '@/components/Loading'
 
 // Reward position options
 const POSITION_OPTIONS = [1, 2, 3, 4, 5]
@@ -57,7 +61,8 @@ const initialFormData = {
   thumbnailPoster: '',
   requireRegistration: false,
   registrationEndTime: null,
-  maxPlayers: 100,
+  limitPlayers: false,
+  maxPlayers: 100000,
   tags: [],
   location: {
     country: '',
@@ -70,7 +75,19 @@ const initialFormData = {
 // Main Game Form component
 const GameForm = ({ onSubmit, quizzes, onCancel }) => {
   const [formData, setFormData] = useState(initialFormData)
+  const fileInputRef = useRef(null)
   const [availablePositions, setAvailablePositions] = useState(POSITION_OPTIONS)
+  const [selectedCountry, setSelectedCountry] = useState('')
+  const [selectedCountryObject, setSelectedCountryObject] = useState(null)
+  const [selectedRegion, setSelectedRegion] = useState('')
+  const [city, setCity] = useState('')
+  const [cityOptions, setCityOptions] = useState([])
+
+  // Loading state
+  const [loading, setLoading] = useState({
+    fetchCities: false,
+    submitting: false
+  })
 
   // Reward Dialog states
   const [openRewardDialog, setOpenRewardDialog] = useState(false)
@@ -81,6 +98,30 @@ const GameForm = ({ onSubmit, quizzes, onCancel }) => {
     const usedPositions = formData.rewards.map(r => r.position)
     setAvailablePositions(POSITION_OPTIONS.filter(pos => !usedPositions.includes(pos)))
   }, [formData.rewards])
+
+  // Fetch Cities from DB
+  const getCitiesData = async (region = '') => {
+    setLoading(prev => ({ ...prev, fetchCities: true }))
+    try {
+      console.log('Fetching Cities Data now...')
+      // const result = await clientApi.getAllCities()
+      const result = await RestApi.get(`/api/cities?state=${region}`)
+      if (result?.status === 'success') {
+        console.log('Cities Fetched result', result)
+        setCityOptions(result?.result?.map(each => each.city)) // Store the fetched cities
+      } else {
+        console.log('Error Fetching cities:', result)
+      }
+    } catch (error) {
+      console.log('Error:', error)
+    } finally {
+      setLoading(prev => ({ ...prev, fetchCities: false }))
+    }
+  }
+
+  useEffect(() => {
+    getCitiesData()
+  }, [])
 
   const handleChange = e => {
     const { name, value, type, checked } = e.target
@@ -152,6 +193,83 @@ const GameForm = ({ onSubmit, quizzes, onCancel }) => {
     await onSubmit(formData)
   }
 
+  // Image upload
+  const handleImageUpload = async e => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    // Resize image if over 2MB
+    if (file.size > 2 * 1024 * 1024) {
+      try {
+        const compressedFile = await compressImage(file)
+        setFormData(prev => ({ ...prev, thumbnailPoster: compressedFile }))
+      } catch (error) {
+        console.error('Compression error:', error)
+      }
+    } else {
+      const reader = new FileReader()
+      reader.onload = event => {
+        setFormData(prev => ({
+          ...prev,
+          thumbnailPoster: event.target.result
+        }))
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  // Image compression function
+  const compressImage = file => {
+    return new Promise(resolve => {
+      const reader = new FileReader()
+      reader.readAsDataURL(file)
+      reader.onload = event => {
+        const img = new Image()
+        img.src = event.target.result
+        img.onload = () => {
+          const canvas = document.createElement('canvas')
+          const MAX_WIDTH = 800
+          const MAX_HEIGHT = 800
+          let width = img.width
+          let height = img.height
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width
+              width = MAX_WIDTH
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height
+              height = MAX_HEIGHT
+            }
+          }
+
+          canvas.width = width
+          canvas.height = height
+          const ctx = canvas.getContext('2d')
+          ctx.drawImage(img, 0, 0, width, height)
+
+          canvas.toBlob(
+            blob => {
+              resolve(URL.createObjectURL(blob))
+            },
+            'image/jpeg',
+            0.7
+          )
+        }
+      }
+    })
+  }
+
+  const triggerFileInput = () => {
+    fileInputRef.current.click()
+  }
+
+  const handleChangeCountry = countryValue => {
+    setSelectedRegion('')
+  }
+
   return (
     <Grid container spacing={3}>
       <Grid item xs={12}>
@@ -189,13 +307,43 @@ const GameForm = ({ onSubmit, quizzes, onCancel }) => {
         />
       </Grid>
 
-      <Grid item xs={12} md={6}>
+      <Grid item xs={12}>
         <FormControl fullWidth>
           <InputLabel>Quiz</InputLabel>
           <Select name='quiz' value={formData.quiz} label='Quiz' onChange={handleChange} required>
             {quizzes.map(quiz => (
               <MenuItem key={quiz._id} value={quiz._id}>
-                {quiz.title}
+                <Grid container alignItems='center' spacing={2} justifyContent='space-between'>
+                  {/* Left side - Thumbnail and Quiz Info */}
+                  <Grid item xs={8}>
+                    <Grid container alignItems='center' spacing={2}>
+                      {/* Quiz Thumbnail */}
+                      <Grid item>
+                        <img
+                          src={quiz?.thumbnail || 'https://via.placeholder.com/150x150'}
+                          alt={quiz.title}
+                          style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }}
+                        />
+                      </Grid>
+
+                      {/* Title and Details */}
+                      <Grid item>
+                        <Typography variant='body2' noWrap={false}>
+                          <Box component='span' fontWeight='bold'>
+                            {quiz.title}
+                          </Box>
+                          <Box component='span' sx={{ color: 'text.secondary', mx: 0.5 }}>
+                            - by
+                          </Box>
+                          <Box component='span'>{quiz.createdBy}</Box>
+                        </Typography>
+                        <Typography variant='body2' color='textSecondary' noWrap>
+                          {quiz.details}
+                        </Typography>
+                      </Grid>
+                    </Grid>
+                  </Grid>
+                </Grid>
               </MenuItem>
             ))}
           </Select>
@@ -203,7 +351,6 @@ const GameForm = ({ onSubmit, quizzes, onCancel }) => {
       </Grid>
 
       {/* Date & Time */}
-
       <Grid item xs={12} md={6}>
         <DateTimePicker
           sx={{ width: '100%' }}
@@ -243,24 +390,21 @@ const GameForm = ({ onSubmit, quizzes, onCancel }) => {
       </Grid>
 
       {/* Registration */}
-      <Grid item xs={12}>
+      <Grid item xs={12} md={6}>
         <FormControlLabel
           control={
             <Checkbox checked={formData.requireRegistration} onChange={handleChange} name='requireRegistration' />
           }
           label='Require Registration'
         />
-      </Grid>
-
-      {formData.requireRegistration && (
-        <Grid item xs={12} md={6}>
+        {formData.requireRegistration && (
           <DateTimePicker
             sx={{ width: '100%' }}
             label='Registration End Time'
             value={formData.registrationEndTime ? dayjs(formData.registrationEndTime) : null}
             onChange={newValue => handleDateChange('registrationEndTime', newValue ? newValue.toDate() : null)}
-            renderInput={params => {
-              ;<TextField
+            renderInput={params => (
+              <TextField
                 {...params}
                 fullWidth
                 required
@@ -268,21 +412,28 @@ const GameForm = ({ onSubmit, quizzes, onCancel }) => {
                   shrink: true
                 }}
               />
-            }}
+            )}
           />
-        </Grid>
-      )}
+        )}
+      </Grid>
 
+      {/* Limit Players */}
       <Grid item xs={12} md={6}>
-        <TextField
-          fullWidth
-          label='Max Players'
-          name='maxPlayers'
-          type='number'
-          value={formData.maxPlayers}
-          onChange={handleChange}
-          inputProps={{ min: 1 }}
+        <FormControlLabel
+          control={<Checkbox checked={formData.limitPlayers} onChange={handleChange} name='limitPlayers' />}
+          label='Limit Players'
         />
+        {formData.limitPlayers && (
+          <TextField
+            fullWidth
+            label='Max Players'
+            name='maxPlayers'
+            type='number'
+            value={formData.maxPlayers}
+            onChange={handleChange}
+            inputProps={{ min: 1 }}
+          />
+        )}
       </Grid>
 
       {/* Location */}
@@ -291,57 +442,253 @@ const GameForm = ({ onSubmit, quizzes, onCancel }) => {
           Location (Optional)
         </Typography>
         <Grid container spacing={2}>
-          <Grid item xs={12} md={4}>
-            <TextField
-              fullWidth
-              label='Country'
-              name='location.country'
-              value={formData.location.country}
-              onChange={handleChange}
+        <Grid item xs={12} sm={6} md={4}>
+            <CountryRegionDropdown
+              setSelectedCountry={setSelectedCountry}
+              selectedCountryObject={selectedCountryObject}
+              setSelectedCountryObject={setSelectedCountryObject}
+              onCountryChange={handleChangeCountry}
             />
           </Grid>
-          <Grid item xs={12} md={4}>
-            <TextField
-              fullWidth
-              label='Region/State'
-              name='location.region'
-              value={formData.location.region}
-              onChange={handleChange}
-            />
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <TextField
-              fullWidth
-              label='City'
-              name='location.city'
-              value={formData.location.city}
-              onChange={handleChange}
-            />
-          </Grid>
+
+          {selectedCountryObject?.country && (
+            <Grid item xs={12} sm={6} md={4}>
+              <FormControl fullWidth>
+                <Autocomplete
+                  autoHighlight
+                  onChange={(e, newValue) => {
+                    setSelectedRegion(newValue)
+                    getCitiesData(newValue)
+                    setCity('')
+                  }}
+                  id='autocomplete-region-select'
+                  options={selectedCountryObject?.regions || []}
+                  getOptionLabel={option => option || ''}
+                  renderInput={params => (
+                    <TextField
+                      {...params}
+                      key={params.id}
+                      label='Choose a region'
+                      inputProps={{
+                        ...params.inputProps,
+                        autoComplete: 'region'
+                      }}
+                    />
+                  )}
+                  value={selectedRegion}
+                />
+              </FormControl>
+            </Grid>
+          )}
+
+          {selectedRegion && (
+            <Grid item xs={12} sm={6} md={4}>
+              {loading.fetchCities && <Loading />}
+              {!loading.fetchCities && (
+                <FormControl fullWidth>
+                  <Autocomplete
+                    autoHighlight
+                    onChange={(e, newValue) => {
+                      setCity(newValue)
+                    }}
+                    id='autocomplete-city-select'
+                    options={cityOptions}
+                    getOptionLabel={option => option || ''}
+                    renderInput={params => (
+                      <TextField
+                        {...params}
+                        key={params.id}
+                        label='Choose a City'
+                        inputProps={{
+                          ...params.inputProps,
+                          autoComplete: 'city'
+                        }}
+                      />
+                    )}
+                    value={city}
+                  />
+                </FormControl>
+              )}
+            </Grid>
+          )}
         </Grid>
       </Grid>
 
-      {/* Media */}
-      <Grid item xs={12} md={6}>
-        <TextField
-          fullWidth
-          label='Promotional Video URL'
-          name='promotionalVideoUrl'
-          value={formData.promotionalVideoUrl}
-          onChange={handleChange}
-          type='url'
-        />
-      </Grid>
+      {/* Media Section */}
+      <Grid item xs={12}>
+        <Box
+          sx={{
+            border: '1px dashed',
+            borderColor: 'divider',
+            borderRadius: 1,
+            p: 3,
+            mb: 2
+          }}
+        >
+          <Typography variant='subtitle1' gutterBottom sx={{ mb: 2 }}>
+            Media
+          </Typography>
 
-      <Grid item xs={12} md={6}>
-        <TextField
-          fullWidth
-          label='Thumbnail Poster URL'
-          name='thumbnailPoster'
-          value={formData.thumbnailPoster}
-          onChange={handleChange}
-          type='url'
+          <Grid container spacing={3}>
+            {/* Video Section - Full width on xs, half on md+ */}
+            <Grid item xs={12} md={6}>
+  <Box sx={{ height: '100%' }}>
+    <Typography variant='subtitle2' gutterBottom>
+      Promotional Video
+    </Typography>
+    <TextField
+      fullWidth
+      label='Video URL'
+      name='promotionalVideoUrl'
+      value={formData.promotionalVideoUrl}
+      onChange={handleChange}
+      type='url'
+      placeholder='https://youtube.com/watch?v=...'
+    />
+    <Box
+      sx={{
+        mt: 2,
+        borderRadius: 1,
+        overflow: 'hidden',
+        border: '1px solid',
+        borderColor: 'divider',
+        height: '200px',
+        backgroundColor: '#f5f5f5',
+        position: 'relative'
+      }}
+    >
+      {formData.promotionalVideoUrl ? (
+        <ReactPlayer
+          url={formData.promotionalVideoUrl}
+          width='100%'
+          height='200px'
+          controls
+          style={{ backgroundColor: '#f5f5f5' }}
         />
+      ) : (
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+            textAlign: 'center',
+            p: 2
+          }}
+        >
+          <VideocamOffIcon sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
+          <Typography variant='body2' color='text.secondary'>
+            No video URL provided
+          </Typography>
+          <Typography variant='caption' color='text.disabled'>
+            Add a YouTube or video URL above
+          </Typography>
+        </Box>
+      )}
+    </Box>
+  </Box>
+</Grid>
+
+            {/* Image Upload Section - Full width on xs, half on md+ */}
+            <Grid item xs={12} md={6}>
+              <Box sx={{ height: '100%' }}>
+                <Typography variant='subtitle2' gutterBottom>
+                  Thumbnail Image
+                </Typography>
+                <input
+                  type='file'
+                  ref={fileInputRef}
+                  onChange={handleImageUpload}
+                  accept='image/*'
+                  style={{ display: 'none' }}
+                />
+                {formData.thumbnailPoster ? (
+                  <Box sx={{ position: 'relative', mb: 2 }}>
+                    <img
+                      src={formData.thumbnailPoster}
+                      alt='Game thumbnail'
+                      style={{
+                        width: '100%',
+                        height: '200px',
+                        objectFit: 'cover',
+                        borderRadius: 4,
+                        border: '1px solid #e0e0e0'
+                      }}
+                    />
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        top: 8,
+                        right: 8,
+                        display: 'flex',
+                        gap: 1,
+                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                        borderRadius: 1,
+                        p: 0.5,
+                        boxShadow: 1
+                      }}
+                    >
+                      <IconButton
+                        color='primary'
+                        size='small'
+                        onClick={triggerFileInput}
+                        sx={{ backgroundColor: 'rgba(0, 0, 0, 0.04)' }}
+                      >
+                        <EditIcon fontSize='small' />
+                      </IconButton>
+                      <IconButton
+                        color='error'
+                        size='small'
+                        onClick={() => {
+                          if (formData.thumbnailPoster.startsWith('blob:')) {
+                            URL.revokeObjectURL(formData.thumbnailPoster)
+                          }
+                          setFormData(prev => ({
+                            ...prev,
+                            thumbnailPoster: ''
+                          }))
+                        }}
+                        sx={{ backgroundColor: 'rgba(0, 0, 0, 0.04)' }}
+                      >
+                        <DeleteIcon fontSize='small' />
+                      </IconButton>
+                    </Box>
+                  </Box>
+                ) : (
+                  <Box
+                    onClick={triggerFileInput}
+                    sx={{
+                      height: '200px',
+                      border: '2px dashed',
+                      borderColor: 'divider',
+                      borderRadius: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      backgroundColor: 'action.hover',
+                      '&:hover': {
+                        backgroundColor: 'action.selected'
+                      }
+                    }}
+                  >
+                    <Typography color='text.secondary'>Click to upload thumbnail image</Typography>
+                  </Box>
+                )}
+                <TextField
+                  fullWidth
+                  label='Or enter image URL'
+                  name='thumbnailPoster'
+                  value={formData.thumbnailPoster}
+                  onChange={handleChange}
+                  type='url'
+                  sx={{ mt: 2 }}
+                />
+              </Box>
+            </Grid>
+          </Grid>
+        </Box>
       </Grid>
 
       <Grid item xs={12}>

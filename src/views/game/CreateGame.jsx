@@ -151,8 +151,12 @@ function CreateGame({ mode = 'create', quizId = '', gameId }) {
     }
   }
 
-  // Fetch Cities from DB
-  const getCitiesData = async (region = '') => {
+  useEffect(() => {
+    getQuizData()
+  }, [])
+
+   // Fetch Cities from DB
+   const getCitiesData = async (region = '') => {
     setLoading(prev => ({ ...prev, fetchCities: true }))
     try {
       console.log('Fetching Cities Data now...')
@@ -170,10 +174,6 @@ function CreateGame({ mode = 'create', quizId = '', gameId }) {
       setLoading(prev => ({ ...prev, fetchCities: false }))
     }
   }
-
-  useEffect(() => {
-    getQuizData()
-  }, [])
 
   useEffect(() => {
     getCitiesData()

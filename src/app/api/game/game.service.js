@@ -17,7 +17,7 @@ export const getOne = async (filter = {}) => {
     }
 
     const game = await Game.findOne({ ...filter })
-      .populate('quiz', 'title description')
+      .populate('quiz')
       .populate('createdBy', 'email firstName lastName')
       .lean()
 
@@ -47,7 +47,7 @@ export const getAll = async (filter = {}) => {
   await connectMongo()
   try {
     const games = await Game.find(filter)
-      .populate('quiz', 'title')
+      .populate('quiz')
       .populate('createdBy', 'email firstName lastName')
       .sort({ createdAt: -1 })
       .lean()
@@ -78,7 +78,7 @@ export const getAllByEmail = async email => {
     }
 
     const games = await Game.find({ creatorEmail: email })
-      .populate('quiz', 'title')
+      .populate('quiz')
       .populate('createdBy', 'email firstName lastName')
       .sort({ startTime: -1 })
       .lean()

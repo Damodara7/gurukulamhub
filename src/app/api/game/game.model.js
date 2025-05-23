@@ -137,9 +137,11 @@ const gameSchema = new mongoose.Schema(
       type: [participatedUserSchema],
       default: []
     },
+    limitPlayers: Boolean,
     maxPlayers: {
       type: Number,
-      min: 1
+      min: 1,
+      default: 100000,
     },
     status: {
       type: String,
