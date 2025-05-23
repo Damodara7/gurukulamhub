@@ -6,8 +6,10 @@ import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { useSession } from 'next-auth/react'
 import GamesList from '@/components/apps/games/all-games/GamesList'
+import { useRouter } from 'next/navigation'
 
 const AllGamesPage = () => {
+  const router = useRouter()
   const [games, setGames] = useState([])
   const [loading, setLoading] = useState(true)
   const { data: session } = useSession()
@@ -60,13 +62,16 @@ const AllGamesPage = () => {
     return <div className='text-center py-8'>Loading games...</div>
   }
 
-  async function handleViewGame(id){
+  async function handleViewGame(id) {
     console.log('Clicked View game of id: ', id)
+    router.push(`/apps/games/${id}`)
+  }
+  async function handleEditGame(id) {
+    console.log('Clicked Edit game of id: ', id)
+    router.push(`/apps/games/${id}/edit`)
   }
 
-  return (
-    <GamesList games={games} onApprove={handleApprove} onViewGame={handleViewGame} />
-  )
+  return <GamesList games={games} onApprove={handleApprove} onViewGame={handleViewGame} onEditGame={handleEditGame} />
 }
 
 export default AllGamesPage

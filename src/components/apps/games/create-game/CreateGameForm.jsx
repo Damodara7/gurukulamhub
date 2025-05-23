@@ -34,7 +34,7 @@ import {
   Edit as EditIcon,
   DateRange as DateRangeIcon,
   AccessTime as AccessTimeIcon,
-  VideocamOff as VideocamOffIcon,
+  VideocamOff as VideocamOffIcon
 } from '@mui/icons-material'
 
 import RewardDialog from '../RewardDialog'
@@ -45,6 +45,7 @@ import CountryRegionDropdown from '@/views/pages/auth/register-multi-steps/Count
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import Loading from '@/components/Loading'
+import { getCountryByName } from '@/utils/countryRegionUtil'
 
 // Reward position options
 const POSITION_OPTIONS = [1, 2, 3, 4, 5]
@@ -73,15 +74,14 @@ const initialFormData = {
 }
 
 // Main Game Form component
-const GameForm = ({ onSubmit, quizzes, onCancel }) => {
+const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
   const [formData, setFormData] = useState(initialFormData)
-  const fileInputRef = useRef(null)
   const [availablePositions, setAvailablePositions] = useState(POSITION_OPTIONS)
-  const [selectedCountry, setSelectedCountry] = useState('')
   const [selectedCountryObject, setSelectedCountryObject] = useState(null)
   const [selectedRegion, setSelectedRegion] = useState('')
-  const [city, setCity] = useState('')
+  const [selectedCity, setSelectedCity] = useState('')
   const [cityOptions, setCityOptions] = useState([])
+  const fileInputRef = useRef(null)
 
   // Loading state
   const [loading, setLoading] = useState({
@@ -93,11 +93,29 @@ const GameForm = ({ onSubmit, quizzes, onCancel }) => {
   const [openRewardDialog, setOpenRewardDialog] = useState(false)
   const [editingReward, setEditingReward] = useState(null)
 
+  // If Edit Game?
+  useEffect(() => {
+    console.log({ data })
+    setFormData({
+      ...data,
+      quiz: data?.quiz?._id || null,
+      startTime: data?.startTime ? new Date(data.startTime) : null,
+      registrationEndTime: data.registrationEndTime ? new Date(data.registrationEndTime) : null
+    })
+    setSelectedCountryObject(
+      data?.location?.country
+        ? { country: data?.location?.country, countryCode: getCountryByName(data?.location?.country)?.countryCode }
+        : null
+    )
+    setSelectedRegion(data?.location?.region || '')
+    setSelectedCity(data?.location?.city || '')
+  }, [data])
+
   // Update available positions when rewards change
   useEffect(() => {
-    const usedPositions = formData.rewards.map(r => r.position)
+    const usedPositions = formData?.rewards?.map(r => r.position)
     setAvailablePositions(POSITION_OPTIONS.filter(pos => !usedPositions.includes(pos)))
-  }, [formData.rewards])
+  }, [formData?.rewards])
 
   // Fetch Cities from DB
   const getCitiesData = async (region = '') => {
@@ -190,7 +208,10 @@ const GameForm = ({ onSubmit, quizzes, onCancel }) => {
 
   const handleSubmit = async () => {
     console.log('Hello')
-    await onSubmit(formData)
+    await onSubmit({
+      ...formData,
+      location: { country: selectedCountryObject?.country, region: selectedRegion, city: selectedCity }
+    })
   }
 
   // Image upload
@@ -350,7 +371,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel }) => {
         </FormControl>
       </Grid>
 
-      {/* Date & Time */}
+      {/* Start Date & Time */}
       <Grid item xs={12} md={6}>
         <DateTimePicker
           sx={{ width: '100%' }}
@@ -442,9 +463,10 @@ const GameForm = ({ onSubmit, quizzes, onCancel }) => {
           Location (Optional)
         </Typography>
         <Grid container spacing={2}>
-        <Grid item xs={12} sm={6} md={4}>
+          <Grid item xs={12} sm={6} md={4}>
             <CountryRegionDropdown
-              setSelectedCountry={setSelectedCountry}
+              setSelectedCountry={() => {}}
+              defaultCountryCode=''
               selectedCountryObject={selectedCountryObject}
               setSelectedCountryObject={setSelectedCountryObject}
               onCountryChange={handleChangeCountry}
@@ -459,7 +481,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel }) => {
                   onChange={(e, newValue) => {
                     setSelectedRegion(newValue)
                     getCitiesData(newValue)
-                    setCity('')
+                    setSelectedCity('')
                   }}
                   id='autocomplete-region-select'
                   options={selectedCountryObject?.regions || []}
@@ -489,7 +511,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel }) => {
                   <Autocomplete
                     autoHighlight
                     onChange={(e, newValue) => {
-                      setCity(newValue)
+                      setSelectedCity(newValue)
                     }}
                     id='autocomplete-city-select'
                     options={cityOptions}
@@ -505,7 +527,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel }) => {
                         }}
                       />
                     )}
-                    value={city}
+                    value={selectedCity}
                   />
                 </FormControl>
               )}
@@ -532,63 +554,63 @@ const GameForm = ({ onSubmit, quizzes, onCancel }) => {
           <Grid container spacing={3}>
             {/* Video Section - Full width on xs, half on md+ */}
             <Grid item xs={12} md={6}>
-  <Box sx={{ height: '100%' }}>
-    <Typography variant='subtitle2' gutterBottom>
-      Promotional Video
-    </Typography>
-    <TextField
-      fullWidth
-      label='Video URL'
-      name='promotionalVideoUrl'
-      value={formData.promotionalVideoUrl}
-      onChange={handleChange}
-      type='url'
-      placeholder='https://youtube.com/watch?v=...'
-    />
-    <Box
-      sx={{
-        mt: 2,
-        borderRadius: 1,
-        overflow: 'hidden',
-        border: '1px solid',
-        borderColor: 'divider',
-        height: '200px',
-        backgroundColor: '#f5f5f5',
-        position: 'relative'
-      }}
-    >
-      {formData.promotionalVideoUrl ? (
-        <ReactPlayer
-          url={formData.promotionalVideoUrl}
-          width='100%'
-          height='200px'
-          controls
-          style={{ backgroundColor: '#f5f5f5' }}
-        />
-      ) : (
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: '100%',
-            textAlign: 'center',
-            p: 2
-          }}
-        >
-          <VideocamOffIcon sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
-          <Typography variant='body2' color='text.secondary'>
-            No video URL provided
-          </Typography>
-          <Typography variant='caption' color='text.disabled'>
-            Add a YouTube or video URL above
-          </Typography>
-        </Box>
-      )}
-    </Box>
-  </Box>
-</Grid>
+              <Box sx={{ height: '100%' }}>
+                <Typography variant='subtitle2' gutterBottom>
+                  Promotional Video
+                </Typography>
+                <TextField
+                  fullWidth
+                  label='Video URL'
+                  name='promotionalVideoUrl'
+                  value={formData.promotionalVideoUrl}
+                  onChange={handleChange}
+                  type='url'
+                  placeholder='https://youtube.com/watch?v=...'
+                />
+                <Box
+                  sx={{
+                    mt: 2,
+                    borderRadius: 1,
+                    overflow: 'hidden',
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    height: '200px',
+                    backgroundColor: '#f5f5f5',
+                    position: 'relative'
+                  }}
+                >
+                  {formData.promotionalVideoUrl ? (
+                    <ReactPlayer
+                      url={formData.promotionalVideoUrl}
+                      width='100%'
+                      height='200px'
+                      controls
+                      style={{ backgroundColor: '#f5f5f5' }}
+                    />
+                  ) : (
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        height: '100%',
+                        textAlign: 'center',
+                        p: 2
+                      }}
+                    >
+                      <VideocamOffIcon sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
+                      <Typography variant='body2' color='text.secondary'>
+                        No video URL provided
+                      </Typography>
+                      <Typography variant='caption' color='text.disabled'>
+                        Add a YouTube or video URL above
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
+              </Box>
+            </Grid>
 
             {/* Image Upload Section - Full width on xs, half on md+ */}
             <Grid item xs={12} md={6}>

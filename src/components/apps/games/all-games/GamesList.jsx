@@ -15,9 +15,10 @@ import { format } from 'date-fns'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import PeopleIcon from '@mui/icons-material/People'
 import PersonIcon from '@mui/icons-material/Person'
-import EventIcon from '@mui/icons-material/Event';
+import EventIcon from '@mui/icons-material/Event'
+import imagePlaceholder from '/public/images/misc/image-placeholder.png'
 
-const GameList = ({ games, onApprove, onViewGame }) => {
+const GameList = ({ games, onApprove, onViewGame, onEditGame }) => {
   const theme = useTheme()
 
   const getStatusChip = status => {
@@ -71,15 +72,16 @@ const GameList = ({ games, onApprove, onViewGame }) => {
                   }
                 }}
               >
-                {game.thumbnailPoster && (
-                  <CardMedia
-                    component='img'
-                    height='180'
-                    image={game.thumbnailPoster}
-                    alt={game.title}
-                    sx={{ objectFit: 'cover' }}
-                  />
-                )}
+                <CardMedia
+                  component='img'
+                  height='180'
+                  image={game?.thumbnailPoster || imagePlaceholder.src}
+                  alt={game.title}
+                  sx={{ objectFit: 'cover' }}
+                  onError={e => {
+                    e.target.src = imagePlaceholder.src // Your fallback image
+                  }}
+                />
 
                 <CardContent sx={{ flexGrow: 1 }}>
                   <Stack direction='row' justifyContent='space-between' alignItems='flex-start' mb={0}>
@@ -137,12 +139,17 @@ const GameList = ({ games, onApprove, onViewGame }) => {
                     </Stack>
                   </Stack>
 
-                  <Stack direction='row' spacing={1} justifyContent='flex-end'>
+                  <Stack direction='row' spacing={1} justifyContent='center'>
                     <Button variant='outlined' color='info' size='small' onClick={() => onViewGame(game._id)}>
                       Details
                     </Button>
+                    {(game.status === 'created' || game.status === 'reg_open' || game.status === 'reg_closed') && (
+                      <Button variant='outlined' color='primary' size='small' onClick={()=>onEditGame(game._id)}>
+                        Edit
+                      </Button>
+                    )}
                     {game.status === 'created' && (
-                      <Button variant='outlined' color='primary' size='small' onClick={() => onApprove(game._id)}>
+                      <Button variant='outlined' color='success' size='small' onClick={() => onApprove(game._id)}>
                         Approve
                       </Button>
                     )}

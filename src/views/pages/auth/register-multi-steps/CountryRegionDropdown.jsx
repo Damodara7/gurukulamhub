@@ -3,37 +3,30 @@ import Autocomplete from '@mui/material/Autocomplete'
 import { Grid, TextField } from '@mui/material'
 import { CountryRegionData } from '../../../../data/regions'
 import Box from '@mui/material/Box'
+import {parsedCountryRegionData} from '@/utils/countryRegionUtil'
 
 const CountryRegionDropdown = ({
   setSelectedCountry,
   selectedCountryObject,
   setSelectedCountryObject,
   onCountryChange,
-  error=false
+  defaultCountryCode = 'IN',
+  error = false
 }) => {
   const [countriesWithRegions, setCountriesWithRegions] = useState([])
 
-  // Function to remove tilde and suffix from a region string
-  const removeSuffix = region => region.split('~')[0].toUpperCase()
-
-  // Parse the CountryRegionData into a structured format
-  const parseCountryRegionData = () =>
-    CountryRegionData.map(([country, countryCode, regions]) => ({
-      country,
-      countryCode,
-      regions: regions.split('|').map(removeSuffix)
-    }))
-
   // Initialize countries with parsed data
   useEffect(() => {
-    const parsedData = parseCountryRegionData()
+    const parsedData = parsedCountryRegionData
     setCountriesWithRegions(parsedData)
 
     // Set default selection to India
-    const indiaObject = parsedData.find(item => item.countryCode === 'IN')
-    if (indiaObject) {
-      setSelectedCountry(indiaObject.country)
-      setSelectedCountryObject(indiaObject)
+    if (defaultCountryCode) {
+      const indiaObject = parsedData.find(item => item.countryCode === defaultCountryCode)
+      if (indiaObject) {
+        setSelectedCountry(indiaObject.country)
+        setSelectedCountryObject(indiaObject)
+      }
     }
   }, [])
 
