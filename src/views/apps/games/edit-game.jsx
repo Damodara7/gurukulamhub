@@ -72,7 +72,8 @@ function EditGamePage({ gameData = null, gameId = null }) {
                 }),
                 ...(sponsor.rewardType === 'physicalGift' && {
                   nonCashReward: sponsor.nonCashItem,
-                  numberOfNonCashRewards: sponsor.allocated
+                  numberOfNonCashRewards: sponsor.allocated,
+                  currency: undefined
                 })
               }
             })),

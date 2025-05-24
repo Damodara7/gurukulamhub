@@ -71,7 +71,8 @@ function CreateGamePage() {
                 }),
                 ...(sponsor.rewardType === 'physicalGift' && {
                   nonCashReward: sponsor.nonCashItem,
-                  numberOfNonCashRewards: sponsor.allocated
+                  numberOfNonCashRewards: sponsor.allocated,
+                  currency: undefined
                 })
               }
             })),

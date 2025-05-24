@@ -9,7 +9,6 @@ import {
   Avatar,
   Card,
   CardContent,
-  CardMedia,
   List,
   ListItem,
   ListItemIcon,
@@ -21,38 +20,15 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
-  IconButton,
-  Button
+  Paper
 } from '@mui/material'
-import {
-  Place,
-  Schedule,
-  People,
-  EmojiEvents,
-  Videocam,
-  HowToReg,
-  CheckCircle,
-  Cancel,
-  Person,
-  CalendarToday,
-  ExitToApp
-} from '@mui/icons-material'
+import { Place, People, EmojiEvents, Videocam, HowToReg, CheckCircle, Cancel } from '@mui/icons-material'
 import ReactPlayer from 'react-player'
-import imagePlaceholder from '/public/images/misc/image-placeholder.png'
-
-const statusColors = {
-  created: 'default',
-  reg_open: 'success',
-  reg_closed: 'warning',
-  lobby: 'info',
-  live: 'error',
-  completed: 'primary',
-  cancelled: 'error'
-}
+import RewardsList from '@/components/apps/games/game-details/RewardsList'
+import Leaderboard from '@/components/apps/games/game-details/Leaderboard'
+import GameHeader from '@/components/apps/games/game-details/GameHeader'
 
 export default function GameDetailsPage({ game = null }) {
-    const [showSponsors, setShowSponsors] = useState(false)
   if (!game)
     return (
       <Box sx={{ p: 3, textAlign: 'center' }}>
@@ -63,54 +39,7 @@ export default function GameDetailsPage({ game = null }) {
   return (
     <Box sx={{ p: 3 }}>
       {/* Game Header Section */}
-      <Card sx={{ mb: 3 }}>
-        <Box sx={{ display: 'flex', p: 3 }}>
-          <Avatar
-            variant='rounded'
-            component='image'
-            src={game?.thumbnailPoster || imagePlaceholder?.src}
-            sx={{
-              width: 150,
-              height: 150,
-              mr: 3,
-              borderRadius: 2
-            }}
-            onError={e => (e.target.src = imagePlaceholder?.src)}
-          />
-          <Box sx={{ flexGrow: 1 }}>
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                mb: 2,
-                gap: 2
-              }}
-            >
-              <Typography variant='h4' component='h1'>
-                {game.title}
-              </Typography>
-              <Chip label={game.status} color={statusColors[game.status]} variant='outlined' size='medium' />
-            </Box>
-            <Typography variant='body1' color='text.secondary' sx={{ mb: 2 }}>
-              {game.description}
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <Chip
-                icon={<Schedule />}
-                label={`${Date.now() > new Date(game.startTime).getTime() ? 'Started' : 'Starts'}: ${new Date(
-                  game.startTime
-                ).toLocaleString()}`}
-                variant='outlined'
-              />
-              <Chip
-                icon={<People />}
-                label={`Players: ${game.participatedUsers.length}/${game.maxPlayers}`}
-                variant='outlined'
-              />
-            </Box>
-          </Box>
-        </Box>
-      </Card>
+      <GameHeader game={game} />
 
       {/* Promotional Video Section */}
       {game.promotionalVideoUrl && (
@@ -266,8 +195,20 @@ export default function GameDetailsPage({ game = null }) {
                             <TableCell align='right'>
                               <Chip
                                 icon={hasParticipated ? <CheckCircle fontSize='small' /> : <Cancel fontSize='small' />}
-                                label={hasParticipated ? 'Participated' : 'Not Yet'}
-                                color={hasParticipated ? 'success' : 'default'}
+                                label={
+                                  hasParticipated
+                                    ? 'Yes'
+                                    : Date.now() < new Date(game.startTime).getTime() + game.duration * 1000
+                                      ? 'Not Yet'
+                                      : 'No'
+                                }
+                                color={
+                                  hasParticipated
+                                    ? 'success'
+                                    : Date.now() < new Date(game.startTime).getTime() + game.duration * 1000
+                                      ? 'warning'
+                                      : 'error'
+                                }
                                 size='small'
                                 variant='outlined'
                               />
@@ -393,94 +334,7 @@ export default function GameDetailsPage({ game = null }) {
       </Grid>
 
       {/* Leaderboard Section */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant='h6' sx={{ mb: 2 }}>
-            <EmojiEvents sx={{ mr: 1, verticalAlign: 'middle' }} />
-            Leaderboard
-          </Typography>
-          <TableContainer component={Paper}>
-            <Table stickyHeader>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Rank</TableCell>
-                  <TableCell>Player</TableCell>
-                  <TableCell align='right'>Score</TableCell>
-                  <TableCell align='right'>Status</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {game.participatedUsers.length > 0 ? (
-                  [...game.participatedUsers]
-                    .sort((a, b) => b.score - a.score)
-                    .map((user, index) => (
-                      <TableRow key={user._id || index} hover>
-                        <TableCell>
-                          <Typography variant='subtitle1' color='text.secondary'>
-                            #{index + 1}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <Avatar sx={{ width: 32, height: 32 }} alt={user.email}>
-                              {user.email[0].toUpperCase()}
-                            </Avatar>
-                            <Typography variant='body1'>{user.email}</Typography>
-                          </Box>
-                        </TableCell>
-                        <TableCell align='right'>
-                          <Typography variant='body1' fontWeight='medium'>
-                            {user.score}
-                          </Typography>
-                        </TableCell>
-                        <TableCell align='right'>
-                          {user.completed ? (
-                            <Chip
-                              icon={<CheckCircle fontSize='small' />}
-                              label='Completed'
-                              color='success'
-                              size='small'
-                              variant='outlined'
-                            />
-                          ) : (
-                            <Chip
-                              icon={<Cancel fontSize='small' />}
-                              label='In Progress'
-                              color='warning'
-                              size='small'
-                              variant='outlined'
-                            />
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={4} align='center' sx={{ py: 4 }}>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          gap: 1
-                        }}
-                      >
-                        <People fontSize='large' color='disabled' />
-                        <Typography variant='body1' color='text.secondary'>
-                          No players have participated yet
-                        </Typography>
-                        <Typography variant='body2' color='text.disabled'>
-                          Player results will appear here once the game starts.
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </CardContent>
-      </Card>
+      <Leaderboard participatedUsers={game?.participatedUsers} />
 
       {/* Rewards Section */}
       {game.rewards.length > 0 && (
@@ -489,93 +343,15 @@ export default function GameDetailsPage({ game = null }) {
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography variant='h6'>
                 <EmojiEvents sx={{ mr: 1, verticalAlign: 'middle' }} />
-                Reward Structure
+                Rewards
               </Typography>
-              <Button size='small' startIcon={<People />} onClick={() => setShowSponsors(!showSponsors)}>
-                {showSponsors ? 'Hide Sponsors' : 'Show Sponsors'}
-              </Button>
             </Box>
 
-            <Grid container spacing={2}>
-              {game.rewards.map(reward => (
-                <Grid item xs={12} md={6} lg={4} key={reward.position}>
-                  <Card variant='outlined'>
-                    <CardContent>
-                      {/* Reward Position Header */}
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          mb: 2,
-                          gap: 1
-                        }}
-                      >
-                        <Avatar
-                          sx={{
-                            bgcolor: positionColors[reward.position],
-                            width: 32,
-                            height: 32
-                          }}
-                        >
-                          #{reward.position}
-                        </Avatar>
-                        <Typography variant='h6'>{reward.numberOfWinnersForThisPosition} Winner(s)</Typography>
-                      </Box>
-
-                      {/* Reward Details */}
-                      <Box sx={{ mb: 2 }}>
-                        {reward.sponsors.map((sponsor, idx) => (
-                          <Box
-                            key={idx}
-                            sx={{
-                              mb: 1.5,
-                              p: 1.5,
-                              borderRadius: 1,
-                              bgcolor: 'action.hover',
-                              display: showSponsors ? 'block' : 'none'
-                            }}
-                          >
-                            <Typography variant='subtitle2' sx={{ mb: 0.5 }}>
-                              {sponsor.email}
-                            </Typography>
-                            {sponsor.rewardDetails.rewardType === 'cash' ? (
-                              <Typography variant='body2'>
-                                Cash Prize: {sponsor.rewardDetails.rewardValue} {sponsor.rewardDetails.currency}
-                              </Typography>
-                            ) : (
-                              <Typography variant='body2'>
-                                Physical Gift: {sponsor.rewardDetails.nonCashReward}
-                                {sponsor.rewardDetails.numberOfNonCashRewards > 1 &&
-                                  ` (x${sponsor.rewardDetails.numberOfNonCashRewards})`}
-                              </Typography>
-                            )}
-                          </Box>
-                        ))}
-                      </Box>
-
-                      {/* Summary Line */}
-                      <Typography variant='body2' color='text.secondary'>
-                        Total Reward: {reward.rewardValuePerWinner} {reward.sponsors[0]?.rewardDetails?.currency || ''}
-                      </Typography>
-                      <Typography variant='caption' color='text.secondary'>
-                        Sponsored by {reward.sponsors.length} {reward.sponsors.length === 1 ? 'sponsor' : 'sponsors'}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
+            {/* Rewards List */}
+            <RewardsList rewards={game?.rewards} />
           </CardContent>
         </Card>
       )}
     </Box>
   )
-}
-
-const positionColors = {
-  1: '#ffd700', // Gold
-  2: '#c0c0c0', // Silver
-  3: '#cd7f32', // Bronze
-  4: '#a0a0a0',
-  5: '#808080'
 }
