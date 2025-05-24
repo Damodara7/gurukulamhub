@@ -10,7 +10,6 @@ import { useSession } from 'next-auth/react'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 
-
 function CreateGamePage() {
   const { data: session } = useSession()
   const [quizzes, setQuizzes] = useState([])
@@ -58,21 +57,25 @@ function CreateGamePage() {
         maxPlayers: values.limitPlayers ? Number(values.maxPlayers) : 100000,
         // Convert rewards to proper format
         rewards:
-          values?.rewards?.map(reward => ({
-            ...reward,
-            numberOfWinnersForThisPosition: Number(reward.numberOfWinnersForThisPosition),
+          values?.rewards.map(reward => ({
+            position: reward.position,
+            numberOfWinnersForThisPosition: reward.numberOfWinnersForThisPosition,
+            rewardValuePerWinner: reward.rewardValuePerWinner,
             sponsors: reward.sponsors.map(sponsor => ({
-              ...sponsor,
+              email: sponsor.email,
               rewardDetails: {
-                ...sponsor.rewardDetails,
-                rewardValue:
-                  sponsor.rewardDetails.rewardType === 'cash' ? Number(sponsor.rewardDetails.rewardValue) : undefined,
-                numberOfNonCashRewards:
-                  sponsor.rewardDetails.rewardType !== 'cash'
-                    ? Number(sponsor.rewardDetails.numberOfNonCashRewards)
-                    : undefined
+                rewardType: sponsor.rewardType,
+                ...(sponsor.rewardType === 'cash' && {
+                  rewardValue: sponsor.allocated,
+                  currency: sponsor.currency
+                }),
+                ...(sponsor.rewardType === 'physicalGift' && {
+                  nonCashReward: sponsor.nonCashItem,
+                  numberOfNonCashRewards: sponsor.allocated
+                })
               }
-            }))
+            })),
+            winners: reward.winners || []
           })) || []
       }
 
