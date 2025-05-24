@@ -55,7 +55,7 @@ function CreateGamePage() {
         // Ensure duration is a number
         duration: Number(values.duration),
         // Ensure maxPlayers is a number
-        maxPlayers: Number(values.maxPlayers),
+        maxPlayers: values.limitPlayers ? Number(values.maxPlayers) : 100000,
         // Convert rewards to proper format
         rewards:
           values?.rewards?.map(reward => ({

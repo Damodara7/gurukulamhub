@@ -186,7 +186,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
         // Update existing reward
         return {
           ...prev,
-          rewards: prev.rewards.map(r => (r.id === reward.id ? reward : r))
+          rewards: prev.rewards.map(r => ((r?._id || r?.id) === (reward?._id || reward?.id) ? reward : r))
         }
       } else {
         // Add new reward
@@ -201,7 +201,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
   const handleRemoveReward = rewardId => {
     setFormData(prev => ({
       ...prev,
-      rewards: prev.rewards.filter(r => r.id !== rewardId)
+      rewards: prev.rewards.filter(r => (r?._id || r?.id) !== rewardId)
     }))
   }
   // ********* Reward Related Functions - END ***********
@@ -756,7 +756,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                 reward.rewardType === 'cash' ? reward.rewardValuePerWinner * reward.numberOfWinnersForThisPosition : 0
 
               return (
-                <Card key={reward.id} variant='outlined' sx={{ mb: 2 }}>
+                <Card key={reward?._id || reward?.id} variant='outlined' sx={{ mb: 2 }}>
                   <CardContent>
                     <Stack direction='row' justifyContent='space-between' alignItems='center' mb={2}>
                       <Typography variant='h6'>Position {reward.position} Reward</Typography>
@@ -764,7 +764,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                         <IconButton onClick={() => handleEditReward(reward)}>
                           <EditIcon />
                         </IconButton>
-                        <IconButton onClick={() => handleRemoveReward(reward.id)}>
+                        <IconButton onClick={() => handleRemoveReward(reward?._id || reward?.id)}>
                           <CloseIcon />
                         </IconButton>
                       </Stack>
@@ -796,7 +796,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                     {reward.sponsors.length > 0 && (
                       <Grid container spacing={2}>
                         {reward.sponsors.map(sponsor => (
-                          <Grid item xs={12} sm={6} key={sponsor.id}>
+                          <Grid item xs={12} sm={6} key={sponsor?._id || sponsor?.id}>
                             <Paper variant='outlined' sx={{ p: 2 }}>
                               <Typography variant='body2'>{sponsor.email}</Typography>
                               <Typography variant='body2' color='text.secondary'>

@@ -33,7 +33,7 @@ const REWARD_TYPES = [
 const CURRENCY_OPTIONS = ['INR', 'USD', 'EUR', 'GBP']
 
 // Enhanced dummy sponsor data
-const dummySponsors = [
+export const DUMMY_SPONSORS = [
   {
     id: '1',
     name: 'TechCorp Inc.',
@@ -118,7 +118,7 @@ const RewardDialog = ({ open, onClose, reward, onSave, availablePositions, isEdi
 
   // Get physical gift options with aggregated availability
   const getPhysicalGiftOptions = () => {
-    const physicalGiftSponsors = dummySponsors.filter(s => s.rewardType === 'physicalGift')
+    const physicalGiftSponsors = DUMMY_SPONSORS.filter(s => s.rewardType === 'physicalGift')
     const itemsMap = new Map()
 
     physicalGiftSponsors.forEach(sponsor => {
@@ -158,20 +158,20 @@ const RewardDialog = ({ open, onClose, reward, onSave, availablePositions, isEdi
   useEffect(() => {
     // Filter available sponsors based on reward type and selected gift (for physical gifts)
     if (currentReward.rewardType === 'physicalGift') {
-      const filtered = dummySponsors.filter(
+      const filtered = DUMMY_SPONSORS.filter(
         s =>
           s.rewardType === 'physicalGift' &&
           s.nonCashItem === currentReward.nonCashReward &&
           // Exclude sponsors already added
-          !currentReward.sponsors.some(addedSponsor => addedSponsor.id === s.id)
+          !currentReward.sponsors.some(addedSponsor => (addedSponsor?._id || addedSponsor?.id) === (s?._id || s?.id))
       )
       setAvailableSponsors(filtered)
     } else {
-      const filtered = dummySponsors.filter(
+      const filtered = DUMMY_SPONSORS.filter(
         s =>
           s.rewardType === currentReward.rewardType &&
           // Exclude sponsors already added
-          !currentReward.sponsors.some(addedSponsor => addedSponsor.id === s.id)
+          !currentReward.sponsors.some(addedSponsor => (addedSponsor?._id || addedSponsor?.id) === (s?._id || s?.id))
       )
       setAvailableSponsors(filtered)
     }
@@ -187,20 +187,75 @@ const RewardDialog = ({ open, onClose, reward, onSave, availablePositions, isEdi
     if (!sponsor) return
 
     const updatedReward = { ...currentReward }
-    const existingIndex = updatedReward.sponsors.findIndex(s => s.id === sponsor.id)
+    const existingIndex = updatedReward.sponsors.findIndex(s => (s?._id || s?.id) === (sponsor?._id || sponsor?.id))
+
+    const sponsorPayload = {
+      ...sponsor,
+      allocated: parseFloat(allocation) || 0,
+      // The above fields for the values to be identify the original sponsor in SponsorDialog
+
+      ...(sponsor?._id ? { _id: sponsor?._id } : { id: sponsor?.id }),
+      // email: sponsor.email,
+      // rewardDetails: {
+      //   rewardType: sponsor.rewardType,
+      //   ...(sponsor.rewardType === 'cash' && {
+      //     rewardValue: parseFloat(allocation) || 0,
+      //     currency: sponsor.currency || 'INR'
+      //   }),
+      //   ...(sponsor.rewardType === 'physicalGift' && {
+      //     nonCashReward: sponsor.nonCashItem,
+      //     numberOfNonCashRewards: parseInt(allocation) || 0
+      //   })
+      // }
+    }
 
     if (existingIndex >= 0) {
-      updatedReward.sponsors[existingIndex].allocated = parseFloat(allocation) || 0
+      updatedReward.sponsors[existingIndex] = {
+        ...updatedReward.sponsors[existingIndex],
+        ...sponsorPayload
+      }
     } else {
-      updatedReward.sponsors.push({
-        ...sponsor,
-        allocated: parseFloat(allocation) || 0
-      })
+      updatedReward.sponsors.push(sponsorPayload)
     }
+
+    // Calculate rewardValuePerWinner based on sponsors' contributions
+    // if (updatedReward.numberOfWinnersForThisPosition > 0) {
+    //   const totalCash = updatedReward.sponsors
+    //     .filter(s => s.rewardDetails.rewardType === 'cash')
+    //     .reduce((sum, s) => sum + (s.rewardDetails.rewardValue || 0), 0)
+
+    //   const totalPhysical = updatedReward.sponsors
+    //     .filter(s => s.rewardDetails.rewardType === 'physicalGift')
+    //     .reduce((sum, s) => sum + (s.rewardDetails.numberOfNonCashRewards || 0), 0)
+
+    //   updatedReward.rewardValuePerWinner =
+    //     updatedReward.sponsors[0]?.rewardDetails?.rewardType === 'cash'
+    //       ? totalCash / updatedReward.numberOfWinnersForThisPosition
+    //       : totalPhysical / updatedReward.numberOfWinnersForThisPosition
+    // }
 
     setCurrentReward(updatedReward)
     handleCloseSponsor()
   }
+
+  // const handleSelectSponsor = (sponsor, allocation) => {
+  //   if (!sponsor) return
+
+  //   const updatedReward = { ...currentReward }
+  //   const existingIndex = updatedReward.sponsors.findIndex(s => (s?._id || s?.id) === (sponsor?._id || sponsor?.id))
+
+  //   if (existingIndex >= 0) {
+  //     updatedReward.sponsors[existingIndex].allocated = parseFloat(allocation) || 0
+  //   } else {
+  //     updatedReward.sponsors.push({
+  //       ...sponsor,
+  //       allocated: parseFloat(allocation) || 0
+  //     })
+  //   }
+
+  //   setCurrentReward(updatedReward)
+  //   handleCloseSponsor()
+  // }
 
   const handleCloseSponsor = () => {
     setSelectedSponsor(null)
@@ -210,7 +265,7 @@ const RewardDialog = ({ open, onClose, reward, onSave, availablePositions, isEdi
 
   const handleEditAllocation = (sponsorId, newValue) => {
     const updatedReward = { ...currentReward }
-    const sponsorIndex = updatedReward.sponsors.findIndex(s => s.id === sponsorId)
+    const sponsorIndex = updatedReward.sponsors.findIndex(s => (s?._id || s?.id) === sponsorId)
 
     if (sponsorIndex >= 0) {
       updatedReward.sponsors[sponsorIndex].allocated = parseFloat(newValue) || 0
@@ -407,7 +462,7 @@ const RewardDialog = ({ open, onClose, reward, onSave, availablePositions, isEdi
           </Grid>
 
           <Grid item xs={12}>
-            <Alert icon={false} color='info' sx={{p: 3, textAlign: 'center', mt: 2 }}>
+            <Alert icon={false} color='info' sx={{ p: 3, textAlign: 'center', mt: 2 }}>
               {currentReward.rewardType === 'cash'
                 ? `Total required: ${currentReward.currency} ${calculateTotalRequired().toFixed(2)}`
                 : `Total items needed: ${calculateTotalRequired()}`}
@@ -451,7 +506,7 @@ const RewardDialog = ({ open, onClose, reward, onSave, availablePositions, isEdi
             </Alert>
           ) : (
             currentReward.sponsors.map(sponsor => (
-              <Paper key={sponsor.id} sx={{ p: 2, mb: 2 }}>
+              <Paper key={sponsor?._id || sponsor?.id} sx={{ p: 2, mb: 2 }}>
                 <Stack direction='row' alignItems='center' spacing={2}>
                   <Avatar sx={{ bgcolor: 'primary.main' }}>{sponsor.logo}</Avatar>
                   <Box sx={{ flexGrow: 1 }}>
@@ -466,7 +521,7 @@ const RewardDialog = ({ open, onClose, reward, onSave, availablePositions, isEdi
                     label={currentReward.rewardType === 'cash' ? 'Amount' : 'Items'}
                     type='number'
                     value={sponsor.allocated}
-                    onChange={e => handleEditAllocation(sponsor.id, e.target.value)}
+                    onChange={e => handleEditAllocation(sponsor?._id || sponsor?.id, e.target.value)}
                     inputProps={{
                       max: currentReward.rewardType === 'cash' ? sponsor.availableAmount : sponsor.availableItems,
                       min: 0,
@@ -478,7 +533,9 @@ const RewardDialog = ({ open, onClose, reward, onSave, availablePositions, isEdi
                     onClick={() =>
                       setCurrentReward({
                         ...currentReward,
-                        sponsors: currentReward.sponsors.filter(s => s.id !== sponsor.id)
+                        sponsors: currentReward.sponsors.filter(
+                          s => (s?._id || s?.id) !== (sponsor?._id || sponsor?.id)
+                        )
                       })
                     }
                   >
@@ -501,8 +558,16 @@ const RewardDialog = ({ open, onClose, reward, onSave, availablePositions, isEdi
         </DialogContent>
 
         <DialogActions className='mt-3'>
-          <Button variant='outlined' onClick={onClose}>Cancel</Button>
-          <Button component='label' style={{color: 'white'}} onClick={handleSave} variant='contained' disabled={getRemainingNeed() > 0}>
+          <Button variant='outlined' onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            component='label'
+            style={{ color: 'white' }}
+            onClick={handleSave}
+            variant='contained'
+            disabled={getRemainingNeed() > 0}
+          >
             Save
           </Button>
         </DialogActions>

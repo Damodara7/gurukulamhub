@@ -9,11 +9,11 @@ import { toast } from 'react-toastify'
 import { useSession } from 'next-auth/react'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
+import { DUMMY_SPONSORS } from '@/components/apps/games/RewardDialog'
 
-function EditGamePage({ gameData = null, gameId=null }) {
+function EditGamePage({ gameData = null, gameId = null }) {
   const { data: session } = useSession()
   const [quizzes, setQuizzes] = useState([])
-  // const [gameData, setGameData] = useState(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
@@ -41,32 +41,6 @@ function EditGamePage({ gameData = null, gameId=null }) {
     getQuizData()
   }, [gameData])
 
-  // useEffect(() => {
-  //   async function getGameData() {
-  //     if (!gameId) return
-
-  //     setLoading(true)
-  //     try {
-  //       const result = await RestApi.get(`${API_URLS.v0.USERS_GAME}?id=${gameId}`)
-  //       console.log(result)
-  //       if (result?.status === 'success') {
-  //         setGameData(result.result)
-  //       } else {
-  //         console.error('Error Fetching game:', result.message)
-  //         toast.error('Failed to load game data')
-  //         setGameData(null)
-  //       }
-  //     } catch (error) {
-  //       console.error('Error fetching game:', error)
-  //       toast.error('An error occurred while loading game data')
-  //       setGameData(null)
-  //     } finally {
-  //       setLoading(false)
-  //     }
-  //   }
-  //   getGameData()
-  // }, [gameId])
-
   const handleSubmit = async values => {
     try {
       console.log('formData: ', values)
@@ -81,24 +55,28 @@ function EditGamePage({ gameData = null, gameId=null }) {
         // Ensure duration is a number
         duration: Number(values.duration),
         // Ensure maxPlayers is a number
-        maxPlayers: Number(values.maxPlayers),
+        maxPlayers: values.limitPlayers ? Number(values.maxPlayers) : 100000,
         // Convert rewards to proper format
         rewards:
-          values?.rewards?.map(reward => ({
-            ...reward,
-            numberOfWinnersForThisPosition: Number(reward.numberOfWinnersForThisPosition),
+          values?.rewards.map(reward => ({
+            position: reward.position,
+            numberOfWinnersForThisPosition: reward.numberOfWinnersForThisPosition,
+            rewardValuePerWinner: reward.rewardValuePerWinner,
             sponsors: reward.sponsors.map(sponsor => ({
-              ...sponsor,
+              email: sponsor.email,
               rewardDetails: {
-                ...sponsor.rewardDetails,
-                rewardValue:
-                  sponsor.rewardDetails.rewardType === 'cash' ? Number(sponsor.rewardDetails.rewardValue) : undefined,
-                numberOfNonCashRewards:
-                  sponsor.rewardDetails.rewardType !== 'cash'
-                    ? Number(sponsor.rewardDetails.numberOfNonCashRewards)
-                    : undefined
+                rewardType: sponsor.rewardType,
+                ...(sponsor.rewardType === 'cash' && {
+                  rewardValue: sponsor.allocated,
+                  currency: sponsor.currency
+                }),
+                ...(sponsor.rewardType === 'physicalGift' && {
+                  nonCashReward: sponsor.nonCashItem,
+                  numberOfNonCashRewards: sponsor.allocated
+                })
               }
-            }))
+            })),
+            winners: reward.winners || []
           })) || []
       }
 
@@ -140,6 +118,49 @@ function EditGamePage({ gameData = null, gameId=null }) {
     )
   }
 
+  // Utility function to transform database rewards to UI format
+const transformRewardsFromDB = (rewards) => {
+  return rewards.map(reward => {
+    // Calculate total allocations from sponsors
+    const cashSponsors = reward.sponsors.filter(s => s.rewardDetails.rewardType === 'cash');
+    const physicalSponsors = reward.sponsors.filter(s => s.rewardDetails.rewardType === 'physicalGift');
+    
+    const totalCash = cashSponsors.reduce((sum, s) => sum + (s.rewardDetails.rewardValue || 0), 0);
+    const totalPhysical = physicalSponsors.reduce((sum, s) => sum + (s.rewardDetails.numberOfNonCashRewards || 0), 0);
+
+    return {
+      id: reward._id?.$oid || reward._id,
+      position: reward.position,
+      numberOfWinnersForThisPosition: reward.numberOfWinnersForThisPosition,
+      rewardValuePerWinner: reward.rewardValuePerWinner,
+      rewardType: reward.sponsors[0]?.rewardDetails?.rewardType || 'cash',
+      currency: reward.sponsors[0]?.rewardDetails?.currency || 'INR',
+      nonCashReward: reward.sponsors[0]?.rewardDetails?.nonCashReward,
+      sponsors: reward.sponsors.map(sponsor => ({
+        id: sponsor._id?.$oid || sponsor._id,
+        email: sponsor.email,
+        name: DUMMY_SPONSORS.find(ds => ds.email === sponsor.email)?.name || sponsor.email,
+        rewardType: sponsor.rewardDetails.rewardType,
+        amount: sponsor.rewardDetails.rewardValue,
+        currency: sponsor.rewardDetails.currency,
+        availableAmount: DUMMY_SPONSORS.find(ds => ds.email === sponsor.email)?.availableAmount || 0,
+        nonCashItem: sponsor.rewardDetails.nonCashReward,
+        numberOfNonCashItems: sponsor.rewardDetails.numberOfNonCashRewards,
+        availableItems: DUMMY_SPONSORS.find(ds => ds.email === sponsor.email)?.availableItems || 0,
+        logo: DUMMY_SPONSORS.find(ds => ds.email === sponsor.email)?.logo || 'SP',
+        allocated: sponsor.rewardDetails.rewardType === 'cash' 
+          ? sponsor.rewardDetails.rewardValue 
+          : sponsor.rewardDetails.numberOfNonCashRewards
+      })),
+      winners: reward.winners,
+      totalCash,
+      totalPhysical
+    };
+  });
+};
+
+  const updatedGameData = {...gameData, rewards: transformRewardsFromDB(gameData?.rewards|| [])}
+
   return (
     <div className='p-4'>
       <div className='mb-6'>
@@ -150,12 +171,7 @@ function EditGamePage({ gameData = null, gameId=null }) {
       </div>
 
       <LocalizationProvider dateAdapter={AdapterDayjs}>
-        <GameForm
-          onSubmit={handleSubmit}
-          quizzes={quizzes}
-          onCancel={handleCancel}
-          data={gameData}
-        />
+        <GameForm onSubmit={handleSubmit} quizzes={quizzes} onCancel={handleCancel} data={updatedGameData} />
       </LocalizationProvider>
     </div>
   )
