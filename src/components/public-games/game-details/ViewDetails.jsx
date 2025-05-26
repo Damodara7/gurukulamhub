@@ -7,7 +7,7 @@ import { format } from 'date-fns'
 import ReactPlayer from 'react-player'
 import ChevronToggleComponent from '@/components/media-viewer/ChevronToggleComponent'
 import Language from '@mui/icons-material/Language'
-import { AccessTime, ListAlt, LocationOn, People, Person, SportsEsports } from '@mui/icons-material';
+import { AccessTime, ListAlt, LocationOn, NotInterested, People, Person, SportsEsports } from '@mui/icons-material';
 const ViewDetails = ({ game }) => {
   const theme = useTheme()
   console.log('we are getting game data', game);
@@ -93,8 +93,8 @@ const ViewDetails = ({ game }) => {
                 sx={{
                   position: 'relative',
                   textAlign: 'center',
-                  mt:-7,
-                  mb:1,
+                  mt: -7,
+                  mb: 1,
                   p: 2,
                   borderRadius: 1
                 }}
@@ -332,16 +332,24 @@ const ViewDetails = ({ game }) => {
                 <Divider />
               </Stack>
               {/* Tags */}
+
               {game?.tags?.length > 0 && (
                 <>
-                  <Typography variant='h6' fontWeight={600}>
+                  <Typography mt={1} variant='h6' fontWeight={600}>
                     Tags
                   </Typography>
-                  <Stack mt={2} spacing={3} direction='row' flexWrap='wrap' minWidth gap={1}>
-                    {game.tags.map(tag => (
-                      <Chip key={tag} label={tag} size='small' color='primary' variant='outlined' />
-                    ))}
-                  </Stack>
+                 <Box mt={1} display='flex' flexWrap='wrap' alignItems='center'>
+                {game.tags.map(tag => (
+                  <Chip
+                    key={tag}
+                    label={tag}
+                    size='small'
+                    color='primary'
+                    variant='outlined'
+                    sx={{ marginRight: 1, marginBottom: 1 , marginTop: 1 }} // Horizontal and vertical spacing
+                  />
+                ))}
+              </Box>
                 </>
               )}
             </CardContent>
