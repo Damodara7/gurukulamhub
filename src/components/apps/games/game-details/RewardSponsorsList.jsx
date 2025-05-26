@@ -38,8 +38,7 @@ function RewardSponsorCard({ sponsors }) {
               <Box>
                 <Typography variant='body1' fontWeight='bold'>
                   {sponsor.rewardDetails.nonCashReward}
-                  {sponsor.rewardDetails.numberOfNonCashRewards > 1 &&
-                    ` ×${sponsor.rewardDetails.numberOfNonCashRewards}`}
+                  {` ×${sponsor.rewardDetails.numberOfNonCashRewards}`}
                 </Typography>
               </Box>
             </Box>
