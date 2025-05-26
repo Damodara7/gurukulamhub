@@ -1,6 +1,5 @@
 'use client'
 
-import GameForm from '@/components/apps/games/create-game/CreateGameForm'
 import React, { useEffect, useState } from 'react'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
@@ -9,6 +8,7 @@ import { toast } from 'react-toastify'
 import { useSession } from 'next-auth/react'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
+import GameForm from '@/components/apps/games/GameForm'
 
 function CreateGamePage() {
   const { data: session } = useSession()

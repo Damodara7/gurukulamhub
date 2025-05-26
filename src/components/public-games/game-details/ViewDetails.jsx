@@ -7,7 +7,10 @@ import { format } from 'date-fns'
 import ReactPlayer from 'react-player'
 import ChevronToggleComponent from '@/components/media-viewer/ChevronToggleComponent'
 import Language from '@mui/icons-material/Language'
-import { AccessTime, ListAlt, LocationOn, People, Person, SportsEsports } from '@mui/icons-material';
+import { AccessTime, ListAlt, LocationOn, NotInterested, People, Person, SportsEsports, Star } from '@mui/icons-material';
+import VideoAd from '@/views/apps/advertisements/VideoAd/VideoAd';
+import ImagePopup from '@/components/ImagePopup';
+import Link from 'next/link';
 const ViewDetails = ({ game }) => {
   const theme = useTheme()
   console.log('we are getting game data', game);

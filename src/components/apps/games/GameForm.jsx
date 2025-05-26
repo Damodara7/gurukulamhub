@@ -20,11 +20,7 @@ import {
   Stack,
   TextField,
   Typography,
-  Autocomplete,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions
+  Autocomplete
 } from '@mui/material'
 import {
   Add as AddIcon,
@@ -37,7 +33,7 @@ import {
   VideocamOff as VideocamOffIcon
 } from '@mui/icons-material'
 
-import RewardDialog from '../RewardDialog'
+import RewardDialog from './RewardDialog'
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker'
 import dayjs from 'dayjs'
 import ReactPlayer from 'react-player'
@@ -95,20 +91,23 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
 
   // If Edit Game?
   useEffect(() => {
-    console.log({ data })
-    setFormData({
-      ...data,
-      quiz: data?.quiz?._id || null,
-      startTime: data?.startTime ? new Date(data.startTime) : null,
-      registrationEndTime: data.registrationEndTime ? new Date(data.registrationEndTime) : null
-    })
-    setSelectedCountryObject(
-      data?.location?.country
-        ? { country: data?.location?.country, countryCode: getCountryByName(data?.location?.country)?.countryCode }
-        : null
-    )
-    setSelectedRegion(data?.location?.region || '')
-    setSelectedCity(data?.location?.city || '')
+    if (data) {
+      console.log({ data })
+      setFormData({
+        ...initialFormData, // Start with initial values
+        ...data,
+        quiz: data?.quiz?._id || null,
+        startTime: data?.startTime ? new Date(data.startTime) : null,
+        registrationEndTime: data?.registrationEndTime ? new Date(data.registrationEndTime) : null
+      })
+      setSelectedCountryObject(
+        data?.location?.country
+          ? { country: data?.location?.country, countryCode: getCountryByName(data?.location?.country)?.countryCode }
+          : null
+      )
+      setSelectedRegion(data?.location?.region || '')
+      setSelectedCity(data?.location?.city || '')
+    }
   }, [data])
 
   // Update available positions when rewards change
@@ -514,7 +513,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                       setSelectedCity(newValue)
                     }}
                     id='autocomplete-city-select'
-                    options={cityOptions}
+                    options={cityOptions || []}
                     getOptionLabel={option => option || ''}
                     renderInput={params => (
                       <TextField
@@ -723,7 +722,9 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
             setFormData(prev => ({ ...prev, tags: newValue }))
           }}
           renderTags={(value, getTagProps) =>
-            value.map((option, index) => <Chip variant='outlined' label={option} {...getTagProps({ index })} />)
+            value.map((option, index) => (
+              <Chip key={index} variant='outlined' label={option} {...getTagProps({ index })} />
+            ))
           }
           renderInput={params => <TextField {...params} label='Tags' placeholder='Add tags' />}
         />
@@ -744,13 +745,13 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
           </Button>
         </Stack>
 
-        {formData.rewards.length === 0 ? (
+        {formData?.rewards?.length === 0 ? (
           <Typography variant='body2' color='text.secondary' sx={{ mt: 2 }}>
             No rewards added yet
           </Typography>
         ) : (
           <Box sx={{ mt: 2 }}>
-            {formData.rewards.map(reward => {
+            {formData?.rewards?.map(reward => {
               // Calculate total cash reward if reward type is cash
               const totalCashReward =
                 reward.rewardType === 'cash' ? reward.rewardValuePerWinner * reward.numberOfWinnersForThisPosition : 0

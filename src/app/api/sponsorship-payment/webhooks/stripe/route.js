@@ -2,11 +2,15 @@ import { NextResponse } from 'next/server'
 import Sponsorship from '@/app/api/sponsorship/sponsorship.model'
 import Stripe from 'stripe'
 
-export const config = {
-  api: {
-    bodyParser: false // Disable default body parsing
-  }
-}
+// depricated
+// export const config = {
+//   api: {
+//     bodyParser: false // Disable default body parsing
+//   }
+// }
+export const dynamic = 'force-dynamic'; // Ensure this is a dynamic route
+export const runtime = 'nodejs'; // Specify the runtime environment
+export const fetchCache = 'force-no-store'; // Disable caching
 
 const stripe = Stripe(process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY)
 
