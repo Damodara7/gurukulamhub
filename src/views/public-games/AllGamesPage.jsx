@@ -14,7 +14,7 @@ export const PublicGamesPage = () => {
   useEffect(() => {
     const fetchGames = async () => {
       try {
-        const res = await RestApi.get(`${API_URLS.v0.USERS_GAME}?status=live`)
+        const res = await RestApi.get(`${API_URLS.v0.USERS_GAME}/public`)
         if (res.status === 'success') {
           setGames(res?.result || [])
         } else {

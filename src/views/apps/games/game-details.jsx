@@ -69,10 +69,10 @@ export default function GameDetailsPage({ game = null }) {
       {/* Registration & Participation Section */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
         {/* Registered Players */}
-        <RegisteredPlayersTable registeredUsers={game?.registeredUsers} participatedUsers={game?.participatedUsers} />
+        <RegisteredPlayersTable registeredUsers={game?.registeredUsers} participatedUsers={game?.participatedUsers} game={game} />
 
         {/* Participated Players */}
-        <ParticipatedPlayersTable participatedUsers={game?.participatedUsers} />
+        <ParticipatedPlayersTable game={game} participatedUsers={game?.participatedUsers} />
       </Grid>
 
       {/* Leaderboard Section */}

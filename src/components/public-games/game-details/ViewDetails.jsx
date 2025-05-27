@@ -1,19 +1,41 @@
 'use client'
 
 import React from 'react'
-import { Box, Card, CardContent, Chip, Container, Divider, Grid, Paper, Stack, Typography, useTheme  } from '@mui/material';
+import {
+  Box,
+  Card,
+  CardContent,
+  Chip,
+  Container,
+  Divider,
+  Grid,
+  Paper,
+  Stack,
+  Typography,
+  useTheme
+} from '@mui/material'
 
 import { format } from 'date-fns'
 import ReactPlayer from 'react-player'
 import ChevronToggleComponent from '@/components/media-viewer/ChevronToggleComponent'
 import Language from '@mui/icons-material/Language'
-import { AccessTime, ListAlt, LocationOn, NotInterested, People, Person, SportsEsports, Star } from '@mui/icons-material';
-import VideoAd from '@/views/apps/advertisements/VideoAd/VideoAd';
-import ImagePopup from '@/components/ImagePopup';
-import Link from 'next/link';
+import {
+  AccessTime,
+  ListAlt,
+  LocationOn,
+  NotInterested,
+  People,
+  Person,
+  PlayCircle,
+  SportsEsports,
+  Star
+} from '@mui/icons-material'
+import VideoAd from '@/views/apps/advertisements/VideoAd/VideoAd'
+import ImagePopup from '@/components/ImagePopup'
+import Link from 'next/link'
 const ViewDetails = ({ game }) => {
   const theme = useTheme()
-  console.log('we are getting game data', game);
+  console.log('we are getting game data', game)
   if (!game) {
     return (
       <Container maxWidth='lg' sx={{ py: 4 }}>
@@ -25,8 +47,10 @@ const ViewDetails = ({ game }) => {
   const getStatusChip = () => {
     const statusConfig = {
       created: { color: 'warning', label: 'Pending', icon: <AccessTime /> },
-      live: { color: 'success', label: 'Live', icon: <SportsEsports /> },
-      completed: { color: 'default', label: 'Ended', icon: <ListAlt /> }
+      approved: { color: 'info', label: 'Approved', icon: <AccessTime /> },
+      lobby: { color: 'warning', label: 'Lobby', icon: <AccessTime /> },
+      live: { color: 'success', label: 'Live', icon: <PlayCircle /> },
+      completed: { color: 'default', label: 'Completed', icon: <SportsEsports /> }
     }
 
     const config = statusConfig[game.status] || statusConfig.default
@@ -341,18 +365,18 @@ const ViewDetails = ({ game }) => {
                   <Typography mt={1} variant='h6' fontWeight={600}>
                     Tags
                   </Typography>
-                 <Box mt={1} display='flex' flexWrap='wrap' alignItems='center'>
-                {game.tags.map(tag => (
-                  <Chip
-                    key={tag}
-                    label={tag}
-                    size='small'
-                    color='primary'
-                    variant='outlined'
-                    sx={{ marginRight: 1, marginBottom: 1 , marginTop: 1 }} // Horizontal and vertical spacing
-                  />
-                ))}
-              </Box>
+                  <Box mt={1} display='flex' flexWrap='wrap' alignItems='center'>
+                    {game.tags.map(tag => (
+                      <Chip
+                        key={tag}
+                        label={tag}
+                        size='small'
+                        color='primary'
+                        variant='outlined'
+                        sx={{ marginRight: 1, marginBottom: 1, marginTop: 1 }} // Horizontal and vertical spacing
+                      />
+                    ))}
+                  </Box>
                 </>
               )}
             </CardContent>

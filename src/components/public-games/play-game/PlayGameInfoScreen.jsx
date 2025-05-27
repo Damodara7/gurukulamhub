@@ -70,8 +70,10 @@ const GamePlayInfoScreen = ({ game, setShouldStartGame }) => {
   const getStatusChip = () => {
     const statusConfig = {
       created: { color: 'warning', label: 'Pending', icon: <AccessTime /> },
+      approved: { color: 'info', label: 'Approved', icon: <AccessTime /> },
+      lobby: { color: 'warning', label: 'Lobby', icon: <AccessTime /> },
       live: { color: 'success', label: 'Live', icon: <PlayCircle /> },
-      completed: { color: 'default', label: 'Ended', icon: <SportsEsports /> }
+      completed: { color: 'default', label: 'Completed', icon: <SportsEsports /> }
     }
 
     const config = statusConfig[game.status] || statusConfig.default

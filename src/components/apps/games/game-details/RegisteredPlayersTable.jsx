@@ -21,7 +21,7 @@ import {
   Cancel
 } from '@mui/icons-material';
 
-function RegisteredPlayersTable({registeredUsers, participatedUsers}) {
+function RegisteredPlayersTable({registeredUsers, participatedUsers, game}) {
   return (
     <Grid item xs={12} lg={6}>
           <Card>

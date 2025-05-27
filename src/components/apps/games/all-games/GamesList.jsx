@@ -23,9 +23,12 @@ const GameList = ({ games, onApprove, onViewGame, onEditGame }) => {
 
   const getStatusChip = status => {
     const statusConfig = {
-      created: { color: 'warning', label: 'Pending' },
-      live: { color: 'success', label: 'Live' },
-      ended: { color: 'default', label: 'Ended' }
+      created: { color: 'default', label: 'Created' },
+      approved: { color: 'info', label: 'Approved' },
+      lobby: { color: 'primary', label: 'Lobby' },
+      live: { color: 'error', label: 'Live' },
+      completed: { color: 'success', label: 'Completed' },
+      cancelled: { color: 'warning', label: 'Cancelled' }
     }
 
     const config = statusConfig[status] || statusConfig.default
@@ -143,11 +146,12 @@ const GameList = ({ games, onApprove, onViewGame, onEditGame }) => {
                     <Button variant='outlined' color='info' size='small' onClick={() => onViewGame(game._id)}>
                       Details
                     </Button>
-                    {(game.status === 'created' || game.status === 'reg_open' || game.status === 'reg_closed') && (
-                      <Button variant='outlined' color='primary' size='small' onClick={()=>onEditGame(game._id)}>
-                        Edit
-                      </Button>
-                    )}
+                    {['created', 'approved'].includes(game.status) &&
+                      (game?.registrationEndTime ? new Date() < new Date(game?.registrationEndTime) : true) && (
+                        <Button variant='outlined' color='primary' size='small' onClick={() => onEditGame(game._id)}>
+                          Edit
+                        </Button>
+                      )}
                     {game.status === 'created' && (
                       <Button variant='outlined' color='success' size='small' onClick={() => onApprove(game._id)}>
                         Approve

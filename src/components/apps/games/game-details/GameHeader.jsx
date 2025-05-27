@@ -14,8 +14,7 @@ import imagePlaceholder from '/public/images/misc/image-placeholder.png'
 
 const statusColors = {
   created: 'default',
-  reg_open: 'success',
-  reg_closed: 'warning',
+  approved: 'success',
   lobby: 'info',
   live: 'error',
   completed: 'primary',

@@ -40,13 +40,12 @@ const AllGamesPage = () => {
 
   const handleApprove = async gameId => {
     try {
-      const result = await RestApi.put(`${API_URLS.v0.USERS_GAME}`, {
-        status: 'live',
-        _id: gameId
+      const result = await RestApi.post(`${API_URLS.v0.USERS_GAME}/${gameId}/approve`, {
+        status: 'approved'
       })
 
       if (result?.status === 'success') {
-        toast.success('Game approved and set to live!')
+        toast.success('Game approved!')
         fetchGames() // Refresh the list
       } else {
         console.error('Error approving game:', result)

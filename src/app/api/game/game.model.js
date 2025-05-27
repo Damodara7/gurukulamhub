@@ -35,7 +35,7 @@ const answerSchema = new mongoose.Schema({
   hintUsed: Boolean,
   skipped: Boolean,
   answerTime: Number, // Time taken in seconds
-  answeredAt: Date    // Timestamp when answered
+  answeredAt: Date // Timestamp when answered
 })
 const participatedUserSchema = new mongoose.Schema({
   user: {
@@ -141,11 +141,11 @@ const gameSchema = new mongoose.Schema(
     maxPlayers: {
       type: Number,
       min: 1,
-      default: 100000,
+      default: 100000
     },
     status: {
       type: String,
-      enum: ['created', 'reg_open', 'reg_closed', 'lobby', 'live', 'completed', 'cancelled'],
+      enum: ['created', 'approved', 'lobby', 'live', 'completed', 'cancelled'],
       default: 'created'
     },
     rewards: {
