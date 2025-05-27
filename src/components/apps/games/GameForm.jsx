@@ -42,7 +42,7 @@ import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import Loading from '@/components/Loading'
 import { getCountryByName } from '@/utils/countryRegionUtil'
-
+import Marquee from 'react-fast-marquee'
 // Reward position options
 const POSITION_OPTIONS = [1, 2, 3, 4, 5]
 
@@ -53,7 +53,7 @@ const initialFormData = {
   description: '',
   quiz: '',
   startTime: null,
-  duration: 600, // 10 minutes in seconds
+  duration: null, // 10 minutes in seconds
   promotionalVideoUrl: '',
   thumbnailPoster: '',
   requireRegistration: false,
@@ -69,6 +69,75 @@ const initialFormData = {
   rewards: []
 }
 
+//validate the form
+
+const validateForm = formData => {
+  const errors = {}
+  if (!formData.title) {
+    errors.title = 'Game title is required.'
+  }
+  if (!formData.pin || formData.pin.length !== 6 || isNaN(formData.pin)) {
+    errors.pin = 'A valid 6-digit PIN is required.'
+  }
+  if (!formData.quiz) {
+    errors.quiz = 'Quiz selection is required.'
+  }
+  if (!formData.thumbnailPoster) {
+    errors.thumbnailPoster = 'Thumbnail image is required.'
+  } else {
+    // Check if it's a base64 URL
+    if (formData.thumbnailPoster.startsWith('data:image/')) {
+      const validBase64Types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml']
+      const mimeType = formData.thumbnailPoster.split(';')[0].split(':')[1]
+      if (!validBase64Types.includes(mimeType)) {
+        errors.thumbnailPoster = 'Please upload a valid image (JPEG, PNG, GIF, WEBP, or SVG).'
+      }
+    }
+    // If it's a standard URL (HTTP/HTTPS)
+    else if (formData.thumbnailPoster.startsWith('http')) {
+      const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg']
+      const fileName = formData.thumbnailPoster.toLowerCase()
+      const hasValidExtension = validExtensions.some(ext => fileName.endsWith(ext))
+      if (!hasValidExtension) {
+        errors.thumbnailPoster = 'Please upload a valid image (JPEG, PNG, GIF, WEBP, or SVG).'
+      }
+    }
+    // If it's neither base64 nor HTTP URL
+    else {
+      errors.thumbnailPoster = 'Invalid image format.'
+    }
+  }
+
+  if (formData.startTime === null) {
+    errors.startTime = 'Start time is required.'
+  } else {
+    const parsedDate = dayjs(formData.startTime)
+    if (!parsedDate.isValid()) {
+      errors.startTime = 'Invalid date format. Please select a valid time'
+    } else if (!parsedDate.isAfter(dayjs())) {
+      errors.startTime = 'Start time must be in the future.'
+    }
+  }
+
+  if (formData.requireRegistration && formData.registrationEndTime === null) {
+    errors.registrationEndTime = 'Registration end time is required'
+  } else if (formData.registrationEndTime && formData.registrationEndTime < formData.startTime) {
+    errors.registrationEndTime = 'Registration end time must be after the start time.'
+  }
+
+  if (!formData.duration || formData.duration < 60) {
+    errors.duration = 'Duration must be atleast 60 seconds.'
+  }
+
+  if (formData.limitPlayers && (!formData.maxPlayers || formData.maxPlayers <= 0)) {
+    errors.maxPlayers = 'Maximum players must be a positive number.'
+  }
+  if (!formData.promotionalVideoUrl || !formData.promotionalVideoUrl.startsWith('https://')) {
+    errors.promotionalVideoUrl = 'enter the valid URL.'
+  }
+  return errors
+}
+
 // Main Game Form component
 const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
   const [formData, setFormData] = useState(initialFormData)
@@ -77,6 +146,8 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
   const [selectedRegion, setSelectedRegion] = useState('')
   const [selectedCity, setSelectedCity] = useState('')
   const [cityOptions, setCityOptions] = useState([])
+  const [errors, setErrors] = useState({})
+  const [touches, setTouches] = useState({})
   const fileInputRef = useRef(null)
 
   // Loading state
@@ -142,6 +213,14 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
 
   const handleChange = e => {
     const { name, value, type, checked } = e.target
+    setTouches(prev => ({ ...prev, [name]: true })) // Mark field as touched
+    if (errors[name]) {
+      setErrors(prev => {
+        const newErrors = { ...prev }
+        delete newErrors[name] // Remove error for this field
+        return newErrors
+      })
+    }
 
     if (name.includes('.')) {
       // Handle nested fields (like location.country)
@@ -162,10 +241,41 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
   }
 
   const handleDateChange = (name, date) => {
+    setTouches(prev => ({ ...prev, [name]: true })) // Mark field as touched
+    if (errors[name]) {
+      setErrors(prev => {
+        const newErrors = { ...prev }
+        delete newErrors[name] // Remove error for this field
+        return newErrors
+      })
+    }
+
     setFormData(prev => ({
       ...prev,
       [name]: date
     }))
+  }
+
+  const handleBlur = e => {
+    const { name } = e.target
+    setTouches(prev => ({ ...prev, [name]: true })) // Mark field as touched
+    validateField(name)
+  }
+
+  const validateField = fieldname => {
+    const fieldErrors = validateForm(formData)
+    if (fieldErrors[fieldname]) {
+      setErrors(prev => ({
+        ...prev,
+        [fieldname]: fieldErrors[fieldname]
+      }))
+    } else {
+      setErrors(prev => {
+        const newErrors = { ...prev }
+        delete newErrors[fieldname] // Remove error for this field
+        return newErrors
+      })
+    }
   }
 
   // ********* Reward Related Functions - START ***********
@@ -205,8 +315,20 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
   }
   // ********* Reward Related Functions - END ***********
 
-  const handleSubmit = async () => {
-    console.log('Hello')
+  const handleSubmit = async e => {
+    e.preventDefault()
+    const formErrors = validateForm(formData)
+    setErrors(formErrors)
+    const allFields = Object.keys(formData)
+    const touchedFields = allFields.reduce((acc, field) => {
+      acc[field] = true
+      return acc
+    }, {})
+    setTouches(touchedFields)
+
+    if (Object.keys(formErrors).length > 0) {
+      return // If there are validation errors, do not submit
+    }
     await onSubmit({
       ...formData,
       location: { country: selectedCountryObject?.country, region: selectedRegion, city: selectedCity }
@@ -292,15 +414,20 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
 
   return (
     <Grid container spacing={3}>
-      <Grid item xs={12}>
-        <Typography variant='h5' gutterBottom>
-          Game Details
-        </Typography>
-      </Grid>
-
       {/* Basic Information */}
       <Grid item xs={12} md={6}>
-        <TextField fullWidth label='Game Title' name='title' value={formData.title} onChange={handleChange} required />
+        <TextField
+          fullWidth
+          label='Game Title'
+          name='title'
+          value={formData.title}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          onFocus={() => setErrors(prev => ({ ...prev, title: '' }))}
+          error={!!errors.title && touches.title}
+          helperText={errors.title}
+          required
+        />
       </Grid>
 
       <Grid item xs={12} md={6}>
@@ -310,6 +437,10 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
           name='pin'
           value={formData.pin}
           onChange={handleChange}
+          onBlur={handleBlur}
+          onFocus={() => setErrors(prev => ({ ...prev, pin: '' }))}
+          error={!!errors.pin && touches.pin}
+          helperText={errors.pin || 'Enter a unique 6-digit PIN for the game'}
           required
           inputProps={{ maxLength: 6, pattern: '\\d{6}' }}
         />
@@ -330,7 +461,17 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
       <Grid item xs={12}>
         <FormControl fullWidth>
           <InputLabel>Quiz</InputLabel>
-          <Select name='quiz' value={formData.quiz} label='Quiz' onChange={handleChange} required>
+          <Select
+            name='quiz'
+            value={formData.quiz}
+            label='Quiz'
+            onChange={handleChange}
+            onBlur={handleBlur}
+            onFocus={() => setErrors(prev => ({ ...prev, quiz: '' }))}
+            error={!!errors.quiz && touches.quiz}
+            helperText={errors.quiz || 'Select a quiz for this game'}
+            required
+          >
             {quizzes.map(quiz => (
               <MenuItem key={quiz._id} value={quiz._id}>
                 <Grid container alignItems='center' spacing={2} justifyContent='space-between'>
@@ -373,19 +514,42 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
       {/* Start Date & Time */}
       <Grid item xs={12} md={6}>
         <DateTimePicker
+          disablePast
+          minDateTime={dayjs().add(1, 'minute')}
           sx={{ width: '100%' }}
           label='Start Time'
           value={formData.startTime ? dayjs(formData.startTime) : null}
-          onChange={newValue => handleDateChange('startTime', newValue ? newValue.toDate() : null)}
-          renderInput={params => (
-            <TextField
-              {...params}
-              required
-              InputLabelProps={{
+          onChange={newValue => {
+            // explicitly set to 'null' if cleared
+            const newDate = newValue ? newValue.toDate() : null
+            console.log('new Datee ', newDate)
+
+            handleDateChange('startTime', newDate)
+
+            validateField('startTime')
+            if (formData.requireRegistration) {
+              validateField('registrationEndTime')
+            }
+          }}
+          onClose={() => validateField('startTime')}
+          slotProps={{
+            textField: {
+              error: !!errors.startTime && touches.startTime,
+              helperText: (touches.startTime && errors.startTime) || 'Select the start time for the game',
+              required: true,
+              onBlur: () => {
+                setTouches(prev => ({ ...prev, startTime: true }))
+                validateField('startTime')
+              },
+              onFocus: () => {
+                setTouches(prev => ({ ...prev, startTime: true }))
+                setErrors(prev => ({ ...prev, startTime: undefined }))
+              },
+              InputLabelProps: {
                 shrink: true
-              }}
-            />
-          )}
+              }
+            }
+          }}
         />
       </Grid>
 
@@ -397,6 +561,10 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
           type='number'
           value={formData.duration}
           onChange={handleChange}
+          onBlur={handleBlur}
+          onFocus={() => setErrors(prev => ({ ...prev, duration: '' }))}
+          error={!!errors.duration && touches.duration}
+          helperText={errors.duration}
           required
           inputProps={{ min: 60 }}
           InputProps={{
@@ -419,20 +587,36 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
         />
         {formData.requireRegistration && (
           <DateTimePicker
+            disablePast
+            minDateTime={dayjs().add(1, 'minute')}
             sx={{ width: '100%' }}
             label='Registration End Time'
             value={formData.registrationEndTime ? dayjs(formData.registrationEndTime) : null}
-            onChange={newValue => handleDateChange('registrationEndTime', newValue ? newValue.toDate() : null)}
-            renderInput={params => (
-              <TextField
-                {...params}
-                fullWidth
-                required
-                InputLabelProps={{
+            onChange={newValue => {
+              handleDateChange('registrationEndTime', newValue ? newValue.toDate() : null)
+              validateField('registrationEndTime')
+            }}
+            onClose={() => validateField('registrationEndTime')}
+            slotProps={{
+              textField: {
+                error: !!errors.registrationEndTime && touches.registrationEndTime,
+                helperText:
+                  (touches.registrationEndTime && errors.registrationEndTime) ||
+                  'Select the registration end time for the game',
+                required: true,
+                onBlur: () => {
+                  setTouches(prev => ({ ...prev, registrationEndTime: true }))
+                  validateField('registrationEndTime')
+                },
+                onFocus: () => {
+                  setTouches(prev => ({ ...prev, registrationEndTime: true }))
+                  setErrors(prev => ({ ...prev, registrationEndTime: undefined }))
+                },
+                InputLabelProps: {
                   shrink: true
-                }}
-              />
-            )}
+                }
+              }
+            }}
           />
         )}
       </Grid>
@@ -451,6 +635,10 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
             type='number'
             value={formData.maxPlayers}
             onChange={handleChange}
+            onBlur={handleBlur}
+            onFocus={() => setErrors(prev => ({ ...prev, maxPlayers: '' }))}
+            error={!!errors.maxPlayers && touches.maxPlayers}
+            helperText={errors.maxPlayers || 'Set a maximum number of players for the game'}
             inputProps={{ min: 1 }}
           />
         )}
@@ -563,6 +751,10 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                   name='promotionalVideoUrl'
                   value={formData.promotionalVideoUrl}
                   onChange={handleChange}
+                  onBlur={handleBlur}
+                  onFocus={() => setErrors(prev => ({ ...prev, promotionalVideoUrl: '' }))}
+                  error={!!errors.promotionalVideoUrl && touches.promotionalVideoUrl}
+                  helperText={errors.promotionalVideoUrl || 'Enter a YouTube or video URL'}
                   type='url'
                   placeholder='https://youtube.com/watch?v=...'
                 />
@@ -621,6 +813,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                   type='file'
                   ref={fileInputRef}
                   onChange={handleImageUpload}
+                  onBlur={handleBlur}
                   accept='image/*'
                   style={{ display: 'none' }}
                 />
@@ -703,6 +896,11 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                   name='thumbnailPoster'
                   value={formData.thumbnailPoster}
                   onChange={handleChange}
+                  onBlur={handleBlur}
+                  onFocus={() => setErrors(prev => ({ ...prev, thumbnailPoster: '' }))}
+                  error={!!errors.thumbnailPoster && touches.thumbnailPoster}
+                  helperText={errors.thumbnailPoster}
+                  placeholder='https://example.com/image.jpg'
                   type='url'
                   sx={{ mt: 2 }}
                 />
@@ -823,7 +1021,6 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
             })}
           </Box>
         )}
-
         {/* Reward Dialog */}
         <RewardDialog
           open={openRewardDialog}

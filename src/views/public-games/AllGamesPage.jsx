@@ -60,6 +60,7 @@ export const PublicGamesPage = () => {
         {games.map(game => (
           <Grid item key={game._id || game.id} xs={12} sm={6} md={4} lg={3}>
             <GameCard game={game} />
+            
           </Grid>
         ))}
       </Grid>
