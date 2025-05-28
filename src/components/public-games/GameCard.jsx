@@ -27,6 +27,7 @@ const GameCard = ({ game }) => {
   useEffect(() => {
     if (game.status === 'lobby' && game.startTime) {
       const startTime = new Date(game.startTime).getTime()
+      let interval // Declare interval variable here
 
       const updateTimer = () => {
         const now = new Date().getTime()
@@ -46,7 +47,7 @@ const GameCard = ({ game }) => {
       updateTimer()
 
       // Update every second
-      const interval = setInterval(updateTimer, 1000)
+      interval = setInterval(updateTimer, 1000)
       return () => clearInterval(interval)
     }
   }, [game.status, game.startTime])
@@ -76,7 +77,7 @@ const GameCard = ({ game }) => {
   }
 
   // Status-based UI logic
-  const isRegistrationOpen = new Date(game.registrationEndTime) > new Date()
+  const isRegistrationOpen = (game.requireRegistration && game.registrationEndTime) ? new Date(game.registrationEndTime) > new Date() : true
   const isGameUpcoming = ['approved', 'lobby'].includes(game.status)
   const isGameLive = game.status === 'live'
   const isGameEnded = ['completed', 'cancelled'].includes(game.status)
@@ -89,7 +90,7 @@ const GameCard = ({ game }) => {
       case 'lobby':
         return timeRemaining
           ? `Starts in ${timeRemaining.minutes}m ${timeRemaining.seconds.toString().padStart(2, '0')}s`
-          : 'Starting soon'
+          : 'Live'
       case 'live':
         return 'Live'
       case 'completed':

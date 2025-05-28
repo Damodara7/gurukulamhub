@@ -19,9 +19,11 @@ import PersonIcon from '@mui/icons-material/Person'
 import EventIcon from '@mui/icons-material/Event'
 import imagePlaceholder from '/public/images/misc/image-placeholder.png'
 import { HourglassBottom as HourglassBottomIcon, Verified as VerifiedIcon } from '@mui/icons-material'
+import { useSession } from 'next-auth/react'
 
 const GameList = ({ games, onApprove, onViewGame, onEditGame, isSuperUser = false }) => {
   const theme = useTheme()
+  const {data: session} = useSession()
 
   const getStatusChip = status => {
     const statusConfig = {
@@ -197,7 +199,7 @@ const GameList = ({ games, onApprove, onViewGame, onEditGame, isSuperUser = fals
                       <Button variant='outlined' color='info' size='small' onClick={() => onViewGame(game._id)}>
                         Details
                       </Button>
-                      {['created', 'approved'].includes(game.status) &&
+                      {(!game.createdBy?.roles?.includes('ADMIN') && game.creatorEmail === session?.user?.email) && ['created', 'approved'].includes(game.status) &&
                         (game?.registrationEndTime ? new Date() < new Date(game?.registrationEndTime) : true) && (
                           <Button variant='outlined' color='primary' size='small' onClick={() => onEditGame(game._id)}>
                             Edit

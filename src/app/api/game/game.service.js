@@ -560,7 +560,24 @@ export const updatePlayerProgress = async (gameId, { user, userAnswer, finish })
 export const startGame = async (gameId, userData) => {
   await connectMongo()
   try {
-    const game = await Game.findOne({ _id: gameId, status: 'live' })
+    const bufferMs = 5000; // 5 seconds
+    const now = new Date()
+    const oneSecondBefore = new Date(now.getTime() - bufferMs)
+    const oneSecondAfter = new Date(now.getTime() + bufferMs)
+
+    const game = await Game.findOne({
+      _id: gameId,
+      $or: [
+        { status: 'live' },
+        {
+          status: 'lobby',
+          startTime: {
+            $gte: oneSecondBefore,
+            $lte: oneSecondAfter
+          }
+        }
+      ]
+    })
       .populate('registeredUsers.user')
       .populate('participatedUsers.user')
       .populate('quiz')

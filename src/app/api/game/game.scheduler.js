@@ -64,7 +64,7 @@ export async function scheduleLobbyTransition(gameId) {
       return
     }
 
-    const lobbyTime = new Date(game.startTime.getTime() - 10 * 60000)
+    const lobbyTime = new Date(game.startTime.getTime() - 2 * 60000)
     const now = new Date()
 
     cancelTask(gameId)
