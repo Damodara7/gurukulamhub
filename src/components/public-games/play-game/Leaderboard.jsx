@@ -16,7 +16,7 @@ import { EmojiEvents } from '@mui/icons-material';
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 
-export default function Leaderboard({ game, duringPlay=false }) {
+export default function Leaderboard({ game, duringPlay=false, isAdmin=false }) {
   const [leaderboard, setLeaderboard] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -60,7 +60,7 @@ export default function Leaderboard({ game, duringPlay=false }) {
   }
 
   return (
-    <Box sx={{ mx: 'auto', maxWidth: duringPlay ? 'sm' : 'md', px: {md: 10, xs: 3} }}>
+    <Box sx={{ mx: 'auto', maxWidth: (duringPlay || !isAdmin) ? 'sm' : 'md', px: {md: 10, xs: 3} }}>
       <Typography variant="h6" sx={{ 
         mb: 2,
         fontWeight: 600,
@@ -72,14 +72,14 @@ export default function Leaderboard({ game, duringPlay=false }) {
       </Typography>
   
       <TableContainer component={Paper} elevation={3}>
-        <Table size={duringPlay ? 'small' :'medium'}>
+        <Table size={(duringPlay) ? 'small' :'medium'}>
           <TableHead>
             <TableRow>
               <TableCell>Rank</TableCell>
               <TableCell>Player</TableCell>
               <TableCell align='right'>Score</TableCell>
-              {!duringPlay && <TableCell align='right'>Time</TableCell>}
-              {!duringPlay && <TableCell align='right'>Accuracy</TableCell>}
+              {!duringPlay && isAdmin && <TableCell align='right'>Time</TableCell>}
+              {!duringPlay && isAdmin && <TableCell align='right'>Accuracy</TableCell>}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -90,8 +90,8 @@ export default function Leaderboard({ game, duringPlay=false }) {
                   <TableCell>{index + 1}</TableCell>
                   <TableCell>{player.email}</TableCell>
                   <TableCell align='right'>{player.score.toFixed(2)}</TableCell>
-                  {!duringPlay && <TableCell align='right'>{formatTime(player.totalTime)}</TableCell>}
-                  {!duringPlay &&  <TableCell align='right'>{player.accuracy}%</TableCell>}
+                  {!duringPlay && isAdmin && <TableCell align='right'>{formatTime(player.totalTime)}</TableCell>}
+                  {!duringPlay && isAdmin &&  <TableCell align='right'>{player.accuracy}%</TableCell>}
                 </TableRow>
               ))}
           </TableBody>
