@@ -102,88 +102,110 @@ const GameCard = ({ game }) => {
   }
 
   return (
-    <Card sx={{ maxWidth: 400, margin: 2, display: 'flex', flexDirection: 'column' }}>
+    <Card
+      sx={{ maxWidth: 400, margin: 2, display: 'flex', flexDirection: 'column' }}
+      style={{
+        height: '100%',
+        transition: 'transform 0.2s',
+        '&hover': {
+          transform: 'translateY(-4px)',
+          boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.1)'
+        }
+      }}
+    >
       <CardMedia component='img' src={game?.thumbnailPoster} height={'140px'} alt={game.title} />
-      <CardContent sx={{ flex: 1 }}>
-        <Stack direction='row' justifyContent='space-between' alignItems='center'>
-          <Typography variant='h6' noWrap>
-            {game.title}
+      <CardContent sx={{ flexGrow: 1 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100%'
+          }}
+        >
+          <Stack direction='row' justifyContent='space-between' alignItems='center'>
+            <Typography variant='h6' noWrap>
+              {game.title || 'Not Specified'}
+            </Typography>
+            <Chip
+              label={getStatusLabel()}
+              color={
+                game.status === 'live'
+                  ? 'error'
+                  : ['completed', 'cancelled'].includes(game.status)
+                    ? 'default'
+                    : 'primary'
+              }
+              size='small'
+              variant='outlined'
+            />
+          </Stack>
+
+          <Typography variant='body2' color='text.secondary' noWrap>
+            {game.info || 'No description available'}
           </Typography>
-          <Chip
-            label={getStatusLabel()}
-            color={
-              game.status === 'live'
-                ? 'error'
-                : ['completed', 'cancelled'].includes(game.status)
-                  ? 'default'
-                  : 'primary'
-            }
-            size='small'
-            variant='outlined'
-          />
-        </Stack>
 
-        <Typography variant='body2' color='text.secondary' noWrap>
-          {game.info}
-        </Typography>
+          {/* Game Info */}
+          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-around' }}>
+            <Stack spacing={1} mb={3}>
+              <Stack direction='row' alignItems='center' spacing={1}>
+                <EventIcon fontSize='small' color='action' />
+                <Typography variant='body2'>
+                  {format(new Date(game.startTime), 'PPpp') || 'time is not Specified'}
+                </Typography>
+              </Stack>
 
-        {/* Game Info */}
-        <Stack spacing={1} mb={3}>
-          <Stack direction='row' alignItems='center' spacing={1}>
-            <EventIcon fontSize='small' color='action' />
-            <Typography variant='body2'>{format(new Date(game.startTime), 'PPpp')}</Typography>
-          </Stack>
+              <Stack direction='row' alignItems='center' spacing={1}>
+                <LocationOnIcon fontSize='small' color='action' />
+                <Typography variant='body2' textTransform='capitalize'>
+                  {game?.location?.city || game.location?.region || game.location?.country || 'Anywhere'}
+                </Typography>
+              </Stack>
 
-          <Stack direction='row' alignItems='center' spacing={1}>
-            <LocationOnIcon fontSize='small' color='action' />
-            <Typography variant='body2' textTransform='capitalize'>
-              {game?.location?.city || game.location?.region || game.location?.country || 'Anywhere'}
-            </Typography>
-          </Stack>
-
-          <Stack direction='row' alignItems='flex-start' spacing={1}>
-            <EmojiEventsIcon fontSize='small' color='action' />
-            <Typography variant='body2'>
-              {game?.totalRewardValue
-                ? new Intl.NumberFormat(undefined, { style: 'currency', currency: 'INR' }).format(
-                    game?.totalRewardValue
-                  )
-                : 'Not mentioned'}
-            </Typography>
-          </Stack>
-
-          {isRegistrationOpen && !isGameEnded && (
-            <Stack direction='row' alignItems='flex-start' spacing={1}>
-              <HourglassBottomIcon fontSize='small' color='action' />
-              <Typography variant='body2'>Reg closes on {format(new Date(game?.registrationEndTime), 'Pp')}</Typography>
+              <Stack direction='row' alignItems='flex-start' spacing={1}>
+                <EmojiEventsIcon fontSize='small' color='action' />
+                <Typography variant='body2'>
+                  {game?.totalRewardValue
+                    ? new Intl.NumberFormat(undefined, { style: 'currency', currency: 'INR' }).format(
+                        game?.totalRewardValue
+                      )
+                    : 'Not mentioned'}
+                </Typography>
+              </Stack>
+              <Stack direction='row' alignItems='flex-start' spacing={1}>
+                <HourglassBottomIcon fontSize='small' color='action' />
+                <Typography variant='body2'>
+                  {isRegistrationOpen && !isGameEnded
+                    ? `Reg closes on ${format(new Date(game?.registrationEndTime), 'Pp')}`
+                    : 'No Registartion required'}
+                </Typography>
+              </Stack>
             </Stack>
-          )}
-        </Stack>
+          </Box>
+          {/* Buttons - Conditionally Rendered */}
+          <Stack direction='row' justifyContent='center' spacing={2} mt={2}>
+            <Button variant='outlined' color='info' onClick={handleView}>
+              View
+            </Button>
 
-        {/* Buttons - Conditionally Rendered */}
-        <Stack direction='row' justifyContent='center' spacing={2} mt={2}>
-          <Button variant='outlined' color='info' onClick={handleView}>
-            View
-          </Button>
-
-          {/* {isGameUpcoming && isRegistrationOpen && (
+            {/* {isGameUpcoming && isRegistrationOpen && (
             <Button variant='outlined' color='success' onClick={handleRegister}>
               Register
             </Button>
           )} */}
 
-          {((isGameUpcoming && isRegistrationOpen) || isGameLive) && (
-            <Button variant='outlined' color='primary' onClick={handleJoin}>
-              Join
-            </Button>
-          )}
+            {((isGameUpcoming && isRegistrationOpen) || isGameLive) && (
+              <Button variant='outlined' color='primary' onClick={handleJoin}>
+                Join
+              </Button>
+            )}
 
-          {isGameEnded && (
-            <Button variant='outlined' color='secondary' disabled>
-              {game.status === 'completed' ? 'Completed' : 'Cancelled'}
-            </Button>
-          )}
-        </Stack>
+            {isGameEnded && (
+              <Button variant='outlined' color='secondary' disabled>
+                {game.status === 'completed' ? 'Completed' : 'Cancelled'}
+              </Button>
+            )}
+          </Stack>
+        </Box>
       </CardContent>
     </Card>
   )

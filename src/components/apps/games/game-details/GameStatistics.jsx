@@ -9,6 +9,21 @@ import {
 import { EmojiEvents } from '@mui/icons-material';
 
 function GameStatistics({game}) {
+
+  function formatDuration(seconds) {
+    const hrs = Math.floor(seconds / 3600)
+    const mins = Math.floor((seconds % 3600) / 60)
+    const secs = seconds % 60
+
+    if (hrs > 0) {
+      return `${hrs}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+    } else if (mins > 0) {
+      return `${mins}:${String(secs).padStart(2, '0')}`
+    } else {
+      return `${secs}`
+    }
+  }
+  
   return (
     <Grid item xs={12} md={6}>
           <Card>
@@ -36,7 +51,7 @@ function GameStatistics({game}) {
                 </Grid>
                 <Grid item xs={6}>
                   <Box sx={{ textAlign: 'center' }}>
-                    <Typography variant='h4'>{game.duration / 60}min</Typography>
+                    <Typography variant='h4'>{formatDuration(game.duration)}</Typography>
                     <Typography variant='body2' color='text.secondary'>
                       Duration
                     </Typography>

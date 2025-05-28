@@ -42,7 +42,6 @@ import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import Loading from '@/components/Loading'
 import { getCountryByName } from '@/utils/countryRegionUtil'
-import Marquee from 'react-fast-marquee'
 // Reward position options
 const POSITION_OPTIONS = [1, 2, 3, 4, 5]
 
@@ -84,28 +83,6 @@ const validateForm = formData => {
   }
   if (!formData.thumbnailPoster) {
     errors.thumbnailPoster = 'Thumbnail image is required.'
-  } else {
-    // Check if it's a base64 URL
-    if (formData.thumbnailPoster.startsWith('data:image/')) {
-      const validBase64Types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml']
-      const mimeType = formData.thumbnailPoster.split(';')[0].split(':')[1]
-      if (!validBase64Types.includes(mimeType)) {
-        errors.thumbnailPoster = 'Please upload a valid image (JPEG, PNG, GIF, WEBP, or SVG).'
-      }
-    }
-    // If it's a standard URL (HTTP/HTTPS)
-    else if (formData.thumbnailPoster.startsWith('http')) {
-      const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg']
-      const fileName = formData.thumbnailPoster.toLowerCase()
-      const hasValidExtension = validExtensions.some(ext => fileName.endsWith(ext))
-      if (!hasValidExtension) {
-        errors.thumbnailPoster = 'Please upload a valid image (JPEG, PNG, GIF, WEBP, or SVG).'
-      }
-    }
-    // If it's neither base64 nor HTTP URL
-    else {
-      errors.thumbnailPoster = 'Invalid image format.'
-    }
   }
 
   if (formData.startTime === null) {
@@ -119,10 +96,12 @@ const validateForm = formData => {
     }
   }
 
-  if (formData.requireRegistration && formData.registrationEndTime === null) {
-    errors.registrationEndTime = 'Registration end time is required'
-  } else if (formData.registrationEndTime && formData.registrationEndTime < formData.startTime) {
-    errors.registrationEndTime = 'Registration end time must be after the start time.'
+  if (formData.requireRegistration) {
+    if (formData.registrationEndTime === null) {
+      errors.registrationEndTime = 'Please enter a valid date'
+    } else if (new Date(formData.registrationEndTime) >= new Date(formData.startTime)) {
+      errors.registrationEndTime = 'Registration end time must be before the start time'
+    }
   }
 
   if (!formData.duration || formData.duration < 60) {
@@ -425,7 +404,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
           onBlur={handleBlur}
           onFocus={() => setErrors(prev => ({ ...prev, title: '' }))}
           error={!!errors.title && touches.title}
-          helperText={errors.title}
+          helperText={errors.title || 'Enter the title'}
           required
         />
       </Grid>
@@ -440,7 +419,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
           onBlur={handleBlur}
           onFocus={() => setErrors(prev => ({ ...prev, pin: '' }))}
           error={!!errors.pin && touches.pin}
-          helperText={errors.pin || 'Enter a unique 6-digit PIN for the game'}
+          helperText={errors.pin || 'Enter a unique 6-digit PIN'}
           required
           inputProps={{ maxLength: 6, pattern: '\\d{6}' }}
         />
@@ -453,13 +432,14 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
           name='description'
           value={formData.description}
           onChange={handleChange}
+          hypertext={'enter the description'}
           multiline
           rows={3}
         />
       </Grid>
 
       <Grid item xs={12}>
-        <FormControl fullWidth>
+        <FormControl fullWidth error={!!errors.quiz && touches.quiz}>
           <InputLabel>Quiz</InputLabel>
           <Select
             name='quiz'
@@ -468,8 +448,6 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
             onChange={handleChange}
             onBlur={handleBlur}
             onFocus={() => setErrors(prev => ({ ...prev, quiz: '' }))}
-            error={!!errors.quiz && touches.quiz}
-            helperText={errors.quiz || 'Select a quiz for this game'}
             required
           >
             {quizzes.map(quiz => (
@@ -508,6 +486,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
               </MenuItem>
             ))}
           </Select>
+          <FormHelperText>{errors.quiz || 'Select a quiz'}</FormHelperText>
         </FormControl>
       </Grid>
 
@@ -535,7 +514,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
           slotProps={{
             textField: {
               error: !!errors.startTime && touches.startTime,
-              helperText: (touches.startTime && errors.startTime) || 'Select the start time for the game',
+              helperText: (touches.startTime && errors.startTime) || 'Select the start time',
               required: true,
               onBlur: () => {
                 setTouches(prev => ({ ...prev, startTime: true }))
@@ -556,17 +535,17 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
       <Grid item xs={12} md={6}>
         <TextField
           fullWidth
-          label='Duration (seconds)'
+          label='Duration (minutes)'
           name='duration'
           type='number'
-          value={formData.duration}
+          value={formData.duration * 60}
           onChange={handleChange}
           onBlur={handleBlur}
           onFocus={() => setErrors(prev => ({ ...prev, duration: '' }))}
           error={!!errors.duration && touches.duration}
-          helperText={errors.duration}
+          helperText={errors.duration || 'Enter the duration in minutes'}
           required
-          inputProps={{ min: 60 }}
+          inputProps={{ min: 1 }}
           InputProps={{
             endAdornment: (
               <InputAdornment position='end'>
@@ -588,7 +567,8 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
         {formData.requireRegistration && (
           <DateTimePicker
             disablePast
-            minDateTime={dayjs().add(1, 'minute')}
+            minDateTime={dayjs().add(1, 'minute')} // ensure the future time
+            maxDateTime={dayjs(formData.startTime).subtract(1, 'minute')} // must be before start time
             sx={{ width: '100%' }}
             label='Registration End Time'
             value={formData.registrationEndTime ? dayjs(formData.registrationEndTime) : null}
@@ -602,7 +582,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                 error: !!errors.registrationEndTime && touches.registrationEndTime,
                 helperText:
                   (touches.registrationEndTime && errors.registrationEndTime) ||
-                  'Select the registration end time for the game',
+                  'Select the registration end time',
                 required: true,
                 onBlur: () => {
                   setTouches(prev => ({ ...prev, registrationEndTime: true }))
@@ -638,7 +618,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
             onBlur={handleBlur}
             onFocus={() => setErrors(prev => ({ ...prev, maxPlayers: '' }))}
             error={!!errors.maxPlayers && touches.maxPlayers}
-            helperText={errors.maxPlayers || 'Set a maximum number of players for the game'}
+            helperText={errors.maxPlayers || 'Set a maximum number of players'}
             inputProps={{ min: 1 }}
           />
         )}
