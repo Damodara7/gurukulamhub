@@ -52,7 +52,7 @@ function CreateGamePage({ isSuperUser = false }) {
         startTime: values.startTime.toISOString(),
         registrationEndTime: values.requireRegistration ? values.registrationEndTime.toISOString() : null,
         // Ensure duration is a number
-        duration: Number(values.duration),
+        duration: Number(values.duration) * 60, // because duration entered by user is in minutes
         // Ensure maxPlayers is a number
         maxPlayers: values.limitPlayers ? Number(values.maxPlayers) : 100000,
         // Convert rewards to proper format

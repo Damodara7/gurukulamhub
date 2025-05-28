@@ -6,7 +6,7 @@ import PermissionLayoutWrapper from '@/components/PermissionLayoutWrapper'
 
 function Layout({ children }) {
   return (
-    <PermissionLayoutWrapper featureName={FEATURES_LOOKUP.MANAGE_GAMES} permissionName={PERMISSIONS_LOOKUP.UPDATE}>
+    <PermissionLayoutWrapper featureName={FEATURES_LOOKUP.ADMIN_GAMES} permissionName={PERMISSIONS_LOOKUP.UPDATE}>
       {children}
     </PermissionLayoutWrapper>
   )

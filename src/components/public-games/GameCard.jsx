@@ -15,7 +15,7 @@ import PeopleIcon from '@mui/icons-material/People'
 import PersonIcon from '@mui/icons-material/Person'
 import EventIcon from '@mui/icons-material/Event'
 import { format } from 'date-fns'
-import gameThumbnailImage from '/public/images/games/game_thumbnail.png'
+import imagePlaceholder from '/public/images/misc/image-placeholder.png'
 import { useEffect, useState } from 'react'
 
 const GameCard = ({ game }) => {
@@ -38,7 +38,7 @@ const GameCard = ({ game }) => {
           setTimeRemaining({ minutes, seconds })
         } else {
           setTimeRemaining(null)
-          clearInterval(interval)
+          // clearInterval(interval)
         }
       }
 
@@ -113,7 +113,17 @@ const GameCard = ({ game }) => {
         }
       }}
     >
-      <CardMedia component='img' src={game?.thumbnailPoster} height={'140px'} alt={game.title} />
+      <CardMedia
+        component='img'
+        height='180'
+        image={game?.thumbnailPoster || imagePlaceholder.src}
+        alt={game.title}
+        sx={{ objectFit: 'cover' }}
+        onError={e => {
+          // e.target.onerror = null // prevents looping
+          e.target.src = imagePlaceholder.src   // fallback image
+        }}
+      />
       <CardContent sx={{ flexGrow: 1 }}>
         <Box
           sx={{

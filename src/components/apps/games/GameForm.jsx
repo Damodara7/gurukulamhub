@@ -104,8 +104,8 @@ const validateForm = formData => {
     }
   }
 
-  if (!formData.duration || formData.duration < 60) {
-    errors.duration = 'Duration must be atleast 60 seconds.'
+  if (!formData.duration || formData.duration < 1) {
+    errors.duration = 'Duration must be atleast 1 minute.'
   }
 
   if (formData.limitPlayers && (!formData.maxPlayers || formData.maxPlayers <= 0)) {
@@ -148,7 +148,8 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
         ...data,
         quiz: data?.quiz?._id || null,
         startTime: data?.startTime ? new Date(data.startTime) : null,
-        registrationEndTime: data?.registrationEndTime ? new Date(data.registrationEndTime) : null
+        registrationEndTime: data?.registrationEndTime ? new Date(data.registrationEndTime) : null,
+        duration: data?.duration ? Math.floor(data.duration / 60) : ''
       })
       setSelectedCountryObject(
         data?.location?.country
@@ -538,7 +539,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
           label='Duration (minutes)'
           name='duration'
           type='number'
-          value={formData.duration * 60}
+          value={formData.duration}
           onChange={handleChange}
           onBlur={handleBlur}
           onFocus={() => setErrors(prev => ({ ...prev, duration: '' }))}

@@ -8,6 +8,8 @@ import { CircularProgress, Box, Typography, useTheme } from '@mui/material'
 import PlayGameInfoScreen from '@/components/public-games/play-game/PlayGameInfoScreen'
 import StartPlayGame from '@/components/public-games/play-game/StartPlayGame'
 import GameEnded from '@/components/public-games/play-game/GameEnded'
+import GameRegistrationNotice from '@/components/public-games/play-game/GameRegistrationNotice'
+
 
 function PlayGamePage() {
   const params = useParams()
@@ -62,13 +64,28 @@ function PlayGamePage() {
     )
   }
 
+  //check if game has ended
   if (new Date() > new Date(new Date(game.startTime).getTime() + game.duration * 1000)) {
     return <GameEnded game={game} onExit={handleExit} />
   }
 
+  // caluculate the difference in minutes
+  // first we get the starttime and then get the current time and we get the result in the milliseconds 
+  // for convertiing milliseconds to minutes we divide by 1000 and then by 60
+  // this will give us the time left in minutes
+
+  // const timeleft = (new Date(game.startTime).getTime() - new Date().getTime()) / (1000 * 60);
+
+  // if( timeleft >= 10){
+  //   return <GameRegistrationNotice game={game}/>
+  // }
+
+  //if user has choosen to start the game
   if (shouldStartGame) {
     return <StartPlayGame game={game} setGame={setGame} />
   }
+  
+  //default-case - show game info screen
 
   return <PlayGameInfoScreen game={game} setShouldStartGame={setShouldStartGame} />
 }
