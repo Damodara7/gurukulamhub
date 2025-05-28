@@ -8,7 +8,7 @@ import { useSession } from 'next-auth/react'
 import GamesList from '@/components/apps/games/all-games/GamesList'
 import { useRouter } from 'next/navigation'
 
-const AllGamesPage = () => {
+const AllGamesPage = ({ creatorEmail = '', isSuperUser = false }) => {
   const router = useRouter()
   const [games, setGames] = useState([])
   const [loading, setLoading] = useState(true)
@@ -17,7 +17,11 @@ const AllGamesPage = () => {
   const fetchGames = async () => {
     setLoading(true)
     try {
-      const result = await RestApi.get(API_URLS.v0.USERS_GAME)
+      let url = `${API_URLS.v0.USERS_GAME}`
+      if (creatorEmail) {
+        url += `?email=${creatorEmail}`
+      }
+      const result = await RestApi.get(url)
       if (result?.status === 'success') {
         setGames(result.result || [])
       } else {
@@ -41,7 +45,9 @@ const AllGamesPage = () => {
   const handleApprove = async gameId => {
     try {
       const result = await RestApi.post(`${API_URLS.v0.USERS_GAME}/${gameId}/approve`, {
-        status: 'approved'
+        status: 'approved',
+        approvedBy: session?.user?.id,
+        approverEmail: session?.user?.email
       })
 
       if (result?.status === 'success') {
@@ -63,14 +69,22 @@ const AllGamesPage = () => {
 
   async function handleViewGame(id) {
     console.log('Clicked View game of id: ', id)
-    router.push(`/apps/games/${id}`)
+    router.push(isSuperUser ? `/manage-games/${id}` : `/apps/games/${id}`)
   }
   async function handleEditGame(id) {
     console.log('Clicked Edit game of id: ', id)
-    router.push(`/apps/games/${id}/edit`)
+    router.push(isSuperUser ? `/manage-games/${id}/edit` : `/apps/games/${id}/edit`)
   }
 
-  return <GamesList games={games} onApprove={handleApprove} onViewGame={handleViewGame} onEditGame={handleEditGame} />
+  return (
+    <GamesList
+      games={games}
+      onApprove={handleApprove}
+      onViewGame={handleViewGame}
+      onEditGame={handleEditGame}
+      isSuperUser={isSuperUser}
+    />
+  )
 }
 
 export default AllGamesPage

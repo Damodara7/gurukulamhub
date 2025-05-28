@@ -130,6 +130,7 @@
     "sponsorByArea": "Sponsor By Area",
     "manageSponsorships": "Manage Sponsorships",
     "all":"All",
-    "registered":"Registered"
+    "registered":"Registered",
+    "superUserPages": "Super User"
   }
 }

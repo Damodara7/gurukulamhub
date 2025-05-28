@@ -101,9 +101,7 @@ const DebouncedInput = ({ value: initialValue, onChange, debounce = 500, ...prop
 const userRoleObj = {
   ADMIN: { icon: 'ri-vip-crown-line', color: 'error' },
   USER: { icon: 'ri-user-3-line', color: 'primary' },
-  author: { icon: 'ri-computer-line', color: 'warning' },
-  editor: { icon: 'ri-edit-box-line', color: 'info' },
-  maintainer: { icon: 'ri-pie-chart-2-line', color: 'success' }
+  "SUPER_USER": { icon: 'ri-shield-star-line', color: 'error' },
 }
 
 const userStatusObj = {
@@ -181,7 +179,7 @@ const RolesTable = ({ tableData, refreshUsers }) => {
         header: 'Email',
         cell: ({ row }) => <Typography>{row.original.email}</Typography>
       }),
-      columnHelper.accessor('role', {
+      columnHelper.accessor('roles', {
         header: 'Role',
         cell: ({ row }) => (
           <div className='flex flex-wrap gap-2'>
@@ -513,7 +511,13 @@ const RolesTable = ({ tableData, refreshUsers }) => {
         roles={rolesData}
       />
 
-      {addUserOpen && <AddUserDrawer refreshUsers={refreshUsers} open={addUserOpen} handleClose={() => setAddUserOpen(!addUserOpen)} />}
+      {addUserOpen && (
+        <AddUserDrawer
+          refreshUsers={refreshUsers}
+          open={addUserOpen}
+          handleClose={() => setAddUserOpen(!addUserOpen)}
+        />
+      )}
     </Card>
   )
 }

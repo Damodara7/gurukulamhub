@@ -42,7 +42,6 @@ import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import Loading from '@/components/Loading'
 import { getCountryByName } from '@/utils/countryRegionUtil'
-import Marquee from 'react-fast-marquee'
 // Reward position options
 const POSITION_OPTIONS = [1, 2, 3, 4, 5]
 
@@ -84,28 +83,6 @@ const validateForm = formData => {
   }
   if (!formData.thumbnailPoster) {
     errors.thumbnailPoster = 'Thumbnail image is required.'
-  } else {
-    // Check if it's a base64 URL
-    if (formData.thumbnailPoster.startsWith('data:image/')) {
-      const validBase64Types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml']
-      const mimeType = formData.thumbnailPoster.split(';')[0].split(':')[1]
-      if (!validBase64Types.includes(mimeType)) {
-        errors.thumbnailPoster = 'Please upload a valid image (JPEG, PNG, GIF, WEBP, or SVG).'
-      }
-    }
-    // If it's a standard URL (HTTP/HTTPS)
-    else if (formData.thumbnailPoster.startsWith('http')) {
-      const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg']
-      const fileName = formData.thumbnailPoster.toLowerCase()
-      const hasValidExtension = validExtensions.some(ext => fileName.endsWith(ext))
-      if (!hasValidExtension) {
-        errors.thumbnailPoster = 'Please upload a valid image (JPEG, PNG, GIF, WEBP, or SVG).'
-      }
-    }
-    // If it's neither base64 nor HTTP URL
-    else {
-      errors.thumbnailPoster = 'Invalid image format.'
-    }
   }
 
   if (formData.startTime === null) {

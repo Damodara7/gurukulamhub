@@ -19,7 +19,7 @@ export const getOne = async (filter = {}) => {
 
     const game = await Game.findOne({ ...filter })
       .populate('quiz')
-      .populate('createdBy', 'email firstName lastName')
+      .populate('createdBy', 'email firstName lastName roles')
       .lean()
 
     if (!game) {
@@ -49,7 +49,7 @@ export const getAll = async (filter = {}) => {
   try {
     const games = await Game.find(filter)
       .populate('quiz')
-      .populate('createdBy', 'email firstName lastName')
+      .populate('createdBy', 'email firstName lastName roles')
       .sort({ createdAt: -1 })
       .lean()
 
@@ -96,7 +96,7 @@ export const getAllPublic = async (filter = {}) => {
 export const getAllByEmail = async email => {
   await connectMongo()
   try {
-    if (!email || !validator.isEmail(email)) {
+    if (!email) {
       return {
         status: 'error',
         result: null,
@@ -106,7 +106,7 @@ export const getAllByEmail = async email => {
 
     const games = await Game.find({ creatorEmail: email })
       .populate('quiz')
-      .populate('createdBy', 'email firstName lastName')
+      .populate('createdBy', 'email firstName lastName roles')
       .sort({ startTime: -1 })
       .lean()
 
@@ -129,6 +129,9 @@ export const addOne = async gameData => {
   try {
     const user = await User.findOne({ email: gameData.creatorEmail })
     gameData.createdBy = user._id
+    if (user?.roles?.includes('ADMIN')) {
+      gameData.approvedBy = user._id
+    }
     console.log({ gameData })
     // Validate required fields
     const requiredFields = ['title', 'pin', 'quiz', 'startTime', 'duration', 'createdBy']
@@ -193,6 +196,11 @@ export const addOne = async gameData => {
     }
 
     const savedGame = await newGame.save()
+
+    // If the user is ADMIN - Then Schedule game scheduleres(on approval)
+    if (user?.roles?.includes('ADMIN')) {
+      gameScheduler.onGameApproved(savedGame._id)
+    }
 
     return {
       status: 'success',
@@ -317,6 +325,9 @@ export const approveGame = async (gameId, updateData) => {
         }
       }
     }
+
+    const user = await User.findOne({ email: updateData.approverEmail })
+    updateData.approvedBy = user._id
 
     // Apply updates to the existing game document
     Object.keys(updateData).forEach(key => {

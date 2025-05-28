@@ -97,9 +97,7 @@ const DebouncedInput = ({ value: initialValue, onChange, debounce = 500, ...prop
 const userRoleObj = {
   ADMIN: { icon: 'ri-vip-crown-line', color: 'error' },
   USER: { icon: 'ri-user-3-line', color: 'primary' },
-  author: { icon: 'ri-computer-line', color: 'warning' },
-  editor: { icon: 'ri-edit-box-line', color: 'info' },
-  maintainer: { icon: 'ri-pie-chart-2-line', color: 'success' }
+  "SUPER_USER": { icon: 'ri-shield-star-line', color: 'warning' },
 }
 
 const userStatusObj = {

@@ -1,4 +1,5 @@
 import {
+  Alert,
   Box,
   Button,
   Card,
@@ -17,8 +18,9 @@ import PeopleIcon from '@mui/icons-material/People'
 import PersonIcon from '@mui/icons-material/Person'
 import EventIcon from '@mui/icons-material/Event'
 import imagePlaceholder from '/public/images/misc/image-placeholder.png'
+import { HourglassBottom as HourglassBottomIcon, Verified as VerifiedIcon } from '@mui/icons-material'
 
-const GameList = ({ games, onApprove, onViewGame, onEditGame }) => {
+const GameList = ({ games, onApprove, onViewGame, onEditGame, isSuperUser = false }) => {
   const theme = useTheme()
 
   const getStatusChip = status => {
@@ -87,28 +89,76 @@ const GameList = ({ games, onApprove, onViewGame, onEditGame }) => {
                 />
 
                 <CardContent sx={{ flexGrow: 1 }}>
-                  <Stack direction='row' justifyContent='space-between' alignItems='flex-start' mb={0}>
-                    <Typography variant='h6' fontWeight={600}>
-                      {game.title}
-                    </Typography>
-                    {getStatusChip(game.status)}
-                  </Stack>
+                  <Box className='flex flex-col justify-between' style={{ height: '100%' }}>
+                    <Box>
+                      <Stack direction='row' justifyContent='space-between' alignItems='flex-start' mb={0}>
+                        <Typography variant='h6' fontWeight={600}>
+                          {game.title}
+                        </Typography>
+                        {getStatusChip(game.status)}
+                      </Stack>
 
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                    mb={2}
-                    sx={{
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden'
-                    }}
-                  >
-                    {game.description}
-                  </Typography>
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                        mb={2}
+                        sx={{
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden'
+                        }}
+                      >
+                        {game.description}
+                      </Typography>
 
-                  {/* {game.tags?.length > 0 && (
+                      {/* Add approval notice for SuperUsers */}
+                      {isSuperUser && game.status === 'created' && (
+                        <Alert
+                          severity='warning'
+                          icon={false}
+                          style={{ textAlign: 'center' }}
+                          variant='outlined'
+                          sx={{
+                            my: 2,
+                            py: 0,
+                            display: 'block',
+                            '& .MuiAlert-message': {
+                              padding: '4px 0',
+                              fontSize: '0.8rem'
+                            }
+                          }}
+                        >
+                          <Box className='flex gap-2 items-center justify-center'>
+                            <HourglassBottomIcon fontSize='small' />
+                            <span>Waiting for admin approval</span>
+                          </Box>
+                        </Alert>
+                      )}
+                      {isSuperUser && game.status === 'approved' && (
+                        <Alert
+                          severity='success'
+                          icon={<VerifiedIcon fontSize='small' />}
+                          style={{ textAlign: 'center' }}
+                          variant='outlined'
+                          sx={{
+                            my: 2,
+                            py: 0,
+                            display: 'block',
+                            '& .MuiAlert-message': {
+                              padding: '4px 0',
+                              fontSize: '0.8rem'
+                            }
+                          }}
+                        >
+                          <Box className='flex gap-2 items-center justify-center'>
+                            <VerifiedIcon fontSize='small' sx={{ fontSize: '0.875rem' }} />
+                            <span>Approved by admin!</span>
+                          </Box>
+                        </Alert>
+                      )}
+
+                      {/* {game.tags?.length > 0 && (
                     <Stack direction='row' flexWrap='wrap' gap={1} mb={2}>
                       {game.tags.map(tag => (
                         <Chip key={tag} label={tag} size='small' color='secondary' variant='outlined' />
@@ -116,48 +166,50 @@ const GameList = ({ games, onApprove, onViewGame, onEditGame }) => {
                     </Stack>
                   )} */}
 
-                  <Stack spacing={1} mb={3}>
-                    <Stack direction='row' alignItems='center' spacing={1}>
-                      <EventIcon fontSize='small' color='action' />
-                      <Typography variant='body2'>{format(new Date(game.startTime), 'PPpp')}</Typography>
-                    </Stack>
+                      <Stack spacing={1} mb={3}>
+                        <Stack direction='row' alignItems='center' spacing={1}>
+                          <EventIcon fontSize='small' color='action' />
+                          <Typography variant='body2'>{format(new Date(game.startTime), 'PPpp')}</Typography>
+                        </Stack>
 
-                    <Stack direction='row' alignItems='center' spacing={1}>
-                      <AccessTimeIcon fontSize='small' color='action' />
-                      <Typography variant='body2'>{Math.floor(game.duration / 60)} minutes</Typography>
-                    </Stack>
+                        <Stack direction='row' alignItems='center' spacing={1}>
+                          <AccessTimeIcon fontSize='small' color='action' />
+                          <Typography variant='body2'>{Math.floor(game.duration / 60)} minutes</Typography>
+                        </Stack>
 
-                    <Stack direction='row' alignItems='center' spacing={1}>
-                      <PeopleIcon fontSize='small' color='action' />
-                      <Typography variant='body2'>
-                        {game.participatedUsers?.length || 0} / {game.maxPlayers || '∞'} players
-                      </Typography>
-                    </Stack>
+                        <Stack direction='row' alignItems='center' spacing={1}>
+                          <PeopleIcon fontSize='small' color='action' />
+                          <Typography variant='body2'>
+                            {game.participatedUsers?.length || 0} / {game.maxPlayers || '∞'} players
+                          </Typography>
+                        </Stack>
 
-                    <Stack direction='row' alignItems='center' spacing={1}>
-                      <PersonIcon fontSize='small' color='action' />
-                      <Typography variant='body2' noWrap>
-                        {game.creatorEmail}
-                      </Typography>
-                    </Stack>
-                  </Stack>
+                        <Stack direction='row' alignItems='center' spacing={1}>
+                          <PersonIcon fontSize='small' color='action' />
+                          <Typography variant='body2' noWrap>
+                            {game.creatorEmail}
+                          </Typography>
+                        </Stack>
+                      </Stack>
+                    </Box>
 
-                  <Stack direction='row' spacing={1} justifyContent='center'>
-                    <Button variant='outlined' color='info' size='small' onClick={() => onViewGame(game._id)}>
-                      Details
-                    </Button>
-                    {['created', 'approved'].includes(game.status) &&
-                      (game?.registrationEndTime ? new Date() < new Date(game?.registrationEndTime) : true) && (
-                        <Button variant='outlined' color='primary' size='small' onClick={() => onEditGame(game._id)}>
-                          Edit
+                    <Stack direction='row' spacing={1} justifyContent='center'>
+                      <Button variant='outlined' color='info' size='small' onClick={() => onViewGame(game._id)}>
+                        Details
+                      </Button>
+                      {['created', 'approved'].includes(game.status) &&
+                        (game?.registrationEndTime ? new Date() < new Date(game?.registrationEndTime) : true) && (
+                          <Button variant='outlined' color='primary' size='small' onClick={() => onEditGame(game._id)}>
+                            Edit
+                          </Button>
+                        )}
+                      {!isSuperUser && game.status === 'created' && (
+                        <Button variant='outlined' color='success' size='small' onClick={() => onApprove(game._id)}>
+                          Approve
                         </Button>
                       )}
-                    {game.status === 'created' && (
-                      <Button variant='outlined' color='success' size='small' onClick={() => onApprove(game._id)}>
-                        Approve
-                      </Button>
-                    )}
-                  </Stack>
+                    </Stack>
+                  </Box>
                 </CardContent>
               </Card>
             </Grid>

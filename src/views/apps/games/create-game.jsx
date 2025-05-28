@@ -10,7 +10,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import GameForm from '@/components/apps/games/GameForm'
 
-function CreateGamePage() {
+function CreateGamePage({ isSuperUser = false }) {
   const { data: session } = useSession()
   const [quizzes, setQuizzes] = useState([])
   const [loading, setLoading] = useState(true)
@@ -77,7 +77,8 @@ function CreateGamePage() {
               }
             })),
             winners: reward.winners || []
-          })) || []
+          })) || [],
+        ...(session?.user?.roles?.includes('ADMIN') ? { status: 'approved', approvedBy: session?.user?.id } : {})
       }
 
       console.log('payload: ', payload)
@@ -86,7 +87,7 @@ function CreateGamePage() {
 
       if (result?.status === 'success') {
         toast.success('Game created successfully!')
-        router.push('/apps/games') // Redirect to games list
+        router.push(isSuperUser ? '/manage-games' : '/apps/games') // Redirect to games list
       } else {
         console.error('Error creating game:', result.message)
         toast.error(result?.message || 'Failed to create game')
@@ -100,7 +101,7 @@ function CreateGamePage() {
   }
 
   const handleCancel = () => {
-    router.push('/apps/games') // Redirect to games list
+    router.push(isSuperUser ? '/manage-games' : '/apps/games') // Redirect to games list
   }
 
   if (loading && quizzes.length === 0) {

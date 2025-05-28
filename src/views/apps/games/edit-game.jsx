@@ -11,7 +11,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { DUMMY_SPONSORS } from '@/components/apps/games/RewardDialog'
 import GameForm from '@/components/apps/games/GameForm'
 
-function EditGamePage({ gameData = null, gameId = null }) {
+function EditGamePage({ gameData = null, gameId = null, isSuperUser=false }) {
   const { data: session } = useSession()
   const [quizzes, setQuizzes] = useState([])
   const [loading, setLoading] = useState(true)
@@ -94,7 +94,7 @@ function EditGamePage({ gameData = null, gameId = null }) {
 
       if (result?.status === 'success') {
         toast.success(`Game ${gameId ? 'updated' : 'created'} successfully!`)
-        router.push('/apps/games') // Redirect to games list
+        router.push(isSuperUser ? '/manage-games' : '/apps/games') // Redirect to games list
       } else {
         console.error(`Error ${gameId ? 'updating' : 'creating'} game:`, result.message)
         toast.error(result?.message || `Failed to ${gameId ? 'update' : 'create'} game`)
@@ -108,7 +108,7 @@ function EditGamePage({ gameData = null, gameId = null }) {
   }
 
   const handleCancel = () => {
-    router.push('/apps/games') // Redirect to games list
+    router.push(isSuperUser ? '/manage-games' : '/apps/games') // Redirect to games list
   }
 
   if (loading && (quizzes.length === 0 || (gameId && !gameData))) {

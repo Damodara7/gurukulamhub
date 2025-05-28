@@ -199,7 +199,22 @@ async function scheduleCompletion(gameId, endTime) {
         try {
           console.log(`Moving game ${gameId} to completed status`)
 
-          const updatedGame = await Game.findByIdAndUpdate(gameId, { $set: { status: 'completed' } }, { new: true })
+          const currentTime = new Date()
+          const updatedGame = await Game.findByIdAndUpdate(
+            gameId,
+            {
+              $set: { status: 'completed' },
+              // Only update users who haven't completed the game yet
+              $set: {
+                'participatedUsers.$[elem].completed': true,
+                'participatedUsers.$[elem].finishedAt': currentTime
+              }
+            },
+            {
+              new: true,
+              arrayFilters: [{ 'elem.completed': false }] // Only target uncompleted users
+            }
+          )
 
           if (updatedGame) {
             console.log(`Game ${gameId} status updated to completed`)

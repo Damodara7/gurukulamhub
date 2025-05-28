@@ -169,6 +169,11 @@ const gameSchema = new mongoose.Schema(
       required: true
     },
     creatorEmail: String,
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'users'
+    },
+    approverEmail: String,
     tags: [String]
   },
   { timestamps: true }

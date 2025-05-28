@@ -211,7 +211,6 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
           <MenuItem href={`/${locale}/public-games/registered`}>{dictionary['navigation'].registered}</MenuItem>
 
           <MenuItem href={`/${locale}/public-games/join`}>{dictionary['navigation'].join}</MenuItem>
-
         </SubMenu>
 
         <MenuSection label={dictionary['navigation'].mypages}>
@@ -277,66 +276,59 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
         )} */}
         {/* </RBACMenuWrapper> */}
 
-        {hasAdminPagesViewPermission && (
+        {!userRoles?.includes(ROLES_LOOKUP.ADMIN) && userRoles?.includes(ROLES_LOOKUP.SUPER_USER) && (
+          <MenuSection label={dictionary['navigation'].superUserPages}>
+            <SubMenu label={dictionary['navigation'].manageGames} icon={<i className='ri-gamepad-line' />}>
+              {/* <MenuItem href={`/${locale}/apps/game/list`}>{dictionary['navigation'].list}</MenuItem> */}
+              <MenuItem href={`/${locale}/manage-games`}>{dictionary['navigation'].all}</MenuItem>
+              <MenuItem href={`/${locale}/manage-games/create`}>{dictionary['navigation'].create}</MenuItem>
+              {/* <MenuItem href={`/${locale}/apps/quiz/view`}>{dictionary['navigation'].view}</MenuItem> */}
+            </SubMenu>
+          </MenuSection>
+        )}
+
+        {userRoles?.includes(ROLES_LOOKUP.ADMIN) && (
           <MenuSection label={dictionary['navigation'].adminPages}>
-            {hasManageAdvtViewPermission && (
-              <MenuItem href={`/${locale}/apps/advertisements/list`} icon={<i className='ri-advertisement-line'></i>}>
-                {dictionary['navigation'].manageAdvt}
-              </MenuItem>
-            )}
+            <MenuItem href={`/${locale}/apps/advertisements/list`} icon={<i className='ri-advertisement-line'></i>}>
+              {dictionary['navigation'].manageAdvt}
+            </MenuItem>
 
-            {hasManageQuizzesViewPermission && (
-              <SubMenu label={dictionary['navigation'].manageQuizzes} icon={<i className='ri-dashboard-line' />}>
-                <MenuItem href={`/${locale}/apps/quiz/list`}>{dictionary['navigation'].list}</MenuItem>
-                {/* <MenuItem href={`/${locale}/apps/quiz/view`}>{dictionary['navigation'].view}</MenuItem> */}
-              </SubMenu>
-            )}
-            {hasManageGamesViewPermission && (
-              <SubMenu label={dictionary['navigation'].manageGames} icon={<i className='ri-gamepad-line' />}>
-                {/* <MenuItem href={`/${locale}/apps/game/list`}>{dictionary['navigation'].list}</MenuItem> */}
-                <MenuItem href={`/${locale}/apps/games`}>{dictionary['navigation'].all}</MenuItem>
-                <MenuItem href={`/${locale}/apps/games/create`}>{dictionary['navigation'].create}</MenuItem>
-                {/* <MenuItem href={`/${locale}/apps/quiz/view`}>{dictionary['navigation'].view}</MenuItem> */}
-              </SubMenu>
-            )}
+            <SubMenu label={dictionary['navigation'].manageQuizzes} icon={<i className='ri-dashboard-line' />}>
+              <MenuItem href={`/${locale}/apps/quiz/list`}>{dictionary['navigation'].list}</MenuItem>
+              {/* <MenuItem href={`/${locale}/apps/quiz/view`}>{dictionary['navigation'].view}</MenuItem> */}
+            </SubMenu>
+            <SubMenu label={dictionary['navigation'].manageGames} icon={<i className='ri-gamepad-line' />}>
+              {/* <MenuItem href={`/${locale}/apps/game/list`}>{dictionary['navigation'].list}</MenuItem> */}
+              <MenuItem href={`/${locale}/apps/games`}>{dictionary['navigation'].all}</MenuItem>
+              <MenuItem href={`/${locale}/apps/games/create`}>{dictionary['navigation'].create}</MenuItem>
+              {/* <MenuItem href={`/${locale}/apps/quiz/view`}>{dictionary['navigation'].view}</MenuItem> */}
+            </SubMenu>
 
-            {hasManageUsersViewPermission && (
-              <SubMenu label={dictionary['navigation'].manageUsers} icon={<i className='ri-group-line' />}>
-                <MenuItem href={`/${locale}/apps/user/list`}>{dictionary['navigation'].list}</MenuItem>
-              </SubMenu>
-            )}
-            {hasManageSponsorshipViewPermission && (
-              <SubMenu label={dictionary['navigation'].manageSponsorships} icon={<i className='ri-wallet-3-line' />}>
-                <MenuItem href={`/${locale}/apps/sponsorships`}>{dictionary['navigation'].list}</MenuItem>
-              </SubMenu>
-            )}
-            {hasManageVideosViewPermission && (
-              <MenuItem href={`/${locale}/apps/videos`} icon={<i className='ri-video-line' />}>
-                {dictionary['navigation'].videos}
-              </MenuItem>
-            )}
-            {/* {hasManageUserAlertsViewPermission && (
+            <SubMenu label={dictionary['navigation'].manageUsers} icon={<i className='ri-group-line' />}>
+              <MenuItem href={`/${locale}/apps/user/list`}>{dictionary['navigation'].list}</MenuItem>
+            </SubMenu>
+            <SubMenu label={dictionary['navigation'].manageSponsorships} icon={<i className='ri-wallet-3-line' />}>
+              <MenuItem href={`/${locale}/apps/sponsorships`}>{dictionary['navigation'].list}</MenuItem>
+            </SubMenu>
+            <MenuItem href={`/${locale}/apps/videos`} icon={<i className='ri-video-line' />}>
+              {dictionary['navigation'].videos}
+            </MenuItem>
+            {/* 
               <MenuItem href={`/${locale}/apps/alerts`} icon={<i className='ri-notification-3-line' />}>
                 {dictionary['navigation'].alerts}
               </MenuItem>
-            )} */}
-            {hasRolesPermissionsViewPermission && (
-              <SubMenu label={dictionary['navigation'].roles} icon={<i className='ri-shield-user-line' />}>
-                <MenuItem href={`/${locale}/apps/roles`}>{dictionary['navigation'].roles}</MenuItem>
-                <MenuItem href={`/${locale}/apps/geo-roles`}>{dictionary['navigation'].geoRoles}</MenuItem>
-              </SubMenu>
-            )}
-            {hasRolesPermissionsViewPermission && (
-              <SubMenu label={dictionary['navigation'].features} icon={<i className='ri-stack-line' />}>
-                <MenuItem href={`/${locale}/apps/features`}>{dictionary['navigation'].features}</MenuItem>
-                <MenuItem href={`/${locale}/apps/geo-features`}>{dictionary['navigation'].geoFeatures}</MenuItem>
-              </SubMenu>
-            )}
-            {hasContextViewPermission && (
-              <MenuItem href={`/${locale}/apps/contexts/generic`} icon={<i className='ri-question-line' />}>
-                {dictionary['navigation'].generic}
-              </MenuItem>
-            )}
+             */}
+            <SubMenu label={dictionary['navigation'].roles} icon={<i className='ri-shield-user-line' />}>
+              <MenuItem href={`/${locale}/apps/roles`}>{dictionary['navigation'].roles}</MenuItem>
+              <MenuItem href={`/${locale}/apps/geo-roles`}>{dictionary['navigation'].geoRoles}</MenuItem>
+            </SubMenu>
+            <SubMenu label={dictionary['navigation'].features} icon={<i className='ri-stack-line' />}>
+              <MenuItem href={`/${locale}/apps/features`}>{dictionary['navigation'].features}</MenuItem>
+              <MenuItem href={`/${locale}/apps/geo-features`}>{dictionary['navigation'].geoFeatures}</MenuItem>
+            </SubMenu>
+            <MenuItem href={`/${locale}/apps/contexts/generic`} icon={<i className='ri-question-line' />}>
+              {dictionary['navigation'].generic}
+            </MenuItem>
           </MenuSection>
         )}
 
