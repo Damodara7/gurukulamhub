@@ -10,7 +10,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { DUMMY_SPONSORS } from '@/components/apps/games/RewardDialog'
 import GameForm from '@/components/apps/games/GameForm'
-
+import NonEditableGamePage from '@/components/apps/games/game-details/NonEditableGamePage';
 function EditGamePage({ gameData = null, gameId = null, isSuperUser=false }) {
   const { data: session } = useSession()
   const [quizzes, setQuizzes] = useState([])
@@ -119,48 +119,55 @@ function EditGamePage({ gameData = null, gameId = null, isSuperUser=false }) {
     )
   }
 
+  //main conditional rendering
+
+  if (gameData?.status !== 'created') {
+    return <NonEditableGamePage />
+  }
+
   // Utility function to transform database rewards to UI format
-const transformRewardsFromDB = (rewards) => {
-  return rewards.map(reward => {
-    // Calculate total allocations from sponsors
-    const cashSponsors = reward.sponsors.filter(s => s.rewardDetails.rewardType === 'cash');
-    const physicalSponsors = reward.sponsors.filter(s => s.rewardDetails.rewardType === 'physicalGift');
-    
-    const totalCash = cashSponsors.reduce((sum, s) => sum + (s.rewardDetails.rewardValue || 0), 0);
-    const totalPhysical = physicalSponsors.reduce((sum, s) => sum + (s.rewardDetails.numberOfNonCashRewards || 0), 0);
+  const transformRewardsFromDB = rewards => {
+    return rewards.map(reward => {
+      // Calculate total allocations from sponsors
+      const cashSponsors = reward.sponsors.filter(s => s.rewardDetails.rewardType === 'cash')
+      const physicalSponsors = reward.sponsors.filter(s => s.rewardDetails.rewardType === 'physicalGift')
 
-    return {
-      id: reward._id?.$oid || reward._id,
-      position: reward.position,
-      numberOfWinnersForThisPosition: reward.numberOfWinnersForThisPosition,
-      rewardValuePerWinner: reward.rewardValuePerWinner,
-      rewardType: reward.sponsors[0]?.rewardDetails?.rewardType || 'cash',
-      currency: reward.sponsors[0]?.rewardDetails?.currency || 'INR',
-      nonCashReward: reward.sponsors[0]?.rewardDetails?.nonCashReward,
-      sponsors: reward.sponsors.map(sponsor => ({
-        id: sponsor._id?.$oid || sponsor._id,
-        email: sponsor.email,
-        name: DUMMY_SPONSORS.find(ds => ds.email === sponsor.email)?.name || sponsor.email,
-        rewardType: sponsor.rewardDetails.rewardType,
-        amount: sponsor.rewardDetails.rewardValue,
-        currency: sponsor.rewardDetails.currency,
-        availableAmount: DUMMY_SPONSORS.find(ds => ds.email === sponsor.email)?.availableAmount || 0,
-        nonCashItem: sponsor.rewardDetails.nonCashReward,
-        numberOfNonCashItems: sponsor.rewardDetails.numberOfNonCashRewards,
-        availableItems: DUMMY_SPONSORS.find(ds => ds.email === sponsor.email)?.availableItems || 0,
-        logo: DUMMY_SPONSORS.find(ds => ds.email === sponsor.email)?.logo || 'SP',
-        allocated: sponsor.rewardDetails.rewardType === 'cash' 
-          ? sponsor.rewardDetails.rewardValue 
-          : sponsor.rewardDetails.numberOfNonCashRewards
-      })),
-      winners: reward.winners,
-      totalCash,
-      totalPhysical
-    };
-  });
-};
+      const totalCash = cashSponsors.reduce((sum, s) => sum + (s.rewardDetails.rewardValue || 0), 0)
+      const totalPhysical = physicalSponsors.reduce((sum, s) => sum + (s.rewardDetails.numberOfNonCashRewards || 0), 0)
 
-  const updatedGameData = {...gameData, rewards: transformRewardsFromDB(gameData?.rewards|| [])}
+      return {
+        id: reward._id?.$oid || reward._id,
+        position: reward.position,
+        numberOfWinnersForThisPosition: reward.numberOfWinnersForThisPosition,
+        rewardValuePerWinner: reward.rewardValuePerWinner,
+        rewardType: reward.sponsors[0]?.rewardDetails?.rewardType || 'cash',
+        currency: reward.sponsors[0]?.rewardDetails?.currency || 'INR',
+        nonCashReward: reward.sponsors[0]?.rewardDetails?.nonCashReward,
+        sponsors: reward.sponsors.map(sponsor => ({
+          id: sponsor._id?.$oid || sponsor._id,
+          email: sponsor.email,
+          name: DUMMY_SPONSORS.find(ds => ds.email === sponsor.email)?.name || sponsor.email,
+          rewardType: sponsor.rewardDetails.rewardType,
+          amount: sponsor.rewardDetails.rewardValue,
+          currency: sponsor.rewardDetails.currency,
+          availableAmount: DUMMY_SPONSORS.find(ds => ds.email === sponsor.email)?.availableAmount || 0,
+          nonCashItem: sponsor.rewardDetails.nonCashReward,
+          numberOfNonCashItems: sponsor.rewardDetails.numberOfNonCashRewards,
+          availableItems: DUMMY_SPONSORS.find(ds => ds.email === sponsor.email)?.availableItems || 0,
+          logo: DUMMY_SPONSORS.find(ds => ds.email === sponsor.email)?.logo || 'SP',
+          allocated:
+            sponsor.rewardDetails.rewardType === 'cash'
+              ? sponsor.rewardDetails.rewardValue
+              : sponsor.rewardDetails.numberOfNonCashRewards
+        })),
+        winners: reward.winners,
+        totalCash,
+        totalPhysical
+      }
+    })
+  }
+
+  const updatedGameData = { ...gameData, rewards: transformRewardsFromDB(gameData?.rewards || []) }
 
   return (
     <div className='p-4'>

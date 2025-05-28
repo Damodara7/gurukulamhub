@@ -234,7 +234,7 @@ const ViewDetails = ({ game }) => {
                         <Typography variant='body1'>
                           {[game?.location?.city, game?.location?.region, game?.location?.country]
                             .filter(Boolean)
-                            .join(', ')}
+                            .join(', ') || 'Not specified'}
                         </Typography>
                       </Stack>
                     </Stack>

@@ -25,6 +25,7 @@ export default function GameDetailsPage({ game = null }) {
       {/* Game Header Section */}
       <GameHeader game={game} />
 
+    
       {/* Promotional Video Section */}
       {game.promotionalVideoUrl && (
         <Card sx={{ mb: 3 }}>
