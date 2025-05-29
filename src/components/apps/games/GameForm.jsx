@@ -148,7 +148,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
         ...data,
         quiz: data?.quiz?._id || null,
         startTime: data?.startTime ? new Date(data.startTime) : null,
-        registrationEndTime: data?.registrationEndTime ? new Date(data.registrationEndTime) : null
+        registrationEndTime: data?.registrationEndTime ? new Date(data.registrationEndTime) : null,
       })
       setSelectedCountryObject(
         data?.location?.country
