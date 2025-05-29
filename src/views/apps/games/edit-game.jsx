@@ -121,8 +121,8 @@ function EditGamePage({ gameData = null, gameId = null, isSuperUser=false }) {
 
   //main conditional rendering
 
-  if (gameData?.status !== 'created') {
-    return <NonEditableGamePage />
+  if (!['created', 'cancelled'].includes(gameData?.status)) {
+    return <NonEditableGamePage gameData={gameData} />
   }
 
   // Utility function to transform database rewards to UI format
