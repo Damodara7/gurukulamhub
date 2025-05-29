@@ -26,6 +26,7 @@ import { useSession } from 'next-auth/react'
 const GameList = ({ games, onApprove, onViewGame, onDeleteGame, onEditGame, isSuperUser = false }) => {
   const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false) // Manage confirmation dialog
   const [gameToDelete, setGameToDelete] = useState(null) // Track the game to delete
+  console.log('GameList games: ', games)
   const theme = useTheme()
   const { data: session } = useSession()
 
@@ -124,51 +125,51 @@ const GameList = ({ games, onApprove, onViewGame, onDeleteGame, onEditGame, isSu
                           {game.description}
                         </Typography>
 
-                      {/* Add approval notice for SuperUsers */}
-                      {isSuperUser && game.status === 'created' && (
-                        <Alert
-                          severity='warning'
-                          icon={false}
-                          style={{ textAlign: 'center' }}
-                          variant='outlined'
-                          sx={{
-                            my: 2,
-                            py: 0,
-                            display: 'block',
-                            '& .MuiAlert-message': {
-                              padding: '4px 0',
-                              fontSize: '0.8rem'
-                            }
-                          }}
-                        >
-                          <Box className='flex gap-2 items-center justify-center'>
-                            <HourglassBottomIcon fontSize='small' />
-                            <span>Waiting for admin approval</span>
-                          </Box>
-                        </Alert>
-                      )}
-                      {isSuperUser && game.status === 'approved' && (
-                        <Alert
-                          severity='success'
-                          icon={<VerifiedIcon fontSize='small' />}
-                          style={{ textAlign: 'center' }}
-                          variant='outlined'
-                          sx={{
-                            my: 2,
-                            py: 0,
-                            display: 'block',
-                            '& .MuiAlert-message': {
-                              padding: '4px 0',
-                              fontSize: '0.8rem'
-                            }
-                          }}
-                        >
-                          <Box className='flex gap-2 items-center justify-center'>
-                            <VerifiedIcon fontSize='small' />
-                            <span>Approved by admin!</span>
-                          </Box>
-                        </Alert>
-                      )}
+                        {/* Add approval notice for SuperUsers */}
+                        {isSuperUser && game.status === 'created' && (
+                          <Alert
+                            severity='warning'
+                            icon={false}
+                            style={{ textAlign: 'center' }}
+                            variant='outlined'
+                            sx={{
+                              my: 2,
+                              py: 0,
+                              display: 'block',
+                              '& .MuiAlert-message': {
+                                padding: '4px 0',
+                                fontSize: '0.8rem'
+                              }
+                            }}
+                          >
+                            <Box className='flex gap-2 items-center justify-center'>
+                              <HourglassBottomIcon fontSize='small' />
+                              <span>Waiting for admin approval</span>
+                            </Box>
+                          </Alert>
+                        )}
+                        {isSuperUser && game.status === 'approved' && (
+                          <Alert
+                            severity='success'
+                            icon={false}
+                            style={{ textAlign: 'center' }}
+                            variant='outlined'
+                            sx={{
+                              my: 2,
+                              py: 0,
+                              display: 'block',
+                              '& .MuiAlert-message': {
+                                padding: '4px 0',
+                                fontSize: '0.8rem'
+                              }
+                            }}
+                          >
+                            <Box className='flex gap-2 items-center justify-center'>
+                              <VerifiedIcon fontSize='small' />
+                              <span>Approved by admin!</span>
+                            </Box>
+                          </Alert>
+                        )}
 
                         {/* {game.tags?.length > 0 && (
                     <Stack direction='row' flexWrap='wrap' gap={1} mb={2}>
@@ -234,7 +235,11 @@ const GameList = ({ games, onApprove, onViewGame, onDeleteGame, onEditGame, isSu
                           </Button>
                         )}
 
-                        {!isSuperUser && !['live', 'completed', 'lobby'].includes(game?.status) && (
+                        { !['live', 'completed', 'lobby'].includes(game?.status) && ((isSuperUser  &&
+                          game?.createdBy?.email === session?.user?.email &&
+                          !game?.createdBy?.roles?.includes('ADMIN')) ||
+                          (session?.user?.roles?.includes('ADMIN')
+                            ))  && (
                           <Button
                             variant='outlined'
                             color='error'
