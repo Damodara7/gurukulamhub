@@ -23,6 +23,35 @@ const GameCard = ({ game }) => {
   const router = useRouter()
   const [timeRemaining, setTimeRemaining] = useState(null)
 
+  console.log('GameCard output :', game)
+
+
+  const getStatusChip = status => {
+    const statusConfig = {
+      created: { color: 'default', label: 'Created' },
+      approved: { color: 'info', label: 'Approved' },
+      lobby: { color: 'primary', label: 'Lobby' },
+      live: { color: 'error', label: 'Live' },
+      completed: { color: 'success', label: 'Completed' },
+      cancelled: { color: 'warning', label: 'Cancelled' }
+    }
+
+    const config = statusConfig[status] || statusConfig.default
+    return (
+      <Chip
+        label={config.label}
+        color={config.color}
+        size='small'
+        variant='outlined'
+        sx={{
+          fontWeight: 500,
+          borderWidth: 1.5,
+          borderStyle: 'solid'
+        }}
+      />
+    )
+  }
+
   // Countdown timer effect for lobby status
   useEffect(() => {
     if (game.status === 'lobby' && game.startTime) {
@@ -56,10 +85,6 @@ const GameCard = ({ game }) => {
     router.push(`/public-games/${game._id}`)
   }
 
-  const handleRegister = () => {
-    router.push(`/public-games/${game._id}/register`)
-  }
-
   const handleJoin = async () => {
     try {
       const res = await RestApi.post(`${API_URLS.v0.USERS_GAME}/${game._id}/join`, {
@@ -82,26 +107,6 @@ const GameCard = ({ game }) => {
   const isGameLive = game.status === 'live'
   const isGameEnded = ['completed', 'cancelled'].includes(game.status)
 
-  // Chip label configuration
-  const getStatusLabel = () => {
-    switch (game.status) {
-      case 'approved':
-        return 'Not Started Yet'
-      case 'lobby':
-        return timeRemaining
-          ? `Starts in ${timeRemaining.minutes}m ${timeRemaining.seconds.toString().padStart(2, '0')}s`
-          : 'Live'
-      case 'live':
-        return 'Live'
-      case 'completed':
-        return 'Completed'
-      case 'cancelled':
-        return 'Cancelled'
-      default:
-        return game.status.toUpperCase()
-    }
-  }
-
   return (
     <Card
       sx={{ maxWidth: 400, margin: 2, display: 'flex', flexDirection: 'column' }}
@@ -122,7 +127,7 @@ const GameCard = ({ game }) => {
         sx={{ objectFit: 'cover' }}
         onError={e => {
           // e.target.onerror = null // prevents looping
-          e.target.src = imagePlaceholder.src   // fallback image
+          e.target.src = imagePlaceholder.src // fallback image
         }}
       />
       <CardContent sx={{ flexGrow: 1 }}>
@@ -137,18 +142,7 @@ const GameCard = ({ game }) => {
             <Typography variant='h6' noWrap>
               {game.title || 'Not Specified'}
             </Typography>
-            <Chip
-              label={getStatusLabel()}
-              color={
-                game.status === 'live'
-                  ? 'error'
-                  : ['completed', 'cancelled'].includes(game.status)
-                    ? 'default'
-                    : 'primary'
-              }
-              size='small'
-              variant='outlined'
-            />
+            {getStatusChip(game.status)}
           </Stack>
 
           <Typography variant='body2' color='text.secondary' noWrap>
@@ -194,7 +188,7 @@ const GameCard = ({ game }) => {
           </Box>
           {/* Buttons - Conditionally Rendered */}
           <Stack direction='row' justifyContent='center' spacing={2} mt={2}>
-            <Button variant='outlined' color='info' onClick={handleView}>
+            <Button variant='outlined' color='info' size='small' onClick={handleView}>
               View
             </Button>
 
@@ -205,13 +199,13 @@ const GameCard = ({ game }) => {
           )} */}
 
             {((isGameUpcoming && isRegistrationOpen) || isGameLive) && (
-              <Button variant='outlined' color='primary' onClick={handleJoin}>
+              <Button variant='outlined' color='primary' size='small' onClick={handleJoin}>
                 Join
               </Button>
             )}
 
-            {isGameEnded && (
-              <Button variant='outlined' color='secondary' disabled>
+            {isGameEnded && !['completed' , 'cancelled'].includes(game.status) && (
+              <Button variant='outlined' color='secondary' size='small' disabled>
                 {game.status === 'completed' ? 'Completed' : 'Cancelled'}
               </Button>
             )}
