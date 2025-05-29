@@ -32,6 +32,8 @@ import {
 } from '@mui/icons-material'
 import VideoAd from '@/views/apps/advertisements/VideoAd/VideoAd'
 import ImagePopup from '@/components/ImagePopup'
+import CancelIcon from '@mui/icons-material/Cancel'
+
 import Link from 'next/link'
 const ViewDetails = ({ game }) => {
   const theme = useTheme()
@@ -46,11 +48,12 @@ const ViewDetails = ({ game }) => {
 
   const getStatusChip = () => {
     const statusConfig = {
-      created: { color: 'warning', label: 'Pending', icon: <AccessTime /> },
+      created: { color: 'default', label: 'Pending', icon: <AccessTime /> },
       approved: { color: 'info', label: 'Approved', icon: <AccessTime /> },
       lobby: { color: 'warning', label: 'Lobby', icon: <AccessTime /> },
-      live: { color: 'success', label: 'Live', icon: <PlayCircle /> },
-      completed: { color: 'default', label: 'Completed', icon: <SportsEsports /> }
+      live: { color: 'error', label: 'Live', icon: <PlayCircle /> },
+      completed: { color: 'success', label: 'Completed', icon: <SportsEsports /> },
+      cancelled: { color: 'error', label: 'Cancelled', icon: <CancelIcon /> }
     }
 
     const config = statusConfig[game.status] || statusConfig.default

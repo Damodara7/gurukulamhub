@@ -20,7 +20,7 @@ const  NonEditableGamePage = () => {
         Cannot Edit This Game
       </Typography>
       <Typography variant='body1' sx={{ mb: 3 }}>
-        Only games with "created" status can be edited. This game is either live, completed, or cancelled.
+        Only games with "created" status can be edited. This game is either approved , live, completed, or cancelled.
       </Typography>
       <Button variant='contained' onClick={() => router.push(`/apps/games`)}>
         Back to All Games

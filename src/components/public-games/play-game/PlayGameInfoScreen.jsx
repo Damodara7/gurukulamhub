@@ -311,7 +311,7 @@ const GamePlayInfoScreen = ({ game, setShouldStartGame }) => {
                     <Stack direction='row' alignItems='center' spacing={1}>
                       <LocationOn color='primary' />
                       <Typography variant='body1'>
-                        {[game.location.city, game.location.region, game.location.country].filter(Boolean).join(', ')}
+                        {[game.location.city, game.location.region, game.location.country].filter(Boolean).join(', ') || 'Not Specified'}
                       </Typography>
                     </Stack>
                   </Stack>
