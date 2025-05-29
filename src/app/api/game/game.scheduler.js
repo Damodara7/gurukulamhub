@@ -64,7 +64,7 @@ export async function scheduleLobbyTransition(gameId) {
       return
     }
 
-    const lobbyTime = new Date(game.startTime.getTime() - 2 * 60000)
+    const lobbyTime = new Date(game.startTime.getTime() - 10 * 60000)
     const now = new Date()
 
     cancelTask(gameId)
@@ -316,7 +316,7 @@ export async function initializeScheduler() {
 
   // Optional: Add periodic check (e.g., every hour) to catch any missed transitions
   cron.schedule(
-    '0 * * * *',
+    '*/2 * * * *', // Every minute
     async () => {
       console.log('Running periodic schedule check')
       await reschedulePendingGames()
