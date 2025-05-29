@@ -148,6 +148,7 @@ const gameSchema = new mongoose.Schema(
       enum: ['created', 'approved', 'lobby', 'live', 'completed', 'cancelled'],
       default: 'created'
     },
+    cancellationReason: String,
     rewards: {
       type: [rewardSchema],
       default: []

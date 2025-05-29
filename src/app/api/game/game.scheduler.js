@@ -27,7 +27,7 @@ async function checkAndCancelOverdueGames() {
 
     // Find games that should have started but didn't
     const overdueGames = await Game.find({
-      status: { $in: ['approved', 'lobby'] },
+      status: { $in: ['created', 'approved', 'lobby'] },
       startTime: { $lte: overdueThreshold }
     })
 
