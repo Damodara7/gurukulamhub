@@ -27,6 +27,7 @@ async function checkAndCancelOverdueGames() {
 
     // Find games that should have started but didn't
     const overdueGames = await Game.find({
+      isDeleted: false,
       status: { $in: ['created', 'approved', 'lobby'] },
       startTime: { $lte: overdueThreshold }
     })
@@ -52,7 +53,7 @@ async function checkAndCancelOverdueGames() {
 
 export async function scheduleLobbyTransition(gameId) {
   try {
-    const game = await Game.findById(gameId)
+    const game = await Game.findOne({ _id: gameId, isDeleted: false })
     if (!game) {
       console.error(`Game ${gameId} not found`)
       return
@@ -119,7 +120,7 @@ async function scheduleLiveTransition(gameId, startTime) {
     // First check if the game should be cancelled
     await checkAndCancelOverdueGames()
 
-    const game = await Game.findById(gameId)
+    const game = await Game.findOne({ _id: gameId, isDeleted: false })
     if (!game || ['cancelled', 'completed'].includes(game.status)) {
       console.log(`Game ${gameId} is ${game?.status || 'deleted'}, skipping live transition`)
       return
@@ -200,8 +201,11 @@ async function scheduleCompletion(gameId, endTime) {
           console.log(`Moving game ${gameId} to completed status`)
 
           const currentTime = new Date()
-          const updatedGame = await Game.findByIdAndUpdate(
-            gameId,
+          const updatedGame = await Game.findOneAndUpdate(
+            {
+              _id: gameId,
+              isDeleted: false
+            },
             {
               $set: { status: 'completed' },
               // Only update users who haven't completed the game yet
@@ -256,6 +260,7 @@ export async function reschedulePendingGames() {
     await checkAndCancelOverdueGames()
 
     const pendingGames = await Game.find({
+      isDeleted: false,
       $or: [{ status: 'approved', startTime: { $gt: now } }, { status: 'lobby' }, { status: 'live' }]
     })
 

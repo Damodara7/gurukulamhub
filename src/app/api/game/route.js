@@ -91,26 +91,28 @@ export async function PUT(request) {
   }
 }
 
-// export async function DELETE(req) {
-//   const url = new URL(req.url)
-//   const searchParams = new URLSearchParams(url.searchParams)
-//   const id = searchParams.get('id')
+export async function DELETE(req) {
+  const url = new URL(req.url)
+  const searchParams = new URLSearchParams(url.searchParams)
+  const id = searchParams.get('id')
 
-//   try {
-//     console.log('Received deleted request for id' + id)
-//     const deletedAd = await ArtifactService.deleteOne(id)
-//     if (deletedAd.status === 'success') {
-//       console.log('`${Artifact}` deleted Successfully ():')
-//       // Return the created advt data as JSON
-//       var successResponse = ApiResponseUtils.createSuccessResponse(' Advt deleted successfully', deletedAd)
-//       return ApiResponseUtils.sendSuccessResponse(successResponse)
-//     } else {
-//       console.log('`${Artifact}` deletion error.')
-//       const errorResponse = ApiResponseUtils.createErrorResponse(deletedAd.message)
-//       return ApiResponseUtils.sendErrorResponse(errorResponse, HttpStatusCode.Ok)
-//     }
-//   } catch (error) {
-//     var errorResponse = ApiResponseUtils.createErrorResponse(error.message)
-//     return ApiResponseUtils.sendErrorResponse(errorResponse)
-//   }
-// }
+  const { email } = await req.json()
+
+  try {
+    console.log('Received deleted request for id' + id)
+    const deletedAd = await ArtifactService.deleteOne(id, { email })
+    if (deletedAd.status === 'success') {
+      console.log(`${Artifact} deleted Successfully ():`)
+      // Return the created advt data as JSON
+      var successResponse = ApiResponseUtils.createSuccessResponse(' Advt deleted successfully', deletedAd.result)
+      return ApiResponseUtils.sendSuccessResponse(successResponse)
+    } else {
+      console.log('`${Artifact}` deletion error.')
+      const errorResponse = ApiResponseUtils.createErrorResponse(deletedAd.message)
+      return ApiResponseUtils.sendErrorResponse(errorResponse)
+    }
+  } catch (error) {
+    var errorResponse = ApiResponseUtils.createErrorResponse(error.message)
+    return ApiResponseUtils.sendErrorResponse(errorResponse)
+  }
+}

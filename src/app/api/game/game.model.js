@@ -175,7 +175,17 @@ const gameSchema = new mongoose.Schema(
       ref: 'users'
     },
     approverEmail: String,
-    tags: [String]
+    tags: [String],
+    isDeleted: {
+      type: Boolean,
+      default: false
+    },
+    deletedAt : Date,
+    deletedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'users'
+    },
+    deleterEmail: String
   },
   { timestamps: true }
 )

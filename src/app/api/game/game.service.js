@@ -17,7 +17,7 @@ export const getOne = async (filter = {}) => {
       }
     }
 
-    const game = await Game.findOne({ ...filter })
+    const game = await Game.findOne({ ...filter, isDeleted: false })
       .populate('quiz')
       .populate('createdBy', 'email firstName lastName roles')
       .lean()
@@ -47,9 +47,11 @@ export const getOne = async (filter = {}) => {
 export const getAll = async (filter = {}) => {
   await connectMongo()
   try {
-    const games = await Game.find(filter)
+    const games = await Game.find({ ...filter, isDeleted: false })
       .populate('quiz')
       .populate('createdBy', 'email firstName lastName roles')
+      .populate('registeredUsers.user')
+      .populate('participatedUsers.user')
       .sort({ createdAt: -1 })
       .lean()
 
@@ -72,6 +74,7 @@ export const getAllPublic = async (filter = {}) => {
   try {
     const games = await Game.find({
       ...filter,
+      isDeleted: false,
       status: { $in: ['approved', 'lobby', 'live', 'completed', 'cancelled'] }
     })
       .populate('quiz')
@@ -104,7 +107,7 @@ export const getAllByEmail = async email => {
       }
     }
 
-    const games = await Game.find({ creatorEmail: email })
+    const games = await Game.find({ creatorEmail: email, isDeleted: false })
       .populate('quiz')
       .populate('createdBy', 'email firstName lastName roles')
       .sort({ startTime: -1 })
@@ -230,7 +233,7 @@ export const updateOne = async (gameId, updateData) => {
   await connectMongo()
   try {
     // Find the existing game by ID
-    const existingGame = await Game.findById(gameId)
+    const existingGame = await Game.findOne({ _id: gameId, isDeleted: false })
     if (!existingGame) {
       return {
         status: 'error',
@@ -297,6 +300,51 @@ export const updateOne = async (gameId, updateData) => {
       status: 'error',
       result: null,
       message: error.message || 'Failed to update game'
+    }
+  }
+}
+
+export const deleteOne = async (gameId, { email }) => {
+  await connectMongo()
+  try {
+    const user = await User.findOne({ email })
+    if (!user) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'User not found!'
+      }
+    }
+    // Find the existing game by ID and ensure it's not already deleted
+    const existingGame = await Game.findOne({ _id: gameId, isDeleted: false })
+
+    if (!existingGame) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Game not found or already deleted'
+      }
+    }
+
+    // Perform soft delete with audit fields
+    existingGame.isDeleted = true
+    existingGame.deletedAt = new Date()
+    existingGame.deletedBy = user._id // Assuming user object has _id
+    existingGame.deleterEmail = user.email // More natural than "deletorEmail"
+
+    // Save the updated game
+    const deletedGame = await existingGame.save()
+
+    return {
+      status: 'success',
+      result: deletedGame,
+      message: 'Game soft deleted successfully'
+    }
+  } catch (error) {
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to delete game'
     }
   }
 }
@@ -381,7 +429,7 @@ export const approveGame = async (gameId, updateData) => {
 export const joinGame = async (gameId, userData) => {
   await connectMongo()
   try {
-    const user = await User.findOne({ email: userData?.email })
+    const user = await User.findOne({ email: userData?.email, isDeleted: false })
     if (!user) {
       return {
         status: 'error',
@@ -473,7 +521,7 @@ export const joinGame = async (gameId, userData) => {
 export const updatePlayerProgress = async (gameId, { user, userAnswer, finish }) => {
   await connectMongo()
   try {
-    const game = await Game.findOne({ _id: gameId, status: 'live' })
+    const game = await Game.findOne({ _id: gameId, status: 'live', isDeleted: false })
     if (!game) {
       return {
         status: 'error',
@@ -560,13 +608,14 @@ export const updatePlayerProgress = async (gameId, { user, userAnswer, finish })
 export const startGame = async (gameId, userData) => {
   await connectMongo()
   try {
-    const bufferMs = 5000; // 5 seconds
+    const bufferMs = 5000 // 5 seconds
     const now = new Date()
     const oneSecondBefore = new Date(now.getTime() - bufferMs)
     const oneSecondAfter = new Date(now.getTime() + bufferMs)
 
     const game = await Game.findOne({
       _id: gameId,
+      isDeleted: false,
       $or: [
         { status: 'live' },
         {

@@ -161,7 +161,7 @@ const RoleCards = () => {
                     {/* <IconButtonTooltip title='' className='p-[7px]'>
                       <i className='ri-file-copy-line text-secondary' />
                     </IconButtonTooltip> */}
-                    <IconButtonTooltip title='Delete' disabled className='p-[7px]' onClick={() => handleDeleteConfirmation(item)}>
+                    <IconButtonTooltip title='Delete'  className='p-[7px]' onClick={() => handleDeleteConfirmation(item)}>
                       <DeleteOutlineIcon />
                     </IconButtonTooltip>
                   </div>

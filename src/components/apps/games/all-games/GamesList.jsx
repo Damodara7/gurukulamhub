@@ -154,7 +154,7 @@ const GameList = ({ games, onApprove, onViewGame, onEditGame, isSuperUser = fals
                           }}
                         >
                           <Box className='flex gap-2 items-center justify-center'>
-                            <VerifiedIcon fontSize='small' sx={{ fontSize: '0.875rem' }} />
+                            <VerifiedIcon fontSize='small' />
                             <span>Approved by admin!</span>
                           </Box>
                         </Alert>

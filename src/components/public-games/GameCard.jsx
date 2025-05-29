@@ -17,30 +17,91 @@ import EventIcon from '@mui/icons-material/Event'
 import { format } from 'date-fns'
 import imagePlaceholder from '/public/images/misc/image-placeholder.png'
 import { useEffect, useState } from 'react'
+import {
+  EventAvailable as EventAvailableIcon,
+  CheckCircle as CheckCircleIcon,
+  Cancel as CancelIcon
+} from '@mui/icons-material'
 
 const GameCard = ({ game }) => {
   const { data: session } = useSession()
   const router = useRouter()
   const [timeRemaining, setTimeRemaining] = useState(null)
 
-  console.log('GameCard output :', game)
+  // Status-based UI logic
+  const isRegistrationOpen =
+    game.requireRegistration && game.registrationEndTime ? new Date(game.registrationEndTime) > new Date() : true
+  const isGameUpcoming = ['approved', 'lobby'].includes(game.status)
+  const isGameLive = game.status === 'live'
+  const isGameEnded = ['completed', 'cancelled'].includes(game.status)
+  const isGameStarted = new Date(game?.startTime) < new Date()
+  const isUserRegistered = !!game?.registeredUsers?.find(u => u.email === session?.user?.email) || false
+  const isRegistrationRequired = game?.requireRegistration
 
-
-  const getStatusChip = status => {
-    const statusConfig = {
-      created: { color: 'default', label: 'Created' },
-      approved: { color: 'info', label: 'Approved' },
-      lobby: { color: 'primary', label: 'Lobby' },
-      live: { color: 'error', label: 'Live' },
-      completed: { color: 'success', label: 'Completed' },
-      cancelled: { color: 'warning', label: 'Cancelled' }
+  // Get game status for display in info stack
+  const getGameStatusInfo = () => {
+    if (game.status === 'cancelled') {
+      return { text: 'Game Cancelled', icon: <CancelIcon fontSize='small' />, color: 'warning.main' }
     }
 
-    const config = statusConfig[status] || statusConfig.default
+    if (game.status === 'completed') {
+      return { text: 'Game Ended', icon: <CheckCircleIcon fontSize='small' />, color: 'success.main' }
+    }
+
+    if (game.status === 'live') {
+      return { text: 'Live Now', icon: <LiveTvIcon fontSize='small' />, color: 'error.main' }
+    }
+
+    if (game.status === 'lobby') {
+      return { text: 'Starting Soon', icon: <AccessTimeIcon fontSize='small' />, color: 'info.main' }
+    }
+
+    // For created/approved status
+    return {
+      text: 'Upcoming Game',
+      icon: <EventAvailableIcon fontSize='small' />,
+      color: 'primary.main'
+    }
+  }
+
+  function getUserGameStatus() {
+    // Convert to string for consistent comparison
+    const userEmail = session?.user?.email
+
+    // 1. Handle cancelled games (always shown)
+    if (game.status === 'cancelled') {
+      return { status: 'Cancelled', color: 'warning' }
+    }
+
+    // 2. Check user participation status
+    const participation = game?.participatedUsers?.find(p => p.email === userEmail)
+
+    if (participation) {
+      return participation.completed
+        ? { status: 'Completed', color: 'success' }
+        : { status: 'In Progress', color: 'info' }
+    }
+
+    // 3. Check user registration status
+    const isRegistered = game?.registeredUsers?.some(r => r.email === userEmail)
+
+    if (isRegistered) {
+      return game.status === 'completed'
+        ? { status: 'Missed', color: 'error' }
+        : { status: 'Registered', color: 'primary' }
+    }
+
+    return { status: '', color: 'default' }
+  }
+
+  const getUserStatusChip = () => {
+    const { status, color } = getUserGameStatus()
+    if (!status) return null
+
     return (
       <Chip
-        label={config.label}
-        color={config.color}
+        label={status}
+        color={color}
         size='small'
         variant='outlined'
         sx={{
@@ -101,11 +162,7 @@ const GameCard = ({ game }) => {
     }
   }
 
-  // Status-based UI logic
-  const isRegistrationOpen = (game.requireRegistration && game.registrationEndTime) ? new Date(game.registrationEndTime) > new Date() : true
-  const isGameUpcoming = ['approved', 'lobby'].includes(game.status)
-  const isGameLive = game.status === 'live'
-  const isGameEnded = ['completed', 'cancelled'].includes(game.status)
+  const gameStatusInfo = getGameStatusInfo()
 
   return (
     <Card
@@ -142,7 +199,7 @@ const GameCard = ({ game }) => {
             <Typography variant='h6' noWrap>
               {game.title || 'Not Specified'}
             </Typography>
-            {getStatusChip(game.status)}
+            {getUserStatusChip()}
           </Stack>
 
           <Typography variant='body2' color='text.secondary' noWrap>
@@ -150,8 +207,17 @@ const GameCard = ({ game }) => {
           </Typography>
 
           {/* Game Info */}
-          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-around' }}>
-            <Stack spacing={1} mb={3}>
+          <Box sx={{ flex: 1, my: 2, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
+            <Stack spacing={1}>
+              {/* Game Status Info - Added at the top */}
+              <Stack direction='row' alignItems='flex-start' spacing={1}>
+                <Box sx={{ color: gameStatusInfo.color,  }}>
+                  {gameStatusInfo.icon}
+                </Box>
+                <Typography variant='body2' sx={{ color: gameStatusInfo.color, fontWeight: 500 }}>
+                  {gameStatusInfo.text}
+                </Typography>
+              </Stack>
               <Stack direction='row' alignItems='center' spacing={1}>
                 <EventIcon fontSize='small' color='action' />
                 <Typography variant='body2'>
@@ -179,15 +245,15 @@ const GameCard = ({ game }) => {
               <Stack direction='row' alignItems='flex-start' spacing={1}>
                 <HourglassBottomIcon fontSize='small' color='action' />
                 <Typography variant='body2'>
-                  {isRegistrationOpen && !isGameEnded
+                  {isRegistrationRequired && isRegistrationOpen && !isGameEnded
                     ? `Reg closes on ${format(new Date(game?.registrationEndTime), 'Pp')}`
-                    : 'No Registartion required'}
+                    : 'No registartion required'}
                 </Typography>
               </Stack>
             </Stack>
           </Box>
           {/* Buttons - Conditionally Rendered */}
-          <Stack direction='row' justifyContent='center' spacing={2} mt={2}>
+          <Stack direction='row' justifyContent='center' spacing={2}>
             <Button variant='outlined' color='info' size='small' onClick={handleView}>
               View
             </Button>
@@ -200,11 +266,15 @@ const GameCard = ({ game }) => {
 
             {((isGameUpcoming && isRegistrationOpen) || isGameLive) && (
               <Button variant='outlined' color='primary' size='small' onClick={handleJoin}>
-                Join
+                {!isRegistrationRequired || isUserRegistered
+                  ? 'JOIN'
+                  : isRegistrationOpen && !isGameStarted
+                    ? 'Register'
+                    : 'Registration Ended'}
               </Button>
             )}
 
-            {isGameEnded && !['completed' , 'cancelled'].includes(game.status) && (
+            {isGameEnded && !['completed', 'cancelled'].includes(game.status) && (
               <Button variant='outlined' color='secondary' size='small' disabled>
                 {game.status === 'completed' ? 'Completed' : 'Cancelled'}
               </Button>
