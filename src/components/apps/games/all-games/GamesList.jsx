@@ -23,7 +23,7 @@ import { useSession } from 'next-auth/react'
 
 const GameList = ({ games, onApprove, onViewGame, onEditGame, isSuperUser = false }) => {
   const theme = useTheme()
-  const {data: session} = useSession()
+  const { data: session } = useSession()
 
   const getStatusChip = status => {
     const statusConfig = {
@@ -199,12 +199,20 @@ const GameList = ({ games, onApprove, onViewGame, onEditGame, isSuperUser = fals
                       <Button variant='outlined' color='info' size='small' onClick={() => onViewGame(game._id)}>
                         Details
                       </Button>
-                      {(!game.createdBy?.roles?.includes('ADMIN') && game.creatorEmail === session?.user?.email) && ['created', 'approved'].includes(game.status) &&
-                        (game?.registrationEndTime ? new Date() < new Date(game?.registrationEndTime) : true) && (
+                      {
+                        // If the creator & logged in person is admin, and status is cancelled - can edit
+                        // If the creator & logged in person is not admin(means superUser), and ifb status is created/cancelled - can edit
+                        ((game.createdBy?.roles?.includes('ADMIN') &&
+                          game.creatorEmail === session?.user?.email &&
+                          ['cancelled'].includes(game.status)) ||
+                          (!game.createdBy?.roles?.includes('ADMIN') &&
+                            game.creatorEmail === session?.user?.email &&
+                            ['created', 'cancelled'].includes(game.status))) && (
                           <Button variant='outlined' color='primary' size='small' onClick={() => onEditGame(game._id)}>
                             Edit
                           </Button>
-                        )}
+                        )
+                      }
                       {!isSuperUser && game.status === 'created' && (
                         <Button variant='outlined' color='success' size='small' onClick={() => onApprove(game._id)}>
                           Approve
