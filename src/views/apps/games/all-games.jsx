@@ -6,22 +6,56 @@ import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { useSession } from 'next-auth/react'
 import GamesList from '@/components/apps/games/all-games/GamesList'
-import { useRouter } from 'next/navigation'
+import { useSearchParams , useRouter } from 'next/navigation'
+import ReusableTabsList from '@/components/public-games/ReusableTabsList';
+import { Box } from '@mui/material'
+
 
 const AllGamesPage = ({ creatorEmail = '', isSuperUser = false }) => {
   const router = useRouter()
   const [games, setGames] = useState([])
   const [loading, setLoading] = useState(true)
   const { data: session } = useSession()
+  const searchParams = useSearchParams()
+  const gameStatusFilter = searchParams.get('status') || 'all'
+  
+  const gamestatuses = [
+    {value: 'all', label: 'All'},
+    {value: 'created', label: 'Created'},
+    {value: 'approved', label: 'Approved'},
+    {value: 'lobby', label: 'Lobby'},
+    {value: 'live', label: 'Live'},
+    {value: 'completed', label: 'Completed'},
+    {value: 'cancelled', label: 'Cancelled'},
+  ]
+
+  const handleGameStatusChange = newStatus => {
+    const params = new URLSearchParams(searchParams.toString())
+    newStatus === 'all' ? params.delete('status') : params.set('status', newStatus)
+    router.push(`?${params.toString()}`)
+  }
 
   const fetchGames = async () => {
     setLoading(true)
+    
     try {
-      let url = `${API_URLS.v0.USERS_GAME}`
+      const params = [] 
       if (creatorEmail) {
-        url += `?email=${creatorEmail}`
+        params.push(`email=${creatorEmail}`)
       }
+      if (gameStatusFilter && gameStatusFilter !== 'all') {
+        params.push(`status=${gameStatusFilter}`)
+      }
+      let url = `${API_URLS.v0.USERS_GAME}`
+      // Only add ? if there are any parameters
+      
+        if(params.length > 0) {
+          url += `?${params.join('&')}`
+        }
+      
+
       const result = await RestApi.get(url)
+
       if (result?.status === 'success') {
         setGames(result.result || [])
       } else {
@@ -40,7 +74,7 @@ const AllGamesPage = ({ creatorEmail = '', isSuperUser = false }) => {
 
   useEffect(() => {
     fetchGames()
-  }, [])
+  }, [gameStatusFilter, creatorEmail])
 
   const handleApprove = async gameId => {
     try {
@@ -101,15 +135,18 @@ const AllGamesPage = ({ creatorEmail = '', isSuperUser = false }) => {
   }
 
   return (
-    <GamesList
-      games={games}
-      onApprove={handleApprove}
-      onViewGame={handleViewGame}
-      onEditGame={handleEditGame}
-      onDeleteGame={handleDeleteGame}
-      onCreateNew={handleCreateNewGame}
-      isSuperUser={isSuperUser}
-    />
+    <Box className='flex flex-col items-center p-4'>
+      <ReusableTabsList tabsList={gamestatuses} value={gameStatusFilter} onChange={handleGameStatusChange} />
+      <GamesList
+        games={games}
+        onApprove={handleApprove}
+        onViewGame={handleViewGame}
+        onEditGame={handleEditGame}
+        onDeleteGame={handleDeleteGame}
+        onCreateNew={handleCreateNewGame}
+        isSuperUser={isSuperUser}
+      />
+    </Box>
   )
 }
 

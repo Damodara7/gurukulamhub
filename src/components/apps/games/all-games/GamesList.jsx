@@ -64,9 +64,7 @@ const GameList = ({ games, onApprove, onViewGame, onDeleteGame, onEditGame, isSu
   return (
     <>
       <Container maxWidth='xl' sx={{ py: 4, position: 'relative', pb: 10 }}>
-        <Typography variant='h4' component='h1' gutterBottom sx={{ fontWeight: 700 }}>
-          All Games
-        </Typography>
+        
         <Box sx={{ position: 'relative' }}>
           <Button
             variant='contained'

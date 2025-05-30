@@ -26,7 +26,7 @@ const allowedOrigins = [
   'http://localhost:3000',
   'http://ec2-13-51-204-221.eu-north-1.compute.amazonaws.com:3000',
   'https://gurukulamhub.com'
-];
+]
 
 export const getLocale = request => {
   // Try to get locale from URL
@@ -51,38 +51,37 @@ export const getLocale = request => {
 
 const localizedRedirect = (url, locale, request) => {
   // console.log({ request, url })
-  let _url = url;
-  const isLocaleMissing = isUrlMissingLocale(_url);
+  let _url = url
+  const isLocaleMissing = isUrlMissingLocale(_url)
 
   if (isLocaleMissing) {
-    _url = getLocalizedUrl(_url, locale ?? i18n.defaultLocale);
+    _url = getLocalizedUrl(_url, locale ?? i18n.defaultLocale)
   }
 
-  let _basePath = process.env.BASEPATH ?? '';
+  let _basePath = process.env.BASEPATH ?? ''
 
-  _basePath = _basePath.replace('demo-1', request.headers.get('X-server-header') ?? 'demo-1');
-  _url = ensurePrefix(_url, `${_basePath ?? ''}`);
+  _basePath = _basePath.replace('demo-1', request.headers.get('X-server-header') ?? 'demo-1')
+  _url = ensurePrefix(_url, `${_basePath ?? ''}`)
 
   if (!_url.startsWith('http')) {
-    _url = new URL(_url, request.url).toString();
+    _url = new URL(_url, request.url).toString()
   }
 
   // Preserve search params from the original request
-  const originalUrl = new URL(request.url);
-  const searchParams = originalUrl.searchParams.toString();
+  const originalUrl = new URL(request.url)
+  const searchParams = originalUrl.searchParams.toString()
 
-  const redirectUrl = new URL(_url); // originalUrl.origin
+  const redirectUrl = new URL(_url) // originalUrl.origin
   // Append the search params if they exist
   if (searchParams) {
-    redirectUrl.search = searchParams;
+    redirectUrl.search = searchParams
   }
 
   //console.log({ _url, _basePath, requestUrl: request.url });
   //console.log({ redirectUrl: redirectUrl.toString() });
 
-  return NextResponse.redirect(redirectUrl.toString());
-};
-
+  return NextResponse.redirect(redirectUrl.toString())
+}
 
 export default async function middleware(request) {
   // export default auth(async request => {
@@ -90,13 +89,13 @@ export default async function middleware(request) {
   const locale = getLocale(request)
   const pathname = request.nextUrl.pathname
   // console.log('pathname:', pathname)
-// retrieve the current response
-//const res = NextResponse.next()
-   // if the origin is an allowed one,
-    // add it to the 'Access-Control-Allow-Origin' header
-    //if (allowedOrigins.includes(origin)) {
-     // res.headers.append('Access-Control-Allow-Origin', origin);
-   // }
+  // retrieve the current response
+  //const res = NextResponse.next()
+  // if the origin is an allowed one,
+  // add it to the 'Access-Control-Allow-Origin' header
+  //if (allowedOrigins.includes(origin)) {
+  // res.headers.append('Access-Control-Allow-Origin', origin);
+  // }
 
   const session = await auth()
   //console.log('Session in Middleware:', session)
@@ -117,11 +116,11 @@ export default async function middleware(request) {
     'forgot-password',
     'reset-password',
     'termsofservice',
-    'privacypolicy',
+    'privacypolicy'
   ]
 
   // Shared routes (Routes that can be accessed by both guest and logged in users)
-  const sharedRoutes = ['shared-route',]
+  const sharedRoutes = ['shared-route']
 
   // Private routes (All routes except guest and shared routes that can only be accessed by logged in users)
   const privateRoute = ![...guestRoutes, ...sharedRoutes].some(route => pathname.endsWith(route))
@@ -172,7 +171,6 @@ export default async function middleware(request) {
   // })
 }
 
-
 // Middleware function with role-based access control
 // export default async function middleware(request) {
 //   const locale = getLocale(request)
@@ -183,7 +181,7 @@ export default async function middleware(request) {
 
 //   // Guest routes (Accessible by users who are not logged in)
 //   const guestRoutes = [
-//     'welcome', 'join-game', 'auth/login', 'auth/register', 'forgot-password', 'reset-password', 'termsofservice', 'privacypolicy'
+//     'welcome', '-game', 'auth/login', 'auth/register', 'forgot-password', 'reset-password', 'termsofservice', 'privacypolicy'
 //   ]
 
 //   // Shared routes (Accessible by both guest and logged-in users)
@@ -237,7 +235,6 @@ export default async function middleware(request) {
 //   // If the pathname already contains a locale, proceed to the next middleware/handler
 //   return isUrlMissingLocale(pathname) ? localizedRedirect(pathname, locale, request) : NextResponse.next()
 // }
-
 
 // Matcher Config
 export const config = {
