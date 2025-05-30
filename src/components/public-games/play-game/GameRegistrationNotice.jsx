@@ -3,18 +3,12 @@ import { Box, Typography, Card, CardContent, Chip, Divider, Button, Stack, Avata
 import { LocationOn, Schedule, People, School, YouTube , AccessTime } from '@mui/icons-material'
 
 const GameRegistrationNotice = ({ game }) => {
-  // Format game times
-  const gameStartTime = new Date(game.startTime) // game.startTime should be a valid ISO string
-  const formattedTime = gameStartTime.toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-
   // Function to format date and time
   const formatTime = dateString => {
     const date = new Date(dateString)
     return date.toLocaleString('en-US', {
       month: 'short',
+      year: 'numeric',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
@@ -25,7 +19,7 @@ const GameRegistrationNotice = ({ game }) => {
   // Calculate duration in hours and minutes
   const durationHours = Math.floor(game.duration / 60)
   const durationMinutes = game.duration % 60
-  const durationText = `${durationHours > 0 ? `${durationHours}h ` : ''}${durationMinutes}m`
+  const durationText = `${durationHours > 0 ? `${durationHours}h` : ''}${durationMinutes > 0 ? ' '+durationMinutes+'m': ''}`
 
   return (
     <Box display='flex' flexDirection='column' alignItems='center' bgcolor='#f5f5f5' px={2} py={4} gap={4}>
