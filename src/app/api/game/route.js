@@ -21,7 +21,7 @@ export async function GET(req) {
       artifact = await ArtifactService.getOne({ pin: pin, ...rest })
     } else {
       if (email) {
-        artifact = await ArtifactService.getAllByEmail(email)
+        artifact = await ArtifactService.getAllByEmail(email, { ...rest })
       } else {
         artifact = await ArtifactService.getAll({ ...rest })
       }

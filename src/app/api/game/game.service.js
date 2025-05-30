@@ -96,7 +96,7 @@ export const getAllPublic = async (filter = {}) => {
   }
 }
 
-export const getAllByEmail = async email => {
+export const getAllByEmail = async (email, filter = {}) => {
   await connectMongo()
   try {
     if (!email) {
@@ -107,7 +107,7 @@ export const getAllByEmail = async email => {
       }
     }
 
-    const games = await Game.find({ creatorEmail: email, isDeleted: false })
+    const games = await Game.find({ creatorEmail: email, isDeleted: false, ...filter })
       .populate('quiz')
       .populate('createdBy', 'email firstName lastName roles')
       .sort({ startTime: -1 })

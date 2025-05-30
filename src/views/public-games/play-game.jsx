@@ -86,8 +86,12 @@ function PlayGamePage() {
   }
   
   //default-case - show game info screen
+  if(game.status === 'lobby'){
+    return <PlayGameInfoScreen game={game} setShouldStartGame={setShouldStartGame} />
+  }
 
-  return <PlayGameInfoScreen game={game} setShouldStartGame={setShouldStartGame} />
+  return <GameRegistrationNotice game={game}/>
+
 }
 
 export default PlayGamePage
