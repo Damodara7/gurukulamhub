@@ -37,7 +37,6 @@ const AllGamesPage = ({ creatorEmail = '', isSuperUser = false }) => {
 
   const fetchGames = async () => {
     setLoading(true)
-    
     try {
       const params = [] 
       if (creatorEmail) {
@@ -53,7 +52,6 @@ const AllGamesPage = ({ creatorEmail = '', isSuperUser = false }) => {
           url += `?${params.join('&')}`
         }
       
-
       const result = await RestApi.get(url)
 
       if (result?.status === 'success') {

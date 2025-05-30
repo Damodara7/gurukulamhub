@@ -1,9 +1,35 @@
 import React from 'react'
-import { Box, Typography, Card, CardContent, Chip, Divider, Button, Stack, Avatar , LinearProgress } from '@mui/material'
-import { LocationOn, Schedule, People, School, YouTube , AccessTime } from '@mui/icons-material'
-
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  Chip,
+  Divider,
+  Button,
+  Stack,
+  Avatar,
+  LinearProgress,
+  Grid,
+  useTheme
+} from '@mui/material'
+import {
+  LocationOn,
+  PlayCircle,
+  SportsEsports,
+  Schedule,
+  People,
+  School,
+  YouTube,
+  AccessTime
+} from '@mui/icons-material'
+import ChevronToggleComponent from '@/components/media-viewer/ChevronToggleComponent'
+import Language from '@mui/icons-material/Language'
+import CancelIcon from '@mui/icons-material/Cancel'
+import ReactPlayer from 'react-player'
 const GameRegistrationNotice = ({ game }) => {
   // Function to format date and time
+  const theme = useTheme()
   const formatTime = dateString => {
     const date = new Date(dateString)
     return date.toLocaleString('en-US', {
@@ -15,6 +41,35 @@ const GameRegistrationNotice = ({ game }) => {
       hour12: true
     })
   }
+
+  const getStatusChip = () => {
+      const statusConfig = {
+        created: { color: 'default', label: 'Pending', icon: <AccessTime /> },
+        approved: { color: 'info', label: 'Approved', icon: <AccessTime /> },
+        lobby: { color: 'warning', label: 'Lobby', icon: <AccessTime /> },
+        live: { color: 'error', label: 'Live', icon: <PlayCircle /> },
+        completed: { color: 'success', label: 'Completed', icon: <SportsEsports /> },
+        cancelled: { color: 'error', label: 'Cancelled', icon: <CancelIcon /> }
+      }
+  
+      const config = statusConfig[game.status] || statusConfig.default
+      return (
+        <Chip
+          icon={config.icon}
+          label={config.label}
+          color={config.color}
+          variant='outlined'
+          sx={{
+            fontWeight: 600,
+            borderWidth: 1.5,
+            px: 1,
+            '& .MuiChip-icon': {
+              color: theme.palette[config.color].main
+            }
+          }}
+        />
+      )
+    }
 
   // Calculate duration in hours and minutes
   const durationHours = Math.floor(game.duration / 60)
@@ -49,8 +104,9 @@ const GameRegistrationNotice = ({ game }) => {
             {game.name}
           </Typography>
 
-          <Box display='flex' gap={6} flexWrap='wrap' mt={2}>
+          <Box display='flex' gap={6} flexWrap='wrap' mt={2} alignItems='center' justifyContent='center'>
             <Chip icon={<Schedule />} label={`Duration: ${durationText}`} color='info' variant='outlined' />
+
             {game.location && (
               <Chip
                 icon={<LocationOn />}
@@ -74,96 +130,86 @@ const GameRegistrationNotice = ({ game }) => {
         </CardContent>
       </Card>
 
-      <Card sx={{ maxWidth: 800, width: '100%', borderRadius: 3, boxShadow: 3 }}>
-        <Box
-          sx={{
-            height: 200,
-            backgroundImage: `url(${game.quiz.thumbnail})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            position: 'relative'
-          }}
-        >
-          <Box
-            sx={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              p: 2,
-              background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)'
-            }}
-          >
-            <Typography variant='h4' color='white' fontWeight='bold'>
-              {game.quiz.title}
-            </Typography>
-            <Typography variant='subtitle1' color='rgba(255,255,255,0.9)'>
-              {game.title}
-            </Typography>
-          </Box>
-        </Box>
+      <Grid container spacing={3}>
+        {/* First Column (Details Card) */}
+        <Grid item xs={12} md={6}>
+          <Card sx={{ borderRadius: 2, p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <CardContent sx={{ flex: 1 }}>
+              {/* Quiz Details */}
+              <Stack spacing={3}>
+                <Typography variant='body1'>
+                  Explore the course links and documents below to learn more about the game.
+                </Typography>
+              </Stack>
 
-        <CardContent sx={{ p: 4 }}>
-          <Box sx={{ mb: 3 }}>
-            <Typography variant='h6' gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
-              <School sx={{ mr: 1 }} /> Quiz Details
-            </Typography>
-            <Typography variant='body1' paragraph>
-              {game.quiz.details || 'Test your knowledge in this challenging quiz!'}
-            </Typography>
-            <Typography variant='body2' color='text.secondary'>
-              Language: {game.quiz.language.name}
-            </Typography>
-          </Box>
-
-          {game.promotionalVideoUrl && (
-            <Box sx={{ mb: 3 }}>
-              <Button
-                variant='contained'
-                color='error'
-                startIcon={<YouTube />}
-                href={game.promotionalVideoUrl}
-                target='_blank'
-                sx={{ mb: 1 }}
-              >
-                Watch Promo Video
-              </Button>
-            </Box>
-          )}
-
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
-            <Box>
-              <Typography variant='subtitle2'>Organized by:</Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                <Avatar sx={{ width: 32, height: 32, mr: 1 }}>{game.createdBy.email.charAt(0).toUpperCase()}</Avatar>
-                <Typography>{game.createdBy.email}</Typography>
+              {/* Course Links */}
+              <Box mt={3}>
+                <ChevronToggleComponent
+                  heading={'Course Links:'}
+                  minimizedSubHeading={'Click the chevron to view course links'}
+                >
+                  {game?.quiz?.courseLinks?.length > 0 ? (
+                    <Box className='flex flex-col gap-4'>
+                      {game?.quiz?.courseLinks?.map((link, index) => (
+                        <Box key={index} className='flex flex-col gap-1 items-start'>
+                          <Box className='flex flex-col gap-1 items-center'>
+                            <VideoAd url={link?.link || ''} showPause autoPlay={false} />
+                            <ImagePopup imageUrl={link?.link || ''} mediaType={link.mediaType} />
+                          </Box>
+                        </Box>
+                      ))}
+                    </Box>
+                  ) : (
+                    <Typography color='error'>No course links exist.</Typography>
+                  )}
+                </ChevronToggleComponent>
               </Box>
-            </Box>
 
-            <Box sx={{ textAlign: 'right' }}>
-              <Typography variant='subtitle2'>Players Registered:</Typography>
-              <Typography variant='h6' color='primary'>
-                {game.registeredUsers.length}/{game.maxPlayers}
-              </Typography>
-            </Box>
-          </Box>
+              {/* Documents */}
+              <Box mt={3}>
+                <ChevronToggleComponent
+                  heading={'Documents:'}
+                  minimizedSubHeading={'Click the chevron to view documents'}
+                >
+                  {game?.quiz?.documents?.length > 0 ? (
+                    game?.quiz?.documents?.map((document, index) => (
+                      <Box key={index} display='flex' alignItems='center' gap={2} mb={1}>
+                        <Typography variant='body2'>{`Document ${index + 1}: ${document?.description}`}</Typography>
+                        <Link href={document?.document || ''} target='_blank' rel='noopener noreferrer'>
+                          <Typography color='primary'>View Document</Typography>
+                        </Link>
+                      </Box>
+                    ))
+                  ) : (
+                    <Typography color='error'>No documents exist.</Typography>
+                  )}
+                </ChevronToggleComponent>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
 
-          <Box sx={{ mt: 4, textAlign: 'center' }}>
-            <Typography variant='body2' color='text.secondary'>
-              Don't forget to join 10 minutes before start time!
-            </Typography>
-            <Button
-              variant='contained'
-              color='primary'
-              size='large'
-              sx={{ mt: 2, px: 4 }}
-              onClick={() => window.location.reload()} // Or navigate to game page
-            >
-              View Game Dashboard
-            </Button>
-          </Box>
-        </CardContent>
-      </Card>
+        {/* Second Column (Video Card) */}
+        <Grid item xs={12} md={6}>
+          <Card sx={{ borderRadius: 2, p: 3, height: '100%' , minHeight:'300px'
+
+           }}>
+            <Stack spacing={3} height='100%'>
+              {game.promotionalVideoUrl && (
+                <Box sx={{ height: '100%', borderRadius: 2, overflow: 'hidden' }}>
+                  <ReactPlayer
+                    url={game.promotionalVideoUrl}
+                    width='100%'
+                    height='100%'
+                    controls
+                    playing={false}
+                  />
+                </Box>
+              )}
+            </Stack>
+          </Card>
+        </Grid>
+      </Grid>
     </Box>
   )
 }
