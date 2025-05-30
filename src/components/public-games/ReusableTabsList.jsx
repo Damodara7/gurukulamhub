@@ -2,19 +2,7 @@ import CustomTabList from '@/@core/components/mui/TabList'
 import { TabContext } from '@mui/lab'
 import { Tab, Tabs } from '@mui/material'
 
-const GameUserStatusTabs = ({ value, onChange }) => {
-  const statuses = [
-    { value: 'all', label: 'All' },
-    { value: 'lobby', label: 'Lobby' },
-    { value: 'live', label: 'Live' },
-    { value: 'upcoming', label: 'Upcoming' },
-    { value: 'registered', label: 'Registered' },
-    { value: 'missed', label: 'Missed' },
-    { value: 'completed', label: 'You Finished' },
-    // { value: 'inProgress', label: 'Currently Playing' },
-    { value: 'cancelled', label: 'Cancelled' }
-  ]
-
+const ReusableTabsList = ({ tabsList = [], value, onChange }) => {
   return (
     <TabContext value={value}>
       <CustomTabList
@@ -25,14 +13,14 @@ const GameUserStatusTabs = ({ value, onChange }) => {
         scrollButtons='auto'
         allowScrollButtonsMobile
       >
-        {statuses.map(status => (
+        {tabsList.map(status => (
           <Tab
             key={status.value}
             value={status.value}
             label={status.label}
             sx={{
               fontWeight: 600,
-              fontSize: '0.875rem',
+              fontSize: '0.875rem'
             }}
           />
         ))}
@@ -41,4 +29,4 @@ const GameUserStatusTabs = ({ value, onChange }) => {
   )
 }
 
-export default GameUserStatusTabs
+export default ReusableTabsList

@@ -2,12 +2,12 @@
 
 import React, { useEffect, useState } from 'react'
 import GameCard from '@/components/public-games/GameCard'
-import GameUserStatusTabs from '@/components/public-games/GameUserStatusTabs'
 import { Box, Grid, CircularProgress, Typography } from '@mui/material'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { useSession } from 'next-auth/react'
 import { useSearchParams, useRouter } from 'next/navigation'
+import ReusableTabsList from '@/components/public-games/ReusableTabsList'
 
 export const PublicGamesPage = () => {
   const [games, setGames] = useState([])
@@ -95,9 +95,21 @@ export const PublicGamesPage = () => {
     )
   }
 
+  const statuses = [
+    { value: 'all', label: 'All' },
+    { value: 'lobby', label: 'Lobby' },
+    { value: 'live', label: 'Live' },
+    { value: 'upcoming', label: 'Upcoming' },
+    { value: 'registered', label: 'Registered' },
+    { value: 'missed', label: 'Missed' },
+    { value: 'completed', label: 'You Finished' },
+    // { value: 'inProgress', label: 'Currently Playing' },
+    { value: 'cancelled', label: 'Cancelled' }
+  ]
+
   return (
     <Box p={4} className='flex flex-col items-center gap-2'>
-      <GameUserStatusTabs value={statusFilter} onChange={handleStatusChange} />
+      <ReusableTabsList tabsList={statuses} value={statusFilter} onChange={handleStatusChange} />
 
       {filteredGames.length === 0 ? (
         <Box p={4}>
