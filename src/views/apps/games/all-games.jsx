@@ -63,29 +63,25 @@ const AllGamesPage = ({ creatorEmail = '', isSuperUser = false }) => {
     }
   }
 
-  const handleDeleteGame = async  (gameId) => {
+  const handleDeleteGame = async gameId => {
     if (!session?.user?.email) {
       toast.error('Authentication required')
       return
     }
-    try{
-      const result = await RestApi.del(`${API_URLS.v0.USERS_GAME}?id=${gameId}`,{email : session?.user?.email})
-      if(result?.status === 'success'){
+    try {
+      const result = await RestApi.del(`${API_URLS.v0.USERS_GAME}?id=${gameId}`, { email: session?.user?.email })
+      if (result?.status === 'success') {
         await fetchGames() // Refresh the list
         toast.success('Game deleted successfully!')
-      }
-      else{
+      } else {
         console.error('Error deleting game:', result)
         toast.error(result?.message || 'Failed to delete game')
       }
-    }
-    catch (error) {
+    } catch (error) {
       console.error('Error deleting game:', error)
       toast.error('An error occurred while deleting game')
     }
   }
-
-
 
   if (loading) {
     return <div className='text-center py-8'>Loading games...</div>
@@ -99,15 +95,20 @@ const AllGamesPage = ({ creatorEmail = '', isSuperUser = false }) => {
     console.log('Clicked Edit game of id: ', id)
     router.push(isSuperUser ? `/manage-games/${id}/edit` : `/apps/games/${id}/edit`)
   }
+  async function handleCreateNewGame() {
+    console.log('Clicked Create new game')
+    router.push(isSuperUser ? `/manage-games/create` : `/apps/games/create`)
+  }
 
   return (
     <GamesList
-      games = {games}
-      onApprove = {handleApprove}
-      onViewGame = {handleViewGame}
-      onEditGame = {handleEditGame}
-      onDeleteGame = {handleDeleteGame}
-      isSuperUser = {isSuperUser}
+      games={games}
+      onApprove={handleApprove}
+      onViewGame={handleViewGame}
+      onEditGame={handleEditGame}
+      onDeleteGame={handleDeleteGame}
+      onCreateNew={handleCreateNewGame}
+      isSuperUser={isSuperUser}
     />
   )
 }

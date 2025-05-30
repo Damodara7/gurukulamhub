@@ -18,12 +18,12 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import PeopleIcon from '@mui/icons-material/People'
 import PersonIcon from '@mui/icons-material/Person'
 import EventIcon from '@mui/icons-material/Event'
-import ConfirmationDialog from '@/components/dialogs/confirmation-dialog';
+import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
 import imagePlaceholder from '/public/images/misc/image-placeholder.png'
-import { HourglassBottom as HourglassBottomIcon, Verified as VerifiedIcon } from '@mui/icons-material'
+import { HourglassBottom as HourglassBottomIcon, Verified as VerifiedIcon, Add as AddIcon } from '@mui/icons-material'
 import { useSession } from 'next-auth/react'
 
-const GameList = ({ games, onApprove, onViewGame, onDeleteGame, onEditGame, isSuperUser = false }) => {
+const GameList = ({ games, onApprove, onViewGame, onDeleteGame, onEditGame, isSuperUser = false, onCreateNew }) => {
   const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false) // Manage confirmation dialog
   const [gameToDelete, setGameToDelete] = useState(null) // Track the game to delete
   console.log('GameList games: ', games)
@@ -56,17 +56,28 @@ const GameList = ({ games, onApprove, onViewGame, onDeleteGame, onEditGame, isSu
     )
   }
 
-  const handleDeleteConfirmation = (game) => {
+  const handleDeleteConfirmation = game => {
     setGameToDelete(game)
     setConfirmationDialogOpen(true)
   }
 
   return (
     <>
-      <Container maxWidth='xl' sx={{ py: 4 }}>
+      <Container maxWidth='xl' sx={{ py: 4, position: 'relative', pb: 10 }}>
         <Typography variant='h4' component='h1' gutterBottom sx={{ fontWeight: 700 }}>
           All Games
         </Typography>
+        <Box sx={{ position: 'relative' }}>
+          <Button
+            variant='contained'
+            component='label'
+            style={{ color: 'white', position: 'fixed', bottom: 20, right: 10, zIndex: 1001 }}
+            startIcon={<AddIcon />}
+            onClick={onCreateNew}
+          >
+            Create New
+          </Button>
+        </Box>
 
         {games.length === 0 ? (
           <Box textAlign='center' py={6}>
@@ -235,20 +246,20 @@ const GameList = ({ games, onApprove, onViewGame, onDeleteGame, onEditGame, isSu
                           </Button>
                         )}
 
-                        { !['live', 'completed', 'lobby'].includes(game?.status) && ((isSuperUser  &&
-                          game?.createdBy?.email === session?.user?.email &&
-                          !game?.createdBy?.roles?.includes('ADMIN')) ||
-                          (session?.user?.roles?.includes('ADMIN')
-                            ))  && (
-                          <Button
-                            variant='outlined'
-                            color='error'
-                            size='small'
-                            onClick={() => handleDeleteConfirmation(game)}
-                          >
-                            Delete
-                          </Button>
-                        )}
+                        {!['live', 'completed', 'lobby'].includes(game?.status) &&
+                          ((isSuperUser &&
+                            game?.createdBy?.email === session?.user?.email &&
+                            !game?.createdBy?.roles?.includes('ADMIN')) ||
+                            session?.user?.roles?.includes('ADMIN')) && (
+                            <Button
+                              variant='outlined'
+                              color='error'
+                              size='small'
+                              onClick={() => handleDeleteConfirmation(game)}
+                            >
+                              Delete
+                            </Button>
+                          )}
                       </Stack>
                     </Box>
                   </CardContent>
