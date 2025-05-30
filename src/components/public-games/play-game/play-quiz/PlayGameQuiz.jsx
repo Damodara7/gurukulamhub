@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Box, Typography, Alert, CardContent, useTheme, LinearProgress, Chip, Paper } from '@mui/material'
 import Loading from '@/components/Loading'
@@ -303,7 +303,7 @@ export default function PlayGameQuiz({ quiz, questions, game }) {
       <Box sx={{ mx: 'auto', px: 2, width: { xs: '100%', sm: '100%' }, height: '100%' }}>
         {/* <Leaderboard game={game} key={currentQuestionIndex} duringPlay /> */}
 
-        <Paper elevation={0} sx={{ p: 2, my: 4 }}>
+        <Paper elevation={0} sx={{ p: 2, my: 4, maxWidth: 'lg', mx: 'auto' }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Typography variant='h6' component='div'>
               Time Remaining

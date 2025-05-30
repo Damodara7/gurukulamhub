@@ -429,7 +429,8 @@ export const approveGame = async (gameId, updateData) => {
 export const joinGame = async (gameId, userData) => {
   await connectMongo()
   try {
-    const user = await User.findOne({ email: userData?.email, isDeleted: false })
+    console.log({ userData })
+    const user = await User.findOne({ email: userData?.email })
     if (!user) {
       return {
         status: 'error',
@@ -448,7 +449,7 @@ export const joinGame = async (gameId, userData) => {
       }
     }
 
-    const game = await Game.findOne({ _id: gameId, status: { $in: ['approved', 'lobby', 'live'] } })
+    const game = await Game.findOne({ _id: gameId, status: { $in: ['approved', 'lobby', 'live'] }, isDeleted: false })
     if (!game) {
       return {
         status: 'error',
