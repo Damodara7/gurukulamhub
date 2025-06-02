@@ -17,14 +17,11 @@ import { useRouter } from 'next/navigation'
 import HourglassBottomIcon from '@mui/icons-material/HourglassBottom'
 import LocationOnIcon from '@mui/icons-material/LocationOn'
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
-import CustomChipWithIcon from '../CustomChipWithIcon'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { toast } from 'react-toastify'
 import { useSession } from 'next-auth/react'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
-import PeopleIcon from '@mui/icons-material/People'
-import PersonIcon from '@mui/icons-material/Person'
 import EventIcon from '@mui/icons-material/Event'
 import { format } from 'date-fns'
 import imagePlaceholder from '/public/images/misc/image-placeholder.png'
@@ -333,4 +330,4 @@ const GameCard = ({ game }) => {
   )
 }
 
-export default GameCard
+export default GameCard;
