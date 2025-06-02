@@ -21,15 +21,18 @@ import {
   People,
   School,
   YouTube,
-  AccessTime
+  AccessTime,
+  Videocam
 } from '@mui/icons-material'
 import ChevronToggleComponent from '@/components/media-viewer/ChevronToggleComponent'
 import Language from '@mui/icons-material/Language'
 import CancelIcon from '@mui/icons-material/Cancel'
 import ReactPlayer from 'react-player'
+import { useRouter } from 'next/navigation'
 const GameRegistrationNotice = ({ game }) => {
   // Function to format date and time
   const theme = useTheme()
+  const router = useRouter()
   const formatTime = dateString => {
     const date = new Date(dateString)
     return date.toLocaleString('en-US', {
@@ -42,39 +45,20 @@ const GameRegistrationNotice = ({ game }) => {
     })
   }
 
-  const getStatusChip = () => {
-      const statusConfig = {
-        created: { color: 'default', label: 'Pending', icon: <AccessTime /> },
-        approved: { color: 'info', label: 'Approved', icon: <AccessTime /> },
-        lobby: { color: 'warning', label: 'Lobby', icon: <AccessTime /> },
-        live: { color: 'error', label: 'Live', icon: <PlayCircle /> },
-        completed: { color: 'success', label: 'Completed', icon: <SportsEsports /> },
-        cancelled: { color: 'error', label: 'Cancelled', icon: <CancelIcon /> }
-      }
-  
-      const config = statusConfig[game.status] || statusConfig.default
-      return (
-        <Chip
-          icon={config.icon}
-          label={config.label}
-          color={config.color}
-          variant='outlined'
-          sx={{
-            fontWeight: 600,
-            borderWidth: 1.5,
-            px: 1,
-            '& .MuiChip-icon': {
-              color: theme.palette[config.color].main
-            }
-          }}
-        />
-      )
-    }
-
   // Calculate duration in hours and minutes
   const durationHours = Math.floor(game.duration / 60)
   const durationMinutes = game.duration % 60
-  const durationText = `${durationHours > 0 ? `${durationHours}h` : ''}${durationMinutes > 0 ? ' '+durationMinutes+'m': ''}`
+  const durationText = `${durationHours > 0 ? `${durationHours}h` : ''}${
+    durationMinutes > 0 ? ' ' + durationMinutes + 'm' : ''
+  }`
+
+  // Determine location text
+  const getLocationText = () => {
+    if (!game.location) return 'Anywhere'
+    if (game.location.city) return `${game.location.city} ${game.location.region || ''}`
+    if (game.location.region) return game.location.region
+    return 'Anywhere'
+  }
 
   return (
     <Box display='flex' flexDirection='column' alignItems='center' bgcolor='#f5f5f5' px={2} py={4} gap={4}>
@@ -108,12 +92,7 @@ const GameRegistrationNotice = ({ game }) => {
             <Chip icon={<Schedule />} label={`Duration: ${durationText}`} color='info' variant='outlined' />
 
             {game.location && (
-              <Chip
-                icon={<LocationOn />}
-                label={`${game.location.city}, ${game.location.region}`}
-                color='success'
-                variant='outlined'
-              />
+              <Chip icon={<LocationOn />} label={getLocationText()} color='success' variant='outlined' />
             )}
           </Box>
 
@@ -191,23 +170,51 @@ const GameRegistrationNotice = ({ game }) => {
 
         {/* Second Column (Video Card) */}
         <Grid item xs={12} md={6}>
-          <Card sx={{ borderRadius: 2, p: 3, height: '100%' , minHeight:'300px'}}>
+          <Card sx={{ borderRadius: 2, p: 3, height: '100%', minHeight: '300px' }}>
             <Stack spacing={3} height='100%'>
+              <Typography variant='h6' sx={{ mb: 2 }}>
+                <Videocam sx={{ mr: 1, verticalAlign: 'middle' }} />
+                Promotional Video
+              </Typography>
               {game.promotionalVideoUrl && (
                 <Box sx={{ height: '100%', borderRadius: 2, overflow: 'hidden' }}>
-                  <ReactPlayer
-                    url={game.promotionalVideoUrl}
-                    width='100%'
-                    height='100%'
-                    controls
-                    playing={false}
-                  />
+                  <ReactPlayer url={game.promotionalVideoUrl} width='100%' height='100%' controls playing={false} />
                 </Box>
               )}
             </Stack>
           </Card>
         </Grid>
       </Grid>
+
+      <Box
+        sx={{
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'center',
+          mt: 4 // Adds margin above the button
+        }}
+      >
+        <Button
+          variant='outlined'
+          color='primary'
+          onClick={() => router.push('/public-games')}
+          sx={{
+            width: { xs: '100%', sm: 'auto' }, // Full width on mobile, auto on larger screens
+            maxWidth: '345px',
+            fontWeight: 'bold',
+            py: 1.5,
+            px: 4,
+            fontSize: '1rem',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              boxShadow: 2
+            },
+            transition: 'all 0.2s ease'
+          }}
+        >
+          Back to All Games
+        </Button>
+      </Box>
     </Box>
   )
 }
