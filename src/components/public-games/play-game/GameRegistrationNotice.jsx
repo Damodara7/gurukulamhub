@@ -53,12 +53,6 @@ const GameRegistrationNotice = ({ game }) => {
   }`
 
   // Determine location text
-  const getLocationText = () => {
-    if (!game.location) return 'Anywhere'
-    if (game.location.city) return `${game.location.city} ${game.location.region || ''}`
-    if (game.location.region) return game.location.region
-    return 'Anywhere'
-  }
 
   return (
     <Box display='flex' flexDirection='column' alignItems='center' bgcolor='#f5f5f5' px={2} py={4} gap={4}>
@@ -92,7 +86,16 @@ const GameRegistrationNotice = ({ game }) => {
             <Chip icon={<Schedule />} label={`Duration: ${durationText}`} color='info' variant='outlined' />
 
             {game.location && (
-              <Chip icon={<LocationOn />} label={getLocationText()} color='success' variant='outlined' />
+              <Chip
+                icon={<LocationOn />}
+                label={
+                  [game?.location?.city, game?.location?.region, game?.location?.country]
+                    .filter(Boolean) // removes undefined/null/empty values
+                    .join(' , ') || 'Anywhere'
+                }
+                color='success'
+                variant='outlined'
+              />
             )}
           </Box>
 

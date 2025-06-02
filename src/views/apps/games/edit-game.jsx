@@ -46,7 +46,7 @@ function EditGamePage({ gameData = null, gameId = null, isSuperUser=false }) {
       console.log('formData: ', values)
       setLoading(true)
       // Convert dates to ISO strings for API
-      const payload = {
+      let payload = {
         ...values,
         createdBy: session?.user?.id,
         creatorEmail: session?.user?.email,
@@ -78,10 +78,21 @@ function EditGamePage({ gameData = null, gameId = null, isSuperUser=false }) {
               }
             })),
             winners: reward.winners || []
-          })) || []
+          })) || []          
       }
 
+
+      if(gameData?.status === 'cancelled' && !isSuperUser){
+        payload = {
+          ...payload,
+          status: 'created', // Reset status to 'created' if it was cancelled
+          approvedBy: undefined,
+          approverEmail: undefined,
+          cancellationReason: null
+        }
+      }
       console.log('payload: ', payload)
+
 
       let result
       if (gameId) {
