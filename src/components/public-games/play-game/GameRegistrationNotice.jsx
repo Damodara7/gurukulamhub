@@ -191,9 +191,7 @@ const GameRegistrationNotice = ({ game }) => {
 
         {/* Second Column (Video Card) */}
         <Grid item xs={12} md={6}>
-          <Card sx={{ borderRadius: 2, p: 3, height: '100%' , minHeight:'300px'
-
-           }}>
+          <Card sx={{ borderRadius: 2, p: 3, height: '100%' , minHeight:'300px'}}>
             <Stack spacing={3} height='100%'>
               {game.promotionalVideoUrl && (
                 <Box sx={{ height: '100%', borderRadius: 2, overflow: 'hidden' }}>

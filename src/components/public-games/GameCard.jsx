@@ -1,6 +1,18 @@
 'use client'
 
-import { Button, Card, CardContent, CardMedia, Typography, Box, Stack, Chip, Grid, Tooltip } from '@mui/material'
+import {
+  Button,
+  Card,
+  useTheme,
+  CardContent,
+  CardMedia,
+  Typography,
+  Box,
+  Stack,
+  Chip,
+  Grid,
+  Tooltip
+} from '@mui/material'
 import { useRouter } from 'next/navigation'
 import HourglassBottomIcon from '@mui/icons-material/HourglassBottom'
 import LocationOnIcon from '@mui/icons-material/LocationOn'
@@ -26,6 +38,7 @@ import {
 const GameCard = ({ game }) => {
   const { data: session } = useSession()
   const router = useRouter()
+  const theme = useTheme()
   const [timeRemaining, setTimeRemaining] = useState(null)
 
   // Status-based UI logic
@@ -166,16 +179,17 @@ const GameCard = ({ game }) => {
 
   return (
     <Card
-      sx={{ maxWidth: 400, margin: 2, display: 'flex', flexDirection: 'column' }}
-      style={{
+      sx={{
         height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
         transition: 'transform 0.2s',
-        '&hover': {
+        '&:hover': {
           transform: 'translateY(-4px)',
-          boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.1)'
+          boxShadow: theme.shadows[6]
         }
       }}
-    >
+      >
       <CardMedia
         component='img'
         height='180'
@@ -211,9 +225,7 @@ const GameCard = ({ game }) => {
             <Stack spacing={1}>
               {/* Game Status Info - Added at the top */}
               <Stack direction='row' alignItems='flex-start' spacing={1}>
-                <Box sx={{ color: gameStatusInfo.color,  }}>
-                  {gameStatusInfo.icon}
-                </Box>
+                <Box sx={{ color: gameStatusInfo.color }}>{gameStatusInfo.icon}</Box>
                 <Typography variant='body2' sx={{ color: gameStatusInfo.color, fontWeight: 500 }}>
                   {gameStatusInfo.text}
                 </Typography>

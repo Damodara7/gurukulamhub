@@ -74,7 +74,7 @@ const ViewDetails = ({ game }) => {
       />
     )
   }
-
+  
   return (
     <Container maxWidth='lg' sx={{ py: 4 }}>
       <Grid container spacing={4}>
