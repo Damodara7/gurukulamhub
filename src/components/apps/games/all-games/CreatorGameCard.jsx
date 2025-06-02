@@ -164,16 +164,16 @@ const CreatorGameCard = ({ game, isSuperUser = false, onViewGame, onEditGame, on
             <Button variant='outlined' color='info' size='small' onClick={() => onViewGame(game._id)}>
               Details
             </Button>
-            {(game.createdBy?.roles?.includes('ADMIN') &&
-              game.creatorEmail === session?.user?.email &&
-              ['cancelled'].includes(game.status)) ||
+            {((session?.user?.roles?.includes('ADMIN') &&
+              // game.creatorEmail === session?.user?.email &&
+              game.status === 'cancelled') ||
               (!game.createdBy?.roles?.includes('ADMIN') &&
                 game.creatorEmail === session?.user?.email &&
-                ['created', 'cancelled'].includes(game.status) && (
-                  <Button variant='outlined' color='primary' size='small' onClick={() => onEditGame(game._id)}>
-                    Edit
-                  </Button>
-                ))}
+                ['created', 'cancelled'].includes(game.status))) && (
+              <Button variant='outlined' color='primary' size='small' onClick={() => onEditGame(game._id)}>
+                Edit
+              </Button>
+            )}
             {!isSuperUser && game?.status === 'created' && (
               <Button variant='outlined' color='success' size='small' onClick={() => onApproveGame(game._id)}>
                 Approve

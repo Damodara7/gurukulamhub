@@ -170,22 +170,28 @@ const gameSchema = new mongoose.Schema(
       required: true
     },
     creatorEmail: String,
+    approvedAt: Date,
     approvedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'users'
     },
     approverEmail: String,
-    tags: [String],
-    isDeleted: {
-      type: Boolean,
-      default: false
+    updatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'users'
     },
-    deletedAt : Date,
+    updaterEmail: String,
+    deletedAt: Date,
     deletedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'users'
     },
-    deleterEmail: String
+    deleterEmail: String,
+    tags: [String],
+    isDeleted: {
+      type: Boolean,
+      default: false
+    }
   },
   { timestamps: true }
 )

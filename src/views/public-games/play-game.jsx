@@ -27,6 +27,7 @@ function PlayGamePage() {
         console.log('API Response:', res) // Log full response
         if (res.status === 'success') {
           setGame(res.result)
+          setShouldStartGame(res.result?.status==='live')
         } else {
           console.error('API Error:', res.message)
           setError(res.message)

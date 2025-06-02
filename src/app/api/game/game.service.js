@@ -5,6 +5,7 @@ import User from '@/app/models/user.model'
 import Quiz from '../quiz/quiz.model'
 import QuestionsModel from '../question/question.model'
 import * as gameScheduler from './game.scheduler'
+import { ROLES_LOOKUP } from '@/configs/roles-lookup'
 
 export const getOne = async (filter = {}) => {
   await connectMongo()
@@ -232,6 +233,16 @@ export const addOne = async gameData => {
 export const updateOne = async (gameId, updateData) => {
   await connectMongo()
   try {
+    const user = await User.findOne({ email: updateData?.updaterEmail })
+    if (!user) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'User not found'
+      }
+    }
+    updateData.updatedBy = user?._id
+
     // Find the existing game by ID
     const existingGame = await Game.findOne({ _id: gameId, isDeleted: false })
     if (!existingGame) {
@@ -257,6 +268,11 @@ export const updateOne = async (gameId, updateData) => {
     // Apply updates to the existing game document
     Object.keys(updateData).forEach(key => {
       existingGame[key] = updateData[key]
+      if (key === 'status' && updateData[key] === 'cancelled' && !user?.roles?.includes(ROLES_LOOKUP.ADMIN)) {
+        existingGame.approvedBy = undefined
+        existingGame.approverEmail = undefined
+        existingGame.approvedAt = undefined
+      }
     })
 
     // Recalculate total reward value if rewards are updated
@@ -376,6 +392,7 @@ export const approveGame = async (gameId, updateData) => {
 
     const user = await User.findOne({ email: updateData.approverEmail })
     updateData.approvedBy = user._id
+    updateData.approvedAt = new Date()
 
     // Apply updates to the existing game document
     Object.keys(updateData).forEach(key => {

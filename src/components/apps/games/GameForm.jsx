@@ -221,6 +221,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
   }
 
   const handleDateChange = (name, date) => {
+    console.log('Type of date: ', typeof date)
     setTouches(prev => ({ ...prev, [name]: true })) // Mark field as touched
     if (errors[name]) {
       setErrors(prev => {

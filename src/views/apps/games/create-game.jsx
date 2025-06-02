@@ -43,14 +43,15 @@ function CreateGamePage({ isSuperUser = false }) {
   const handleSubmit = async values => {
     try {
       console.log('formData: ', values)
+      console.log('Type of StartTime: ', typeof values.startTime)
       setLoading(true)
       // Convert dates to ISO strings for API
       const payload = {
         ...values,
         createdBy: session?.user?.id,
         creatorEmail: session?.user?.email,
-        startTime: values.startTime.toISOString(),
-        registrationEndTime: values.requireRegistration ? values.registrationEndTime.toISOString() : null,
+        startTime: values.startTime, //.toISOString()
+        registrationEndTime: values.requireRegistration ? values.registrationEndTime : null,
         // Ensure duration is a number
         duration: Number(values.duration) * 60, // because duration entered by user is in minutes
         // Ensure maxPlayers is a number
@@ -78,7 +79,9 @@ function CreateGamePage({ isSuperUser = false }) {
             })),
             winners: reward.winners || []
           })) || [],
-        ...(session?.user?.roles?.includes('ADMIN') ? { status: 'approved', approvedBy: session?.user?.id } : {})
+        ...(session?.user?.roles?.includes('ADMIN')
+          ? { status: 'approved', approvedBy: session?.user?.id, approvedAt: new Date() }
+          : {})
       }
 
       console.log('payload: ', payload)

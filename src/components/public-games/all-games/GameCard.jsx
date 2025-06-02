@@ -32,7 +32,8 @@ import { useEffect, useState } from 'react'
 import {
   EventAvailable as EventAvailableIcon,
   CheckCircle as CheckCircleIcon,
-  Cancel as CancelIcon
+  Cancel as CancelIcon,
+  LiveTv as LiveTvIcon
 } from '@mui/icons-material'
 
 const GameCard = ({ game }) => {
@@ -66,12 +67,18 @@ const GameCard = ({ game }) => {
     }
 
     if (game.status === 'lobby') {
-      return { text: 'Starting Soon', icon: <AccessTimeIcon fontSize='small' />, color: 'info.main' }
+      const minutes = timeRemaining?.minutes
+      const seconds = timeRemaining?.seconds
+      return {
+        text: timeRemaining ? `Join now - Starts in ${timeRemaining.minutes > 0 ? minutes + 'm ' : ''}${seconds}s`: 'Join now - Starting soon',
+        icon: <AccessTimeIcon fontSize='small' />,
+        color: 'info.main'
+      }
     }
 
     // For created/approved status
     return {
-      text: 'Upcoming Game',
+      text: 'Upcoming Game - Join before 10m',
       icon: <EventAvailableIcon fontSize='small' />,
       color: 'primary.main'
     }
@@ -189,7 +196,7 @@ const GameCard = ({ game }) => {
           boxShadow: theme.shadows[6]
         }
       }}
-      >
+    >
       <CardMedia
         component='img'
         height='180'
@@ -270,21 +277,49 @@ const GameCard = ({ game }) => {
               View
             </Button>
 
-            {/* {isGameUpcoming && isRegistrationOpen && (
-            <Button variant='outlined' color='success' onClick={handleRegister}>
-              Register
-            </Button>
-          )} */}
-
-            {((isGameUpcoming && isRegistrationOpen) || isGameLive) && (
-              <Button disabled={isUserRegistered && !game.status==='lobby'} variant='outlined' color='primary' size='small' onClick={handleJoin}>
+            {/* {((isUserRegistered && !game?.participatedUsers?.find(p => p.email === session?.user?.email)?.completed) &&
+              (isGameUpcoming && isRegistrationOpen && !isGameEnded) ||
+              isGameLive) && (
+              <Button
+                disabled={isUserRegistered && !game.status === 'lobby'}
+                variant='outlined'
+                color='primary'
+                size='small'
+                onClick={handleJoin}
+              >
                 {!isRegistrationRequired || isUserRegistered
                   ? 'JOIN'
-                  : (!isUserRegistered && isRegistrationOpen && !isGameStarted)
+                  : !isUserRegistered && isRegistrationOpen && !isGameStarted
                     ? 'Register'
                     : 'Registration Ended'}
               </Button>
-            )}
+            )} */}
+
+            {
+              // Show join button if:
+              // 1. User is registered but hasn't completed the game AND
+              //    (game is upcoming with open registration OR game is live)
+              // OR
+              // 2. User is not registered AND registration is open AND game hasn't started
+              ((isUserRegistered &&
+                !game?.participatedUsers?.find(p => p.email === session?.user?.email)?.completed &&
+                (isGameUpcoming || isGameLive)) ||
+                (!isUserRegistered && isRegistrationOpen && !isGameStarted && !isGameEnded)) && (
+                <Button
+                  disabled={
+                    isUserRegistered &&
+                    game.status !== 'lobby' && !isGameLive &&
+                    !game?.participatedUsers?.find(p => p.email === session?.user?.email)?.completed
+                  }
+                  variant='outlined'
+                  color='primary'
+                  size='small'
+                  onClick={handleJoin}
+                >
+                  {isUserRegistered ? 'JOIN' : 'Register'}
+                </Button>
+              )
+            }
 
             {isGameEnded && !['completed', 'cancelled'].includes(game.status) && (
               <Button variant='outlined' color='secondary' size='small' disabled>

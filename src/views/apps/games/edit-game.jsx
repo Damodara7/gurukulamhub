@@ -48,10 +48,10 @@ function EditGamePage({ gameData = null, gameId = null, isSuperUser=false }) {
       // Convert dates to ISO strings for API
       const payload = {
         ...values,
-        createdBy: session?.user?.id,
-        creatorEmail: session?.user?.email,
-        startTime: values.startTime.toISOString(),
-        registrationEndTime: values.requireRegistration ? values.registrationEndTime.toISOString() : null,
+        updatedBy: session?.user?.id,
+        updaterEmail: session?.user?.email,
+        startTime: values.startTime, //.toISOString()
+        registrationEndTime: values.requireRegistration ? values.registrationEndTime : null,
         // Ensure duration is a number
         duration: Number(values.duration) * 60, // because duration entered by user is in minutes
         // Ensure maxPlayers is a number
