@@ -1,8 +1,6 @@
 import React, { useState } from 'react'
 import {
   Box,
-  Button,
-  Chip,
   Container,
   Grid,
   Typography,
@@ -12,12 +10,16 @@ import { useSession } from 'next-auth/react'
 import Loading from '@/components/Loading'
 import CreatorGameCard from './CreatorGameCard'
 import { toast } from 'react-toastify'
+import * as RestApi from '@/utils/restApiUtil'
+import { API_URLS } from '@/configs/apiConfig'
+import { useRouter } from 'next/navigation'
 
 const CreatorGameList = ({ games = [], loading = false, onRefresh, isSuperUser = false }) => {
   const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false) // Manage confirmation dialog
   const [gameToDelete, setGameToDelete] = useState(null) // Track the game to delete
   console.log('GameList games: ', games)
   const { data: session } = useSession()
+  const router = useRouter()
 
   const handleApproveGame = async gameId => {
     try {

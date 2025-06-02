@@ -277,10 +277,10 @@ const GameCard = ({ game }) => {
           )} */}
 
             {((isGameUpcoming && isRegistrationOpen) || isGameLive) && (
-              <Button variant='outlined' color='primary' size='small' onClick={handleJoin}>
+              <Button disabled={isUserRegistered && !game.status==='lobby'} variant='outlined' color='primary' size='small' onClick={handleJoin}>
                 {!isRegistrationRequired || isUserRegistered
                   ? 'JOIN'
-                  : isRegistrationOpen && !isGameStarted
+                  : (!isUserRegistered && isRegistrationOpen && !isGameStarted)
                     ? 'Register'
                     : 'Registration Ended'}
               </Button>
