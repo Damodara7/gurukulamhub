@@ -10,8 +10,8 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { DUMMY_SPONSORS } from '@/components/apps/games/RewardDialog'
 import GameForm from '@/components/apps/games/GameForm'
-import NonEditableGamePage from '@/components/apps/games/game-details/NonEditableGamePage';
-function EditGamePage({ gameData = null, gameId = null, isSuperUser=false }) {
+import NonEditableGamePage from '@/components/apps/games/game-details/NonEditableGamePage'
+function EditGamePage({ gameData = null, gameId = null, isSuperUser = false }) {
   const { data: session } = useSession()
   const [quizzes, setQuizzes] = useState([])
   const [loading, setLoading] = useState(true)
@@ -78,21 +78,20 @@ function EditGamePage({ gameData = null, gameId = null, isSuperUser=false }) {
               }
             })),
             winners: reward.winners || []
-          })) || []          
+          })) || []
       }
 
-
-      if(gameData?.status === 'cancelled' && !isSuperUser){
+      if (gameData?.status === 'cancelled' && isSuperUser) {
         payload = {
           ...payload,
           status: 'created', // Reset status to 'created' if it was cancelled
           approvedBy: undefined,
           approverEmail: undefined,
-          cancellationReason: null
+          approvedAt: undefined,
+          cancellationReason: undefined
         }
       }
       console.log('payload: ', payload)
-
 
       let result
       if (gameId) {
