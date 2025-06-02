@@ -1,0 +1,123 @@
+import React, { useState } from 'react'
+import {
+  Box,
+  Button,
+  Chip,
+  Container,
+  Grid,
+  Typography,
+} from '@mui/material'
+import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
+import { useSession } from 'next-auth/react'
+import Loading from '@/components/Loading'
+import CreatorGameCard from './CreatorGameCard'
+import { toast } from 'react-toastify'
+
+const CreatorGameList = ({ games = [], loading = false, onRefresh, isSuperUser = false }) => {
+  const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false) // Manage confirmation dialog
+  const [gameToDelete, setGameToDelete] = useState(null) // Track the game to delete
+  console.log('GameList games: ', games)
+  const { data: session } = useSession()
+
+  const handleApproveGame = async gameId => {
+    try {
+      const result = await RestApi.post(`${API_URLS.v0.USERS_GAME}/${gameId}/approve`, {
+        status: 'approved',
+        approvedBy: session?.user?.id,
+        approverEmail: session?.user?.email
+      })
+
+      if (result?.status === 'success') {
+        toast.success('Game approved!')
+        onRefresh() // Refresh the list
+      } else {
+        console.error('Error approving game:', result)
+        toast.error(result?.message || 'Failed to approve game')
+      }
+    } catch (error) {
+      console.error('Error approving game:', error)
+      toast.error('An error occurred while approving game')
+    }
+  }
+
+  const handleFinalDeleteGame = async gameId => {
+    if (!session?.user?.email) {
+      toast.error('Authentication required')
+      return
+    }
+    try {
+      const result = await RestApi.del(`${API_URLS.v0.USERS_GAME}?id=${gameId}`, { email: session?.user?.email })
+      if (result?.status === 'success') {
+        onRefresh() // Refresh the list
+        toast.success('Game deleted successfully!')
+      } else {
+        console.error('Error deleting game:', result)
+        toast.error(result?.message || 'Failed to delete game')
+      }
+    } catch (error) {
+      console.error('Error deleting game:', error)
+      toast.error('An error occurred while deleting game')
+    }
+  }
+
+  async function handleViewGame(id) {
+    console.log('Clicked View game of id: ', id)
+    router.push(isSuperUser ? `/manage-games/${id}` : `/apps/games/${id}`)
+  }
+  async function handleEditGame(id) {
+    console.log('Clicked Edit game of id: ', id)
+    router.push(isSuperUser ? `/manage-games/${id}/edit` : `/apps/games/${id}/edit`)
+  }
+
+  const handleDeleteConfirmation = game => {
+    setGameToDelete(game)
+    setConfirmationDialogOpen(true)
+  }
+
+  if (loading) {
+    return (
+      <Box p={4} display='flex' justifyContent='center'>
+        <Loading />
+      </Box>
+    )
+  }
+
+  return (
+    <>
+      <Container maxWidth='xl' sx={{ position: 'relative', pb: 10 }}>
+        {games.length === 0 ? (
+          <Box textAlign='center' py={6}>
+            <Typography variant='body1' color='text.secondary'>
+              No games found
+            </Typography>
+          </Box>
+        ) : (
+          <Grid container spacing={3}>
+            {games.map(game => (
+              <Grid item key={game._id} xs={12} sm={6} md={4} lg={3}>
+                <CreatorGameCard
+                  game={game}
+                  isSuperUser={isSuperUser}
+                  onViewGame={handleViewGame}
+                  onEditGame={handleEditGame}
+                  onApproveGame={handleApproveGame}
+                  onDeleteGame={handleDeleteConfirmation}
+                />
+              </Grid>
+            ))}
+          </Grid>
+        )}
+      </Container>
+      <ConfirmationDialog
+        open={confirmationDialogOpen}
+        setOpen={setConfirmationDialogOpen}
+        type='delete-game' // Customize based on your context
+        onConfirm={() => {
+          handleFinalDeleteGame(gameToDelete?._id)
+          setGameToDelete(null) // Reset after confirmation
+        }}
+      />
+    </>
+  )
+}
+export default CreatorGameList
