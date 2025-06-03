@@ -1010,6 +1010,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
           reward={editingReward}
           onSave={handleSaveReward}
           availablePositions={availablePositions}
+          allPositions={POSITION_OPTIONS}
           isEditing={!!editingReward}
         />
       </Grid>

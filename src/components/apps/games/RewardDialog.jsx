@@ -86,7 +86,7 @@ export const DUMMY_SPONSORS = [
   }
 ]
 
-const RewardDialog = ({ open, onClose, reward, onSave, availablePositions, isEditing }) => {
+const RewardDialog = ({ open, onClose, reward, onSave, availablePositions, allPositions, isEditing }) => {
   const [currentReward, setCurrentReward] = useState({
     id: '',
     position: '',
@@ -140,7 +140,7 @@ const RewardDialog = ({ open, onClose, reward, onSave, availablePositions, isEdi
 
   useEffect(() => {
     if (reward) {
-      setCurrentReward(JSON.parse(JSON.stringify(reward)))
+      setCurrentReward(reward)
     } else {
       setCurrentReward({
         id: Date.now().toString(),
@@ -194,7 +194,7 @@ const RewardDialog = ({ open, onClose, reward, onSave, availablePositions, isEdi
       allocated: parseFloat(allocation) || 0,
       // The above fields for the values to be identify the original sponsor in SponsorDialog
 
-      ...(sponsor?._id ? { _id: sponsor?._id } : { id: sponsor?.id }),
+      ...(sponsor?._id ? { _id: sponsor?._id } : { id: sponsor?.id })
       // email: sponsor.email,
       // rewardDetails: {
       //   rewardType: sponsor.rewardType,
@@ -353,8 +353,8 @@ const RewardDialog = ({ open, onClose, reward, onSave, availablePositions, isEdi
                   value={currentReward.position}
                   onChange={e => setCurrentReward({ ...currentReward, position: e.target.value })}
                 >
-                  {availablePositions.map(pos => (
-                    <MenuItem key={pos} value={pos}>
+                  {(!isEditing ? [...allPositions] : [currentReward.position])?.map(pos => (
+                    <MenuItem disabled={!isEditing && !availablePositions.includes(pos)} key={pos} value={pos}>
                       {pos}
                     </MenuItem>
                   ))}
