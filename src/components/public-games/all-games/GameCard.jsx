@@ -175,7 +175,7 @@ const GameCard = ({ game }) => {
         user: { id: session.user.id, email: session.user.email }
       })
       if (res.status === 'success') {
-        toast.success('You joined the game successfully!')
+        toast.success('You Registered the Game Successfully!')
         router.push(`/public-games/${game._id}/play`)
       } else {
         toast.error(res.message)
