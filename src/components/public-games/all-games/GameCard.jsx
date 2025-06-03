@@ -67,7 +67,9 @@ const GameCard = ({ game }) => {
       const minutes = timeRemaining?.minutes
       const seconds = timeRemaining?.seconds
       return {
-        text: timeRemaining ? `Join now - Starts in ${timeRemaining.minutes > 0 ? minutes + 'm ' : ''}${seconds}s`: 'Join now - Starting soon',
+        text: timeRemaining
+          ? `Join now - Starts in ${timeRemaining.minutes > 0 ? minutes + 'm ' : ''}${seconds}s`
+          : 'Join now - Starting soon',
         icon: <AccessTimeIcon fontSize='small' />,
         color: 'info.main'
       }
@@ -75,7 +77,7 @@ const GameCard = ({ game }) => {
 
     // For created/approved status
     return {
-      text: 'Upcoming Game - Join before 10m',
+      text: `Upcoming Game${isUserRegistered ? ' - Join before 10m' : ''}`,
       icon: <EventAvailableIcon fontSize='small' />,
       color: 'primary.main'
     }
@@ -305,7 +307,8 @@ const GameCard = ({ game }) => {
                 <Button
                   disabled={
                     isUserRegistered &&
-                    game.status !== 'lobby' && !isGameLive &&
+                    game.status !== 'lobby' &&
+                    !isGameLive &&
                     !game?.participatedUsers?.find(p => p.email === session?.user?.email)?.completed
                   }
                   variant='outlined'
@@ -330,4 +333,4 @@ const GameCard = ({ game }) => {
   )
 }
 
-export default GameCard;
+export default GameCard

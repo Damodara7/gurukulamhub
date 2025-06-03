@@ -81,14 +81,13 @@ function EditGamePage({ gameData = null, gameId = null, isSuperUser = false }) {
           })) || []
       }
 
-      if (gameData?.status === 'cancelled' && isSuperUser) {
+      if (gameData?.status === 'cancelled') {
         payload = {
           ...payload,
-          status: 'created', // Reset status to 'created' if it was cancelled
-          approvedBy: undefined,
-          approverEmail: undefined,
-          approvedAt: undefined,
-          cancellationReason: undefined
+          cancellationReason: null,
+          ...(isSuperUser
+            ? { status: 'created', approvedBy: null, approverEmail: null, approvedAt: null }
+            : { status: 'approved', approverEmail: session?.user?.email, approvedAt: new Date() })
         }
       }
       console.log('payload: ', payload)

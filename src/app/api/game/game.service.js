@@ -268,10 +268,26 @@ export const updateOne = async (gameId, updateData) => {
     // Apply updates to the existing game document
     Object.keys(updateData).forEach(key => {
       existingGame[key] = updateData[key]
-      if (key === 'status' && updateData[key] === 'cancelled' && !user?.roles?.includes(ROLES_LOOKUP.ADMIN)) {
-        existingGame.approvedBy = undefined
-        existingGame.approverEmail = undefined
-        existingGame.approvedAt = undefined
+      if (key === 'status' && existingGame.status === 'cancelled') {
+        existingGame.cancellationReason = undefined
+        // For admin case (approving)
+        if (user?.roles?.includes(ROLES_LOOKUP.ADMIN)) {
+          existingGame.status = 'approved'
+          existingGame.approvedBy = updateData.updatedBy
+          existingGame.approverEmail = updateData.updaterEmail
+          existingGame.approvedAt = new Date()
+        }
+        // For non-admin case (cancelling)
+        else {
+          existingGame.status = 'created'
+          // Use $unset in the save operation
+          existingGame.$unset = {
+            cancellationReason: 1,
+            approvedBy: 1,
+            approverEmail: 1,
+            approvedAt: 1
+          }
+        }
       }
     })
 
