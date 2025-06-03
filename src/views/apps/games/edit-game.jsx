@@ -81,7 +81,7 @@ function EditGamePage({ gameData = null, gameId = null, isSuperUser = false }) {
           })) || []
       }
 
-      if (gameData?.status === 'cancelled' && isSuperUser) {
+      if (gameData?.status === 'cancelled' && isSuperUser ) {
         payload = {
           ...payload,
           status: 'created', // Reset status to 'created' if it was cancelled

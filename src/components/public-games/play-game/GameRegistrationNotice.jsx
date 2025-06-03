@@ -207,12 +207,7 @@ const GameRegistrationNotice = ({ game }) => {
             fontWeight: 'bold',
             py: 1.5,
             px: 4,
-            fontSize: '1rem',
-            '&:hover': {
-              transform: 'translateY(-2px)',
-              boxShadow: 2
-            },
-            transition: 'all 0.2s ease'
+            fontSize: '1rem'
           }}
         >
           Back to All Games
