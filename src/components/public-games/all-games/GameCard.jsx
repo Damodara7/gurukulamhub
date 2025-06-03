@@ -52,7 +52,11 @@ const GameCard = ({ game }) => {
   // Get game status for display in info stack
   const getGameStatusInfo = () => {
     if (game.status === 'cancelled') {
-      return { text: 'Game Cancelled', icon: <CancelIcon fontSize='small' />, color: 'warning.main' }
+      return {
+        text: `Game Cancelled${game?.cancellationReason ? ` (${game?.cancellationReason})` : ''}`,
+        icon: <CancelIcon fontSize='small' />,
+        color: 'warning.main'
+      }
     }
 
     if (game.status === 'completed') {

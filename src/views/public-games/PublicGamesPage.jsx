@@ -2,7 +2,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { Box } from '@mui/material'
+import { Box, Grid } from '@mui/material'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { useSearchParams, useRouter } from 'next/navigation'
@@ -36,7 +36,7 @@ export const PublicGamesPage = () => {
     fetchGames()
   }, [])
 
-  const handleStatusChange = (newStatus) => {
+  const handleStatusChange = newStatus => {
     const params = new URLSearchParams(searchParams.toString())
     newStatus === 'all' ? params.delete('status') : params.set('status', newStatus)
     router.push(`?${params.toString()}`)
@@ -55,16 +55,8 @@ export const PublicGamesPage = () => {
 
   return (
     <Box p={4} className='flex flex-col items-center gap-5'>
-      <ReusableTabsList 
-        tabsList={statuses} 
-        value={statusFilter} 
-        onChange={handleStatusChange} 
-      />
-      <PublicGamesList 
-        games={games} 
-        loading={loading} 
-        error={error} 
-      />
+      <ReusableTabsList tabsList={statuses} value={statusFilter} onChange={handleStatusChange} />
+      <PublicGamesList games={games} loading={loading} error={error} />
     </Box>
   )
 }
