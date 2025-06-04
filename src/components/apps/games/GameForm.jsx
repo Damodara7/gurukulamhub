@@ -634,7 +634,6 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6} md={4}>
             <CountryRegionDropdown
-              setSelectedCountry={() => {}}
               defaultCountryCode=''
               selectedCountryObject={selectedCountryObject}
               setSelectedCountryObject={setSelectedCountryObject}

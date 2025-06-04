@@ -3,13 +3,13 @@ import Autocomplete from '@mui/material/Autocomplete'
 import { Grid, TextField } from '@mui/material'
 import { CountryRegionData } from '../../../../data/regions'
 import Box from '@mui/material/Box'
-import {parsedCountryRegionData} from '@/utils/countryRegionUtil'
+import { parsedCountryRegionData } from '@/utils/countryRegionUtil'
 
 const CountryRegionDropdown = ({
-  setSelectedCountry,
+  setSelectedCountry = () => {},
   selectedCountryObject,
-  setSelectedCountryObject,
-  onCountryChange,
+  setSelectedCountryObject = () => {},
+  onCountryChange = () => {},
   defaultCountryCode = 'IN',
   error = false
 }) => {

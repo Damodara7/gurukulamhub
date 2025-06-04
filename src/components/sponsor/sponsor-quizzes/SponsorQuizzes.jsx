@@ -28,30 +28,38 @@ import { API_URLS } from '@/configs/apiConfig'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 
+// Reward types
+const REWARD_TYPES = {
+  CASH: 'cash',
+  PHYSICAL_GIFT: 'physicalGift'
+}
+
+const rewardTypeOptions = [
+  { value: REWARD_TYPES.CASH, label: 'Cash (INR)' },
+  { value: REWARD_TYPES.PHYSICAL_GIFT, label: 'Physical Gift' }
+]
+
+const initialFormData = {
+  fullname: '',
+  sponsorshipAmount: '',
+  orgName: '',
+  website: '',
+  orgType: '',
+  mobileNumber: '',
+  nonCashItem: '',
+  numberOfNonCashItems: '',
+  rewardValue: '',
+  rewardDescription: ''
+}
+
 const SponsorQuizzes = () => {
   const router = useRouter()
   const { data: session } = useSession()
 
-  // Reward types
-  const REWARD_TYPES = {
-    CASH: 'cash',
-    PHYSICAL_GIFT: 'physicalGift',
-    REWARD_POINTS: 'rewardPoints',
-    OTHER: 'other'
-  }
-
-  const rewardTypeOptions = [
-    { value: 'cash', label: 'Cash' },
-    { value: 'physicalGift', label: 'Physical Gift' },
-    { value: 'rewardPoints', label: 'Reward Points' },
-    { value: 'other', label: 'Other' }
-  ]
-
   // State for quizzes selection
-  const [selectedQuizzes, setSelectedQuizzes] = useState([])
+  const [selectedQuizzes, setSelectedQuizzes] = useState(['any-quiz'])
 
   // State for location
-  const [selectedCountry, setSelectedCountry] = useState('')
   const [selectedCountryObject, setSelectedCountryObject] = useState(null)
   const [selectedRegion, setSelectedRegion] = useState('')
   const [city, setCity] = useState('')
@@ -60,18 +68,8 @@ const SponsorQuizzes = () => {
   const [quizzes, setQuizzes] = useState([])
 
   const [sponsorerType, setSponsorerType] = useState('individual')
-  const [rewardType, setRewardType] = useState('cash')
-  const [formData, setFormData] = useState({
-    sponsorshipAmount: '',
-    orgName: '',
-    website: '',
-    orgType: '',
-    mobileNumber: '', // Changed from contactPerson to mobileNumber
-    numberOfGames: 1,
-    rewardValue: '',
-    rewardDescription: '',
-    otherDetails: ''
-  })
+  const [rewardType, setRewardType] = useState(REWARD_TYPES.CASH)
+  const [formData, setFormData] = useState(initialFormData)
 
   // Loading state
   const [loading, setLoading] = useState({
@@ -125,7 +123,6 @@ const SponsorQuizzes = () => {
 
   const handleChangeCountry = countryValue => {
     setSelectedRegion('')
-    setErrors(prev => ({ ...prev, selectedCountry: '' }))
   }
 
   const validateMobileNumber = number => {
@@ -136,18 +133,20 @@ const SponsorQuizzes = () => {
   const validateForm = () => {
     const newErrors = {}
 
-    if (selectedQuizzes.length === 0) {
-      newErrors.selectedQuizzes = 'Please select at least one quiz'
+    if (!formData.fullname) {
+      newErrors.fullname = 'Full name is required'
     }
+
     if (sponsorerType === 'organization') {
       if (!formData.orgName) newErrors.orgName = 'Organization name is required'
       if (!formData.website) newErrors.website = 'Website is required'
       if (!formData.orgType) newErrors.orgType = 'Organization type is required'
-      if (!formData.mobileNumber) {
-        newErrors.mobileNumber = 'Mobile number is required'
-      } else if (!validateMobileNumber(formData.mobileNumber)) {
-        newErrors.mobileNumber = 'Please enter a valid 10-digit Indian mobile number'
-      }
+    }
+
+    if (!formData.mobileNumber) {
+      newErrors.mobileNumber = 'Mobile number is required'
+    } else if (!validateMobileNumber(formData.mobileNumber)) {
+      newErrors.mobileNumber = 'Please enter a valid 10-digit Indian mobile number'
     }
 
     if (rewardType === REWARD_TYPES.CASH && !formData.sponsorshipAmount) {
@@ -159,22 +158,17 @@ const SponsorQuizzes = () => {
       newErrors.sponsorshipAmount = 'Please enter a valid amount'
     }
 
-    if ([REWARD_TYPES.PHYSICAL_GIFT, REWARD_TYPES.OTHER].includes(rewardType)) {
-      if (!formData.rewardValue) newErrors.rewardValue = 'Value is required'
-      if (!formData.rewardDescription) newErrors.rewardDescription = 'Description is required'
-      if (rewardType === 'other' && !formData.otherDetails) {
-        newErrors.otherDetails = 'Details are required'
+    if (rewardType === REWARD_TYPES.PHYSICAL_GIFT) {
+      if (!formData.nonCashItem) newErrors.nonCashItem = 'Item description is required'
+      if (!formData.numberOfNonCashItems) {
+        newErrors.numberOfNonCashItems = 'Quantity is required'
+      } else if (isNaN(formData.numberOfNonCashItems) || formData.numberOfNonCashItems <= 0) {
+        newErrors.numberOfNonCashItems = 'Please enter a valid quantity'
       }
-    }
-
-    if (!formData.numberOfGames) {
-      newErrors.numberOfGames = 'Please enter number of games'
-    } else if (isNaN(formData.numberOfGames) || formData.numberOfGames <= 0) {
-      newErrors.numberOfGames = 'Please enter a valid number'
+      if (!formData.rewardValue) newErrors.rewardValue = 'Estimated value is required'
     }
 
     setErrors(newErrors)
-    console.log(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
@@ -186,27 +180,32 @@ const SponsorQuizzes = () => {
       try {
         const submissionData = {
           email: session?.user?.email,
+          fullname: formData.fullname,
           quizzes: selectedQuizzes,
           sponsorType: 'quiz',
           sponsorerType,
           location: {
-            country: selectedCountry,
+            country: selectedCountryObject.country,
             region: selectedRegion,
             city,
             zipCode
           },
+          mobileNumber: formData.mobileNumber,
+          rewardType,
+          currency: 'INR', // Hardcoded as per requirements
           ...(sponsorerType === 'organization' && {
             orgName: formData.orgName,
             website: formData.website,
-            orgType: formData.orgType,
-            mobileNumber: formData.mobileNumber
+            orgType: formData.orgType
           }),
-          rewardType,
-          ...(rewardType === REWARD_TYPES.CASH && { sponsorshipAmount: formData.sponsorshipAmount }),
-          ...([REWARD_TYPES.PHYSICAL_GIFT, REWARD_TYPES.OTHER].includes(rewardType) && {
+          ...(rewardType === REWARD_TYPES.CASH && {
+            sponsorshipAmount: formData.sponsorshipAmount
+          }),
+          ...(rewardType === REWARD_TYPES.PHYSICAL_GIFT && {
+            nonCashItem: formData.nonCashItem,
+            numberOfNonCashItems: formData.numberOfNonCashItems,
             rewardValue: formData.rewardValue,
-            rewardDescription: formData.rewardDescription,
-            ...(rewardType === REWARD_TYPES.OTHER && { otherRewardDetails: formData.otherDetails })
+            rewardDescription: formData.rewardDescription
           })
         }
 
@@ -216,20 +215,12 @@ const SponsorQuizzes = () => {
           router.push(`/sponsor/${res.result._id}/payment`)
           // Reset form
           setSelectedQuizzes([])
-          setSelectedCountry('')
           setSelectedCountryObject(null)
           setSelectedRegion('')
           setCity('')
           setZipCode('')
           setSponsorerType('individual')
-          setFormData({
-            sponsorshipAmount: '',
-            orgName: '',
-            website: '',
-            orgType: '',
-            mobileNumber: '',
-            numberOfGames: 1
-          })
+          setFormData(initialFormData)
         }
       } catch (error) {
         console.error('Submission error:', error)
@@ -258,17 +249,15 @@ const SponsorQuizzes = () => {
             fullWidth
             sx={{ mb: 3 }}
             label='Sponsorship Amount (INR)'
-            type='text' // Changed to text input
+            type='text'
             name='sponsorshipAmount'
             value={formData.sponsorshipAmount}
             onChange={e => {
-              // Only allow numbers and decimal point
-              const value = e.target.value.replace(/[^0-9.]/g, '').replace(/^0+(\d)/, '$1') // Remove leading zeros;
+              const value = e.target.value.replace(/[^0-9.]/g, '').replace(/^0+(\d)/, '$1')
               handleChange({ target: { name: e.target.name, value } })
             }}
             error={!!errors.sponsorshipAmount}
             helperText={errors.sponsorshipAmount}
-            InputProps={{ inputProps: { min: 0 } }}
           />
         )
       case REWARD_TYPES.PHYSICAL_GIFT:
@@ -277,70 +266,51 @@ const SponsorQuizzes = () => {
             <TextField
               fullWidth
               sx={{ mb: 3 }}
-              label='Gift Value (INR)'
-              type='number'
-              name='rewardValue'
-              value={formData.rewardValue}
+              label='Item Name'
+              name='nonCashItem'
+              value={formData.nonCashItem}
               onChange={handleChange}
-              error={!!errors.rewardValue}
-              helperText={errors.rewardValue}
-              InputProps={{ inputProps: { min: 0 } }}
+              error={!!errors.nonCashItem}
+              helperText={errors.nonCashItem}
             />
+            <Grid container spacing={2}>
+              <Grid item xs={6}>
+                <TextField
+                  fullWidth
+                  label='Quantity'
+                  type='number'
+                  name='numberOfNonCashItems'
+                  value={formData.numberOfNonCashItems}
+                  onChange={handleChange}
+                  error={!!errors.numberOfNonCashItems}
+                  helperText={errors.numberOfNonCashItems}
+                  InputProps={{ inputProps: { min: 1 } }}
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  fullWidth
+                  label='Estimated Value (INR)'
+                  type='number'
+                  name='rewardValue'
+                  value={formData.rewardValue}
+                  onChange={handleChange}
+                  error={!!errors.rewardValue}
+                  helperText={errors.rewardValue}
+                  InputProps={{ inputProps: { min: 0 } }}
+                />
+              </Grid>
+            </Grid>
             <TextField
               fullWidth
-              sx={{ mb: 3 }}
-              label='Gift Description'
+              sx={{ mt: 3 }}
+              label='Additional Details About The Gift'
               name='rewardDescription'
               value={formData.rewardDescription}
               onChange={handleChange}
-              error={!!errors.rewardDescription}
-              helperText={errors.rewardDescription}
+              multiline
+              rows={2}
             />
-          </>
-        )
-      case REWARD_TYPES.OTHER:
-        return (
-          <>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                sx={{ mb: 3 }}
-                label='Reward Value (INR)'
-                type='number'
-                name='rewardValue'
-                value={formData.rewardValue}
-                onChange={handleChange}
-                error={!!errors.rewardValue}
-                helperText={errors.rewardValue}
-                InputProps={{ inputProps: { min: 0 } }}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                sx={{ mb: 3 }}
-                label='Reward Description'
-                name='rewardDescription'
-                value={formData.rewardDescription}
-                onChange={handleChange}
-                error={!!errors.rewardDescription}
-                helperText={errors.rewardDescription}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                sx={{ mb: 3 }}
-                label='Other Details'
-                name='otherDetails'
-                value={formData.otherDetails}
-                onChange={handleChange}
-                error={!!errors.otherDetails}
-                helperText={errors.otherDetails}
-                multiline
-                rows={3}
-              />
-            </Grid>
           </>
         )
       default:
@@ -370,7 +340,103 @@ const SponsorQuizzes = () => {
 
       <form>
         {/* Quizzes Selection */}
+        {/* Quizzes Selection */}
         <FormControl fullWidth sx={{ mb: 3 }} error={!!errors.selectedQuizzes}>
+          <InputLabel>Select Quizzes</InputLabel>
+          <Select
+            name='quiz'
+            value={selectedQuizzes}
+            label='Select Quizzes'
+            onChange={e => {
+              const value = e.target.value
+
+              // If user clicked "any-quiz" (check if it's the last selected item)
+              if (value[value.length - 1] === 'any-quiz') {
+                // When selecting "any-quiz", deselect all other quizzes
+                setSelectedQuizzes(['any-quiz'])
+              }
+              // If user selected a regular quiz (not "any-quiz")
+              else {
+                // Deselect "any-quiz" if it was previously selected
+                const newSelection = value.filter(v => v !== 'any-quiz')
+
+                // If no quizzes are selected, default to "any-quiz"
+                if (newSelection.length === 0) {
+                  setSelectedQuizzes(['any-quiz'])
+                } else {
+                  setSelectedQuizzes(newSelection)
+                }
+              }
+            }}
+            onFocus={() => setErrors(prev => ({ ...prev, selectedQuizzes: '' }))}
+            required
+            multiple
+            renderValue={selected => {
+              if (selected.includes('any-quiz')) {
+                return 'Sponsor Any Quiz'
+              }
+              // Map selected IDs to their quiz titles
+              const selectedTitles = selected.map(id => {
+                const quiz = quizzes.find(q => q._id === id)
+                return quiz ? quiz.title : id
+              })
+              return selectedTitles.join(', ')
+            }}
+          >
+            {/* "Sponsoring Any Quiz" option */}
+            <MenuItem key='any-quiz' value='any-quiz'>
+              <Grid container alignItems='center' spacing={2} justifyContent='space-between'>
+                <Grid item xs={12}>
+                  <Typography variant='body2' noWrap={false}>
+                    <Box component='span' fontWeight='bold'>
+                      Sponsor Any Quiz
+                    </Box>
+                  </Typography>
+                  <Typography variant='body2' noWrap={false}>
+                    <Box component='span' sx={{ color: 'text.secondary', mx: 0.5 }}>
+                      Will be applied to all available quizzes
+                    </Box>
+                  </Typography>
+                </Grid>
+              </Grid>
+            </MenuItem>
+
+            {/* Regular quiz options */}
+            {quizzes.map(quiz => (
+              <MenuItem key={quiz._id} value={quiz._id}>
+                <Grid container alignItems='center' spacing={2} justifyContent='space-between'>
+                  <Grid item xs={8}>
+                    <Grid container alignItems='center' spacing={2}>
+                      <Grid item>
+                        <img
+                          src={quiz?.thumbnail || 'https://via.placeholder.com/150x150'}
+                          alt={quiz.title}
+                          style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }}
+                        />
+                      </Grid>
+                      <Grid item>
+                        <Typography variant='body2' noWrap={false}>
+                          <Box component='span' fontWeight='bold'>
+                            {quiz.title}
+                          </Box>
+                          <Box component='span' sx={{ color: 'text.secondary', mx: 0.5 }}>
+                            - by
+                          </Box>
+                          <Box component='span'>{quiz.createdBy}</Box>
+                        </Typography>
+                        <Typography variant='body2' color='textSecondary' noWrap>
+                          {quiz.details}
+                        </Typography>
+                      </Grid>
+                    </Grid>
+                  </Grid>
+                </Grid>
+              </MenuItem>
+            ))}
+          </Select>
+          <FormHelperText>{errors.selectedQuizzes || 'Select a quiz'}</FormHelperText>
+        </FormControl>
+        {/* <FormControl fullWidth sx={{ mb: 3 }} error={!!errors.selectedQuizzes}>
           <InputLabel id='quizzes-select-label'>Select Quizzes to Sponsor</InputLabel>
           <Select
             labelId='quizzes-select-label'
@@ -398,7 +464,7 @@ const SponsorQuizzes = () => {
             ))}
           </Select>
           {errors.selectedQuizzes && <FormHelperText error>{errors.selectedQuizzes}</FormHelperText>}
-        </FormControl>
+        </FormControl> */}
 
         {/* Location Selection */}
         <Typography variant='h6' gutterBottom>
@@ -408,11 +474,10 @@ const SponsorQuizzes = () => {
         <Grid container spacing={2} sx={{ mb: 3 }}>
           <Grid item xs={12} md={6}>
             <CountryRegionDropdown
-              setSelectedCountry={setSelectedCountry}
+              defaultCountryCode=''
               selectedCountryObject={selectedCountryObject}
               setSelectedCountryObject={setSelectedCountryObject}
               onCountryChange={handleChangeCountry}
-              error={!!errors.selectedCountry}
             />
           </Grid>
 
@@ -482,10 +547,27 @@ const SponsorQuizzes = () => {
         <Typography variant='h6' gutterBottom sx={{ mt: 2 }}>
           Sponsorship Type
         </Typography>
-        <RadioGroup value={sponsorerType} onChange={e => setSponsorerType(e.target.value)} sx={{ mb: 3 }}>
+        <RadioGroup
+          style={{ display: 'block' }}
+          value={sponsorerType}
+          onChange={e => setSponsorerType(e.target.value)}
+          sx={{ mb: 2 }}
+        >
           <FormControlLabel value='individual' control={<Radio />} label='Sponsor as an Individual' />
           <FormControlLabel value='organization' control={<Radio />} label='Sponsor as an Organization' />
         </RadioGroup>
+
+        {/* Basic Information */}
+        <TextField
+          fullWidth
+          sx={{ mb: 3 }}
+          label={sponsorerType === 'individual' ? 'Your Full Name' : 'Contact Person Name'}
+          name='fullname'
+          value={formData.fullname}
+          onChange={handleChange}
+          error={!!errors.fullname}
+          helperText={errors.fullname}
+        />
 
         {/* Organization Sponsor Fields */}
         {sponsorerType === 'organization' && (
@@ -579,19 +661,6 @@ const SponsorQuizzes = () => {
 
         {/* Render reward-specific fields */}
         {renderRewardFields()}
-        <Grid item xs={12} md={6}>
-          <TextField
-            fullWidth
-            label='Number of Games to Sponsor'
-            type='number'
-            name='numberOfGames'
-            value={formData.numberOfGames}
-            onChange={handleChange}
-            error={!!errors.numberOfGames}
-            helperText={errors.numberOfGames}
-            InputProps={{ inputProps: { min: 1 } }}
-          />
-        </Grid>
 
         <Button
           onClick={handleSubmit}

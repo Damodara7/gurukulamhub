@@ -61,7 +61,7 @@ const sponsorerSchema = new mongoose.Schema({
   rewardDetails: {
     rewardType: {
       type: String,
-      enum: ['cash', 'physicalGift', 'other']
+      enum: ['cash', 'physicalGift']
     },
     rewardValue: Number,
     currency: {

@@ -37,20 +37,27 @@ const sponsorshipSchema = new mongoose.Schema(
     orgType: String,
     email: String,
     mobileNumber: String,
-    sponsorshipAmount: String,
-    numberOfGames: Number,
-    rewardType:{
+    sponsorshipAmount: Number,
+    availableAmount: Number,
+    currency: {
+      type: String,
+      enum: ['INR', 'USD'],
+      default: 'INR'
+    },
+    rewardType: {
       type: Number,
-      enum: ['cash', 'physicalGift', 'other'],
+      enum: ['cash', 'physicalGift'],
       default: 'cash'
     },
     rewardValue: Number,
+    nonCashItem: String,
+    numberOfNonCashItems: Number,
+    availableItems: Number,
     rewardDescription: String,
-    otherRewardDetails: String,
-    // nonCashRewardStatus: {
-    //   type: String,
-    //   enum: []
-    // },
+    nonCashSponsorshipStatus: {
+      type: String,
+      enum: ['pending', 'completed', 'rejected']
+    },
     sponsorshipStatus: {
       type: String,
       enum: ['created', 'pending', 'failed', 'completed', 'expired'],

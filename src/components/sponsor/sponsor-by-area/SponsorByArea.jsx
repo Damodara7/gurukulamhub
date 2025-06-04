@@ -36,7 +36,7 @@ const REWARD_TYPES = {
 const rewardTypeOptions = [
   { value: 'cash', label: 'Cash' },
   { value: 'physicalGift', label: 'Physical Gift' },
-  { value: 'other', label: 'Other' }
+  // { value: 'other', label: 'Other' }
 ]
 
 const SponsorByArea = () => {

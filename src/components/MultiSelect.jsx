@@ -1,5 +1,5 @@
 import React from 'react'
-import { FormControl, InputLabel, Select, MenuItem, Checkbox, ListItemText, Chip } from '@mui/material'
+import { FormControl, InputLabel, Select, MenuItem, Checkbox, ListItemText, Chip, FormHelperText } from '@mui/material'
 
 export default function MultiSelect({
   options = [],
@@ -7,7 +7,8 @@ export default function MultiSelect({
   onChange = () => {},
   label = 'Select Options',
   placeholder = 'No options selected',
-  defaultAll = false // New prop to control "All" behavior
+  defaultAll = false, // New prop to control "All" behavior
+  error='',
 }) {
   // Handle "All" logic internally
   const handleChange = event => {
@@ -48,7 +49,7 @@ export default function MultiSelect({
   }
 
   return (
-    <FormControl fullWidth margin='normal'>
+    <FormControl fullWidth margin='normal' error={error}>
       <InputLabel id='multi-select-label'>{label}</InputLabel>
       <Select
         labelId='multi-select-label'
@@ -107,6 +108,7 @@ export default function MultiSelect({
           </MenuItem>
         ))}
       </Select>
+      {error && <FormHelperText error>{error}</FormHelperText>}
     </FormControl>
   )
 }
