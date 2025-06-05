@@ -10,7 +10,7 @@ async function page({ searchParams }) {
   const session = await auth()
   const { sponsorType } = searchParams
 
-  let url = `${API_URLS.v0.SPONSORSHIP}?email=${session?.user?.email}&sponsorshipStatus=completed`
+  let url = `${API_URLS.v0.SPONSORSHIP}?email=${session?.user?.email}&status=completed`
 
   if (sponsorType) {
     url += `&sponsorType=${sponsorType}`

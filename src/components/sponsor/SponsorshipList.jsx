@@ -118,14 +118,13 @@ const SponsorshipList = ({ tableData, sponsorType = 'all' }) => {
           ...columnHelper.accessor('games', {
             header: 'Sponsored Games',
             cell: ({ row }) => {
-              // console.log('row : ', row.original)
               return <Typography variant='body1'>{row.original?.games?.join(', ') || '-'}</Typography>
             }
           })
         },
         (sponsorType === 'all' || sponsorType === 'quiz') && {
           id: 'quizzes',
-          accessorFn: row => row.quizzes?.map(q => q.title).join(', ') || '', // Flatten for searching
+          accessorFn: row => row.quizzes?.map(q => q.title).join(', ') || '',
           ...columnHelper.accessor('quizzes', {
             header: 'Sponsored Quizzes',
             cell: ({ row }) => {
@@ -154,29 +153,76 @@ const SponsorshipList = ({ tableData, sponsorType = 'all' }) => {
             }
           })
         },
-        columnHelper.accessor('sponsorshipAmount', {
-          header: 'Amount',
-          cell: ({ row }) => {
-            const formattedAmount = new Intl.NumberFormat(undefined, {
-              style: 'currency',
-              currency: 'INR'
-            }).format(row.original?.sponsorshipAmount)
-            return <Typography variant='body1'>{formattedAmount}</Typography>
-          }
-        }),
-        columnHelper.accessor('numberOfGames', {
-          header: 'No. of Games',
-          cell: ({ row }) => {
-            return <Typography variant='body1'>{row.original.numberOfGames || 1}</Typography>
-          }
-        }),
-        columnHelper.accessor('sponsorshipStatus', {
-          header: 'Status',
-          cell: ({ row }) => <Chip size='small' color='success' label={row.original.sponsorshipStatus} />
-        })
-      ].filter(Boolean), // This will filter out any falsy values (like the conditional column when false)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [sponsorType] // Add sponsorType to dependencies
+        {
+          id: 'rewardType',
+          ...columnHelper.accessor('rewardType', {
+            header: 'Reward Type',
+            cell: ({ row }) => {
+              return <Typography variant='body1'>{row.original.rewardType === 'cash' ? 'Cash' : 'Physical Gift'}</Typography>
+            }
+          })
+        },
+        {
+          id: 'rewardDetails',
+          ...columnHelper.accessor('rewardDetails', {
+            header: 'Reward Details',
+            cell: ({ row }) => {
+              const { rewardType, currency } = row.original;
+              
+              if (rewardType === 'cash') {
+                const formattedAmount = new Intl.NumberFormat(undefined, {
+                  style: 'currency',
+                  currency: currency || 'INR'
+                }).format(row.original?.sponsorshipAmount || 0);
+                return <Typography variant='body1'>{formattedAmount}</Typography>;
+              } else {
+                // For physical gifts
+                const formatCurrency = (value) => (
+                  new Intl.NumberFormat(undefined, {
+                    style: 'currency',
+                    currency: currency || 'INR'
+                  }).format(value || 0)
+                );
+        
+                return (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                    <Typography variant='body1' noWrap>
+                      {row.original.nonCashItem || 'Physical Gift'}
+                    </Typography>
+                    <Typography variant='caption' fontSize={'0.75rem'} color='text.secondary' noWrap>
+                      {row.original.numberOfNonCashItems || 0} × {formatCurrency(row.original.rewardValuePerItem || 0)}
+                    </Typography>
+                    <Typography variant='caption' fontSize={'0.75rem'} color='text.secondary' noWrap>
+                      Total: {formatCurrency(row.original.rewardValue || 0)}
+                    </Typography>
+                  </Box>
+                );
+              }
+            }
+          })
+        },
+        {
+          id: 'status',
+          ...columnHelper.accessor('status', {
+            header: 'Status',
+            cell: ({ row }) => {
+              const { rewardType, sponsorshipStatus, nonCashSponsorshipStatus } = row.original
+              const status = rewardType === 'cash' ? sponsorshipStatus : nonCashSponsorshipStatus
+              const statusColor = {
+                created: 'default',
+                pending: 'warning',
+                failed: 'error',
+                completed: 'success',
+                expired: 'secondary',
+                rejected: 'error'
+              }[status] || 'default'
+              
+              return <Chip size='small' color={statusColor} label={status} />
+            }
+          })
+        }
+      ].filter(Boolean),
+    [sponsorType]
   )
 
   const table = useReactTable({

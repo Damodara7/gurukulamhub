@@ -128,6 +128,8 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
   const [errors, setErrors] = useState({})
   const [touches, setTouches] = useState({})
   const fileInputRef = useRef(null)
+  const [sponsorships, setSponsorships] = useState([])
+  const [selectedSponsors, setSelectedSponsors] = useState([])
 
   // Loading state
   const [loading, setLoading] = useState({
@@ -190,6 +192,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
   useEffect(() => {
     getCitiesData()
   }, [])
+  
 
   const handleChange = e => {
     const { name, value, type, checked } = e.target
@@ -440,6 +443,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
         />
       </Grid>
 
+      {/* Quiz Selection */}
       <Grid item xs={12}>
         <FormControl fullWidth error={!!errors.quiz && touches.quiz}>
           <InputLabel>Quiz</InputLabel>
@@ -583,8 +587,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
               textField: {
                 error: !!errors.registrationEndTime && touches.registrationEndTime,
                 helperText:
-                  (touches.registrationEndTime && errors.registrationEndTime) ||
-                  'Select the registration end time',
+                  (touches.registrationEndTime && errors.registrationEndTime) || 'Select the registration end time',
                 required: true,
                 onBlur: () => {
                   setTouches(prev => ({ ...prev, registrationEndTime: true }))
@@ -1011,6 +1014,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
           availablePositions={availablePositions}
           allPositions={POSITION_OPTIONS}
           isEditing={!!editingReward}
+          formData={formData}
         />
       </Grid>
 

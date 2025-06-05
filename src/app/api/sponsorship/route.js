@@ -6,13 +6,14 @@ export async function GET(request) {
     const searchParams = new URLSearchParams(url.searchParams);
     // Convert searchParams to an object
     const queryParamsObj = Object.fromEntries(searchParams.entries());
+    const {id, ...rest}= queryParamsObj
 
     let response = {}
 
-    if(queryParamsObj.id){
-        response = await SponsorshipService.getOne({ queryParams: { _id: queryParamsObj.id} })
+    if(id){
+        response = await SponsorshipService.getOne({ queryParams: { _id: id} })
     }else{
-        response = await SponsorshipService.getAll({ queryParams: queryParamsObj })
+        response = await SponsorshipService.getAll({ queryParams: {...rest} })
     }
 
   if (response.status === 'success') {
@@ -26,7 +27,7 @@ export async function GET(request) {
 export async function POST(request) {
   const reqBody = await request.json()
 
-  const response = await SponsorshipService.create({ data: reqBody })
+  const response = await SponsorshipService.addOne({ data: reqBody })
 
   if (response.status === 'success') {
     const successResponse = ApiResponseUtils.createSuccessResponse(response.message, response.result)

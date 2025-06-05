@@ -25,6 +25,9 @@ import {
 } from '@mui/material'
 import { Add as AddIcon, Close as CloseIcon, Edit as EditIcon, Info as InfoIcon } from '@mui/icons-material'
 import SponsorDialog from './SponsorDialog'
+import * as RestApi from '@/utils/restApiUtil'
+import { API_URLS } from '@/configs/apiConfig'
+import { toast } from 'react-toastify'
 
 const REWARD_TYPES = [
   { label: 'Cash', value: 'cash' },
@@ -33,60 +36,60 @@ const REWARD_TYPES = [
 const CURRENCY_OPTIONS = ['INR', 'USD', 'EUR', 'GBP']
 
 // Enhanced dummy sponsor data
-export const DUMMY_SPONSORS = [
-  {
-    id: '1',
-    name: 'TechCorp Inc.',
-    email: 'sponsor1@example.com',
-    rewardType: 'cash',
-    amount: 1000,
-    currency: 'INR',
-    availableAmount: 1000,
-    logo: 'TC'
-  },
-  {
-    id: '2',
-    name: 'Finance Partners',
-    email: 'sponsor2@example.com',
-    rewardType: 'cash',
-    amount: 1500,
-    currency: 'USD',
-    availableAmount: 1500,
-    logo: 'FP'
-  },
-  {
-    id: '3',
-    name: 'Gadget World',
-    email: 'sponsor3@example.com',
-    rewardType: 'physicalGift',
-    nonCashItem: 'iPhone 15',
-    numberOfNonCashItems: 50,
-    availableItems: 50,
-    logo: 'GW'
-  },
-  {
-    id: '4',
-    name: 'Mobile Solutions',
-    email: 'sponsor4@example.com',
-    rewardType: 'physicalGift',
-    nonCashItem: 'iPhone 15',
-    numberOfNonCashItems: 30,
-    availableItems: 30,
-    logo: 'MS'
-  },
-  {
-    id: '5',
-    name: 'Travel Co.',
-    email: 'sponsor5@example.com',
-    rewardType: 'physicalGift',
-    nonCashItem: 'Vacation Package',
-    numberOfNonCashItems: 10,
-    availableItems: 10,
-    logo: 'TC'
-  }
-]
+// export const sponsorships = [
+//   {
+//     id: '1',
+//     name: 'TechCorp Inc.',
+//     email: 'sponsor1@example.com',
+//     rewardType: 'cash',
+//     amount: 1000,
+//     currency: 'INR',
+//     availableAmount: 1000,
+//     logo: 'TC'
+//   },
+//   {
+//     id: '2',
+//     name: 'Finance Partners',
+//     email: 'sponsor2@example.com',
+//     rewardType: 'cash',
+//     amount: 1500,
+//     currency: 'USD',
+//     availableAmount: 1500,
+//     logo: 'FP'
+//   },
+//   {
+//     id: '3',
+//     name: 'Gadget World',
+//     email: 'sponsor3@example.com',
+//     rewardType: 'physicalGift',
+//     nonCashItem: 'iPhone 15',
+//     numberOfNonCashItems: 50,
+//     availableItems: 50,
+//     logo: 'GW'
+//   },
+//   {
+//     id: '4',
+//     name: 'Mobile Solutions',
+//     email: 'sponsor4@example.com',
+//     rewardType: 'physicalGift',
+//     nonCashItem: 'iPhone 15',
+//     numberOfNonCashItems: 30,
+//     availableItems: 30,
+//     logo: 'MS'
+//   },
+//   {
+//     id: '5',
+//     name: 'Travel Co.',
+//     email: 'sponsor5@example.com',
+//     rewardType: 'physicalGift',
+//     nonCashItem: 'Vacation Package',
+//     numberOfNonCashItems: 10,
+//     availableItems: 10,
+//     logo: 'TC'
+//   }
+// ]
 
-const RewardDialog = ({ open, onClose, reward, onSave, availablePositions, allPositions, isEditing }) => {
+const RewardDialog = ({ open, onClose, reward, onSave, availablePositions, allPositions, isEditing, formData }) => {
   const [currentReward, setCurrentReward] = useState({
     id: '',
     position: '',
@@ -102,6 +105,7 @@ const RewardDialog = ({ open, onClose, reward, onSave, availablePositions, allPo
   const [validationError, setValidationError] = useState('')
   const [availableSponsors, setAvailableSponsors] = useState([])
   const [allocationAmount, setAllocationAmount] = useState(0)
+  const [sponsorships, setSponsorships] = useState([])
 
   // Calculate total required value based on reward type and number of winners
   const calculateTotalRequired = () => {
@@ -118,7 +122,7 @@ const RewardDialog = ({ open, onClose, reward, onSave, availablePositions, allPo
 
   // Get physical gift options with aggregated availability
   const getPhysicalGiftOptions = () => {
-    const physicalGiftSponsors = DUMMY_SPONSORS.filter(s => s.rewardType === 'physicalGift')
+    const physicalGiftSponsors = sponsorships.filter(s => s.rewardType === 'physicalGift')
     const itemsMap = new Map()
 
     physicalGiftSponsors.forEach(sponsor => {
@@ -158,7 +162,7 @@ const RewardDialog = ({ open, onClose, reward, onSave, availablePositions, allPo
   useEffect(() => {
     // Filter available sponsors based on reward type and selected gift (for physical gifts)
     if (currentReward.rewardType === 'physicalGift') {
-      const filtered = DUMMY_SPONSORS.filter(
+      const filtered = sponsorships.filter(
         s =>
           s.rewardType === 'physicalGift' &&
           s.nonCashItem === currentReward.nonCashReward &&
@@ -167,7 +171,7 @@ const RewardDialog = ({ open, onClose, reward, onSave, availablePositions, allPo
       )
       setAvailableSponsors(filtered)
     } else {
-      const filtered = DUMMY_SPONSORS.filter(
+      const filtered = sponsorships.filter(
         s =>
           s.rewardType === currentReward.rewardType &&
           // Exclude sponsors already added
@@ -176,6 +180,50 @@ const RewardDialog = ({ open, onClose, reward, onSave, availablePositions, allPo
       setAvailableSponsors(filtered)
     }
   }, [currentReward.rewardType, currentReward.nonCashReward, currentReward.sponsors])
+
+  useEffect(() => {
+    setCurrentReward(prev => ({ ...prev, sponsors: [] }))
+    async function getSponsorships() {
+      try {
+        let searchParams = ['status=completed']
+        if (formData.quiz) {
+          searchParams.push(`quizId=${formData.quiz}`)
+          searchParams.push(`sponsorType=quiz`)
+        }
+        if (currentReward.rewardType) {
+          searchParams.push(`rewardType=${currentReward.rewardType}`)
+        }
+        if (formData?.location?.country) {
+          searchParams.push(`country=${formData?.location?.country}`)
+        }
+        if (formData?.location?.region) {
+          searchParams.push(`region=${formData?.location?.region}`)
+        }
+        if (formData?.location?.city) {
+          searchParams.push(`city=${formData?.location?.city}`)
+        }
+
+        const url = `${API_URLS.v0.SPONSORSHIP}?${searchParams.join('&')}`
+
+        const res = await RestApi.get(url)
+
+        console.log({getSponsorshipsRes: res})
+
+        if (res.status === 'success') {
+          setSponsorships(res.result)
+          toast.success(res.message)
+        } else {
+          toast.error(res.message)
+          setSponsorships([])
+        }
+      } catch (error) {
+        console.log(error)
+        setSponsorships([])
+      }
+    }
+
+    getSponsorships()
+  }, [open, formData?.quiz, formData?.location?.country, formData?.location?.region, formData?.location?.city])
 
   const handleAddSponsor = () => {
     setSelectedSponsor(null)

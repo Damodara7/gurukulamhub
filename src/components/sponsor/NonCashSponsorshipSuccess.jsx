@@ -9,10 +9,11 @@ import Lottie from 'lottie-react'
 import successAnimation from '../../../public/animations/payment-success.json' // Replace with your Lottie file
 import { revalidatePathAction } from '@/actions/revalidatePathAction'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
-function PaymentSuccess({ paymentId, sponsorship, amount }) {
+
+function NonCashSponsorshipSuccess({ sponsorship }) {
   const router = useRouter()
   const theme = useTheme()
-  const [copied, setCopied] = useState({ paymentId: false, sponsorshipId: false })
+  const [copied, setCopied] = useState({ sponsorshipId: false })
   const [countdown, setCountdown] = useState(10)
 
   // Auto-redirect after 10 seconds
@@ -40,13 +41,13 @@ function PaymentSuccess({ paymentId, sponsorship, amount }) {
 
   const handleGoHome = () => {
     revalidatePathAction('/sponsor/list')
-    router.push('/sponsor/list') // Redirect to the home page
+    router.push('/sponsor/list')
   }
 
-  const formattedAmount = new Intl.NumberFormat(undefined, {
+  const formattedValue = new Intl.NumberFormat(undefined, {
     style: 'currency',
-    currency: 'INR'
-  }).format(amount)
+    currency: sponsorship.currency || 'INR'
+  }).format(sponsorship.rewardValue)
 
   return (
     <Container
@@ -75,14 +76,14 @@ function PaymentSuccess({ paymentId, sponsorship, amount }) {
           </Box>
 
           <Typography variant='h4' component='h1' gutterBottom sx={{ fontWeight: 700 }}>
-            Payment Successful!
+            Sponsorship Confirmed!
           </Typography>
 
           <Typography variant='body1' color='text.secondary' paragraph>
-            Thank you for your sponsorship. A confirmation has been sent to your email.
+            Thank you for your physical gift sponsorship. We'll contact you shortly about delivery details.
           </Typography>
 
-          {/* Amount Paid */}
+          {/* Gift Details */}
           <Box
             sx={{
               background: `linear-gradient(135deg, ${theme.palette.success.dark} 0%, ${theme.palette.success.main} 100%)`,
@@ -94,10 +95,16 @@ function PaymentSuccess({ paymentId, sponsorship, amount }) {
             }}
           >
             <Typography variant='h6' sx={{ fontWeight: 600, color: 'white' }}>
-              Amount Paid
+              Gift Details
             </Typography>
-            <Typography variant='h3' sx={{ mt: 1, fontWeight: 800, color: 'white' }}>
-              {formattedAmount}
+            <Typography variant='h5' sx={{ mt: 1, fontWeight: 800, color: 'white' }}>
+              {sponsorship.nonCashItem}
+            </Typography>
+            <Typography variant='h6' sx={{ mt: 1, fontWeight: 600, color: 'white' }}>
+              Quantity: {sponsorship.numberOfNonCashItems}
+            </Typography>
+            <Typography variant='h6' sx={{ mt: 1, fontWeight: 600, color: 'white' }}>
+              Total Value: {formattedValue}
             </Typography>
           </Box>
 
@@ -171,26 +178,8 @@ function PaymentSuccess({ paymentId, sponsorship, amount }) {
               })()}
           </Box>
 
-          {/* IDs with Copy Functionality */}
+          {/* Sponsorship Details */}
           <Box sx={{ textAlign: 'left', mt: 3 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1.5 }}>
-              <Typography variant='body1' sx={{ fontWeight: 500 }}>
-                Payment ID:
-              </Typography>
-              <Typography variant='body1' component='span' sx={{ fontFamily: 'monospace' }}>
-                {paymentId}
-              </Typography>
-              <Tooltip title={copied.paymentId ? 'Copied!' : 'Copy'}>
-                <IconButtonTooltip title='Copy'
-                  size='small'
-                  onClick={() => handleCopy(paymentId, 'paymentId')}
-                  aria-label='Copy payment ID'
-                >
-                  <ContentCopyIcon fontSize='small' />
-                </IconButtonTooltip>
-              </Tooltip>
-            </Box>
-
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Typography variant='body1' sx={{ fontWeight: 500 }}>
                 Sponsorship ID:
@@ -199,7 +188,8 @@ function PaymentSuccess({ paymentId, sponsorship, amount }) {
                 {sponsorship._id}
               </Typography>
               <Tooltip title={copied.sponsorshipId ? 'Copied!' : 'Copy'}>
-                <IconButtonTooltip title='Copy'
+                <IconButtonTooltip 
+                  title='Copy'
                   size='small'
                   onClick={() => handleCopy(sponsorship._id, 'sponsorshipId')}
                   aria-label='Copy sponsorship ID'
@@ -207,6 +197,26 @@ function PaymentSuccess({ paymentId, sponsorship, amount }) {
                   <ContentCopyIcon fontSize='small' />
                 </IconButtonTooltip>
               </Tooltip>
+            </Box>
+
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 2 }}>
+              <Typography variant='body1' sx={{ fontWeight: 500 }}>
+                Status:
+              </Typography>
+              <Typography 
+                variant='body1' 
+                component='span' 
+                sx={{ 
+                  fontFamily: 'monospace',
+                  color: sponsorship.nonCashSponsorshipStatus === 'pending' ? 
+                    theme.palette.warning.main : 
+                    sponsorship.nonCashSponsorshipStatus === 'completed' ? 
+                    theme.palette.success.main : 
+                    theme.palette.error.main
+                }}
+              >
+                {sponsorship.nonCashSponsorshipStatus.toUpperCase()}
+              </Typography>
             </Box>
           </Box>
 
@@ -242,7 +252,7 @@ function PaymentSuccess({ paymentId, sponsorship, amount }) {
                 '@media print': { display: 'none' }
               }}
             >
-              Print Receipt
+              Print Confirmation
             </Button>
           </Box>
 
@@ -256,4 +266,4 @@ function PaymentSuccess({ paymentId, sponsorship, amount }) {
   )
 }
 
-export default PaymentSuccess
+export default NonCashSponsorshipSuccess

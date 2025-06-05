@@ -22,7 +22,7 @@ const sponsorshipSchema = new mongoose.Schema(
     sponsorerType: {
       type: String,
       required: true,
-      enum: ['individual', 'organisation']
+      enum: ['individual', 'organization']
     },
     games: [String],
     quizzes: [
@@ -45,23 +45,29 @@ const sponsorshipSchema = new mongoose.Schema(
       default: 'INR'
     },
     rewardType: {
-      type: Number,
+      type: String,
       enum: ['cash', 'physicalGift'],
       default: 'cash'
     },
-    rewardValue: Number,
     nonCashItem: String,
     numberOfNonCashItems: Number,
     availableItems: Number,
+    rewardValuePerItem: Number,
+    rewardValue: Number,
     rewardDescription: String,
     nonCashSponsorshipStatus: {
       type: String,
-      enum: ['pending', 'completed', 'rejected']
+      enum: ['pending', 'completed', 'rejected'],
+      required: function() {
+        return this.rewardType === 'physicalGift';
+      }
     },
     sponsorshipStatus: {
       type: String,
       enum: ['created', 'pending', 'failed', 'completed', 'expired'],
-      default: 'created'
+      required: function() {
+        return this.rewardType === 'cash';
+      }
       // 'created' --> when sponsorship submitted, just before payment initiated
       // 'pending' --> payment initiated but not completed
       // 'failed' --> payment failed

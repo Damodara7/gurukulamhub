@@ -25,18 +25,41 @@ export async function getAll({ queryParams }) {
 
     console.log({ queryParams })
 
-    // Extract quizId from queryParams if it exists
-    const { quizId, country, region, city, ...otherParams } = queryParams
+    // Extract parameters from queryParams
+    const { quizId, country, region, city, status, ...otherParams } = queryParams
 
-    // Build the query
+    // Build the base query
     const query = { ...otherParams }
 
+    // Handle quizId filter
     if (quizId) {
       query.quizzes = quizId
     }
 
+    // Handle status filter if provided
+    if (status) {
+      query.$or = [
+        { 
+          rewardType: 'cash', 
+          sponsorshipStatus: status,
+          nonCashSponsorshipStatus: { $exists: false } // Ensure this field doesn't exist
+        },
+        { 
+          rewardType: 'physicalGift', 
+          nonCashSponsorshipStatus: status,
+          sponsorshipStatus: { $exists: false } // Ensure this field doesn't exist
+        }
+      ]
+    } else {
+      // When no status filter is applied, ensure we get all sponsorships
+      query.$or = [
+        { rewardType: 'cash', sponsorshipStatus: { $exists: true } },
+        { rewardType: 'physicalGift', nonCashSponsorshipStatus: { $exists: true } }
+      ]
+    }
+
     // By Quiz ID
-    let sponsorships = await Sponsorship.find({ ...query }).populate('quizzes', 'title _id') // Only populate 'title' and '_id'
+    let sponsorships = await Sponsorship.find(query).populate('quizzes', 'title _id')
 
     if (sponsorships?.length > 0 && (country || region || city)) {
       console.log('Sponsorships found by quizId')
@@ -61,13 +84,13 @@ export async function getAll({ queryParams }) {
         console.log('Sponsorships not found')
         let locationQuery = {}
 
-        if (country) locationQuery.location.country = country
-        if (region) locationQuery.location.region = region
-        if (city) locationQuery.location.city = city
+        if (country) locationQuery['location.country'] = country
+        if (region) locationQuery['location.region'] = region
+        if (city) locationQuery['location.city'] = city
 
         console.log({ locationQuery })
 
-        sponsorships = await Sponsorship.find({ ...otherParams, ...locationQuery })
+        sponsorships = await Sponsorship.find({ ...query, ...locationQuery })
       }
     }
 
@@ -80,7 +103,7 @@ export async function getAll({ queryParams }) {
   }
 }
 
-export async function create({ data }) {
+export async function addOne({ data }) {
   try {
     await connectMongo()
 
