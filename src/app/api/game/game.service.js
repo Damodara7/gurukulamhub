@@ -3,6 +3,7 @@ import Game from './game.model'
 import mongoose from 'mongoose'
 import User from '@/app/models/user.model'
 import Quiz from '../quiz/quiz.model'
+import SponsorshipModel from '../sponsorship/sponsorship.model'
 import QuestionsModel from '../question/question.model'
 import * as gameScheduler from './game.scheduler'
 import { ROLES_LOOKUP } from '@/configs/roles-lookup'
@@ -21,6 +22,7 @@ export const getOne = async (filter = {}) => {
     const game = await Game.findOne({ ...filter, isDeleted: false })
       .populate('quiz')
       .populate('createdBy', 'email firstName lastName roles')
+      .populate('rewards.sponsorshipId')
       .lean()
 
     if (!game) {
@@ -53,6 +55,7 @@ export const getAll = async (filter = {}) => {
       .populate('createdBy', 'email firstName lastName roles')
       .populate('registeredUsers.user')
       .populate('participatedUsers.user')
+      .populate('rewards.sponsorshipId')
       .sort({ createdAt: -1 })
       .lean()
 
@@ -80,6 +83,7 @@ export const getAllPublic = async (filter = {}) => {
     })
       .populate('quiz')
       .populate('createdBy', 'email firstName lastName')
+      .populate('rewards.sponsorshipId')
       .sort({ createdAt: -1 })
       .lean()
 
@@ -111,6 +115,7 @@ export const getAllByEmail = async (email, filter = {}) => {
     const games = await Game.find({ creatorEmail: email, isDeleted: false, ...filter })
       .populate('quiz')
       .populate('createdBy', 'email firstName lastName roles')
+      .populate('rewards.sponsorshipId')
       .sort({ startTime: -1 })
       .lean()
 
@@ -200,6 +205,9 @@ export const addOne = async gameData => {
     }
 
     const savedGame = await newGame.save()
+
+    // Update sponsorships
+    await updateSponsorshipsForGame(savedGame)
 
     // If the user is ADMIN - Then Schedule game scheduleres(on approval)
     if (user?.roles?.includes('ADMIN')) {
@@ -768,146 +776,100 @@ export const getLeaderboard = async gameId => {
   }
 }
 
-// import nodeSchedule from 'node-schedule';
-// import Game from './models/gameModel'; // Adjust path to your Game model
+// ********************* Helper Functions *******************
+// Helper function to update sponsorships
+async function updateSponsorshipsForGame(game) {
+  try {
+    if (!game.rewards || game.rewards.length === 0) return
 
-// // Object to store our scheduled jobs
-// const gameStatusJobs = {};
+    const sponsorshipUpdates = []
 
-// export async function scheduleLobbyTransition(gameId) {
-//   try {
-//     // Find the game
-//     const game = await Game.findById(gameId);
-//     if (!game) {
-//       console.error(`Game ${gameId} not found`);
-//       return;
-//     }
+    // Aggregate allocations per sponsorship
+    for (const reward of game.rewards) {
+      for (const sponsor of reward.sponsors) {
+        const { sponsorshipId, allocated, rewardDetails, _id } = sponsor
+        if (!sponsorshipId) continue
 
-//     // Calculate 10 minutes before startTime
-//     const lobbyTime = new Date(game.startTime.getTime() - 10 * 60000);
+        const existing = sponsorshipUpdates.find(u => u.sponsorshipId === sponsorshipId)
+        const { rewardType } = rewardDetails
 
-//     // Cancel any existing job for this game
-//     if (gameStatusJobs[gameId]) {
-//       gameStatusJobs[gameId].cancel();
-//     }
+        if (existing) {
+          if (rewardType === 'cash') {
+            existing.totalCashAllocated += allocated
+            existing.rewardSponsorships.push({
+              allocated,
+              rewardSponsorshipId: _id
+            })
+          } else {
+            existing.totalItemsAllocated += allocated
+            existing.rewardSponsorships.push({
+              allocated,
+              rewardSponsorshipId: _id
+            })
+          }
+        } else {
+          sponsorshipUpdates.push({
+            sponsorshipId,
+            rewardType,
+            totalCashAllocated: rewardType === 'cash' ? allocated : 0,
+            totalItemsAllocated: rewardType === 'physicalGift' ? allocated : 0,
+            rewardSponsorships: [
+              {
+                allocated,
+                rewardSponsorshipId: _id
+              }
+            ]
+          })
+        }
+      }
+    }
 
-//     // Schedule the new job
-//     gameStatusJobs[gameId] = nodeSchedule.scheduleJob(lobbyTime, async () => {
-//       try {
-//         console.log(`Moving game ${gameId} to lobby status`);
+    // Process each sponsorship update
+    for (const update of sponsorshipUpdates) {
+      const { sponsorshipId, rewardType, totalCashAllocated, totalItemsAllocated, rewardSponsorships } = update
 
-//         const updatedGame = await Game.findByIdAndUpdate(
-//           gameId,
-//           { $set: { status: 'lobby' } },
-//           { new: true }
-//         );
+      const sponsorship = await SponsorshipModel.findById(sponsorshipId)
 
-//         if (updatedGame) {
-//           console.log(`Game ${gameId} status updated to lobby`);
+      if (!sponsorship) {
+        console.warn(`Sponsorship not found: ${sponsorshipId}`)
+        continue
+      }
 
-//           // Schedule the next transition to 'live' at startTime
-//           scheduleLiveTransition(gameId, game.startTime);
-//         } else {
-//           console.error(`Failed to update game ${gameId} status`);
-//         }
-//       } catch (error) {
-//         console.error(`Error updating game ${gameId} status:`, error);
-//       }
-//     });
+      // Validate and update based on reward type
+      if (rewardType === 'cash') {
+        if (sponsorship.availableAmount < totalCashAllocated) {
+          throw new Error(
+            `Insufficient funds for sponsorship ${sponsorshipId}. Available: ${sponsorship.availableAmount}, Required: ${totalCashAllocated}`
+          )
+        }
+        sponsorship.availableAmount -= totalCashAllocated
+      } else {
+        if (sponsorship.availableItems < totalItemsAllocated) {
+          throw new Error(
+            `Insufficient items for sponsorship ${sponsorshipId}. Available: ${sponsorship.availableItems}, Required: ${totalItemsAllocated}`
+          )
+        }
+        sponsorship.availableItems -= totalItemsAllocated
+      }
 
-//     console.log(`Scheduled lobby transition for game ${gameId} at ${lobbyTime}`);
-//   } catch (error) {
-//     console.error(`Error scheduling lobby transition for game ${gameId}:`, error);
-//   }
-// }
+      // Record the game sponsorship
+      const existingSponsored = sponsorship.sponsored.find(s => s.game.equals(game._id))
 
-// async function scheduleLiveTransition(gameId, startTime) {
-//   try {
-//     gameStatusJobs[gameId] = nodeSchedule.scheduleJob(startTime, async () => {
-//       try {
-//         console.log(`Moving game ${gameId} to live status`);
+      if (existingSponsored) {
+        // Add to existing game sponsorship record
+        existingSponsored.rewardSponsorships.push(...rewardSponsorships)
+      } else {
+        // Create new game sponsorship record
+        sponsorship.sponsored.push({
+          game: game._id,
+          rewardSponsorships
+        })
+      }
 
-//         const updatedGame = await Game.findByIdAndUpdate(
-//           gameId,
-//           { $set: { status: 'live' } },
-//           { new: true }
-//         );
-
-//         if (updatedGame) {
-//           console.log(`Game ${gameId} status updated to live`);
-
-//           // Schedule completion when duration elapses
-//           const endTime = new Date(startTime.getTime() + updatedGame.duration * 1000);
-//           scheduleCompletion(gameId, endTime);
-//         } else {
-//           console.error(`Failed to update game ${gameId} status`);
-//         }
-//       } catch (error) {
-//         console.error(`Error updating game ${gameId} status:`, error);
-//       }
-//     });
-
-//     console.log(`Scheduled live transition for game ${gameId} at ${startTime}`);
-//   } catch (error) {
-//     console.error(`Error scheduling live transition for game ${gameId}:`, error);
-//   }
-// }
-
-// async function scheduleCompletion(gameId, endTime) {
-//   try {
-//     gameStatusJobs[gameId] = nodeSchedule.scheduleJob(endTime, async () => {
-//       try {
-//         console.log(`Moving game ${gameId} to completed status`);
-
-//         const updatedGame = await Game.findByIdAndUpdate(
-//           gameId,
-//           { $set: { status: 'completed' } },
-//           { new: true }
-//         );
-
-//         if (updatedGame) {
-//           console.log(`Game ${gameId} status updated to completed`);
-//           // Clean up the job
-//           delete gameStatusJobs[gameId];
-//         } else {
-//           console.error(`Failed to update game ${gameId} status`);
-//         }
-//       } catch (error) {
-//         console.error(`Error updating game ${gameId} status:`, error);
-//       }
-//     });
-
-//     console.log(`Scheduled completion for game ${gameId} at ${endTime}`);
-//   } catch (error) {
-//     console.error(`Error scheduling completion for game ${gameId}:`, error);
-//   }
-// }
-
-// // Call this when admin approves a game
-// export async function onGameApproved(gameId) {
-//   await scheduleLobbyTransition(gameId);
-// }
-
-// // Call this when server starts to reschedule any pending jobs
-// export async function reschedulePendingGames() {
-//   try {
-//     const now = new Date();
-//     const pendingGames = await Game.find({
-//       status: { $in: ['approved', 'lobby', 'live'] },
-//       startTime: { $gt: now }
-//     });
-
-//     for (const game of pendingGames) {
-//       if (game.status === 'approved') {
-//         await scheduleLobbyTransition(game._id);
-//       } else if (game.status === 'lobby') {
-//         await scheduleLiveTransition(game._id, game.startTime);
-//       } else if (game.status === 'live') {
-//         const endTime = new Date(game.startTime.getTime() + game.duration * 1000);
-//         await scheduleCompletion(game._id, endTime);
-//       }
-//     }
-//   } catch (error) {
-//     console.error('Error rescheduling pending games:', error);
-//   }
-// }
+      await sponsorship.save()
+    }
+  } catch (error) {
+    console.error('Error updating sponsorships:', error)
+    throw error
+  }
+}

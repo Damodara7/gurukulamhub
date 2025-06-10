@@ -26,7 +26,7 @@ export async function getAll({ queryParams }) {
     console.log({ queryParams })
 
     // Extract parameters from queryParams
-    const { quizId, country, region, city, status, ...otherParams } = queryParams
+    const { quizId, country, region, city, status, email, ...otherParams } = queryParams
 
     // Build the base query
     const query = { ...otherParams }
@@ -35,17 +35,20 @@ export async function getAll({ queryParams }) {
     if (quizId) {
       query.quizzes = quizId
     }
+    if (email) {
+      query.accountHolderEmail = email
+    }
 
     // Handle status filter if provided
     if (status) {
       query.$or = [
-        { 
-          rewardType: 'cash', 
+        {
+          rewardType: 'cash',
           sponsorshipStatus: status,
           nonCashSponsorshipStatus: { $exists: false } // Ensure this field doesn't exist
         },
-        { 
-          rewardType: 'physicalGift', 
+        {
+          rewardType: 'physicalGift',
           nonCashSponsorshipStatus: status,
           sponsorshipStatus: { $exists: false } // Ensure this field doesn't exist
         }

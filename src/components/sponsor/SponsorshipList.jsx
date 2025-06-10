@@ -118,7 +118,7 @@ const SponsorshipList = ({ tableData, sponsorType = 'all' }) => {
           ...columnHelper.accessor('games', {
             header: 'Sponsored Games',
             cell: ({ row }) => {
-              return <Typography variant='body1'>{row.original?.games?.join(', ') || '-'}</Typography>
+              return <Typography variant='body1'>{row.original?.games?.join(', ') || <span style={{fontSize: '0.85rem', fontStyle: 'italic'}}>Any game</span>}</Typography>
             }
           })
         },
@@ -129,7 +129,7 @@ const SponsorshipList = ({ tableData, sponsorType = 'all' }) => {
             header: 'Sponsored Quizzes',
             cell: ({ row }) => {
               return (
-                <Typography variant='body1'>{row.original?.quizzes?.map(q => q.title).join(', ') || '-'}</Typography>
+                <Typography variant='body1'>{row.original?.quizzes?.map(q => q.title).join(', ') || <span style={{fontSize: '0.85rem', fontStyle: 'italic'}}>Any quiz</span>}</Typography>
               )
             }
           })
@@ -149,7 +149,7 @@ const SponsorshipList = ({ tableData, sponsorType = 'all' }) => {
               if (row.original?.location?.city) {
                 area += `, ${row.original?.location?.city}`
               }
-              return <Typography variant='body1'>{area || '-'}</Typography>
+              return <Typography variant='body1'>{area || <span style={{fontSize: '0.85rem', fontStyle: 'italic'}}>Any location</span>}</Typography>
             }
           })
         },

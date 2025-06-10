@@ -128,8 +128,6 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
   const [errors, setErrors] = useState({})
   const [touches, setTouches] = useState({})
   const fileInputRef = useRef(null)
-  const [sponsorships, setSponsorships] = useState([])
-  const [selectedSponsors, setSelectedSponsors] = useState([])
 
   // Loading state
   const [loading, setLoading] = useState({
@@ -192,7 +190,6 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
   useEffect(() => {
     getCitiesData()
   }, [])
-  
 
   const handleChange = e => {
     const { name, value, type, checked } = e.target
@@ -274,19 +271,52 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
   }
 
   const handleSaveReward = reward => {
+    // update all sponsors with the same sponsorshipId across all rewards whenever a reward is saved,
+    //  ensuring they reflect the latest availableItems/availableAmount
     setFormData(prev => {
-      if (editingReward) {
-        // Update existing reward
-        return {
-          ...prev,
-          rewards: prev.rewards.map(r => ((r?._id || r?.id) === (reward?._id || reward?.id) ? reward : r))
+      // First create a map of the latest sponsor data from the current reward
+      const latestSponsorsMap = new Map()
+      reward.sponsors?.forEach(sponsor => {
+        latestSponsorsMap.set(sponsor.sponsorshipId, {
+          availableAmount: sponsor.availableAmount,
+          availableItems: sponsor.availableItems,
+          allocated: sponsor.allocated,
+          rewardType: sponsor.rewardType
+        })
+      })
+
+      // Update all rewards
+      const updatedRewards = prev.rewards.map(r => {
+        // For the current reward being saved, just use it as-is
+        if ((r?._id || r?.id) === (reward?._id || reward?.id)) {
+          return reward
         }
-      } else {
-        // Add new reward
+
+        // For other rewards, update any matching sponsors
+        const updatedSponsors = r.sponsors?.map(sponsor => {
+          const latestSponsorData = latestSponsorsMap.get(sponsor.sponsorshipId)
+          if (latestSponsorData) {
+            return {
+              ...sponsor,
+              availableAmount: latestSponsorData.availableAmount,
+              availableItems: latestSponsorData.availableItems
+            }
+          }
+          return sponsor
+        })
+
         return {
-          ...prev,
-          rewards: [...prev.rewards, reward]
+          ...r,
+          sponsors: updatedSponsors || []
         }
+      })
+
+      // Handle adding new reward or updating existing
+      const finalRewards = editingReward ? updatedRewards : [...updatedRewards, reward]
+
+      return {
+        ...prev,
+        rewards: finalRewards
       }
     })
   }
@@ -989,10 +1019,9 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                               </Typography>
                               <Typography variant='caption' color='text.secondary'>
                                 {reward.rewardType === 'cash'
-                                  ? `Remaining balance: ${sponsor.currency} ${(
-                                      sponsor.availableAmount - sponsor.allocated
-                                    ).toFixed(2)}`
-                                  : `Remaining stock: ${sponsor.availableItems - sponsor.allocated}`}
+                                  ? `Remaining balance: ${sponsor.currency} ${sponsor.availableAmount //- sponsor.allocated
+                                      .toFixed(2)}`
+                                  : `Remaining stock: ${sponsor.availableItems}`}
                               </Typography>
                             </Paper>
                           </Grid>
@@ -1008,6 +1037,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
         {/* Reward Dialog */}
         <RewardDialog
           open={openRewardDialog}
+          key={openRewardDialog}
           onClose={() => setOpenRewardDialog(false)}
           reward={editingReward}
           onSave={handleSaveReward}

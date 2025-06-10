@@ -1,4 +1,6 @@
 import mongoose from 'mongoose'
+import QuizModel from '../../api/quiz/quiz.model'
+import GameModel from '../game/game.model'
 
 const locationSchema = new mongoose.Schema({
   country: {
@@ -9,6 +11,22 @@ const locationSchema = new mongoose.Schema({
   },
   city: {
     type: String
+  }
+})
+
+const sponsoredSchema = mongoose.Schema({
+  game: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'game'
+  },
+  rewardSponsorships: {
+    type: [
+      {
+        allocated: Number,
+        rewardSponsorshipId: String
+      }
+    ],
+    default: []
   }
 })
 
@@ -36,6 +54,8 @@ const sponsorshipSchema = new mongoose.Schema(
     website: String,
     orgType: String,
     email: String,
+    fullname: String,
+    accountHolderEmail: String,
     mobileNumber: String,
     sponsorshipAmount: Number,
     availableAmount: Number,
@@ -58,15 +78,15 @@ const sponsorshipSchema = new mongoose.Schema(
     nonCashSponsorshipStatus: {
       type: String,
       enum: ['pending', 'completed', 'rejected'],
-      required: function() {
-        return this.rewardType === 'physicalGift';
+      required: function () {
+        return this.rewardType === 'physicalGift'
       }
     },
     sponsorshipStatus: {
       type: String,
       enum: ['created', 'pending', 'failed', 'completed', 'expired'],
-      required: function() {
-        return this.rewardType === 'cash';
+      required: function () {
+        return this.rewardType === 'cash'
       }
       // 'created' --> when sponsorship submitted, just before payment initiated
       // 'pending' --> payment initiated but not completed
@@ -76,6 +96,10 @@ const sponsorshipSchema = new mongoose.Schema(
     },
     sponsorshipExpiresAt: {
       type: Date
+    },
+    sponsored: {
+      type: [sponsoredSchema],
+      default: []
     }
   },
   {

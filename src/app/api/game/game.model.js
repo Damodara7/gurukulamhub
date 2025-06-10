@@ -2,6 +2,7 @@ import mongoose from 'mongoose'
 import Quiz from '../quiz/quiz.model'
 import User from '@/app/models/user.model'
 import QuestionsModel from '../question/question.model'
+import SponsorshipModel from '../sponsorship/sponsorship.model'
 
 const locationSchema = new mongoose.Schema({
   country: String,
@@ -58,18 +59,23 @@ const sponsorerSchema = new mongoose.Schema({
     ref: 'users'
   },
   email: String,
+  sponsorshipId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'sponsorship'
+  },
   rewardDetails: {
     rewardType: {
       type: String,
       enum: ['cash', 'physicalGift']
     },
-    rewardValue: Number,
+    rewardValue: Number, // Total Cash (OR) numberOfNonCashRewards * rewardValuePerItem
     currency: {
       type: String,
       default: 'INR'
     },
     nonCashReward: String,
-    numberOfNonCashRewards: Number
+    numberOfNonCashRewards: Number,
+    allocated: Number // ==> numberOfNonCashRewards for PHYSICALGIFT (OR) rewardValue for CASH
   }
 })
 const rewardSchema = new mongoose.Schema({

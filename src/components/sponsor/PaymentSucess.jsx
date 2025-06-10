@@ -108,7 +108,7 @@ function PaymentSuccess({ paymentId, sponsorship, amount }) {
                   You sponsored for games:
                 </Typography>
                 <Typography variant='body1' component='span' sx={{ fontFamily: 'monospace' }}>
-                  {sponsorship.games.join(', ')}
+                  {sponsorship.games.join(', ')  || 'Any game'}
                 </Typography>
               </Box>
             )}
@@ -119,7 +119,7 @@ function PaymentSuccess({ paymentId, sponsorship, amount }) {
                     You sponsored for quizzes:
                   </Typography>
                   <Typography variant='body1' component='span' sx={{ fontFamily: 'monospace' }}>
-                    {sponsorship?.quizzes?.map(q => q.title).join(', ')}
+                    {sponsorship?.quizzes?.map(q => q.title).join(', ') || 'Any quiz'}
                   </Typography>
                 </Box>
                 {(() => {
@@ -139,7 +139,7 @@ function PaymentSuccess({ paymentId, sponsorship, amount }) {
                         You sponsored for games in area:
                       </Typography>
                       <Typography variant='body1' component='span' sx={{ fontFamily: 'monospace' }}>
-                        {area}
+                        {area || 'Any location'}
                       </Typography>
                     </Box>
                   )
@@ -164,7 +164,7 @@ function PaymentSuccess({ paymentId, sponsorship, amount }) {
                       You sponsored for games in area:
                     </Typography>
                     <Typography variant='body1' component='span' sx={{ fontFamily: 'monospace' }}>
-                      {area}
+                      {area || 'Any location'}
                     </Typography>
                   </Box>
                 )

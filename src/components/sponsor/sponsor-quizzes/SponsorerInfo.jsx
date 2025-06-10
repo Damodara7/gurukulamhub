@@ -13,6 +13,7 @@ const OrganizationFields = ({ formData, handleChange, errors }) => {
         onChange={handleChange}
         error={!!errors.orgName}
         helperText={errors.orgName}
+        required
       />
       <TextField
         fullWidth
@@ -23,6 +24,7 @@ const OrganizationFields = ({ formData, handleChange, errors }) => {
         onChange={handleChange}
         error={!!errors.website}
         helperText={errors.website}
+        required
       />
       <FormControl fullWidth sx={{ mb: 3 }} error={!!errors.orgType}>
         <InputLabel id='org-type-label'>Organization Type</InputLabel>
@@ -32,6 +34,7 @@ const OrganizationFields = ({ formData, handleChange, errors }) => {
           name='orgType'
           value={formData.orgType}
           onChange={handleChange}
+          required
         >
           <MenuItem value=''>Select Organization Type</MenuItem>
           <MenuItem value='public-company'>Public Company</MenuItem>
@@ -77,6 +80,20 @@ export default function SponsorerInfo({sponsorerType,setSponsorerType, formData,
         onChange={handleChange}
         error={!!errors.fullname}
         helperText={errors.fullname}
+        required
+      />
+
+      <TextField
+        fullWidth
+        sx={{ mb: 3 }}
+        label={sponsorerType === 'individual' ? 'Your Email' : 'Business Email'}
+        name='email'
+        type='email'
+        required
+        value={formData.email}
+        onChange={handleChange}
+        error={!!errors.email}
+        helperText={errors.email}
       />
 
       {sponsorerType === 'organization' && (
@@ -94,6 +111,7 @@ export default function SponsorerInfo({sponsorerType,setSponsorerType, formData,
         error={!!errors.mobileNumber}
         helperText={errors.mobileNumber || 'Enter 10-digit Indian mobile number'}
         inputProps={{ maxLength: 10 }}
+        required
       />
     </>
   )

@@ -64,16 +64,18 @@ function CreateGamePage({ isSuperUser = false }) {
             rewardValuePerWinner: reward.rewardValuePerWinner,
             sponsors: reward.sponsors.map(sponsor => ({
               email: sponsor.email,
+              sponsorshipId: sponsor.sponsorshipId,
               rewardDetails: {
                 rewardType: sponsor.rewardType,
+                allocated: sponsor.allocated,
+                currency: sponsor.currency,
                 ...(sponsor.rewardType === 'cash' && {
-                  rewardValue: sponsor.allocated,
-                  currency: sponsor.currency
+                  rewardValue: sponsor.allocated
                 }),
                 ...(sponsor.rewardType === 'physicalGift' && {
                   nonCashReward: sponsor.nonCashItem,
                   numberOfNonCashRewards: sponsor.allocated,
-                  currency: undefined
+                  rewardValue: sponsor.allocated * sponsor.rewardValuePerItem
                 })
               }
             })),

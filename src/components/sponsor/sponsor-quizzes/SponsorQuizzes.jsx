@@ -23,6 +23,7 @@ const rewardTypeOptions = [
 ]
 
 const initialFormData = {
+  email: '',
   fullname: '',
   sponsorshipAmount: '',
   orgName: '',
@@ -51,7 +52,7 @@ const SponsorQuizzes = () => {
 
   const [sponsorerType, setSponsorerType] = useState('individual')
   const [rewardType, setRewardType] = useState(REWARD_TYPES.CASH)
-  const [formData, setFormData] = useState(initialFormData)
+  const [formData, setFormData] = useState({ ...initialFormData, email: session?.user?.email })
 
   // Loading state
   const [loading, setLoading] = useState({
@@ -157,8 +158,9 @@ const SponsorQuizzes = () => {
 
       try {
         const payload = {
-          email: session?.user?.email,
-          fullname: formData.fullname,
+          accountHolderEmail: session?.user?.email,
+          email: formData?.email || session?.user?.email,
+          fullname: formData?.fullname,
           quizzes: selectedQuizzes?.filter(x => x !== 'any-quiz'),
           sponsorType: 'quiz',
           sponsorerType,
@@ -177,6 +179,7 @@ const SponsorQuizzes = () => {
           }),
           ...(rewardType === REWARD_TYPES.CASH && {
             sponsorshipAmount: Number(formData.sponsorshipAmount),
+            availableAmount: Number(formData.sponsorshipAmount),
             sponsorshipStatus: 'created', // Only for cash rewards
             nonCashSponsorshipStatus: undefined,
             sponsorshipExpiresAt: new Date(Date.now() + 2 * 60 * 1000) // 2 minutes
@@ -184,6 +187,7 @@ const SponsorQuizzes = () => {
           ...(rewardType === REWARD_TYPES.PHYSICAL_GIFT && {
             nonCashItem: formData.nonCashItem,
             numberOfNonCashItems: Number(formData.numberOfNonCashItems),
+            availableItems: Number(formData.numberOfNonCashItems),
             rewardValuePerItem: Number(formData.rewardValuePerItem),
             rewardValue: Number(formData.rewardValuePerItem) * Number(formData?.numberOfNonCashItems),
             rewardDescription: formData.rewardDescription,

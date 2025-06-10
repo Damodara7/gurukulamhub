@@ -54,8 +54,7 @@ const SponsorDialog = ({ open, onClose, currentReward, availableSponsors, onSave
     }
   }, [open, selectedSponsor])
 
-
-  function handleCloseSponsor(){
+  function handleCloseSponsor() {
     setSelectedSponsor(null)
     onClose()
   }
@@ -71,16 +70,19 @@ const SponsorDialog = ({ open, onClose, currentReward, availableSponsors, onSave
           onChange={(e, newValue) => {
             setSelectedSponsor(newValue)
           }}
-          sx={{mt: 1}}
+          sx={{ mt: 1 }}
           // Add this prop to disable already added sponsors
-          getOptionDisabled={option => currentReward.sponsors.some(s => s.id === option.id)}
+          getOptionDisabled={option =>
+            currentReward.sponsors.some(s => s._id === option._id) ||
+            (option.rewardType === 'cash' ? option.availableAmount === 0 : option.availableItems === 0)
+          }
           renderInput={params => <TextField {...params} label='Search Sponsors' />}
           renderOption={(props, option) => (
             <li {...props}>
               <Stack direction='row' alignItems='center' spacing={2}>
                 <Avatar sx={{ bgcolor: 'primary.main' }}>{option.logo}</Avatar>
                 <Box>
-                  <Typography>{option.name}</Typography>
+                  <Typography>{option.fullname}</Typography>
                   <Typography variant='body2' color='text.secondary'>
                     {option.email}
                     {option.rewardType === 'cash'
@@ -88,7 +90,7 @@ const SponsorDialog = ({ open, onClose, currentReward, availableSponsors, onSave
                       : ` | Available Items: ${option.availableItems}`}
                   </Typography>
                   {/* Add disabled status indicator */}
-                  {currentReward.sponsors.some(s => s.id === option.id) && (
+                  {currentReward.sponsors.some(s => s._id === option._id) && (
                     <Typography variant='body2' color='error'>
                       Already added
                     </Typography>
@@ -101,7 +103,7 @@ const SponsorDialog = ({ open, onClose, currentReward, availableSponsors, onSave
 
         {selectedSponsor && (
           <>
-          <Alert icon={false} color='info' sx={{ my: 2 }}>
+            <Alert icon={false} color='info' sx={{ my: 2 }}>
               <Typography variant='body2' color='text.secondary'>
                 {currentReward.rewardType === 'cash'
                   ? `Available: ${selectedSponsor.currency} ${selectedSponsor.availableAmount}`
@@ -136,8 +138,16 @@ const SponsorDialog = ({ open, onClose, currentReward, availableSponsors, onSave
         )}
       </DialogContent>
       <DialogActions>
-        <Button variant='outlined' onClick={onClose}>Cancel</Button>
-        <Button component='label' sx={{color: 'white'}} onClick={handleAddSponsor} variant='contained' disabled={!selectedSponsor || allocationAmount <= 0}>
+        <Button variant='outlined' onClick={onClose}>
+          Cancel
+        </Button>
+        <Button
+          component='label'
+          sx={{ color: 'white' }}
+          onClick={handleAddSponsor}
+          variant='contained'
+          disabled={!selectedSponsor || allocationAmount <= 0}
+        >
           Add Sponsor
         </Button>
       </DialogActions>
