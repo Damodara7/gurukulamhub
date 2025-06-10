@@ -766,7 +766,8 @@ export const getLeaderboard = async gameId => {
         email: p.email,
         score: p.score,
         totalTime: p.answers.reduce((sum, a) => sum + a.answerTime, 0),
-        accuracy: (p.answers.filter(a => a.marks > 0).length / p.answers.length) * 100
+        // accuracy: (p.answers.filter(a => a.marks > 0).length / p.answers.length) * 100
+        accuracy: (p.score / p.answers.length) * 100
       }))
       .sort((a, b) => b.score - a.score || a.totalTime - b.totalTime)
 
