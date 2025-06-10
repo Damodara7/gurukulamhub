@@ -29,6 +29,9 @@ import Language from '@mui/icons-material/Language'
 import CancelIcon from '@mui/icons-material/Cancel'
 import ReactPlayer from 'react-player'
 import { useRouter } from 'next/navigation'
+import VideoAd from '@/views/apps/advertisements/VideoAd/VideoAd'
+import ImagePopup from '@/components/ImagePopup'
+import Link from 'next/link'
 const GameRegistrationNotice = ({ game }) => {
   // Function to format date and time
   const theme = useTheme()

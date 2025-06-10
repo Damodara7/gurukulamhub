@@ -33,8 +33,12 @@ export async function getAll({ queryParams }) {
 
     // Handle quizId filter
     if (quizId) {
-      query.quizzes = quizId
+      query.$or = [
+        { quizzes: quizId }, // Sponsorships that include this specific quiz
+        { quizzes: { $size: 0 } } // Sponsorships that apply to any quiz (empty array)
+      ]
     }
+    
     if (email) {
       query.accountHolderEmail = email
     }
@@ -60,6 +64,8 @@ export async function getAll({ queryParams }) {
         { rewardType: 'physicalGift', nonCashSponsorshipStatus: { $exists: true } }
       ]
     }
+
+    console.log({ query })
 
     // By Quiz ID
     let sponsorships = await Sponsorship.find(query).populate('quizzes', 'title _id')

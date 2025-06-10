@@ -322,7 +322,7 @@ export async function initializeScheduler() {
 
   // Schedule periodic checks without duplicate initial run
   cron.schedule(
-    '*/2 * * * *', // Every 2 minutes
+    '*/10 * * * *', // Every 2 minutes
     async () => {
       console.log('⏰ Running periodic schedule check');
       await reschedulePendingGames();

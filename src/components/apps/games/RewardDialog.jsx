@@ -128,7 +128,7 @@ const RewardDialog = ({ open, onClose, reward, onSave, availablePositions, allPo
 
     physicalGiftSponsors.forEach(sponsor => {
       const itemName = sponsor.nonCashItem
-      const available = sponsor.prevAvailableItems
+      const available = sponsor.availableItems
       if (itemsMap.has(itemName)) {
         itemsMap.set(itemName, itemsMap.get(itemName) + available)
       } else {
@@ -144,7 +144,10 @@ const RewardDialog = ({ open, onClose, reward, onSave, availablePositions, allPo
   }
 
   useEffect(() => {
-    setCurrentReward(prev => ({ ...prev, sponsors: [] }))
+    setCurrentReward(prev => ({
+      ...prev,
+      sponsors: reward && reward?.rewardType === currentReward?.rewardType ? currentReward?.sponsors : []
+    }))
     async function getSponsorships() {
       try {
         let searchParams = ['status=completed']
@@ -433,6 +436,7 @@ const RewardDialog = ({ open, onClose, reward, onSave, availablePositions, allPo
   }
 
   const handleSave = () => {
+    if (!validateReward()) return
     const updatedDisplaySponsorships = displaySponsorships.map(sponsorship => {
       const foundSponsor = currentReward?.sponsors?.find(s => s.sponsorshipId === sponsorship._id)
       if (!foundSponsor) return sponsorship
@@ -445,8 +449,7 @@ const RewardDialog = ({ open, onClose, reward, onSave, availablePositions, allPo
       }
     })
     setDisplaySponsorships(updatedDisplaySponsorships)
-
-    if (!validateReward()) return
+    console.log({currentReward})
     onSave(currentReward)
 
     onClose()
@@ -458,6 +461,8 @@ const RewardDialog = ({ open, onClose, reward, onSave, availablePositions, allPo
     const totalAllocated = calculateTotalAllocated()
     return Math.max(0, totalNeeded - totalAllocated)
   }
+
+  console.log({ currentReward })
 
   return (
     <>

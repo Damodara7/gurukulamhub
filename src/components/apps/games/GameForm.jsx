@@ -278,8 +278,9 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
       const latestSponsorsMap = new Map()
       reward.sponsors?.forEach(sponsor => {
         latestSponsorsMap.set(sponsor.sponsorshipId, {
-          availableAmount: sponsor.availableAmount,
-          availableItems: sponsor.availableItems,
+          ...(reward.rewardType === 'cash'
+            ? { availableAmount: sponsor.availableAmount }
+            : { availableItems: sponsor.availableItems }),
           allocated: sponsor.allocated,
           rewardType: sponsor.rewardType
         })
@@ -298,8 +299,9 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
           if (latestSponsorData) {
             return {
               ...sponsor,
-              availableAmount: latestSponsorData.availableAmount,
-              availableItems: latestSponsorData.availableItems
+              ...(reward.rewardType === 'cash'
+                ? { availableAmount: latestSponsorData.availableAmount }
+                : { availableItems: latestSponsorData.availableItems })
             }
           }
           return sponsor
