@@ -110,9 +110,11 @@ async function updateUserScore(gameId, { user, userAnswer, finish }) {
 
 export default function PlayGameQuiz({ quiz, questions, game }) {
   const { data: session } = useSession()
+  console.log('game data :  ' , game);
   const router = useRouter()
   const storageKey = `quiz-${quiz._id}-state`
-
+  // Inside PlayGameQuiz
+  
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [selectedAnswers, setSelectedAnswers] = useState({})
   const [usedHints, setUsedHints] = useState({})
@@ -121,19 +123,50 @@ export default function PlayGameQuiz({ quiz, questions, game }) {
   const [remainingTime, setRemainingTime] = useState(0)
   const [questionStartTimes, setQuestionStartTimes] = useState({})
 
+  const [questionTimers, setQuestionTimers] = useState({})
+  const performanceRef = useRef({
+    startTime: null,
+    questionStartTimes: {},
+    totalTime: 0
+  })
+
   const duration = game?.duration || 0
   const startTime = new Date(game?.startTime)
 
-  // Track when a question is first displayed
+  // Initialize timing when component mounts
+  useEffect(() => {
+    performanceRef.current.startTime = performance.now()
+    return () => {
+      // Cleanup if needed
+    }
+  }, [])
+
+  // Track when a question is first displayed with high prercession
   useEffect(() => {
     const currentQuestionId = questions[currentQuestionIndex]?._id
-    if (currentQuestionId && !questionStartTimes[currentQuestionId]) {
+    if (currentQuestionId && !performanceRef.current.questionStartTimes[currentQuestionId]) {
+      const now = performance.now()
+      performanceRef.current.questionStartTimes[currentQuestionId] = now
+
       setQuestionStartTimes(prev => ({
         ...prev,
-        [currentQuestionId]: new Date()
+        [currentQuestionId]: {
+          startTime: now,
+          endTime: null,
+          duration: null
+        }
       }))
     }
   }, [currentQuestionIndex])
+
+  // Calculate answer time with high precision
+  const getAnswerTime = questionId => {
+    if (!performanceRef.current.questionStartTimes[questionId]) return 0
+
+    const endTime = performance.now()
+    const startTime = performanceRef.current.questionStartTimes[questionId]
+    return (endTime - startTime) / 1000 // Convert to seconds
+  }
 
   const calculateRemainingTime = () => {
     const now = new Date()
@@ -210,8 +243,9 @@ export default function PlayGameQuiz({ quiz, questions, game }) {
   async function calculateAndUpdateUserScore({ finish }) {
     const currentQuestion = questions[currentQuestionIndex]
     const selectedAnswer = selectedAnswers[currentQuestion._id]
-    const questionStartTime = questionStartTimes[currentQuestion._id]
-    const answerTime = questionStartTime ? Math.floor((new Date() - questionStartTime) / 1000) : 0
+    // const questionStartTime = questionStartTimes[currentQuestion._id]
+    // const answerTime = questionStartTime ? Math.floor((new Date() - questionStartTime) / 1000) : 0
+    const answerTime = getAnswerTime(currentQuestion._id)
 
     if (!selectedAnswer) {
       // !selectedAnswer means Question was Skipped (Not answered)
@@ -224,7 +258,7 @@ export default function PlayGameQuiz({ quiz, questions, game }) {
           hintUsed: false,
           skipped: true,
           answerTime: answerTime,
-          answeredAt: new Date()
+          answeredAt: new Date().toISOString() // Use ISO string for precession time
         },
         user: { id: session.user.id, email: session.user.email },
         finish: finish
@@ -246,11 +280,24 @@ export default function PlayGameQuiz({ quiz, questions, game }) {
         hintUsed,
         skipped: false,
         answerTime: answerTime,
-        answeredAt: new Date()
+        answeredAt: new Date().toISOString() // Use ISO string for precession time
       },
       user: { id: session.user.id, email: session.user.email },
       finish: finish
     })
+
+    // Update the question timer with end time
+    if (questionTimers[currentQuestion._id]) {
+      const endTime = performance.now()
+      setQuestionTimers(prev => ({
+        ...prev,
+        [currentQuestion._id]: {
+          ...prev[currentQuestion._id],
+          endTime,
+          duration: (endTime - prev[currentQuestion._id].startTime) / 1000
+        }
+      }))
+    }
   }
 
   const handleExit = () => {

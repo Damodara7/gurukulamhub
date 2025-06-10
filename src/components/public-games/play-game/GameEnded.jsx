@@ -3,7 +3,7 @@ import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
 import { TimerOff as TimerIcon } from '@mui/icons-material';
 import Leaderboard from './Leaderboard'
 
-const GameEnded = ({ onExit, game = null }) => {
+const GameEnded = ({ onExit, game = null , isAdmin = false}) => {
   return (
     <Container maxWidth='lg' sx={{ py: 8, textAlign: 'center' }}>
         <Typography
@@ -32,7 +32,7 @@ const GameEnded = ({ onExit, game = null }) => {
         }} 
       /> */}
 
-      {game && <Leaderboard game={game} />}
+      {game && <Leaderboard game={game} isAdmin={isAdmin} />}
 
       <Typography variant='subtitle1' color='text.secondary' sx={{ my: 4 }}>
         Thank you for participating.
