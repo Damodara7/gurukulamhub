@@ -3,8 +3,8 @@
 import React from 'react'
 import { Box, Typography, Card, CardContent } from '@mui/material'
 import { EmojiEvents } from '@mui/icons-material'
-import Leaderboard from '@/components/apps/games/game-details/Leaderboard'
 import GameHeader from '@/components/apps/games/game-details/GameHeader'
+import AdminLeaderboard from '@/components/apps/games/game-details/AdminLeaderboard'
 
 export default function GameLeaderboardPage({ gameId, game }) {
   return (
@@ -12,8 +12,7 @@ export default function GameLeaderboardPage({ gameId, game }) {
       {/* Game Header with minimal info */}
       <GameHeader game={game} />
 
-      <Leaderboard
-        participatedUsers={game?.participatedUsers}
+      <AdminLeaderboard
         game={game}
         description={
           game.status === 'live'

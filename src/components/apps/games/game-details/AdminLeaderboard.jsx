@@ -1,8 +1,4 @@
-import React from 'react';
-import { useEffect, useState } from 'react';
-import * as RestApi from '@/utils/restApiUtil'
-import { API_URLS } from '@/configs/apiConfig'
-
+import React from 'react'
 import {
   Card,
   CardContent,
@@ -17,52 +13,16 @@ import {
   Avatar,
   Chip,
   Paper
-} from '@mui/material';
-import {
-  EmojiEvents,
-  CheckCircle,
-  Cancel,
-  People
-} from '@mui/icons-material';
+} from '@mui/material'
+import { EmojiEvents, CheckCircle, Cancel, People } from '@mui/icons-material'
 
-function AdminLeaderboard({ game, duringPlay = false }) {
-  const [leaderboard, setLeaderboard] = useState([])
-  const [loading, setLoading] = useState(true)
-console.log('inside the game' , game);
-  useEffect(() => {
-    const fetchLeaderboard = async () => {
-      try {
-        const res = await RestApi.get(`${API_URLS.v0.USERS_GAME}/${game._id}/leaderboard`)
-        if (res.status === 'success') {
-          // Sort leaderboard by score (descending) and then by totalTime (ascending)
-          console.log(res.result)
-          const sortedLeaderBoard = res.result.sort((a, b) => {
-            if (b.score > a.score) return 1
-            if (b.score < a.score) return -1
-
-            //if scores are eqaul , compare by time (lower time comes first)
-            if (a.totalTime > b.totalTime) return 1
-            if (a.totalTime < b.totalTime) return -1
-
-            return 0
-          })
-          setLeaderboard(sortedLeaderBoard)
-          setLoading(false)
-        } else {
-          console.log('Error while updating score: ', res.message)
-          setLoading(false)
-        }
-      } catch (error) {
-        console.log('Error while updating score: ', error.message)
-        setLoading(false)
-      }
-    }
-
-    // Initial fetch
-    fetchLeaderboard()
-  }, [game._id])
-
-  
+function AdminLeaderboard({
+  game,
+  duringPlay = false,
+  headerIcon = <EmojiEvents sx={{ mr: 1, verticalAlign: 'middle' }} />,
+  headerTitle = 'Leaderboard',
+  description = ''
+}) {
   const formatTime = seconds => {
     // Handle edge cases
     if (seconds === 0) return '0s'
@@ -114,10 +74,15 @@ console.log('inside the game' , game);
   return (
     <Card sx={{ mb: 3 }}>
       <CardContent>
-        <Typography variant='h6' sx={{ mb: 2 }}>
-          <EmojiEvents sx={{ mr: 1, verticalAlign: 'middle' }} />
-          Leaderboard
+        <Typography variant='h6' sx={{ mb: 1 }}>
+          {headerIcon}
+          {headerTitle}
         </Typography>
+        {description && (
+          <Typography variant='body2' color='text.secondary' sx={{ mb: 3 }}>
+            {description}
+          </Typography>
+        )}
         <TableContainer component={Paper}>
           <Table stickyHeader>
             <TableHead>
@@ -131,16 +96,12 @@ console.log('inside the game' , game);
               </TableRow>
             </TableHead>
             <TableBody>
-              {leaderboard.length > 0 ? (
-                leaderboard.slice(0, duringPlay ? 5 : leaderboard.length).map((player, index) => {
-                  //finding the matching player in the participatedUser 
-                  const participated = game?.participatedUsers?.find(
-                    user => user._id === player._id);
-                  
-                  const isCompleted = participated?.completed || false;
-
-                  return (
-                    <TableRow key={player._id} hover>
+              {game?.participatedUsers?.length > 0 ? (
+                [...game.participatedUsers]
+                  .sort((a, b) => b.score - a.score)
+                  .slice(0, duringPlay ? 5 : game.participatedUsers.length)
+                  .map((user, index) => (
+                    <TableRow key={user._id} hover>
                       <TableCell>
                         <Typography variant='subtitle1' color='text.secondary'>
                           #{index + 1}
@@ -148,32 +109,32 @@ console.log('inside the game' , game);
                       </TableCell>
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                          <Avatar sx={{ width: 32, height: 32 }} alt={player.email}>
-                            {player.email[0].toUpperCase()}
+                          <Avatar sx={{ width: 32, height: 32 }} alt={user.email}>
+                            {user.email[0].toUpperCase()}
                           </Avatar>
-                          <Typography variant='body1'>{player.email}</Typography>
+                          <Typography variant='body1'>{user.email}</Typography>
                         </Box>
                       </TableCell>
                       <TableCell align='right'>
                         <Typography variant='body1' fontWeight='medium'>
-                          {player.score.toFixed(2)}
+                          {user.score?.toFixed(2)}
                         </Typography>
                       </TableCell>
                       <TableCell align='right'>
                         <Typography variant='body1' fontWeight='medium'>
-                          {formatTime(player.totalTime)}
+                          {formatTime(user.answers.reduce((sum, a) => sum + a.answerTime, 0))}
                         </Typography>
                       </TableCell>
                       <TableCell align='right'>
                         <Typography variant='body1' fontWeight='medium'>
-                          {parseFloat(player.accuracy || 0)
+                          {parseFloat((user.score / user.answers.length) * 100 || 0)
                             .toFixed(2)
                             .replace(/\.?0+$/, '')}
                           %
                         </Typography>
                       </TableCell>
                       <TableCell align='right'>
-                        {isCompleted ? (
+                        {user.completed ? (
                           <Chip
                             icon={<CheckCircle fontSize='small' />}
                             label='Completed'
@@ -192,11 +153,10 @@ console.log('inside the game' , game);
                         )}
                       </TableCell>
                     </TableRow>
-                  )
-              })
+                  ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} align='center' sx={{ py: 4 }}>
+                  <TableCell colSpan={6} align='center' sx={{ py: 4 }}>
                     <Box
                       sx={{
                         display: 'flex',
@@ -207,10 +167,18 @@ console.log('inside the game' , game);
                     >
                       <People fontSize='large' color='disabled' />
                       <Typography variant='body1' color='text.secondary'>
-                        No players have participated yet
+                        {game?.status === 'cancelled'
+                          ? 'Game was cancelled'
+                          : game?.status === 'completed'
+                            ? 'No players participated in this game'
+                            : 'No players have participated yet'}
                       </Typography>
                       <Typography variant='body2' color='text.disabled'>
-                        Player results will appear here once the game starts.
+                        {game?.status === 'cancelled'
+                          ? 'This game has been cancelled and no results are available.'
+                          : game?.status === 'completed'
+                            ? 'The game has ended with no participants.'
+                            : 'Player results will appear here once they start playing.'}
                       </Typography>
                     </Box>
                   </TableCell>
