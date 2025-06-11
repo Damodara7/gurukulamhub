@@ -37,6 +37,7 @@ import { useSettings } from '@core/hooks/useSettings'
 
 // Util Imports
 import { getLocalizedUrl } from '@/utils/i18n'
+import { Box } from '@mui/material'
 
 const ScrollWrapper = ({ children, hidden }) => {
   if (hidden) {
@@ -73,9 +74,11 @@ const MetricsDropdown = ({ metrics }) => {
 
   return (
     <>
-      <IconButtonTooltip title='Toggle' ref={anchorRef} onClick={handleToggle} className='!text-textPrimary'>
-        <i className='ri-star-smile-line' />
-      </IconButtonTooltip>
+      <Box ref={anchorRef}>
+        <IconButtonTooltip title='Toggle' onClick={handleToggle} className='!text-textPrimary'>
+          <i className='ri-star-smile-line' />
+        </IconButtonTooltip>
+      </Box>
       <Popper
         open={open}
         transition

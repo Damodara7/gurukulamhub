@@ -89,7 +89,17 @@ const CURRENCY_OPTIONS = ['INR', 'USD', 'EUR', 'GBP']
 //   }
 // ]
 
-const RewardDialog = ({ open, onClose, reward, onSave, availablePositions, allPositions, isEditing, formData }) => {
+const RewardDialog = ({
+  open,
+  onClose,
+  reward,
+  onSave,
+  availablePositions,
+  allPositions,
+  isEditing,
+  formData,
+  gameData = null
+}) => {
   const [currentReward, setCurrentReward] = useState({
     id: '',
     position: '',
@@ -360,6 +370,7 @@ const RewardDialog = ({ open, onClose, reward, onSave, availablePositions, allPo
         ...(sponsor.rewardType === 'physicalGift' && {
           nonCashReward: sponsor.nonCashItem,
           numberOfNonCashRewards: parseFloat(allocation) || 0,
+          rewardValuePerItem: sponsor.rewardValuePerItem,
           rewardValue: parseFloat(allocation) * sponsor.rewardValuePerItem
         })
       }
@@ -439,18 +450,29 @@ const RewardDialog = ({ open, onClose, reward, onSave, availablePositions, allPo
     if (!validateReward()) return
     const updatedDisplaySponsorships = displaySponsorships.map(sponsorship => {
       const foundSponsor = currentReward?.sponsors?.find(s => s.sponsorshipId === sponsorship._id)
+      console.log('sponsorship: ', sponsorship)
+      console.log('foundSponsor: ', foundSponsor)
       if (!foundSponsor) return sponsorship
 
-      return {
+      const updatedSponsorship = {
         ...sponsorship,
         ...(foundSponsor.rewardType === 'cash'
-          ? { availableAmount: sponsorship.availableAmount - foundSponsor.allocated }
-          : { availableItems: sponsorship.availableItems - foundSponsor.allocated })
+          ? {
+              availableAmount: sponsorship.availableAmount - foundSponsor.allocated,
+              prevAvailableAmount: sponsorship.availableAmount - foundSponsor.allocated
+            }
+          : {
+              availableItems: sponsorship.availableItems - foundSponsor.allocated,
+              prevAvailableItems: sponsorship.availableItems - foundSponsor.allocated
+            })
       }
+      console.log('updatedSponsorship: ', updatedSponsorship)
+
+      return updatedSponsorship
     })
     setDisplaySponsorships(updatedDisplaySponsorships)
-    console.log({currentReward})
-    onSave(currentReward)
+    console.log({ currentReward })
+    onSave({currentReward})
 
     onClose()
   }
@@ -462,7 +484,8 @@ const RewardDialog = ({ open, onClose, reward, onSave, availablePositions, allPo
     return Math.max(0, totalNeeded - totalAllocated)
   }
 
-  console.log({ currentReward })
+  console.log('New Current Reward: ', currentReward)
+  console.log('New Display Sponsorships: ', displaySponsorships)
 
   return (
     <>

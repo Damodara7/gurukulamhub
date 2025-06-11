@@ -71,6 +71,11 @@ const CreatorGameList = ({ games = [], loading = false, onRefresh, isSuperUser =
     router.push(isSuperUser ? `/manage-games/${id}/edit` : `/apps/games/${id}/edit`)
   }
 
+  async function handleLeaderboard(id) {
+    console.log('Clicked Leaderboard game of id: ', id)
+    router.push(isSuperUser ? `/manage-games/${id}/leaderboard` : `/apps/games/${id}/leaderboard`)
+  }
+
   const handleDeleteConfirmation = game => {
     setGameToDelete(game)
     setConfirmationDialogOpen(true)
@@ -104,6 +109,7 @@ const CreatorGameList = ({ games = [], loading = false, onRefresh, isSuperUser =
                   onEditGame={handleEditGame}
                   onApproveGame={handleApproveGame}
                   onDeleteGame={handleDeleteConfirmation}
+                  onLeaderboard={handleLeaderboard}
                 />
               </Grid>
             ))}

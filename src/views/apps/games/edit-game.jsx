@@ -8,7 +8,6 @@ import { toast } from 'react-toastify'
 import { useSession } from 'next-auth/react'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
-import { DUMMY_SPONSORS } from '@/components/apps/games/RewardDialog'
 import GameForm from '@/components/apps/games/GameForm'
 import NonEditableGamePage from '@/components/apps/games/game-details/NonEditableGamePage'
 function EditGamePage({ gameData = null, gameId = null, isSuperUser = false }) {
@@ -64,16 +63,19 @@ function EditGamePage({ gameData = null, gameId = null, isSuperUser = false }) {
             rewardValuePerWinner: reward.rewardValuePerWinner,
             sponsors: reward.sponsors.map(sponsor => ({
               email: sponsor.email,
+              sponsorshipId: sponsor.sponsorshipId,
               rewardDetails: {
                 rewardType: sponsor.rewardType,
+                allocated: sponsor.allocated,
+                currency: sponsor.currency,
                 ...(sponsor.rewardType === 'cash' && {
-                  rewardValue: sponsor.allocated,
-                  currency: sponsor.currency
+                  rewardValue: sponsor.allocated
                 }),
                 ...(sponsor.rewardType === 'physicalGift' && {
                   nonCashReward: sponsor.nonCashItem,
                   numberOfNonCashRewards: sponsor.allocated,
-                  currency: undefined
+                  rewardValuePerItem: sponsor.rewardValuePerItem,
+                  rewardValue: sponsor.allocated * sponsor.rewardValuePerItem
                 })
               }
             })),
@@ -145,33 +147,39 @@ function EditGamePage({ gameData = null, gameId = null, isSuperUser = false }) {
       const totalPhysical = physicalSponsors.reduce((sum, s) => sum + (s.rewardDetails.numberOfNonCashRewards || 0), 0)
 
       return {
-        id: reward._id?.$oid || reward._id,
+        ...reward,
+        id: reward._id,
         position: reward.position,
         numberOfWinnersForThisPosition: reward.numberOfWinnersForThisPosition,
         rewardValuePerWinner: reward.rewardValuePerWinner,
         rewardType: reward.sponsors[0]?.rewardDetails?.rewardType || 'cash',
         currency: reward.sponsors[0]?.rewardDetails?.currency || 'INR',
         nonCashReward: reward.sponsors[0]?.rewardDetails?.nonCashReward,
-        sponsors: reward.sponsors.map(sponsor => ({
-          id: sponsor._id?.$oid || sponsor._id,
-          email: sponsor.email,
-          name: DUMMY_SPONSORS.find(ds => ds.email === sponsor.email)?.name || sponsor.email,
-          rewardType: sponsor.rewardDetails.rewardType,
-          amount: sponsor.rewardDetails.rewardValue,
-          currency: sponsor.rewardDetails.currency,
-          availableAmount: DUMMY_SPONSORS.find(ds => ds.email === sponsor.email)?.availableAmount || 0,
-          nonCashItem: sponsor.rewardDetails.nonCashReward,
-          numberOfNonCashItems: sponsor.rewardDetails.numberOfNonCashRewards,
-          availableItems: DUMMY_SPONSORS.find(ds => ds.email === sponsor.email)?.availableItems || 0,
-          logo: DUMMY_SPONSORS.find(ds => ds.email === sponsor.email)?.logo || 'SP',
-          allocated:
-            sponsor.rewardDetails.rewardType === 'cash'
-              ? sponsor.rewardDetails.rewardValue
-              : sponsor.rewardDetails.numberOfNonCashRewards
-        })),
-        winners: reward.winners,
-        totalCash,
-        totalPhysical
+        sponsors: reward.sponsors.map(sponsor => {
+          const rewardType = sponsor.rewardDetails.rewardType
+          const allocated = sponsor.rewardDetails.allocated
+          const available = rewardType === 'cash' ? sponsor.sponsorshipId.availableAmount : sponsor.sponsorshipId.availableItems
+          
+          return {
+            ...sponsor.sponsorshipId,
+            ...sponsor,
+            sponsorshipId: sponsor.sponsorshipId._id,
+            ...sponsor.rewardDetails,
+            _id: sponsor._id,
+            id: sponsor._id,
+            allocated: allocated,
+            ...(rewardType === 'cash' ? {
+              availableAmount: available,
+              prevAvailableAmount: available , // Store the original available amount before allocation
+            } : {
+              availableItems: available,
+              prevAvailableItems: available, // Store the original available amount before allocation
+            }),
+            rewardType: rewardType,
+            currency: sponsor.rewardDetails.currency
+          }
+        }),
+        winners: reward.winners
       }
     })
   }
