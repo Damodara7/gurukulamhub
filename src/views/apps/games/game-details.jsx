@@ -5,12 +5,12 @@ import { Box, Grid, Typography, Card, CardContent } from '@mui/material'
 import { EmojiEvents, Videocam } from '@mui/icons-material'
 import ReactPlayer from 'react-player'
 import RewardsList from '@/components/apps/games/game-details/RewardsList'
-import Leaderboard from '@/components/apps/games/game-details/Leaderboard'
 import GameHeader from '@/components/apps/games/game-details/GameHeader'
 import RegisteredPlayersTable from '@/components/apps/games/game-details/RegisteredPlayersTable'
 import ParticipatedPlayersTable from '@/components/apps/games/game-details/ParticipatedPlayersTable'
 import GameLocationInfo from '@/components/apps/games/game-details/GameLocationInfo'
 import GameStatistics from '@/components/apps/games/game-details/GameStatistics'
+import AdminLeaderboard from '@/components/apps/games/game-details/AdminLeaderboard'
 
 export default function GameDetailsPage({ game = null }) {
   if (!game)
@@ -77,7 +77,7 @@ export default function GameDetailsPage({ game = null }) {
       </Grid>
 
       {/* Leaderboard Section */}
-      <Leaderboard participatedUsers={game?.participatedUsers} />
+      <AdminLeaderboard  game={game} />
 
       {/* Rewards Section */}
       {game.rewards.length > 0 && (

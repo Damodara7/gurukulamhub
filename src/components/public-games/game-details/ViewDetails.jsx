@@ -45,7 +45,7 @@ const ViewDetails = ({ game }) => {
       </Container>
     )
   }
-
+  console.log('game data', game);
   const getStatusChip = () => {
     const statusConfig = {
       created: { color: 'default', label: 'Pending', icon: <AccessTime /> },
@@ -77,10 +77,26 @@ const ViewDetails = ({ game }) => {
   
   return (
     <Container maxWidth='lg' sx={{ py: 4 }}>
-      <Grid container spacing={4}>
-        {/* Left Column - Main Details */}
-        <Grid item xs={12} md={8}>
-          <Card sx={{ borderRadius: 2, p: 3 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          gap: 3,
+          alignItems: 'flex-start'
+        }}
+      >
+        {/* Left Column - Main Details will reorder on small screens */}
+        <Box
+          sx={{
+            flex: { md: 2 }, // Takes 2/3 space on desktop
+            width: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 3,
+            order: { xs: 1, md: 1 }
+          }}
+        >
+          <Card sx={{ borderRadius: 2, order: 1, p: 3 }}>
             <Stack spacing={3}>
               {/* Title and Status */}
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -89,7 +105,7 @@ const ViewDetails = ({ game }) => {
                 </Typography>
                 <Stack direction='row' alignItems='center' spacing={3}>
                   {getStatusChip()}
-                  <Typography variant='body2' color='text.secondary'>
+                  <Typography variant='body2' color='text.primary'>
                     PIN: {game.pin}
                   </Typography>
                 </Stack>
@@ -113,10 +129,8 @@ const ViewDetails = ({ game }) => {
               </Stack>
             </Stack>
           </Card>
-
           {/* Quiz Details */}
-
-          <Card sx={{ borderRadius: 2, p: 3, mt: 3 }}>
+          <Card sx={{ borderRadius: 2, p: 3, order: { md: 2 }, display: { xs: 'none', md: 'block' } }}>
             <CardContent>
               {/* Main Game Title Banner */} {/* Quiz Language */}
               <Box
@@ -218,11 +232,20 @@ const ViewDetails = ({ game }) => {
               </ChevronToggleComponent>
             </Grid>
           </Card>
-        </Grid>
+        </Box>
 
         {/* Right Column - Additional Info */}
-        <Grid item xs={12} md={4}>
-          <Card sx={{ position: 'sticky', top: 20, borderRadius: 2 }}>
+        <Box
+          sx={{
+            flex: { md: 1 },
+            width: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 3,
+            order: { xs: 2, md: 2 }
+          }}
+        >
+          <Card sx={{ position: { md: 'sticky' }, p: 3, top: 20, borderRadius: 2 }}>
             <CardContent>
               <Stack spacing={3}>
                 {/* Location */}
@@ -341,7 +364,7 @@ const ViewDetails = ({ game }) => {
                 </Stack>
                 <Divider />
                 {/* Rewards */}
-                <Box>
+                <Box mt={3}>
                   <Typography variant='h6' fontWeight={600}>
                     Rewards
                   </Typography>
@@ -358,11 +381,45 @@ const ViewDetails = ({ game }) => {
                   <Typography variant='body2' color='text.secondary' mt={1}>
                     Winners declared: {game?.winnersDeclared ? 'Yes' : 'No'}
                   </Typography>
+
+                  {game?.rewards?.map(reward => (
+                    <Box key={reward._id} mt={3} p={2} border='1px solid #eee' borderRadius={2}>
+                      <Typography variant='subtitle1' fontWeight={500}>
+                        Position : {reward.position}
+                      </Typography>
+
+                      <Box ml={2} mt={1}>
+                        <Typography variant='body1'>No of Winners : {reward.numberOfWinnersForThisPosition}</Typography>
+                        <Typography variant='body1'>Reward : {reward.rewardValuePerWinner}</Typography>
+
+                        {reward.sponsors?.map(sponsor => (
+                          <Box key={sponsor._id} mt={2}>
+                            <Typography variant='body2'>Reward Type: {sponsor.rewardDetails?.rewardType}</Typography>
+
+                            {sponsor.rewardDetails?.rewardType === 'cash' && (
+                              <Typography variant='body2'>
+                                Amount: {sponsor.rewardDetails?.rewardValue} {sponsor.rewardDetails?.currency}
+                              </Typography>
+                            )}
+
+                            {sponsor.rewardDetails?.rewardType === 'physicalGift' && (
+                              <>
+                                <Typography variant='body2'>Gift: {sponsor.rewardDetails?.nonCashReward}</Typography>
+                                <Typography variant='body2'>
+                                  Quantity: {sponsor.rewardDetails?.numberOfNonCashRewards}
+                                </Typography>
+                              </>
+                            )}
+                          </Box>
+                        ))}
+                      </Box>
+                    </Box>
+                  ))}
                 </Box>
                 <Divider />
               </Stack>
-              {/* Tags */}
 
+              {/* Tags */}
               {game?.tags?.length > 0 && (
                 <>
                   <Typography mt={1} variant='h6' fontWeight={600}>
@@ -384,8 +441,109 @@ const ViewDetails = ({ game }) => {
               )}
             </CardContent>
           </Card>
-        </Grid>
-      </Grid>
+          <Card
+            sx={{
+              p: 3,
+              display: { md: 'none' },
+              borderRadius: 2
+            }}
+          >
+            <CardContent>
+              <Box
+                sx={{
+                  position: 'relative',
+                  textAlign: 'center',
+                  mt: -7,
+                  mb: 1,
+                  p: 2,
+                  borderRadius: 1
+                }}
+              >
+                <Typography variant='h4' fontWeight={700} color='primary.contrastText'>
+                  Game on the Quiz
+                </Typography>
+                <Box sx={{ position: 'relative', width: '100%', mt: 1 }}>
+                  <Typography
+                    variant='h5'
+                    fontWeight={600}
+                    sx={{
+                      display: 'inline-block',
+                      textAlign: 'center',
+                      width: '100%'
+                    }}
+                  >
+                    {game?.quiz?.title || 'Quiz Title'}
+                  </Typography>
+                  <Chip
+                    label={game?.quiz?.language?.name || 'Not specified'}
+                    variant='outlined'
+                    color='success'
+                    icon={<Language />}
+                    sx={{
+                      position: 'absolute',
+                      right: 0,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      fontWeight: 500,
+                      borderWidth: 2,
+                      '& .MuiChip-icon': {
+                        color: 'success.main'
+                      }
+                    }}
+                  />
+                </Box>
+              </Box>
+              <Stack spacing={3}>
+                {/* Quiz Details */}
+                <Typography variant='h6' fontWeight={600}>
+                  Details
+                </Typography>
+                <Typography>{game?.quiz?.details || 'No details provided'}</Typography>
+              </Stack>
+            </CardContent>
+            <Grid item xs={12}>
+              <ChevronToggleComponent
+                heading={'Course Links:'}
+                minimizedSubHeading={'Click the chevron to view course links'}
+              >
+                {game?.quiz?.courseLinks?.length > 0 ? (
+                  <Box className='flex flex-col gap-4'>
+                    {game?.quiz?.courseLinks?.map((link, index) => (
+                      <Box key={index} className='flex flex-col gap-1 items-start'>
+                        <Box className='flex flex-col gap-1 items-center'>
+                          <VideoAd url={link?.link || ''} showPause autoPlay={false} />
+                          <ImagePopup imageUrl={link?.link || ''} mediaType={link.mediaType} />
+                        </Box>
+                      </Box>
+                    ))}
+                  </Box>
+                ) : (
+                  <Typography color='error'>No course links exist.</Typography>
+                )}
+              </ChevronToggleComponent>
+            </Grid>
+            <Grid item xs={12}>
+              <ChevronToggleComponent
+                heading={'Documents:'}
+                minimizedSubHeading={'Click the chevron to view documents'}
+              >
+                {game?.quiz?.documents?.length > 0 ? (
+                  game?.quiz?.documents?.map((document, index) => (
+                    <Box key={index} display='flex' alignItems='center' gap={2} mb={1}>
+                      <Typography variant='body2'>{`Document ${index + 1}: ${document?.description}`}</Typography>
+                      <Link href={document?.document || ''} target='_blank' rel='noopener noreferrer'>
+                        <Typography color='primary'>View Document</Typography>
+                      </Link>
+                    </Box>
+                  ))
+                ) : (
+                  <Typography color='error'>No documents exist.</Typography>
+                )}
+              </ChevronToggleComponent>
+            </Grid>
+          </Card>
+        </Box>
+      </Box>
     </Container>
   )
 }
