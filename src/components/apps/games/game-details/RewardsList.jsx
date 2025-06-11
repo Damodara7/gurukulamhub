@@ -32,8 +32,10 @@ function RewardsList({rewards}) {
 
   return (
     <Grid container spacing={2}>
-      {rewards.map(reward => (
-        <Grid item xs={12} md={6} lg={4} key={reward.position}>
+      {rewards
+        .sort((a, b) => a.position - b.position)
+        .map(reward => (
+          <Grid item xs={12} md={6} lg={4} key={reward.position}>
           <Card
             variant='outlined'
             sx={{
@@ -85,7 +87,7 @@ function RewardsList({rewards}) {
                     reward.sponsors[0]?.rewardDetails?.rewardType === 'cash'
                       ? 'Cash Prize'
                       : reward.sponsors[0]?.rewardDetails?.rewardType === 'physicalGift'
-                        ? 'Physical Gift'
+                        ? `Physical Gift - ${reward.sponsors[0]?.rewardDetails?.nonCashReward}`
                         : 'Custom Reward'
                   }
                   color={
@@ -129,9 +131,14 @@ function RewardsList({rewards}) {
                     </Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       <AttachMoney color='success' />
-                      <Typography variant='body1' fontWeight='bold'>
-                        {reward.rewardValuePerWinner} {reward.sponsors[0]?.rewardDetails?.currency || ''}
-                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.85 }}>
+                        <Typography variant='body1' fontWeight={600}>
+                          {reward.sponsors[0]?.rewardDetails.rewardValue} {reward.sponsors[0]?.rewardDetails?.currency || ''}
+                          <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+                            ({reward.rewardValuePerWinner} {reward.sponsors[0]?.rewardDetails?.currency || ''} per winner)
+                          </Typography>
+                        </Typography>
+                      </Box>
                     </Box>
                   </Box>
                 ) : reward.sponsors[0]?.rewardDetails?.rewardType === 'physicalGift' ? (
@@ -141,12 +148,17 @@ function RewardsList({rewards}) {
                     </Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       <CardGiftcard color='warning' />
-                      <Typography variant='body1' fontWeight='bold'>
-                        {reward.sponsors.reduce(
-                          (sum, sponsor) => sum + (sponsor.rewardDetails.numberOfNonCashRewards || 0),
-                          0
-                        )}{' '}
-                        items
+                      <Typography variant='body1' fontWeight={600}>
+                        {(() => {
+                          const totalItems = reward.sponsors.reduce(
+                            (sum, sponsor) => sum + (sponsor.rewardDetails.numberOfNonCashRewards || 0),
+                            0
+                          );
+                          return `${totalItems} ${totalItems > 1 ? 'items' : 'item'}`;
+                        })()}
+                        <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+                          (1 item per winner)
+                        </Typography>
                       </Typography>
                     </Box>
                   </Box>

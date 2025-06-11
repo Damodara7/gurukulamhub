@@ -68,6 +68,7 @@ const sponsorerSchema = new mongoose.Schema({
       type: String,
       enum: ['cash', 'physicalGift']
     },
+    rewardValuePerItem: Number, // For physical gift only
     rewardValue: Number, // Total Cash (OR) numberOfNonCashRewards * rewardValuePerItem
     currency: {
       type: String,

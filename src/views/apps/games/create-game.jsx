@@ -75,7 +75,8 @@ function CreateGamePage({ isSuperUser = false }) {
                 ...(sponsor.rewardType === 'physicalGift' && {
                   nonCashReward: sponsor.nonCashItem,
                   numberOfNonCashRewards: sponsor.allocated,
-                  rewardValue: sponsor.allocated * sponsor.rewardValuePerItem
+                  rewardValuePerItem: sponsor.rewardValuePerItem,
+                  rewardValue: sponsor.allocated * sponsor.rewardValuePerItem,
                 })
               }
             })),

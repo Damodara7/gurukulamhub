@@ -360,7 +360,8 @@ const RewardDialog = ({ open, onClose, reward, onSave, availablePositions, allPo
         ...(sponsor.rewardType === 'physicalGift' && {
           nonCashReward: sponsor.nonCashItem,
           numberOfNonCashRewards: parseFloat(allocation) || 0,
-          rewardValue: parseFloat(allocation) * sponsor.rewardValuePerItem
+          rewardValuePerItem: sponsor.rewardValuePerItem,
+          rewardValue: parseFloat(allocation) * sponsor.rewardValuePerItem,
         })
       }
     }

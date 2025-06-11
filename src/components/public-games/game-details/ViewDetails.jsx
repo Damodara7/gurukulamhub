@@ -12,7 +12,8 @@ import {
   Paper,
   Stack,
   Typography,
-  useTheme
+  useTheme,
+  Avatar
 } from '@mui/material'
 
 import { format } from 'date-fns'
@@ -28,7 +29,10 @@ import {
   Person,
   PlayCircle,
   SportsEsports,
-  Star
+  Star,
+  PeopleAlt,
+  AttachMoney,
+  CardGiftcard
 } from '@mui/icons-material'
 import VideoAd from '@/views/apps/advertisements/VideoAd/VideoAd'
 import ImagePopup from '@/components/ImagePopup'
@@ -345,16 +349,69 @@ const ViewDetails = ({ game }) => {
                   <Typography variant='h6' fontWeight={600}>
                     Rewards
                   </Typography>
-                  <Typography variant='body1' color='text.secondary'>
-                    {game?.totalRewardValue ? (
-                      <Stack direction='row' alignItems='center' spacing={1}>
-                        <Star color='primary' />
-                        <span>Total value: {game?.totalRewardValue}</span>
-                      </Stack>
-                    ) : (
-                      'No rewards'
-                    )}
-                  </Typography>
+                  {game?.rewards?.length > 0 ? (
+                    <Stack spacing={1.5} mt={1}>
+                      {game.rewards?.sort((a, b) => a.position - b.position)?.map((reward) => (
+                        <Box 
+                          key={reward.position} 
+                          sx={{ 
+                            display: 'flex', 
+                            alignItems: 'flex-start', 
+                            gap: 1.5,
+                            p: 1,
+                            borderRadius: 1,
+                            bgcolor: 'action.hover'
+                          }}
+                        >
+                          <Avatar
+                            sx={{
+                              bgcolor: positionColors[reward.position],
+                              width: 32,
+                              height: 32,
+                              fontSize: '0.9rem',
+                              fontWeight: 'bold'
+                            }}
+                          >
+                            {getOrdinalSuffix(reward.position)}
+                          </Avatar>
+                          <Box sx={{ flex: 1 }}>
+                            <Typography variant='subtitle2' sx={{ mb: 0.5 }}>
+                              {reward.numberOfWinnersForThisPosition} Winner{reward.numberOfWinnersForThisPosition !== 1 ? 's' : ''}
+                            </Typography>
+                            {reward.sponsors[0]?.rewardDetails?.rewardType === 'cash' ? (
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                <AttachMoney fontSize='small' color='success' />
+                                <Typography variant='body2'>
+                                  Cash Prize: {reward.rewardValuePerWinner} {reward.sponsors[0]?.rewardDetails?.currency || 'INR'} (per winner)
+                                </Typography>
+                              </Box>
+                            ) : reward.sponsors[0]?.rewardDetails?.rewardType === 'physicalGift' ? (
+                              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                  <CardGiftcard fontSize='small' color='warning' />
+                                  <Typography variant='body2'>
+                                    Physical Gift: {reward.sponsors[0]?.rewardDetails?.nonCashReward}
+                                  </Typography>
+                                </Box>
+                                <Typography variant='body2' color='text.secondary' sx={{ ml: 3 }}>
+                                  Worth: {reward.sponsors[0]?.rewardDetails?.rewardValuePerItem || reward?.rewardValuePerWinner} {reward.sponsors[0]?.rewardDetails?.currency || 'INR'}
+                                </Typography>
+                              </Box>
+                            ) : (
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                <Star fontSize='small' color='info' />
+                                <Typography variant='body2'>
+                                  Custom Reward
+                                </Typography>
+                              </Box>
+                            )}
+                          </Box>
+                        </Box>
+                      ))}
+                    </Stack>
+                  ) : (
+                    <Typography variant='body2' color='text.secondary'>No rewards</Typography>
+                  )}
                   <Typography variant='body2' color='text.secondary' mt={1}>
                     Winners declared: {game?.winnersDeclared ? 'Yes' : 'No'}
                   </Typography>
@@ -391,3 +448,21 @@ const ViewDetails = ({ game }) => {
 }
 
 export default ViewDetails
+
+
+const positionColors = {
+  1: '#ffd700', // Gold
+  2: '#c0c0c0', // Silver
+  3: '#cd7f32', // Bronze
+  4: '#a0a0a0',
+  5: '#808080'
+}
+
+function getOrdinalSuffix(number) {
+  const j = number % 10,
+    k = number % 100
+  if (j === 1 && k !== 11) return number + 'st'
+  if (j === 2 && k !== 12) return number + 'nd'
+  if (j === 3 && k !== 13) return number + 'rd'
+  return number + 'th'
+}

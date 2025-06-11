@@ -21,14 +21,24 @@ import {
   People
 } from '@mui/icons-material';
 
-function Leaderboard({ participatedUsers = [] }) {
+function Leaderboard({ 
+  participatedUsers = [],
+  headerIcon = <EmojiEvents sx={{ mr: 1, verticalAlign: 'middle' }} />,
+  headerTitle = 'Leaderboard',
+  description= ''
+}) {
   return (
     <Card sx={{ mb: 3 }}>
       <CardContent>
-        <Typography variant='h6' sx={{ mb: 2 }}>
-          <EmojiEvents sx={{ mr: 1, verticalAlign: 'middle' }} />
-          Leaderboard
+        <Typography variant='h6' sx={{ mb: 1 }}>
+          {headerIcon}
+          {headerTitle}
         </Typography>
+        {description && (
+          <Typography variant='body2' color='text.secondary' sx={{ mb: 3 }}>
+            {description}
+          </Typography>
+        )}
         <TableContainer component={Paper}>
           <Table stickyHeader>
             <TableHead>

@@ -965,75 +965,77 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
           </Typography>
         ) : (
           <Box sx={{ mt: 2 }}>
-            {formData?.rewards?.map(reward => {
-              // Calculate total cash reward if reward type is cash
-              const totalCashReward =
-                reward.rewardType === 'cash' ? reward.rewardValuePerWinner * reward.numberOfWinnersForThisPosition : 0
+            {formData?.rewards
+              ?.sort((a, b) => a.position - b.position)
+              ?.map(reward => {
+                // Calculate total cash reward if reward type is cash
+                const totalCashReward =
+                  reward.rewardType === 'cash' ? reward.rewardValuePerWinner * reward.numberOfWinnersForThisPosition : 0
 
-              return (
-                <Card key={reward?._id || reward?.id} variant='outlined' sx={{ mb: 2 }}>
-                  <CardContent>
-                    <Stack direction='row' justifyContent='space-between' alignItems='center' mb={2}>
-                      <Typography variant='h6'>Position {reward.position} Reward</Typography>
-                      <Stack direction='row'>
-                        <IconButton onClick={() => handleEditReward(reward)}>
-                          <EditIcon />
-                        </IconButton>
-                        <IconButton onClick={() => handleRemoveReward(reward?._id || reward?.id)}>
-                          <CloseIcon />
-                        </IconButton>
+                return (
+                  <Card key={reward?._id || reward?.id} variant='outlined' sx={{ mb: 2 }}>
+                    <CardContent>
+                      <Stack direction='row' justifyContent='space-between' alignItems='center' mb={2}>
+                        <Typography variant='h6'>Position {reward.position} Reward</Typography>
+                        <Stack direction='row'>
+                          <IconButton onClick={() => handleEditReward(reward)}>
+                            <EditIcon />
+                          </IconButton>
+                          <IconButton onClick={() => handleRemoveReward(reward?._id || reward?.id)}>
+                            <CloseIcon />
+                          </IconButton>
+                        </Stack>
                       </Stack>
-                    </Stack>
 
-                    <Stack spacing={1} mb={2}>
-                      <Typography variant='body1'>
-                        {reward.rewardType === 'cash' ? (
-                          <>
-                            Cash Reward: {reward.currency} {reward.rewardValuePerWinner} per winner
-                            <Typography variant='body2' color='text.secondary'>
-                              Total: {reward.currency} {totalCashReward.toFixed(2)} (
-                              {reward.numberOfWinnersForThisPosition} winners)
-                            </Typography>
-                          </>
-                        ) : (
-                          <>Physical Gift: {reward.nonCashReward}</>
-                        )}
-                      </Typography>
-                      <Typography variant='body1'>
-                        Number of Winners: {reward.numberOfWinnersForThisPosition}
-                      </Typography>
-                    </Stack>
-
-                    <Typography variant='subtitle1' gutterBottom>
-                      Sponsor Contributions ({reward.sponsors.length})
-                    </Typography>
-
-                    {reward.sponsors.length > 0 && (
-                      <Grid container spacing={2}>
-                        {reward.sponsors.map(sponsor => (
-                          <Grid item xs={12} sm={6} key={sponsor?._id || sponsor?.id}>
-                            <Paper variant='outlined' sx={{ p: 2 }}>
-                              <Typography variant='body2'>{sponsor.email}</Typography>
+                      <Stack spacing={1} mb={2}>
+                        <Typography variant='body1'>
+                          {reward.rewardType === 'cash' ? (
+                            <>
+                              Cash Reward: {reward.currency} {reward.rewardValuePerWinner} per winner
                               <Typography variant='body2' color='text.secondary'>
-                                {reward.rewardType === 'cash'
-                                  ? `Contributed: ${sponsor.currency} ${sponsor.allocated.toFixed(2)}`
-                                  : `Provided: ${sponsor.allocated} items`}
+                                Total: {reward.currency} {totalCashReward.toFixed(2)} (
+                                {reward.numberOfWinnersForThisPosition} winners)
                               </Typography>
-                              <Typography variant='caption' color='text.secondary'>
-                                {reward.rewardType === 'cash'
-                                  ? `Remaining balance: ${sponsor.currency} ${sponsor.availableAmount //- sponsor.allocated
-                                      .toFixed(2)}`
-                                  : `Remaining stock: ${sponsor.availableItems}`}
-                              </Typography>
-                            </Paper>
-                          </Grid>
-                        ))}
-                      </Grid>
-                    )}
-                  </CardContent>
-                </Card>
-              )
-            })}
+                            </>
+                          ) : (
+                            <>Physical Gift: {reward.nonCashReward}</>
+                          )}
+                        </Typography>
+                        <Typography variant='body1'>
+                          Number of Winners: {reward.numberOfWinnersForThisPosition}
+                        </Typography>
+                      </Stack>
+
+                      <Typography variant='subtitle1' gutterBottom>
+                        Sponsor Contributions ({reward.sponsors.length})
+                      </Typography>
+
+                      {reward.sponsors.length > 0 && (
+                        <Grid container spacing={2}>
+                          {reward.sponsors.map(sponsor => (
+                            <Grid item xs={12} sm={6} key={sponsor?._id || sponsor?.id}>
+                              <Paper variant='outlined' sx={{ p: 2 }}>
+                                <Typography variant='body2'>{sponsor.email}</Typography>
+                                <Typography variant='body2' color='text.secondary'>
+                                  {reward.rewardType === 'cash'
+                                    ? `Contributed: ${sponsor.currency} ${sponsor.allocated.toFixed(2)}`
+                                    : `Provided: ${sponsor.allocated} items`}
+                                </Typography>
+                                <Typography variant='caption' color='text.secondary'>
+                                  {reward.rewardType === 'cash'
+                                    ? `Remaining balance: ${sponsor.currency} ${sponsor.availableAmount //- sponsor.allocated
+                                        .toFixed(2)}`
+                                    : `Remaining stock: ${sponsor.availableItems}`}
+                                </Typography>
+                              </Paper>
+                            </Grid>
+                          ))}
+                        </Grid>
+                      )}
+                    </CardContent>
+                  </Card>
+                )
+              })}
           </Box>
         )}
         {/* Reward Dialog */}

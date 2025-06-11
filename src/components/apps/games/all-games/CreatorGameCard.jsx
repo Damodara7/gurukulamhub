@@ -2,13 +2,22 @@
 import React from 'react'
 import { Alert, Box, Button, Card, CardContent, CardMedia, Chip, Stack, Typography, useTheme } from '@mui/material'
 import { format } from 'date-fns'
-import AccessTimeIcon from '@mui/icons-material/AccessTime'
-import PeopleIcon from '@mui/icons-material/People'
-import PersonIcon from '@mui/icons-material/Person'
-import EventIcon from '@mui/icons-material/Event'
-import { HourglassBottom as HourglassBottomIcon, Verified as VerifiedIcon } from '@mui/icons-material'
+import { 
+  AccessTime as AccessTimeIcon,
+  People as PeopleIcon,
+  Person as PersonIcon,
+  Event as EventIcon,
+  HourglassBottom as HourglassBottomIcon,
+  Verified as VerifiedIcon,
+  Visibility as VisibilityIcon,
+  Edit as EditIcon,
+  Send as SendIcon,
+  Leaderboard as LeaderboardIcon,
+  Delete as DeleteIcon
+} from '@mui/icons-material'
 import { useSession } from 'next-auth/react'
 import imagePlaceholder from '/public/images/misc/image-placeholder.png'
+import IconButtonTooltip from '@/components/IconButtonTooltip'
 
 const getStatusChip = status => {
   const statusConfig = {
@@ -36,7 +45,7 @@ const getStatusChip = status => {
   )
 }
 
-const CreatorGameCard = ({ game, isSuperUser = false, onViewGame, onEditGame, onApproveGame, onDeleteGame }) => {
+const CreatorGameCard = ({ game, isSuperUser = false, onViewGame, onEditGame, onApproveGame, onDeleteGame, onLeaderboard }) => {
   const { data: session } = useSession()
   const theme = useTheme()
 
@@ -160,34 +169,37 @@ const CreatorGameCard = ({ game, isSuperUser = false, onViewGame, onEditGame, on
             </Stack>
           </Box>
 
-          <Stack direction='row' spacing={1} justifyContent='center'>
-            <Button variant='outlined' color='info' size='small' onClick={() => onViewGame(game._id)}>
-              Details
-            </Button>
+          <Stack direction='row' spacing={1} gap={1} justifyContent='center' className='border border-gray-200 rounded-md p-1'>
+            <IconButtonTooltip title="View Details" onClick={() => onViewGame(game._id)} color="info">
+              <VisibilityIcon />
+            </IconButtonTooltip>
             {((session?.user?.roles?.includes('ADMIN') &&
-              // game.creatorEmail === session?.user?.email &&
               game.status === 'cancelled') ||
               (!game.createdBy?.roles?.includes('ADMIN') &&
                 game.creatorEmail === session?.user?.email &&
                 ['created', 'cancelled'].includes(game.status))) && (
-              <Button variant='outlined' color='primary' size='small' onClick={() => onEditGame(game._id)}>
-                Edit
-              </Button>
+              <IconButtonTooltip title="Edit Game" onClick={() => onEditGame(game._id)} color="warning">
+                <EditIcon />
+              </IconButtonTooltip>
             )}
             {!isSuperUser && game?.status === 'created' && (
-              <Button variant='outlined' color='success' size='small' onClick={() => onApproveGame(game._id)}>
-                Approve
-              </Button>
+              <IconButtonTooltip title="Approve Game" onClick={() => onApproveGame(game._id)} color="success">
+                <SendIcon />
+              </IconButtonTooltip>
             )}
-
+            {['live', 'completed'].includes(game?.status) && (
+              <IconButtonTooltip title="View Leaderboard" onClick={() => onLeaderboard(game._id)} color="primary">
+                <LeaderboardIcon />
+              </IconButtonTooltip>
+            )}
             {!['live', 'completed', 'lobby'].includes(game?.status) &&
               ((isSuperUser &&
                 game?.createdBy?.email === session?.user?.email &&
                 !game?.createdBy?.roles?.includes('ADMIN')) ||
                 session?.user?.roles?.includes('ADMIN')) && (
-                <Button variant='outlined' color='error' size='small' onClick={() => onDeleteGame(game)}>
-                  Delete
-                </Button>
+                <IconButtonTooltip title="Delete Game" onClick={() => onDeleteGame(game)} color="error">
+                  <DeleteIcon />
+                </IconButtonTooltip>
               )}
           </Stack>
         </Box>
