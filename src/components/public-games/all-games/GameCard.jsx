@@ -257,11 +257,26 @@ const GameCard = ({ game }) => {
               <Stack direction='row' alignItems='flex-start' spacing={1}>
                 <EmojiEventsIcon fontSize='small' color='action' />
                 <Typography variant='body2'>
-                  {game?.totalRewardValue
-                    ? new Intl.NumberFormat(undefined, { style: 'currency', currency: 'INR' }).format(
-                        game?.totalRewardValue
-                      )
-                    : 'Not mentioned'}
+                  {(() => {
+                    if (!game?.rewards?.length) return 'Not mentioned'
+                    
+                    const firstReward = [...game.rewards].sort((a, b) => a.position - b.position)[0]
+                    const sponsor = firstReward?.sponsors?.[0]
+                    const rewardType = sponsor?.rewardDetails?.rewardType
+                    
+                    if (rewardType === 'cash') {
+                      return new Intl.NumberFormat(undefined, {
+                        style: 'currency',
+                        currency: sponsor?.rewardDetails?.currency || 'INR'
+                      }).format(firstReward.rewardValuePerWinner)
+                    }
+                    
+                    if (rewardType === 'physicalGift') {
+                      return sponsor?.rewardDetails?.nonCashReward
+                    }
+                    
+                    return 'Custom Reward'
+                  })()}
                 </Typography>
               </Stack>
               <Stack direction='row' alignItems='flex-start' spacing={1}>
