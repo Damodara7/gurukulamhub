@@ -27,7 +27,6 @@ function GameHeader({game}) {
         <Box sx={{ display: 'flex', p: 3 }}>
           <Avatar
             variant='rounded'
-            component='image'
             src={game?.thumbnailPoster || imagePlaceholder?.src}
             sx={{
               width: 150,

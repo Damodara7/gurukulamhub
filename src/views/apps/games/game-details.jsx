@@ -77,7 +77,7 @@ export default function GameDetailsPage({ game = null }) {
       </Grid>
 
       {/* Leaderboard Section */}
-      <Leaderboard participatedUsers={game?.participatedUsers} />
+      <Leaderboard participatedUsers={game?.participatedUsers} game={game}  />
 
       {/* Rewards Section */}
       {game.rewards.length > 0 && (

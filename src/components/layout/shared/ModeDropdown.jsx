@@ -16,6 +16,7 @@ import MenuItem from '@mui/material/MenuItem'
 // Hook Imports
 import { useSettings } from '@core/hooks/useSettings'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
+import { Box } from '@mui/material'
 
 const ModeDropdown = () => {
   // States
@@ -57,20 +58,21 @@ const ModeDropdown = () => {
 
   return (
     <>
-      <IconButtonTooltip
-        title='Mode'
-        ref={anchorRef}
-        tooltipProps={{
-          onOpen: () => setTooltipOpen(true),
-          onClose: () => setTooltipOpen(false),
-          PopperProps: { className: 'capitalize' },
-          open: open ? false : tooltipOpen ? true : false
-        }}
-        onClick={handleToggle}
-        className='!text-textPrimary'
-      >
-        <i className={getModeIcon()} />
-      </IconButtonTooltip>
+      <Box ref={anchorRef}>
+        <IconButtonTooltip
+          title='Mode'
+          tooltipProps={{
+            onOpen: () => setTooltipOpen(true),
+            onClose: () => setTooltipOpen(false),
+            PopperProps: { className: 'capitalize' },
+            open: open ? false : tooltipOpen ? true : false
+          }}
+          onClick={handleToggle}
+          className='!text-textPrimary'
+        >
+          <i className={getModeIcon()} />
+        </IconButtonTooltip>
+      </Box>
       <Popper
         open={open}
         transition

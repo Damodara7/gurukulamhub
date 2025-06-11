@@ -286,10 +286,13 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
         })
       })
 
+      console.log('latestSponsorsMap: ', latestSponsorsMap)
+
       // Update all rewards
       const updatedRewards = prev.rewards.map(r => {
         // For the current reward being saved, just use it as-is
         if ((r?._id || r?.id) === (reward?._id || reward?.id)) {
+          console.log('Reward ....', reward)
           return reward
         }
 
@@ -306,6 +309,8 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
           }
           return sponsor
         })
+
+        console.log('updatedSponsors: ', updatedSponsors)
 
         return {
           ...r,
@@ -1049,6 +1054,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
           allPositions={POSITION_OPTIONS}
           isEditing={!!editingReward}
           formData={formData}
+          gameData={data}
         />
       </Grid>
 

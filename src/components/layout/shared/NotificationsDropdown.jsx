@@ -4,19 +4,22 @@
 import { useRef, useState } from 'react'
 
 // MUI Imports
-import IconButton from '@mui/material/IconButton'
-import Badge from '@mui/material/Badge'
-import Popper from '@mui/material/Popper'
-import Fade from '@mui/material/Fade'
-import Paper from '@mui/material/Paper'
-import ClickAwayListener from '@mui/material/ClickAwayListener'
-import Typography from '@mui/material/Typography'
-import Chip from '@mui/material/Chip'
-import Tooltip from '@mui/material/Tooltip'
-import Divider from '@mui/material/Divider'
-import Avatar from '@mui/material/Avatar'
-import useMediaQuery from '@mui/material/useMediaQuery'
-import Button from '@mui/material/Button'
+import { 
+  IconButton,
+  Badge,
+  Popper,
+  Fade,
+  Paper,
+  ClickAwayListener,
+  Typography,
+  Chip,
+  Tooltip,
+  Divider,
+  Avatar,
+  useMediaQuery,
+  Button,
+  Box
+} from '@mui/material'
 
 // Third Party Components
 import classnames from 'classnames'
@@ -122,7 +125,8 @@ const NotificationDropdown = ({ notifications }) => {
 
   return (
     <>
-      <IconButtonTooltip title='Notifications' ref={anchorRef} onClick={handleToggle} className='!text-textPrimary'>
+    <Box ref={anchorRef}>
+      <IconButtonTooltip title='Notifications' onClick={handleToggle} className='!text-textPrimary'>
         <Badge
           color='error'
           className='cursor-pointer'
@@ -134,6 +138,7 @@ const NotificationDropdown = ({ notifications }) => {
           <i className='ri-notification-2-line' />
         </Badge>
       </IconButtonTooltip>
+    </Box>
       <Popper
         open={open}
         transition

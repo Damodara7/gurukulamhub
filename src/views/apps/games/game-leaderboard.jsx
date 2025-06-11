@@ -14,6 +14,7 @@ export default function GameLeaderboardPage({ gameId, game }) {
 
       <Leaderboard
         participatedUsers={game?.participatedUsers}
+        game={game}
         description={
           game.status === 'live'
             ? 'Live rankings as players compete in the game'

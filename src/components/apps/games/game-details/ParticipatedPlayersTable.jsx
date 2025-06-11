@@ -24,7 +24,7 @@ import {
 function ParticipatedPlayersTable({participatedUsers, game}) {
   return (
     <Grid item xs={12} lg={6}>
-          <Card>
+          <Card style={{height: '100%'}}>
             <CardContent>
               <Typography variant='h6' sx={{ mb: 2 }}>
                 <CheckCircle sx={{ mr: 1, verticalAlign: 'middle' }} />

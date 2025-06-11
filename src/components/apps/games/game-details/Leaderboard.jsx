@@ -25,7 +25,8 @@ function Leaderboard({
   participatedUsers = [],
   headerIcon = <EmojiEvents sx={{ mr: 1, verticalAlign: 'middle' }} />,
   headerTitle = 'Leaderboard',
-  description= ''
+  description= '',
+  game= null
 }) {
   return (
     <Card sx={{ mb: 3 }}>
@@ -107,10 +108,18 @@ function Leaderboard({
                     >
                       <People fontSize='large' color='disabled' />
                       <Typography variant='body1' color='text.secondary'>
-                        No players have participated yet
+                        {game?.status === 'cancelled' 
+                          ? 'Game was cancelled'
+                          : game?.status === 'completed'
+                          ? 'No players participated in this game'
+                          : 'No players have participated yet'}
                       </Typography>
                       <Typography variant='body2' color='text.disabled'>
-                        Player results will appear here once the game starts.
+                        {game?.status === 'cancelled'
+                          ? 'This game has been cancelled and no results are available.'
+                          : game?.status === 'completed'
+                          ? 'The game has ended with no participants.'
+                          : 'Player results will appear here once they start playing.'}
                       </Typography>
                     </Box>
                   </TableCell>

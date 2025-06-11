@@ -15,7 +15,7 @@ import { Place } from '@mui/icons-material';
 function GameLocationInfo({game}) {
   return (
     <Grid item xs={12} md={6}>
-          <Card>
+          <Card style={{height: '100%'}}>
             <CardContent>
               <Typography variant='h6' sx={{ mb: 2 }}>
                 <Place sx={{ mr: 1, verticalAlign: 'middle' }} />
