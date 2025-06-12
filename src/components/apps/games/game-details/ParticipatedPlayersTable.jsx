@@ -30,7 +30,7 @@ function ParticipatedPlayersTable({participatedUsers, game}) {
                 <CheckCircle sx={{ mr: 1, verticalAlign: 'middle' }} />
                 Participated Players ({participatedUsers.length})
               </Typography>
-              <TableContainer component={Paper} sx={{ maxHeight: 400 }}>
+              <TableContainer component={Paper} sx={{ maxHeight: 300, overflow: 'auto' }}>
                 <Table stickyHeader size='small'>
                   <TableHead>
                     <TableRow>

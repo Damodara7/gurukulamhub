@@ -435,47 +435,9 @@ const ViewDetails = ({ game }) => {
                   ) : (
                     <Typography variant='body2' color='text.secondary'>No rewards</Typography>
                   )}
-                  <Typography variant='body2' color='text.secondary' mt={1}>
-                    Winners declared: {game?.winnersDeclared ? 'Yes' : 'No'}
-                  </Typography>
-
-                  {game?.rewards?.map(reward => (
-                    <Box key={reward._id} mt={3} p={2} border='1px solid #eee' borderRadius={2}>
-                      <Typography variant='subtitle1' fontWeight={500}>
-                        Position : {reward.position}
-                      </Typography>
-
-                      <Box ml={2} mt={1}>
-                        <Typography variant='body1'>No of Winners : {reward.numberOfWinnersForThisPosition}</Typography>
-                        <Typography variant='body1'>Reward : {reward.rewardValuePerWinner}</Typography>
-
-                        {reward.sponsors?.map(sponsor => (
-                          <Box key={sponsor._id} mt={2}>
-                            <Typography variant='body2'>Reward Type: {sponsor.rewardDetails?.rewardType}</Typography>
-
-                            {sponsor.rewardDetails?.rewardType === 'cash' && (
-                              <Typography variant='body2'>
-                                Amount: {sponsor.rewardDetails?.rewardValue} {sponsor.rewardDetails?.currency}
-                              </Typography>
-                            )}
-
-                            {sponsor.rewardDetails?.rewardType === 'physicalGift' && (
-                              <>
-                                <Typography variant='body2'>Gift: {sponsor.rewardDetails?.nonCashReward}</Typography>
-                                <Typography variant='body2'>
-                                  Quantity: {sponsor.rewardDetails?.numberOfNonCashRewards}
-                                </Typography>
-                              </>
-                            )}
-                          </Box>
-                        ))}
-                      </Box>
-                    </Box>
-                  ))}
                 </Box>
                 <Divider />
               </Stack>
-
               {/* Tags */}
               {game?.tags?.length > 0 && (
                 <>

@@ -30,7 +30,7 @@ function RegisteredPlayersTable({registeredUsers, participatedUsers, game}) {
                 <HowToReg sx={{ mr: 1, verticalAlign: 'middle' }} />
                 Registered Players ({registeredUsers.length})
               </Typography>
-              <TableContainer component={Paper} sx={{ maxHeight: 400 }}>
+              <TableContainer component={Paper} sx={{ maxHeight: 300, overflow: 'auto' }}>
                 <Table stickyHeader size='small'>
                   <TableHead>
                     <TableRow>

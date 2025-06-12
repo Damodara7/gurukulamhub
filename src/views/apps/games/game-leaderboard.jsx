@@ -14,6 +14,7 @@ export default function GameLeaderboardPage({ gameId, game }) {
 
       <AdminLeaderboard
         game={game}
+        maxheight={600}
         description={
           game.status === 'live'
             ? 'Live rankings as players compete in the game'

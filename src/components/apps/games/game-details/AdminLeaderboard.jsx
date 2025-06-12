@@ -21,7 +21,8 @@ function AdminLeaderboard({
   duringPlay = false,
   headerIcon = <EmojiEvents sx={{ mr: 1, verticalAlign: 'middle' }} />,
   headerTitle = 'Leaderboard',
-  description = ''
+  description = '',
+  maxheight = 300       
 }) {
   const formatTime = seconds => {
     // Handle edge cases
@@ -83,8 +84,8 @@ function AdminLeaderboard({
             {description}
           </Typography>
         )}
-        <TableContainer component={Paper}>
-          <Table stickyHeader>
+        <TableContainer component={Paper} sx={{ maxHeight: maxheight, overflow: 'auto' }}>
+          <Table stickyHeader size='small'>
             <TableHead>
               <TableRow>
                 <TableCell>Rank</TableCell>
