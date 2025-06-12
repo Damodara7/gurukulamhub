@@ -65,7 +65,7 @@ const SponsorDialog = ({ open, onClose, currentReward, availableSponsors, onSave
       <DialogContent>
         <Autocomplete
           options={availableSponsors}
-          getOptionLabel={option => `${option.name} (${option.email})`}
+          getOptionLabel={option => `${option.fullname} (${option.email})`}
           value={selectedSponsor}
           onChange={(e, newValue) => {
             setSelectedSponsor(newValue)

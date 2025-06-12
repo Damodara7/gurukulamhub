@@ -271,6 +271,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
   }
 
   const handleSaveReward = reward => {
+    console.log('saving reward...: ', reward)
     // update all sponsors with the same sponsorshipId across all rewards whenever a reward is saved,
     //  ensuring they reflect the latest availableItems/availableAmount
     setFormData(prev => {
@@ -320,6 +321,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
 
       // Handle adding new reward or updating existing
       const finalRewards = editingReward ? updatedRewards : [...updatedRewards, reward]
+      console.log('finalRewards: ', finalRewards)
 
       return {
         ...prev,
@@ -1012,10 +1014,10 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                       </Stack>
 
                       <Typography variant='subtitle1' gutterBottom>
-                        Sponsor Contributions ({reward.sponsors.length})
+                        Sponsor Contributions ({reward?.sponsors?.length})
                       </Typography>
 
-                      {reward.sponsors.length > 0 && (
+                      {reward?.sponsors?.length > 0 && (
                         <Grid container spacing={2}>
                           {reward.sponsors.map(sponsor => (
                             <Grid item xs={12} sm={6} key={sponsor?._id || sponsor?.id}>
