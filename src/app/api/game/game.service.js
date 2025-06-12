@@ -273,6 +273,58 @@ export const updateOne = async (gameId, updateData) => {
       }
     }
 
+    // Handle rewards update if present in updateData
+    if (updateData.rewards !== undefined) {
+      // Create a map of existing rewards by _id
+      const existingRewardsMap = new Map(
+        existingGame.rewards.map(reward => [reward._id.toString(), reward])
+      )
+
+      // Process each reward in the update data
+      const updatedRewards = updateData.rewards.map(newReward => {
+        // If reward has _id, it's an update
+        if (newReward._id) {
+          const existingReward = existingRewardsMap.get(newReward._id.toString())
+          if (existingReward) {
+            // Create a map of existing sponsors by _id
+            const existingSponsorsMap = new Map(
+              existingReward.sponsors.map(sponsor => [sponsor._id.toString(), sponsor])
+            )
+
+            // Process each sponsor in the new reward
+            const updatedSponsors = newReward.sponsors.map(newSponsor => {
+              // If sponsor has _id, it's an update
+              if (newSponsor._id) {
+                const existingSponsor = existingSponsorsMap.get(newSponsor._id.toString())
+                if (existingSponsor) {
+                  // Keep the existing _id and rewardSponsorshipId
+                  return {
+                    ...newSponsor,
+                    _id: existingSponsor._id,
+                    rewardSponsorshipId: existingSponsor.rewardSponsorshipId
+                  }
+                }
+              }
+              // If no _id or not found, it's a new sponsor
+              return newSponsor
+            })
+
+            // Return updated reward with existing _id and updated sponsors
+            return {
+              ...newReward,
+              _id: existingReward._id,
+              sponsors: updatedSponsors
+            }
+          }
+        }
+        // If no _id or not found, it's a new reward
+        return newReward
+      })
+
+      // Replace the rewards in updateData with the processed rewards
+      updateData.rewards = updatedRewards
+    }
+
     // Apply updates to the existing game document
     Object.keys(updateData).forEach(key => {
       existingGame[key] = updateData[key]
@@ -319,6 +371,9 @@ export const updateOne = async (gameId, updateData) => {
 
     // Save the updated game
     const updatedGame = await existingGame.save()
+
+    // Update sponsorships
+    await updateSponsorshipsForGame(updatedGame)
 
     return {
       status: 'success',
@@ -812,10 +867,22 @@ async function updateSponsorshipsForGame(game) {
           } else {
             existingUpdate.totalItemsAllocated += allocated;
           }
-          existingUpdate.rewardSponsorships.push({
-            allocated: allocated,
-            rewardSponsorshipId: _id
-          });
+
+          // Check if rewardSponsorshipId already exists
+          const existingRewardSponsorshipIndex = existingUpdate.rewardSponsorships.findIndex(
+            rs => rs.rewardSponsorshipId === _id
+          );
+          
+          if (existingRewardSponsorshipIndex > -1) {
+            // Update existing reward sponsorship
+            existingUpdate.rewardSponsorships[existingRewardSponsorshipIndex].allocated = allocated;
+          } else {
+            // Add new reward sponsorship
+            existingUpdate.rewardSponsorships.push({
+              allocated: allocated,
+              rewardSponsorshipId: _id
+            });
+          }
         } else {
           sponsorshipUpdates.push({
             sponsorshipId,
@@ -872,13 +939,33 @@ async function updateSponsorshipsForGame(game) {
       const existingSponsoredIndex = sponsorship.sponsored.findIndex(s => s.game.toString() === game._id.toString());
 
       if (existingSponsoredIndex >= 0) {
-        // Merge with existing game sponsorship
-        sponsorship.sponsored[existingSponsoredIndex].rewardSponsorships.push(
-          ...rewardSponsorships.map(rs => ({
-            allocated: parseFloat(rs.allocated),
-            rewardSponsorshipId: rs.rewardSponsorshipId
-          }))
+        // Get existing game sponsorship
+        const existingGameSponsorship = sponsorship.sponsored[existingSponsoredIndex];
+        
+        // Create a map of existing reward sponsorships by rewardSponsorshipId
+        const existingRewardSponsorshipsMap = new Map(
+          existingGameSponsorship.rewardSponsorships.map(rs => [rs.rewardSponsorshipId, rs])
         );
+
+        // Process new reward sponsorships
+        const updatedRewardSponsorships = rewardSponsorships.map(newRs => {
+          const existingRs = existingRewardSponsorshipsMap.get(newRs.rewardSponsorshipId);
+          if (existingRs) {
+            // Update existing reward sponsorship
+            return {
+              ...existingRs,
+              allocated: parseFloat(newRs.allocated)
+            };
+          }
+          // Add new reward sponsorship
+          return {
+            allocated: parseFloat(newRs.allocated),
+            rewardSponsorshipId: newRs.rewardSponsorshipId
+          };
+        });
+
+        // Replace the reward sponsorships array
+        existingGameSponsorship.rewardSponsorships = updatedRewardSponsorships;
       } else {
         // Add new game sponsorship
         sponsorship.sponsored.push({

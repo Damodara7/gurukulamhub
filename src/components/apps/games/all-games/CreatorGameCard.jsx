@@ -174,7 +174,7 @@ const CreatorGameCard = ({ game, isSuperUser = false, onViewGame, onEditGame, on
               <VisibilityIcon />
             </IconButtonTooltip>
             {((session?.user?.roles?.includes('ADMIN') &&
-              game.status === 'cancelled') ||
+              ['created', 'approved', 'cancelled'].includes(game.status)) ||
               (!game.createdBy?.roles?.includes('ADMIN') &&
                 game.creatorEmail === session?.user?.email &&
                 ['created', 'cancelled'].includes(game.status))) && (

@@ -58,10 +58,12 @@ function EditGamePage({ gameData = null, gameId = null, isSuperUser = false }) {
         // Convert rewards to proper format
         rewards:
           values?.rewards.map(reward => ({
+            ...(reward._id && { _id: reward._id }),
             position: reward.position,
             numberOfWinnersForThisPosition: reward.numberOfWinnersForThisPosition,
             rewardValuePerWinner: reward.rewardValuePerWinner,
             sponsors: reward.sponsors.map(sponsor => ({
+              ...(sponsor._id && { _id: sponsor._id }),
               email: sponsor.email,
               sponsorshipId: sponsor.sponsorshipId,
               rewardDetails: {
@@ -132,7 +134,7 @@ function EditGamePage({ gameData = null, gameId = null, isSuperUser = false }) {
 
   //main conditional rendering
 
-  if (!['created', 'cancelled'].includes(gameData?.status)) {
+  if (!['created', 'approved', 'cancelled'].includes(gameData?.status)) {
     return <NonEditableGamePage gameData={gameData} />
   }
 
@@ -170,10 +172,10 @@ function EditGamePage({ gameData = null, gameId = null, isSuperUser = false }) {
             allocated: allocated,
             ...(rewardType === 'cash' ? {
               availableAmount: available,
-              prevAvailableAmount: available , // Store the original available amount before allocation
+              // prevAvailableAmount: available , // Store the original available amount before allocation
             } : {
               availableItems: available,
-              prevAvailableItems: available, // Store the original available amount before allocation
+              // prevAvailableItems: available, // Store the original available amount before allocation
             }),
             rewardType: rewardType,
             currency: sponsor.rewardDetails.currency
