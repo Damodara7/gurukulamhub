@@ -270,7 +270,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
     setOpenRewardDialog(true)
   }
 
-  const handleSaveReward = reward => {
+  const handleSaveReward = (reward, updatedDisplaySponsorships) => {
     console.log('saving reward...: ', reward)
     // update all sponsors with the same sponsorshipId across all rewards whenever a reward is saved,
     //  ensuring they reflect the latest availableItems/availableAmount
@@ -299,7 +299,8 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
         if (!currentSponsor) {
           removedSponsorsMap.set(prevSponsor?._id || prevSponsor?.id, {
             allocated: prevSponsor.allocated,
-            rewardType: prevSponsor.rewardType
+            rewardType: prevSponsor.rewardType,
+            sponsorship: updatedDisplaySponsorships.find(s => (s?._id || s?.id) === prevSponsor?.sponsorshipId)
           })
         }
       })
@@ -307,18 +308,26 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
       console.log('removedSponsorsMap in handleSaveReward in GameForm : ', removedSponsorsMap)
 
       // anyMap.forEach((value, key) => {
-      removedSponsorsMap.forEach(({ allocated, rewardType }, sponsorId) => {
+      removedSponsorsMap.forEach(({ allocated, rewardType, sponsorship }, sponsorId) => {
         updatedRewards.forEach(r => {
           r.sponsors.forEach(s => {
-            if ((s?._id || s?.id) === sponsorId) {
-              if (rewardType === 'cash') {
-                s.availableAmount += allocated
-              } else {
-                s.availableItems += allocated
-              }
+            if (s.sponsorshipId === sponsorship?._id) {
+              s.availableAmount = sponsorship?.availableAmount
+              s.availableItems = sponsorship?.availableItems
+              s.sponsored = sponsorship?.sponsored
             }
           })
         })
+        // push the removed sponsors to the updatedRewards sponsors
+        const rewardIdxToSave = updatedRewards.findIndex(r => (r?._id || r?.id) === (reward?._id || reward?.id))
+        if (rewardIdxToSave > -1) {
+          updatedRewards[rewardIdxToSave].sponsors.push({
+            ...sponsorship,
+            _id: sponsorId,
+            allocated: sponsorship?.allocated - allocated,
+            rewardType: rewardType
+          })
+        }
       })
       console.log('updatedRewards after removing sponsors: ', updatedRewards)
       // END:  Update all rewards to reflect the removed sponsors - correct avaialableAmount/availableItems by adding their allocated amount/items (compare currentReward.sponsors with matching reward (in formData.rewards sponsors)

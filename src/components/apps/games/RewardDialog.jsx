@@ -193,19 +193,48 @@ const RewardDialog = ({
           setOriginalSponsorships(res.result)
 
           // Calculate initial display values (deducting any existing allocations)
-          const updatedDisplay = res.result.map(sp => {
-            const allocated = calculateExistingAllocations(sp._id, res.result)
+          const updatedDisplay = res.result.map(sponsorship => {
+            const allocated = calculateExistingAllocations(sponsorship._id, res.result)
+
+            // const removedSponsorsMap = new Map()
+            // sponsorship?.sponsored?.forEach(s => {
+            //   if (s?.game === gameData?._id) {
+            //     s?.rewardSponsorships?.forEach(rs => {
+            //       if (!reward?.sponsors?.find(sp => (sp._id || sp.id) === (rs.rewardSponsorshipId || rs.id))) {
+            //         removedSponsorsMap.set(rs.rewardSponsorshipId, rs.allocated)
+            //       }
+            //     })
+            //   }
+            // })
+            // removedSponsorsMap.forEach(({ allocated }, sponsorId) => {
+            //   sponsorship.sponsored.forEach(s => {
+            //     if (s.game === gameData?._id) {
+            //       s.rewardSponsorships.forEach(rs => {
+            //         if (rs.rewardSponsorshipId === sponsorId) {
+            //           rs.allocated -= allocated
+            //         }
+            //       })
+            //     }
+            //   })
+            //   if (sponsorship.rewardType === 'cash') {
+            //     sponsorship.availableAmount += allocated
+            //   } else {
+            //     sponsorship.availableItems += allocated
+            //   }
+            // })
+
             return {
-              ...sp,
-              ...(sp.rewardType === 'cash'
+              ...sponsorship,
+              ...(sponsorship.rewardType === 'cash'
                 ? {
-                    availableAmount: sp.availableAmount - (allocated.cash || 0)
+                    availableAmount: sponsorship.availableAmount - (allocated.cash || 0)
                   }
                 : {
-                    availableItems: sp.availableItems - (allocated.items || 0)
+                    availableItems: sponsorship.availableItems - (allocated.items || 0)
                   })
             }
           })
+          console.log('updatedDisplay : ', updatedDisplay)
 
           // 2. Update displaySponsorships with availableItems = actual available + allocated of current
           if (reward) {
@@ -324,7 +353,11 @@ const RewardDialog = ({
   // Helper function to calculate existing allocations
   const calculateExistingAllocations = (sponsorshipId, sponsorships) => {
     const result = { cash: 0, items: 0 }
-    // const sponsoredForGame = sponsorships?.find(s => s?.game === gameData?._id)?.sponsored?.find(s => s?.game === gameData?._id)
+    const originalewardSponsorships = sponsorships
+      ?.find(s => s?._id === sponsorshipId)
+      ?.sponsored?.find(s => s?.game === gameData?._id)?.rewardSponsorships
+
+    console.log('formData.rewards: ', formData.rewards)
 
     formData.rewards?.forEach(reward => {
       reward.sponsors?.forEach(sponsor => {
@@ -336,11 +369,22 @@ const RewardDialog = ({
               s => s?.rewardSponsorshipId === sponsor?._id
             )
             if (allocatedRewardSponsorship) {
-              console.log('allocatedRewardSponsorship: ', allocatedRewardSponsorship)
-              if (sponsor.rewardDetails?.rewardType === 'cash') {
-                result.cash -= parseFloat(allocatedRewardSponsorship?.allocated) || 0
+              const originalRewardSponsorship = originalewardSponsorships?.find(
+                s => s?._id === allocatedRewardSponsorship?._id
+              )
+              if (parseFloat(allocatedRewardSponsorship?.allocated) === 0) {
+                if (sponsor.rewardDetails?.rewardType === 'cash') {
+                  result.cash -= parseFloat(originalRewardSponsorship?.allocated) || 0
+                } else {
+                  result.items -= parseFloat(originalRewardSponsorship?.allocated) || 0
+                }
               } else {
-                result.items -= parseFloat(allocatedRewardSponsorship?.allocated) || 0
+                console.log('allocatedRewardSponsorship: ', allocatedRewardSponsorship)
+                if (sponsor.rewardDetails?.rewardType === 'cash') {
+                  result.cash -= parseFloat(allocatedRewardSponsorship?.allocated) || 0
+                } else {
+                  result.items -= parseFloat(allocatedRewardSponsorship?.allocated) || 0
+                }
               }
             }
           }
@@ -352,6 +396,8 @@ const RewardDialog = ({
         }
       })
     })
+
+    console.log('result: ', result)
 
     return result
   }
@@ -557,18 +603,18 @@ const RewardDialog = ({
             ...s,
             ...(s.rewardType === 'cash'
               ? {
-                    availableAmount: sponsorship.availableAmount - s.allocated,
-                    prevAvailableAmount: sponsorship.availableAmount - s.allocated
-                  }
-                : {
-                    availableItems: sponsorship.availableItems - s.allocated,
-                    prevAvailableItems: sponsorship.availableItems - s.allocated
-                  })
-            }
+                  availableAmount: sponsorship.availableAmount - s.allocated,
+                  prevAvailableAmount: sponsorship.availableAmount - s.allocated
+                }
+              : {
+                  availableItems: sponsorship.availableItems - s.allocated,
+                  prevAvailableItems: sponsorship.availableItems - s.allocated
+                })
           }
-          return s
-        })
-        rewardToSave.sponsors = updatedRewardSponsors
+        }
+        return s
+      })
+      rewardToSave.sponsors = updatedRewardSponsors
       // END:  Update sponsors in the reward to save
 
       return updatedSponsorship
@@ -578,7 +624,7 @@ const RewardDialog = ({
     setDisplaySponsorships(updatedDisplaySponsorships)
 
     console.log('rewardToSave: ', rewardToSave)
-    onSave(rewardToSave)
+    onSave(rewardToSave, updatedDisplaySponsorships)
 
     onClose()
   }
