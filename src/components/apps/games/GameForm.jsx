@@ -289,8 +289,42 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
 
       console.log('latestSponsorsMap: ', latestSponsorsMap)
 
+      let updatedRewards = prev.rewards
+
+      // START:  Update all rewards to reflect the removed sponsors - correct avaialableAmount/availableItems by adding their allocated amount/items (compare currentReward.sponsors with matching reward (in formData.rewards sponsors)
+      const prevVersionOfCurrentReward = updatedRewards.find(r => (r?._id || r?.id) === (reward?._id || reward?.id))
+      const removedSponsorsMap = new Map()
+      prevVersionOfCurrentReward.sponsors.forEach(prevSponsor => {
+        const currentSponsor = reward.sponsors.find(s => (s?._id || s?.id) === (prevSponsor?._id || prevSponsor?.id))
+        if (!currentSponsor) {
+          removedSponsorsMap.set(prevSponsor?._id || prevSponsor?.id, {
+            allocated: prevSponsor.allocated,
+            rewardType: prevSponsor.rewardType
+          })
+        }
+      })
+
+      console.log('removedSponsorsMap in handleSaveReward in GameForm : ', removedSponsorsMap)
+
+      // anyMap.forEach((value, key) => {
+      removedSponsorsMap.forEach(({ allocated, rewardType }, sponsorId) => {
+        updatedRewards.forEach(r => {
+          r.sponsors.forEach(s => {
+            if ((s?._id || s?.id) === sponsorId) {
+              if (rewardType === 'cash') {
+                s.availableAmount += allocated
+              } else {
+                s.availableItems += allocated
+              }
+            }
+          })
+        })
+      })
+      console.log('updatedRewards after removing sponsors: ', updatedRewards)
+      // END:  Update all rewards to reflect the removed sponsors - correct avaialableAmount/availableItems by adding their allocated amount/items (compare currentReward.sponsors with matching reward (in formData.rewards sponsors)
+
       // Update all rewards
-      const updatedRewards = prev.rewards.map(r => {
+      updatedRewards = updatedRewards.map(r => {
         // For the current reward being saved, just use it as-is
         if ((r?._id || r?.id) === (reward?._id || reward?.id)) {
           console.log('Reward ....', reward)
@@ -1056,6 +1090,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
           allPositions={POSITION_OPTIONS}
           isEditing={!!editingReward}
           formData={formData}
+          setFormData={setFormData}
           gameData={data}
         />
       </Grid>

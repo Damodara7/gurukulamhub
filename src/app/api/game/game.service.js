@@ -840,7 +840,7 @@ async function updateSponsorshipsForGame(game) {
 
     const sponsorshipUpdates = [];
 
-    // First pass: Aggregate allocations per sponsorship
+    // First pass: Collect all reward sponsorships
     for (const reward of game.rewards) {
       for (const sponsor of reward.sponsors) {
         const { sponsorshipId, rewardDetails, _id } = sponsor;
@@ -853,45 +853,28 @@ async function updateSponsorshipsForGame(game) {
           continue;
         }
 
-        const existingUpdate = sponsorshipUpdates.find(u => u.sponsorshipId.toString() === sponsorshipId.toString());
         const rewardType = rewardDetails?.rewardType;
-
         if (!rewardType) {
           console.error(`Missing rewardType for sponsor ${_id}`);
           continue;
         }
 
+        const existingUpdate = sponsorshipUpdates.find(u => u.sponsorshipId.toString() === sponsorshipId.toString());
+        
         if (existingUpdate) {
-          if (rewardType === 'cash') {
-            existingUpdate.totalCashAllocated += allocated;
-          } else {
-            existingUpdate.totalItemsAllocated += allocated;
-          }
-
-          // Check if rewardSponsorshipId already exists
-          const existingRewardSponsorshipIndex = existingUpdate.rewardSponsorships.findIndex(
-            rs => rs.rewardSponsorshipId === _id
-          );
-          
-          if (existingRewardSponsorshipIndex > -1) {
-            // Update existing reward sponsorship
-            existingUpdate.rewardSponsorships[existingRewardSponsorshipIndex].allocated = allocated;
-          } else {
-            // Add new reward sponsorship
-            existingUpdate.rewardSponsorships.push({
-              allocated: allocated,
-              rewardSponsorshipId: _id
-            });
-          }
+          existingUpdate.rewardSponsorships.push({
+            allocated,
+            rewardSponsorshipId: _id,
+            rewardType
+          });
         } else {
           sponsorshipUpdates.push({
             sponsorshipId,
             rewardType,
-            totalCashAllocated: rewardType === 'cash' ? allocated : 0,
-            totalItemsAllocated: rewardType === 'physicalGift' ? allocated : 0,
             rewardSponsorships: [{
-              allocated: allocated,
-              rewardSponsorshipId: _id
+              allocated,
+              rewardSponsorshipId: _id,
+              rewardType
             }]
           });
         }
@@ -900,7 +883,7 @@ async function updateSponsorshipsForGame(game) {
 
     // Second pass: Update each sponsorship
     for (const update of sponsorshipUpdates) {
-      const { sponsorshipId, rewardType, totalCashAllocated, totalItemsAllocated, rewardSponsorships } = update;
+      const { sponsorshipId, rewardType, rewardSponsorships } = update;
 
       const sponsorship = await SponsorshipModel.findById(sponsorshipId);
       if (!sponsorship) {
@@ -908,72 +891,82 @@ async function updateSponsorshipsForGame(game) {
         continue;
       }
 
-      // Validate and update based on reward type
-      if (rewardType === 'cash') {
-        const availableAmount = parseFloat(sponsorship.availableAmount);
-        if (isNaN(availableAmount)) {
-          throw new Error(`Invalid availableAmount for sponsorship ${sponsorshipId}`);
+      // Find existing game sponsorship
+      const existingSponsoredIndex = sponsorship.sponsored.findIndex(s => s.game.toString() === game._id.toString());
+      const existingGameSponsorship = existingSponsoredIndex >= 0 ? sponsorship.sponsored[existingSponsoredIndex] : null;
+
+      // Create a map of existing reward sponsorships by rewardSponsorshipId
+      const existingRewardSponsorshipsMap = existingGameSponsorship 
+        ? new Map(existingGameSponsorship.rewardSponsorships.map(rs => [rs.rewardSponsorshipId, rs]))
+        : new Map();
+
+      // Calculate the difference in allocation
+      let totalAllocationDifference = 0;
+      const processedRewardSponsorshipIds = new Set();
+
+      // Process new reward sponsorships and calculate differences
+      for (const newRs of rewardSponsorships) {
+        const existingRs = existingRewardSponsorshipsMap.get(newRs.rewardSponsorshipId);
+        const newAllocated = parseFloat(newRs.allocated);
+        
+        if (existingRs) {
+          // Calculate difference between new and old allocation
+          const oldAllocated = parseFloat(existingRs.allocated);
+          totalAllocationDifference += oldAllocated - newAllocated;
+        } else {
+          // New reward sponsorship
+          totalAllocationDifference -= newAllocated;
         }
         
-        if (availableAmount < totalCashAllocated) {
-          throw new Error(
-            `Insufficient funds for sponsorship ${sponsorshipId}. Available: ${availableAmount}, Required: ${totalCashAllocated}`
-          );
+        processedRewardSponsorshipIds.add(newRs.rewardSponsorshipId);
+      }
+
+      // Add back allocations for removed reward sponsorships
+      if (existingGameSponsorship) {
+        for (const existingRs of existingGameSponsorship.rewardSponsorships) {
+          if (!processedRewardSponsorshipIds.has(existingRs.rewardSponsorshipId)) {
+            totalAllocationDifference += parseFloat(existingRs.allocated);
+          }
         }
-        sponsorship.availableAmount = availableAmount - totalCashAllocated;
+      }
+
+      // Update available amount/items
+      const isCash = rewardType === 'cash';
+      const currentAvailable = isCash 
+        ? parseFloat(sponsorship.availableAmount)
+        : parseInt(sponsorship.availableItems);
+
+      if (isNaN(currentAvailable)) {
+        throw new Error(`Invalid ${isCash ? 'availableAmount' : 'availableItems'} for sponsorship ${sponsorshipId}`);
+      }
+
+      const newAvailable = currentAvailable + totalAllocationDifference;
+      
+      if (newAvailable < 0) {
+        throw new Error(
+          `Insufficient ${isCash ? 'funds' : 'items'} for sponsorship ${sponsorshipId}. Available after adjustment: ${newAvailable}`
+        );
+      }
+
+      // Update the sponsorship
+      if (isCash) {
+        sponsorship.availableAmount = newAvailable;
       } else {
-        const availableItems = parseInt(sponsorship.availableItems);
-        if (isNaN(availableItems)) {
-          throw new Error(`Invalid availableItems for sponsorship ${sponsorshipId}`);
-        }
-        
-        if (availableItems < totalItemsAllocated) {
-          throw new Error(
-            `Insufficient items for sponsorship ${sponsorshipId}. Available: ${availableItems}, Required: ${totalItemsAllocated}`
-          );
-        }
-        sponsorship.availableItems = availableItems - totalItemsAllocated;
+        sponsorship.availableItems = newAvailable;
       }
 
       // Update sponsored games array
-      const existingSponsoredIndex = sponsorship.sponsored.findIndex(s => s.game.toString() === game._id.toString());
+      const updatedRewardSponsorships = rewardSponsorships.map(({ allocated, rewardSponsorshipId }) => ({
+        allocated: parseFloat(allocated),
+        rewardSponsorshipId
+      }));
 
       if (existingSponsoredIndex >= 0) {
-        // Get existing game sponsorship
-        const existingGameSponsorship = sponsorship.sponsored[existingSponsoredIndex];
-        
-        // Create a map of existing reward sponsorships by rewardSponsorshipId
-        const existingRewardSponsorshipsMap = new Map(
-          existingGameSponsorship.rewardSponsorships.map(rs => [rs.rewardSponsorshipId, rs])
-        );
-
-        // Process new reward sponsorships
-        const updatedRewardSponsorships = rewardSponsorships.map(newRs => {
-          const existingRs = existingRewardSponsorshipsMap.get(newRs.rewardSponsorshipId);
-          if (existingRs) {
-            // Update existing reward sponsorship
-            return {
-              ...existingRs,
-              allocated: parseFloat(newRs.allocated)
-            };
-          }
-          // Add new reward sponsorship
-          return {
-            allocated: parseFloat(newRs.allocated),
-            rewardSponsorshipId: newRs.rewardSponsorshipId
-          };
-        });
-
-        // Replace the reward sponsorships array
         existingGameSponsorship.rewardSponsorships = updatedRewardSponsorships;
       } else {
-        // Add new game sponsorship
         sponsorship.sponsored.push({
           game: game._id,
-          rewardSponsorships: rewardSponsorships.map(rs => ({
-            allocated: parseFloat(rs.allocated),
-            rewardSponsorshipId: rs.rewardSponsorshipId
-          }))
+          rewardSponsorships: updatedRewardSponsorships
         });
       }
 

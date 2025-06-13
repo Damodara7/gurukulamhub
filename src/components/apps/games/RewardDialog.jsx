@@ -98,6 +98,7 @@ const RewardDialog = ({
   allPositions,
   isEditing,
   formData,
+  setFormData,
   gameData = null
 }) => {
   const [currentReward, setCurrentReward] = useState({
@@ -361,7 +362,7 @@ const RewardDialog = ({
     setOpenSponsorSelection(true)
   }
 
-  const handleSelectSponsor = (sponsor, allocation) => {
+  const handleSelectSponsor = ({ _id, ...sponsor }, allocation) => {
     if (!sponsor) return
 
     console.log('Selected Sponsor: ', sponsor)
@@ -469,10 +470,67 @@ const RewardDialog = ({
     return true
   }
 
+  const handleRemoveSponsor = sponsorId => {
+    // Update currentReward by removing the sponsor
+    setCurrentReward({
+      ...currentReward,
+      sponsors: currentReward.sponsors.filter(s => (s?._id || s?.id) !== sponsorId)
+    })
+  }
+
   const handleSave = () => {
     if (!validateReward()) return
     let rewardToSave = currentReward
-    const updatedDisplaySponsorships = displaySponsorships.map(sponsorship => {
+    let updatedDisplaySponsorships = displaySponsorships
+    // STRAT:  Update displaySponsorships to reflect the removed sponsor (compare currentReward.sponsors with matching reward (in formData.rewards sponsors)
+    const prevVersionOfCurrentReward = formData.rewards.find(
+      r => (r?._id || r?.id) === (currentReward?._id || currentReward?.id)
+    )
+    const removedSponsorsMap = new Map()
+    prevVersionOfCurrentReward.sponsors.forEach(prevSponsor => {
+      const currentSponsor = currentReward.sponsors.find(
+        s => (s?._id || s?.id) === (prevSponsor?._id || prevSponsor?.id)
+      )
+      if (!currentSponsor) {
+        removedSponsorsMap.set(prevSponsor?._id || prevSponsor?.id, {
+          allocated: prevSponsor.allocated,
+          sponsorshipId: prevSponsor.sponsorshipId,
+          rewardType: prevSponsor.rewardType
+        })
+      }
+    })
+
+    console.log('prevVersionOfCurrentReward.sponsors : ', prevVersionOfCurrentReward.sponsors)
+    console.log('currentReward.sponsors : ', currentReward.sponsors)
+    console.log('removedSponsorsMap: ', removedSponsorsMap)
+
+    // anyMap.forEach((value, key) => {
+    removedSponsorsMap.forEach(({ allocated, sponsorshipId, rewardType }, sponsorId) => {
+      const matchedSponsorshipIndex = updatedDisplaySponsorships.findIndex(s => (s?._id || s?.id) === sponsorshipId)
+      if (matchedSponsorshipIndex > -1) {
+        // when you use forEach to iterate over an array and modify its elements, the original array does get updated because objects and arrays in JavaScript are passed by reference.
+        updatedDisplaySponsorships[matchedSponsorshipIndex]?.sponsored?.forEach(s => {
+          if (s.game === gameData?._id) {
+            s.rewardSponsorships.forEach(rs => {
+              if (rs.rewardSponsorshipId === sponsorId) {
+                rs.allocated -= allocated // This modifies the original object
+              }
+            })
+          }
+        })
+
+        // No need to add allocated to availableAmount/availableItems as it is already added when the reward was clicked start editing
+        // if (rewardType === 'cash') {
+        //   updatedDisplaySponsorships[matchedSponsorshipIndex].availableAmount += allocated
+        // } else {
+        //   updatedDisplaySponsorships[matchedSponsorshipIndex].availableItems += allocated
+        // }
+      }
+    })
+    console.log('updatedDisplaySponsorships after removing sponsors : ', updatedDisplaySponsorships)
+    // END:  Update displaySponsorships to reflect the removed sponsor (compare currentReward.sponsors with matching reward (in formData.rewards sponsors)
+
+    updatedDisplaySponsorships = displaySponsorships.map(sponsorship => {
       const foundSponsor = currentReward?.sponsors?.find(s => s.sponsorshipId === sponsorship._id)
 
       console.log('sponsorship: ', sponsorship)
@@ -491,38 +549,14 @@ const RewardDialog = ({
               prevAvailableItems: sponsorship.availableItems - foundSponsor.allocated
             })
       }
-      const sponsoredForGame = sponsorship?.sponsored?.find(s => s?.game === gameData?._id)
-      if (gameData && sponsoredForGame) {
-        const allocatedRewardSponsorship = sponsoredForGame?.rewardSponsorships?.find(
-          s => s?.rewardSponsorshipId === foundSponsor?._id
-        )
-        if (allocatedRewardSponsorship) {
-          const updatedRewardSponsors = rewardToSave?.sponsors?.map(s => {
-            if (s._id === foundSponsor?._id) {
-              return {
-                ...s,
-                ...(s.rewardType === 'cash'
-                  ? {
-                      availableAmount: sponsorship.availableAmount - s.allocated,
-                      prevAvailableAmount: sponsorship.availableAmount - s.allocated
-                    }
-                  : {
-                      availableItems: sponsorship.availableItems - s.allocated,
-                      prevAvailableItems: sponsorship.availableItems - s.allocated
-                    })
-              }
-            }
-            return s
-          })
-          rewardToSave.sponsors = updatedRewardSponsors
-        }
-      } else {
-        const updatedRewardSponsors = rewardToSave?.sponsors?.map(s => {
-          if (s._id === foundSponsor?._id) {
-            return {
-              ...s,
-              ...(s.rewardType === 'cash'
-                ? {
+
+      // START:  Update sponsors in the reward to save
+      const updatedRewardSponsors = rewardToSave?.sponsors?.map(s => {
+        if (s._id === foundSponsor?._id) {
+          return {
+            ...s,
+            ...(s.rewardType === 'cash'
+              ? {
                     availableAmount: sponsorship.availableAmount - s.allocated,
                     prevAvailableAmount: sponsorship.availableAmount - s.allocated
                   }
@@ -535,11 +569,14 @@ const RewardDialog = ({
           return s
         })
         rewardToSave.sponsors = updatedRewardSponsors
-      }
+      // END:  Update sponsors in the reward to save
+
       return updatedSponsorship
     })
-    console.log('updatedDisplaySponsorships: ', updatedDisplaySponsorships)
+
+    console.log('updatedDisplaySponsorships after updating sponsors : ', updatedDisplaySponsorships)
     setDisplaySponsorships(updatedDisplaySponsorships)
+
     console.log('rewardToSave: ', rewardToSave)
     onSave(rewardToSave)
 
@@ -759,22 +796,14 @@ const RewardDialog = ({
                     value={sponsor.allocated}
                     onChange={e => handleEditAllocation(sponsor?._id || sponsor?.id, e.target.value)}
                     inputProps={{
-                      max: currentReward.rewardType === 'cash' ? sponsor.prevAvailableAmount : sponsor.prevAvailableItems,
+                      max:
+                        currentReward.rewardType === 'cash' ? sponsor.prevAvailableAmount : sponsor.prevAvailableItems,
                       min: 0,
                       step: currentReward.rewardType === 'cash' ? 1 : 1
                     }}
                     sx={{ width: 120 }}
                   />
-                  <IconButton
-                    onClick={() =>
-                      setCurrentReward({
-                        ...currentReward,
-                        sponsors: currentReward.sponsors.filter(
-                          s => (s?._id || s?.id) !== (sponsor?._id || sponsor?.id)
-                        )
-                      })
-                    }
-                  >
+                  <IconButton onClick={() => handleRemoveSponsor(sponsor?._id || sponsor?.id)}>
                     <CloseIcon />
                   </IconButton>
                 </Stack>
