@@ -290,16 +290,18 @@ const RewardDialog = ({
           s.rewardType === 'physicalGift' &&
           s.nonCashItem === currentReward.nonCashReward &&
           // Exclude sponsors already added
-          !currentReward.sponsors.some(addedSponsor => (addedSponsor?._id || addedSponsor?.id) === (s?._id || s?.id))
+          !currentReward.sponsors.some(addedSponsor => addedSponsor?.sponsorshipId === (s?._id || s?.id))
       )
+      console.log('filtered PHYSICALGIFT: ', filtered)
       setAvailableSponsors(filtered)
     } else {
       const filtered = displaySponsorships.filter(
         s =>
           s.rewardType === currentReward.rewardType &&
           // Exclude sponsors already added
-          !currentReward.sponsors.some(addedSponsor => (addedSponsor?._id || addedSponsor?.id) === (s?._id || s?.id))
+          !currentReward.sponsors.some(addedSponsor => addedSponsor?.sponsorshipId === (s?._id || s?.id))
       )
+      console.log('filtered CASH: ', filtered)
       setAvailableSponsors(filtered)
     }
   }, [
@@ -360,6 +362,26 @@ const RewardDialog = ({
     console.log('formData.rewards: ', formData.rewards)
 
     formData.rewards?.forEach(reward => {
+      const originalRewardSponsorshipsOfThisReward = originalewardSponsorships?.filter(x => x?.rewardId === reward?._id) || []
+      console.log('originalRewardSponsorshipsOfThisReward: ', originalRewardSponsorshipsOfThisReward)
+
+      const originalRewardSponsorshipIds = originalRewardSponsorshipsOfThisReward?.map(x => x.rewardSponsorshipId) || []
+      const rewardSponsorshipIds = reward.sponsors?.map(x => x.sponsorshipId) || []
+
+      const removedRewardSponsorshipIds = originalRewardSponsorshipIds.filter(x => !rewardSponsorshipIds.includes(x)) || []
+      const removedRewardSponsorships = originalRewardSponsorshipsOfThisReward?.filter(x =>
+        removedRewardSponsorshipIds.includes(x.rewardSponsorshipId)
+      ) || []
+      console.log('removedRewardSponsorships: ', removedRewardSponsorships)
+      removedRewardSponsorships?.forEach(removedRewardSponsorship => {
+        if (removedRewardSponsorship.sponsorshipId === sponsorshipId) {
+          if (reward.rewardType === 'cash') {
+            result.cash -= parseFloat(removedRewardSponsorship?.allocated) || 0
+          } else {
+            result.items -= parseFloat(removedRewardSponsorship?.allocated) || 0
+          }
+        }
+      })
       reward.sponsors?.forEach(sponsor => {
         if (sponsor.sponsorshipId === sponsorshipId) {
           const sponsoredForGame = sponsor?.sponsored?.find(s => s?.game === gameData?._id)
@@ -369,22 +391,11 @@ const RewardDialog = ({
               s => s?.rewardSponsorshipId === sponsor?._id
             )
             if (allocatedRewardSponsorship) {
-              const originalRewardSponsorship = originalewardSponsorships?.find(
-                s => s?._id === allocatedRewardSponsorship?._id
-              )
-              if (parseFloat(allocatedRewardSponsorship?.allocated) === 0) {
-                if (sponsor.rewardDetails?.rewardType === 'cash') {
-                  result.cash -= parseFloat(originalRewardSponsorship?.allocated) || 0
-                } else {
-                  result.items -= parseFloat(originalRewardSponsorship?.allocated) || 0
-                }
+              console.log('allocatedRewardSponsorship: ', allocatedRewardSponsorship)
+              if (sponsor.rewardDetails?.rewardType === 'cash') {
+                result.cash -= parseFloat(allocatedRewardSponsorship?.allocated) || 0
               } else {
-                console.log('allocatedRewardSponsorship: ', allocatedRewardSponsorship)
-                if (sponsor.rewardDetails?.rewardType === 'cash') {
-                  result.cash -= parseFloat(allocatedRewardSponsorship?.allocated) || 0
-                } else {
-                  result.items -= parseFloat(allocatedRewardSponsorship?.allocated) || 0
-                }
+                result.items -= parseFloat(allocatedRewardSponsorship?.allocated) || 0
               }
             }
           }
@@ -414,12 +425,12 @@ const RewardDialog = ({
     console.log('Selected Sponsor: ', sponsor)
 
     const updatedReward = { ...currentReward }
-    const existingIndex = updatedReward.sponsors.findIndex(s => (s?._id || s?.id) === (sponsor?._id || sponsor?.id))
+    const existingIndex = updatedReward.sponsors.findIndex(s => s?.sponsorshipId === _id)
 
     const sponsorPayload = {
       ...sponsor, // For SponsorDialog to read values like availableItems/Amount
       id: Date.now().toString(),
-      sponsorshipId: sponsor?._id,
+      sponsorshipId: _id,
       email: sponsor.email,
       allocated: parseFloat(allocation),
       ...(sponsor.rewardType === 'cash'
@@ -527,54 +538,54 @@ const RewardDialog = ({
   const handleSave = () => {
     if (!validateReward()) return
     let rewardToSave = currentReward
+    console.log('rewardToSave before any changes: ', rewardToSave)
     let updatedDisplaySponsorships = displaySponsorships
-    // STRAT:  Update displaySponsorships to reflect the removed sponsor (compare currentReward.sponsors with matching reward (in formData.rewards sponsors)
-    const prevVersionOfCurrentReward = formData.rewards.find(
-      r => (r?._id || r?.id) === (currentReward?._id || currentReward?.id)
-    )
-    const removedSponsorsMap = new Map()
-    prevVersionOfCurrentReward.sponsors.forEach(prevSponsor => {
-      const currentSponsor = currentReward.sponsors.find(
-        s => (s?._id || s?.id) === (prevSponsor?._id || prevSponsor?.id)
-      )
-      if (!currentSponsor) {
-        removedSponsorsMap.set(prevSponsor?._id || prevSponsor?.id, {
-          allocated: prevSponsor.allocated,
-          sponsorshipId: prevSponsor.sponsorshipId,
-          rewardType: prevSponsor.rewardType
-        })
-      }
-    })
+    // // STRAT:  Update displaySponsorships to reflect the removed sponsor (compare currentReward.sponsors with matching reward (in formData.rewards sponsors)
+    // const prevVersionOfCurrentReward = formData.rewards.find(
+    //   r => (r?._id || r?.id) === (currentReward?._id || currentReward?.id)
+    // )
+    // const removedSponsorsMap = new Map()
+    // prevVersionOfCurrentReward.sponsors.forEach(prevSponsor => {
+    //   const currentSponsor = currentReward.sponsors.find(
+    //     s => (s?._id || s?.id) === (prevSponsor?._id || prevSponsor?.id)
+    //   )
+    //   if (!currentSponsor) {
+    //     removedSponsorsMap.set(prevSponsor.sponsorshipId, {
+    //       allocated: prevSponsor.allocated,
+    //       rewardType: prevSponsor.rewardType
+    //     })
+    //   }
+    // })
 
-    console.log('prevVersionOfCurrentReward.sponsors : ', prevVersionOfCurrentReward.sponsors)
-    console.log('currentReward.sponsors : ', currentReward.sponsors)
-    console.log('removedSponsorsMap: ', removedSponsorsMap)
+    // console.log('prevVersionOfCurrentReward.sponsors : ', prevVersionOfCurrentReward.sponsors)
+    // console.log('currentReward.sponsors : ', currentReward.sponsors)
+    // console.log('removedSponsorsMap: ', removedSponsorsMap)
 
-    // anyMap.forEach((value, key) => {
-    removedSponsorsMap.forEach(({ allocated, sponsorshipId, rewardType }, sponsorId) => {
-      const matchedSponsorshipIndex = updatedDisplaySponsorships.findIndex(s => (s?._id || s?.id) === sponsorshipId)
-      if (matchedSponsorshipIndex > -1) {
-        // when you use forEach to iterate over an array and modify its elements, the original array does get updated because objects and arrays in JavaScript are passed by reference.
-        updatedDisplaySponsorships[matchedSponsorshipIndex]?.sponsored?.forEach(s => {
-          if (s.game === gameData?._id) {
-            s.rewardSponsorships.forEach(rs => {
-              if (rs.rewardSponsorshipId === sponsorId) {
-                rs.allocated -= allocated // This modifies the original object
-              }
-            })
-          }
-        })
+    // // anyMap.forEach((value, key) => {
+    // removedSponsorsMap.forEach(({ allocated, rewardType }, sponsorshipId) => {
+    //   const matchedSponsorshipIndex = updatedDisplaySponsorships.findIndex(s => (s?._id || s?.id) === sponsorshipId)
+    //   if (matchedSponsorshipIndex > -1) {
+    //     // when you use forEach to iterate over an array and modify its elements, the original array does get updated because objects and arrays in JavaScript are passed by reference.
+    //     updatedDisplaySponsorships[matchedSponsorshipIndex]?.sponsored?.forEach(s => {
+    //       if (s.game === gameData?._id) {
+    //         s.rewardSponsorships.forEach(rs => {
+    //           if (rs.rewardSponsorshipId === sponsorId) {
+    //             rs.allocated -= allocated // This modifies the original object
+    //           }
+    //         })
+    //       }
+    //     })
 
-        // No need to add allocated to availableAmount/availableItems as it is already added when the reward was clicked start editing
-        // if (rewardType === 'cash') {
-        //   updatedDisplaySponsorships[matchedSponsorshipIndex].availableAmount += allocated
-        // } else {
-        //   updatedDisplaySponsorships[matchedSponsorshipIndex].availableItems += allocated
-        // }
-      }
-    })
-    console.log('updatedDisplaySponsorships after removing sponsors : ', updatedDisplaySponsorships)
-    // END:  Update displaySponsorships to reflect the removed sponsor (compare currentReward.sponsors with matching reward (in formData.rewards sponsors)
+    //     // No need to add allocated to availableAmount/availableItems as it is already added when the reward was clicked start editing
+    //     // if (rewardType === 'cash') {
+    //     //   updatedDisplaySponsorships[matchedSponsorshipIndex].availableAmount += allocated
+    //     // } else {
+    //     //   updatedDisplaySponsorships[matchedSponsorshipIndex].availableItems += allocated
+    //     // }
+    //   }
+    // })
+    // console.log('updatedDisplaySponsorships after removing sponsors : ', updatedDisplaySponsorships)
+    // // END:  Update displaySponsorships to reflect the removed sponsor (compare currentReward.sponsors with matching reward (in formData.rewards sponsors)
 
     updatedDisplaySponsorships = displaySponsorships.map(sponsorship => {
       const foundSponsor = currentReward?.sponsors?.find(s => s.sponsorshipId === sponsorship._id)
@@ -598,7 +609,7 @@ const RewardDialog = ({
 
       // START:  Update sponsors in the reward to save
       const updatedRewardSponsors = rewardToSave?.sponsors?.map(s => {
-        if (s._id === foundSponsor?._id) {
+        if (s.sponsorshipId === sponsorship._id) {
           return {
             ...s,
             ...(s.rewardType === 'cash'
@@ -767,13 +778,16 @@ const RewardDialog = ({
                     }}
                     renderInput={params => <TextField {...params} label='Physical Gift' />}
                     getOptionDisabled={option => option.totalAvailable === 0}
-                    renderOption={(props, option) => (
-                      <li {...props}>
-                        <Typography>
-                          {option.label} (Available: {option.totalAvailable})
-                        </Typography>
-                      </li>
-                    )}
+                    renderOption={(props, option) => {
+                      const { key, ...otherProps } = props;
+                      return (
+                        <li key={option.value} {...otherProps} value={option.value}>
+                          <Typography>
+                            {option.label} (Available: {option.totalAvailable})
+                          </Typography>
+                        </li>
+                      );
+                    }}
                   />
                 </FormControl>
               </Grid>

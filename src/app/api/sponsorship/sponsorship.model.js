@@ -23,7 +23,8 @@ const sponsoredSchema = mongoose.Schema({
     type: [
       {
         allocated: Number,
-        rewardSponsorshipId: String
+        rewardSponsorshipId: String,
+        rewardId: String
       }
     ],
     default: []

@@ -865,7 +865,8 @@ async function updateSponsorshipsForGame(game) {
           existingUpdate.rewardSponsorships.push({
             allocated,
             rewardSponsorshipId: _id,
-            rewardType
+            rewardType,
+            rewardId: reward._id
           });
         } else {
           sponsorshipUpdates.push({
@@ -874,7 +875,8 @@ async function updateSponsorshipsForGame(game) {
             rewardSponsorships: [{
               allocated,
               rewardSponsorshipId: _id,
-              rewardType
+              rewardType,
+              rewardId: reward._id
             }]
           });
         }
@@ -956,9 +958,10 @@ async function updateSponsorshipsForGame(game) {
       }
 
       // Update sponsored games array
-      const updatedRewardSponsorships = rewardSponsorships.map(({ allocated, rewardSponsorshipId }) => ({
+      const updatedRewardSponsorships = rewardSponsorships.map(({ allocated, rewardSponsorshipId, rewardId }) => ({
         allocated: parseFloat(allocated),
-        rewardSponsorshipId
+        rewardSponsorshipId,
+        rewardId
       }));
 
       if (existingSponsoredIndex >= 0) {
