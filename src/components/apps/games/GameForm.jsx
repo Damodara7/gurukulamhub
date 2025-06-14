@@ -365,10 +365,61 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
   }
 
   const handleRemoveReward = rewardId => {
-    setFormData(prev => ({
-      ...prev,
-      rewards: prev.rewards.filter(r => (r?._id || r?.id) !== rewardId)
-    }))
+    setFormData(prev => {
+      // Find the reward being removed
+      const removedReward = prev.rewards.find(r => (r?._id || r?.id) === rewardId)
+      
+      // Create a map of sponsorships that need to be updated
+      const sponsorshipsToUpdate = new Map()
+      
+      // For each sponsor in the removed reward
+      removedReward?.sponsors?.forEach(sponsor => {
+        const sponsorshipId = sponsor.sponsorshipId
+        const currentData = sponsorshipsToUpdate.get(sponsorshipId) || {
+          cash: 0,
+          items: 0,
+          rewardType: sponsor.rewardType
+        }
+        
+        // Add the allocated amount/items back to the sponsorship
+        if (sponsor.rewardType === 'cash') {
+          currentData.cash += parseFloat(sponsor.allocated) || 0
+        } else {
+          currentData.items += parseFloat(sponsor.allocated) || 0
+        }
+        
+        sponsorshipsToUpdate.set(sponsorshipId, currentData)
+      })
+      
+      // Update remaining rewards with the new sponsorship data
+      const updatedRewards = prev.rewards
+        .filter(r => (r?._id || r?.id) !== rewardId) // Remove the reward
+        .map(reward => {
+          // Update sponsors in this reward
+          const updatedSponsors = reward.sponsors?.map(sponsor => {
+            const updatedData = sponsorshipsToUpdate.get(sponsor.sponsorshipId)
+            if (updatedData) {
+              return {
+                ...sponsor,
+                ...(sponsor.rewardType === 'cash'
+                  ? { availableAmount: sponsor.availableAmount + updatedData.cash }
+                  : { availableItems: sponsor.availableItems + updatedData.items })
+              }
+            }
+            return sponsor
+          })
+          
+          return {
+            ...reward,
+            sponsors: updatedSponsors
+          }
+        })
+      
+      return {
+        ...prev,
+        rewards: updatedRewards
+      }
+    })
   }
   // ********* Reward Related Functions - END ***********
 

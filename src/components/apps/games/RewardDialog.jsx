@@ -35,60 +35,6 @@ const REWARD_TYPES = [
 ]
 const CURRENCY_OPTIONS = ['INR', 'USD', 'EUR', 'GBP']
 
-// Enhanced dummy sponsor data
-// export const sponsorships = [
-//   {
-//     id: '1',
-//     name: 'TechCorp Inc.',
-//     email: 'sponsor1@example.com',
-//     rewardType: 'cash',
-//     amount: 1000,
-//     currency: 'INR',
-//     availableAmount: 1000,
-//     logo: 'TC'
-//   },
-//   {
-//     id: '2',
-//     name: 'Finance Partners',
-//     email: 'sponsor2@example.com',
-//     rewardType: 'cash',
-//     amount: 1500,
-//     currency: 'USD',
-//     availableAmount: 1500,
-//     logo: 'FP'
-//   },
-//   {
-//     id: '3',
-//     name: 'Gadget World',
-//     email: 'sponsor3@example.com',
-//     rewardType: 'physicalGift',
-//     nonCashItem: 'iPhone 15',
-//     numberOfNonCashItems: 50,
-//     availableItems: 50,
-//     logo: 'GW'
-//   },
-//   {
-//     id: '4',
-//     name: 'Mobile Solutions',
-//     email: 'sponsor4@example.com',
-//     rewardType: 'physicalGift',
-//     nonCashItem: 'iPhone 15',
-//     numberOfNonCashItems: 30,
-//     availableItems: 30,
-//     logo: 'MS'
-//   },
-//   {
-//     id: '5',
-//     name: 'Travel Co.',
-//     email: 'sponsor5@example.com',
-//     rewardType: 'physicalGift',
-//     nonCashItem: 'Vacation Package',
-//     numberOfNonCashItems: 10,
-//     availableItems: 10,
-//     logo: 'TC'
-//   }
-// ]
-
 const RewardDialog = ({
   open,
   onClose,
@@ -196,33 +142,6 @@ const RewardDialog = ({
           const updatedDisplay = res.result.map(sponsorship => {
             const allocated = calculateExistingAllocations(sponsorship._id, res.result)
 
-            // const removedSponsorsMap = new Map()
-            // sponsorship?.sponsored?.forEach(s => {
-            //   if (s?.game === gameData?._id) {
-            //     s?.rewardSponsorships?.forEach(rs => {
-            //       if (!reward?.sponsors?.find(sp => (sp._id || sp.id) === (rs.rewardSponsorshipId || rs.id))) {
-            //         removedSponsorsMap.set(rs.rewardSponsorshipId, rs.allocated)
-            //       }
-            //     })
-            //   }
-            // })
-            // removedSponsorsMap.forEach(({ allocated }, sponsorId) => {
-            //   sponsorship.sponsored.forEach(s => {
-            //     if (s.game === gameData?._id) {
-            //       s.rewardSponsorships.forEach(rs => {
-            //         if (rs.rewardSponsorshipId === sponsorId) {
-            //           rs.allocated -= allocated
-            //         }
-            //       })
-            //     }
-            //   })
-            //   if (sponsorship.rewardType === 'cash') {
-            //     sponsorship.availableAmount += allocated
-            //   } else {
-            //     sponsorship.availableItems += allocated
-            //   }
-            // })
-
             return {
               ...sponsorship,
               ...(sponsorship.rewardType === 'cash'
@@ -279,7 +198,8 @@ const RewardDialog = ({
     formData?.quiz,
     formData?.location?.country,
     formData?.location?.region,
-    formData?.location?.city
+    formData?.location?.city,
+    formData?.rewards
   ])
 
   useEffect(() => {
@@ -355,23 +275,54 @@ const RewardDialog = ({
   // Helper function to calculate existing allocations
   const calculateExistingAllocations = (sponsorshipId, sponsorships) => {
     const result = { cash: 0, items: 0 }
-    const originalewardSponsorships = sponsorships
-      ?.find(s => s?._id === sponsorshipId)
-      ?.sponsored?.find(s => s?.game === gameData?._id)?.rewardSponsorships
+    const originalRewardSponsorships =
+      sponsorships?.find(s => s?._id === sponsorshipId)?.sponsored?.find(s => s?.game === gameData?._id)
+        ?.rewardSponsorships || []
 
     console.log('formData.rewards: ', formData.rewards)
 
+    // Handle removed rewards first
+    const currentRewardIds = formData.rewards?.map(r => r?._id || r?.id) || []
+    console.log('currentRewardIds: ', currentRewardIds)
+
+    // Find rewards that were removed
+    const removedRewardIds =
+      originalRewardSponsorships?.map(rs => rs?.rewardId)?.filter(id => !currentRewardIds.includes(id)) || []
+    console.log('removedRewardIds: ', removedRewardIds)
+
+    // Add back allocations from removed rewards
+    const removedRewardSponsorships =
+      originalRewardSponsorships?.filter(x => removedRewardIds.includes(x?.rewardId)) || []
+
+    console.log('removedRewardSponsorships: ', removedRewardSponsorships)
+
+    removedRewardSponsorships.forEach(removedRewardSponsorship => {
+      // Find the reward type from the original sponsorship data
+      const rewardType = sponsorships?.find(s => s?._id === sponsorshipId)?.rewardType
+
+      if (rewardType === 'cash') {
+        result.cash -= parseFloat(removedRewardSponsorship?.allocated) || 0
+      } else {
+        result.items -= parseFloat(removedRewardSponsorship?.allocated) || 0
+      }
+    })
+    console.log('result after removedRewardSponsorships: ', result)
+
+    // Handle existing rewards
     formData.rewards?.forEach(reward => {
-      const originalRewardSponsorshipsOfThisReward = originalewardSponsorships?.filter(x => x?.rewardId === reward?._id) || []
+      const originalRewardSponsorshipsOfThisReward =
+        originalRewardSponsorships?.filter(x => x?.rewardId === reward?._id) || []
       console.log('originalRewardSponsorshipsOfThisReward: ', originalRewardSponsorshipsOfThisReward)
 
       const originalRewardSponsorshipIds = originalRewardSponsorshipsOfThisReward?.map(x => x.rewardSponsorshipId) || []
       const rewardSponsorshipIds = reward.sponsors?.map(x => x.sponsorshipId) || []
 
-      const removedRewardSponsorshipIds = originalRewardSponsorshipIds.filter(x => !rewardSponsorshipIds.includes(x)) || []
-      const removedRewardSponsorships = originalRewardSponsorshipsOfThisReward?.filter(x =>
-        removedRewardSponsorshipIds.includes(x.rewardSponsorshipId)
-      ) || []
+      const removedRewardSponsorshipIds =
+        originalRewardSponsorshipIds.filter(x => !rewardSponsorshipIds.includes(x)) || []
+      const removedRewardSponsorships =
+        originalRewardSponsorshipsOfThisReward?.filter(x =>
+          removedRewardSponsorshipIds.includes(x.rewardSponsorshipId)
+        ) || []
       console.log('removedRewardSponsorships: ', removedRewardSponsorships)
       removedRewardSponsorships?.forEach(removedRewardSponsorship => {
         if (removedRewardSponsorship.sponsorshipId === sponsorshipId) {
@@ -540,52 +491,6 @@ const RewardDialog = ({
     let rewardToSave = currentReward
     console.log('rewardToSave before any changes: ', rewardToSave)
     let updatedDisplaySponsorships = displaySponsorships
-    // // STRAT:  Update displaySponsorships to reflect the removed sponsor (compare currentReward.sponsors with matching reward (in formData.rewards sponsors)
-    // const prevVersionOfCurrentReward = formData.rewards.find(
-    //   r => (r?._id || r?.id) === (currentReward?._id || currentReward?.id)
-    // )
-    // const removedSponsorsMap = new Map()
-    // prevVersionOfCurrentReward.sponsors.forEach(prevSponsor => {
-    //   const currentSponsor = currentReward.sponsors.find(
-    //     s => (s?._id || s?.id) === (prevSponsor?._id || prevSponsor?.id)
-    //   )
-    //   if (!currentSponsor) {
-    //     removedSponsorsMap.set(prevSponsor.sponsorshipId, {
-    //       allocated: prevSponsor.allocated,
-    //       rewardType: prevSponsor.rewardType
-    //     })
-    //   }
-    // })
-
-    // console.log('prevVersionOfCurrentReward.sponsors : ', prevVersionOfCurrentReward.sponsors)
-    // console.log('currentReward.sponsors : ', currentReward.sponsors)
-    // console.log('removedSponsorsMap: ', removedSponsorsMap)
-
-    // // anyMap.forEach((value, key) => {
-    // removedSponsorsMap.forEach(({ allocated, rewardType }, sponsorshipId) => {
-    //   const matchedSponsorshipIndex = updatedDisplaySponsorships.findIndex(s => (s?._id || s?.id) === sponsorshipId)
-    //   if (matchedSponsorshipIndex > -1) {
-    //     // when you use forEach to iterate over an array and modify its elements, the original array does get updated because objects and arrays in JavaScript are passed by reference.
-    //     updatedDisplaySponsorships[matchedSponsorshipIndex]?.sponsored?.forEach(s => {
-    //       if (s.game === gameData?._id) {
-    //         s.rewardSponsorships.forEach(rs => {
-    //           if (rs.rewardSponsorshipId === sponsorId) {
-    //             rs.allocated -= allocated // This modifies the original object
-    //           }
-    //         })
-    //       }
-    //     })
-
-    //     // No need to add allocated to availableAmount/availableItems as it is already added when the reward was clicked start editing
-    //     // if (rewardType === 'cash') {
-    //     //   updatedDisplaySponsorships[matchedSponsorshipIndex].availableAmount += allocated
-    //     // } else {
-    //     //   updatedDisplaySponsorships[matchedSponsorshipIndex].availableItems += allocated
-    //     // }
-    //   }
-    // })
-    // console.log('updatedDisplaySponsorships after removing sponsors : ', updatedDisplaySponsorships)
-    // // END:  Update displaySponsorships to reflect the removed sponsor (compare currentReward.sponsors with matching reward (in formData.rewards sponsors)
 
     updatedDisplaySponsorships = displaySponsorships.map(sponsorship => {
       const foundSponsor = currentReward?.sponsors?.find(s => s.sponsorshipId === sponsorship._id)
@@ -779,14 +684,14 @@ const RewardDialog = ({
                     renderInput={params => <TextField {...params} label='Physical Gift' />}
                     getOptionDisabled={option => option.totalAvailable === 0}
                     renderOption={(props, option) => {
-                      const { key, ...otherProps } = props;
+                      const { key, ...otherProps } = props
                       return (
                         <li key={option.value} {...otherProps} value={option.value}>
                           <Typography>
                             {option.label} (Available: {option.totalAvailable})
                           </Typography>
                         </li>
-                      );
+                      )
                     }}
                   />
                 </FormControl>
