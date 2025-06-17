@@ -9,10 +9,10 @@ function HomePage() {
   return (
     <Stack>
       <Grid container spacing={6}>
-        <Grid item xs={12} md={8} className='self-end'>
-          <Marquee></Marquee>
+        <Grid item xs={12} >
+          <Marquee/>
         </Grid>
-        <Grid item xs={12} mx='auto' mb={8} md={8} className='self-end'>
+        <Grid item xs={12} >
           <LandingPage />
         </Grid>
       </Grid>

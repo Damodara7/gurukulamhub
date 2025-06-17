@@ -1,27 +1,26 @@
 'use client'
-
 import './Marquee.css'
-/********** Standard imports.*********************/
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState } from 'react'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS as ApiUrls } from '@/configs/apiConfig'
 import { toast } from 'react-toastify'
-/********************************************
- * ///https://www.freecodecamp.org/news/how-to-build-a-marquee-component-with-react/*/
 import VideoAd from '@views/apps/advertisements/VideoAd/VideoAd'
 
 const Marquee = ({ position = 'top', positionClass = ' top-16', ads = [] }) => {
   const [loading, setLoading] = useState(false)
   const [data, setData] = useState([])
-
   const [currentAdIndex, setCurrentAdIndex] = useState(0)
+
+  // Define fixed heights matching your content
+  const CONTENT_HEIGHT = 60 // Match your maxHeight for video ads
+  const BOTTOM_CONTENT_HEIGHT = 60 // Match your bottom ad height
 
   useEffect(() => {
     let isMounted = true
-    let isFetching = false // Flag to prevent multiple requests
+    let isFetching = false
 
     async function getData() {
-      if (isFetching) return // Prevent multiple requests
+      if (isFetching) return
       setLoading(true)
       isFetching = true
 
@@ -35,33 +34,75 @@ const Marquee = ({ position = 'top', positionClass = ' top-16', ads = [] }) => {
             setData([])
           }
         } else {
-          // toast.error(result?.message || 'Failed to fetch advertisements.')
           setLoading(false)
         }
       }
 
-      isFetching = false // Reset the flag when request is completed
+      isFetching = false
     }
 
     getData()
 
     return () => {
-      isMounted = false // Cleanup to prevent state update after unmounting
+      isMounted = false
     }
   }, [])
 
   useEffect(() => {
     const intervalId = setInterval(() => {
       setCurrentAdIndex(prevIndex => (prevIndex + 1) % data.length)
-    }, 26000) // Update index every 3 seconds (adjust as needed)
-    return () => clearInterval(intervalId) // Clear interval on unmount
+    }, 26000)
+    return () => clearInterval(intervalId)
   }, [data])
 
-  if (loading) return <>Fetching Advertisements Please Wait...</>
+  if (loading)
+    return (
+      <>
+        {/* Top marquee skeleton - fixed height */}
+        <section
+          className='marquee-skeleton-section enable-animation fixed ml-6 -left-4'
+          style={{
+            zIndex: 1001,
+            height: CONTENT_HEIGHT // Fixed height
+          }}
+        >
+          <div className='marquee-skeleton -left-4' style={{ height: CONTENT_HEIGHT }}>
+            <ul className='marquee-skeleton__content' style={{ height: CONTENT_HEIGHT }}>
+              {[...Array(4)].map((_, index) => (
+                <div key={index} className='marquee-skeleton__item' style={{ height: CONTENT_HEIGHT }}></div>
+              ))}
+            </ul>
+            <ul aria-hidden='true' className='marquee-skeleton__content' style={{ height: CONTENT_HEIGHT }}>
+              {[...Array(4)].map((_, index) => (
+                <div
+                  key={`hidden-${index}`}
+                  className='marquee-skeleton__item'
+                  style={{ height: CONTENT_HEIGHT }}
+                ></div>
+              ))}
+            </ul>
+          </div>
+        </section>
 
-  let classNames = ' marquee-section enable-animation fixed  ml-6 -left-4 '
+        {/* Bottom marquee skeleton - fixed height */}
+        <section
+          className='marquee-skeleton-section fixed ml-2 -left-2 bottom-0'
+          style={{
+            zIndex: 1001,
+            height: BOTTOM_CONTENT_HEIGHT // Fixed height
+          }}
+        >
+          <div className='marquee-skeleton' style={{ height: BOTTOM_CONTENT_HEIGHT }}>
+            <ul className='marquee-skeleton__content' style={{ height: BOTTOM_CONTENT_HEIGHT }}>
+              <div className='marquee-skeleton__item' style={{ height: BOTTOM_CONTENT_HEIGHT }}></div>
+            </ul>
+          </div>
+        </section>
+      </>
+    )
 
-  // conditionally add a class based on position parameter
+  let classNames = ' marquee-section enable-animation fixed ml-6 -left-4 '
+
   if (position === 'top') {
     classNames += positionClass
   } else if (position === 'bottom') {
@@ -76,12 +117,12 @@ const Marquee = ({ position = 'top', positionClass = ' top-16', ads = [] }) => {
             {data?.map((ad, index) => (
               <div key={index} className='marquee__item'>
                 {ad.mediaType == 'video' ? (
-                  <div style={{ maxHeight: '180px' }}>
+                  <div style={{ maxHeight: CONTENT_HEIGHT }}>
                     <VideoAd url={ad?.imageUrl} muted></VideoAd>
                   </div>
                 ) : (
                   <div className={ad.runType}>
-                    <img src={ad.imageUrl} alt={ad.text} />
+                    <img src={ad.imageUrl} alt={ad.text} style={{ maxHeight: CONTENT_HEIGHT }} />
                   </div>
                 )}
               </div>
@@ -92,12 +133,12 @@ const Marquee = ({ position = 'top', positionClass = ' top-16', ads = [] }) => {
             {data?.map((ad, index) => (
               <div key={index} className='marquee__item'>
                 {ad.mediaType === 'video' ? (
-                  <div style={{ maxHeight: '180px' }}>
+                  <div style={{ maxHeight: CONTENT_HEIGHT }}>
                     <VideoAd url={ad?.imageUrl} muted></VideoAd>
                   </div>
                 ) : (
                   <div className={ad?.runType}>
-                    <img src={ad.imageUrl} alt={ad.text} />
+                    <img src={ad.imageUrl} alt={ad.text} style={{ maxHeight: CONTENT_HEIGHT }} />
                   </div>
                 )}
               </div>
@@ -106,20 +147,23 @@ const Marquee = ({ position = 'top', positionClass = ' top-16', ads = [] }) => {
         </div>
       </section>
       {data.length > 0 ? (
-        <section style={{ zIndex: 1001 }} className=' marquee-section  fixed ml-2  -left-2 bottom-0 '>
+        <section style={{ zIndex: 1001 }} className=' marquee-section fixed ml-2 -left-2 bottom-0'>
           <div className='marquee'>
             <ul className='marquee__content'>
               <div key={currentAdIndex} className='marquee__item'>
                 {data[currentAdIndex]?.status === 'active' && data[currentAdIndex]?.mediaType === 'video' ? (
-                  <div className='ml-6' style={{ margin: '0px' }}>
+                  <div className='ml-6' style={{ margin: '0px', height: BOTTOM_CONTENT_HEIGHT }}>
                     <VideoAd showPause showMute url={data[currentAdIndex]?.imageUrl}></VideoAd>
                   </div>
                 ) : (
                   <div className={data[currentAdIndex].runType}>
-                    <img src={data[currentAdIndex]?.imageUrl} alt={data[currentAdIndex]?.description} />
+                    <img
+                      src={data[currentAdIndex]?.imageUrl}
+                      alt={data[currentAdIndex]?.description}
+                      style={{ height: BOTTOM_CONTENT_HEIGHT }}
+                    />
                   </div>
                 )}
-                {/* */}
               </div>
             </ul>
           </div>

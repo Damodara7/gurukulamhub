@@ -180,7 +180,7 @@ const NavbarContent = () => {
         <NavSearch />
       </div>
       <div className='flex items-center'>
-        <JoinGameButton sx={{fontSize:"small",padding:"5px"}} style={{color: 'white'}} href='/game/join' />
+        <JoinGameButton sx={{fontSize:"small",padding:"5px"}} style={{color: 'white'}} href='/public-games/join' />
         {/* <LanguageDropdown /> */}
         <ModeDropdown />
         <MetricsDropdown metrics={metrics} />

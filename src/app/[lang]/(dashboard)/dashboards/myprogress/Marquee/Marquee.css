@@ -157,3 +157,61 @@
 .marquee:hover .marquee__content {
   animation-play-state: paused;
 }
+
+/* Existing styles remain the same */
+/* Add these new skeleton styles at the end */
+
+/* Skeleton Loader Styles */
+.marquee-skeleton {
+  --gap: 2rem;
+  position: relative;
+  display: flex;
+  width: 100vw;
+  overflow: hidden;
+  user-select: none;
+  gap: var(--gap);
+  background-color: #f5f5f5;
+}
+
+.marquee-skeleton__content {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-around;
+  gap: var(--gap);
+  min-width: 100%;
+}
+
+.marquee-skeleton__item {
+  flex: 0 0 auto;
+  width: 180px;
+  height: 100px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  border-radius: 4px;
+  animation: shimmer 1.5s infinite linear;
+  margin: 2px;
+}
+
+/* Shimmer animation */
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Skeleton scroll animation */
+.enable-animation .marquee-skeleton__content {
+  animation: scroll 16s linear infinite;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .marquee-skeleton__item {
+    width: 120px;
+    height: 80px;
+  }
+}

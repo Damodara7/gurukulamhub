@@ -13,7 +13,7 @@ const LoginPage = ({ searchParams }) => {
   // Vars
   const mode = getServerMode()
 
-  return <Login gamePin={searchParams.gamePin} mode={mode} />
+  return <Login gamePin={searchParams.gamePin} intialSearchParams={searchParams} mode={mode} />
 }
 
 export default LoginPage

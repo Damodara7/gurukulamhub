@@ -84,7 +84,7 @@ const initialLoadingState = {
   resendCode: false
 }
 
-const Login = ({ mode, gamePin = null }) => {
+const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
   // Hooks
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -128,6 +128,11 @@ const Login = ({ mode, gamePin = null }) => {
   const lightIllustration = '/images/illustrations/auth/v2-login-light.png'
   const borderedDarkIllustration = '/images/illustrations/auth/v2-login-dark-border.png'
   const borderedLightIllustration = '/images/illustrations/auth/v2-login-light-border.png'
+
+  const allSearchParams = {
+    ...Object.fromEntries(searchParams.entries()),
+    ...initialSearchParams
+  }
 
   const {
     control,
@@ -456,7 +461,6 @@ const Login = ({ mode, gamePin = null }) => {
             className='max-bs-[500px] max-is-full bs-auto'
           />
         </div>
-        
       </div>
       <div className='flex flex-col justify-center items-center bs-full bg-backgroundPaper !min-is-full p-6 md:!min-is-[unset] md:p-12 md:is-[480px]'>
         <div className='flex justify-center  text-center w-full flex-col items-center gap-2'>
@@ -553,7 +557,8 @@ const Login = ({ mode, gamePin = null }) => {
                           InputProps={{
                             endAdornment: (
                               <InputAdornment position='end'>
-                                <IconButtonTooltip title={isPasswordShown ? 'Hide' : 'Show'}
+                                <IconButtonTooltip
+                                  title={isPasswordShown ? 'Hide' : 'Show'}
                                   edge='end'
                                   onClick={handleClickShowPassword}
                                   onMouseDown={e => e.preventDefault()}
@@ -806,7 +811,11 @@ const Login = ({ mode, gamePin = null }) => {
                       <Typography
                         style={{ cursor: 'pointer' }}
                         component={Link}
-                        href={gamePin ? `/auth/register?gamePin=${gamePin}` : `/auth/register`}
+                        href={
+                          Object.keys(allSearchParams).length > 0
+                            ? `/auth/register?${new URLSearchParams(allSearchParams).toString()}`
+                            : '/auth/register'
+                        }
                         color='primary'
                       >
                         Register?

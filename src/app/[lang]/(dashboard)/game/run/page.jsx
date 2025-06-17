@@ -516,7 +516,7 @@ export default function Run() {
               }}
             >
               <IconButtonTooltip
-               title={"Join Game"}
+               title={"Join"}
                sx={{ marginTop: '5px' }} color='inherit' onClick={handleJoinGame}>
                 {isJoined ? <SwitchAccessShortcutAddIcon /> : <SwitchAccessShortcutAddIcon />}
               </IconButtonTooltip>
