@@ -11,12 +11,14 @@ import {
   Stack,
   Chip,
   Grid,
-  Tooltip
+  Tooltip,
+  IconButton
 } from '@mui/material'
 import { useRouter } from 'next/navigation'
 import HourglassBottomIcon from '@mui/icons-material/HourglassBottom'
 import LocationOnIcon from '@mui/icons-material/LocationOn'
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
+import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { toast } from 'react-toastify'
@@ -38,6 +40,7 @@ const GameCard = ({ game }) => {
   const router = useRouter()
   const theme = useTheme()
   const [timeRemaining, setTimeRemaining] = useState(null)
+  const [copied, setCopied] = useState(false)
 
   // Status-based UI logic
   const isRegistrationOpen =
@@ -185,6 +188,13 @@ const GameCard = ({ game }) => {
     }
   }
 
+  // Handle copy with temporary feedback
+  const handleCopy = () => {
+    navigator.clipboard.writeText(game.pin)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500) // Reset after 1.5 seconds
+  }
+
   const gameStatusInfo = getGameStatusInfo()
 
   return (
@@ -202,7 +212,7 @@ const GameCard = ({ game }) => {
     >
       <CardMedia
         component='img'
-        height='180'
+        height='150'
         image={game?.thumbnailPoster || imagePlaceholder.src}
         alt={game.title}
         sx={{ objectFit: 'cover' }}
@@ -227,11 +237,11 @@ const GameCard = ({ game }) => {
           </Stack>
 
           <Typography variant='body2' color='text.secondary' noWrap>
-            {game.info || 'No description available'}
+            {game.description || 'No description available'}
           </Typography>
 
           {/* Game Info */}
-          <Box sx={{ flex: 1, my: 2, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
+          <Box sx={{ flex: 1, my: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
             <Stack spacing={1}>
               {/* Game Status Info - Added at the top */}
               <Stack direction='row' alignItems='flex-start' spacing={1}>
@@ -289,29 +299,48 @@ const GameCard = ({ game }) => {
               </Stack>
             </Stack>
           </Box>
+          {/* Game Pin Display */}
+          {game.pin && (
+            <Box sx={{ textAlign: 'center', mb: 2 }}>
+              <Stack 
+                direction="row" 
+                spacing={1} 
+                alignItems="center" 
+                justifyContent="center"
+                sx={{
+                  bgcolor: 'background.paper',
+                  py: 0.5,
+                  px: 1,
+                  borderRadius: 1,
+                  display: 'inline-flex',
+                  border: `1px solid ${theme.palette.divider}`
+                }}
+              >
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  Game PIN: {game.pin}
+                </Typography>
+                <Tooltip title={copied ? "Copied!" : "Copy PIN"} placement="top">
+                  <IconButton 
+                    size="small"
+                    onClick={handleCopy}
+                    sx={{ 
+                      p: 0.5,
+                      '&:hover': {
+                        bgcolor: 'action.hover'
+                      }
+                    }}
+                  >
+                    <ContentCopyIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Stack>
+            </Box>
+          )}
           {/* Buttons - Conditionally Rendered */}
           <Stack direction='row' justifyContent='center' spacing={2}>
             <Button variant='outlined' color='info' size='small' onClick={handleView}>
               View
             </Button>
-
-            {/* {((isUserRegistered && !game?.participatedUsers?.find(p => p.email === session?.user?.email)?.completed) &&
-              (isGameUpcoming && isRegistrationOpen && !isGameEnded) ||
-              isGameLive) && (
-              <Button
-                disabled={isUserRegistered && !game.status === 'lobby'}
-                variant='outlined'
-                color='primary'
-                size='small'
-                onClick={handleJoin}
-              >
-                {!isRegistrationRequired || isUserRegistered
-                  ? 'JOIN'
-                  : !isUserRegistered && isRegistrationOpen && !isGameStarted
-                    ? 'Register'
-                    : 'Registration Ended'}
-              </Button>
-            )} */}
 
             {
               // Show join button if:
