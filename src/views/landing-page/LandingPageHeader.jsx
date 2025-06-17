@@ -24,7 +24,7 @@ const Header = () => {
           <Button color={'primary'} component={Link} href='/auth/login' size='small' variant='outlined'>
             Sign In
           </Button>
-          <JoinGameButton href='/join-game' size='small' style={{ color: 'white'}} />
+          <JoinGameButton href={`/auth/login?redirectTo=/public-games/join`} size='small' style={{ color: 'white' }} />
         </Box>
       </Toolbar>
     </AppBar>

@@ -49,7 +49,7 @@ export const getLocale = request => {
   return locale
 }
 
-const localizedRedirect = (url, locale, request) => {
+const localizedRedirect = (url, locale, request ) => {
   // console.log({ request, url })
   let _url = url
   const isLocaleMissing = isUrlMissingLocale(_url)
@@ -77,9 +77,11 @@ const localizedRedirect = (url, locale, request) => {
     redirectUrl.search = searchParams
   }
 
+
   //console.log({ _url, _basePath, requestUrl: request.url });
   //console.log({ redirectUrl: redirectUrl.toString() });
 
+  
   return NextResponse.redirect(redirectUrl.toString())
 }
 
@@ -98,6 +100,9 @@ export default async function middleware(request) {
   // }
 
   const session = await auth()
+
+  const searchParams = request.nextUrl.searchParams
+  const redirectTo = searchParams.get('redirectTo')
   //console.log('Session in Middleware:', session)
 
   // If the user is logged in, `token` will be an object containing the user's details
@@ -136,6 +141,26 @@ export default async function middleware(request) {
     // console.log('API Auth ROUTE')
     return NextResponse.next()
   }
+
+  // Handle redirect after login
+  if (session?.user && redirectTo) {
+    console.log('redirect to ', redirectTo)
+
+    // Create a new URL object to manipulate the search params
+    const requestUrl = new URL(request.url)
+    const searchParams = new URLSearchParams(requestUrl.search)
+
+    // Remove the redirectTo parameter
+    searchParams.delete('redirectTo')
+
+    // Update the request URL without the redirectTo parameter
+    requestUrl.search = searchParams.toString()
+    const cleanedRequest = new Request(requestUrl.toString(), request)
+
+    console.log('total data', localizedRedirect(redirectTo, locale, cleanedRequest))
+    return localizedRedirect(redirectTo, locale, cleanedRequest)
+  }
+
   if (!session?.user && privateRoute) {
     let redirectUrl = '/welcome' // /auth/login
 

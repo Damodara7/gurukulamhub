@@ -257,7 +257,8 @@ export const authOptions = {
         return false
       }
       return true
-    }
+    },
+    
   },
   pages: {
     signIn: '/login'

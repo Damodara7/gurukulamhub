@@ -33,7 +33,8 @@ const AccountTypeStep = ({
   email,
   setActiveStep,
   onSubmitAccountTypeStep,
-  gamePin = null
+  gamePin = null,
+  intialSearchParams={}
 }) => {
   const [accountType, setAccountType] = useState('INDIVIDUAL')
   const [institutionType, setInstitutionType] = useState('')
@@ -46,6 +47,12 @@ const AccountTypeStep = ({
   const [referrer, setReferrer] = useState(null)
 
   const searchParams = useSearchParams()
+
+  const allSearchParams = {
+    ...Object.fromEntries(searchParams.entries()),
+    ...intialSearchParams
+  }
+
   const ref = searchParams.get('ref')
 
   const isValidName = name => name.trim().length >= 3
@@ -181,7 +188,8 @@ const AccountTypeStep = ({
               {referrer.firstname} {referrer.lastname}
             </Typography>
             <Typography variant='body1'>
-              {themeConfig.templateName} is a Quiz application designed to earn Rewards & Prizes while learning & spreading Indian Knowledge Systems
+              {themeConfig.templateName} is a Quiz application designed to earn Rewards & Prizes while learning &
+              spreading Indian Knowledge Systems
             </Typography>
           </Box>
         )}
@@ -303,13 +311,14 @@ const AccountTypeStep = ({
             Back to Home
           </Button>
         </Link>
-        <Link href={gamePin ? `/auth/login?gamePin=${gamePin}` : '/auth/login'}>
-          <Button
-            // disabled={activeStep === 0}
-            color='primary'
-            variant='text'
-            endIcon={<DirectionalIcon className='ri-arrow-right-line' />}
-          >
+        <Link
+          href={
+            Object.keys(allSearchParams).length > 0
+              ? `/auth/login?${new URLSearchParams(allSearchParams).toString()}`
+              : '/auth/login'
+          }
+        >
+          <Button color='primary' variant='text' endIcon={<DirectionalIcon className='ri-arrow-right-line' />}>
             Go to Login
           </Button>
         </Link>
