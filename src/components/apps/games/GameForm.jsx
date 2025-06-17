@@ -20,7 +20,9 @@ import {
   Stack,
   TextField,
   Typography,
-  Autocomplete
+  Autocomplete,
+  Snackbar,
+  Alert
 } from '@mui/material'
 import {
   Add as AddIcon,
@@ -112,10 +114,31 @@ const validateForm = formData => {
     errors.maxPlayers = 'Maximum players must be a positive number.'
   }
   if (!formData.promotionalVideoUrl || !formData.promotionalVideoUrl.startsWith('https://')) {
-    errors.promotionalVideoUrl = 'enter the valid URL.'
+    errors.promotionalVideoUrl = 'Please enter a valid promotional video URL.'
   }
   return errors
 }
+
+const formFieldOrder = [
+  'title',
+  'pin',
+  'description',
+  'quiz',
+  'startTime',
+  'duration',
+  'requireRegistration',
+  'registrationEndTime',
+  'limitPlayers',
+  'maxPlayers',
+  'location.country',
+  'location.region',
+  'location.city',
+  'promotionalVideoUrl',
+  'thumbnailPoster',
+  'tags',
+  'rewards'
+]
+
 
 // Main Game Form component
 const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
@@ -128,17 +151,34 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
   const [errors, setErrors] = useState({})
   const [touches, setTouches] = useState({})
   const fileInputRef = useRef(null)
+  const [showErrorSnackbar, setShowErrorSnackbar] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
 
   // Loading state
   const [loading, setLoading] = useState({
     fetchCities: false,
     submitting: false
   })
-
+  
   // Reward Dialog states
   const [openRewardDialog, setOpenRewardDialog] = useState(false)
   const [editingReward, setEditingReward] = useState(null)
-
+  
+  // Create refs for each field
+  const fieldRefs = {
+    title: useRef(),
+    pin: useRef(),
+    description: useRef(),
+    quiz: useRef(),
+    startTime: useRef(),
+    duration: useRef(),
+    registrationEndTime: useRef(),
+    maxPlayers: useRef(),
+    promotionalVideoUrl: useRef(),
+    thumbnailPoster: useRef(),
+    tags: useRef()
+    // Add more if needed
+  }
   // If Edit Game?
   useEffect(() => {
     if (data) {
@@ -435,6 +475,28 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
     setTouches(touchedFields)
 
     if (Object.keys(formErrors).length > 0) {
+      // Show error snackbar with the first error in form field order
+      let firstError = ''
+      let firstErrorField = ''
+      for (const field of formFieldOrder) {
+        if (formErrors[field]) {
+          firstError = formErrors[field]
+          firstErrorField = field
+          break
+        }
+      }
+      if (!firstError) firstError = Object.values(formErrors)[0]
+      setErrorMessage(firstError)
+      setShowErrorSnackbar(true)
+
+      // Scroll to the first errored field if ref exists
+      if (firstErrorField && fieldRefs[firstErrorField] && fieldRefs[firstErrorField].current) {
+        fieldRefs[firstErrorField].current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        // Optionally, focus the field
+        if (typeof fieldRefs[firstErrorField].current.focus === 'function') {
+          fieldRefs[firstErrorField].current.focus()
+        }
+      }
       return // If there are validation errors, do not submit
     }
     await onSubmit({
@@ -522,6 +584,41 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
 
   return (
     <Grid container spacing={3}>
+      {/* Add Snackbar for error messages */}
+      <Snackbar
+        open={showErrorSnackbar}
+        autoHideDuration={6000}
+        onClose={() => setShowErrorSnackbar(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        sx={{
+          '& .MuiSnackbar-root': {
+            top: { xs: 90, sm: 0 }
+          }
+        }}
+      >
+        <Alert
+          onClose={() => setShowErrorSnackbar(false)}
+          severity="error"
+          variant="filled"
+          sx={{
+            width: '100%',
+            animation: 'slideUp 0.5s ease-out',
+            '@keyframes slideUp': {
+              '0%': {
+                transform: 'translateY(100%)',
+                opacity: 0
+              },
+              '100%': {
+                transform: 'translateY(0)',
+                opacity: 1
+              }
+            }
+          }}
+        >
+          {errorMessage}
+        </Alert>
+      </Snackbar>
+
       {/* Basic Information */}
       <Grid item xs={12} md={6}>
         <TextField
@@ -535,6 +632,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
           error={!!errors.title && touches.title}
           helperText={errors.title || 'Enter the title'}
           required
+          inputRef={fieldRefs.title}
         />
       </Grid>
 
@@ -551,6 +649,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
           helperText={errors.pin || 'Enter a unique 6-digit PIN'}
           required
           inputProps={{ maxLength: 6, pattern: '\\d{6}' }}
+          inputRef={fieldRefs.pin}
         />
       </Grid>
 
@@ -564,6 +663,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
           hypertext={'enter the description'}
           multiline
           rows={3}
+          inputRef={fieldRefs.description}
         />
       </Grid>
 
@@ -579,6 +679,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
             onBlur={handleBlur}
             onFocus={() => setErrors(prev => ({ ...prev, quiz: '' }))}
             required
+            ref={fieldRefs.quiz}
           >
             {quizzes.map(quiz => (
               <MenuItem key={quiz._id} value={quiz._id}>
@@ -656,7 +757,8 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
               },
               InputLabelProps: {
                 shrink: true
-              }
+              },
+              inputRef: fieldRefs.startTime
             }
           }}
         />
@@ -683,6 +785,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
               </InputAdornment>
             )
           }}
+          inputRef={fieldRefs.duration}
         />
       </Grid>
 
@@ -723,7 +826,8 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                 },
                 InputLabelProps: {
                   shrink: true
-                }
+                },
+                inputRef: fieldRefs.registrationEndTime
               }
             }}
           />
@@ -749,6 +853,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
             error={!!errors.maxPlayers && touches.maxPlayers}
             helperText={errors.maxPlayers || 'Set a maximum number of players'}
             inputProps={{ min: 1 }}
+            inputRef={fieldRefs.maxPlayers}
           />
         )}
       </Grid>
@@ -865,6 +970,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                   helperText={errors.promotionalVideoUrl || 'Enter a YouTube or video URL'}
                   type='url'
                   placeholder='https://youtube.com/watch?v=...'
+                  inputRef={fieldRefs.promotionalVideoUrl}
                 />
                 <Box
                   sx={{
@@ -1011,6 +1117,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                   placeholder='https://example.com/image.jpg'
                   type='url'
                   sx={{ mt: 2 }}
+                  inputRef={fieldRefs.thumbnailPoster}
                 />
               </Box>
             </Grid>
@@ -1032,7 +1139,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
               <Chip key={index} variant='outlined' label={option} {...getTagProps({ index })} />
             ))
           }
-          renderInput={params => <TextField {...params} label='Tags' placeholder='Add tags' />}
+          renderInput={params => <TextField {...params} label='Tags' placeholder='Add tags' inputRef={fieldRefs.tags} />}
         />
       </Grid>
 

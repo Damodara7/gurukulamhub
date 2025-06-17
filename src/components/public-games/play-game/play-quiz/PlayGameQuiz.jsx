@@ -12,7 +12,6 @@ import './PlayGameQuiz'
 import GameEnded from '../GameEnded'
 import { AccessTime as TimeIcon } from '@mui/icons-material'
 import { useSession } from 'next-auth/react'
-import Leaderboard from '../Leaderboard'
 
 const getColor = percentage => {
   if (percentage > 50) return 'primary'

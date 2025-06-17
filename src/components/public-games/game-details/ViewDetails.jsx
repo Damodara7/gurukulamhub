@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import {
   Box,
   Card,
@@ -13,7 +13,9 @@ import {
   Stack,
   Typography,
   useTheme,
-  Avatar
+  Avatar,
+  IconButton,
+  Tooltip
 } from '@mui/material'
 
 import { format } from 'date-fns'
@@ -32,7 +34,8 @@ import {
   Star,
   PeopleAlt,
   AttachMoney,
-  CardGiftcard
+  CardGiftcard,
+  ContentCopy
 } from '@mui/icons-material'
 import VideoAd from '@/views/apps/advertisements/VideoAd/VideoAd'
 import ImagePopup from '@/components/ImagePopup'
@@ -41,6 +44,14 @@ import CancelIcon from '@mui/icons-material/Cancel'
 import Link from 'next/link'
 const ViewDetails = ({ game }) => {
   const theme = useTheme()
+  const [copyTooltip, setCopyTooltip] = useState('Copy PIN')
+  
+  const handleCopyPin = () => {
+    navigator.clipboard.writeText(game.pin)
+    setCopyTooltip('Copied!')
+    setTimeout(() => setCopyTooltip('Copy PIN'), 2000)
+  }
+  
   console.log('we are getting game data', game)
   if (!game) {
     return (
@@ -109,9 +120,16 @@ const ViewDetails = ({ game }) => {
                 </Typography>
                 <Stack direction='row' alignItems='center' spacing={3}>
                   {getStatusChip()}
-                  <Typography variant='body2' color='text.primary'>
-                    PIN: {game.pin}
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Typography variant='body2' color='text.primary'>
+                      PIN: {game.pin}
+                    </Typography>
+                    <Tooltip placement='top' title={copyTooltip}>
+                      <IconButton onClick={handleCopyPin} size="small">
+                        <ContentCopy fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
                 </Stack>
               </Box>
 

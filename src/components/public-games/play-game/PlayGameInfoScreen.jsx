@@ -12,9 +12,11 @@ import {
   Typography,
   useTheme,
   keyframes,
-  Alert
+  Alert,
+  IconButton,
+  Tooltip
 } from '@mui/material'
-import { AccessTime, People, Person, LocationOn, PlayCircle, SportsEsports, ListAlt } from '@mui/icons-material'
+import { AccessTime, People, Person, LocationOn, PlayCircle, SportsEsports, ListAlt, ContentCopy } from '@mui/icons-material'
 import ReactPlayer from 'react-player'
 import { format, formatDistanceToNow } from 'date-fns'
 
@@ -29,6 +31,13 @@ const GamePlayInfoScreen = ({ game, setShouldStartGame }) => {
   const [timeRemaining, setTimeRemaining] = useState('')
   const [isVideoReady, setIsVideoReady] = useState(false)
   const [countdownColor, setCountdownColor] = useState('primary.main')
+  const [copyTooltip, setCopyTooltip] = useState('Copy PIN')
+
+  const handleCopyPin = () => {
+    navigator.clipboard.writeText(game.pin)
+    setCopyTooltip('Copied!')
+    setTimeout(() => setCopyTooltip('Copy PIN'), 2000)
+  }
 
   // Calculate time remaining until game starts
   useEffect(() => {
@@ -209,31 +218,40 @@ const GamePlayInfoScreen = ({ game, setShouldStartGame }) => {
           <Card sx={{ mt: 3, borderRadius: 2 }}>
             <CardContent sx={{ p: 3 }}>
               <Stack spacing={3}>
-                {/* Title */}
                 <Typography variant='h6' sx={{ fontWeight: 600 }}>
                   Game Instructions
                 </Typography>
 
                 <Divider />
 
-                {/* Instructions List */}
                 <Box component='ul' sx={{ pl: 5, mb: 1 }}>
                   {[
                     'The game will start automatically when the countdown reaches zero.',
                     'All players must be ready when the game begins.',
                     'Questions will appear one after another with limited time to answer.',
                     'Answer quickly and accurately to score maximum points.',
-                    `The game PIN is ${game.pin} - share it with friends to join.`,
+                    <Box key="pin" component="li" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography variant='body2' sx={{ fontSize: '0.85rem', lineHeight: 1.8 }}>
+                        The game PIN is {game.pin} - share it with friends to join.
+                      </Typography>
+                      <Tooltip placement="top" title={copyTooltip}>
+                        <IconButton onClick={handleCopyPin} size="small">
+                          <ContentCopy fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>,
                     'Winners will be announced immediately after the game ends.'
                   ].map((instruction, index) => (
-                    <Typography
-                      key={index}
-                      component='li'
-                      variant='body2'
-                      sx={{ fontSize: '0.85rem', lineHeight: 1.8 }}
-                    >
-                      {instruction}
-                    </Typography>
+                    typeof instruction === 'string' ? (
+                      <Typography
+                        key={index}
+                        component='li'
+                        variant='body2'
+                        sx={{ fontSize: '0.85rem', lineHeight: 1.8 }}
+                      >
+                        {instruction}
+                      </Typography>
+                    ) : instruction
                   ))}
                 </Box>
 
@@ -260,9 +278,16 @@ const GamePlayInfoScreen = ({ game, setShouldStartGame }) => {
                   </Typography>
                   <Stack direction='row' alignItems='center' spacing={1}>
                     {getStatusChip()}
-                    <Typography variant='body2' color='text.secondary'>
-                      PIN: {game.pin}
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Typography variant='body2' color='text.secondary'>
+                        PIN: {game.pin}
+                      </Typography>
+                      <Tooltip placement="top" title={copyTooltip}>
+                        <IconButton onClick={handleCopyPin} size="small">
+                          <ContentCopy fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
                   </Stack>
                 </Box>
 
