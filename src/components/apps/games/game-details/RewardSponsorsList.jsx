@@ -5,7 +5,7 @@ import { AccountCircle, AttachMoney, CardGiftcard, Star, Info } from '@mui/icons
 function RewardSponsorCard({ sponsors }) {
   return (
     <>
-      {sponsors.map(sponsor => (
+      {sponsors?.map(sponsor => (
         <Box
           key={sponsor._id}
           sx={{
@@ -18,10 +18,10 @@ function RewardSponsorCard({ sponsors }) {
             //   display: showSponsors ? 'block' : 'none'
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1 }}>
             <AccountCircle color='action' sx={{ mr: 1 }} />
             <Typography variant='subtitle2' fontWeight='medium'>
-              {sponsor.email}
+            {`${sponsor?.sponsorshipId?.fullname} (${sponsor.email})`}
             </Typography>
           </Box>
 

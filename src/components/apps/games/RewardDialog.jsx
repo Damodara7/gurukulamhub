@@ -743,12 +743,12 @@ const RewardDialog = ({
               </Typography>
             </Alert>
           ) : (
-            currentReward.sponsors.map(sponsor => (
+            currentReward?.sponsors?.map(sponsor => (
               <Paper key={sponsor?._id || sponsor?.id} sx={{ p: 2, mb: 2 }}>
                 <Stack direction='row' alignItems='center' spacing={2}>
                   <Avatar sx={{ bgcolor: 'primary.main' }}>{sponsor.logo}</Avatar>
                   <Box sx={{ flexGrow: 1 }}>
-                    <Typography>{sponsor.name || sponsor.email}</Typography>
+                    <Typography>{`${sponsor.fullname} (${sponsor.email})`}</Typography>
                     <Typography variant='body2' color='text.secondary'>
                       {currentReward.rewardType === 'cash'
                         ? `Available: ${sponsor.currency} ${sponsor.prevAvailableAmount}`
