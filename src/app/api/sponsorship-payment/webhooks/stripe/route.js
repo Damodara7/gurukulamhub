@@ -63,7 +63,7 @@ export async function POST(request) {
         }
 
         sponsorshipFailed.sponsorshipStatus = 'failed'
-        await sponsorship.save()
+        await sponsorshipFailed.save()
         break
 
       default:
