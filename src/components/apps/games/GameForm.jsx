@@ -681,6 +681,9 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
             required
             ref={fieldRefs.quiz}
           >
+            <MenuItem value="">
+              <em>Select Quiz</em>
+            </MenuItem>
             {quizzes.map(quiz => (
               <MenuItem key={quiz._id} value={quiz._id}>
                 <Grid container alignItems='center' spacing={2} justifyContent='space-between'>
@@ -732,7 +735,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
           onChange={newValue => {
             // explicitly set to 'null' if cleared
             const newDate = newValue ? newValue.toDate() : null
-            console.log('new Datee ', newDate)
+            console.log('new Date ', newDate)
 
             handleDateChange('startTime', newDate)
 

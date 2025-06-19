@@ -120,17 +120,18 @@ const SponsorDialog = ({ open, onClose, currentReward, availableSponsors, onSave
             <TextField
               fullWidth
               label={currentReward.rewardType === 'cash' ? 'Amount to Allocate' : 'Items to Allocate'}
-              type='number'
               value={allocationAmount}
               onChange={e => {
+                if(e.target.value.trim() === ''){
+                  setAllocationAmount(0)
+                  return
+                }
+                if(isNaN(e.target.value)){
+                  return
+                }
                 const maxAllocation = getMaxAllocation()
                 const newValue = Math.min(maxAllocation, Math.max(0, e.target.value))
                 setAllocationAmount(newValue)
-              }}
-              inputProps={{
-                max: getMaxAllocation(),
-                min: 0,
-                step: currentReward.rewardType === 'cash' ? 0.01 : 1
               }}
               sx={{ mt: 3 }}
             />
