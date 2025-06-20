@@ -7,6 +7,7 @@ import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { useSearchParams, useRouter } from 'next/navigation'
 import ReusableTabsList from '@/components/public-games/ReusableTabsList'
+import ReusablePopUpList from '@/components/public-games/ReusablePopUpList'
 import PublicGamesList from '@/components/public-games/all-games/PublicGamesList'
 
 export const PublicGamesPage = () => {
@@ -16,6 +17,8 @@ export const PublicGamesPage = () => {
   const searchParams = useSearchParams()
   const router = useRouter()
   const statusFilter = searchParams.get('status') || 'all'
+  const [selectedQuizzes, setSelectedQuizzes] = useState([])
+  const [selectedLocations, setSelectedLocations] = useState([])
 
   useEffect(() => {
     const fetchGames = async () => {
@@ -36,6 +39,7 @@ export const PublicGamesPage = () => {
     fetchGames()
   }, [])
 
+  console.log('games data' , games);
   const handleStatusChange = newStatus => {
     const params = new URLSearchParams(searchParams.toString())
     newStatus === 'all' ? params.delete('status') : params.set('status', newStatus)
@@ -53,10 +57,38 @@ export const PublicGamesPage = () => {
     { value: 'cancelled', label: 'Cancelled' }
   ]
 
+  const selectedQuizzesIds = selectedQuizzes?.map(q => q._id) || []
+
+  let filteredGames = games?.filter(game => {
+    // Quiz filter condition
+    const matchesQuiz = selectedQuizzesIds.length ? selectedQuizzesIds.includes(game.quiz._id) : true
+
+    if(!matchesQuiz) return false
+    // Check if game location is "Anywhere" - matches all location filters
+    if (game.location === 'Anywhere') {
+      
+      return true
+    }
+    console.log('game location', game.location)
+    // Check if game matches ANY location condition (country OR region OR city)
+    return  selectedLocations.length ? selectedLocations.some(loc => {
+
+      if (loc === 'Anywhere') return true
+
+      return (
+        (loc.country && game?.location?.country === loc?.country) ||
+        (loc.region && game?.location?.region === loc?.region) ||
+        (loc.city && game?.location?.city === loc?.city)
+      )
+
+    }) : true
+  })
+
   return (
-    <Box p={4} className='flex flex-col items-center gap-5'>
+    <Box p={4} className='flex flex-col items-center gap-3'>
       <ReusableTabsList tabsList={statuses} value={statusFilter} onChange={handleStatusChange} />
-      <PublicGamesList games={games} loading={loading} error={error} />
+      <ReusablePopUpList selectedLocations={selectedLocations}  setSelectedLocations={setSelectedLocations} selectedQuizzes={selectedQuizzes} setSelectedQuizzes = {setSelectedQuizzes}  />
+      <PublicGamesList games={filteredGames} loading={loading} error={error} />
     </Box>
   )
 }

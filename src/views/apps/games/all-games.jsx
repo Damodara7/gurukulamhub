@@ -10,6 +10,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import ReusableTabsList from '@/components/public-games/ReusableTabsList'
 import { Box, Button } from '@mui/material'
 import { Add as AddIcon } from '@mui/icons-material'
+import ReusablePopUpList from '@/components/public-games/ReusablePopUpList'
 
 const gamestatuses = [
   { value: 'all', label: 'All' },
@@ -28,6 +29,8 @@ const AllGamesPage = ({ creatorEmail = '', isSuperUser = false }) => {
   const { data: session } = useSession()
   const searchParams = useSearchParams()
   const gameStatusFilter = searchParams.get('status') || 'all'
+  const [selectedQuizzes, setSelectedQuizzes] = useState([])
+  const [selectedLocations, setSelectedLocations] = useState([])
 
   const fetchGames = async () => {
     setLoading(true)
@@ -79,11 +82,45 @@ const AllGamesPage = ({ creatorEmail = '', isSuperUser = false }) => {
     router.push(`?${params.toString()}`)
   }
 
+
+  const selectedQuizzesIds = selectedQuizzes?.map(q => q._id) || []
+
+  let filteredGames = games?.filter(game => {
+    // Quiz filter condition
+    const matchesQuiz = selectedQuizzesIds.length ? selectedQuizzesIds.includes(game.quiz._id) : true
+
+    if (!matchesQuiz) return false
+    // Check if game location is "Anywhere" - matches all location filters
+    if (game.location === 'Anywhere') {
+      return true
+    }
+    console.log('game location', game.location)
+    // Check if game matches ANY location condition (country OR region OR city)
+    return selectedLocations.length
+      ? selectedLocations.some(loc => {
+          if (loc === 'Anywhere') return true
+
+          return (
+            (loc.country && game?.location?.country === loc?.country) ||
+            (loc.region && game?.location?.region === loc?.region) ||
+            (loc.city && game?.location?.city === loc?.city)
+          )
+        })
+      : true
+  })
+
+
   return (
     <>
       <Box className='flex flex-col items-center gap-5'>
         <ReusableTabsList tabsList={gamestatuses} value={gameStatusFilter} onChange={handleGameStatusChange} />
-        <CreatorGamesList games={games} isSuperUser={isSuperUser} onRefresh={fetchGames} loading={loading} />
+        <ReusablePopUpList
+          selectedLocations={selectedLocations}
+          setSelectedLocations={setSelectedLocations}
+          selectedQuizzes={selectedQuizzes}
+          setSelectedQuizzes={setSelectedQuizzes}
+        />
+        <CreatorGamesList games={filteredGames} isSuperUser={isSuperUser} onRefresh={fetchGames} loading={loading} />
       </Box>
       <Box sx={{ position: 'relative' }}>
         <Button

@@ -251,6 +251,10 @@ const GameCard = ({ game }) => {
                 </Typography>
               </Stack>
               <Stack direction='row' alignItems='center' spacing={1}>
+                <Typography variant='body2'> Quiz on : {game?.quiz?.title}
+                </Typography>
+              </Stack>
+              <Stack direction='row' alignItems='center' spacing={1}>
                 <EventIcon fontSize='small' color='action' />
                 <Typography variant='body2'>
                   {format(new Date(game.startTime), 'PPpp') || 'time is not Specified'}
@@ -269,22 +273,22 @@ const GameCard = ({ game }) => {
                 <Typography variant='body2'>
                   {(() => {
                     if (!game?.rewards?.length) return 'Not mentioned'
-                    
+
                     const firstReward = [...game.rewards].sort((a, b) => a.position - b.position)[0]
                     const sponsor = firstReward?.sponsors?.[0]
                     const rewardType = sponsor?.rewardDetails?.rewardType
-                    
+
                     if (rewardType === 'cash') {
                       return new Intl.NumberFormat(undefined, {
                         style: 'currency',
                         currency: sponsor?.rewardDetails?.currency || 'INR'
                       }).format(firstReward.rewardValuePerWinner)
                     }
-                    
+
                     if (rewardType === 'physicalGift') {
                       return sponsor?.rewardDetails?.nonCashReward
                     }
-                    
+
                     return 'Custom Reward'
                   })()}
                 </Typography>
@@ -302,11 +306,11 @@ const GameCard = ({ game }) => {
           {/* Game Pin Display */}
           {game.pin && (
             <Box sx={{ textAlign: 'center', mb: 2 }}>
-              <Stack 
-                direction="row" 
-                spacing={1} 
-                alignItems="center" 
-                justifyContent="center"
+              <Stack
+                direction='row'
+                spacing={1}
+                alignItems='center'
+                justifyContent='center'
                 sx={{
                   bgcolor: 'background.paper',
                   py: 0.5,
@@ -316,21 +320,21 @@ const GameCard = ({ game }) => {
                   border: `1px solid ${theme.palette.divider}`
                 }}
               >
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                <Typography variant='body2' sx={{ fontWeight: 500 }}>
                   Game PIN: {game.pin}
                 </Typography>
-                <Tooltip title={copied ? "Copied!" : "Copy PIN"} placement="top">
-                  <IconButton 
-                    size="small"
+                <Tooltip title={copied ? 'Copied!' : 'Copy PIN'} placement='top'>
+                  <IconButton
+                    size='small'
                     onClick={handleCopy}
-                    sx={{ 
+                    sx={{
                       p: 0.5,
                       '&:hover': {
                         bgcolor: 'action.hover'
                       }
                     }}
                   >
-                    <ContentCopyIcon fontSize="small" />
+                    <ContentCopyIcon fontSize='small' />
                   </IconButton>
                 </Tooltip>
               </Stack>
