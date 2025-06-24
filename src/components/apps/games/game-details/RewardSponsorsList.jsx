@@ -2,7 +2,7 @@ import React from 'react'
 import { Box, Typography } from '@mui/material'
 import { AccountCircle, AttachMoney, CardGiftcard, Star, Info } from '@mui/icons-material'
 
-function RewardSponsorCard({ sponsors }) {
+function RewardSponsorsList({ sponsors }) {
   return (
     <>
       {sponsors?.map(sponsor => (
@@ -65,4 +65,4 @@ function RewardSponsorCard({ sponsors }) {
   )
 }
 
-export default RewardSponsorCard
+export default RewardSponsorsList

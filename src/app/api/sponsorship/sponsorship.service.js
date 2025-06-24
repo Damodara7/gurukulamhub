@@ -68,7 +68,16 @@ export async function getAll({ queryParams }) {
     console.log({ query })
 
     // By Quiz ID
-    let sponsorships = await Sponsorship.find(query).populate('quizzes', 'title _id')
+    let sponsorships = await Sponsorship.find(query)
+      .populate('quizzes', 'title _id')
+      .populate({
+        path: 'sponsored.game',
+        select: 'title _id quiz',
+        populate: {
+          path: 'quiz',
+          select: 'title description' // Specify the fields you want from the quiz model
+        }
+      })
 
     if (sponsorships?.length > 0 && (country || region || city)) {
       console.log('Sponsorships found by quizId')

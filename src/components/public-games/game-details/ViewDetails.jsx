@@ -40,11 +40,15 @@ import {
 import VideoAd from '@/views/apps/advertisements/VideoAd/VideoAd'
 import ImagePopup from '@/components/ImagePopup'
 import CancelIcon from '@mui/icons-material/Cancel'
+import RewardSponsorCard from '@/components/apps/games/game-details/RewardSponsorsList'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 
 import Link from 'next/link'
 const ViewDetails = ({ game }) => {
   const theme = useTheme()
   const [copyTooltip, setCopyTooltip] = useState('Copy PIN')
+  const [expandedReward, setExpandedReward] = useState(null)
   
   const handleCopyPin = () => {
     navigator.clipboard.writeText(game.pin)
@@ -189,7 +193,7 @@ const ViewDetails = ({ game }) => {
                   <Chip
                     label={game?.quiz?.language?.name || 'Not specified'}
                     variant='outlined'
-                    color='success'
+                    color='info'
                     icon={<Language />}
                     sx={{
                       position: 'absolute',
@@ -199,7 +203,7 @@ const ViewDetails = ({ game }) => {
                       fontWeight: 500,
                       borderWidth: 2,
                       '& .MuiChip-icon': {
-                        color: 'success.main'
+                        color: 'info.main'
                       }
                     }}
                   />
@@ -385,69 +389,103 @@ const ViewDetails = ({ game }) => {
                   </Box>
                 </Stack>
                 <Divider />
-                {/* Rewards */}
+                {/* Rewards - New Detailed Card Layout */}
                 <Box mt={3}>
-                  <Typography variant='h6' fontWeight={600}>
-                    Rewards
-                  </Typography>
+                  <Box display="flex" alignItems="center" mb={2}>
+                    <Typography variant='h6' fontWeight={600} mr={1}>
+                      Rewards
+                    </Typography>
+                    <Star color="warning" fontSize="medium" />
+                  </Box>
                   {game?.rewards?.length > 0 ? (
-                    <Stack spacing={1.5} mt={1}>
+                    <Stack spacing={2}>
                       {game.rewards?.sort((a, b) => a.position - b.position)?.map((reward) => (
-                        <Box 
-                          key={reward.position} 
-                          sx={{ 
-                            display: 'flex', 
-                            alignItems: 'flex-start', 
-                            gap: 1.5,
-                            p: 1,
-                            borderRadius: 1,
-                            bgcolor: 'action.hover'
+                        <Card
+                          key={reward.position}
+                          sx={{
+                            borderRadius: 2,
+                            boxShadow: 2,
+                            p: { xs: 2, md: 3 },
+                            bgcolor: 'background.paper',
+                            width: '100%'
                           }}
                         >
-                          <Avatar
+                          <Box
                             sx={{
-                              bgcolor: positionColors[reward.position],
-                              width: 32,
-                              height: 32,
-                              fontSize: '0.9rem',
-                              fontWeight: 'bold'
+                              display: 'flex',
+                              flexDirection: { xs: 'column', sm: 'row' },
+                              alignItems: { xs: 'flex-start', sm: 'center' },
+                              gap: 2,
+                              width: '100%'
                             }}
                           >
-                            {getOrdinalSuffix(reward.position)}
-                          </Avatar>
-                          <Box sx={{ flex: 1 }}>
-                            <Typography variant='subtitle2' sx={{ mb: 0.5 }}>
-                              {reward.numberOfWinnersForThisPosition} Winner{reward.numberOfWinnersForThisPosition !== 1 ? 's' : ''}
-                            </Typography>
-                            {reward.sponsors[0]?.rewardDetails?.rewardType === 'cash' ? (
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                <AttachMoney fontSize='small' color='success' />
-                                <Typography variant='body2'>
-                                  Cash Prize: {reward.rewardValuePerWinner} {reward.sponsors[0]?.rewardDetails?.currency || 'INR'} (per winner)
-                                </Typography>
-                              </Box>
-                            ) : reward.sponsors[0]?.rewardDetails?.rewardType === 'physicalGift' ? (
-                              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                  <CardGiftcard fontSize='small' color='warning' />
+                            <Avatar
+                              sx={{
+                                bgcolor: positionColors[reward.position],
+                                width: 40,
+                                height: 40,
+                                fontSize: '1.1rem',
+                                fontWeight: 'bold',
+                                mr: { sm: 2 },
+                                mb: { xs: 1, sm: 0 }
+                              }}
+                            >
+                              {getOrdinalSuffix(reward.position)}
+                            </Avatar>
+                            <Box sx={{ flex: 1, minWidth: 0 }}>
+                              <Typography variant='subtitle1' fontWeight={600}>
+                                {reward.numberOfWinnersForThisPosition} Winner{reward.numberOfWinnersForThisPosition !== 1 ? 's' : ''}
+                              </Typography>
+                              {reward.sponsors[0]?.rewardDetails?.rewardType === 'cash' ? (
+                                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>
+                                  <AttachMoney fontSize='small' color='success' />
                                   <Typography variant='body2'>
-                                    Physical Gift: {reward.sponsors[0]?.rewardDetails?.nonCashReward}
+                                    Cash Prize: {reward.rewardValuePerWinner} {reward.sponsors[0]?.rewardDetails?.currency || 'INR'} (per winner)
                                   </Typography>
                                 </Box>
-                                <Typography variant='body2' color='text.secondary' sx={{ ml: 3 }}>
-                                  Worth: {reward.sponsors[0]?.rewardDetails?.rewardValuePerItem || reward?.rewardValuePerWinner} {reward.sponsors[0]?.rewardDetails?.currency || 'INR'}
-                                </Typography>
-                              </Box>
-                            ) : (
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                <Star fontSize='small' color='info' />
-                                <Typography variant='body2'>
-                                  Custom Reward
-                                </Typography>
-                              </Box>
+                              ) : reward.sponsors[0]?.rewardDetails?.rewardType === 'physicalGift' ? (
+                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>
+                                    <CardGiftcard fontSize='small' color='warning' />
+                                    <Typography variant='body2'>
+                                      Physical Gift: {reward.sponsors[0]?.rewardDetails?.nonCashReward}
+                                    </Typography>
+                                  </Box>
+                                  <Typography variant='body2' color='text.secondary' sx={{ ml: 3 }}>
+                                    Worth: {reward.sponsors[0]?.rewardDetails?.rewardValuePerItem || reward?.rewardValuePerWinner} {reward.sponsors[0]?.rewardDetails?.currency || 'INR'}
+                                  </Typography>
+                                </Box>
+                              ) : (
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                  <Star fontSize='small' color='info' />
+                                  <Typography variant='body2'>
+                                    Custom Reward
+                                  </Typography>
+                                </Box>
+                              )}
+                            </Box>
+                            {/* Toggle Sponsors */}
+                            {reward.sponsors?.length > 0 && (
+                              <IconButton
+                                onClick={() => setExpandedReward(expandedReward === reward.position ? null : reward.position)}
+                                size='small'
+                                sx={{ alignSelf: { xs: 'flex-end', sm: 'center' } }}
+                                aria-label={expandedReward === reward.position ? 'Hide sponsors' : 'Show sponsors'}
+                              >
+                                {expandedReward === reward.position ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                              </IconButton>
                             )}
                           </Box>
-                        </Box>
+                          {/* Sponsors Details (Collapsible) */}
+                          {expandedReward === reward.position && reward.sponsors?.length > 0 && (
+                            <Box mt={2} width='100%'>
+                              <Typography variant='subtitle2' fontWeight={500} mb={1}>
+                                Sponsors
+                              </Typography>
+                              <RewardSponsorCard sponsors={reward.sponsors} />
+                            </Box>
+                          )}
+                        </Card>
                       ))}
                     </Stack>
                   ) : (
@@ -470,7 +508,7 @@ const ViewDetails = ({ game }) => {
                         size='small'
                         color='primary'
                         variant='outlined'
-                        sx={{ marginRight: 1, marginBottom: 1, marginTop: 1 }} // Horizontal and vertical spacing
+                        sx={{ marginRight: 1, marginBottom: 1, marginTop: 1 }}
                       />
                     ))}
                   </Box>
@@ -514,7 +552,7 @@ const ViewDetails = ({ game }) => {
                   <Chip
                     label={game?.quiz?.language?.name || 'Not specified'}
                     variant='outlined'
-                    color='success'
+                    color='info'
                     icon={<Language />}
                     sx={{
                       position: 'absolute',
@@ -524,7 +562,7 @@ const ViewDetails = ({ game }) => {
                       fontWeight: 500,
                       borderWidth: 2,
                       '& .MuiChip-icon': {
-                        color: 'success.main'
+                        color: 'info.main'
                       }
                     }}
                   />
@@ -586,8 +624,6 @@ const ViewDetails = ({ game }) => {
 }
 
 export default ViewDetails
-
-
 const positionColors = {
   1: '#ffd700', // Gold
   2: '#c0c0c0', // Silver
@@ -604,3 +640,4 @@ function getOrdinalSuffix(number) {
   if (j === 3 && k !== 13) return number + 'rd'
   return number + 'th'
 }
+

@@ -438,6 +438,14 @@ const RewardDialog = ({
   }
 
   const validateReward = () => {
+    if (currentReward.numberOfWinnersForThisPosition < 1) {
+      setValidationError('At least 1 winner is required for a reward')
+      return false
+    }
+    if (currentReward.rewardType === 'cash' && (!currentReward.rewardValuePerWinner || Number(currentReward.rewardValuePerWinner) === 0)) {
+      setValidationError('Value per winner must be greater than 0 for cash rewards')
+      return false
+    }
     const totalNeeded = calculateTotalRequired()
     const totalAllocated = calculateTotalAllocated()
 
@@ -488,7 +496,11 @@ const RewardDialog = ({
 
   const handleSave = () => {
     if (!validateReward()) return
-    let rewardToSave = currentReward
+    // Remove sponsors with allocated=0
+    let rewardToSave = {
+      ...currentReward,
+      sponsors: currentReward.sponsors.filter(s => s.allocated > 0)
+    }
     console.log('rewardToSave before any changes: ', rewardToSave)
     let updatedDisplaySponsorships = displaySponsorships
 
@@ -595,14 +607,23 @@ const RewardDialog = ({
               <TextField
                 fullWidth
                 label='Number of Winners'
-                type='number'
                 value={currentReward.numberOfWinnersForThisPosition}
-                onChange={e =>
+                onChange={e =>{
+                  if(e.target.value.trim() === ''){
+                    setCurrentReward({
+                      ...currentReward,
+                      numberOfWinnersForThisPosition: 0
+                    })
+                    return
+                  }
+                  if(isNaN(e.target.value)){
+                    return
+                  }
                   setCurrentReward({
                     ...currentReward,
                     numberOfWinnersForThisPosition: Math.max(1, e.target.value)
                   })
-                }
+                }}
                 inputProps={{ min: 1 }}
               />
             </Grid>
@@ -636,15 +657,24 @@ const RewardDialog = ({
                   <TextField
                     fullWidth
                     label='Value Per Winner'
-                    type='number'
                     value={currentReward.rewardValuePerWinner}
-                    onChange={e =>
+                    onChange={e =>{
+                      if(e.target.value.trim() === ''){
+                        setCurrentReward({
+                          ...currentReward,
+                          rewardValuePerWinner: 0
+                        })
+                        return
+                      }
+                      if(isNaN(e.target.value)){
+                        return
+                      }
                       setCurrentReward({
                         ...currentReward,
                         rewardValuePerWinner: Math.max(0, e.target.value)
                       })
-                    }
-                    inputProps={{ step: '0.01', min: 0 }}
+                    }}
+                    inputProps={{ step: '1', min: 0 }}
                   />
                 </Grid>
                 <Grid item xs={4}>
@@ -757,14 +787,19 @@ const RewardDialog = ({
                   </Box>
                   <TextField
                     label={currentReward.rewardType === 'cash' ? 'Amount' : 'Items'}
-                    type='number'
                     value={sponsor.allocated}
-                    onChange={e => handleEditAllocation(sponsor?._id || sponsor?.id, e.target.value)}
-                    inputProps={{
-                      max:
-                        currentReward.rewardType === 'cash' ? sponsor.prevAvailableAmount : sponsor.prevAvailableItems,
-                      min: 0,
-                      step: currentReward.rewardType === 'cash' ? 1 : 1
+                    onChange={e =>{
+                      if(e.target.value.trim() === ''){
+                        handleEditAllocation(sponsor?._id || sponsor?.id, 0)
+                        return
+                      }
+                      if(isNaN(e.target.value)){
+                        return
+                      }
+                      if(e.target.value > (currentReward.rewardType === 'cash' ? sponsor.prevAvailableAmount : sponsor.prevAvailableItems)){
+                        return
+                      }
+                      handleEditAllocation(sponsor?._id || sponsor?.id, e.target.value)
                     }}
                     sx={{ width: 120 }}
                   />
