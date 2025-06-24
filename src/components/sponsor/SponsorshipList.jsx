@@ -1,7 +1,7 @@
 'use client'
 
 // React Imports
-import { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 
 // Next Imports
 import { useParams, useRouter } from 'next/navigation'
@@ -40,7 +40,7 @@ import { API_URLS } from '@/configs/apiConfig'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
-import { Box, Divider, Grid, Tab } from '@mui/material'
+import { Box, Divider, Grid, Tab, Tooltip } from '@mui/material'
 import { revalidatePath } from 'next/cache'
 
 const fuzzyFilter = (row, columnId, value, addMeta) => {
@@ -200,6 +200,106 @@ const SponsorshipList = ({ tableData, sponsorType = 'all' }) => {
               }
             }
           })
+        },
+        {
+          id: 'usage',
+          header: 'Usage',
+          cell: ({ row }) => {
+            const {
+              rewardType,
+              currency,
+              sponsorshipAmount,
+              availableAmount,
+              numberOfNonCashItems,
+              availableItems,
+              sponsored
+            } = row.original
+
+            const formatCurrency = (value, curr) =>
+              new Intl.NumberFormat(undefined, {
+                style: 'currency',
+                currency: curr || 'INR'
+              }).format(value || 0)
+
+            const SponsoredDetailsTooltipContent = () => {
+              if (!sponsored || sponsored.length === 0) {
+                return <Typography variant='caption' sx={{ color: 'white' }}>Not used in any game yet.</Typography>
+              }
+
+              return (
+                <Box sx={{ display: 'flex', flexDirection: 'column', p: 1 }}>
+                  <Typography variant='subtitle2' sx={{ mb: 1, color: 'white' }}>
+                    Sponsorship Usage Breakdown
+                  </Typography>
+                  {sponsored.map((s, index) => {
+                    const usedAmount = s.rewardSponsorships?.reduce((acc, rs) => acc + rs.allocated, 0) || 0
+
+                    return (
+                      <React.Fragment key={index}>
+                        <div className='flex flex-col gap-0'>
+                          <Typography
+                            variant='body2'
+                            component='div'
+                            sx={{ fontWeight: 'bold', color: 'white', display: 'flex', alignItems: 'center', gap: 0.5, cursor: s.game?._id ? 'pointer' : 'default' }}
+                            onClick={() => {
+                              if (s.game?._id) {
+                                router.push(`/public-games/${s.game._id}`)
+                              }
+                            }}
+                          >
+                            Game: {s.game?.title || 'N/A'}
+                            {s.game?._id && <i className='ri-external-link-line' style={{ fontSize: '1em', marginLeft: 4 }} />}
+                          </Typography>
+                          <Typography variant='caption' component='div' sx={{ color: 'white', ml: 1 }}>
+                            Quiz: {s.game?.quiz?.title || 'N/A'}
+                          </Typography>
+                          <Typography variant='caption' component='div' sx={{ color: 'white', ml: 1 }}>
+                            Used: {rewardType === 'cash' ? formatCurrency(usedAmount, currency) : `${usedAmount} ${usedAmount === 1 ? 'item' : 'items'}`}
+                          </Typography>
+                        </div>
+                        {index < sponsored.length - 1 && (
+                          <Divider sx={{ my: 1, borderColor: 'rgba(255, 255, 255, 0.42)' }} />
+                        )}
+                      </React.Fragment>
+                    )
+                  })}
+                </Box>
+              )
+            }
+
+            if (rewardType === 'cash') {
+              const usedAmount = (sponsorshipAmount || 0) - (availableAmount || 0)
+
+              return (
+                <Tooltip title={<SponsoredDetailsTooltipContent />} placement='right'>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', cursor: 'pointer' }}>
+                    <Typography variant='body2'>
+                      {formatCurrency(usedAmount, currency)} / {formatCurrency(sponsorshipAmount, currency)}
+                    </Typography>
+                    <Typography variant='caption' color='text.secondary'>
+                      Available: {formatCurrency(availableAmount, currency)}
+                    </Typography>
+                  </Box>
+                </Tooltip>
+              )
+            } else {
+              // For physical gifts
+              const usedItems = (numberOfNonCashItems || 0) - (availableItems || 0)
+
+              return (
+                <Tooltip title={<SponsoredDetailsTooltipContent />} placement='right'>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', cursor: 'pointer' }}>
+                    <Typography variant='body2'>
+                      {usedItems} / {numberOfNonCashItems || 0} {usedItems === 1 ? 'item' : 'items'}
+                    </Typography>
+                    <Typography variant='caption' color='text.secondary'>
+                      Available: {availableItems || 0} {availableItems === 1 ? 'item' : 'items'}
+                    </Typography>
+                  </Box>
+                </Tooltip>
+              )
+            }
+          }
         },
         {
           id: 'status',
