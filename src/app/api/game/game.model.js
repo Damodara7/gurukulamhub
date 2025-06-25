@@ -35,7 +35,7 @@ const answerSchema = new mongoose.Schema({
   hintMarks: Number,
   hintUsed: Boolean,
   skipped: Boolean,
-  answerTime: Number, // Time taken in seconds
+  answerTime: Number, // Time taken (in ms) to answer this question
   answeredAt: Date // Timestamp when answered
 })
 const participatedUserSchema = new mongoose.Schema({

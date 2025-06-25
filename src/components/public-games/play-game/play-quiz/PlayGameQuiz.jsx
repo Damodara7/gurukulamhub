@@ -109,11 +109,11 @@ async function updateUserScore(gameId, { user, userAnswer, finish }) {
 
 export default function PlayGameQuiz({ quiz, questions, game }) {
   const { data: session } = useSession()
-  console.log('game data :  ' , game);
+  console.log('game data :  ', game)
   const router = useRouter()
   const storageKey = `quiz-${quiz._id}-state`
   // Inside PlayGameQuiz
-  
+
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [selectedAnswers, setSelectedAnswers] = useState({})
   const [usedHints, setUsedHints] = useState({})
@@ -164,7 +164,7 @@ export default function PlayGameQuiz({ quiz, questions, game }) {
 
     const endTime = performance.now()
     const startTime = performanceRef.current.questionStartTimes[questionId]
-    return (endTime - startTime) / 1000 // Convert to seconds
+    return endTime - startTime // milli seconds
   }
 
   const calculateRemainingTime = () => {
@@ -256,7 +256,7 @@ export default function PlayGameQuiz({ quiz, questions, game }) {
           hintMarks: 0,
           hintUsed: false,
           skipped: true,
-          answerTime: answerTime,
+          answerTime: answerTime, // milli seconds
           answeredAt: new Date().toISOString() // Use ISO string for precession time
         },
         user: { id: session.user.id, email: session.user.email },
@@ -347,7 +347,6 @@ export default function PlayGameQuiz({ quiz, questions, game }) {
   return (
     <>
       <Box sx={{ mx: 'auto', px: 2, width: { xs: '100%', sm: '100%' }, height: '100%' }}>
-
         <Paper elevation={0} sx={{ p: 2, my: 4, maxWidth: 'lg', mx: 'auto' }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Typography variant='h6' component='div'>
