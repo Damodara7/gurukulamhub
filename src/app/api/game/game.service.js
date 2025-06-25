@@ -430,6 +430,9 @@ export const deleteOne = async (gameId, { email }) => {
     // Save the updated game
     const deletedGame = await existingGame.save()
 
+    // Revert sponsorships
+    await revertSponsorshipsForGame(deletedGame)
+
     return {
       status: 'success',
       result: deletedGame,
@@ -497,6 +500,9 @@ export const approveGame = async (gameId, updateData) => {
       console.error(`Failed to schedule (approved) game ${gameId}:`, err)
       // Optional: Log to an error tracking service (Sentry, etc.)
     })
+
+    // Update sponsorships
+    await updateSponsorshipsForGame(updatedGame)
 
     return {
       status: 'success',
@@ -978,5 +984,80 @@ async function updateSponsorshipsForGame(game) {
   } catch (error) {
     console.error('Error updating sponsorships:', error);
     throw error;
+  }
+}
+
+async function revertSponsorshipsForGame(game) {
+  try {
+    if (!game.rewards || game.rewards.length === 0) return
+
+    // Group all reward-sponsor allocations by the main sponsorship ID
+    const sponsorshipAllocations = new Map()
+
+    for (const reward of game.rewards) {
+      for (const sponsor of reward.sponsors) {
+        const { sponsorshipId, rewardDetails } = sponsor
+        if (!sponsorshipId) continue
+
+        const sId = sponsorshipId.toString()
+        const allocated = parseFloat(rewardDetails?.allocated || sponsor.allocated || 0)
+        if (isNaN(allocated)) {
+          console.error(`Invalid allocation value for sponsor in game ${game._id}`)
+          continue
+        }
+
+        const sponsorship = await SponsorshipModel.findById(sId)
+        const rewardType = rewardDetails?.rewardType || (sponsorship?.sponsorshipType === 'cash' ? 'cash' : 'items')
+
+        if (!rewardType) {
+          console.error(`Missing rewardType for sponsor in game ${game._id}`)
+          continue
+        }
+
+        if (!sponsorshipAllocations.has(sId)) {
+          sponsorshipAllocations.set(sId, [])
+        }
+        sponsorshipAllocations.get(sId).push({ allocated, rewardType })
+      }
+    }
+
+    // Now, update each sponsorship
+    for (const [sponsorshipId, allocations] of sponsorshipAllocations.entries()) {
+      const sponsorship = await SponsorshipModel.findById(sponsorshipId)
+      if (!sponsorship) {
+        console.warn(`Sponsorship not found while reverting: ${sponsorshipId}`)
+        continue
+      }
+
+      // Sum up the total reverted amounts/items
+      let totalCashReverted = 0
+      let totalItemsReverted = 0
+      for (const { allocated, rewardType } of allocations) {
+        if (rewardType === 'cash') {
+          totalCashReverted += allocated
+        } else {
+          totalItemsReverted += allocated
+        }
+      }
+
+      // Add back to available pool
+      if (sponsorship.availableAmount !== null && sponsorship.availableAmount !== undefined) {
+        sponsorship.availableAmount += totalCashReverted
+      }
+      if (sponsorship.availableItems !== null && sponsorship.availableItems !== undefined) {
+        sponsorship.availableItems += totalItemsReverted
+      }
+
+      // Remove the game from the sponsored list
+      const sponsoredGameIndex = sponsorship.sponsored.findIndex(s => s.game.toString() === game._id.toString())
+      if (sponsoredGameIndex > -1) {
+        sponsorship.sponsored.splice(sponsoredGameIndex, 1)
+      }
+
+      await sponsorship.save()
+    }
+  } catch (error) {
+    console.error(`Error reverting sponsorships for game ${game._id}:`, error)
+    throw error
   }
 }

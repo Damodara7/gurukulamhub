@@ -99,7 +99,7 @@ function LandingPageGamedata() {
   )
 
   const renderCardSkeleton = () => {
-    return Array(7)
+    return Array(4)
       .fill(0)
       .map((_, index) => (
         <Box

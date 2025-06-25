@@ -15,7 +15,6 @@ import Marquee from './Marquee/Marquee'
 import CompleteUserProfilePopup from './CompleteUserProfilePopup'
 import { Box, Stack } from '@mui/material'
 import DonateButton from '@components/DonateButton'
-import HomeDashboardPage from '@views/home/HomeDashboardPage'
 import FreshLoginPopup from '@/components/alert-popups/FreshLoginPopup'
 
 const DashboardMyProgress = () => {
@@ -30,7 +29,6 @@ const DashboardMyProgress = () => {
         </Grid>
         <Grid item xs={12} mx='auto' mb={8} md={8} className='self-end'>
           {/* <ActionCardGrid2></ActionCardGrid2> */}
-          <HomeDashboardPage />
         </Grid>
       </Grid>
     </Stack>
