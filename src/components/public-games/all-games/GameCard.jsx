@@ -12,7 +12,7 @@ import {
   Chip,
   Grid,
   Tooltip,
-  IconButton
+  IconButton,
 } from '@mui/material'
 import { useRouter } from 'next/navigation'
 import HourglassBottomIcon from '@mui/icons-material/HourglassBottom'
@@ -28,11 +28,13 @@ import EventIcon from '@mui/icons-material/Event'
 import { format } from 'date-fns'
 import imagePlaceholder from '/public/images/misc/image-placeholder.png'
 import { useEffect, useState } from 'react'
+import ShareGamePopup from './ShareGamePopup';
 import {
   EventAvailable as EventAvailableIcon,
   CheckCircle as CheckCircleIcon,
   Cancel as CancelIcon,
-  LiveTv as LiveTvIcon
+  LiveTv as LiveTvIcon,
+  Share as ShareIcon
 } from '@mui/icons-material'
 
 const GameCard = ({ game }) => {
@@ -41,6 +43,7 @@ const GameCard = ({ game }) => {
   const theme = useTheme()
   const [timeRemaining, setTimeRemaining] = useState(null)
   const [copied, setCopied] = useState(false)
+  const [sharePopupOpen, setSharePopupOpen] = useState(false)
 
   // Status-based UI logic
   const isRegistrationOpen =
@@ -196,6 +199,7 @@ const GameCard = ({ game }) => {
   }
 
   const gameStatusInfo = getGameStatusInfo()
+  
 
   return (
     <Card
@@ -243,16 +247,31 @@ const GameCard = ({ game }) => {
           {/* Game Info */}
           <Box sx={{ flex: 1, my: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
             <Stack spacing={1}>
-              {/* Game Status Info - Added at the top */}
-              <Stack direction='row' alignItems='flex-start' spacing={1}>
-                <Box sx={{ color: gameStatusInfo.color }}>{gameStatusInfo.icon}</Box>
-                <Typography variant='body2' sx={{ color: gameStatusInfo.color, fontWeight: 500 }}>
-                  {gameStatusInfo.text}
-                </Typography>
+              <Stack direction='row' justifyContent='space-between' alignItems='center'>
+                {/* Game Status Info - Added at the top */}
+                <Stack direction='row' alignItems='flex-start' spacing={1}>
+                  <Box sx={{ color: gameStatusInfo.color }}>{gameStatusInfo.icon}</Box>
+                  <Typography variant='body2' sx={{ color: gameStatusInfo.color, fontWeight: 500 }}>
+                    {gameStatusInfo.text}
+                  </Typography>
+                </Stack>
+                <Tooltip title='Share game'>
+                  <IconButton
+                    size='small'
+                    onClick={() => setSharePopupOpen(true)}
+                    sx={{
+                      '&:hover': {
+                        bgcolor: 'action.hover'
+                      }
+                    }}
+                  >
+                    <ShareIcon fontSize='small' />
+                  </IconButton>
+                </Tooltip>
               </Stack>
+
               <Stack direction='row' alignItems='center' spacing={1}>
-                <Typography variant='body2'> Quiz on : {game?.quiz?.title}
-                </Typography>
+                <Typography variant='body2'> Quiz on : {game?.quiz?.title}</Typography>
               </Stack>
               <Stack direction='row' alignItems='center' spacing={1}>
                 <EventIcon fontSize='small' color='action' />
@@ -340,6 +359,7 @@ const GameCard = ({ game }) => {
               </Stack>
             </Box>
           )}
+
           {/* Buttons - Conditionally Rendered */}
           <Stack direction='row' justifyContent='center' spacing={2}>
             <Button variant='outlined' color='info' size='small' onClick={handleView}>
@@ -347,11 +367,6 @@ const GameCard = ({ game }) => {
             </Button>
 
             {
-              // Show join button if:
-              // 1. User is registered but hasn't completed the game AND
-              //    (game is upcoming with open registration OR game is live)
-              // OR
-              // 2. User is not registered AND registration is open AND game hasn't started
               ((isUserRegistered &&
                 !game?.participatedUsers?.find(p => p.email === session?.user?.email)?.completed &&
                 (isGameUpcoming || isGameLive)) ||
@@ -381,8 +396,10 @@ const GameCard = ({ game }) => {
           </Stack>
         </Box>
       </CardContent>
+      <ShareGamePopup open={sharePopupOpen} onClose={() => setSharePopupOpen(false)} game={game} />
     </Card>
   )
+
 }
 
 export default GameCard
