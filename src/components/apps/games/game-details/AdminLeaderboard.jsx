@@ -22,7 +22,7 @@ function AdminLeaderboard({
   headerIcon = <EmojiEvents sx={{ mr: 1, verticalAlign: 'middle' }} />,
   headerTitle = 'Leaderboard',
   description = '',
-  maxheight = 300       
+  maxheight = 300
 }) {
   const formatTime = seconds => {
     // Handle edge cases
@@ -123,7 +123,7 @@ function AdminLeaderboard({
                       </TableCell>
                       <TableCell align='right'>
                         <Typography variant='body1' fontWeight='medium'>
-                          {formatTime(user.answers.reduce((sum, a) => sum + a.answerTime, 0))}
+                          {formatTime(user.answers.reduce((sum, a) => sum + a.answerTime, 0) / 1000)}
                         </Typography>
                       </TableCell>
                       <TableCell align='right'>

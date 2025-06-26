@@ -12,31 +12,30 @@ import {
   TableRow,
   CircularProgress
 } from '@mui/material'
-import { EmojiEvents } from '@mui/icons-material';
+import { EmojiEvents } from '@mui/icons-material'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 
-export default function Leaderboard({ game, duringPlay=false, isAdmin=false }) {
+export default function Leaderboard({ game, duringPlay = false, isAdmin = false }) {
   const [leaderboard, setLeaderboard] = useState([])
   const [loading, setLoading] = useState(true)
-  
+
   useEffect(() => {
     const fetchLeaderboard = async () => {
       try {
         const res = await RestApi.get(`${API_URLS.v0.USERS_GAME}/${game._id}/leaderboard`)
         if (res.status === 'success') {
           // Sort leaderboard by score (descending) and then by totalTime (ascending)
-          console.log(res.result);
-          const sortedLeaderBoard = res.result.sort((a,b) => {
-            if(b.score > a.score) return 1
-            if(b.score < a.score) return -1
-            
-            //if scores are eqaul , compare by time (lower time comes first)
-            if(a.totalTime > b.totalTime) return 1
-            if(a.totalTime < b.totalTime) return -1
-            
-            return 0
+          console.log(res.result)
+          const sortedLeaderBoard = res.result.sort((a, b) => {
+            if (b.score > a.score) return 1
+            if (b.score < a.score) return -1
 
+            //if scores are eqaul , compare by time (lower time comes first)
+            if (a.totalTime > b.totalTime) return 1
+            if (a.totalTime < b.totalTime) return -1
+
+            return 0
           })
           setLeaderboard(sortedLeaderBoard)
           setLoading(false)
@@ -74,7 +73,7 @@ export default function Leaderboard({ game, duringPlay=false, isAdmin=false }) {
     )
   }
 
-  if(!leaderboard ||(leaderboard && leaderboard.length === 0)){
+  if (!leaderboard || (leaderboard && leaderboard.length === 0)) {
     return null
   }
 
@@ -110,7 +109,7 @@ export default function Leaderboard({ game, duringPlay=false, isAdmin=false }) {
                 <TableCell>{index + 1}</TableCell>
                 <TableCell>{player.email}</TableCell>
                 <TableCell align='right'>{player.score.toFixed(2)}</TableCell>
-                {!duringPlay && <TableCell align='right'>{formatTime(player.totalTime)}</TableCell>}
+                {!duringPlay && <TableCell align='right'>{formatTime(player.totalTime / 1000)}</TableCell>}
                 {isAdmin && <TableCell align='right'>{(player.accuracy || 0).toFixed(2)}%</TableCell>}
               </TableRow>
             ))}

@@ -729,6 +729,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
         <DateTimePicker
           disablePast
           minDateTime={dayjs().add(1, 'minute')}
+          timeSteps={{hours: 1, minutes: 1}}
           sx={{ width: '100%' }}
           label='Start Time'
           value={formData.startTime ? dayjs(formData.startTime) : null}
@@ -805,6 +806,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
             disablePast
             minDateTime={dayjs().add(1, 'minute')} // ensure the future time
             maxDateTime={dayjs(formData.startTime).subtract(1, 'minute')} // must be before start time
+            timeSteps={{hours: 1, minutes: 1}}
             sx={{ width: '100%' }}
             label='Registration End Time'
             value={formData.registrationEndTime ? dayjs(formData.registrationEndTime) : null}
