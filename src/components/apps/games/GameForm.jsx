@@ -22,7 +22,10 @@ import {
   Typography,
   Autocomplete,
   Snackbar,
-  Alert
+  Alert,
+  FormLabel,
+  RadioGroup,
+  Radio
 } from '@mui/material'
 import {
   Add as AddIcon,
@@ -57,6 +60,7 @@ const initialFormData = {
   duration: null, // 10 minutes in seconds
   promotionalVideoUrl: '',
   thumbnailPoster: '',
+  forwardtype: 'auto',
   requireRegistration: false,
   registrationEndTime: null,
   limitPlayers: false,
@@ -136,9 +140,9 @@ const formFieldOrder = [
   'promotionalVideoUrl',
   'thumbnailPoster',
   'tags',
-  'rewards'
+  'rewards',
+  'forwardtype'
 ]
-
 
 // Main Game Form component
 const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
@@ -159,11 +163,11 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
     fetchCities: false,
     submitting: false
   })
-  
+
   // Reward Dialog states
   const [openRewardDialog, setOpenRewardDialog] = useState(false)
   const [editingReward, setEditingReward] = useState(null)
-  
+
   // Create refs for each field
   const fieldRefs = {
     title: useRef(),
@@ -176,7 +180,8 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
     maxPlayers: useRef(),
     promotionalVideoUrl: useRef(),
     thumbnailPoster: useRef(),
-    tags: useRef()
+    tags: useRef(),
+    forwardtype: useRef()
     // Add more if needed
   }
   // If Edit Game?
@@ -408,10 +413,10 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
     setFormData(prev => {
       // Find the reward being removed
       const removedReward = prev.rewards.find(r => (r?._id || r?.id) === rewardId)
-      
+
       // Create a map of sponsorships that need to be updated
       const sponsorshipsToUpdate = new Map()
-      
+
       // For each sponsor in the removed reward
       removedReward?.sponsors?.forEach(sponsor => {
         const sponsorshipId = sponsor.sponsorshipId
@@ -420,17 +425,17 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
           items: 0,
           rewardType: sponsor.rewardType
         }
-        
+
         // Add the allocated amount/items back to the sponsorship
         if (sponsor.rewardType === 'cash') {
           currentData.cash += parseFloat(sponsor.allocated) || 0
         } else {
           currentData.items += parseFloat(sponsor.allocated) || 0
         }
-        
+
         sponsorshipsToUpdate.set(sponsorshipId, currentData)
       })
-      
+
       // Update remaining rewards with the new sponsorship data
       const updatedRewards = prev.rewards
         .filter(r => (r?._id || r?.id) !== rewardId) // Remove the reward
@@ -448,13 +453,13 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
             }
             return sponsor
           })
-          
+
           return {
             ...reward,
             sponsors: updatedSponsors
           }
         })
-      
+
       return {
         ...prev,
         rewards: updatedRewards
@@ -598,8 +603,8 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
       >
         <Alert
           onClose={() => setShowErrorSnackbar(false)}
-          severity="error"
-          variant="filled"
+          severity='error'
+          variant='filled'
           sx={{
             width: '100%',
             animation: 'slideUp 0.5s ease-out',
@@ -856,6 +861,31 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
             inputRef={fieldRefs.maxPlayers}
           />
         )}
+      </Grid>
+
+      {/* Forward Type Selection - Add this above the Location section */}
+      <Grid item xs={6}>
+        <FormControl>
+          <FormLabel
+            variant='subtitle1'
+            sx={{
+              color: 'text.primary',
+              '&.Mui-focused': {
+                color: 'text.primary'
+              }
+            }}
+          >
+            Forward Type
+          </FormLabel>
+          <RadioGroup
+            row
+            value={formData.forwardtype} // Connect to form state
+            onChange={e => setFormData({ ...formData, forwardtype: e.target.value })}
+          >
+            <FormControlLabel value='auto' control={<Radio />} label='Auto' />
+            <FormControlLabel value='admin' control={<Radio />} label='Admin' />
+          </RadioGroup>
+        </FormControl>
       </Grid>
 
       {/* Location */}
@@ -1139,7 +1169,9 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
               <Chip key={index} variant='outlined' label={option} {...getTagProps({ index })} />
             ))
           }
-          renderInput={params => <TextField {...params} label='Tags' placeholder='Add tags' inputRef={fieldRefs.tags} />}
+          renderInput={params => (
+            <TextField {...params} label='Tags' placeholder='Add tags' inputRef={fieldRefs.tags} />
+          )}
         />
       </Grid>
 

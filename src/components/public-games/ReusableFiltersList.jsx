@@ -27,7 +27,7 @@ import CloseIcon from '@mui/icons-material/Close'
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import CountryRegionDropdown from '@/views/pages/auth/register-multi-steps/CountryRegionDropdown' // Make sure to import this component
-const ReusablePopUpList = ({
+const ReusableFiltersList = ({
   selectedLocations = [],
   setSelectedLocations = () => {},
   selectedQuizzes = [],
@@ -462,4 +462,4 @@ const ReusablePopUpList = ({
   )
 }
 
-export default ReusablePopUpList
+export default ReusableFiltersList

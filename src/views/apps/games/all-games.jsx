@@ -10,7 +10,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import ReusableTabsList from '@/components/public-games/ReusableTabsList'
 import { Box, Button } from '@mui/material'
 import { Add as AddIcon } from '@mui/icons-material'
-import ReusablePopUpList from '@/components/public-games/ReusablePopUpList'
+import ReusablePopUpList from '@/components/public-games/ReusableFiltersList'
 
 const gamestatuses = [
   { value: 'all', label: 'All' },
