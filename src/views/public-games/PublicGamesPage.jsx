@@ -7,7 +7,7 @@ import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { useSearchParams, useRouter } from 'next/navigation'
 import ReusableTabsList from '@/components/public-games/ReusableTabsList'
-import ReusablePopUpList from '@/components/public-games/ReusablePopUpList'
+import ReusableFiltersList from '@components/public-games/ReusableFiltersList'
 import PublicGamesList from '@/components/public-games/all-games/PublicGamesList'
 
 export const PublicGamesPage = () => {
@@ -87,7 +87,7 @@ export const PublicGamesPage = () => {
   return (
     <Box p={4} className='flex flex-col items-center gap-3'>
       <ReusableTabsList tabsList={statuses} value={statusFilter} onChange={handleStatusChange} />
-      <ReusablePopUpList selectedLocations={selectedLocations}  setSelectedLocations={setSelectedLocations} selectedQuizzes={selectedQuizzes} setSelectedQuizzes = {setSelectedQuizzes}  />
+      <ReusableFiltersList selectedLocations={selectedLocations}  setSelectedLocations={setSelectedLocations} selectedQuizzes={selectedQuizzes} setSelectedQuizzes = {setSelectedQuizzes}  />
       <PublicGamesList games={filteredGames} loading={loading} error={error} />
     </Box>
   )
