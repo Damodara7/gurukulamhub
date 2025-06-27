@@ -12,7 +12,8 @@ import {
   Box,
   Avatar,
   Chip,
-  Paper
+  Paper,
+  Tooltip
 } from '@mui/material'
 import { EmojiEvents, CheckCircle, Cancel, People } from '@mui/icons-material'
 
@@ -91,8 +92,10 @@ function AdminLeaderboard({
                 <TableCell>Rank</TableCell>
                 <TableCell>Player</TableCell>
                 <TableCell align='right'>Score</TableCell>
-                <TableCell align='right'>Time</TableCell>
-                <TableCell align='right'>Accuracy</TableCell>
+                <TableCell align='right'>Answer Time</TableCell>
+                <TableCell align='right'>
+                  <Tooltip title="Fastest Finger First Points" placement="top">FFF Points</Tooltip>
+                </TableCell>
                 <TableCell align='right'>Status</TableCell>
               </TableRow>
             </TableHead>
@@ -128,10 +131,7 @@ function AdminLeaderboard({
                       </TableCell>
                       <TableCell align='right'>
                         <Typography variant='body1' fontWeight='medium'>
-                          {parseFloat((user.score / user.answers.length) * 100 || 0)
-                            .toFixed(2)
-                            .replace(/\.?0+$/, '')}
-                          %
+                          {user.fffPoints}
                         </Typography>
                       </TableCell>
                       <TableCell align='right'>

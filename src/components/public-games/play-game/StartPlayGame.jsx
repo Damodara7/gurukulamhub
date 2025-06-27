@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useEffect, useState } from 'react'
 import { Box, Typography, CircularProgress } from '@mui/material'
 import PlayGameQuiz from './play-quiz/PlayGameQuiz'
+import AssessmentPlayGameQuiz from './play-quiz/AssessmentPlayGameQuiz'
 
 const StartPlayGame = ({ game }) => {
   const router = useRouter()
@@ -62,11 +63,13 @@ const StartPlayGame = ({ game }) => {
 
   if (!data) return null
 
-  const {quiz, questions, ...restGameData} = data
+  const { quiz, questions, gameMode, ...restGameData } = data
+
+  const PlayGameQuizByMode = gameMode === 'live' ? PlayGameQuiz : AssessmentPlayGameQuiz
 
   return (
     <Box p={4} height='100%'>
-      <PlayGameQuiz quiz={quiz} questions={questions} game={restGameData} />
+      <PlayGameQuizByMode quiz={quiz} questions={questions} game={restGameData} />
     </Box>
   )
 }

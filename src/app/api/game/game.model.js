@@ -36,6 +36,7 @@ const answerSchema = new mongoose.Schema({
   hintUsed: Boolean,
   skipped: Boolean,
   answerTime: Number, // Time taken (in ms) to answer this question
+  fffPoints: Number,
   answeredAt: Date // Timestamp when answered
 })
 const participatedUserSchema = new mongoose.Schema({
@@ -46,6 +47,7 @@ const participatedUserSchema = new mongoose.Schema({
   email: String,
   joinedAt: Date,
   score: { type: Number, default: 0 },
+  fffPoints: { type: Number, default: 0 },
   answers: { type: [answerSchema], default: [] },
   completed: {
     type: Boolean,
@@ -117,10 +119,22 @@ const gameSchema = new mongoose.Schema(
       ref: 'quizzes', //Need to be changed to "quiz"
       required: true
     },
+    questionsCount: Number,
     location: locationSchema,
     startTime: {
       type: Date,
       required: true
+    },
+    gameMode: {
+      type: String,
+      enum: ['live', 'self-paced'],
+      default: 'live',
+      required: true
+    },
+    forwardType: {
+      type: String,
+      enum: ['auto', 'admin'],
+      default: 'auto'
     },
     duration: {
       // In seconds

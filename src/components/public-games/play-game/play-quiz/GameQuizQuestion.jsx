@@ -17,7 +17,6 @@ const QuizQuestion = ({
   hasHint,
   isSkippable,
   handleSkip,
-  timer,
   timeLeft
 }) => {
   return (

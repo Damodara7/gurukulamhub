@@ -141,10 +141,26 @@ export const addOne = async gameData => {
     if (user?.roles?.includes('ADMIN')) {
       gameData.approvedBy = user._id
     }
-    console.log({ gameData })
+
+    // Fetch the quiz to get language code
+    const quiz = await Quiz.findById(gameData.quiz).lean()
+    const languageCode = quiz?.language?.code || 'en'
+    // Fetch all questions for this quiz and language
+    const questions = await QuestionsModel.find({ quizId: quiz.id, languageCode }).lean()
+
+    // Adding questions count field to gameData
+    gameData.questionsCount = questions?.length
+
+    // If live mode, calculate duration from questions
+    if (gameData.gameMode === 'live') {
+      // Sum timerSeconds from data field
+      gameData.duration = questions.reduce((sum, q) => sum + (q.data?.timerSeconds || 0), 0)
+    }
+
     // Validate required fields
-    const requiredFields = ['title', 'pin', 'quiz', 'startTime', 'duration', 'createdBy']
-    const missingFields = requiredFields.filter(field => !gameData[field])
+    const requiredFields = ['title', 'pin', 'quiz', 'startTime', 'createdBy']
+    if (gameData.gameMode === 'self-paced') requiredFields.push('duration')
+    const missingFields = requiredFields.filter(field => !gameData[field] && gameData[field] !== 0)
 
     if (missingFields.length > 0) {
       return {
@@ -174,6 +190,8 @@ export const addOne = async gameData => {
     //   location: gameData.location,
     //   startTime: gameData.startTime,
     //   duration: gameData.duration,
+    //   gameMode: gameData.gameMode,
+    //   forwardType: gameData.forwardType,
     //   promotionalVideoUrl: gameData.promotionalVideoUrl,
     //   thumbnailPoster: gameData.thumbnailPoster,
     //   requireRegistration: gameData.requireRegistration || false,
@@ -261,6 +279,18 @@ export const updateOne = async (gameId, updateData) => {
       }
     }
 
+    // If live mode, calculate duration from questions
+    if (updateData.gameMode === 'live') {
+      // Fetch the quiz to get language code
+      const quiz = await Quiz.findById(updateData.quiz || existingGame.quiz).lean()
+      const quizId = quiz._id
+      const languageCode = quiz.language.code
+      // Fetch all questions for this quiz and language
+      const questions = await QuestionsModel.find({ quizId, languageCode }).lean()
+      // Sum timerSeconds from data field
+      updateData.duration = questions.reduce((sum, q) => sum + (q.data?.timerSeconds || 0), 0)
+    }
+
     // Check if pin is being updated to a non-unique value
     if (updateData.pin !== undefined && updateData.pin !== existingGame.pin) {
       const existingPinGame = await Game.findOne({ pin: updateData.pin })
@@ -276,9 +306,7 @@ export const updateOne = async (gameId, updateData) => {
     // Handle rewards update if present in updateData
     if (updateData.rewards !== undefined) {
       // Create a map of existing rewards by _id
-      const existingRewardsMap = new Map(
-        existingGame.rewards.map(reward => [reward._id.toString(), reward])
-      )
+      const existingRewardsMap = new Map(existingGame.rewards.map(reward => [reward._id.toString(), reward]))
 
       // Process each reward in the update data
       const updatedRewards = updateData.rewards.map(newReward => {
@@ -658,6 +686,7 @@ export const updatePlayerProgress = async (gameId, { user, userAnswer, finish })
       // hintUsed: userAnswer.hintUsed,
       // skipped: userAnswer.skipped
       // answerTime: userAnswer.answerTime
+      // fffPoints: userAnswer.fffPoints
       // answeredAt: userAnswer.answeredAt
     }
 
@@ -678,6 +707,7 @@ export const updatePlayerProgress = async (gameId, { user, userAnswer, finish })
 
     // Update total score
     player.score += answerData.marks
+    player.fffPoints += answerData.fffPoints
 
     // Handle game completion
     if (finish) {
@@ -823,14 +853,12 @@ export const getLeaderboard = async gameId => {
     const leaderboard = game.participatedUsers
       // .filter(p => p.completed)
       .map(p => ({
-        _id: p._id,
+        ...p,
         email: p.email,
         score: p.score,
-        totalTime: p.answers.reduce((sum, a) => sum + a.answerTime, 0),
-        // accuracy: (p.answers.filter(a => a.marks > 0).length / p.answers.length) * 100
-        accuracy: (p.score / p.answers.length) * 100
+        fffPoints: p.fffPoints,
       }))
-      .sort((a, b) => b.score - a.score || a.totalTime - b.totalTime)
+      .sort((a, b) => b.fffPoints - a.fffPoints)
 
     return { status: 'success', result: leaderboard, message: 'Game not found' }
   } catch (error) {
@@ -842,125 +870,127 @@ export const getLeaderboard = async gameId => {
 // Helper function to update sponsorships
 async function updateSponsorshipsForGame(game) {
   try {
-    if (!game.rewards || game.rewards.length === 0) return;
+    if (!game.rewards || game.rewards.length === 0) return
 
-    const sponsorshipUpdates = [];
+    const sponsorshipUpdates = []
 
     // First pass: Collect all reward sponsorships
     for (const reward of game.rewards) {
       for (const sponsor of reward.sponsors) {
-        const { sponsorshipId, rewardDetails, _id } = sponsor;
-        if (!sponsorshipId) continue;
+        const { sponsorshipId, rewardDetails, _id } = sponsor
+        if (!sponsorshipId) continue
 
         // Safely parse allocated value
-        const allocated = parseFloat(sponsor.rewardDetails?.allocated || sponsor.allocated || 0);
+        const allocated = parseFloat(sponsor.rewardDetails?.allocated || sponsor.allocated || 0)
         if (isNaN(allocated)) {
-          console.error(`Invalid allocation value for sponsor ${_id}`);
-          continue;
+          console.error(`Invalid allocation value for sponsor ${_id}`)
+          continue
         }
 
-        const rewardType = rewardDetails?.rewardType;
+        const rewardType = rewardDetails?.rewardType
         if (!rewardType) {
-          console.error(`Missing rewardType for sponsor ${_id}`);
-          continue;
+          console.error(`Missing rewardType for sponsor ${_id}`)
+          continue
         }
 
-        const existingUpdate = sponsorshipUpdates.find(u => u.sponsorshipId.toString() === sponsorshipId.toString());
-        
+        const existingUpdate = sponsorshipUpdates.find(u => u.sponsorshipId.toString() === sponsorshipId.toString())
+
         if (existingUpdate) {
           existingUpdate.rewardSponsorships.push({
             allocated,
             rewardSponsorshipId: _id,
             rewardType,
             rewardId: reward._id
-          });
+          })
         } else {
           sponsorshipUpdates.push({
             sponsorshipId,
             rewardType,
-            rewardSponsorships: [{
-              allocated,
-              rewardSponsorshipId: _id,
-              rewardType,
-              rewardId: reward._id
-            }]
-          });
+            rewardSponsorships: [
+              {
+                allocated,
+                rewardSponsorshipId: _id,
+                rewardType,
+                rewardId: reward._id
+              }
+            ]
+          })
         }
       }
     }
 
     // Second pass: Update each sponsorship
     for (const update of sponsorshipUpdates) {
-      const { sponsorshipId, rewardType, rewardSponsorships } = update;
+      const { sponsorshipId, rewardType, rewardSponsorships } = update
 
-      const sponsorship = await SponsorshipModel.findById(sponsorshipId);
+      const sponsorship = await SponsorshipModel.findById(sponsorshipId)
       if (!sponsorship) {
-        console.warn(`Sponsorship not found: ${sponsorshipId}`);
-        continue;
+        console.warn(`Sponsorship not found: ${sponsorshipId}`)
+        continue
       }
 
       // Find existing game sponsorship
-      const existingSponsoredIndex = sponsorship.sponsored.findIndex(s => s.game.toString() === game._id.toString());
-      const existingGameSponsorship = existingSponsoredIndex >= 0 ? sponsorship.sponsored[existingSponsoredIndex] : null;
+      const existingSponsoredIndex = sponsorship.sponsored.findIndex(s => s.game.toString() === game._id.toString())
+      const existingGameSponsorship = existingSponsoredIndex >= 0 ? sponsorship.sponsored[existingSponsoredIndex] : null
 
       // Create a map of existing reward sponsorships by rewardSponsorshipId
-      const existingRewardSponsorshipsMap = existingGameSponsorship 
+      const existingRewardSponsorshipsMap = existingGameSponsorship
         ? new Map(existingGameSponsorship.rewardSponsorships.map(rs => [rs.rewardSponsorshipId, rs]))
-        : new Map();
+        : new Map()
 
       // Calculate the difference in allocation
-      let totalAllocationDifference = 0;
-      const processedRewardSponsorshipIds = new Set();
+      let totalAllocationDifference = 0
+      const processedRewardSponsorshipIds = new Set()
 
       // Process new reward sponsorships and calculate differences
       for (const newRs of rewardSponsorships) {
-        const existingRs = existingRewardSponsorshipsMap.get(newRs.rewardSponsorshipId);
-        const newAllocated = parseFloat(newRs.allocated);
-        
+        const existingRs = existingRewardSponsorshipsMap.get(newRs.rewardSponsorshipId)
+        const newAllocated = parseFloat(newRs.allocated)
+
         if (existingRs) {
           // Calculate difference between new and old allocation
-          const oldAllocated = parseFloat(existingRs.allocated);
-          totalAllocationDifference += oldAllocated - newAllocated;
+          const oldAllocated = parseFloat(existingRs.allocated)
+          totalAllocationDifference += oldAllocated - newAllocated
         } else {
           // New reward sponsorship
-          totalAllocationDifference -= newAllocated;
+          totalAllocationDifference -= newAllocated
         }
-        
-        processedRewardSponsorshipIds.add(newRs.rewardSponsorshipId);
+
+        processedRewardSponsorshipIds.add(newRs.rewardSponsorshipId)
       }
 
       // Add back allocations for removed reward sponsorships
       if (existingGameSponsorship) {
         for (const existingRs of existingGameSponsorship.rewardSponsorships) {
           if (!processedRewardSponsorshipIds.has(existingRs.rewardSponsorshipId)) {
-            totalAllocationDifference += parseFloat(existingRs.allocated);
+            totalAllocationDifference += parseFloat(existingRs.allocated)
           }
         }
       }
 
       // Update available amount/items
-      const isCash = rewardType === 'cash';
-      const currentAvailable = isCash 
-        ? parseFloat(sponsorship.availableAmount)
-        : parseInt(sponsorship.availableItems);
+      const isCash = rewardType === 'cash'
+      const currentAvailable = isCash ? parseFloat(sponsorship.availableAmount) : parseInt(sponsorship.availableItems)
 
       if (isNaN(currentAvailable)) {
-        throw new Error(`Invalid ${isCash ? 'availableAmount' : 'availableItems'} for sponsorship ${sponsorshipId}`);
+        throw new Error(`Invalid ${isCash ? 'availableAmount' : 'availableItems'} for sponsorship ${sponsorshipId}`)
       }
 
-      const newAvailable = currentAvailable + totalAllocationDifference;
-      
+      const newAvailable = currentAvailable + totalAllocationDifference
+
       if (newAvailable < 0) {
         throw new Error(
-          `Insufficient ${isCash ? 'funds' : 'items'} for sponsorship ${sponsorshipId}. Available after adjustment: ${newAvailable}`
-        );
+          `Insufficient ${
+            isCash ? 'funds' : 'items'
+          } for sponsorship ${sponsorshipId}. Available after adjustment: ${newAvailable}`
+        )
       }
 
       // Update the sponsorship
       if (isCash) {
-        sponsorship.availableAmount = newAvailable;
+        sponsorship.availableAmount = newAvailable
       } else {
-        sponsorship.availableItems = newAvailable;
+        sponsorship.availableItems = newAvailable
       }
 
       // Update sponsored games array
@@ -968,22 +998,22 @@ async function updateSponsorshipsForGame(game) {
         allocated: parseFloat(allocated),
         rewardSponsorshipId,
         rewardId
-      }));
+      }))
 
       if (existingSponsoredIndex >= 0) {
-        existingGameSponsorship.rewardSponsorships = updatedRewardSponsorships;
+        existingGameSponsorship.rewardSponsorships = updatedRewardSponsorships
       } else {
         sponsorship.sponsored.push({
           game: game._id,
           rewardSponsorships: updatedRewardSponsorships
-        });
+        })
       }
 
-      await sponsorship.save();
+      await sponsorship.save()
     }
   } catch (error) {
-    console.error('Error updating sponsorships:', error);
-    throw error;
+    console.error('Error updating sponsorships:', error)
+    throw error
   }
 }
 

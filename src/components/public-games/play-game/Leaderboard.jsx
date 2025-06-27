@@ -10,7 +10,8 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  CircularProgress
+  CircularProgress,
+  Tooltip
 } from '@mui/material'
 import { EmojiEvents } from '@mui/icons-material'
 import * as RestApi from '@/utils/restApiUtil'
@@ -78,7 +79,7 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
   }
 
   return (
-    <Box sx={{ mx: 'auto', maxWidth: duringPlay || !isAdmin ? 'sm' : 'md', px: { md: 10, xs: 3 } }}>
+    <Box sx={{ mx: 'auto', maxWidth: duringPlay || !isAdmin ? 'md' : 'md', px: { md: 10, xs: 3 } }}>
       <Typography
         variant='h6'
         sx={{
@@ -93,14 +94,19 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
       </Typography>
 
       <TableContainer component={Paper} elevation={3}>
-        <Table size={duringPlay ? 'medium' : 'big'}>
+        <Table size={duringPlay ? 'small' : 'medium'}>
           <TableHead>
             <TableRow>
               <TableCell>Rank</TableCell>
               <TableCell>Player</TableCell>
               <TableCell align='right'>Score</TableCell>
-              {!duringPlay && <TableCell align='right'>Time</TableCell>}
-              {isAdmin && <TableCell align='right'>Accuracy</TableCell>}
+              {!duringPlay && <TableCell align='right'>Answer Time</TableCell>}
+              <TableCell align='right'>
+                <Tooltip title='Fastest Finger First Points' placement='top'>
+                  FFF Points{' '}
+                  <span style={{ fontSize: '0.8em', color: '#888' }}>{`(out of ${1000 * game?.questionsCount})`}</span>
+                </Tooltip>
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -110,7 +116,7 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
                 <TableCell>{player.email}</TableCell>
                 <TableCell align='right'>{player.score.toFixed(2)}</TableCell>
                 {!duringPlay && <TableCell align='right'>{formatTime(player.totalTime / 1000)}</TableCell>}
-                {isAdmin && <TableCell align='right'>{(player.accuracy || 0).toFixed(2)}%</TableCell>}
+                <TableCell align='right'>{player?.fffPoints}</TableCell>
               </TableRow>
             ))}
           </TableBody>

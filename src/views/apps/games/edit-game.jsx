@@ -160,8 +160,9 @@ function EditGamePage({ gameData = null, gameId = null, isSuperUser = false }) {
         sponsors: reward.sponsors.map(sponsor => {
           const rewardType = sponsor.rewardDetails.rewardType
           const allocated = sponsor.rewardDetails.allocated
-          const available = rewardType === 'cash' ? sponsor.sponsorshipId.availableAmount : sponsor.sponsorshipId.availableItems
-          
+          const available =
+            rewardType === 'cash' ? sponsor.sponsorshipId.availableAmount : sponsor.sponsorshipId.availableItems
+
           return {
             ...sponsor.sponsorshipId,
             ...sponsor,
@@ -170,13 +171,15 @@ function EditGamePage({ gameData = null, gameId = null, isSuperUser = false }) {
             _id: sponsor._id,
             id: sponsor._id,
             allocated: allocated,
-            ...(rewardType === 'cash' ? {
-              availableAmount: available,
-              // prevAvailableAmount: available , // Store the original available amount before allocation
-            } : {
-              availableItems: available,
-              // prevAvailableItems: available, // Store the original available amount before allocation
-            }),
+            ...(rewardType === 'cash'
+              ? {
+                  availableAmount: available
+                  // prevAvailableAmount: available , // Store the original available amount before allocation
+                }
+              : {
+                  availableItems: available
+                  // prevAvailableItems: available, // Store the original available amount before allocation
+                }),
             rewardType: rewardType,
             currency: sponsor.rewardDetails.currency
           }

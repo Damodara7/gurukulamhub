@@ -61,6 +61,7 @@ const initialFormData = {
   promotionalVideoUrl: '',
   thumbnailPoster: '',
   forwardtype: 'auto',
+  gameMode: 'live',
   requireRegistration: false,
   registrationEndTime: null,
   limitPlayers: false,
@@ -110,8 +111,17 @@ const validateForm = formData => {
     }
   }
 
-  if (!formData.duration || formData.duration < 1) {
-    errors.duration = 'Duration must be atleast 1 minute.'
+  // Only validate duration if gameMode is self-paced
+  if (formData.gameMode === 'self-paced') {
+    if (!formData.duration || formData.duration < 1) {
+      errors.duration = 'Duration must be at least 1 minute.'
+    }
+  }
+  // Only validate forwardtype if gameMode is live
+  if (formData.gameMode === 'live') {
+    if (!formData.forwardtype) {
+      errors.forwardtype = 'Forward type is required for live games.'
+    }
   }
 
   if (formData.limitPlayers && (!formData.maxPlayers || formData.maxPlayers <= 0)) {
@@ -129,6 +139,7 @@ const formFieldOrder = [
   'description',
   'quiz',
   'startTime',
+  'gameMode',
   'duration',
   'requireRegistration',
   'registrationEndTime',
@@ -181,7 +192,8 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
     promotionalVideoUrl: useRef(),
     thumbnailPoster: useRef(),
     tags: useRef(),
-    forwardtype: useRef()
+    forwardtype: useRef(),
+    gameMode: useRef()
     // Add more if needed
   }
   // If Edit Game?
@@ -194,7 +206,8 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
         quiz: data?.quiz?._id || null,
         startTime: data?.startTime ? new Date(data.startTime) : null,
         registrationEndTime: data?.registrationEndTime ? new Date(data.registrationEndTime) : null,
-        duration: data?.duration ? Math.floor(data.duration / 60) : ''
+        duration: data?.duration ? Math.floor(data.duration / 60) : '',
+        gameMode: data?.gameMode || 'live'
       })
       setSelectedCountryObject(
         data?.location?.country
@@ -288,8 +301,8 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
     validateField(name)
   }
 
-  const validateField = fieldname => {
-    const fieldErrors = validateForm(formData)
+  const validateField = (fieldname, latestFormData = formData) => {
+    const fieldErrors = validateForm(latestFormData)
     if (fieldErrors[fieldname]) {
       setErrors(prev => ({
         ...prev,
@@ -504,10 +517,20 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
       }
       return // If there are validation errors, do not submit
     }
-    await onSubmit({
+    // Only include relevant fields
+    const submission = {
       ...formData,
       location: { country: selectedCountryObject?.country, region: selectedRegion, city: selectedCity }
-    })
+    }
+    if (formData.gameMode !== 'self-paced') {
+      delete submission.duration
+    }
+    if (formData.gameMode !== 'live') {
+      delete submission.forwardtype
+      submission.duration= Number(submission.duration)
+    }
+    console.log("submission data: ", submission)
+    await onSubmit(submission)
   }
 
   // Image upload
@@ -515,23 +538,30 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
     const file = e.target.files[0]
     if (!file) return
 
+    let updatingFormData = { ...formData }
+
     // Resize image if over 2MB
     if (file.size > 2 * 1024 * 1024) {
       try {
         const compressedFile = await compressImage(file)
-        setFormData(prev => ({ ...prev, thumbnailPoster: compressedFile }))
+        updatingFormData = { ...updatingFormData, thumbnailPoster: compressedFile }
+        setFormData(updatingFormData)
+        validateThumbnailPoster(updatingFormData)
       } catch (error) {
         console.error('Compression error:', error)
       }
     } else {
       const reader = new FileReader()
       reader.onload = event => {
-        setFormData(prev => ({
-          ...prev,
-          thumbnailPoster: event.target.result
-        }))
+        updatingFormData = { ...updatingFormData, thumbnailPoster: event.target.result }
+        setFormData(updatingFormData)
+        validateThumbnailPoster(updatingFormData)
       }
       reader.readAsDataURL(file)
+    }
+    function validateThumbnailPoster(latestFormData) {
+      setTouches(prev => ({ ...prev, thumbnailPoster: true }))
+      validateField('thumbnailPoster', latestFormData)
     }
   }
 
@@ -585,6 +615,33 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
 
   const handleChangeCountry = countryValue => {
     setSelectedRegion('')
+  }
+
+  // Handle gameMode change to clear irrelevant fields' errors/touches
+  const handleGameModeChange = e => {
+    const { value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      gameMode: value
+    }))
+    setTouches(prev => {
+      const newTouches = { ...prev }
+      if (value === 'live') {
+        delete newTouches.duration
+      } else {
+        delete newTouches.forwardtype
+      }
+      return newTouches
+    })
+    setErrors(prev => {
+      const newErrors = { ...prev }
+      if (value === 'live') {
+        delete newErrors.duration
+      } else {
+        delete newErrors.forwardtype
+      }
+      return newErrors
+    })
   }
 
   return (
@@ -686,7 +743,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
             required
             ref={fieldRefs.quiz}
           >
-            <MenuItem value="">
+            <MenuItem value=''>
               <em>Select Quiz</em>
             </MenuItem>
             {quizzes.map(quiz => (
@@ -734,7 +791,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
         <DateTimePicker
           disablePast
           minDateTime={dayjs().add(1, 'minute')}
-          timeSteps={{hours: 1, minutes: 1}}
+          timeSteps={{ hours: 1, minutes: 1 }}
           sx={{ width: '100%' }}
           label='Start Time'
           value={formData.startTime ? dayjs(formData.startTime) : null}
@@ -773,30 +830,86 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
         />
       </Grid>
 
-      <Grid item xs={12} md={6}>
-        <TextField
-          fullWidth
-          label='Duration (minutes)'
-          name='duration'
-          type='number'
-          value={formData.duration}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          onFocus={() => setErrors(prev => ({ ...prev, duration: '' }))}
-          error={!!errors.duration && touches.duration}
-          helperText={errors.duration || 'Enter the duration in minutes'}
-          required
-          inputProps={{ min: 1 }}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position='end'>
-                <AccessTimeIcon />
-              </InputAdornment>
-            )
-          }}
-          inputRef={fieldRefs.duration}
-        />
+      {/* Game Mode Selection */}
+      <Grid item xs={6}>
+        <FormControl fullWidth required error={!!errors.gameMode && touches.gameMode}>
+          <InputLabel id="game-mode-label">Game Mode</InputLabel>
+          <Select
+            labelId="game-mode-label"
+            id="game-mode-select"
+            name="gameMode"
+            value={formData.gameMode}
+            label="Game Mode"
+            onChange={handleGameModeChange}
+            onBlur={handleBlur}
+            onFocus={() => setErrors(prev => ({ ...prev, gameMode: '' }))}
+            inputRef={fieldRefs.gameMode}
+          >
+            <MenuItem value="live">Live</MenuItem>
+            <MenuItem value="self-paced">Self-paced</MenuItem>
+          </Select>
+          <FormHelperText>
+            {formData.gameMode === 'live'
+              ? 'The game will be live for all players'
+              : 'The game will be like an assessment'}
+          </FormHelperText>
+        </FormControl>
       </Grid>
+
+      {/* Forward Type Selection - now as Select, only if live */}
+      {formData.gameMode === 'live' && (
+        <Grid item xs={6}>
+          <FormControl fullWidth required error={!!errors.forwardtype && touches.forwardtype}>
+            <InputLabel id="forward-type-label">Forward Type</InputLabel>
+            <Select
+              labelId="forward-type-label"
+              id="forward-type-select"
+              name="forwardtype"
+              value={formData.forwardtype}
+              label="Forward Type"
+              onChange={handleChange}
+              onBlur={handleBlur}
+              onFocus={() => setErrors(prev => ({ ...prev, forwardtype: '' }))}
+              inputRef={fieldRefs.forwardtype}
+            >
+              <MenuItem value="auto">Auto</MenuItem>
+              <MenuItem value="admin">Admin</MenuItem>
+            </Select>
+            <FormHelperText>Select how the game will be forwarded</FormHelperText>
+          </FormControl>
+        </Grid>
+      )}
+
+      {/* Duration (only if self-paced) */}
+      {formData.gameMode === 'self-paced' && (
+        <Grid item xs={12} md={6}>
+          <TextField
+            fullWidth
+            label='Duration (minutes)'
+            name='duration'
+            type='number'
+            value={formData.duration}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            onFocus={() => setErrors(prev => ({ ...prev, duration: '' }))}
+            error={!!errors.duration && touches.duration}
+            helperText={errors.duration || 'Enter the duration in minutes'}
+            required
+            inputProps={{ min: 1 }}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position='end'>
+                  <AccessTimeIcon />
+                </InputAdornment>
+              )
+            }}
+            inputRef={fieldRefs.duration}
+          />
+        </Grid>
+      )}
+
+      
+        <Grid item xs={12} md={6}></Grid>
 
       {/* Registration */}
       <Grid item xs={12} md={6}>
@@ -811,7 +924,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
             disablePast
             minDateTime={dayjs().add(1, 'minute')} // ensure the future time
             maxDateTime={dayjs(formData.startTime).subtract(1, 'minute')} // must be before start time
-            timeSteps={{hours: 1, minutes: 1}}
+            timeSteps={{ hours: 1, minutes: 1 }}
             sx={{ width: '100%' }}
             label='Registration End Time'
             value={formData.registrationEndTime ? dayjs(formData.registrationEndTime) : null}
@@ -866,31 +979,6 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
             inputRef={fieldRefs.maxPlayers}
           />
         )}
-      </Grid>
-
-      {/* Forward Type Selection - Add this above the Location section */}
-      <Grid item xs={6}>
-        <FormControl>
-          <FormLabel
-            variant='subtitle1'
-            sx={{
-              color: 'text.primary',
-              '&.Mui-focused': {
-                color: 'text.primary'
-              }
-            }}
-          >
-            Forward Type
-          </FormLabel>
-          <RadioGroup
-            row
-            value={formData.forwardtype} // Connect to form state
-            onChange={e => setFormData({ ...formData, forwardtype: e.target.value })}
-          >
-            <FormControlLabel value='auto' control={<Radio />} label='Auto' />
-            <FormControlLabel value='admin' control={<Radio />} label='Admin' />
-          </RadioGroup>
-        </FormControl>
       </Grid>
 
       {/* Location */}
@@ -1107,10 +1195,10 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                           if (formData.thumbnailPoster.startsWith('blob:')) {
                             URL.revokeObjectURL(formData.thumbnailPoster)
                           }
-                          setFormData(prev => ({
-                            ...prev,
-                            thumbnailPoster: ''
-                          }))
+                          let updatingFormData = { ...formData, thumbnailPoster: '' }
+                          setFormData(updatingFormData)
+                          setTouches(prev => ({ ...prev, thumbnailPoster: true })) // Mark field as touched
+                          validateField('thumbnailPoster', updatingFormData)
                         }}
                         sx={{ backgroundColor: 'rgba(0, 0, 0, 0.04)' }}
                       >
@@ -1124,7 +1212,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                     sx={{
                       height: '200px',
                       border: '2px dashed',
-                      borderColor: 'divider',
+                      borderColor: !!errors.thumbnailPoster && touches.thumbnailPoster ? 'red' :'divider',
                       borderRadius: 1,
                       display: 'flex',
                       alignItems: 'center',

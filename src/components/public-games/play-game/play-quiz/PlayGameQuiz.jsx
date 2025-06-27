@@ -8,7 +8,7 @@ import Timer, { formatTime } from '@/components/Timer'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { toast } from 'react-toastify'
-import './PlayGameQuiz'
+import './PlayGameQuiz.css'
 import GameEnded from '../GameEnded'
 import { AccessTime as TimeIcon } from '@mui/icons-material'
 import { useSession } from 'next-auth/react'
@@ -122,13 +122,11 @@ export default function PlayGameQuiz({ quiz, questions, game }) {
   const [gameEnded, setGameEnded] = useState(false)
   const [remainingTime, setRemainingTime] = useState(0)
 
-  const [questionTimers, setQuestionTimers] = useState({})
-  const performanceRef = useRef({
-    questionStartTimes: {}
-  })
+  // const performanceRef = useRef({
+  //   questionStartTimes: {}
+  // })
   const questionTimerInitializedRef = useRef(false)
 
-  const [questionTimer, setQuestionTimer] = useState(0)
   const [questionTimeLeft, setQuestionTimeLeft] = useState(0)
   const [lastAnswerTimes, setLastAnswerTimes] = useState({})
 
@@ -152,13 +150,13 @@ export default function PlayGameQuiz({ quiz, questions, game }) {
   }, [questions, startTime])
 
   // Track when a question is first displayed with high prercession
-  useEffect(() => {
-    const currentQuestionId = mappedQuestions[currentQuestionIndex]?._id
-    if (currentQuestionId && !performanceRef.current.questionStartTimes[currentQuestionId]) {
-      const now = new Date()
-      performanceRef.current.questionStartTimes[currentQuestionId] = now
-    }
-  }, [currentQuestionIndex])
+  // useEffect(() => {
+  //   const currentQuestionId = mappedQuestions[currentQuestionIndex]?._id
+  //   if (currentQuestionId && !performanceRef.current.questionStartTimes[currentQuestionId]) {
+  //     const now = new Date()
+  //     performanceRef.current.questionStartTimes[currentQuestionId] = now
+  //   }
+  // }, [currentQuestionIndex])
 
   const calculateRemainingTime = () => {
     const now = new Date()
@@ -187,9 +185,10 @@ export default function PlayGameQuiz({ quiz, questions, game }) {
   useEffect(() => {
     const currentQuestion = mappedQuestions[currentQuestionIndex]
     if (!currentQuestion) return
-    const timer = Number(currentQuestion?.data?.timerSeconds) || 10
-    setQuestionTimer(timer)
-    setQuestionTimeLeft(timer)
+    const questionExpiresAt = currentQuestion?.data?.expiresAt
+    const now = new Date()
+    const timerRemaining = Math.floor((questionExpiresAt - now) / 1000)
+    setQuestionTimeLeft(timerRemaining)
     questionTimerInitializedRef.current = false
   }, [currentQuestionIndex])
 
@@ -258,7 +257,10 @@ export default function PlayGameQuiz({ quiz, questions, game }) {
         return updatedAnswers
       })
     }
-    setSkippedQuestions(prev => [...prev, { question: mappedQuestions[currentQuestionIndex], index: currentQuestionIndex }])
+    setSkippedQuestions(prev => [
+      ...prev,
+      { question: mappedQuestions[currentQuestionIndex], index: currentQuestionIndex }
+    ])
     handleNext()
   }
 
@@ -294,8 +296,10 @@ export default function PlayGameQuiz({ quiz, questions, game }) {
   // Update calculateAndUpdateUserScore to use latest state directly
   async function calculateAndUpdateUserScore({ finish }) {
     const currentQuestion = mappedQuestions[currentQuestionIndex]
+    const curQuestionTimerSeconds = currentQuestion?.data?.timerSeconds || 0
+    const curQuestionExpiresAt = currentQuestion?.data?.expiresAt
     const selectedAnswer = selectedAnswers[currentQuestion._id]
-    const questionStart = performanceRef.current.questionStartTimes[currentQuestion._id]
+    const questionStart = new Date(curQuestionExpiresAt - curQuestionTimerSeconds * 1000)
     const lastAnswerTime = lastAnswerTimes[currentQuestion._id]
     const answerTime = lastAnswerTime && questionStart ? lastAnswerTime - questionStart : null // ms from question start to last answer change
     const answeredAt = lastAnswerTimes[currentQuestion._id] || null
@@ -309,7 +313,10 @@ export default function PlayGameQuiz({ quiz, questions, game }) {
           marks: 0,
           hintMarks: hintUsed ? currentQuestion?.data?.hintMarks : 0,
           hintUsed,
-          skipped: true
+          skipped: true,
+          answerTime: curQuestionTimerSeconds,
+          fffPoints: 0,
+          answeredAt: curQuestionExpiresAt || new Date().toISOString()
         },
         user: { id: session.user.id, email: session.user.email },
         finish: finish
@@ -320,34 +327,32 @@ export default function PlayGameQuiz({ quiz, questions, game }) {
     // Calculate marks for current question
     const calculatedMarks = calculateQuestionMarks(currentQuestion, selectedAnswer, hintUsed)
 
+    const maxFFF = 1000 // 1000 for more granularity
+    const fffPoints =
+      calculatedMarks > 0
+        ? Math.round(
+            maxFFF *
+              (1 - answerTime / (curQuestionTimerSeconds * 1000)) *
+              (calculatedMarks / currentQuestion?.data?.marks)
+          )
+        : 0
+
     // EndPoint
     await updateUserScore(game._id, {
       userAnswer: {
         question: currentQuestion._id,
         answer: selectedAnswer,
-        marks: calculatedMarks,
+        marks: calculatedMarks, // marks user got
         hintMarks: hintUsed ? currentQuestion?.data?.hintMarks : 0,
         hintUsed,
         skipped: false,
         answerTime: answerTime,
+        fffPoints,
         answeredAt: answeredAt
       },
       user: { id: session.user.id, email: session.user.email },
       finish: finish
     })
-
-    // Update the question timer with end time
-    if (questionTimers[currentQuestion._id]) {
-      const endTime = performance.now()
-      setQuestionTimers(prev => ({
-        ...prev,
-        [currentQuestion._id]: {
-          ...prev[currentQuestion._id],
-          endTime,
-          duration: (endTime - prev[currentQuestion._id].startTime) / 1000
-        }
-      }))
-    }
   }
 
   const handleExit = () => {
@@ -371,7 +376,7 @@ export default function PlayGameQuiz({ quiz, questions, game }) {
     } else if (mappedQuestions.length > 0) {
       // If no question is active, the game might have ended
       setGameEnded(true)
-    }else{
+    } else {
       setGameEnded(true)
     }
   }, [mappedQuestions, quiz._id, storageKey])
@@ -433,7 +438,6 @@ export default function PlayGameQuiz({ quiz, questions, game }) {
             hasHint={hasHint}
             isSkippable={isSkippable}
             handleSkip={handleSkip}
-            timer={questionTimer}
             timeLeft={questionTimeLeft}
           />
         ) : (
