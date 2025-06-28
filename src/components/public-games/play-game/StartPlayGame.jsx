@@ -64,6 +64,7 @@ const StartPlayGame = ({ game }) => {
   if (!data) return null
 
   const { quiz, questions, gameMode, ...restGameData } = data
+  console.log({data})
 
   const PlayGameQuizByMode = gameMode === 'live' ? PlayGameQuiz : AssessmentPlayGameQuiz
 

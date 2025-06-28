@@ -108,7 +108,7 @@ async function updateUserScore(gameId, { user, userAnswer, finish }) {
   }
 }
 
-export default function PlayGameQuiz({ quiz, questions, game }) {
+export default function PlayGameQuiz({ quiz, questions, game, onGameEnd }) {
   const { data: session } = useSession()
   // console.log('game data :  ', game)
   const router = useRouter()
@@ -172,10 +172,10 @@ export default function PlayGameQuiz({ quiz, questions, game }) {
       const newRemaining = calculateRemainingTime()
       setRemainingTime(newRemaining)
 
-      if (newRemaining <= 0) {
-        clearInterval(timerInterval)
-        handleGameEnd()
-      }
+      // if (newRemaining <= 0 && !gameEnded) {
+      //   clearInterval(timerInterval)
+      //   handleGameEnd()
+      // }
     }, 1000)
 
     return () => clearInterval(timerInterval)
@@ -265,10 +265,10 @@ export default function PlayGameQuiz({ quiz, questions, game }) {
   }
 
   async function handleGameEnd() {
-    // Hit backend endpoint
-    await calculateAndUpdateUserScore({ finish: true })
     setGameEnded(true)
     localStorage.removeItem(storageKey)
+    // Hit backend endpoint
+    await calculateAndUpdateUserScore({ finish: true })
   }
 
   async function handleNext() {
@@ -355,7 +355,7 @@ export default function PlayGameQuiz({ quiz, questions, game }) {
         finish: finish
       })
     } catch (error) {
-      console.log("Error updating user answer & score: ", error)
+      console.log('Error updating user answer & score: ', error)
     }
   }
 

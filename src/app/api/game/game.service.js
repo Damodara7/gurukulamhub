@@ -7,6 +7,7 @@ import SponsorshipModel from '../sponsorship/sponsorship.model'
 import QuestionsModel from '../question/question.model'
 import * as gameScheduler from './game.scheduler'
 import { ROLES_LOOKUP } from '@/configs/roles-lookup'
+import Player from '@/app/api/player/player.model'
 
 export const getOne = async (filter = {}) => {
   await connectMongo()
@@ -33,6 +34,14 @@ export const getOne = async (filter = {}) => {
       }
     }
 
+    // Add registeredUsers and participatedUsers from Player model
+    const [registeredUsers, participatedUsers] = await Promise.all([
+      Player.find({ game: game._id, status: 'registered' }).lean(),
+      Player.find({ game: game._id, status: { $in: ['participated', 'completed'] } }).lean()
+    ])
+    game.registeredUsers = registeredUsers || []
+    game.participatedUsers = participatedUsers || []
+
     return {
       status: 'success',
       result: game,
@@ -53,11 +62,25 @@ export const getAll = async (filter = {}) => {
     const games = await Game.find({ ...filter, isDeleted: false })
       .populate('quiz')
       .populate('createdBy', 'email firstName lastName roles')
-      .populate('registeredUsers.user')
-      .populate('participatedUsers.user')
       .populate('rewards.sponsors.sponsorshipId')
       .sort({ createdAt: -1 })
       .lean()
+
+    // For each game, add registeredUsers and participatedUsers from Player model
+    const gameIds = games.map(g => g._id)
+    const allPlayers = await Player.find({ game: { $in: gameIds } }).lean()
+    const playersByGame = {}
+    for (const player of allPlayers) {
+      const gid = player.game.toString()
+      if (!playersByGame[gid]) playersByGame[gid] = { registered: [], participated: [] }
+      if (player.status === 'registered') playersByGame[gid].registered.push(player)
+      if (player.status === 'participated' || player.status === 'completed') playersByGame[gid].participated.push(player)
+    }
+    for (const game of games) {
+      const gid = game._id.toString()
+      game.registeredUsers = playersByGame[gid]?.registered || []
+      game.participatedUsers = playersByGame[gid]?.participated || []
+    }
 
     return {
       status: 'success',
@@ -86,6 +109,22 @@ export const getAllPublic = async (filter = {}) => {
       .populate('rewards.sponsors.sponsorshipId')
       .sort({ createdAt: -1 })
       .lean()
+
+    // For each game, add registeredUsers and participatedUsers from Player model
+    const gameIds = games.map(g => g._id)
+    const allPlayers = await Player.find({ game: { $in: gameIds } }).lean()
+    const playersByGame = {}
+    for (const player of allPlayers) {
+      const gid = player.game.toString()
+      if (!playersByGame[gid]) playersByGame[gid] = { registered: [], participated: [] }
+      if (player.status === 'registered') playersByGame[gid].registered.push(player)
+      if (player.status === 'participated' || player.status === 'completed') playersByGame[gid].participated.push(player)
+    }
+    for (const game of games) {
+      const gid = game._id.toString()
+      game.registeredUsers = playersByGame[gid]?.registered || []
+      game.participatedUsers = playersByGame[gid]?.participated || []
+    }
 
     return {
       status: 'success',
@@ -119,6 +158,22 @@ export const getAllByEmail = async (email, filter = {}) => {
       .sort({ startTime: -1 })
       .lean()
 
+    // For each game, add registeredUsers and participatedUsers from Player model
+    const gameIds = games.map(g => g._id)
+    const allPlayers = await Player.find({ game: { $in: gameIds } }).lean()
+    const playersByGame = {}
+    for (const player of allPlayers) {
+      const gid = player.game.toString()
+      if (!playersByGame[gid]) playersByGame[gid] = { registered: [], participated: [] }
+      if (player.status === 'registered') playersByGame[gid].registered.push(player)
+      if (player.status === 'participated' || player.status === 'completed') playersByGame[gid].participated.push(player)
+    }
+    for (const game of games) {
+      const gid = game._id.toString()
+      game.registeredUsers = playersByGame[gid]?.registered || []
+      game.participatedUsers = playersByGame[gid]?.participated || []
+    }
+
     return {
       status: 'success',
       result: games,
@@ -149,7 +204,7 @@ export const addOne = async gameData => {
     // Fetch all questions for this quiz and language
     const questions = await QuestionsModel.find({ quizId, languageCode }).lean()
     // Adding questions count field to gameData
-    updateData.questionsCount = questions?.length
+    gameData.questionsCount = questions?.length
 
     // If live mode, calculate duration from questions
     if (gameData.gameMode === 'live') {
@@ -460,6 +515,9 @@ export const deleteOne = async (gameId, { email }) => {
     // Save the updated game
     const deletedGame = await existingGame.save()
 
+    // Delete all players for this game
+    await Player.deleteMany({ game: gameId })
+
     // Revert sponsorships
     await revertSponsorshipsForGame(deletedGame)
 
@@ -562,7 +620,6 @@ export const approveGame = async (gameId, updateData) => {
 export const joinGame = async (gameId, userData) => {
   await connectMongo()
   try {
-    console.log({ userData })
     const user = await User.findOne({ email: userData?.email })
     if (!user) {
       return {
@@ -573,75 +630,56 @@ export const joinGame = async (gameId, userData) => {
     }
     userData.id = user._id
 
-    // Validate input
-    if (!userData?.id || !userData?.email) {
+    // Check if player already exists for this game
+    let player = await Player.findOne({ game: gameId, email: userData?.email })
+    if (player) {
+      // Fetch latest registered and participated users
+      const [registeredUsers, participatedUsers] = await Promise.all([
+        Player.find({ game: gameId, status: 'registered' }).lean(),
+        Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } }).lean()
+      ])
+      const game = await Game.findById(gameId).lean()
       return {
-        status: 'error',
-        result: null,
-        message: 'Missing user ID or email'
+        status: 'success',
+        result: { ...game, registeredUsers, participatedUsers },
+        message: player.status === 'registered' ? 'User is already registered for this game' : 'User already started/participated in this game'
       }
     }
 
-    const game = await Game.findOne({ _id: gameId, status: { $in: ['approved', 'lobby', 'live'] }, isDeleted: false })
+    // Check if game exists and is joinable
+    const game = await Game.findOne({ _id: gameId, status: { $in: ['approved', 'lobby', 'live'] }, isDeleted: false }).lean()
     if (!game) {
       return {
         status: 'error',
         result: null,
-        message: 'Game not found'
+        message: 'Game not found or not joinable'
       }
     }
 
-    // Check game status
-    const allowedStatuses = ['approved', 'lobby', 'live']
-    if (!allowedStatuses.includes(game.status)) {
-      return {
-        status: 'error',
-        result: null,
-        message: 'Game is not currently accepting participants'
-      }
-    }
+    // Create new player document with status 'registered'
+    player = new Player({
+      user: user._id,
+      game: gameId,
+      email: user.email,
+      registeredAt: new Date(),
+      score: 0,
+      fffPoints: 0,
+      answers: [],
+      completed: false,
+      status: 'registered',
+      joinedAt: null
+    })
+    await player.save()
 
-    // Check registration requirements
-    if (game.requireRegistration || !game.requireRegistration) {
-      //   if (game.registrationEndTime && new Date() > game.registrationEndTime) {
-      //     return {
-      //       status: 'error',
-      //       result: null,
-      //       message: 'Registration period has ended'
-      //     }
-      //   }
-
-      // Add to registered users if not already registered
-      const isRegistered = game.registeredUsers.some(u => u.user.toString() === userData.id.toString())
-
-      if (!isRegistered) {
-        game.registeredUsers.push({
-          user: userData.id,
-          email: userData.email,
-          registeredAt: new Date()
-        })
-
-        await game.save()
-
-        return {
-          status: 'success',
-          result: game,
-          message: 'Successfully registered for game'
-        }
-      } else {
-        return {
-          status: 'success',
-          result: game,
-          message: 'User is already registered for this game'
-        }
-      }
-    }
-
-    // If no registration required, just return success
+    // Fetch latest registered and participated users after registration
+    const [registeredUsers, participatedUsers] = await Promise.all([
+      Player.find({ game: gameId, status: 'registered' }).lean(),
+      Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } }).lean()
+    ])
     return {
       status: 'success',
-      result: game,
-      message: 'No registration required for this game'
+      result: { ...game, registeredUsers, participatedUsers },
+      message: 'Successfully registered for game'
     }
   } catch (error) {
     return {
@@ -652,208 +690,62 @@ export const joinGame = async (gameId, userData) => {
   }
 }
 
-export const updatePlayerProgress = async (gameId, { user, userAnswer, finish }) => {
-  await connectMongo()
-  try {
-    // Allow updates for both 'live' and 'completed' games
-    const game = await Game.findOne({ _id: gameId, status: "live", isDeleted: false })
-    if (!game) {
-      console.error(`[updatePlayerProgress] Game not found for id: ${gameId}`)
-      return {
-        status: 'error',
-        result: null,
-        message: 'Game not found'
-      }
-    }
-
-    // Find player index in participated users by user ID or email
-    const playerIndex = game.participatedUsers.findIndex(
-      p => p.email === user.email
-    )
-
-    if (playerIndex === -1) {
-      console.error(`[updatePlayerProgress] Player not found in game: ${user.email}`)
-      return {
-        status: 'error',
-        result: null,
-        message: 'Player not found in game'
-      }
-    }
-
-    // Prepare answer data
-    const answerData = {
-      ...userAnswer
-    }
-
-    // Find if answer already exists for this question
-    const player = game.participatedUsers[playerIndex]
-    const existingAnswerIndex = player.answers.findIndex(a => a.question === userAnswer.question)
-
-    let scoreDelta = 0
-    let fffPointsDelta = 0
-    let updateAnswers
-
-    if (existingAnswerIndex > -1) {
-      // Update existing answer
-      const existingAnswer = player.answers[existingAnswerIndex]
-      scoreDelta = (answerData.marks || 0) - (existingAnswer.marks || 0)
-      fffPointsDelta = (answerData.fffPoints || 0) - (existingAnswer.fffPoints || 0)
-      updateAnswers = [...player.answers]
-      updateAnswers[existingAnswerIndex] = answerData
-    } else {
-      // Add new answer
-      scoreDelta = answerData.marks || 0
-      fffPointsDelta = answerData.fffPoints || 0
-      updateAnswers = [...player.answers, answerData]
-    }
-
-    // Prepare update object for atomic update
-    const updateObj = {
-      $set: {
-        [`participatedUsers.${playerIndex}.answers`]: updateAnswers,
-      },
-      $inc: {
-        [`participatedUsers.${playerIndex}.score`]: scoreDelta,
-        [`participatedUsers.${playerIndex}.fffPoints`]: fffPointsDelta
-      }
-    }
-
-    if (finish) {
-      updateObj.$set[`participatedUsers.${playerIndex}.completed`] = true
-      updateObj.$set[`participatedUsers.${playerIndex}.finishedAt`] = new Date()
-      if (!player.joinedAt) {
-        updateObj.$set[`participatedUsers.${playerIndex}.joinedAt`] = new Date()
-      }
-    }
-
-    // Perform atomic update
-    const updatedGame = await Game.findOneAndUpdate(
-      { _id: gameId, status: "live", isDeleted: false },
-      updateObj,
-      { new: true }
-    )
-
-    if (!updatedGame) {
-      console.error(`[updatePlayerProgress] Failed to update game for id: ${gameId}`)
-      return {
-        status: 'error',
-        result: null,
-        message: 'Failed to update player progress'
-      }
-    }
-
-    return {
-      status: 'success',
-      result: updatedGame,
-      message: 'Player progress updated successfully'
-    }
-  } catch (error) {
-    console.error('[updatePlayerProgress] error updating player progress: ', error)
-    return {
-      status: 'error',
-      result: null,
-      message: error.message || 'Failed to update player progress'
-    }
-  }
-}
-
 export const startGame = async (gameId, userData) => {
   await connectMongo()
   try {
-    const bufferMs = 5000 // 5 seconds
-    const now = new Date()
-    const oneSecondBefore = new Date(now.getTime() - bufferMs)
-    const oneSecondAfter = new Date(now.getTime() + bufferMs)
-
-    const game = await Game.findOne({
-      _id: gameId,
-      isDeleted: false,
-      $or: [
-        { status: 'live' },
-        {
-          status: 'lobby',
-          startTime: {
-            $gte: oneSecondBefore,
-            $lte: oneSecondAfter
-          }
-        }
-      ]
-    })
-      .populate('registeredUsers.user')
-      .populate('participatedUsers.user')
-      .populate('quiz')
-      .lean() // Add .lean() to get plain JavaScript object
-
-    if (!game) {
-      return {
-        status: 'error',
-        result: null,
-        message: 'Game not found'
-      }
-    }
-
     const user = await User.findOne({ email: userData?.email })
     if (!user) {
       return {
         status: 'error',
         result: null,
-        message: 'User not found'
+        message: 'User with this email does not exist.'
       }
     }
     userData.id = user._id
 
-    // Check if user is registered
-    const isUserRegistered = game.registeredUsers.some(ru => ru.user._id.toString() === userData.id.toString())
-
-    if (!isUserRegistered) {
+    let player = await Player.findOne({ game: gameId, email: userData?.email })
+    if (!player) {
       return {
         status: 'error',
         result: null,
         message: 'User is not registered for this game'
       }
     }
-
-    // Check if user is already participating
-    const isAlreadyParticipating = game.participatedUsers?.some(pu => pu.user._id.toString() === userData.id.toString())
-
-    // Add current user to participatedUsers if not already there
-    if (!isAlreadyParticipating) {
-      game.participatedUsers.push({
-        user: userData.id,
-        email: userData.email || '',
-        joinedAt: new Date(),
-        score: 0,
-        completed: false,
-        finishedAt: null
-      })
-
-      // Need to use the model to save since we used lean()
-      await Game.updateOne(
-        { _id: gameId },
-        { $push: { participatedUsers: game.participatedUsers[game.participatedUsers.length - 1] } }
-      )
+    if (player.status === 'participated' || player.status === 'completed') {
+      // Fetch latest registered and participated users
+      const [registeredUsers, participatedUsers] = await Promise.all([
+        Player.find({ game: gameId, status: 'registered' }).lean(),
+        Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } }).lean()
+      ])
+      const game = await Game.findById(gameId).lean()
+      const questions = await QuestionsModel.find({ quizId: game.quiz, languageCode: game.quiz.language?.code }).lean()
+      return {
+        status: 'success',
+        result: { ...game, questions, registeredUsers, participatedUsers },
+        message: 'User already started or completed this game'
+      }
     }
-
+    // Update status to participated
+    player.status = 'participated'
+    player.joinedAt = new Date()
+    await player.save()
     // Get questions
+    const game = await Game.findById(gameId).populate('quiz').lean()
     const quizId = game.quiz._id
     const languageCode = game.quiz.language.code
-    const questions = await QuestionsModel.find({
-      quizId: quizId,
-      languageCode: languageCode
-    }).lean()
-
-    // Create clean response object
-    const response = {
-      ...game,
-      questions
-    }
-
+    const questions = await QuestionsModel.find({ quizId, languageCode }).lean()
+    // Fetch latest registered and participated users after participation
+    const [registeredUsers, participatedUsers] = await Promise.all([
+      Player.find({ game: gameId, status: 'registered' }).lean(),
+      Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } }).lean()
+    ])
     return {
       status: 'success',
-      result: response,
-      message: 'Game started successfully and user added to participants'
+      result: { ...game, questions, registeredUsers, participatedUsers },
+      message: 'User started participated in game'
     }
   } catch (error) {
+    console.log("error starting game: ", error)
     return {
       status: 'error',
       result: null,
@@ -862,27 +754,108 @@ export const startGame = async (gameId, userData) => {
   }
 }
 
-export const getLeaderboard = async gameId => {
+export const updatePlayerProgress = async (gameId, { user, userAnswer, finish }) => {
+  await connectMongo()
   try {
-    const game = await Game.findById(gameId)
-    if (!game) {
-      return { status: 'success', result: null, message: 'Game not found' }
+    // Find player by game and user
+    const player = await Player.findOne({ game: gameId, email: user.email })
+    if (!player) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Player not found in game'
+      }
+    }
+    if (player.status === 'completed') {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Player already completed the game.'
+      }
+    }
+    if (player.status === 'registered') {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Player has not started the game yet'
+      }
+    }
+    // Prepare answer data
+    const answerData = { ...userAnswer }
+    // Find if answer already exists for this question
+    const existingAnswerIndex = player.answers.findIndex(a => a.question.toString() === userAnswer.question.toString())
+
+    let scoreDelta = 0
+    let fffPointsDelta = 0
+    if (existingAnswerIndex > -1) {
+      // Update existing answer
+      const existingAnswer = player.answers[existingAnswerIndex]
+      scoreDelta = (answerData.marks || 0) - (existingAnswer.marks || 0)
+      fffPointsDelta = (answerData.fffPoints || 0) - (existingAnswer.fffPoints || 0)
+      player.answers[existingAnswerIndex] = answerData
+    } else {
+      // Add new answer
+      scoreDelta = answerData.marks || 0
+      fffPointsDelta = answerData.fffPoints || 0
+      player.answers.push(answerData)
+    }
+    player.score += scoreDelta
+    player.fffPoints = (player.fffPoints || 0) + fffPointsDelta
+
+    if (finish) {
+      player.completed = true
+      player.status = 'completed'
+      player.finishedAt = new Date()
+      if (!player.registeredAt) {
+        player.registeredAt = new Date()
+      }
     }
 
-    const leaderboard = game.participatedUsers
-      // .filter(p => p.completed)
-      .map(p => ({
-        ...p,
-        email: p.email,
-        score: p.score,
-        fffPoints: p.fffPoints,
-        totalAnswerTime: p.answers?.reduce((sum, a) => sum + (a?.answerTime || 0), 0)
-      }))
-      .sort((a, b) => b.fffPoints - a.fffPoints)
+    await player.save()
 
-    return { status: 'success', result: leaderboard, message: 'Game not found' }
+    // Fetch latest game, registeredUsers, and participatedUsers
+    const game = await Game.findById(gameId).lean()
+    const [registeredUsers, participatedUsers] = await Promise.all([
+      Player.find({ game: gameId, status: 'registered' }).lean(),
+      Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } }).lean()
+    ])
+
+    return {
+      status: 'success',
+      result: { ...game, registeredUsers, participatedUsers },
+      message: 'Player progress updated successfully'
+    }
   } catch (error) {
-    return { status: 'success', result: null, message: error.message }
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to update player progress'
+    }
+  }
+}
+
+export const getLeaderboard = async gameId => {
+  await connectMongo()
+  try {
+    const players = await Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } })
+      .sort({ fffPoints: -1 })
+      .lean()
+    // Add totalAnswerTime for each player
+    const leaderboard = players.map(p => ({
+      ...p,
+      totalAnswerTime: p.answers?.reduce((sum, a) => sum + (a?.answerTime || 0), 0)
+    }))
+    return {
+      status: 'success',
+      result: leaderboard,
+      message: 'Leaderboard fetched successfully'
+    }
+  } catch (error) {
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to fetch leaderboard'
+    }
   }
 }
 // ********** Player Related Services - END ***********

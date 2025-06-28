@@ -150,14 +150,14 @@ const gameSchema = new mongoose.Schema(
     registrationEndTime: {
       type: Date
     },
-    registeredUsers: {
-      type: [registeredUserSchema],
-      default: []
-    },
-    participatedUsers: {
-      type: [participatedUserSchema],
-      default: []
-    },
+    // registeredUsers: {
+    //   type: [registeredUserSchema],
+    //   default: []
+    // },
+    // participatedUsers: {
+    //   type: [participatedUserSchema],
+    //   default: []
+    // },
     limitPlayers: Boolean,
     maxPlayers: {
       type: Number,

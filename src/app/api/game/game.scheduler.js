@@ -1,5 +1,6 @@
 import cron from 'node-cron'
 import Game from './game.model' // Adjust path to your Game model
+import Player from '@/app/api/player/player.model'
 
 // Object to store our scheduled tasks
 const gameStatusTasks = {}
@@ -201,23 +202,24 @@ async function scheduleCompletion(gameId, endTime) {
           console.log(`📌 Moving game ${gameId} to completed status`)
 
           const currentTime = new Date()
+          // Update the game status
           const updatedGame = await Game.findOneAndUpdate(
             {
               _id: gameId,
               isDeleted: false
             },
             {
-              $set: { status: 'completed' },
-              // Only update users who haven't completed the game yet
-              $set: {
-                'participatedUsers.$[elem].completed': true,
-                'participatedUsers.$[elem].finishedAt': currentTime
-              }
+              $set: { status: 'completed' }
             },
             {
-              new: true,
-              arrayFilters: [{ 'elem.completed': false }] // Only target uncompleted users
+              new: true
             }
+          )
+
+          // Update all Player documents for this game with status 'participated' to completed
+          await Player.updateMany(
+            { game: gameId, status: 'participated' },
+            { $set: { status: 'completed', completed: true, finishedAt: currentTime } }
           )
 
           if (updatedGame) {
