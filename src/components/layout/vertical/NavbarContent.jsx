@@ -1,5 +1,7 @@
 // Third-party Imports
+'use client'
 import classnames from 'classnames'
+import { usePathname } from 'next/navigation'
 
 // Component Imports
 import NavToggle from './NavToggle'
@@ -173,6 +175,11 @@ const notifications = [
 ]
 
 const NavbarContent = () => {
+  // Get the current location
+  const pathname = usePathname();
+
+  const isJoinGamePage = pathname?.includes('/public-games/join');
+
   return (
     <div className={classnames(verticalLayoutClasses.navbarContent, 'flex items-center justify-between gap-4 is-full')}>
       <div className='flex items-center gap-[5px]'>
@@ -180,7 +187,12 @@ const NavbarContent = () => {
         <NavSearch />
       </div>
       <div className='flex items-center'>
-        <JoinGameButton sx={{fontSize:"small",padding:"5px"}} style={{color: 'white'}} href='/public-games/join' />
+        <JoinGameButton
+          sx={{ fontSize: 'small', padding: '5px' }}
+          style={{ color: 'white' }}
+          href='/public-games/join'
+          disabled={isJoinGamePage}
+        />
         {/* <LanguageDropdown /> */}
         <ModeDropdown />
         <MetricsDropdown metrics={metrics} />

@@ -1,5 +1,4 @@
 'use client'
-
 import React, { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useForm, Controller } from 'react-hook-form'
@@ -44,7 +43,7 @@ function CreateQuiz() {
   const { uuid, regenerateUUID, getUUID } = useUUID()
   const [formData, setFormData] = useState({})
   const [loading, setLoading] = useState(false)
-
+  const [formSubmitted, setFormSubmitted] = useState(false)
   const user = session?.user
 
   const handleInputChange = event => {
@@ -52,21 +51,22 @@ function CreateQuiz() {
     setFormData({ ...formData, [name]: value })
   }
 
-  // Define a yup schema for form validation
+  // Yup validation schema
   const createQuizSchema = yup.object().shape({
-    //quizId: yup.string().min(3).max(10).notRequired(),
-    title: yup.string().min(3).required(),
-    details: yup.string().min(10).required()
-    // Add more fields and validation rules as needed
+    title: yup.string().min(3, 'Title must be at least 3 characters').required('Quiz title is required'),
+    details: yup.string().min(10, 'Details must be at least 10 characters').required('Quiz details are required'),
+    syllabus: yup.string().required('Quiz syllabus is required'),
+    contextIds: yup.array().min(1, 'At least one context must be selected'),
+    thumbnail: yup.string().required('Thumbnail is required')
   })
 
   const createQuizDefaultValues = {
-    details: 'test details',
+    details: '',
     documents: [],
     courseLinks: [],
     syllabus: '',
     id: getUUID('QZ_'),
-    title: 'My Quiz',
+    title: '',
     tags: [],
     owner: user?.email,
     privacy: 'PUBLIC',
@@ -164,17 +164,16 @@ function CreateQuiz() {
     }
   }
 
-  const onSubmit = async () => {
-    const formValues = getValues()
-    console.log('formValues: ', formValues) // Access form values here
-    setLoading(true)
+  const [fieldErrors, setFieldErrors] = useState({
+    title: false,
+    contextIds: false,
+    details: false,
+    syllabus: false,
+    thumbnail: false
+  })
 
-    // Validations
-    if (formValues.contextIds?.length === 0) {
-      toast.error('Please select the quiz context')
-      setLoading(false)
-      return
-    }
+  const onSubmit = async () => {
+    setLoading(true)
 
     try {
       const result = await RestApi.post(ApiUrls.v0.USERS_QUIZ, formValues)
@@ -195,6 +194,24 @@ function CreateQuiz() {
       setLoading(false)
     }
   }
+  // Button click handler
+  const onClickCreate = async () => {
+    const isValid = await trigger()
+    if (!isValid) {
+      toast.error('Please fix the validation errors.')
+      return
+    }
+    handleSubmit(onSubmit)()
+  }
+
+  // // Handler to pass to child component in parent
+  // const handleFieldInteraction = (fieldName, forceError = false) => {
+  //   setFieldErrors(prev => ({
+  //     ...prev,
+  //     [fieldName]: forceError ? true : false
+  //   }))
+  // }
+
   return (
     <>
       <GoBackButton />
@@ -214,10 +231,24 @@ function CreateQuiz() {
             errors={errors}
             formData={getValues()}
             quiz={getValues()}
-            setValue={setValue}
+            // setValue={setValue}
+            // fieldErrors={fieldErrors} // Pass validation props
+            // formSubmitted={formSubmitted}
+            // onFieldInteraction={handleFieldInteraction}
           />
           <Stack className='w-full' flexDirection='row' alignItems='center' justifyContent='flex-end'>
             <Button
+              sx={{ mt: 2 }}
+              variant='contained'
+              style={{ color: 'white' }}
+              color='primary'
+              onClick={onClickCreate}
+              disabled={loading}
+            >
+              {loading ? 'Creating...' : 'Create Quiz'}
+            </Button>
+            {/* <Button
+              sx={{ mt: 2 }}
               variant='contained'
               style={{ color: 'white' }}
               color='primary'
@@ -226,7 +257,7 @@ function CreateQuiz() {
               disabled={loading}
             >
               {loading ? 'Creating...' : 'Create Quiz'}
-            </Button>
+            </Button> */}
           </Stack>
         </CardContent>
       </Card>

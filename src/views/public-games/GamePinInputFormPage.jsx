@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import * as RestApi from '@/utils/restApiUtil'
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter ,useSearchParams } from 'next/navigation'
 import { API_URLS } from '@/configs/apiConfig'
 import { Box, Typography, Card, CardContent, TextField, Button, Alert, CircularProgress } from '@mui/material'
 import { toast } from 'react-toastify'
@@ -15,17 +15,16 @@ const GamePinInputFormPage = () => {
   const [error, setError] = useState(null)
   const { data: session } = useSession()
   const router = useRouter()
+  const searchParams = useSearchParams() 
+  
+  //check for the gamepin in url when component mounts
+  useEffect(()=>{
+    const urlGamePin = searchParams.get('gamepin')
+    if(urlGamePin && validateGamePin(urlGamePin)){
+      setGamePin(urlGamePin)
+    }
+  },[searchParams])
 
-  // Refs for the input fields
-  // const gamePinRef = React.useRef(null)
-  // const emailRef = React.useRef(null)
-
-  // Clear errors when inputs are focused
-  // useEffect(() => {
-  //   setError(null)
-  // }, [gamePin , email])
-
-  // Validate game PIN is exactly 6 digits
   const validateGamePin = pin => {
     return /^\d{6}$/.test(pin)
   }
@@ -123,7 +122,7 @@ const GamePinInputFormPage = () => {
       {/* Header */}
       <Box sx={{ width: '100%', maxWidth: '800px', textAlign: 'center', mb: 8 }}>
         <Typography variant='h2' color='primary.main' fontWeight='bold'>
-          Gurukul Hub
+          Gurukulam Hub
         </Typography>
         <Typography variant='subtitle1' color='text.secondary' mt={2}>
           Enter Game Pin and Email to Join the Game
