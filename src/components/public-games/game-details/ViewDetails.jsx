@@ -22,6 +22,7 @@ import { format } from 'date-fns'
 import ReactPlayer from 'react-player'
 import ChevronToggleComponent from '@/components/media-viewer/ChevronToggleComponent'
 import Language from '@mui/icons-material/Language'
+import ShareGamePopup from '@components/public-games/all-games/ShareGamePopup';
 import {
   AccessTime,
   ListAlt,
@@ -35,7 +36,8 @@ import {
   PeopleAlt,
   AttachMoney,
   CardGiftcard,
-  ContentCopy
+  ContentCopy,
+  Share as ShareIcon
 } from '@mui/icons-material'
 import VideoAd from '@/views/apps/advertisements/VideoAd/VideoAd'
 import ImagePopup from '@/components/ImagePopup'
@@ -49,13 +51,14 @@ const ViewDetails = ({ game }) => {
   const theme = useTheme()
   const [copyTooltip, setCopyTooltip] = useState('Copy PIN')
   const [expandedReward, setExpandedReward] = useState(null)
-  
+  const [sharePopupOpen, setSharePopupOpen] = useState(false)
+
   const handleCopyPin = () => {
     navigator.clipboard.writeText(game.pin)
     setCopyTooltip('Copied!')
     setTimeout(() => setCopyTooltip('Copy PIN'), 2000)
   }
-  
+
   console.log('we are getting game data', game)
   if (!game) {
     return (
@@ -64,7 +67,7 @@ const ViewDetails = ({ game }) => {
       </Container>
     )
   }
-  console.log('game data', game);
+  console.log('game data', game)
   const getStatusChip = () => {
     const statusConfig = {
       created: { color: 'default', label: 'Pending', icon: <AccessTime /> },
@@ -93,7 +96,7 @@ const ViewDetails = ({ game }) => {
       />
     )
   }
-  
+
   return (
     <Container maxWidth='lg' sx={{ py: 4 }}>
       <Box
@@ -115,22 +118,43 @@ const ViewDetails = ({ game }) => {
             order: { xs: 1, md: 1 }
           }}
         >
-          <Card sx={{ borderRadius: 2, order: 1, p: 3 }}>
-            <Stack spacing={3}>
+          <Card sx={{ borderRadius: 2, order: 1, p: { xs: 2, md: 3 } }}>
+            <Stack spacing={{ xs: 2, md: 3 }}>
               {/* Title and Status */}
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant='h4' fontWeight={700}>
+              <Box
+                sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: { xs: 1, md: 2 } }}
+              >
+                <Typography
+                  variant={"h4"}
+                  sx={{
+                    fontSize:{xs:'medium' , md:'large'}
+                  }}
+                >
                   {game.title}
                 </Typography>
-                <Stack direction='row' alignItems='center' spacing={3}>
+                <Stack direction='row' alignItems='center' spacing={{ xs: 2, md: 3 }}>
                   {getStatusChip()}
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Typography variant='body2' color='text.primary'>
                       PIN: {game.pin}
                     </Typography>
                     <Tooltip placement='top' title={copyTooltip}>
-                      <IconButton onClick={handleCopyPin} size="small">
-                        <ContentCopy fontSize="small" />
+                      <IconButton onClick={handleCopyPin} size='small' sx={{ p: { xs: 1, md: 2 } }}>
+                        <ContentCopy fontSize='small' />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title='Share game'>
+                      <IconButton
+                        size='small'
+                        onClick={() => setSharePopupOpen(true)}
+                        sx={{
+                          p: { xs: 1, md: 2 },
+                          '&:hover': {
+                            bgcolor: 'action.hover'
+                          }
+                        }}
+                      >
+                        <ShareIcon fontSize='small' />
                       </IconButton>
                     </Tooltip>
                   </Box>
@@ -154,6 +178,7 @@ const ViewDetails = ({ game }) => {
                 )}
               </Stack>
             </Stack>
+            <ShareGamePopup open={sharePopupOpen} onClose={() => setSharePopupOpen(false)} game={game} />
           </Card>
           {/* Quiz Details */}
           <Card sx={{ borderRadius: 2, p: 3, order: { md: 2 }, display: { xs: 'none', md: 'block' } }}>
@@ -391,105 +416,114 @@ const ViewDetails = ({ game }) => {
                 <Divider />
                 {/* Rewards - New Detailed Card Layout */}
                 <Box mt={3}>
-                  <Box display="flex" alignItems="center" mb={2}>
+                  <Box display='flex' alignItems='center' mb={2}>
                     <Typography variant='h6' fontWeight={600} mr={1}>
                       Rewards
                     </Typography>
-                    <Star color="warning" fontSize="medium" />
+                    <Star color='warning' fontSize='medium' />
                   </Box>
                   {game?.rewards?.length > 0 ? (
                     <Stack spacing={2}>
-                      {game.rewards?.sort((a, b) => a.position - b.position)?.map((reward) => (
-                        <Card
-                          key={reward.position}
-                          sx={{
-                            borderRadius: 2,
-                            boxShadow: 2,
-                            p: { xs: 2, md: 3 },
-                            bgcolor: 'background.paper',
-                            width: '100%'
-                          }}
-                        >
-                          <Box
+                      {game.rewards
+                        ?.sort((a, b) => a.position - b.position)
+                        ?.map(reward => (
+                          <Card
+                            key={reward.position}
                             sx={{
-                              display: 'flex',
-                              flexDirection: { xs: 'column', sm: 'row' },
-                              alignItems: { xs: 'flex-start', sm: 'center' },
-                              gap: 2,
+                              borderRadius: 2,
+                              boxShadow: 2,
+                              p: { xs: 2, md: 3 },
+                              bgcolor: 'background.paper',
                               width: '100%'
                             }}
                           >
-                            <Avatar
+                            <Box
                               sx={{
-                                bgcolor: positionColors[reward.position],
-                                width: 40,
-                                height: 40,
-                                fontSize: '1.1rem',
-                                fontWeight: 'bold',
-                                mr: { sm: 2 },
-                                mb: { xs: 1, sm: 0 }
+                                display: 'flex',
+                                flexDirection: { xs: 'column', sm: 'row' },
+                                alignItems: { xs: 'flex-start', sm: 'center' },
+                                gap: 2,
+                                width: '100%'
                               }}
                             >
-                              {getOrdinalSuffix(reward.position)}
-                            </Avatar>
-                            <Box sx={{ flex: 1, minWidth: 0 }}>
-                              <Typography variant='subtitle1' fontWeight={600}>
-                                {reward.numberOfWinnersForThisPosition} Winner{reward.numberOfWinnersForThisPosition !== 1 ? 's' : ''}
-                              </Typography>
-                              {reward.sponsors[0]?.rewardDetails?.rewardType === 'cash' ? (
-                                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>
-                                  <AttachMoney fontSize='small' color='success' />
-                                  <Typography variant='body2'>
-                                    Cash Prize: {reward.rewardValuePerWinner} {reward.sponsors[0]?.rewardDetails?.currency || 'INR'} (per winner)
-                                  </Typography>
-                                </Box>
-                              ) : reward.sponsors[0]?.rewardDetails?.rewardType === 'physicalGift' ? (
-                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                              <Avatar
+                                sx={{
+                                  bgcolor: positionColors[reward.position],
+                                  width: 40,
+                                  height: 40,
+                                  fontSize: '1.1rem',
+                                  fontWeight: 'bold',
+                                  mr: { sm: 2 },
+                                  mb: { xs: 1, sm: 0 }
+                                }}
+                              >
+                                {getOrdinalSuffix(reward.position)}
+                              </Avatar>
+                              <Box sx={{ flex: 1, minWidth: 0 }}>
+                                <Typography variant='subtitle1' fontWeight={600}>
+                                  {reward.numberOfWinnersForThisPosition} Winner
+                                  {reward.numberOfWinnersForThisPosition !== 1 ? 's' : ''}
+                                </Typography>
+                                {reward.sponsors[0]?.rewardDetails?.rewardType === 'cash' ? (
                                   <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>
-                                    <CardGiftcard fontSize='small' color='warning' />
+                                    <AttachMoney fontSize='small' color='success' />
                                     <Typography variant='body2'>
-                                      Physical Gift: {reward.sponsors[0]?.rewardDetails?.nonCashReward}
+                                      Cash Prize: {reward.rewardValuePerWinner}{' '}
+                                      {reward.sponsors[0]?.rewardDetails?.currency || 'INR'} (per winner)
                                     </Typography>
                                   </Box>
-                                  <Typography variant='body2' color='text.secondary' sx={{ ml: 3 }}>
-                                    Worth: {reward.sponsors[0]?.rewardDetails?.rewardValuePerItem || reward?.rewardValuePerWinner} {reward.sponsors[0]?.rewardDetails?.currency || 'INR'}
-                                  </Typography>
-                                </Box>
-                              ) : (
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                  <Star fontSize='small' color='info' />
-                                  <Typography variant='body2'>
-                                    Custom Reward
-                                  </Typography>
-                                </Box>
+                                ) : reward.sponsors[0]?.rewardDetails?.rewardType === 'physicalGift' ? (
+                                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>
+                                      <CardGiftcard fontSize='small' color='warning' />
+                                      <Typography variant='body2'>
+                                        Physical Gift: {reward.sponsors[0]?.rewardDetails?.nonCashReward}
+                                      </Typography>
+                                    </Box>
+                                    <Typography variant='body2' color='text.secondary' sx={{ ml: 3 }}>
+                                      Worth:{' '}
+                                      {reward.sponsors[0]?.rewardDetails?.rewardValuePerItem ||
+                                        reward?.rewardValuePerWinner}{' '}
+                                      {reward.sponsors[0]?.rewardDetails?.currency || 'INR'}
+                                    </Typography>
+                                  </Box>
+                                ) : (
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                    <Star fontSize='small' color='info' />
+                                    <Typography variant='body2'>Custom Reward</Typography>
+                                  </Box>
+                                )}
+                              </Box>
+                              {/* Toggle Sponsors */}
+                              {reward.sponsors?.length > 0 && (
+                                <IconButton
+                                  onClick={() =>
+                                    setExpandedReward(expandedReward === reward.position ? null : reward.position)
+                                  }
+                                  size='small'
+                                  sx={{ alignSelf: { xs: 'flex-end', sm: 'center' } }}
+                                  aria-label={expandedReward === reward.position ? 'Hide sponsors' : 'Show sponsors'}
+                                >
+                                  {expandedReward === reward.position ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                                </IconButton>
                               )}
                             </Box>
-                            {/* Toggle Sponsors */}
-                            {reward.sponsors?.length > 0 && (
-                              <IconButton
-                                onClick={() => setExpandedReward(expandedReward === reward.position ? null : reward.position)}
-                                size='small'
-                                sx={{ alignSelf: { xs: 'flex-end', sm: 'center' } }}
-                                aria-label={expandedReward === reward.position ? 'Hide sponsors' : 'Show sponsors'}
-                              >
-                                {expandedReward === reward.position ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                              </IconButton>
+                            {/* Sponsors Details (Collapsible) */}
+                            {expandedReward === reward.position && reward.sponsors?.length > 0 && (
+                              <Box mt={2} width='100%'>
+                                <Typography variant='subtitle2' fontWeight={500} mb={1}>
+                                  Sponsors
+                                </Typography>
+                                <RewardSponsorCard sponsors={reward.sponsors} />
+                              </Box>
                             )}
-                          </Box>
-                          {/* Sponsors Details (Collapsible) */}
-                          {expandedReward === reward.position && reward.sponsors?.length > 0 && (
-                            <Box mt={2} width='100%'>
-                              <Typography variant='subtitle2' fontWeight={500} mb={1}>
-                                Sponsors
-                              </Typography>
-                              <RewardSponsorCard sponsors={reward.sponsors} />
-                            </Box>
-                          )}
-                        </Card>
-                      ))}
+                          </Card>
+                        ))}
                     </Stack>
                   ) : (
-                    <Typography variant='body2' color='text.secondary'>No rewards</Typography>
+                    <Typography variant='body2' color='text.secondary'>
+                      No rewards
+                    </Typography>
                   )}
                 </Box>
                 <Divider />
@@ -640,4 +674,3 @@ function getOrdinalSuffix(number) {
   if (j === 3 && k !== 13) return number + 'rd'
   return number + 'th'
 }
-

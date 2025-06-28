@@ -1,60 +1,80 @@
 import { useState } from 'react'
-import { Box, Grid, TextField, IconButton, Button, FormControl, Typography, Divider } from '@mui/material'
-
-// react-icons Imports
+import {
+  Box,
+  Grid,
+  TextField,
+  IconButton,
+  Button,
+  FormControl,
+  Typography,
+  Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Chip,
+  Tooltip
+} from '@mui/material'
+import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined'
 import AddIcon from '@mui/icons-material/Add'
-import RemoveIcon from '@mui/icons-material/Remove'
-import { RiAddFill, RiCloseFill } from 'react-icons/ri'
-import { IoMdAttach } from 'react-icons/io'
+import { RiCloseFill } from 'react-icons/ri'
+import { IoMdAttach, IoMdClose } from 'react-icons/io'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
 import useUUID from '@/app/hooks/useUUID'
-
-// Mui-file-input Imports
 import { MuiFileInput } from 'mui-file-input'
 
 const QuizDocuments = ({ documents = [], setTheFormValue }) => {
-  //   const [documents, setDocuments] = useState([{ id: 0, description: '', document: null }])
-  console.log('quiz documents:', documents)
-  const { uuid, regenerateUUID, getUUID } = useUUID()
+  const [openDialog, setOpenDialog] = useState(false)
+  const [currentDocument, setCurrentDocument] = useState({
+    id: null,
+    description: '',
+    document: null
+  })
+  const { getUUID } = useUUID()
 
-  // Handle adding a new document row
-  const handleAddRow = () => {
-    setTheFormValue('documents', [...documents, { id: getUUID(), description: '', document: null }])
+  const hasDocuments = documents.some(doc => doc.document);
+
+  // Handle opening the add document dialog
+  const handleOpenAddDialog = () => {
+    setCurrentDocument({
+      id: getUUID(),
+      description: '',
+      document: null
+    })
+    setOpenDialog(true)
   }
 
-  // Handle removing a document row by ID
-  const handleRemoveRow = id => {
-    const updatedDocuments = documents.filter(doc => doc.id !== id) // Filter out the document with the matching id
-    setTheFormValue('documents', updatedDocuments)
+  // Handle closing the dialog
+  const handleCloseDialog = () => {
+    setOpenDialog(false)
   }
 
-  // Handle input changes by ID
-  const handleInputChange = (id, event) => {
-    const { name, value, files } = event.target
-
-    const updatedDocuments = documents.map(doc =>
-      doc.id === id
-        ? {
-            ...doc,
-            [name]: name === 'document' ? files[0] : value // Update only the matching document's field
-          }
-        : doc
-    )
-
-    setTheFormValue('documents', updatedDocuments)
+  // Handle saving the document
+  const handleSaveDocument = () => {
+    setTheFormValue('documents', [...documents, currentDocument])
+    setOpenDialog(false)
   }
 
-  // Handle file input changes by ID and field name
-  const handleFileInputChangeByFieldName = (id, name, file) => {
-    const updatedDocuments = documents.map(doc =>
-      doc.id === id
-        ? {
-            ...doc,
-            [name]: file // Update the file field for the matching document
-          }
-        : doc
-    )
+  // Handle input changes in dialog
+  const handleDialogInputChange = e => {
+    const { name, value } = e.target
+    setCurrentDocument(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
 
+  // Handle file input changes in dialog
+  const handleDialogFileChange = file => {
+    setCurrentDocument(prev => ({
+      ...prev,
+      document: file
+    }))
+  }
+
+  // Remove uploaded file from a document
+  const handleRemoveFile = id => {
+    const updatedDocuments = documents.map(doc => (doc.id === id ? { ...doc, document: null } : doc))
     setTheFormValue('documents', updatedDocuments)
   }
 
@@ -64,76 +84,145 @@ const QuizDocuments = ({ documents = [], setTheFormValue }) => {
         border: '1px solid #ccc',
         borderRadius: '5px',
         width: '100%',
+        height: '100%',
         p: 2
       }}
     >
-      <Typography variant='h6' className='mb-2'>
-        Related Documents:{' '}
-      </Typography>
-      {documents.map((document, index) => (
-        <Box
-          key={index}
-          display='flex'
-          alignItems='center'
-          flexWrap='wrap'
-          sx={{ border: { xs: '1px solid #ccc', sm: 'none' }, padding: { xs: '5px', sm: '0' } }}
-          gap={3}
-          mb={index === documents.length ? 0 : 3} // Add margin-bottom for spacing between rows
+      <Box display='flex' justifyContent='space-between' alignItems='center' mb={2}>
+        <Typography variant='h6'>Related Documents</Typography>
+
+        <IconButtonTooltip
+          title='Add Document'
+          color='primary'
+          onClick={handleOpenAddDialog}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            p: 1,
+            borderRadius: '4px',
+            '&:hover': {
+              backgroundColor: 'action.hover'
+            }
+          }}
         >
+          <AddIcon />
+          <Typography color='primary'>Add Document</Typography>
+        </IconButtonTooltip>
+      </Box>
+      <Box
+        sx={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 1,
+          maxHeight: '70px', // Height for 2 rows (adjust as needed)
+          overflowY: 'auto'
+        }}
+      >
+        {hasDocuments ? (
+          documents.map(
+            document =>
+              document.document && (
+                <Tooltip key={document.id} title={document.document.name} arrow>
+                  <Chip
+                    key={document.id}
+                    icon={<InsertDriveFileOutlinedIcon color='info' fontSize='small' />}
+                    label={
+                      <Box component='span' sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Box
+                          component='span'
+                          sx={{
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            maxWidth: '120px', // Reduced to accommodate extension
+                            display: 'inline-block'
+                          }}
+                        >
+                          {document.document.name.substring(0, document.document.name.lastIndexOf('.'))}
+                        </Box>
+                        <Box component='span'>
+                          {document.document.name.substring(document.document.name.lastIndexOf('.'))}
+                        </Box>
+                      </Box>
+                    }
+                    onDelete={() => handleRemoveFile(document.id)}
+                    deleteIcon={<IoMdClose />}
+                    variant='outlined'
+                    sx={{
+                      '.MuiChip-label': {
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        display: 'inline-block',
+                        maxWidth: '150px' // Adjust width as needed
+                      },
+                      flexShrink: 0 //prevent chips from shrinking
+                    }}
+                  />
+                </Tooltip>
+              )
+          )
+        ) : (
           <Box
-            flex={'1 1 45%'} // Adjust width flexibly
-            minWidth='250px' // To prevent from getting too small on narrow screens
+            sx={{
+              width: '100%', // Take full width
+              textAlign: 'center' // Center text within the Box
+            }}
           >
+            <Typography variant='body2' fontSize='1rem' color='textSecondary'>
+              No documents added
+            </Typography>
+          </Box>
+        )}
+      </Box>
+
+      {/* Add Document Dialog */}
+      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth='sm' fullWidth>
+        <DialogTitle>Add New Document</DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 2 }}>
             <TextField
-              label={`Document Description ${index + 1}`}
+              label='Document Description'
               name='description'
-              value={document.description}
-              onChange={e => handleInputChange(document.id, e)}
+              value={currentDocument.description}
+              onChange={handleDialogInputChange}
               variant='outlined'
               fullWidth
               required
+              sx={{ mb: 3 }}
+            />
+
+            <MuiFileInput
+              label='Upload Document'
+              value={currentDocument.document}
+              onChange={handleDialogFileChange}
+              fullWidth
+              clearIconButtonProps={{
+                title: 'Remove',
+                children: <RiCloseFill />
+              }}
+              placeholder='Upload document (pdf/doc/image)'
+              InputProps={{
+                inputProps: {
+                  accept: '.pdf,.doc,.docx,.jpeg,.png,.jpg'
+                },
+                startAdornment: <IoMdAttach />
+              }}
             />
           </Box>
-
-          <Box flex='1 1 45%' minWidth='250px'>
-            <FormControl fullWidth>
-              <MuiFileInput
-                label={'Upload Doc.'}
-                name='document'
-                value={document.document}
-                onChange={e => handleFileInputChangeByFieldName(document.id, 'document', e)}
-                fullWidth
-                clearIconButtonProps={{
-                  title: 'Remove',
-                  children: <RiCloseFill />
-                }}
-                placeholder='Upload document (pdf/doc/image)'
-                InputProps={{
-                  inputProps: {
-                    accept: '.pdf,.doc,.docx,.jpeg,.png,.jpg'
-                    // 'application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-                  },
-                  startAdornment: <IoMdAttach />
-                }}
-              />
-            </FormControl>
-          </Box>
-
-          {
-            <Box display='flex' justifyContent='center' flex='0 1 40px'>
-              <IconButtonTooltip title='Remove' color='secondary' onClick={() => handleRemoveRow(document.id)}>
-                <RemoveIcon />
-              </IconButtonTooltip>
-            </Box>
-          }
-        </Box>
-      ))}
-
-      <Box display='flex' justifyContent='flex-end'>
-        <IconButtonTooltip title='Add' color='primary' onClick={handleAddRow}>
-          <AddIcon />
-        </IconButtonTooltip>
-      </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button
+            onClick={handleSaveDocument}
+            variant='contained'
+            disabled={!currentDocument.description || !currentDocument.document}
+          >
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   )
 }

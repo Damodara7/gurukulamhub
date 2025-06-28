@@ -34,7 +34,7 @@ import {
 } from '@mui/icons-material'
 import { useState } from 'react'
 import { useParams } from 'next/navigation'
-
+import { format } from 'date-fns'
 const ShareGamePopup = ({ open, onClose, game }) => {
   const { lang: locale } = useParams()
   const [copied, setCopied] = useState(false)
@@ -69,36 +69,100 @@ const ShareGamePopup = ({ open, onClose, game }) => {
       <DialogContent sx={{ pb: 2 }}>
         <Box sx={{ overflowX: 'auto', whiteSpace: 'nowrap' }}>
           <Stack direction='row' justifyContent='space-around' spacing={2}>
-            <EmailShareButton
+            {/* WhatsApp Share */}
+            <WhatsappShareButton
               url={shareUrl}
-              subject={`${themeConfig.templateName}: A Quiz App to Earn Rewards & Prizes`}
-              body={`🌟 Discover ${themeConfig.templateName}!\n\n${themeConfig.templateName} is a Quiz application designed to earn Rewards & Prizes while learning & spreading Indian Knowledge Systems.\n\nSign up now: ${shareUrl}`}
-            >
-              <EmailIcon size={32} round />
-            </EmailShareButton>
+              title={`
+🎮 *${game?.title}* 🎮
 
+📌 *Game Details:*
+✨ *Description:* ${game?.description || 'Join the fun!'}
+📍 *Location:* ${game?.location?.country || game?.location?.region || game?.location?.city || 'AnyWhere'}
+⏰ *Starts at:*  ${format(new Date(game.startTime), 'PPpp') || 'time is not Specified'} 
+📚 *Syllabus:* ${game.quiz.syllabus || 'General Knowledge & Fun!'}
+
+🔥 *Why Join?*
+✅ Exciting Prizes 🏆  
+✅ Challenge Friends 👥  
+✅ Test Your Knowledge �  
+
+🔗 *Click the link to join now!*  
+`}
+              separator=''
+            >
+              <WhatsappIcon size={32} round />
+            </WhatsappShareButton>
             {/* Facebook Share */}
             <FacebookShareButton
               url={shareUrl}
-              quote={`${themeConfig.templateName}: A Quiz App to Earn Rewards & Prizes\n\n${themeConfig.templateName} is designed to learn & spread Indian Knowledge Systems while having fun.`}
-              hashtag={`#${themeConfig.templateName} ${shareUrl}`}
+              quote={`
+🎮 *${game?.title}* 🎮
+
+📌 *Game Details:*
+✨ *Description:* ${game?.description || 'Join the fun!'}
+📍 *Location:* ${game?.location?.country || game?.location?.region || game?.location?.city || 'AnyWhere'}
+⏰ *Starts at:* ${format(new Date(game.startTime), 'PPpp') || 'time is not Specified'} 
+📚 *Syllabus:* ${game.quiz.syllabus || 'General Knowledge & Fun!'}
+
+🔥 *Why Join?*
+✅ Exciting Prizes 🏆  
+✅ Challenge Friends 👥  
+✅ Test Your Knowledge  
+
+🔗 *Click the link to join now!*  
+
+`}
             >
               <FacebookIcon size={32} round />
             </FacebookShareButton>
 
-            {/* WhatsApp Share */}
-            <WhatsappShareButton
-              url={shareUrl} // Ensure the referral link is a complete, accessible URL
-              title={`✨ ${themeConfig.templateName}: The Ultimate Quiz App ✨\n\n${themeConfig.templateName} is a Quiz application designed to earn Rewards & Prizes while learning & spreading Indian Knowledge Systems.\n\n🎯 Test your knowledge, challenge your friends, and enjoy the journey!\n\nSign up now to join the excitement:\n`}
-              separator={'🔗 '}
+            {/* Email Share */}
+            <EmailShareButton
+              url={`https://www.geeksforgeeks.org/`}
+              subject={`Join ${game?.title} - Challenge & Win!`}
+              body={`
+🎮 *${game?.title}* 🎮
+
+📌 *Game Details:*
+✨ *Description:* ${game?.description || 'Join the fun!'}
+📍 *Location:* ${game?.location?.country || game?.location?.region || game?.location?.city || 'AnyWhere'}
+⏰ *Starts at:* ${format(new Date(game.startTime), 'PPpp') || 'time is not Specified'}
+📚 *Syllabus:* ${game.quiz.syllabus || 'General Knowledge & Fun!'}
+
+🔥 *Why Join?*
+✅ Exciting Prizes 🏆  
+✅ Challenge Friends 👥  
+✅ Test Your Knowledge  
+
+🔗 *Click the link to join now!*  
+
+
+Regards,
+${themeConfig.templateName} Team
+`}
             >
-              <WhatsappIcon size={32} round />
-            </WhatsappShareButton>
+              <EmailIcon size={32} round />
+            </EmailShareButton>
 
             {/* Telegram Share */}
             <TelegramShareButton
               url={shareUrl}
-              title={`${themeConfig.templateName}: The Ultimate Quiz App for Fun, Learning, and Rewards!\n\n${themeConfig.templateName} is designed to promote Indian Knowledge Systems while earning Rewards & Prizes.\n\nJoin now: ${shareUrl}`}
+              title={`
+🎮 *${game?.title}* 🎮
+
+📌 *Game Details:*
+✨ *Description:* ${game?.description || 'Join the fun!'}
+📍 *Location:* ${game?.location?.country || game?.location?.region || game?.location?.city || 'AnyWhere'}
+⏰ *Starts at:* ${format(new Date(game.startTime), 'PPpp') || 'time is not Specified'} 
+📚 *Syllabus:* ${game.quiz.syllabus || 'General Knowledge & Fun!'}
+
+🔥 *Why Join?*
+✅ Exciting Prizes 🏆  
+✅ Challenge Friends 👥  
+✅ Test Your Knowledge  
+
+🔗 *Click the link to join now!*  
+`}
             >
               <TelegramIcon size={32} round />
             </TelegramShareButton>
@@ -106,18 +170,42 @@ const ShareGamePopup = ({ open, onClose, game }) => {
             {/* Twitter Share */}
             <TwitterShareButton
               url={shareUrl}
-              title={`Discover ${themeConfig.templateName} 🧠✨\n\nA Quiz App to Learn, Challenge, and Earn Rewards! 🎉\n\nSign up now and explore Indian Knowledge Systems: ${shareUrl}`}
-              hashtags={[themeConfig.templateName, 'QuizApp', 'Rewards']}
+              title={`
+🎮 *${game?.title}* 🎮
+
+📌 *Game Details:*
+✨ ${game?.description || 'Join the fun!'}
+📍 ${game?.location?.country || game?.location?.region || game?.location?.city || 'AnyWhere'}
+⏰ Starts at:${format(new Date(game.startTime), 'PPpp') || 'time is not Specified'} 
+📚 Syllabus: ${game.quiz.syllabus || 'General Knowledge & Fun!'}
+
+🏆 Exciting Prizes | 👥 Challenge Friends | 🧠 Test Your Knowledge
+
+🔗 Register now:`}
             >
               <TwitterIcon size={32} round />
             </TwitterShareButton>
 
             {/* LinkedIn Share */}
+
             <LinkedinShareButton
               url={shareUrl}
-              title={`${themeConfig.templateName}: A Quiz App to Earn Rewards & Prizes`}
-              summary={`${themeConfig.templateName} is designed to spread Indian Knowledge Systems while allowing you to test your knowledge, challenge friends, and earn exciting prizes.`}
-              source={themeConfig.templateName}
+              title={`${game?.title} - Knowledge Challenge`}
+              summary={`
+🎮 *${game?.title}* 🎮
+
+📌 *Game Details:*
+✨ *Description:* ${game?.description || 'Join the fun!'}
+📍 *Location:* ${game?.location?.country || game?.location?.region || game?.location?.city || 'AnyWhere'}
+⏰ *Starts at:* ${format(new Date(game.startTime), 'PPpp') || 'time is not Specified'}
+📚 *Syllabus:* ${game.quiz.syllabus || 'General Knowledge & Fun!'}
+
+🔥 *Why Join?*
+✅ Exciting Prizes 🏆  
+✅ Challenge Connections 👥  
+✅ Expand Your Knowledge 🧠  
+
+Perfect for professionals, students, and lifelong learners!`}
             >
               <LinkedinIcon size={32} round />
             </LinkedinShareButton>

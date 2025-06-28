@@ -16,10 +16,20 @@ import {
   IconButton,
   Tooltip
 } from '@mui/material'
-import { AccessTime, People, Person, LocationOn, PlayCircle, SportsEsports, ListAlt, ContentCopy } from '@mui/icons-material'
+import {
+  AccessTime,
+  People,
+  Person,
+  LocationOn,
+  PlayCircle,
+  SportsEsports,
+  ListAlt,
+  ContentCopy,
+  Share as ShareIcon
+} from '@mui/icons-material'
 import ReactPlayer from 'react-player'
 import { format, formatDistanceToNow } from 'date-fns'
-
+import ShareGamePopup from '@components/public-games/all-games/ShareGamePopup';
 const blink = keyframes`
   0% { opacity: 1; }
   50% { opacity: 0.5; }
@@ -32,6 +42,7 @@ const GamePlayInfoScreen = ({ game, setShouldStartGame }) => {
   const [isVideoReady, setIsVideoReady] = useState(false)
   const [countdownColor, setCountdownColor] = useState('primary.main')
   const [copyTooltip, setCopyTooltip] = useState('Copy PIN')
+  const [sharePopupOpen, setSharePopupOpen] = useState(false)
 
   const handleCopyPin = () => {
     navigator.clipboard.writeText(game.pin)
@@ -44,7 +55,7 @@ const GamePlayInfoScreen = ({ game, setShouldStartGame }) => {
     const updateTimer = () => {
       const now = new Date()
       const startTime = new Date(game.startTime)
-    //   const startTime = new Date(new Date('2025-05-15T11:02:00Z') + 2* 60 * 1000)
+      //   const startTime = new Date(new Date('2025-05-15T11:02:00Z') + 2* 60 * 1000)
       const diffInSeconds = Math.floor((startTime - now) / 1000)
 
       if (diffInSeconds <= 0) {
@@ -118,7 +129,7 @@ const GamePlayInfoScreen = ({ game, setShouldStartGame }) => {
         icon={false}
         sx={{
           mb: 3,
-          p:1,
+          p: 1,
           alignItems: 'center',
           animation: `${blink} 1s infinite`,
           '& .MuiAlert-message': {
@@ -171,7 +182,7 @@ const GamePlayInfoScreen = ({ game, setShouldStartGame }) => {
 
       <Grid container spacing={4}>
         {/* Left Column - Game Media */}
-        <Grid item xs={12} md={8}>
+        <Grid item xs={12} md={8} sx={{ order: { xs: 2, md: 1 } }}>
           <Card sx={{ borderRadius: 2, overflow: 'hidden' }}>
             {game.promotionalVideoUrl ? (
               <Box sx={{ position: 'relative', pt: '56.25%' }}>
@@ -196,24 +207,6 @@ const GamePlayInfoScreen = ({ game, setShouldStartGame }) => {
             )}
           </Card>
 
-          {/* Game Description */}
-          <Card sx={{ mt: 3, p: 3 }}>
-            <Typography variant='h6' gutterBottom fontWeight={600}>
-              About This Game
-            </Typography>
-            <Typography variant='body1' color='text.secondary'>
-              {game.description}
-            </Typography>
-
-            {game.tags?.length > 0 && (
-              <Stack direction='row' flexWrap='wrap' gap={1} mt={2}>
-                {game.tags.map(tag => (
-                  <Chip key={tag} label={tag} size='small' color='primary' variant='outlined' />
-                ))}
-              </Stack>
-            )}
-          </Card>
-
           {/* Game Instructions */}
           <Card sx={{ mt: 3, borderRadius: 2 }}>
             <CardContent sx={{ p: 3 }}>
@@ -230,18 +223,18 @@ const GamePlayInfoScreen = ({ game, setShouldStartGame }) => {
                     'All players must be ready when the game begins.',
                     'Questions will appear one after another with limited time to answer.',
                     'Answer quickly and accurately to score maximum points.',
-                    <Box key="pin" component="li" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box key='pin' component='li' sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Typography variant='body2' sx={{ fontSize: '0.85rem', lineHeight: 1.8 }}>
                         The game PIN is {game.pin} - share it with friends to join.
                       </Typography>
-                      <Tooltip placement="top" title={copyTooltip}>
-                        <IconButton onClick={handleCopyPin} size="small">
-                          <ContentCopy fontSize="small" />
+                      <Tooltip placement='top' title={copyTooltip}>
+                        <IconButton onClick={handleCopyPin} size='small'>
+                          <ContentCopy fontSize='small' />
                         </IconButton>
                       </Tooltip>
                     </Box>,
                     'Winners will be announced immediately after the game ends.'
-                  ].map((instruction, index) => (
+                  ].map((instruction, index) =>
                     typeof instruction === 'string' ? (
                       <Typography
                         key={index}
@@ -251,8 +244,10 @@ const GamePlayInfoScreen = ({ game, setShouldStartGame }) => {
                       >
                         {instruction}
                       </Typography>
-                    ) : instruction
-                  ))}
+                    ) : (
+                      instruction
+                    )
+                  )}
                 </Box>
 
                 {/* Pro Tip */}
@@ -267,24 +262,39 @@ const GamePlayInfoScreen = ({ game, setShouldStartGame }) => {
         </Grid>
 
         {/* Right Column - Game Info */}
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} md={4} sx={{ order: { xs: 1, md: 2 } }}>
           <Card sx={{ position: 'sticky', top: 20, borderRadius: 2 }}>
             <CardContent>
               <Stack spacing={3}>
                 {/* Game Title and Status */}
                 <Box>
-                  <Typography variant='h5' fontWeight={700} gutterBottom>
-                    {game.title}
-                  </Typography>
-                  <Stack direction='row' alignItems='center' spacing={1}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <Typography variant='h5' fontWeight={700} gutterBottom>
+                      {game.title}
+                    </Typography>
+                    <Tooltip title='Share game'>
+                      <IconButton
+                        size='small'
+                        onClick={() => setSharePopupOpen(true)}
+                        sx={{
+                          '&:hover': {
+                            bgcolor: 'action.hover'
+                          }
+                        }}
+                      >
+                        <ShareIcon fontSize='small' />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                  <Stack direction='row' justifyContent='space-between' alignItems='center' spacing={1}>
                     {getStatusChip()}
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                       <Typography variant='body2' color='text.secondary'>
                         PIN: {game.pin}
                       </Typography>
-                      <Tooltip placement="top" title={copyTooltip}>
-                        <IconButton onClick={handleCopyPin} size="small">
-                          <ContentCopy fontSize="small" />
+                      <Tooltip placement='top' title={copyTooltip}>
+                        <IconButton onClick={handleCopyPin} size='small'>
+                          <ContentCopy fontSize='small' />
                         </IconButton>
                       </Tooltip>
                     </Box>
@@ -336,7 +346,8 @@ const GamePlayInfoScreen = ({ game, setShouldStartGame }) => {
                     <Stack direction='row' alignItems='center' spacing={1}>
                       <LocationOn color='primary' />
                       <Typography variant='body1'>
-                        {[game.location.city, game.location.region, game.location.country].filter(Boolean).join(', ') || 'Not Specified'}
+                        {[game.location.city, game.location.region, game.location.country].filter(Boolean).join(', ') ||
+                          'Not Specified'}
                       </Typography>
                     </Stack>
                   </Stack>
@@ -359,6 +370,7 @@ const GamePlayInfoScreen = ({ game, setShouldStartGame }) => {
                 </Stack>
               </Stack>
             </CardContent>
+            <ShareGamePopup open={sharePopupOpen} onClose={() => setSharePopupOpen(false)} game={game} />
           </Card>
         </Grid>
       </Grid>
