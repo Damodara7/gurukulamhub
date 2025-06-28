@@ -2,8 +2,10 @@ import { Box, Container, Typography, Button } from '@mui/material'
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
 import { TimerOff as TimerIcon } from '@mui/icons-material';
 import Leaderboard from './Leaderboard'
+import { useSession } from 'next-auth/react';
 
 const GameEnded = ({ onExit, game = null , isAdmin = false}) => {
+  const {data: session} = useSession()
   return (
     <Container maxWidth='lg' sx={{ py: 8, textAlign: 'center' }}>
         <Typography
@@ -19,7 +21,7 @@ const GameEnded = ({ onExit, game = null , isAdmin = false}) => {
       >
         <EmojiEventsIcon color='primary' sx={{ fontSize: 60, mb: 3 }} /> {game.title}
       </Typography>
-      <Typography variant='h3' color='error' gutterBottom sx={{ fontWeight: 700 }}>
+      <Typography variant='h3' color='error' sx={{ fontWeight: 700 }}>
         Game Ended!
       </Typography>
       {/* <TimerIcon 
@@ -34,10 +36,10 @@ const GameEnded = ({ onExit, game = null , isAdmin = false}) => {
 
       {game && <Leaderboard game={game} isAdmin={isAdmin} />}
 
-      <Typography variant='subtitle1' color='text.secondary' sx={{ my: 4 }}>
+      {game?.participatedUsers?.find(p=>p.email === session?.user?.email) &&<Typography variant='subtitle1' color='text.secondary'>
         Thank you for participating.
-      </Typography>
-      <Button variant='outlined' size='large' onClick={onExit} sx={{ px: 5 }}>
+      </Typography>}
+      <Button variant='outlined' size='large' onClick={onExit} sx={{ px: 5, my:5 }}>
         Explore Available Games
       </Button>
     </Container>

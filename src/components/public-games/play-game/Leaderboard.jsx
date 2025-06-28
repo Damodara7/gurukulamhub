@@ -28,17 +28,7 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
         if (res.status === 'success') {
           // Sort leaderboard by score (descending) and then by totalTime (ascending)
           console.log(res.result)
-          const sortedLeaderBoard = res.result.sort((a, b) => {
-            if (b.score > a.score) return 1
-            if (b.score < a.score) return -1
-
-            //if scores are eqaul , compare by time (lower time comes first)
-            if (a.totalTime > b.totalTime) return 1
-            if (a.totalTime < b.totalTime) return -1
-
-            return 0
-          })
-          setLeaderboard(sortedLeaderBoard)
+          setLeaderboard(res.result)
           setLoading(false)
         } else {
           console.log('Error while updating score: ', res.message)
@@ -79,7 +69,7 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
   }
 
   return (
-    <Box sx={{ mx: 'auto', maxWidth: duringPlay || !isAdmin ? 'md' : 'md', px: { md: 10, xs: 3 } }}>
+    <Box sx={{ mx: 'auto', maxWidth: duringPlay || !isAdmin ? 'md' : 'md', px: { md: 10, xs: 3 }, my: 5 }}>
       <Typography
         variant='h6'
         sx={{
@@ -115,7 +105,7 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
                 <TableCell>{index + 1}</TableCell>
                 <TableCell>{player.email}</TableCell>
                 <TableCell align='right'>{player.score.toFixed(2)}</TableCell>
-                {!duringPlay && <TableCell align='right'>{formatTime(player.totalTime / 1000)}</TableCell>}
+                {!duringPlay && <TableCell align='right'>{formatTime(player.totalAnswerTime / 1000)}</TableCell>}
                 <TableCell align='right'>{player?.fffPoints}</TableCell>
               </TableRow>
             ))}

@@ -143,18 +143,18 @@ export const addOne = async gameData => {
     }
 
     // Fetch the quiz to get language code
-    const quiz = await Quiz.findById(gameData.quiz).lean()
-    const languageCode = quiz?.language?.code || 'en'
+    const quiz = await Quiz.findById(gameData?.quiz).lean()
+    const quizId = quiz._id
+    const languageCode = quiz.language.code
     // Fetch all questions for this quiz and language
-    const questions = await QuestionsModel.find({ quizId: quiz.id, languageCode }).lean()
-
+    const questions = await QuestionsModel.find({ quizId, languageCode }).lean()
     // Adding questions count field to gameData
-    gameData.questionsCount = questions?.length
+    updateData.questionsCount = questions?.length
 
     // If live mode, calculate duration from questions
     if (gameData.gameMode === 'live') {
       // Sum timerSeconds from data field
-      gameData.duration = questions.reduce((sum, q) => sum + (q.data?.timerSeconds || 0), 0)
+      gameData.duration = questions?.reduce((sum, q) => sum + (q?.data?.timerSeconds || 0), 0) + 30 // 30 seconds grace period
     }
 
     // Validate required fields
@@ -279,16 +279,18 @@ export const updateOne = async (gameId, updateData) => {
       }
     }
 
+    const quiz = await Quiz.findById(updateData.quiz || existingGame.quiz).lean()
+    const quizId = quiz._id
+    const languageCode = quiz.language.code
+    // Fetch all questions for this quiz and language
+    const questions = await QuestionsModel.find({ quizId, languageCode }).lean()
+    // Adding questions count field to gameData
+    updateData.questionsCount = questions?.length
+
     // If live mode, calculate duration from questions
     if (updateData.gameMode === 'live') {
-      // Fetch the quiz to get language code
-      const quiz = await Quiz.findById(updateData.quiz || existingGame.quiz).lean()
-      const quizId = quiz._id
-      const languageCode = quiz.language.code
-      // Fetch all questions for this quiz and language
-      const questions = await QuestionsModel.find({ quizId, languageCode }).lean()
       // Sum timerSeconds from data field
-      updateData.duration = questions.reduce((sum, q) => sum + (q.data?.timerSeconds || 0), 0)
+      updateData.duration = questions.reduce((sum, q) => sum + (q.data?.timerSeconds || 0), 0) + 30 // 30 seconds grace period
     }
 
     // Check if pin is being updated to a non-unique value
@@ -556,6 +558,7 @@ export const approveGame = async (gameId, updateData) => {
   }
 }
 
+// ********** Player Related Services - START ***********
 export const joinGame = async (gameId, userData) => {
   await connectMongo()
   try {
@@ -652,8 +655,10 @@ export const joinGame = async (gameId, userData) => {
 export const updatePlayerProgress = async (gameId, { user, userAnswer, finish }) => {
   await connectMongo()
   try {
-    const game = await Game.findOne({ _id: gameId, status: 'live', isDeleted: false })
+    // Allow updates for both 'live' and 'completed' games
+    const game = await Game.findOne({ _id: gameId, status: "live", isDeleted: false })
     if (!game) {
+      console.error(`[updatePlayerProgress] Game not found for id: ${gameId}`)
       return {
         status: 'error',
         result: null,
@@ -661,14 +666,13 @@ export const updatePlayerProgress = async (gameId, { user, userAnswer, finish })
       }
     }
 
-    // Find player in participated users by user ID
-    const player = game.participatedUsers.find(
-      p =>
-        // p.user.toString() === user.id.toString() &&
-        p.email === user.email
+    // Find player index in participated users by user ID or email
+    const playerIndex = game.participatedUsers.findIndex(
+      p => p.email === user.email
     )
 
-    if (!player) {
+    if (playerIndex === -1) {
+      console.error(`[updatePlayerProgress] Player not found in game: ${user.email}`)
       return {
         status: 'error',
         result: null,
@@ -679,57 +683,72 @@ export const updatePlayerProgress = async (gameId, { user, userAnswer, finish })
     // Prepare answer data
     const answerData = {
       ...userAnswer
-      // question: userAnswer.questionId,
-      // answer: userAnswer.answer,
-      // marks: userAnswer.marks,
-      // hintMarks: userAnswer.hintMarks,
-      // hintUsed: userAnswer.hintUsed,
-      // skipped: userAnswer.skipped
-      // answerTime: userAnswer.answerTime
-      // fffPoints: userAnswer.fffPoints
-      // answeredAt: userAnswer.answeredAt
     }
 
-    // Check if answer already exists for this question
-    const existingAnswerIndex = player.answers.findIndex(a => a.questions === userAnswer.question)
+    // Find if answer already exists for this question
+    const player = game.participatedUsers[playerIndex]
+    const existingAnswerIndex = player.answers.findIndex(a => a.question === userAnswer.question)
+
+    let scoreDelta = 0
+    let fffPointsDelta = 0
+    let updateAnswers
 
     if (existingAnswerIndex > -1) {
       // Update existing answer
       const existingAnswer = player.answers[existingAnswerIndex]
-      player.score -= existingAnswer.marks // Remove old marks
-      player.answers[existingAnswerIndex] = answerData
-      // console.error('Question already answered!')
-      // return {status: 'error', message: 'Question already answered', result: null}
+      scoreDelta = (answerData.marks || 0) - (existingAnswer.marks || 0)
+      fffPointsDelta = (answerData.fffPoints || 0) - (existingAnswer.fffPoints || 0)
+      updateAnswers = [...player.answers]
+      updateAnswers[existingAnswerIndex] = answerData
     } else {
       // Add new answer
-      player.answers.push(answerData)
+      scoreDelta = answerData.marks || 0
+      fffPointsDelta = answerData.fffPoints || 0
+      updateAnswers = [...player.answers, answerData]
     }
 
-    // Update total score
-    player.score += answerData.marks
-    player.fffPoints += answerData.fffPoints
+    // Prepare update object for atomic update
+    const updateObj = {
+      $set: {
+        [`participatedUsers.${playerIndex}.answers`]: updateAnswers,
+      },
+      $inc: {
+        [`participatedUsers.${playerIndex}.score`]: scoreDelta,
+        [`participatedUsers.${playerIndex}.fffPoints`]: fffPointsDelta
+      }
+    }
 
-    // Handle game completion
     if (finish) {
-      player.completed = true
-      player.finishedAt = new Date()
-
-      // Optional: Calculate total time taken
-      if (!player.joinedAt) player.joinedAt = new Date()
-      const timeTaken = Math.floor((player.finishedAt - player.joinedAt) / 1000)
-      // You can store timeTaken if needed
+      updateObj.$set[`participatedUsers.${playerIndex}.completed`] = true
+      updateObj.$set[`participatedUsers.${playerIndex}.finishedAt`] = new Date()
+      if (!player.joinedAt) {
+        updateObj.$set[`participatedUsers.${playerIndex}.joinedAt`] = new Date()
+      }
     }
 
-    // Validate and save changes
-    await game.validate()
-    await game.save()
+    // Perform atomic update
+    const updatedGame = await Game.findOneAndUpdate(
+      { _id: gameId, status: "live", isDeleted: false },
+      updateObj,
+      { new: true }
+    )
+
+    if (!updatedGame) {
+      console.error(`[updatePlayerProgress] Failed to update game for id: ${gameId}`)
+      return {
+        status: 'error',
+        result: null,
+        message: 'Failed to update player progress'
+      }
+    }
 
     return {
       status: 'success',
-      result: game,
+      result: updatedGame,
       message: 'Player progress updated successfully'
     }
   } catch (error) {
+    console.error('[updatePlayerProgress] error updating player progress: ', error)
     return {
       status: 'error',
       result: null,
@@ -857,6 +876,7 @@ export const getLeaderboard = async gameId => {
         email: p.email,
         score: p.score,
         fffPoints: p.fffPoints,
+        totalAnswerTime: p.answers?.reduce((sum, a) => sum + (a?.answerTime || 0), 0)
       }))
       .sort((a, b) => b.fffPoints - a.fffPoints)
 
@@ -865,6 +885,7 @@ export const getLeaderboard = async gameId => {
     return { status: 'success', result: null, message: error.message }
   }
 }
+// ********** Player Related Services - END ***********
 
 // ********************* Helper Functions *******************
 // Helper function to update sponsorships

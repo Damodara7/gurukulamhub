@@ -197,12 +197,12 @@ export default function PlayGameQuiz({ quiz, questions, game }) {
     if (questionTimeLeft <= 0) return
     const interval = setInterval(() => {
       setQuestionTimeLeft(prev => {
+        if (!questionTimerInitializedRef.current) {
+          questionTimerInitializedRef.current = true
+        }
         if (prev <= 1) {
           clearInterval(interval)
           return 0
-        }
-        if (!questionTimerInitializedRef.current) {
-          questionTimerInitializedRef.current = true
         }
         return prev - 1
       })
@@ -265,10 +265,10 @@ export default function PlayGameQuiz({ quiz, questions, game }) {
   }
 
   async function handleGameEnd() {
-    setGameEnded(true)
-    localStorage.removeItem(storageKey)
     // Hit backend endpoint
     await calculateAndUpdateUserScore({ finish: true })
+    setGameEnded(true)
+    localStorage.removeItem(storageKey)
   }
 
   async function handleNext() {
@@ -289,7 +289,7 @@ export default function PlayGameQuiz({ quiz, questions, game }) {
       await calculateAndUpdateUserScore({ finish: false, auto: true })
       setCurrentQuestionIndex(currentQuestionIndex + 1)
     } else {
-      handleGameEnd()
+      await handleGameEnd()
     }
   }
 
@@ -338,21 +338,25 @@ export default function PlayGameQuiz({ quiz, questions, game }) {
         : 0
 
     // EndPoint
-    await updateUserScore(game._id, {
-      userAnswer: {
-        question: currentQuestion._id,
-        answer: selectedAnswer,
-        marks: calculatedMarks, // marks user got
-        hintMarks: hintUsed ? currentQuestion?.data?.hintMarks : 0,
-        hintUsed,
-        skipped: false,
-        answerTime: answerTime,
-        fffPoints,
-        answeredAt: answeredAt
-      },
-      user: { id: session.user.id, email: session.user.email },
-      finish: finish
-    })
+    try {
+      await updateUserScore(game._id, {
+        userAnswer: {
+          question: currentQuestion._id,
+          answer: selectedAnswer,
+          marks: calculatedMarks, // marks user got
+          hintMarks: hintUsed ? currentQuestion?.data?.hintMarks : 0,
+          hintUsed,
+          skipped: false,
+          answerTime: answerTime,
+          fffPoints,
+          answeredAt: answeredAt
+        },
+        user: { id: session.user.id, email: session.user.email },
+        finish: finish
+      })
+    } catch (error) {
+      console.log("Error updating user answer & score: ", error)
+    }
   }
 
   const handleExit = () => {
