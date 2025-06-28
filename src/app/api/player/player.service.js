@@ -1,3 +1,5 @@
+// Not using these now. We are using game.service.js for these operations
+
 import connectMongo from '@/utils/dbConnect-mongo'
 import Player from './player.model'
 import User from '@/app/models/user.model'
