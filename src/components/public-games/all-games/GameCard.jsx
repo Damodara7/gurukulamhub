@@ -12,7 +12,7 @@ import {
   Chip,
   Grid,
   Tooltip,
-  IconButton,
+  IconButton
 } from '@mui/material'
 import { useRouter } from 'next/navigation'
 import HourglassBottomIcon from '@mui/icons-material/HourglassBottom'
@@ -28,7 +28,7 @@ import EventIcon from '@mui/icons-material/Event'
 import { format } from 'date-fns'
 import imagePlaceholder from '/public/images/misc/image-placeholder.png'
 import { useEffect, useState } from 'react'
-import ShareGamePopup from './ShareGamePopup';
+import ShareGamePopup from './ShareGamePopup'
 import {
   EventAvailable as EventAvailableIcon,
   CheckCircle as CheckCircleIcon,
@@ -52,7 +52,8 @@ const GameCard = ({ game }) => {
   const isGameLive = game.status === 'live'
   const isGameEnded = ['completed', 'cancelled'].includes(game.status)
   const isGameStarted = new Date(game?.startTime) < new Date()
-  const isUserRegistered = !!game?.registeredUsers?.find(u => u.email === session?.user?.email) || false
+  const isUserRegistered =
+    !!game?.participatedUsers?.find(u => u.email === session?.user?.email) || false
   const isRegistrationRequired = game?.requireRegistration
 
   // Get game status for display in info stack
@@ -199,7 +200,6 @@ const GameCard = ({ game }) => {
   }
 
   const gameStatusInfo = getGameStatusInfo()
-  
 
   return (
     <Card
@@ -366,27 +366,23 @@ const GameCard = ({ game }) => {
               View
             </Button>
 
-            {
-              ((isUserRegistered &&
-                !game?.participatedUsers?.find(p => p.email === session?.user?.email)?.completed &&
-                (isGameUpcoming || isGameLive)) ||
-                (!isUserRegistered && isRegistrationOpen && !isGameStarted && !isGameEnded)) && (
-                <Button
-                  disabled={
-                    isUserRegistered &&
-                    game.status !== 'lobby' &&
-                    !isGameLive &&
-                    !game?.participatedUsers?.find(p => p.email === session?.user?.email)?.completed
-                  }
-                  variant='outlined'
-                  color='primary'
-                  size='small'
-                  onClick={handleJoin}
-                >
-                  {isUserRegistered ? 'JOIN' : 'Register'}
-                </Button>
-              )
-            }
+            {((!game?.participatedUsers?.find(p => p.email === session?.user?.email)?.completed &&
+              (isGameUpcoming || isGameLive)) ||
+              (!isUserRegistered && isRegistrationOpen && !isGameStarted && !isGameEnded)) && (
+              <Button
+                disabled={
+                  game.status !== 'lobby' &&
+                  !isGameLive &&
+                  !game?.participatedUsers?.find(p => p.email === session?.user?.email)?.completed
+                }
+                variant='outlined'
+                color='primary'
+                size='small'
+                onClick={handleJoin}
+              >
+                {isUserRegistered ? 'JOIN' : 'Register'}
+              </Button>
+            )}
 
             {isGameEnded && !['completed', 'cancelled'].includes(game.status) && (
               <Button variant='outlined' color='secondary' size='small' disabled>
@@ -399,7 +395,6 @@ const GameCard = ({ game }) => {
       <ShareGamePopup open={sharePopupOpen} onClose={() => setSharePopupOpen(false)} game={game} />
     </Card>
   )
-
 }
 
 export default GameCard
