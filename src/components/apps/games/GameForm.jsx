@@ -1155,7 +1155,14 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                   style={{ display: 'none' }}
                 />
                 {formData.thumbnailPoster ? (
-                  <Box sx={{ position: 'relative', mb: 2 }}>
+                  <Box sx={{ position: 'relative',
+                    mb: 2,
+                    height: '200px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: '#f5f5f5' // Light gray background for error state
+                }}>
                     <img
                       src={formData.thumbnailPoster}
                       alt='Game thumbnail'
@@ -1177,7 +1184,9 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                         backgroundColor: 'rgba(255, 255, 255, 0.9)',
                         borderRadius: 1,
                         p: 0.5,
-                        boxShadow: 1
+                        boxShadow: 1,
+                        zIndex:2,
+                        transform: 'translateY(-1px)',
                       }}
                     >
                       <IconButton

@@ -1,9 +1,7 @@
 'use client'
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useForm, Controller } from 'react-hook-form'
-import { yupResolver } from '@hookform/resolvers/yup'
-import * as yup from 'yup'
 import useUUID from '@/app/hooks/useUUID'
 import * as RestApi from '@/utils/restApiUtil'
 import {
@@ -41,24 +39,24 @@ function CreateQuiz() {
   const router = useRouter()
   const { data: session, status, update } = useSession()
   const { uuid, regenerateUUID, getUUID } = useUUID()
-  const [formData, setFormData] = useState({})
+  // const [formData, setFormData] = useState({})
   const [loading, setLoading] = useState(false)
   const [formSubmitted, setFormSubmitted] = useState(false)
   const user = session?.user
 
-  const handleInputChange = event => {
-    const { name, value } = event.target
-    setFormData({ ...formData, [name]: value })
-  }
+  // const handleInputChange = event => {
+  //   const { name, value } = event.target
+  //   setFormData({ ...formData, [name]: value })
+  // }
 
-  // Yup validation schema
-  const createQuizSchema = yup.object().shape({
-    title: yup.string().min(3, 'Title must be at least 3 characters').required('Quiz title is required'),
-    details: yup.string().min(10, 'Details must be at least 10 characters').required('Quiz details are required'),
-    syllabus: yup.string().required('Quiz syllabus is required'),
-    contextIds: yup.array().min(1, 'At least one context must be selected'),
-    thumbnail: yup.string().required('Thumbnail is required')
-  })
+  // // Yup validation schema
+  // const createQuizSchema = yup.object().shape({
+  //   title: yup.string().min(3, 'Title must be at least 3 characters').required('Quiz title is required'),
+  //   details: yup.string().min(10, 'Details must be at least 10 characters').required('Quiz details are required'),
+  //   syllabus: yup.string().required('Quiz syllabus is required'),
+  //   contextIds: yup.array().min(1, 'At least one context must be selected'),
+  //   thumbnail: yup.string().required('Thumbnail is required')
+  // })
 
   const createQuizDefaultValues = {
     details: '',
@@ -88,24 +86,24 @@ function CreateQuiz() {
     getValues,
     formState: { errors },
     setValue,
-    reset
+    reset,
+    trigger
   } = useForm({
-    defaultValues: { ...createQuizDefaultValues },
-    resolver: yupResolver(createQuizSchema)
+    defaultValues: { ...createQuizDefaultValues }
   })
 
-  async function handleDeleteQuizDocuments() {
-    const fileNameWithoutExtension = `${getValues().id}/documents` // deleting the folder of quiz documents
+  // async function handleDeleteQuizDocuments() {
+  //   const fileNameWithoutExtension = `${getValues().id}/documents` // deleting the folder of quiz documents
 
-    try {
-      await deleteAllMatchingFilesWithUnknownExtension({
-        bucketName: quizBucketName,
-        fileNamePrefix: fileNameWithoutExtension
-      })
-    } catch (error) {
-      console.error('Error in handleDeleteQuizDocuments:', error)
-    }
-  }
+  //   try {
+  //     await deleteAllMatchingFilesWithUnknownExtension({
+  //       bucketName: quizBucketName,
+  //       fileNamePrefix: fileNameWithoutExtension
+  //     })
+  //   } catch (error) {
+  //     console.error('Error in handleDeleteQuizDocuments:', error)
+  //   }
+  // }
 
   async function handleUploadQuizDocToS3(docObj) {
     // const fileNameWithoutExtension = `${getValues().id}/documents/${docObj.id}`
@@ -172,8 +170,40 @@ function CreateQuiz() {
     thumbnail: false
   })
 
+
+  // Validate form fields
+  const validateForm = () => {
+    const values = getValues()
+    const newErrors = {
+      title: !values.title || values.title.trim() === '',
+      contextIds: values.contextIds.length === 0,
+      details: !values.details || values.details.trim() === '',
+      syllabus: !values.syllabus || values.syllabus.trim() === '',
+      thumbnail: !values.thumbnail
+    }
+    
+    setFieldErrors(newErrors)
+    return !Object.values(newErrors).some(error => error)
+  }
+  // Handle field interaction (focus/blur)
+  const handleFieldInteraction = (fieldName, forceError = false) => {
+    setFieldErrors(prev => ({
+      ...prev,
+      [fieldName]: forceError ? !getValues()[fieldName] || 
+        (Array.isArray(getValues()[fieldName]) && getValues()[fieldName].length === 0) : false
+    }))
+  }
+
+
   const onSubmit = async () => {
+    setFormSubmitted(true)
+    if (!validateForm()) {
+      toast.error('Please fill all required fields')
+      return
+    }
+
     setLoading(true)
+    const formValues = getValues()
 
     try {
       const result = await RestApi.post(ApiUrls.v0.USERS_QUIZ, formValues)
@@ -194,24 +224,6 @@ function CreateQuiz() {
       setLoading(false)
     }
   }
-  // Button click handler
-  const onClickCreate = async () => {
-    const isValid = await trigger()
-    if (!isValid) {
-      toast.error('Please fix the validation errors.')
-      return
-    }
-    handleSubmit(onSubmit)()
-  }
-
-  // // Handler to pass to child component in parent
-  // const handleFieldInteraction = (fieldName, forceError = false) => {
-  //   setFieldErrors(prev => ({
-  //     ...prev,
-  //     [fieldName]: forceError ? true : false
-  //   }))
-  // }
-
   return (
     <>
       <GoBackButton />
@@ -231,23 +243,13 @@ function CreateQuiz() {
             errors={errors}
             formData={getValues()}
             quiz={getValues()}
-            // setValue={setValue}
-            // fieldErrors={fieldErrors} // Pass validation props
-            // formSubmitted={formSubmitted}
-            // onFieldInteraction={handleFieldInteraction}
+            setValue={setValue}
+            fieldErrors={fieldErrors}
+            formSubmitted={formSubmitted}
+            onFieldInteraction={handleFieldInteraction}
           />
           <Stack className='w-full' flexDirection='row' alignItems='center' justifyContent='flex-end'>
             <Button
-              sx={{ mt: 2 }}
-              variant='contained'
-              style={{ color: 'white' }}
-              color='primary'
-              onClick={onClickCreate}
-              disabled={loading}
-            >
-              {loading ? 'Creating...' : 'Create Quiz'}
-            </Button>
-            {/* <Button
               sx={{ mt: 2 }}
               variant='contained'
               style={{ color: 'white' }}
@@ -257,7 +259,7 @@ function CreateQuiz() {
               disabled={loading}
             >
               {loading ? 'Creating...' : 'Create Quiz'}
-            </Button> */}
+            </Button>
           </Stack>
         </CardContent>
       </Card>

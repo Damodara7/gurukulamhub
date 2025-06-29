@@ -12,7 +12,11 @@ import {
   IconButton,
   DialogContent,
   Typography,
-  Autocomplete
+  Autocomplete,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select
 } from '@mui/material'
 import {
   Add as AddIcon,
@@ -27,8 +31,6 @@ import {
 import TabPanel from '@mui/lab/TabPanel'
 import TabContext from '@mui/lab/TabContext'
 import CustomTabList from '@/@core/components/mui/TabList'
-// Components Imports
-import { FormControl, InputLabel, MenuItem, Select } from '@mui/material'
 import TagInput from '../../TagInput'
 import { Controller } from 'react-hook-form'
 import ImageUploader from '@/components/media-viewer/ImageUploader'
@@ -52,7 +54,7 @@ const CreateQuizForm = ({
 }) => {
   const [isGenericPopupOpen, setIsGenericPopupOpen] = useState(false)
   const fileInputRef = useRef(null)
-
+  
   const setTheFormValue = (name, val) => {
     setValue(name, val, { shouldValidate: true, shouldDirty: true })
   }
@@ -69,28 +71,7 @@ const CreateQuizForm = ({
     setIsGenericPopupOpen(false)
   }
 
-  // Handle field focus - clear error state
-  const handleFocus = fieldName => {
-    onFieldInteraction(fieldName)
-  }
-
-  const handleBlur = fieldName => {
-    if (formSubmitted) {
-      const value = formData[fieldName]
-      let isEmpty = false
-
-      if (fieldName === 'contextIds') {
-        isEmpty = value?.length === 0
-      } else if (fieldName === 'thumbnail') {
-        isEmpty = !value
-      } else {
-        isEmpty = !value || value.trim() === ''
-      }
-
-      // Use the passed onFieldInteraction prop instead of setFieldErrors
-      onFieldInteraction(fieldName, true)
-    }
-  }
+  
 
   // Image upload
   const handleImageUpload = async e => {
@@ -102,6 +83,7 @@ const CreateQuizForm = ({
       try {
         const compressedFile = await compressImage(file)
         setTheFormValue('thumbnail', compressedFile)
+        onFieldInteraction('thumbnail', false)
       } catch (error) {
         console.error('Compression error:', error)
       }
@@ -109,20 +91,13 @@ const CreateQuizForm = ({
       const reader = new FileReader()
       reader.onload = event => {
         setTheFormValue('thumbnail', event.target.result)
+        onFieldInteraction('thumbnail', false)
       }
       reader.readAsDataURL(file)
     }
   }
 
-  const handleChange = e => {
-    const { name, value } = e.target
-    // Make sure name is a string
-    if (typeof name !== 'string') {
-      console.error('Expected string for field name', name)
-      return
-    }
-    setTheFormValue(prev => ({ ...prev, [name]: value }))
-  }
+ 
 
   return (
     <Box>
@@ -155,23 +130,13 @@ const CreateQuizForm = ({
                 required
                 error={fieldErrors.title}
                 helperText={fieldErrors.title ? 'Quiz title is required' : ''}
-                onFocus={() => handleFocus('title')}
-                onBlur={() => handleBlur('title')}
+                onFocus={() => onFieldInteraction('title')}
+                onBlur={() => onFieldInteraction('title', true)}
                 onChange={e => {
                   field.onChange(e)
                   setTheFormValue('title', e.target.value)
                   if (fieldErrors.title && e.target.value.trim() !== '') {
-                    handleFocus('title') // Clear error when typing
-                  }
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '& fieldset': {
-                      borderColor: fieldErrors.title ? 'error.main' : ''
-                    },
-                    '&:hover fieldset': {
-                      borderColor: fieldErrors.title ? 'error.main' : ''
-                    }
+                    onFieldInteraction('title') // Clear error when typing
                   }
                 }}
               />
@@ -186,21 +151,12 @@ const CreateQuizForm = ({
             value={formData.contextIds.join(', ') || ''}
             onClick={() => handleOpenPopup()}
             fullWidth
+            required
             InputProps={{ readOnly: true }}
             error={fieldErrors.contextIds}
             helperText={fieldErrors.contextIds ? 'At least one context ID is required' : ''}
-            onFocus={() => handleFocus('contextIds')}
-            onBlur={() => handleBlur('contextIds')}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                '& fieldset': {
-                  borderColor: fieldErrors.contextIds ? 'error.main' : ''
-                },
-                '&:hover fieldset': {
-                  borderColor: fieldErrors.contextIds ? 'error.main' : ''
-                }
-              }
-            }}
+            onFocus={() => onFieldInteraction('contextIds')}
+            onBlur={() => onFieldInteraction('contextIds', true)}
           />
           {/* Generic Context Popup */}
           <Dialog fullWidth maxWidth='sm' open={isGenericPopupOpen} onClose={() => handleClosePopup()}>
@@ -213,7 +169,10 @@ const CreateQuizForm = ({
             </IconButtonTooltip>
             <DialogContent>
               <ContextTreeSearch
-                setTheFormValue={(field, value) => setTheFormValue('contextIds', value)}
+                setTheFormValue={(field, value) => {
+                  setTheFormValue('contextIds', value)
+                  onFieldInteraction('contextIds', value.length === 0)
+                }}
                 data={{ formData, genericContextIds: formData.contextIds }}
                 contextType='GENERIC'
               />
@@ -255,23 +214,13 @@ const CreateQuizForm = ({
                 multiline
                 error={fieldErrors.details}
                 helperText={fieldErrors.details ? 'Quiz details are required' : ''}
-                onFocus={() => handleFocus('details')}
-                onBlur={() => handleBlur('details')}
+                onFocus={() => onFieldInteraction('details')}
+                onBlur={() => onFieldInteraction('details', true)}
                 onChange={e => {
                   field.onChange(e)
                   setTheFormValue('details', e.target.value)
                   if (fieldErrors.details && e.target.value.trim() !== '') {
-                    handleFocus('details')
-                  }
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '& fieldset': {
-                      borderColor: fieldErrors.details ? 'error.main' : ''
-                    },
-                    '&:hover fieldset': {
-                      borderColor: fieldErrors.details ? 'error.main' : ''
-                    }
+                    onFieldInteraction('details')
                   }
                 }}
               />
@@ -293,23 +242,13 @@ const CreateQuizForm = ({
                 multiline
                 error={fieldErrors.syllabus}
                 helperText={fieldErrors.syllabus ? 'Quiz syllabus is required' : ''}
-                onFocus={() => handleFocus('syllabus')}
-                onBlur={() => handleBlur('syllabus')}
+                onFocus={() => onFieldInteraction('syllabus')}
+                onBlur={() => onFieldInteraction('syllabus', true)}
                 onChange={e => {
                   field.onChange(e)
                   setTheFormValue('syllabus', e.target.value)
                   if (fieldErrors.syllabus && e.target.value.trim() !== '') {
-                    handleFocus('syllabus')
-                  }
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '& fieldset': {
-                      borderColor: fieldErrors.syllabus ? 'error.main' : ''
-                    },
-                    '&:hover fieldset': {
-                      borderColor: fieldErrors.syllabus ? 'error.main' : ''
-                    }
+                    onFieldInteraction('syllabus')
                   }
                 }}
               />
@@ -376,7 +315,17 @@ const CreateQuizForm = ({
                           style={{ display: 'none' }}
                         />
                         {formData.thumbnail ? (
-                          <Box sx={{ position: 'relative', mb: 2 }}>
+                          <Box
+                            sx={{
+                              position: 'relative',
+                              mb: 2,
+                              height: '200px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              backgroundColor: '#f5f5f5' // Light gray background for error state
+                            }}
+                          >
                             <img
                               src={formData.thumbnail}
                               alt='Game thumbnail'
@@ -385,7 +334,8 @@ const CreateQuizForm = ({
                                 height: '200px',
                                 objectFit: 'cover',
                                 borderRadius: 4,
-                                border: '1px solid #e0e0e0'
+                                border: '1px solid #e0e0e0',
+                                position: 'absolute'
                               }}
                             />
                             <Box
@@ -398,7 +348,9 @@ const CreateQuizForm = ({
                                 backgroundColor: 'rgba(255, 255, 255, 0.9)',
                                 borderRadius: 1,
                                 p: 0.5,
-                                boxShadow: 1
+                                boxShadow: 1,
+                                zIndex: 2,
+                                transform: 'translateY(-1px)'
                               }}
                             >
                               <IconButton
@@ -417,6 +369,7 @@ const CreateQuizForm = ({
                                     URL.revokeObjectURL(formData.thumbnail)
                                   }
                                   setTheFormValue('thumbnail', '')
+                                  onFieldInteraction('thumbnail', true)
                                 }}
                                 sx={{ backgroundColor: 'rgba(0, 0, 0, 0.04)' }}
                               >
@@ -429,8 +382,8 @@ const CreateQuizForm = ({
                             onClick={() => fileInputRef.current?.click()}
                             sx={{
                               height: '200px',
-                              border: '2px dashed',
-                              borderColor: 'divider',
+                              border: '2px dashed #e0e0e0',
+                              borderColor: fieldErrors.thumbnail ? 'error.main' : 'divider',
                               borderRadius: 1,
                               display: 'flex',
                               alignItems: 'center',
@@ -442,18 +395,27 @@ const CreateQuizForm = ({
                               }
                             }}
                           >
-                            <Typography color='text.secondary'>Click to upload thumbnail image</Typography>
+                            <Typography color={fieldErrors.thumbnail ? 'error' : 'text.secondary'}>
+                              Click to upload thumbnail image
+                            </Typography>
                           </Box>
                         )}
+
                         <TextField
                           fullWidth
-                          label='Or enter image URL'
-                          name='thumbnail'
+                          label='Or enter image URL *'
                           value={formData.thumbnail || ''}
                           onChange={e => {
-                            handleChange(e)
-                            field.onChange(e.target.value)
+                            field.onChange(e)
+                            setTheFormValue('thumbnail', e.target.value)
+                            if (fieldErrors.thumbnail) {
+                              onFieldInteraction('thumbnail')
+                            }
                           }}
+                          error={fieldErrors.thumbnail && !formData.thumbnail}
+                          helperText={fieldErrors.thumbnail && !formData.thumbnail ? 'Thumbnail image is required' : ''}
+                          onFocus={() => onFieldInteraction('thumbnail')}
+                          onBlur={() => onFieldInteraction('thumbnail', true)}
                           placeholder='https://example.com/image.jpg'
                           type='url'
                           sx={{ mt: 2 }}
