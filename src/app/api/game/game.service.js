@@ -35,12 +35,16 @@ export const getOne = async (filter = {}) => {
     }
 
     // Add registeredUsers and participatedUsers from Player model
-    const [registeredUsers, participatedUsers] = await Promise.all([
+    const [registeredUsers, participatedUsers, questions] = await Promise.all([
       Player.find({ game: game._id, status: 'registered' }).lean(),
-      Player.find({ game: game._id, status: { $in: ['participated', 'completed'] } }).lean()
+      Player.find({ game: game._id, status: { $in: ['participated', 'completed'] } }).lean(),
+      QuestionsModel.find({ quizId: game.quiz._id || game.quiz, languageCode: game.quiz.language?.code })
+        .sort({ createdAt: 1 })
+        .lean()
     ])
     game.registeredUsers = registeredUsers || []
     game.participatedUsers = participatedUsers || []
+    game.questions = questions || []
 
     return {
       status: 'success',
@@ -66,7 +70,7 @@ export const getAll = async (filter = {}) => {
       .sort({ createdAt: -1 })
       .lean()
 
-    // For each game, add registeredUsers and participatedUsers from Player model
+    // For each game, add registeredUsers, participatedUsers, and questions from Player and QuestionsModel
     const gameIds = games.map(g => g._id)
     const allPlayers = await Player.find({ game: { $in: gameIds } }).lean()
     const playersByGame = {}
@@ -76,11 +80,15 @@ export const getAll = async (filter = {}) => {
       if (player.status === 'registered') playersByGame[gid].registered.push(player)
       if (player.status === 'participated' || player.status === 'completed') playersByGame[gid].participated.push(player)
     }
-    for (const game of games) {
+    // Fetch questions for all games in parallel
+    await Promise.all(games.map(async game => {
       const gid = game._id.toString()
       game.registeredUsers = playersByGame[gid]?.registered || []
       game.participatedUsers = playersByGame[gid]?.participated || []
-    }
+      game.questions = await QuestionsModel.find({ quizId: game.quiz._id || game.quiz, languageCode: game.quiz.language?.code })
+        .sort({ createdAt: 1 })
+        .lean()
+    }))
 
     return {
       status: 'success',
@@ -110,7 +118,7 @@ export const getAllPublic = async (filter = {}) => {
       .sort({ createdAt: -1 })
       .lean()
 
-    // For each game, add registeredUsers and participatedUsers from Player model
+    // For each game, add registeredUsers, participatedUsers, and questions
     const gameIds = games.map(g => g._id)
     const allPlayers = await Player.find({ game: { $in: gameIds } }).lean()
     const playersByGame = {}
@@ -120,11 +128,14 @@ export const getAllPublic = async (filter = {}) => {
       if (player.status === 'registered') playersByGame[gid].registered.push(player)
       if (player.status === 'participated' || player.status === 'completed') playersByGame[gid].participated.push(player)
     }
-    for (const game of games) {
+    await Promise.all(games.map(async game => {
       const gid = game._id.toString()
       game.registeredUsers = playersByGame[gid]?.registered || []
       game.participatedUsers = playersByGame[gid]?.participated || []
-    }
+      game.questions = await QuestionsModel.find({ quizId: game.quiz._id || game.quiz, languageCode: game.quiz.language?.code })
+        .sort({ createdAt: 1 })
+        .lean()
+    }))
 
     return {
       status: 'success',
@@ -158,7 +169,7 @@ export const getAllByEmail = async (email, filter = {}) => {
       .sort({ startTime: -1 })
       .lean()
 
-    // For each game, add registeredUsers and participatedUsers from Player model
+    // For each game, add registeredUsers, participatedUsers, and questions
     const gameIds = games.map(g => g._id)
     const allPlayers = await Player.find({ game: { $in: gameIds } }).lean()
     const playersByGame = {}
@@ -168,11 +179,14 @@ export const getAllByEmail = async (email, filter = {}) => {
       if (player.status === 'registered') playersByGame[gid].registered.push(player)
       if (player.status === 'participated' || player.status === 'completed') playersByGame[gid].participated.push(player)
     }
-    for (const game of games) {
+    await Promise.all(games.map(async game => {
       const gid = game._id.toString()
       game.registeredUsers = playersByGame[gid]?.registered || []
       game.participatedUsers = playersByGame[gid]?.participated || []
-    }
+      game.questions = await QuestionsModel.find({ quizId: game.quiz._id || game.quiz, languageCode: game.quiz.language?.code })
+        .sort({ createdAt: 1 })
+        .lean()
+    }))
 
     return {
       status: 'success',
@@ -209,7 +223,7 @@ export const addOne = async gameData => {
     // If live mode, calculate duration from questions
     if (gameData.gameMode === 'live') {
       // Sum timerSeconds from data field
-      gameData.duration = questions?.reduce((sum, q) => sum + (q?.data?.timerSeconds || 0), 0) + 30 // 30 seconds grace period
+      gameData.duration = questions?.reduce((sum, q) => sum + (q?.data?.timerSeconds || 0), 0)
     }
 
     // Validate required fields
@@ -345,7 +359,7 @@ export const updateOne = async (gameId, updateData) => {
     // If live mode, calculate duration from questions
     if (updateData.gameMode === 'live') {
       // Sum timerSeconds from data field
-      updateData.duration = questions.reduce((sum, q) => sum + (q.data?.timerSeconds || 0), 0) + 30 // 30 seconds grace period
+      updateData.duration = questions.reduce((sum, q) => sum + (q.data?.timerSeconds || 0), 0)
     }
 
     // Check if pin is being updated to a non-unique value

@@ -112,7 +112,7 @@ export default function PlayGameQuiz({ quiz, questions, game, onGameEnd }) {
   const { data: session } = useSession()
   // console.log('game data :  ', game)
   const router = useRouter()
-  const storageKey = `quiz-${quiz._id}-state`
+  const storageKey = `game-${game._id}-quiz-${quiz._id}-state`
   // Inside PlayGameQuiz
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
@@ -365,22 +365,19 @@ export default function PlayGameQuiz({ quiz, questions, game, onGameEnd }) {
 
   // Restore saved state and sync with live game state
   useEffect(() => {
-    const savedState = JSON.parse(localStorage.getItem(storageKey))
-    if (savedState) {
-      setSelectedAnswers(savedState.selectedAnswers || {})
-      setUsedHints(savedState.usedHints || {})
-      setSkippedQuestions(savedState.skippedQuestions || [])
-    }
-
     const now = new Date()
-    const liveQuestionIndex = mappedQuestions.findIndex(q => q.data.expiresAt > now)
+    const liveQuestionIndex = mappedQuestions.findIndex(q => q.data.expiresAt >= now)
 
     if (liveQuestionIndex !== -1) {
       setCurrentQuestionIndex(liveQuestionIndex)
-    } else if (mappedQuestions.length > 0) {
+      const savedState = JSON.parse(localStorage.getItem(storageKey))
+      if (savedState && savedState.currentQuestionIndex === liveQuestionIndex) {
+        setSelectedAnswers(savedState?.selectedAnswers || {})
+        setUsedHints(savedState?.usedHints || {})
+        setSkippedQuestions(savedState?.skippedQuestions || [])
+      }
+    } else if (liveQuestionIndex >= mappedQuestions.length) {
       // If no question is active, the game might have ended
-      setGameEnded(true)
-    } else {
       setGameEnded(true)
     }
   }, [mappedQuestions, quiz._id, storageKey])
@@ -393,10 +390,16 @@ export default function PlayGameQuiz({ quiz, questions, game, onGameEnd }) {
       usedHints,
       skippedQuestions
     }
-    localStorage.setItem(storageKey, JSON.stringify(stateToSave))
+    if (!gameEnded) {
+      localStorage.setItem(storageKey, JSON.stringify(stateToSave))
+    }
   }, [currentQuestionIndex, selectedAnswers, usedHints, skippedQuestions, storageKey])
 
-  // console.log("Selected answers:", selectedAnswers)
+  useEffect(() => {
+    if (gameEnded) {
+      localStorage.removeItem(storageKey)
+    }
+  }, [storageKey, gameEnded])
 
   const isAnswerSelected = Array.isArray(selectedAnswers[currentQuestion?._id])
     ? selectedAnswers[currentQuestion?._id].length > 0

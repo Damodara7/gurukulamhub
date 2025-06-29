@@ -295,7 +295,7 @@ export async function reschedulePendingGames() {
             } else {
               console.log(`📌 Game ${game._id} within grace period, moving to live`)
               await Game.findByIdAndUpdate(game._id, { $set: { status: 'live' } })
-              const endTime = new Date(game.startTime.getTime() + game.duration * 1000)
+              const endTime = new Date(game.startTime.getTime() + game.duration * 1000 + 30 * 1000)
               await scheduleCompletion(game._id, endTime)
             }
           }
@@ -320,19 +320,19 @@ export async function reschedulePendingGames() {
 // Call this when server starts
 export async function initializeScheduler() {
   // Initial run
-  await reschedulePendingGames();
+  await reschedulePendingGames()
 
   // Schedule periodic checks without duplicate initial run
   cron.schedule(
     '*/10 * * * *', // Every 2 minutes
     async () => {
-      console.log('⏰ Running periodic schedule check');
-      await reschedulePendingGames();
+      console.log('⏰ Running periodic schedule check')
+      await reschedulePendingGames()
     },
-    { 
-      scheduled: true, 
+    {
+      scheduled: true,
       timezone: 'Asia/Kolkata',
       runOnInit: false // ← This prevents the duplicate initial run
     }
-  );
+  )
 }

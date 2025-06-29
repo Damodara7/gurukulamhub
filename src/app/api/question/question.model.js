@@ -93,7 +93,7 @@ const QuestionSchema1_0_0 = new mongoose.Schema({
     default: '1.0.0', // Initial schema version
     required: true
   }
-});
+}, { timestamps: true });
 
 const ArtifactSchemaLatest = QuestionSchema1_0_0;
 
