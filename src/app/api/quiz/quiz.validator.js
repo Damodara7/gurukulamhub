@@ -302,13 +302,13 @@ export function validateQuizQuestions(questions) {
     }
 
     // Validate timer
-    // if (typeof data?.timerSeconds !== 'number' || data?.timerSeconds <= 0) {
-    //   questionErrors.push({
-    //     questionId,
-    //     field: 'timerSeconds',
-    //     message: 'Valid timer value required'
-    //   })
-    // }
+    if (typeof data?.timerSeconds !== 'number' || data?.timerSeconds <= 0) {
+      questionErrors.push({
+        questionId,
+        field: 'timerSeconds',
+        message: 'Valid timer value required'
+      })
+    }
 
     if (questionErrors.length > 0) {
       errors.push(...questionErrors)

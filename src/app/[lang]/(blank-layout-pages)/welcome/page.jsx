@@ -5,14 +5,15 @@ import LandingPage from '@/views/landing-page/LandingPage'
 import { Grid, Stack } from '@mui/material'
 import Marquee from '../../(dashboard)/dashboards/myprogress/Marquee/Marquee'
 
-function HomePage() {
+function WelcomePage() {
   return (
     <Stack>
-      <Grid container spacing={6}>
-        <Grid item xs={12} >
-          <Marquee/>
-        </Grid>
-        <Grid item xs={12} >
+      {/* Top fixed marquee - add padding to main content */}
+      <Marquee position='top' positionClass='top-12' />
+
+      <Grid container spacing={6} sx={{ pt: '40px', pb: '70px' }}>
+        {/* Add padding for top and bottom marquees */}
+        <Grid item xs={12}>
           <LandingPage />
         </Grid>
       </Grid>
@@ -20,4 +21,4 @@ function HomePage() {
   )
 }
 
-export default HomePage
+export default WelcomePage

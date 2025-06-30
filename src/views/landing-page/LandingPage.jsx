@@ -5,7 +5,7 @@ import { Stack , Box } from '@mui/material'
 
 function LandingPage() {
   return (
-    <Box sx={{ mt: 10 }}>
+    <Box>
       <LandingPageQuizData />
       <LandingPageGameData />
     </Box>

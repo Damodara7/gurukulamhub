@@ -24,11 +24,11 @@ async function HomePage({ searchParams }) {
 
   return (
     <Stack>
-      <Grid container spacing={6}>
-        <Grid item xs={12}>
-          <DonateButton />
-          <Marquee />
-        </Grid>
+      {/* Top fixed marquee - add padding to main content */}
+      <DonateButton />
+      <Marquee position='top' positionClass='top-[4.4rem]' />
+      <Grid container spacing={6} sx={{ pt: '60px', pb: '70px' }}>
+        {/* Add padding for  top and bottom marquees */}
         <Grid item xs={12}>
           <LandingPage />
         </Grid>
