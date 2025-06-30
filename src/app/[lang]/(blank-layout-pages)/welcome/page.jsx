@@ -11,15 +11,12 @@ function WelcomePage() {
       {/* Top fixed marquee - add padding to main content */}
       <Marquee position='top' positionClass='top-12' />
 
-      <Grid container spacing={6} sx={{ pt: '60px', pb: '60px' }}>
+      <Grid container spacing={6} sx={{ pt: '40px', pb: '70px' }}>
         {/* Add padding for top and bottom marquees */}
         <Grid item xs={12}>
           <LandingPage />
         </Grid>
       </Grid>
-
-      {/* Bottom fixed marquee */}
-      <Marquee position='bottom' positionClass='bottom-10' />
     </Stack>
   )
 }
