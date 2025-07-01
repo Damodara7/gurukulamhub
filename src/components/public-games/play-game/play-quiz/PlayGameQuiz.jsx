@@ -330,11 +330,9 @@ export default function PlayGameQuiz({ quiz, questions, game, onGameEnd }) {
     const maxFFF = 1000 // 1000 for more granularity
     const fffPoints =
       calculatedMarks > 0
-        ? Math.round(
-            maxFFF *
-              (1 - answerTime / (curQuestionTimerSeconds * 1000)) *
-              (calculatedMarks / currentQuestion?.data?.marks)
-          )
+        ? maxFFF *
+          (1 - answerTime / (curQuestionTimerSeconds * 1000)) *
+          (calculatedMarks / currentQuestion?.data?.marks)
         : 0
 
     // EndPoint

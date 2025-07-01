@@ -1,15 +1,13 @@
-import * as PlayerService from './player.service.js'
+import * as GameService from '../../../game.service.js'
 import * as ApiResponseUtils from '@/utils/apiResponses'
 
-export async function GET(request) {
+export async function POST(request, { params }) {
   try {
-    const { searchParams } = new URL(request.url)
-    const email = searchParams.get('email')
-    if (!email) {
-      const errorRes = ApiResponseUtils.createErrorResponse('Email is required')
-      return ApiResponseUtils.sendErrorResponse(errorRes)
-    }
-    const result = await PlayerService.getPlayerByEmail(email)
+    const { id: gameId } = params
+    const { user, currentQuestionIndex } = await request.json()
+
+    const result = await GameService.forwardQuestion(gameId, user, currentQuestionIndex)
+
     if (result.status === 'success') {
       const successRes = ApiResponseUtils.createSuccessResponse(result.message, result.result)
       return ApiResponseUtils.sendSuccessResponse(successRes)
@@ -17,8 +15,8 @@ export async function GET(request) {
     const errorRes = ApiResponseUtils.createErrorResponse(result.message)
     return ApiResponseUtils.sendErrorResponse(errorRes)
   } catch (error) {
+    console.error('error:', error)
     const errorRes = ApiResponseUtils.createErrorResponse(error.message)
     return ApiResponseUtils.sendErrorResponse(errorRes)
   }
-}
-
+} 

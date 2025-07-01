@@ -36,7 +36,7 @@ export const getOne = async (filter = {}) => {
 
     // Add registeredUsers and participatedUsers from Player model
     const [registeredUsers, participatedUsers, questions] = await Promise.all([
-      Player.find({ game: game._id, status: 'registered' }).lean(),
+      Player.find({ game: game._id, status: { $in: ['registered', 'participated', 'completed'] } }).lean(),
       Player.find({ game: game._id, status: { $in: ['participated', 'completed'] } }).lean(),
       QuestionsModel.find({ quizId: game.quiz._id || game.quiz, languageCode: game.quiz.language?.code })
         .sort({ createdAt: 1 })
@@ -77,18 +77,24 @@ export const getAll = async (filter = {}) => {
     for (const player of allPlayers) {
       const gid = player.game.toString()
       if (!playersByGame[gid]) playersByGame[gid] = { registered: [], participated: [] }
-      if (player.status === 'registered') playersByGame[gid].registered.push(player)
-      if (player.status === 'participated' || player.status === 'completed') playersByGame[gid].participated.push(player)
+      if (['registered', 'participated', 'completed'].includes(player.status))
+        playersByGame[gid].registered.push(player)
+      if (['participated', 'completed'].includes(player.status)) playersByGame[gid].participated.push(player)
     }
     // Fetch questions for all games in parallel
-    await Promise.all(games.map(async game => {
-      const gid = game._id.toString()
-      game.registeredUsers = playersByGame[gid]?.registered || []
-      game.participatedUsers = playersByGame[gid]?.participated || []
-      game.questions = await QuestionsModel.find({ quizId: game.quiz._id || game.quiz, languageCode: game.quiz.language?.code })
-        .sort({ createdAt: 1 })
-        .lean()
-    }))
+    await Promise.all(
+      games.map(async game => {
+        const gid = game._id.toString()
+        game.registeredUsers = playersByGame[gid]?.registered || []
+        game.participatedUsers = playersByGame[gid]?.participated || []
+        game.questions = await QuestionsModel.find({
+          quizId: game.quiz._id || game.quiz,
+          languageCode: game.quiz.language?.code
+        })
+          .sort({ createdAt: 1 })
+          .lean()
+      })
+    )
 
     return {
       status: 'success',
@@ -125,17 +131,23 @@ export const getAllPublic = async (filter = {}) => {
     for (const player of allPlayers) {
       const gid = player.game.toString()
       if (!playersByGame[gid]) playersByGame[gid] = { registered: [], participated: [] }
-      if (player.status === 'registered') playersByGame[gid].registered.push(player)
-      if (player.status === 'participated' || player.status === 'completed') playersByGame[gid].participated.push(player)
+      if (['registered', 'participated', 'completed'].includes(player.status))
+        playersByGame[gid].registered.push(player)
+      if (['participated', 'completed'].includes(player.status)) playersByGame[gid].participated.push(player)
     }
-    await Promise.all(games.map(async game => {
-      const gid = game._id.toString()
-      game.registeredUsers = playersByGame[gid]?.registered || []
-      game.participatedUsers = playersByGame[gid]?.participated || []
-      game.questions = await QuestionsModel.find({ quizId: game.quiz._id || game.quiz, languageCode: game.quiz.language?.code })
-        .sort({ createdAt: 1 })
-        .lean()
-    }))
+    await Promise.all(
+      games.map(async game => {
+        const gid = game._id.toString()
+        game.registeredUsers = playersByGame[gid]?.registered || []
+        game.participatedUsers = playersByGame[gid]?.participated || []
+        game.questions = await QuestionsModel.find({
+          quizId: game.quiz._id || game.quiz,
+          languageCode: game.quiz.language?.code
+        })
+          .sort({ createdAt: 1 })
+          .lean()
+      })
+    )
 
     return {
       status: 'success',
@@ -176,17 +188,23 @@ export const getAllByEmail = async (email, filter = {}) => {
     for (const player of allPlayers) {
       const gid = player.game.toString()
       if (!playersByGame[gid]) playersByGame[gid] = { registered: [], participated: [] }
-      if (player.status === 'registered') playersByGame[gid].registered.push(player)
-      if (player.status === 'participated' || player.status === 'completed') playersByGame[gid].participated.push(player)
+      if (['registered', 'participated', 'completed'].includes(player.status))
+        playersByGame[gid].registered.push(player)
+      if (['participated', 'completed'].includes(player.status)) playersByGame[gid].participated.push(player)
     }
-    await Promise.all(games.map(async game => {
-      const gid = game._id.toString()
-      game.registeredUsers = playersByGame[gid]?.registered || []
-      game.participatedUsers = playersByGame[gid]?.participated || []
-      game.questions = await QuestionsModel.find({ quizId: game.quiz._id || game.quiz, languageCode: game.quiz.language?.code })
-        .sort({ createdAt: 1 })
-        .lean()
-    }))
+    await Promise.all(
+      games.map(async game => {
+        const gid = game._id.toString()
+        game.registeredUsers = playersByGame[gid]?.registered || []
+        game.participatedUsers = playersByGame[gid]?.participated || []
+        game.questions = await QuestionsModel.find({
+          quizId: game.quiz._id || game.quiz,
+          languageCode: game.quiz.language?.code
+        })
+          .sort({ createdAt: 1 })
+          .lean()
+      })
+    )
 
     return {
       status: 'success',
@@ -649,19 +667,26 @@ export const joinGame = async (gameId, userData) => {
     if (player) {
       // Fetch latest registered and participated users
       const [registeredUsers, participatedUsers] = await Promise.all([
-        Player.find({ game: gameId, status: 'registered' }).lean(),
+        Player.find({ game: gameId, status: { $in: ['registered','participated', 'completed'] } }).lean(),
         Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } }).lean()
       ])
       const game = await Game.findById(gameId).lean()
       return {
         status: 'success',
         result: { ...game, registeredUsers, participatedUsers },
-        message: player.status === 'registered' ? 'User is already registered for this game' : 'User already started/participated in this game'
+        message:
+          player.status === 'registered'
+            ? 'User is already registered for this game'
+            : 'User already started/participated in this game'
       }
     }
 
     // Check if game exists and is joinable
-    const game = await Game.findOne({ _id: gameId, status: { $in: ['approved', 'lobby', 'live'] }, isDeleted: false }).lean()
+    const game = await Game.findOne({
+      _id: gameId,
+      status: { $in: ['approved', 'lobby', 'live'] },
+      isDeleted: false
+    }).lean()
     if (!game) {
       return {
         status: 'error',
@@ -687,7 +712,7 @@ export const joinGame = async (gameId, userData) => {
 
     // Fetch latest registered and participated users after registration
     const [registeredUsers, participatedUsers] = await Promise.all([
-      Player.find({ game: gameId, status: 'registered' }).lean(),
+      Player.find({ game: gameId, status: { $in: ['registered','participated', 'completed'] } }).lean(),
       Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } }).lean()
     ])
     return {
@@ -728,7 +753,7 @@ export const startGame = async (gameId, userData) => {
     if (player.status === 'participated' || player.status === 'completed') {
       // Fetch latest registered and participated users
       const [registeredUsers, participatedUsers] = await Promise.all([
-        Player.find({ game: gameId, status: 'registered' }).lean(),
+        Player.find({ game: gameId, status: { $in: ['registered','participated', 'completed'] } }).lean(),
         Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } }).lean()
       ])
       const game = await Game.findById(gameId).lean()
@@ -750,7 +775,7 @@ export const startGame = async (gameId, userData) => {
     const questions = await QuestionsModel.find({ quizId, languageCode }).lean()
     // Fetch latest registered and participated users after participation
     const [registeredUsers, participatedUsers] = await Promise.all([
-      Player.find({ game: gameId, status: 'registered' }).lean(),
+      Player.find({ game: gameId, status: { $in: ['registered','participated', 'completed'] } }).lean(),
       Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } }).lean()
     ])
     return {
@@ -759,7 +784,7 @@ export const startGame = async (gameId, userData) => {
       message: 'User started participated in game'
     }
   } catch (error) {
-    console.log("error starting game: ", error)
+    console.log('error starting game: ', error)
     return {
       status: 'error',
       result: null,
@@ -830,7 +855,7 @@ export const updatePlayerProgress = async (gameId, { user, userAnswer, finish })
     // Fetch latest game, registeredUsers, and participatedUsers
     const game = await Game.findById(gameId).lean()
     const [registeredUsers, participatedUsers] = await Promise.all([
-      Player.find({ game: gameId, status: 'registered' }).lean(),
+      Player.find({ game: gameId, status: { $in: ['registered','participated', 'completed'] } }).lean(),
       Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } }).lean()
     ])
 
@@ -1097,5 +1122,136 @@ async function revertSponsorshipsForGame(game) {
   } catch (error) {
     console.error(`Error reverting sponsorships for game ${game._id}:`, error)
     throw error
+  }
+}
+
+export const setForwardingAdmin = async (gameId, user) => {
+  await connectMongo()
+  try {
+    if (!user?.email) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'User email is required'
+      }
+    }
+    const adminUser = await User.findOne({ email: user.email })
+    if (!adminUser) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Admin user not found'
+      }
+    }
+    if (!adminUser?.roles?.includes('ADMIN')) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'User does not have admin role'
+      }
+    }
+    const game = await Game.findById(gameId)
+    if (!game) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Game not found'
+      }
+    }
+    game.forwardingAdmin = adminUser._id
+    await game.save()
+    return {
+      status: 'success',
+      result: game,
+      message: 'Forwarding admin updated successfully'
+    }
+  } catch (error) {
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to update forwarding admin'
+    }
+  }
+}
+
+export const forwardQuestion = async (gameId, user, currentQuestionIndex) => {
+  await connectMongo()
+  try {
+    if (!user?.email) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'User email is required'
+      }
+    }
+    const adminUser = await User.findOne({ email: user.email })
+    if (!adminUser) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'User not found'
+      }
+    }
+    const game = await Game.findById(gameId)
+    if (!game) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Game not found'
+      }
+    }
+    if (!game.forwardingAdmin || adminUser._id.toString() !== game.forwardingAdmin.toString()) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'User is not the forwarding admin for this game'
+      }
+    }
+    // Get total questions count
+    const totalQuestions = game.questionsCount || 0
+    if (typeof currentQuestionIndex !== 'number') {
+      return {
+        status: 'error',
+        result: null,
+        message: 'currentQuestionIndex is required and must be a number'
+      }
+    }
+    let message = ''
+    if (currentQuestionIndex >= totalQuestions - 1) {
+      // Last question, complete the game
+      game.status = 'completed'
+      game.liveQuestionIndex = totalQuestions - 1
+      await game.save()
+      // Update all players
+      const now = new Date()
+      await Player.updateMany({ game: gameId }, { $set: { status: 'completed', completed: true, finishedAt: now } })
+      message = 'Game completed and all players marked as completed.'
+    } else {
+      // Increment liveQuestionIndex
+      game.liveQuestionIndex = currentQuestionIndex + 1
+      await game.save()
+      message = 'Moved to next question.'
+    }
+    // Always return game with registeredPlayers, participatedPlayers, and questions
+    const [registeredPlayers, participatedPlayers, questions] = await Promise.all([
+      Player.find({ game: gameId, status: { $in: ['registered', 'participated', 'completed'] } }).lean(),
+      Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } }).lean(),
+      QuestionsModel.find({ quizId: game.quiz, languageCode: game.quiz.language?.code }).lean()
+    ])
+    const resultGame = game.toObject()
+    resultGame.registeredPlayers = registeredPlayers
+    resultGame.participatedPlayers = participatedPlayers
+    resultGame.questions = questions
+    return {
+      status: 'success',
+      result: resultGame,
+      message
+    }
+  } catch (error) {
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to forward question'
+    }
   }
 }

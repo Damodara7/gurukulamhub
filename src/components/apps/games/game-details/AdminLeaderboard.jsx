@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   Card,
   CardContent,
@@ -13,9 +13,12 @@ import {
   Avatar,
   Chip,
   Paper,
-  Tooltip
+  Tooltip,
+  CircularProgress
 } from '@mui/material'
 import { EmojiEvents, CheckCircle, Cancel, People } from '@mui/icons-material'
+import * as RestApi from '@/utils/restApiUtil'
+import { API_URLS } from '@/configs/apiConfig'
 
 function AdminLeaderboard({
   game,
@@ -25,6 +28,9 @@ function AdminLeaderboard({
   description = '',
   maxheight = 300
 }) {
+  const [leaderboard, setLeaderboard] = useState([])
+  const [loading, setLoading] = useState(true)
+
   const formatTime = seconds => {
     // Handle edge cases
     if (seconds === 0) return '0s'
@@ -73,6 +79,46 @@ function AdminLeaderboard({
     return parts.length === 0 ? '0s' : parts.join(' ')
   }
 
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      try {
+        const res = await RestApi.get(`${API_URLS.v0.USERS_GAME}/${game._id}/leaderboard`)
+        if (res.status === 'success') {
+          // Sort leaderboard by score (descending) and then by totalTime (ascending)
+          const sortedLeaderboard = res.result?.sort((p1, p2) => {
+            if (game?.gameMode === 'live') {
+              return p2.fffPoints - p1.fffPoints
+            } else {
+              // self-paced: sort by score desc, then totalAnswerTime asc, then finishedAt asc
+              if (p2.score !== p1.score) {
+                return p2.score - p1.score
+              }
+              if (p1.totalAnswerTime !== p2.totalAnswerTime) {
+                return p1.totalAnswerTime - p2.totalAnswerTime
+              }
+              return new Date(p1.finishedAt) - new Date(p2.finishedAt)
+            }
+          })
+          setLeaderboard(sortedLeaderboard)
+          setLoading(false)
+        } else {
+          setLoading(false)
+        }
+      } catch (error) {
+        setLoading(false)
+      }
+    }
+    if (game?._id) fetchLeaderboard()
+  }, [game?._id])
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+        <CircularProgress />
+      </Box>
+    )
+  }
+
   return (
     <Card sx={{ mb: 3 }}>
       <CardContent>
@@ -93,17 +139,21 @@ function AdminLeaderboard({
                 <TableCell>Player</TableCell>
                 <TableCell align='right'>Score</TableCell>
                 <TableCell align='right'>Answer Time</TableCell>
-                <TableCell align='right'>
-                  <Tooltip title="Fastest Finger First Points" placement="top">FFF Points</Tooltip>
-                </TableCell>
+                {game.gameMode === 'live' && (
+                  <TableCell align='right'>
+                    <Tooltip title="Fastest Finger First Points" placement="top">FFF Points</Tooltip>
+                  </TableCell>
+                )}
+                {game.gameMode === 'self-paced' && (
+                  <TableCell align='right'>Finished At</TableCell>
+                )}
                 <TableCell align='right'>Status</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {game?.participatedUsers?.length > 0 ? (
-                [...game.participatedUsers]
-                  .sort((a, b) => b.score - a.score)
-                  .slice(0, duringPlay ? 5 : game.participatedUsers.length)
+              {leaderboard && leaderboard.length > 0 ? (
+                leaderboard
+                  .slice(0, duringPlay ? 5 : leaderboard.length)
                   .map((user, index) => (
                     <TableRow key={user._id} hover>
                       <TableCell>
@@ -126,14 +176,23 @@ function AdminLeaderboard({
                       </TableCell>
                       <TableCell align='right'>
                         <Typography variant='body1' fontWeight='medium'>
-                          {formatTime(user.answers.reduce((sum, a) => sum + a.answerTime, 0) / 1000)}
+                          {formatTime((user.totalAnswerTime || user.answers?.reduce((sum, a) => sum + a.answerTime, 0) || 0) / 1000)}
                         </Typography>
                       </TableCell>
-                      <TableCell align='right'>
-                        <Typography variant='body1' fontWeight='medium'>
-                          {user.fffPoints}
-                        </Typography>
-                      </TableCell>
+                      {game.gameMode === 'live' && (
+                        <TableCell align='right'>
+                          <Typography variant='body1' fontWeight='medium'>
+                            {user?.fffPoints?.toFixed(3)}
+                          </Typography>
+                        </TableCell>
+                      )}
+                      {game.gameMode === 'self-paced' && (
+                        <TableCell align='right'>
+                          <Typography variant='body1' fontWeight='medium'>
+                            {user.finishedAt ? new Date(user.finishedAt).toLocaleString() : '--'}
+                          </Typography>
+                        </TableCell>
+                      )}
                       <TableCell align='right'>
                         {user.completed ? (
                           <Chip

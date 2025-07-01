@@ -24,7 +24,7 @@ import {
   InputAdornment,
   Paper
 } from '@mui/material'
-import { TaskAltOutlined, WarningAmberOutlined, Info, ArrowBack, VisibilityOff, Visibility } from '@mui/icons-material'
+import { TaskAltOutlined, WarningAmberOutlined, Info, ArrowBack, VisibilityOff, Visibility, WarningAmberOutlined as WarningAmberOutlinedIcon, TaskAltOutlined as TaskAltOutlinedIcon,   } from '@mui/icons-material'
 
 import { toast } from 'react-toastify'
 /********************************************/

@@ -28,7 +28,22 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
         if (res.status === 'success') {
           // Sort leaderboard by score (descending) and then by totalTime (ascending)
           console.log(res.result)
-          setLeaderboard(res.result)
+
+          const sortedLeaderboard = res.result?.sort((p1, p2) => {
+            if (game?.gameMode === 'live') {
+              return p2.fffPoints - p1.fffPoints
+            } else {
+              // self-paced: sort by score desc, then totalAnswerTime asc, then finishedAt asc
+              if (p2.score !== p1.score) {
+                return p2.score - p1.score
+              }
+              if (p1.totalAnswerTime !== p2.totalAnswerTime) {
+                return p1.totalAnswerTime - p2.totalAnswerTime
+              }
+              return new Date(p1.finishedAt) - new Date(p2.finishedAt)
+            }
+          })
+          setLeaderboard(sortedLeaderboard)
           setLoading(false)
         } else {
           console.log('Error while updating score: ', res.message)
@@ -91,12 +106,17 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
               <TableCell>Player</TableCell>
               <TableCell align='right'>Score</TableCell>
               {!duringPlay && <TableCell align='right'>Answer Time</TableCell>}
-              <TableCell align='right'>
-                <Tooltip title='Fastest Finger First Points' placement='top'>
-                  FFF Points{' '}
-                  <span style={{ fontSize: '0.8em', color: '#888' }}>{`(out of ${1000 * game?.questionsCount})`}</span>
-                </Tooltip>
-              </TableCell>
+              {game?.gameMode === 'live' && (
+                <TableCell align='right'>
+                  <Tooltip title='Fastest Finger First Points' placement='top'>
+                    FFF Points{' '}
+                    <span style={{ fontSize: '0.8em', color: '#888' }}>{`(out of ${
+                      1000 * game?.questionsCount
+                    })`}</span>
+                  </Tooltip>
+                </TableCell>
+              )}
+              {game.gameMode === 'self-paced' && <TableCell align='right'>Completed At</TableCell>}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -106,7 +126,10 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
                 <TableCell>{player.email}</TableCell>
                 <TableCell align='right'>{player.score.toFixed(2)}</TableCell>
                 {!duringPlay && <TableCell align='right'>{formatTime(player.totalAnswerTime / 1000)}</TableCell>}
-                <TableCell align='right'>{player?.fffPoints}</TableCell>
+                {game?.gameMode === 'live' && <TableCell align='right'>{player?.fffPoints?.toFixed(3)}</TableCell>}
+                {game?.gameMode === 'self-paced' && (
+                  <TableCell align='right'>{new Date(player?.finishedAt)?.toLocaleString()}</TableCell>
+                )}
               </TableRow>
             ))}
           </TableBody>

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Box, Typography, Button, Alert } from '@mui/material'
+import { Box, Typography, Button, Alert, Chip } from '@mui/material'
 import SingleChoiceTemplate from '../../../publicquiz/SingleChoiceTemplate'
 import MultipleChoiceTemplate from '../../../publicquiz/MultipleChoiceTemplate'
 import TrueFalseQuizTemplate from '../../../publicquiz/TrueFalseQuizTemplate'
@@ -25,9 +25,17 @@ const QuizQuestion = ({
         {`Question ${currentQuestionIndex + 1} / ${questions.length}`}
       </Typography>
       <Box mb={2}>
-        <Typography variant='subtitle1' sx={{ color: '#1976d2', mb: 1 }}>
-          Time Left: {timeLeft}s
-        </Typography>
+        <Box className='flex justify-between items-center mb-2'>
+          <Typography variant='subtitle1' sx={{ color: timeLeft >= 30?'#1976d2':"red", mb: 1 }}>
+            Time Left for this question: {timeLeft}s
+          </Typography>
+          <Chip
+            label={<b>{`${currentQuestion?.data?.marks} Mark${currentQuestion?.data?.marks > 1 ? 's' : ''}`}</b>}
+            variant='outlined'
+            color='success'
+            // size='small'
+          />
+        </Box>
         {/* Dynamically render the correct template based on the question type */}
         {currentQuestion?.templateId === 'single-choice' && (
           <SingleChoiceTemplate

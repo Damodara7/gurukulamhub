@@ -136,6 +136,14 @@ const gameSchema = new mongoose.Schema(
       enum: ['auto', 'admin'],
       default: 'auto'
     },
+    forwardingAdmin: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'users',
+    },
+    liveQuestionIndex: {
+      type: Number,
+      default: 0,
+    },
     duration: {
       // In seconds
       type: Number,

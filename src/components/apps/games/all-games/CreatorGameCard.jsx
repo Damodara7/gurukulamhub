@@ -192,7 +192,7 @@ const CreatorGameCard = ({ game, isSuperUser = false, onViewGame, onEditGame, on
                 <LeaderboardIcon />
               </IconButtonTooltip>
             )}
-            {!['live', 'completed', 'lobby'].includes(game?.status) &&
+            {!['live', 'lobby'].includes(game?.status) &&
               ((isSuperUser &&
                 game?.createdBy?.email === session?.user?.email &&
                 !game?.createdBy?.roles?.includes('ADMIN')) ||
