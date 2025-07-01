@@ -50,31 +50,6 @@ import { getCountryByName } from '@/utils/countryRegionUtil'
 // Reward position options
 const POSITION_OPTIONS = [1, 2, 3, 4, 5]
 
-// Initial form data
-const initialFormData = {
-  title: '',
-  pin: Math.floor(100000 + Math.random() * 900000).toString(),
-  description: '',
-  quiz: '',
-  startTime: null,
-  duration: null, // 10 minutes in seconds
-  promotionalVideoUrl: '',
-  thumbnailPoster: '',
-  forwardtype: 'auto',
-  gameMode: 'live',
-  requireRegistration: false,
-  registrationEndTime: null,
-  limitPlayers: false,
-  maxPlayers: 100000,
-  tags: [],
-  location: {
-    country: '',
-    region: '',
-    city: ''
-  },
-  rewards: []
-}
-
 //validate the form
 
 const validateForm = formData => {
@@ -157,6 +132,30 @@ const formFieldOrder = [
 
 // Main Game Form component
 const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
+  // Initial form data
+  const initialFormData = {
+    title: '',
+    pin: Math.floor(100000 + Math.random() * 900000).toString(),
+    description: '',
+    quiz: '',
+    startTime: null,
+    duration: null, // 10 minutes in seconds
+    promotionalVideoUrl: '',
+    thumbnailPoster: '',
+    forwardtype: 'auto',
+    gameMode: 'live',
+    requireRegistration: false,
+    registrationEndTime: null,
+    limitPlayers: false,
+    maxPlayers: 100000,
+    tags: [],
+    location: {
+      country: '',
+      region: '',
+      city: ''
+    },
+    rewards: []
+  }
   const [formData, setFormData] = useState(initialFormData)
   const [availablePositions, setAvailablePositions] = useState(POSITION_OPTIONS)
   const [selectedCountryObject, setSelectedCountryObject] = useState(null)
@@ -527,9 +526,9 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
     }
     if (formData.gameMode !== 'live') {
       delete submission.forwardtype
-      submission.duration= Number(submission.duration)
+      submission.duration = Number(submission.duration)
     }
-    console.log("submission data: ", submission)
+    console.log('submission data: ', submission)
     await onSubmit(submission)
   }
 
@@ -833,20 +832,20 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
       {/* Game Mode Selection */}
       <Grid item xs={6}>
         <FormControl fullWidth required error={!!errors.gameMode && touches.gameMode}>
-          <InputLabel id="game-mode-label">Game Mode</InputLabel>
+          <InputLabel id='game-mode-label'>Game Mode</InputLabel>
           <Select
-            labelId="game-mode-label"
-            id="game-mode-select"
-            name="gameMode"
+            labelId='game-mode-label'
+            id='game-mode-select'
+            name='gameMode'
             value={formData.gameMode}
-            label="Game Mode"
+            label='Game Mode'
             onChange={handleGameModeChange}
             onBlur={handleBlur}
             onFocus={() => setErrors(prev => ({ ...prev, gameMode: '' }))}
             inputRef={fieldRefs.gameMode}
           >
-            <MenuItem value="live">Live</MenuItem>
-            <MenuItem value="self-paced">Self-paced</MenuItem>
+            <MenuItem value='live'>Live</MenuItem>
+            <MenuItem value='self-paced'>Self-paced</MenuItem>
           </Select>
           <FormHelperText>
             {formData.gameMode === 'live'
@@ -860,20 +859,20 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
       {formData.gameMode === 'live' && (
         <Grid item xs={6}>
           <FormControl fullWidth required error={!!errors.forwardtype && touches.forwardtype}>
-            <InputLabel id="forward-type-label">Forward Type</InputLabel>
+            <InputLabel id='forward-type-label'>Forward Type</InputLabel>
             <Select
-              labelId="forward-type-label"
-              id="forward-type-select"
-              name="forwardtype"
+              labelId='forward-type-label'
+              id='forward-type-select'
+              name='forwardtype'
               value={formData.forwardtype}
-              label="Forward Type"
+              label='Forward Type'
               onChange={handleChange}
               onBlur={handleBlur}
               onFocus={() => setErrors(prev => ({ ...prev, forwardtype: '' }))}
               inputRef={fieldRefs.forwardtype}
             >
-              <MenuItem value="auto">Auto</MenuItem>
-              <MenuItem value="admin">Admin</MenuItem>
+              <MenuItem value='auto'>Auto</MenuItem>
+              <MenuItem value='admin'>Admin</MenuItem>
             </Select>
             <FormHelperText>Select how the game will be forwarded</FormHelperText>
           </FormControl>
@@ -908,8 +907,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
         </Grid>
       )}
 
-      
-        <Grid item xs={12} md={6}></Grid>
+      <Grid item xs={12} md={6}></Grid>
 
       {/* Registration */}
       <Grid item xs={12} md={6}>
@@ -1221,7 +1219,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                     sx={{
                       height: '200px',
                       border: '2px dashed',
-                      borderColor: !!errors.thumbnailPoster && touches.thumbnailPoster ? 'red' :'divider',
+                      borderColor: !!errors.thumbnailPoster && touches.thumbnailPoster ? 'red' : 'divider',
                       borderRadius: 1,
                       display: 'flex',
                       alignItems: 'center',
