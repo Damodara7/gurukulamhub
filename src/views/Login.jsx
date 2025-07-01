@@ -1,34 +1,37 @@
 'use client'
 
 /********** Standard imports.*********************/
-import React, { useState, useRef, useTransition, useEffect } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import {
-  TextField,
+  Box,
+  Container,
+  Grid,
+  Avatar,
   Button,
+  Checkbox,
+  FormControlLabel,
+  TextField,
+  Typography,
+  Link as MuiLink,
+  Divider,
   FormControl,
+  FormLabel,
   RadioGroup,
   Radio,
-  FormControlLabel,
-  FormLabel,
-  Avatar,
-  CircularProgress
+  CircularProgress,
+  Alert,
+  IconButton,
+  InputAdornment,
+  Paper
 } from '@mui/material'
-import Typography from '@mui/material/Typography'
+import { TaskAltOutlined, WarningAmberOutlined, Info, ArrowBack, VisibilityOff, Visibility } from '@mui/icons-material'
+
 import { toast } from 'react-toastify'
 /********************************************/
 
 // Next Imports
 import Link from 'next/link'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
-
-// MUI Imports
-import IconButton from '@mui/material/IconButton'
-import InputAdornment from '@mui/material/InputAdornment'
-import Checkbox from '@mui/material/Checkbox'
-import Divider from '@mui/material/Divider'
-import Alert from '@mui/material/Alert'
-import TaskAltOutlinedIcon from '@mui/icons-material/TaskAltOutlined'
-import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined'
 
 // Third-party Imports
 import { Controller, useForm } from 'react-hook-form'
@@ -452,448 +455,377 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
   const watchedMobile = watch('mobile')
 
   return (
-    <div className='flex bs-full justify-center'>
-      <div className='flex bs-full items-center justify-center flex-1 min-bs-[100dvh] relative p-6 max-md:hidden'>
-        <div className='plb-12 pis-12'>
-          <img
-            src={characterIllustration}
-            alt='character-illustration'
-            className='max-bs-[500px] max-is-full bs-auto'
-          />
+    <div className='flex h-screen'>
+      {/* Illustration side - hidden on mobile */}
+      <div className='hidden md:flex items-center justify-center flex-1 p-6 overflow-hidden'>
+        <div className='p-6'>
+          <img src={characterIllustration} alt='character-illustration' className='max-h-[500px] w-auto' />
         </div>
       </div>
-      <div className='flex flex-col justify-center items-center bs-full bg-backgroundPaper !min-is-full p-6 md:!min-is-[unset] md:p-12 md:is-[480px]'>
-        <div className='flex justify-center  text-center w-full flex-col items-center gap-2'>
-          <Link href='/'>
-            <Logo className='text-primary' height={98} width={95} />
-          </Link>
-          <Typography variant='h4' textAlign='center' className='font-semibold tracking-[0.15px]'>
-            {gamePin
-              ? `Login to ${themeConfig.templateName} to join the game!`
-              : `Welcome to ${themeConfig.templateName}!`}
-          </Typography>
-        </div>
-        <div className='flex flex-col gap-2 is-full sm:is-auto md:is-full sm:max-is-[400px] md:max-is-[unset]'>
-          <>
-            {!showCode && (
-              <>
-                <div className='flex flex-col justify-center items-center mt-2'>
-                  <Typography>Explore Indian Knowledge Systems</Typography>
-                  <form action={onSocialLogin}>
-                    <Button
-                      color='secondary'
-                      className='self-center text-primary'
-                      startIcon={<img src='/images/logos/google.png' alt='Google' width={22} />}
-                      sx={{ '& .MuiButton-startIcon': { marginInlineEnd: 3 } }}
-                      type='submit'
-                      value='google'
-                      name='action'
-                    >
-                      Sign in with Google
-                    </Button>
-                  </form>
-                </div>
-                <div>
-                  <Divider className='gap-3'>or</Divider>
-                  {/* <Typography variant='h4'>{`Welcome to ${themeConfig.templateName}!👋🏻`}</Typography> */}
-                </div>
-              </>
-            )}
 
-            {/* Login Method Selection */}
-            <div className='flex flex-col sm:flex-row justify-center items-center gap-1 sm:gap-4'>
-              <FormLabel component='legend'>Login Using</FormLabel>
-              <RadioGroup row value={loginMethod} onChange={handleLoginMethodChange}>
-                <FormControlLabel value='email' control={<Radio />} label='Email' />
-                <FormControlLabel value='mobile' control={<Radio />} label='Mobile (India Only)' />
-              </RadioGroup>
-            </div>
+      {/* Form side */}
+      <div className='flex flex-col justify-center items-center w-full md:w-[480px]  p-6 bg-backgroundPaper overflow-auto'>
+        <div className='flex flex-col justify-center items-center w-full max-w-[400px]'>
+          <div className='flex justify-center text-center w-full flex-col items-center pt-20'>
+            <Link href='/'>
+              <Logo className='text-primary' height={98} width={95} />
+            </Link>
+            <Typography variant='h4' className='font-semibold tracking-[0.15px] mt-0'>
+              {gamePin
+                ? `Login to ${themeConfig.templateName} to join the game!`
+                : `Welcome to ${themeConfig.templateName}!`}
+            </Typography>
+          </div>
 
-            {!showCode && (
-              <form noValidate autoComplete='off' onSubmit={handleSubmit(onSubmit)} className='flex flex-col gap-3'>
-                {loginMethod === 'email' && (
-                  <>
-                    <Controller
-                      name='email'
-                      control={control}
-                      rules={{ required: true }}
-                      render={({ field }) => (
-                        <TextField
-                          {...field}
-                          fullWidth
-                          autoFocus
-                          type='email'
-                          label='Email'
-                          onChange={e => {
-                            setSuccessMsg('')
-                            setErrorMsg('')
-                            field.onChange(e) // Ensure this is called
-                            errorState !== null && setErrorState(null)
-                          }}
-                          {...((errors.email || errorState !== null) && {
-                            error: true,
-                            helperText: errors?.email?.message || errorState?.message[0]
-                          })}
-                        />
-                      )}
-                    />
-                    <Controller
-                      name='password'
-                      control={control}
-                      rules={{ required: true }}
-                      render={({ field }) => (
-                        <TextField
-                          {...field}
-                          fullWidth
-                          label='Password'
-                          id='login-password'
-                          type={isPasswordShown ? 'text' : 'password'}
-                          onChange={e => {
-                            setSuccessMsg('')
-                            setErrorMsg('')
-                            field.onChange(e) // Ensure this is called
-                            errorState !== null && setErrorState(null)
-                          }}
-                          InputProps={{
-                            endAdornment: (
-                              <InputAdornment position='end'>
-                                <IconButtonTooltip
-                                  title={isPasswordShown ? 'Hide' : 'Show'}
-                                  edge='end'
-                                  onClick={handleClickShowPassword}
-                                  onMouseDown={e => e.preventDefault()}
-                                  aria-label='toggle password visibility'
-                                >
-                                  <i className={isPasswordShown ? 'ri-eye-off-line' : 'ri-eye-line'} />
-                                </IconButtonTooltip>
-                              </InputAdornment>
-                            )
-                          }}
-                          {...(errors.password && { error: true, helperText: errors.password.message })}
-                        />
-                      )}
-                    />
-                  </>
-                )}
-                {loginMethod === 'mobile' && (
-                  <>
-                    <Controller
-                      name='mobile'
-                      control={control}
-                      rules={{ required: true }}
-                      render={({ field }) => (
-                        <TextField
-                          {...field}
-                          fullWidth
-                          defaultValue='8247783396'
-                          autoFocus
-                          label='Mobile Number'
-                          onKeyDown={e => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault()
-                              e.stopPropagation()
-                              findAccountsWithMobile(field.value)
-                            }
-                          }}
-                          onChange={e => {
-                            field.onChange(e.target.value)
-                            setOtpSent(false)
-                            setOtpValue('')
-                            setErrorMsg('')
-                            setLoading(prev => ({ ...prev, accountsFetched: false }))
-                            setAccountsWithMobile([]) // Clear the list when mobile number changes
-                            setSelectedAccountWithMobile(null)
-                          }}
-                          InputProps={{
-                            startAdornment: (
-                              <InputAdornment position='start'>
-                                <Typography variant='body1' color='textSecondary'>
-                                  +91
-                                </Typography>
-                              </InputAdornment>
-                            ),
-                            endAdornment: (
-                              <InputAdornment
-                                position='end'
-                                type='button'
-                                component='button'
-                                style={{ color: 'white' }}
-                              >
-                                <Button
-                                  onClick={e => {
-                                    e.stopPropagation()
-                                    findAccountsWithMobile(field.value)
-                                  }}
-                                  disabled={!field.value || field.value.trim().length !== 10 || loading.findAccounts}
-                                  edge='end'
-                                  color='primary'
-                                  type='button'
-                                  component='label'
-                                  style={{ color: 'white' }}
-                                  variant='contained'
-                                  size='small'
-                                >
-                                  {loading.findAccounts ? 'Finding...' : 'Find Account'}
-                                </Button>
-                              </InputAdornment>
-                            )
-                          }}
-                        />
-                      )}
-                    />
-
-                    {/* List of accounts if any */}
-                    {accountsWithMobile.length > 0 ? (
-                      <>
-                        <Typography color='primary'>
-                          Please select one of the email address account associated with this phone number.
-                        </Typography>
-                        <div
-                          style={{
-                            // maxHeight: '60px',
-                            overflowY: 'auto',
-                            padding: '4px',
-                            background: 'rgba(0,0,0,0.025)',
-                            borderRadius: '4px'
-                          }}
-                        >
-                          {accountsWithMobile.map(account => (
-                            <div
-                              key={account?.email}
-                              className={`flex items-center px-3 py-1 border rounded-md transition duration-300 ease-in-out ${
-                                selectedAccountWithMobile === account
-                                  ? 'bg-blue-200 shadow-md'
-                                  : !otpSent && 'hover:bg-gray-200'
-                              }`}
-                              style={{ cursor: !otpSent ? 'pointer' : 'not-allowed' }}
-                              onClick={!otpSent ? () => setSelectedAccountWithMobile(account) : () => {}}
-                            >
-                              <Avatar>{account?.firstname?.charAt(0)}</Avatar>
-                              <div className='ml-3'>
-                                <Typography variant='caption' className='text-blue-800 font-medium'>
-                                  {account?.email}
-                                </Typography>
-                                <Typography variant='body2' className='text-gray-700'>
-                                  {account?.firstname} {account?.lastname}
-                                </Typography>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </>
-                    ) : (
-                      loading.accountsFetched && (
-                        <div
-                          style={{
-                            maxHeight: '80px',
-                            overflowY: 'auto',
-                            padding: '6px 4px',
-                            background: 'rgba(0,0,0,0.05)',
-                            borderRadius: '4px'
-                          }}
-                          className='flex items-center justify-center gap-1'
-                        >
-                          <Typography>No account found.</Typography>
-                          <Typography
-                            style={{ cursor: 'pointer' }}
-                            component={Link}
-                            href={gamePin ? `/auth/register?gamePin=${gamePin}` : `/auth/register`}
-                            color='primary'
-                          >
-                            Register?
-                          </Typography>
-                        </div>
-                      )
-                    )}
-
-                    {/* Send OTP button appears if account is selected */}
-                    {!otpSent && selectedAccountWithMobile && (
-                      <Button
-                        disabled={loading.sendOtp}
-                        color='primary'
-                        variant='contained'
-                        type='button'
-                        fullWidth
-                        style={{ color: 'white' }}
-                        onClick={e => {
-                          e.stopPropagation()
-                          sendPhoneOtpToAccount(selectedAccountWithMobile.phone)
-                        }}
-                      >
-                        {loading.sendOtp ? 'Sending...' : `Send OTP `}
-                      </Button>
-                    )}
-
-                    {/* OTP form appears after OTP is sent */}
-                    {otpSent && (
-                      <div className='flex flex-col sm:flex-row justify-center items-center space-y-2 sm:space-y-0'>
-                        {loading.resendOtp ? (
-                          <CircularProgress />
-                        ) : (
-                          <OtpForm otpValue={otpValue} setOtpValue={setOtpValue} setIsDirty={() => {}} />
-                        )}
-                        <Button
-                          color='primary'
-                          disabled={loading.resendOtp}
-                          variant='text'
-                          type='button'
-                          size='small'
-                          onClick={e => handleResendPhoneOtp(selectedAccountWithMobile.phone)}
-                          className='sm:ml-2'
-                        >
-                          Resend
-                        </Button>
-                      </div>
-                    )}
-                  </>
-                )}
-
-                {errorMsg && (
-                  <Alert
-                    sx={{ padding: '0.5rem' }}
-                    severity=''
-                    icon={<WarningAmberOutlinedIcon fontSize='inherit' />}
-                    color='error'
-                  >
-                    {errorMsg}
-                  </Alert>
-                )}
-                {successMsg && (
-                  <Alert
-                    sx={{ padding: '0.5rem' }}
-                    severity=''
-                    variant='standard'
-                    icon={<TaskAltOutlinedIcon fontSize='inherit' />}
-                    color='success'
-                  >
-                    {successMsg}
-                  </Alert>
-                )}
-                <>
-                  {((otpSent && loginMethod === 'mobile') || loginMethod === 'email') && (
-                    <>
-                      <div className='flex justify-center'>
-                        <RecaptchaComponent
-                          key={recaptchaKey}
-                          recaptchaRef={recaptchaRef}
-                          handleCaptchaChange={handleCaptchaChange}
-                        />
-                      </div>
-
-                      <Button
-                        disabled={isSubmitting}
-                        fullWidth
-                        variant='contained'
-                        style={{ color: 'white' }}
-                        component='button'
-                        type='submit'
-                      >
-                        {loginMethod === 'mobile' ? 'Verify & Log In' : 'Log In'}
-                      </Button>
-                    </>
-                  )}
-                  <div className='flex justify-between items-center flex-wrap gap-x-3 gap-y-1'>
-                    <Typography
-                      className='text-end'
-                      color='primary'
-                      component={Link}
-                      href={
-                        loginMethod === 'email' && watchedEmail
-                          ? `/forgot-password?email=${watchedEmail}`
-                          : loginMethod === 'mobile' && watchedMobile
-                            ? `/forgot-password?mobile=${watchedMobile}`
-                            : '/forgot-password'
-                      }
-                    >
-                      Forgot password?
-                    </Typography>
-                    <div className='flex justify-center items-center flex-wrap gap-2'>
-                      <Typography
-                        style={{ cursor: 'pointer' }}
-                        component={Link}
-                        href={
-                          Object.keys(allSearchParams).length > 0
-                            ? `/auth/register?${new URLSearchParams(allSearchParams).toString()}`
-                            : '/auth/register'
-                        }
-                        color='primary'
-                      >
-                        Register?
-                      </Typography>
-                    </div>
-                  </div>
-                </>
-              </form>
-            )}
-            {showCode && (
-              <form
-                noValidate
-                autoComplete='off'
-                onSubmit={handleSubmit(onSubmitWithCode)}
-                className='flex flex-col gap-4'
-              >
-                <div className='flex flex-col sm:flex-row justify-center items-center space-y-2 sm:space-y-0'>
-                  {loading.resendCode ? (
-                    <CircularProgress />
-                  ) : (
-                    <OtpForm otpValue={code} setOtpValue={setCode} setIsDirty={() => {}} />
-                  )}
+          {!showCode && (
+            <>
+              <div className='flex flex-col justify-center items-center w-full  mt-2 mb-4'>
+                <Typography>Explore Indian Knowledge Systems</Typography>
+                <form action={onSocialLogin}>
                   <Button
-                    color='primary'
-                    disabled={loading.resendCode}
-                    variant='text'
-                    type='button'
-                    size='small'
-                    onClick={e => handleResendCode()}
-                    className='sm:ml-2'
+                    color='secondary'
+                    className='self-center text-primary'
+                    startIcon={<img src='/images/logos/google.png' alt='Google' width={22} />}
+                    sx={{ '& .MuiButton-startIcon': { marginInlineEnd: 3 } }}
+                    type='submit'
+                    value='google'
+                    name='action'
                   >
-                    {loading.resendCode ? 'Sending...' : 'Resend'}
+                    Sign in with Google
                   </Button>
-                </div>
+                </form>
+              </div>
+              <Divider className='gap-3 w-full mb-4'>or</Divider>
+            </>
+          )}
 
-                {errorMsg && (
-                  <Alert
-                    sx={{ padding: '0.5rem' }}
-                    severity=''
-                    icon={<WarningAmberOutlinedIcon fontSize='inherit' />}
-                    color='error'
-                  >
-                    {errorMsg}
-                  </Alert>
-                )}
-                {successMsg && (
-                  <Alert
-                    sx={{ padding: '0.5rem' }}
-                    severity=''
-                    variant='standard'
-                    icon={<TaskAltOutlinedIcon fontSize='inherit' />}
-                    color='success'
-                  >
-                    {successMsg}
-                  </Alert>
+          {/* Login Method Selection */}
+          <div className='flex flex-col sm:flex-row justify-center items-center gap-1 sm:gap-4 w-full mb-4'>
+            <FormLabel component='legend'>Login Using</FormLabel>
+            <RadioGroup row value={loginMethod} onChange={handleLoginMethodChange}>
+              <FormControlLabel value='email' control={<Radio />} label='Email' />
+              <FormControlLabel value='mobile' control={<Radio />} label='Mobile (India Only)' />
+            </RadioGroup>
+          </div>
+
+          {!showCode ? (
+            <form
+              noValidate
+              autoComplete='off'
+              onSubmit={handleSubmit(onSubmit)}
+              className='flex flex-col gap-3 w-full'
+            >
+              {loginMethod === 'email' && (
+                <>
+                  <Controller
+                    name='email'
+                    control={control}
+                    rules={{ required: true }}
+                    render={({ field }) => (
+                      <TextField
+                        {...field}
+                        fullWidth
+                        autoFocus
+                        type='email'
+                        label='Email'
+                        onChange={e => {
+                          setSuccessMsg('')
+                          setErrorMsg('')
+                          field.onChange(e)
+                          errorState !== null && setErrorState(null)
+                        }}
+                        {...((errors.email || errorState !== null) && {
+                          error: true,
+                          helperText: errors?.email?.message || errorState?.message[0]
+                        })}
+                      />
+                    )}
+                  />
+                  <Controller
+                    name='password'
+                    control={control}
+                    rules={{ required: true }}
+                    render={({ field }) => (
+                      <TextField
+                        {...field}
+                        fullWidth
+                        label='Password'
+                        type={isPasswordShown ? 'text' : 'password'}
+                        onChange={e => {
+                          setSuccessMsg('')
+                          setErrorMsg('')
+                          field.onChange(e)
+                          errorState !== null && setErrorState(null)
+                        }}
+                        InputProps={{
+                          endAdornment: (
+                            <InputAdornment position='end'>
+                              <IconButtonTooltip
+                                title={isPasswordShown ? 'Hide' : 'Show'}
+                                edge='end'
+                                onClick={handleClickShowPassword}
+                                onMouseDown={e => e.preventDefault()}
+                                aria-label='toggle password visibility'
+                              >
+                                <i className={isPasswordShown ? 'ri-eye-off-line' : 'ri-eye-line'} />
+                              </IconButtonTooltip>
+                            </InputAdornment>
+                          )
+                        }}
+                        {...(errors.password && { error: true, helperText: errors.password.message })}
+                      />
+                    )}
+                  />
+                </>
+              )}
+
+              {loginMethod === 'mobile' && (
+                <>
+                  <Controller
+                    name='mobile'
+                    control={control}
+                    rules={{ required: true }}
+                    render={({ field }) => (
+                      <TextField
+                        {...field}
+                        fullWidth
+                        autoFocus
+                        label='Mobile Number'
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            findAccountsWithMobile(field.value)
+                          }
+                        }}
+                        onChange={e => {
+                          field.onChange(e.target.value)
+                          setOtpSent(false)
+                          setOtpValue('')
+                          setErrorMsg('')
+                          setLoading(prev => ({ ...prev, accountsFetched: false }))
+                          setAccountsWithMobile([])
+                          setSelectedAccountWithMobile(null)
+                        }}
+                        InputProps={{
+                          startAdornment: (
+                            <InputAdornment position='start'>
+                              <Typography variant='body1' color='textSecondary'>
+                                +91
+                              </Typography>
+                            </InputAdornment>
+                          ),
+                          endAdornment: (
+                            <InputAdornment position='end'>
+                              <Button
+                                onClick={e => {
+                                  e.stopPropagation()
+                                  findAccountsWithMobile(field.value)
+                                }}
+                                disabled={!field.value || field.value.trim().length !== 10 || loading.findAccounts}
+                                color='primary'
+                                type='button'
+                                variant='contained'
+                                size='small'
+                              >
+                                {loading.findAccounts ? 'Finding...' : 'Find Account'}
+                              </Button>
+                            </InputAdornment>
+                          )
+                        }}
+                      />
+                    )}
+                  />
+
+                  {accountsWithMobile.length > 0 ? (
+                    <>
+                      <Typography color='primary'>
+                        Please select one of the email address account associated with this phone number.
+                      </Typography>
+                      <div className='overflow-y-auto p-1 bg-[rgba(0,0,0,0.025)] rounded'>
+                        {accountsWithMobile.map(account => (
+                          <div
+                            key={account?.email}
+                            className={`flex items-center p-2 border rounded transition ${
+                              selectedAccountWithMobile === account
+                                ? 'bg-blue-200 shadow-md'
+                                : !otpSent && 'hover:bg-gray-200'
+                            }`}
+                            style={{ cursor: !otpSent ? 'pointer' : 'not-allowed' }}
+                            onClick={!otpSent ? () => setSelectedAccountWithMobile(account) : () => {}}
+                          >
+                            <Avatar>{account?.firstname?.charAt(0)}</Avatar>
+                            <div className='ml-3'>
+                              <Typography variant='caption' className='text-blue-800 font-medium'>
+                                {account?.email}
+                              </Typography>
+                              <Typography variant='body2' className='text-gray-700'>
+                                {account?.firstname} {account?.lastname}
+                              </Typography>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    loading.accountsFetched && (
+                      <div className='p-1 bg-[rgba(0,0,0,0.05)] rounded flex items-center justify-center gap-1'>
+                        <Typography>No account found.</Typography>
+                        <Typography
+                          component={Link}
+                          href={gamePin ? `/auth/register?gamePin=${gamePin}` : `/auth/register`}
+                          color='primary'
+                        >
+                          Register?
+                        </Typography>
+                      </div>
+                    )
+                  )}
+
+                  {!otpSent && selectedAccountWithMobile && (
+                    <Button
+                      disabled={loading.sendOtp}
+                      color='primary'
+                      variant='contained'
+                      type='button'
+                      fullWidth
+                      onClick={() => sendPhoneOtpToAccount(selectedAccountWithMobile.phone)}
+                    >
+                      {loading.sendOtp ? 'Sending...' : `Send OTP`}
+                    </Button>
+                  )}
+
+                  {otpSent && (
+                    <div className='flex flex-col sm:flex-row justify-center items-center gap-2'>
+                      {loading.resendOtp ? (
+                        <CircularProgress />
+                      ) : (
+                        <OtpForm otpValue={otpValue} setOtpValue={setOtpValue} setIsDirty={() => {}} />
+                      )}
+                      <Button
+                        color='primary'
+                        disabled={loading.resendOtp}
+                        variant='text'
+                        type='button'
+                        size='small'
+                        onClick={() => handleResendPhoneOtp(selectedAccountWithMobile.phone)}
+                      >
+                        Resend
+                      </Button>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {errorMsg && (
+                <Alert severity='error' icon={<WarningAmberOutlinedIcon />} className='p-2'>
+                  {errorMsg}
+                </Alert>
+              )}
+
+              {successMsg && (
+                <Alert severity='success' icon={<TaskAltOutlinedIcon />} className='p-2'>
+                  {successMsg}
+                </Alert>
+              )}
+
+              {((otpSent && loginMethod === 'mobile') || loginMethod === 'email') && (
+                <>
+                  <div className='flex justify-center'>
+                    <RecaptchaComponent
+                      key={recaptchaKey}
+                      recaptchaRef={recaptchaRef}
+                      handleCaptchaChange={handleCaptchaChange}
+                    />
+                  </div>
+
+                  <Button disabled={isSubmitting} fullWidth variant='contained' type='submit' className='mt-2'>
+                    {loginMethod === 'mobile' ? 'Verify & Log In' : 'Log In'}
+                  </Button>
+                </>
+              )}
+
+              <div className='flex justify-between items-center flex-wrap gap-2 mt-2'>
+                <Typography
+                  color='primary'
+                  component={Link}
+                  href={
+                    loginMethod === 'email' && watchedEmail
+                      ? `/forgot-password?email=${watchedEmail}`
+                      : loginMethod === 'mobile' && watchedMobile
+                        ? `/forgot-password?mobile=${watchedMobile}`
+                        : '/forgot-password'
+                  }
+                >
+                  Forgot password?
+                </Typography>
+                <Typography
+                  component={Link}
+                  href={
+                    Object.keys(allSearchParams).length > 0
+                      ? `/auth/register?${new URLSearchParams(allSearchParams).toString()}`
+                      : '/auth/register'
+                  }
+                  color='primary'
+                >
+                  Register?
+                </Typography>
+              </div>
+            </form>
+          ) : (
+            <form
+              noValidate
+              autoComplete='off'
+              onSubmit={handleSubmit(onSubmitWithCode)}
+              className='flex flex-col gap-4 w-full'
+            >
+              <div className='flex flex-col sm:flex-row justify-center items-center gap-2'>
+                {loading.resendCode ? (
+                  <CircularProgress />
+                ) : (
+                  <OtpForm otpValue={code} setOtpValue={setCode} setIsDirty={() => {}} />
                 )}
                 <Button
-                  disabled={!code || loading.confirmCode || loading.resendCode}
-                  fullWidth
-                  variant='contained'
-                  component='button'
-                  style={{ color: 'white' }}
-                  type='submit'
+                  color='primary'
+                  disabled={loading.resendCode}
+                  variant='text'
+                  type='button'
+                  size='small'
+                  onClick={handleResendCode}
                 >
-                  {loading.confirmCode ? <CircularProgress color='inherit' size={24} /> : 'Confirm'}
+                  {loading.resendCode ? 'Sending...' : 'Resend'}
                 </Button>
-              </form>
-            )}
-          </>
+              </div>
 
-          <div className='flex justify-between items-center flex-wrap gap-x-8 gap-y-1 mt-10'>
-            <Link className='flex items-center gap-1 underline underline-offset-4' href='/termsofservice'>
-              {/* <i style={{ color: 'red' }} className='ri-file-warning-fill'></i> */}
+              {errorMsg && (
+                <Alert severity='error' icon={<WarningAmberOutlinedIcon />} className='p-2'>
+                  {errorMsg}
+                </Alert>
+              )}
+
+              {successMsg && (
+                <Alert severity='success' icon={<TaskAltOutlinedIcon />} className='p-2'>
+                  {successMsg}
+                </Alert>
+              )}
+
+              <Button
+                disabled={!code || loading.confirmCode || loading.resendCode}
+                fullWidth
+                variant='contained'
+                type='submit'
+              >
+                {loading.confirmCode ? <CircularProgress color='inherit' size={24} /> : 'Confirm'}
+              </Button>
+            </form>
+          )}
+
+          <div className='flex justify-between items-center flex-wrap gap-4 mt-8 w-full'>
+            <Link className='flex items-center gap-1 underline' href='/termsofservice'>
               <InfoIcon color='primary' />
               <Typography>Terms of Service</Typography>
             </Link>
-            <Link className='flex items-center gap-1 underline  underline-offset-4' href='/privacypolicy'>
-              {/* <i style={{ color: 'red' }} className='ri-file-warning-fill'></i> */}
+            <Link className='flex items-center gap-1 underline' href='/privacypolicy'>
               <InfoIcon color='primary' />
               <Typography>Privacy Policy</Typography>
             </Link>
@@ -902,6 +834,474 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
       </div>
       {isSubmitting && <LoadingDialog open={isSubmitting} />}
     </div>
+    // this is the code by using the mui 
+    // <Box sx={{ display: 'flex', height: '100vh' }}>
+    //   {/* Illustration side - hidden on mobile */}
+    //   <Box
+    //     sx={{
+    //       display: { xs: 'none', md: 'flex' },
+    //       alignItems: 'center',
+    //       justifyContent: 'center',
+    //       flex: 1,
+    //       p: 6,
+    //       overflow: 'hidden'
+    //     }}
+    //   >
+    //     <Box
+    //       component='img'
+    //       src={characterIllustration}
+    //       alt='character-illustration'
+    //       sx={{ maxHeight: 500, width: 'auto' }}
+    //     />
+    //   </Box>
+
+    //   {/* Form side */}
+    //   <Container
+    //     maxWidth='sm'
+    //     sx={{
+    //       display: 'flex',
+    //       flexDirection: 'column',
+    //       justifyContent: 'center',
+    //       p: 6,
+    //       bgcolor: 'background.paper',
+    //       overflow: 'auto'
+    //     }}
+    //   >
+    //     <Box
+    //       sx={{
+    //         display: 'flex',
+    //         flexDirection: 'column',
+    //         alignItems: 'center',
+    //         width: '100%',
+    //         maxWidth: 400,
+    //         mx: 'auto'
+    //       }}
+    //     >
+    //       {/* Logo and Title */}
+    //       <Box
+    //         sx={{
+    //           display: 'flex',
+    //           flexDirection: 'column',
+    //           alignItems: 'center',
+    //           textAlign: 'center',
+    //           width: '100%',
+    //           pt: 10,
+    //           pb: 4
+    //         }}
+    //       >
+    //         <Link href='/' passHref>
+    //           <MuiLink>
+    //             <Logo className='text-primary' height={98} width={95} />
+    //           </MuiLink>
+    //         </Link>
+    //         <Typography variant='h4' sx={{ fontWeight: 600, letterSpacing: 0.15, mt: 1 }}>
+    //           {gamePin
+    //             ? `Login to ${themeConfig.templateName} to join the game!`
+    //             : `Welcome to ${themeConfig.templateName}!`}
+    //         </Typography>
+    //       </Box>
+
+    //       {!showCode && (
+    //         <>
+    //           <Box
+    //             sx={{
+    //               display: 'flex',
+    //               flexDirection: 'column',
+    //               alignItems: 'center',
+    //               width: '100%',
+    //               my: 2
+    //             }}
+    //           >
+    //             <Typography>Explore Indian Knowledge Systems</Typography>
+    //             <form action={onSocialLogin}>
+    //               <Button
+    //                 color='secondary'
+    //                 sx={{
+    //                   alignSelf: 'center',
+    //                   color: 'primary.main',
+    //                   '& .MuiButton-startIcon': { mr: 3 }
+    //                 }}
+    //                 startIcon={<img src='/images/logos/google.png' alt='Google' width={22} />}
+    //                 type='submit'
+    //                 value='google'
+    //                 name='action'
+    //               >
+    //                 Sign in with Google
+    //               </Button>
+    //             </form>
+    //           </Box>
+    //           <Divider sx={{ width: '100%', my: 2 }}>or</Divider>
+    //         </>
+    //       )}
+
+    //       {/* Login Method Selection */}
+    //       <FormControl component='fieldset' sx={{ width: '100%', mb: 3 }}>
+    //         <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: 'center', gap: 2 }}>
+    //           <FormLabel component='legend'>Login Using</FormLabel>
+    //           <RadioGroup row value={loginMethod} onChange={handleLoginMethodChange}>
+    //             <FormControlLabel value='email' control={<Radio />} label='Email' />
+    //             <FormControlLabel value='mobile' control={<Radio />} label='Mobile (India Only)' />
+    //           </RadioGroup>
+    //         </Box>
+    //       </FormControl>
+
+    //       {!showCode ? (
+    //         <Box
+    //           component='form'
+    //           noValidate
+    //           autoComplete='off'
+    //           onSubmit={handleSubmit(onSubmit)}
+    //           sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}
+    //         >
+    //           {loginMethod === 'email' && (
+    //             <>
+    //               <Controller
+    //                 name='email'
+    //                 control={control}
+    //                 render={({ field }) => (
+    //                   <TextField
+    //                     {...field}
+    //                     fullWidth
+    //                     autoFocus
+    //                     type='email'
+    //                     label='Email'
+    //                     error={!!errors.email || !!errorState}
+    //                     helperText={errors?.email?.message || errorState?.message[0]}
+    //                     onChange={e => {
+    //                       setSuccessMsg('')
+    //                       setErrorMsg('')
+    //                       field.onChange(e)
+    //                       errorState !== null && setErrorState(null)
+    //                     }}
+    //                   />
+    //                 )}
+    //               />
+    //               <Controller
+    //                 name='password'
+    //                 control={control}
+    //                 render={({ field }) => (
+    //                   <TextField
+    //                     {...field}
+    //                     fullWidth
+    //                     label='Password'
+    //                     type={isPasswordShown ? 'text' : 'password'}
+    //                     error={!!errors.password}
+    //                     helperText={errors?.password?.message}
+    //                     onChange={e => {
+    //                       setSuccessMsg('')
+    //                       setErrorMsg('')
+    //                       field.onChange(e)
+    //                       errorState !== null && setErrorState(null)
+    //                     }}
+    //                     InputProps={{
+    //                       endAdornment: (
+    //                         <InputAdornment position='end'>
+    //                           <IconButton
+    //                             onClick={handleClickShowPassword}
+    //                             onMouseDown={e => e.preventDefault()}
+    //                             edge='end'
+    //                           >
+    //                             {isPasswordShown ? <VisibilityOff /> : <Visibility />}
+    //                           </IconButton>
+    //                         </InputAdornment>
+    //                       )
+    //                     }}
+    //                   />
+    //                 )}
+    //               />
+    //             </>
+    //           )}
+
+    //           {loginMethod === 'mobile' && (
+    //             <>
+    //               <Controller
+    //                 name='mobile'
+    //                 control={control}
+    //                 render={({ field }) => (
+    //                   <TextField
+    //                     {...field}
+    //                     fullWidth
+    //                     autoFocus
+    //                     label='Mobile Number'
+    //                     error={!!errors.mobile}
+    //                     helperText={errors?.mobile?.message}
+    //                     onKeyDown={e => {
+    //                       if (e.key === 'Enter') {
+    //                         e.preventDefault()
+    //                         e.stopPropagation()
+    //                         findAccountsWithMobile(field.value)
+    //                       }
+    //                     }}
+    //                     onChange={e => {
+    //                       field.onChange(e.target.value)
+    //                       setOtpSent(false)
+    //                       setOtpValue('')
+    //                       setErrorMsg('')
+    //                       setLoading(prev => ({ ...prev, accountsFetched: false }))
+    //                       setAccountsWithMobile([])
+    //                       setSelectedAccountWithMobile(null)
+    //                     }}
+    //                     InputProps={{
+    //                       startAdornment: (
+    //                         <InputAdornment position='start'>
+    //                           <Typography variant='body1' color='text.secondary'>
+    //                             +91
+    //                           </Typography>
+    //                         </InputAdornment>
+    //                       ),
+    //                       endAdornment: (
+    //                         <InputAdornment position='end'>
+    //                           <Button
+    //                             onClick={e => {
+    //                               e.stopPropagation()
+    //                               findAccountsWithMobile(field.value)
+    //                             }}
+    //                             disabled={!field.value || field.value.trim().length !== 10 || loading.findAccounts}
+    //                             color='primary'
+    //                             variant='contained'
+    //                             size='small'
+    //                           >
+    //                             {loading.findAccounts ? 'Finding...' : 'Find Account'}
+    //                           </Button>
+    //                         </InputAdornment>
+    //                       )
+    //                     }}
+    //                   />
+    //                 )}
+    //               />
+
+    //               {accountsWithMobile.length > 0 ? (
+    //                 <>
+    //                   <Typography color='primary'>
+    //                     Please select one of the email address account associated with this phone number.
+    //                   </Typography>
+    //                   <Box sx={{ overflowY: 'auto', p: 0.5, bgcolor: 'rgba(0,0,0,0.025)', borderRadius: 1 }}>
+    //                     {accountsWithMobile.map(account => (
+    //                       <Paper
+    //                         key={account?.email}
+    //                         elevation={0}
+    //                         sx={{
+    //                           display: 'flex',
+    //                           alignItems: 'center',
+    //                           p: 2,
+    //                           mb: 1,
+    //                           border: 1,
+    //                           borderColor: 'divider',
+    //                           borderRadius: 1,
+    //                           transition: 'all 0.3s ease',
+    //                           bgcolor: selectedAccountWithMobile === account ? 'primary.light' : 'background.paper',
+    //                           '&:hover': !otpSent ? { bgcolor: 'action.hover' } : {},
+    //                           cursor: !otpSent ? 'pointer' : 'default'
+    //                         }}
+    //                         onClick={!otpSent ? () => setSelectedAccountWithMobile(account) : undefined}
+    //                       >
+    //                         <Avatar>{account?.firstname?.charAt(0)}</Avatar>
+    //                         <Box sx={{ ml: 2 }}>
+    //                           <Typography variant='caption' sx={{ color: 'primary.main', fontWeight: 500 }}>
+    //                             {account?.email}
+    //                           </Typography>
+    //                           <Typography variant='body2' color='text.secondary'>
+    //                             {account?.firstname} {account?.lastname}
+    //                           </Typography>
+    //                         </Box>
+    //                       </Paper>
+    //                     ))}
+    //                   </Box>
+    //                 </>
+    //               ) : (
+    //                 loading.accountsFetched && (
+    //                   <Box
+    //                     sx={{
+    //                       p: 0.5,
+    //                       bgcolor: 'rgba(0,0,0,0.05)',
+    //                       borderRadius: 1,
+    //                       display: 'flex',
+    //                       alignItems: 'center',
+    //                       justifyContent: 'center',
+    //                       gap: 1
+    //                     }}
+    //                   >
+    //                     <Typography>No account found.</Typography>
+    //                     <Link href={gamePin ? `/auth/register?gamePin=${gamePin}` : `/auth/register`} passHref>
+    //                       <MuiLink color='primary'>Register?</MuiLink>
+    //                     </Link>
+    //                   </Box>
+    //                 )
+    //               )}
+
+    //               {!otpSent && selectedAccountWithMobile && (
+    //                 <Button
+    //                   disabled={loading.sendOtp}
+    //                   color='primary'
+    //                   variant='contained'
+    //                   fullWidth
+    //                   onClick={() => sendPhoneOtpToAccount(selectedAccountWithMobile.phone)}
+    //                 >
+    //                   {loading.sendOtp ? 'Sending...' : `Send OTP`}
+    //                 </Button>
+    //               )}
+
+    //               {otpSent && (
+    //                 <Box
+    //                   sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: 'center', gap: 2 }}
+    //                 >
+    //                   {loading.resendOtp ? (
+    //                     <CircularProgress />
+    //                   ) : (
+    //                     <OtpForm otpValue={otpValue} setOtpValue={setOtpValue} setIsDirty={() => {}} />
+    //                   )}
+    //                   <Button
+    //                     color='primary'
+    //                     disabled={loading.resendOtp}
+    //                     variant='text'
+    //                     size='small'
+    //                     onClick={() => handleResendPhoneOtp(selectedAccountWithMobile.phone)}
+    //                   >
+    //                     Resend
+    //                   </Button>
+    //                 </Box>
+    //               )}
+    //             </>
+    //           )}
+
+    //           {errorMsg && (
+    //             <Alert severity='error' icon={<WarningAmberOutlined />} sx={{ p: 1 }}>
+    //               {errorMsg}
+    //             </Alert>
+    //           )}
+
+    //           {successMsg && (
+    //             <Alert severity='success' icon={<TaskAltOutlined />} sx={{ p: 1 }}>
+    //               {successMsg}
+    //             </Alert>
+    //           )}
+
+    //           {((otpSent && loginMethod === 'mobile') || loginMethod === 'email') && (
+    //             <>
+    //               <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+    //                 <RecaptchaComponent
+    //                   key={recaptchaKey}
+    //                   recaptchaRef={recaptchaRef}
+    //                   handleCaptchaChange={handleCaptchaChange}
+    //                 />
+    //               </Box>
+
+    //               <Button disabled={isSubmitting} fullWidth variant='contained' type='submit' sx={{ mt: 2 }}>
+    //                 {loginMethod === 'mobile' ? 'Verify & Log In' : 'Log In'}
+    //               </Button>
+    //             </>
+    //           )}
+
+    //           <Box
+    //             sx={{
+    //               display: 'flex',
+    //               justifyContent: 'space-between',
+    //               alignItems: 'center',
+    //               flexWrap: 'wrap',
+    //               gap: 2,
+    //               mt: 2
+    //             }}
+    //           >
+    //             <Link
+    //               href={
+    //                 loginMethod === 'email' && watchedEmail
+    //                   ? `/forgot-password?email=${watchedEmail}`
+    //                   : loginMethod === 'mobile' && watchedMobile
+    //                     ? `/forgot-password?mobile=${watchedMobile}`
+    //                     : '/forgot-password'
+    //               }
+    //               passHref
+    //             >
+    //               <MuiLink color='primary'>Forgot password?</MuiLink>
+    //             </Link>
+    //             <Link
+    //               href={
+    //                 Object.keys(allSearchParams).length > 0
+    //                   ? `/auth/register?${new URLSearchParams(allSearchParams).toString()}`
+    //                   : '/auth/register'
+    //               }
+    //               passHref
+    //             >
+    //               <MuiLink color='primary'>Register?</MuiLink>
+    //             </Link>
+    //           </Box>
+    //         </Box>
+    //       ) : (
+    //         <Box
+    //           component='form'
+    //           noValidate
+    //           autoComplete='off'
+    //           onSubmit={handleSubmit(onSubmitWithCode)}
+    //           sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 3 }}
+    //         >
+    //           <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: 'center', gap: 2 }}>
+    //             {loading.resendCode ? (
+    //               <CircularProgress />
+    //             ) : (
+    //               <OtpForm otpValue={code} setOtpValue={setCode} setIsDirty={() => {}} />
+    //             )}
+    //             <Button
+    //               color='primary'
+    //               disabled={loading.resendCode}
+    //               variant='text'
+    //               size='small'
+    //               onClick={handleResendCode}
+    //             >
+    //               {loading.resendCode ? 'Sending...' : 'Resend'}
+    //             </Button>
+    //           </Box>
+
+    //           {errorMsg && (
+    //             <Alert severity='error' icon={<WarningAmberOutlined />} sx={{ p: 1 }}>
+    //               {errorMsg}
+    //             </Alert>
+    //           )}
+
+    //           {successMsg && (
+    //             <Alert severity='success' icon={<TaskAltOutlined />} sx={{ p: 1 }}>
+    //               {successMsg}
+    //             </Alert>
+    //           )}
+
+    //           <Button
+    //             disabled={!code || loading.confirmCode || loading.resendCode}
+    //             fullWidth
+    //             variant='contained'
+    //             type='submit'
+    //           >
+    //             {loading.confirmCode ? <CircularProgress color='inherit' size={24} /> : 'Confirm'}
+    //           </Button>
+    //         </Box>
+    //       )}
+
+    //       <Box
+    //         sx={{
+    //           display: 'flex',
+    //           justifyContent: 'space-between',
+    //           alignItems: 'center',
+    //           flexWrap: 'wrap',
+    //           gap: 3,
+    //           mt: 4,
+    //           width: '100%'
+    //         }}
+    //       >
+    //         <Link href='/termsofservice' passHref>
+    //           <MuiLink sx={{ display: 'flex', alignItems: 'center', gap: 1, textDecoration: 'underline' }}>
+    //             <Info color='primary' />
+    //             <Typography>Terms of Service</Typography>
+    //           </MuiLink>
+    //         </Link>
+    //         <Link href='/privacypolicy' passHref>
+    //           <MuiLink sx={{ display: 'flex', alignItems: 'center', gap: 1, textDecoration: 'underline' }}>
+    //             <Info color='primary' />
+    //             <Typography>Privacy Policy</Typography>
+    //           </MuiLink>
+    //         </Link>
+    //       </Box>
+    //     </Box>
+    //   </Container>
+    //   {isSubmitting && <LoadingDialog open={isSubmitting} />}
+    // </Box>
   )
 }
 
