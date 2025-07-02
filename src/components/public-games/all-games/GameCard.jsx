@@ -372,6 +372,7 @@ const GameCard = ({ game }) => {
               <Button
                 disabled={
                   game.status !== 'lobby' &&
+                  game.status !== 'approved' &&
                   !isGameLive &&
                   !game?.participatedUsers?.find(p => p.email === session?.user?.email)?.completed
                 }
