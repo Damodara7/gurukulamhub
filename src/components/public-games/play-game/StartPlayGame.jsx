@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import { Box, Typography, CircularProgress } from '@mui/material'
 import PlayGameQuiz from './play-quiz/PlayGameQuiz'
 import AssessmentPlayGameQuiz from './play-quiz/AssessmentPlayGameQuiz'
+import AdminForwardPlayGame from './play-quiz/AdminForwardPlayGame'
 
 const StartPlayGame = ({ game }) => {
   const router = useRouter()
@@ -15,7 +16,7 @@ const StartPlayGame = ({ game }) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  console.log("game inside the StartPlayGame: ", game)
+  console.log('game inside the StartPlayGame: ', game)
 
   useEffect(() => {
     if (
@@ -74,10 +75,11 @@ const StartPlayGame = ({ game }) => {
 
   if (!data) return null
 
-  const { quiz, questions, gameMode, ...restGameData } = data
+  const { quiz, questions, gameMode, forwardType, ...restGameData } = data
   console.log({ data })
 
-  const PlayGameQuizByMode = gameMode === 'live' ? PlayGameQuiz : AssessmentPlayGameQuiz
+  const PlayGameQuizByMode =
+    gameMode === 'live' ? (forwardType === 'auto' ? PlayGameQuiz : AdminForwardPlayGame) : AssessmentPlayGameQuiz
 
   return (
     <Box p={4} height='100%'>
