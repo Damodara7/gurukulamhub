@@ -434,7 +434,7 @@ import GameEnded from '@/components/public-games/play-game/GameEnded'
 import { AccessTime as TimeIcon } from '@mui/icons-material'
 import { useSession } from 'next-auth/react'
 import AdminForwardQuizQuestion from './AdminForwardQuizQuestion'
-
+import AdminForwardLiveHeader from './AdminForwardLiveHeader'
 const getColor = percentage => {
   if (percentage > 50) return 'primary'
   if (percentage > 25) return 'warning'
@@ -728,6 +728,11 @@ function AdminForwardLivePage({ quiz, questions, game, onGameEnd }) {
   return (
     <>
       <Box sx={{ mx: 'auto', px: 2, width: { xs: '100%', sm: '100%' }, height: '100%' }}>
+        <AdminForwardLiveHeader
+          registeredUsers={game?.registeredUsers}
+          participatedUsers={game?.participatedUsers}
+          game={game}
+        />
         {mappedQuestions.length > 0 ? (
           <AdminForwardQuizQuestion
             currentQuestion={currentQuestion}

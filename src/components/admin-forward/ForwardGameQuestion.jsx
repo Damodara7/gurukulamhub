@@ -4,6 +4,7 @@ import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import AdminForwardPage from './AdminForwardPage'
 import AdminForwardLivePage from './AdminForwardLivePage'
+import AdminForwardLiveHeader from './AdminForwardLiveHeader'
 function ForwardGameQuestion({ gameId }) {
   const [gameData, setGameData] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -38,7 +39,9 @@ function ForwardGameQuestion({ gameId }) {
     gameData?.status === 'completed' ||
     gameData?.status === 'cancelled'
   ) {
-    return <AdminForwardPage game={gameData} />
+    return (
+      <AdminForwardPage game={gameData} />
+    )
   }
 
   const { quiz , questions , ...restGameData } = gameData
