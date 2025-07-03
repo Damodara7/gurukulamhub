@@ -92,10 +92,10 @@ const validateForm = formData => {
       errors.duration = 'Duration must be at least 1 minute.'
     }
   }
-  // Only validate forwardtype if gameMode is live
+  // Only validate forwardType if gameMode is live
   if (formData.gameMode === 'live') {
-    if (!formData.forwardtype) {
-      errors.forwardtype = 'Forward type is required for live games.'
+    if (!formData.forwardType) {
+      errors.forwardType = 'Forward type is required for live games.'
     }
   }
 
@@ -127,7 +127,7 @@ const formFieldOrder = [
   'thumbnailPoster',
   'tags',
   'rewards',
-  'forwardtype'
+  'forwardType'
 ]
 
 // Main Game Form component
@@ -142,7 +142,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
     duration: null, // 10 minutes in seconds
     promotionalVideoUrl: '',
     thumbnailPoster: '',
-    forwardtype: 'auto',
+    forwardType: 'auto',
     gameMode: 'live',
     requireRegistration: false,
     registrationEndTime: null,
@@ -191,7 +191,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
     promotionalVideoUrl: useRef(),
     thumbnailPoster: useRef(),
     tags: useRef(),
-    forwardtype: useRef(),
+    forwardType: useRef(),
     gameMode: useRef()
     // Add more if needed
   }
@@ -525,7 +525,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
       delete submission.duration
     }
     if (formData.gameMode !== 'live') {
-      delete submission.forwardtype
+      delete submission.forwardType
       submission.duration = Number(submission.duration)
     }
     console.log('submission data: ', submission)
@@ -628,7 +628,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
       if (value === 'live') {
         delete newTouches.duration
       } else {
-        delete newTouches.forwardtype
+        delete newTouches.forwardType
       }
       return newTouches
     })
@@ -637,7 +637,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
       if (value === 'live') {
         delete newErrors.duration
       } else {
-        delete newErrors.forwardtype
+        delete newErrors.forwardType
       }
       return newErrors
     })
@@ -858,18 +858,18 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
       {/* Forward Type Selection - now as Select, only if live */}
       {formData.gameMode === 'live' && (
         <Grid item xs={6}>
-          <FormControl fullWidth required error={!!errors.forwardtype && touches.forwardtype}>
+          <FormControl fullWidth required error={!!errors.forwardType && touches.forwardType}>
             <InputLabel id='forward-type-label'>Forward Type</InputLabel>
             <Select
               labelId='forward-type-label'
               id='forward-type-select'
-              name='forwardtype'
-              value={formData.forwardtype}
+              name='forwardType'
+              value={formData.forwardType}
               label='Forward Type'
               onChange={handleChange}
               onBlur={handleBlur}
-              onFocus={() => setErrors(prev => ({ ...prev, forwardtype: '' }))}
-              inputRef={fieldRefs.forwardtype}
+              onFocus={() => setErrors(prev => ({ ...prev, forwardType: '' }))}
+              inputRef={fieldRefs.forwardType}
             >
               <MenuItem value='auto'>Auto</MenuItem>
               <MenuItem value='admin'>Admin</MenuItem>

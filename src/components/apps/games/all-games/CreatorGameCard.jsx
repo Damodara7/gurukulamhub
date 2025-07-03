@@ -15,6 +15,7 @@ import {
   Leaderboard as LeaderboardIcon,
   Delete as DeleteIcon
 } from '@mui/icons-material'
+import SettingsIcon from '@mui/icons-material/Settings'
 import { useSession } from 'next-auth/react'
 import imagePlaceholder from '/public/images/misc/image-placeholder.png'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
@@ -45,7 +46,7 @@ const getStatusChip = status => {
   )
 }
 
-const CreatorGameCard = ({ game, isSuperUser = false, onViewGame, onEditGame, onApproveGame, onDeleteGame, onLeaderboard }) => {
+const CreatorGameCard = ({ game, isSuperUser = false, onViewGame, onEditGame, onApproveGame, onDeleteGame, onLeaderboard , onAdminForward}) => {
   const { data: session } = useSession()
   const theme = useTheme()
 
@@ -169,26 +170,31 @@ const CreatorGameCard = ({ game, isSuperUser = false, onViewGame, onEditGame, on
             </Stack>
           </Box>
 
-          <Stack direction='row' spacing={1} gap={1} justifyContent='center' className='border border-gray-200 rounded-md p-1'>
-            <IconButtonTooltip title="View Details" onClick={() => onViewGame(game._id)} color="info">
+          <Stack
+            direction='row'
+            spacing={1}
+            gap={1}
+            justifyContent='center'
+            className='border border-gray-200 rounded-md p-1'
+          >
+            <IconButtonTooltip title='View Details' onClick={() => onViewGame(game._id)} color='info'>
               <VisibilityIcon />
             </IconButtonTooltip>
-            {((session?.user?.roles?.includes('ADMIN') &&
-              ['created', 'approved', 'cancelled'].includes(game.status)) ||
+            {((session?.user?.roles?.includes('ADMIN') && ['created', 'approved', 'cancelled'].includes(game.status)) ||
               (!game.createdBy?.roles?.includes('ADMIN') &&
                 game.creatorEmail === session?.user?.email &&
                 ['created', 'cancelled'].includes(game.status))) && (
-              <IconButtonTooltip title="Edit Game" onClick={() => onEditGame(game._id)} color="warning">
+              <IconButtonTooltip title='Edit Game' onClick={() => onEditGame(game._id)} color='warning'>
                 <EditIcon />
               </IconButtonTooltip>
             )}
             {!isSuperUser && game?.status === 'created' && (
-              <IconButtonTooltip title="Approve Game" onClick={() => onApproveGame(game._id)} color="success">
+              <IconButtonTooltip title='Approve Game' onClick={() => onApproveGame(game._id)} color='success'>
                 <SendIcon />
               </IconButtonTooltip>
             )}
             {['live', 'completed'].includes(game?.status) && (
-              <IconButtonTooltip title="View Leaderboard" onClick={() => onLeaderboard(game._id)} color="primary">
+              <IconButtonTooltip title='View Leaderboard' onClick={() => onLeaderboard(game._id)} color='primary'>
                 <LeaderboardIcon />
               </IconButtonTooltip>
             )}
@@ -197,10 +203,15 @@ const CreatorGameCard = ({ game, isSuperUser = false, onViewGame, onEditGame, on
                 game?.createdBy?.email === session?.user?.email &&
                 !game?.createdBy?.roles?.includes('ADMIN')) ||
                 session?.user?.roles?.includes('ADMIN')) && (
-                <IconButtonTooltip title="Delete Game" onClick={() => onDeleteGame(game)} color="error">
+                <IconButtonTooltip title='Delete Game' onClick={() => onDeleteGame(game)} color='error'>
                   <DeleteIcon />
                 </IconButtonTooltip>
               )}
+            {session?.user?.roles?.includes('ADMIN') && (
+              <IconButtonTooltip title='Admin Forward' onClick={() => onAdminForward(game._id)} color='warning'>
+                <SettingsIcon />
+              </IconButtonTooltip>
+            )}
           </Stack>
         </Box>
       </CardContent>

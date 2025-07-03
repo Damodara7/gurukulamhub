@@ -228,6 +228,7 @@ export const addOne = async gameData => {
     if (user?.roles?.includes('ADMIN')) {
       gameData.approvedBy = user._id
     }
+    console.log('gameData Fort' , gameData.forwardType)
 
     // Fetch the quiz to get language code
     const quiz = await Quiz.findById(gameData?.quiz).lean()

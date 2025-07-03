@@ -76,6 +76,12 @@ const CreatorGameList = ({ games = [], loading = false, onRefresh, isSuperUser =
     router.push(isSuperUser ? `/manage-games/${id}/leaderboard` : `/apps/games/${id}/leaderboard`)
   }
 
+  async function handleAdminForward(id) {
+    console.log('Clicked Admin Forward game of id: ', id)
+    router.push(`/apps/games/${id}/admin-forward`)
+  }
+
+
   const handleDeleteConfirmation = game => {
     setGameToDelete(game)
     setConfirmationDialogOpen(true)
@@ -110,6 +116,7 @@ const CreatorGameList = ({ games = [], loading = false, onRefresh, isSuperUser =
                   onApproveGame={handleApproveGame}
                   onDeleteGame={handleDeleteConfirmation}
                   onLeaderboard={handleLeaderboard}
+                  onAdminForward={handleAdminForward}
                 />
               </Grid>
             ))}
