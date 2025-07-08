@@ -166,7 +166,9 @@ async function scheduleLiveTransition(gameId, startTime) {
           if (updatedGame) {
             console.log(`📌 Game ${gameId} status updated to live`)
             const endTime = new Date(startTime.getTime() + updatedGame.duration * 1000)
-            scheduleCompletion(gameId, endTime)
+            if (updatedGame.forwardType !== 'admin') {
+              scheduleCompletion(gameId, endTime)
+            }
           }
         } catch (error) {
           console.error(`❌ Error updating game ${gameId} status:`, error)
@@ -299,7 +301,7 @@ export async function reschedulePendingGames() {
               await scheduleCompletion(game._id, endTime)
             }
           }
-        } else if (game.status === 'live') {
+        } else if (game.status === 'live' && game.forwardType !== 'admin') {
           const endTime = new Date(game.startTime.getTime() + game.duration * 1000)
           if (endTime > now) {
             await scheduleCompletion(game._id, endTime)

@@ -53,7 +53,7 @@ const GameCard = ({ game }) => {
   const isGameEnded = ['completed', 'cancelled'].includes(game.status)
   const isGameStarted = new Date(game?.startTime) < new Date()
   const isUserRegistered =
-    !!game?.participatedUsers?.find(u => u.email === session?.user?.email) || false
+    !!game?.registeredUsers?.find(u => u.email === session?.user?.email) || false
   const isRegistrationRequired = game?.requireRegistration
 
   // Get game status for display in info stack
