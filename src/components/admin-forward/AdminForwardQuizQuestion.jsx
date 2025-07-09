@@ -4,6 +4,7 @@ import SingleChoiceTemplate from '@/components/publicquiz/SingleChoiceTemplate'
 import MultipleChoiceTemplate from '@/components/publicquiz/MultipleChoiceTemplate'
 import TrueFalseQuizTemplate from '@/components/publicquiz/TrueFalseQuizTemplate'
 import FillInBlanksTemplate from '@/components/publicquiz/FillInBlanksTemplate'
+import { Label } from '@mui/icons-material'
 
 const AdminForwardQuizQuestion = ({
   currentQuestion,
@@ -17,7 +18,7 @@ const AdminForwardQuizQuestion = ({
       sx={{
         mt: 0,
         maxWidth: 'lg',
-        mx: 'auto',
+        mx: 'auto'
       }}
     >
       <Typography
@@ -61,18 +62,20 @@ const AdminForwardQuizQuestion = ({
           }}
         >
           <Button
+            component='label'
             variant='contained'
             color='primary'
             onClick={handleForwardQuestion}
             sx={{
               px: 4,
               py: 1.5,
+              color: 'white',
               fontWeight: 'bold',
               fontSize: '1rem'
             }}
-            size='large'
+            size='small'
           >
-            {currentQuestionIndex < questions.length - 1 ? 'Next Question' : 'End Game'}
+            {currentQuestionIndex < questions.length - 1 ? 'Next Question' : 'Finish Game'}
           </Button>
         </Box>
       )}

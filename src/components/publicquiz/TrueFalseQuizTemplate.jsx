@@ -3,7 +3,7 @@ import { Card, CardContent, RadioGroup, Radio, FormControlLabel, Typography, Gri
 import VideoAd from '@/views/apps/advertisements/VideoAd/VideoAd'
 import ImagePopup from '../ImagePopup'
 
-const TrueFalseTemplate = ({ question, selectedAnswer, onAnswerSelect }) => {
+const TrueFalseTemplate = ({ question, selectedAnswer, onAnswerSelect, readOnly=false }) => {
   const questionObj = question?.data?.question
   const handleOptionSelect = (questionId, optionId) => {
     if (!readOnly && onAnswerSelect) {
@@ -67,9 +67,9 @@ const TrueFalseTemplate = ({ question, selectedAnswer, onAnswerSelect }) => {
                     p: 2,
                     height: '100%',
                     transition: 'background-color 0.3s ease',
-                    cursor: 'pointer',
+                    cursor: readOnly ? 'default' : 'pointer',
                     '&:hover': {
-                      backgroundColor: 'rgba(0, 0, 0, 0.05)'
+                      backgroundColor: readOnly ? 'transparent' : 'rgba(0, 0, 0, 0.05)'
                     }
                   }}
                   onClick={() => handleOptionSelect(question._id, option.id)}

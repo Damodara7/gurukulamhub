@@ -68,9 +68,10 @@ const SingleChoiceTemplate = ({ question, selectedAnswer, onAnswerSelect ,readOn
                     p: 2,
                     height: '100%',
                     transition: 'background-color 0.3s ease',
-                    cursor: 'pointer',
+                    cursor: readOnly ?'default' : 'pointer',
+                    pointerEvents: readOnly ? 'none' : 'auto',
                     '&:hover': {
-                      backgroundColor: 'rgba(0, 0, 0, 0.05)'
+                      backgroundColor: readOnly ? 'transparent' : 'rgba(0, 0, 0, 0.05)'
                     }
                   }}
                   onClick={() => handleOptionSelect(question?._id, option.id)}

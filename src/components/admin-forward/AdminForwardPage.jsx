@@ -8,13 +8,15 @@ import AdminForwardRegisteredUsersCard from './AdminForwardRegisterUsersCard'
 import AdminForwardQuizCard from './AdminForwardQuizCard'
 import AdminForwardParticipatedUserCard from './AdminForwardParticipatedUserCard'
 import AdminLeaderboard from '@/components/apps/games/game-details/AdminLeaderboard'
-
+import AdminInstructions from './AdminInstructions'
 
 function AdminForwardPage({ game = null }) {
  
   if (!game) return <Typography variant='body1'>No game data available</Typography>
 
   const showParticipatedUsers = game?.status === 'completed' || game?.status === 'live'
+
+  const admininstructions = game?.status === 'lobby'
 
   return (
     <>
@@ -64,6 +66,7 @@ function AdminForwardPage({ game = null }) {
             </Card>
           </Grid>
         )}
+        {admininstructions && <AdminInstructions game={game} />}
       </Grid>
     </>
   )

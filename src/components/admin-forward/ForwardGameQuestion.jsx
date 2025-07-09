@@ -3,7 +3,7 @@ import React, {useEffect, useState } from 'react' // Combined import
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import AdminForwardLivePage from './AdminForwardLivePage'
-import AdminForwardPage from './AdminforwardPage'
+import AdminForwardPage from './AdminForwardPage'
 function ForwardGameQuestion({ gameId }) {
   const [gameData, setGameData] = useState(null)
   const [loading, setLoading] = useState(true)

@@ -30,13 +30,13 @@ function AdminForwardLiveHeader({ registeredUsers, participatedUsers, game }) {
   return (
     <>
       <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 3 }}>
-        <Button variant='contained' onClick={() => handleOpenDialog('registered')} startIcon={<HowToReg />}>
+        <Button variant='outlined' color='primary' size='small'  onClick={() => handleOpenDialog('registered')} startIcon={<HowToReg />}>
           Registered Users ({registeredUsers?.length})
         </Button>
-        <Button variant='contained' onClick={() => handleOpenDialog('participated')} startIcon={<CheckCircle />}>
+        <Button variant='outlined' color='primary' size='small' onClick={() => handleOpenDialog('participated')} startIcon={<CheckCircle />}>
           Participated Users ({participatedUsers?.length})
         </Button>
-        <Button variant='contained' onClick={() => handleOpenDialog('leaderboard')} startIcon={<EmojiEvents />}>
+        <Button variant='outlined' color='primary' size='small' onClick={() => handleOpenDialog('leaderboard')} startIcon={<EmojiEvents />}>
           Leaderboard
         </Button>
       </Box>
