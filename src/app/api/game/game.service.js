@@ -25,6 +25,7 @@ export const getOne = async (filter = {}) => {
     const game = await Game.findOne({ ...filter, isDeleted: false })
       .populate('quiz')
       .populate('createdBy', 'email firstName lastName roles')
+      .populate('forwardingAdmin', 'email firstName lastName roles')
       .populate('rewards.sponsors.sponsorshipId')
       .lean()
 
@@ -68,6 +69,7 @@ export const getAll = async (filter = {}) => {
     const games = await Game.find({ ...filter, isDeleted: false })
       .populate('quiz')
       .populate('createdBy', 'email firstName lastName roles')
+      .populate('forwardingAdmin', 'email firstName lastName roles')
       .populate('rewards.sponsors.sponsorshipId')
       .sort({ createdAt: -1 })
       .lean()
@@ -122,6 +124,7 @@ export const getAllPublic = async (filter = {}) => {
     })
       .populate('quiz')
       .populate('createdBy', 'email firstName lastName')
+      .populate('forwardingAdmin', 'email firstName lastName roles')
       .populate('rewards.sponsors.sponsorshipId')
       .sort({ createdAt: -1 })
       .lean()
@@ -179,6 +182,7 @@ export const getAllByEmail = async (email, filter = {}) => {
     const games = await Game.find({ creatorEmail: email, isDeleted: false, ...filter })
       .populate('quiz')
       .populate('createdBy', 'email firstName lastName roles')
+      .populate('forwardingAdmin', 'email firstName lastName roles')
       .populate('rewards.sponsors.sponsorshipId')
       .sort({ startTime: -1 })
       .lean()
@@ -1263,18 +1267,20 @@ export const forwardQuestion = async (gameId, user, currentQuestionIndex) => {
       message = 'Moved to next question.'
     }
     // Always return game with registeredPlayers, participatedPlayers, and questions
-    const [registeredPlayers, participatedPlayers, questions] = await Promise.all([
-      Player.find({ game: gameId, status: { $in: ['registered', 'participated', 'completed'] } }).lean(),
-      Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } }).lean(),
-      QuestionsModel.find({ quizId: game.quiz, languageCode: game.quiz.language?.code }).lean()
-    ])
-    const resultGame = game.toObject()
-    resultGame.registeredPlayers = registeredPlayers
-    resultGame.participatedPlayers = participatedPlayers
-    resultGame.questions = questions
+    // const [registeredPlayers, participatedPlayers, questions] = await Promise.all([
+    //   Player.find({ game: gameId, status: { $in: ['registered', 'participated', 'completed'] } }).lean(),
+    //   Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } }).lean(),
+    //   QuestionsModel.find({ quizId: game.quiz, languageCode: game.quiz.language?.code }).lean()
+    // ])
+    // const resultGame = game.toObject()
+    // resultGame.registeredPlayers = registeredPlayers
+    // resultGame.participatedPlayers = participatedPlayers
+    // resultGame.questions = questions
+    // console.log(questions);
+    const resultGame = await getOne({_id: game._id})
     return {
       status: 'success',
-      result: resultGame,
+      result: resultGame.result,
       message
     }
   } catch (error) {

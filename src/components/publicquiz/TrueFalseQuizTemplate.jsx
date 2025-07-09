@@ -5,6 +5,11 @@ import ImagePopup from '../ImagePopup'
 
 const TrueFalseTemplate = ({ question, selectedAnswer, onAnswerSelect }) => {
   const questionObj = question?.data?.question
+  const handleOptionSelect = (questionId, optionId) => {
+    if (!readOnly && onAnswerSelect) {
+      onAnswerSelect(questionId, optionId)
+    }
+  }
   return (
     <Card>
       <CardContent>
@@ -48,7 +53,7 @@ const TrueFalseTemplate = ({ question, selectedAnswer, onAnswerSelect }) => {
           )}
         </Box>
 
-        <RadioGroup value={selectedAnswer || ''} onChange={e => onAnswerSelect(question._id, e.target.value)}>
+        <RadioGroup value={selectedAnswer || ''} onChange={e => handleOptionSelect(question._id, e.target.value)}>
           <Grid container spacing={2}>
             {question?.data?.options?.map(option => (
               <Grid item xs={12} key={option.id}>
@@ -67,7 +72,7 @@ const TrueFalseTemplate = ({ question, selectedAnswer, onAnswerSelect }) => {
                       backgroundColor: 'rgba(0, 0, 0, 0.05)'
                     }
                   }}
-                  onClick={() => onAnswerSelect(question._id, option.id)}
+                  onClick={() => handleOptionSelect(question._id, option.id)}
                 >
                   <FormControlLabel
                     value={option.id}

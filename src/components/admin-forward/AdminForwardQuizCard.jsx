@@ -94,7 +94,7 @@ const cardstyle = game?.status === 'approved' || game?.status === 'lobby' || gam
                     <Typography variant='subtitle2' color='text.secondary'>
                       Language:
                     </Typography>
-                    <Chip label={`${game.quiz.language.name}`} color='primary' variant='outlined' />
+                    <Chip label={`${game?.quiz?.language?.name}`} color='primary' variant='outlined' />
                   </Box>
                 )}
                 {game?.quiz?.syllabus && (
@@ -102,7 +102,7 @@ const cardstyle = game?.status === 'approved' || game?.status === 'lobby' || gam
                     <Typography variant='subtitle2' color='text.secondary'>
                       Syllabus:
                     </Typography>
-                    <Chip label={`${game.quiz.syllabus}`} color='primary' variant='outlined' />
+                    <Chip label={`${game?.quiz?.syllabus}`} color='primary' variant='outlined' />
                   </Box>
                 )}
                 {game?.quiz?.status && (
@@ -110,7 +110,7 @@ const cardstyle = game?.status === 'approved' || game?.status === 'lobby' || gam
                     <Typography variant='subtitle2' color='text.secondary'>
                       status:
                     </Typography>
-                    <Chip label={`${game.quiz.status}`} color='primary' variant='outlined' />
+                    <Chip label={`${game?.quiz?.status}`} color='primary' variant='outlined' />
                   </Box>
                 )}
               </Box>

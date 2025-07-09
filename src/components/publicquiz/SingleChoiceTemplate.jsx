@@ -2,8 +2,15 @@ import { Card, CardContent, Typography, RadioGroup, FormControlLabel, Radio, Gri
 import VideoAd from '@/views/apps/advertisements/VideoAd/VideoAd'
 import ImagePopup from '../ImagePopup'
 
-const SingleChoiceTemplate = ({ question, selectedAnswer, onAnswerSelect }) => {
+const SingleChoiceTemplate = ({ question, selectedAnswer, onAnswerSelect ,readOnly = false }) => {
   const questionObj = question?.data?.question
+
+  const handleOptionSelect = (questionId, optionId) => {
+    if (!readOnly && onAnswerSelect) {
+      onAnswerSelect(questionId, optionId)
+    }
+  }
+
   return (
     <Card>
       <CardContent>
@@ -47,7 +54,7 @@ const SingleChoiceTemplate = ({ question, selectedAnswer, onAnswerSelect }) => {
           )}
         </Box>
 
-        <RadioGroup value={selectedAnswer || ''} onChange={e => onAnswerSelect(question._id, e.target.value)}>
+        <RadioGroup value={selectedAnswer || ''} onChange={e => handleOptionSelect(question._id, e.target.value)}>
           <Grid container spacing={2}>
             {question.data.options.map(option => (
               <Grid item xs={12} sm={6} key={option.id}>
@@ -66,7 +73,7 @@ const SingleChoiceTemplate = ({ question, selectedAnswer, onAnswerSelect }) => {
                       backgroundColor: 'rgba(0, 0, 0, 0.05)'
                     }
                   }}
-                  onClick={() => onAnswerSelect(question._id, option.id)}
+                  onClick={() => handleOptionSelect(question?._id, option.id)}
                 >
                   <FormControlLabel
                     value={option.id}

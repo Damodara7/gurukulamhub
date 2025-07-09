@@ -1,20 +1,24 @@
 import { Card, CardContent, Typography, TextField, Box } from '@mui/material'
 import { useState } from 'react'
 
-const FillInBlanksTemplate = ({ question, onAnswer }) => {
+const FillInBlanksTemplate = ({ question, onAnswer , readOnly= false }) => {
   const questionObj = question?.data?.question
 
+  // Initialize with selectedAnswer if in readOnly mode, otherwise empty
   const [blankAnswers, setBlankAnswers] = useState(
-    questionObj
-      .filter(part => part.type === 'blank')
-      .map(part => ({
-        ...part,
-        content: ''
-      }))
+    readOnly
+      ? selectedAnswer || []
+      : questionObj
+          .filter(part => part.type === 'blank')
+          .map(part => ({
+            ...part,
+            content: ''
+          }))
   )
-
+ 
   // Handle content change for the blank parts
   const handleContentChange = (partId, value) => {
+    if (readOnly) return
     // Find the index of the part in blankAnswers based on partId
     const updatedBlankAnswers = blankAnswers.map(part => {
       if (part.id === partId) {
@@ -41,22 +45,38 @@ const FillInBlanksTemplate = ({ question, onAnswer }) => {
                 <Typography variant='body1' component='span'>
                   {part.content}
                 </Typography>
+              ) : readOnly ? (
+                <Typography
+                  variant='body1'
+                  component='span'
+                  sx={{
+                    minWidth: '100px',
+                    maxWidth: '300px',
+                    borderBottom: '1px solid',
+                    borderColor: 'text.primary',
+                    px: 1,
+                    mx: 0.5
+                  }}
+                >
+                  {blankAnswers.find(b => b.id === part.id)?.content || '______'}
+                </Typography>
               ) : (
                 <TextField
                   size='small'
                   variant='outlined'
                   placeholder='Enter answer'
+                  value={blankAnswers.find(b => b.id === part.id)?.content || ''}
                   onChange={e => handleContentChange(part.id, e.target.value)}
                   sx={{
-                    minWidth: '100px', // Ensures the input has a minimum width
-                    maxWidth: '300px', // Max width for larger inputs
-                    marginBottom: '2px' // Space below the input field
+                    minWidth: '100px',
+                    maxWidth: '300px',
+                    marginBottom: '2px'
                   }}
+                  disabled={readOnly}
                 />
               )}
             </Box>
           ))}
-          .
         </Box>
       </CardContent>
     </Card>
