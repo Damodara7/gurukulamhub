@@ -12,7 +12,8 @@
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx}\"",
     "cypress:open": "cypress open",
     "e2e": "start-server-and-test dev 3000 \"cypress run --e2e\"",
-    "e2e:headless": "start-server-and-test dev 3000 \"cypress run --e2e\""
+    "e2e:headless": "start-server-and-test dev 3000 \"cypress run --e2e\"",
+    "prepare": "next-ws patch"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.1.0",
@@ -95,6 +96,7 @@
     "next": "^14.2.3",
     "next-auth": "^5.0.0-beta.20",
     "next-share": "^0.27.0",
+    "next-ws": "^2.0.10",
     "node-cron": "^3.0.3",
     "nodemailer": "^6.9.13",
     "os-utils": "^0.0.14",
@@ -149,6 +151,7 @@
     "tsx": "4.7.0",
     "uuid": "^9.0.1",
     "valibot": "^0.31.0-rc.5",
+    "ws": "^8.18.3",
     "yup": "^1.4.0",
     "zod": "^3.22.4"
   },

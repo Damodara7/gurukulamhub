@@ -120,7 +120,7 @@ const AllGamesPage = ({ creatorEmail = '', isSuperUser = false }) => {
           selectedQuizzes={selectedQuizzes}
           setSelectedQuizzes={setSelectedQuizzes}
         />
-        <CreatorGamesList games={filteredGames} isSuperUser={isSuperUser} onRefresh={fetchGames} loading={loading} />
+        <CreatorGamesList games={filteredGames} isSuperUser={isSuperUser} setGames={setGames} onRefresh={fetchGames} loading={loading} />
       </Box>
       <Box sx={{ position: 'relative' }}>
         <Button

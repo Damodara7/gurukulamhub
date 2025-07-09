@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import {
   Box,
   Container,
@@ -14,12 +14,58 @@ import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { useRouter } from 'next/navigation'
 
-const CreatorGameList = ({ games = [], loading = false, onRefresh, isSuperUser = false }) => {
+const CreatorGameList = ({ games = [], loading = false, onRefresh, setGames, isSuperUser = false }) => {
   const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false) // Manage confirmation dialog
   const [gameToDelete, setGameToDelete] = useState(null) // Track the game to delete
+  const wsRef = useRef(null)
+  const [localGames, setLocalGames] = useState(games)
+  const gamesToUse = setGames ? games : localGames
   console.log('GameList games: ', games)
   const { data: session } = useSession()
   const router = useRouter()
+
+  useEffect(() => {
+    setLocalGames(games)
+  }, [games])
+
+  useEffect(() => {
+    // WebSocket connection for real-time games list updates
+    const wsUrl =
+      typeof window !== 'undefined'
+        ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/api/ws/games`
+        : ''
+    if (wsUrl) {
+      wsRef.current = new WebSocket(wsUrl)
+      wsRef.current.onopen = () => {
+        console.log('[WS] Connected to games list updates')
+      }
+      wsRef.current.onmessage = event => {
+        try {
+          const msg = JSON.parse(event.data)
+          if (msg.type === 'gamesList') {
+            if (setGames) {
+              setGames(msg.data)
+            } else {
+              setLocalGames(msg.data)
+            }
+          }
+        } catch (e) {
+          console.error('[WS] Error parsing games list message', e)
+        }
+      }
+      wsRef.current.onerror = err => {
+        console.error('[WS] Games list error', err)
+      }
+      wsRef.current.onclose = () => {
+        console.log('[WS] Games list connection closed')
+      }
+    }
+    return () => {
+        // if (wsRef.current) {
+        //   wsRef.current.close()
+        // }
+    }
+  }, [])
 
   const handleApproveGame = async gameId => {
     try {
@@ -31,7 +77,7 @@ const CreatorGameList = ({ games = [], loading = false, onRefresh, isSuperUser =
 
       if (result?.status === 'success') {
         toast.success('Game approved!')
-        onRefresh() // Refresh the list
+        // onRefresh() // Refresh the list
       } else {
         console.error('Error approving game:', result)
         toast.error(result?.message || 'Failed to approve game')
@@ -50,7 +96,7 @@ const CreatorGameList = ({ games = [], loading = false, onRefresh, isSuperUser =
     try {
       const result = await RestApi.del(`${API_URLS.v0.USERS_GAME}?id=${gameId}`, { email: session?.user?.email })
       if (result?.status === 'success') {
-        onRefresh() // Refresh the list
+        // onRefresh() // Refresh the list
         toast.success('Game deleted successfully!')
       } else {
         console.error('Error deleting game:', result)
@@ -98,7 +144,7 @@ const CreatorGameList = ({ games = [], loading = false, onRefresh, isSuperUser =
   return (
     <>
       <Container maxWidth='xl' sx={{ position: 'relative', pb: 10 }}>
-        {games.length === 0 ? (
+        {gamesToUse.length === 0 ? (
           <Box textAlign='center' py={6}>
             <Typography variant='body1' color='text.secondary'>
               No games found
@@ -106,7 +152,7 @@ const CreatorGameList = ({ games = [], loading = false, onRefresh, isSuperUser =
           </Box>
         ) : (
           <Grid container spacing={3}>
-            {games.map(game => (
+            {gamesToUse.map(game => (
               <Grid item key={game._id} xs={12} sm={6} md={4} lg={3}>
                 <CreatorGameCard
                   game={game}

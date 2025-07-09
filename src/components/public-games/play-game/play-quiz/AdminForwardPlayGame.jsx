@@ -8,33 +8,6 @@ import GameEnded from '../GameEnded'
 import { useSession } from 'next-auth/react'
 import { formatTime } from '@/components/Timer'
 
-const getColor = percentage => {
-  if (percentage > 50) return 'primary'
-  if (percentage > 25) return 'warning'
-  return 'error'
-}
-
-const TimerChip = ({ remainingTime, duration }) => {
-  const progress = (remainingTime / duration) * 100
-  return (
-    <Chip
-      label={formatTime(remainingTime)}
-      color={getColor(progress)}
-      variant='outlined'
-      sx={{ transition: 'background-color 0.3s ease' }}
-    />
-  )
-}
-
-const ProgressBar = ({ progress }) => (
-  <LinearProgress
-    variant='determinate'
-    value={progress}
-    color={getColor(progress)}
-    sx={{ height: '8px', transition: 'all 0.3s ease' }}
-  />
-)
-
 const calculateQuestionMarks = (question, selectedAnswer, hintUsed) => {
   const correctAnswerIds = question.data?.options?.filter(option => option.correct).map(option => option.id) || []
   let gainedMarks = 0
@@ -88,10 +61,8 @@ export default function AdminForwardPlayGame({ quiz, questions, game }) {
   const [usedHints, setUsedHints] = useState({})
   const [lastAnswerTimes, setLastAnswerTimes] = useState({})
   const [gameEnded, setGameEnded] = useState(false)
-  const [remainingTime, setRemainingTime] = useState(0)
   const [pollingGame, setPollingGame] = useState(game)
 
-  const duration = game?.duration || 0
   const startTime = useMemo(() => new Date(game?.startTime), [game?.startTime])
 
   const mappedQuestions = useMemo(() => {
@@ -135,16 +106,6 @@ export default function AdminForwardPlayGame({ quiz, questions, game }) {
       setGameEnded(true)
     }
   }, [pollingGame.liveQuestionIndex, pollingGame.status])
-
-  useEffect(() => {
-    const initialRemaining = Math.max(duration - Math.floor((Date.now() - startTime.getTime()) / 1000), 0)
-    setRemainingTime(initialRemaining)
-    const timerInterval = setInterval(() => {
-      const newRemaining = Math.max(duration - Math.floor((Date.now() - startTime.getTime()) / 1000), 0)
-      setRemainingTime(newRemaining)
-    }, 1000)
-    return () => clearInterval(timerInterval)
-  }, [duration, startTime])
 
   function handleAnswerSelect(questionId, optionId) {
     setSelectedAnswers(prev => ({ ...prev, [questionId]: optionId }))
@@ -204,7 +165,6 @@ export default function AdminForwardPlayGame({ quiz, questions, game }) {
   }
 
   const currentQuestion = mappedQuestions[currentQuestionIndex]
-  const progress = (remainingTime / duration) * 100
   const hasHint = !!currentQuestion?.data?.hint
   const hintUsed = !!usedHints[currentQuestion?._id]
 
@@ -215,17 +175,6 @@ export default function AdminForwardPlayGame({ quiz, questions, game }) {
   return (
     <>
       <Box sx={{ mx: 'auto', px: 2, width: { xs: '100%', sm: '100%' }, height: '100%' }}>
-        <Paper elevation={0} sx={{ p: 2, my: 4, maxWidth: 'lg', mx: 'auto' }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant='h6' component='div'>
-              Time Remaining
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-              <TimerChip remainingTime={remainingTime} duration={duration} />
-            </Box>
-          </Box>
-          <ProgressBar progress={progress} />
-        </Paper>
         {mappedQuestions.length > 0 ? (
           <QuizQuestion
             currentQuestion={currentQuestion}

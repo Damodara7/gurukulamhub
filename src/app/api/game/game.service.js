@@ -8,6 +8,8 @@ import QuestionsModel from '../question/question.model'
 import * as gameScheduler from './game.scheduler'
 import { ROLES_LOOKUP } from '@/configs/roles-lookup'
 import Player from '@/app/api/player/player.model'
+import { broadcastLeaderboard } from '../ws/leaderboard/[gameId]/route.js'
+import { broadcastGamesList } from '../ws/games/route.js'
 
 export const getOne = async (filter = {}) => {
   await connectMongo()
@@ -228,7 +230,7 @@ export const addOne = async gameData => {
     if (user?.roles?.includes('ADMIN')) {
       gameData.approvedBy = user._id
     }
-    console.log('gameData Fort' , gameData.forwardType)
+    console.log('gameData Fort', gameData.forwardType)
 
     // Fetch the quiz to get language code
     const quiz = await Quiz.findById(gameData?.quiz).lean()
@@ -319,6 +321,9 @@ export const addOne = async gameData => {
     if (user?.roles?.includes('ADMIN')) {
       gameScheduler.onGameApproved(savedGame._id)
     }
+
+    // Broadcast games list update
+    await broadcastGamesUpdate()
 
     return {
       status: 'success',
@@ -493,6 +498,9 @@ export const updateOne = async (gameId, updateData) => {
     // Update sponsorships
     await updateSponsorshipsForGame(updatedGame)
 
+    // Broadcast games list update
+    await broadcastGamesUpdate()
+
     return {
       status: 'success',
       result: updatedGame,
@@ -539,20 +547,24 @@ export const deleteOne = async (gameId, { email }) => {
       }
     }
 
-    // Perform soft delete with audit fields
-    existingGame.isDeleted = true
-    existingGame.deletedAt = new Date()
-    existingGame.deletedBy = user._id // Assuming user object has _id
-    existingGame.deleterEmail = user.email // More natural than "deletorEmail"
+    // // Perform soft delete with audit fields
+    // existingGame.isDeleted = true
+    // existingGame.deletedAt = new Date()
+    // existingGame.deletedBy = user._id // Assuming user object has _id
+    // existingGame.deleterEmail = user.email // More natural than "deletorEmail"
 
-    // Save the updated game
-    const deletedGame = await existingGame.save()
+    // // Save the updated game
+    // const deletedGame = await existingGame.save()
+    const deletedGame = await Game.deleteOne({ _id: gameId })
 
     // Delete all players for this game
     await Player.deleteMany({ game: gameId })
 
     // Revert sponsorships
     await revertSponsorshipsForGame(deletedGame)
+
+    // Broadcast games list update
+    await broadcastGamesUpdate()
 
     return {
       status: 'success',
@@ -625,6 +637,9 @@ export const approveGame = async (gameId, updateData) => {
     // Update sponsorships
     await updateSponsorshipsForGame(updatedGame)
 
+    // Broadcast games list update
+    await broadcastGamesUpdate()
+
     return {
       status: 'success',
       result: updatedGame,
@@ -668,7 +683,7 @@ export const joinGame = async (gameId, userData) => {
     if (player) {
       // Fetch latest registered and participated users
       const [registeredUsers, participatedUsers] = await Promise.all([
-        Player.find({ game: gameId, status: { $in: ['registered','participated', 'completed'] } }).lean(),
+        Player.find({ game: gameId, status: { $in: ['registered', 'participated', 'completed'] } }).lean(),
         Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } }).lean()
       ])
       const game = await Game.findById(gameId).lean()
@@ -713,7 +728,7 @@ export const joinGame = async (gameId, userData) => {
 
     // Fetch latest registered and participated users after registration
     const [registeredUsers, participatedUsers] = await Promise.all([
-      Player.find({ game: gameId, status: { $in: ['registered','participated', 'completed'] } }).lean(),
+      Player.find({ game: gameId, status: { $in: ['registered', 'participated', 'completed'] } }).lean(),
       Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } }).lean()
     ])
     return {
@@ -754,7 +769,7 @@ export const startGame = async (gameId, userData) => {
     if (player.status === 'participated' || player.status === 'completed') {
       // Fetch latest registered and participated users
       const [registeredUsers, participatedUsers] = await Promise.all([
-        Player.find({ game: gameId, status: { $in: ['registered','participated', 'completed'] } }).lean(),
+        Player.find({ game: gameId, status: { $in: ['registered', 'participated', 'completed'] } }).lean(),
         Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } }).lean()
       ])
       const game = await Game.findById(gameId).lean()
@@ -776,7 +791,7 @@ export const startGame = async (gameId, userData) => {
     const questions = await QuestionsModel.find({ quizId, languageCode }).lean()
     // Fetch latest registered and participated users after participation
     const [registeredUsers, participatedUsers] = await Promise.all([
-      Player.find({ game: gameId, status: { $in: ['registered','participated', 'completed'] } }).lean(),
+      Player.find({ game: gameId, status: { $in: ['registered', 'participated', 'completed'] } }).lean(),
       Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } }).lean()
     ])
     return {
@@ -856,9 +871,23 @@ export const updatePlayerProgress = async (gameId, { user, userAnswer, finish })
     // Fetch latest game, registeredUsers, and participatedUsers
     const game = await Game.findById(gameId).lean()
     const [registeredUsers, participatedUsers] = await Promise.all([
-      Player.find({ game: gameId, status: { $in: ['registered','participated', 'completed'] } }).lean(),
+      Player.find({ game: gameId, status: { $in: ['registered', 'participated', 'completed'] } }).lean(),
       Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } }).lean()
     ])
+
+    // Broadcast leaderboard update
+    try {
+      const players = await Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } })
+        .sort({ fffPoints: -1 })
+        .lean()
+      const leaderboard = players.map(p => ({
+        ...p,
+        totalAnswerTime: p.answers?.reduce((sum, a) => sum + (a?.answerTime || 0), 0)
+      }))
+      broadcastLeaderboard(gameId.toString(), leaderboard)
+    } catch (e) {
+      console.error('Failed to broadcast leaderboard:', e)
+    }
 
     return {
       status: 'success',
@@ -1254,5 +1283,15 @@ export const forwardQuestion = async (gameId, user, currentQuestionIndex) => {
       result: null,
       message: error.message || 'Failed to forward question'
     }
+  }
+}
+
+// Helper to broadcast updated games list
+export async function broadcastGamesUpdate() {
+  try {
+    const allGamesRes = await getAllPublic()
+    broadcastGamesList(allGamesRes.result)
+  } catch (e) {
+    console.error('Failed to broadcast games list:', e)
   }
 }

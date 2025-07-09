@@ -1,17 +1,65 @@
 // components/public-games/PublicGamesList.tsx
 'use client'
 
-import React from 'react'
+import React, { useRef, useEffect, useState } from 'react'
 import GameCard from './GameCard'
 import { Box, Grid, Typography } from '@mui/material'
 import { useSession } from 'next-auth/react'
 import { useSearchParams } from 'next/navigation'
 import Loading from '@/components/Loading'
 
-const PublicGamesList = ({ games, loading, error }) => {
+const PublicGamesList = ({ games, loading, error, setGames }) => {
   const searchParams = useSearchParams()
   const { data: session } = useSession()
   const statusFilter = searchParams.get('status') || 'all'
+  const wsRef = useRef(null)
+  // If setGames is not provided, use local state for demonstration
+  const [localGames, setLocalGames] = useState(games)
+  const gamesToUse = setGames ? games : localGames
+
+  useEffect(() => {
+    // console.log('games', games)
+    setLocalGames(games)
+  }, [games])
+
+  useEffect(() => {
+    // WebSocket connection for real-time games list updates
+    const wsUrl = 
+      typeof window !== 'undefined'
+        ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/api/ws/games`
+        : ''
+    if (wsUrl) {
+      wsRef.current = new WebSocket(wsUrl)
+      wsRef.current.onopen = () => {
+        console.log('[WS] Connected to games list updates')
+      }
+      wsRef.current.onmessage = event => {
+        try {
+          const msg = JSON.parse(event.data)
+          if (msg.type === 'gamesList') {
+            if (setGames) {
+              setGames(msg.data)
+            } else {
+              setLocalGames(msg.data)
+            }
+          }
+        } catch (e) {
+          console.error('[WS] Error parsing games list message', e)
+        }
+      }
+      wsRef.current.onerror = err => {
+        console.error('[WS] Games list error', err)
+      }
+      wsRef.current.onclose = () => {
+        console.log('[WS] Games list connection closed')
+      }
+    }
+    return () => {
+      // if (wsRef.current) {
+      //   wsRef.current.close()
+      // }
+    }
+  }, [])
 
   const getUserGameStatus = (game) => {
     const userEmail = session?.user?.email
@@ -41,7 +89,7 @@ const PublicGamesList = ({ games, loading, error }) => {
     return { status: '' }
   }
 
-  const filteredGames = games.filter((game) => {
+  const filteredGames = gamesToUse.filter((game) => {
     const userStatus = getUserGameStatus(game).status
     const userEmail = session?.user?.email
     const globalStatus = game.status

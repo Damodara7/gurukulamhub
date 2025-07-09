@@ -1,6 +1,7 @@
 import cron from 'node-cron'
 import Game from './game.model' // Adjust path to your Game model
 import Player from '@/app/api/player/player.model'
+import { broadcastGamesUpdate } from './game.service'
 
 // Object to store our scheduled tasks
 const gameStatusTasks = {}
@@ -43,6 +44,7 @@ async function checkAndCancelOverdueGames() {
           }
         })
         cancelTask(game._id)
+        await broadcastGamesUpdate()
       } catch (error) {
         console.error(`❌ Error cancelling game ${game._id}:`, error)
       }
@@ -78,6 +80,7 @@ export async function scheduleLobbyTransition(gameId) {
         console.log(`📌 Game ${gameId} missed lobby transition but startTime is in future, moving to lobby now`)
         await Game.findByIdAndUpdate(gameId, { $set: { status: 'lobby' } })
         await scheduleLiveTransition(gameId, game.startTime)
+        await broadcastGamesUpdate()
       }
       return
     }
@@ -99,6 +102,7 @@ export async function scheduleLobbyTransition(gameId) {
           if (updatedGame) {
             console.log(`📌 Game ${gameId} status updated to lobby`)
             scheduleLiveTransition(gameId, game.startTime)
+            await broadcastGamesUpdate()
           }
         } catch (error) {
           console.error(`❌ Error updating game ${gameId} status:`, error)
@@ -139,11 +143,13 @@ async function scheduleLiveTransition(gameId, startTime) {
             cancellationReason: 'Game did not start on time'
           }
         })
+        await broadcastGamesUpdate()
       } else {
         console.log(`📌 Game ${gameId} within grace period, moving to live`)
         await Game.findByIdAndUpdate(gameId, { $set: { status: 'live' } })
         const endTime = new Date(startTime.getTime() + game.duration * 1000)
         await scheduleCompletion(gameId, endTime)
+        await broadcastGamesUpdate()
       }
       return
     }
@@ -169,6 +175,7 @@ async function scheduleLiveTransition(gameId, startTime) {
             if (updatedGame.forwardType !== 'admin') {
               scheduleCompletion(gameId, endTime)
             }
+            await broadcastGamesUpdate()
           }
         } catch (error) {
           console.error(`❌ Error updating game ${gameId} status:`, error)
@@ -228,6 +235,7 @@ async function scheduleCompletion(gameId, endTime) {
             console.log(`📌 Game ${gameId} status updated to completed`)
             // Clean up the task
             delete gameStatusTasks[gameId]
+            await broadcastGamesUpdate()
           } else {
             console.error(`❌ Failed to update game ${gameId} status`)
           }
@@ -280,6 +288,7 @@ export async function reschedulePendingGames() {
             console.log(`📌 Game ${game._id} missed lobby window, moving to lobby now`)
             await Game.findByIdAndUpdate(game._id, { $set: { status: 'lobby' } })
             await scheduleLiveTransition(game._id, game.startTime)
+            await broadcastGamesUpdate()
           }
         } else if (game.status === 'lobby') {
           if (game.startTime > now) {
@@ -294,11 +303,13 @@ export async function reschedulePendingGames() {
                   cancellationReason: 'Game did not start on time'
                 }
               })
+              await broadcastGamesUpdate()
             } else {
               console.log(`📌 Game ${game._id} within grace period, moving to live`)
               await Game.findByIdAndUpdate(game._id, { $set: { status: 'live' } })
               const endTime = new Date(game.startTime.getTime() + game.duration * 1000 + 30 * 1000)
               await scheduleCompletion(game._id, endTime)
+              await broadcastGamesUpdate()
             }
           }
         } else if (game.status === 'live' && game.forwardType !== 'admin') {
@@ -308,6 +319,7 @@ export async function reschedulePendingGames() {
           } else {
             console.log(`📌 Game ${game._id} live past end time, completing`)
             await Game.findByIdAndUpdate(game._id, { $set: { status: 'completed' } })
+            await broadcastGamesUpdate()
           }
         }
       } catch (error) {

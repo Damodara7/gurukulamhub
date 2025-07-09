@@ -12,6 +12,7 @@ import './PlayGameQuiz.css'
 import GameEnded from '../GameEnded'
 import { AccessTime as TimeIcon } from '@mui/icons-material'
 import { useSession } from 'next-auth/react'
+import Leaderboard from '../Leaderboard'
 
 const getColor = percentage => {
   if (percentage > 50) return 'primary'
@@ -448,6 +449,8 @@ export default function PlayGameQuiz({ quiz, questions, game, onGameEnd }) {
         ) : (
           <Alert severity='error'>No mappedQuestions available for this quiz</Alert>
         )}
+
+        <Leaderboard game={game} duringPlay={true} isAdmin={true} />
       </Box>
     </>
   )

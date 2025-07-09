@@ -1,5 +1,5 @@
 // components/Leaderboard.jsx
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import {
   Box,
   Typography,
@@ -20,6 +20,7 @@ import { API_URLS } from '@/configs/apiConfig'
 export default function Leaderboard({ game, duringPlay = false, isAdmin = false }) {
   const [leaderboard, setLeaderboard] = useState([])
   const [loading, setLoading] = useState(true)
+  const wsRef = useRef(null)
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
@@ -31,7 +32,12 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
 
           const sortedLeaderboard = res.result?.sort((p1, p2) => {
             if (game?.gameMode === 'live') {
-              return p2.fffPoints - p1.fffPoints
+              if (p2.score !== p1.score) {
+                return p2.score - p1.score
+              }
+              if (p2.fffPoints !== p1.fffPoints) {
+                return p2.fffPoints - p1.fffPoints
+              }
             } else {
               // self-paced: sort by score desc, then totalAnswerTime asc, then finishedAt asc
               if (p2.score !== p1.score) {
@@ -57,6 +63,53 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
 
     // Initial fetch
     fetchLeaderboard()
+
+    // WebSocket connection for real-time updates
+    const wsUrl =
+      typeof window !== 'undefined'
+        ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/api/ws/leaderboard/${game._id}`
+        : ''
+    if (wsUrl) {
+      wsRef.current = new WebSocket(wsUrl)
+      wsRef.current.onopen = () => {
+        console.log('[WS] Connected to leaderboard updates')
+      }
+      wsRef.current.onmessage = event => {
+        try {
+          const msg = JSON.parse(event.data)
+          if (msg.type === 'leaderboard') {
+            const sortedLeaderboard = msg.data?.sort((p1, p2) => {
+              if (game?.gameMode === 'live') {
+                return p2.fffPoints - p1.fffPoints
+              } else {
+                if (p2.score !== p1.score) {
+                  return p2.score - p1.score
+                }
+                if (p1.totalAnswerTime !== p2.totalAnswerTime) {
+                  return p1.totalAnswerTime - p2.totalAnswerTime
+                }
+                return new Date(p1.finishedAt) - new Date(p2.finishedAt)
+              }
+            })
+            setLeaderboard(sortedLeaderboard)
+            setLoading(false)
+          }
+        } catch (e) {
+          console.error('[WS] Error parsing leaderboard message', e)
+        }
+      }
+      wsRef.current.onerror = err => {
+        console.error('[WS] Leaderboard error', err)
+      }
+      wsRef.current.onclose = () => {
+        console.log('[WS] Leaderboard connection closed')
+      }
+    }
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close()
+      }
+    }
   }, [game._id])
 
   const formatTime = seconds => {
