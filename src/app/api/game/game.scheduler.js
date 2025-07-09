@@ -1,7 +1,7 @@
 import cron from 'node-cron'
 import Game from './game.model' // Adjust path to your Game model
 import Player from '@/app/api/player/player.model'
-import { broadcastGamesUpdate } from './game.service'
+import { broadcastGameDetailsUpdates, broadcastGamesUpdate } from './game.service'
 
 // Object to store our scheduled tasks
 const gameStatusTasks = {}
@@ -45,6 +45,7 @@ async function checkAndCancelOverdueGames() {
         })
         cancelTask(game._id)
         await broadcastGamesUpdate()
+        broadcastGameDetailsUpdates(game._id)
       } catch (error) {
         console.error(`❌ Error cancelling game ${game._id}:`, error)
       }
@@ -103,6 +104,7 @@ export async function scheduleLobbyTransition(gameId) {
             console.log(`📌 Game ${gameId} status updated to lobby`)
             scheduleLiveTransition(gameId, game.startTime)
             await broadcastGamesUpdate()
+            broadcastGameDetailsUpdates(gameId)
           }
         } catch (error) {
           console.error(`❌ Error updating game ${gameId} status:`, error)
@@ -151,6 +153,7 @@ async function scheduleLiveTransition(gameId, startTime) {
         await scheduleCompletion(gameId, endTime)
         await broadcastGamesUpdate()
       }
+      broadcastGameDetailsUpdates(gameId)
       return
     }
 
@@ -176,6 +179,7 @@ async function scheduleLiveTransition(gameId, startTime) {
               scheduleCompletion(gameId, endTime)
             }
             await broadcastGamesUpdate()
+            broadcastGameDetailsUpdates(gameId)
           }
         } catch (error) {
           console.error(`❌ Error updating game ${gameId} status:`, error)
@@ -236,6 +240,7 @@ async function scheduleCompletion(gameId, endTime) {
             // Clean up the task
             delete gameStatusTasks[gameId]
             await broadcastGamesUpdate()
+            broadcastGameDetailsUpdates(gameId)
           } else {
             console.error(`❌ Failed to update game ${gameId} status`)
           }

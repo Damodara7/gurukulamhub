@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Box, Grid, Typography, Card, CardContent } from '@mui/material'
 import { EmojiEvents, Videocam } from '@mui/icons-material'
 import ReactPlayer from 'react-player'
@@ -12,7 +12,51 @@ import GameLocationInfo from '@/components/apps/games/game-details/GameLocationI
 import GameStatistics from '@/components/apps/games/game-details/GameStatistics'
 import AdminLeaderboard from '@/components/apps/games/game-details/AdminLeaderboard'
 
-export default function GameDetailsPage({ game = null }) {
+export default function GameDetailsPage({ game: initialGame = null, gameId }) {
+  const [game, setGame] = useState(initialGame)
+  const wsRef = useRef(null)
+
+  useEffect(() => {
+    if (gameId) {
+      const wsUrl =
+        typeof window !== undefined
+          ? `${window.location.protocol === 'https' ? 'wss' : 'ws'}://${window.location.host}/api/ws/games/${gameId}`
+          : ''
+
+      if (wsUrl) {
+        wsRef.current = new WebSocket(wsUrl)
+        if (!wsRef.current) return
+
+        wsRef.current.onopen = () => {
+          console.log('[WS] Connected to game details updates')
+        }
+
+        wsRef.current.onmessage = event => {
+          try {
+            const { data, type } = JSON.parse(event.data)
+            if (type === 'gameDetails') {
+              setGame(data)
+            }
+          } catch (e) {
+            console.error('[WS] Error parsing game details message', e)
+          }
+        }
+        wsRef.current.onerror = err => {
+          console.error('[WS] game details error', err)
+        }
+        wsRef.current.onclose = () => {
+          console.log('[WS] game details connection closed')
+        }
+      }
+    }
+
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close()
+      }
+    }
+  }, [gameId])
+
   if (!game)
     return (
       <Box sx={{ p: 3, textAlign: 'center' }}>
@@ -25,7 +69,6 @@ export default function GameDetailsPage({ game = null }) {
       {/* Game Header Section */}
       <GameHeader game={game} />
 
-    
       {/* Promotional Video Section */}
       {game.promotionalVideoUrl && (
         <Card sx={{ mb: 3 }}>
@@ -70,14 +113,18 @@ export default function GameDetailsPage({ game = null }) {
       {/* Registration & Participation Section */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
         {/* Registered Players */}
-        <RegisteredPlayersTable registeredUsers={game?.registeredUsers} participatedUsers={game?.participatedUsers} game={game} />
+        <RegisteredPlayersTable
+          registeredUsers={game?.registeredUsers}
+          participatedUsers={game?.participatedUsers}
+          game={game}
+        />
 
         {/* Participated Players */}
         <ParticipatedPlayersTable game={game} participatedUsers={game?.participatedUsers} />
       </Grid>
 
       {/* Leaderboard Section */}
-      <AdminLeaderboard  game={game} />
+      <AdminLeaderboard game={game} />
 
       {/* Rewards Section */}
       {game.rewards.length > 0 && (

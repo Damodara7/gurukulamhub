@@ -51,61 +51,85 @@ async function updateUserScore(gameId, { user, userAnswer, finish }) {
   }
 }
 
-export default function AdminForwardPlayGame({ quiz, questions, game }) {
+export default function AdminForwardPlayGame({ quiz, questions, game: initialGame }) {
   const { data: session } = useSession()
   const router = useRouter()
-  const storageKey = `game-${game._id}-quiz-${quiz._id}-admin-state`
 
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(game.liveQuestionIndex || 0)
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [selectedAnswers, setSelectedAnswers] = useState({})
   const [usedHints, setUsedHints] = useState({})
   const [lastAnswerTimes, setLastAnswerTimes] = useState({})
   const [gameEnded, setGameEnded] = useState(false)
-  const [pollingGame, setPollingGame] = useState(game)
+  const [game, setGame] = useState(initialGame)
+  const wsRef = useRef(null)
+
+   const storageKey = `game-${game._id}-quiz-${quiz._id}-admin-state`
+  const gameId = game?._id
+
+  useEffect(() => {
+    if (gameId) {
+      const wsUrl =
+        typeof window !== undefined
+          ? `${window.location.protocol === 'https' ? 'wss' : 'ws'}://${window.location.host}/api/ws/games/${gameId}`
+          : ''
+
+      if (wsUrl) {
+        wsRef.current = new WebSocket(wsUrl)
+        if (!wsRef.current) return
+
+        wsRef.current.onopen = () => {
+          console.log('[WS] Connected to game details updates')
+        }
+
+        wsRef.current.onmessage = async event => {
+          try {
+            const { data, type } = JSON.parse(event.data)
+            if (type === 'gameDetails') {
+              setGame(data)
+              const liveIdx = data?.liveQuestionIndex
+              if (
+                currentQuestionIndex >= 0 &&
+                currentQuestionIndex < mappedQuestions.length &&
+                currentQuestionIndex !== liveIdx
+              ) {
+                await calculateAndUpdateUserScore({ finish: false, index: currentQuestionIndex })
+                setCurrentQuestionIndex(liveIdx)
+              }
+            }
+          } catch (e) {
+            console.error('[WS] Error parsing game details message', e)
+          }
+        }
+        wsRef.current.onerror = err => {
+          console.error('[WS] game details error', err)
+        }
+        wsRef.current.onclose = () => {
+          console.log('[WS] game details connection closed')
+        }
+      }
+    }
+
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close()
+      }
+    }
+  }, [gameId])
 
   const startTime = useMemo(() => new Date(game?.startTime), [game?.startTime])
 
   const mappedQuestions = useMemo(() => {
-    let cumulativeTime = 0
     return (
       questions?.map(q => {
-        cumulativeTime += (q?.data?.timerSeconds || 0) * 1000
         return {
           ...q,
           data: {
-            ...q.data,
-            expiresAt: new Date(startTime.getTime() + cumulativeTime)
+            ...q.data
           }
         }
       }) || []
     )
   }, [questions, startTime])
-
-  // Poll for liveQuestionIndex changes (simulate websocket)
-  useEffect(() => {
-    if (gameEnded) return
-    const interval = setInterval(async () => {
-      const res = await RestApi.get(`${API_URLS.v0.USERS_GAME}/${game._id}`)
-      if (res?.result) {
-        setPollingGame(res.result)
-      }
-    }, 2000)
-    return () => clearInterval(interval)
-  }, [game._id, gameEnded])
-
-  // When liveQuestionIndex changes, submit previous and move to new
-  useEffect(() => {
-    if (pollingGame.liveQuestionIndex !== currentQuestionIndex) {
-      // Submit answer for previous question if not already submitted
-      if (currentQuestionIndex >= 0 && currentQuestionIndex < mappedQuestions.length) {
-        calculateAndUpdateUserScore({ finish: false, index: currentQuestionIndex })
-      }
-      setCurrentQuestionIndex(pollingGame.liveQuestionIndex)
-    }
-    if (pollingGame.status === 'completed') {
-      setGameEnded(true)
-    }
-  }, [pollingGame.liveQuestionIndex, pollingGame.status])
 
   function handleAnswerSelect(questionId, optionId) {
     setSelectedAnswers(prev => ({ ...prev, [questionId]: optionId }))
@@ -157,7 +181,9 @@ export default function AdminForwardPlayGame({ quiz, questions, game }) {
         },
         finish: finish
       })
-    } catch (error) {}
+    } catch (error) {
+      console.error("Error updating user score: ", error)
+    }
   }
 
   const handleExit = () => {
