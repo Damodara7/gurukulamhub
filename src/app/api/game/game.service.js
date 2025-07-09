@@ -8,8 +8,9 @@ import QuestionsModel from '../question/question.model'
 import * as gameScheduler from './game.scheduler'
 import { ROLES_LOOKUP } from '@/configs/roles-lookup'
 import Player from '@/app/api/player/player.model'
-import { broadcastLeaderboard } from '../ws/leaderboard/[gameId]/route.js'
-import { broadcastGamesList } from '../ws/games/route.js'
+import { broadcastLeaderboard } from '../ws/leaderboard/[gameId]/publishers'
+import { broadcastGamesList } from '../ws/games/publishers'
+import { broadcastGameDetails } from '../ws/games/[gameId]/publishers'
 
 export const getOne = async (filter = {}) => {
   await connectMongo()
@@ -499,7 +500,9 @@ export const updateOne = async (gameId, updateData) => {
     await updateSponsorshipsForGame(updatedGame)
 
     // Broadcast games list update
-    await broadcastGamesUpdate()
+    broadcastGamesUpdate()
+
+    broadcastGameDetailsUpdates(gameId)
 
     return {
       status: 'success',
@@ -564,7 +567,8 @@ export const deleteOne = async (gameId, { email }) => {
     await revertSponsorshipsForGame(deletedGame)
 
     // Broadcast games list update
-    await broadcastGamesUpdate()
+    broadcastGamesUpdate()
+    broadcastGameDetailsUpdates(gameId)
 
     return {
       status: 'success',
@@ -638,7 +642,8 @@ export const approveGame = async (gameId, updateData) => {
     await updateSponsorshipsForGame(updatedGame)
 
     // Broadcast games list update
-    await broadcastGamesUpdate()
+    broadcastGamesUpdate()
+    broadcastGameDetailsUpdates(gameId)
 
     return {
       status: 'success',
@@ -731,6 +736,9 @@ export const joinGame = async (gameId, userData) => {
       Player.find({ game: gameId, status: { $in: ['registered', 'participated', 'completed'] } }).lean(),
       Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } }).lean()
     ])
+
+    broadcastGameDetailsUpdates(gameId)
+
     return {
       status: 'success',
       result: { ...game, registeredUsers, participatedUsers },
@@ -794,6 +802,9 @@ export const startGame = async (gameId, userData) => {
       Player.find({ game: gameId, status: { $in: ['registered', 'participated', 'completed'] } }).lean(),
       Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } }).lean()
     ])
+
+    broadcastGameDetailsUpdates(gameId)
+
     return {
       status: 'success',
       result: { ...game, questions, registeredUsers, participatedUsers },
@@ -884,7 +895,8 @@ export const updatePlayerProgress = async (gameId, { user, userAnswer, finish })
         ...p,
         totalAnswerTime: p.answers?.reduce((sum, a) => sum + (a?.answerTime || 0), 0)
       }))
-      broadcastLeaderboard(gameId.toString(), leaderboard)
+      broadcastLeaderboard(gameId, leaderboard)
+      broadcastGameDetailsUpdates(gameId)
     } catch (e) {
       console.error('Failed to broadcast leaderboard:', e)
     }
@@ -1190,6 +1202,9 @@ export const setForwardingAdmin = async (gameId, user) => {
     }
     game.forwardingAdmin = adminUser._id
     await game.save()
+
+    broadcastGameDetailsUpdates(gameId)
+
     return {
       status: 'success',
       result: game,
@@ -1272,6 +1287,9 @@ export const forwardQuestion = async (gameId, user, currentQuestionIndex) => {
     resultGame.registeredPlayers = registeredPlayers
     resultGame.participatedPlayers = participatedPlayers
     resultGame.questions = questions
+
+    broadcastGameDetailsUpdates(resultGame._id)
+
     return {
       status: 'success',
       result: resultGame,
@@ -1293,5 +1311,14 @@ export async function broadcastGamesUpdate() {
     broadcastGamesList(allGamesRes.result)
   } catch (e) {
     console.error('Failed to broadcast games list:', e)
+  }
+}
+
+export async function broadcastGameDetailsUpdates(gameId) {
+  try {
+    const gameRes = await getOne({ _id: gameId })
+    broadcastGameDetails(gameId, gameRes.result)
+  } catch (e) {
+    console.error('Failed to broadcast game details:', e)
   }
 }

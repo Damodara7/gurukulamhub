@@ -55,9 +55,9 @@ const PublicGamesList = ({ games, loading, error, setGames }) => {
       }
     }
     return () => {
-      // if (wsRef.current) {
-      //   wsRef.current.close()
-      // }
+      if (wsRef.current) {
+        wsRef.current.close()
+      }
     }
   }, [])
 

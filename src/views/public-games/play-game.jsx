@@ -66,8 +66,7 @@ function PlayGamePage() {
   }
 
   //check if game has ended
-  if (new Date() > new Date(new Date(game.startTime).getTime() + game.duration * 1000)) {
-    console.log("Hello")
+  if (game.status === 'completed') {
     return <GameEnded game={game} onExit={handleExit}  />
   }
 

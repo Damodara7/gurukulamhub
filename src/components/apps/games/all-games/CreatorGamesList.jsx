@@ -20,7 +20,7 @@ const CreatorGameList = ({ games = [], loading = false, onRefresh, setGames, isS
   const wsRef = useRef(null)
   const [localGames, setLocalGames] = useState(games)
   const gamesToUse = setGames ? games : localGames
-  console.log('GameList games: ', games)
+  // console.log('GameList games: ', games)
   const { data: session } = useSession()
   const router = useRouter()
 
@@ -61,9 +61,9 @@ const CreatorGameList = ({ games = [], loading = false, onRefresh, setGames, isS
       }
     }
     return () => {
-        // if (wsRef.current) {
-        //   wsRef.current.close()
-        // }
+        if (wsRef.current) {
+          wsRef.current.close()
+        }
     }
   }, [])
 
