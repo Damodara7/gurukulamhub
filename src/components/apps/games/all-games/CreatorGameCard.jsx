@@ -207,8 +207,8 @@ const CreatorGameCard = ({ game, isSuperUser = false, onViewGame, onEditGame, on
                   <DeleteIcon />
                 </IconButtonTooltip>
               )}
-            {session?.user?.roles?.includes('ADMIN') && (
-              <IconButtonTooltip title='Admin Forward' onClick={() => onAdminForward(game._id)} color='warning'>
+            { game?.forwardType === 'admin' && (!game?.forwardingAdmin || game?.forwardingAdmin?.email ===  session?.user?.email)  &&(
+              <IconButtonTooltip title='Admin Forward' onClick={() => onAdminForward(game)} color='warning'>
                 <SettingsIcon />
               </IconButtonTooltip>
             )}

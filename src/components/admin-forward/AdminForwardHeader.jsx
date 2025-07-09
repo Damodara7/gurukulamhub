@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { Card, Box, Avatar, Typography, Chip, Paper, keyframes, LinearProgress, Alert, useTheme } from '@mui/material'
 import { Schedule, People, AccessTime } from '@mui/icons-material'
 import imagePlaceholder from '/public/images/misc/image-placeholder.png'
-import Timer, { formatTime } from '@/components/Timer'
+
 const blink = keyframes`
   0% { opacity: 1; }
   50% { opacity: 0.5; }
@@ -22,24 +22,25 @@ const pulse = keyframes`
   100% { transform: scale(1); }
 `
 
-function AdminForwardHeader({ game }) {
+function AdminForwardHeader({ game  }) {
   const theme = useTheme()
   const [countdownColor, setCountdownColor] = useState('primary.main')
   const [timeRemaining, setTimeRemaining] = useState('')
+
   // Calculate time remaining until game starts
   useEffect(() => {
     const updateTimer = () => {
       const now = new Date()
-      const startTime = new Date(game.startTime)
+      const startTime = new Date(game?.startTime)
       //   const startTime = new Date(new Date('2025-05-15T11:02:00Z') + 2* 60 * 1000)
       const diffInSeconds = Math.floor((startTime - now) / 1000)
 
       if (diffInSeconds <= 0) {
         setTimeRemaining('Game is Starting Now')
         setCountdownColor('success.main')
+        // setShouldRedirect(true)
         return
       }
-
       // Change color based on time remaining
       if (diffInSeconds <= 30) {
         setCountdownColor('error.main')
@@ -63,6 +64,7 @@ function AdminForwardHeader({ game }) {
   }, [game.startTime])
 
   const gamestatus = game?.status === 'completed' || game?.status === 'live' || game?.status === 'cancelled'
+
   return (
     <Card sx={{ mb: 3 }}>
       <Box sx={{ display: 'flex', p: 3 }}>

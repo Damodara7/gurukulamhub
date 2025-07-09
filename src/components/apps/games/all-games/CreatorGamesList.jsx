@@ -76,11 +76,29 @@ const CreatorGameList = ({ games = [], loading = false, onRefresh, isSuperUser =
     router.push(isSuperUser ? `/manage-games/${id}/leaderboard` : `/apps/games/${id}/leaderboard`)
   }
 
-  async function handleAdminForward(id) {
-    console.log('Clicked Admin Forward game of id: ', id)
-    router.push(`/apps/games/${id}/admin-forward`)
+  async function handleAdminForward(game) {
+    console.log('Clicked Admin Forward game of id: ', game._id)
+    if (game?.forwardingAdmin && game?.forwardingAdmin?.email === session?.user?.email){
+      router.push(`/apps/games/${game._id}/admin-forward`)
+      return
+    }
+      try {
+        const result = await RestApi.post(`${API_URLS.v0.USERS_GAME}/${game._id}/admin-forward`, {
+          user: { email: session?.user?.email }
+        })
+        if (result?.status === 'success') {
+          toast.success('Admin forwarding set successfully')
+          router.push(`/apps/games/${game._id}/admin-forward`)
+        } else {
+          console.error('Error setting admin forarding:', error)
+          toast.error(result?.message || 'Failed to set admin forwarding')
+        }
+      } catch (error) {
+        console.error('Error setting admin forwarding', error)
+        toast.error('An error occurred while setting admin forwarding')
+      }
+    
   }
-
 
   const handleDeleteConfirmation = game => {
     setGameToDelete(game)

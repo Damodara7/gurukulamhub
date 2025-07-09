@@ -27,21 +27,21 @@ function AdminForwardLocationInfo({ game }) {
               <ListItemIcon>
                 <Place color='action' />
               </ListItemIcon>
-              <ListItemText primary='Country' secondary={game.location?.country || 'Not specified'} />
+              <ListItemText primary='Country' secondary={game?.location?.country || 'Not specified'} />
             </ListItem>
             <Divider component='li' />
             <ListItem>
               <ListItemIcon>
                 <Place color='action' />
               </ListItemIcon>
-              <ListItemText primary='Region' secondary={game.location?.region || 'Not specified'} />
+              <ListItemText primary='Region' secondary={game?.location?.region || 'Not specified'} />
             </ListItem>
             <Divider component='li' />
             <ListItem>
               <ListItemIcon>
                 <Place color='action' />
               </ListItemIcon>
-              <ListItemText primary='City' secondary={game.location?.city || 'Not specified'} />
+              <ListItemText primary='City' secondary={game?.location?.city || 'Not specified'} />
             </ListItem>
           </List>
         </CardContent>

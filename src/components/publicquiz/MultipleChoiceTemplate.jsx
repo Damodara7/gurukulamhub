@@ -3,10 +3,11 @@ import { Card, CardContent, Checkbox, FormControlLabel, Typography, FormGroup, B
 import VideoAd from '@/views/apps/advertisements/VideoAd/VideoAd'
 import ImagePopup from '../ImagePopup'
 
-const MultipleChoiceTemplate = ({ question, selectedAnswers, onAnswerSelect }) => {
+const MultipleChoiceTemplate = ({ question, selectedAnswers, onAnswerSelect , readOnly=false }) => {
   const questionObj = question?.data?.question
   // Handle checkbox change
   const handleCheckboxChange = optionId => {
+    if(readOnly) return
     let updatedAnswers
     if (selectedAnswers.includes(optionId)) {
       updatedAnswers = selectedAnswers.filter(id => id !== optionId) // Remove if already selected
@@ -66,8 +67,8 @@ const MultipleChoiceTemplate = ({ question, selectedAnswers, onAnswerSelect }) =
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
-                  border: selectedAnswers.includes(option.id) ? '2px solid' : '2px solid',
-                  borderColor: selectedAnswers.includes(option.id) ? 'primary.main' : '#ccc',
+                  border: selectedAnswers?.includes(option.id) ? '2px solid' : '2px solid',
+                  borderColor: selectedAnswers?.includes(option.id) ? 'primary.main' : '#ccc',
                   borderRadius: 2,
                   p: 2,
                   height: '100%',
@@ -77,16 +78,20 @@ const MultipleChoiceTemplate = ({ question, selectedAnswers, onAnswerSelect }) =
                     backgroundColor: 'rgba(0, 0, 0, 0.05)'
                   }
                 }}
-                onClick={() => handleCheckboxChange(option.id)} // Now the entire box is clickable
+                onClick={() => !readOnly && handleCheckboxChange(option.id)} // Now the entire box is clickable
               >
                 <Checkbox
-                  checked={selectedAnswers.includes(option.id)}
+                  checked={selectedAnswers?.includes(option.id)}
                   sx={{ mr: 1 }}
                   onChange={e => {
                     e.stopPropagation()
                     handleCheckboxChange(option.id)
                   }}
-                  onClick={e => e.stopPropagation()} // Prevent checkbox click from triggering the entire box
+                  onClick={e => {
+                    if (readOnly) e.preventDefault()
+                    e.stopPropagation()
+                  }}
+                  disabled={readOnly}
                 />
                 <Box display='flex' alignItems='center' sx={{ flexGrow: 1 }}>
                   {option.mediaType === 'image' && option.image && (

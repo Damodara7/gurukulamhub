@@ -128,7 +128,7 @@ function AdminForwardRegisteredUsersCard({ game = null }) {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {game?.participatedUsers.length > 0 ? (
+                {game?.participatedUsers?.length > 0 ? (
                   game?.participatedUsers?.map((user, index) => (
                     <TableRow key={index}>
                       <TableCell>

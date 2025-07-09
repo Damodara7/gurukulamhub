@@ -2,14 +2,12 @@
 import React, {useEffect, useState } from 'react' // Combined import
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
-import AdminForwardPage from './AdminForwardPage'
 import AdminForwardLivePage from './AdminForwardLivePage'
-import AdminForwardLiveHeader from './AdminForwardLiveHeader'
+import AdminForwardPage from './AdminforwardPage'
 function ForwardGameQuestion({ gameId }) {
   const [gameData, setGameData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-
   useEffect(() => {
     const fetchGameData = async () => {
       try {
@@ -40,18 +38,14 @@ function ForwardGameQuestion({ gameId }) {
     gameData?.status === 'cancelled'
   ) {
     return (
-      <AdminForwardPage game={gameData} />
+      <AdminForwardPage game={gameData} setGame={setGameData}/>
     )
   }
 
-  const { quiz , questions , ...restGameData } = gameData
-
-
-  if(gameData?.status === 'live'){
-    return <AdminForwardLivePage quiz={quiz} questions={questions} game={restGameData} />
+  if (gameData?.status === 'live') {
+    const { quiz, questions, ...restGameData } = gameData
+    return <AdminForwardLivePage quiz={quiz} questions={questions} game={restGameData} setGame={setGameData} />
   }
-  console.log('Game Data:', gameData)
-
   return null
 }
 

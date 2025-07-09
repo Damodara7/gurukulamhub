@@ -128,7 +128,7 @@ const tableHeight = 4 * 50
                 </TableRow>
               </TableHead>
               <TableBody >
-                {game?.registeredUsers.length > 0 ? (
+                {game?.registeredUsers?.length > 0 ? (
                   game?.registeredUsers?.map((user, index) => (
                     <TableRow key={index}>
                       <TableCell>
