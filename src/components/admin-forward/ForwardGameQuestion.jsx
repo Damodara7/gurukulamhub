@@ -1,7 +1,5 @@
 'use client'
 import React, { useEffect, useRef, useState } from 'react' // Combined import
-import * as RestApi from '@/utils/restApiUtil'
-import { API_URLS } from '@/configs/apiConfig'
 import LiveForwardPage from './AdminForwardLivePage'
 import NonLiveForwardPage from './AdminForwardPage'
 import { Box, Button, Card, CardContent, Typography } from '@mui/material'
@@ -9,9 +7,7 @@ import { useRouter } from 'next/navigation'
 import FallBackCard from '../apps/games/FallBackCard'
 function ForwardGameQuestion({ gameId = null, game: initialGame = null }) {
   const [game, setGame] = useState(initialGame)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const router = useRouter();
+  const router = useRouter()
 
   const wsRef = useRef(null)
 
@@ -50,24 +46,6 @@ function ForwardGameQuestion({ gameId = null, game: initialGame = null }) {
     }
   }, [gameId])
 
-  // useEffect(() => {
-  //   const fetchGameData = async () => {
-  //     try {
-  //       const res = await RestApi.get(`${API_URLS.v0.USERS_GAME}?id=${gameId}`)
-  //       if (res.status === 'success') {
-  //         setGame(res?.result || [])
-  //       } else {
-  //         setError(res.message)
-  //       }
-  //     } catch (err) {
-  //       setError(err.message)
-  //     } finally {
-  //       setLoading(false)
-  //     }
-  //   }
-
-  //   fetchGameData()
-  // }, [gameId])
 
   if (loading) return <p>Loading...</p>
 

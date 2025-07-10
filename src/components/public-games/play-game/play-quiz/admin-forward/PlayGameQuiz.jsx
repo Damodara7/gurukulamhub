@@ -7,6 +7,7 @@ import GameEnded from '../../GameEnded'
 import { useSession } from 'next-auth/react'
 import { formatTime } from '@/components/Timer'
 import AdminForwardGameQuizQuestion from './GameQuizQuestion'
+import Leaderboard from '../../Leaderboard'
 
 const calculateQuestionMarks = (question, selectedAnswer, hintUsed) => {
   const correctAnswerIds = question.data?.options?.filter(option => option.correct).map(option => option.id) || []
@@ -283,6 +284,8 @@ export default function AdminForwardPlayGame({ game: initialGame }) {
         ) : (
           <Alert severity='error'>No mappedQuestions available for this quiz</Alert>
         )}
+
+        <Leaderboard game={game} duringPlay={true} isAdmin={true} />
       </Box>
     </>
   )
