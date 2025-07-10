@@ -836,11 +836,53 @@ export const updatePlayerProgress = async (gameId, { user, userAnswer, finish })
         message: 'Player not found in game'
       }
     }
+    // Find if answer already exists for this question
+    const existingAnswerIndex = player.answers.findIndex(a => a.question.toString() === userAnswer.question.toString())
+
+    const game = await Game.findById(gameId).lean()
+
+    // Allow last answer submission after completed, only if not already answered and finish is true
     if (player.status === 'completed') {
-      return {
-        status: 'error',
-        result: null,
-        message: 'Player already completed the game.'
+      if (finish && existingAnswerIndex === -1 && game?.forwardType === 'admin') {
+        // Allow one last answer submission
+        const answerData = { ...userAnswer }
+        let scoreDelta = answerData.marks || 0
+        let fffPointsDelta = answerData.fffPoints || 0
+        player.answers.push(answerData)
+        player.score += scoreDelta
+        player.fffPoints = (player.fffPoints || 0) + fffPointsDelta
+        // No need to set completed/status again
+        await player.save()
+        // Fetch latest game, registeredUsers, and participatedUsers
+        const [registeredUsers, participatedUsers] = await Promise.all([
+          Player.find({ game: gameId, status: { $in: ['registered', 'participated', 'completed'] } }).lean(),
+          Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } }).lean()
+        ])
+        // Broadcast leaderboard update
+        try {
+          const players = await Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } })
+            .sort({ fffPoints: -1 })
+            .lean()
+          const leaderboard = players.map(p => ({
+            ...p,
+            totalAnswerTime: p.answers?.reduce((sum, a) => sum + (a?.answerTime || 0), 0)
+          }))
+          broadcastLeaderboard(gameId, leaderboard)
+          broadcastGameDetailsUpdates(gameId)
+        } catch (e) {
+          console.error('Failed to broadcast leaderboard:', e)
+        }
+        return {
+          status: 'success',
+          result: { ...game, registeredUsers, participatedUsers },
+          message: 'Player progress updated successfully (after completion)'
+        }
+      } else {
+        return {
+          status: 'error',
+          result: null,
+          message: 'Player already completed the game.'
+        }
       }
     }
     if (player.status === 'registered') {
@@ -852,9 +894,6 @@ export const updatePlayerProgress = async (gameId, { user, userAnswer, finish })
     }
     // Prepare answer data
     const answerData = { ...userAnswer }
-    // Find if answer already exists for this question
-    const existingAnswerIndex = player.answers.findIndex(a => a.question.toString() === userAnswer.question.toString())
-
     let scoreDelta = 0
     let fffPointsDelta = 0
     if (existingAnswerIndex > -1) {
@@ -884,7 +923,6 @@ export const updatePlayerProgress = async (gameId, { user, userAnswer, finish })
     await player.save()
 
     // Fetch latest game, registeredUsers, and participatedUsers
-    const game = await Game.findById(gameId).lean()
     const [registeredUsers, participatedUsers] = await Promise.all([
       Player.find({ game: gameId, status: { $in: ['registered', 'participated', 'completed'] } }).lean(),
       Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } }).lean()
@@ -1294,7 +1332,7 @@ export const forwardQuestion = async (gameId, user, currentQuestionIndex) => {
     // console.log(questions);
     const resultGame = await getOne({_id: game._id})
 
-    broadcastGameDetailsUpdates(resultGame._id)
+    broadcastGameDetailsUpdates(game._id)
 
     return {
       status: 'success',
