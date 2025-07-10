@@ -10,43 +10,18 @@ import AdminForwardParticipatedUserCard from './AdminForwardParticipatedUserCard
 import AdminLeaderboard from '@/components/apps/games/game-details/AdminLeaderboard'
 import AdminInstructions from './AdminInstructions'
 import { useRouter } from 'next/navigation'
+import FallBackCard from '../apps/games/FallBackCard'
 
 function AdminForwardPage({ game = null }) {
   const router = useRouter()
 
   if (!game) return (
-    <Box display='flex' flexDirection='column' alignItems='center' bgcolor='#f5f5f5' px={2} py={4} gap={4}>
-      <Card sx={{ maxWidth: 500, p: 3, textAlign: 'center' }}>
-        <CardContent>
-          <Typography variant='h5' gutterBottom>
-            🎮 Game is Not Available
-          </Typography>
-
-          <Typography variant='body1' sx={{ mt: 2 }}>
-            You can go back to the all games
-          </Typography>
-          <Typography variant='h6' color='primary' sx={{ mt: 1 }}></Typography>
-
-          <Box display='flex' gap={6} flexWrap='wrap' mt={2} alignItems='center' justifyContent='center'>
-            <Button
-              component='label'
-              size='small'
-              variant='contained'
-              onClick={() => router.push('/apps/games')}
-              sx={{ color: 'white' }}
-            >
-              Back To All Games
-            </Button>
-          </Box>
-        </CardContent>
-      </Card>
-    </Box>
+    <FallBackCard path='/apps/games' content='You can go Back to All games' btnText='Back To All Games' />
   ) 
-
   const showParticipatedUsers = game?.status === 'completed'
 
   const admininstructions = game?.status === 'lobby'
-
+  const livemode = game?.status === 'live'
   return (
     <>
       <AdminForwardHeader game={game} />
@@ -96,6 +71,19 @@ function AdminForwardPage({ game = null }) {
           </Grid>
         )}
         {admininstructions && <AdminInstructions game={game} />}
+
+        {!livemode && (
+          <Grid xs={12}  sx={{ display:'flex',  justifyContent:'center' ,  mt:2 }}>
+          <Button
+          component = 'label'
+          variant='contained'
+          onClick={()=> router.push('/apps/games')}
+          sx={{ color:'white'}}
+          >
+            Back To All Games
+          </Button>
+        </Grid>
+        )}
       </Grid>
     </>
   )

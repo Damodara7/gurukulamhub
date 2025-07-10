@@ -1,7 +1,7 @@
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import GameDetailsPage from '@/views/apps/games/game-details'
-import NoGamesFound from '@/components/apps/games/NoGamesFound'
+import FallBackCard from '@/components/apps/games/FallBackCard'
 
 async function getGameData(gameId) {
   try {
@@ -21,7 +21,7 @@ export default async function page({ params }) {
   const { id } = params
   const [gameData] = await Promise.all([getGameData(id)])
   if (!gameData) {
-    return <NoGamesFound />
+    return <FallBackCard  content='You can go back to All Games' path='/apps/games' btntext='Back To All Games'/>
   }
 
   return <GameDetailsPage gameId={id} game={gameData} />

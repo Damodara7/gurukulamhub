@@ -1,6 +1,6 @@
 // import React from 'react'
 // import ForwardGameQuestion from '@/components/admin-forward/ForwardGameQuestion'
-// export default async function page( {params}) {  
+// export default async function page( {params}) {
 //     return (
 //       <>
 //         <ForwardGameQuestion gameId={params.id} />
@@ -8,12 +8,11 @@
 //     )
 //   }
 
-
 import React from 'react'
 import ForwardGameQuestion from '@/components/admin-forward/ForwardGameQuestion'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
-import NoGamesFound from '@/components/apps/games/NoGamesFound'
+import FallBackCard from '@/components/apps/games/FallBackCard'
 
 async function getGameData(gameId) {
   try {
@@ -29,18 +28,17 @@ async function getGameData(gameId) {
   }
 }
 
-export default async function page( {params}) {
+export default async function page({ params }) {
   const { id } = params
   const [gameData] = await Promise.all([getGameData(id)])
 
   if (!gameData) {
     // You might want to redirect or show a not found page here
-    return <NoGamesFound/>
-  }  
-    return (
-      <>
-        <ForwardGameQuestion gameId={id} game={gameData} />
-        <ForwardGameQuestion gameId={id} game={gameData} />
-      </>
-    )
+    return <FallBackCard content='You can go back to All Games' path='/apps/games' btntext='Back To All Games' />
   }
+  return (
+    <>
+      <ForwardGameQuestion gameId={id} game={gameData} />
+    </>
+  )
+}

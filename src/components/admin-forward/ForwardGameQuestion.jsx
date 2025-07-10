@@ -6,6 +6,7 @@ import LiveForwardPage from './AdminForwardLivePage'
 import NonLiveForwardPage from './AdminForwardPage'
 import { Box, Button, Card, CardContent, Typography } from '@mui/material'
 import { useRouter } from 'next/navigation'
+import FallBackCard from '../apps/games/FallBackCard'
 function ForwardGameQuestion({ gameId = null, game: initialGame = null }) {
   const [game, setGame] = useState(initialGame)
   const [loading, setLoading] = useState(false)
@@ -72,33 +73,8 @@ function ForwardGameQuestion({ gameId = null, game: initialGame = null }) {
 
   if (error) return <p>Error: {error}</p>
 
-  if (!gameData) return (
-    <Box display='flex' flexDirection='column' alignItems='center' bgcolor='#f5f5f5' px={2} py={4} gap={4}>
-      <Card sx={{ maxWidth: 500, p: 3, textAlign: 'center' }}>
-        <CardContent>
-          <Typography variant='h5' gutterBottom>
-            🎮 Game is Not Available
-          </Typography>
-
-          <Typography variant='body1' sx={{ mt: 2 }}>
-            You can go back to the all games
-          </Typography>
-          <Typography variant='h6' color='primary' sx={{ mt: 1 }}></Typography>
-
-          <Box display='flex' gap={6} flexWrap='wrap' mt={2} alignItems='center' justifyContent='center'>
-            <Button
-              component='label'
-              size='small'
-              variant='contained'
-              onClick={() => router.push('/apps/games')}
-              sx={{ color: 'white' }}
-            >
-              Back To All Games
-            </Button>
-          </Box>
-        </CardContent>
-      </Card>
-    </Box>
+  if(!game) return (
+    <FallBackCard path='/apps/games'  content='You can go Back to All Games' btnText='Back To All Games'/>
   )
 
   if (

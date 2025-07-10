@@ -2,7 +2,7 @@
 import EditGamePage from '@/views/apps/games/edit-game'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
-import NoGamesFound from '@/components/apps/games/NoGamesFound'
+import FallBackCard from '@/components/apps/games/FallBackCard'
 
 async function getGameData(gameId) {
   try {
@@ -24,9 +24,7 @@ export default async function page({ params }) {
 
   if (!gameData) {
     // You might want to redirect or show a not found page here
-    return (
-      <NoGamesFound isSuperUser={true}/>
-    )
+    return <FallBackCard content='You can go back to All Games' path='/manage-games' btntext='Back To All Games' />
   }
 
   return <EditGamePage gameId={id} gameData={gameData} isSuperUser={true} />

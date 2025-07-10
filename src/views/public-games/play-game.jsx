@@ -10,6 +10,7 @@ import StartPlayGame from '@/components/public-games/play-game/StartPlayGame'
 import GameEnded from '@/components/public-games/play-game/GameEnded'
 import GameRegistrationNotice from '@/components/public-games/play-game/GameRegistrationNotice'
 import textAlign from 'tailwindcss-logical/plugins/textAlign'
+import FallBackCard from '@/components/apps/games/FallBackCard'
 
 
 function PlayGamePage() {
@@ -60,37 +61,12 @@ function PlayGamePage() {
 
   if (error || !game) {
     return (
-      // <Box p={4}>
-      //   <Typography color='error'>Error loading game.</Typography>
-      // </Box>
-      <Box display='flex' flexDirection='column' alignItems='center' bgcolor='f5f5f5' px={2} py={4} gap={4}>
-        <Card sx={{ maxwidth: 500, p: 3, textAlign: 'center' }}>
-          <CardContent>
-            <Typography variant='h5' gutterBottom>
-              {error ? '⚠️  Error Occurred' : '🎮 Game is Not Available'}
-            </Typography>
-            {error ? (
-              <Typography color='error' variant='body1' sx={{mt:2}}>
-                {error}
-              </Typography>
-            ):(
-            <Typography variant='body1' sx={{ mt:2 }}>
-              You can go back to Public Games
-            </Typography>)}
-            <Box display='flex' gap={6} flexWrap='wrap' mt={2} alignItems='center' justifyContent='center'>
-              <Button
-              component='label'
-              size='small'
-              variant='contained'
-              onClick={()=>router.push('/public-games')}
-              sx={{color:'white'}}
-              >
-                Back To Public Games
-              </Button>
-            </Box>
-          </CardContent>
-        </Card>
-      </Box>
+      <FallBackCard
+        error={error}
+        path='/public-games'
+        content='You can go back to Public Games '
+        btnText='Back To Public Games'
+      />
     )
   }
 
