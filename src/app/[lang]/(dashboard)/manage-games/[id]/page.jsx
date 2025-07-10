@@ -1,6 +1,7 @@
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import GameDetailsPage from '@/views/apps/games/game-details'
+import NoGamesFound from '@/components/apps/games/NoGamesFound'
 
 async function getGameData(gameId) {
   try {
@@ -23,9 +24,7 @@ export default async function page({ params }) {
   if (!gameData) {
     // You might want to redirect or show a not found page here
     return (
-      <div className='flex items-center justify-center h-64'>
-        <p className='text-red-500'>Game not found or failed to load</p>
-      </div>
+      <NoGamesFound isSuperUser={true}/>
     )
   }
 

@@ -4,7 +4,7 @@ import { Box, Button, Card, CardContent, Typography } from '@mui/material'
 import { useRouter } from 'next/navigation'
 
 
-function NoGamesFound() {
+function NoGamesFound({isSuperUser = false}) {
   const router = useRouter()
   return (
     <Box display='flex' flexDirection='column' alignItems='center' bgcolor='#f5f5f5' px={2} py={4} gap={4}>
@@ -24,7 +24,7 @@ function NoGamesFound() {
               component='label'
               size='small'
               variant='contained'
-              onClick={() => router.push('/apps/games')}
+              onClick={() => router.push( isSuperUser ? '/manage-games' :'/apps/games')}
               sx={{ color: 'white' }}
             >
               Back To All Games

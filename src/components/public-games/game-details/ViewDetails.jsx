@@ -62,7 +62,7 @@ const ViewDetails = ({ game }) => {
   }
 
   console.log('we are getting game data', game)
-  if (game) {
+  if (!game) {
     return (
       <Box display='flex' flexDirection='column' alignItems='center' bgcolor='#f5f5f5' px={2} py={4} gap={4}>
         <Card sx={{ maxWidth: 500, p: 3, textAlign: 'center' }}>
