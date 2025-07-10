@@ -1,16 +1,12 @@
 'use client'
 import React, { useEffect, useRef, useState } from 'react' // Combined import
-import * as RestApi from '@/utils/restApiUtil'
-import { API_URLS } from '@/configs/apiConfig'
 import LiveForwardPage from './AdminForwardLivePage'
 import NonLiveForwardPage from './AdminForwardPage'
 import { Box, Button, Card, CardContent, Typography } from '@mui/material'
 import { useRouter } from 'next/navigation'
 function ForwardGameQuestion({ gameId = null, game: initialGame = null }) {
   const [game, setGame] = useState(initialGame)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const router = useRouter();
+  const router = useRouter()
 
   const wsRef = useRef(null)
 
@@ -49,57 +45,35 @@ function ForwardGameQuestion({ gameId = null, game: initialGame = null }) {
     }
   }, [gameId])
 
-  // useEffect(() => {
-  //   const fetchGameData = async () => {
-  //     try {
-  //       const res = await RestApi.get(`${API_URLS.v0.USERS_GAME}?id=${gameId}`)
-  //       if (res.status === 'success') {
-  //         setGame(res?.result || [])
-  //       } else {
-  //         setError(res.message)
-  //       }
-  //     } catch (err) {
-  //       setError(err.message)
-  //     } finally {
-  //       setLoading(false)
-  //     }
-  //   }
+  if (!gameData)
+    return (
+      <Box display='flex' flexDirection='column' alignItems='center' bgcolor='#f5f5f5' px={2} py={4} gap={4}>
+        <Card sx={{ maxWidth: 500, p: 3, textAlign: 'center' }}>
+          <CardContent>
+            <Typography variant='h5' gutterBottom>
+              🎮 Game is Not Available
+            </Typography>
 
-  //   fetchGameData()
-  // }, [gameId])
+            <Typography variant='body1' sx={{ mt: 2 }}>
+              You can go back to the all games
+            </Typography>
+            <Typography variant='h6' color='primary' sx={{ mt: 1 }}></Typography>
 
-  if (loading) return <p>Loading...</p>
-
-  if (error) return <p>Error: {error}</p>
-
-  if (!gameData) return (
-    <Box display='flex' flexDirection='column' alignItems='center' bgcolor='#f5f5f5' px={2} py={4} gap={4}>
-      <Card sx={{ maxWidth: 500, p: 3, textAlign: 'center' }}>
-        <CardContent>
-          <Typography variant='h5' gutterBottom>
-            🎮 Game is Not Available
-          </Typography>
-
-          <Typography variant='body1' sx={{ mt: 2 }}>
-            You can go back to the all games
-          </Typography>
-          <Typography variant='h6' color='primary' sx={{ mt: 1 }}></Typography>
-
-          <Box display='flex' gap={6} flexWrap='wrap' mt={2} alignItems='center' justifyContent='center'>
-            <Button
-              component='label'
-              size='small'
-              variant='contained'
-              onClick={() => router.push('/apps/games')}
-              sx={{ color: 'white' }}
-            >
-              Back To All Games
-            </Button>
-          </Box>
-        </CardContent>
-      </Card>
-    </Box>
-  )
+            <Box display='flex' gap={6} flexWrap='wrap' mt={2} alignItems='center' justifyContent='center'>
+              <Button
+                component='label'
+                size='small'
+                variant='contained'
+                onClick={() => router.push('/apps/games')}
+                sx={{ color: 'white' }}
+              >
+                Back To All Games
+              </Button>
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
+    )
 
   if (
     game?.status === 'approved' ||
