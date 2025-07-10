@@ -15,7 +15,8 @@ import {
   useTheme,
   Avatar,
   IconButton,
-  Tooltip
+  Tooltip,
+  Button
 } from '@mui/material'
 
 import { format } from 'date-fns'
@@ -47,12 +48,13 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 const ViewDetails = ({ game }) => {
   const theme = useTheme()
   const [copyTooltip, setCopyTooltip] = useState('Copy PIN')
   const [expandedReward, setExpandedReward] = useState(null)
   const [sharePopupOpen, setSharePopupOpen] = useState(false)
-
+  const router = useRouter();
   const handleCopyPin = () => {
     navigator.clipboard.writeText(game.pin)
     setCopyTooltip('Copied!')
@@ -60,11 +62,34 @@ const ViewDetails = ({ game }) => {
   }
 
   console.log('we are getting game data', game)
-  if (!game) {
+  if (game) {
     return (
-      <Container maxWidth='lg' sx={{ py: 4 }}>
-        <Typography variant='h6'>Game not found</Typography>
-      </Container>
+      <Box display='flex' flexDirection='column' alignItems='center' bgcolor='#f5f5f5' px={2} py={4} gap={4}>
+        <Card sx={{ maxWidth: 500, p: 3, textAlign: 'center' }}>
+          <CardContent>
+            <Typography variant='h5' gutterBottom>
+              🎮 Game is Not Available
+            </Typography>
+
+            <Typography variant='body1' sx={{ mt: 2 }}>
+              You can go back to Public games
+            </Typography>
+            <Typography variant='h6' color='primary' sx={{ mt: 1 }}></Typography>
+
+            <Box display='flex' gap={6} flexWrap='wrap' mt={2} alignItems='center' justifyContent='center'>
+              <Button
+                component='label'
+                size='small'
+                variant='contained'
+                onClick={() => router.push('/public-games')}
+                sx={{ color: 'white' }}
+              >
+                Back To Public Games
+              </Button>
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
     )
   }
   console.log('game data', game)

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useRef, useState } from 'react'
-import { Box, Grid, Typography, Card, CardContent } from '@mui/material'
+import { Box, Grid, Typography, Card, CardContent , Button } from '@mui/material'
 import { EmojiEvents, Videocam } from '@mui/icons-material'
 import ReactPlayer from 'react-player'
 import RewardsList from '@/components/apps/games/game-details/RewardsList'
@@ -11,11 +11,12 @@ import ParticipatedPlayersTable from '@/components/apps/games/game-details/Parti
 import GameLocationInfo from '@/components/apps/games/game-details/GameLocationInfo'
 import GameStatistics from '@/components/apps/games/game-details/GameStatistics'
 import AdminLeaderboard from '@/components/apps/games/game-details/AdminLeaderboard'
+import { useRouter } from 'next/navigation'
 
 export default function GameDetailsPage({ game: initialGame = null, gameId }) {
   const [game, setGame] = useState(initialGame)
   const wsRef = useRef(null)
-
+  const router = useRouter()
   useEffect(() => {
     if (gameId) {
       const wsUrl =
@@ -59,8 +60,31 @@ export default function GameDetailsPage({ game: initialGame = null, gameId }) {
 
   if (!game)
     return (
-      <Box sx={{ p: 3, textAlign: 'center' }}>
-        <Typography variant='h6'>No game data available</Typography>
+      <Box display='flex' flexDirection='column' alignItems='center' bgcolor='#f5f5f5' px={2} py={4} gap={4}>
+        <Card sx={{ maxWidth: 500, p: 3, textAlign: 'center' }}>
+          <CardContent>
+            <Typography variant='h5' gutterBottom>
+              🎮 Game is Not Available
+            </Typography>
+
+            <Typography variant='body1' sx={{ mt: 2 }}>
+              You can go back to the all games
+            </Typography>
+            <Typography variant='h6' color='primary' sx={{ mt: 1 }}></Typography>
+
+            <Box display='flex' gap={6} flexWrap='wrap' mt={2} alignItems='center' justifyContent='center'>
+              <Button
+                component='label'
+                size='small'
+                variant='contained'
+                onClick={() => router.push('/apps/games')}
+                sx={{ color: 'white' }}
+              >
+                Back To All Games
+              </Button>
+            </Box>
+          </CardContent>
+        </Card>
       </Box>
     )
 
