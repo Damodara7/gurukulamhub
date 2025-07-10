@@ -1,9 +1,9 @@
 import React from 'react'
 import { Box, Typography, Button, Alert, Chip } from '@mui/material'
-import SingleChoiceTemplate from '../../../publicquiz/SingleChoiceTemplate'
-import MultipleChoiceTemplate from '../../../publicquiz/MultipleChoiceTemplate'
-import TrueFalseQuizTemplate from '../../../publicquiz/TrueFalseQuizTemplate'
-import FillInBlanksTemplate from '../../../publicquiz/FillInBlanksTemplate'
+import SingleChoiceTemplate from '../../../../publicquiz/SingleChoiceTemplate'
+import MultipleChoiceTemplate from '../../../../publicquiz/MultipleChoiceTemplate'
+import TrueFalseQuizTemplate from '../../../../publicquiz/TrueFalseQuizTemplate'
+import FillInBlanksTemplate from '../../../../publicquiz/FillInBlanksTemplate'
 
 const AdminForwardGameQuizQuestion = ({
   currentQuestion,

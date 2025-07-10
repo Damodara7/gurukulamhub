@@ -1308,6 +1308,7 @@ export const forwardQuestion = async (gameId, user, currentQuestionIndex) => {
       // Last question, complete the game
       game.status = 'completed'
       game.liveQuestionIndex = totalQuestions - 1
+      game.liveQuestionStartedAt = new Date()
       await game.save()
       // Update all players
       const now = new Date()
@@ -1316,6 +1317,7 @@ export const forwardQuestion = async (gameId, user, currentQuestionIndex) => {
     } else {
       // Increment liveQuestionIndex
       game.liveQuestionIndex = currentQuestionIndex + 1
+      game.liveQuestionStartedAt = new Date()
       await game.save()
       message = 'Moved to next question.'
     }
@@ -1330,9 +1332,17 @@ export const forwardQuestion = async (gameId, user, currentQuestionIndex) => {
     // resultGame.participatedPlayers = participatedPlayers
     // resultGame.questions = questions
     // console.log(questions);
-    const resultGame = await getOne({_id: game._id})
+    const resultGame = await getOne({ _id: game._id })
 
-    broadcastGameDetailsUpdates(game._id)
+    // After getting resultGame.result
+    // const qIdx = currentQuestionIndex
+    // if (resultGame.result.questions[qIdx]) {
+    //   resultGame.result.questions[qIdx].data = {
+    //     ...resultGame.result.questions[qIdx].data,
+    //     expiredAt: new Date()
+    //   }
+    // }
+    broadcastGameDetailsUpdates(game._id, resultGame.result)
 
     return {
       status: 'success',
@@ -1358,10 +1368,14 @@ export async function broadcastGamesUpdate() {
   }
 }
 
-export async function broadcastGameDetailsUpdates(gameId) {
+export async function broadcastGameDetailsUpdates(gameId, updatedGame = null) {
   try {
-    const gameRes = await getOne({ _id: gameId })
-    broadcastGameDetails(gameId, gameRes.result)
+    if (!updatedGame) {
+      const gameRes = await getOne({ _id: gameId })
+      broadcastGameDetails(gameId, gameRes.result)
+    } else {
+      broadcastGameDetails(gameId, updatedGame)
+    }
   } catch (e) {
     console.error('Failed to broadcast game details:', e)
   }

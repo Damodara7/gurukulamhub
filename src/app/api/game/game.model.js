@@ -138,11 +138,14 @@ const gameSchema = new mongoose.Schema(
     },
     forwardingAdmin: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'users',
+      ref: 'users'
     },
     liveQuestionIndex: {
       type: Number,
-      default: 0,
+      default: 0
+    },
+    liveQuestionStartedAt: {
+      type: Date
     },
     duration: {
       // In seconds

@@ -14,7 +14,7 @@ function AdminForwardPage({ game = null }) {
  
   if (!game) return <Typography variant='body1'>No game data available</Typography>
 
-  const showParticipatedUsers = game?.status === 'completed' || game?.status === 'live'
+  const showParticipatedUsers = game?.status === 'completed'
 
   const admininstructions = game?.status === 'lobby'
 

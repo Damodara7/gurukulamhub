@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Box, Typography, Alert, CardContent, useTheme, LinearProgress, Chip, Paper } from '@mui/material'
 import Loading from '@/components/Loading'
-import QuizQuestion from './AdminForwardGameQuizQuestion'
+import QuizQuestion from './GameQuizQuestion'
 import Timer, { formatTime } from '@/components/Timer'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
@@ -109,11 +109,10 @@ async function updateUserScore(gameId, { user, userAnswer, finish }) {
   }
 }
 
-export default function PlayGameQuiz({ quiz, questions, game, onGameEnd }) {
+export default function PlayGameQuiz({ game, onGameEnd }) {
   const { data: session } = useSession()
   // console.log('game data :  ', game)
   const router = useRouter()
-  const storageKey = `game-${game._id}-quiz-${quiz._id}-state`
   // Inside PlayGameQuiz
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
@@ -133,6 +132,11 @@ export default function PlayGameQuiz({ quiz, questions, game, onGameEnd }) {
 
   const duration = game?.duration || 0
   const startTime = useMemo(() => new Date(game?.startTime), [game?.startTime])
+
+  const quiz = game?.quiz
+  const questions = game?.questions
+
+   const storageKey = `game-${game._id}-quiz-${quiz._id}-state`
 
   const mappedQuestions = useMemo(() => {
     let cumulativeTime = 0
