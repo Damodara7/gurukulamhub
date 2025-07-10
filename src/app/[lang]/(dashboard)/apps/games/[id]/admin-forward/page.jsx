@@ -40,6 +40,7 @@ export default async function page( {params}) {
     return (
       <>
         <ForwardGameQuestion gameId={id} game={gameData} />
+        <ForwardGameQuestion gameId={id} game={gameData} />
       </>
     )
   }

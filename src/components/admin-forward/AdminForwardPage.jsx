@@ -43,7 +43,7 @@ function AdminForwardPage({ game = null }) {
     </Box>
   ) 
 
-  const showParticipatedUsers = game?.status === 'completed' || game?.status === 'live'
+  const showParticipatedUsers = game?.status === 'completed'
 
   const admininstructions = game?.status === 'lobby'
 

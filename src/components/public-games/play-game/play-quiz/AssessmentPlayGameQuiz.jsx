@@ -107,7 +107,7 @@ async function updateUserScore(gameId, { user, userAnswer, finish }) {
   }
 }
 
-export default function PlayGameQuiz({ quiz, questions, game }) {
+export default function PlayGameQuiz({ game }) {
   const { data: session } = useSession()
   console.log('game data :  ', game)
   const router = useRouter()
@@ -131,6 +131,9 @@ export default function PlayGameQuiz({ quiz, questions, game }) {
 
   const duration = game?.duration || 0
   const startTime = new Date(game?.startTime)
+
+  const quiz = game?.quiz
+  const questions = game?.questions
 
   // Initialize timing when component mounts
   useEffect(() => {

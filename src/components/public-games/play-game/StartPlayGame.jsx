@@ -140,14 +140,14 @@ const StartPlayGame = ({ game }) => {
   // )
 
   const { quiz, questions, gameMode, forwardType, ...restGameData } = data
-  console.log({ data })
+  // console.log({ data })
 
   const PlayGameQuizByMode =
     gameMode === 'live' ? (forwardType === 'auto' ? PlayGameQuiz : AdminForwardPlayGame) : AssessmentPlayGameQuiz
 
   return (
     <Box p={4} height='100%'>
-      <PlayGameQuizByMode quiz={quiz} questions={questions} game={restGameData} />
+      <PlayGameQuizByMode quiz={quiz} questions={questions} game={data} />
     </Box>
   )
 }
