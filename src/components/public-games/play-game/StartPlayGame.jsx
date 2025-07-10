@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react'
 import { Box, Typography, CircularProgress } from '@mui/material'
 import PlayGameQuiz from './play-quiz/PlayGameQuiz'
 import AssessmentPlayGameQuiz from './play-quiz/AssessmentPlayGameQuiz'
-import AdminForwardPlayGame from './play-quiz/AdminForwardPlayGame'
+import AdminForwardPlayGame from './play-quiz/admin-forward/PlayGameQuiz'
 
 const StartPlayGame = ({ game }) => {
   const router = useRouter()

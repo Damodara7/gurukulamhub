@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Box, Typography, Alert, Paper, Chip, LinearProgress } from '@mui/material'
-import QuizQuestion from './GameQuizQuestion'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
-import GameEnded from '../GameEnded'
+import GameEnded from '../../GameEnded'
 import { useSession } from 'next-auth/react'
 import { formatTime } from '@/components/Timer'
+import AdminForwardGameQuizQuestion from './GameQuizQuestion'
 
 const calculateQuestionMarks = (question, selectedAnswer, hintUsed) => {
   const correctAnswerIds = question.data?.options?.filter(option => option.correct).map(option => option.id) || []
@@ -56,15 +56,27 @@ export default function AdminForwardPlayGame({ quiz, questions, game: initialGam
   const router = useRouter()
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
-  const [selectedAnswers, setSelectedAnswers] = useState({})
-  const [usedHints, setUsedHints] = useState({})
-  const [lastAnswerTimes, setLastAnswerTimes] = useState({})
+  const selectedAnswersRef = useRef({})
+  const usedHintsRef = useRef({})
+  const lastAnswerTimesRef = useRef({})
+  // To force re-render when refs change
+  const [, forceUpdate] = useState(0)
   const [gameEnded, setGameEnded] = useState(false)
   const [game, setGame] = useState(initialGame)
   const wsRef = useRef(null)
+  const prevLiveIndexRef = useRef(game?.liveQuestionIndex ?? 0)
+  const submittedQuestionsRef = useRef(new Set())
+  const questionStartTimesRef = useRef({})
 
-   const storageKey = `game-${game._id}-quiz-${quiz._id}-admin-state`
+  const storageKey = `game-${game._id}-quiz-${quiz._id}-admin-state`
   const gameId = game?._id
+
+  // Ensure the start time for the first question is set to game.startTime
+  useEffect(() => {
+    if (game?.startTime) {
+      questionStartTimesRef.current[0] = new Date(game.startTime)
+    }
+  }, [game?.startTime])
 
   useEffect(() => {
     if (gameId) {
@@ -81,20 +93,48 @@ export default function AdminForwardPlayGame({ quiz, questions, game: initialGam
           console.log('[WS] Connected to game details updates')
         }
 
-        wsRef.current.onmessage = async event => {
+        wsRef.current.onmessage = event => {
           try {
             const { data, type } = JSON.parse(event.data)
             if (type === 'gameDetails') {
               setGame(data)
               const liveIdx = data?.liveQuestionIndex
+              const prevLiveIdx = prevLiveIndexRef.current
+              const totalQuestions = mappedQuestions.length
+
+              // If liveIdx increased, submit answer for previous question
               if (
-                currentQuestionIndex >= 0 &&
-                currentQuestionIndex < mappedQuestions.length &&
-                currentQuestionIndex !== liveIdx
+                typeof liveIdx === 'number' &&
+                liveIdx !== prevLiveIdx &&
+                liveIdx > 0 &&
+                liveIdx < totalQuestions
               ) {
-                await calculateAndUpdateUserScore({ finish: false, index: currentQuestionIndex })
+                // Record the start time for the new question
+                if (!(liveIdx in questionStartTimesRef.current)) {
+                  questionStartTimesRef.current[liveIdx] = new Date()
+                }
+                const prevQIdx = liveIdx - 1
+                if (!submittedQuestionsRef.current.has(prevQIdx)) {
+                  calculateAndUpdateUserScore({ finish: false, index: prevQIdx })
+                  submittedQuestionsRef.current.add(prevQIdx)
+                }
                 setCurrentQuestionIndex(liveIdx)
               }
+
+              // If game completed, submit answer for last question
+              if (data?.status === 'completed') {
+                const lastQIdx = totalQuestions - 1
+                if (!(lastQIdx in questionStartTimesRef.current)) {
+                  questionStartTimesRef.current[lastQIdx] = new Date()
+                }
+                if (!submittedQuestionsRef.current.has(lastQIdx)) {
+                  calculateAndUpdateUserScore({ finish: true, index: lastQIdx })
+                  submittedQuestionsRef.current.add(lastQIdx)
+                }
+                setGameEnded(true)
+              }
+
+              prevLiveIndexRef.current = liveIdx
             }
           } catch (e) {
             console.error('[WS] Error parsing game details message', e)
@@ -116,6 +156,11 @@ export default function AdminForwardPlayGame({ quiz, questions, game: initialGam
     }
   }, [gameId])
 
+  // useEffect(() => {
+  //   setCurrentQuestionIndex(game?.liveQuestionIndex)
+  // }, [game?.liveQuestionIndex])
+  
+
   const startTime = useMemo(() => new Date(game?.startTime), [game?.startTime])
 
   const mappedQuestions = useMemo(() => {
@@ -132,32 +177,35 @@ export default function AdminForwardPlayGame({ quiz, questions, game: initialGam
   }, [questions, startTime])
 
   function handleAnswerSelect(questionId, optionId) {
-    setSelectedAnswers(prev => ({ ...prev, [questionId]: optionId }))
-    setLastAnswerTimes(prev => ({ ...prev, [questionId]: new Date() }))
+    selectedAnswersRef.current = { ...selectedAnswersRef.current, [questionId]: optionId }
+    lastAnswerTimesRef.current = { ...lastAnswerTimesRef.current, [questionId]: new Date() }
+    forceUpdate(n => n + 1)
   }
 
   function handleAnswerFillInBlanks(questionId, value) {
-    setSelectedAnswers(prev => ({ ...prev, [questionId]: value }))
-    setLastAnswerTimes(prev => ({ ...prev, [questionId]: new Date() }))
+    selectedAnswersRef.current = { ...selectedAnswersRef.current, [questionId]: value }
+    lastAnswerTimesRef.current = { ...lastAnswerTimesRef.current, [questionId]: new Date() }
+    forceUpdate(n => n + 1)
   }
 
   const handleShowHint = questionId => {
-    setUsedHints(prev => ({ ...prev, [questionId]: true }))
+    usedHintsRef.current = { ...usedHintsRef.current, [questionId]: true }
+    forceUpdate(n => n + 1)
   }
 
   async function calculateAndUpdateUserScore({ finish, index }) {
     const idx = typeof index === 'number' ? index : currentQuestionIndex
     const currentQuestion = mappedQuestions[idx]
-    const curQuestionTimerSeconds = currentQuestion?.data?.timerSeconds || 0
-    const curQuestionExpiresAt = currentQuestion?.data?.expiresAt
-    const selectedAnswer = selectedAnswers[currentQuestion._id]
-    const questionStart = new Date(curQuestionExpiresAt - curQuestionTimerSeconds * 1000)
-    const lastAnswerTime = lastAnswerTimes[currentQuestion._id]
+    // Use the tracked question start time if available
+    const questionStart = questionStartTimesRef.current[idx] || new Date()
+    const lastAnswerTime = lastAnswerTimesRef.current[currentQuestion._id]
     const answerTime = lastAnswerTime && questionStart ? lastAnswerTime - questionStart : null
-    const answeredAt = lastAnswerTimes[currentQuestion._id] || null
-    const hintUsed = usedHints[currentQuestion._id] || false
-    if (!selectedAnswer) return
+    const answeredAt = lastAnswerTimesRef.current[currentQuestion._id] || null
+    const selectedAnswer = selectedAnswersRef.current[currentQuestion._id]
+    const hintUsed = usedHintsRef.current[currentQuestion._id] || false
+
     const calculatedMarks = calculateQuestionMarks(currentQuestion, selectedAnswer, hintUsed)
+    const curQuestionTimerSeconds = currentQuestion?.data?.timerSeconds || 0
     const maxFFF = 1000
     const fffPoints =
       calculatedMarks > 0
@@ -170,11 +218,11 @@ export default function AdminForwardPlayGame({ quiz, questions, game: initialGam
         user: { id: session.user.id, email: session.user.email },
         userAnswer: {
           question: currentQuestion._id,
-          answer: selectedAnswer,
-          marks: calculatedMarks,
+          answer: selectedAnswer || '',
+          marks: calculatedMarks || 0,
           hintMarks: hintUsed ? currentQuestion?.data?.hintMarks : 0,
           hintUsed,
-          skipped: false,
+          skipped: !selectedAnswer,
           answerTime: answerTime,
           fffPoints,
           answeredAt: answeredAt
@@ -182,7 +230,7 @@ export default function AdminForwardPlayGame({ quiz, questions, game: initialGam
         finish: finish
       })
     } catch (error) {
-      console.error("Error updating user score: ", error)
+      console.error('Error updating user score: ', error)
     }
   }
 
@@ -192,7 +240,7 @@ export default function AdminForwardPlayGame({ quiz, questions, game: initialGam
 
   const currentQuestion = mappedQuestions[currentQuestionIndex]
   const hasHint = !!currentQuestion?.data?.hint
-  const hintUsed = !!usedHints[currentQuestion?._id]
+  const hintUsed = !!usedHintsRef.current[currentQuestion?._id]
 
   if (gameEnded) {
     return <GameEnded game={game} onExit={handleExit} isAdmin={false} />
@@ -202,11 +250,11 @@ export default function AdminForwardPlayGame({ quiz, questions, game: initialGam
     <>
       <Box sx={{ mx: 'auto', px: 2, width: { xs: '100%', sm: '100%' }, height: '100%' }}>
         {mappedQuestions.length > 0 ? (
-          <QuizQuestion
+          <AdminForwardGameQuizQuestion
             currentQuestion={currentQuestion}
             currentQuestionIndex={currentQuestionIndex}
             questions={mappedQuestions}
-            selectedAnswers={selectedAnswers}
+            selectedAnswers={selectedAnswersRef.current}
             handleAnswerFillInBlanks={handleAnswerFillInBlanks}
             handleAnswerSelect={handleAnswerSelect}
             handleShowHint={handleShowHint}
