@@ -310,7 +310,7 @@ const GamePlayInfoScreen = ({ game, setShouldStartGame }) => {
                   </Typography>
                   <Stack direction='row' alignItems='center' spacing={1}>
                     <AccessTime color='primary' />
-                    <Typography variant='body1'>{Math.floor(game.duration / 60)} minutes</Typography>
+                    <Typography variant='body1'>{game?.forwardType === 'admin' && game?.status !== 'completed' ? 'Decides by Question Forwarding Admin' :`${Math.floor(game?.duration / 60)} minutes`}</Typography>
                   </Stack>
                   <Typography variant='caption' color='text.secondary'>
                     Starting at {format(new Date(game.startTime), 'h:mm a')}

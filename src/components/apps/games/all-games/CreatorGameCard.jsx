@@ -149,10 +149,10 @@ const CreatorGameCard = ({ game, isSuperUser = false, onViewGame, onEditGame, on
                 <Typography variant='body2'>{format(new Date(game.startTime), 'PPpp')}</Typography>
               </Stack>
 
-              <Stack direction='row' alignItems='center' spacing={1}>
+              {!game?.forwardType === 'admin' && <Stack direction='row' alignItems='center' spacing={1}>
                 <AccessTimeIcon fontSize='small' color='action' />
                 <Typography variant='body2'>{Math.floor(game.duration / 60)} minutes</Typography>
-              </Stack>
+              </Stack>}
 
               <Stack direction='row' alignItems='center' spacing={1}>
                 <PeopleIcon fontSize='small' color='action' />

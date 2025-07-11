@@ -1,7 +1,7 @@
 import { Card, CardContent, Typography, TextField, Box } from '@mui/material'
 import { useState } from 'react'
 
-const FillInBlanksTemplate = ({ question, onAnswer , readOnly= false }) => {
+const FillInBlanksTemplate = ({ question, onAnswer , selectedAnswer, readOnly= false }) => {
   const questionObj = question?.data?.question
 
   // Initialize with selectedAnswer if in readOnly mode, otherwise empty
@@ -52,13 +52,13 @@ const FillInBlanksTemplate = ({ question, onAnswer , readOnly= false }) => {
                   sx={{
                     minWidth: '100px',
                     maxWidth: '300px',
-                    borderBottom: '1px solid',
+                    // borderBottom: '1px solid',
                     borderColor: 'text.primary',
                     px: 1,
                     mx: 0.5
                   }}
                 >
-                  {blankAnswers.find(b => b.id === part.id)?.content || '______'}
+                  {blankAnswers.find(b => b.id === part.id)?.content || '_________________'}
                 </Typography>
               ) : (
                 <TextField

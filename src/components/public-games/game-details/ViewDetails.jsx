@@ -349,7 +349,7 @@ const ViewDetails = ({ game }) => {
                     <Typography variant='subtitle2' color='text.secondary' sx={{ width: 130 }}>
                       Start Time:
                     </Typography>
-                    <Box display='flex' alignItems='center' gap={1} sx={{ minWidth: 170 }}>
+                    <Box display='flex' alignItems='flex-start' gap={1} sx={{ minWidth: 170 }}>
                       <AccessTime color='primary' fontSize='small' />
                       <Typography variant='body1' sx={{ fontSize: 'small' }}>
                         {format(new Date(game?.startTime), 'MMM d, yyyy h:mm a')}
@@ -358,14 +358,14 @@ const ViewDetails = ({ game }) => {
                   </Box>
 
                   {/* Duration */}
-                  <Box display='flex' alignItems='center'>
+                  <Box display='flex' alignItems='flex-start'>
                     <Typography variant='subtitle2' color='text.secondary' sx={{ width: 130 }}>
                       Duration:
                     </Typography>
-                    <Box display='flex' alignItems='center' gap={1} sx={{ minWidth: 170 }}>
+                    <Box display='flex' alignItems='flex-start' gap={1} sx={{ minWidth: 170 }}>
                       <AccessTime color='primary' fontSize='small' />
                       <Typography variant='body1' sx={{ fontSize: 'small' }}>
-                        {Math.floor(game?.duration / 60)} minutes
+                        {game?.forwardType === 'admin' && game?.status !== 'completed' ? 'Decides by Question Forwarding Admin' :`${Math.floor(game?.duration / 60)} minutes`}
                       </Typography>
                     </Box>
                   </Box>
@@ -379,7 +379,7 @@ const ViewDetails = ({ game }) => {
                       {game?.requireRegistration ? (
                         <Typography variant='body1' sx={{ fontSize: 'small' }}>
                           {game?.requireRegistration && (
-                            <Box display='flex' alignItems='center' gap={1} sx={{ minWidth: 170 }}>
+                            <Box display='flex' alignItems='flex-start' gap={1} sx={{ minWidth: 170 }}>
                               <AccessTime color='primary' fontSize='small' />
                               <Typography variant='body1' sx={{ fontSize: 'small' }}>
                                 {format(new Date(game?.registrationEndTime), 'MMM d, yyyy h:mm a')}
@@ -403,7 +403,7 @@ const ViewDetails = ({ game }) => {
                     <Typography variant='subtitle2' color='text.secondary' sx={{ width: 130 }}>
                       Registered Players:
                     </Typography>
-                    <Box display='flex' alignItems='center' gap={1} sx={{ minWidth: 170 }}>
+                    <Box display='flex' alignItems='flex-start' gap={1} sx={{ minWidth: 170 }}>
                       <People color='primary' />
                       <Typography variant='body1' sx={{ fontSize: 'small' }}>
                         {game?.registeredUsers?.length} / {game?.maxPlayers || 'Unlimited'}

@@ -184,8 +184,8 @@ const QuestionBuilderArea = forwardRef(({ quiz, validationErrors = [], validateQ
       if (isallQuestionsValid) {
         toast.success('Question Saved Successfully')
       } else {
-        toast.error('Question Saved Successfully.')
-        toast.error('Solve the issues for other questions.')
+        // toast.error('Question Saved Successfully.')
+        toast.error('Solve the issues for all questions.')
       }
     } else {
       // toast.error('Error:' + result?.message)

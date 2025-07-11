@@ -1309,6 +1309,7 @@ export const forwardQuestion = async (gameId, user, currentQuestionIndex) => {
       game.status = 'completed'
       game.liveQuestionIndex = totalQuestions - 1
       game.liveQuestionStartedAt = new Date()
+      game.duration = (new Date().getTime() - new Game(game?.startTime).getTime()) / 1000
       await game.save()
       // Update all players
       const now = new Date()
