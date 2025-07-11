@@ -52,7 +52,7 @@ function AdminForwardLiveHeader({ registeredUsers, participatedUsers, game }) {
       </Dialog>
 
       {/* Leaderboard Dialog */}
-      <Dialog open={openDialog === 'leaderboard'} onClose={handleCloseDialog} maxWidth='sm' fullWidth sx={dialogStyle}>
+      <Dialog open={openDialog === 'leaderboard'} onClose={handleCloseDialog} maxWidth='lg' fullWidth sx={dialogStyle}>
         <AdminLeaderboard game={game} duringPlay={true} />
       </Dialog>
     </>

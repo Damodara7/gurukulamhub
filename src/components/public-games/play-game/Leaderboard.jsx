@@ -105,7 +105,7 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
                   return p2.score - p1.score
                 }
                 if (p2.fffPoints !== p1.fffPoints) {
-                  return p1.fffPoints - p2.fffPoints
+                  return p2.fffPoints - p1.fffPoints
                 }
               } else {
                 if (p2.score !== p1.score) {
