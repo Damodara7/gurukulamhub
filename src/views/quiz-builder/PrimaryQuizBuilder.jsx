@@ -124,7 +124,7 @@ function PrimaryQuizBuilder({ quiz }) {
   }, [builderAreaRef.current]) // Run when ref changes
 
   return (
-    <Box className='flex flex-col gap-2'>
+    <Box className='flex flex-col gap-2' sx={{ height: '89vh', minHeight: 0 }}>
       <Button
         onClick={handleSaveQuiz}
         className='self-end'
@@ -141,7 +141,9 @@ function PrimaryQuizBuilder({ quiz }) {
       </Snackbar>
 
       <QuizDetails quiz={quiz} />
-      <QuestionBuilderArea ref={builderAreaRef} quiz={quiz} setQuestionsLength={setQuestionsLength} validateQuizQuestions={validateQuizQuestionsFunc} validationErrors={errors} />
+      <Box sx={{ flex: 1, minHeight: 0 }}>
+        <QuestionBuilderArea ref={builderAreaRef} quiz={quiz} setQuestionsLength={setQuestionsLength} validateQuizQuestions={validateQuizQuestionsFunc} validationErrors={errors} />
+      </Box>
     </Box>
   )
 }

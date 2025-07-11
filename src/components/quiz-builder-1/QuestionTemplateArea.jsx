@@ -10,7 +10,7 @@ function QuestionTemplateArea({
   questionsLength = 0
 }) {
   return (
-    <Box style={{height: '100%', overflow: 'auto'}}>
+    <Box sx={{ height: '100%', overflow: 'auto', p: 1 }}>
       {selectedQuestion && (
         <DynamicQuestionTemplate
           key={selectedQuestion._id}

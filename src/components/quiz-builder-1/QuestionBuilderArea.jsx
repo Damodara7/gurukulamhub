@@ -227,8 +227,8 @@ const QuestionBuilderArea = forwardRef(({ quiz, validationErrors = [], validateQ
   }))
 
   return (
-    <Stack direction='row' spacing={2} style={{maxHeight: '85vh', overflow: 'hidden'}}>
-      <Box sx={{ flex: 1 }}>
+    <Stack spacing={2} sx={{ height: '100%', overflow: 'hidden', flexDirection: 'row', minHeight: 0 }}>
+      <Box sx={{ flex: 1, height: '100%', minWidth: 0, pr: 1}}>
         <QuestionsVerticalMenu
           questions={primaryQuestions}
           selectedQuestion={selectedQuestion}
@@ -239,8 +239,8 @@ const QuestionBuilderArea = forwardRef(({ quiz, validationErrors = [], validateQ
           validationErrors={validationErrors}
         />
       </Box>
-      <Box sx={{ flex: 3 }}>
-        <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1, minHeight: '50vh' }}>
+      <Box sx={{ flex: 3, height: '100%', minWidth: 0 }}>
+        <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1, minHeight: 0, height: '100%' }}>
           {!hasClickedNew && (
             <QuestionTemplateArea
               selectedQuestion={selectedQuestion}

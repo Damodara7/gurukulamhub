@@ -791,7 +791,7 @@ export const DummyTrueOrFalseTemplate = ({ question, title, questionNumber }) =>
             <FormControlLabel
               value='false'
               control={<Radio size='small' readOnly checked={trueOption.correct} />}
-              label={'True'}
+              label={trueOption?.text || 'True'}
               sx={{
                 backgroundColor: trueOption?.text || trueOption?.image ? 'lightgreen' : '',
                 borderRadius: '4px',
@@ -805,7 +805,7 @@ export const DummyTrueOrFalseTemplate = ({ question, title, questionNumber }) =>
             <FormControlLabel
               value='true'
               control={<Radio size='small' readOnly checked={falseOption?.correct} />}
-              label={'False'}
+              label={falseOption?.text || 'False'}
               sx={{
                 backgroundColor: falseOption?.text || falseOption?.image ? 'lightcoral' : '',
                 borderRadius: '4px',
