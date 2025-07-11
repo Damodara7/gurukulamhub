@@ -1,4 +1,4 @@
-import { Card, CardContent, Typography, Chip, Divider, Box, Stack, Button,Grid } from '@mui/material'
+import { Card, CardContent, Typography, Chip, Divider, Box, Stack, Button, Grid } from '@mui/material'
 import React, { useState } from 'react'
 import AdminForwardHeader from './AdminForwardHeader'
 import AdminForwardLocationInfo from './AdminForwardLocationinfo'
@@ -11,15 +11,14 @@ import AdminLeaderboard from '@/components/apps/games/game-details/AdminLeaderbo
 import AdminInstructions from './AdminInstructions'
 import { useRouter } from 'next/navigation'
 import FallBackCard from '../apps/games/FallBackCard'
-
+import CancelIcon from '@mui/icons-material/Cancel'
 function AdminForwardPage({ game = null }) {
   const router = useRouter()
-
-  if (!game) return (
-    <FallBackCard path='/apps/games' content='You can go Back to All games' btnText='Back To All Games' />
-  ) 
+  console.log('cancel reason ', game)
+  if (!game)
+    return <FallBackCard path='/apps/games' content='You can go Back to All games' btnText='Back To All Games' />
   const showParticipatedUsers = game?.status === 'completed'
-
+  const cancel = game?.status === 'cancelled'
   const admininstructions = game?.status === 'lobby'
   const livemode = game?.status === 'live'
   return (
@@ -72,17 +71,65 @@ function AdminForwardPage({ game = null }) {
         )}
         {admininstructions && <AdminInstructions game={game} />}
 
+        {cancel && (
+          <Grid xs={12} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }} gap={1}>
+            <Card sx={{ maxWidth: 600, p: 1, textAlign: 'center' }}>
+              <CardContent>
+                <Typography
+                  variant='h5'
+                  gutterBottom
+                  color='error'
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 2
+                  }}
+                >
+                  <CancelIcon color='error' sx={{ fontSize: 30 }} />
+                  Game Cancellation Notice
+                </Typography>
+                <Typography
+                  variant='h4'
+                  sx={{
+                    color: 'primary.main', // Use theme color or replace with a hex
+                    fontWeight: 700, // Bold weight
+                    letterSpacing: 1, // Slight spacing between letters
+                    mb: 1, // Bottom margin
+                    textTransform: 'capitalize' // Optional: Capitalizes each word
+                  }}
+                >
+                  {game?.title}
+                </Typography>
+                <Box
+                  sx={{
+                    p: 2,
+                    borderRadius: 1
+                  }}
+                >
+                  <Typography variant='h6' color='error' gutterBottom>
+                    ⚠️ This game has been cancelled
+                  </Typography>
+                  <Typography variant='body1'>
+                    {game?.cancellationReason || 'Please provide cancellation details for registered players'}
+                  </Typography>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+
         {!livemode && (
-          <Grid xs={12}  sx={{ display:'flex',  justifyContent:'center' ,  mt:2 }}>
-          <Button
-          component = 'label'
-          variant='contained'
-          onClick={()=> router.push('/apps/games')}
-          sx={{ color:'white'}}
-          >
-            Back To All Games
-          </Button>
-        </Grid>
+          <Grid xs={12} sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+            <Button
+              component='label'
+              variant='contained'
+              onClick={() => router.push('/apps/games')}
+              sx={{ color: 'white' }}
+            >
+              Back To All Games
+            </Button>
+          </Grid>
         )}
       </Grid>
     </>

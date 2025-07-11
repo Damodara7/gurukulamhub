@@ -280,6 +280,8 @@ export function validateQuizQuestions(questions) {
       })
     }
 
+    
+
     // Validate timer
     if (typeof data?.timerSeconds !== 'number' || data?.timerSeconds <= 0) {
       questionErrors.push({
