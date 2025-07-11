@@ -23,7 +23,7 @@ import { format } from 'date-fns'
 import ReactPlayer from 'react-player'
 import ChevronToggleComponent from '@/components/media-viewer/ChevronToggleComponent'
 import Language from '@mui/icons-material/Language'
-import ShareGamePopup from '@components/public-games/all-games/ShareGamePopup';
+import ShareGamePopup from '@components/public-games/all-games/ShareGamePopup'
 import {
   AccessTime,
   ListAlt,
@@ -49,12 +49,13 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import Leaderboard from '../play-game/Leaderboard'
 const ViewDetails = ({ game }) => {
   const theme = useTheme()
   const [copyTooltip, setCopyTooltip] = useState('Copy PIN')
   const [expandedReward, setExpandedReward] = useState(null)
   const [sharePopupOpen, setSharePopupOpen] = useState(false)
-  const router = useRouter();
+  const router = useRouter()
   const handleCopyPin = () => {
     navigator.clipboard.writeText(game.pin)
     setCopyTooltip('Copied!')
@@ -150,9 +151,9 @@ const ViewDetails = ({ game }) => {
                 sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: { xs: 1, md: 2 } }}
               >
                 <Typography
-                  variant={"h4"}
+                  variant={'h4'}
                   sx={{
-                    fontSize:{xs:'medium' , md:'large'}
+                    fontSize: { xs: 'medium', md: 'large' }
                   }}
                 >
                   {game.title}
@@ -205,6 +206,7 @@ const ViewDetails = ({ game }) => {
             </Stack>
             <ShareGamePopup open={sharePopupOpen} onClose={() => setSharePopupOpen(false)} game={game} />
           </Card>
+          
           {/* Quiz Details */}
           <Card sx={{ borderRadius: 2, p: 3, order: { md: 2 }, display: { xs: 'none', md: 'block' } }}>
             <CardContent>
@@ -365,7 +367,9 @@ const ViewDetails = ({ game }) => {
                     <Box display='flex' alignItems='flex-start' gap={1} sx={{ minWidth: 170 }}>
                       <AccessTime color='primary' fontSize='small' />
                       <Typography variant='body1' sx={{ fontSize: 'small' }}>
-                        {game?.forwardType === 'admin' && game?.status !== 'completed' ? 'Decides by Question Forwarding Admin' :`${Math.floor(game?.duration / 60)} minutes`}
+                        {game?.forwardType === 'admin' && game?.status !== 'completed'
+                          ? 'Decides by Question Forwarding Admin'
+                          : `${Math.floor(game?.duration / 60)} minutes`}
                       </Typography>
                     </Box>
                   </Box>
@@ -678,6 +682,15 @@ const ViewDetails = ({ game }) => {
           </Card>
         </Box>
       </Box>
+      {game.status === 'completed' && (
+        <Card sx={{ mt: 3, p: { xs: 2, md: 3 }, borderRadius: 3, boxShadow: 2 }}>
+          <Typography textAlign='center' variant='h3' color='error' sx={{ fontWeight: 700 }}>
+            Game Ended!
+          </Typography>
+
+          {game && <Leaderboard width='100%' game={game} />}
+        </Card>
+      )}
     </Container>
   )
 }

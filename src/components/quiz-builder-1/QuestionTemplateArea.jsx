@@ -10,7 +10,7 @@ function QuestionTemplateArea({
   questionsLength = 0
 }) {
   return (
-    <>
+    <Box style={{height: '100%', overflow: 'auto'}}>
       {selectedQuestion && (
         <DynamicQuestionTemplate
           key={selectedQuestion._id}
@@ -27,7 +27,7 @@ function QuestionTemplateArea({
           {questionsLength > 0 ? `Create New Question or Edit Question` : `Create New Question`}
         </Alert>
       )}
-    </>
+    </Box>
   )
 }
 

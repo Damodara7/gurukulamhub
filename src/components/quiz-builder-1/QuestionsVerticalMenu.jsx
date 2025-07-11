@@ -86,7 +86,7 @@ export default function QuestionsVerticalMenu({
   }
 
   return (
-    <Box sx={{ maxHeight: '85vh', overflowY: 'auto' }}>
+    <Box sx={{ maxHeight: '100%', overflowY: 'auto' }}>
       <Card
         sx={{
           m: 1,

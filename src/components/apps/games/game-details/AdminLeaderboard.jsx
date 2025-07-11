@@ -19,6 +19,8 @@ import {
 import { EmojiEvents, CheckCircle, Cancel, People } from '@mui/icons-material'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
+import { motion, AnimatePresence } from 'framer-motion'
+import { stringToColor } from '@/utils/stringToColor'
 
 function AdminLeaderboard({
   game,
@@ -31,6 +33,8 @@ function AdminLeaderboard({
   const [leaderboard, setLeaderboard] = useState([])
   const [loading, setLoading] = useState(true)
   const wsRef = useRef(null)
+  const [prevLeaderboard, setPrevLeaderboard] = useState([])
+  const [highlightedRows, setHighlightedRows] = useState({})
 
   const formatTime = seconds => {
     // Handle edge cases
@@ -105,6 +109,23 @@ function AdminLeaderboard({
               return new Date(p1.finishedAt) - new Date(p2.finishedAt)
             }
           })
+          // Highlight moved rows
+          if (leaderboard.length > 0) {
+            const newHighlights = {}
+            sortedLeaderboard.forEach((player, idx) => {
+              const prevIdx = leaderboard.findIndex(p => p._id === player._id)
+              if (prevIdx !== -1 && prevIdx !== idx) {
+                newHighlights[player._id] = prevIdx > idx ? 'up' : 'down'
+              }
+            })
+            setHighlightedRows(newHighlights)
+            if (Object.keys(newHighlights).length > 0) {
+              setTimeout(() => {
+                setHighlightedRows({})
+              }, 2500)
+            }
+          }
+          setPrevLeaderboard(leaderboard)
           setLeaderboard(sortedLeaderboard)
           setLoading(false)
         } else {
@@ -148,6 +169,23 @@ function AdminLeaderboard({
                 return new Date(p1.finishedAt) - new Date(p2.finishedAt)
               }
             })
+            // Highlight moved rows
+            if (leaderboard.length > 0) {
+              const newHighlights = {}
+              sortedLeaderboard.forEach((player, idx) => {
+                const prevIdx = leaderboard.findIndex(p => p._id === player._id)
+                if (prevIdx !== -1 && prevIdx !== idx) {
+                  newHighlights[player._id] = prevIdx > idx ? 'up' : 'down'
+                }
+              })
+              setHighlightedRows(newHighlights)
+              if (Object.keys(newHighlights).length > 0) {
+                setTimeout(() => {
+                  setHighlightedRows({})
+                }, 2500)
+              }
+            }
+            setPrevLeaderboard(leaderboard)
             setLeaderboard(sortedLeaderboard)
             setLoading(false)
           }
@@ -168,6 +206,25 @@ function AdminLeaderboard({
       // }
     }
   }, [game._id])
+
+  // Helper to blend a hex color with white for a lighter shade
+  function blendWithWhite(hex, alpha = 0.8) {
+    const r = parseInt(hex.slice(1, 3), 16)
+    const g = parseInt(hex.slice(3, 5), 16)
+    const b = parseInt(hex.slice(5, 7), 16)
+    return `rgba(${Math.round(r * (1 - alpha) + 255 * alpha)}, ${Math.round(g * (1 - alpha) + 255 * alpha)}, ${Math.round(b * (1 - alpha) + 255 * alpha)}, 1)`
+  }
+
+  // Get row style based on movement
+  const getRowAnimation = (player, index) => {
+    if (highlightedRows[player._id] === 'up') {
+      return { backgroundColor: '#e0ffe0', transition: 'background-color 0.5s' }
+    }
+    if (highlightedRows[player._id] === 'down') {
+      return { backgroundColor: '#ffe0e0', transition: 'background-color 0.5s' }
+    }
+    return { backgroundColor: blendWithWhite(stringToColor(player.email), 0.8), transition: 'background-color 0.5s' }
+  }
 
   if (loading) {
     return (
@@ -210,68 +267,78 @@ function AdminLeaderboard({
             </TableHead>
             <TableBody>
               {leaderboard && leaderboard.length > 0 ? (
-                leaderboard
-                  .slice(0, duringPlay ? 5 : leaderboard.length)
-                  .map((user, index) => (
-                    <TableRow key={user._id} hover>
-                      <TableCell>
-                        <Typography variant='subtitle1' color='text.secondary'>
-                          #{index + 1}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                          <Avatar sx={{ width: 32, height: 32 }} alt={user.email}>
-                            {user.email[0].toUpperCase()}
-                          </Avatar>
-                          <Typography variant='body1'>{user.email}</Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell align='right'>
-                        <Typography variant='body1' fontWeight='medium'>
-                          {user.score?.toFixed(2)}
-                        </Typography>
-                      </TableCell>
-                      <TableCell align='right'>
-                        <Typography variant='body1' fontWeight='medium'>
-                          {formatTime((user.totalAnswerTime || user.answers?.reduce((sum, a) => sum + a.answerTime, 0) || 0) / 1000)}
-                        </Typography>
-                      </TableCell>
-                      {game.gameMode === 'live' && (
-                        <TableCell align='right'>
-                          <Typography variant='body1' fontWeight='medium'>
-                            {user?.fffPoints?.toFixed(3)}
+                <AnimatePresence>
+                  {leaderboard
+                    .slice(0, duringPlay ? 5 : leaderboard.length)
+                    .map((user, index) => (
+                      <motion.tr
+                        key={user._id}
+                        layout
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 20 }}
+                        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                        style={getRowAnimation(user, index)}
+                      >
+                        <TableCell>
+                          <Typography variant='subtitle1' color='text.secondary'>
+                            #{index + 1}
                           </Typography>
                         </TableCell>
-                      )}
-                      {game.gameMode === 'self-paced' && (
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <Avatar sx={{ width: 32, height: 32 }} alt={user.email}>
+                              {user.email[0].toUpperCase()}
+                            </Avatar>
+                            <Typography variant='body1'>{user.email}</Typography>
+                          </Box>
+                        </TableCell>
                         <TableCell align='right'>
                           <Typography variant='body1' fontWeight='medium'>
-                            {user.finishedAt ? new Date(user.finishedAt).toLocaleString() : '--'}
+                            {user.score?.toFixed(2)}
                           </Typography>
                         </TableCell>
-                      )}
-                      <TableCell align='right'>
-                        {user.completed ? (
-                          <Chip
-                            icon={<CheckCircle fontSize='small' />}
-                            label='Completed'
-                            color='success'
-                            size='small'
-                            variant='outlined'
-                          />
-                        ) : (
-                          <Chip
-                            icon={<Cancel fontSize='small' />}
-                            label='In Progress'
-                            color='warning'
-                            size='small'
-                            variant='outlined'
-                          />
+                        <TableCell align='right'>
+                          <Typography variant='body1' fontWeight='medium'>
+                            {formatTime((user.totalAnswerTime || user.answers?.reduce((sum, a) => sum + a.answerTime, 0) || 0) / 1000)}
+                          </Typography>
+                        </TableCell>
+                        {game.gameMode === 'live' && (
+                          <TableCell align='right'>
+                            <Typography variant='body1' fontWeight='medium'>
+                              {user?.fffPoints?.toFixed(3)}
+                            </Typography>
+                          </TableCell>
                         )}
-                      </TableCell>
-                    </TableRow>
-                  ))
+                        {game.gameMode === 'self-paced' && (
+                          <TableCell align='right'>
+                            <Typography variant='body1' fontWeight='medium'>
+                              {user.finishedAt ? new Date(user.finishedAt).toLocaleString() : '--'}
+                            </Typography>
+                          </TableCell>
+                        )}
+                        <TableCell align='right'>
+                          {user.completed ? (
+                            <Chip
+                              icon={<CheckCircle fontSize='small' />}
+                              label='Completed'
+                              color='success'
+                              size='small'
+                              variant='outlined'
+                            />
+                          ) : (
+                            <Chip
+                              icon={<Cancel fontSize='small' />}
+                              label='In Progress'
+                              color='warning'
+                              size='small'
+                              variant='outlined'
+                            />
+                          )}
+                        </TableCell>
+                      </motion.tr>
+                    ))}
+                </AnimatePresence>
               ) : (
                 <TableRow>
                   <TableCell colSpan={6} align='center' sx={{ py: 4 }}>

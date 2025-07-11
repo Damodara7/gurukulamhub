@@ -227,7 +227,7 @@ const QuestionBuilderArea = forwardRef(({ quiz, validationErrors = [], validateQ
   }))
 
   return (
-    <Stack direction='row' spacing={2}>
+    <Stack direction='row' spacing={2} style={{maxHeight: '85vh', overflow: 'hidden'}}>
       <Box sx={{ flex: 1 }}>
         <QuestionsVerticalMenu
           questions={primaryQuestions}

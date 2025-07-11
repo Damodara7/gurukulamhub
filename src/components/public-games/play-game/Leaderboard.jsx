@@ -16,11 +16,15 @@ import {
 import { EmojiEvents } from '@mui/icons-material'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
+import { motion, AnimatePresence } from 'framer-motion'
+import { stringToColor } from '@/utils/stringToColor'
 
 export default function Leaderboard({ game, duringPlay = false, isAdmin = false }) {
   const [leaderboard, setLeaderboard] = useState([])
   const [loading, setLoading] = useState(true)
   const wsRef = useRef(null)
+  const [prevLeaderboard, setPrevLeaderboard] = useState([])
+  const [highlightedRows, setHighlightedRows] = useState({})
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
@@ -49,6 +53,23 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
               return new Date(p1.finishedAt) - new Date(p2.finishedAt)
             }
           })
+          // Highlight moved rows
+          if (leaderboard.length > 0) {
+            const newHighlights = {}
+            sortedLeaderboard.forEach((player, idx) => {
+              const prevIdx = leaderboard.findIndex(p => p._id === player._id)
+              if (prevIdx !== -1 && prevIdx !== idx) {
+                newHighlights[player._id] = prevIdx > idx ? 'up' : 'down'
+              }
+            })
+            setHighlightedRows(newHighlights)
+            if (Object.keys(newHighlights).length > 0) {
+              setTimeout(() => {
+                setHighlightedRows({})
+              }, 2500)
+            }
+          }
+          setPrevLeaderboard(leaderboard)
           setLeaderboard(sortedLeaderboard)
           setLoading(false)
         } else {
@@ -80,7 +101,12 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
           if (msg.type === 'leaderboard') {
             const sortedLeaderboard = msg.data?.sort((p1, p2) => {
               if (game?.gameMode === 'live') {
-                return p2.fffPoints - p1.fffPoints
+                if (p2.score !== p1.score) {
+                  return p2.score - p1.score
+                }
+                if (p2.fffPoints !== p1.fffPoints) {
+                  return p1.fffPoints - p2.fffPoints
+                }
               } else {
                 if (p2.score !== p1.score) {
                   return p2.score - p1.score
@@ -91,6 +117,23 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
                 return new Date(p1.finishedAt) - new Date(p2.finishedAt)
               }
             })
+            // Highlight moved rows
+            if (leaderboard.length > 0) {
+              const newHighlights = {}
+              sortedLeaderboard.forEach((player, idx) => {
+                const prevIdx = leaderboard.findIndex(p => p._id === player._id)
+                if (prevIdx !== -1 && prevIdx !== idx) {
+                  newHighlights[player._id] = prevIdx > idx ? 'up' : 'down'
+                }
+              })
+              setHighlightedRows(newHighlights)
+              if (Object.keys(newHighlights).length > 0) {
+                setTimeout(() => {
+                  setHighlightedRows({})
+                }, 2500)
+              }
+            }
+            setPrevLeaderboard(leaderboard)
             setLeaderboard(sortedLeaderboard)
             setLoading(false)
           }
@@ -124,6 +167,29 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
     return parts.length === 0 ? '0s' : parts.join(' ')
   }
 
+  // Helper to blend a hex color with white for a lighter shade
+  function blendWithWhite(hex, alpha = 0.8) {
+    // hex: #RRGGBB
+    const r = parseInt(hex.slice(1, 3), 16)
+    const g = parseInt(hex.slice(3, 5), 16)
+    const b = parseInt(hex.slice(5, 7), 16)
+    // blend with white
+    return `rgba(${Math.round(r * (1 - alpha) + 255 * alpha)}, ${Math.round(g * (1 - alpha) + 255 * alpha)}, ${Math.round(b * (1 - alpha) + 255 * alpha)}, 1)`
+  }
+
+  // Helper to check if a player moved up or down
+  const getRowAnimation = (player, index) => {
+    // Highlight if recently moved
+    if (highlightedRows[player._id] === 'up') {
+      return { backgroundColor: '#e0ffe0', transition: 'background-color 0.5s' }
+    }
+    if (highlightedRows[player._id] === 'down') {
+      return { backgroundColor: '#ffe0e0', transition: 'background-color 0.5s' }
+    }
+    // Default: light color based on player email
+    return { backgroundColor: blendWithWhite(stringToColor(player.email), 0.8), transition: 'background-color 0.5s' }
+  }
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
@@ -152,7 +218,7 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
       </Typography>
 
       <TableContainer component={Paper} elevation={3}>
-        <Table size={duringPlay ? 'small' : 'medium'}>
+        <Table size={duringPlay ? 'medium' : 'medium'}>
           <TableHead>
             <TableRow>
               <TableCell>Rank</TableCell>
@@ -173,18 +239,28 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
             </TableRow>
           </TableHead>
           <TableBody>
-            {leaderboard.slice(0, duringPlay ? 5 : leaderboard.length).map((player, index) => (
-              <TableRow key={player._id}>
-                <TableCell>{index + 1}</TableCell>
-                <TableCell>{player.email}</TableCell>
-                <TableCell align='right'>{player.score.toFixed(2)}</TableCell>
-                {!duringPlay && <TableCell align='right'>{formatTime(player.totalAnswerTime / 1000)}</TableCell>}
-                {game?.gameMode === 'live' && <TableCell align='right'>{player?.fffPoints?.toFixed(3)}</TableCell>}
-                {game?.gameMode === 'self-paced' && (
-                  <TableCell align='right'>{new Date(player?.finishedAt)?.toLocaleString()}</TableCell>
-                )}
-              </TableRow>
-            ))}
+            <AnimatePresence>
+              {leaderboard.slice(0, duringPlay ? 5 : leaderboard.length).map((player, index) => (
+                <motion.tr
+                  key={player._id}
+                  layout
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  style={getRowAnimation(player, index)}
+                >
+                  <TableCell>{index + 1}</TableCell>
+                  <TableCell>{player.email}</TableCell>
+                  <TableCell align='right'>{player.score.toFixed(2)}</TableCell>
+                  {!duringPlay && <TableCell align='right'>{formatTime(player.totalAnswerTime / 1000)}</TableCell>}
+                  {game?.gameMode === 'live' && <TableCell align='right'>{player?.fffPoints?.toFixed(3)}</TableCell>}
+                  {game?.gameMode === 'self-paced' && (
+                    <TableCell align='right'>{new Date(player?.finishedAt)?.toLocaleString()}</TableCell>
+                  )}
+                </motion.tr>
+              ))}
+            </AnimatePresence>
           </TableBody>
         </Table>
       </TableContainer>

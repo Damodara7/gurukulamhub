@@ -80,7 +80,7 @@
     "eslint-plugin-import": "2.29.1",
     "express": "^4.19.2",
     "express-session": "^1.18.0",
-    "framer-motion": "^12.4.2",
+    "framer-motion": "^12.23.3",
     "html2canvas": "^1.4.1",
     "ioredis": "^5.4.1",
     "jsonwebtoken": "^9.0.2",
