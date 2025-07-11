@@ -46,12 +46,6 @@ function ForwardGameQuestion({ gameId = null, game: initialGame = null }) {
     }
   }, [gameId])
 
-<<<<<<< HEAD
-
-
-
-=======
->>>>>>> c12607a4e4962c0c25fa0561a978fc5b264e398f
   if(!game) return (
     <FallBackCard path='/apps/games'  content='You can go Back to All Games' btnText='Back To All Games'/>
   )

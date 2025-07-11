@@ -56,7 +56,8 @@ const SingleChoiceQuestionTemplate = ({
       mediaType: data?.mediaType || 'text' // 'text', 'image', 'text-image', 'video', 'text-video'
     }
   )
-  const [addHint , setAddHint]=useState(false)
+
+  const [addHint, setAddHint] = useState(false)
   const [status, setStatus] = useState(innerData?.status || 'draft')
   const [hint, setHint] = useState(innerData?.hint || '')
   const [hintMarks, setHintMarks] = useState(innerData?.hintMarks || '')
@@ -110,6 +111,7 @@ const SingleChoiceQuestionTemplate = ({
       data: {
         language: language,
         question: question,
+        addHint: addHint,
         hint: hint,
         hintMarks: +hintMarks,
         marks: +marks,
@@ -133,6 +135,7 @@ const SingleChoiceQuestionTemplate = ({
       data: {
         language: language,
         question: question,
+        addHint: addHint, // Include addHint in the request data
         hint: hint,
         hintMarks: +hintMarks || +primaryQuestion?.data?.hintMarks,
         marks: +marks || +primaryQuestion?.data?.marks,
@@ -186,8 +189,8 @@ const SingleChoiceQuestionTemplate = ({
   }
 
   const handleQuestionChange = (key, value) => {
-    let filterValue = value;
-    if(key === 'text'){
+    let filterValue = value
+    if (key === 'text') {
       filterValue = filterInput(value, excludeQuesstionChars) // Allow only alphanumeric characters and some punctuation
     }
     setQuestion(prev => ({ ...prev, [key]: filterValue }))
@@ -295,7 +298,7 @@ const SingleChoiceQuestionTemplate = ({
     return ''
   }
 
-  const hasExactlyOneCorrectOption = options?.filter(op => op.correct).length === 1 || false;
+  const hasExactlyOneCorrectOption = options?.filter(op => op.correct).length === 1 || false
 
   return (
     <>
@@ -810,12 +813,7 @@ const SingleChoiceQuestionTemplate = ({
       <Grid container spacing={2} mt={2} alignItems='start'>
         <Grid item xs={12} className='flex justify-start'>
           <FormControlLabel
-            control={
-              <Checkbox
-                checked={addHint}
-                onChange={e => setAddHint(e.target.checked)}
-              />
-            }
+            control={<Checkbox checked={addHint} onChange={e => setAddHint(e.target.checked)} />}
             label='Add Hint'
           />
         </Grid>
@@ -828,8 +826,8 @@ const SingleChoiceQuestionTemplate = ({
               fullWidth
               value={hint}
               onChange={handleHintChange}
-              error={hasErrors && !hint.trim() && getErrorMessage('hint')}
-              helperText={!hint.trim() && getErrorMessage('hint')}
+              error={addHint && hasErrors && !hint.trim() && getErrorMessage('hint')}
+              helperText={addHint && !hint.trim() && getErrorMessage('hint')}
             />
           </Grid>
         )}
@@ -857,11 +855,20 @@ const SingleChoiceQuestionTemplate = ({
                   variant='outlined'
                   fullWidth
                   type='number'
-                  InputProps={{ inputProps: { max: 0 } }}
+                  InputProps={{ 
+                    inputProps: 
+                    { 
+                      max: marks || 0, 
+                      min: 0 
+                    } 
+                  }}
                   value={hintMarks}
                   onChange={handleHintMarksChange}
-                  error={hasErrors && !hintMarks && getErrorMessage('hintMarks')}
-                  helperText={!hintMarks && getErrorMessage('hintMarks')}
+                  error={(addHint && hasErrors && !hintMarks && getErrorMessage('hintMarks')) || (hintMarks >= marks)}
+                  helperText={
+                    (addHint && !hintMarks && getErrorMessage('hintMarks')) ||
+                    (hintMarks >= marks && 'Hint marks cannot exceed question marks')
+                  }
                 />
               </Grid>
             )}

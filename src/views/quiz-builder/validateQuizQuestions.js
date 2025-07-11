@@ -280,7 +280,32 @@ export function validateQuizQuestions(questions) {
       })
     }
 
-    
+    // Only validate hint and hintMarks if addHint is true
+    if (data?.addHint) {
+      // Validate hintMarks
+      if (typeof data?.hintMarks !== 'number' || data?.hintMarks <= 0) {
+        questionErrors.push({
+          questionId,
+          field: 'hintMarks',
+          message: 'Valid hintMarks value required'
+        })
+      } else if (data?.hintMarks >= data?.marks) {
+        questionErrors.push({
+          questionId,
+          field: 'hintMarks',
+          message: 'Hint marks cannot exceed or equal question marks'
+        })
+      }
+
+      // Validate hint
+      if (!data?.hint || data?.hint.trim().length === 0) {
+        questionErrors.push({
+          questionId,
+          field: 'hint',
+          message: 'Valid hint is required when hints are enabled'
+        })
+      }
+    }
 
     // Validate timer
     if (typeof data?.timerSeconds !== 'number' || data?.timerSeconds <= 0) {
