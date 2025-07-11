@@ -22,39 +22,84 @@ import YouTubeIcon from '@mui/icons-material/YouTube'
 const QuizCourseLinks = ({ courseLinks = [], setTheFormValue }) => {
   const [open, setOpen] = useState(false)
   const [newLink, setNewLink] = useState('')
-
+  const [error, setError] = useState('')
+  const [isTouched, setIsTouched] = useState(false)
 
   const hasLinks = courseLinks.some(link => link.link)
+
+  // Function to validate video URLs
+  const isValidVideoUrl = url => {
+    try {
+      // Basic URL validation
+      const parsedUrl = new URL(url)
+
+      // List of common video hosting domains
+      const videoDomains = [
+        'youtube.com',
+        'youtu.be',
+        'vimeo.com',
+        'dailymotion.com',
+        'twitch.tv',
+        'facebook.com',
+        'instagram.com',
+        'streamable.com'
+      ]
+
+      // Check if the domain is in our video domains list
+      return videoDomains.some(
+        domain => parsedUrl.hostname.includes(domain) || parsedUrl.hostname.replace('www.', '').includes(domain)
+      )
+    } catch (e) {
+      return false // Not a valid URL
+    }
+  }
+
   // Handle opening the popup
   const handleOpen = () => {
     setOpen(true)
+    setIsTouched(false)
   }
 
   // Handle closing the popup
   const handleClose = () => {
     setOpen(false)
     setNewLink('')
+    setIsTouched(false)
   }
 
   // Handle saving the new link
   const handleSave = () => {
+    setIsTouched(true)
     if (newLink.trim()) {
-      setTheFormValue('courseLinks', [
-        ...courseLinks,
-        {
-          id: courseLinks.length + 1,
-          mediaType: 'video',
-          link: newLink.trim()
-        }
-      ])
-      handleClose()
-    }
+      if(isValidVideoUrl(newLink)){
+        setTheFormValue('courseLinks', [
+          ...courseLinks,
+          {
+            id: courseLinks.length + 1,
+            mediaType: 'video',
+            link: newLink.trim()
+          }
+        ])
+        handleClose()
+      }
+      else
+      {
+        setError('Please enter a valid video URL (YouTube, Vimeo, etc.)')
+      }
+      }
+      
   }
 
   // Handle removing a link
   const handleRemoveLink = index => {
     const updatedLinks = courseLinks.filter((_, i) => i !== index)
     setTheFormValue('courseLinks', updatedLinks)
+  }
+
+  const handleInputChange = e => {
+    setNewLink(e.target.value)
+    // Clear error when user starts typing again
+    if (error) setError('')
   }
 
   return (
@@ -107,7 +152,7 @@ const QuizCourseLinks = ({ courseLinks = [], setTheFormValue }) => {
                 key={index}
                 label={link.link}
                 icon={
-                  link.link.includes('https://youtu.be/') ? (
+                  link.link.includes('youtube.com') || link.link.includes('youtu.be') ? (
                     <YouTubeIcon color='error' />
                   ) : (
                     <VideocamIcon color='warning' />
@@ -158,17 +203,16 @@ const QuizCourseLinks = ({ courseLinks = [], setTheFormValue }) => {
           <TextField
             autoFocus
             margin='dense'
-            label='Link URL'
+            label='Video link URL'
             type='url'
             fullWidth
             variant='outlined'
             value={newLink}
-            onChange={e => setNewLink(e.target.value)}
+            onChange={handleInputChange}
+            onFocus={() => setIsTouched(true)}
             placeholder='https://www.youtube.com/shorts/Aak8yjC_nT0'
-            clearIconButtonProps={{
-              title: 'Remove',
-              children: <RiCloseFill />
-            }}
+            error={isTouched && !!error}
+            helperText={error || 'Only video links (YouTube, Vimeo, etc.) are accepted'}
             sx={{ mt: 2 }}
           />
         </DialogContent>
