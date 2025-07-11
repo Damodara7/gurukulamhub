@@ -15,7 +15,8 @@ import {
   Select,
   MenuItem,
   InputLabel,
-  FormControl
+  FormControl,
+  Checkbox
 } from '@mui/material'
 import SaveIcon from '@mui/icons-material/Save'
 import DeleteIcon from '@mui/icons-material/Delete'
@@ -50,6 +51,7 @@ const TrueFalseQuestionTemplate = ({
       mediaType: data?.mediaType || 'text' // 'text', 'image', 'text-image', 'video', 'text-video'
     }
   )
+  const [addHint , setAddHint] =useState(false)
   const [status, setStatus] = useState(innerData?.status || 'draft')
   const [hint, setHint] = useState(innerData?.hint || '')
   const [hintMarks, setHintMarks] = useState(innerData?.hintMarks)
@@ -108,6 +110,7 @@ const TrueFalseQuestionTemplate = ({
       data: {
         language: language,
         question: question,
+        addHint: addHint,
         hint: hint,
         hintMarks: +hintMarks,
         marks: +marks,
@@ -542,21 +545,29 @@ const TrueFalseQuestionTemplate = ({
 
       {/* Hint, Marks, Hint Marks, Skippable, Time in Seconds */}
       <Grid container spacing={2} mt={2} alignItems='start'>
-        <Grid item xs={12} sx={{ marginBottom: '4px' }}>
-          <TextField
-            disabled={loading.save || loading.delete}
-            label='Hint'
-            variant='outlined'
-            fullWidth
-            value={hint}
-            onChange={handleHintChange}
-            error={hasErrors && !hint.trim() && getErrorMessage('hint')}
-            helperText={!hint.trim() && getErrorMessage('hint')}
+        <Grid item xs={12} className='flex justify-start'>
+          <FormControlLabel
+            control={<Checkbox checked={addHint} onChange={e => setAddHint(e.target.checked)} />}
+            label='Add Hint'
           />
         </Grid>
+        {addHint && (
+          <Grid item xs={12} sx={{ marginBottom: '4px' }}>
+            <TextField
+              disabled={loading.save || loading.delete}
+              label='Hint'
+              variant='outlined'
+              fullWidth
+              value={hint}
+              onChange={handleHintChange}
+              error={addHint && hasErrors && !hint.trim() && getErrorMessage('hint')}
+              helperText={addHint && !hint.trim() && getErrorMessage('hint')}
+            />
+          </Grid>
+        )}
         {mode === 'primary' ? (
           <>
-            <Grid item xs={6} md={4}>
+            <Grid item xs={6} md={addHint ? 4 : 6}>
               <TextField
                 disabled={loading.save || loading.delete}
                 label='Marks'
@@ -570,21 +581,31 @@ const TrueFalseQuestionTemplate = ({
                 helperText={!marks && getErrorMessage('marks')}
               />
             </Grid>
-            <Grid item xs={6} md={4}>
-              <TextField
-                disabled={loading.save || loading.delete}
-                label='Hint Marks'
-                variant='outlined'
-                fullWidth
-                type='number'
-                InputProps={{ inputProps: { max: 0 } }}
-                value={hintMarks}
-                onChange={handleHintMarksChange}
-                error={hasErrors && !hintMarks && getErrorMessage('hintMarks')}
-                helperText={!hintMarks && getErrorMessage('hintMarks')}
-              />
-            </Grid>
-            <Grid item xs={6} md={4}>
+            {addHint && (
+              <Grid item xs={6} md={4}>
+                <TextField
+                  disabled={loading.save || loading.delete}
+                  label='Hint Marks'
+                  variant='outlined'
+                  fullWidth
+                  type='number'
+                  InputProps={{
+                    inputProps: {
+                      max: marks || 0,
+                      min: 0
+                    }
+                  }}
+                  value={hintMarks}
+                  onChange={handleHintMarksChange}
+                  error={(addHint && hasErrors && !hintMarks && getErrorMessage('hintMarks')) || (hintMarks >= marks)}
+                  helperText={
+                    (addHint && !hintMarks && getErrorMessage('hintMarks')) ||
+                    (hintMarks >= marks && 'Hint marks cannot exceed question marks')
+                  }
+                />
+              </Grid>
+            )}
+            <Grid item xs={6} md={addHint ? 4 : 6}>
               <TextField
                 disabled={loading.save || loading.delete}
                 label='Timer Seconds'

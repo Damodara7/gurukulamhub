@@ -10,7 +10,8 @@ import {
   Card,
   CardContent,
   FormControlLabel,
-  Switch
+  Switch,
+  Checkbox
 } from '@mui/material'
 import AddCircleIcon from '@mui/icons-material/AddCircle'
 import RemoveCircleIcon from '@mui/icons-material/RemoveCircle'
@@ -40,7 +41,7 @@ const FillInBlanksQuestionTemplate = ({
   const [marks, setMarks] = useState(innerData?.marks || '')
   const [timerSeconds, setTimerSeconds] = useState(innerData?.timerSeconds || '')
   const [skippable, setSkippable] = useState(innerData?.skippable || false) // by default non-skippable
-
+  const [addHint, setAddHint] = useState(false)
   const [questionParts, setQuestionParts] = useState(
     innerData?.question || [{ id: 'part-1', type: 'text', content: '' }]
   )
@@ -78,6 +79,7 @@ const FillInBlanksQuestionTemplate = ({
       data: {
         language: language,
         question: questionParts,
+        addHint: addHint,
         hint: hint,
         hintMarks: +hintMarks,
         marks: +marks,
@@ -100,6 +102,7 @@ const FillInBlanksQuestionTemplate = ({
       data: {
         language: language,
         question: questionParts,
+        addHint: addHint,
         hint: hint,
         hintMarks: +hintMarks || +primaryQuestion?.data?.hintMarks,
         marks: +marks || +primaryQuestion?.data?.marks,
@@ -344,7 +347,14 @@ const FillInBlanksQuestionTemplate = ({
 
       {/* Hint, Marks, Hint Marks, Skippable, Time in Seconds */}
       <Grid container spacing={2} mt={2} alignItems='start'>
-        <Grid item xs={12} sx={{ marginBottom: '4px' }}>
+        <Grid item xs={12} className='flex justify-start'>
+          <FormControlLabel
+            control={<Checkbox checked={addHint} onChange={e => setAddHint(e.target.checked)} />}
+            label='Add Hint'
+          />
+        </Grid>
+
+       {addHint && ( <Grid item xs={12} sx={{ marginBottom: '4px' }}>
           <TextField
             disabled={loading.save || loading.delete}
             label='Hint'
@@ -352,13 +362,13 @@ const FillInBlanksQuestionTemplate = ({
             fullWidth
             value={hint}
             onChange={handleHintChange}
-            error={hasErrors && !hint.trim() && getErrorMessage('hint')}
-            helperText={!hint.trim() && getErrorMessage('hint')}
+            error={addHint && hasErrors && !hint.trim() && getErrorMessage('hint')}
+            helperText={addHint && !hint.trim() && getErrorMessage('hint')}
           />
-        </Grid>
+        </Grid>)}
         {mode === 'primary' ? (
           <>
-            <Grid item xs={6} md={4}>
+            <Grid item xs={6} md={addHint ? 4 : 6}>
               <TextField
                 disabled={loading.save || loading.delete}
                 label='Marks'
@@ -372,21 +382,26 @@ const FillInBlanksQuestionTemplate = ({
                 helperText={!marks && getErrorMessage('marks')}
               />
             </Grid>
-            <Grid item xs={6} md={4}>
+            {addHint && (<Grid item xs={6} md={4}>
               <TextField
                 disabled={loading.save || loading.delete}
                 label='Hint Marks'
                 variant='outlined'
                 fullWidth
                 type='number'
-                InputProps={{ inputProps: { max: 0 } }}
+                InputProps={{ 
+                  inputProps: { 
+                    max: marks || 0 , 
+                    min: 0 
+                  } 
+                }}
                 value={hintMarks}
                 onChange={handleHintMarksChange}
-                error={hasErrors && !hintMarks && getErrorMessage('hintMarks')}
-                helperText={!hintMarks && getErrorMessage('hintMarks')}
+                error={addHint && hasErrors && !hintMarks && getErrorMessage('hintMarks') || (hintMarks >= marks)}
+                helperText={addHint && !hintMarks && getErrorMessage('hintMarks') || (hintMarks >= marks &&  'Hint marks cannot exceed question marks')}
               />
-            </Grid>
-            <Grid item xs={6} md={4}>
+            </Grid>)}
+            <Grid item xs={6} md={addHint ?4 : 6}>
               <TextField
                 disabled={loading.save || loading.delete}
                 label='Timer Seconds'
