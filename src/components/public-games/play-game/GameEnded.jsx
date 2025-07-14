@@ -5,7 +5,8 @@ import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
 import { TimerOff as TimerIcon } from '@mui/icons-material';
 import Leaderboard from './Leaderboard'
 import { useSession } from 'next-auth/react';
-import Lottie from 'lottie-react';
+import dynamic from 'next/dynamic'
+const Lottie = dynamic(() => import('lottie-react'), { ssr: false })
 import trophyAnimation from '../../../../public/animations/trophy.json';
 
 const GameEnded = ({ onExit, game = null , isAdmin = false}) => {

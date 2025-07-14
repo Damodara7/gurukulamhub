@@ -1303,6 +1303,48 @@ export const forwardQuestion = async (gameId, user, currentQuestionIndex) => {
         message: 'currentQuestionIndex is required and must be a number'
       }
     }
+
+    // --- FFF Points Calculation for just-ended question ---
+    if (currentQuestionIndex >= 0) {
+      const questionEndTime = new Date();
+      const questionStartTime = game.liveQuestionIndex > 0 ? new Date(game.liveQuestionStartedAt) : new Date(game?.startTime);
+      const questionDuration = new Date(questionEndTime).getTime() - new Date(questionStartTime).getTime();
+
+      // Get the just-ended question's ID and max marks
+      const quiz = await Quiz.findById(game.quiz).lean();
+      const questions = await QuestionsModel.find({ quizId: quiz._id, languageCode: quiz.language?.code }).sort({ createdAt: 1 }).lean();
+      const justEndedQuestion = questions[currentQuestionIndex];
+      const maxMarks = justEndedQuestion?.data?.marks || 1;
+      const maxFFF = 1000;
+
+      // Get all players who participated
+      const players = await Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } });
+
+      for (const player of players) {
+        // Find the answer for the just-ended question
+        const answer = player?.answers?.find(a => a.question.toString() === justEndedQuestion._id.toString());
+        if (answer && answer.answerTime != null) {
+          // Calculate fffPoints
+          answer.fffPoints =
+            answer.marks > 0
+              ? maxFFF * (1 - (answer.answerTime / questionDuration)) * (answer.marks / maxMarks)
+              : 0;
+
+        }
+        // Update player's total fffPoints
+        player.fffPoints = player.answers.reduce((sum, a) => sum + (a.fffPoints || 0), 0);
+        await player.save();
+      }
+      // Broadcast updated leaderboard
+      const updatedPlayers = await Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } }).lean();
+      const leaderboard = updatedPlayers.map(p => ({
+        ...p,
+        totalAnswerTime: p.answers?.reduce((sum, a) => sum + (a?.answerTime || 0), 0)
+      }));
+      broadcastLeaderboard(gameId, leaderboard);
+    }
+    // --- End FFF Points Calculation ---
+
     let message = ''
     if (currentQuestionIndex >= totalQuestions - 1) {
       // Last question, complete the game
@@ -1322,27 +1364,9 @@ export const forwardQuestion = async (gameId, user, currentQuestionIndex) => {
       await game.save()
       message = 'Moved to next question.'
     }
-    // Always return game with registeredPlayers, participatedPlayers, and questions
-    // const [registeredPlayers, participatedPlayers, questions] = await Promise.all([
-    //   Player.find({ game: gameId, status: { $in: ['registered', 'participated', 'completed'] } }).lean(),
-    //   Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } }).lean(),
-    //   QuestionsModel.find({ quizId: game.quiz, languageCode: game.quiz.language?.code }).lean()
-    // ])
-    // const resultGame = game.toObject()
-    // resultGame.registeredPlayers = registeredPlayers
-    // resultGame.participatedPlayers = participatedPlayers
-    // resultGame.questions = questions
-    // console.log(questions);
+    // Always return game with registeredPlayers, participatedUsers, and questions
     const resultGame = await getOne({ _id: game._id })
 
-    // After getting resultGame.result
-    // const qIdx = currentQuestionIndex
-    // if (resultGame.result.questions[qIdx]) {
-    //   resultGame.result.questions[qIdx].data = {
-    //     ...resultGame.result.questions[qIdx].data,
-    //     expiredAt: new Date()
-    //   }
-    // }
     broadcastGameDetailsUpdates(game._id, resultGame.result)
 
     return {

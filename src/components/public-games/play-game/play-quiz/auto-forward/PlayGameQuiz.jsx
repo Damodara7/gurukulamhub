@@ -1,18 +1,17 @@
 'use client'
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { Box, Typography, Alert, CardContent, useTheme, LinearProgress, Chip, Paper } from '@mui/material'
+import { Box, Typography, Alert, CardContent, useTheme, LinearProgress, Chip, Paper, Button } from '@mui/material'
 import Loading from '@/components/Loading'
 import QuizQuestion from './GameQuizQuestion'
 import Timer, { formatTime } from '@/components/Timer'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { toast } from 'react-toastify'
-import './PlayGameQuiz.css'
-import GameEnded from '../GameEnded'
+import GameEnded from '../../GameEnded'
 import { AccessTime as TimeIcon } from '@mui/icons-material'
 import { useSession } from 'next-auth/react'
-import Leaderboard from '../Leaderboard'
+import Leaderboard from '../../Leaderboard'
 
 const getColor = percentage => {
   if (percentage > 50) return 'primary'
@@ -109,10 +108,16 @@ async function updateUserScore(gameId, { user, userAnswer, finish }) {
   }
 }
 
-export default function PlayGameQuiz({ game, onGameEnd }) {
+export default function PlayGameQuiz({ game: initialGame, onGameEnd }) {
   const { data: session } = useSession()
   // console.log('game data :  ', game)
   const router = useRouter()
+
+  // 1. Local game state and wsRef
+  const [game, setGame] = useState(initialGame)
+  const wsRef = useRef(null)
+  const [, forceUpdate] = useState(0)
+
   // Inside PlayGameQuiz
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
@@ -121,7 +126,7 @@ export default function PlayGameQuiz({ game, onGameEnd }) {
   const [skippedQuestions, setSkippedQuestions] = useState([])
   const [gameEnded, setGameEnded] = useState(false)
   const [remainingTime, setRemainingTime] = useState(0)
-
+  const [submitting, setSubmitting] = useState(false)
   // const performanceRef = useRef({
   //   questionStartTimes: {}
   // })
@@ -215,22 +220,19 @@ export default function PlayGameQuiz({ game, onGameEnd }) {
     return () => clearInterval(interval)
   }, [questionTimeLeft])
 
-  // New useEffect to handle auto-submit when timer hits 0
-  useEffect(() => {
-    if (questionTimeLeft === 0 && questionTimerInitializedRef.current) {
-      questionTimerInitializedRef.current = false
-      handleAutoSubmit()
-    }
-  }, [
-    questionTimeLeft,
-    selectedAnswers,
-    usedHints,
-    currentQuestionIndex,
-    lastAnswerTimes,
-    questionTimerInitializedRef.current
-  ])
-
   const currentQuestion = mappedQuestions[currentQuestionIndex]
+  const hintUsed = !!usedHints[currentQuestion?._id];
+  const hasHint = !!currentQuestion?.data?.hint;
+  const isSkippable = currentQuestion?.data?.skippable;
+
+  // Derive submitted state from server/player data
+  const userEmail = session?.user?.email;
+  const player = useMemo(() => game?.participatedUsers?.find(p => p.email === userEmail), [game, userEmail]);
+  const isCurrentSubmitted = useMemo(() => {
+    if (!player || !currentQuestion) return false;
+    return player.answers?.some(ans => ans.question?.toString() === currentQuestion._id?.toString());
+  }, [player, currentQuestion]);
+  const canSubmit = !isCurrentSubmitted && questionTimeLeft > 0 && !submitting;
 
   // Track last answer time (ms from question start)
   function handleAnswerSelect(questionId, optionId) {
@@ -271,7 +273,6 @@ export default function PlayGameQuiz({ game, onGameEnd }) {
 
   async function handleGameEnd() {
     setGameEnded(true)
-    localStorage.removeItem(storageKey)
     // Hit backend endpoint
     await calculateAndUpdateUserScore({ finish: true })
   }
@@ -362,6 +363,24 @@ export default function PlayGameQuiz({ game, onGameEnd }) {
     }
   }
 
+  async function handleSubmit() {
+    if (!currentQuestion || isCurrentSubmitted || submitting) return;
+    setSubmitting(true);
+    const isLastQuestion = currentQuestionIndex === mappedQuestions.length - 1;
+    await calculateAndUpdateUserScore({ finish: isLastQuestion });
+    // Fetch latest game data to update player answers/submission state
+    try {
+      const res = await RestApi.get(`${API_URLS.v0.USERS_GAME}/${game._id}`);
+      if (res.status === 'success' && res.result) {
+        setGame(res.result);
+        forceUpdate(n => n + 1);
+      }
+    } catch (e) {
+      // Optionally handle error
+    }
+    setSubmitting(false);
+  }
+
   const handleExit = () => {
     router.push('/public-games') // Or your exit path
   }
@@ -373,43 +392,92 @@ export default function PlayGameQuiz({ game, onGameEnd }) {
 
     if (liveQuestionIndex !== -1) {
       setCurrentQuestionIndex(liveQuestionIndex)
-      const savedState = JSON.parse(localStorage.getItem(storageKey))
-      if (savedState && savedState.currentQuestionIndex === liveQuestionIndex) {
-        setSelectedAnswers(savedState?.selectedAnswers || {})
-        setUsedHints(savedState?.usedHints || {})
-        setSkippedQuestions(savedState?.skippedQuestions || [])
-      }
     } else if (liveQuestionIndex >= mappedQuestions.length) {
       // If no question is active, the game might have ended
       setGameEnded(true)
     }
-  }, [mappedQuestions, quiz._id, storageKey])
+  }, [mappedQuestions, quiz._id])
 
-  // Persist state
+  // Timer for question expiry and moving to next question
   useEffect(() => {
-    const stateToSave = {
-      currentQuestionIndex,
-      selectedAnswers,
-      usedHints,
-      skippedQuestions
-    }
-    if (!gameEnded) {
-      localStorage.setItem(storageKey, JSON.stringify(stateToSave))
-    }
-  }, [currentQuestionIndex, selectedAnswers, usedHints, skippedQuestions, storageKey])
+    if (!currentQuestion) return;
+    const now = new Date();
+    const expiresAt = new Date(currentQuestion?.data?.expiresAt);
+    const msLeft = expiresAt - now;
+    setQuestionTimeLeft(Math.max(Math.floor(msLeft / 1000), 0));
 
+    if (msLeft <= 0) {
+      // Move to the next question immediately
+      const nextIdx = mappedQuestions.findIndex((q, idx) => idx > currentQuestionIndex && new Date(q.data.expiresAt) > now);
+      if (nextIdx !== -1) {
+        setCurrentQuestionIndex(nextIdx);
+      } else {
+        setGameEnded(true);
+      }
+      return;
+    }
+
+    // Timer for current question
+    const interval = setInterval(() => {
+      const now = new Date();
+      const msLeft = expiresAt - now;
+      setQuestionTimeLeft(Math.max(Math.floor(msLeft / 1000), 0));
+      if (msLeft <= 0) {
+        clearInterval(interval);
+        // Move to next question immediately
+        const nextIdx = mappedQuestions.findIndex((q, idx) => idx > currentQuestionIndex && new Date(q.data.expiresAt) > now);
+        if (nextIdx !== -1) {
+          setCurrentQuestionIndex(nextIdx);
+        } else {
+          setGameEnded(true);
+        }
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [currentQuestionIndex, mappedQuestions]);
+
+  // 2. WebSocket setup for real-time updates
   useEffect(() => {
-    if (gameEnded) {
-      localStorage.removeItem(storageKey)
+    const gameId = game?._id
+    if (!gameId) return
+    const wsUrl =
+      typeof window !== 'undefined'
+        ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/api/ws/games/${gameId}`
+        : ''
+    if (!wsUrl) return
+    wsRef.current = new window.WebSocket(wsUrl)
+    wsRef.current.onopen = () => {
+      // console.log('[WS] Connected to game details updates')
     }
-  }, [storageKey, gameEnded])
-
-  const isAnswerSelected = Array.isArray(selectedAnswers[currentQuestion?._id])
-    ? selectedAnswers[currentQuestion?._id].length > 0
-    : !!selectedAnswers[currentQuestion?._id]
-  const hasHint = !!currentQuestion?.data?.hint
-  const hintUsed = !!usedHints[currentQuestion?._id]
-  const isSkippable = currentQuestion?.data?.skippable
+    wsRef.current.onmessage = event => {
+      try {
+        const { data, type } = JSON.parse(event.data)
+        if (type === 'gameDetails') {
+          setGame(data)
+          // Check if the current question is now submitted for the user
+          const userEmail = session?.user?.email
+          const player = data?.participatedUsers?.find(p => p.email === userEmail)
+          const currentQuestion = data?.questions?.[currentQuestionIndex]
+          const hasSubmitted = player?.answers?.some(ans => ans.question?.toString() === currentQuestion?._id?.toString())
+          if (hasSubmitted) setSubmitting(false)
+          forceUpdate(n => n + 1)
+        }
+      } catch (e) {
+        // console.error('[WS] Error parsing game details message', e)
+      }
+    }
+    wsRef.current.onerror = err => {
+      // console.error('[WS] game details error', err)
+    }
+    wsRef.current.onclose = () => {
+      // console.log('[WS] game details connection closed')
+    }
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close()
+      }
+    }
+  }, [game?._id])
 
   const isUserCompletedGame = game.participatedUsers.find(pu => pu.email === session.user.email)?.completed || false
   const isGameEnded = new Date() > new Date(new Date(game.startTime).getTime() + game.duration * 1000)
@@ -441,17 +509,69 @@ export default function PlayGameQuiz({ game, onGameEnd }) {
             currentQuestionIndex={currentQuestionIndex}
             questions={mappedQuestions}
             selectedAnswers={selectedAnswers}
-            handleAnswerFillInBlanks={handleAnswerFillInBlanks}
-            handleAnswerSelect={handleAnswerSelect}
-            handleShowHint={handleShowHint}
+            handleAnswerFillInBlanks={isCurrentSubmitted ? undefined : handleAnswerFillInBlanks}
+            handleAnswerSelect={isCurrentSubmitted ? undefined : handleAnswerSelect}
+            handleShowHint={isCurrentSubmitted ? undefined : handleShowHint}
             hintUsed={hintUsed}
             hasHint={hasHint}
             isSkippable={isSkippable}
-            handleSkip={handleSkip}
+            handleSkip={isCurrentSubmitted ? undefined : handleSkip}
             timeLeft={questionTimeLeft}
+            disabled={isCurrentSubmitted}
           />
         ) : (
           <Alert severity='error'>No mappedQuestions available for this quiz</Alert>
+        )}
+
+        {/* Submit button and waiting message */}
+        {currentQuestion && (
+          <Box sx={{ mt: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <Button
+              onClick={handleSubmit}
+              disabled={
+                submitting ||
+                isCurrentSubmitted ||
+                !selectedAnswers[currentQuestion._id] ||
+                !canSubmit
+              }
+              color={
+                submitting
+                  ? 'secondary'
+                  : isCurrentSubmitted
+                  ? 'success'
+                  : 'primary'
+              }
+              component='label'
+              variant='contained'
+              mb={4}
+              style={{
+                color: '#fff',
+                cursor:
+                  submitting ||
+                  isCurrentSubmitted ||
+                  !selectedAnswers[currentQuestion._id] ||
+                  !canSubmit
+                    ? 'not-allowed'
+                    : 'pointer'
+              }}
+            >
+              {submitting
+                ? 'Submitting...'
+                : isCurrentSubmitted
+                ? 'Submitted'
+                : 'Submit'}
+            </Button>
+          </Box>
+        )}
+        {currentQuestion && isCurrentSubmitted && (
+          <Box sx={{ mt: 2, textAlign: 'center', color: '#1976d2', fontWeight: 500 }}>
+            Submitted! Waiting for next question...
+          </Box>
+        )}
+        {currentQuestion && !isCurrentSubmitted && questionTimeLeft === 0 && (
+          <Box sx={{ mt: 2, textAlign: 'center', color: '#1976d2', fontWeight: 500 }}>
+            Time is up!
+          </Box>
         )}
 
         <Leaderboard game={game} duringPlay={true} isAdmin={true} />

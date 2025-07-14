@@ -17,6 +17,7 @@ const AdminForwardGameQuizQuestion = ({
   hasHint,
   isSkippable,
   handleSkip,
+  disabled=false
 }) => {
   return (
     <Box sx={{ mt: 0, maxWidth: 'lg', mx: 'auto' }}>
@@ -41,6 +42,7 @@ const AdminForwardGameQuizQuestion = ({
             question={currentQuestion}
             selectedAnswer={selectedAnswers[currentQuestion._id] || ''}
             onAnswerSelect={handleAnswerSelect}
+            readOnly={disabled}
           />
         )}
         {currentQuestion?.templateId === 'multiple-choice' && (
@@ -48,6 +50,7 @@ const AdminForwardGameQuizQuestion = ({
             question={currentQuestion}
             selectedAnswers={selectedAnswers[currentQuestion._id] || []}
             onAnswerSelect={handleAnswerSelect}
+            readOnly={disabled}
           />
         )}
         {currentQuestion?.templateId === 'true-or-false' && (
@@ -55,6 +58,7 @@ const AdminForwardGameQuizQuestion = ({
             question={currentQuestion}
             selectedAnswer={selectedAnswers[currentQuestion._id] || ''}
             onAnswerSelect={handleAnswerSelect}
+            readOnly={disabled}
           />
         )}
         {currentQuestion?.templateId === 'fill-in-blank' && (
@@ -62,11 +66,12 @@ const AdminForwardGameQuizQuestion = ({
             question={currentQuestion}
             selectedAnswer={selectedAnswers[currentQuestion._id] || {}}
             onAnswer={handleAnswerFillInBlanks}
+            readOnly={disabled}
           />
         )}
       </Box>
       {/* Hint section */}
-      {hasHint && !hintUsed && (
+      {hasHint && !hintUsed && !disabled && (
         <Button variant='outlined' onClick={() => handleShowHint(currentQuestion._id)}>
           Show Hint
         </Button>
@@ -77,13 +82,13 @@ const AdminForwardGameQuizQuestion = ({
         </Alert>
       )}
       {/* Bottom action buttons */}
-      <Box className='flex justify-end gap-4 items-center w-full' mt={3}>
+      {!disabled && <Box className='flex justify-end gap-4 items-center w-full' mt={3}>
         {isSkippable && (
           <Button variant='outlined' color='warning' onClick={handleSkip}>
             Skip
           </Button>
         )}
-      </Box>
+      </Box>}
     </Box>
   )
 }

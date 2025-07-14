@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { Box, Typography, Alert, Paper, Chip, LinearProgress, Button } from '@mui/material'
+import { Box, Typography, Alert, Paper, Chip, LinearProgress } from '@mui/material'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import GameEnded from '../../GameEnded'
@@ -52,29 +52,10 @@ async function updateUserScore(gameId, { user, userAnswer, finish }) {
   }
 }
 
-// Utility to check if the answer is empty for the current question type
-function isAnswerEmpty(question, answer) {
-  if (!answer) return true;
-  if (question?.templateId === 'multiple-choice') {
-    return !Array.isArray(answer) || answer.length === 0;
-  }
-  if (question?.templateId === 'fill-in-blank') {
-    if (Array.isArray(answer)) {
-      return answer.length === 0 || answer.every(a => !a.content || a.content.trim() === '');
-    }
-    if (typeof answer === 'object' && answer !== null) {
-      return Object.values(answer).every(val => !val || val.trim() === '');
-    }
-  }
-  // For single-choice, true/false, treat empty string or undefined as empty
-  return answer === '' || answer === undefined || answer === null;
-}
-
 export default function AdminForwardPlayGame({ game: initialGame }) {
   const { data: session } = useSession()
   const router = useRouter()
 
-  // Place mappedQuestions and currentQuestion at the top
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const selectedAnswersRef = useRef({})
   const usedHintsRef = useRef({})
@@ -87,65 +68,10 @@ export default function AdminForwardPlayGame({ game: initialGame }) {
   const prevLiveIndexRef = useRef(game?.liveQuestionIndex ?? 0)
   const submittedQuestionsRef = useRef(new Set())
   const questionStartTimesRef = useRef({})
-  const [submitting, setSubmitting] = useState(false)
-  const [selectedAnswersVersion, setSelectedAnswersVersion] = useState(0)
-
-  // These must come after questions and startTime are available
-  const startTime = useMemo(() => new Date(game?.startTime), [game?.startTime])
-  const questions = game?.questions
-  const mappedQuestions = useMemo(() => {
-    return (
-      questions?.map(q => {
-        return {
-          ...q,
-          data: {
-            ...q.data
-            // expiredAt: q?.expiredAt
-          }
-        }
-      }) || []
-    )
-  }, [questions, startTime])
-  const currentQuestion = mappedQuestions[currentQuestionIndex]
-
-  // Now, all hooks and code that use currentQuestion can safely reference it
-  // Helper: Check if user has submitted for the current live question
-  const userEmail = session?.user?.email
-  const player = useMemo(() => {
-    // Find the player object for the current user
-    return (
-      game?.participatedUsers?.find(p => p.email === userEmail)
-    )
-  }, [game, userEmail])
-
-  const hasSubmittedCurrent = useMemo(() => {
-    if (!player || !currentQuestion) return false
-    return player?.answers?.some(ans => ans.question?.toString() === currentQuestion._id?.toString())
-  }, [player, currentQuestion])
-
-  // Find the submitted answer for the current question (if any)
-  const submittedAnswer = useMemo(() => {
-    if (!player || !currentQuestion) return null
-    return player.answers?.find(ans => ans.question?.toString() === currentQuestion._id?.toString()) || null
-  }, [player, currentQuestion])
-
-  // Compute selectedAnswers to show: use submitted answer if available, else local
-  const effectiveSelectedAnswers = useMemo(() => {
-    if (!currentQuestion) return {}
-    if (hasSubmittedCurrent && submittedAnswer) {
-      return { ...selectedAnswersRef.current, [currentQuestion._id]: submittedAnswer.answer }
-    }
-    return selectedAnswersRef.current
-  }, [hasSubmittedCurrent, submittedAnswer, currentQuestion, selectedAnswersVersion])
-
-  // Determine if hint was used (either in-progress or in submitted answer)
-  const effectiveHintUsed = hasSubmittedCurrent
-    ? submittedAnswer?.hintUsed || false
-    : usedHintsRef.current[currentQuestion?._id] || false
-  const effectiveHasHint = !!currentQuestion?.data?.hint
 
   const gameId = game?._id
   const quiz = game?.quiz
+  const questions = game?.questions
   // const storageKey = `game-${game._id}-quiz-${quiz._id}-admin-state`
 
   // Ensure the start time for the first question is set to game.startTime
@@ -175,26 +101,42 @@ export default function AdminForwardPlayGame({ game: initialGame }) {
             const { data, type } = JSON.parse(event.data)
             if (type === 'gameDetails') {
               setGame(data)
-              const userEmail = session?.user?.email
-              const player = data?.participatedUsers?.find(p => p.email === userEmail)
-              const currentQuestion = data?.questions?.[currentQuestionIndex]
-              const hasSubmitted = player?.answers?.some(ans => ans.question?.toString() === currentQuestion?._id?.toString())
-              if (hasSubmitted) setSubmitting(false)
               const liveIdx = data?.liveQuestionIndex
               const prevLiveIdx = prevLiveIndexRef.current
               const totalQuestions = mappedQuestions.length
 
-              // If liveIdx increased, just update the current question index (no auto submission)
+              // If liveIdx increased, submit answer for previous question
               if (typeof liveIdx === 'number' && liveIdx !== prevLiveIdx && liveIdx > 0 && liveIdx < totalQuestions) {
                 // Record the start time for the new question
                 if (!(liveIdx in questionStartTimesRef.current)) {
                   questionStartTimesRef.current[liveIdx] = data?.liveQuestionStartedAt || new Date()
                 }
+                const prevQIdx = liveIdx - 1
+                if (!submittedQuestionsRef.current.has(prevQIdx)) {
+                  calculateAndUpdateUserScore({
+                    finish: false,
+                    index: prevQIdx,
+                    liveQuestionStartedAt: data?.liveQuestionStartedAt
+                  })
+                  submittedQuestionsRef.current.add(prevQIdx)
+                }
                 setCurrentQuestionIndex(liveIdx)
               }
 
-              // If game completed, just set gameEnded (no auto submission)
+              // If game completed, submit answer for last question
               if (data?.status === 'completed') {
+                const lastQIdx = totalQuestions - 1
+                if (!(lastQIdx in questionStartTimesRef.current)) {
+                  questionStartTimesRef.current[lastQIdx] = data?.liveQuestionStartedAt || new Date()
+                }
+                if (!submittedQuestionsRef.current.has(lastQIdx)) {
+                  calculateAndUpdateUserScore({
+                    finish: true,
+                    index: lastQIdx,
+                    liveQuestionStartedAt: data?.liveQuestionStartedAt
+                  })
+                  submittedQuestionsRef.current.add(lastQIdx)
+                }
                 setGameEnded(true)
               }
 
@@ -227,17 +169,31 @@ export default function AdminForwardPlayGame({ game: initialGame }) {
     }
   }, [game?.liveQuestionIndex])
 
+  const startTime = useMemo(() => new Date(game?.startTime), [game?.startTime])
+
+  const mappedQuestions = useMemo(() => {
+    return (
+      questions?.map(q => {
+        return {
+          ...q,
+          data: {
+            ...q.data
+            // expiredAt: q?.expiredAt
+          }
+        }
+      }) || []
+    )
+  }, [questions, startTime])
+
   function handleAnswerSelect(questionId, optionId) {
     selectedAnswersRef.current = { ...selectedAnswersRef.current, [questionId]: optionId }
     lastAnswerTimesRef.current = { ...lastAnswerTimesRef.current, [questionId]: new Date() }
-    setSelectedAnswersVersion(v => v + 1)
     forceUpdate(n => n + 1)
   }
 
   function handleAnswerFillInBlanks(questionId, value) {
     selectedAnswersRef.current = { ...selectedAnswersRef.current, [questionId]: value }
     lastAnswerTimesRef.current = { ...lastAnswerTimesRef.current, [questionId]: new Date() }
-    setSelectedAnswersVersion(v => v + 1)
     forceUpdate(n => n + 1)
   }
 
@@ -291,53 +247,13 @@ export default function AdminForwardPlayGame({ game: initialGame }) {
     }
   }
 
-  async function handleSubmit() {
-    if (!currentQuestion || hasSubmittedCurrent || submitting) return
-    setSubmitting(true)
-    const idx = currentQuestionIndex
-    const questionStart = questionStartTimesRef.current[idx] || new Date()
-    const now = new Date()
-    const answerTime = now - questionStart
-    const selectedAnswer = selectedAnswersRef.current[currentQuestion._id]
-    const hintUsed = usedHintsRef.current[currentQuestion._id] || false
-    const calculatedMarks = calculateQuestionMarks(currentQuestion, selectedAnswer, hintUsed)
-    const maxFFF = 1000
-    // Use a fallback for curQuestionTimerSeconds if not available
-    const curQuestionTimerSeconds = (game?.liveQuestionStartedAt ? now.getTime() - new Date(game.liveQuestionStartedAt).getTime() : answerTime) || answerTime || 1
-    
-    console.log('answerTime: ', answerTime)
-    console.log('curQuestionTimerSeconds: ', curQuestionTimerSeconds)
-    const fffPoints =
-      calculatedMarks > 0
-        ? maxFFF * (1 - answerTime / curQuestionTimerSeconds) * (calculatedMarks / currentQuestion?.data?.marks)
-        : 0
-    const isLastQuestion = currentQuestionIndex === mappedQuestions.length - 1
-    try {
-      await updateUserScore(game?._id, {
-        user: { id: session.user.id, email: session.user.email },
-        userAnswer: {
-          question: currentQuestion._id,
-          answer: selectedAnswer || '',
-          marks: calculatedMarks || 0,
-          hintMarks: hintUsed ? currentQuestion?.data?.hintMarks : 0,
-          hintUsed,
-          skipped: !selectedAnswer,
-          answerTime: answerTime,
-          fffPoints,
-          answeredAt: now
-        },
-        finish: isLastQuestion
-      })
-    } catch (error) {
-      console.error('Error submitting answer: ', error)
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
   const handleExit = () => {
     router.push('/public-games')
   }
+
+  const currentQuestion = mappedQuestions[currentQuestionIndex]
+  const hasHint = !!currentQuestion?.data?.hint
+  const hintUsed = !!usedHintsRef.current[currentQuestion?._id]
 
   if (!game) {
     return <>No game found</>
@@ -355,47 +271,18 @@ export default function AdminForwardPlayGame({ game: initialGame }) {
             currentQuestion={currentQuestion}
             currentQuestionIndex={currentQuestionIndex}
             questions={mappedQuestions}
-            selectedAnswers={effectiveSelectedAnswers}
-            handleAnswerFillInBlanks={hasSubmittedCurrent ? undefined : handleAnswerFillInBlanks}
-            handleAnswerSelect={hasSubmittedCurrent ? undefined : handleAnswerSelect}
-            handleShowHint={hasSubmittedCurrent ? undefined : handleShowHint}
-            hintUsed={effectiveHintUsed}
-            hasHint={effectiveHasHint}
+            selectedAnswers={selectedAnswersRef.current}
+            handleAnswerFillInBlanks={handleAnswerFillInBlanks}
+            handleAnswerSelect={handleAnswerSelect}
+            handleShowHint={handleShowHint}
+            hintUsed={hintUsed}
+            hasHint={hasHint}
             isSkippable={false}
             handleSkip={null}
             timeLeft={null}
-            disabled={hasSubmittedCurrent || submitting}
           />
         ) : (
           <Alert severity='error'>No mappedQuestions available for this quiz</Alert>
-        )}
-
-        {/* Submit button and waiting message */}
-        {currentQuestion && (
-          <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <Button
-              onClick={handleSubmit}
-              disabled={submitting || hasSubmittedCurrent || isAnswerEmpty(currentQuestion, effectiveSelectedAnswers[currentQuestion._id])}
-              color={submitting ? 'secondary' : hasSubmittedCurrent ? 'success' : 'primary'}
-              component='label'
-              variant='contained'
-              mb={4}
-              style={{
-                color: '#fff',
-                cursor:
-                  submitting || hasSubmittedCurrent || isAnswerEmpty(currentQuestion, effectiveSelectedAnswers[currentQuestion._id])
-                    ? 'not-allowed'
-                    : 'pointer'
-              }}
-            >
-              {submitting ? 'Submitting...' : hasSubmittedCurrent ? 'Submitted' : 'Submit'}
-            </Button>
-          </Box>
-        )}
-        {currentQuestion && hasSubmittedCurrent && (
-          <Box sx={{ mt: 2, textAlign: 'center', color: '#1976d2', fontWeight: 500 }}>
-            Submitted! Waiting for next question...
-          </Box>
         )}
 
         <Leaderboard game={game} duringPlay={true} isAdmin={true} />

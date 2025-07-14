@@ -1,9 +1,9 @@
 import React from 'react'
 import { Box, Typography, Button, Alert, Chip } from '@mui/material'
-import SingleChoiceTemplate from '../../../publicquiz/SingleChoiceTemplate'
-import MultipleChoiceTemplate from '../../../publicquiz/MultipleChoiceTemplate'
-import TrueFalseQuizTemplate from '../../../publicquiz/TrueFalseQuizTemplate'
-import FillInBlanksTemplate from '../../../publicquiz/FillInBlanksTemplate'
+import SingleChoiceTemplate from '../../../../publicquiz/SingleChoiceTemplate'
+import MultipleChoiceTemplate from '../../../../publicquiz/MultipleChoiceTemplate'
+import TrueFalseQuizTemplate from '../../../../publicquiz/TrueFalseQuizTemplate'
+import FillInBlanksTemplate from '../../../../publicquiz/FillInBlanksTemplate'
 
 const QuizQuestion = ({
   currentQuestion,
@@ -17,7 +17,8 @@ const QuizQuestion = ({
   hasHint,
   isSkippable,
   handleSkip,
-  timeLeft
+  timeLeft,
+  disabled = false
 }) => {
   return (
     <Box sx={{ mt: 0, maxWidth: 'lg', mx: 'auto' }}>
@@ -41,33 +42,37 @@ const QuizQuestion = ({
           <SingleChoiceTemplate
             question={currentQuestion}
             selectedAnswer={selectedAnswers[currentQuestion._id] || ''}
-            onAnswerSelect={handleAnswerSelect}
+            onAnswerSelect={disabled ? undefined : handleAnswerSelect}
+            readOnly={disabled}
           />
         )}
         {currentQuestion?.templateId === 'multiple-choice' && (
           <MultipleChoiceTemplate
             question={currentQuestion}
             selectedAnswers={selectedAnswers[currentQuestion._id] || []}
-            onAnswerSelect={handleAnswerSelect}
+            onAnswerSelect={disabled ? undefined : handleAnswerSelect}
+            readOnly={disabled}
           />
         )}
         {currentQuestion?.templateId === 'true-or-false' && (
           <TrueFalseQuizTemplate
             question={currentQuestion}
             selectedAnswer={selectedAnswers[currentQuestion._id] || ''}
-            onAnswerSelect={handleAnswerSelect}
+            onAnswerSelect={disabled ? undefined : handleAnswerSelect}
+            readOnly={disabled}
           />
         )}
         {currentQuestion?.templateId === 'fill-in-blank' && (
           <FillInBlanksTemplate
             question={currentQuestion}
             selectedAnswer={selectedAnswers[currentQuestion._id] || {}}
-            onAnswer={handleAnswerFillInBlanks}
+            onAnswer={disabled ? undefined : handleAnswerFillInBlanks}
+            readOnly={disabled}
           />
         )}
       </Box>
       {/* Hint section */}
-      {hasHint && !hintUsed && (
+      {hasHint && !hintUsed && !disabled && (
         <Button variant='outlined' onClick={() => handleShowHint(currentQuestion._id)}>
           Show Hint
         </Button>
@@ -78,13 +83,13 @@ const QuizQuestion = ({
         </Alert>
       )}
       {/* Bottom action buttons */}
-      <Box className='flex justify-end gap-4 items-center w-full' mt={3}>
+      {!disabled && <Box className='flex justify-end gap-4 items-center w-full' mt={3}>
         {isSkippable && (
           <Button variant='outlined' color='warning' onClick={handleSkip}>
             Skip
           </Button>
         )}
-      </Box>
+      </Box>}
     </Box>
   )
 }

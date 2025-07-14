@@ -112,7 +112,7 @@ const TrueFalseQuestionTemplate = ({
         question: question,
         addHint: addHint,
         hint: hint,
-        hintMarks: +hintMarks,
+        hintMarks: -parseInt(hintMarks),
         marks: +marks,
         timerSeconds: +timerSeconds,
         skippable: skippable,

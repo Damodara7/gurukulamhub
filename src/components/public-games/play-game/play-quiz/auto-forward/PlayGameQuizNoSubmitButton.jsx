@@ -1,16 +1,17 @@
 'use client'
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Box, Typography, Alert, CardContent, useTheme, LinearProgress, Chip, Paper } from '@mui/material'
 import Loading from '@/components/Loading'
-import QuizQuestion from '@/components/publicquiz/QuizQuestion'
+import QuizQuestion from './GameQuizQuestion'
 import Timer, { formatTime } from '@/components/Timer'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { toast } from 'react-toastify'
-import GameEnded from '../GameEnded'
+import GameEnded from '../../GameEnded'
 import { AccessTime as TimeIcon } from '@mui/icons-material'
 import { useSession } from 'next-auth/react'
+import Leaderboard from '../../Leaderboard'
 
 const getColor = percentage => {
   if (percentage > 50) return 'primary'
@@ -97,6 +98,7 @@ async function updateUserScore(gameId, { user, userAnswer, finish }) {
       finish
     })
     if (res.status === 'success') {
+      console.log('user answer payload: ', userAnswer)
       console.log('Score updated successfully')
     } else {
       console.log('Error while updating score: ', res.message)
@@ -106,11 +108,10 @@ async function updateUserScore(gameId, { user, userAnswer, finish }) {
   }
 }
 
-export default function PlayGameQuiz({ game }) {
+export default function PlayGameQuiz({ game, onGameEnd }) {
   const { data: session } = useSession()
-  console.log('game data :  ', game)
+  // console.log('game data :  ', game)
   const router = useRouter()
-  const storageKey = `quiz-${quiz._id}-state`
   // Inside PlayGameQuiz
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
@@ -119,55 +120,47 @@ export default function PlayGameQuiz({ game }) {
   const [skippedQuestions, setSkippedQuestions] = useState([])
   const [gameEnded, setGameEnded] = useState(false)
   const [remainingTime, setRemainingTime] = useState(0)
-  const [questionStartTimes, setQuestionStartTimes] = useState({})
 
-  const [questionTimers, setQuestionTimers] = useState({})
-  const performanceRef = useRef({
-    startTime: null,
-    questionStartTimes: {},
-    totalTime: 0
-  })
+  // const performanceRef = useRef({
+  //   questionStartTimes: {}
+  // })
+  const questionTimerInitializedRef = useRef(false)
+
+  const [questionTimeLeft, setQuestionTimeLeft] = useState(0)
+  const [lastAnswerTimes, setLastAnswerTimes] = useState({})
 
   const duration = game?.duration || 0
-  const startTime = new Date(game?.startTime)
+  const startTime = useMemo(() => new Date(game?.startTime), [game?.startTime])
 
   const quiz = game?.quiz
   const questions = game?.questions
 
-  // Initialize timing when component mounts
-  useEffect(() => {
-    performanceRef.current.startTime = performance.now()
-    return () => {
-      // Cleanup if needed
-    }
-  }, [])
+   const storageKey = `game-${game._id}-quiz-${quiz._id}-state`
+
+  const mappedQuestions = useMemo(() => {
+    let cumulativeTime = 0
+    return (
+      questions?.map(q => {
+        cumulativeTime += (q?.data?.timerSeconds || 0) * 1000
+        return {
+          ...q,
+          data: {
+            ...q.data,
+            expiresAt: new Date(startTime.getTime() + cumulativeTime)
+          }
+        }
+      }) || []
+    )
+  }, [questions, startTime])
 
   // Track when a question is first displayed with high prercession
-  useEffect(() => {
-    const currentQuestionId = questions[currentQuestionIndex]?._id
-    if (currentQuestionId && !performanceRef.current.questionStartTimes[currentQuestionId]) {
-      const now = performance.now()
-      performanceRef.current.questionStartTimes[currentQuestionId] = now
-
-      setQuestionStartTimes(prev => ({
-        ...prev,
-        [currentQuestionId]: {
-          startTime: now,
-          endTime: null,
-          duration: null
-        }
-      }))
-    }
-  }, [currentQuestionIndex])
-
-  // Calculate answer time with high precision
-  const getAnswerTime = questionId => {
-    if (!performanceRef.current.questionStartTimes[questionId]) return 0
-
-    const endTime = performance.now()
-    const startTime = performanceRef.current.questionStartTimes[questionId]
-    return endTime - startTime // in ms
-  }
+  // useEffect(() => {
+  //   const currentQuestionId = mappedQuestions[currentQuestionIndex]?._id
+  //   if (currentQuestionId && !performanceRef.current.questionStartTimes[currentQuestionId]) {
+  //     const now = new Date()
+  //     performanceRef.current.questionStartTimes[currentQuestionId] = now
+  //   }
+  // }, [currentQuestionIndex])
 
   const calculateRemainingTime = () => {
     const now = new Date()
@@ -183,34 +176,84 @@ export default function PlayGameQuiz({ game }) {
       const newRemaining = calculateRemainingTime()
       setRemainingTime(newRemaining)
 
-      if (newRemaining <= 0) {
-        clearInterval(timerInterval)
-        handleGameEnd()
-      }
+      // if (newRemaining <= 0 && !gameEnded) {
+      //   clearInterval(timerInterval)
+      //   handleGameEnd()
+      // }
     }, 1000)
 
     return () => clearInterval(timerInterval)
   }, [game?.startTime, duration])
 
-  const handleAnswerSelect = (questionId, optionId) => {
-    setSelectedAnswers(prev => ({ ...prev, [questionId]: optionId }))
+  // When question changes, set timer from question.data.timer
+  useEffect(() => {
+    const currentQuestion = mappedQuestions[currentQuestionIndex]
+    if (!currentQuestion) return
+    const questionExpiresAt = currentQuestion?.data?.expiresAt
+    const now = new Date()
+    const timerRemaining = Math.floor((questionExpiresAt - now) / 1000)
+    setQuestionTimeLeft(timerRemaining)
+    questionTimerInitializedRef.current = false
+  }, [currentQuestionIndex])
+
+  // New useEffect to handle timer countdown and auto-submit
+  useEffect(() => {
+    if (questionTimeLeft <= 0) return
+    const interval = setInterval(() => {
+      setQuestionTimeLeft(prev => {
+        if (!questionTimerInitializedRef.current) {
+          questionTimerInitializedRef.current = true
+        }
+        if (prev <= 1) {
+          clearInterval(interval)
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [questionTimeLeft])
+
+  // New useEffect to handle auto-submit when timer hits 0
+  useEffect(() => {
+    if (questionTimeLeft === 0 && questionTimerInitializedRef.current) {
+      questionTimerInitializedRef.current = false
+      handleAutoSubmit()
+    }
+  }, [
+    questionTimeLeft,
+    selectedAnswers,
+    usedHints,
+    currentQuestionIndex,
+    lastAnswerTimes,
+    questionTimerInitializedRef.current
+  ])
+
+  const currentQuestion = mappedQuestions[currentQuestionIndex]
+
+  // Track last answer time (ms from question start)
+  function handleAnswerSelect(questionId, optionId) {
+    console.log('Selected options', optionId, 'for question', questionId)
+
+    const newAnswers = { ...selectedAnswers, [questionId]: optionId }
+
+    setSelectedAnswers(newAnswers)
+    setLastAnswerTimes(prev => ({ ...prev, [questionId]: new Date() }))
     const updatedSkippedQuestions = skippedQuestions.filter(q => q.index !== currentQuestionIndex)
     setSkippedQuestions(updatedSkippedQuestions)
   }
 
-  const handleAnswerFillInBlanks = (questionId, value) => {
-    setSelectedAnswers(prev => ({
-      ...prev,
-      [questionId]: value
-    }))
+  function handleAnswerFillInBlanks(questionId, value) {
+    setSelectedAnswers(prev => ({ ...prev, [questionId]: value }))
+    setLastAnswerTimes(prev => ({ ...prev, [questionId]: new Date() }))
   }
 
   const handleShowHint = questionId => {
     setUsedHints(prev => ({ ...prev, [questionId]: true }))
   }
 
-  const handleSkip = () => {
-    const currentQuestionId = questions[currentQuestionIndex]?._id
+  async function handleSkip() {
+    const currentQuestionId = mappedQuestions[currentQuestionIndex]?._id
     if (selectedAnswers[currentQuestionId]) {
       setSelectedAnswers(prev => {
         const updatedAnswers = { ...prev }
@@ -218,19 +261,22 @@ export default function PlayGameQuiz({ game }) {
         return updatedAnswers
       })
     }
-    setSkippedQuestions(prev => [...prev, { question: questions[currentQuestionIndex], index: currentQuestionIndex }])
+    setSkippedQuestions(prev => [
+      ...prev,
+      { question: mappedQuestions[currentQuestionIndex], index: currentQuestionIndex }
+    ])
     handleNext()
   }
 
-  const handleGameEnd = async () => {
+  async function handleGameEnd() {
     setGameEnded(true)
     localStorage.removeItem(storageKey)
     // Hit backend endpoint
     await calculateAndUpdateUserScore({ finish: true })
   }
 
-  const handleNext = async () => {
-    if (currentQuestionIndex < questions.length - 1) {
+  async function handleNext() {
+    if (currentQuestionIndex < mappedQuestions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1)
 
       // Calculate Score for This question & Update Score of User in DB
@@ -241,63 +287,77 @@ export default function PlayGameQuiz({ game }) {
     }
   }
 
+  // On timer expiry, auto-submit answer and go to next question
+  async function handleAutoSubmit() {
+    if (currentQuestionIndex < mappedQuestions.length - 1) {
+      await calculateAndUpdateUserScore({ finish: false, auto: true })
+      setCurrentQuestionIndex(currentQuestionIndex + 1)
+    } else {
+      await handleGameEnd()
+    }
+  }
+
+  // Update calculateAndUpdateUserScore to use latest state directly
   async function calculateAndUpdateUserScore({ finish }) {
-    const currentQuestion = questions[currentQuestionIndex]
+    const currentQuestion = mappedQuestions[currentQuestionIndex]
+    const curQuestionTimerSeconds = currentQuestion?.data?.timerSeconds || 0
+    const curQuestionExpiresAt = currentQuestion?.data?.expiresAt
     const selectedAnswer = selectedAnswers[currentQuestion._id]
-    // const questionStartTime = questionStartTimes[currentQuestion._id]
-    // const answerTime = questionStartTime ? Math.floor((new Date() - questionStartTime) / 1000) : 0
-    const answerTime = getAnswerTime(currentQuestion._id)
+    const questionStart = new Date(curQuestionExpiresAt - curQuestionTimerSeconds * 1000)
+    const lastAnswerTime = lastAnswerTimes[currentQuestion._id]
+    const answerTime = lastAnswerTime && questionStart ? lastAnswerTime - questionStart : null // ms from question start to last answer change
+    const answeredAt = lastAnswerTimes[currentQuestion._id] || null
+    const hintUsed = usedHints[currentQuestion._id] || false
 
     if (!selectedAnswer) {
       // !selectedAnswer means Question was Skipped (Not answered)
       await updateUserScore(game._id, {
         userAnswer: {
-          questionId: currentQuestion._id,
-          answer: selectedAnswer,
+          question: currentQuestion._id,
           marks: 0,
-          hintMarks: 0,
-          hintUsed: false,
+          hintMarks: hintUsed ? currentQuestion?.data?.hintMarks : 0,
+          hintUsed,
           skipped: true,
-          answerTime: answerTime,
-          answeredAt: new Date().toISOString() // Use ISO string for precession time
+          answerTime: curQuestionTimerSeconds,
+          fffPoints: 0,
+          answeredAt: curQuestionExpiresAt || new Date().toISOString()
         },
         user: { id: session.user.id, email: session.user.email },
         finish: finish
       })
       return
     }
-    const hintUsed = usedHints[currentQuestion._id] || false
 
     // Calculate marks for current question
     const calculatedMarks = calculateQuestionMarks(currentQuestion, selectedAnswer, hintUsed)
 
-    // EndPoint
-    await updateUserScore(game._id, {
-      userAnswer: {
-        question: currentQuestion._id,
-        answer: selectedAnswer,
-        marks: calculatedMarks,
-        hintMarks: hintUsed ? currentQuestion?.data?.hintMarks : 0,
-        hintUsed,
-        skipped: false,
-        answerTime: answerTime,
-        answeredAt: new Date().toISOString() // Use ISO string for precession time
-      },
-      user: { id: session.user.id, email: session.user.email },
-      finish: finish
-    })
+    const maxFFF = 1000 // 1000 for more granularity
+    const fffPoints =
+      calculatedMarks > 0
+        ? maxFFF *
+          (1 - answerTime / (curQuestionTimerSeconds * 1000)) *
+          (calculatedMarks / currentQuestion?.data?.marks)
+        : 0
 
-    // Update the question timer with end time
-    if (questionTimers[currentQuestion._id]) {
-      const endTime = performance.now()
-      setQuestionTimers(prev => ({
-        ...prev,
-        [currentQuestion._id]: {
-          ...prev[currentQuestion._id],
-          endTime,
-          duration: (endTime - prev[currentQuestion._id].startTime) / 1000
-        }
-      }))
+    // EndPoint
+    try {
+      await updateUserScore(game._id, {
+        userAnswer: {
+          question: currentQuestion._id,
+          answer: selectedAnswer,
+          marks: calculatedMarks, // marks user got
+          hintMarks: hintUsed ? currentQuestion?.data?.hintMarks : 0,
+          hintUsed,
+          skipped: false,
+          answerTime: answerTime,
+          fffPoints,
+          answeredAt: answeredAt
+        },
+        user: { id: session.user.id, email: session.user.email },
+        finish: finish
+      })
+    } catch (error) {
+      console.log('Error updating user answer & score: ', error)
     }
   }
 
@@ -305,18 +365,24 @@ export default function PlayGameQuiz({ game }) {
     router.push('/public-games') // Or your exit path
   }
 
-  // Restore saved state
+  // Restore saved state and sync with live game state
   useEffect(() => {
-    const savedState = localStorage.getItem(storageKey)
-    if (savedState) {
-      const { currentQuestionIndex, selectedAnswers, usedHints, skippedQuestions, time } = JSON.parse(savedState)
+    const now = new Date()
+    const liveQuestionIndex = mappedQuestions.findIndex(q => q.data.expiresAt >= now)
 
-      setCurrentQuestionIndex(currentQuestionIndex || 0)
-      setSelectedAnswers(selectedAnswers || {})
-      setUsedHints(usedHints || {})
-      setSkippedQuestions(skippedQuestions || [])
+    if (liveQuestionIndex !== -1) {
+      setCurrentQuestionIndex(liveQuestionIndex)
+      const savedState = JSON.parse(localStorage.getItem(storageKey))
+      if (savedState && savedState.currentQuestionIndex === liveQuestionIndex) {
+        setSelectedAnswers(savedState?.selectedAnswers || {})
+        setUsedHints(savedState?.usedHints || {})
+        setSkippedQuestions(savedState?.skippedQuestions || [])
+      }
+    } else if (liveQuestionIndex >= mappedQuestions.length) {
+      // If no question is active, the game might have ended
+      setGameEnded(true)
     }
-  }, [quiz._id])
+  }, [mappedQuestions, quiz._id, storageKey])
 
   // Persist state
   useEffect(() => {
@@ -326,10 +392,17 @@ export default function PlayGameQuiz({ game }) {
       usedHints,
       skippedQuestions
     }
-    localStorage.setItem(storageKey, JSON.stringify(stateToSave))
-  }, [currentQuestionIndex, selectedAnswers, usedHints, skippedQuestions])
+    if (!gameEnded) {
+      localStorage.setItem(storageKey, JSON.stringify(stateToSave))
+    }
+  }, [currentQuestionIndex, selectedAnswers, usedHints, skippedQuestions, storageKey])
 
-  const currentQuestion = questions[currentQuestionIndex]
+  useEffect(() => {
+    if (gameEnded) {
+      localStorage.removeItem(storageKey)
+    }
+  }, [storageKey, gameEnded])
+
   const isAnswerSelected = Array.isArray(selectedAnswers[currentQuestion?._id])
     ? selectedAnswers[currentQuestion?._id].length > 0
     : !!selectedAnswers[currentQuestion?._id]
@@ -361,11 +434,11 @@ export default function PlayGameQuiz({ game }) {
           <ProgressBar progress={progress} />
         </Paper>
 
-        {questions.length > 0 ? (
+        {mappedQuestions.length > 0 ? (
           <QuizQuestion
             currentQuestion={currentQuestion}
             currentQuestionIndex={currentQuestionIndex}
-            questions={questions}
+            questions={mappedQuestions}
             selectedAnswers={selectedAnswers}
             handleAnswerFillInBlanks={handleAnswerFillInBlanks}
             handleAnswerSelect={handleAnswerSelect}
@@ -374,12 +447,13 @@ export default function PlayGameQuiz({ game }) {
             hasHint={hasHint}
             isSkippable={isSkippable}
             handleSkip={handleSkip}
-            isAnswerSelected={isAnswerSelected}
-            handleNext={handleNext}
+            timeLeft={questionTimeLeft}
           />
         ) : (
-          <Alert severity='error'>No questions available for this quiz</Alert>
+          <Alert severity='error'>No mappedQuestions available for this quiz</Alert>
         )}
+
+        <Leaderboard game={game} duringPlay={true} isAdmin={true} />
       </Box>
     </>
   )

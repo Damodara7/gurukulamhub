@@ -4,7 +4,7 @@ import { API_URLS } from '@/configs/apiConfig'
 import { useSession } from 'next-auth/react'
 import { useEffect, useState } from 'react'
 import { Box, Typography, CircularProgress, Card, CardContent, Button } from '@mui/material'
-import PlayGameQuiz from './play-quiz/PlayGameQuiz'
+import PlayGameQuiz from './play-quiz/auto-forward/PlayGameQuiz'
 import AssessmentPlayGameQuiz from './play-quiz/AssessmentPlayGameQuiz'
 import AdminForwardPlayGame from './play-quiz/admin-forward/PlayGameQuiz'
 
