@@ -354,18 +354,20 @@ const FillInBlanksQuestionTemplate = ({
           />
         </Grid>
 
-       {addHint && ( <Grid item xs={12} sx={{ marginBottom: '4px' }}>
-          <TextField
-            disabled={loading.save || loading.delete}
-            label='Hint'
-            variant='outlined'
-            fullWidth
-            value={hint}
-            onChange={handleHintChange}
-            error={addHint && hasErrors && !hint.trim() && getErrorMessage('hint')}
-            helperText={addHint && !hint.trim() && getErrorMessage('hint')}
-          />
-        </Grid>)}
+        {addHint && (
+          <Grid item xs={12} sx={{ marginBottom: '4px' }}>
+            <TextField
+              disabled={loading.save || loading.delete}
+              label='Hint'
+              variant='outlined'
+              fullWidth
+              value={hint}
+              onChange={handleHintChange}
+              error={addHint && hasErrors && !hint.trim() && getErrorMessage('hint')}
+              helperText={addHint && !hint.trim() && getErrorMessage('hint')}
+            />
+          </Grid>
+        )}
         {mode === 'primary' ? (
           <>
             <Grid item xs={6} md={addHint ? 4 : 6}>
@@ -382,26 +384,32 @@ const FillInBlanksQuestionTemplate = ({
                 helperText={!marks && getErrorMessage('marks')}
               />
             </Grid>
-            {addHint && (<Grid item xs={6} md={4}>
-              <TextField
-                disabled={loading.save || loading.delete}
-                label='Hint Marks'
-                variant='outlined'
-                fullWidth
-                type='number'
-                InputProps={{ 
-                  inputProps: { 
-                    max: marks || 0 , 
-                    min: 0 
-                  } 
-                }}
-                value={hintMarks}
-                onChange={handleHintMarksChange}
-                error={addHint && hasErrors && !hintMarks && getErrorMessage('hintMarks') || (hintMarks >= marks)}
-                helperText={addHint && !hintMarks && getErrorMessage('hintMarks') || (hintMarks >= marks &&  'Hint marks cannot exceed question marks')}
-              />
-            </Grid>)}
-            <Grid item xs={6} md={addHint ?4 : 6}>
+            {addHint && (
+              <Grid item xs={6} md={4}>
+                <TextField
+                  disabled={loading.save || loading.delete}
+                  label='Hint Marks'
+                  variant='outlined'
+                  fullWidth
+                  type='number'
+                  InputProps={{
+                    inputProps: {
+                      max: marks || 0,
+                      min: 0,
+                      step: 0.25
+                    }
+                  }}
+                  value={hintMarks}
+                  onChange={handleHintMarksChange}
+                  error={(addHint && hasErrors && !hintMarks && getErrorMessage('hintMarks')) || hintMarks >= marks}
+                  helperText={
+                    (addHint && !hintMarks && getErrorMessage('hintMarks')) ||
+                    (hintMarks >= marks && 'Hint marks cannot exceed question marks')
+                  }
+                />
+              </Grid>
+            )}
+            <Grid item xs={6} md={addHint ? 4 : 6}>
               <TextField
                 disabled={loading.save || loading.delete}
                 label='Timer Seconds'

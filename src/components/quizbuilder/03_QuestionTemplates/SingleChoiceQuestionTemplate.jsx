@@ -855,16 +855,16 @@ const SingleChoiceQuestionTemplate = ({
                   variant='outlined'
                   fullWidth
                   type='number'
-                  InputProps={{ 
-                    inputProps: 
-                    { 
-                      max: marks || 0, 
-                      min: 0 
-                    } 
+                  InputProps={{
+                    inputProps: {
+                      max: marks || 0,
+                      min: 0,
+                      step: 0.25
+                    }
                   }}
                   value={hintMarks}
                   onChange={handleHintMarksChange}
-                  error={(addHint && hasErrors && !hintMarks && getErrorMessage('hintMarks')) || (hintMarks >= marks)}
+                  error={(addHint && hasErrors && !hintMarks && getErrorMessage('hintMarks')) || hintMarks >= marks}
                   helperText={
                     (addHint && !hintMarks && getErrorMessage('hintMarks')) ||
                     (hintMarks >= marks && 'Hint marks cannot exceed question marks')
