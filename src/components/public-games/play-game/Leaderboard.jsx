@@ -18,6 +18,9 @@ import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { motion, AnimatePresence } from 'framer-motion'
 import { stringToColor } from '@/utils/stringToColor'
+import dynamic from 'next/dynamic'
+
+const Lottie = dynamic(() => import('lottie-react'), { ssr: false })
 
 export default function Leaderboard({ game, duringPlay = false, isAdmin = false }) {
   const [leaderboard, setLeaderboard] = useState([])
