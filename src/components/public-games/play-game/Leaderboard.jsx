@@ -21,14 +21,15 @@ import { stringToColor } from '@/utils/stringToColor'
 
 export default function Leaderboard({ game, duringPlay = false, isAdmin = false }) {
   const [leaderboard, setLeaderboard] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const wsRef = useRef(null)
-  const [prevLeaderboard, setPrevLeaderboard] = useState([])
   const [highlightedRows, setHighlightedRows] = useState({})
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
       try {
+        setLoading(true)
+
         const res = await RestApi.get(`${API_URLS.v0.USERS_GAME}/${game._id}/leaderboard`)
         if (res.status === 'success') {
           // Sort leaderboard by score (descending) and then by totalTime (ascending)
@@ -59,25 +60,23 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
             sortedLeaderboard.forEach((player, idx) => {
               const prevIdx = leaderboard.findIndex(p => p._id === player._id)
               if (prevIdx !== -1 && prevIdx !== idx) {
-                newHighlights[player._id] = prevIdx > idx ? 'up' : 'down'
+                newHighlights[player._id] = prevIdx > idx ? 'up' : 'down' // if index reduced means moves up ( Ex: Idx ==> 2 to 1 means moved up in the list)
               }
             })
             setHighlightedRows(newHighlights)
             if (Object.keys(newHighlights).length > 0) {
               setTimeout(() => {
                 setHighlightedRows({})
-              }, 2500)
+              }, 3000)
             }
           }
-          setPrevLeaderboard(leaderboard)
           setLeaderboard(sortedLeaderboard)
-          setLoading(false)
         } else {
           console.log('Error while updating score: ', res.message)
-          setLoading(false)
         }
       } catch (error) {
         console.log('Error while updating score: ', error.message)
+      } finally {
         setLoading(false)
       }
     }
@@ -88,7 +87,9 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
     // WebSocket connection for real-time updates
     const wsUrl =
       typeof window !== 'undefined'
-        ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/api/ws/leaderboard/${game._id}`
+        ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/api/ws/leaderboard/${
+            game._id
+          }`
         : ''
     if (wsUrl) {
       wsRef.current = new WebSocket(wsUrl)
@@ -97,6 +98,7 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
       }
       wsRef.current.onmessage = event => {
         try {
+
           const msg = JSON.parse(event.data)
           if (msg.type === 'leaderboard') {
             const sortedLeaderboard = msg.data?.sort((p1, p2) => {
@@ -133,9 +135,7 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
                 }, 2500)
               }
             }
-            setPrevLeaderboard(leaderboard)
             setLeaderboard(sortedLeaderboard)
-            setLoading(false)
           }
         } catch (e) {
           console.error('[WS] Error parsing leaderboard message', e)
@@ -174,7 +174,9 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
     const g = parseInt(hex.slice(3, 5), 16)
     const b = parseInt(hex.slice(5, 7), 16)
     // blend with white
-    return `rgba(${Math.round(r * (1 - alpha) + 255 * alpha)}, ${Math.round(g * (1 - alpha) + 255 * alpha)}, ${Math.round(b * (1 - alpha) + 255 * alpha)}, 1)`
+    return `rgba(${Math.round(r * (1 - alpha) + 255 * alpha)}, ${Math.round(
+      g * (1 - alpha) + 255 * alpha
+    )}, ${Math.round(b * (1 - alpha) + 255 * alpha)}, 1)`
   }
 
   // Helper to check if a player moved up or down
@@ -203,7 +205,7 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
   }
 
   return (
-    <Box sx={{ mx: 'auto', maxWidth: duringPlay || !isAdmin ? 'md' : 'md', px: { md: 10, xs: 3 }, my: 5 }}>
+    <Box sx={{ mx: 'auto', width: '100%', maxWidth: duringPlay || !isAdmin ? 'md' : 'md', my: 5 }}>
       <Typography
         variant='h6'
         sx={{

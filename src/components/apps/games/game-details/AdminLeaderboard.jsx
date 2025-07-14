@@ -33,7 +33,6 @@ function AdminLeaderboard({
   const [leaderboard, setLeaderboard] = useState([])
   const [loading, setLoading] = useState(true)
   const wsRef = useRef(null)
-  const [prevLeaderboard, setPrevLeaderboard] = useState([])
   const [highlightedRows, setHighlightedRows] = useState({})
 
   const formatTime = seconds => {
@@ -125,7 +124,6 @@ function AdminLeaderboard({
               }, 2500)
             }
           }
-          setPrevLeaderboard(leaderboard)
           setLeaderboard(sortedLeaderboard)
           setLoading(false)
         } else {
@@ -185,7 +183,6 @@ function AdminLeaderboard({
                 }, 2500)
               }
             }
-            setPrevLeaderboard(leaderboard)
             setLeaderboard(sortedLeaderboard)
             setLoading(false)
           }
@@ -201,9 +198,9 @@ function AdminLeaderboard({
       }
     }
     return () => {
-      // if (wsRef.current) {
-      //   wsRef.current.close()
-      // }
+      if (wsRef.current) {
+        wsRef.current.close()
+      }
     }
   }, [game._id])
 
