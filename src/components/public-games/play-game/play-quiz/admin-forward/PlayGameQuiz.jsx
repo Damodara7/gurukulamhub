@@ -372,7 +372,7 @@ export default function AdminForwardPlayGame({ game: initialGame }) {
 
         {/* Submit button and waiting message */}
         {currentQuestion && (
-          <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <Box sx={{ mt: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Button
               onClick={handleSubmit}
               disabled={submitting || hasSubmittedCurrent || isAnswerEmpty(currentQuestion, effectiveSelectedAnswers[currentQuestion._id])}
