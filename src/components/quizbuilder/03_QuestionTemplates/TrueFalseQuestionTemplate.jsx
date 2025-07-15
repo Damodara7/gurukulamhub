@@ -25,7 +25,6 @@ import ImageIcon from '@mui/icons-material/Image'
 import InputAdornment from '@mui/material/InputAdornment'
 import { filterInput, excludeQuesstionChars } from '@/utils/regexUtil'
 
-
 import VideoAd from '@views/apps/advertisements/VideoAd/VideoAd'
 import ImagePopup from '@/components/ImagePopup'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
@@ -51,7 +50,8 @@ const TrueFalseQuestionTemplate = ({
       mediaType: data?.mediaType || 'text' // 'text', 'image', 'text-image', 'video', 'text-video'
     }
   )
-  const [addHint , setAddHint] =useState(false)
+
+  const [addHint, setAddHint] = useState(false)
   const [status, setStatus] = useState(innerData?.status || 'draft')
   const [hint, setHint] = useState(innerData?.hint || '')
   const [hintMarks, setHintMarks] = useState(innerData?.hintMarks)
@@ -142,9 +142,9 @@ const TrueFalseQuestionTemplate = ({
   }
 
   const handleQuestionChange = (key, value) => {
-    let filterValue = value;
-    if(key === 'text') {
-      filterValue = filterInput(value, excludeQuesstionChars)// Allow only alphanumeric characters and some punctuation
+    let filterValue = value
+    if (key === 'text') {
+      filterValue = filterInput(value, excludeQuesstionChars) // Allow only alphanumeric characters and some punctuation
     }
     setQuestion(prev => ({ ...prev, [key]: filterValue }))
   }
@@ -245,6 +245,16 @@ const TrueFalseQuestionTemplate = ({
       return fieldErrorObj.message
     }
     return ''
+  }
+
+  const handleAddHintChange = e => {
+    const isChecked = e.target.checked
+    setAddHint(isChecked)
+    if (!isChecked) {
+      // When unchecking, reset to empty/zero
+      setHint('')
+      setHintMarks(0)
+    }
   }
 
   const hasExactlyOneCorrectOption = options?.filter(op => op.correct).length === 1 || false
@@ -547,7 +557,7 @@ const TrueFalseQuestionTemplate = ({
       <Grid container spacing={2} mt={2} alignItems='start'>
         <Grid item xs={12} className='flex justify-start'>
           <FormControlLabel
-            control={<Checkbox checked={addHint} onChange={e => setAddHint(e.target.checked)} />}
+            control={<Checkbox checked={addHint} onChange={handleAddHintChange} />}
             label='Add Hint'
           />
         </Grid>

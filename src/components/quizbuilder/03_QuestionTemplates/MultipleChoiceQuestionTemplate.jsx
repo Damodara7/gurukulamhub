@@ -287,6 +287,16 @@ const MultipleChoiceQuestionTemplate = ({
     return ''
   }
 
+   const handleAddHintChange = e => {
+     const isChecked = e.target.checked
+     setAddHint(isChecked)
+     if (!isChecked) {
+       // When unchecking, reset to empty/zero
+       setHint('')
+       setHintMarks(0)
+     }
+   }
+
   const hasAtleastOneCorrectOption = options?.filter(op => op.correct).length >= 1 || false;
 
   return (
@@ -798,7 +808,7 @@ const MultipleChoiceQuestionTemplate = ({
       <Grid container spacing={2} mt={2} alignItems='start'>
         <Grid item xs={12} className='flex justify-start'>
           <FormControlLabel
-            control={<Checkbox checked={addHint} onChange={e => setAddHint(e.target.checked)} />}
+            control={<Checkbox checked={addHint} onChange={ handleAddHintChange} />}
             label='Add Hint'
           />
         </Grid>

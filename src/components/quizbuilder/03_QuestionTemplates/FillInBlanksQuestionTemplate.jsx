@@ -220,6 +220,20 @@ const FillInBlanksQuestionTemplate = ({
     }
     return ''
   }
+  
+
+   const handleAddHintChange = e => {
+     const isChecked = e.target.checked
+     setAddHint(isChecked)
+     if (!isChecked) {
+       // When unchecking, reset to empty/zero
+       setHint('')
+       setHintMarks(0)
+     }
+   }
+
+
+
 
   const hasAtleastOneBlank = questionParts.filter(p => p.type === 'blank').length >= 1 || false
   const hasAtleastOneText = questionParts.filter(p => p.type === 'text').length >= 1 || false
@@ -348,10 +362,7 @@ const FillInBlanksQuestionTemplate = ({
       {/* Hint, Marks, Hint Marks, Skippable, Time in Seconds */}
       <Grid container spacing={2} mt={2} alignItems='start'>
         <Grid item xs={12} className='flex justify-start'>
-          <FormControlLabel
-            control={<Checkbox checked={addHint} onChange={e => setAddHint(e.target.checked)} />}
-            label='Add Hint'
-          />
+          <FormControlLabel control={<Checkbox checked={addHint} onChange={handleAddHintChange} />} label='Add Hint' />
         </Grid>
 
         {addHint && (
