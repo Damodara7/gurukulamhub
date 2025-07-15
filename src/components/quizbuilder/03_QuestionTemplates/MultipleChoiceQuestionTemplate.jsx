@@ -850,10 +850,13 @@ const MultipleChoiceQuestionTemplate = ({
                   }}
                   value={hintMarks}
                   onChange={handleHintMarksChange}
-                  error={(addHint && hasErrors && !hintMarks && getErrorMessage('hintMarks')) || hintMarks >= marks}
+                  error={
+                    (addHint && hasErrors && !hintMarks && marks && getErrorMessage('hintMarks')) || // Only validate if marks exists
+                    (addHint && marks && hintMarks >= marks) // Only compare if marks exists
+                  }
                   helperText={
-                    (addHint && !hintMarks && getErrorMessage('hintMarks')) ||
-                    (hintMarks >= marks && 'Hint Marks cannot exceed question marks')
+                    (addHint && !hintMarks && marks && getErrorMessage('hintMarks')) || // Only show error if marks exists
+                    (addHint && marks && hintMarks >= marks && 'Hint marks cannot exceed question marks')
                   }
                 />
               </Grid>
