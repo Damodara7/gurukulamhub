@@ -43,7 +43,8 @@ export async function getOneByQueryParams({ queryParams }) {
   try {
     let user = await User.findOne({ ...queryParams })
       .select('-password')
-      .lean().populate('profile')
+      .lean()
+      .populate('profile')
     if (!user) {
       return { status: 'error', result: null, message: 'No user found' }
     }
@@ -335,6 +336,10 @@ export async function addByGoogleSignin({ email, data }) {
       }
       // Increase user login count
       user.loginCount = user.loginCount + 1
+      if (!user?.profile) {
+        const profile = await UserProfile.findOne({ email: email })
+        user.profile = profile?._id
+      }
       await user.save()
 
       // Synchronize all alerts from AlertModel to the user's alerts list on login
