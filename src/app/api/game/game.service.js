@@ -43,12 +43,22 @@ export const getOne = async (filter = {}) => {
     const [registeredUsers, participatedUsers, questions] = await Promise.all([
       Player.find({ game: game._id, status: { $in: ['registered', 'participated', 'completed'] } })
         .lean()
-        .populate('user')
-        .populate('user.profile'),
+
+        .populate({
+          path: 'user',
+          populate: {
+            path: 'profile'
+          }
+        }),
       Player.find({ game: game._id, status: { $in: ['participated', 'completed'] } })
         .lean()
-        .populate('user')
-        .populate('user.profile'),
+
+        .populate({
+          path: 'user',
+          populate: {
+            path: 'profile'
+          }
+        }),
       ,
       QuestionsModel.find({ quizId: game.quiz._id || game.quiz, languageCode: game.quiz.language?.code })
         .sort({ createdAt: 1 })
@@ -87,8 +97,13 @@ export const getAll = async (filter = {}) => {
     const gameIds = games.map(g => g._id)
     const allPlayers = await Player.find({ game: { $in: gameIds } })
       .lean()
-      .populate('user')
-      .populate('user.profile')
+
+      .populate({
+        path: 'user',
+        populate: {
+          path: 'profile'
+        }
+      })
     const playersByGame = {}
     for (const player of allPlayers) {
       const gid = player.game.toString()
@@ -145,8 +160,13 @@ export const getAllPublic = async (filter = {}) => {
     const gameIds = games.map(g => g._id)
     const allPlayers = await Player.find({ game: { $in: gameIds } })
       .lean()
-      .populate('user')
-      .populate('user.profile')
+
+      .populate({
+        path: 'user',
+        populate: {
+          path: 'profile'
+        }
+      })
     const playersByGame = {}
     for (const player of allPlayers) {
       const gid = player.game.toString()
@@ -206,8 +226,12 @@ export const getAllByEmail = async (email, filter = {}) => {
     const gameIds = games.map(g => g._id)
     const allPlayers = await Player.find({ game: { $in: gameIds } })
       .lean()
-      .populate('user')
-      .populate('user.profile')
+      .populate({
+        path: 'user',
+        populate: {
+          path: 'profile'
+        }
+      })
     const playersByGame = {}
     for (const player of allPlayers) {
       const gid = player.game.toString()
@@ -713,12 +737,20 @@ export const joinGame = async (gameId, userData) => {
       const [registeredUsers, participatedUsers] = await Promise.all([
         Player.find({ game: gameId, status: { $in: ['registered', 'participated', 'completed'] } })
           .lean()
-          .populate('user')
-          .populate('user.profile'),
+          .populate({
+            path: 'user',
+            populate: {
+              path: 'profile'
+            }
+          }),
         Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } })
           .lean()
-          .populate('user')
-          .populate('user.profile')
+          .populate({
+            path: 'user',
+            populate: {
+              path: 'profile'
+            }
+          })
       ])
       const game = await Game.findById(gameId).lean()
       return {
@@ -764,12 +796,22 @@ export const joinGame = async (gameId, userData) => {
     const [registeredUsers, participatedUsers] = await Promise.all([
       Player.find({ game: gameId, status: { $in: ['registered', 'participated', 'completed'] } })
         .lean()
-        .populate('user')
-        .populate('user.profile'),
+
+        .populate({
+          path: 'user',
+          populate: {
+            path: 'profile'
+          }
+        }),
       Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } })
         .lean()
-        .populate('user')
-        .populate('user.profile')
+
+        .populate({
+          path: 'user',
+          populate: {
+            path: 'profile'
+          }
+        })
     ])
 
     broadcastGameDetailsUpdates(gameId)
@@ -814,12 +856,22 @@ export const startGame = async (gameId, userData) => {
       const [registeredUsers, participatedUsers] = await Promise.all([
         Player.find({ game: gameId, status: { $in: ['registered', 'participated', 'completed'] } })
           .lean()
-          .populate('user')
-          .populate('user.profile'),
+
+          .populate({
+            path: 'user',
+            populate: {
+              path: 'profile'
+            }
+          }),
         Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } })
           .lean()
-          .populate('user')
-          .populate('user.profile')
+
+          .populate({
+            path: 'user',
+            populate: {
+              path: 'profile'
+            }
+          })
       ])
       const game = await Game.findById(gameId).lean()
       const questions = await QuestionsModel.find({ quizId: game.quiz, languageCode: game.quiz.language?.code }).lean()
@@ -842,12 +894,22 @@ export const startGame = async (gameId, userData) => {
     const [registeredUsers, participatedUsers] = await Promise.all([
       Player.find({ game: gameId, status: { $in: ['registered', 'participated', 'completed'] } })
         .lean()
-        .populate('user')
-        .populate('user.profile'),
+
+        .populate({
+          path: 'user',
+          populate: {
+            path: 'profile'
+          }
+        }),
       Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } })
         .lean()
-        .populate('user')
-        .populate('user.profile')
+
+        .populate({
+          path: 'user',
+          populate: {
+            path: 'profile'
+          }
+        })
     ])
 
     broadcastGameDetailsUpdates(gameId)
@@ -906,8 +968,13 @@ export const updatePlayerProgress = async (gameId, { user, userAnswer, finish })
           const players = await Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } })
             .sort({ fffPoints: -1 })
             .lean()
-            .populate('user')
-            .populate('user.profile')
+
+            .populate({
+              path: 'user',
+              populate: {
+                path: 'profile'
+              }
+            })
           const leaderboard = players.map(p => ({
             ...p,
             totalAnswerTime: p.answers?.reduce((sum, a) => sum + (a?.answerTime || 0), 0)
@@ -971,12 +1038,22 @@ export const updatePlayerProgress = async (gameId, { user, userAnswer, finish })
     const [registeredUsers, participatedUsers] = await Promise.all([
       Player.find({ game: gameId, status: { $in: ['registered', 'participated', 'completed'] } })
         .lean()
-        .populate('user')
-        .populate('user.profile'),
+
+        .populate({
+          path: 'user',
+          populate: {
+            path: 'profile'
+          }
+        }),
       Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } })
         .lean()
-        .populate('user')
-        .populate('user.profile')
+
+        .populate({
+          path: 'user',
+          populate: {
+            path: 'profile'
+          }
+        })
     ])
 
     // Broadcast leaderboard update
@@ -984,8 +1061,13 @@ export const updatePlayerProgress = async (gameId, { user, userAnswer, finish })
       const players = await Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } })
         .sort({ fffPoints: -1 })
         .lean()
-        .populate('user')
-        .populate('user.profile')
+
+        .populate({
+          path: 'user',
+          populate: {
+            path: 'profile'
+          }
+        })
       const leaderboard = players.map(p => ({
         ...p,
         totalAnswerTime: p.answers?.reduce((sum, a) => sum + (a?.answerTime || 0), 0)
@@ -1016,8 +1098,13 @@ export const getLeaderboard = async gameId => {
     const players = await Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } })
       .sort({ fffPoints: -1 })
       .lean()
-      .populate('user')
-      .populate('user.profile')
+
+      .populate({
+        path: 'user',
+        populate: {
+          path: 'profile'
+        }
+      })
     // Add totalAnswerTime for each player
     const leaderboard = players.map(p => ({
       ...p,
