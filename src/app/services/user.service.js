@@ -169,10 +169,13 @@ export async function add({ data: userData }) {
     })
     newUserData.socialLogin = 'credentials'
 
-    var savedNewUser = await newUserData.save()
     // const userProfile = new UserProfile({ email: userData.email, ...userData, password: hashedPassword })
     // await userProfile.save()
     const userProfileResult = await UserProfileService.add({ data: { email: userData.email, ...userData } })
+
+    newUserData.profile = userProfileResult?.result?._id
+    var savedNewUser = await newUserData.save()
+
     if (savedNewUser) {
       await srvSendEmailOtp(userData.email, 'verifyEmail')
       return { status: 'success', result: savedNewUser, message: 'User added successfully' }
@@ -209,10 +212,13 @@ export async function addByAdmin({ data: userData }) {
     })
     newUserData.socialLogin = 'credentials'
 
-    var savedNewUser = await newUserData.save()
     // const userProfile = new UserProfile({ email: userData.email, ...userData, password: hashedPassword })
     // await userProfile.save()
     const userProfileResult = await UserProfileService.addByAdmin({ data: { ...userData } })
+
+    newUserData.profile = userProfileResult?.result?._id
+    var savedNewUser = await newUserData.save()
+
     if (savedNewUser) {
       // await srvSendEmailOtp(userData.email, 'verifyEmail')
       const sendCredentialsResponse = await srvSendCredentials(userData)
@@ -285,12 +291,15 @@ export async function addByGoogleSignin({ email, data }) {
       newUserData.socialLogin = 'google'
       newUserData.isVerified = true
       newUserData.loginCount = newUserData.loginCount + 1
-      await newUserData.save()
 
       // Synchronize all alerts from AlertModel to the user's alerts list on login
       await UserAlertService.addAllAlertsToOneUser({ email })
 
-      const createdUserProfile = await UserProfileService.addOrUpdate({ email, data })
+      const createdUserProfileResult = await UserProfileService.addOrUpdate({ email, data })
+
+      newUserData.profile = createdUserProfileResult?.result?._id
+
+      await newUserData.save()
       return { status: 'success', result: newUserData, message: 'User added successfully by google signin' }
     } else {
       if (!user.isVerified) {
@@ -310,15 +319,18 @@ export async function addByGoogleSignin({ email, data }) {
         newUserData.socialLogin = 'google'
         newUserData.isVerified = true
         newUserData.loginCount = newUserData.loginCount + 1
-        await newUserData.save()
 
         // Synchronize all alerts from AlertModel to the user's alerts list on login
         await UserAlertService.addAllAlertsToOneUser({ email })
 
-        const createdUserProfile = await UserProfileService.addOrUpdate({
+        const createdUserProfileResult = await UserProfileService.addOrUpdate({
           email,
           data: { ...data, accountType: 'INDIVIDUAL' }
         })
+
+        newUserData.profile = createdUserProfileResult?.result?._id
+        await newUserData.save()
+
         return { status: 'success', result: newUserData, message: 'User added successfully by google signin' }
       }
       // Increase user login count
@@ -377,6 +389,11 @@ export async function mobileLogin({ email }) {
     let user = await User.findOne({ email })
     const userProfile = await UserProfile.findOne({ email: email })
 
+    if (!user?.profile) {
+      const profile = await UserProfile.findOne({ email: email })
+      user.profile = profile?._id
+    }
+
     // Synchronize all alerts from AlertModel to the user's alerts list on login
     await UserAlertService.addAllAlertsToOneUser({ email })
 
@@ -420,6 +437,11 @@ export async function login({ email, password }) {
       console.log('invalid password.')
 
       return { status: 'error', result: null, message: 'Invalid password' }
+    }
+
+    if (!user?.profile) {
+      const profile = await UserProfile.findOne({ email: email })
+      user.profile = profile?._id
     }
 
     // Increase user login count

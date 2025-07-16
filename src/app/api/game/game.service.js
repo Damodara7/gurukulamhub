@@ -11,6 +11,7 @@ import Player from '@/app/api/player/player.model'
 import { broadcastLeaderboard } from '../ws/leaderboard/[gameId]/publishers'
 import { broadcastGamesList } from '../ws/games/publishers'
 import { broadcastGameDetails } from '../ws/games/[gameId]/publishers'
+import UserProfile from '@/app/models/profile.model'
 
 export const getOne = async (filter = {}) => {
   await connectMongo()
@@ -687,6 +688,8 @@ export const joinGame = async (gameId, userData) => {
     }
     userData.id = user._id
 
+    const profile = await UserProfile.findOne({email: userData?.email}).lean()
+
     // Check if player already exists for this game
     let player = await Player.findOne({ game: gameId, email: userData?.email })
     if (player) {
@@ -731,7 +734,7 @@ export const joinGame = async (gameId, userData) => {
       answers: [],
       completed: false,
       status: 'registered',
-      joinedAt: null
+      joinedAt: null,
     })
     await player.save()
 

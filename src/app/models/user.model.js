@@ -1,4 +1,5 @@
 import mongoose from 'mongoose'
+import UserProfile from './profile.model'
 
 export const userSchema = new mongoose.Schema({
   email: {
@@ -6,6 +7,10 @@ export const userSchema = new mongoose.Schema({
     required: [true, 'Please provide email'],
     unique: true,
     index: true
+  },
+  profile: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'userprofiles',
   },
   phone: {
     type: String,
