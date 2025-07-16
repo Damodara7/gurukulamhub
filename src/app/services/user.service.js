@@ -19,7 +19,7 @@ import * as UserAlertService from '../api/user-alerts/user-alerts.service'
 export async function getByEmail({ email }) {
   await connectMongo()
   try {
-    let user = await User.findOne({ email }).select('-password').lean()
+    let user = await User.findOne({ email }).select('-password').lean().populate('profile')
     if (user && !user.isActive) {
       return {
         status: 'error',
@@ -43,7 +43,7 @@ export async function getOneByQueryParams({ queryParams }) {
   try {
     let user = await User.findOne({ ...queryParams })
       .select('-password')
-      .lean()
+      .lean().populate('profile')
     if (!user) {
       return { status: 'error', result: null, message: 'No user found' }
     }
@@ -58,7 +58,7 @@ export async function getOneByQueryParams({ queryParams }) {
 export async function getById({ id }) {
   await connectMongo()
   try {
-    let user = await User.findOne({ _id: id }).select('-password').lean()
+    let user = await User.findOne({ _id: id }).select('-password').lean().populate('profile')
     if (user && !user.isActive) {
       return {
         status: 'error',
@@ -79,7 +79,7 @@ export async function getById({ id }) {
 export async function getByReferralToken({ referralToken }) {
   await connectMongo()
   try {
-    let user = await User.findOne({ referralToken, isActive: true }).select('-password').lean()
+    let user = await User.findOne({ referralToken, isActive: true }).select('-password').lean().populate('profile')
     if (user && !user.isActive) {
       return {
         status: 'error',
@@ -121,7 +121,7 @@ export async function getAll() {
   }
 
   try {
-    const users = await User.find({}).select('-password').sort({ createdAt: -1 }) // Fetch all users, exclude passwords
+    const users = await User.find({}).select('-password').sort({ createdAt: -1 }).populate('profile') // Fetch all users, exclude passwords
 
     // Merge users with userProfiles based on matching emails
     const mergedUsers = users.map(user => {

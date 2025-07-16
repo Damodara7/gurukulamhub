@@ -678,7 +678,7 @@ export const approveGame = async (gameId, updateData) => {
 export const joinGame = async (gameId, userData) => {
   await connectMongo()
   try {
-    const user = await User.findOne({ email: userData?.email })
+    const user = await User.findOne({ email: userData?.email }).populate('profile')
     if (!user) {
       return {
         status: 'error',
@@ -688,7 +688,7 @@ export const joinGame = async (gameId, userData) => {
     }
     userData.id = user._id
 
-    const profile = await UserProfile.findOne({email: userData?.email}).lean()
+    const profile = await UserProfile.findOne({ email: userData?.email }).lean()
 
     // Check if player already exists for this game
     let player = await Player.findOne({ game: gameId, email: userData?.email })
@@ -734,7 +734,7 @@ export const joinGame = async (gameId, userData) => {
       answers: [],
       completed: false,
       status: 'registered',
-      joinedAt: null,
+      joinedAt: null
     })
     await player.save()
 
@@ -1309,42 +1309,42 @@ export const forwardQuestion = async (gameId, user, currentQuestionIndex) => {
 
     // --- FFF Points Calculation for just-ended question ---
     if (currentQuestionIndex >= 0) {
-      const questionEndTime = new Date();
-      const questionStartTime = game.liveQuestionIndex > 0 ? new Date(game.liveQuestionStartedAt) : new Date(game?.startTime);
-      const questionDuration = new Date(questionEndTime).getTime() - new Date(questionStartTime).getTime();
+      const questionEndTime = new Date()
+      const questionStartTime =
+        game.liveQuestionIndex > 0 ? new Date(game.liveQuestionStartedAt) : new Date(game?.startTime)
+      const questionDuration = new Date(questionEndTime).getTime() - new Date(questionStartTime).getTime()
 
       // Get the just-ended question's ID and max marks
-      const quiz = await Quiz.findById(game.quiz).lean();
-      const questions = await QuestionsModel.find({ quizId: quiz._id, languageCode: quiz.language?.code }).sort({ createdAt: 1 }).lean();
-      const justEndedQuestion = questions[currentQuestionIndex];
-      const maxMarks = justEndedQuestion?.data?.marks || 1;
-      const maxFFF = 1000;
+      const quiz = await Quiz.findById(game.quiz).lean()
+      const questions = await QuestionsModel.find({ quizId: quiz._id, languageCode: quiz.language?.code })
+        .sort({ createdAt: 1 })
+        .lean()
+      const justEndedQuestion = questions[currentQuestionIndex]
+      const maxMarks = justEndedQuestion?.data?.marks || 1
+      const maxFFF = 1000
 
       // Get all players who participated
-      const players = await Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } });
+      const players = await Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } })
 
       for (const player of players) {
         // Find the answer for the just-ended question
-        const answer = player?.answers?.find(a => a.question.toString() === justEndedQuestion._id.toString());
+        const answer = player?.answers?.find(a => a.question.toString() === justEndedQuestion._id.toString())
         if (answer && answer.answerTime != null) {
           // Calculate fffPoints
           answer.fffPoints =
-            answer.marks > 0
-              ? maxFFF * (1 - (answer.answerTime / questionDuration)) * (answer.marks / maxMarks)
-              : 0;
-
+            answer.marks > 0 ? maxFFF * (1 - answer.answerTime / questionDuration) * (answer.marks / maxMarks) : 0
         }
         // Update player's total fffPoints
-        player.fffPoints = player.answers.reduce((sum, a) => sum + (a.fffPoints || 0), 0);
-        await player.save();
+        player.fffPoints = player.answers.reduce((sum, a) => sum + (a.fffPoints || 0), 0)
+        await player.save()
       }
       // Broadcast updated leaderboard
-      const updatedPlayers = await Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } }).lean();
+      const updatedPlayers = await Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } }).lean()
       const leaderboard = updatedPlayers.map(p => ({
         ...p,
         totalAnswerTime: p.answers?.reduce((sum, a) => sum + (a?.answerTime || 0), 0)
-      }));
-      broadcastLeaderboard(gameId, leaderboard);
+      }))
+      broadcastLeaderboard(gameId, leaderboard)
     }
     // --- End FFF Points Calculation ---
 
