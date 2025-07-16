@@ -41,8 +41,15 @@ export const getOne = async (filter = {}) => {
 
     // Add registeredUsers and participatedUsers from Player model
     const [registeredUsers, participatedUsers, questions] = await Promise.all([
-      Player.find({ game: game._id, status: { $in: ['registered', 'participated', 'completed'] } }).lean(),
-      Player.find({ game: game._id, status: { $in: ['participated', 'completed'] } }).lean(),
+      Player.find({ game: game._id, status: { $in: ['registered', 'participated', 'completed'] } })
+        .lean()
+        .populate('user')
+        .populate('user.profile'),
+      Player.find({ game: game._id, status: { $in: ['participated', 'completed'] } })
+        .lean()
+        .populate('user')
+        .populate('user.profile'),
+      ,
       QuestionsModel.find({ quizId: game.quiz._id || game.quiz, languageCode: game.quiz.language?.code })
         .sort({ createdAt: 1 })
         .lean()
@@ -78,7 +85,10 @@ export const getAll = async (filter = {}) => {
 
     // For each game, add registeredUsers, participatedUsers, and questions from Player and QuestionsModel
     const gameIds = games.map(g => g._id)
-    const allPlayers = await Player.find({ game: { $in: gameIds } }).lean()
+    const allPlayers = await Player.find({ game: { $in: gameIds } })
+      .lean()
+      .populate('user')
+      .populate('user.profile')
     const playersByGame = {}
     for (const player of allPlayers) {
       const gid = player.game.toString()
@@ -133,7 +143,10 @@ export const getAllPublic = async (filter = {}) => {
 
     // For each game, add registeredUsers, participatedUsers, and questions
     const gameIds = games.map(g => g._id)
-    const allPlayers = await Player.find({ game: { $in: gameIds } }).lean()
+    const allPlayers = await Player.find({ game: { $in: gameIds } })
+      .lean()
+      .populate('user')
+      .populate('user.profile')
     const playersByGame = {}
     for (const player of allPlayers) {
       const gid = player.game.toString()
@@ -191,7 +204,10 @@ export const getAllByEmail = async (email, filter = {}) => {
 
     // For each game, add registeredUsers, participatedUsers, and questions
     const gameIds = games.map(g => g._id)
-    const allPlayers = await Player.find({ game: { $in: gameIds } }).lean()
+    const allPlayers = await Player.find({ game: { $in: gameIds } })
+      .lean()
+      .populate('user')
+      .populate('user.profile')
     const playersByGame = {}
     for (const player of allPlayers) {
       const gid = player.game.toString()
@@ -695,8 +711,14 @@ export const joinGame = async (gameId, userData) => {
     if (player) {
       // Fetch latest registered and participated users
       const [registeredUsers, participatedUsers] = await Promise.all([
-        Player.find({ game: gameId, status: { $in: ['registered', 'participated', 'completed'] } }).lean(),
-        Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } }).lean()
+        Player.find({ game: gameId, status: { $in: ['registered', 'participated', 'completed'] } })
+          .lean()
+          .populate('user')
+          .populate('user.profile'),
+        Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } })
+          .lean()
+          .populate('user')
+          .populate('user.profile')
       ])
       const game = await Game.findById(gameId).lean()
       return {
@@ -740,8 +762,14 @@ export const joinGame = async (gameId, userData) => {
 
     // Fetch latest registered and participated users after registration
     const [registeredUsers, participatedUsers] = await Promise.all([
-      Player.find({ game: gameId, status: { $in: ['registered', 'participated', 'completed'] } }).lean(),
-      Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } }).lean()
+      Player.find({ game: gameId, status: { $in: ['registered', 'participated', 'completed'] } })
+        .lean()
+        .populate('user')
+        .populate('user.profile'),
+      Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } })
+        .lean()
+        .populate('user')
+        .populate('user.profile')
     ])
 
     broadcastGameDetailsUpdates(gameId)
@@ -784,8 +812,14 @@ export const startGame = async (gameId, userData) => {
     if (player.status === 'participated' || player.status === 'completed') {
       // Fetch latest registered and participated users
       const [registeredUsers, participatedUsers] = await Promise.all([
-        Player.find({ game: gameId, status: { $in: ['registered', 'participated', 'completed'] } }).lean(),
-        Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } }).lean()
+        Player.find({ game: gameId, status: { $in: ['registered', 'participated', 'completed'] } })
+          .lean()
+          .populate('user')
+          .populate('user.profile'),
+        Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } })
+          .lean()
+          .populate('user')
+          .populate('user.profile')
       ])
       const game = await Game.findById(gameId).lean()
       const questions = await QuestionsModel.find({ quizId: game.quiz, languageCode: game.quiz.language?.code }).lean()
@@ -806,8 +840,14 @@ export const startGame = async (gameId, userData) => {
     const questions = await QuestionsModel.find({ quizId, languageCode }).lean()
     // Fetch latest registered and participated users after participation
     const [registeredUsers, participatedUsers] = await Promise.all([
-      Player.find({ game: gameId, status: { $in: ['registered', 'participated', 'completed'] } }).lean(),
-      Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } }).lean()
+      Player.find({ game: gameId, status: { $in: ['registered', 'participated', 'completed'] } })
+        .lean()
+        .populate('user')
+        .populate('user.profile'),
+      Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } })
+        .lean()
+        .populate('user')
+        .populate('user.profile')
     ])
 
     broadcastGameDetailsUpdates(gameId)
@@ -866,6 +906,8 @@ export const updatePlayerProgress = async (gameId, { user, userAnswer, finish })
           const players = await Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } })
             .sort({ fffPoints: -1 })
             .lean()
+            .populate('user')
+            .populate('user.profile')
           const leaderboard = players.map(p => ({
             ...p,
             totalAnswerTime: p.answers?.reduce((sum, a) => sum + (a?.answerTime || 0), 0)
@@ -927,8 +969,14 @@ export const updatePlayerProgress = async (gameId, { user, userAnswer, finish })
 
     // Fetch latest game, registeredUsers, and participatedUsers
     const [registeredUsers, participatedUsers] = await Promise.all([
-      Player.find({ game: gameId, status: { $in: ['registered', 'participated', 'completed'] } }).lean(),
-      Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } }).lean()
+      Player.find({ game: gameId, status: { $in: ['registered', 'participated', 'completed'] } })
+        .lean()
+        .populate('user')
+        .populate('user.profile'),
+      Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } })
+        .lean()
+        .populate('user')
+        .populate('user.profile')
     ])
 
     // Broadcast leaderboard update
@@ -936,6 +984,8 @@ export const updatePlayerProgress = async (gameId, { user, userAnswer, finish })
       const players = await Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } })
         .sort({ fffPoints: -1 })
         .lean()
+        .populate('user')
+        .populate('user.profile')
       const leaderboard = players.map(p => ({
         ...p,
         totalAnswerTime: p.answers?.reduce((sum, a) => sum + (a?.answerTime || 0), 0)
@@ -966,6 +1016,8 @@ export const getLeaderboard = async gameId => {
     const players = await Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } })
       .sort({ fffPoints: -1 })
       .lean()
+      .populate('user')
+      .populate('user.profile')
     // Add totalAnswerTime for each player
     const leaderboard = players.map(p => ({
       ...p,

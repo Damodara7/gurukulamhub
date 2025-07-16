@@ -34,7 +34,7 @@ function AdminLeaderboard({
   const [loading, setLoading] = useState(true)
   const wsRef = useRef(null)
   const [highlightedRows, setHighlightedRows] = useState({})
-
+  console.log('game data for admin ' , game)
   const formatTime = seconds => {
     // Handle edge cases
     if (seconds === 0) return '0s'

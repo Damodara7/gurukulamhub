@@ -28,6 +28,8 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
   const wsRef = useRef(null)
   const [highlightedRows, setHighlightedRows] = useState({})
 
+
+  console.log('data game on the leaderboard ' , game)
   useEffect(() => {
     const fetchLeaderboard = async () => {
       try {
@@ -36,7 +38,7 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
         const res = await RestApi.get(`${API_URLS.v0.USERS_GAME}/${game._id}/leaderboard`)
         if (res.status === 'success') {
           // Sort leaderboard by score (descending) and then by totalTime (ascending)
-          console.log(res.result)
+          console.log(' response result '  , res.result)
 
           const sortedLeaderboard = res.result?.sort((p1, p2) => {
             if (game?.gameMode === 'live') {
