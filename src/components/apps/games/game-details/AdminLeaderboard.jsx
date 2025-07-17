@@ -34,7 +34,7 @@ function AdminLeaderboard({
   const [loading, setLoading] = useState(true)
   const wsRef = useRef(null)
   const [highlightedRows, setHighlightedRows] = useState({})
-  console.log('game data for admin ' , game)
+  console.log('game data for admin ', game)
   const formatTime = seconds => {
     // Handle edge cases
     if (seconds === 0) return '0s'
@@ -138,7 +138,9 @@ function AdminLeaderboard({
     // WebSocket connection for real-time updates
     const wsUrl =
       typeof window !== 'undefined'
-        ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/api/ws/leaderboard/${game._id}`
+        ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/api/ws/leaderboard/${
+            game._id
+          }`
         : ''
     if (wsUrl) {
       wsRef.current = new WebSocket(wsUrl)
@@ -209,7 +211,9 @@ function AdminLeaderboard({
     const r = parseInt(hex.slice(1, 3), 16)
     const g = parseInt(hex.slice(3, 5), 16)
     const b = parseInt(hex.slice(5, 7), 16)
-    return `rgba(${Math.round(r * (1 - alpha) + 255 * alpha)}, ${Math.round(g * (1 - alpha) + 255 * alpha)}, ${Math.round(b * (1 - alpha) + 255 * alpha)}, 1)`
+    return `rgba(${Math.round(r * (1 - alpha) + 255 * alpha)}, ${Math.round(
+      g * (1 - alpha) + 255 * alpha
+    )}, ${Math.round(b * (1 - alpha) + 255 * alpha)}, 1)`
   }
 
   // Get row style based on movement
@@ -253,88 +257,102 @@ function AdminLeaderboard({
                 <TableCell align='right'>Answer Time</TableCell>
                 {game.gameMode === 'live' && (
                   <TableCell align='right'>
-                    <Tooltip title="Fastest Finger First Points" placement="top">FFF Points</Tooltip>
+                    <Tooltip title='Fastest Finger First Points' placement='top'>
+                      FFF Points
+                    </Tooltip>
                   </TableCell>
                 )}
-                {game.gameMode === 'self-paced' && (
-                  <TableCell align='right'>Finished At</TableCell>
-                )}
+                {game.gameMode === 'self-paced' && <TableCell align='right'>Finished At</TableCell>}
                 <TableCell align='right'>Status</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {leaderboard && leaderboard.length > 0 ? (
                 <AnimatePresence>
-                  {leaderboard
-                    .slice(0, duringPlay ? 5 : leaderboard.length)
-                    .map((user, index) => (
-                      <motion.tr
-                        key={user._id}
-                        layout
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 20 }}
-                        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                        style={getRowAnimation(user, index)}
-                      >
-                        <TableCell>
-                          <Typography variant='subtitle1' color='text.secondary'>
-                            #{index + 1}
+                  {leaderboard.slice(0, duringPlay ? 5 : leaderboard.length).map((user, index) => (
+                    <motion.tr
+                      key={user._id}
+                      layout
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 20 }}
+                      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                      style={getRowAnimation(user, index)}
+                    >
+                      <TableCell>
+                        <Typography variant='subtitle1' color='text.secondary'>
+                          #{index + 1}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                          <Avatar
+                            sx={{ width: 32, height: 32 }}
+                            alt={
+                              user?.user?.profile?.firstname && user?.user?.profile?.lastname
+                                ? `${user?.user?.profile?.firstname} ${user?.user?.profile?.lastname} `
+                                : user?.user?.profile?.firstname || user?.user?.profile?.lastname || user?.email
+                            }
+                          >
+                            {user?.user?.profile?.firstname && user?.user?.profile?.lastname
+                              ? `${user?.user?.profile?.firstname[0].toUpperCase()} ${user?.user?.profile?.lastname[0].toUpperCase()} `
+                              : user?.user?.profile?.firstname[0].toUpperCase() || user?.user?.profile?.lastname[0].toUpperCase() || user.email[0].toUpperCase()}
+                          </Avatar>
+                          <Typography variant='body1'>
+                            {user?.user?.profile?.firstname && user?.user?.profile?.lastname
+                              ? `${user?.user?.profile?.firstname} ${user?.user?.profile?.lastname} `
+                              : user?.user?.profile?.firstname || user?.user?.profile?.lastname || user?.email}
                           </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <Avatar sx={{ width: 32, height: 32 }} alt={user.email}>
-                              {user.email[0].toUpperCase()}
-                            </Avatar>
-                            <Typography variant='body1'>{user.email}</Typography>
-                          </Box>
-                        </TableCell>
-                        <TableCell align='right'>
-                          <Typography variant='body1' fontWeight='medium'>
-                            {user.score?.toFixed(2)}
-                          </Typography>
-                        </TableCell>
-                        <TableCell align='right'>
-                          <Typography variant='body1' fontWeight='medium'>
-                            {formatTime((user.totalAnswerTime || user.answers?.reduce((sum, a) => sum + a.answerTime, 0) || 0) / 1000)}
-                          </Typography>
-                        </TableCell>
-                        {game.gameMode === 'live' && (
-                          <TableCell align='right'>
-                            <Typography variant='body1' fontWeight='medium'>
-                              {user?.fffPoints?.toFixed(3)}
-                            </Typography>
-                          </TableCell>
-                        )}
-                        {game.gameMode === 'self-paced' && (
-                          <TableCell align='right'>
-                            <Typography variant='body1' fontWeight='medium'>
-                              {user.finishedAt ? new Date(user.finishedAt).toLocaleString() : '--'}
-                            </Typography>
-                          </TableCell>
-                        )}
-                        <TableCell align='right'>
-                          {user.completed ? (
-                            <Chip
-                              icon={<CheckCircle fontSize='small' />}
-                              label='Completed'
-                              color='success'
-                              size='small'
-                              variant='outlined'
-                            />
-                          ) : (
-                            <Chip
-                              icon={<Cancel fontSize='small' />}
-                              label='In Progress'
-                              color='warning'
-                              size='small'
-                              variant='outlined'
-                            />
+                        </Box>
+                      </TableCell>
+                      <TableCell align='right'>
+                        <Typography variant='body1' fontWeight='medium'>
+                          {user.score?.toFixed(2)}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align='right'>
+                        <Typography variant='body1' fontWeight='medium'>
+                          {formatTime(
+                            (user.totalAnswerTime || user.answers?.reduce((sum, a) => sum + a.answerTime, 0) || 0) /
+                              1000
                           )}
+                        </Typography>
+                      </TableCell>
+                      {game.gameMode === 'live' && (
+                        <TableCell align='right'>
+                          <Typography variant='body1' fontWeight='medium'>
+                            {user?.fffPoints?.toFixed(3)}
+                          </Typography>
                         </TableCell>
-                      </motion.tr>
-                    ))}
+                      )}
+                      {game.gameMode === 'self-paced' && (
+                        <TableCell align='right'>
+                          <Typography variant='body1' fontWeight='medium'>
+                            {user.finishedAt ? new Date(user.finishedAt).toLocaleString() : '--'}
+                          </Typography>
+                        </TableCell>
+                      )}
+                      <TableCell align='right'>
+                        {user.completed ? (
+                          <Chip
+                            icon={<CheckCircle fontSize='small' />}
+                            label='Completed'
+                            color='success'
+                            size='small'
+                            variant='outlined'
+                          />
+                        ) : (
+                          <Chip
+                            icon={<Cancel fontSize='small' />}
+                            label='In Progress'
+                            color='warning'
+                            size='small'
+                            variant='outlined'
+                          />
+                        )}
+                      </TableCell>
+                    </motion.tr>
+                  ))}
                 </AnimatePresence>
               ) : (
                 <TableRow>

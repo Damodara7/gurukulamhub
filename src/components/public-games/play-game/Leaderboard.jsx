@@ -258,7 +258,11 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
                   style={getRowAnimation(player, index)}
                 >
                   <TableCell>{index + 1}</TableCell>
-                  <TableCell>{player.email}</TableCell>
+                  <TableCell>
+                    {player?.user?.profile?.firstname && player?.user?.profile?.lastname
+                      ? ` ${player?.user?.profile?.firstname} ${player?.user?.profile?.lastname}`
+                      : player?.user?.profile?.firstname || player?.user?.profile?.lastname || player?.email}
+                  </TableCell>
                   <TableCell align='right'>{player.score.toFixed(2)}</TableCell>
                   {!duringPlay && <TableCell align='right'>{formatTime(player.totalAnswerTime / 1000)}</TableCell>}
                   {game?.gameMode === 'live' && <TableCell align='right'>{player?.fffPoints?.toFixed(3)}</TableCell>}
