@@ -5,6 +5,8 @@ import { useState, useMemo, useEffect } from 'react'
 
 // Next Imports
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
+import { getLocalizedUrl } from '@/utils/i18n'
 
 // MUI Imports
 import Card from '@mui/material/Card'
@@ -133,7 +135,45 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
         },
         columnHelper.accessor('email', {
           header: 'Sponsorer',
-          cell: ({ row }) => <Typography variant='body1'>{row.original?.email}</Typography>
+          cell: ({ row }) => {
+            const firstname = row.original?.profile?.firstname || ''
+            const lastname = row.original?.profile?.lastname || ''
+            const fullname = `${firstname} ${lastname}`.trim()
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                {fullname ? (
+                  <Typography variant='body2' color='text.secondary' sx={{ mb: 0.25, lineHeight: 1.1 }}>
+                    {fullname}
+                  </Typography>
+                ) : null}
+                <Link
+                  href={getLocalizedUrl(`/apps/user/${encodeURIComponent(row.original?.email)}`, locale)}
+                  style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                >
+                  <Typography
+                    variant='body1'
+                    color='text.primary'
+                    sx={{
+                      cursor: 'pointer',
+                      textDecoration: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      transition: 'color 0.2s',
+                      '&:hover': {
+                        color: 'info.main',
+                        '& .external-link-icon': {
+                          color: 'info.main',
+                        }
+                      }
+                    }}
+                  >
+                    {row.original?.email}
+                    <i className='ri-external-link-line text-[16px] ml-1 external-link-icon' style={{ marginLeft: 4, color: 'var(--mui-palette-info-main)' }} />
+                  </Typography>
+                </Link>
+              </div>
+            )
+          }
         }),
         (sponsorType === 'all' || sponsorType === 'game') && {
           id: 'games',

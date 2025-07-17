@@ -46,6 +46,7 @@ import CustomAvatar from '@core/components/mui/Avatar'
 import OptionMenu from '@core/components/option-menu'
 import AddUserDrawer from './AddUserDrawer'
 import EditUserRoleDialog from '../../roles/EditUserRoleDialog'
+import IconButtonTooltip from '@/components/IconButtonTooltip'
 
 // Util Imports
 import { getInitials } from '@/utils/getInitials'
@@ -160,15 +161,37 @@ const RolesTable = ({ tableData, refreshUsers }) => {
       columnHelper.accessor('fullName', {
         header: 'User',
         cell: ({ row }) => {
-          // console.log('row : ', row.original)
           const fullname = `${row.original.firstname || ''} ${row.original.lastname || ''}`
           return (
             <div className='flex items-center gap-4'>
               {getAvatar({ avatar: row.original.image, fullName: fullname })}
               <div className='flex flex-col'>
-                <Typography variant='body1' className='font-medium' color='text.primary'>
-                  {fullname || ''}
-                </Typography>
+                <Link
+                  href={getLocalizedUrl(`/apps/user/${encodeURIComponent(row.original.email)}`, locale)}
+                  style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                >
+                  <Typography
+                    variant='body1'
+                    className='font-medium'
+                    color='text.primary'
+                    sx={{
+                      cursor: 'pointer',
+                      textDecoration: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      transition: 'color 0.2s',
+                      '&:hover': {
+                        color: 'info.main',
+                        '& .external-link-icon': {
+                          color: 'info.main',
+                        }
+                      }
+                    }}
+                  >
+                    {fullname || ''}
+                    <i className='ri-external-link-line text-[16px] ml-1 external-link-icon' style={{ marginLeft: 4, color: 'var(--mui-palette-info-main)' }} />
+                  </Typography>
+                </Link>
                 <Typography variant='body2'>{row.original.nickname}</Typography>
               </div>
             </div>
@@ -177,7 +200,32 @@ const RolesTable = ({ tableData, refreshUsers }) => {
       }),
       columnHelper.accessor('email', {
         header: 'Email',
-        cell: ({ row }) => <Typography>{row.original.email}</Typography>
+        cell: ({ row }) => (
+          <Link
+            href={getLocalizedUrl(`/apps/user/${encodeURIComponent(row.original.email)}`, locale)}
+            style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+          >
+            <Typography
+              color='text.primary'
+              sx={{
+                cursor: 'pointer',
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                transition: 'color 0.2s',
+                '&:hover': {
+                  color: 'info.main',
+                  '& .external-link-icon': {
+                    color: 'info.main',
+                  }
+                }
+              }}
+            >
+              {row.original.email}
+              <i className='ri-external-link-line text-[16px] ml-1 external-link-icon' style={{ marginLeft: 4, color: 'var(--mui-palette-info-main)' }} />
+            </Typography>
+          </Link>
+        )
       }),
       columnHelper.accessor('roles', {
         header: 'Role',
@@ -236,22 +284,17 @@ const RolesTable = ({ tableData, refreshUsers }) => {
         header: 'Actions',
         cell: ({ row }) => (
           <div className='flex items-center'>
-            {/* <IconButtonTooltip title=''>
-              <i className='ri-delete-bin-7-line text-[22px] text-textSecondary' />
-            </IconButtonTooltip> */}
-            {/* <IconButtonTooltip title=''>
-              <Link href={getLocalizedUrl('apps/user/view', locale)} className='flex'>
-                <i className='ri-eye-line text-[22px] text-textSecondary' />
-              </Link>
-            </IconButtonTooltip> */}
+            <IconButtonTooltip
+              title='View'
+              href={getLocalizedUrl(`/apps/user/${encodeURIComponent(row.original.email)}`, locale)}
+              component={Link}
+              size='small'
+            >
+              <i className='ri-eye-line text-[22px] text-textSecondary' />
+            </IconButtonTooltip>
             <OptionMenu
               iconClassName='text-[22px] text-textSecondary'
               options={[
-                // {
-                //   text: 'Download',
-                //   icon: 'ri-download-line text-[22px]',
-                //   menuItemProps: { className: 'flex items-center gap-2 text-textSecondary' }
-                // },
                 {
                   text: 'Edit',
                   icon: 'ri-edit-box-line text-[22px]',
