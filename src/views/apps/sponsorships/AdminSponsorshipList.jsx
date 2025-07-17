@@ -5,6 +5,8 @@ import { useState, useMemo, useEffect } from 'react'
 
 // Next Imports
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
+import { getLocalizedUrl } from '@/utils/i18n'
 
 // MUI Imports
 import Card from '@mui/material/Card'
@@ -42,6 +44,10 @@ import { API_URLS } from '@/configs/apiConfig'
 import tableStyles from '@core/styles/table.module.css'
 import { Box, Divider, FormControl, Grid, InputLabel, MenuItem, Select, Tab } from '@mui/material'
 import { revalidatePath } from 'next/cache'
+import React from 'react'
+import { Tooltip } from '@mui/material'
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney'
+import CardGiftcardIcon from '@mui/icons-material/CardGiftcard'
 
 const fuzzyFilter = (row, columnId, value, addMeta) => {
   // Rank the item
@@ -130,30 +136,62 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
         columnHelper.accessor('email', {
           header: 'Sponsorer',
           cell: ({ row }) => {
-            // console.log('row : ', row.original)
-            return <Typography variant='body1'>{row.original?.email}</Typography>
+            const firstname = row.original?.profile?.firstname || ''
+            const lastname = row.original?.profile?.lastname || ''
+            const fullname = `${firstname} ${lastname}`.trim()
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                {fullname ? (
+                  <Typography variant='body2' color='text.secondary' sx={{ mb: 0.25, lineHeight: 1.1 }}>
+                    {fullname}
+                  </Typography>
+                ) : null}
+                <Link
+                  href={getLocalizedUrl(`/apps/user/${encodeURIComponent(row.original?.email)}`, locale)}
+                  style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                >
+                  <Typography
+                    variant='body1'
+                    color='text.primary'
+                    sx={{
+                      cursor: 'pointer',
+                      textDecoration: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      transition: 'color 0.2s',
+                      '&:hover': {
+                        color: 'info.main',
+                        '& .external-link-icon': {
+                          color: 'info.main',
+                        }
+                      }
+                    }}
+                  >
+                    {row.original?.email}
+                    <i className='ri-external-link-line text-[16px] ml-1 external-link-icon' style={{ marginLeft: 4, color: 'var(--mui-palette-info-main)' }} />
+                  </Typography>
+                </Link>
+              </div>
+            )
           }
         }),
         (sponsorType === 'all' || sponsorType === 'game') && {
           id: 'games',
           ...columnHelper.accessor('games', {
             header: 'Sponsored Games',
-            cell: ({ row }) => {
-              // console.log('row : ', row.original)
-              return <Typography variant='body1'>{row.original?.games?.join(', ') || '-'}</Typography>
-            }
+            cell: ({ row }) => (
+              <Typography variant='body1'>{row.original?.games?.join(', ') || <span style={{fontSize: '0.85rem', fontStyle: 'italic'}}>Any game</span>}</Typography>
+            )
           })
         },
         (sponsorType === 'all' || sponsorType === 'quiz') && {
           id: 'quizzes',
-          accessorFn: row => row.quizzes?.map(q => q.title).join(', ') || '', // Flatten for searching
+          accessorFn: row => row.quizzes?.map(q => q.title).join(', ') || '',
           ...columnHelper.accessor('quizzes', {
             header: 'Sponsored Quizzes',
-            cell: ({ row }) => {
-              return (
-                <Typography variant='body1'>{row.original?.quizzes?.map(q => q.title).join(', ') || '-'}</Typography>
-              )
-            }
+            cell: ({ row }) => (
+              <Typography variant='body1'>{row.original?.quizzes?.map(q => q.title).join(', ') || <span style={{fontSize: '0.85rem', fontStyle: 'italic'}}>Any quiz</span>}</Typography>
+            )
           })
         },
         (sponsorType === 'all' || sponsorType === 'area' || sponsorType === 'quiz') && {
@@ -171,46 +209,182 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
               if (row.original?.location?.city) {
                 area += `, ${row.original?.location?.city}`
               }
-              return <Typography variant='body1'>{area || '-'}</Typography>
+              return <Typography variant='body1'>{area || <span style={{fontSize: '0.85rem', fontStyle: 'italic'}}>Any location</span>}</Typography>
             }
           })
         },
-        columnHelper.accessor('sponsorshipAmount', {
-          header: 'Amount',
+        {
+          id: 'rewardType',
+          ...columnHelper.accessor('rewardType', {
+            header: 'Reward Type',
+            cell: ({ row }) => (
+              <Typography variant='body1' sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                {row.original.rewardType === 'cash' ? (
+                  <>
+                    <AttachMoneyIcon fontSize='small' sx={{ color: 'success.main' }} />
+                    Cash
+                  </>
+                ) : (
+                  <>
+                    <CardGiftcardIcon fontSize='small' sx={{ color: 'warning.main' }} />
+                    Physical Gift
+                  </>
+                )}
+              </Typography>
+            )
+          })
+        },
+        {
+          id: 'rewardDetails',
+          ...columnHelper.accessor('rewardDetails', {
+            header: 'Reward Details',
+            cell: ({ row }) => {
+              const { rewardType, currency } = row.original;
+              if (rewardType === 'cash') {
+                const formattedAmount = new Intl.NumberFormat(undefined, {
+                  style: 'currency',
+                  currency: currency || 'INR'
+                }).format(row.original?.sponsorshipAmount || 0);
+                return <Typography variant='body1'>{formattedAmount}</Typography>;
+              } else {
+                // For physical gifts
+                const formatCurrency = (value) => (
+                  new Intl.NumberFormat(undefined, {
+                    style: 'currency',
+                    currency: currency || 'INR'
+                  }).format(value || 0)
+                );
+                return (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                    <Typography variant='body1' noWrap>
+                      {row.original.nonCashItem || 'Physical Gift'}
+                    </Typography>
+                    <Typography variant='caption' fontSize={'0.75rem'} color='text.secondary' noWrap>
+                      {row.original.numberOfNonCashItems || 0} × {formatCurrency(row.original.rewardValuePerItem || 0)}
+                    </Typography>
+                    <Typography variant='caption' fontSize={'0.75rem'} color='text.secondary' noWrap>
+                      Total: {formatCurrency(row.original.rewardValue || 0)}
+                    </Typography>
+                  </Box>
+                );
+              }
+            }
+          })
+        },
+        {
+          id: 'usage',
+          header: 'Usage',
           cell: ({ row }) => {
-            const formattedAmount = new Intl.NumberFormat(undefined, {
-              style: 'currency',
-              currency: 'INR'
-            }).format(row.original?.sponsorshipAmount)
-            return <Typography variant='body1'>{formattedAmount}</Typography>
+            const {
+              rewardType,
+              currency,
+              sponsorshipAmount,
+              availableAmount,
+              numberOfNonCashItems,
+              availableItems,
+              sponsored
+            } = row.original
+            const formatCurrency = (value, curr) =>
+              new Intl.NumberFormat(undefined, {
+                style: 'currency',
+                currency: curr || 'INR'
+              }).format(value || 0)
+            const SponsoredDetailsTooltipContent = () => {
+              if (!sponsored || sponsored.length === 0) {
+                return <Typography variant='caption' sx={{ color: 'white' }}>Not used in any game yet.</Typography>
+              }
+              return (
+                <Box sx={{ display: 'flex', flexDirection: 'column', p: 1 }}>
+                  <Typography variant='subtitle2' sx={{ mb: 1, color: 'white' }}>
+                    Sponsorship Usage Breakdown
+                  </Typography>
+                  {sponsored.map((s, index) => {
+                    const usedAmount = s.rewardSponsorships?.reduce((acc, rs) => acc + rs.allocated, 0) || 0
+                    return (
+                      <React.Fragment key={index}>
+                        <div className='flex flex-col gap-0'>
+                          <Typography
+                            variant='body2'
+                            component='div'
+                            sx={{ fontWeight: 'bold', color: 'white', display: 'flex', alignItems: 'center', gap: 0.5, cursor: s.game?._id ? 'pointer' : 'default' }}
+                            onClick={() => {
+                              if (s.game?._id) {
+                                router.push(`/public-games/${s.game._id}`)
+                              }
+                            }}
+                          >
+                            Game: {s.game?.title || 'N/A'}
+                            {s.game?._id && <i className='ri-external-link-line' style={{ fontSize: '1em', marginLeft: 4 }} />}
+                          </Typography>
+                          <Typography variant='caption' component='div' sx={{ color: 'white', ml: 1 }}>
+                            Quiz: {s.game?.quiz?.title || 'N/A'}
+                          </Typography>
+                          <Typography variant='caption' component='div' sx={{ color: 'white', ml: 1 }}>
+                            Used: {rewardType === 'cash' ? formatCurrency(usedAmount, currency) : `${usedAmount} ${usedAmount === 1 ? 'item' : 'items'}`}
+                          </Typography>
+                        </div>
+                        {index < sponsored.length - 1 && (
+                          <Divider sx={{ my: 1, borderColor: 'rgba(255, 255, 255, 0.42)' }} />
+                        )}
+                      </React.Fragment>
+                    )
+                  })}
+                </Box>
+              )
+            }
+            if (rewardType === 'cash') {
+              const usedAmount = (sponsorshipAmount || 0) - (availableAmount || 0)
+              return (
+                <Tooltip title={<SponsoredDetailsTooltipContent />} placement='right'>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', cursor: 'pointer' }}>
+                    <Typography variant='body2'>
+                      {formatCurrency(usedAmount, currency)} / {formatCurrency(sponsorshipAmount, currency)}
+                    </Typography>
+                    <Typography variant='caption' color='text.secondary'>
+                      Available: {formatCurrency(availableAmount, currency)}
+                    </Typography>
+                  </Box>
+                </Tooltip>
+              )
+            } else {
+              // For physical gifts
+              const usedItems = (numberOfNonCashItems || 0) - (availableItems || 0)
+              return (
+                <Tooltip title={<SponsoredDetailsTooltipContent />} placement='right'>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', cursor: 'pointer' }}>
+                    <Typography variant='body2'>
+                      {usedItems} / {numberOfNonCashItems || 0} {usedItems === 1 ? 'item' : 'items'}
+                    </Typography>
+                    <Typography variant='caption' color='text.secondary'>
+                      Available: {availableItems || 0} {availableItems === 1 ? 'item' : 'items'}
+                    </Typography>
+                  </Box>
+                </Tooltip>
+              )
+            }
           }
-        }),
-        columnHelper.accessor('numberOfGames', {
-          header: 'No. of Games',
-          cell: ({ row }) => {
-            return <Typography variant='body1'>{row.original.numberOfGames || 1}</Typography>
-          }
-        }),
-        columnHelper.accessor('sponsorshipStatus', {
-          header: 'Status',
-          cell: ({ row }) => {
-            const status = row.original.sponsorshipStatus
-            let color =
-              status === 'completed'
-                ? 'success'
-                : status === 'cancelled'
-                  ? 'error'
-                  : status === 'failed'
-                    ? 'warning'
-                    : status === 'pending'
-                      ? 'info'
-                      : status === 'created' && 'secondary'
-            return <Chip size='small' color={color} label={status} />
-          }
-        })
-      ].filter(Boolean), // This will filter out any falsy values (like the conditional column when false)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [sponsorType] // Add sponsorType to dependencies
+        },
+        {
+          id: 'sponsorshipStatus',
+          ...columnHelper.accessor('sponsorshipStatus', {
+            header: 'Status',
+            cell: ({ row }) => {
+              const { rewardType, sponsorshipStatus, nonCashSponsorshipStatus } = row.original
+              const status = rewardType === 'cash' ? sponsorshipStatus : nonCashSponsorshipStatus
+              const statusColor = {
+                created: 'default',
+                pending: 'warning',
+                failed: 'error',
+                completed: 'success',
+                expired: 'secondary',
+                rejected: 'error'
+              }[status] || 'default'
+              return <Chip size='small' color={statusColor} label={status} />
+            }
+          })
+        }
+      ].filter(Boolean),
+    [sponsorType]
   )
 
   const table = useReactTable({
@@ -302,7 +476,7 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
       </Box>
       <Card>
         <CardContent className='flex justify-between flex-col gap-4 items-start sm:flex-row sm:items-center'>
-          <Typography variant='h5'>Your Sponsorships</Typography>
+          <Typography variant='h5'>All Sponsorships</Typography>
           <div className='flex flex-col sm:flex-row justify-end gap-4'>
             <FormControl size='small' sx={{ minWidth: 180 }}>
               <InputLabel id='sponsorship-status-label'>Sponsorship Status</InputLabel>

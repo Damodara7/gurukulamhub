@@ -42,6 +42,8 @@ import { API_URLS } from '@/configs/apiConfig'
 import tableStyles from '@core/styles/table.module.css'
 import { Box, Divider, Grid, Tab, Tooltip } from '@mui/material'
 import { revalidatePath } from 'next/cache'
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney'
+import CardGiftcardIcon from '@mui/icons-material/CardGiftcard'
 
 const fuzzyFilter = (row, columnId, value, addMeta) => {
   // Rank the item
@@ -157,9 +159,21 @@ const SponsorshipList = ({ tableData, sponsorType = 'all' }) => {
           id: 'rewardType',
           ...columnHelper.accessor('rewardType', {
             header: 'Reward Type',
-            cell: ({ row }) => {
-              return <Typography variant='body1'>{row.original.rewardType === 'cash' ? 'Cash' : 'Physical Gift'}</Typography>
-            }
+            cell: ({ row }) => (
+              <Typography variant='body1' sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                {row.original.rewardType === 'cash' ? (
+                  <>
+                    <AttachMoneyIcon fontSize='small' sx={{ color: 'success.main' }} />
+                    Cash
+                  </>
+                ) : (
+                  <>
+                    <CardGiftcardIcon fontSize='small' sx={{ color: 'warning.main' }} />
+                    Physical Gift
+                  </>
+                )}
+              </Typography>
+            )
           })
         },
         {

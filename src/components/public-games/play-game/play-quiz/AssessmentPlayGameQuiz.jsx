@@ -110,7 +110,6 @@ export default function PlayGameQuiz({ game }) {
   const { data: session } = useSession()
   console.log('game data :  ', game)
   const router = useRouter()
-  const storageKey = `quiz-${quiz._id}-state`
   // Inside PlayGameQuiz
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
@@ -133,6 +132,8 @@ export default function PlayGameQuiz({ game }) {
 
   const quiz = game?.quiz
   const questions = game?.questions
+
+  const storageKey = `quiz-${quiz._id}-state`
 
   // Initialize timing when component mounts
   useEffect(() => {
