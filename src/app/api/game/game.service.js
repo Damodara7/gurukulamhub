@@ -13,6 +13,39 @@ import { broadcastGamesList } from '../ws/games/publishers'
 import { broadcastGameDetails } from '../ws/games/[gameId]/publishers'
 import UserProfile from '@/app/models/profile.model'
 
+// Helper to enrich a single game with registeredUsers, participatedUsers, and questions
+async function enrichGameWithDetails(game) {
+  if (!game) return game
+  const [registeredUsers, participatedUsers, questions] = await Promise.all([
+    Player.find({ game: game._id, status: { $in: ['registered', 'participated', 'completed'] } })
+      .lean()
+      .populate({
+        path: 'user',
+        populate: { path: 'profile' }
+      }),
+    Player.find({ game: game._id, status: { $in: ['participated', 'completed'] } })
+      .lean()
+      .populate({
+        path: 'user',
+        populate: { path: 'profile' }
+      }),
+    QuestionsModel.find({ quizId: game.quiz._id || game.quiz, languageCode: game.quiz.language?.code })
+      .sort({ createdAt: 1 })
+      .lean()
+  ])
+  return {
+    ...game,
+    registeredUsers: registeredUsers || [],
+    participatedUsers: participatedUsers || [],
+    questions: questions || []
+  }
+}
+
+// Helper to enrich an array of games
+async function enrichGamesWithDetails(games) {
+  return Promise.all((games || []).map(enrichGameWithDetails))
+}
+
 export const getOne = async (filter = {}) => {
   await connectMongo()
   try {
@@ -39,38 +72,11 @@ export const getOne = async (filter = {}) => {
       }
     }
 
-    // Add registeredUsers and participatedUsers from Player model
-    const [registeredUsers, participatedUsers, questions] = await Promise.all([
-      Player.find({ game: game._id, status: { $in: ['registered', 'participated', 'completed'] } })
-        .lean()
-
-        .populate({
-          path: 'user',
-          populate: {
-            path: 'profile'
-          }
-        }),
-      Player.find({ game: game._id, status: { $in: ['participated', 'completed'] } })
-        .lean()
-
-        .populate({
-          path: 'user',
-          populate: {
-            path: 'profile'
-          }
-        }),
-      ,
-      QuestionsModel.find({ quizId: game.quiz._id || game.quiz, languageCode: game.quiz.language?.code })
-        .sort({ createdAt: 1 })
-        .lean()
-    ])
-    game.registeredUsers = registeredUsers || []
-    game.participatedUsers = participatedUsers || []
-    game.questions = questions || []
+    const enrichedGame = await enrichGameWithDetails(game)
 
     return {
       status: 'success',
-      result: game,
+      result: enrichedGame,
       message: 'Game retrieved successfully'
     }
   } catch (error) {
@@ -93,43 +99,11 @@ export const getAll = async (filter = {}) => {
       .sort({ createdAt: -1 })
       .lean()
 
-    // For each game, add registeredUsers, participatedUsers, and questions from Player and QuestionsModel
-    const gameIds = games.map(g => g._id)
-    const allPlayers = await Player.find({ game: { $in: gameIds } })
-      .lean()
-
-      .populate({
-        path: 'user',
-        populate: {
-          path: 'profile'
-        }
-      })
-    const playersByGame = {}
-    for (const player of allPlayers) {
-      const gid = player.game.toString()
-      if (!playersByGame[gid]) playersByGame[gid] = { registered: [], participated: [] }
-      if (['registered', 'participated', 'completed'].includes(player.status))
-        playersByGame[gid].registered.push(player)
-      if (['participated', 'completed'].includes(player.status)) playersByGame[gid].participated.push(player)
-    }
-    // Fetch questions for all games in parallel
-    await Promise.all(
-      games.map(async game => {
-        const gid = game._id.toString()
-        game.registeredUsers = playersByGame[gid]?.registered || []
-        game.participatedUsers = playersByGame[gid]?.participated || []
-        game.questions = await QuestionsModel.find({
-          quizId: game.quiz._id || game.quiz,
-          languageCode: game.quiz.language?.code
-        })
-          .sort({ createdAt: 1 })
-          .lean()
-      })
-    )
+    const enrichedGames = await enrichGamesWithDetails(games)
 
     return {
       status: 'success',
-      result: games,
+      result: enrichedGames,
       message: `Found ${games.length} games`
     }
   } catch (error) {
@@ -156,42 +130,11 @@ export const getAllPublic = async (filter = {}) => {
       .sort({ createdAt: -1 })
       .lean()
 
-    // For each game, add registeredUsers, participatedUsers, and questions
-    const gameIds = games.map(g => g._id)
-    const allPlayers = await Player.find({ game: { $in: gameIds } })
-      .lean()
-
-      .populate({
-        path: 'user',
-        populate: {
-          path: 'profile'
-        }
-      })
-    const playersByGame = {}
-    for (const player of allPlayers) {
-      const gid = player.game.toString()
-      if (!playersByGame[gid]) playersByGame[gid] = { registered: [], participated: [] }
-      if (['registered', 'participated', 'completed'].includes(player.status))
-        playersByGame[gid].registered.push(player)
-      if (['participated', 'completed'].includes(player.status)) playersByGame[gid].participated.push(player)
-    }
-    await Promise.all(
-      games.map(async game => {
-        const gid = game._id.toString()
-        game.registeredUsers = playersByGame[gid]?.registered || []
-        game.participatedUsers = playersByGame[gid]?.participated || []
-        game.questions = await QuestionsModel.find({
-          quizId: game.quiz._id || game.quiz,
-          languageCode: game.quiz.language?.code
-        })
-          .sort({ createdAt: 1 })
-          .lean()
-      })
-    )
+    const enrichedGames = await enrichGamesWithDetails(games)
 
     return {
       status: 'success',
-      result: games,
+      result: enrichedGames,
       message: `Found ${games.length} games`
     }
   } catch (error) {
@@ -222,41 +165,11 @@ export const getAllByEmail = async (email, filter = {}) => {
       .sort({ startTime: -1 })
       .lean()
 
-    // For each game, add registeredUsers, participatedUsers, and questions
-    const gameIds = games.map(g => g._id)
-    const allPlayers = await Player.find({ game: { $in: gameIds } })
-      .lean()
-      .populate({
-        path: 'user',
-        populate: {
-          path: 'profile'
-        }
-      })
-    const playersByGame = {}
-    for (const player of allPlayers) {
-      const gid = player.game.toString()
-      if (!playersByGame[gid]) playersByGame[gid] = { registered: [], participated: [] }
-      if (['registered', 'participated', 'completed'].includes(player.status))
-        playersByGame[gid].registered.push(player)
-      if (['participated', 'completed'].includes(player.status)) playersByGame[gid].participated.push(player)
-    }
-    await Promise.all(
-      games.map(async game => {
-        const gid = game._id.toString()
-        game.registeredUsers = playersByGame[gid]?.registered || []
-        game.participatedUsers = playersByGame[gid]?.participated || []
-        game.questions = await QuestionsModel.find({
-          quizId: game.quiz._id || game.quiz,
-          languageCode: game.quiz.language?.code
-        })
-          .sort({ createdAt: 1 })
-          .lean()
-      })
-    )
+    const enrichedGames = await enrichGamesWithDetails(games)
 
     return {
       status: 'success',
-      result: games,
+      result: enrichedGames,
       message: `Found ${games.length} games for ${email}`
     }
   } catch (error) {
@@ -733,29 +646,11 @@ export const joinGame = async (gameId, userData) => {
     // Check if player already exists for this game
     let player = await Player.findOne({ game: gameId, email: userData?.email })
     if (player) {
-      // Fetch latest registered and participated users
-      const [registeredUsers, participatedUsers] = await Promise.all([
-        Player.find({ game: gameId, status: { $in: ['registered', 'participated', 'completed'] } })
-          .lean()
-          .populate({
-            path: 'user',
-            populate: {
-              path: 'profile'
-            }
-          }),
-        Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } })
-          .lean()
-          .populate({
-            path: 'user',
-            populate: {
-              path: 'profile'
-            }
-          })
-      ])
       const game = await Game.findById(gameId).lean()
+      const enrichedGame = await enrichGameWithDetails(game)
       return {
         status: 'success',
-        result: { ...game, registeredUsers, participatedUsers },
+        result: enrichedGame,
         message:
           player.status === 'registered'
             ? 'User is already registered for this game'
@@ -792,33 +687,13 @@ export const joinGame = async (gameId, userData) => {
     })
     await player.save()
 
-    // Fetch latest registered and participated users after registration
-    const [registeredUsers, participatedUsers] = await Promise.all([
-      Player.find({ game: gameId, status: { $in: ['registered', 'participated', 'completed'] } })
-        .lean()
-
-        .populate({
-          path: 'user',
-          populate: {
-            path: 'profile'
-          }
-        }),
-      Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } })
-        .lean()
-
-        .populate({
-          path: 'user',
-          populate: {
-            path: 'profile'
-          }
-        })
-    ])
+    const enrichedGame = await enrichGameWithDetails(game)
 
     broadcastGameDetailsUpdates(gameId)
 
     return {
       status: 'success',
-      result: { ...game, registeredUsers, participatedUsers },
+      result: enrichedGame,
       message: 'Successfully registered for game'
     }
   } catch (error) {
@@ -852,32 +727,11 @@ export const startGame = async (gameId, userData) => {
       }
     }
     if (player.status === 'participated' || player.status === 'completed') {
-      // Fetch latest registered and participated users
-      const [registeredUsers, participatedUsers] = await Promise.all([
-        Player.find({ game: gameId, status: { $in: ['registered', 'participated', 'completed'] } })
-          .lean()
-
-          .populate({
-            path: 'user',
-            populate: {
-              path: 'profile'
-            }
-          }),
-        Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } })
-          .lean()
-
-          .populate({
-            path: 'user',
-            populate: {
-              path: 'profile'
-            }
-          })
-      ])
       const game = await Game.findById(gameId).lean()
-      const questions = await QuestionsModel.find({ quizId: game.quiz, languageCode: game.quiz.language?.code }).lean()
+      const enrichedGame = await enrichGameWithDetails(game)
       return {
         status: 'success',
-        result: { ...game, questions, registeredUsers, participatedUsers },
+        result: enrichedGame,
         message: 'User already started or completed this game'
       }
     }
@@ -887,36 +741,11 @@ export const startGame = async (gameId, userData) => {
     await player.save()
     // Get questions
     const game = await Game.findById(gameId).populate('quiz').lean()
-    const quizId = game.quiz._id
-    const languageCode = game.quiz.language.code
-    const questions = await QuestionsModel.find({ quizId, languageCode }).lean()
-    // Fetch latest registered and participated users after participation
-    const [registeredUsers, participatedUsers] = await Promise.all([
-      Player.find({ game: gameId, status: { $in: ['registered', 'participated', 'completed'] } })
-        .lean()
-
-        .populate({
-          path: 'user',
-          populate: {
-            path: 'profile'
-          }
-        }),
-      Player.find({ game: gameId, status: { $in: ['participated', 'completed'] } })
-        .lean()
-
-        .populate({
-          path: 'user',
-          populate: {
-            path: 'profile'
-          }
-        })
-    ])
-
+    const enrichedGame = await enrichGameWithDetails(game)
     broadcastGameDetailsUpdates(gameId)
-
     return {
       status: 'success',
-      result: { ...game, questions, registeredUsers, participatedUsers },
+      result: enrichedGame,
       message: 'User started participated in game'
     }
   } catch (error) {
