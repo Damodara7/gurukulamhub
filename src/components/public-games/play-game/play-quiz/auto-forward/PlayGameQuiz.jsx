@@ -528,50 +528,30 @@ export default function PlayGameQuiz({ game: initialGame, onGameEnd }) {
           <Box sx={{ mt: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Button
               onClick={handleSubmit}
-              disabled={
-                submitting ||
-                isCurrentSubmitted ||
-                !selectedAnswers[currentQuestion._id] ||
-                !canSubmit
-              }
-              color={
-                submitting
-                  ? 'secondary'
-                  : isCurrentSubmitted
-                  ? 'success'
-                  : 'primary'
-              }
+              disabled={submitting || isCurrentSubmitted || !selectedAnswers[currentQuestion._id] || !canSubmit}
+              color={submitting ? 'secondary' : isCurrentSubmitted ? 'success' : 'primary'}
               component='label'
               variant='contained'
               mb={4}
               style={{
                 color: '#fff',
                 cursor:
-                  submitting ||
-                  isCurrentSubmitted ||
-                  !selectedAnswers[currentQuestion._id] ||
-                  !canSubmit
+                  submitting || isCurrentSubmitted || !selectedAnswers[currentQuestion._id] || !canSubmit
                     ? 'not-allowed'
                     : 'pointer'
               }}
             >
-              {submitting
-                ? 'Submitting...'
-                : isCurrentSubmitted
-                ? 'Submitted'
-                : 'Submit'}
+              {submitting ? 'Submitting...' : isCurrentSubmitted ? 'Submitted' : 'Submit'}
             </Button>
           </Box>
         )}
         {currentQuestion && isCurrentSubmitted && (
           <Box sx={{ mt: 2, textAlign: 'center', color: '#1976d2', fontWeight: 500 }}>
-            Submitted! Waiting for next question...
+            Please Wait for next question...
           </Box>
         )}
         {currentQuestion && !isCurrentSubmitted && questionTimeLeft === 0 && (
-          <Box sx={{ mt: 2, textAlign: 'center', color: '#1976d2', fontWeight: 500 }}>
-            Time is up!
-          </Box>
+          <Box sx={{ mt: 2, textAlign: 'center', color: '#1976d2', fontWeight: 500 }}>Time is up!</Box>
         )}
 
         <Leaderboard game={game} duringPlay={true} isAdmin={true} />

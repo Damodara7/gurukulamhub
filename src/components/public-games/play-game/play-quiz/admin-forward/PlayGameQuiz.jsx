@@ -394,7 +394,7 @@ export default function AdminForwardPlayGame({ game: initialGame }) {
         )}
         {currentQuestion && hasSubmittedCurrent && (
           <Box sx={{ mt: 2, textAlign: 'center', color: '#1976d2', fontWeight: 500 }}>
-            Submitted! Waiting for next question...
+            Please Wait for next question...
           </Box>
         )}
 
