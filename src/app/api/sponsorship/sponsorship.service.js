@@ -78,6 +78,12 @@ export async function getAll({ queryParams }) {
           select: 'title description' // Specify the fields you want from the quiz model
         }
       })
+      // .populate({
+      //   path: 'user', 
+      //   populate: {
+      //     path: 'profile'
+      //   }
+      // })
 
     if (sponsorships?.length > 0 && (country || region || city)) {
       console.log('Sponsorships found by quizId')

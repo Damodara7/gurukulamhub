@@ -228,12 +228,12 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
             </MenuItem> */}
           </SubMenu>
 
-          <SubMenu label={dictionary['navigation'].game} icon={<i className='ri-gamepad-line' />}>
+          {/* <SubMenu label={dictionary['navigation'].game} icon={<i className='ri-gamepad-line' />}>
             <MenuItem href={`/${locale}/mygames/view`}>{dictionary['navigation'].view}</MenuItem>
             <MenuItem href={`/${locale}/mygames/create`}>{dictionary['navigation'].create}</MenuItem>
             <MenuItem href={`/${locale}/mygames/run`}>{dictionary['navigation'].run}</MenuItem>
             <MenuItem href={`/${locale}/mygames/join`}>{dictionary['navigation'].join}</MenuItem>
-          </SubMenu>
+          </SubMenu> */}
 
           <SubMenu label={dictionary['navigation'].sponsorship} icon={<i className='ri-wallet-3-line' />}>
             <MenuItem href={`/${locale}/sponsor/list`}>{dictionary['navigation'].list}</MenuItem>

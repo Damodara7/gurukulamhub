@@ -138,11 +138,11 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
           cell: ({ row }) => {
             const firstname = row.original?.profile?.firstname || ''
             const lastname = row.original?.profile?.lastname || ''
-            const fullname = `${firstname} ${lastname}`.trim()
+            const fullname = `${firstname} ${lastname}`.trim() || row.original?.fullname || ''
             return (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                 {fullname ? (
-                  <Typography variant='body2' color='text.secondary' sx={{ mb: 0.25, lineHeight: 1.1 }}>
+                  <Typography variant='body1' color='text.primary' sx={{ mb: 0.25, lineHeight: 1.1 }}>
                     {fullname}
                   </Typography>
                 ) : null}
@@ -151,8 +151,8 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
                   style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}
                 >
                   <Typography
-                    variant='body1'
-                    color='text.primary'
+                    variant='body2'
+                    color='text.secondary'
                     sx={{
                       cursor: 'pointer',
                       textDecoration: 'none',
