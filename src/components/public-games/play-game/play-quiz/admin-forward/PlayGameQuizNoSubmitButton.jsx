@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { Box, Typography, Alert, Paper, Chip, LinearProgress } from '@mui/material'
+import { Box, Typography, Alert, Paper, Chip, LinearProgress, Card, CardContent, Button } from '@mui/material'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import GameEnded from '../../GameEnded'

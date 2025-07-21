@@ -1,4 +1,4 @@
-export const CountryTimezone = [
+export const countryTimezones = [
   { countryCode: 'AD', name: 'Andorra', timezone: 'Europe/Andorra' },
   { countryCode: 'AE', name: 'United Arab Emirates', timezone: 'Asia/Dubai' },
   { countryCode: 'AF', name: 'Afghanistan', timezone: 'Asia/Kabul' },

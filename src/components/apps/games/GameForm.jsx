@@ -138,6 +138,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
     pin: Math.floor(100000 + Math.random() * 900000).toString(),
     description: '',
     quiz: '',
+    timezone: '',
     startTime: null,
     duration: null, // 10 minutes in seconds
     promotionalVideoUrl: '',

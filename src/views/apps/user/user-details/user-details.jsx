@@ -34,7 +34,7 @@ import {
   WhatsappShareButton,
   WhatsappIcon,
   FacebookShareButton,
-  FacebookIcon,
+  FacebookIcon as FacebookShareIcon,
   TelegramShareButton,
   TelegramIcon,
   TwitterShareButton,
@@ -55,8 +55,7 @@ import FlagIcon from '@mui/icons-material/Flag'
 import PublicIcon from '@mui/icons-material/Public'
 import HomeIcon from '@mui/icons-material/Home'
 import MapIcon from '@mui/icons-material/Map'
-import LinkedInIcon from '@mui/icons-material/LinkedIn'
-import InstagramIcon from '@mui/icons-material/Instagram'
+import { Facebook as FacebookIcon, LinkedIn as LinkedInIcon, Instagram as InstagramIcon } from '@mui/icons-material'
 import LanguageIcon from '@mui/icons-material/Language'
 import SchoolIcon from '@mui/icons-material/School'
 import WorkIcon from '@mui/icons-material/Work'
@@ -252,7 +251,7 @@ function ReferralCard({ referralToken }) {
             url={referralLink}
             title={`Join me on GurukulamHub! Sign up and earn rewards: ${referralLink}`}
           >
-            <TelFacebookIcon round />
+            <TelegramIcon round />
           </TelegramShareButton>
           <TwitterShareButton
             url={referralLink}
@@ -287,14 +286,12 @@ function EnhancedProfileCard({ profile }) {
   const isOrg = ['BUSINESS', 'ORGANIZATION', 'NGO'].includes(accountType)
 
   // Basic Info
-  const basicInfo = [
-    accountType && { label: 'Account Type', value: accountType }
-  ].filter(Boolean)
+  const basicInfo = [accountType && { label: 'Account Type', value: accountType }].filter(Boolean)
 
   // Individual fields
-  const individualFields = [
-    isIndividual && profile?.nickname && { label: 'Nickname', value: profile.nickname }
-  ].filter(Boolean)
+  const individualFields = [isIndividual && profile?.nickname && { label: 'Nickname', value: profile.nickname }].filter(
+    Boolean
+  )
 
   // Organization fields
   const orgFields = [
@@ -329,7 +326,11 @@ function EnhancedProfileCard({ profile }) {
   const socialLinks = [
     profile?.linkedInUrl && { icon: <LinkedInIcon color='primary' />, url: profile.linkedInUrl, label: 'LinkedIn' },
     profile?.facebookUrl && { icon: <FacebookIcon color='primary' />, url: profile.facebookUrl, label: 'Facebook' },
-    profile?.instagramUrl && { icon: <InstagramIcon color='secondary' />, url: profile.instagramUrl, label: 'Instagram' }
+    profile?.instagramUrl && {
+      icon: <InstagramIcon color='secondary' />,
+      url: profile.instagramUrl,
+      label: 'Instagram'
+    }
   ].filter(Boolean)
 
   // Other
@@ -341,14 +342,28 @@ function EnhancedProfileCard({ profile }) {
     profile?.referralPoints && { label: 'Referral Points', value: profile.referralPoints }
   ].filter(Boolean)
 
-  const hasProfile = basicInfo.length || individualFields.length || orgFields.length || demographics.length || languages.length || schools.length || workPositions.length || organizations.length || socialLinks.length || other.length || profile?.openToWork || profile?.hiring
+  const hasProfile =
+    basicInfo.length ||
+    individualFields.length ||
+    orgFields.length ||
+    demographics.length ||
+    languages.length ||
+    schools.length ||
+    workPositions.length ||
+    organizations.length ||
+    socialLinks.length ||
+    other.length ||
+    profile?.openToWork ||
+    profile?.hiring
 
   const labelSx = { minWidth: 120, flexShrink: 0, color: 'text.secondary', fontWeight: 500, pr: 1 }
   const valueSx = { flex: 1, display: 'flex', flexWrap: 'wrap', gap: 1, wordBreak: 'break-word', alignItems: 'center' }
 
   const renderRow = (label, value) => (
     <Stack direction='row' alignItems='flex-start' sx={{ mb: 1 }}>
-      <Typography variant='body2' sx={labelSx}>{label}</Typography>
+      <Typography variant='body2' sx={labelSx}>
+        {label}
+      </Typography>
       <Box sx={valueSx}>{value}</Box>
     </Stack>
   )
@@ -358,114 +373,188 @@ function EnhancedProfileCard({ profile }) {
       {hasProfile ? (
         <Stack spacing={2}>
           {/* Account Type */}
-          {basicInfo.length > 0 && renderRow('Account Type:', basicInfo.map((item, idx) => (
-            <Chip key={idx} label={item.value} color='info' size='small' sx={{ maxWidth: 220 }} />
-          )))}
+          {basicInfo.length > 0 &&
+            renderRow(
+              'Account Type:',
+              basicInfo.map((item, idx) => (
+                <Chip key={idx} label={item.value} color='info' size='small' sx={{ maxWidth: 220 }} />
+              ))
+            )}
           {/* Individual fields */}
-          {individualFields.length > 0 && renderRow('Personal Info:', individualFields.map((item, idx) => (
-            <Chip key={idx} label={`${item.label}: ${item.value}`} color='primary' size='small' sx={{ maxWidth: 220, color: 'white' }} />
-          )))}
+          {individualFields.length > 0 &&
+            renderRow(
+              'Personal Info:',
+              individualFields.map((item, idx) => (
+                <Chip
+                  key={idx}
+                  label={`${item.label}: ${item.value}`}
+                  color='primary'
+                  size='small'
+                  sx={{ maxWidth: 220, color: 'white' }}
+                />
+              ))
+            )}
           {/* Organization fields */}
-          {orgFields.length > 0 && renderRow('Organization Info:', orgFields.map((item, idx) => (
-            item.isLink ? (
-              <a key={idx} href={item.value} target='_blank' rel='noopener noreferrer' style={{ textDecoration: 'none', wordBreak: 'break-all' }}>
-                <Chip label={item.label} icon={<LinkIcon fontSize='small' />} color='primary' size='small' sx={{ maxWidth: 220 }} />
-              </a>
-            ) : (
-              <Chip key={idx} label={`${item.label}: ${item.value}`} color='primary' size='small' sx={{ maxWidth: 220 }} />
-            )
-          )))}
+          {orgFields.length > 0 &&
+            renderRow(
+              'Organization Info:',
+              orgFields.map((item, idx) =>
+                item.isLink ? (
+                  <a
+                    key={idx}
+                    href={item.value}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    style={{ textDecoration: 'none', wordBreak: 'break-all' }}
+                  >
+                    <Chip
+                      label={item.label}
+                      icon={<LinkIcon fontSize='small' />}
+                      color='primary'
+                      size='small'
+                      sx={{ maxWidth: 220 }}
+                    />
+                  </a>
+                ) : (
+                  <Chip
+                    key={idx}
+                    label={`${item.label}: ${item.value}`}
+                    color='primary'
+                    size='small'
+                    sx={{ maxWidth: 220 }}
+                  />
+                )
+              )
+            )}
           {(basicInfo.length > 0 || individualFields.length > 0 || orgFields.length > 0) && <Divider />}
           {/* Demographics */}
-          {demographics.length > 0 && renderRow('Demographics:', demographics.map((item, idx) => (
-            <Chip key={idx} label={`${item.label}: ${item.value}`} color='secondary' size='small' sx={{ maxWidth: 220 }} />
-          )))}
+          {demographics.length > 0 &&
+            renderRow(
+              'Demographics:',
+              demographics.map((item, idx) => (
+                <Chip
+                  key={idx}
+                  label={`${item.label}: ${item.value}`}
+                  color='secondary'
+                  size='small'
+                  sx={{ maxWidth: 220 }}
+                />
+              ))
+            )}
           {demographics.length > 0 && <Divider />}
           {/* Languages */}
-          {languages.length > 0 && renderRow('Languages:', languages.map((lang, idx) => (
-            <Chip
-              key={idx}
-              label={
-                lang.language +
-                (lang.canRead ? ' R' : '') +
-                (lang.canWrite ? ' W' : '') +
-                (lang.canSpeak ? ' S' : '')
-              }
-              icon={<LanguageIcon fontSize='small' />}
-              color='primary'
-              size='small'
-              sx={{ maxWidth: 220 }}
-            />
-          )))}
+          {languages.length > 0 &&
+            renderRow(
+              'Languages:',
+              languages.map((lang, idx) => (
+                <Chip
+                  key={idx}
+                  label={
+                    lang.language +
+                    (lang.canRead ? ' R' : '') +
+                    (lang.canWrite ? ' W' : '') +
+                    (lang.canSpeak ? ' S' : '')
+                  }
+                  icon={<LanguageIcon fontSize='small' />}
+                  color='primary'
+                  size='small'
+                  sx={{ maxWidth: 220 }}
+                />
+              ))
+            )}
           {languages.length > 0 && <Divider />}
           {/* Education */}
-          {schools.length > 0 && renderRow('Education:', (
-            <Stack spacing={1} sx={{ width: '100%' }}>
-              {schools.map((school, idx) => (
-                <Stack key={idx} direction='row' alignItems='center' spacing={1} sx={{ wordBreak: 'break-word' }}>
-                  <SchoolIcon fontSize='small' color='action' />
-                  <Typography variant='body2' sx={{ wordBreak: 'break-word' }}>
-                    {school.school} {school.highestQualification && `- ${school.highestQualification}`} {school.degree && `- ${school.degree}`}
-                  </Typography>
-                </Stack>
-              ))}
-            </Stack>
-          ))}
+          {schools.length > 0 &&
+            renderRow(
+              'Education:',
+              <Stack spacing={1} sx={{ width: '100%' }}>
+                {schools.map((school, idx) => (
+                  <Stack key={idx} direction='row' alignItems='center' spacing={1} sx={{ wordBreak: 'break-word' }}>
+                    <SchoolIcon fontSize='small' color='action' />
+                    <Typography variant='body2' sx={{ wordBreak: 'break-word' }}>
+                      {school.school} {school.highestQualification && `- ${school.highestQualification}`}{' '}
+                      {school.degree && `- ${school.degree}`}
+                    </Typography>
+                  </Stack>
+                ))}
+              </Stack>
+            )}
           {schools.length > 0 && <Divider />}
           {/* Work Experience */}
-          {workPositions.length > 0 && renderRow('Work Experience:', (
-            <Stack spacing={1} sx={{ width: '100%' }}>
-              {workPositions.map((work, idx) => (
-                <Stack key={idx} direction='row' alignItems='center' spacing={1} sx={{ wordBreak: 'break-word' }}>
-                  <WorkIcon fontSize='small' color='action' />
-                  <Typography variant='body2' sx={{ wordBreak: 'break-word' }}>
-                    {work.title} at {work.companyName} {work.employmentType && `(${work.employmentType})`}
-                  </Typography>
+          {workPositions.length > 0 &&
+            renderRow(
+              'Work Experience:',
+              <Stack spacing={1} sx={{ width: '100%' }}>
+                {workPositions.map((work, idx) => (
+                  <Stack key={idx} direction='row' alignItems='center' spacing={1} sx={{ wordBreak: 'break-word' }}>
+                    <WorkIcon fontSize='small' color='action' />
+                    <Typography variant='body2' sx={{ wordBreak: 'break-word' }}>
+                      {work.title} at {work.companyName} {work.employmentType && `(${work.employmentType})`}
+                    </Typography>
+                  </Stack>
+                ))}
+                <Stack direction='row' spacing={1} flexWrap='wrap'>
+                  {profile?.openToWork && <Chip label='Open to Work' color='success' size='small' />}
+                  {profile?.hiring && <Chip label='Hiring' color='warning' size='small' />}
                 </Stack>
-              ))}
-              <Stack direction='row' spacing={1} flexWrap='wrap'>
-                {profile?.openToWork && <Chip label='Open to Work' color='success' size='small' />}
-                {profile?.hiring && <Chip label='Hiring' color='warning' size='small' />}
               </Stack>
-            </Stack>
-          ))}
+            )}
           {workPositions.length > 0 && <Divider />}
           {/* Organizations */}
-          {organizations.length > 0 && renderRow('Organizations:', (
-            <Stack spacing={1} sx={{ width: '100%' }}>
-              {organizations.map((org, idx) => (
-                <Stack key={idx} direction='row' alignItems='center' spacing={1} sx={{ wordBreak: 'break-word' }}>
-                  <BusinessIcon fontSize='small' color='action' />
-                  <Typography variant='body2' sx={{ wordBreak: 'break-word' }}>
-                    {org.organization} {org.organizationType && `(${org.organizationType})`} {org.websiteUrl && (
-                      <a href={org.websiteUrl} target='_blank' rel='noopener noreferrer'><LinkIcon fontSize='small' /></a>
-                    )}
-                  </Typography>
-                </Stack>
-              ))}
-            </Stack>
-          ))}
+          {organizations.length > 0 &&
+            renderRow(
+              'Organizations:',
+              <Stack spacing={1} sx={{ width: '100%' }}>
+                {organizations.map((org, idx) => (
+                  <Stack key={idx} direction='row' alignItems='center' spacing={1} sx={{ wordBreak: 'break-word' }}>
+                    <BusinessIcon fontSize='small' color='action' />
+                    <Typography variant='body2' sx={{ wordBreak: 'break-word' }}>
+                      {org.organization} {org.organizationType && `(${org.organizationType})`}{' '}
+                      {org.websiteUrl && (
+                        <a href={org.websiteUrl} target='_blank' rel='noopener noreferrer'>
+                          <LinkIcon fontSize='small' />
+                        </a>
+                      )}
+                    </Typography>
+                  </Stack>
+                ))}
+              </Stack>
+            )}
           {organizations.length > 0 && <Divider />}
           {/* Social */}
-          {socialLinks.length > 0 && renderRow('Social:', (
-            <Stack direction='row' spacing={1} flexWrap='wrap'>
-              {socialLinks.map((item, idx) => (
-                <Tooltip key={idx} title={item.label}>
-                  <IconButton component='a' href={item.url} target='_blank' rel='noopener noreferrer' size='small'>
-                    {item.icon}
-                  </IconButton>
-                </Tooltip>
-              ))}
-            </Stack>
-          ))}
+          {socialLinks.length > 0 &&
+            renderRow(
+              'Social:',
+              <Stack direction='row' spacing={1} flexWrap='wrap'>
+                {socialLinks.map((item, idx) => (
+                  <Tooltip key={idx} title={item.label}>
+                    <IconButton component='a' href={item.url} target='_blank' rel='noopener noreferrer' size='small'>
+                      {item.icon}
+                    </IconButton>
+                  </Tooltip>
+                ))}
+              </Stack>
+            )}
           {socialLinks.length > 0 && <Divider />}
           {/* Other */}
-          {other.length > 0 && renderRow('Other:', other.map((item, idx) => (
-            <Chip key={idx} label={`${item.label}: ${item.value}`} color='default' size='small' sx={{ maxWidth: 220 }} />
-          )))}
+          {other.length > 0 &&
+            renderRow(
+              'Other:',
+              other.map((item, idx) => (
+                <Chip
+                  key={idx}
+                  label={`${item.label}: ${item.value}`}
+                  color='default'
+                  size='small'
+                  sx={{ maxWidth: 220 }}
+                />
+              ))
+            )}
         </Stack>
       ) : (
-        <Typography variant='body2' color='text.secondary'>No profile info provided.</Typography>
+        <Typography variant='body2' color='text.secondary'>
+          No profile info provided.
+        </Typography>
       )}
     </InfoCard>
   )
@@ -518,7 +607,12 @@ function UserDetailsPage({ data }) {
             <Tooltip title={profile?.email || user?.email} arrow>
               <Typography
                 variant='body2'
-                sx={{ maxWidth: {sm: '100%', md:'350px'}, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                sx={{
+                  maxWidth: { sm: '100%', md: '350px' },
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}
               >
                 {profile?.email || user?.email}
               </Typography>
@@ -618,15 +712,15 @@ function UserDetailsPage({ data }) {
           )}
         </Stack>
       ) : (
-        <Typography variant='body2' color='text.secondary'>No address info provided.</Typography>
+        <Typography variant='body2' color='text.secondary'>
+          No address info provided.
+        </Typography>
       )}
     </InfoCard>
   )
 
   // Profile Card (other info)
-  const profileCard = (
-    <EnhancedProfileCard profile={profile} />
-  )
+  const profileCard = <EnhancedProfileCard profile={profile} />
 
   return (
     <Box maxWidth={1200} mx='auto' mt={{ xs: 2, md: 6 }} px={{ xs: 0.5, sm: 2 }}>
