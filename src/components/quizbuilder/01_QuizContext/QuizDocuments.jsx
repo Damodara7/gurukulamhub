@@ -23,7 +23,7 @@ import IconButtonTooltip from '@/components/IconButtonTooltip'
 import useUUID from '@/app/hooks/useUUID'
 import { MuiFileInput } from 'mui-file-input'
 
-const QuizDocuments = ({ documents = [], setTheFormValue }) => {
+const QuizDocuments = ({ documents = [], setTheFormValue , loading }) => {
   const [openDialog, setOpenDialog] = useState(false)
   const [currentDocument, setCurrentDocument] = useState({
     id: null,
@@ -85,16 +85,18 @@ const QuizDocuments = ({ documents = [], setTheFormValue }) => {
         borderRadius: '5px',
         width: '100%',
         height: '100%',
-        p: 2
+        p: 2,
+        opacity : loading ? 0.7 : 1
       }}
     >
-      <Box display='flex' justifyContent='space-between' alignItems='center' mb={2}>
+      <Box display='flex' justifyContent='space-between' alignItems='center' mb={2} >
         <Typography variant='h6'>Related Documents</Typography>
 
         <IconButtonTooltip
           title='Add Document'
           color='primary'
-          onClick={handleOpenAddDialog}
+          onClick={!loading ? handleOpenAddDialog : undefined}
+          disabled={loading}
           sx={{
             display: 'flex',
             alignItems: 'center',
@@ -102,12 +104,12 @@ const QuizDocuments = ({ documents = [], setTheFormValue }) => {
             p: 1,
             borderRadius: '4px',
             '&:hover': {
-              backgroundColor: 'action.hover'
+              backgroundColor: !loading ? 'action.hover' : undefined
             }
           }}
         >
           <AddIcon />
-          <Typography color='primary'>Add Document</Typography>
+          <Typography color='primary' >Add Document</Typography>
         </IconButtonTooltip>
       </Box>
       <Box
@@ -178,7 +180,7 @@ const QuizDocuments = ({ documents = [], setTheFormValue }) => {
       </Box>
 
       {/* Add Document Dialog */}
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth='sm' fullWidth>
+      <Dialog open={openDialog} onClose={ !loading ? handleCloseDialog : undefined } maxWidth='sm' fullWidth>
         <DialogTitle>Add New Document</DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 2 }}>
@@ -196,7 +198,7 @@ const QuizDocuments = ({ documents = [], setTheFormValue }) => {
             <MuiFileInput
               label='Upload Document'
               value={currentDocument.document}
-              onChange={handleDialogFileChange}
+              onChange={!loading ? handleDialogFileChange : undefined}
               fullWidth
               clearIconButtonProps={{
                 title: 'Remove',
@@ -217,7 +219,7 @@ const QuizDocuments = ({ documents = [], setTheFormValue }) => {
           <Button
             onClick={handleSaveDocument}
             variant='contained'
-            disabled={!currentDocument.description || !currentDocument.document}
+            disabled={!currentDocument.description || !currentDocument.document || loading}
           >
             Save
           </Button>

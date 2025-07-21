@@ -19,7 +19,7 @@ import { IoMdAttach, IoMdClose } from 'react-icons/io'
 import { RiCloseFill } from 'react-icons/ri'
 import VideocamIcon from '@mui/icons-material/Videocam';
 import YouTubeIcon from '@mui/icons-material/YouTube'
-const QuizCourseLinks = ({ courseLinks = [], setTheFormValue }) => {
+const QuizCourseLinks = ({ courseLinks = [], setTheFormValue , loading }) => {
   const [open, setOpen] = useState(false)
   const [newLink, setNewLink] = useState('')
   const [error, setError] = useState('')
@@ -109,7 +109,8 @@ const QuizCourseLinks = ({ courseLinks = [], setTheFormValue }) => {
         borderRadius: '5px',
         width: '100%',
         height: '100%',
-        p: 2
+        p: 2,
+        opacity: loading ? 0.7 : 1
       }}
     >
       <Box display='flex' justifyContent='space-between' alignItems='center' mb={2}>
@@ -118,7 +119,8 @@ const QuizCourseLinks = ({ courseLinks = [], setTheFormValue }) => {
         <IconButtonTooltip
           title='Add Links'
           color='primary'
-          onClick={handleOpen}
+          onClick={ !loading ? handleOpen :  undefined}
+          disabled={loading}
           sx={{
             display: 'flex',
             alignItems: 'center',
@@ -126,7 +128,7 @@ const QuizCourseLinks = ({ courseLinks = [], setTheFormValue }) => {
             p: 1,
             borderRadius: '4px',
             '&:hover': {
-              backgroundColor: 'action.hover'
+              backgroundColor: !loading ? 'action.hover' : undefined
             }
           }}
         >
@@ -197,7 +199,7 @@ const QuizCourseLinks = ({ courseLinks = [], setTheFormValue }) => {
         )}
       </Box>
       {/* Popup Dialog */}
-      <Dialog open={open} onClose={handleClose} maxWidth='sm' fullWidth>
+      <Dialog open={open} onClose={!loading ? handleClose : undefined} maxWidth='sm' fullWidth>
         <DialogTitle>Add New Course Link</DialogTitle>
         <DialogContent>
           <TextField
@@ -218,7 +220,7 @@ const QuizCourseLinks = ({ courseLinks = [], setTheFormValue }) => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Cancel</Button>
-          <Button onClick={handleSave} variant='contained' disabled={!newLink.trim()}>
+          <Button onClick={handleSave} variant='contained' disabled={!newLink.trim() || loading}>
             Save
           </Button>
         </DialogActions>
