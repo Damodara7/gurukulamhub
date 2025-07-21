@@ -242,9 +242,10 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
             <MenuItem href={`/${locale}/sponsor/area`}>{dictionary['navigation'].sponsorByArea}</MenuItem>
           </SubMenu>
 
-          <MenuItem href={`/${locale}/dashboards/myprogress`} icon={<i className='ri-bar-chart-2-line' />}>
+          {/* <MenuItem href={`/${locale}/dashboards/myprogress`} icon={<i className='ri-bar-chart-2-line' />}>
             {dictionary['navigation'].myprogress}
-          </MenuItem>
+          </MenuItem> */}
+
           <MenuItem href={`/${locale}/pages/user-profile`} icon={<i className='ri-user-line' />}>
             {dictionary['navigation'].userProfile}
           </MenuItem>
@@ -333,18 +334,20 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
         )}
 
         <MenuSection label={dictionary['navigation'].support}>
-          <MenuItem href={`/${locale}/pages/faq`} icon={<i className='ri-question-answer-line' />}>
+          
+          {/* <MenuItem href={`/${locale}/pages/faq`} icon={<i className='ri-question-answer-line' />}>
             {dictionary['navigation'].faq}
-          </MenuItem>
+          </MenuItem> */}
 
-          <MenuItem
+          {/* <MenuItem
             href='https://triesoltech.com/support'
             suffix={<i className='ri-external-link-line text-xl' />}
             target='_blank'
             icon={<i className='ri-customer-service-line' />}
           >
             {dictionary['navigation'].raiseSupport}
-          </MenuItem>
+          </MenuItem> */}
+          
           <MenuItem href={`/${locale}/pages/donation`} icon={<i className='ri-hand-heart-line' />}>
             {dictionary['navigation'].donation}
           </MenuItem>

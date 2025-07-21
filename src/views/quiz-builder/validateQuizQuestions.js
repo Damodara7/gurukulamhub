@@ -283,7 +283,7 @@ export function validateQuizQuestions(questions) {
     // Only validate hint and hintMarks if addHint is true
     if (data?.addHint) {
       // Validate hintMarks
-      if (typeof data?.hintMarks !== 'number' || data?.hintMarks <= 0) {
+      if (typeof data?.hintMarks !== 'number' || -1*data?.hintMarks <= 0) {
         questionErrors.push({
           questionId,
           field: 'hintMarks',

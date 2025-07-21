@@ -57,10 +57,10 @@ const SingleChoiceQuestionTemplate = ({
     }
   )
 
-  const [addHint, setAddHint] = useState(false)
+  const [addHint, setAddHint] = useState( innerData?.addHint || false)
   const [status, setStatus] = useState(innerData?.status || 'draft')
   const [hint, setHint] = useState(innerData?.hint || '')
-  const [hintMarks, setHintMarks] = useState(innerData?.hintMarks || '')
+  const [hintMarks, setHintMarks] = useState(-1 * innerData?.hintMarks || '')
   const [marks, setMarks] = useState(innerData?.marks || '')
   const [timerSeconds, setTimerSeconds] = useState(innerData?.timerSeconds || '')
   const [skippable, setSkippable] = useState(innerData?.skippable || false) // by default non-skippable
@@ -113,7 +113,7 @@ const SingleChoiceQuestionTemplate = ({
         question: question,
         addHint: addHint,
         hint: hint,
-        hintMarks: -parseInt(hintMarks),
+        hintMarks: parseFloat(hintMarks),
         marks: +marks,
         timerSeconds: +timerSeconds,
         skippable: skippable,

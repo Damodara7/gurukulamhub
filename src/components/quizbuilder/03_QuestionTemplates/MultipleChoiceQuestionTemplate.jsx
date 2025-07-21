@@ -46,6 +46,7 @@ const MultipleChoiceQuestionTemplate = ({
   validationErrors = []
 }) => {
   const innerData = data?.data
+  console.log('inner data  ' ,innerData)
   const [id, setId] = useState(questionUUID)
   const [language, setLanguage] = useState(data?.language)
   const [question, setQuestion] = useState(
@@ -56,10 +57,10 @@ const MultipleChoiceQuestionTemplate = ({
       mediaType: data?.mediaType || 'text' // 'text', 'image', 'text-image', 'video', 'text-video'
     }
   )
-  const [addHint , setAddHint] = useState(false);
+  const [addHint , setAddHint] = useState(innerData?.addHint || false);
   const [status, setStatus] = useState(innerData?.status || 'draft')
   const [hint, setHint] = useState(innerData?.hint || '')
-  const [hintMarks, setHintMarks] = useState(innerData?.hintMarks)
+  const [hintMarks, setHintMarks] = useState(-1 * innerData?.hintMarks || '')
   const [marks, setMarks] = useState(innerData?.marks || '')
   const [timerSeconds, setTimerSeconds] = useState(innerData?.timerSeconds || '')
   const [skippable, setSkippable] = useState(innerData?.skippable || false)
@@ -111,7 +112,7 @@ const MultipleChoiceQuestionTemplate = ({
         question: question,
         addHint: addHint,
         hint: hint,
-        hintMarks: -parseInt(hintMarks),
+        hintMarks: parseFloat(hintMarks),
         marks: +marks,
         timerSeconds: +timerSeconds,
         skippable: skippable,
@@ -135,7 +136,7 @@ const MultipleChoiceQuestionTemplate = ({
         question: question,
         addHint: addHint,
         hint: hint,
-        hintMarks: -parseInt(hintMarks) || +primaryQuestion?.data?.hintMarks,
+        hintMarks: parseFloat(hintMarks) || +primaryQuestion?.data?.hintMarks,
         marks: +marks || +primaryQuestion?.data?.marks,
         timerSeconds: +timerSeconds || +primaryQuestion?.data?.timerSeconds,
         skippable: skippable || primaryQuestion?.data?.skippable,
