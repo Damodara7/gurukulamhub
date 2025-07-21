@@ -50,6 +50,7 @@ const CreateQuizForm = ({
   formData = {},
   fieldErrors = {},
   formSubmitted = false,
+  loading,
   onFieldInteraction = () => {}
 }) => {
   const [isGenericPopupOpen, setIsGenericPopupOpen] = useState(false)
@@ -128,6 +129,7 @@ const CreateQuizForm = ({
                 variant='outlined'
                 fullWidth
                 required
+                disabled={loading}
                 error={fieldErrors.title}
                 helperText={fieldErrors.title ? 'Quiz title is required' : ''}
                 onFocus={() => onFieldInteraction('title')}
@@ -152,6 +154,7 @@ const CreateQuizForm = ({
             onClick={() => handleOpenPopup()}
             fullWidth
             required
+            disabled={loading}
             InputProps={{ readOnly: true }}
             error={fieldErrors.contextIds}
             helperText={fieldErrors.contextIds ? 'At least one context ID is required' : ''}
@@ -169,10 +172,14 @@ const CreateQuizForm = ({
             </IconButtonTooltip>
             <DialogContent>
               <ContextTreeSearch
+              disabled= {loading}
                 setTheFormValue={(field, value) => {
-                  setTheFormValue('contextIds', value)
+                  if(!loading)
+                    {
+                      setTheFormValue('contextIds', value)
                   onFieldInteraction('contextIds', value.length === 0)
-                }}
+                }
+              }}
                 data={{ formData, genericContextIds: formData.contextIds }}
                 contextType='GENERIC'
               />
@@ -210,6 +217,7 @@ const CreateQuizForm = ({
                 variant='outlined'
                 fullWidth
                 required
+                disabled={loading}
                 rows={4}
                 multiline
                 error={fieldErrors.details}
@@ -239,6 +247,7 @@ const CreateQuizForm = ({
                 variant='outlined'
                 fullWidth
                 required
+                disabled={loading}
                 multiline
                 error={fieldErrors.syllabus}
                 helperText={fieldErrors.syllabus ? 'Quiz syllabus is required' : ''}
@@ -262,6 +271,7 @@ const CreateQuizForm = ({
             <Controller
               name='privacy'
               control={control}
+              disabled={loading}
               render={({ field }) => (
                 <Select {...field} labelId='privacy-label' label='Privacy'>
                   <MenuItem value='PUBLIC'>Public</MenuItem>
@@ -358,6 +368,7 @@ const CreateQuizForm = ({
                                 size='small'
                                 onClick={() => fileInputRef.current?.click()}
                                 sx={{ backgroundColor: 'rgba(0, 0, 0, 0.04)' }}
+                                disabled={loading}
                               >
                                 <EditIcon fontSize='small' />
                               </IconButton>
@@ -372,6 +383,7 @@ const CreateQuizForm = ({
                                   onFieldInteraction('thumbnail', true)
                                 }}
                                 sx={{ backgroundColor: 'rgba(0, 0, 0, 0.04)' }}
+                                disabled={loading}
                               >
                                 <DeleteIcon fontSize='small' />
                               </IconButton>
@@ -379,7 +391,7 @@ const CreateQuizForm = ({
                           </Box>
                         ) : (
                           <Box
-                            onClick={() => fileInputRef.current?.click()}
+                            onClick={!loading ? () => fileInputRef.current?.click() : undefined}
                             sx={{
                               height: '200px',
                               border: '2px dashed #e0e0e0',
@@ -388,8 +400,9 @@ const CreateQuizForm = ({
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              cursor: 'pointer',
+                              cursor: loading ? 'not-allowed' : 'pointer',
                               backgroundColor: 'action.hover',
+                              opacity: loading ? 0.7 : 1, 
                               '&:hover': {
                                 backgroundColor: 'action.selected'
                               }
@@ -405,6 +418,7 @@ const CreateQuizForm = ({
                           fullWidth
                           label='Or enter image URL *'
                           value={formData.thumbnail || ''}
+                          disabled={loading}
                           onChange={e => {
                             field.onChange(e)
                             setTheFormValue('thumbnail', e.target.value)
@@ -442,11 +456,19 @@ const CreateQuizForm = ({
                     Upload Related Documents and Course Links
                   </Typography>
                   <Box sx={{ flexGrow: 1 }}>
-                    <QuizDocuments documents={formData?.documents} setTheFormValue={setTheFormValue} />
+                    <QuizDocuments
+                      documents={formData?.documents}
+                      setTheFormValue={setTheFormValue}
+                      loading={loading}
+                    />
                   </Box>
 
                   <Box sx={{ flexGrow: 1, mt: 2 }}>
-                    <QuizCourseLinks courseLinks={formData?.courseLinks} setTheFormValue={setTheFormValue} />
+                    <QuizCourseLinks
+                      courseLinks={formData?.courseLinks}
+                      setTheFormValue={setTheFormValue}
+                      loading={loading}
+                    />
                   </Box>
                 </Box>
               </Grid>
@@ -458,6 +480,7 @@ const CreateQuizForm = ({
           <Controller
             name='language'
             control={control}
+            disabled={loading}
             render={({ field }) => (
               <LanguageSelect
                 {...field}
@@ -483,7 +506,7 @@ const CreateQuizForm = ({
               ))
             }
             renderInput={params => (
-              <TextField {...params} label='Tags' placeholder='Add tags' inputRef={fieldRefs.tags} />
+              <TextField {...params} label='Tags' placeholder='Add tags' inputRef={fieldRefs.tags} disabled={loading} />
             )}
           />
         </Grid>

@@ -247,6 +247,7 @@ function CreateQuiz() {
             fieldErrors={fieldErrors}
             formSubmitted={formSubmitted}
             onFieldInteraction={handleFieldInteraction}
+            loading={loading}
           />
           <Stack className='w-full' flexDirection='row' alignItems='center' justifyContent='flex-end'>
             <Button
