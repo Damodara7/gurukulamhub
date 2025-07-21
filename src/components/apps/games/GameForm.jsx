@@ -47,6 +47,9 @@ import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import Loading from '@/components/Loading'
 import { getCountryByName } from '@/utils/countryRegionUtil'
+import { timezones } from '@/data/timezones'
+import { countryTimezones } from '@/data/country-timezones'
+import moment from 'moment-timezone'
 // Reward position options
 const POSITION_OPTIONS = [1, 2, 3, 4, 5]
 
@@ -65,6 +68,9 @@ const validateForm = formData => {
   }
   if (!formData.thumbnailPoster) {
     errors.thumbnailPoster = 'Thumbnail image is required.'
+  }
+  if (!formData.timezone) {
+    errors.timezone = 'Timezone is required.'
   }
 
   if (formData.startTime === null) {
@@ -110,6 +116,7 @@ const validateForm = formData => {
 
 const formFieldOrder = [
   'title',
+  'timezone',
   'pin',
   'description',
   'quiz',
@@ -182,6 +189,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
   // Create refs for each field
   const fieldRefs = {
     title: useRef(),
+    timezone: useRef(),
     pin: useRef(),
     description: useRef(),
     quiz: useRef(),
@@ -207,7 +215,8 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
         startTime: data?.startTime ? new Date(data.startTime) : null,
         registrationEndTime: data?.registrationEndTime ? new Date(data.registrationEndTime) : null,
         duration: data?.duration ? Math.floor(data.duration / 60) : '',
-        gameMode: data?.gameMode || 'live'
+        gameMode: data?.gameMode || 'live',
+        timezone: data?.timezone || ''
       })
       setSelectedCountryObject(
         data?.location?.country
@@ -645,7 +654,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
   }
 
   return (
-    <Grid container spacing={3}>
+    <Grid container spacing={4}>
       {/* Add Snackbar for error messages */}
       <Snackbar
         open={showErrorSnackbar}
@@ -682,7 +691,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
       </Snackbar>
 
       {/* Basic Information */}
-      <Grid item xs={12} md={6}>
+      <Grid item xs={12} sm={6}>
         <TextField
           fullWidth
           label='Game Title'
@@ -698,7 +707,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
         />
       </Grid>
 
-      <Grid item xs={12} md={6}>
+      <Grid item xs={12} sm={6}>
         <TextField
           fullWidth
           label='6-digit PIN'
@@ -786,8 +795,42 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
         </FormControl>
       </Grid>
 
+      {/* Timezone Autocomplete */}
+      <Grid item xs={12} sm={6}>
+        <FormControl fullWidth required error={!!errors.timezone && touches.timezone}>
+          <Autocomplete
+            id='timezone-autocomplete'
+            options={timezones}
+            value={formData.timezone || ''}
+            onChange={(e, newValue) => {
+              setFormData(prev => ({ ...prev, timezone: newValue || '' }))
+              setTouches(prev => ({ ...prev, timezone: true }))
+              setErrors(prev => ({ ...prev, timezone: '' }))
+            }}
+            onBlur={() => {
+              setTouches(prev => ({ ...prev, timezone: true }))
+              validateField('timezone')
+            }}
+            renderInput={params => (
+              <TextField
+                {...params}
+                label='Timezone'
+                required
+                error={!!errors.timezone && touches.timezone}
+                helperText={errors.timezone || 'From where the game is creating'}
+                inputRef={fieldRefs.timezone}
+              />
+            )}
+            isOptionEqualToValue={(option, value) => option === value}
+            autoHighlight
+            autoSelect
+            clearOnEscape
+            disableClearable={false}
+          />
+        </FormControl>
+      </Grid>
       {/* Start Date & Time */}
-      <Grid item xs={12} md={6}>
+      <Grid item xs={12} sm={6}>
         <DateTimePicker
           disablePast
           minDateTime={dayjs().add(1, 'minute')}
@@ -798,10 +841,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
           onChange={newValue => {
             // explicitly set to 'null' if cleared
             const newDate = newValue ? newValue.toDate() : null
-            console.log('new Date ', newDate)
-
             handleDateChange('startTime', newDate)
-
             validateField('startTime')
             if (formData.requireRegistration) {
               validateField('registrationEndTime')
@@ -811,7 +851,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
           slotProps={{
             textField: {
               error: !!errors.startTime && touches.startTime,
-              helperText: (touches.startTime && errors.startTime) || 'Select the start time',
+              helperText: (touches.startTime && errors.startTime) || 'Select start time of the game',
               required: true,
               onBlur: () => {
                 setTouches(prev => ({ ...prev, startTime: true }))
@@ -831,7 +871,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
       </Grid>
 
       {/* Game Mode Selection */}
-      <Grid item xs={6}>
+      <Grid item xs={12} sm={6}>
         <FormControl fullWidth required error={!!errors.gameMode && touches.gameMode}>
           <InputLabel id='game-mode-label'>Game Mode</InputLabel>
           <Select
@@ -858,7 +898,8 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
 
       {/* Forward Type Selection - now as Select, only if live */}
       {formData.gameMode === 'live' && (
-        <Grid item xs={6}>
+        <>
+        <Grid item xs={12} sm={6}>
           <FormControl fullWidth required error={!!errors.forwardType && touches.forwardType}>
             <InputLabel id='forward-type-label'>Forward Type</InputLabel>
             <Select
@@ -878,11 +919,14 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
             <FormHelperText>Select how the game will be forwarded</FormHelperText>
           </FormControl>
         </Grid>
+        <Grid item xs={12} sm={6}></Grid>
+        </>
       )}
 
       {/* Duration (only if self-paced) */}
       {formData.gameMode === 'self-paced' && (
-        <Grid item xs={12} md={6}>
+        <>
+        <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
             label='Duration (minutes)'
@@ -906,12 +950,14 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
             inputRef={fieldRefs.duration}
           />
         </Grid>
+        <Grid item xs={12} sm={6}></Grid>
+        </>
       )}
 
-      <Grid item xs={12} md={6}></Grid>
+      <Grid item xs={12} sm={6}></Grid>
 
       {/* Registration */}
-      <Grid item xs={12} md={6}>
+      <Grid item xs={12} sm={6}>
         <FormControlLabel
           control={
             <Checkbox checked={formData.requireRegistration} onChange={handleChange} name='requireRegistration' />
@@ -957,7 +1003,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
       </Grid>
 
       {/* Limit Players */}
-      <Grid item xs={12} md={6}>
+      <Grid item xs={12} sm={6}>
         <FormControlLabel
           control={<Checkbox checked={formData.limitPlayers} onChange={handleChange} name='limitPlayers' />}
           label='Limit Players'
@@ -983,7 +1029,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
       {/* Location */}
       <Grid item xs={12}>
         <Typography variant='subtitle1' gutterBottom>
-          Location (Optional)
+          Location of the game (Accessible anywhere, if nothing specified)
         </Typography>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6} md={4}>
@@ -1055,6 +1101,24 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
               )}
             </Grid>
           )}
+
+          {/* Show converted time info if timezone, startTime, and selectedCountryObject are set */}
+          {formData.timezone &&
+            formData.startTime &&
+            selectedCountryObject?.countryCode &&
+            (() => {
+              const countryTzObj = countryTimezones.find(ctz => ctz.countryCode === selectedCountryObject.countryCode)
+              if (!countryTzObj) return null
+              const userMoment = moment.tz(formData.startTime, formData.timezone)
+              const countryMoment = userMoment.clone().tz(countryTzObj.timezone)
+              return (
+                <Grid item xs={12}>
+                  <Alert severity='info' sx={{ my: 2 }}>
+                    In {selectedCountryObject.country} ({countryTzObj.timezone}), the start time of game will be: <b>{countryMoment.format('YYYY-MM-DD HH:mm (z)')}</b>
+                  </Alert>
+                </Grid>
+              )
+            })()}
         </Grid>
       </Grid>
 
@@ -1154,14 +1218,17 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                   style={{ display: 'none' }}
                 />
                 {formData.thumbnailPoster ? (
-                  <Box sx={{ position: 'relative',
-                    mb: 2,
-                    height: '200px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: '#f5f5f5' // Light gray background for error state
-                }}>
+                  <Box
+                    sx={{
+                      position: 'relative',
+                      mb: 2,
+                      height: '200px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: '#f5f5f5' // Light gray background for error state
+                    }}
+                  >
                     <img
                       src={formData.thumbnailPoster}
                       alt='Game thumbnail'
@@ -1184,8 +1251,8 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                         borderRadius: 1,
                         p: 0.5,
                         boxShadow: 1,
-                        zIndex:2,
-                        transform: 'translateY(-1px)',
+                        zIndex: 2,
+                        transform: 'translateY(-1px)'
                       }}
                     >
                       <IconButton

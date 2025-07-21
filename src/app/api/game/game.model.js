@@ -125,6 +125,10 @@ const gameSchema = new mongoose.Schema(
       type: Date,
       required: true
     },
+    timezone: {
+      type: String,
+      required: true,
+    },
     gameMode: {
       type: String,
       enum: ['live', 'self-paced'],
