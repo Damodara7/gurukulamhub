@@ -1,5 +1,6 @@
 // Component Imports
-import Donation from '@views/pages/donation'
+
+import Donation from '@/views/donation/Donation'
 
 const DonationPage = async () => {
   // Vars
