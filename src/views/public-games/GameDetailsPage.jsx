@@ -50,7 +50,12 @@ const GameDetailsPage = () => {
 
   if (error || !game) {
     return (
-      <FallBackCard error={error} path='/public-games' content='You can go Back to Public Games' btnText='Back To Public Games'/>
+      <FallBackCard
+        error={error}
+        path='/public-games'
+        content='You can go Back to Public Games'
+        btnText='Back To Public Games'
+      />
     )
   }
 

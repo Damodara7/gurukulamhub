@@ -34,7 +34,7 @@ export default async function page({ params }) {
 
   if (!gameData) {
     // You might want to redirect or show a not found page here
-    return <FallBackCard content='You can go back to All Games' path='/apps/games' btntext='Back To All Games' />
+    return <FallBackCard content='You can go back to All Games' path='/apps/games' btnText='Back To All Games' />
   }
   return (
     <>
