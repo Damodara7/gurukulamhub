@@ -73,7 +73,7 @@ const AllGamesPage = ({ creatorEmail = '', isSuperUser = false }) => {
 
   async function handleCreateNewGame() {
     console.log('Clicked Create new game')
-    router.push(isSuperUser ? `/manage-games/create` : `/apps/games/create`)
+    router.push(isSuperUser ? `/manage-games/create` : `/management/games/create`)
   }
 
   const handleGameStatusChange = newStatus => {

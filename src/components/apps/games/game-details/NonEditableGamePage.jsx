@@ -27,7 +27,7 @@ const  NonEditableGamePage = ( {gameData}) => {
           <Typography variant='body2' sx={{ mt: 1, mb: 3 }}>
             {statusMessages[gameData.status] || 'Editing is restricted due to the current game status.'}
           </Typography>
-          <Button variant='contained' onClick={() => router.push(`/apps/games`)} sx={{ mt: 2 }}>
+          <Button variant='contained' onClick={() => router.push(`/management/games`)} sx={{ mt: 2 }}>
             Back to All Games
           </Button>
         </CardContent>

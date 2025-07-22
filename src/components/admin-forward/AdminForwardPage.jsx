@@ -16,7 +16,7 @@ function AdminForwardPage({ game = null }) {
   const router = useRouter()
   console.log('cancel reason ', game)
   if (!game)
-    return <FallBackCard path='/apps/games' content='You can go Back to All games' btnText='Back To All Games' />
+    return <FallBackCard path='/management/games' content='You can go Back to All games' btnText='Back To All Games' />
   const showParticipatedUsers = game?.status === 'completed'
   const cancel = game?.status === 'cancelled'
   const admininstructions = game?.status === 'lobby'
@@ -124,7 +124,7 @@ function AdminForwardPage({ game = null }) {
             <Button
               component='label'
               variant='contained'
-              onClick={() => router.push('/apps/games')}
+              onClick={() => router.push('/management/games')}
               sx={{ color: 'white' }}
             >
               Back To All Games

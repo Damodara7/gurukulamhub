@@ -1,5 +1,15 @@
-// app/views/apps/games/edit-game/page.js
-import EditGamePage from '@/views/apps/games/edit-game'
+// import React from 'react'
+// import ForwardGameQuestion from '@/components/admin-forward/ForwardGameQuestion'
+// export default async function page( {params}) {
+//     return (
+//       <>
+//         <ForwardGameQuestion gameId={params.id} />
+//       </>
+//     )
+//   }
+
+import React from 'react'
+import ForwardGameQuestion from '@/components/admin-forward/ForwardGameQuestion'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import FallBackCard from '@/components/apps/games/FallBackCard'
@@ -24,8 +34,11 @@ export default async function page({ params }) {
 
   if (!gameData) {
     // You might want to redirect or show a not found page here
-    return <FallBackCard content='You can go back to All Games' path='/apps/games' btntext='Back To All Games' />
+    return <FallBackCard content='You can go back to All Games' path='/apps/games' btnText='Back To All Games' />
   }
-
-  return <EditGamePage gameId={id} gameData={gameData} />
+  return (
+    <>
+      <ForwardGameQuestion gameId={id} game={gameData} />
+    </>
+  )
 }

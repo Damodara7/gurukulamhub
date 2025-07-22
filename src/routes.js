@@ -10,7 +10,7 @@ export const authRoutes = [
 ]
 
 export const USER_ROUTES = ['/home', '/publicquiz', '/game', '/myquizzes', '/mygames', '/myutilities', '/dashboards', '/pages']
-export const ADMIN_ROUTES = ['/home', '/publicquiz', '/game', '/myquizzes', '/mygames', '/myutilities', '/dashboards', '/pages', '/apps']
+export const ADMIN_ROUTES = ['/home', '/publicquiz', '/game', '/myquizzes', '/mygames', '/myutilities', '/dashboards', '/pages', '/management']
 
 
 // When user is not logged in and tries to access protected routes redirect to login page

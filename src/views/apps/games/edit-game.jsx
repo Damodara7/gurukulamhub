@@ -107,7 +107,7 @@ function EditGamePage({ gameData = null, gameId = null, isSuperUser = false }) {
 
       if (result?.status === 'success') {
         toast.success(`Game ${gameId ? 'updated' : 'created'} successfully!`)
-        router.push(isSuperUser ? '/manage-games' : '/apps/games') // Redirect to games list
+        router.push(isSuperUser ? '/manage-games' : '/management/games') // Redirect to games list
       } else {
         console.error(`Error ${gameId ? 'updating' : 'creating'} game:`, result.message)
         toast.error(result?.message || `Failed to ${gameId ? 'update' : 'create'} game`)
@@ -121,7 +121,7 @@ function EditGamePage({ gameData = null, gameId = null, isSuperUser = false }) {
   }
 
   const handleCancel = () => {
-    router.push(isSuperUser ? '/manage-games' : '/apps/games') // Redirect to games list
+    router.push(isSuperUser ? '/manage-games' : '/management/games') // Redirect to games list
   }
 
   if (loading && (quizzes.length === 0 || (gameId && !gameData))) {

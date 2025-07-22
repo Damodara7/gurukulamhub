@@ -9,7 +9,7 @@ import AppFullCalendar from '@/libs/styles/AppFullCalendar'
 
 async function fetchEvents() {
   // Vars
-  const res = await fetch(`${process.env.API_URL}/apps/calendar-events`)
+  const res = await fetch(`${process.env.API_URL}/management/calendar-events`)
 
   if (!res.ok) {
     throw new Error('Failed to fetch data')

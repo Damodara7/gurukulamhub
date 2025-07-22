@@ -250,7 +250,7 @@ const GeoRolesTable = ({ tableData, refreshUsers }) => {
               <i className='ri-delete-bin-7-line text-[22px] text-textSecondary' />
             </IconButtonTooltip> */}
             {/* <IconButtonTooltip title=''>
-              <Link href={getLocalizedUrl('apps/user/view', locale)} className='flex'>
+              <Link href={getLocalizedUrl('management/user/view', locale)} className='flex'>
                 <i className='ri-eye-line text-[22px] text-textSecondary' />
               </Link>
             </IconButtonTooltip> */}

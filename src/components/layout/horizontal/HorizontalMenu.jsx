@@ -92,25 +92,27 @@ const HorizontalMenu = ({ dictionary }) => {
           </MenuItem>
         </SubMenu>
 
-        <SubMenu label={dictionary['navigation'].apps} icon={<i className='ri-mail-open-line' />}>
-          <MenuItem href={`/${locale}/apps/calendar`} icon={<i className='ri-calendar-line' />}>
+        <SubMenu label={dictionary['navigation'].management} icon={<i className='ri-mail-open-line' />}>
+          <MenuItem href={`/${locale}/management/calendar`} icon={<i className='ri-calendar-line' />}>
             {dictionary['navigation'].calendar}
           </MenuItem>
           <SubMenu label={dictionary['navigation'].invoice} icon={<i className='ri-file-list-2-line' />}>
-            <MenuItem href={`/${locale}/apps/invoice/list`}>{dictionary['navigation'].list}</MenuItem>
-            <MenuItem href={`/${locale}/apps/invoice/preview/${id || '4987'}`}>
+            <MenuItem href={`/${locale}/management/invoice/list`}>{dictionary['navigation'].list}</MenuItem>
+            <MenuItem href={`/${locale}/management/invoice/preview/${id || '4987'}`}>
               {dictionary['navigation'].preview}
             </MenuItem>
-            <MenuItem href={`/${locale}/apps/invoice/edit/${id || '4987'}`}>{dictionary['navigation'].edit}</MenuItem>
-            <MenuItem href={`/${locale}/apps/invoice/add`}>{dictionary['navigation'].add}</MenuItem>
+            <MenuItem href={`/${locale}/management/invoice/edit/${id || '4987'}`}>
+              {dictionary['navigation'].edit}
+            </MenuItem>
+            <MenuItem href={`/${locale}/management/invoice/add`}>{dictionary['navigation'].add}</MenuItem>
           </SubMenu>
           <SubMenu label={dictionary['navigation'].user} icon={<i className='ri-user-line' />}>
-            <MenuItem href={`/${locale}/apps/user/list`}>{dictionary['navigation'].list}</MenuItem>
-            <MenuItem href={`/${locale}/apps/user/view`}>{dictionary['navigation'].view}</MenuItem>
+            <MenuItem href={`/${locale}/management/user/list`}>{dictionary['navigation'].list}</MenuItem>
+            <MenuItem href={`/${locale}/management/user/view`}>{dictionary['navigation'].view}</MenuItem>
           </SubMenu>
           <SubMenu label={dictionary['navigation'].rolesPermissions} icon={<i className='ri-lock-line' />}>
-            <MenuItem href={`/${locale}/apps/roles`}>{dictionary['navigation'].roles}</MenuItem>
-            <MenuItem href={`/${locale}/apps/features`}>{dictionary['navigation'].features}</MenuItem>
+            <MenuItem href={`/${locale}/management/roles`}>{dictionary['navigation'].roles}</MenuItem>
+            <MenuItem href={`/${locale}/management/features`}>{dictionary['navigation'].features}</MenuItem>
           </SubMenu>
         </SubMenu>
         <SubMenu label={dictionary['navigation'].pages} icon={<i className='ri-file-list-2-line' />}>
@@ -258,8 +260,8 @@ const HorizontalMenu = ({ dictionary }) => {
           </MenuItem>
         </SubMenu>
         <SubMenu label={dictionary['navigation'].others} icon={<i className='ri-more-line' />}>
-           {dictionary['navigation'].menuExamples}
-                <MenuItem
+          {dictionary['navigation'].menuExamples}
+          <MenuItem
             suffix={<Chip label='New' size='small' color='info' />}
             icon={<i className='ri-notification-badge-line' />}
           >
@@ -273,7 +275,6 @@ const HorizontalMenu = ({ dictionary }) => {
           >
             {dictionary['navigation'].externalLink}
           </MenuItem>
-    
         </SubMenu>
       </Menu>
 

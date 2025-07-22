@@ -27,6 +27,7 @@ import {
   CardActions,
   CardContent,
   CardHeader,
+  Grid,
   Stack,
   Typography
 } from '@mui/material'
@@ -226,7 +227,6 @@ function CreateQuiz() {
   }
   return (
     <>
-      <GoBackButton />
       <Card>
         <CardContent>
           <Box className='flex flex-col gap-2 mb-6 mt-2 text-center'>
@@ -249,19 +249,25 @@ function CreateQuiz() {
             onFieldInteraction={handleFieldInteraction}
             loading={loading}
           />
-          <Stack className='w-full' flexDirection='row' alignItems='center' justifyContent='flex-end'>
-            <Button
-              sx={{ mt: 2 }}
-              variant='contained'
-              style={{ color: 'white' }}
-              color='primary'
-              component='label'
-              onClick={handleSubmit(onSubmit)}
-              disabled={loading}
-            >
-              {loading ? 'Creating...' : 'Create Quiz'}
-            </Button>
-          </Stack>
+          {/* Form Actions */}
+          <Grid item xs={12} mt={5}>
+            <Stack direction='row' spacing={2} justifyContent='center'>
+              <Button variant='outlined' onClick={() => router.push('/myquizzes/view')}>
+                Cancel
+              </Button>
+              <Button
+                sx={{ mt: 2 }}
+                variant='contained'
+                style={{ color: 'white' }}
+                color='primary'
+                component='label'
+                onClick={handleSubmit(onSubmit)}
+                disabled={loading}
+              >
+                {loading ? 'Creating...' : 'Create Quiz'}
+              </Button>
+            </Stack>
+          </Grid>
         </CardContent>
       </Card>
     </>
