@@ -93,7 +93,7 @@ function CreateGamePage({ isSuperUser = false }) {
 
       if (result?.status === 'success') {
         toast.success('Game created successfully!')
-        router.push(isSuperUser ? '/manage-games' : '/apps/games') // Redirect to games list
+        router.push(isSuperUser ? '/manage-games' : '/management/games') // Redirect to games list
       } else {
         console.error('Error creating game:', result.message)
         toast.error(result?.message || 'Failed to create game')
@@ -107,7 +107,7 @@ function CreateGamePage({ isSuperUser = false }) {
   }
 
   const handleCancel = () => {
-    router.push(isSuperUser ? '/manage-games' : '/apps/games') // Redirect to games list
+    router.push(isSuperUser ? '/manage-games' : '/management/games') // Redirect to games list
   }
 
   if (loading && quizzes.length === 0) {

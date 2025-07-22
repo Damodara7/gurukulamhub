@@ -46,9 +46,7 @@ function ForwardGameQuestion({ gameId = null, game: initialGame = null }) {
     }
   }, [gameId])
 
-  if(!game) return (
-    <FallBackCard path='/apps/games'  content='You can go Back to All Games' btnText='Back To All Games'/>
-  )
+  if(!game) return <FallBackCard path='/management/games' content='You can go Back to All Games' btnText='Back To All Games' />
 
   if (
     game?.status === 'approved' ||

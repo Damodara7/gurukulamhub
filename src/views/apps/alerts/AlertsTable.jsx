@@ -285,7 +285,7 @@ const AlertsTable = () => {
   }
 
   const handleGoToAlertUsers = () => {
-    router.push(`/apps/alerts/${currentRow._id}/users`)
+    router.push(`/management/alerts/${currentRow._id}/users`)
   }
 
   const handleAddRow = () => {

@@ -105,7 +105,7 @@ const AdminViewQuiz = ({ quizId }) => {
     try {
       const result = await rejectQuiz(reqBody)
       if (result.status === 'success') {
-        router.push('/apps/quiz/list')
+        router.push('/management/quiz/list')
       } else {
         console.error('Error rejecting quiz:', result)
         throw new Error('Error rejecting quiz.')
@@ -129,7 +129,7 @@ const AdminViewQuiz = ({ quizId }) => {
     try {
       const result = await moveQuizToPending(reqBody)
       if (result.status === 'success') {
-        router.push('/apps/quiz/list')
+        router.push('/management/quiz/list')
       } else {
         console.error('Error moving quiz to pending:', result)
         throw new Error('Error moving quiz to pending.')
@@ -153,7 +153,7 @@ const AdminViewQuiz = ({ quizId }) => {
     try {
       const result = await approveQuiz(reqBody)
       if (result.status === 'success') {
-        router.push('/apps/quiz/list')
+        router.push('/management/quiz/list')
       } else {
         console.error('Error approving quiz:', result)
       }
@@ -176,11 +176,11 @@ const AdminViewQuiz = ({ quizId }) => {
     <Box sx={{ maxWidth: '1200px', margin: 'auto', padding: 4, pb: 12, position: 'relative' }}>
       {/* Back Button */}
       {/* <Box sx={{ position: 'absolute', top: 16, left: 16 }}>
-        <IconButtonTooltip title='' onClick={() => router.push('/apps/quiz/list')}>
+        <IconButtonTooltip title='' onClick={() => router.push('/management/quiz/list')}>
           <ArrowBackIcon />
         </IconButtonTooltip>
       </Box> */}
-      <GoBackButton path='/apps/quiz/list'/>
+      <GoBackButton path='/management/quiz/list' />
       <Box sx={{ padding: 2, backgroundColor: '#f0f4f8', borderRadius: '12px', maxWidth: '1200px', margin: 'auto' }}>
         {/* Thumbnail Section */}
         <Box sx={{ width: '100%', textAlign: 'center', mb: 2 }}>

@@ -77,7 +77,7 @@ export default function GameDetailsPage({ game: initialGame = null, gameId }) {
                 component='label'
                 size='small'
                 variant='contained'
-                onClick={() => router.push('/apps/games')}
+                onClick={() => router.push('/management/games')}
                 sx={{ color: 'white' }}
               >
                 Back To All Games

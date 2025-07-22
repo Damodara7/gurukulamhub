@@ -147,7 +147,7 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
                   </Typography>
                 ) : null}
                 <Link
-                  href={getLocalizedUrl(`/apps/user/${encodeURIComponent(row.original?.email)}`, locale)}
+                  href={getLocalizedUrl(`/management/user/${encodeURIComponent(row.original?.email)}`, locale)}
                   style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}
                 >
                   <Typography
@@ -162,13 +162,16 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
                       '&:hover': {
                         color: 'info.main',
                         '& .external-link-icon': {
-                          color: 'info.main',
+                          color: 'info.main'
                         }
                       }
                     }}
                   >
                     {row.original?.email}
-                    <i className='ri-external-link-line text-[16px] ml-1 external-link-icon' style={{ marginLeft: 4, color: 'var(--mui-palette-info-main)' }} />
+                    <i
+                      className='ri-external-link-line text-[16px] ml-1 external-link-icon'
+                      style={{ marginLeft: 4, color: 'var(--mui-palette-info-main)' }}
+                    />
                   </Typography>
                 </Link>
               </div>
@@ -424,7 +427,7 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
           <CustomTabList
             onChange={(e, val) => {
               //   revalidatePath('/sponsor/list', 'page')
-              let url = `/apps/sponsorships`
+              let url = `/management/sponsorships`
               if (val !== 'all') {
                 url += `?sponsorType=${val}`
               }

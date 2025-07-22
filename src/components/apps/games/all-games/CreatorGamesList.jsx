@@ -110,22 +110,22 @@ const CreatorGameList = ({ games = [], loading = false, onRefresh, setGames, isS
 
   async function handleViewGame(id) {
     console.log('Clicked View game of id: ', id)
-    router.push(isSuperUser ? `/manage-games/${id}` : `/apps/games/${id}`)
+    router.push(isSuperUser ? `/manage-games/${id}` : `/management/games/${id}`)
   }
   async function handleEditGame(id) {
     console.log('Clicked Edit game of id: ', id)
-    router.push(isSuperUser ? `/manage-games/${id}/edit` : `/apps/games/${id}/edit`)
+    router.push(isSuperUser ? `/manage-games/${id}/edit` : `/management/games/${id}/edit`)
   }
 
   async function handleLeaderboard(id) {
     console.log('Clicked Leaderboard game of id: ', id)
-    router.push(isSuperUser ? `/manage-games/${id}/leaderboard` : `/apps/games/${id}/leaderboard`)
+    router.push(isSuperUser ? `/manage-games/${id}/leaderboard` : `/management/games/${id}/leaderboard`)
   }
 
   async function handleAdminForward(game) {
     console.log('Clicked Admin Forward game of id: ', game._id)
     if (game?.forwardingAdmin && game?.forwardingAdmin?.email === session?.user?.email){
-      router.push(`/apps/games/${game._id}/admin-forward`)
+      router.push(`/management/games/${game._id}/admin-forward`)
       return
     }
       try {
@@ -134,7 +134,7 @@ const CreatorGameList = ({ games = [], loading = false, onRefresh, setGames, isS
         })
         if (result?.status === 'success') {
           toast.success('Admin forwarding set successfully')
-          router.push(`/apps/games/${game._id}/admin-forward`)
+          router.push(`/management/games/${game._id}/admin-forward`)
         } else {
           console.error('Error setting admin forarding:', error)
           toast.error(result?.message || 'Failed to set admin forwarding')

@@ -232,7 +232,7 @@ const AlertUsersTable = ({ alertId }) => {
 
   return (
     <>
-      <GoBackButton path='/apps/alerts' />
+      <GoBackButton path='/management/alerts' />
       <Card>
         <CardContent className='flex flex-col gap-4 sm:flex-row items-start sm:items-center justify-between'>
           <DebouncedInput

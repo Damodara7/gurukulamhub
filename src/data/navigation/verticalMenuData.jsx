@@ -30,7 +30,7 @@ const verticalMenuData = (dictionary, params) => [
     children: [
       {
         label: dictionary['navigation'].calendar,
-        href: '/apps/calendar',
+        href: '/management/calendar',
         icon: 'ri-calendar-line'
       },
       {
@@ -40,22 +40,22 @@ const verticalMenuData = (dictionary, params) => [
           {
             label: dictionary['navigation'].list,
             icon: 'ri-circle-line',
-            href: '/apps/invoice/list'
+            href: '/management/invoice/list'
           },
           {
             label: dictionary['navigation'].preview,
             icon: 'ri-circle-line',
-            href: `/apps/invoice/preview/${params.id || '4987'}`
+            href: `/management/invoice/preview/${params.id || '4987'}`
           },
           {
             label: dictionary['navigation'].edit,
             icon: 'ri-circle-line',
-            href: `/apps/invoice/edit/${params.id || '4987'}`
+            href: `/management/invoice/edit/${params.id || '4987'}`
           },
           {
             label: dictionary['navigation'].add,
             icon: 'ri-circle-line',
-            href: '/apps/invoice/add'
+            href: '/management/invoice/add'
           }
         ]
       },
@@ -66,12 +66,12 @@ const verticalMenuData = (dictionary, params) => [
           {
             label: dictionary['navigation'].list,
             icon: 'ri-circle-line',
-            href: '/apps/user/list'
+            href: '/management/user/list'
           },
           {
             label: dictionary['navigation'].view,
             icon: 'ri-circle-line',
-            href: '/apps/user/view'
+            href: '/management/user/view'
           }
         ]
       },
@@ -82,12 +82,12 @@ const verticalMenuData = (dictionary, params) => [
           {
             label: dictionary['navigation'].roles,
             icon: 'ri-circle-line',
-            href: '/apps/roles'
+            href: '/management/roles'
           },
           {
             label: dictionary['navigation'].permissions,
             icon: 'ri-circle-line',
-            href: '/apps/permissions'
+            href: '/management/permissions'
           }
         ]
       },

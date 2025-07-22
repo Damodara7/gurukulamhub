@@ -7,7 +7,7 @@ import AddActions from '@views/apps/invoice/add/AddActions'
 
 const getData = async () => {
   // Vars
-  const res = await fetch(`${process.env.API_URL}/apps/invoice`)
+  const res = await fetch(`${process.env.API_URL}/management/invoice`)
 
   if (!res.ok) {
     throw new Error('Failed to fetch invoice data')

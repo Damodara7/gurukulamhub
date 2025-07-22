@@ -54,7 +54,7 @@ function FallBackCard({ error=null , path = '/', content = null, btnText = null,
     //           component='label'
     //           size='small'
     //           variant='contained'
-    //           onClick={() => router.push( isSuperUser ? '/manage-games' :'/apps/games')}
+    //           onClick={() => router.push( isSuperUser ? '/manage-games' :'/management/games')}
     //           sx={{ color: 'white' }}
     //         >
     //           Back To {content} Games

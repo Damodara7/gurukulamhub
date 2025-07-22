@@ -230,12 +230,12 @@ const AdminPendingQuizzesTable = ({ data, refreshData }) => {
         header: 'Actions',
         cell: ({ row }) => (
           <div className='flex items-center'>
-            <IconButtonTooltip title={"View"}>
-              <Link href={`/apps/quiz/view/${row.original._id}`} className='flex'>
+            <IconButtonTooltip title={'View'}>
+              <Link href={`/management/quiz/view/${row.original._id}`} className='flex'>
                 <i className='ri-eye-line text-[22px] text-textSecondary' />
               </Link>
             </IconButtonTooltip>
-            <IconButtonTooltip title={"Actions"} onClick={e => handleOpenActionsMenu(e, row)}>
+            <IconButtonTooltip title={'Actions'} onClick={e => handleOpenActionsMenu(e, row)}>
               <MoreVertIcon />
             </IconButtonTooltip>
           </div>
