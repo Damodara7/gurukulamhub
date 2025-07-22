@@ -508,15 +508,15 @@ export const deleteOne = async (gameId, { email }) => {
       }
     }
 
-    // // Perform soft delete with audit fields
-    // existingGame.isDeleted = true
-    // existingGame.deletedAt = new Date()
-    // existingGame.deletedBy = user._id // Assuming user object has _id
-    // existingGame.deleterEmail = user.email // More natural than "deletorEmail"
+    // Perform soft delete with audit fields
+    existingGame.isDeleted = true
+    existingGame.deletedAt = new Date()
+    existingGame.deletedBy = user._id // Assuming user object has _id
+    existingGame.deleterEmail = user.email // More natural than "deletorEmail"
 
-    // // Save the updated game
-    // const deletedGame = await existingGame.save()
-    const deletedGame = await Game.deleteOne({ _id: gameId })
+    // Save the updated game
+    const deletedGame = await existingGame.save()
+    // const deletedGame = await Game.deleteOne({ _id: gameId })
 
     // Delete all players for this game
     await Player.deleteMany({ game: gameId })
@@ -690,6 +690,12 @@ export const joinGame = async (gameId, userData) => {
     const enrichedGame = await enrichGameWithDetails(game)
 
     broadcastGameDetailsUpdates(gameId)
+    const leaderboard = enrichedGame?.participatedUsers?.map(p => ({
+      ...p,
+      totalAnswerTime: p.answers?.reduce((sum, a) => sum + (a?.answerTime || 0), 0)
+    }))
+    broadcastLeaderboard(gameId, leaderboard)
+    broadcastGamesUpdate()
 
     return {
       status: 'success',
@@ -742,7 +748,13 @@ export const startGame = async (gameId, userData) => {
     // Get questions
     const game = await Game.findById(gameId).populate('quiz').lean()
     const enrichedGame = await enrichGameWithDetails(game)
+    const leaderboard = enrichedGame?.participatedUsers?.map(p => ({
+      ...p,
+      totalAnswerTime: p.answers?.reduce((sum, a) => sum + (a?.answerTime || 0), 0)
+    }))
     broadcastGameDetailsUpdates(gameId)
+    broadcastLeaderboard(gameId, leaderboard)
+    broadcastGamesUpdate()
     return {
       status: 'success',
       result: enrichedGame,

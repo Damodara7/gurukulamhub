@@ -133,7 +133,7 @@ export default function PlayGameQuiz({ game }) {
   const quiz = game?.quiz
   const questions = game?.questions
 
-  const storageKey = `quiz-${quiz._id}-state`
+  const storageKey = `quiz-${quiz?._id}-state`
 
   // Initialize timing when component mounts
   useEffect(() => {

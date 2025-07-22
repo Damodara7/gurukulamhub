@@ -141,7 +141,7 @@ export default function PlayGameQuiz({ game: initialGame, onGameEnd }) {
   const quiz = game?.quiz
   const questions = game?.questions
 
-   const storageKey = `game-${game._id}-quiz-${quiz._id}-state`
+   const storageKey = `game-${game?._id}-quiz-${quiz?._id}-state`
 
   const mappedQuestions = useMemo(() => {
     let cumulativeTime = 0
