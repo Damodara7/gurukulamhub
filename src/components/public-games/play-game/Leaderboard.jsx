@@ -28,8 +28,7 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
   const wsRef = useRef(null)
   const [highlightedRows, setHighlightedRows] = useState({})
 
-
-  console.log('data game on the leaderboard ' , game)
+  console.log('data game on the leaderboard ', game)
   useEffect(() => {
     const fetchLeaderboard = async () => {
       try {
@@ -38,7 +37,7 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
         const res = await RestApi.get(`${API_URLS.v0.USERS_GAME}/${game._id}/leaderboard`)
         if (res.status === 'success') {
           // Sort leaderboard by score (descending) and then by totalTime (ascending)
-          console.log(' response result '  , res.result)
+          console.log(' response result ', res.result)
 
           const sortedLeaderboard = res.result?.sort((p1, p2) => {
             if (game?.gameMode === 'live') {
@@ -103,7 +102,6 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
       }
       wsRef.current.onmessage = event => {
         try {
-
           const msg = JSON.parse(event.data)
           if (msg.type === 'leaderboard') {
             const sortedLeaderboard = msg.data?.sort((p1, p2) => {
@@ -225,13 +223,13 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
       </Typography>
 
       <TableContainer component={Paper} elevation={3}>
-        <Table size={duringPlay ? 'medium' : 'medium'}>
+        <Table size={'medium'}>
           <TableHead>
             <TableRow>
               <TableCell>Rank</TableCell>
               <TableCell>Player</TableCell>
               <TableCell align='right'>Score</TableCell>
-              {!duringPlay && <TableCell align='right'>Answer Time</TableCell>}
+              <TableCell align='right'>Answer Time</TableCell>
               {game?.gameMode === 'live' && (
                 <TableCell align='right'>
                   <Tooltip title='Fastest Finger First Points' placement='top'>
@@ -264,7 +262,7 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
                       : player?.user?.profile?.firstname || player?.user?.profile?.lastname || player?.email}
                   </TableCell>
                   <TableCell align='right'>{player.score.toFixed(2)}</TableCell>
-                  {!duringPlay && <TableCell align='right'>{formatTime(player.totalAnswerTime / 1000)}</TableCell>}
+                  <TableCell align='right'>{formatTime(player.totalAnswerTime / 1000)}</TableCell>
                   {game?.gameMode === 'live' && <TableCell align='right'>{player?.fffPoints?.toFixed(3)}</TableCell>}
                   {game?.gameMode === 'self-paced' && (
                     <TableCell align='right'>{new Date(player?.finishedAt)?.toLocaleString()}</TableCell>

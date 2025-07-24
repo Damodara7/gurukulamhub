@@ -105,7 +105,7 @@ const AdminViewQuiz = ({ quizId }) => {
     try {
       const result = await rejectQuiz(reqBody)
       if (result.status === 'success') {
-        router.push('/management/quiz/list')
+        router.push('/management/user-quizzes/list')
       } else {
         console.error('Error rejecting quiz:', result)
         throw new Error('Error rejecting quiz.')
@@ -129,7 +129,7 @@ const AdminViewQuiz = ({ quizId }) => {
     try {
       const result = await moveQuizToPending(reqBody)
       if (result.status === 'success') {
-        router.push('/management/quiz/list')
+        router.push('/management/user-quizzes/list')
       } else {
         console.error('Error moving quiz to pending:', result)
         throw new Error('Error moving quiz to pending.')
@@ -153,7 +153,7 @@ const AdminViewQuiz = ({ quizId }) => {
     try {
       const result = await approveQuiz(reqBody)
       if (result.status === 'success') {
-        router.push('/management/quiz/list')
+        router.push('/management/user-quizzes/list')
       } else {
         console.error('Error approving quiz:', result)
       }
@@ -180,7 +180,7 @@ const AdminViewQuiz = ({ quizId }) => {
           <ArrowBackIcon />
         </IconButtonTooltip>
       </Box> */}
-      <GoBackButton path='/management/quiz/list' />
+      <GoBackButton path='/management/user-quizzes/list' />
       <Box sx={{ padding: 2, backgroundColor: '#f0f4f8', borderRadius: '12px', maxWidth: '1200px', margin: 'auto' }}>
         {/* Thumbnail Section */}
         <Box sx={{ width: '100%', textAlign: 'center', mb: 2 }}>

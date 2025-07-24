@@ -280,10 +280,8 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
         {!userRoles?.includes(ROLES_LOOKUP.ADMIN) && userRoles?.includes(ROLES_LOOKUP.SUPER_USER) && (
           <MenuSection label={dictionary['navigation'].superUserPages}>
             <SubMenu label={dictionary['navigation'].manageGames} icon={<i className='ri-gamepad-line' />}>
-              {/* <MenuItem href={`/${locale}/management/game/list`}>{dictionary['navigation'].list}</MenuItem> */}
               <MenuItem href={`/${locale}/manage-games`}>{dictionary['navigation'].all}</MenuItem>
               <MenuItem href={`/${locale}/manage-games/create`}>{dictionary['navigation'].create}</MenuItem>
-              {/* <MenuItem href={`/${locale}/management/quiz/view`}>{dictionary['navigation'].view}</MenuItem> */}
             </SubMenu>
           </MenuSection>
         )}
@@ -298,14 +296,13 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
             </MenuItem>
 
             <SubMenu label={dictionary['navigation'].manageQuizzes} icon={<i className='ri-dashboard-line' />}>
-              <MenuItem href={`/${locale}/management/quiz/list`}>{dictionary['navigation'].list}</MenuItem>
-              {/* <MenuItem href={`/${locale}/management/quiz/view`}>{dictionary['navigation'].view}</MenuItem> */}
+              <MenuItem href={`/${locale}/management/quizzes/view`}>{dictionary['navigation'].all}</MenuItem>
+              <MenuItem href={`/${locale}/management/user-quizzes/list`}>{dictionary['navigation'].userQuizzes}</MenuItem>
+              <MenuItem href={`/${locale}/management/quizzes/create`}>{dictionary['navigation'].create}</MenuItem>
             </SubMenu>
             <SubMenu label={dictionary['navigation'].manageGames} icon={<i className='ri-gamepad-line' />}>
-              {/* <MenuItem href={`/${locale}/management/game/list`}>{dictionary['navigation'].list}</MenuItem> */}
               <MenuItem href={`/${locale}/management/games`}>{dictionary['navigation'].all}</MenuItem>
               <MenuItem href={`/${locale}/management/games/create`}>{dictionary['navigation'].create}</MenuItem>
-              {/* <MenuItem href={`/${locale}/management/quiz/view`}>{dictionary['navigation'].view}</MenuItem> */}
             </SubMenu>
 
             <SubMenu label={dictionary['navigation'].manageUsers} icon={<i className='ri-group-line' />}>

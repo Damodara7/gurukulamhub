@@ -119,6 +119,7 @@ const gameSchema = new mongoose.Schema(
       ref: 'quizzes', //Need to be changed to "quiz"
       required: true
     },
+    maxScore: Number,
     questionsCount: Number,
     location: locationSchema,
     startTime: {
@@ -127,7 +128,7 @@ const gameSchema = new mongoose.Schema(
     },
     timezone: {
       type: String,
-      required: true,
+      required: true
     },
     gameMode: {
       type: String,

@@ -238,7 +238,7 @@ const AdminApprovedQuizzesTable = ({ data, refreshData }) => {
         cell: ({ row }) => (
           <div className='flex items-center'>
             <IconButtonTooltip title={'Eye line'}>
-              <Link href={`/management/quiz/view/${row.original._id}`} className='flex'>
+              <Link href={`/management/user-quizzes/view/${row.original._id}`} className='flex'>
                 <i className='ri-eye-line text-[22px] text-textSecondary' />
               </Link>
             </IconButtonTooltip>

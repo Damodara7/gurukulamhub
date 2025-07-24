@@ -54,20 +54,20 @@ async function updateUserScore(gameId, { user, userAnswer, finish }) {
 
 // Utility to check if the answer is empty for the current question type
 function isAnswerEmpty(question, answer) {
-  if (!answer) return true;
+  if (!answer) return true
   if (question?.templateId === 'multiple-choice') {
-    return !Array.isArray(answer) || answer.length === 0;
+    return !Array.isArray(answer) || answer.length === 0
   }
   if (question?.templateId === 'fill-in-blank') {
     if (Array.isArray(answer)) {
-      return answer.length === 0 || answer.every(a => !a.content || a.content.trim() === '');
+      return answer.length === 0 || answer.every(a => !a.content || a.content.trim() === '')
     }
     if (typeof answer === 'object' && answer !== null) {
-      return Object.values(answer).every(val => !val || val.trim() === '');
+      return Object.values(answer).every(val => !val || val.trim() === '')
     }
   }
   // For single-choice, true/false, treat empty string or undefined as empty
-  return answer === '' || answer === undefined || answer === null;
+  return answer === '' || answer === undefined || answer === null
 }
 
 export default function AdminForwardPlayGame({ game: initialGame }) {
@@ -113,9 +113,7 @@ export default function AdminForwardPlayGame({ game: initialGame }) {
   const userEmail = session?.user?.email
   const player = useMemo(() => {
     // Find the player object for the current user
-    return (
-      game?.participatedUsers?.find(p => p.email === userEmail)
-    )
+    return game?.participatedUsers?.find(p => p.email === userEmail)
   }, [game, userEmail])
 
   const hasSubmittedCurrent = useMemo(() => {
@@ -178,7 +176,9 @@ export default function AdminForwardPlayGame({ game: initialGame }) {
               const userEmail = session?.user?.email
               const player = data?.participatedUsers?.find(p => p.email === userEmail)
               const currentQuestion = data?.questions?.[currentQuestionIndex]
-              const hasSubmitted = player?.answers?.some(ans => ans.question?.toString() === currentQuestion?._id?.toString())
+              const hasSubmitted = player?.answers?.some(
+                ans => ans.question?.toString() === currentQuestion?._id?.toString()
+              )
               if (hasSubmitted) setSubmitting(false)
               const liveIdx = data?.liveQuestionIndex
               const prevLiveIdx = prevLiveIndexRef.current
@@ -265,11 +265,10 @@ export default function AdminForwardPlayGame({ game: initialGame }) {
     console.log('liveQuestionStartedAt:', liveQuestionStartedAt)
     console.log('curQuestionTimerSeconds:', curQuestionTimerSeconds)
 
+    // const maxScore = game?.maxScore || mappedQuestions?.reduce((acc, q) => acc + q?.data?.marks, 0)
+
     const maxFFF = 1000
-    const fffPoints =
-      calculatedMarks > 0
-        ? maxFFF * (1 - answerTime / curQuestionTimerSeconds) * (calculatedMarks / currentQuestion?.data?.marks)
-        : 0
+    const fffPoints = calculatedMarks > 0 ? maxFFF * (calculatedMarks / Number(currentQuestion?.data?.marks)) : 0
     try {
       await updateUserScore(game?._id, {
         user: { id: session.user.id, email: session.user.email },
@@ -301,16 +300,16 @@ export default function AdminForwardPlayGame({ game: initialGame }) {
     const selectedAnswer = selectedAnswersRef.current[currentQuestion._id]
     const hintUsed = usedHintsRef.current[currentQuestion._id] || false
     const calculatedMarks = calculateQuestionMarks(currentQuestion, selectedAnswer, hintUsed)
-    const maxFFF = 1000
     // Use a fallback for curQuestionTimerSeconds if not available
-    const curQuestionTimerSeconds = (game?.liveQuestionStartedAt ? now.getTime() - new Date(game.liveQuestionStartedAt).getTime() : answerTime) || answerTime || 1
-    
+    const curQuestionTimerSeconds =
+      (game?.liveQuestionStartedAt ? now.getTime() - new Date(game.liveQuestionStartedAt).getTime() : answerTime) ||
+      answerTime ||
+      1
+
     console.log('answerTime: ', answerTime)
     console.log('curQuestionTimerSeconds: ', curQuestionTimerSeconds)
-    const fffPoints =
-      calculatedMarks > 0
-        ? maxFFF * (1 - answerTime / curQuestionTimerSeconds) * (calculatedMarks / currentQuestion?.data?.marks)
-        : 0
+    const maxFFF = 1000
+    const fffPoints = calculatedMarks > 0 ? maxFFF * (calculatedMarks / Number(currentQuestion?.data?.marks)) : 0
     const isLastQuestion = currentQuestionIndex === mappedQuestions.length - 1
     try {
       await updateUserScore(game?._id, {
@@ -401,7 +400,11 @@ export default function AdminForwardPlayGame({ game: initialGame }) {
           <Box sx={{ mt: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Button
               onClick={handleSubmit}
-              disabled={submitting || hasSubmittedCurrent || isAnswerEmpty(currentQuestion, effectiveSelectedAnswers[currentQuestion._id])}
+              disabled={
+                submitting ||
+                hasSubmittedCurrent ||
+                isAnswerEmpty(currentQuestion, effectiveSelectedAnswers[currentQuestion._id])
+              }
               color={submitting ? 'secondary' : hasSubmittedCurrent ? 'success' : 'primary'}
               component='label'
               variant='contained'
@@ -409,7 +412,9 @@ export default function AdminForwardPlayGame({ game: initialGame }) {
               style={{
                 color: '#fff',
                 cursor:
-                  submitting || hasSubmittedCurrent || isAnswerEmpty(currentQuestion, effectiveSelectedAnswers[currentQuestion._id])
+                  submitting ||
+                  hasSubmittedCurrent ||
+                  isAnswerEmpty(currentQuestion, effectiveSelectedAnswers[currentQuestion._id])
                     ? 'not-allowed'
                     : 'pointer'
               }}
