@@ -25,7 +25,8 @@ import {
   Alert,
   FormLabel,
   RadioGroup,
-  Radio
+  Radio,
+  CircularProgress
 } from '@mui/material'
 import {
   Add as AddIcon,
@@ -50,6 +51,7 @@ import { getCountryByName } from '@/utils/countryRegionUtil'
 import { timezones } from '@/data/timezones'
 import { countryTimezones } from '@/data/country-timezones'
 import moment from 'moment-timezone'
+import { userAgent } from 'next/server'
 // Reward position options
 const POSITION_OPTIONS = [1, 2, 3, 4, 5]
 
@@ -69,9 +71,19 @@ const validateForm = formData => {
   if (!formData.thumbnailPoster) {
     errors.thumbnailPoster = 'Thumbnail image is required.'
   }
-  if (!formData.timezone) {
-    errors.timezone = 'Timezone is required.'
-  }
+
+  // if (!formData.timezone) {
+  //   errors.timezone = 'Timezone is required.'
+  // }
+  // if (!formData.zipcode) {
+  //   errors.zipcode = 'Creator zipcode is required'
+  // }
+  //  if (!selectedAdminCountry?.country) {
+  //    errors.creatorCountry = 'Creator country is required'
+  //  }
+  // if (!formData.zipcode) {
+  //   errors.zipcode = 'ZipCode is Required to determine Timezone'
+  // }
 
   if (formData.startTime === null) {
     errors.startTime = 'Start time is required.'
@@ -121,6 +133,9 @@ const formFieldOrder = [
   'description',
   'quiz',
   'startTime',
+  'creatorZipcode',
+  'creatorTimeZone',
+  'creatorCountry',
   'gameMode',
   'duration',
   'requireRegistration',
@@ -130,6 +145,7 @@ const formFieldOrder = [
   'location.country',
   'location.region',
   'location.city',
+  'location.zipcode',
   'promotionalVideoUrl',
   'thumbnailPoster',
   'tags',
@@ -145,7 +161,9 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
     pin: Math.floor(100000 + Math.random() * 900000).toString(),
     description: '',
     quiz: '',
-    timezone: '',
+    creatorZipcode: '',
+    creatorTimezone: '',
+    creatorCountry: '',
     startTime: null,
     duration: null, // 10 minutes in seconds
     promotionalVideoUrl: '',
@@ -160,13 +178,15 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
     location: {
       country: '',
       region: '',
-      city: ''
+      city: '',
+      zipcode: ''
     },
     rewards: []
   }
   const [formData, setFormData] = useState(initialFormData)
   const [availablePositions, setAvailablePositions] = useState(POSITION_OPTIONS)
   const [selectedCountryObject, setSelectedCountryObject] = useState(null)
+  const [selectedAdminCountry, setSelectedAdminCountry] = useState(null)
   const [selectedRegion, setSelectedRegion] = useState('')
   const [selectedCity, setSelectedCity] = useState('')
   const [cityOptions, setCityOptions] = useState([])
@@ -175,12 +195,32 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
   const fileInputRef = useRef(null)
   const [showErrorSnackbar, setShowErrorSnackbar] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const [pinCodes, setPinCodes] = useState([])
+  const [loadingPincodes, setLoadingPincodes] = useState(false)
+  const [selectedPincode, setSelectedPincode] = useState('')
 
   // Loading state
   const [loading, setLoading] = useState({
     fetchCities: false,
     submitting: false
   })
+
+  const fetchPinCodesForState = async selectedStateName => {
+    if (!selectedStateName) {
+      setPinCodes([])
+      return
+    }
+    setLoadingPincodes(true)
+    try {
+      const response = await fetch(`/api/pincodes/${selectedStateName}`)
+      const data = await response.json()
+      setPinCodes(data?.pinCodes || [])
+    } catch (e) {
+      console.error('Error fetching pincodes:', e)
+    } finally {
+      setLoadingPincodes(false)
+    }
+  }
 
   // Reward Dialog states
   const [openRewardDialog, setOpenRewardDialog] = useState(false)
@@ -201,7 +241,10 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
     thumbnailPoster: useRef(),
     tags: useRef(),
     forwardType: useRef(),
-    gameMode: useRef()
+    gameMode: useRef(),
+    creatorZipcode: useRef(),
+    creatorTimezone: useRef(),
+    creatorCountry: useRef()
     // Add more if needed
   }
   // If Edit Game?
@@ -216,7 +259,10 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
         registrationEndTime: data?.registrationEndTime ? new Date(data.registrationEndTime) : null,
         duration: data?.duration ? Math.floor(data.duration / 60) : '',
         gameMode: data?.gameMode || 'live',
-        timezone: data?.timezone || ''
+        timezone: data?.timezone || '',
+        creatorZipcode: data?.creatorZipcode || '',
+        creatorTimezone: data?.creatorTimezone || '',
+        creatorCountry: data?.creatorCountry || ''
       })
       setSelectedCountryObject(
         data?.location?.country
@@ -225,8 +271,98 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
       )
       setSelectedRegion(data?.location?.region || '')
       setSelectedCity(data?.location?.city || '')
+      setSelectedPincode(data?.location?.zipcode || '')
+      // Set the admin country if creatorCountry exists
+      if (data?.creatorCountry) {
+        const adminCountry = {
+          country: data.creatorCountry,
+          countryCode: getCountryByName(data.creatorCountry)?.countryCode
+        }
+        setSelectedAdminCountry(adminCountry)
+      }
     }
   }, [data])
+
+  // Your existing async function
+  async function getTimezoneFromZipcode(zipcode, countryCode) {
+    try {
+      if (!zipcode || !countryCode) {
+        throw new Error('Both zipcode and country code are required')
+      }
+      if (countryCode === 'IN') {
+        return 'Asia/Kolkata'
+      }
+      const geoUrl = `http://api.geonames.org/postalCodeSearchJSON?postalcode=${encodeURIComponent(
+        zipcode
+      )}&country=${encodeURIComponent(countryCode)}&username=demo`
+
+      const geoResponse = await fetch(geoUrl)
+
+      if (!geoResponse.ok) {
+        throw new Error(`Geocoding API error: ${geoResponse.status}`)
+      }
+
+      const geoData = await geoResponse.json()
+
+      if (!geoData.postalCodes || geoData.postalCodes.length === 0) {
+        throw new Error('Zipcode not found')
+      }
+
+      const { lat, lng } = geoData.postalCodes[0]
+
+      const timezoneUrl = `http://api.geonames.org/timezoneJSON?lat=${lat}&lng=${lng}&username=demo`
+
+      const timezoneResponse = await fetch(timezoneUrl)
+
+      if (!timezoneResponse.ok) {
+        throw new Error(`Timezone API error: ${timezoneResponse.status}`)
+      }
+
+      const timezoneData = await timezoneResponse.json()
+
+      if (!timezoneData.timezoneId) {
+        throw new Error('Timezone not found for the given coordinates')
+      }
+
+      return timezoneData.timezoneId
+    } catch (error) {
+      console.error('Error in getTimezoneFromZipcode:', error)
+      throw error
+    }
+  }
+
+  // using the useeffect to fetch the timezone y changing the timezone and the country
+
+  useEffect(() => {
+    const fetchTimezone = async () => {
+      if (formData.zipcode && selectedAdminCountry?.countryCode) {
+        try {
+          // Special handling for India
+          if (selectedAdminCountry.countryCode === 'IN') {
+            // Validate Indian PIN code format (6 digits)
+            if (!/^\d{6}$/.test(formData.zipcode)) {
+              throw new Error('Indian PIN code must be 6 digits')
+            }
+            setFormData(prev => ({
+              ...prev,
+              timezone: 'Asia/Kolkata'
+            }))
+            return
+          }
+
+          const timezone = await getTimezoneFromZipcode(formData.zipcode, selectedAdminCountry.countryCode)
+          setFormData(prev => ({
+            ...prev,
+            timezone: timezone
+          }))
+          console.log(' timezone ', timezone)
+        } catch (error) {
+          console.error('Failed to fetch timezone:', error)
+        }
+      }
+    }
+    fetchTimezone()
+  }, [formData.zipcode, selectedAdminCountry])
 
   // Update available positions when rewards change
   useEffect(() => {
@@ -529,7 +665,15 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
     // Only include relevant fields
     const submission = {
       ...formData,
-      location: { country: selectedCountryObject?.country, region: selectedRegion, city: selectedCity }
+      creatorZipcode: formData.zipcode,
+      creatorTimezone: formData.timezone,
+      creatorCountry: selectedAdminCountry?.country || '',
+      location: {
+        country: selectedCountryObject?.country,
+        region: selectedRegion,
+        city: selectedCity,
+        zipcode: selectedCountryObject?.country === 'India' ? selectedPincode : formData.location.zipcode
+      }
     }
     if (formData.gameMode !== 'self-paced') {
       delete submission.duration
@@ -794,9 +938,92 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
           <FormHelperText>{errors.quiz || 'Select a quiz'}</FormHelperText>
         </FormControl>
       </Grid>
+      <Grid item xs={12}>
+        <Typography variant='subtitle1' gutterBottom>
+          Location of Game Creator (Admin)
+        </Typography>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={4} md={4}>
+            <CountryRegionDropdown
+              defaultCountryCode=''
+              selectedCountryObject={selectedAdminCountry}
+              setSelectedCountryObject={setSelectedAdminCountry}
+            />
+          </Grid>
+          <Grid item xs={12} sm={4} md={4}>
+            <TextField
+              fullWidth
+              label='Zipcode'
+              name='zipcode'
+              value={formData.zipcode}
+              onChange={handleChange}
+              helperText={errors.zipcode || 'Enter the zipcode'}
+              required
+              inputRef={fieldRefs.zipcode}
+            />
+          </Grid>
+
+          {/* Add a timezone display field (read-only) to show the detected timezone:
+          <Grid item xs={12} sm={4} md={4}>
+            <TextField
+              fullWidth
+              label='Timezone'
+              name='timezone'
+              value={formData.timezone || ''}
+              InputProps={{
+                readOnly: true
+              }}
+              helperText={errors.timezone || 'Timezone will be determined from zipcode'}
+              error={!!errors.timezone && touches.timezone}
+              required
+              inputRef={fieldRefs.timezone}
+            />
+          </Grid> */}
+
+          <Grid item xs={12} sm={4} md={4}>
+            <DateTimePicker
+              disablePast
+              minDateTime={dayjs().add(1, 'minute')}
+              timeSteps={{ hours: 1, minutes: 1 }}
+              sx={{ width: '100%' }}
+              label='Start Time'
+              value={formData.startTime ? dayjs(formData.startTime) : null}
+              onChange={newValue => {
+                // explicitly set to 'null' if cleared
+                const newDate = newValue ? newValue.toDate() : null
+                handleDateChange('startTime', newDate)
+                validateField('startTime')
+                if (formData.requireRegistration) {
+                  validateField('registrationEndTime')
+                }
+              }}
+              onClose={() => validateField('startTime')}
+              slotProps={{
+                textField: {
+                  error: !!errors.startTime && touches.startTime,
+                  helperText: (touches.startTime && errors.startTime) || 'Select start time of the game',
+                  required: true,
+                  onBlur: () => {
+                    setTouches(prev => ({ ...prev, startTime: true }))
+                    validateField('startTime')
+                  },
+                  onFocus: () => {
+                    setTouches(prev => ({ ...prev, startTime: true }))
+                    setErrors(prev => ({ ...prev, startTime: undefined }))
+                  },
+                  InputLabelProps: {
+                    shrink: true
+                  },
+                  inputRef: fieldRefs.startTime
+                }
+              }}
+            />
+          </Grid>
+        </Grid>
+      </Grid>
 
       {/* Timezone Autocomplete */}
-      <Grid item xs={12} sm={6}>
+      {/* <Grid item xs={12} sm={6}>
         <FormControl fullWidth required error={!!errors.timezone && touches.timezone}>
           <Autocomplete
             id='timezone-autocomplete'
@@ -828,47 +1055,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
             disableClearable={false}
           />
         </FormControl>
-      </Grid>
-      {/* Start Date & Time */}
-      <Grid item xs={12} sm={6}>
-        <DateTimePicker
-          disablePast
-          minDateTime={dayjs().add(1, 'minute')}
-          timeSteps={{ hours: 1, minutes: 1 }}
-          sx={{ width: '100%' }}
-          label='Start Time'
-          value={formData.startTime ? dayjs(formData.startTime) : null}
-          onChange={newValue => {
-            // explicitly set to 'null' if cleared
-            const newDate = newValue ? newValue.toDate() : null
-            handleDateChange('startTime', newDate)
-            validateField('startTime')
-            if (formData.requireRegistration) {
-              validateField('registrationEndTime')
-            }
-          }}
-          onClose={() => validateField('startTime')}
-          slotProps={{
-            textField: {
-              error: !!errors.startTime && touches.startTime,
-              helperText: (touches.startTime && errors.startTime) || 'Select start time of the game',
-              required: true,
-              onBlur: () => {
-                setTouches(prev => ({ ...prev, startTime: true }))
-                validateField('startTime')
-              },
-              onFocus: () => {
-                setTouches(prev => ({ ...prev, startTime: true }))
-                setErrors(prev => ({ ...prev, startTime: undefined }))
-              },
-              InputLabelProps: {
-                shrink: true
-              },
-              inputRef: fieldRefs.startTime
-            }
-          }}
-        />
-      </Grid>
+      </Grid> */}
 
       {/* Game Mode Selection */}
       <Grid item xs={12} sm={6}>
@@ -899,58 +1086,58 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
       {/* Forward Type Selection - now as Select, only if live */}
       {formData.gameMode === 'live' && (
         <>
-        <Grid item xs={12} sm={6}>
-          <FormControl fullWidth required error={!!errors.forwardType && touches.forwardType}>
-            <InputLabel id='forward-type-label'>Forward Type</InputLabel>
-            <Select
-              labelId='forward-type-label'
-              id='forward-type-select'
-              name='forwardType'
-              value={formData.forwardType}
-              label='Forward Type'
-              onChange={handleChange}
-              onBlur={handleBlur}
-              onFocus={() => setErrors(prev => ({ ...prev, forwardType: '' }))}
-              inputRef={fieldRefs.forwardType}
-            >
-              <MenuItem value='auto'>Auto</MenuItem>
-              <MenuItem value='admin'>Admin</MenuItem>
-            </Select>
-            <FormHelperText>Select how the game will be forwarded</FormHelperText>
-          </FormControl>
-        </Grid>
-        <Grid item xs={12} sm={6}></Grid>
+          <Grid item xs={12} sm={6}>
+            <FormControl fullWidth required error={!!errors.forwardType && touches.forwardType}>
+              <InputLabel id='forward-type-label'>Forward Type</InputLabel>
+              <Select
+                labelId='forward-type-label'
+                id='forward-type-select'
+                name='forwardType'
+                value={formData.forwardType}
+                label='Forward Type'
+                onChange={handleChange}
+                onBlur={handleBlur}
+                onFocus={() => setErrors(prev => ({ ...prev, forwardType: '' }))}
+                inputRef={fieldRefs.forwardType}
+              >
+                <MenuItem value='auto'>Auto</MenuItem>
+                <MenuItem value='admin'>Admin</MenuItem>
+              </Select>
+              <FormHelperText>Select how the game will be forwarded</FormHelperText>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} sm={6}></Grid>
         </>
       )}
 
       {/* Duration (only if self-paced) */}
       {formData.gameMode === 'self-paced' && (
         <>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label='Duration (minutes)'
-            name='duration'
-            type='number'
-            value={formData.duration}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            onFocus={() => setErrors(prev => ({ ...prev, duration: '' }))}
-            error={!!errors.duration && touches.duration}
-            helperText={errors.duration || 'Enter the duration in minutes'}
-            required
-            inputProps={{ min: 1 }}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position='end'>
-                  <AccessTimeIcon />
-                </InputAdornment>
-              )
-            }}
-            inputRef={fieldRefs.duration}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6}></Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label='Duration (minutes)'
+              name='duration'
+              type='number'
+              value={formData.duration}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              onFocus={() => setErrors(prev => ({ ...prev, duration: '' }))}
+              error={!!errors.duration && touches.duration}
+              helperText={errors.duration || 'Enter the duration in minutes'}
+              required
+              inputProps={{ min: 1 }}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position='end'>
+                    <AccessTimeIcon />
+                  </InputAdornment>
+                )
+              }}
+              inputRef={fieldRefs.duration}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}></Grid>
         </>
       )}
 
@@ -1050,6 +1237,9 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                     setSelectedRegion(newValue)
                     getCitiesData(newValue)
                     setSelectedCity('')
+                    if (selectedCountryObject.country === 'India') {
+                      fetchPinCodesForState(newValue)
+                    }
                   }}
                   id='autocomplete-region-select'
                   options={selectedCountryObject?.regions || []}
@@ -1070,8 +1260,54 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
               </FormControl>
             </Grid>
           )}
-
           {selectedRegion && (
+            <Grid item xs={12} sm={6} md={4}>
+              <FormControl fullWidth>
+                {selectedCountryObject?.country === 'India' ? (
+                  <>
+                    <Autocomplete
+                      id='pincodes-autocomplete'
+                      options={pinCodes}
+                      getOptionLabel={option => option || ''}
+                      fullWidth
+                      value={selectedPincode}
+                      renderInput={params => (
+                        <TextField
+                          {...params}
+                          label='Enter your PinCode'
+                          variant='outlined'
+                          error={!!errors.zipcode && touches.zipcode}
+                          helperText={errors.zipcode || 'Enter the zipcode'}
+                          required
+                        />
+                      )}
+                      onChange={(e, newVal) => {
+                        setSelectedPincode(newVal)
+                        setFormData(prev => ({ ...prev, zipcode: newVal }))
+                        setTouches(prev => ({ ...prev, zipcode: true }))
+                        validateField('zipcode')
+                      }}
+                    />
+                    {loadingPincodes && <CircularProgress size={24} />}
+                  </>
+                ) : (
+                  <TextField
+                    fullWidth
+                    label='Zipcode'
+                    name='location.zipcode'
+                    value={formData.location.zipcode}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    helperText={errors.zipcode || 'Enter the zipcode'}
+                    required
+                    error={!!errors.zipcode && touches.zipcode}
+                  />
+                )}
+              </FormControl>
+            </Grid>
+          )}
+
+          {/* {selectedRegion && (
             <Grid item xs={12} sm={6} md={4}>
               {loading.fetchCities && <Loading />}
               {!loading.fetchCities && (
@@ -1100,7 +1336,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                 </FormControl>
               )}
             </Grid>
-          )}
+          )} */}
 
           {/* Show converted time info if timezone, startTime, and selectedCountryObject are set */}
           {formData.timezone &&
@@ -1114,7 +1350,8 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
               return (
                 <Grid item xs={12}>
                   <Alert severity='info' sx={{ my: 2 }}>
-                    In {selectedCountryObject.country} ({countryTzObj.timezone}), the start time of game will be: <b>{countryMoment.format('YYYY-MM-DD HH:mm (z)')}</b>
+                    In {selectedCountryObject.country} ({countryTzObj.timezone}), the start time of game will be:{' '}
+                    <b>{countryMoment.format('YYYY-MM-DD HH:mm (z)')}</b>
                   </Alert>
                 </Grid>
               )
