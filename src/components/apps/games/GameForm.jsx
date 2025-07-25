@@ -340,7 +340,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
           // Special handling for India
           if (selectedAdminCountry.countryCode === 'IN') {
             // Validate Indian PIN code format (6 digits)
-            if (!/^\d{6}$/.test(formData.zipcode)) {
+            if (!/^\d{6}$/.test(formData.creatorZipcode)) {
               throw new Error('Indian PIN code must be 6 digits')
             }
             setFormData(prev => ({
@@ -350,7 +350,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
             return
           }
 
-          const timezone = await getTimezoneFromZipcode(formData.zipcode, selectedAdminCountry.countryCode)
+          const timezone = await getTimezoneFromZipcode(formData.creatorZipcode, selectedAdminCountry.countryCode)
           setFormData(prev => ({
             ...prev,
             timezone: timezone
@@ -362,7 +362,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
       }
     }
     fetchTimezone()
-  }, [formData.zipcode, selectedAdminCountry])
+  }, [formData.creatorZipcode, selectedAdminCountry])
 
   // Update available positions when rewards change
   useEffect(() => {
@@ -665,7 +665,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
     // Only include relevant fields
     const submission = {
       ...formData,
-      creatorZipcode: formData.zipcode,
+      creatorZipcode: formData.creatorZipcode,
       creatorTimezone: formData.timezone,
       creatorCountry: selectedAdminCountry?.country || '',
       location: {
@@ -953,13 +953,13 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
           <Grid item xs={12} sm={4} md={4}>
             <TextField
               fullWidth
-              label='Zipcode'
-              name='zipcode'
-              value={formData.zipcode}
+              label='creator zipcode'
+              name='creatorZipcode'
+              value={formData.creatorZipcode}
               onChange={handleChange}
-              helperText={errors.zipcode || 'Enter the zipcode'}
+              helperText={errors.creatorZipcode || 'Enter the Creator Zipcode'}
               required
-              inputRef={fieldRefs.zipcode}
+              inputRef={fieldRefs.creatorZipcode}
             />
           </Grid>
 
