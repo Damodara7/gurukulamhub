@@ -49,6 +49,7 @@ import { API_URLS } from '@/configs/apiConfig'
 import Loading from '@/components/Loading'
 import { getCountryByName } from '@/utils/countryRegionUtil'
 import { timezones } from '@/data/timezones'
+import { gmttimezones } from '@/data/gmttimezones';
 import { countryTimezones } from '@/data/country-timezones'
 import moment from 'moment-timezone'
 import { userAgent } from 'next/server'
@@ -283,88 +284,90 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
     }
   }, [data])
 
-  // Your existing async function
-  async function getTimezoneFromZipcode(zipcode, countryCode) {
-    try {
-      if (!zipcode || !countryCode) {
-        throw new Error('Both zipcode and country code are required')
-      }
-      if (countryCode === 'IN') {
-        return 'Asia/Kolkata'
-      }
-      const geoUrl = `http://api.geonames.org/postalCodeSearchJSON?postalcode=${encodeURIComponent(
-        zipcode
-      )}&country=${encodeURIComponent(countryCode)}&username=demo`
+  // // Your existing async function
+  // async function getTimezoneFromZipcode(zipcode, countryCode) {
+  //   try {
+  //     if (!zipcode || !countryCode) {
+  //       throw new Error('Both zipcode and country code are required')
+  //     }
+  //     if (countryCode === 'IN') {
+  //       return 'Asia/Kolkata'
+  //     }
+  //     const geoUrl = `http://api.geonames.org/postalCodeSearchJSON?postalcode=${encodeURIComponent(
+  //       zipcode
+  //     )}&country=${encodeURIComponent(countryCode)}&username=demo`
 
-      const geoResponse = await fetch(geoUrl)
+  //     const geoResponse = await fetch(geoUrl)
 
-      if (!geoResponse.ok) {
-        throw new Error(`Geocoding API error: ${geoResponse.status}`)
-      }
+  //     if (!geoResponse.ok) {
+  //       throw new Error(`Geocoding API error: ${geoResponse.status}`)
+  //     }
 
-      const geoData = await geoResponse.json()
+  //     const geoData = await geoResponse.json()
 
-      if (!geoData.postalCodes || geoData.postalCodes.length === 0) {
-        throw new Error('Zipcode not found')
-      }
+  //     if (!geoData.postalCodes || geoData.postalCodes.length === 0) {
+  //       throw new Error('Zipcode not found')
+  //     }
 
-      const { lat, lng } = geoData.postalCodes[0]
+  //     const { lat, lng } = geoData.postalCodes[0]
 
-      const timezoneUrl = `http://api.geonames.org/timezoneJSON?lat=${lat}&lng=${lng}&username=demo`
+  //     const timezoneUrl = `http://api.geonames.org/timezoneJSON?lat=${lat}&lng=${lng}&username=demo`
 
-      const timezoneResponse = await fetch(timezoneUrl)
+  //     const timezoneResponse = await fetch(timezoneUrl)
 
-      if (!timezoneResponse.ok) {
-        throw new Error(`Timezone API error: ${timezoneResponse.status}`)
-      }
+  //     if (!timezoneResponse.ok) {
+  //       throw new Error(`Timezone API error: ${timezoneResponse.status}`)
+  //     }
 
-      const timezoneData = await timezoneResponse.json()
+  //     const timezoneData = await timezoneResponse.json()
 
-      if (!timezoneData.timezoneId) {
-        throw new Error('Timezone not found for the given coordinates')
-      }
+  //     if (!timezoneData.timezoneId) {
+  //       throw new Error('Timezone not found for the given coordinates')
+  //     }
 
-      return timezoneData.timezoneId
-    } catch (error) {
-      console.error('Error in getTimezoneFromZipcode:', error)
-      throw error
-    }
-  }
+  //     return timezoneData.timezoneId
+  //   } catch (error) {
+  //     console.error('Error in getTimezoneFromZipcode:', error)
+  //     throw error
+  //   }
+  // }
 
-  // using the useeffect to fetch the timezone y changing the timezone and the country
+  // // using the useeffect to fetch the timezone y changing the timezone and the country
 
-  useEffect(() => {
-    const fetchTimezone = async () => {
-      if (formData.zipcode && selectedAdminCountry?.countryCode) {
-        try {
-          // Special handling for India
-          if (selectedAdminCountry.countryCode === 'IN') {
-            // Validate Indian PIN code format (6 digits)
-            if (!/^\d{6}$/.test(formData.creatorZipcode)) {
-              throw new Error('Indian PIN code must be 6 digits')
-            }
-            setFormData(prev => ({
-              ...prev,
-              timezone: 'Asia/Kolkata'
-            }))
-            return
-          }
+  // useEffect(() => {
+  //   const fetchTimezone = async () => {
+  //     if (formData.zipcode && selectedAdminCountry?.countryCode) {
+  //       try {
+  //         // Special handling for India
+  //         if (selectedAdminCountry.countryCode === 'IN') {
+  //           // Validate Indian PIN code format (6 digits)
+  //           if (!/^\d{6}$/.test(formData.creatorZipcode)) {
+  //             throw new Error('Indian PIN code must be 6 digits')
+  //           }
+  //           setFormData(prev => ({
+  //             ...prev,
+  //             timezone: 'Asia/Kolkata'
+  //           }))
+  //           return
+  //         }
 
-          const timezone = await getTimezoneFromZipcode(formData.creatorZipcode, selectedAdminCountry.countryCode)
-          setFormData(prev => ({
-            ...prev,
-            timezone: timezone
-          }))
-          console.log(' timezone ', timezone)
-        } catch (error) {
-          console.error('Failed to fetch timezone:', error)
-        }
-      }
-    }
-    fetchTimezone()
-  }, [formData.creatorZipcode, selectedAdminCountry])
+  //         const timezone = await getTimezoneFromZipcode(formData.creatorZipcode, selectedAdminCountry.countryCode)
+  //         setFormData(prev => ({
+  //           ...prev,
+  //           timezone: timezone
+  //         }))
+  //         console.log(' timezone ', timezone)
+  //       } catch (error) {
+  //         console.error('Failed to fetch timezone:', error)
+  //       }
+  //     }
+  //   }
+  //   fetchTimezone()
+  // }, [formData.creatorZipcode, selectedAdminCountry])
 
   // Update available positions when rewards change
+  
+  
   useEffect(() => {
     const usedPositions = formData?.rewards?.map(r => r.position)
     setAvailablePositions(POSITION_OPTIONS.filter(pos => !usedPositions.includes(pos)))
@@ -939,11 +942,11 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
         </FormControl>
       </Grid>
       <Grid item xs={12}>
-        <Typography variant='subtitle1' gutterBottom>
+        {/* <Typography variant='subtitle1' gutterBottom>
           Location of Game Creator (Admin)
-        </Typography>
+        </Typography> */}
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={4} md={4}>
+          {/* <Grid item xs={12} sm={4} md={4}>
             <CountryRegionDropdown
               defaultCountryCode=''
               selectedCountryObject={selectedAdminCountry}
@@ -961,7 +964,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
               required
               inputRef={fieldRefs.creatorZipcode}
             />
-          </Grid>
+          </Grid> */}
 
           {/* Add a timezone display field (read-only) to show the detected timezone:
           <Grid item xs={12} sm={4} md={4}>
@@ -980,7 +983,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
             />
           </Grid> */}
 
-          <Grid item xs={12} sm={4} md={4}>
+          <Grid item xs={12} sm={4} md={6}>
             <DateTimePicker
               disablePast
               minDateTime={dayjs().add(1, 'minute')}
@@ -1019,43 +1022,44 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
               }}
             />
           </Grid>
+          <Grid item xs={12} sm={6}>
+            <FormControl fullWidth required error={!!errors.timezone && touches.timezone}>
+              <Autocomplete
+                id='timezone-autocomplete'
+                options={gmttimezones}
+                getOptionLabel={option => option.label}
+                value={gmttimezones.find(tz => tz.value === formData.timezone) || null}
+                onChange={(e, newValue) => {
+                  setFormData(prev => ({ ...prev, timezone: newValue || '' }))
+                  setTouches(prev => ({ ...prev, timezone: true }))
+                  setErrors(prev => ({ ...prev, timezone: '' }))
+                }}
+                onBlur={() => {
+                  setTouches(prev => ({ ...prev, timezone: true }))
+                  validateField('timezone')
+                }}
+                renderInput={params => (
+                  <TextField
+                    {...params}
+                    label='Timezone'
+                    required
+                    error={!!errors.timezone && touches.timezone}
+                    helperText={errors.timezone || 'where we are conducting the game'}
+                    inputRef={fieldRefs.timezone}
+                  />
+                )}
+                isOptionEqualToValue={(option, value) => option === value}
+                autoHighlight
+                autoSelect
+                clearOnEscape
+                disableClearable={false}
+              />
+            </FormControl>
+          </Grid>
         </Grid>
       </Grid>
 
       {/* Timezone Autocomplete */}
-      {/* <Grid item xs={12} sm={6}>
-        <FormControl fullWidth required error={!!errors.timezone && touches.timezone}>
-          <Autocomplete
-            id='timezone-autocomplete'
-            options={timezones}
-            value={formData.timezone || ''}
-            onChange={(e, newValue) => {
-              setFormData(prev => ({ ...prev, timezone: newValue || '' }))
-              setTouches(prev => ({ ...prev, timezone: true }))
-              setErrors(prev => ({ ...prev, timezone: '' }))
-            }}
-            onBlur={() => {
-              setTouches(prev => ({ ...prev, timezone: true }))
-              validateField('timezone')
-            }}
-            renderInput={params => (
-              <TextField
-                {...params}
-                label='Timezone'
-                required
-                error={!!errors.timezone && touches.timezone}
-                helperText={errors.timezone || 'From where the game is creating'}
-                inputRef={fieldRefs.timezone}
-              />
-            )}
-            isOptionEqualToValue={(option, value) => option === value}
-            autoHighlight
-            autoSelect
-            clearOnEscape
-            disableClearable={false}
-          />
-        </FormControl>
-      </Grid> */}
 
       {/* Game Mode Selection */}
       <Grid item xs={12} sm={6}>
@@ -1214,7 +1218,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
       </Grid>
 
       {/* Location */}
-      <Grid item xs={12}>
+      {/* <Grid item xs={12}>
         <Typography variant='subtitle1' gutterBottom>
           Location of the game (Accessible anywhere, if nothing specified)
         </Typography>
@@ -1339,7 +1343,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
           )} */}
 
           {/* Show converted time info if timezone, startTime, and selectedCountryObject are set */}
-          {formData.timezone &&
+          {/* {formData.timezone &&
             formData.startTime &&
             selectedCountryObject?.countryCode &&
             (() => {
@@ -1357,7 +1361,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
               )
             })()}
         </Grid>
-      </Grid>
+      </Grid> */}
 
       {/* Media Section */}
       <Grid item xs={12}>
