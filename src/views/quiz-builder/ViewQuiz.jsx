@@ -42,7 +42,7 @@ import {
   DummyFillInTheBlanksTemplate
 } from '@/components/quizbuilder/Templates'
 
-function ViewQuiz({ quiz }) {
+function ViewQuiz({ quiz, isAdmin=false }) {
   const router = useRouter()
   const [isMinimizedBool, setIsMinimizedBool] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -106,10 +106,10 @@ function ViewQuiz({ quiz }) {
   }
 
   function handleEditQuizDetails() {
-    router.push(`/myquizzes/edit/${quiz._id}`)
+    router.push(`/${isAdmin ? 'management/quizzes' : 'myquizzes'}/edit/${quiz._id}`)
   }
   function handleEditQuizQuestions() {
-    router.push(`/myquizzes/builder/${quiz._id}`)
+    router.push(`/${isAdmin ? 'management/quizzes' : 'myquizzes'}/builder/${quiz._id}`)
   }
 
   if (isLoading) {

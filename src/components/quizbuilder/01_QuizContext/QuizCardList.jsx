@@ -54,7 +54,7 @@ const data = [
   }
 ]
 
-export default function QuizCardList({}) {
+export default function QuizCardList({isAdmin=false}) {
   const router = useRouter()
   const { data: session, status } = useSession()
   const [myQuizzes, setMyQuizzes] = useState([])
@@ -85,7 +85,7 @@ export default function QuizCardList({}) {
   }
 
   function handleBuildQuiz(quiz) {
-    router.push(`/myquizzes/builder/${quiz._id}`)
+    router.push(`/${isAdmin ? 'management/quizzes' : 'myquizzes'}/builder/${quiz._id}`)
   }
 
   async function getQuizData() {
@@ -197,7 +197,7 @@ export default function QuizCardList({}) {
   // }
 
   async function handleViewQuiz(quiz) {
-    router.push(`/myquizzes/view/${quiz._id}`)
+    router.push(`/${isAdmin ? 'management/quizzes' : 'myquizzes'}/view/${quiz._id}`)
   }
 
   // function handleStartMakeQuizPrivate(quiz, e) {
@@ -319,8 +319,7 @@ export default function QuizCardList({}) {
   return (
     <div style={{ width: '100%' }}>
       <Grid container rowSpacing={2} justifyContent='center'>
-        {myQuizzes.length > 0 && (
-          <Grid container alignItems='center' justifyContent='space-between'>
+          {/* <Grid container alignItems='center' justifyContent='space-between'>
             <Grid
               item
               xs={7}
@@ -369,8 +368,7 @@ export default function QuizCardList({}) {
                 style={{ cursor: 'pointer' }}
               />
             </Grid>
-          </Grid>
-        )}
+          </Grid> */}
 
         {selectedQuizIds.length > 0 && (
           <Grid
@@ -609,176 +607,3 @@ export default function QuizCardList({}) {
     </div>
   )
 }
-
-// ;<ImageList
-//   cols={getColumns()}
-//   gap={16}
-//   sx={{
-//     width: '100%',
-//     margin: 0,
-//     padding: 2,
-//     // Responsive height calculation
-//     gridAutoRows: 'auto',
-//     '& .MuiImageListItem-root': {
-//       display: 'flex',
-//       flexDirection: 'column',
-//       height: 'auto !important',
-//       transition: 'transform 0.3s ease',
-//       '&:hover': {
-//         transform: 'scale(1.03)',
-//         zIndex: 1
-//       }
-//     }
-//   }}
-// >
-//   {myQuizzes.length > 0 ? (
-//     myQuizzes.map(item => {
-//       if (item.thumbnail.length === 0) {
-//         item.thumbnail = `https://fakeimg.pl/250x250/?text=${encodeURIComponent(item.title)}`
-//       }
-//       return (
-//         <ImageListItem
-//           key={item.id}
-//           sx={{
-//             position: 'relative',
-//             cursor: 'pointer',
-//             borderRadius: 1,
-//             overflow: 'hidden',
-//             boxShadow: theme.shadows[2],
-//             '&:hover': {
-//               boxShadow: theme.shadows[6]
-//             }
-//           }}
-//         >
-//           {/* Checkbox */}
-//           <Checkbox
-//             checked={selectedQuizIds.includes(item._id)}
-//             onChange={e => {
-//               e.stopPropagation()
-//               handleIndividualSelectChange(item._id)
-//             }}
-//             sx={{
-//               position: 'absolute',
-//               top: 8,
-//               left: 8,
-//               color: 'common.white',
-//               zIndex: 2,
-//               '&.Mui-checked': {
-//                 color: 'primary.light'
-//               }
-//             }}
-//           />
-
-//           {/* Image with responsive sizing */}
-//           <Box
-//             sx={{
-//               position: 'relative',
-//               // paddingTop: '100%', // Creates square aspect ratio
-//               width: '100%'
-//             }}
-//           >
-//             <Image
-//               src={item.thumbnail}
-//               alt={item.title}
-//               fill
-//               style={{
-//                 objectFit: 'cover',
-//                 width: '100%',
-//                 height: '100%'
-//               }}
-//             />
-//           </Box>
-
-//           {/* Item Bar with responsive text */}
-//           <ImageListItemBar
-//             sx={{
-//               background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 70%, transparent 100%)',
-//               display: 'flex',
-//               flexDirection: 'column',
-//               alignItems: 'flex-start',
-//               padding: theme.spacing(1),
-//               '& .MuiImageListItemBar-titleWrap': {
-//                 width: '100%',
-//                 padding: 0,
-//                 marginBottom: theme.spacing(0.5)
-//               },
-//               '& .MuiImageListItemBar-title': {
-//                 fontSize: '0.875rem',
-//                 fontWeight: 500,
-//                 color: 'white',
-//                 whiteSpace: 'nowrap',
-//                 overflow: 'hidden',
-//                 textOverflow: 'ellipsis',
-//                 width: '100%',
-//                 [theme.breakpoints.up('md')]: { fontSize: '1.25rem' }
-//               },
-//               '& .MuiImageListItemBar-subtitle': {
-//                 fontSize: '0.75rem',
-//                 color: 'white',
-//                 whiteSpace: 'nowrap',
-//                 overflow: 'hidden',
-//                 textOverflow: 'ellipsis',
-//                 width: '100%',
-//                 [theme.breakpoints.up('md')]: { fontSize: '1rem' }
-//               },
-//               '& .MuiImageListItemBar-actionIcon': {
-//                 width: '100%',
-//                 display: 'flex',
-//                 justifyContent: 'flex-end',
-//                 padding: 0,
-//                 marginTop: theme.spacing(0.01)
-//               }
-//             }}
-//             title={
-//               <Typography sx={{ color: 'white', fontWeight: 'bold' }} noWrap>
-//                 {item.title}
-//               </Typography>
-//             }
-//             subtitle={
-//               <Typography sx={{ color: 'white', fontWeight: 'bold' }} noWrap variant='body2'>
-//                 {item.details}
-//               </Typography>
-//             }
-//             actionIcon={
-//               <Box
-//                 sx={{
-//                   display: 'flex',
-//                   gap: theme.spacing(1),
-//                   background: 'rgba(255,255,255,0.1)',
-//                   backdropFilter: 'blur(5px)',
-//                   borderRadius: 1,
-//                   padding: '4px'
-//                 }}
-//               >
-//                 {[
-//                   { icon: <VisibilityOutlinedIcon fontSize='small' />, action: handleViewQuiz },
-//                   { icon: <BuildOutlinedIcon fontSize='small' />, action: handleBuildQuiz },
-//                   { icon: <DeleteIcon color='error' fontSize='small' />, action: handleStartDeleteQuiz }
-//                 ].map((btn, index) => (
-//                   <Tooltip key={index} title={['View', 'Build', 'Delete'][index]}>
-//                     <IconButtonTooltip title=''
-//                       size='small'
-//                       sx={{ color: 'common.white' }}
-//                       onClick={e => {
-//                         e.stopPropagation()
-//                         btn.action(item)
-//                       }}
-//                     >
-//                       {btn.icon}
-//                     </IconButtonTooltip>
-//                   </Tooltip>
-//                 ))}
-//               </Box>
-//             }
-//           />
-//         </ImageListItem>
-//       )
-//     })
-//   ) : (
-//     <Box sx={{ width: '100%', textAlign: 'center', py: 4 }}>
-//       <Typography variant='h6' color='text.secondary'>
-//         No quizzes found
-//       </Typography>
-//     </Box>
-//   )}
-// </ImageList>

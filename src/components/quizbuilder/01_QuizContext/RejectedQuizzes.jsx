@@ -201,7 +201,7 @@ export default function RejectedQuizzes({}) {
   return (
     <>
       <Grid container rowSpacing={4} justifyContent='center'>
-        {rejectedQuizzes.length > 0 && (
+        {/* {rejectedQuizzes.length > 0 && (
           <Grid container alignItems='center' justifyContent='space-between'>
             <Grid
               item
@@ -226,7 +226,7 @@ export default function RejectedQuizzes({}) {
               />
             </Grid>
           </Grid>
-        )}
+        )} */}
 
         {selectedQuizIds.length > 0 && (
           <Grid

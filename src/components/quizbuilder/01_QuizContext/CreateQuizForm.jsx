@@ -51,6 +51,7 @@ const CreateQuizForm = ({
   fieldErrors = {},
   formSubmitted = false,
   loading,
+  isAdmin=false,
   onFieldInteraction = () => {}
 }) => {
   const [isGenericPopupOpen, setIsGenericPopupOpen] = useState(false)
@@ -264,8 +265,23 @@ const CreateQuizForm = ({
             )}
           />
         </Grid>
-
         <Grid item xs={12} md={6}>
+          <Controller
+            name='language'
+            control={control}
+            disabled={loading}
+            render={({ field }) => (
+              <LanguageSelect
+                {...field}
+                setTheFormValue={setTheFormValue}
+                defaultLanguage={{ code: 'en', name: 'English' }}
+                fieldName='language'
+              ></LanguageSelect>
+            )}
+          />
+        </Grid>
+
+        {/* <Grid item xs={12} md={6}>
           <FormControl fullWidth>
             <InputLabel id='privacy-label'>Privacy</InputLabel>
             <Controller
@@ -280,7 +296,7 @@ const CreateQuizForm = ({
               )}
             />
           </FormControl>
-        </Grid>
+        </Grid> */}
 
         <Grid item xs={12}>
           <Box
@@ -476,22 +492,7 @@ const CreateQuizForm = ({
           </Box>
         </Grid>
 
-        <Grid item xs={12} md={6}>
-          <Controller
-            name='language'
-            control={control}
-            disabled={loading}
-            render={({ field }) => (
-              <LanguageSelect
-                {...field}
-                setTheFormValue={setTheFormValue}
-                defaultLanguage={{ code: 'en', name: 'English' }}
-                fieldName='language'
-              ></LanguageSelect>
-            )}
-          />
-        </Grid>
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12}>
           <Autocomplete
             multiple
             freeSolo

@@ -8,7 +8,7 @@ import QuizDetails from '@/components/quiz-builder-1/QuizDetails'
 import { Alert, AlertTitle, Stack } from '@mui/material'
 import LoadingDialog from '@/components/LoadingDialog'
 
-function SelectedQuiz({ quiz }) {
+function SelectedQuiz({ quiz, isAdmin=false }) {
   const [isLoading, setIsLoading] = useState(false)
   const [quizData, setQuizData] = useState(null)
 
@@ -38,7 +38,7 @@ function SelectedQuiz({ quiz }) {
   return (
     <Stack gap={2}>
       <QuizDetails quiz={quiz} />
-      <MainQuizQuestionBuilder data={quiz} />
+      <MainQuizQuestionBuilder data={quiz} isAdmin={isAdmin}/>
     </Stack>
   )
 }

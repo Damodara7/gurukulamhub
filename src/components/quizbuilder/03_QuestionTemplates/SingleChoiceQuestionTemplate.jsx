@@ -43,7 +43,8 @@ const SingleChoiceQuestionTemplate = ({
   primaryQuestion = null,
   saveQuestion,
   deleteQuestion,
-  validationErrors = []
+  validationErrors = [],
+  isAdmin=false
 }) => {
   const innerData = data?.data
   const [id, setId] = useState(questionUUID)

@@ -58,6 +58,6 @@ export default async function SelectedQuizPage({ params }) {
     )
   }
 
-  return <PrimaryQuizBuilder quiz={quiz} />
+  return <PrimaryQuizBuilder quiz={quiz} isAdmin={true}/>
   // return <SelectedQuiz quiz={quiz} />
 }

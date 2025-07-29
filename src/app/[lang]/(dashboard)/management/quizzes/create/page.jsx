@@ -4,7 +4,7 @@ import React from 'react'
 import CreateQuiz from '@/views/quiz-builder/create/CreateQuiz'
 
 function page() {
-  return <CreateQuiz />
+  return <CreateQuiz isAdmin={true} />
 }
 
 export default page

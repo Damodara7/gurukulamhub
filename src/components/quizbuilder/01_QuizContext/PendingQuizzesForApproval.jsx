@@ -153,7 +153,7 @@ export default function PendingForApproval({}) {
   return (
     <>
       <Grid container rowSpacing={4} justifyContent='center'>
-        {pendingQuizzes.length > 0 && (
+        {/* {pendingQuizzes.length > 0 && (
           <Grid container alignItems='center' justifyContent='space-between'>
             <Grid
               item
@@ -178,7 +178,7 @@ export default function PendingForApproval({}) {
               />
             </Grid>
           </Grid>
-        )}
+        )} */}
 
         {selectedQuizIds.length > 0 && (
           <Grid

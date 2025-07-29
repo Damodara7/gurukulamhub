@@ -43,7 +43,8 @@ const MultipleChoiceQuestionTemplate = ({
   primaryQuestion = null,
   saveQuestion,
   deleteQuestion,
-  validationErrors = []
+  validationErrors = [],
+  isAdmin=false
 }) => {
   const innerData = data?.data
   console.log('inner data  ' ,innerData)
