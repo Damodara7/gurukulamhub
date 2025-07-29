@@ -6,7 +6,7 @@ import PermissionLayoutWrapper from '@/components/PermissionLayoutWrapper'
 
 function Layout({ children }) {
   return (
-    <PermissionLayoutWrapper featureName={FEATURES_LOOKUP.MY_QUIZZES} permissionName={PERMISSIONS_LOOKUP.CREATE}>
+    <PermissionLayoutWrapper featureName={FEATURES_LOOKUP.MANAGE_QUIZZES} permissionName={PERMISSIONS_LOOKUP.CREATE}>
       {children}
     </PermissionLayoutWrapper>
   )

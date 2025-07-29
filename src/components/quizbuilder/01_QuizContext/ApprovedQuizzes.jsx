@@ -25,7 +25,7 @@ import Loading from '@/components/Loading'
 import { useRouter } from 'next/navigation'
 import DeleteConfirmationDialog from '@/components/dialogs/DeleteConfirmationDialog'
 
-export default function ApprovedQuizzes({}) {
+export default function ApprovedQuizzes({isAdmin=false}) {
   const router = useRouter()
   const mdScreenMatches = useMediaQuery('(min-width:768px)') // Adjust breakpoint as needed
   const { data: session, status } = useSession()
@@ -192,7 +192,7 @@ export default function ApprovedQuizzes({}) {
   return (
     <>
       <Grid container rowSpacing={4} justifyContent='center'>
-        {approvedQuizzes.length > 0 && (
+        {/* {approvedQuizzes.length > 0 && (
           <Grid container alignItems='center' justifyContent='space-between'>
             <Grid
               item
@@ -217,7 +217,7 @@ export default function ApprovedQuizzes({}) {
               />
             </Grid>
           </Grid>
-        )}
+        )} */}
 
         {selectedQuizIds.length > 0 && (
           <Grid

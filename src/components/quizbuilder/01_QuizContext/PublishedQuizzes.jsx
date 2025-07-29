@@ -30,7 +30,7 @@ import { toast } from 'react-toastify'
 import Loading from '@/components/Loading'
 import { useRouter } from 'next/navigation'
 
-export default function PublishedQuizzes({}) {
+export default function PublishedQuizzes({isAdmin=false}) {
   const router = useRouter()
   const mdScreenMatches = useMediaQuery('(min-width:768px)') // Adjust breakpoint as needed
   const { data: session, status } = useSession()
@@ -62,7 +62,7 @@ export default function PublishedQuizzes({}) {
   }
 
   async function handleViewQuiz(quiz) {
-    router.push(`/myquizzes/view/${quiz._id}`)
+    router.push(`/${isAdmin ? 'management/quizzes' : 'myquizzes'}/view/${quiz._id}`)
   }
 
   async function getPublishedQuizzes() {
@@ -166,7 +166,7 @@ export default function PublishedQuizzes({}) {
   return (
     <>
       <Grid container rowSpacing={2} justifyContent='center'>
-        {publishedQuizzes.length > 0 && (
+        {/* {publishedQuizzes.length > 0 && (
           <Grid container alignItems='center' justifyContent='space-between'>
             <Grid
               item
@@ -217,7 +217,7 @@ export default function PublishedQuizzes({}) {
               />
             </Grid>
           </Grid>
-        )}
+        )} */}
         {selectedQuizIds.length > 0 && (
           <Grid
             container

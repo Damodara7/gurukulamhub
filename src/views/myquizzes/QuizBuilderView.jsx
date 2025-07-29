@@ -39,7 +39,7 @@ import * as RestApi from '@/utils/restApiUtil'
 import CenterBox from '@/components/CenterBox'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
 
-const QuizBuilderView = () => {
+const QuizBuilderView = ({isAdmin=false}) => {
   const router = useRouter()
   const { data: session, status } = useSession()
   const [loading, setLoading] = useState(false)
@@ -48,11 +48,11 @@ const QuizBuilderView = () => {
   const mdScreenMatches = useMediaQuery('(min-width:768px)')
 
   function handleBuildQuiz(quiz) {
-    router.push(`/myquizzes/builder/${quiz._id}`)
+    router.push(`/${isAdmin ? 'management/quizzes' : 'myquizzes'}/builder/${quiz._id}`)
   }
 
   async function handleViewQuiz(quiz) {
-    router.push(`/myquizzes/view/${quiz._id}`)
+    router.push(`/${isAdmin ? 'management/quizzes' : 'myquizzes'}/view/${quiz._id}`)
   }
 
   async function getQuizData() {

@@ -60,5 +60,5 @@ export default async function EditQuizPage({ params }) {
     )
   }
 
-  return <EditQuiz quiz={quiz} />
+  return <EditQuiz quiz={quiz} isAdmin={true} />
 }

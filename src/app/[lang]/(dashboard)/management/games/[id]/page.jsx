@@ -20,7 +20,7 @@ async function getGameData(gameId) {
 export default async function page({ params }) {
   const { id } = params
   const [gameData] = await Promise.all([getGameData(id)])
-  if (gameData) {
+  if (!gameData) {
     return <FallBackCard content='You can go back to All Games' path='/management/games' btnText='Back To All Games' />
   }
 

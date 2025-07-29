@@ -56,7 +56,7 @@ const questionData = [
   }
 ]
 
-const MainQuizQuestionBuilder = ({ data }) => {
+const MainQuizQuestionBuilder = ({ data, isAdmin }) => {
   console.log('Selected Quiz data in MainQuizQuestionBuilder: ', data)
   const [questions, setQuestions] = useState([])
   const [invalidateQuestions, setInvalidateQuestions] = useState(false)
@@ -183,6 +183,7 @@ const MainQuizQuestionBuilder = ({ data }) => {
                 setInvalidateQuestions={setInvalidateQuestions}
                 data={quizAndQuestionData}
                 setShowAddQuestion={setShowAddQuestion}
+                isAdmin={isAdmin}
               />
             </Grid>
           )}
@@ -198,6 +199,7 @@ const MainQuizQuestionBuilder = ({ data }) => {
                 data={selectedQuestion}
                 saveQuestion={saveQuestion}
                 deleteQuestion={deleteQuestion}
+                isAdmin={isAdmin}
               />
             </Grid>
           )}
@@ -211,6 +213,7 @@ const MainQuizQuestionBuilder = ({ data }) => {
                   setInvalidatePrimaryQuestions={setInvalidateQuestions}
                   data={quizAndQuestionData}
                   primaryQuestion={selectedQuestion}
+                  isAdmin={isAdmin}
                 />
               </Grid>
             </>

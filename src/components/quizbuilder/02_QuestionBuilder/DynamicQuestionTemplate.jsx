@@ -12,7 +12,8 @@ const DynamicQuestionTemplate = ({
   mode,
   saveQuestion,
   deleteQuestion,
-  validationErrors = []
+  validationErrors = [],
+  isAdmin=false
 }) => {
   const componentMap = {
     'single-choice': SingleChoiceQuestionTemplate,
@@ -37,6 +38,7 @@ const DynamicQuestionTemplate = ({
       saveQuestion={saveQuestion}
       deleteQuestion={deleteQuestion}
       validationErrors={validationErrors}
+      isAdmin={isAdmin}
     />
   )
 }

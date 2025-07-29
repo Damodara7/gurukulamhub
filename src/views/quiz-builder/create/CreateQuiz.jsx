@@ -36,7 +36,7 @@ import { useRouter } from 'next/navigation'
 import { Description } from '@mui/icons-material'
 import GoBackButton from '@/components/GoBackButton'
 
-function CreateQuiz() {
+function CreateQuiz({isAdmin=false}) {
   const router = useRouter()
   const { data: session, status, update } = useSession()
   const { uuid, regenerateUUID, getUUID } = useUUID()
@@ -78,7 +78,8 @@ function CreateQuiz() {
     thumbnail: '',
     approvalState: 'draft',
     language: { code: 'en', name: 'English' },
-    remarks: []
+    remarks: [],
+    isAdmin: isAdmin
   }
 
   const {
@@ -214,7 +215,7 @@ function CreateQuiz() {
         console.log('Quiz Added result', result)
         toast.success('Quiz Added Successfully .')
         reset()
-        router.push(`/myquizzes/builder/${result?.result?._id}`)
+        router.push(`/${isAdmin ? 'management/quizzes' : 'myquizzes'}/builder/${result?.result?._id}`)
       } else {
         toast.error('Error:' + result.message)
       }
@@ -248,11 +249,12 @@ function CreateQuiz() {
             formSubmitted={formSubmitted}
             onFieldInteraction={handleFieldInteraction}
             loading={loading}
+            isAdmin={isAdmin}
           />
           {/* Form Actions */}
           <Grid item xs={12} mt={5}>
             <Stack direction='row' spacing={2} justifyContent='center'>
-              <Button variant='outlined' onClick={() => router.push('/myquizzes/view')}>
+              <Button variant='outlined' onClick={() => router.push(`/${isAdmin ? 'management/quizzes' : 'myquizzes'}/view`)}>
                 Cancel
               </Button>
               <Button

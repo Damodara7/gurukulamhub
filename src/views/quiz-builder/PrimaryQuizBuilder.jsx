@@ -9,7 +9,7 @@ import * as RestApi from '@/utils/restApiUtil'
 import { validateQuizQuestions } from './validateQuizQuestions'
 import { useRouter } from 'next/navigation'
 
-function PrimaryQuizBuilder({ quiz }) {
+function PrimaryQuizBuilder({ quiz, isAdmin=false }) {
   const router = useRouter()
   const builderAreaRef = useRef(null)
   const [errors, setErrors] = useState([])
@@ -95,7 +95,7 @@ function PrimaryQuizBuilder({ quiz }) {
           message: 'Quiz saved successfully!',
           severity: 'success'
         })
-        router.push('/myquizzes/view')
+        router.push(`/${isAdmin ? 'management/quizzes' : 'myquizzes'}/view`)
       } else if (res.status === 'error') {
         setErrors(res.result?.errors)
         setSnackbar({

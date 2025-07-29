@@ -46,7 +46,7 @@ import TranslationLanguagesDialog from '@/components/quizbuilder/01_QuizContext/
 import IconButtonTooltip from '@/components/IconButtonTooltip'
 // import quizImage from '/images/quiz.png'
 
-export default function SavedQuizzes({}) {
+export default function SavedQuizzes({ isAdmin = false }) {
   const router = useRouter()
   const mdScreenMatches = useMediaQuery('(min-width:768px)') // Adjust breakpoint as needed
   const { data: session, status } = useSession()
@@ -78,7 +78,7 @@ export default function SavedQuizzes({}) {
   }
 
   function handleBuildQuiz(quiz) {
-    router.push(`/myquizzes/builder/${quiz._id}`)
+    router.push(`/${isAdmin ? 'management/quizzes' : 'myquizzes'}/builder/${quiz._id}`)
   }
 
   async function getQuizData() {
@@ -190,7 +190,7 @@ export default function SavedQuizzes({}) {
   }
 
   async function handleViewQuiz(quiz) {
-    router.push(`/myquizzes/view/${quiz._id}`)
+    router.push(`/${isAdmin ? 'management/quizzes' : 'myquizzes'}/view/${quiz._id}`)
   }
 
   // function handleStartMakeQuizPrivate(quiz, e) {
@@ -309,11 +309,48 @@ export default function SavedQuizzes({}) {
     }
   }
 
+  async function handlePublish(quiz) {
+    try {
+      const response = await RestApi.put(`${API_URLS.v0.USERS_QUIZ}`, {
+        id: quiz._id,
+        approvalState: 'published'
+      })
+      if (response.status === 'success') {
+        // toast.success(`Quiz "${quiz.title}" published successfully.`)
+        setInvalidateQuizzes(prev => !prev) // Invalidate the quiz list to refresh
+      } else {
+        // toast.error(response.message)
+      }
+    } catch (error) {
+      // toast.error('An error occurred while publishing the quiz.')
+    }
+  }
+
+  const handlePublishSelected = async () => {
+    console.log('Publishing quizzes:', selectedQuizIds)
+    try {
+      const response = await RestApi.put(`${API_URLS.v0.USERS_QUIZ}`, {
+        ids: selectedQuizIds, // Send the array of IDs
+        approvalState: 'published' // Include the approval state
+      })
+
+      if (response.status === 'success') {
+        // toast.success('Quizzes published successfully.');
+        setInvalidateQuizzes(prev => !prev)
+      } else {
+        // toast.error(response.message);
+      }
+    } catch (error) {
+      // toast.error('An error occurred while publishing quizzes.');
+    } finally {
+      setSelectedQuizIds([])
+    }
+  }
+
   return (
     <>
       <Grid container rowSpacing={2} justifyContent='center'>
-        {myQuizzes.length > 0 && (
-          <Grid container alignItems='center' justifyContent='space-between'>
+        {/* <Grid container alignItems='center' justifyContent='space-between'>
             <Grid
               item
               xs={7}
@@ -362,8 +399,7 @@ export default function SavedQuizzes({}) {
                 style={{ cursor: 'pointer' }}
               />
             </Grid>
-          </Grid>
-        )}
+          </Grid> */}
 
         {selectedQuizIds.length > 0 && (
           <Grid
@@ -378,19 +414,36 @@ export default function SavedQuizzes({}) {
               borderRadius: '8px' // Smooth, rounded corners
             }}
           >
-            <Button
-              size='small'
-              variant='outlined'
-              color='primary'
-              startIcon={<SendIcon />}
-              onClick={handleSendSelectedToApprovalConfirm}
-              style={{
-                padding: '8px 16px',
-                fontWeight: 'bold'
-              }}
-            >
-              Send to Approval
-            </Button>
+            {!isAdmin && (
+              <Button
+                size='small'
+                variant='outlined'
+                color='primary'
+                startIcon={<SendIcon />}
+                onClick={handleSendSelectedToApprovalConfirm}
+                style={{
+                  padding: '8px 16px',
+                  fontWeight: 'bold'
+                }}
+              >
+                Send to Approval
+              </Button>
+            )}
+            {isAdmin && (
+              <Button
+                size='small'
+                variant='outlined'
+                color='primary'
+                startIcon={<PublishIcon />}
+                onClick={handlePublishSelected}
+                style={{
+                  padding: '8px 16px',
+                  fontWeight: 'bold'
+                }}
+              >
+                Publish
+              </Button>
+            )}
             <Button
               size='small'
               variant='outlined'
@@ -444,7 +497,7 @@ export default function SavedQuizzes({}) {
                         <Image
                           src={`${item.thumbnail || 'https://fakeimg.pl/250x250/?text=' + item.title}`}
                           alt={item.title}
-                        //   sx={{ maxHeight: '300px', maxWidth: '300px' }}
+                          //   sx={{ maxHeight: '300px', maxWidth: '300px' }}
                           fit='fill'
                         />
 
@@ -510,69 +563,88 @@ export default function SavedQuizzes({}) {
                                 width: '100%'
                               }}
                             >
-                                <IconButtonTooltip title='View'
+                              <IconButtonTooltip
+                                title='View'
+                                sx={{ color: '#fff' }} // White icon color
+                                aria-label={`view quiz ${item.title}`}
+                                onClick={e => {
+                                  e.stopPropagation()
+                                  handleViewQuiz(item)
+                                }}
+                              >
+                                <VisibilityOutlinedIcon />
+                              </IconButtonTooltip>
+                              <IconButtonTooltip
+                                title='Build'
+                                sx={{ color: '#fff' }} // White icon color
+                                aria-label={`build quiz ${item.title}`}
+                                onClick={e => {
+                                  e.stopPropagation()
+                                  handleBuildQuiz(item)
+                                }}
+                              >
+                                <BuildOutlinedIcon />
+                              </IconButtonTooltip>
+                              <IconButtonTooltip
+                                title='Translate'
+                                sx={{ color: '#fff' }} // White icon color
+                                aria-label={`translate quiz ${item.title}`}
+                                onClick={e => {
+                                  e.stopPropagation()
+                                  handleClickTranslate(item)
+                                }}
+                              >
+                                <TranslateIcon />
+                              </IconButtonTooltip>
+                              {!isAdmin && (
+                                <IconButtonTooltip
+                                  title='Send for approval'
                                   sx={{ color: '#fff' }} // White icon color
-                                  aria-label={`view quiz ${item.title}`}
+                                  aria-label='send for approval'
                                   onClick={e => {
                                     e.stopPropagation()
-                                    handleViewQuiz(item)
+                                    handleSendToApproval(item)
                                   }}
                                 >
-                                  <VisibilityOutlinedIcon />
+                                  <SendIcon />
                                 </IconButtonTooltip>
-                                <IconButtonTooltip title='Build'
-                                  sx={{ color: '#fff' }} // White icon color
-                                  aria-label={`build quiz ${item.title}`}
-                                  onClick={e => {
-                                    e.stopPropagation()
-                                    handleBuildQuiz(item)
-                                  }}
-                                >
-                                  <BuildOutlinedIcon />
-                                </IconButtonTooltip>
-                                <IconButtonTooltip title='Translate'
-                                  sx={{ color: '#fff' }} // White icon color
-                                  aria-label={`translate quiz ${item.title}`}
-                                  onClick={e => {
-                                    e.stopPropagation()
-                                    handleClickTranslate(item)
-                                  }}
-                                >
-                                  <TranslateIcon />
-                                </IconButtonTooltip>
-                              {item.privacy === 'PUBLIC' && (
-                                  <IconButtonTooltip title='Send for approval'
-                                    sx={{ color: '#fff' }} // White icon color
-                                    aria-label='send for approval'
-                                    onClick={e => {
-                                      e.stopPropagation()
-                                      handleSendToApproval(item)
-                                    }}
-                                  >
-                                    <SendIcon />
-                                  </IconButtonTooltip>
                               )}
-                              {item.privacy === 'PRIVATE' && (
-                                  <IconButtonTooltip title='Publish'
-                                    sx={{ color: '#fff' }} // White icon color
-                                    aria-label='publish'
-                                    onClick={e => {
-                                      e.stopPropagation()
-                                      handlePublishPrivateQuiz(item)
-                                    }}
-                                  >
-                                    <PublishIcon />
-                                  </IconButtonTooltip>
-                              )}
-                                <IconButtonTooltip title='Delete'
-                                  sx={{ color: 'red' }} // Red icon color for delete button
-                                  aria-label={`delete quiz ${item.owner}`}
+                              {/* {item.privacy === 'PRIVATE' && (
+                                <IconButtonTooltip
+                                  title='Publish'
+                                  sx={{ color: '#fff' }} // White icon color
+                                  aria-label='publish'
                                   onClick={e => {
-                                    handleStartDeleteQuiz(item, e)
+                                    e.stopPropagation()
+                                    handlePublishPrivateQuiz(item)
                                   }}
                                 >
-                                  <DeleteIcon />
+                                  <PublishIcon />
                                 </IconButtonTooltip>
+                              )} */}
+                              {isAdmin && (
+                                <IconButtonTooltip
+                                  title='Publish'
+                                  sx={{ color: '#fff' }} // White icon color
+                                  aria-label='publish'
+                                  onClick={e => {
+                                    e.stopPropagation()
+                                    handlePublish(item)
+                                  }}
+                                >
+                                  <PublishIcon />
+                                </IconButtonTooltip>
+                              )}
+                              <IconButtonTooltip
+                                title='Delete'
+                                sx={{ color: 'red' }} // Red icon color for delete button
+                                aria-label={`delete quiz ${item.owner}`}
+                                onClick={e => {
+                                  handleStartDeleteQuiz(item, e)
+                                }}
+                              >
+                                <DeleteIcon />
+                              </IconButtonTooltip>
                             </div>
                           }
                         />

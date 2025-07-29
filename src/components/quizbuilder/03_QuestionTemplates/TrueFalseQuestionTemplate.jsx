@@ -37,7 +37,8 @@ const TrueFalseQuestionTemplate = ({
   saveQuestion,
   deleteQuestion,
   primaryQuestion = null,
-  validationErrors = []
+  validationErrors = [],
+  isAdmin=false
 }) => {
   const innerData = data?.data
   const [id, setId] = useState(questionUUID)

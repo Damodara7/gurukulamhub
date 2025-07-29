@@ -20,7 +20,7 @@ function CreateGamePage({ isSuperUser = false }) {
     async function getQuizData() {
       setLoading(true)
       try {
-        const result = await RestApi.get(`${API_URLS.v0.USERS_QUIZ}`)
+        const result = await RestApi.get(`${API_URLS.v0.USERS_QUIZ}?approvalState=published&privacyFilter=PUBLIC`)
         if (result?.status === 'success') {
           setQuizzes(result.result)
         } else {

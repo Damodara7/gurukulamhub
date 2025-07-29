@@ -38,7 +38,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import TabPanel from '@mui/lab/TabPanel'
 import SavedQuizzes from './SavedQuizzes'
 
-const ViewQuiz = ({ data, theme, onSelectQuiz }) => {
+const ViewQuiz = ({ data, theme, onSelectQuiz, isAdmin=false }) => {
   const { data: session, status } = useSession()
   const [privacyType, setPrivacyType] = useState('PUBLIC')
   const [invalidateQuizzes, setInvalidateQuizzes] = useState(false)
@@ -57,6 +57,7 @@ const ViewQuiz = ({ data, theme, onSelectQuiz }) => {
         onChangePrivacyType={handleChangePrivacyType}
         onSelectQuiz={onSelectQuiz}
         itemData={myQuizzes}
+        isAdmin={isAdmin}
       />
     ),
     saved: (
@@ -65,6 +66,7 @@ const ViewQuiz = ({ data, theme, onSelectQuiz }) => {
         onChangePrivacyType={handleChangePrivacyType}
         onSelectQuiz={onSelectQuiz}
         itemData={myQuizzes}
+        isAdmin={isAdmin}
       />
     ),
     pending: (
@@ -86,6 +88,7 @@ const ViewQuiz = ({ data, theme, onSelectQuiz }) => {
         onChangePrivacyType={handleChangePrivacyType}
         onSelectQuiz={onSelectQuiz}
         itemData={myQuizzes}
+        isAdmin={isAdmin}
       />
     )
   }
@@ -148,7 +151,7 @@ const ViewQuiz = ({ data, theme, onSelectQuiz }) => {
                     </div>
                   }
                 />
-                <Tab
+                {!isAdmin && <Tab
                   value='pending'
                   label={
                     <div className='flex items-center gap-1.5'>
@@ -156,8 +159,8 @@ const ViewQuiz = ({ data, theme, onSelectQuiz }) => {
                       Pending
                     </div>
                   }
-                />
-                <Tab
+                />}
+                {!isAdmin && <Tab
                   value='approved'
                   label={
                     <div className='flex items-center gap-1.5'>
@@ -165,8 +168,8 @@ const ViewQuiz = ({ data, theme, onSelectQuiz }) => {
                       Approved
                     </div>
                   }
-                />
-                <Tab
+                />}
+                {!isAdmin && <Tab
                   value='rejected'
                   label={
                     <div className='flex items-center gap-1.5'>
@@ -174,7 +177,7 @@ const ViewQuiz = ({ data, theme, onSelectQuiz }) => {
                       Rejected
                     </div>
                   }
-                />
+                />}
                 <Tab
                   value='published'
                   label={

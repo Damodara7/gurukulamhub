@@ -56,5 +56,5 @@ export default async function ViewQuizPage({ params }) {
     )
   }
 
-  return <ViewQuiz quiz={quiz} />
+  return <ViewQuiz quiz={quiz} isAdmin={true} />
 }

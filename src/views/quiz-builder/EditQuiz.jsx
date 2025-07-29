@@ -37,7 +37,7 @@ import CenterBox from '@/components/CenterBox'
 import { useRouter } from 'next/navigation'
 import GoBackButton from '@/components/GoBackButton'
 
-function EditQuiz({ quiz }) {
+function EditQuiz({ quiz, isAdmin=false }) {
   const router = useRouter()
   const { data: session, status, update } = useSession()
   const { uuid, regenerateUUID, getUUID } = useUUID()
@@ -255,7 +255,7 @@ function EditQuiz({ quiz }) {
         toast.success('Quiz Updated Successfully.')
         setLoading(false)
         reset()
-        router.push(`/myquizzes/view`)
+        router.push(`/${isAdmin ? 'management/quizzes' : 'myquizzes'}/view`)
       } else {
         toast.error('Error:' + result.message)
       }
@@ -286,6 +286,7 @@ function EditQuiz({ quiz }) {
             formData={getValues()}
             quiz={quiz}
             quizId={getValues().id}
+            isAdmin={isAdmin}
           />
           <Stack className='w-full' flexDirection='row' alignItems='center' justifyContent='flex-end'>
             <Button
