@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+
 import {
   Box,
   Button,
@@ -51,8 +52,10 @@ import { getCountryByName } from '@/utils/countryRegionUtil'
 import { timezones } from '@/data/timezones'
 import { gmttimezones } from '@/data/gmttimezones';
 import { countryTimezones } from '@/data/country-timezones'
-import moment from 'moment-timezone'
+import moment, { tz } from 'moment-timezone'
 import { userAgent } from 'next/server'
+import { convertWithGMTOffset } from '@/utils/timezoneconverter'
+
 // Reward position options
 const POSITION_OPTIONS = [1, 2, 3, 4, 5]
 
@@ -73,9 +76,9 @@ const validateForm = formData => {
     errors.thumbnailPoster = 'Thumbnail image is required.'
   }
 
-  // if (!formData.timezone) {
-  //   errors.timezone = 'Timezone is required.'
-  // }
+  if (!formData.timezone?.value) {
+    errors.timezone = 'Timezone is required.'
+  }
   // if (!formData.zipcode) {
   //   errors.zipcode = 'Creator zipcode is required'
   // }
@@ -134,9 +137,9 @@ const formFieldOrder = [
   'description',
   'quiz',
   'startTime',
-  'creatorZipcode',
-  'creatorTimeZone',
-  'creatorCountry',
+  // 'creatorZipcode',
+  // 'creatorTimeZone',
+  // 'creatorCountry',
   'gameMode',
   'duration',
   'requireRegistration',
@@ -162,10 +165,11 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
     pin: Math.floor(100000 + Math.random() * 900000).toString(),
     description: '',
     quiz: '',
-    creatorZipcode: '',
-    creatorTimezone: '',
-    creatorCountry: '',
+    // creatorZipcode: '',
+    // creatorTimezone: '',
+    // creatorCountry: '',
     startTime: null,
+    timezone: { value: '', label: '' },
     duration: null, // 10 minutes in seconds
     promotionalVideoUrl: '',
     thumbnailPoster: '',
@@ -176,52 +180,52 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
     limitPlayers: false,
     maxPlayers: 100000,
     tags: [],
-    location: {
-      country: '',
-      region: '',
-      city: '',
-      zipcode: ''
-    },
+    // location: {
+    //   country: '',
+    //   region: '',
+    //   city: '',
+    //   zipcode: ''
+    // },
     rewards: []
   }
   const [formData, setFormData] = useState(initialFormData)
   const [availablePositions, setAvailablePositions] = useState(POSITION_OPTIONS)
-  const [selectedCountryObject, setSelectedCountryObject] = useState(null)
-  const [selectedAdminCountry, setSelectedAdminCountry] = useState(null)
-  const [selectedRegion, setSelectedRegion] = useState('')
-  const [selectedCity, setSelectedCity] = useState('')
-  const [cityOptions, setCityOptions] = useState([])
+  // const [selectedCountryObject, setSelectedCountryObject] = useState(null)
+  // const [selectedAdminCountry, setSelectedAdminCountry] = useState(null)
+  // const [selectedRegion, setSelectedRegion] = useState('')
+  // const [selectedCity, setSelectedCity] = useState('')
+  // const [cityOptions, setCityOptions] = useState([])
   const [errors, setErrors] = useState({})
   const [touches, setTouches] = useState({})
   const fileInputRef = useRef(null)
   const [showErrorSnackbar, setShowErrorSnackbar] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
-  const [pinCodes, setPinCodes] = useState([])
-  const [loadingPincodes, setLoadingPincodes] = useState(false)
-  const [selectedPincode, setSelectedPincode] = useState('')
-
+  // const [pinCodes, setPinCodes] = useState([])
+  // const [loadingPincodes, setLoadingPincodes] = useState(false)
+  // const [selectedPincode, setSelectedPincode] = useState('')
+  const [localTimeDisplay, setLocalTimeDisplay] = useState(null)
   // Loading state
   const [loading, setLoading] = useState({
     fetchCities: false,
     submitting: false
   })
 
-  const fetchPinCodesForState = async selectedStateName => {
-    if (!selectedStateName) {
-      setPinCodes([])
-      return
-    }
-    setLoadingPincodes(true)
-    try {
-      const response = await fetch(`/api/pincodes/${selectedStateName}`)
-      const data = await response.json()
-      setPinCodes(data?.pinCodes || [])
-    } catch (e) {
-      console.error('Error fetching pincodes:', e)
-    } finally {
-      setLoadingPincodes(false)
-    }
-  }
+  // const fetchPinCodesForState = async selectedStateName => {
+  //   if (!selectedStateName) {
+  //     setPinCodes([])
+  //     return
+  //   }
+  //   setLoadingPincodes(true)
+  //   try {
+  //     const response = await fetch(`/api/pincodes/${selectedStateName}`)
+  //     const data = await response.json()
+  //     setPinCodes(data?.pinCodes || [])
+  //   } catch (e) {
+  //     console.error('Error fetching pincodes:', e)
+  //   } finally {
+  //     setLoadingPincodes(false)
+  //   }
+  // }
 
   // Reward Dialog states
   const [openRewardDialog, setOpenRewardDialog] = useState(false)
@@ -243,9 +247,9 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
     tags: useRef(),
     forwardType: useRef(),
     gameMode: useRef(),
-    creatorZipcode: useRef(),
-    creatorTimezone: useRef(),
-    creatorCountry: useRef()
+    // creatorZipcode: useRef(),
+    // creatorTimezone: useRef(),
+    // creatorCountry: useRef()
     // Add more if needed
   }
   // If Edit Game?
@@ -260,118 +264,55 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
         registrationEndTime: data?.registrationEndTime ? new Date(data.registrationEndTime) : null,
         duration: data?.duration ? Math.floor(data.duration / 60) : '',
         gameMode: data?.gameMode || 'live',
-        timezone: data?.timezone || '',
-        creatorZipcode: data?.creatorZipcode || '',
-        creatorTimezone: data?.creatorTimezone || '',
-        creatorCountry: data?.creatorCountry || ''
+        timezone: gmttimezones.find(tz => tz.value === data?.timezone) || {},
+        // creatorZipcode: data?.creatorZipcode || '',
+        // creatorTimezone: data?.creatorTimezone || '',
+        // creatorCountry: data?.creatorCountry || ''
       })
-      setSelectedCountryObject(
-        data?.location?.country
-          ? { country: data?.location?.country, countryCode: getCountryByName(data?.location?.country)?.countryCode }
-          : null
-      )
-      setSelectedRegion(data?.location?.region || '')
-      setSelectedCity(data?.location?.city || '')
-      setSelectedPincode(data?.location?.zipcode || '')
-      // Set the admin country if creatorCountry exists
-      if (data?.creatorCountry) {
-        const adminCountry = {
-          country: data.creatorCountry,
-          countryCode: getCountryByName(data.creatorCountry)?.countryCode
-        }
-        setSelectedAdminCountry(adminCountry)
-      }
-    }
+    //   setSelectedCountryObject(
+    //     data?.location?.country
+    //       ? { country: data?.location?.country, countryCode: getCountryByName(data?.location?.country)?.countryCode }
+    //       : null
+    //   )
+    //   setSelectedRegion(data?.location?.region || '')
+    //   setSelectedCity(data?.location?.city || '')
+    //   setSelectedPincode(data?.location?.zipcode || '')
+    //   // Set the admin country if creatorCountry exists
+    //   if (data?.creatorCountry) {
+    //     const adminCountry = {
+    //       country: data.creatorCountry,
+    //       countryCode: getCountryByName(data.creatorCountry)?.countryCode
+    //     }
+    //     setSelectedAdminCountry(adminCountry)
+    //   }
+    
+  }
   }, [data])
-
-  // // Your existing async function
-  // async function getTimezoneFromZipcode(zipcode, countryCode) {
-  //   try {
-  //     if (!zipcode || !countryCode) {
-  //       throw new Error('Both zipcode and country code are required')
-  //     }
-  //     if (countryCode === 'IN') {
-  //       return 'Asia/Kolkata'
-  //     }
-  //     const geoUrl = `http://api.geonames.org/postalCodeSearchJSON?postalcode=${encodeURIComponent(
-  //       zipcode
-  //     )}&country=${encodeURIComponent(countryCode)}&username=demo`
-
-  //     const geoResponse = await fetch(geoUrl)
-
-  //     if (!geoResponse.ok) {
-  //       throw new Error(`Geocoding API error: ${geoResponse.status}`)
-  //     }
-
-  //     const geoData = await geoResponse.json()
-
-  //     if (!geoData.postalCodes || geoData.postalCodes.length === 0) {
-  //       throw new Error('Zipcode not found')
-  //     }
-
-  //     const { lat, lng } = geoData.postalCodes[0]
-
-  //     const timezoneUrl = `http://api.geonames.org/timezoneJSON?lat=${lat}&lng=${lng}&username=demo`
-
-  //     const timezoneResponse = await fetch(timezoneUrl)
-
-  //     if (!timezoneResponse.ok) {
-  //       throw new Error(`Timezone API error: ${timezoneResponse.status}`)
-  //     }
-
-  //     const timezoneData = await timezoneResponse.json()
-
-  //     if (!timezoneData.timezoneId) {
-  //       throw new Error('Timezone not found for the given coordinates')
-  //     }
-
-  //     return timezoneData.timezoneId
-  //   } catch (error) {
-  //     console.error('Error in getTimezoneFromZipcode:', error)
-  //     throw error
-  //   }
-  // }
-
-  // // using the useeffect to fetch the timezone y changing the timezone and the country
-
-  // useEffect(() => {
-  //   const fetchTimezone = async () => {
-  //     if (formData.zipcode && selectedAdminCountry?.countryCode) {
-  //       try {
-  //         // Special handling for India
-  //         if (selectedAdminCountry.countryCode === 'IN') {
-  //           // Validate Indian PIN code format (6 digits)
-  //           if (!/^\d{6}$/.test(formData.creatorZipcode)) {
-  //             throw new Error('Indian PIN code must be 6 digits')
-  //           }
-  //           setFormData(prev => ({
-  //             ...prev,
-  //             timezone: 'Asia/Kolkata'
-  //           }))
-  //           return
-  //         }
-
-  //         const timezone = await getTimezoneFromZipcode(formData.creatorZipcode, selectedAdminCountry.countryCode)
-  //         setFormData(prev => ({
-  //           ...prev,
-  //           timezone: timezone
-  //         }))
-  //         console.log(' timezone ', timezone)
-  //       } catch (error) {
-  //         console.error('Failed to fetch timezone:', error)
-  //       }
-  //     }
-  //   }
-  //   fetchTimezone()
-  // }, [formData.creatorZipcode, selectedAdminCountry])
-
-  // Update available positions when rewards change
-  
   
   useEffect(() => {
     const usedPositions = formData?.rewards?.map(r => r.position)
     setAvailablePositions(POSITION_OPTIONS.filter(pos => !usedPositions.includes(pos)))
   }, [formData?.rewards])
+
+ useEffect(() => {
+   if (formData.startTime && formData.timezone?.value) {
+     // IST is GMT+05:30 - we pass it as an object to match your timezone data structure
+     const istOffset = { value: '+05:30' }
+
+     const localTime = convertWithGMTOffset(formData.startTime, istOffset, formData.timezone.value)
+
+     if (localTime) {
+       // Format the timezone display (e.g., "GMT+05:30")
+       const tzDisplay = formData.timezone?.value ? `GMT${formData.timezone.value}` : ''
+      //  console.log( 'formdata' , formData.timezone);
+      //  console.log('timezonevalue' , formData.timezone.value);
+       setLocalTimeDisplay(localTime.format('YYYY-MM-DD hh:mm A') + ` (${tzDisplay})`)
+     }
+
+   } else {
+     setLocalTimeDisplay(null)
+   }
+ }, [formData.startTime, formData.timezone])
 
   // Fetch Cities from DB
   const getCitiesData = async (region = '') => {
@@ -668,15 +609,17 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
     // Only include relevant fields
     const submission = {
       ...formData,
-      creatorZipcode: formData.creatorZipcode,
-      creatorTimezone: formData.timezone,
-      creatorCountry: selectedAdminCountry?.country || '',
-      location: {
-        country: selectedCountryObject?.country,
-        region: selectedRegion,
-        city: selectedCity,
-        zipcode: selectedCountryObject?.country === 'India' ? selectedPincode : formData.location.zipcode
-      }
+
+      timezone: formData?.timezone?.value || '',
+      // creatorZipcode: formData.creatorZipcode,
+      // creatorTimezone: formData.timezone,
+      // creatorCountry: selectedAdminCountry?.country || '',
+      // location: {
+      //   country: selectedCountryObject?.country,
+      //   region: selectedRegion,
+      //   city: selectedCity,
+      //   zipcode: selectedCountryObject?.country === 'India' ? selectedPincode : formData.location.zipcode
+      // }
     }
     if (formData.gameMode !== 'self-paced') {
       delete submission.duration
@@ -769,9 +712,9 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
     fileInputRef.current.click()
   }
 
-  const handleChangeCountry = countryValue => {
-    setSelectedRegion('')
-  }
+  // const handleChangeCountry = countryValue => {
+  //   setSelectedRegion('')
+  // }
 
   // Handle gameMode change to clear irrelevant fields' errors/touches
   const handleGameModeChange = e => {
@@ -1028,9 +971,9 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                 id='timezone-autocomplete'
                 options={gmttimezones}
                 getOptionLabel={option => option.label}
-                value={gmttimezones.find(tz => tz.value === formData.timezone) || null}
+                value={formData.timezone?.value ? gmttimezones.find(tz => tz.value === formData.timezone?.value) : null}
                 onChange={(e, newValue) => {
-                  setFormData(prev => ({ ...prev, timezone: newValue || '' }))
+                  setFormData(prev => ({ ...prev, timezone: newValue || null }))
                   setTouches(prev => ({ ...prev, timezone: true }))
                   setErrors(prev => ({ ...prev, timezone: '' }))
                 }}
@@ -1050,11 +993,39 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                 )}
                 isOptionEqualToValue={(option, value) => option === value}
                 autoHighlight
-                autoSelect
+                clearOnBlur
                 clearOnEscape
                 disableClearable={false}
               />
             </FormControl>
+          </Grid>
+          <Grid item xs={12}>
+            {localTimeDisplay && (
+              <TextField
+                fullWidth
+                label='Local Time'
+                value={localTimeDisplay}
+                InputProps={{
+                  readOnly: true,
+                  startAdornment: (
+                    <InputAdornment position='start'>
+                      <AccessTimeIcon color='action' />
+                    </InputAdornment>
+                  )
+                }}
+                variant='outlined'
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': {
+                      borderColor: 'rgba(0, 0, 0, 0.23)' // Match DateTimePicker border
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'rgba(0, 0, 0, 0.87)' // Hover state
+                    }
+                  }
+                }}
+              />
+            )}
           </Grid>
         </Grid>
       </Grid>
@@ -1342,8 +1313,8 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
             </Grid>
           )} */}
 
-          {/* Show converted time info if timezone, startTime, and selectedCountryObject are set */}
-          {/* {formData.timezone &&
+      {/* Show converted time info if timezone, startTime, and selectedCountryObject are set */}
+      {/* {formData.timezone &&
             formData.startTime &&
             selectedCountryObject?.countryCode &&
             (() => {
