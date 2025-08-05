@@ -10,7 +10,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import GameForm from '@/components/apps/games/GameForm'
 
-function CreateGamePage({ isSuperUser = false }) {
+function CreateGamePage({ isSuperUser = false }){
   const { data: session } = useSession()
   const [quizzes, setQuizzes] = useState([])
   const [loading, setLoading] = useState(true)
