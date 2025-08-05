@@ -297,17 +297,28 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
 
             <SubMenu label={dictionary['navigation'].manageQuizzes} icon={<i className='ri-dashboard-line' />}>
               <MenuItem href={`/${locale}/management/quizzes/view`}>{dictionary['navigation'].all}</MenuItem>
-              <MenuItem href={`/${locale}/management/user-quizzes/list`}>{dictionary['navigation'].userQuizzes}</MenuItem>
+              <MenuItem href={`/${locale}/management/user-quizzes/list`}>
+                {dictionary['navigation'].userQuizzes}
+              </MenuItem>
               <MenuItem href={`/${locale}/management/quizzes/create`}>{dictionary['navigation'].create}</MenuItem>
             </SubMenu>
+            
             <SubMenu label={dictionary['navigation'].manageGames} icon={<i className='ri-gamepad-line' />}>
               <MenuItem href={`/${locale}/management/games`}>{dictionary['navigation'].all}</MenuItem>
               <MenuItem href={`/${locale}/management/games/create`}>{dictionary['navigation'].create}</MenuItem>
             </SubMenu>
 
+
+            <SubMenu label={dictionary['navigation'].manageGroups} icon={<i className='ri-group-line' />}>
+              <MenuItem href={`/${locale}/management/groups`}>{dictionary['navigation'].all}</MenuItem>
+              <MenuItem href={`/${locale}/management/groups/create`}>{dictionary['navigation'].create}</MenuItem>
+            </SubMenu>
+
+
             <SubMenu label={dictionary['navigation'].manageUsers} icon={<i className='ri-group-line' />}>
               <MenuItem href={`/${locale}/management/user/list`}>{dictionary['navigation'].list}</MenuItem>
             </SubMenu>
+
             <SubMenu label={dictionary['navigation'].manageSponsorships} icon={<i className='ri-wallet-3-line' />}>
               <MenuItem href={`/${locale}/management/sponsorships`}>{dictionary['navigation'].list}</MenuItem>
             </SubMenu>
