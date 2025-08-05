@@ -21,6 +21,7 @@ export const API_URLS = {
     USERS_VERIFY_PHONE_OTP: `${API_BASE_URL}/users/verifyphone`,
     USERS_PROFILE: `${API_BASE_URL}/profile`,
     USERS_QUIZ: `${API_BASE_URL}/quiz`,
+    USERS_GROUP: `${API_BASE_URL}/groups`,
     USERS_QUIZ_TRANSLATION: `${API_BASE_URL}/translation`,
     USERS_QUIZ_QUESTION: `${API_BASE_URL}/question`,
     USERS_CONTEXT: `${API_BASE_URL}/context`,
@@ -38,7 +39,7 @@ export const API_URLS = {
     USER_ALERTS: `${API_BASE_URL}/user-alerts`,
     USER_LEARNING: `${API_BASE_URL}/user-learning`,
     SPONSORSHIP: `${API_BASE_URL}/sponsorship`,
-    SPONSORSHIP_PAYMENT: `${API_BASE_URL}/sponsorship-payment`,
+    SPONSORSHIP_PAYMENT: `${API_BASE_URL}/sponsorship-payment`
     // Add more URLs for API version 1
   },
   v1: {
@@ -61,6 +62,7 @@ export const API_URLS = {
     USERS_VERIFY_PHONE_OTP: `${API_BASE_URL}/users/verifyphone`,
     USERS_PROFILE: `${API_BASE_URL}/v1/profile`,
     USERS_QUIZ: `${API_BASE_URL}/v1/quiz`,
+    USERS_GROUP: `${API_BASE_URL}/v1/groups`,
     USERS_QUIZ_TRANSLATION: `${API_BASE_URL}/v1/translation`,
     USERS_QUIZ_QUESTION: `${API_BASE_URL}/v1/question`,
     USERS_CONTEXT: `${API_BASE_URL}/v1/context`,
@@ -77,7 +79,7 @@ export const API_URLS = {
     USER_ALERTS: `${API_BASE_URL}/v1/user-alerts`,
     USER_LEARNING: `${API_BASE_URL}/v1/user-learning`,
     SPONSORSHIP: `${API_BASE_URL}/v1/sponsorship`,
-    SPONSORSHIP_PAYMENT: `${API_BASE_URL}/v1/sponsorship-payment`,
+    SPONSORSHIP_PAYMENT: `${API_BASE_URL}/v1/sponsorship-payment`
     // Add more URLs for API version 1
   },
   v2: {
