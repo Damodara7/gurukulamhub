@@ -29,12 +29,15 @@ const validateForm = formData => {
   if (!formData.groupName) {
     errors.groupName = 'Group name is required'
   }
-  if (!formData.location?.country) {
-    errors['location.country'] = 'Country is required'
-  }
-  if (!formData.gender) {
-    errors.gender = 'Gender is required'
-  }
+  // if(!formData.description){
+  //   errors.description = 'Description is required'
+  // }
+  // if (!formData.location?.country) {
+  //   errors['location.country'] = 'Country is required'
+  // }
+  // if (!formData.gender) {
+  //   errors.gender = 'Gender is required'
+  // }
   // Age validation
   // if (formData.ageGroup.min === '' || formData.ageGroup.max === '') {
   //   errors.ageGroup = 'Both age fields are required'
