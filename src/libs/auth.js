@@ -124,14 +124,16 @@ export const authOptions = {
      * the `session()` callback. So we have to add custom parameters in `token`
      * via `jwt()` callback to make them accessible in the `session()` callback
      */
-    async jwt({ token, user, trigger, session }) {
-      // console.log('TOKEN: ', token);
+    async jwt({ token, trigger, session }) {
+      console.log('TOKEN: ', token);
       // console.log('USER: ', user);
       if (token.email) {
         try {
           const result = await RestApi.get(`${API_URLS.v0.USERS_PROFILE}/${token.email}`)
           // const result = await clientApi.getUserProfileByEmail(token.email)
           const { profile, user } = result?.result
+          console.log('PROFILE: ', profile)
+          console.log('USER: ', user)
           if (result?.status === 'success') {
             token.id = user?._id
             token.roles = user?.roles
@@ -173,13 +175,13 @@ export const authOptions = {
       if (session.user) {
         session.user.name = token.name
         session.user.email = token.email
-        if (token.firstname) {
-          session.user.firstname = token.firstname
+        if (token?.firstname) {
+          session.user.firstname = token?.firstname
         }
-        if (token.lastname) {
-          session.user.lastname = token.lastname
+        if (token?.lastname) {
+          session.user.lastname = token?.lastname
         }
-        if (token.image) {
+        if (token?.image) {
           session.user.image = token.image
         }
         if (token.roles) {
@@ -208,9 +210,9 @@ export const authOptions = {
           // Create or Update User
           console.log('USER IN GOOGLE SIGNIN: ', user)
           try {
-            const nameParts = user?.name.trim().split(' ')
-            const lastname = nameParts?.pop() // Removes and returns the last word
-            const firstname = nameParts?.join(' ')
+            const nameParts = user?.name?.trim()?.split(' ') || []
+            const lastname = nameParts?.pop() || ''  // Removes and returns the last word
+            const firstname = nameParts?.join(' ') || ''
 
             let data = {
               email: user?.email

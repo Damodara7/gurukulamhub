@@ -23,8 +23,8 @@ export async function getByEmail({ email }) {
     }
 
     let user = await User.findOne({ email }).select('-password').lean()
-    // console.log('profile: ', profile)
-    // console.log('user: ', user)
+    console.log('profile: ', profile)
+    console.log('user: ', user)
     return { status: 'success', result: { profile, user }, message: 'User profile successfully retrieved' };
   } catch (error) {
     console.error('getByEmail function -> Error fetching user profile: ', error)
@@ -135,6 +135,7 @@ export const addOrUpdate = async ({ email, data: updateData }) => {
   try {
     let existedUser = await User.findOne({ email: email })
     if (!existedUser) {
+      console.error('User not found')
       return { status: 'error', result: null, message: 'User not found' };
     }
 
