@@ -109,11 +109,11 @@ export async function getAll() {
       userProfiles = result?.result?.map(userProfile => {
         return {
           email: userProfile.email,
-          firstname: userProfile.firstname,
-          lastname: userProfile.lastname,
-          nickname: userProfile.nickname,
-          phone: userProfile.phone,
-          image: userProfile.image
+          firstname: userProfile?.firstname,
+          lastname: userProfile?.lastname,
+          nickname: userProfile?.nickname,
+          phone: userProfile?.phone,
+          image: userProfile?.image
         }
       })
     }
@@ -293,15 +293,19 @@ export async function addByGoogleSignin({ email, data }) {
       newUserData.isVerified = true
       newUserData.loginCount = newUserData.loginCount + 1
 
+      // Save the user to database first
+      const savedUser = await newUserData.save();
+
       // Synchronize all alerts from AlertModel to the user's alerts list on login
       await UserAlertService.addAllAlertsToOneUser({ email })
 
+      // TODO(DONE): User need to be created before adding profile
       const createdUserProfileResult = await UserProfileService.addOrUpdate({ email, data })
 
-      newUserData.profile = createdUserProfileResult?.result?._id
+      savedUser.profile = createdUserProfileResult?.result?._id
 
-      await newUserData.save()
-      return { status: 'success', result: newUserData, message: 'User added successfully by google signin' }
+      await savedUser.save()
+      return { status: 'success', result: savedUser, message: 'User added successfully by google signin' }
     } else {
       if (!user.isVerified) {
         // Delete Unverified user & user profile of this email
@@ -351,7 +355,8 @@ export async function addByGoogleSignin({ email, data }) {
         // Filter out fields that are already present in the profile
         const fieldsToCheck = ['firstname', 'lastname', 'image']
         fieldsToCheck.forEach(field => {
-          if (profile[field]) {
+          console.log('FIELD: ', field)
+          if (profile?.[field]) {
             delete data[field] // Remove the field from data if it exists in profile
           }
         })
@@ -624,9 +629,9 @@ export async function srvSendReferrerNotification({ data }) {
     const messageTemplate = referrerNotificationTemplate({
       referrerName: referrerName,
       referrerEmail: referrerEmail,
-      newUserName: `${newUserProfile.firstname}${newUserProfile.lastname && ' ' + newUserProfile.lastname}`,
+      newUserName: `${newUserProfile?.firstname}${newUserProfile?.lastname && ' ' + newUserProfile?.lastname}`,
       newUserEmail: newUserEmail,
-      newUserMobileNumber: newUserProfile.phone,
+      newUserMobileNumber: newUserProfile?.phone,
       referrerMemberId: referrerMemberId
     })
 
