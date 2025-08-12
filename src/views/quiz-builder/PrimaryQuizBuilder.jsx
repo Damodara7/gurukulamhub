@@ -88,7 +88,9 @@ function PrimaryQuizBuilder({ quiz, isAdmin=false }) {
     }
 
     try {
-      const res = await RestApi.put(`${API_URLS.v0.USERS_QUIZ}/${quiz._id || quiz.id}/save`)
+      const res = await RestApi.put(`${API_URLS.v0.USERS_QUIZ}/${quiz._id || quiz.id}/save`, {
+        approvalState : isAdmin ? 'approved' : 'saved'
+      })
       if (res.status === 'success') {
         setSnackbar({
           open: true,

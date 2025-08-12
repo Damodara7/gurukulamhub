@@ -81,7 +81,7 @@ export async function updateById(id, updateData) {
   }
 }
 
-export async function saveQuiz(id) {
+export async function saveQuiz(id, updateData) {
   try {
     await connectMongo()
     const foundArtifact = await ArtifactModel.findOne({ _id: id, approvalState: 'draft' }) // Return updated document
@@ -109,18 +109,18 @@ export async function saveQuiz(id) {
     }
 
     // Update to saved if all questions are validated
-    foundArtifact.approvalState = 'saved'
+    let updatedArtifact = await ArtifactModel.findOneAndUpdate({ _id: id, approvalState: 'draft'}, updateData)
 
     return {
       status: 'success',
       message: 'Quiz saved successfully',
       statuCode: 200,
-      result: foundArtifact
+      result: updatedArtifact
     }
   } catch (error) {
     return {
       status: 'error',
-      message: 'Saving quiz failed',
+      message: error?.message || 'Saving quiz failed',
       result: null
     }
   }

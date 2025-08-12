@@ -142,7 +142,7 @@ const ViewQuiz = ({ data, theme, onSelectQuiz, isAdmin=false }) => {
                     </div>
                   }
                 />
-                <Tab
+                {!isAdmin && <Tab
                   value='saved'
                   label={
                     <div className='flex items-center gap-1.5'>
@@ -150,7 +150,7 @@ const ViewQuiz = ({ data, theme, onSelectQuiz, isAdmin=false }) => {
                       Saved
                     </div>
                   }
-                />
+                />}
                 {!isAdmin && <Tab
                   value='pending'
                   label={
@@ -160,12 +160,12 @@ const ViewQuiz = ({ data, theme, onSelectQuiz, isAdmin=false }) => {
                     </div>
                   }
                 />}
-                {!isAdmin && <Tab
+                {<Tab
                   value='approved'
                   label={
                     <div className='flex items-center gap-1.5'>
                       <VerifiedOutlinedIcon />
-                      Approved
+                      {isAdmin ? `Saved & Approved` : 'Approved'}
                     </div>
                   }
                 />}

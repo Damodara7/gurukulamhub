@@ -9,8 +9,7 @@ export async function PUT(request, { params }) {
     const id = params.id
     const reqBody = await request.json()
 
-    //const { email, password } = reqBody
-    const newArtifact = await ArtifactService.saveQuiz(id)
+    const newArtifact = await ArtifactService.saveQuiz(id, reqBody)
     console.log(`${Artifact} save Step 1 :`, newArtifact)
     if (newArtifact.status === 'success') {
       console.log(`${Artifact} Updated Successfully ():`)

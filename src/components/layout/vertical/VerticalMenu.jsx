@@ -214,7 +214,7 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
         </SubMenu>
 
         <MenuSection label={dictionary['navigation'].mypages}>
-          <SubMenu label={dictionary['navigation'].myquizzes} icon={<i className='ri-dashboard-line' />}>
+          {!userRoles?.includes(ROLES_LOOKUP.ADMIN) && <SubMenu label={dictionary['navigation'].myquizzes} icon={<i className='ri-dashboard-line' />}>
             <MenuItem href={`/${locale}/myquizzes/view`}>{dictionary['navigation'].view}</MenuItem>
 
             <MenuItem href={`/${locale}/myquizzes/create`}>{dictionary['navigation'].create}</MenuItem>
@@ -226,7 +226,7 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
             <MenuItem href={`/${locale}/myquizzes/favorite`} icon={<i className='ri-artboard-2-line' />}>
               {dictionary['navigation'].favorite}
             </MenuItem> */}
-          </SubMenu>
+          </SubMenu>}
 
           {/* <SubMenu label={dictionary['navigation'].game} icon={<i className='ri-gamepad-line' />}>
             <MenuItem href={`/${locale}/mygames/view`}>{dictionary['navigation'].view}</MenuItem>
@@ -237,9 +237,9 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
 
           <SubMenu label={dictionary['navigation'].sponsorship} icon={<i className='ri-wallet-3-line' />}>
             <MenuItem href={`/${locale}/sponsor/list`}>{dictionary['navigation'].list}</MenuItem>
-            <MenuItem href={`/${locale}/sponsor/games`}>{dictionary['navigation'].sponsorGames}</MenuItem>
+            {/* <MenuItem href={`/${locale}/sponsor/games`}>{dictionary['navigation'].sponsorGames}</MenuItem> */}
             <MenuItem href={`/${locale}/sponsor/quizzes`}>{dictionary['navigation'].sponsorQuizzes}</MenuItem>
-            <MenuItem href={`/${locale}/sponsor/area`}>{dictionary['navigation'].sponsorByArea}</MenuItem>
+            {/* <MenuItem href={`/${locale}/sponsor/area`}>{dictionary['navigation'].sponsorByArea}</MenuItem> */}
           </SubMenu>
 
           {/* <MenuItem href={`/${locale}/dashboards/myprogress`} icon={<i className='ri-bar-chart-2-line' />}>
@@ -296,7 +296,7 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
             </MenuItem>
 
             <SubMenu label={dictionary['navigation'].manageQuizzes} icon={<i className='ri-dashboard-line' />}>
-              <MenuItem href={`/${locale}/management/quizzes/view`}>{dictionary['navigation'].all}</MenuItem>
+              <MenuItem href={`/${locale}/management/quizzes/view`}>{dictionary['navigation'].my}</MenuItem>
               <MenuItem href={`/${locale}/management/user-quizzes/list`}>
                 {dictionary['navigation'].userQuizzes}
               </MenuItem>

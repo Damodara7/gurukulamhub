@@ -133,6 +133,7 @@
     "all":"All",
     "registered":"Registered",
     "superUserPages": "Super User",
-    "userQuizzes": "User Quizzes"
+    "userQuizzes": "User Quizzes",
+    "my":"My"
   }
 }
