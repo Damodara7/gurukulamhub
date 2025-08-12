@@ -1,7 +1,18 @@
 'use client'
 import React, { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import * as RestApi from '@/utils/restApiUtil'
+import { API_URLS } from '@/configs/apiConfig'
+import GroupByFilter from './GroupByFilter'
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Avatar,
   Autocomplete,
   Box,
   Button,
@@ -22,8 +33,7 @@ import {
 } from '@mui/material'
 import CountryRegionDropdown from '@/views/pages/auth/register-multi-steps/CountryRegionDropdown'
 import Loading from '../Loading'
-import * as RestApi from '@/utils/restApiUtil'
-
+import UserMultiSelect from './UserMultiSelect'
 const validateForm = formData => {
   const errors = {}
   if (!formData.groupName) {
@@ -96,6 +106,38 @@ const CreateGroupForm = ({ onSubmit, onCancel }) => {
   const [showErrorSnackbar, setShowErrorSnackbar] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [users , setUsers] = useState([]);
+  const [selectedUsers, setSelectedUsers] = useState([])
+
+  //fetching the users 
+  
+  const fetchUsers = async () => {
+    setLoading(true)
+    try {
+      const result = await RestApi.get(`${API_URLS.v0.USER}`);
+      if (result?.status === 'success') {
+        setUsers(result.result || [])
+        // Initially select all users
+        setSelectedUsers(result.result?.map(user => user._id) || [])
+        console.log('users data ', result.result)
+      }
+    } catch (error) {
+      console.error('Error fetching games:', error)
+      toast.error('An error occurred while loading users')
+      setErrorMessage('Failed to load users')
+      setShowErrorSnackbar(true)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchUsers()
+  }, [])
+
+
+
+
 
   // Create refs for each field
   const fieldRefs = {
@@ -347,8 +389,11 @@ const CreateGroupForm = ({ onSubmit, onCancel }) => {
                 inputRef={fieldRefs.description}
               />
             </Grid>
+            <Grid item xs={12}>
+              <GroupByFilter />
+            </Grid>
 
-            {/* Location */}
+            {/* Location 
             <Grid item xs={12}>
               <Typography variant='subtitle1' gutterBottom>
                 Location of the Group Creation
@@ -504,6 +549,12 @@ const CreateGroupForm = ({ onSubmit, onCancel }) => {
               />
             </Grid>
 
+            */}
+
+            <Grid item xs={12}>
+              <Typography>Group Members</Typography>
+              <UserMultiSelect users={users} selectedUsers={selectedUsers} onSelectChange={setSelectedUsers} />
+            </Grid>
             <Grid item xs={12} mt={4}>
               <Stack direction='row' spacing={2} justifyContent='center'>
                 <Button variant='outlined' onClick={onCancel} disabled={isSubmitting}>
