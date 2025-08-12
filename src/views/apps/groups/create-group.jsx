@@ -14,10 +14,15 @@ function CreateGroupPage() {
   const handleSubmit = async values => {
     try {
       setLoading(true)
+      console.log('values we are getting :', values)
 
       // Prepare the payload
       const payload = {
-        ...values,
+        groupName: values.groupName,
+        description: values.description,
+        location: values.location,
+        gender: values.gender,
+        ageGroup: values.ageGroup,
         createdBy: session?.user?.id,
         creatorEmail: session?.user?.email
       }
@@ -29,6 +34,18 @@ function CreateGroupPage() {
       console.log('result' , result);
 
       if (result?.status === 'success') {
+        const groupId = result.result._id
+
+        // Then, add the group to each user's groupIds array
+        if (values.members && values.members.length > 0) {
+          await Promise.all(
+            values.members.map(async userId => {
+              await RestApi.put(`${API_URLS.v0.USER}/${userId}`, {
+                $addToSet: { groupIds: groupId }
+              })
+            })
+          )
+        }
         toast.success('Group created successfully!')
         router.push('/management/groups')
         // router.push(isSuperUser ? '/manage-games' : '/management/games') // Redirect to games list

@@ -584,14 +584,34 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
                   <Controller
                     name='mobile'
                     control={control}
-                    rules={{ required: true }}
+                    rules={{
+                      required: true,
+                      validate: {
+                        validFirstDigit: v => /^[6-9]/.test(v) || 'Mobile number must start with 6, 7, 8, or 9',
+                        validLength: v => v.length === 10 || 'Mobile number must be 10 digits'
+                      }
+                    }}
                     render={({ field }) => (
                       <TextField
                         {...field}
                         fullWidth
                         autoFocus
                         label='Mobile Number'
+                        type='tel'
+                        inputProps={{
+                          maxLength: 10, // Limits input to 10 characters
+                          pattern: '[6-9][0-9]{10}', // HTML5 pattern for exactly 10 digits
+                          inputMode: 'numeric' // Shows numeric keyboard on mobile devices
+                        }}
                         onKeyDown={e => {
+                          // Prevent non-digit characters
+                          if (/\D/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Tab' && e.key !== 'Delete') {
+                            e.preventDefault()
+                          }
+                          // For first digit, only allow 6,7,8,9
+                          if (field.value.length === 0 && !['6', '7', '8', '9'].includes(e.key)) {
+                            e.preventDefault()
+                          }
                           if (e.key === 'Enter') {
                             e.preventDefault()
                             e.stopPropagation()
@@ -599,7 +619,13 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
                           }
                         }}
                         onChange={e => {
-                          field.onChange(e.target.value)
+                          // Only allow numeric input
+                          const value = e.target.value.replace(/\D/g, '')
+                          // If first digit is invalid, don't update the field
+                          if (value.length > 0 && !['6', '7', '8', '9'].includes(value[0])) {
+                            return
+                          }
+                          field.onChange(value)
                           setOtpSent(false)
                           setOtpValue('')
                           setErrorMsg('')
@@ -622,7 +648,12 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
                                   e.stopPropagation()
                                   findAccountsWithMobile(field.value)
                                 }}
-                                disabled={!field.value || field.value.trim().length !== 10 || loading.findAccounts}
+                                disabled={
+                                  !field.value ||
+                                  field.value.length !== 10 ||
+                                  !['6', '7', '8', '9'].includes(field.value[0]) ||
+                                  loading.findAccounts
+                                }
                                 color='primary'
                                 type='button'
                                 variant='contained'
@@ -834,7 +865,7 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
       </div>
       {isSubmitting && <LoadingDialog open={isSubmitting} />}
     </div>
-    // this is the code by using the mui 
+    // this is the code by using the mui
     // <Box sx={{ display: 'flex', height: '100vh' }}>
     //   {/* Illustration side - hidden on mobile */}
     //   <Box

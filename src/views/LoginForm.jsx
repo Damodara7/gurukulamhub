@@ -490,7 +490,8 @@ const LoginForm = ({ mode, toggleAuthMode, customRedirectUrl = '/dashboards/mypr
                     InputProps={{
                       endAdornment: (
                         <InputAdornment position='end'>
-                          <IconButtonTooltip title={isPasswordShown ? 'Hide':'Show'}
+                          <IconButtonTooltip
+                            title={isPasswordShown ? 'Hide' : 'Show'}
                             edge='end'
                             onClick={handleClickShowPassword}
                             onMouseDown={e => e.preventDefault()}
@@ -512,7 +513,13 @@ const LoginForm = ({ mode, toggleAuthMode, customRedirectUrl = '/dashboards/mypr
               <Controller
                 name='mobile'
                 control={control}
-                rules={{ required: true }}
+                rules={{
+                  required: true,
+                  validate: {
+                    validFirstDigit: v => /^[6-9]/.test(v) || 'Mobile number must start with 6, 7, 8, or 9',
+                    validLength: v => v.length === 10 || 'Mobile number must be 10 digits'
+                  }
+                }}
                 render={({ field }) => (
                   <TextField
                     {...field}
@@ -520,8 +527,35 @@ const LoginForm = ({ mode, toggleAuthMode, customRedirectUrl = '/dashboards/mypr
                     defaultValue='8247783396'
                     autoFocus
                     label='Mobile Number'
+                    type='tel'
+                    inputProps={{
+                      maxLength: 10,
+                      pattern: '[6-9][0-9]{10}',
+                      inputMode: 'numeric'
+                    }}
+                    onKeyDown={e => {
+                      // Prevent non-digit characters
+                      if (/\D/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Tab' && e.key !== 'Delete') {
+                        e.preventDefault()
+                      }
+                      // For first digit, only allow 6,7,8,9
+                      if (field.value.length === 0 && !['6', '7', '8', '9'].includes(e.key)) {
+                        e.preventDefault()
+                      }
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        findAccountsWithMobile(field.value)
+                      }
+                    }}
                     onChange={e => {
-                      field.onChange(e.target.value)
+                      // Only allow numeric input
+                      const value = e.target.value.replace(/\D/g, '')
+                      // If first digit is invalid, don't update the field
+                      if (value.length > 0 && !['6', '7', '8', '9'].includes(value[0])) {
+                        return
+                      }
+                      field.onChange(value)
                       setOtpSent(false)
                       setOtpValue('')
                       setErrorMsg('')
@@ -543,7 +577,12 @@ const LoginForm = ({ mode, toggleAuthMode, customRedirectUrl = '/dashboards/mypr
                               e.stopPropagation()
                               findAccountsWithMobile(field.value)
                             }}
-                            disabled={!field.value || field.value.trim().length !== 10 || loading.findAccounts}
+                            disabled={
+                              !field.value ||
+                              field.value.length !== 10 ||
+                              !['6', '7', '8', '9'].includes(field.value[0]) ||
+                              loading.findAccounts
+                            }
                             edge='end'
                             color='primary'
                             type='button'

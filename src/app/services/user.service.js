@@ -99,6 +99,23 @@ export async function getByReferralToken({ referralToken }) {
   }
 }
 
+export async function addGroupToUser(userId, groupId) {
+  await connectMongo()
+  try {
+    const updatedUser = await User.findByIdAndUpdate(userId, { $addToSet: { groupIds: groupId } }, { new: true })
+
+    if (!updatedUser) {
+      return { status: 'error', result: null, message: 'User not found' }
+    }
+
+    return { status: 'success', result: updatedUser, message: 'Group added to user successfully' }
+  } catch (error) {
+    console.error('addGroupToUser function -> Error updating user:', error)
+    return { status: 'error', result: null, message: error.message }
+  }
+}
+
+
 export async function getAll() {
   await connectMongo() // Connect to the MongoDB database
 

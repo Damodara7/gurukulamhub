@@ -5,98 +5,40 @@ import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import GroupByFilter from './GroupByFilter'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Avatar,
-  Autocomplete,
-  Box,
   Button,
   Card,
   CardContent,
   Divider,
-  FormControl,
-  FormHelperText,
   Grid,
-  InputLabel,
-  MenuItem,
-  Select,
   TextField,
   Typography,
   Snackbar,
   Alert,
   Stack
 } from '@mui/material'
-import CountryRegionDropdown from '@/views/pages/auth/register-multi-steps/CountryRegionDropdown'
-import Loading from '../Loading'
+
 import UserMultiSelect from './UserMultiSelect'
+import { useSession } from 'next-auth/react'
 const validateForm = formData => {
   const errors = {}
   if (!formData.groupName) {
     errors.groupName = 'Group name is required'
   }
-  // if(!formData.description){
-  //   errors.description = 'Description is required'
-  // }
-  // if (!formData.location?.country) {
-  //   errors['location.country'] = 'Country is required'
-  // }
-  // if (!formData.gender) {
-  //   errors.gender = 'Gender is required'
-  // }
-  // Age validation
-  // if (formData.ageGroup.min === '' || formData.ageGroup.max === '') {
-  //   errors.ageGroup = 'Both age fields are required'
-  // } else {
-  //   const min = parseInt(formData.ageGroup.min)
-  //   const max = parseInt(formData.ageGroup.max)
-
-  //   if (isNaN(min) || isNaN(max)) {
-  //     errors.ageGroup = 'Please enter valid numbers'
-  //   }
-  //   else if( min < 0 || max < 0) {
-  //     errors.ageGroup = 'Age cannot be negative'
-  //   }
-  //   else if (min > 120 || max > 120) {
-  //     errors.ageGroup = 'Age cannot be more than 120'
-  //   }
-  //   else if (min > max) {
-  //     errors.ageGroup = 'Min age should be less than Max age'
-  //   }
-  //   else if (min === max) {
-  //     errors.ageGroup = 'Min age should be less than Max age'
-  //   }
-  // }
+  if(!formData.description){
+    errors.description = 'Description is required'
+  }
   return errors
 }
 
-const formFieldOrder = ['groupName', 'location.country', 'gender', 'ageGroup.min', 'ageGroup.max']
+const formFieldOrder = ['groupName']
 
 const CreateGroupForm = ({ onSubmit, onCancel }) => {
   const initialFormData = {
     groupName: '',
-    description: '',
-    location: {
-      country: '',
-      region: '',
-      city: ''
-    },
-    gender: '',
-    ageGroup: {
-      min: '',
-      max: ''
-    }
+    description: ''
   }
-
+const { data: session } = useSession()
   const [formData, setFormData] = useState(initialFormData)
-  const [selectedCountryObject, setSelectedCountryObject] = useState(null)
-  const [selectedRegion, setSelectedRegion] = useState('')
-  const [selectedCity, setSelectedCity] = useState('')
-  const [cityOptions, setCityOptions] = useState([])
   const [loading, setLoading] = useState({
     fetchCities: false,
     submitting: false
@@ -106,15 +48,21 @@ const CreateGroupForm = ({ onSubmit, onCancel }) => {
   const [showErrorSnackbar, setShowErrorSnackbar] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [users , setUsers] = useState([]);
+  const [users, setUsers] = useState([])
   const [selectedUsers, setSelectedUsers] = useState([])
+  // Add this state to track the filter criteria
+  const [filterCriteria, setFilterCriteria] = useState({
+    ageGroup: null,
+    location: null,
+    gender: null
+  })
 
-  //fetching the users 
-  
+  //fetching the users
+
   const fetchUsers = async () => {
     setLoading(true)
     try {
-      const result = await RestApi.get(`${API_URLS.v0.USER}`);
+      const result = await RestApi.get(`${API_URLS.v0.USER}`)
       if (result?.status === 'success') {
         setUsers(result.result || [])
         // Initially select all users
@@ -135,18 +83,9 @@ const CreateGroupForm = ({ onSubmit, onCancel }) => {
     fetchUsers()
   }, [])
 
-
-
-
-
   // Create refs for each field
   const fieldRefs = {
-    groupName: useRef(),
-    description: useRef(),
-    gender: useRef(),
-    ageGroupMin: useRef(),
-    ageGroupMax: useRef(),
-    country: useRef()
+    groupName: useRef()
   }
 
   const handleChange = e => {
@@ -179,65 +118,6 @@ const CreateGroupForm = ({ onSubmit, onCancel }) => {
       }))
     }
   }
-
- const handleAgeChange = (field, value) => {
-    // Only allow numbers or empty string
-    if (value === '' || /^\d+$/.test(value)) {
-      setFormData(prev => ({
-        ...prev,
-        ageGroup: {
-          ...prev.ageGroup,
-          [field]: value
-        }
-      }))
-
-    // Validate age group when both fields have values
-    if (formData.ageGroup.min !== '' && formData.ageGroup.max !== '') {
-      validateField('ageGroup')
-    }
-  }
-}
-
- const handleCountryChange = (countryObject) => {
-   setSelectedCountryObject(countryObject)
-   setSelectedRegion('')
-   setSelectedCity('')
-   setFormData(prev => ({
-     ...prev,
-     location: {
-       ...prev.location,
-       country: countryObject?.country || '',
-       region: '',
-       city: ''
-     }
-   }))
-   // Clear country error when selected
-   if (errors['location.country']) {
-     setErrors(prev => {
-       const newErrors = { ...prev }
-       delete newErrors['location.country']
-       return newErrors
-     })
-   }
- }
-  // Fetch Cities from DB
-  const getCitiesData = async (region = '') => {
-    setLoading(prev => ({ ...prev, fetchCities: true }))
-    try {
-      const result = await RestApi.get(`/api/cities?state=${region}`)
-      if (result?.status === 'success') {
-        setCityOptions(result?.result?.map(each => each.city))
-      }
-    } catch (error) {
-      console.error('Error fetching cities:', error)
-    } finally {
-      setLoading(prev => ({ ...prev, fetchCities: false }))
-    }
-  }
-
-  useEffect(() => {
-    getCitiesData()
-  }, [])
 
   const handleBlur = e => {
     const { name } = e.target
@@ -272,10 +152,7 @@ const CreateGroupForm = ({ onSubmit, onCancel }) => {
     // Mark all fields as touched
     const touchedFields = {
       groupName: true,
-      'location.country': true,
-      gender: true,
-      'ageGroup.min': true,
-      'ageGroup.max': true
+      description: true
     }
     setTouches(touchedFields)
 
@@ -314,19 +191,12 @@ const CreateGroupForm = ({ onSubmit, onCancel }) => {
 
     // Prepare submission data
     const submission = {
-      ...formData,
       groupName: formData.groupName.trim(),
       description: formData.description.trim(),
-      location: {
-        country: selectedCountryObject?.country,
-        region: selectedRegion,
-        city: selectedCity
-      },
-      gender: formData.gender,
-      ageGroup: {
-        min: parseInt(formData.ageGroup.min),
-        max: parseInt(formData.ageGroup.max)
-      }
+      ...filterCriteria, // Include the filter criteria
+      createdBy: session?.user?.id,
+      creatorEmail: session?.user?.email,
+      members: selectedUsers // Include selected user IDs
     }
 
     try {
@@ -339,7 +209,11 @@ const CreateGroupForm = ({ onSubmit, onCancel }) => {
     }
   }
   // console.log('form data after submission ', formData);
-
+  // Add this to handle filter changes from GroupByFilter
+   const handleFilterChange = (filteredUserIds, criteria) => {
+     setSelectedUsers(filteredUserIds)
+     setFilterCriteria(criteria)
+   }
   return (
     <Card>
       <CardContent>
@@ -384,172 +258,20 @@ const CreateGroupForm = ({ onSubmit, onCancel }) => {
                 name='description'
                 value={formData.description}
                 onChange={handleChange}
+                onBlur={handleBlur}
+                error={!!errors.description && touches.description}
+                helperText={errors.description}
                 multiline
                 rows={3}
                 inputRef={fieldRefs.description}
               />
             </Grid>
             <Grid item xs={12}>
-              <GroupByFilter />
-            </Grid>
-
-            {/* Location 
-            <Grid item xs={12}>
-              <Typography variant='subtitle1' gutterBottom>
-                Location of the Group Creation
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6} md={4}>
-                  <CountryRegionDropdown
-                    defaultCountryCode=''
-                    selectedCountryObject={selectedCountryObject}
-                    setSelectedCountryObject={handleCountryChange}
-                    error={!!errors['location.country'] && touches['location.country']}
-                    helperText={errors['location.country']}
-                    required
-                  />
-                </Grid>
-
-                {selectedCountryObject?.country && (
-                  <Grid item xs={12} sm={6} md={4}>
-                    <FormControl fullWidth>
-                      <Autocomplete
-                        autoHighlight
-                        onChange={(e, newValue) => {
-                          setSelectedRegion(newValue)
-                          setSelectedCity('')
-                          setFormData(prev => ({
-                            ...prev,
-                            location: {
-                              ...prev.location,
-                              region: newValue,
-                              city: ''
-                            }
-                          }))
-                          getCitiesData(newValue)
-                        }}
-                        id='autocomplete-region-select'
-                        options={selectedCountryObject?.regions || []}
-                        getOptionLabel={option => option || ''}
-                        renderInput={params => (
-                          <TextField
-                            {...params}
-                            key={params.id}
-                            label='Choose a region'
-                            inputProps={{
-                              ...params.inputProps,
-                              autoComplete: 'region'
-                            }}
-                          />
-                        )}
-                        value={selectedRegion}
-                      />
-                    </FormControl>
-                  </Grid>
-                )}
-
-                {selectedRegion && (
-                  <Grid item xs={12} sm={6} md={4}>
-                    {loading.fetchCities && <Loading />}
-                    {!loading.fetchCities && (
-                      <FormControl fullWidth>
-                        <Autocomplete
-                          autoHighlight
-                          onChange={(e, newValue) => {
-                            setSelectedCity(newValue)
-                            setFormData(prev => ({
-                              ...prev,
-                              location: {
-                                ...prev.location,
-                                city: newValue
-                              }
-                            }))
-                          }}
-                          id='autocomplete-city-select'
-                          options={cityOptions || []}
-                          getOptionLabel={option => option || ''}
-                          renderInput={params => (
-                            <TextField
-                              {...params}
-                              key={params.id}
-                              label='Choose a City'
-                              inputProps={{
-                                ...params.inputProps,
-                                autoComplete: 'city'
-                              }}
-                            />
-                          )}
-                          value={selectedCity}
-                        />
-                      </FormControl>
-                    )}
-                  </Grid>
-                )}
-              </Grid>
-            </Grid>
-
-            <Grid item xs={12}>
-              <Typography variant='h6' gutterBottom>
-                Group Criteria
-              </Typography>
-              <Divider />
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth error={!!errors.gender && touches.gender}>
-                <InputLabel>Gender</InputLabel>
-                <Select
-                  name='gender'
-                  value={formData.gender}
-                  label='Gender'
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  required
-                  inputRef={fieldRefs.gender}
-                >
-                  <MenuItem value=''>Select Gender</MenuItem>
-                  <MenuItem value='male'>Male</MenuItem>
-                  <MenuItem value='female'>Female</MenuItem>
-                  <MenuItem value='other'>Other</MenuItem>
-                </Select>
-                {errors.gender && <FormHelperText>{errors.gender}</FormHelperText>}
-              </FormControl>
-            </Grid>
-
-            <Grid item xs={12} md={3}>
-              <TextField
-                fullWidth
-                label='Min Age'
-                name='ageGroup.min'
-                type='number'
-                value={formData.ageGroup.min}
-                onChange={e => handleAgeChange('min', e.target.value)}
-                onBlur={handleBlur}
-                inputProps={{ min: 0, max: 120 }}
-                error={!!errors.ageGroup && touches['ageGroup.min']}
-                helperText={errors.ageGroup && touches['ageGroup.min'] ? errors.ageGroup : ''}
-                required
-                inputRef={fieldRefs.ageGroupMin}
+              <GroupByFilter
+                users={users}
+                onFilterChange={(userIds, criteria) => handleFilterChange(userIds, criteria)}
               />
             </Grid>
-
-            <Grid item xs={12} md={3}>
-              <TextField
-                fullWidth
-                label='Max Age'
-                name='ageGroup.max'
-                type='number'
-                value={formData.ageGroup.max}
-                onChange={e => handleAgeChange('max', e.target.value)}
-                onBlur={handleBlur}
-                inputProps={{ min: 0, max: 120 }}
-                error={!!errors.ageGroup && touches['ageGroup.max']}
-                helperText={errors.ageGroup && touches['ageGroup.max'] ? errors.ageGroup : ''}
-                inputRef={fieldRefs.ageGroupMax}
-              />
-            </Grid>
-
-            */}
 
             <Grid item xs={12}>
               <Typography>Group Members</Typography>

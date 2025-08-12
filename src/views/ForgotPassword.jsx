@@ -245,7 +245,15 @@ const ForgotPasswordV2 = ({ mode }) => {
   }
 
   function handleMobileChange(e) {
-    setMobileValue(e.target.value)
+    // Only allow numeric input
+    const value = e.target.value.replace(/\D/g, '')
+
+    // If first digit is invalid, don't update the field
+    if (value.length > 0 && !['6', '7', '8', '9'].includes(value[0])) {
+      return
+    }
+
+    setMobileValue(value)
     setOtpSent(false)
     setOtpValue('')
     setErrorMessage('')
@@ -285,7 +293,6 @@ const ForgotPasswordV2 = ({ mode }) => {
             className='max-bs-[500px] max-is-full bs-auto'
           />
         </div>
-
       </div>
       <div className='flex justify-center items-center bs-full bg-backgroundPaper !min-is-full p-6 md:!min-is-[unset] md:p-12 md:is-[480px]'>
         <div className='absolute block-start-5 sm:block-start-[33px] inline-start-6 sm:inline-start-[38px]'>
@@ -351,7 +358,21 @@ const ForgotPasswordV2 = ({ mode }) => {
                 autoFocus
                 value={mobileValue}
                 label='Mobile Number'
+                type='tel'
+                inputProps={{
+                  maxLength: 10,
+                  pattern: '[6-9][0-9]{10}',
+                  inputMode: 'numeric'
+                }}
                 onKeyDown={e => {
+                  // Prevent non-digit characters
+                  if (/\D/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Tab' && e.key !== 'Delete') {
+                    e.preventDefault()
+                  }
+                  // For first digit, only allow 6,7,8,9
+                  if (mobileValue.length === 0 && !['6', '7', '8', '9'].includes(e.key)) {
+                    e.preventDefault()
+                  }
                   if (e.key === 'Enter') {
                     e.preventDefault()
                     e.stopPropagation()
@@ -374,7 +395,12 @@ const ForgotPasswordV2 = ({ mode }) => {
                           e.stopPropagation()
                           findAccountsWithMobile(mobileValue)
                         }}
-                        disabled={!mobileValue || mobileValue.trim().length !== 10 || loading.findAccounts}
+                        disabled={
+                          !mobileValue ||
+                          mobileValue.length !== 10 ||
+                          !['6', '7', '8', '9'].includes(mobileValue[0]) ||
+                          loading.findAccounts
+                        }
                         edge='end'
                         color='primary'
                         type='button'
