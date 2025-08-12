@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react'
+import React, { useState , useEffect } from 'react'
 import {
   Button,
   Menu,
@@ -11,11 +11,15 @@ import {
   Stack,
   Divider,
   FormControlLabel,
-  Checkbox
+  Checkbox,
+  Grid,
+  FormControl,
+  Autocomplete
 } from '@mui/material'
 import { ArrowDropDown as ArrowDropDownIcon, Close as CloseIcon } from '@mui/icons-material'
-
-const GroupByFilter = () => {
+import * as RestApi from '@/utils/restApiUtil'
+import CountryRegionDropdown from '@/views/pages/auth/register-multi-steps/CountryRegionDropdown'
+const GroupByFilter = ( { users , onFilterChange}) => {
   const [anchorEl, setAnchorEl] = useState(null)
   const [groupBy, setGroupBy] = useState(null)
   const [filters, setFilters] = useState({
@@ -24,6 +28,13 @@ const GroupByFilter = () => {
     gender: { male: false, female: false, other: false }
   })
   const [selectedFilters, setSelectedFilters] = useState([])
+  const [selectedCountryObject, setSelectedCountryObject] = useState(null)
+  const [selectedRegion, setSelectedRegion] = useState('')
+  const [selectedCity, setSelectedCity] = useState('')
+  const [cityOptions, setCityOptions] = useState([])
+  const [loading, setLoading] = useState({
+    fetchCities: false
+  })
 
   const handleClick = event => {
     setAnchorEl(event.currentTarget)
@@ -38,6 +49,65 @@ const GroupByFilter = () => {
     handleClose()
   }
 
+  // Location data fetching
+  const getCitiesData = async (region = '') => {
+    setLoading(prev => ({ ...prev, fetchCities: true }))
+    try {
+      const result = await RestApi.get(`/api/cities?state=${region}`)
+      if (result?.status === 'success') {
+        setCityOptions(result?.result?.map(each => each.city))
+      }
+    } catch (error) {
+      console.error('Error fetching cities:', error)
+    } finally {
+      setLoading(prev => ({ ...prev, fetchCities: false }))
+    }
+  }
+
+  const handleCountryChange = countryObject => {
+    setSelectedCountryObject(countryObject)
+    setSelectedRegion('')
+    setSelectedCity('')
+    setFilters(prev => ({
+      ...prev,
+      location: {
+        ...prev.location,
+        country: countryObject?.country || '',
+        state: '',
+        city: ''
+      }
+    }))
+  }
+
+  const handleRegionChange = newValue => {
+    setSelectedRegion(newValue)
+    setSelectedCity('')
+    setFilters(prev => ({
+      ...prev,
+      location: {
+        ...prev.location,
+        state: newValue,
+        city: ''
+      }
+    }))
+    getCitiesData(newValue)
+  }
+
+  const handleCityChange = newValue => {
+    setSelectedCity(newValue)
+    setFilters(prev => ({
+      ...prev,
+      location: {
+        ...prev.location,
+        city: newValue
+      }
+    }))
+  }
+
+  useEffect(() => {
+    getCitiesData()
+  }, [])
+
   const handleFilterChange = (type, field, value) => {
     setFilters(prev => ({
       ...prev,
@@ -47,52 +117,115 @@ const GroupByFilter = () => {
 
   const applyFilters = () => {
     const newFilters = []
-
-    if (groupBy === 'age' && (filters.age.min || filters.age.max)) {
-      newFilters.push({
-        type: 'age',
-        label: `Age: ${filters.age.min || '0'} - ${filters.age.max || '100'}`,
-        value: { min: filters.age.min, max: filters.age.max }
-      })
+    let filteredUserIds = []
+    let criteria = {
+      ageGroup: null,
+      location: null,
+      gender: null
     }
 
-    if (groupBy === 'location' && (filters.location.country || filters.location.state || filters.location.city)) {
+    if (groupBy === 'age' && (filters.age.min || filters.age.max)) {
+      const minAge = parseInt(filters.age.min) || 0
+      const maxAge = parseInt(filters.age.max) || 100
+
+      filteredUserIds = users
+        .filter(user => {
+          const userAge = user.profile?.age || 0
+          return userAge >= minAge && userAge <= maxAge
+        })
+        .map(user => user._id)
+
       newFilters.push({
-        type: 'location',
-        label: `Location: ${[filters.location.country, filters.location.state, filters.location.city]
-          .filter(Boolean)
-          .join(', ')}`,
-        value: { ...filters.location }
+        type: 'age',
+        label: `Age: ${minAge} - ${maxAge}`,
+        value: { min: minAge, max: maxAge }
       })
+
+      criteria.ageGroup = {
+        min: minAge,
+        max: maxAge
+      }
+    }
+
+    if (groupBy === 'location') {
+      // Use the location filters from the state
+      filteredUserIds = users
+        .filter(user => {
+          const profile = user.profile || {}
+          return (
+            (!filters.location.country || profile.country?.toLowerCase() === filters.location.country.toLowerCase()) &&
+            (!filters.location.state || profile.region?.toLowerCase() === filters.location.state.toLowerCase()) &&
+            (!filters.location.city || profile.locality?.toLowerCase() === filters.location.city.toLowerCase())
+          )
+        })
+        .map(user => user._id)
+
+      if (filteredUserIds.length > 0) {
+        newFilters.push({
+          type: 'location',
+          label: `Location: ${[filters.location.country, filters.location.state, filters.location.city]
+            .filter(Boolean)
+            .join(', ')}`,
+          value: { ...filters.location }
+        })
+        criteria.location = {
+          country: filters.location.country,
+          region: filters.location.state,
+          city: filters.location.city
+        }
+      }
     }
 
     if (groupBy === 'gender') {
       const selectedGenders = []
-      if (filters.gender.male) selectedGenders.push('Male')
-      if (filters.gender.female) selectedGenders.push('Female')
-      if (filters.gender.other) selectedGenders.push('Other')
+      if (filters.gender.male) selectedGenders.push('male')
+      if (filters.gender.female) selectedGenders.push('female')
+      if (filters.gender.other) selectedGenders.push('other')
 
       if (selectedGenders.length > 0) {
+        filteredUserIds = users
+          .filter(user => selectedGenders.includes(user.profile?.gender?.toLowerCase()))
+          .map(user => user._id)
+
         newFilters.push({
           type: 'gender',
-          label: `Gender: ${selectedGenders.join(', ')}`,
+          label: `Gender: ${selectedGenders.map(g => g.charAt(0).toUpperCase() + g.slice(1)).join(', ')}`,
           value: { ...filters.gender }
         })
+        criteria.gender = selectedGenders[0]
       }
     }
 
     setSelectedFilters(newFilters)
     setGroupBy(null)
+
+    // Call the parent component's filter handler with both filtered user IDs and criteria
+    if (filteredUserIds.length > 0) {
+      onFilterChange(filteredUserIds, criteria)
+    } else {
+      // If no filters applied, return all users
+      onFilterChange(
+        users.map(user => user._id),
+        {}
+      )
+    }
   }
 
   const handleDeleteFilter = index => {
     setSelectedFilters(prev => prev.filter((_, i) => i !== index))
+    // When removing a filter, show all users again
+    onFilterChange(users.map(user => user._id))
   }
 
   return (
     <Box>
       <Stack direction='row' spacing={2} alignItems='center'>
-        <Button variant='outlined' onClick={handleClick} endIcon={<ArrowDropDownIcon />} sx={{ minWidth: 120 }}>
+        <Button
+          variant='outlined'
+          onClick={handleClick}
+          endIcon={<ArrowDropDownIcon />}
+          sx={{ minWidth: 150, fontSize: 20 }}
+        >
           Group By
         </Button>
 
@@ -106,7 +239,19 @@ const GroupByFilter = () => {
         ))}
       </Stack>
 
-      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleClose}
+        sx={{
+          minWidth: 150, // Set minimum width for the entire menu
+          '& .MuiPaper-root': {
+            // Target the Paper component inside Menu
+            minWidth: 150,
+            maxWidth: 150
+          }
+        }}
+      >
         <MenuItem onClick={() => handleGroupBySelect('age')}>Age</MenuItem>
         <MenuItem onClick={() => handleGroupBySelect('location')}>Location</MenuItem>
         <MenuItem onClick={() => handleGroupBySelect('gender')}>Gender</MenuItem>
@@ -146,23 +291,70 @@ const GroupByFilter = () => {
           <Typography variant='h6' gutterBottom>
             Group By Location
           </Typography>
-          <Stack spacing={2} sx={{ mb: 2 }}>
-            <TextField
-              label='Country'
-              value={filters.location.country}
-              onChange={e => handleFilterChange('location', 'country', e.target.value)}
-            />
-            <TextField
-              label='State'
-              value={filters.location.state}
-              onChange={e => handleFilterChange('location', 'state', e.target.value)}
-            />
-            <TextField
-              label='City'
-              value={filters.location.city}
-              onChange={e => handleFilterChange('location', 'city', e.target.value)}
-            />
-          </Stack>
+          <Grid container spacing={2} sx={{ mb: 2 }}>
+            <Grid item xs={12} sm={6} md={4}>
+              <CountryRegionDropdown
+                defaultCountryCode=''
+                selectedCountryObject={selectedCountryObject}
+                setSelectedCountryObject={handleCountryChange}
+              />
+            </Grid>
+
+            {selectedCountryObject?.country && (
+              <Grid item xs={12} sm={6} md={4}>
+                <FormControl fullWidth>
+                  <Autocomplete
+                    autoHighlight
+                    onChange={(e, newValue) => handleRegionChange(newValue)}
+                    id='autocomplete-region-select'
+                    options={selectedCountryObject?.regions || []}
+                    getOptionLabel={option => option || ''}
+                    renderInput={params => (
+                      <TextField
+                        {...params}
+                        key={params.id}
+                        label='Choose a region'
+                        inputProps={{
+                          ...params.inputProps,
+                          autoComplete: 'region'
+                        }}
+                      />
+                    )}
+                    value={selectedRegion}
+                  />
+                </FormControl>
+              </Grid>
+            )}
+
+            {selectedRegion && (
+              <Grid item xs={12} sm={6} md={4}>
+                {loading.fetchCities && <div>Loading cities...</div>}
+                {!loading.fetchCities && (
+                  <FormControl fullWidth>
+                    <Autocomplete
+                      autoHighlight
+                      onChange={(e, newValue) => handleCityChange(newValue)}
+                      id='autocomplete-city-select'
+                      options={cityOptions || []}
+                      getOptionLabel={option => option || ''}
+                      renderInput={params => (
+                        <TextField
+                          {...params}
+                          key={params.id}
+                          label='Choose a City'
+                          inputProps={{
+                            ...params.inputProps,
+                            autoComplete: 'city'
+                          }}
+                        />
+                      )}
+                      value={selectedCity}
+                    />
+                  </FormControl>
+                )}
+              </Grid>
+            )}
+          </Grid>
           <Button variant='contained' onClick={applyFilters}>
             Apply
           </Button>

@@ -31,6 +31,13 @@ export const groupSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User'
     },
+    members: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'users',
+        index: true
+      }
+    ],
     creatorEmail: String
   },
   { timestamps: true }

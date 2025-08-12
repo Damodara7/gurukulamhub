@@ -103,7 +103,8 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
     { key: 'hasManageAlertsViewPermission', feature: FEATURES_LOOKUP.ALERTS },
     { key: 'hasManageUserAlertsViewPermission', feature: FEATURES_LOOKUP.USER_ALERTS },
     { key: 'hasSponsorshipViewPermission', feature: FEATURES_LOOKUP.SPONSORSHIPS },
-    { key: 'hasManageSponsorshipViewPermission', feature: FEATURES_LOOKUP.MANAGE_SPONSORSHIPS }
+    { key: 'hasManageSponsorshipViewPermission', feature: FEATURES_LOOKUP.MANAGE_SPONSORSHIPS },
+    {key:'hasManageGroupsViewPermission' , feature: FEATURES_LOOKUP.USERS_GROUP}
   ]
 
   // Generate permission variables dynamically
@@ -128,6 +129,7 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
     hasReviewQuizzesViewPermission,
     hasReviewGamesViewPermission,
     hasManageAdvtViewPermission,
+    hasManageGroupsViewPermission,
     hasManageQuizzesViewPermission,
     // hasManageGamesViewPermission,
     hasManageGamesViewPermission,
@@ -152,6 +154,7 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
     // hasManageGamesViewPermission ||
     hasManageGamesViewPermission ||
     hasManageEventsViewPermission ||
+    hasManageGroupsViewPermission ||
     hasManageUsersViewPermission
 
   return (
