@@ -35,13 +35,16 @@ function CreateGroupPage() {
 
       if (result?.status === 'success') {
         const groupId = result.result._id
-
+        console.log('groupid aing' , groupId)
         // Then, add the group to each user's groupIds array
         if (values.members && values.members.length > 0) {
           await Promise.all(
-            values.members.map(async userId => {
-              await RestApi.put(`${API_URLS.v0.USER}/${userId}`, {
-                $addToSet: { groupIds: groupId }
+            values.members.map(async userEmail => {
+              await RestApi.put(`${API_URLS.v0.USER}`, {
+                email: userEmail,
+                data: {
+                  $addToSet: { groupIds: groupId }
+                }
               })
             })
           )

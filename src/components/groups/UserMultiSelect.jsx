@@ -1,7 +1,7 @@
+
 'use client'
 import React, { useEffect, useState } from 'react'
 import {
-  Autocomplete,
   Avatar,
   Box,
   Checkbox,
@@ -17,9 +17,8 @@ import {
   ListItemButton,
   ListItemText,
   Paper,
-  TextField,
   Typography,
-  Stack
+  Tooltip
 } from '@mui/material'
 import {
   Person as PersonIcon,
@@ -43,10 +42,52 @@ const getDisplayName = user => {
   return user?.firstname || user?.lastname || 'No name'
 }
 
-const UserMultiSelect = ({ users, selectedUsers, onSelectChange }) => {
+const getLocation = user => {
+  const profile = user?.profile || {}
+  const locationParts = []
+
+  if (profile.locality) locationParts.push(profile.locality)
+  if (profile.region) locationParts.push(profile.region)
+  if (profile.country) locationParts.push(profile.country)
+
+  return locationParts.length > 0 ? locationParts.join(', ') : 'No location'
+}
+
+const getGender = user => {
+  const gender = user?.profile?.gender
+  return gender ? gender.charAt(0).toUpperCase() + gender.slice(1) : 'No gender'
+}
+
+const getAge = user => {
+  const age = user?.profile?.age
+  return age ? `${age} years` : 'No age'
+}
+
+const UserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUserIds = [], unmatchedUserIds = [] }) => {
   const [open, setOpen] = useState(false)
   const [selectAll, setSelectAll] = useState(true)
   const [intermediate, setIntermediate] = useState(false)
+  const [maxVisible, setMaxVisible] = useState(4)
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (typeof window !== 'undefined') {
+        if (window.innerWidth >= 1200) {
+          setMaxVisible(16)
+        } else if (window.innerWidth >= 900) {
+          setMaxVisible(12)
+        } else if (window.innerWidth >= 600) {
+          setMaxVisible(8)
+        } else {
+          setMaxVisible(4)
+        }
+      }
+    }
+
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   useEffect(() => {
     if (selectedUsers.length === users.length) {
@@ -82,6 +123,7 @@ const UserMultiSelect = ({ users, selectedUsers, onSelectChange }) => {
     onSelectChange(newSelected)
   }
 
+
   const handleRemoveUser = (userId, e) => {
     e.stopPropagation()
     handleToggle(userId)
@@ -93,32 +135,7 @@ const UserMultiSelect = ({ users, selectedUsers, onSelectChange }) => {
 
   const renderSelectedUsers = () => {
     const selected = getSelectedUsers()
-    // Calculate how many avatars we can show based on container width
-  const calculateVisibleAvatars = () => {
-    // Default values for mobile
-    let maxVisible = 4
-    let avatarSize = 40
-    let spacing = 4
-
-    // Adjust for larger screens
-    if (window.innerWidth >= 600) {
-      // sm breakpoint
-      maxVisible = 8
-    }
-    if (window.innerWidth >= 900) {
-      // md breakpoint
-      maxVisible = 12
-    }
-    if (window.innerWidth >= 1200) {
-      // lg breakpoint
-      maxVisible = 16
-    }
-
-    return { maxVisible, avatarSize, spacing }
-  }
-
-  const { maxVisible } = calculateVisibleAvatars()
-  const displayUsers = selected.slice(0, maxVisible)
+    const displayUsers = selected.slice(0, maxVisible)
 
     return (
       <Box
@@ -128,30 +145,28 @@ const UserMultiSelect = ({ users, selectedUsers, onSelectChange }) => {
           justifyContent: 'space-between',
           minHeight: 64,
           width: '100%',
-          overflow:'hidden'
+          overflow: 'hidden'
         }}
       >
-      
-       <Box
-        sx={{
-          display: 'flex',
-          gap: 2,
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          flex: 1,
-          minWidth: 0 // Ensures flexbox can shrink properly
-        }}
-      >
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 2,
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            flex: 1,
+            minWidth: 0
+          }}
+        >
           {displayUsers.map(user => (
             <Box
               key={user._id}
               sx={{
-                position: 'relative',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                minWidth: 50,
-                px:2 // Fixed width for consistent spacing
+                width: 70,
+                position: 'relative'
               }}
             >
               <Avatar
@@ -159,38 +174,51 @@ const UserMultiSelect = ({ users, selectedUsers, onSelectChange }) => {
                 sx={{
                   width: 40,
                   height: 40,
-                  mb: 0.5 // Small margin between avatar and name
+                  mb: 0.5
                 }}
               >
                 {getInitials(user)}
               </Avatar>
-              <Typography
-                variant='caption'
+              <Box
                 sx={{
-                  maxWidth: '100%',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  textAlign: 'center'
+                  display: 'flex',
+                  alignItems: 'center',
+                  backgroundColor: 'grey.100',
+                  borderRadius: 1,
+                  px: 1,
+                  width: '90%',
+                  justifyContent: 'space-between',
+                  minHeight: 20
                 }}
               >
-                {getDisplayName(user).split(' ')[0]}
-              </Typography>
-              <IconButton
-                size='small'
-                sx={{
-                  position: 'absolute',
-                  top: 43,
-                  right: -12,
-                  backgroundColor: 'grey.300',
-                  '&:hover': { backgroundColor: 'grey.400' },
-                  width: 5,
-                  height: 10
-                }}
-                onClick={e => handleRemoveUser(user._id, e)}
-              >
-                <CloseIcon sx={{ fontSize: 14 }} />
-              </IconButton>
+                <Tooltip title={getDisplayName(user)} placement='bottom' arrow>
+                  <Typography
+                    variant='body2'
+                    sx={{
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      flex: 1,
+                      mr: 0.5
+                    }}
+                  >
+                    {getDisplayName(user).split(' ')[0]}
+                  </Typography>
+                </Tooltip>
+                <IconButton
+                  size='small'
+                  onClick={e => handleRemoveUser(user._id, e)}
+                  sx={{
+                    color: 'error.main',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 0, 0, 0.1)'
+                    },
+                    p: 0
+                  }}
+                >
+                  <CloseIcon sx={{ fontSize: 12 }} />
+                </IconButton>
+              </Box>
             </Box>
           ))}
         </Box>
@@ -199,7 +227,7 @@ const UserMultiSelect = ({ users, selectedUsers, onSelectChange }) => {
           variant='body2'
           sx={{
             ml: 2,
-            minWidth: 60, // Ensure consistent width for the count
+            minWidth: 60,
             textAlign: 'right'
           }}
         >
@@ -208,6 +236,27 @@ const UserMultiSelect = ({ users, selectedUsers, onSelectChange }) => {
       </Box>
     )
   }
+
+  // Categorize users based on matched/unmatched status
+  const getFilteredUsers = () => {
+    const matched = users.filter(user => matchedUserIds.includes(user._id))
+    const unmatched = users.filter(user => unmatchedUserIds.includes(user._id))
+
+    // If no filters applied, consider all users as matched
+    if (matchedUserIds.length === 0 && unmatchedUserIds.length === 0) {
+      return {
+        matchedUsers: users,
+        unmatchedUsers: []
+      }
+    }
+
+    return {
+      matchedUsers: matched,
+      unmatchedUsers: unmatched
+    }
+  }
+
+  const { matchedUsers, unmatchedUsers } = getFilteredUsers()
 
   return (
     <Box>
@@ -222,8 +271,8 @@ const UserMultiSelect = ({ users, selectedUsers, onSelectChange }) => {
           '&:hover': {
             borderColor: 'text.primary'
           },
-          minHeight: 60, // Minimum height
-          minWidth: 300, // Minimum width
+          minHeight: 60,
+          minWidth: 300,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center'
@@ -232,7 +281,9 @@ const UserMultiSelect = ({ users, selectedUsers, onSelectChange }) => {
         {selectedUsers.length > 0 ? (
           renderSelectedUsers()
         ) : (
-          <Typography color='textSecondary'>Select members ({users.length} available)</Typography>
+          <Typography color='textSecondary'>
+            Select members ({selectedUsers.length} / {users.length}) available
+          </Typography>
         )}
       </Box>
 
@@ -260,7 +311,14 @@ const UserMultiSelect = ({ users, selectedUsers, onSelectChange }) => {
               </ListItem>
               <Divider />
 
-              {users.map(user => {
+              {/* Always show matched users section */}
+              <ListItem>
+                <Typography variant='subtitle2' color='primary'>
+                  Matching Users ({matchedUsers.length})
+                </Typography>
+              </ListItem>
+
+              {matchedUsers.map(user => {
                 const labelId = `checkbox-list-label-${user._id}`
                 const isSelected = selectedUsers.indexOf(user._id) !== -1
 
@@ -270,18 +328,104 @@ const UserMultiSelect = ({ users, selectedUsers, onSelectChange }) => {
                       <ListItemAvatar>
                         <Avatar src={user?.image || user?.profile?.image}>{getInitials(user)}</Avatar>
                       </ListItemAvatar>
-                      <ListItemText id={labelId} primary={getDisplayName(user)} secondary={user.email} />
-                      <Checkbox
-                        edge='end'
-                        checked={isSelected}
-                        tabIndex={-1}
-                        disableRipple
-                        inputProps={{ 'aria-labelledby': labelId }}
-                      />
+                      <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                          <ListItemText id={labelId} primary={getDisplayName(user)} secondary={user.email} />
+                          <Checkbox
+                            edge='end'
+                            checked={isSelected}
+                            tabIndex={-1}
+                            disableRipple
+                            inputProps={{ 'aria-labelledby': labelId }}
+                          />
+                        </Box>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            gap: 2,
+                            mt: 1,
+                            flexWrap: 'wrap'
+                          }}
+                        >
+                          <Chip label={getGender(user)} size='small' variant='outlined' sx={{ fontSize: '0.7rem' }} />
+                          <Chip label={getLocation(user)} size='small' variant='outlined' sx={{ fontSize: '0.7rem' }} />
+                          <Chip label={getAge(user)} size='small' variant='outlined' sx={{ fontSize: '0.7rem' }} />
+                        </Box>
+                      </Box>
                     </ListItemButton>
                   </ListItem>
                 )
               })}
+
+              {/* Show unmatched users section only if there are unmatched users */}
+              {unmatchedUsers.length > 0 && (
+                <>
+                  <Divider />
+                  <ListItem>
+                    <Typography variant='subtitle2' color='text.secondary'>
+                      unmatched Users ({unmatchedUsers.length})
+                    </Typography>
+                  </ListItem>
+                  {unmatchedUsers.map(user => {
+                    const labelId = `checkbox-list-label-${user._id}`
+                    const isSelected = selectedUsers.indexOf(user._id) !== -1
+
+                    return (
+                      <ListItem key={user._id} disablePadding>
+                        <ListItemButton role={undefined} onClick={() => handleToggle(user._id)} dense>
+                          <ListItemAvatar>
+                            <Avatar src={user?.image || user?.profile?.image}>{getInitials(user)}</Avatar>
+                          </ListItemAvatar>
+                          <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                              <ListItemText
+                                id={labelId}
+                                primary={getDisplayName(user)}
+                                secondary={user.email}
+                                sx={{ opacity: 0.5 }}
+                              />
+                              <Checkbox
+                                edge='end'
+                                checked={isSelected}
+                                tabIndex={-1}
+                                disableRipple
+                                inputProps={{ 'aria-labelledby': labelId }}
+                              />
+                            </Box>
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                gap: 2,
+                                mt: 1,
+                                flexWrap: 'wrap'
+                              }}
+                            >
+                              <Chip
+                                label={getGender(user)}
+                                size='small'
+                                variant='outlined'
+                                sx={{ fontSize: '0.7rem', opacity: 0.5 }}
+                              />
+                              <Chip
+                                label={getLocation(user)}
+                                size='small'
+                                variant='outlined'
+                                sx={{ fontSize: '0.7rem', opacity: 0.5 }}
+                              />
+                              <Chip
+                                label={getAge(user)}
+                                size='small'
+                                variant='outlined'
+                                sx={{ fontSize: '0.7rem', opacity: 0.5 }}
+                              />
+                            </Box>
+                          </Box>
+                        </ListItemButton>
+                      </ListItem>
+                    )
+                  })}
+                </>
+              )}
             </List>
           </Paper>
         </DialogContent>

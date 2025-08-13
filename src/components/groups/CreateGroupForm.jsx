@@ -4,18 +4,7 @@ import { useRouter } from 'next/navigation'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import GroupByFilter from './GroupByFilter'
-import {
-  Button,
-  Card,
-  CardContent,
-  Divider,
-  Grid,
-  TextField,
-  Typography,
-  Snackbar,
-  Alert,
-  Stack
-} from '@mui/material'
+import { Button, Card, CardContent, Divider, Grid, TextField, Typography, Snackbar, Alert, Stack } from '@mui/material'
 
 import UserMultiSelect from './UserMultiSelect'
 import { useSession } from 'next-auth/react'
@@ -24,7 +13,7 @@ const validateForm = formData => {
   if (!formData.groupName) {
     errors.groupName = 'Group name is required'
   }
-  if(!formData.description){
+  if (!formData.description) {
     errors.description = 'Description is required'
   }
   return errors
@@ -37,7 +26,7 @@ const CreateGroupForm = ({ onSubmit, onCancel }) => {
     groupName: '',
     description: ''
   }
-const { data: session } = useSession()
+  const { data: session } = useSession()
   const [formData, setFormData] = useState(initialFormData)
   const [loading, setLoading] = useState({
     fetchCities: false,
@@ -50,6 +39,8 @@ const { data: session } = useSession()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [users, setUsers] = useState([])
   const [selectedUsers, setSelectedUsers] = useState([])
+  const [matchedUserIds, setMatchedUserIds] = useState([])
+  const [unmatchedUserIds, setUnmatchedUserIds] = useState([])
   // Add this state to track the filter criteria
   const [filterCriteria, setFilterCriteria] = useState({
     ageGroup: null,
@@ -210,10 +201,22 @@ const { data: session } = useSession()
   }
   // console.log('form data after submission ', formData);
   // Add this to handle filter changes from GroupByFilter
-   const handleFilterChange = (filteredUserIds, criteria) => {
-     setSelectedUsers(filteredUserIds)
-     setFilterCriteria(criteria)
-   }
+  const handleFilterChange = (filteredUserIds, criteria) => {
+    setSelectedUsers(filteredUserIds)
+    setFilterCriteria(criteria)
+
+    // Calculate which users are matched and unmatched
+    const allUserIds = users.map(user => user._id)
+    const unmatched = allUserIds.filter(id => !filteredUserIds.includes(id))
+
+    setMatchedUserIds(filteredUserIds)
+    setUnmatchedUserIds(unmatched)
+  }
+
+  const handleUserSelection = newSelectedUsers => {
+    setSelectedUsers(newSelectedUsers)
+  }
+  
   return (
     <Card>
       <CardContent>
@@ -275,7 +278,13 @@ const { data: session } = useSession()
 
             <Grid item xs={12}>
               <Typography>Group Members</Typography>
-              <UserMultiSelect users={users} selectedUsers={selectedUsers} onSelectChange={setSelectedUsers} />
+              <UserMultiSelect
+                users={users}
+                selectedUsers={selectedUsers}
+                onSelectChange={handleUserSelection}
+                matchedUserIds={matchedUserIds}
+                unmatchedUserIds={unmatchedUserIds}
+              />
             </Grid>
             <Grid item xs={12} mt={4}>
               <Stack direction='row' spacing={2} justifyContent='center'>
