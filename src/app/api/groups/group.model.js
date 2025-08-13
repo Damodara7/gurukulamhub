@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { string } from "yup";
+import User from "@/app/models/user.model";
 
 const locationSchema = new mongoose.Schema({
   country: { type: String },
@@ -29,16 +29,24 @@ export const groupSchema = new mongoose.Schema(
     ageGroup: ageGroupSchema,
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
+      ref: 'users'
     },
-    members: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'users',
-        index: true
-      }
-    ],
-    creatorEmail: String
+    creatorEmail: String,
+    isDeleted: {
+      type: Boolean,
+      default: false
+    },
+    deletedAt: Date,
+    updatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'users'
+    },
+    updatorEmail: String,
+    deletedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'users'
+    },
+    deletorEmail: String,
   },
   { timestamps: true }
 )

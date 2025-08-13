@@ -38,7 +38,7 @@ export const getOne = async (filter = {}) => {
 export const getAll = async (filter = {}) => {
   await connectMongo()
   try {
-    const groups = await Group.find(filter)
+    const groups = await Group.find({...filter, isDeleted: false})
       .sort({ createdAt: -1 })
       .lean()
       console.log('Found groups:', groups)

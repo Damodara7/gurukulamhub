@@ -1,5 +1,4 @@
 import * as GroupService from './group.service.js'
-import { HttpStatusCode } from '@/utils/HttpStatusCodes'
 import * as ApiResponseUtils from '@/utils/apiResponses'
 
 const Artifact = 'Groups'
@@ -56,12 +55,12 @@ export async function POST(request) {
     } else {
       console.error('Service error:', newArtifact)
       const errorResponse = ApiResponseUtils.createErrorResponse(newArtifact?.message || 'Unknown error')
-      return ApiResponseUtils.sendErrorResponse(errorResponse, HttpStatusCode.BadRequest)
+      return ApiResponseUtils.sendErrorResponse(errorResponse)
     }
   } catch (error) {
     console.error('Route error:', error)
     const errorResponse = ApiResponseUtils.createErrorResponse(error.message)
-    return ApiResponseUtils.sendErrorResponse(errorResponse, HttpStatusCode.InternalServerError)
+    return ApiResponseUtils.sendErrorResponse(errorResponse)
   }
 }
 
@@ -73,7 +72,7 @@ export async function PUT(request) {
     const groupId = reqBody._id
     if (!groupId) {
       const errorResponse = ApiResponseUtils.createErrorResponse('Group ID is required')
-      return ApiResponseUtils.sendErrorResponse(errorResponse, HttpStatusCode.BadRequest)
+      return ApiResponseUtils.sendErrorResponse(errorResponse)
     }
 
     // Update the group using the service
@@ -84,11 +83,11 @@ export async function PUT(request) {
       return ApiResponseUtils.sendSuccessResponse(successResponse)
     } else {
       const errorResponse = ApiResponseUtils.createErrorResponse(updateResult.message)
-      return ApiResponseUtils.sendErrorResponse(errorResponse, HttpStatusCode.BadRequest)
+      return ApiResponseUtils.sendErrorResponse(errorResponse)
     }
   } catch (error) {
     const errorResponse = ApiResponseUtils.createErrorResponse(error.message || 'Internal server error')
-    return ApiResponseUtils.sendErrorResponse(errorResponse, HttpStatusCode.InternalServerError)
+    return ApiResponseUtils.sendErrorResponse(errorResponse)
   }
 }
 
