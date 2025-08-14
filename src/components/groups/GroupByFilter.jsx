@@ -33,6 +33,7 @@ const GroupByFilter = ({ users, onFilterChange }) => {
     location: { country: '', state: '', city: '' },
     gender: { male: false, female: false, other: false }
   })
+  const [ageError, setAgeError] = useState(null)
   const [selectedFilters, setSelectedFilters] = useState([])
   const [selectedCountryObject, setSelectedCountryObject] = useState(null)
   const [selectedRegion, setSelectedRegion] = useState('')
@@ -83,18 +84,19 @@ const GroupByFilter = ({ users, onFilterChange }) => {
     handleClose()
   }
 
-  const closeFilterDialog = () => {
-    setShowFilterDialog(false)
-    setGroupBy(null)
-    setFilters({
-      age: { min: '', max: '' },
-      location: { country: '', state: '', city: '' },
-      gender: { male: false, female: false, other: false }
-    })
-    setSelectedCountryObject(null)
-    setSelectedRegion('')
-    setSelectedCity('')
-  }
+const closeFilterDialog = () => {
+  setShowFilterDialog(false)
+  setGroupBy(null)
+  setFilters({
+    age: { min: '', max: '' },
+    location: { country: '', state: '', city: '' },
+    gender: { male: false, female: false, other: false }
+  })
+  setSelectedCountryObject(null)
+  setSelectedRegion('')
+  setSelectedCity('')
+  setAgeError(null) // Clear age error when closing dialog
+}
 
 
   const getCitiesData = async (region = '') => {
@@ -239,6 +241,13 @@ const GroupByFilter = ({ users, onFilterChange }) => {
     if (groupBy === 'age' && (filters.age.min || filters.age.max)) {
       const minAge = parseInt(filters.age.min) || 0
       const maxAge = parseInt(filters.age.max) || 100
+
+      // Validate that min age is less than max age
+      if (minAge >= maxAge) {
+        setAgeError('Minimum age must be less than maximum age')
+        return // Don't proceed with filter application
+      }
+      setAgeError(null) // Clear any previous error
 
       users.forEach(user => {
         const userAge = user.profile?.age
@@ -436,8 +445,6 @@ const GroupByFilter = ({ users, onFilterChange }) => {
         <MenuItem onClick={() => handleGroupBySelect('gender')}>Gender</MenuItem>
       </Menu>
 
-      
-
       {/* Filter Dialog */}
       <Dialog open={showFilterDialog} onClose={closeFilterDialog} maxWidth='sm' fullWidth>
         <DialogTitle>
@@ -453,17 +460,30 @@ const GroupByFilter = ({ users, onFilterChange }) => {
                   label='Min Age'
                   type='number'
                   value={filters.age.min}
-                  onChange={e => handleFilterChange('age', 'min', e.target.value)}
+                  onChange={e => {
+                    handleFilterChange('age', 'min', e.target.value)
+                    setAgeError(null) // Clear error when user edits
+                  }}
                   sx={{ width: 120 }}
+                  error={!!ageError}
                 />
                 <TextField
                   label='Max Age'
                   type='number'
                   value={filters.age.max}
-                  onChange={e => handleFilterChange('age', 'max', e.target.value)}
+                  onChange={e => {
+                    handleFilterChange('age', 'max', e.target.value)
+                    setAgeError(null) // Clear error when user edits
+                  }}
                   sx={{ width: 120 }}
+                  error={!!ageError}
                 />
               </Stack>
+              {ageError && (
+                <Typography color='error' variant='body2' sx={{ mt: 1 }}>
+                  {ageError}
+                </Typography>
+              )}
             </Box>
           )}
 
