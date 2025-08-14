@@ -1,5 +1,5 @@
-import mongoose from "mongoose";
-import { string } from "yup";
+import mongoose from 'mongoose'
+import { string } from 'yup'
 
 const locationSchema = new mongoose.Schema({
   country: { type: String },
@@ -31,13 +31,6 @@ export const groupSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User'
     },
-    members: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'users',
-        index: true
-      }
-    ],
     creatorEmail: String
   },
   { timestamps: true }
