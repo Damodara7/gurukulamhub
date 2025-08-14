@@ -230,7 +230,10 @@ export const addOne = async gameData => {
     }
 
     // Create new game instance
-    const newGame = new Game({ ...gameData })
+    const newGame = new Game({ 
+      ...gameData,
+      groupId: gameData.groupId || null
+    })
     // const newGame = new Game({
     //   title: gameData.title,
     //   pin: gameData.pin,

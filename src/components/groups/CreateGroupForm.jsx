@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import GroupByFilter from './GroupByFilter'
-import { Button, Card, CardContent, Divider, Grid, TextField, Typography, Snackbar, Alert, Stack } from '@mui/material'
+import { Button, Card, CardContent, Divider, Grid, TextField, Typography, Snackbar, Alert, Stack, Box } from '@mui/material'
 
 import UserMultiSelect from './UserMultiSelect'
 import { useSession } from 'next-auth/react'
@@ -36,7 +36,7 @@ const validateForm = formData => {
 
 const formFieldOrder = ['groupName']
 
-const CreateGroupForm = ({ onSubmit, onCancel }) => {
+const CreateGroupForm = ({ onSubmit, onCancel, isInline = false }) => {
   const initialFormData = {
     groupName: '',
     description: ''
@@ -233,12 +233,14 @@ const CreateGroupForm = ({ onSubmit, onCancel }) => {
   }
 
   return (
-    <Card>
-      <CardContent>
-        <Typography variant='h5' gutterBottom>
-          Create New Group
-        </Typography>
-        <Divider sx={{ my: 2 }} />
+    <Box>
+      {/* {!isInline && ( */}
+        <Card sx={{ maxWidth: 'lg' }}>
+          <CardContent>
+            <Typography variant='h5' gutterBottom>
+              Create New Group
+            </Typography>
+            <Divider sx={{ my: 2 }} />
 
         {/* Error Snackbar */}
         <Snackbar
@@ -318,15 +320,18 @@ const CreateGroupForm = ({ onSubmit, onCancel }) => {
                   variant='contained'
                   color='primary'
                   style={{ color: 'white' }}
+                  disabled={isSubmitting}
                 >
-                  Create Group
+                  {isSubmitting ? 'Creating...' : 'Create Group'}
                 </Button>
               </Stack>
             </Grid>
           </Grid>
         </form>
       </CardContent>
-    </Card>
+        </Card>
+      {/* )} */}
+    </Box>
   )
 }
 

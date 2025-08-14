@@ -55,6 +55,7 @@ import { countryTimezones } from '@/data/country-timezones'
 import moment, { tz } from 'moment-timezone'
 import { userAgent } from 'next/server'
 import { convertWithGMTOffset } from '@/utils/timezoneconverter'
+import GroupAutocomplete from '@/components/groups/GroupAutocomplete'
 
 // Reward position options
 const POSITION_OPTIONS = [1, 2, 3, 4, 5]
@@ -180,6 +181,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
     limitPlayers: false,
     maxPlayers: 100000,
     tags: [],
+    groupId: null,
     // location: {
     //   country: '',
     //   region: '',
@@ -265,6 +267,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
         duration: data?.duration ? Math.floor(data.duration / 60) : '',
         gameMode: data?.gameMode || 'live',
         timezone: gmttimezones.find(tz => tz.value === data?.timezone) || {},
+        groupId: data?.groupId || null,
         // creatorZipcode: data?.creatorZipcode || '',
         // creatorTimezone: data?.creatorTimezone || '',
         // creatorCountry: data?.creatorCountry || ''
@@ -883,6 +886,18 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
           </Select>
           <FormHelperText>{errors.quiz || 'Select a quiz'}</FormHelperText>
         </FormControl>
+      </Grid>
+
+      {/* Group Selection */}
+      <Grid item xs={12}>
+        <GroupAutocomplete
+          value={formData.groupId}
+          onChange={(groupId) => {
+            setFormData(prev => ({ ...prev, groupId }))
+          }}
+          label="Target Audience Group (Optional)"
+          placeholder="Search for a group to restrict game access..."
+        />
       </Grid>
       <Grid item xs={12}>
         {/* <Typography variant='subtitle1' gutterBottom>
