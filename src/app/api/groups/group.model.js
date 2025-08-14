@@ -27,10 +27,15 @@ export const groupSchema = new mongoose.Schema(
       enum: ['male', 'female', 'other']
     },
     ageGroup: ageGroupSchema,
+    
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'users',
       required: true
+    },
+    membersCount:{
+      type: Number,
+      default: 0
     },
     creatorEmail: {
       type: String,

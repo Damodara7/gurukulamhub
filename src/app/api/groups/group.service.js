@@ -1,6 +1,7 @@
 import connectMongo from '@/utils/dbConnect-mongo'
 import mongoose from 'mongoose'
 import Group from './group.model.js'
+import User from '@/app/models/user.model.js'
 export const getOne = async (filter = {}) => {
   await connectMongo()
   try {
@@ -39,10 +40,10 @@ export const getOne = async (filter = {}) => {
 export const getAll = async (filter = {}) => {
   await connectMongo()
   try {
-    const groups = await Group.find({...filter, isDeleted: false})
+    const groups = await Group.find({ ...filter, isDeleted: false })
       .sort({ createdAt: -1 })
       .lean()
-      console.log('Found groups:', groups)
+    console.log('Found groups:', groups)
     return {
       status: 'success',
       result: groups,
@@ -60,7 +61,10 @@ export const getAll = async (filter = {}) => {
 export const addOne = async groupData => {
   await connectMongo()
   try {
+    const user = await User.findOne({ email: groupData.creatorEmail })
+    groupData.createdBy = user._id
     // Validate required fields
+
     const requiredFields = ['groupName', 'description', 'createdBy', 'creatorEmail']
     const missingFields = requiredFields.filter(field => !groupData[field])
 
@@ -126,7 +130,10 @@ export const addOne = async groupData => {
     }
 
     // Create new group instance
-    const newGroup = new Group({ ...groupData })
+    const newGroup = new Group({
+      ...groupData,
+      membersCount: groupData.members ? groupData.members.length : 0
+    })
 
     // Validate the group
     const validationError = newGroup.validateSync()
@@ -140,6 +147,17 @@ export const addOne = async groupData => {
     }
 
     const savedGroup = await newGroup.save()
+
+    // Update all users' groupIds arrays with the new group ID
+    if (groupData.members && groupData.members.length > 0) {
+      try {
+        await User.updateMany({ _id: { $in: groupData.members } }, { $addToSet: { groupIds: savedGroup._id } })
+        console.log(`Updated ${groupData.members.length} users with group ID ${savedGroup._id}`)
+      } catch (updateError) {
+        console.error('Error updating users with group ID:', updateError)
+        // Don't fail group creation if user update fails
+      }
+    }
 
     return {
       status: 'success',

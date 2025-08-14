@@ -4,7 +4,19 @@ import { useRouter } from 'next/navigation'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import GroupByFilter from './GroupByFilter'
-import { Button, Card, CardContent, Divider, Grid, TextField, Typography, Snackbar, Alert, Stack, Box } from '@mui/material'
+import {
+  Button,
+  Card,
+  CardContent,
+  Divider,
+  Grid,
+  TextField,
+  Typography,
+  Snackbar,
+  Alert,
+  Stack,
+  Box
+} from '@mui/material'
 
 import UserMultiSelect from './UserMultiSelect'
 import { useSession } from 'next-auth/react'
@@ -235,101 +247,101 @@ const CreateGroupForm = ({ onSubmit, onCancel, isInline = false }) => {
   return (
     <Box>
       {/* {!isInline && ( */}
-        <Card sx={{ maxWidth: 'lg' }}>
-          <CardContent>
-            <Typography variant='h5' gutterBottom>
-              Create New Group
-            </Typography>
-            <Divider sx={{ my: 2 }} />
+      <Card sx={{ maxWidth: 'lg' }}>
+        <CardContent>
+          <Typography variant='h5' gutterBottom>
+            Create New Group
+          </Typography>
+          <Divider sx={{ my: 2 }} />
 
-        {/* Error Snackbar */}
-        <Snackbar
-          open={showErrorSnackbar}
-          autoHideDuration={6000}
-          onClose={() => setShowErrorSnackbar(false)}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        >
-          <Alert onClose={() => setShowErrorSnackbar(false)} severity='error' variant='filled' sx={{ width: '100%' }}>
-            {errorMessage}
-          </Alert>
-        </Snackbar>
+          {/* Error Snackbar */}
+          <Snackbar
+            open={showErrorSnackbar}
+            autoHideDuration={6000}
+            onClose={() => setShowErrorSnackbar(false)}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          >
+            <Alert onClose={() => setShowErrorSnackbar(false)} severity='error' variant='filled' sx={{ width: '100%' }}>
+              {errorMessage}
+            </Alert>
+          </Snackbar>
 
-        <form onSubmit={handleSubmit}>
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label='Group Name'
-                name='groupName'
-                value={formData.groupName}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                error={!!errors.groupName && touches.groupName}
-                helperText={errors.groupName}
-                required
-                inputRef={fieldRefs.groupName}
-                inputProps={{
-                  maxLength: 50
-                }}
-              />
-            </Grid>
+          <form onSubmit={handleSubmit}>
+            <Grid container spacing={3}>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label='Group Name'
+                  name='groupName'
+                  value={formData.groupName}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={!!errors.groupName && touches.groupName}
+                  helperText={errors.groupName}
+                  required
+                  inputRef={fieldRefs.groupName}
+                  inputProps={{
+                    maxLength: 50
+                  }}
+                />
+              </Grid>
 
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label='Description (Optional)'
-                name='description'
-                value={formData.description}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                error={!!errors.description && touches.description}
-                helperText={errors.description}
-                multiline
-                rows={3}
-                inputRef={fieldRefs.description}
-                inputProps={{
-                  maxLength: 500
-                }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <GroupByFilter
-                users={users}
-                onFilterChange={(userIds, criteria) => handleFilterChange(userIds, criteria)}
-              />
-            </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label='Description (Optional)'
+                  name='description'
+                  value={formData.description}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={!!errors.description && touches.description}
+                  helperText={errors.description}
+                  multiline
+                  rows={3}
+                  inputRef={fieldRefs.description}
+                  inputProps={{
+                    maxLength: 500
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <GroupByFilter
+                  users={users}
+                  onFilterChange={(userIds, criteria) => handleFilterChange(userIds, criteria)}
+                />
+              </Grid>
 
-            <Grid item xs={12}>
-              <Typography>Group Members</Typography>
-              <UserMultiSelect
-                users={users}
-                selectedUsers={selectedUsers}
-                onSelectChange={handleUserSelection}
-                matchedUserIds={matchedUserIds}
-                unmatchedUserIds={unmatchedUserIds}
-              />
+              <Grid item xs={12}>
+                <Typography>Group Members</Typography>
+                <UserMultiSelect
+                  users={users}
+                  selectedUsers={selectedUsers}
+                  onSelectChange={handleUserSelection}
+                  matchedUserIds={matchedUserIds}
+                  unmatchedUserIds={unmatchedUserIds}
+                />
+              </Grid>
+              <Grid item xs={12} mt={4}>
+                <Stack direction='row' spacing={2} justifyContent='center'>
+                  <Button variant='outlined' onClick={onCancel} disabled={isSubmitting}>
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleSubmit}
+                    component='label'
+                    variant='contained'
+                    color='primary'
+                    style={{ color: 'white' }}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? 'Creating...' : 'Create Group'}
+                  </Button>
+                </Stack>
+              </Grid>
             </Grid>
-            <Grid item xs={12} mt={4}>
-              <Stack direction='row' spacing={2} justifyContent='center'>
-                <Button variant='outlined' onClick={onCancel} disabled={isSubmitting}>
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleSubmit}
-                  component='label'
-                  variant='contained'
-                  color='primary'
-                  style={{ color: 'white' }}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? 'Creating...' : 'Create Group'}
-                </Button>
-              </Stack>
-            </Grid>
-          </Grid>
-        </form>
-      </CardContent>
-        </Card>
+          </form>
+        </CardContent>
+      </Card>
       {/* )} */}
     </Box>
   )
