@@ -187,17 +187,20 @@ const GroupAutocomplete = ({
     >
       <Box sx={{ flex: 1 }}>
         <Typography variant='body1' fontWeight='medium'>
-          {option.groupName}
+          {option?.groupName}
         </Typography>
         <Typography variant='body2' color='text.secondary'>
-          {option.description}
+          {option?.description}
         </Typography>
         <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
-          {option.ageGroup && (
+          {option?.ageGroup && (
             <Chip size='small' label={`Age: ${option.ageGroup.min}-${option.ageGroup.max}`} variant='outlined' />
           )}
-          {option.gender && <Chip size='small' label={`Gender: ${option.gender}`} variant='outlined' />}
-          {option.location?.city && <Chip size='small' label={`${option.location.city}`} variant='outlined' />}
+          {option?.gender && <Chip size='small' label={`Gender: ${option.gender}`} variant='outlined' />}
+          {option?.location?.city && <Chip size='small' label={`${option.location.city}`} variant='outlined' />}
+          {option?.membersCount !== undefined && (
+            <Chip size='small' label={`${option.membersCount} members`} variant='outlined' color='primary' />
+          )}
         </Box>
       </Box>
       <Box sx={{ display: 'flex', gap: 1, ml: 2 }}>
