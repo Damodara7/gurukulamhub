@@ -10,12 +10,27 @@ import UserMultiSelect from './UserMultiSelect'
 import { useSession } from 'next-auth/react'
 const validateForm = formData => {
   const errors = {}
+
+  // Group name validation
   if (!formData.groupName) {
     errors.groupName = 'Group name is required'
+  } else if (formData.groupName.trim().length < 3) {
+    errors.groupName = 'Group name must be at least 3 characters long'
+  } else if (formData.groupName.trim().length > 50) {
+    errors.groupName = 'Group name must be less than 50 characters'
+  } else if (!/^[a-zA-Z0-9\s\-_]+$/.test(formData.groupName.trim())) {
+    errors.groupName = 'Group name can only contain letters, numbers, spaces, hyphens, and underscores'
   }
+
+  // Description validation
   if (!formData.description) {
     errors.description = 'Description is required'
+  } else if (formData.description.trim().length < 10) {
+    errors.description = 'Description must be at least 10 characters long'
+  } else if (formData.description.trim().length > 500) {
+    errors.description = 'Description must be less than 500 characters'
   }
+
   return errors
 }
 
@@ -216,7 +231,7 @@ const CreateGroupForm = ({ onSubmit, onCancel }) => {
   const handleUserSelection = newSelectedUsers => {
     setSelectedUsers(newSelectedUsers)
   }
-  
+
   return (
     <Card>
       <CardContent>
@@ -251,6 +266,9 @@ const CreateGroupForm = ({ onSubmit, onCancel }) => {
                 helperText={errors.groupName}
                 required
                 inputRef={fieldRefs.groupName}
+                inputProps={{
+                  maxLength: 50
+                }}
               />
             </Grid>
 
@@ -263,10 +281,13 @@ const CreateGroupForm = ({ onSubmit, onCancel }) => {
                 onChange={handleChange}
                 onBlur={handleBlur}
                 error={!!errors.description && touches.description}
-                helperText={errors.description}
+                helperText={errors.description }
                 multiline
                 rows={3}
                 inputRef={fieldRefs.description}
+                inputProps={{
+                  maxLength: 500
+                }}
               />
             </Grid>
             <Grid item xs={12}>

@@ -1,4 +1,5 @@
 import connectMongo from '@/utils/dbConnect-mongo'
+import mongoose from 'mongoose'
 import Group from './group.model.js'
 export const getOne = async (filter = {}) => {
   await connectMongo()
@@ -60,7 +61,7 @@ export const addOne = async groupData => {
   await connectMongo()
   try {
     // Validate required fields
-    const requiredFields = ['groupName', 'description']
+    const requiredFields = ['groupName', 'description', 'createdBy', 'creatorEmail']
     const missingFields = requiredFields.filter(field => !groupData[field])
 
     if (missingFields.length > 0) {
@@ -68,6 +69,72 @@ export const addOne = async groupData => {
         status: 'error',
         result: null,
         message: `Missing required fields: ${missingFields.join(', ')}`
+      }
+    }
+
+    // Validate age group if provided
+    if (groupData.ageGroup) {
+      const { min, max } = groupData.ageGroup
+      if (min === undefined || max === undefined) {
+        return {
+          status: 'error',
+          result: null,
+          message: 'Both minimum and maximum age are required when specifying age group'
+        }
+      }
+
+      if (min < 0 || max < 0) {
+        return {
+          status: 'error',
+          result: null,
+          message: 'Age values cannot be negative'
+        }
+      }
+
+      if (min > 120 || max > 120) {
+        return {
+          status: 'error',
+          result: null,
+          message: 'Age values cannot exceed 120 years'
+        }
+      }
+
+      if (min >= max) {
+        return {
+          status: 'error',
+          result: null,
+          message: 'Minimum age must be less than maximum age'
+        }
+      }
+
+      if (max - min < 1) {
+        return {
+          status: 'error',
+          result: null,
+          message: 'Age range must be at least 1 year'
+        }
+      }
+    }
+
+    // Validate gender if provided
+    if (groupData.gender && !['male', 'female', 'other'].includes(groupData.gender)) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Gender must be one of: male, female, other'
+      }
+    }
+
+    // Validate members array
+    if (groupData.members && Array.isArray(groupData.members)) {
+      for (const memberId of groupData.members) {
+        if (!mongoose.Types.ObjectId.isValid(memberId)) {
+          return {
+            status: 'error',
+            result: null,
+            message: `Invalid member ID format: ${memberId}`
+          }
+        }
       }
     }
 
@@ -93,6 +160,25 @@ export const addOne = async groupData => {
       message: 'Group created successfully'
     }
   } catch (error) {
+    // Handle mongoose validation errors specifically
+    if (error.name === 'ValidationError') {
+      const validationErrors = Object.values(error.errors).map(err => err.message)
+      return {
+        status: 'error',
+        result: null,
+        message: `Validation failed: ${validationErrors.join(', ')}`
+      }
+    }
+
+    // Handle duplicate key errors
+    if (error.code === 11000) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'A group with this name already exists'
+      }
+    }
+
     return {
       status: 'error',
       result: null,

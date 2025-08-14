@@ -25,6 +25,14 @@ import { ArrowDropDown as ArrowDropDownIcon, Close as CloseIcon } from '@mui/ico
 import * as RestApi from '@/utils/restApiUtil'
 import CountryRegionDropdown from '@/views/pages/auth/register-multi-steps/CountryRegionDropdown'
 
+// Add CSS for spinner animation
+const spinnerStyles = `
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`
+
 const GroupByFilter = ({ users, onFilterChange }) => {
   const [anchorEl, setAnchorEl] = useState(null)
   const [groupBy, setGroupBy] = useState(null)
@@ -84,20 +92,19 @@ const GroupByFilter = ({ users, onFilterChange }) => {
     handleClose()
   }
 
-const closeFilterDialog = () => {
-  setShowFilterDialog(false)
-  setGroupBy(null)
-  setFilters({
-    age: { min: '', max: '' },
-    location: { country: '', state: '', city: '' },
-    gender: { male: false, female: false, other: false }
-  })
-  setSelectedCountryObject(null)
-  setSelectedRegion('')
-  setSelectedCity('')
-  setAgeError(null) // Clear age error when closing dialog
-}
-
+  const closeFilterDialog = () => {
+    setShowFilterDialog(false)
+    setGroupBy(null)
+    setFilters({
+      age: { min: '', max: '' },
+      location: { country: '', state: '', city: '' },
+      gender: { male: false, female: false, other: false }
+    })
+    setSelectedCountryObject(null)
+    setSelectedRegion('')
+    setSelectedCity('')
+    setAgeError(null) // Clear age error when closing dialog
+  }
 
   const getCitiesData = async (region = '') => {
     setLoading(prev => ({ ...prev, fetchCities: true }))
@@ -242,11 +249,29 @@ const closeFilterDialog = () => {
       const minAge = parseInt(filters.age.min) || 0
       const maxAge = parseInt(filters.age.max) || 100
 
+      // Enhanced age validation
+      if (minAge < 0 || maxAge < 0) {
+        setAgeError('Age values cannot be negative')
+        return
+      }
+
+      if (minAge > 120 || maxAge > 120) {
+        setAgeError('Age values cannot exceed 120 years')
+        return
+      }
+
       // Validate that min age is less than max age
       if (minAge >= maxAge) {
         setAgeError('Minimum age must be less than maximum age')
         return // Don't proceed with filter application
       }
+
+      // Check if age range is reasonable
+      if (maxAge - minAge < 1) {
+        setAgeError('Age range must be at least 1 year')
+        return
+      }
+
       setAgeError(null) // Clear any previous error
 
       users.forEach(user => {
@@ -385,6 +410,7 @@ const closeFilterDialog = () => {
 
   return (
     <Box sx={{ width: '100%' }}>
+      <style>{spinnerStyles}</style>
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <Box>
           <Button variant='outlined' onClick={handleClick} endIcon={<ArrowDropDownIcon />} sx={{ minWidth: 120 }}>
@@ -446,51 +472,120 @@ const closeFilterDialog = () => {
       </Menu>
 
       {/* Filter Dialog */}
-      <Dialog open={showFilterDialog} onClose={closeFilterDialog} maxWidth='sm' fullWidth>
-        <DialogTitle>
-          {groupBy === 'age' && 'Filter by Age'}
-          {groupBy === 'location' && 'Filter by Location'}
-          {groupBy === 'gender' && 'Filter by Gender'}
+      <Dialog
+        open={showFilterDialog}
+        onClose={closeFilterDialog}
+        maxWidth='md'
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.12)'
+          }
+        }}
+      >
+        <DialogTitle
+          sx={{
+            pb: 2,
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+            backgroundColor: 'background.paper'
+          }}
+        >
+          <Typography variant='h6' component='div' sx={{ fontWeight: 600 }}>
+            {groupBy === 'age' && 'Filter by Age Range'}
+            {groupBy === 'location' && 'Filter by Location'}
+            {groupBy === 'gender' && 'Filter by Gender'}
+          </Typography>
+          <Typography variant='body2' color='text.secondary' sx={{ mt: 0.5 }}>
+            {groupBy === 'age' && 'Select the age range to filter users'}
+            {groupBy === 'location' && 'Choose country, region, and city to filter users'}
+            {groupBy === 'gender' && 'Select gender(s) to filter users'}
+          </Typography>
         </DialogTitle>
-        <DialogContent>
+
+        <DialogContent sx={{ pt: 3, pb: 2 }}>
           {groupBy === 'age' && (
-            <Box sx={{ mt: 2 }}>
-              <Stack direction='row' spacing={2} sx={{ mb: 2 }}>
-                <TextField
-                  label='Min Age'
-                  type='number'
-                  value={filters.age.min}
-                  onChange={e => {
-                    handleFilterChange('age', 'min', e.target.value)
-                    setAgeError(null) // Clear error when user edits
-                  }}
-                  sx={{ width: 120 }}
-                  error={!!ageError}
-                />
-                <TextField
-                  label='Max Age'
-                  type='number'
-                  value={filters.age.max}
-                  onChange={e => {
-                    handleFilterChange('age', 'max', e.target.value)
-                    setAgeError(null) // Clear error when user edits
-                  }}
-                  sx={{ width: 120 }}
-                  error={!!ageError}
-                />
-              </Stack>
-              {ageError && (
-                <Typography color='error' variant='body2' sx={{ mt: 1 }}>
-                  {ageError}
-                </Typography>
-              )}
+            <Box sx={{ mt: 1 }}>
+              <Typography variant='subtitle2' sx={{ mb: 2, fontWeight: 500 }}>
+                Age Range
+              </Typography>
+              <Grid container spacing={3} alignItems='center'>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label='Minimum Age'
+                    type='number'
+                    value={filters.age.min}
+                    onChange={e => {
+                      handleFilterChange('age', 'min', e.target.value)
+                      setAgeError(null)
+                    }}
+                    fullWidth
+                    error={!!ageError}
+                    helperText={ageError || 'Enter minimum age (0-120)'}
+                    InputProps={{
+                      startAdornment: (
+                        <Typography variant='body2' sx={{ mr: 1, color: 'text.secondary' }}>
+                          From:
+                        </Typography>
+                      )
+                    }}
+                    inputProps={{
+                      min: 0,
+                      max: 120
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2
+                      }
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label='Maximum Age'
+                    type='number'
+                    value={filters.age.max}
+                    onChange={e => {
+                      handleFilterChange('age', 'max', e.target.value)
+                      setAgeError(null)
+                    }}
+                    fullWidth
+                    error={!!ageError}
+                    helperText={ageError || 'Enter maximum age (0-120)'}
+                    InputProps={{
+                      startAdornment: (
+                        <Typography variant='body2' sx={{ mr: 1, color: 'text.secondary' }}>
+                          To:
+                        </Typography>
+                      )
+                    }}
+                    inputProps={{
+                      min: 0,
+                      max: 120
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2
+                      }
+                    }}
+                  />
+                </Grid>
+              </Grid>
+              
             </Box>
           )}
 
           {groupBy === 'location' && (
-            <Box sx={{ mt: 2 }}>
-              <Grid container spacing={2} sx={{ mb: 2 }}>
+            <Box sx={{ mt: 1 }}>
+              <Typography variant='subtitle2' sx={{ mb: 3, fontWeight: 500 }}>
+                Location Details
+              </Typography>
+              <Grid container spacing={3}>
                 <Grid item xs={12} sm={6} md={4}>
+                  <Typography variant='body2' sx={{ mb: 1, fontWeight: 500, color: 'text.secondary' }}>
+                    Country
+                  </Typography>
                   <CountryRegionDropdown
                     defaultCountryCode=''
                     selectedCountryObject={selectedCountryObject}
@@ -500,6 +595,9 @@ const closeFilterDialog = () => {
 
                 {selectedCountryObject?.country && (
                   <Grid item xs={12} sm={6} md={4}>
+                    <Typography variant='body2' sx={{ mb: 1, fontWeight: 500, color: 'text.secondary' }}>
+                      Region/State
+                    </Typography>
                     <FormControl fullWidth>
                       <Autocomplete
                         autoHighlight
@@ -512,13 +610,20 @@ const closeFilterDialog = () => {
                             {...params}
                             key={params.id}
                             label='Choose a region'
+                            placeholder='Select region'
                             inputProps={{
                               ...params.inputProps,
                               autoComplete: 'region'
                             }}
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                borderRadius: 2
+                              }
+                            }}
                           />
                         )}
                         value={selectedRegion}
+                        noOptionsText='No regions available'
                       />
                     </FormControl>
                   </Grid>
@@ -526,8 +631,38 @@ const closeFilterDialog = () => {
 
                 {selectedRegion && (
                   <Grid item xs={12} sm={6} md={4}>
-                    {loading.fetchCities && <div>Loading cities...</div>}
-                    {!loading.fetchCities && (
+                    <Typography variant='body2' sx={{ mb: 1, fontWeight: 500, color: 'text.secondary' }}>
+                      City
+                    </Typography>
+                    {loading.fetchCities ? (
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          p: 2,
+                          bgcolor: 'action.hover',
+                          borderRadius: 2,
+                          border: '1px dashed',
+                          borderColor: 'divider'
+                        }}
+                      >
+                        <div
+                          className='spinner'
+                          style={{
+                            width: '20px',
+                            height: '20px',
+                            border: '2px solid #e3e3e3',
+                            borderTop: '2px solid #1976d2',
+                            borderRadius: '50%',
+                            animation: 'spin 1s linear infinite'
+                          }}
+                        ></div>
+                        <Typography variant='body2' color='text.secondary'>
+                          Loading cities...
+                        </Typography>
+                      </Box>
+                    ) : (
                       <FormControl fullWidth>
                         <Autocomplete
                           autoHighlight
@@ -540,13 +675,20 @@ const closeFilterDialog = () => {
                               {...params}
                               key={params.id}
                               label='Choose a City'
+                              placeholder='Select city'
                               inputProps={{
                                 ...params.inputProps,
                                 autoComplete: 'city'
                               }}
+                              sx={{
+                                '& .MuiOutlinedInput-root': {
+                                  borderRadius: 2
+                                }
+                              }}
                             />
                           )}
                           value={selectedCity}
+                          noOptionsText='No cities available'
                         />
                       </FormControl>
                     )}
@@ -557,42 +699,78 @@ const closeFilterDialog = () => {
           )}
 
           {groupBy === 'gender' && (
-            <Box sx={{ mt: 2 }}>
-              <Stack spacing={1} sx={{ mb: 2 }}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={filters.gender.male}
-                      onChange={e => handleFilterChange('gender', 'male', e.target.checked)}
-                    />
-                  }
-                  label='Male'
-                />
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={filters.gender.female}
-                      onChange={e => handleFilterChange('gender', 'female', e.target.checked)}
-                    />
-                  }
-                  label='Female'
-                />
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={filters.gender.other}
-                      onChange={e => handleFilterChange('gender', 'other', e.target.checked)}
-                    />
-                  }
-                  label='Other'
-                />
-              </Stack>
+            <Box sx={{ mt: 1 }}>
+              <Typography variant='subtitle2' sx={{ mb: 3, fontWeight: 500 }}>
+                Gender Selection
+              </Typography>
+              <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
+                Select one or more genders to filter users
+              </Typography>
+              <Grid container spacing={2}>
+                {[
+                  { key: 'male', label: 'Male', icon: '👨' },
+                  { key: 'female', label: 'Female', icon: '👩' },
+                  { key: 'other', label: 'Other', icon: '👤' }
+                ].map(gender => (
+                  <Grid item xs={12} sm={4} key={gender.key}>
+                    <Box
+                      sx={{
+                        p: 2,
+                        border: '2px solid',
+                        borderColor: filters.gender[gender.key] ? 'primary.main' : 'divider',
+                        borderRadius: 2,
+                        bgcolor: filters.gender[gender.key] ? 'primary.light' : 'background.paper',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease-in-out',
+                        '&:hover': {
+                          borderColor: 'primary.main',
+                          bgcolor: filters.gender[gender.key] ? 'primary.light' : 'action.hover'
+                        }
+                      }}
+                      onClick={() => handleFilterChange('gender', gender.key, !filters.gender[gender.key])}
+                    >
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={filters.gender[gender.key]}
+                            onChange={e => handleFilterChange('gender', gender.key, e.target.checked)}
+                            sx={{ mr: 1 }}
+                          />
+                        }
+                        label={
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography variant='h6'>{gender.icon}</Typography>
+                            <Typography variant='body1' sx={{ fontWeight: 500 }}>
+                              {gender.label}
+                            </Typography>
+                          </Box>
+                        }
+                        sx={{ m: 0, width: '100%' }}
+                      />
+                    </Box>
+                  </Grid>
+                ))}
+              </Grid>
             </Box>
           )}
         </DialogContent>
-        <DialogActions>
-          <Button onClick={closeFilterDialog}>Cancel</Button>
-          <Button onClick={applyFilters}>Apply</Button>
+
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button onClick={closeFilterDialog} variant='outlined' sx={{ borderRadius: 2, px: 3 }}>
+            Cancel
+          </Button>
+          <Button
+            onClick={applyFilters}
+            variant='contained'
+            sx={{ borderRadius: 2, px: 3 }}
+            disabled={
+              (groupBy === 'age' && !filters.age.min && !filters.age.max) ||
+              (groupBy === 'location' && !filters.location.country) ||
+              (groupBy === 'gender' && !Object.values(filters.gender).some(Boolean))
+            }
+          >
+            Apply Filters
+          </Button>
         </DialogActions>
       </Dialog>
 
