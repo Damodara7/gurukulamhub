@@ -1,5 +1,5 @@
-import mongoose from "mongoose";
-import User from "@/app/models/user.model";
+import mongoose from 'mongoose'
+import User from '@/app/models/user.model'
 
 const locationSchema = new mongoose.Schema({
   country: { type: String },
@@ -29,9 +29,13 @@ export const groupSchema = new mongoose.Schema(
     ageGroup: ageGroupSchema,
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'users'
+      ref: 'users',
+      required: true
     },
-    creatorEmail: String,
+    creatorEmail: {
+      type: String,
+      required: true
+    },
     isDeleted: {
       type: Boolean,
       default: false
@@ -46,10 +50,15 @@ export const groupSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'users'
     },
-    deletorEmail: String,
+    deletorEmail: String
   },
   { timestamps: true }
 )
+
+// Add indexes for better performance
+groupSchema.index({ groupName: 1 }, { unique: true })
+groupSchema.index({ createdBy: 1 })
+
 const Group = mongoose.models?.groups || mongoose.model('groups', groupSchema)
 
 export default Group

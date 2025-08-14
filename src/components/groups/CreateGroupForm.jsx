@@ -200,8 +200,8 @@ const CreateGroupForm = ({ onSubmit, onCancel }) => {
       groupName: formData.groupName.trim(),
       description: formData.description.trim(),
       ...filterCriteria, // Include the filter criteria
-      createdBy: session?.user?.id,
-      creatorEmail: session?.user?.email,
+      createdBy: session?.user?.id || null, // Will be handled in parent component
+      creatorEmail: session?.user?.email || null, // Will be handled in parent component
       members: selectedUsers // Include selected user IDs
     }
 
@@ -281,7 +281,7 @@ const CreateGroupForm = ({ onSubmit, onCancel }) => {
                 onChange={handleChange}
                 onBlur={handleBlur}
                 error={!!errors.description && touches.description}
-                helperText={errors.description }
+                helperText={errors.description}
                 multiline
                 rows={3}
                 inputRef={fieldRefs.description}

@@ -125,19 +125,6 @@ export const addOne = async groupData => {
       }
     }
 
-    // Validate members array
-    if (groupData.members && Array.isArray(groupData.members)) {
-      for (const memberId of groupData.members) {
-        if (!mongoose.Types.ObjectId.isValid(memberId)) {
-          return {
-            status: 'error',
-            result: null,
-            message: `Invalid member ID format: ${memberId}`
-          }
-        }
-      }
-    }
-
     // Create new group instance
     const newGroup = new Group({ ...groupData })
 
