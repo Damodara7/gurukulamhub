@@ -22,7 +22,9 @@ function CreateGroupPage() {
         gender: values.gender,
         ageGroup: values.ageGroup,
         createdBy: session?.user?.id, // Use the found user ID
-        creatorEmail: session?.user?.email
+        creatorEmail: session?.user?.email,
+        members: values.members,
+        membersCount: values.membersCount
       }
 
       console.log('payload data ', payload)

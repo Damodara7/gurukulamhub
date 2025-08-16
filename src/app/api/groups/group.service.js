@@ -130,10 +130,7 @@ export const addOne = async groupData => {
     }
 
     // Create new group instance
-    const newGroup = new Group({
-      ...groupData,
-      membersCount: groupData.members ? groupData.members.length : 0
-    })
+    const newGroup = new Group({ ...groupData })
 
     // Validate the group
     const validationError = newGroup.validateSync()

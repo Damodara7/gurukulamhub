@@ -214,7 +214,8 @@ const CreateGroupForm = ({ onSubmit, onCancel, isInline = false }) => {
       ...filterCriteria, // Include the filter criteria
       createdBy: session?.user?.id || null, // Will be handled in parent component
       creatorEmail: session?.user?.email || null, // Will be handled in parent component
-      members: selectedUsers // Include selected user IDs
+      members: selectedUsers, // Include selected user IDs
+      membersCount: selectedUsers.length
     }
 
     try {
