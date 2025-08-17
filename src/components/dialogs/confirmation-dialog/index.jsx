@@ -104,12 +104,19 @@ const ConfirmationDialog = ({ open, setOpen, type, onConfirm }) => {
       error: 'Failed to delete video. Please try again.',
       status: 'Video Deleted!'
     },
-    'delete-game':{
+    'delete-game': {
       title: 'Are you sure you want to delete this game?',
       success: 'Game has been deleted successfully.',
       cancel: 'Game Deletion Cancelled!',
       error: 'Failed to delete game. Please try again.',
       status: 'Game Deleted!'
+    },
+    'delete-group': {
+      title: 'Are you sure you want to delete this group?',
+      success: 'Group has been deleted successfully.',
+      cancel: 'Group Deletion Cancelled!',
+      error: 'Failed to delete group. Please try again.',
+      status: 'Group Deleted!'
     },
     'reject-quiz': {
       title: 'Are you sure you want to reject this quiz?',

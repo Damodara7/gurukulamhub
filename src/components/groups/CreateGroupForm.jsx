@@ -46,7 +46,7 @@ const validateForm = formData => {
   return errors
 }
 
-const formFieldOrder = ['groupName']
+const formFieldOrder = ['groupName', 'description']
 
 const CreateGroupForm = ({ onSubmit, onCancel, isInline = false }) => {
   const initialFormData = {
@@ -103,7 +103,8 @@ const CreateGroupForm = ({ onSubmit, onCancel, isInline = false }) => {
 
   // Create refs for each field
   const fieldRefs = {
-    groupName: useRef()
+    groupName: useRef(),
+    description: useRef()
   }
 
   const handleChange = e => {

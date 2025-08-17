@@ -55,6 +55,11 @@ const GroupByFilter = ({ users, onFilterChange }) => {
   const [pendingFilterData, setPendingFilterData] = useState(null)
   const [matchedUsers, setMatchedUsers] = useState([])
   const [unmatchedUsers, setUnmatchedUsers] = useState([])
+  const [combinedCriteria, setCombinedCriteria] = useState({
+    ageGroup: null,
+    location: null,
+    gender: null
+  })
 
   const handleClick = event => {
     setAnchorEl(event.currentTarget)
@@ -207,6 +212,35 @@ const GroupByFilter = ({ users, onFilterChange }) => {
 
     setSelectedFilters(updatedFilters)
 
+    // Derive a cumulative criteria object from all selected filters
+    const nextCombinedCriteria = {
+      ageGroup: null,
+      location: null,
+      gender: null
+    }
+
+    updatedFilters.forEach(filter => {
+      if (filter.type === 'age' && filter.value) {
+        nextCombinedCriteria.ageGroup = { min: filter.value.min, max: filter.value.max }
+      }
+      if (filter.type === 'location' && filter.value) {
+        nextCombinedCriteria.location = {
+          country: filter.value.country || '',
+          region: filter.value.state || '',
+          city: filter.value.city || ''
+        }
+      }
+      if (filter.type === 'gender' && filter.value) {
+        const selected = Object.entries(filter.value)
+          .filter(([, isOn]) => Boolean(isOn))
+          .map(([key]) => key)
+        // Persist a single gender if exactly one selected; otherwise leave null
+        nextCombinedCriteria.gender = selected.length === 1 ? selected[0] : null
+      }
+    })
+
+    setCombinedCriteria(nextCombinedCriteria)
+
     // Update matched/unmatched users
     const matched = users.filter(user => combinedUserIds.includes(user._id))
     const unmatched = users.filter(user => !combinedUserIds.includes(user._id))
@@ -224,8 +258,8 @@ const GroupByFilter = ({ users, onFilterChange }) => {
     setSelectedRegion('')
     setSelectedCity('')
 
-    // Call parent with combined results
-    onFilterChange(combinedUserIds, criteria)
+    // Call parent with combined results and cumulative criteria
+    onFilterChange(combinedUserIds, nextCombinedCriteria)
   }
 
   const handleOperationSelect = operation => {
@@ -314,18 +348,17 @@ const GroupByFilter = ({ users, onFilterChange }) => {
         }
       })
 
-      if (filteredUserIds.length > 0) {
-        const locationParts = [filters.location.country, filters.location.state, filters.location.city].filter(Boolean)
-        newFilters.push({
-          type: 'location',
-          label: `Location: ${locationParts.join(', ')}`,
-          value: { ...filters.location }
-        })
-        criteria.location = {
-          country: filters.location.country,
-          region: filters.location.state,
-          city: filters.location.city
-        }
+      // Always record the selected location filter as a chip, even if no users match
+      const locationParts = [filters.location.country, filters.location.state, filters.location.city].filter(Boolean)
+      newFilters.push({
+        type: 'location',
+        label: `Location: ${locationParts.join(', ')}`,
+        value: { ...filters.location }
+      })
+      criteria.location = {
+        country: filters.location.country,
+        region: filters.location.state,
+        city: filters.location.city
       }
     }
 
@@ -377,9 +410,11 @@ const GroupByFilter = ({ users, onFilterChange }) => {
     if (updatedFilters.length === 0) {
       setMatchedUsers(users)
       setUnmatchedUsers([])
+      const resetCriteria = { ageGroup: null, location: null, gender: null }
+      setCombinedCriteria(resetCriteria)
       onFilterChange(
         users.map(user => user._id),
-        {}
+        resetCriteria
       )
       return
     }
@@ -405,7 +440,33 @@ const GroupByFilter = ({ users, onFilterChange }) => {
     const unmatched = users.filter(user => !combinedUserIds.includes(user._id))
     setMatchedUsers(matched)
     setUnmatchedUsers(unmatched)
-    onFilterChange(combinedUserIds, {})
+
+    // Recompute cumulative criteria from remaining filters
+    const nextCombinedCriteria = {
+      ageGroup: null,
+      location: null,
+      gender: null
+    }
+    updatedFilters.forEach(filter => {
+      if (filter.type === 'age' && filter.value) {
+        nextCombinedCriteria.ageGroup = { min: filter.value.min, max: filter.value.max }
+      }
+      if (filter.type === 'location' && filter.value) {
+        nextCombinedCriteria.location = {
+          country: filter.value.country || '',
+          region: filter.value.state || '',
+          city: filter.value.city || ''
+        }
+      }
+      if (filter.type === 'gender' && filter.value) {
+        const selected = Object.entries(filter.value)
+          .filter(([, isOn]) => Boolean(isOn))
+          .map(([key]) => key)
+        nextCombinedCriteria.gender = selected.length === 1 ? selected[0] : null
+      }
+    })
+    setCombinedCriteria(nextCombinedCriteria)
+    onFilterChange(combinedUserIds, nextCombinedCriteria)
   }
 
   return (
@@ -572,7 +633,6 @@ const GroupByFilter = ({ users, onFilterChange }) => {
                   />
                 </Grid>
               </Grid>
-              
             </Box>
           )}
 
