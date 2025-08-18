@@ -48,7 +48,7 @@ const validateForm = formData => {
 
 const formFieldOrder = ['groupName', 'description']
 
-const CreateGroupForm = ({ onSubmit, onCancel, isInline = false }) => {
+const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
   const initialFormData = {
     groupName: '',
     description: ''
@@ -75,16 +75,92 @@ const CreateGroupForm = ({ onSubmit, onCancel, isInline = false }) => {
     gender: null
   })
 
-  //fetching the users
+  //if edit group?
 
+  useEffect(() => {
+    if (data) {
+      console.log('edit mode data', data)
+      setFormData({
+        ...initialFormData,
+        groupName: data.groupName || '',
+        description: data.description || '',
+        members: data.members || []
+      })
+
+      // Set initial filter criteria from group data
+      setFilterCriteria({
+        ageGroup: data.ageGroup || null,
+        location: data.location || null,
+        gender: data.gender || null
+      })
+
+      // Set initial selected users
+      setSelectedUsers(data.members || [])
+
+      // Calculate matched users based on filters if they exist
+      if (data.ageGroup || data.location || data.gender) {
+        const filteredUserIds = filterUsersByCriteria(users, {
+          ageGroup: data.ageGroup,
+          location: data.location,
+          gender: data.gender
+        })
+        setMatchedUserIds(filteredUserIds)
+        setUnmatchedUserIds(users.filter(user => !filteredUserIds.includes(user._id)).map(user => user._id))
+        // If there were no explicit members saved, default selection to filtered users
+        if (!data.members || data.members.length === 0) {
+          setSelectedUsers(filteredUserIds)
+        }
+      } else {
+        // If no filters, consider all users as matched
+        setMatchedUserIds(users.map(user => user._id))
+        setUnmatchedUserIds([])
+      }
+    }
+  }, [data, users])
+
+  // Helper function to filter users based on criteria
+  const filterUsersByCriteria = (users, criteria) => {
+    return users
+      .filter(user => {
+        const profile = user.profile || {}
+
+        // Age filter
+        const ageMatch =
+          !criteria.ageGroup ||
+          (profile.age && profile.age >= criteria.ageGroup.min && profile.age <= criteria.ageGroup.max)
+
+        // Location filter
+        const locationMatch =
+          !criteria.location ||
+          ((!criteria.location.country ||
+            (profile.country && profile.country.toLowerCase() === criteria.location.country.toLowerCase())) &&
+            (!criteria.location.region ||
+              (profile.region && profile.region.toLowerCase() === criteria.location.region.toLowerCase())) &&
+            (!criteria.location.city ||
+              (profile.locality && profile.locality.toLowerCase() === criteria.location.city.toLowerCase())))
+
+        // Gender filter
+        const genderMatch =
+          !criteria.gender ||
+          (profile.gender &&
+            (Array.isArray(criteria.gender)
+              ? criteria.gender.includes(profile.gender.toLowerCase())
+              : profile.gender.toLowerCase() === criteria.gender.toLowerCase()))
+
+        return ageMatch && locationMatch && genderMatch
+      })
+      .map(user => user._id)
+  }
+
+  //fetching the users
   const fetchUsers = async () => {
     setLoading(true)
     try {
       const result = await RestApi.get(`${API_URLS.v0.USER}`)
       if (result?.status === 'success') {
         setUsers(result.result || [])
-        // Initially select all users
-        setSelectedUsers(result.result?.map(user => user._id) || [])
+        // In edit mode, preserve existing selection; otherwise preselect all
+        setSelectedUsers(prev => (data?.members ? prev : result.result?.map(user => user._id) || []))
         console.log('users data ', result.result)
       }
     } catch (error) {
@@ -210,19 +286,20 @@ const CreateGroupForm = ({ onSubmit, onCancel, isInline = false }) => {
 
     // Prepare submission data
     const submission = {
+      _id: data?._id || null, // Include ID for updates
       groupName: formData.groupName.trim(),
       description: formData.description.trim(),
-      ...filterCriteria, // Include the filter criteria
-      createdBy: session?.user?.id || null, // Will be handled in parent component
-      creatorEmail: session?.user?.email || null, // Will be handled in parent component
-      members: selectedUsers, // Include selected user IDs
+      ...filterCriteria, // Include the current filter criteria
+      createdBy: data?.createdBy || session?.user?.id || null,
+      creatorEmail: data?.creatorEmail || session?.user?.email || null,
+      members: selectedUsers,
       membersCount: selectedUsers.length
     }
 
     try {
       await onSubmit(submission)
     } catch (error) {
-      setErrorMessage(error.message || 'Failed to create group')
+      setErrorMessage(error.message || 'Failed to save group')
       setShowErrorSnackbar(true)
     } finally {
       setIsSubmitting(false)
@@ -310,6 +387,15 @@ const CreateGroupForm = ({ onSubmit, onCancel, isInline = false }) => {
                 <GroupByFilter
                   users={users}
                   onFilterChange={(userIds, criteria) => handleFilterChange(userIds, criteria)}
+                  initialCriteria={
+                    data?.ageGroup || data?.location || data?.gender
+                      ? {
+                          ageGroup: data?.ageGroup,
+                          location: data?.location,
+                          gender: data?.gender
+                        }
+                      : null
+                  }
                 />
               </Grid>
 

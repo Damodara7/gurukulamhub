@@ -77,6 +77,7 @@ const AllGroupsPage = () => {
 
   const handleEditGroup = groupId => {
     console.log('Edit group:', groupId)
+    router.push(`/management/groups/${groupId}/edit`)
   }
 
   const handleViewGroup = groupId => {

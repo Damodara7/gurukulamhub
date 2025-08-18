@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   Button,
   Menu,
@@ -33,7 +33,8 @@ const spinnerStyles = `
   }
 `
 
-const GroupByFilter = ({ users, onFilterChange }) => {
+const GroupByFilter = ({ users, onFilterChange, initialCriteria = null }) => {
+  const didInitFromPropsRef = useRef(false)
   const [anchorEl, setAnchorEl] = useState(null)
   const [groupBy, setGroupBy] = useState(null)
   const [filters, setFilters] = useState({
@@ -68,6 +69,78 @@ const GroupByFilter = ({ users, onFilterChange }) => {
   const handleClose = () => {
     setAnchorEl(null)
   }
+
+  // Initialize with existing filters if in edit mode (once)
+  useEffect(() => {
+    if (didInitFromPropsRef.current) return
+    if (!initialCriteria) return
+    if (!Array.isArray(users) || users.length === 0) return
+
+    const filters = []
+    let userIds = users.map(user => user._id)
+
+    if (initialCriteria.ageGroup) {
+      const idsForAge = users
+        .filter(u => {
+          const age = u?.profile?.age
+          return age != null && age >= initialCriteria.ageGroup.min && age <= initialCriteria.ageGroup.max
+        })
+        .map(u => u._id)
+      filters.push({
+        type: 'age',
+        label: `Age: ${initialCriteria.ageGroup.min}-${initialCriteria.ageGroup.max}`,
+        value: initialCriteria.ageGroup,
+        userIds: idsForAge
+      })
+      userIds = userIds.filter(id => idsForAge.includes(id))
+    }
+
+    if (initialCriteria.location) {
+      const loc = initialCriteria.location
+      const parts = [loc.country, loc.region, loc.city].filter(Boolean)
+      const idsForLoc = users
+        .filter(u => {
+          const p = u?.profile || {}
+          return (
+            (!loc.country || p.country?.toLowerCase() === loc.country?.toLowerCase()) &&
+            (!loc.region || p.region?.toLowerCase() === loc.region?.toLowerCase()) &&
+            (!loc.city || p.locality?.toLowerCase() === loc.city?.toLowerCase())
+          )
+        })
+        .map(u => u._id)
+      filters.push({
+        type: 'location',
+        label: `Location: ${parts.join(', ')}`,
+        value: loc,
+        userIds: idsForLoc
+      })
+      userIds = userIds.filter(id => idsForLoc.includes(id))
+    }
+
+    if (initialCriteria.gender) {
+      const genders = Array.isArray(initialCriteria.gender) ? initialCriteria.gender : [initialCriteria.gender]
+      const idsForGender = users
+        .filter(u => {
+          const gender = u?.profile?.gender?.toLowerCase()
+          return Boolean(gender) && genders.includes(gender)
+        })
+        .map(u => u._id)
+      filters.push({
+        type: 'gender',
+        label: `Gender: ${genders.map(g => g.charAt(0).toUpperCase() + g.slice(1)).join(', ')}`,
+        value: genders.reduce((acc, g) => ({ ...acc, [g]: true }), {}),
+        userIds: idsForGender
+      })
+      userIds = userIds.filter(id => idsForGender.includes(id))
+    }
+
+    setSelectedFilters(filters)
+    setMatchedUsers(users.filter(u => userIds.includes(u._id)))
+    setUnmatchedUsers(users.filter(u => !userIds.includes(u._id)))
+    setCombinedCriteria(initialCriteria)
+
+    didInitFromPropsRef.current = true
+  }, [initialCriteria, users])
 
   const OperationDialog = ({ open, onClose, onOperationSelect }) => (
     <Dialog open={open} onClose={onClose} maxWidth='xs' fullWidth>
@@ -423,16 +496,17 @@ const GroupByFilter = ({ users, onFilterChange }) => {
     // Recalculate combined results based on remaining filters
     let combinedUserIds = []
     if (updatedFilters.length === 1) {
-      combinedUserIds = updatedFilters[0].userIds
+      combinedUserIds = updatedFilters[0].userIds || []
     } else {
-      // Need to reapply all operations in sequence
+      // Need to reapply all operations in sequence, guard against missing userIds
       combinedUserIds = updatedFilters.reduce((acc, filter, idx) => {
-        if (idx === 0) return filter.userIds
+        const currentIds = Array.isArray(filter.userIds) ? filter.userIds : []
+        if (idx === 0) return currentIds
         const operation = filter.operation || 'AND' // Default to AND if not specified
         if (operation === 'AND') {
-          return acc.filter(id => filter.userIds.includes(id))
+          return acc.filter(id => currentIds.includes(id))
         } else {
-          return [...new Set([...acc, ...filter.userIds])]
+          return [...new Set([...acc, ...currentIds])]
         }
       }, [])
     }
