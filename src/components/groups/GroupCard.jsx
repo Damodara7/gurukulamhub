@@ -1,5 +1,5 @@
 import React from 'react'
-import { Card, CardContent, Typography, Stack, Chip, Grid, Box, Divider } from '@mui/material'
+import { Card, CardContent, Typography, Stack, Chip, Grid, Box, Divider, Tooltip } from '@mui/material'
 import IconButtonTooltip from '../IconButtonTooltip'
 
 import { Visibility as VisibilityIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material'
@@ -19,9 +19,9 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup }) => {
     <Grid container spacing={2}>
       {groups.map(group => {
         return (
-          <Grid item xs={12} sm={4} md={4} lg={3} key={group?._id || group?.groupName}>
-            <Card variant='outlined' sx={{ height: '100%' }}>
-              <CardContent>
+          <Grid item xs={12} sm={6} md={4} lg={3} xl={2} key={group?._id || group?.groupName}>
+            <Card variant='outlined' sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+              <CardContent sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
                 <Typography variant='h6' align='center' gutterBottom>
                   {group?.groupName || 'Untitled Group'}
                 </Typography>
@@ -38,31 +38,97 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup }) => {
                 </Typography>
 
                 <Divider sx={{ my: 1.5 }} />
-
-                <Box display='flex'>
+                <Box sx={{ display: 'flex', width: '100%' }}>
                   <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: 0.5, mr: 1 }}>
                     Group by:
                   </Typography>
 
-                  <Stack direction='row' spacing={1} flexWrap='wrap' useFlexGap>
+                  <Stack
+                    direction='row'
+                    spacing={1}
+                    useFlexGap
+                    sx={{
+                      flexWrap: 'wrap',
+                      rowGap: 1,
+                      columnGap: 1,
+                      width: '100%',
+                      minHeight: 48
+                    }}
+                  >
                     {group?.ageGroup && (
-                      <Chip size='small' label={`Age: ${group.ageGroup.min}-${group.ageGroup.max}`} />
+                      <Tooltip arrow title={`Age: ${group.ageGroup.min}-${group.ageGroup.max}`}>
+                        <Chip
+                          size='small'
+                          label={`Age: ${group.ageGroup.min}-${group.ageGroup.max}`}
+                          sx={{
+                            maxWidth: 100,
+                            '& .MuiChip-label': {
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              maxWidth: '100%'
+                            }
+                          }}
+                        />
+                      </Tooltip>
                     )}
-                    {group?.gender && <Chip size='small' label={`Gender: ${group.gender}`} />}
+                    {group?.gender && (
+                      <Tooltip
+                        arrow
+                        title={`Gender: ${
+                          Array.isArray(group.gender) ? group.gender.join(', ') : String(group.gender)
+                        }`}
+                      >
+                        <Chip
+                          size='small'
+                          label={`Gender: ${
+                            Array.isArray(group.gender) ? group.gender.join(', ') : String(group.gender)
+                          }`}
+                          sx={{
+                            maxWidth: 120,
+                            '& .MuiChip-label': {
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              maxWidth: '100%'
+                            }
+                          }}
+                        />
+                      </Tooltip>
+                    )}
                     {(() => {
                       const parts = [group?.location?.country, group?.location?.region, group?.location?.city].filter(
                         Boolean
                       )
-                      return parts.length > 0 ? <Chip size='small' label={`Location: ${parts.join(', ')}`} /> : null
+                      const label = parts.length > 0 ? `Location: ${parts.join(', ')}` : null
+                      return label ? (
+                        <Tooltip arrow title={label}>
+                          <Chip
+                            size='small'
+                            label={label}
+                            sx={{
+                              maxWidth: 180,
+                              '& .MuiChip-label': {
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                maxWidth: '100%'
+                              }
+                            }}
+                          />
+                        </Tooltip>
+                      ) : null
                     })()}
                     {!group?.ageGroup &&
                       !group?.gender &&
                       !group?.location?.country &&
                       !group?.location?.region &&
                       !group?.location?.city && (
-                        <Typography variant='caption' color='text.secondary'>
-                          No filters applied
-                        </Typography>
+                        <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                          <Typography variant='caption' color='text.secondary'>
+                            No filters applied
+                          </Typography>
+                        </Box>
                       )}
                   </Stack>
                 </Box>

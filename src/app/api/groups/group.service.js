@@ -120,13 +120,31 @@ export const addOne = async groupData => {
       }
     }
 
-    // Validate gender if provided
-    if (groupData.gender && !['male', 'female', 'other'].includes(groupData.gender)) {
-      return {
-        status: 'error',
-        result: null,
-        message: 'Gender must be one of: male, female, other'
+    // Validate gender if provided (supports single or multiple selections)
+    if (groupData.gender) {
+      const allowedGenders = ['male', 'female', 'other']
+      let gendersArray
+      if (Array.isArray(groupData.gender)) {
+        gendersArray = groupData.gender
+      } else if (typeof groupData.gender === 'object' && groupData.gender !== null) {
+        gendersArray = Object.entries(groupData.gender)
+          .filter(([, isOn]) => Boolean(isOn))
+          .map(([key]) => key)
+      } else {
+        gendersArray = [groupData.gender]
       }
+
+      const invalidGenders = gendersArray.filter(gender => !allowedGenders.includes(gender))
+      if (invalidGenders.length > 0) {
+        return {
+          status: 'error',
+          result: null,
+          message: 'Gender must be one or more of: male, female, other'
+        }
+      }
+
+      // Normalize to array for the model schema which expects [String]
+      groupData.gender = gendersArray
     }
 
     // Create new group instance

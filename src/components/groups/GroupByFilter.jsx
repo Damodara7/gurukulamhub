@@ -235,7 +235,7 @@ const GroupByFilter = ({ users, onFilterChange }) => {
           .filter(([, isOn]) => Boolean(isOn))
           .map(([key]) => key)
         // Persist a single gender if exactly one selected; otherwise leave null
-        nextCombinedCriteria.gender = selected.length === 1 ? selected[0] : null
+        nextCombinedCriteria.gender = selected.length > 0 ? selected : null
       }
     })
 
@@ -381,7 +381,8 @@ const GroupByFilter = ({ users, onFilterChange }) => {
           label: `Gender: ${selectedGenders.map(g => g.charAt(0).toUpperCase() + g.slice(1)).join(', ')}`,
           value: { ...filters.gender }
         })
-        criteria.gender = selectedGenders[0]
+        // Send all selected genders (array)
+        criteria.gender = selectedGenders
       }
     }
 
@@ -462,7 +463,8 @@ const GroupByFilter = ({ users, onFilterChange }) => {
         const selected = Object.entries(filter.value)
           .filter(([, isOn]) => Boolean(isOn))
           .map(([key]) => key)
-        nextCombinedCriteria.gender = selected.length === 1 ? selected[0] : null
+        // Keep as array if any selected, else null
+        nextCombinedCriteria.gender = selected.length > 0 ? selected : null
       }
     })
     setCombinedCriteria(nextCombinedCriteria)

@@ -23,17 +23,17 @@ export const groupSchema = new mongoose.Schema(
     },
     location: locationSchema,
     gender: {
-      type: String,
+      type: [String],
       enum: ['male', 'female', 'other']
     },
     ageGroup: ageGroupSchema,
-    
+
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'users',
       required: true
     },
-    membersCount:{
+    membersCount: {
       type: Number,
       default: 0
     },
