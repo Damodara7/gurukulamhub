@@ -23,9 +23,13 @@ export const getOne = async (filter = {}) => {
       }
     }
 
+    // Derive members from users' groupIds and do not persist on the group
+    const usersInGroup = await User.find({ groupIds: group._id }, { _id: 1 }).lean()
+    const derivedMembers = usersInGroup.map(u => u._id)
+
     return {
       status: 'success',
-      result: group,
+      result: { ...group, members: derivedMembers, membersCount: derivedMembers.length },
       message: 'Group retrieved successfully'
     }
   } catch (error) {

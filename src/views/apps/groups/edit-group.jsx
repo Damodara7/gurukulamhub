@@ -69,6 +69,12 @@ const EditGroupPage = ({ groupId = null, groupData = null }) => {
 
   return (
     <div className='p-4'>
+      <div className='mb-6'>
+        <h1 className='text-2xl font-bold'>{groupId ? 'Edit Group' : 'Create New Group'}</h1>
+        <p className='text-muted-foreground'>
+          {groupId ? 'Update the group details below' : 'Fill in the details below to create a new group'}
+        </p>
+      </div>
       <CreateGroupForm onSubmit={handleSubmit} onCancel={handleCancel} data={updatedGroupData} />
     </div>
   )

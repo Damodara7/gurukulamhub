@@ -3,20 +3,6 @@ import { API_URLS } from '@/configs/apiConfig'
 import FallBackCard from '@/components/apps/games/FallBackCard'
 import EditGroupPage from '@/views/apps/groups/edit-group'
 
-// async function getGroupData(groupId) {
-//   try{
-//     const res= await RestApi.get(`${API_URLS.v0.USERS_GROUP}?id=${groupId}`)
-//     if(res?.status === 'success'){
-//       return res.result
-//     }
-//     console.error('Error Fetching group:', res.message)
-//     return null
-//   }catch(error){
-//     console.error('Error fetching group:', error)
-//     return null
-//   }
-//   }
-
 async function getGroupData(groupId) {
   try {
     const res = await RestApi.get(`${API_URLS.v0.USERS_GROUP}?id=${groupId}`)
