@@ -19,8 +19,17 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup }) => {
     <Grid container spacing={2}>
       {groups.map(group => {
         return (
-          <Grid item xs={12} sm={6} md={4} lg={3} xl={2} key={group?._id || group?.groupName}>
-            <Card variant='outlined' sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+          <Grid item xs={12} sm={6} md={4} lg={3} xl={3} key={group?._id || group?.groupName}>
+            <Card
+              variant='outlined'
+              sx={{
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                transition: 'box-shadow 0.2s ease, transform 0.2s ease',
+                '&:hover': { boxShadow: 6, transform: 'translateY(-2px)' }
+              }}
+            >
               <CardContent sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
                 <Typography variant='h6' align='center' gutterBottom>
                   {group?.groupName || 'Untitled Group'}
@@ -36,7 +45,9 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup }) => {
                   Created by:{' '}
                   {group?.creatorEmail || (group?.createdBy ? String(group.createdBy).slice(0, 8) : 'Unknown')}
                 </Typography>
-
+                <Typography variant='caption' color='text.secondary'>
+                  users Count : {group?.membersCount || 0}
+                </Typography>
                 <Divider sx={{ my: 1.5 }} />
                 <Box sx={{ display: 'flex', width: '100%' }}>
                   <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: 0.5, mr: 1 }}>
