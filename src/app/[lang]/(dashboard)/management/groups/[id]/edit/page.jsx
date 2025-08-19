@@ -25,11 +25,13 @@ async function getGroupData(groupId) {
   }
 }
 
-  export default async function page({params}){
-    const {id} = params
-    const [groupData] = await Promise.all([getGroupData(id)])
-    if(!groupData){
-      return <FallBackCard content='You can go back to All Groups' path='/management/groups' btnText='Back To All Groups' />
-    }
-    return <EditGroupPage groupId={id} groupData={groupData} />
+export default async function page({ params }) {
+  const { id } = params
+  const [groupData] = await Promise.all([getGroupData(id)])
+  if (!groupData) {
+    return (
+      <FallBackCard content='You can go back to All Groups' path='/management/groups' btnText='Back To All Groups' />
+    )
   }
+  return <EditGroupPage groupId={id} groupData={groupData} />
+}
