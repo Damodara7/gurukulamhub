@@ -11,10 +11,10 @@ const EditGroupPage = ({ groupId = null, groupData = null }) => {
   const [loading, setLoading] = useState(true)
   const router = useRouter()
   const { data: session } = useSession()
-
+  console.log('groupData members array  in the edit page', groupData.members)
   const handleSubmit = async values => {
     try {
-      console.log('form Data: ', values)
+      console.log('form Data INTHE EDIT PAGE: ', values)
       setLoading(true)
       let payload = {
         ...values,
@@ -27,7 +27,7 @@ const EditGroupPage = ({ groupId = null, groupData = null }) => {
         location: values.location,
         gender: values.gender
       }
-      console.log('payload: ', payload)
+      console.log('payload IN THE EDIT PAGE: ', payload)
 
       let result
       if (groupId) {
@@ -66,6 +66,7 @@ const EditGroupPage = ({ groupId = null, groupData = null }) => {
   }
 
   const updatedGroupData = { ...groupData, members: groupData?.members || [] }
+  console.log('i am fetting the updated data' , updatedGroupData);
 
   return (
     <div className='p-4'>

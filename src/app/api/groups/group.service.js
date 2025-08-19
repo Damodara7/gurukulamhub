@@ -47,11 +47,25 @@ export const getAll = async (filter = {}) => {
     const groups = await Group.find({ ...filter, isDeleted: false })
       .sort({ createdAt: -1 })
       .lean()
-    console.log('Found groups:', groups)
+
+    // For each group, get the members from users
+    const groupsWithMembers = await Promise.all(
+      groups.map(async group => {
+        const usersInGroup = await User.find({ groupIds: group._id }, { _id: 1 }).lean()
+        const derivedMembers = usersInGroup.map(u => u._id)
+
+        return {
+          ...group,
+          members: derivedMembers,
+          membersCount: derivedMembers.length
+        }
+      })
+    )
+
     return {
       status: 'success',
-      result: groups,
-      message: `Found ${groups.length} groups`
+      result: groupsWithMembers,
+      message: `Found ${groupsWithMembers.length} groups`
     }
   } catch (error) {
     return {
@@ -151,8 +165,9 @@ export const addOne = async groupData => {
       groupData.gender = gendersArray
     }
 
-    // Create new group instance
-    const newGroup = new Group({ ...groupData })
+    /// Create new group instance (without members array as it's not stored in DB)
+    const { members, ...groupDataWithoutMembers } = groupData
+    const newGroup = new Group({ ...groupDataWithoutMembers })
 
     // Validate the group
     const validationError = newGroup.validateSync()
@@ -167,11 +182,12 @@ export const addOne = async groupData => {
 
     const savedGroup = await newGroup.save()
 
-    // Update all users' groupIds arrays with the new group ID
-    if (groupData.members && groupData.members.length > 0) {
+    // Update all selected users' groupIds arrays with the new group ID
+    if (members && members.length > 0) {
       try {
-        await User.updateMany({ _id: { $in: groupData.members } }, { $addToSet: { groupIds: savedGroup._id } })
-        console.log(`Updated ${groupData.members.length} users with group ID ${savedGroup._id}`)
+        // Add group to selected users
+        await User.updateMany({ _id: { $in: members } }, { $addToSet: { groupIds: savedGroup._id } })
+        console.log(`Updated ${members.length} users with group ID ${savedGroup._id}`)
       } catch (updateError) {
         console.error('Error updating users with group ID:', updateError)
         // Don't fail group creation if user update fails
@@ -180,7 +196,7 @@ export const addOne = async groupData => {
 
     return {
       status: 'success',
-      result: savedGroup,
+      result: { ...savedGroup.toObject(), members },
       message: 'Group created successfully'
     }
   } catch (error) {
@@ -224,9 +240,14 @@ export const updateOne = async (groupId, updateData) => {
       }
     }
 
+    // Extract members from update data (they're not stored in the group document)
+    const { members, ...groupUpdateData } = updateData
+
     // Apply updates to the existing group document
-    Object.keys(updateData).forEach(key => {
-      existingGroup[key] = updateData[key]
+    Object.keys(groupUpdateData).forEach(key => {
+      if (groupUpdateData[key] !== undefined) {
+        existingGroup[key] = groupUpdateData[key]
+      }
     })
 
     // Validate the updated group document
@@ -243,9 +264,41 @@ export const updateOne = async (groupId, updateData) => {
     // Save the updated group
     const updatedGroup = await existingGroup.save()
 
+    // Handle member synchronization if members array is provided
+    if (members !== undefined) {
+      try {
+        // Get current users in this group
+        const currentUsersInGroup = await User.find({ groupIds: groupId }, { _id: 1 }).lean()
+        const currentUserIds = currentUsersInGroup.map(u => u._id.toString())
+
+        // Find users to add and remove
+        const usersToAdd = members.filter(userId => !currentUserIds.includes(userId.toString()))
+        const usersToRemove = currentUserIds.filter(userId => !members.includes(userId.toString()))
+
+        // Add group to new users
+        if (usersToAdd.length > 0) {
+          await User.updateMany({ _id: { $in: usersToAdd } }, { $addToSet: { groupIds: groupId } })
+          console.log(`Added group to ${usersToAdd.length} users`)
+        }
+
+        // Remove group from users who are no longer members
+        if (usersToRemove.length > 0) {
+          await User.updateMany({ _id: { $in: usersToRemove } }, { $pull: { groupIds: groupId } })
+          console.log(`Removed group from ${usersToRemove.length} users`)
+        }
+      } catch (memberUpdateError) {
+        console.error('Error updating group members:', memberUpdateError)
+        // Don't fail the group update if member synchronization fails
+      }
+    }
+
+    // Get updated members list for response
+    const updatedUsersInGroup = await User.find({ groupIds: groupId }, { _id: 1 }).lean()
+    const updatedMembers = updatedUsersInGroup.map(u => u._id)
+
     return {
       status: 'success',
-      result: updatedGroup,
+      result: { ...updatedGroup.toObject(), members: updatedMembers },
       message: 'Group updated successfully'
     }
   } catch (error) {
@@ -269,6 +322,15 @@ export const deleteOne = async groupId => {
         result: null,
         message: 'Group not found or already deleted'
       }
+    }
+
+    // Remove group from all users before soft delete
+    try {
+      await User.updateMany({ groupIds: groupId }, { $pull: { groupIds: groupId } })
+      console.log(`Removed group ${groupId} from all users`)
+    } catch (userUpdateError) {
+      console.error('Error removing group from users:', userUpdateError)
+      // Continue with group deletion even if user update fails
     }
 
     // Perform soft delete

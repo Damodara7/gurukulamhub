@@ -9,6 +9,8 @@ async function getGroupData(groupId) {
     if (res?.status === 'success') {
       // Transform the data to match CreateGroupForm expectations
       const groupData = res.result
+      console.log('i am getting the group data in the edit mode ', groupData)
+      console.log('groupdata members', groupData.members)
       return {
         ...groupData,
         ageGroup: groupData.ageGroup || null,
