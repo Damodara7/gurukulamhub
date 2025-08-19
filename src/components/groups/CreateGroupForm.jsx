@@ -328,11 +328,6 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
       {/* {!isInline && ( */}
       <Card sx={{ maxWidth: 'lg' }}>
         <CardContent>
-          <Typography variant='h5' gutterBottom>
-            Create New Group
-          </Typography>
-          <Divider sx={{ my: 2 }} />
-
           {/* Error Snackbar */}
           <Snackbar
             open={showErrorSnackbar}
@@ -422,7 +417,7 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
                     style={{ color: 'white' }}
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? 'Creating...' : 'Create Group'}
+                    {isSubmitting ? 'Saving...' : 'Save Group'}
                   </Button>
                 </Stack>
               </Grid>
