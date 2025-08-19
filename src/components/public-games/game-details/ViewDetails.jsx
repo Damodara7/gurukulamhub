@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   Box,
   Card,
@@ -16,7 +16,9 @@ import {
   Avatar,
   IconButton,
   Tooltip,
-  Button
+  Button,
+  Alert,
+  AlertTitle
 } from '@mui/material'
 
 import { format } from 'date-fns'
@@ -50,12 +52,18 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Leaderboard from '../play-game/Leaderboard'
+import { useSession } from 'next-auth/react'
+import * as RestApi from '@/utils/restApiUtil'
+import { API_URLS } from '@/configs/apiConfig'
 const ViewDetails = ({ game }) => {
   const theme = useTheme()
   const [copyTooltip, setCopyTooltip] = useState('Copy PIN')
   const [expandedReward, setExpandedReward] = useState(null)
   const [sharePopupOpen, setSharePopupOpen] = useState(false)
   const router = useRouter()
+  const { data: session } = useSession()
+  const [currentUserGroupIds, setCurrentUserGroupIds] = useState([])
+  const [isRestricted, setIsRestricted] = useState(false)
   const handleCopyPin = () => {
     navigator.clipboard.writeText(game.pin)
     setCopyTooltip('Copied!')
@@ -94,6 +102,31 @@ const ViewDetails = ({ game }) => {
     )
   }
   console.log('game data', game)
+
+  // Compute restriction show message
+  useEffect(() => {
+    const fetchAndCompute = async () => {
+      try {
+        if (!game?.groupId) {
+          setIsRestricted(false)
+          return
+        }
+        if (!session?.user?.email) return
+        const res = await RestApi.get(`${API_URLS.v0.USER}`)
+        if (res?.status === 'success' && res.result) {
+          const users = Array.isArray(res.result) ? res.result : [res.result]
+          const user = users.find(u => u.email === session.user.email)
+          const groupIds = (user?.groupIds || []).map(g => g?._id?.toString?.() || g?.toString?.() || g)
+          setCurrentUserGroupIds(groupIds)
+          const groupIdStr = (game.groupId?._id || game.groupId).toString()
+          setIsRestricted(!groupIds.includes(groupIdStr))
+        }
+      } catch (e) {
+        // noop
+      }
+    }
+    fetchAndCompute()
+  }, [game?.groupId, session?.user?.email])
   const getStatusChip = () => {
     const statusConfig = {
       created: { color: 'default', label: 'Pending', icon: <AccessTime /> },
@@ -186,6 +219,40 @@ const ViewDetails = ({ game }) => {
                   </Box>
                 </Stack>
               </Box>
+
+              {isRestricted && (
+                <Alert severity='error' variant='outlined' sx={{ mb: 1 }}>
+                  <AlertTitle sx={{ fontWeight: 700 }}>
+                    {`Restricted to group${game?.groupId?.groupName ? `: ${game.groupId.groupName}` : ''}`}
+                  </AlertTitle>
+                  <Typography variant='body2' sx={{ mb: 0.75 }}>
+                    You are not allowed to register/join this game.
+                  </Typography>
+                  {game?.groupId && (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {game.groupId?.ageGroup?.min != null && game.groupId?.ageGroup?.max != null && (
+                        <Chip size='small' label={`Age: ${game.groupId.ageGroup.min}-${game.groupId.ageGroup.max}`} color='error' variant='outlined' />
+                      )}
+                      {(() => {
+                        const g = game.groupId?.gender
+                        const arr = Array.isArray(g) ? g : g ? [g] : []
+                        return arr.length > 0 ? (
+                          <Chip size='small' label={`Gender: ${arr.join(', ')}`} color='error' variant='outlined' />
+                        ) : null
+                      })()}
+                      {game.groupId?.location?.city && (
+                        <Chip size='small' label={`${game.groupId.location.city}`} color='error' variant='outlined' />
+                      )}
+                      {game.groupId?.location?.region && (
+                        <Chip size='small' label={`${game.groupId.location.region}`} color='error' variant='outlined' />
+                      )}
+                      {game.groupId?.location?.country && (
+                        <Chip size='small' label={`${game.groupId.location.country}`} color='error' variant='outlined' />
+                      )}
+                    </Box>
+                  )}
+                </Alert>
+              )}
 
               <Stack>
                 {game.promotionalVideoUrl && (

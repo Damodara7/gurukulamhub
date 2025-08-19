@@ -7,6 +7,8 @@ import { Box, Grid, Typography } from '@mui/material'
 import { useSession } from 'next-auth/react'
 import { useSearchParams } from 'next/navigation'
 import Loading from '@/components/Loading'
+import * as RestApi from '@/utils/restApiUtil'
+import { API_URLS } from '@/configs/apiConfig'
 
 const PublicGamesList = ({ games, loading, error, setGames }) => {
   const searchParams = useSearchParams()
@@ -16,6 +18,7 @@ const PublicGamesList = ({ games, loading, error, setGames }) => {
   // If setGames is not provided, use local state for demonstration
   const [localGames, setLocalGames] = useState(games)
   const gamesToUse = setGames ? games : localGames
+  const [currentUserGroupIds, setCurrentUserGroupIds] = useState([])
 
   useEffect(() => {
     // console.log('games', games)
@@ -60,6 +63,25 @@ const PublicGamesList = ({ games, loading, error, setGames }) => {
       }
     }
   }, [])
+
+  // Fetch current user's groupIds once
+  useEffect(() => {
+    const fetchUserGroups = async () => {
+      try {
+        if (!session?.user?.email) return
+        const res = await RestApi.get(`${API_URLS.v0.USER}/${session.user.email}`)
+        if (res?.status === 'success') {
+          const user = res.result
+          console.log('Current user group Ids', user.groupIds)
+          if (user?.groupIds) setCurrentUserGroupIds(user.groupIds.map(g => g?.toString?.() || g))
+        }
+      } catch (e) {
+        // silent fail
+        console.error('Error fetching user groups', e)
+      }
+    }
+    fetchUserGroups()
+  }, [session?.user?.email])
 
   const getUserGameStatus = (game) => {
     const userEmail = session?.user?.email
@@ -133,7 +155,7 @@ const PublicGamesList = ({ games, loading, error, setGames }) => {
         <Grid container spacing={2}>
           {filteredGames.map((game) => (
             <Grid item key={game._id || game.id} xs={12} sm={6} md={4} lg={3}>
-              <GameCard game={game} />
+              <GameCard game={game} currentUserGroupIds={currentUserGroupIds} />
             </Grid>
           ))}
         </Grid>

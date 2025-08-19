@@ -12,7 +12,9 @@ import {
   Chip,
   Grid,
   Tooltip,
-  IconButton
+  IconButton,
+  Alert,
+  AlertTitle
 } from '@mui/material'
 import { useRouter } from 'next/navigation'
 import HourglassBottomIcon from '@mui/icons-material/HourglassBottom'
@@ -37,13 +39,41 @@ import {
   Share as ShareIcon
 } from '@mui/icons-material'
 
-const GameCard = ({ game }) => {
+const GameCard = ({ game, currentUserGroupIds = [] }) => {
   const { data: session } = useSession()
   const router = useRouter()
   const theme = useTheme()
   const [timeRemaining, setTimeRemaining] = useState(null)
   const [copied, setCopied] = useState(false)
   const [sharePopupOpen, setSharePopupOpen] = useState(false)
+
+  // Group restriction logic
+  const groupObj = game?.groupId && (game.groupId._id ? game.groupId : null)
+  const groupIdStr = game?.groupId ? (game.groupId._id || game.groupId).toString() : null
+  const isGroupRestricted = Boolean(groupIdStr)
+  const isUserMemberOfGroup = !isGroupRestricted
+    ? true
+    : (currentUserGroupIds || []).map(g => (g?._id ? g._id.toString() : g.toString())).includes(groupIdStr)
+  const showRestriction = isGroupRestricted && !isUserMemberOfGroup
+
+  // Build compact filters text safely
+  const filtersParts = []
+  if (groupObj?.ageGroup?.min != null && groupObj?.ageGroup?.max != null) {
+    filtersParts.push(`Age ${groupObj.ageGroup.min}-${groupObj.ageGroup.max}`)
+  }
+  if (groupObj?.gender) {
+    const gendersArray = Array.isArray(groupObj.gender)
+      ? groupObj.gender
+      : typeof groupObj.gender === 'string'
+      ? [groupObj.gender]
+      : []
+    if (gendersArray.length > 0) filtersParts.push(`Gender: ${gendersArray.join(', ')}`)
+  }
+  if (groupObj?.location) {
+    const loc = groupObj.location || {}
+    const locParts = [loc.city, loc.region, loc.country].filter(Boolean)
+    if (locParts.length > 0) filtersParts.push(`Location: ${locParts.join(', ')}`)
+  }
 
   // Status-based UI logic
   const isRegistrationOpen =
@@ -52,8 +82,7 @@ const GameCard = ({ game }) => {
   const isGameLive = game.status === 'live'
   const isGameEnded = ['completed', 'cancelled'].includes(game.status)
   const isGameStarted = new Date(game?.startTime) < new Date()
-  const isUserRegistered =
-    !!game?.registeredUsers?.find(u => u.email === session?.user?.email) || false
+  const isUserRegistered = !!game?.registeredUsers?.find(u => u.email === session?.user?.email) || false
   const isRegistrationRequired = game?.requireRegistration
 
   // Get game status for display in info stack
@@ -236,6 +265,20 @@ const GameCard = ({ game }) => {
           <Stack direction='row' justifyContent='space-between' alignItems='center'>
             <Typography variant='h6' noWrap>
               {game.title || 'Not Specified'}
+              <Tooltip title='Share game'>
+                <IconButton
+                  size='small'
+                  onClick={() => setSharePopupOpen(true)}
+                  sx={{
+                    mx: 2,
+                    '&:hover': {
+                      bgcolor: 'action.hover'
+                    }
+                  }}
+                >
+                  <ShareIcon fontSize='small' />
+                </IconButton>
+              </Tooltip>
             </Typography>
             {getUserStatusChip()}
           </Stack>
@@ -247,28 +290,27 @@ const GameCard = ({ game }) => {
           {/* Game Info */}
           <Box sx={{ flex: 1, my: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
             <Stack spacing={1}>
-              <Stack direction='row' justifyContent='space-between' alignItems='center'>
-                {/* Game Status Info - Added at the top */}
+              {/* Game Status Info - Added at the top */}
+              {!showRestriction && (
                 <Stack direction='row' alignItems='flex-start' spacing={1}>
                   <Box sx={{ color: gameStatusInfo.color }}>{gameStatusInfo.icon}</Box>
                   <Typography variant='body2' sx={{ color: gameStatusInfo.color, fontWeight: 500 }}>
                     {gameStatusInfo.text}
                   </Typography>
                 </Stack>
-                <Tooltip title='Share game'>
-                  <IconButton
-                    size='small'
-                    onClick={() => setSharePopupOpen(true)}
-                    sx={{
-                      '&:hover': {
-                        bgcolor: 'action.hover'
-                      }
-                    }}
-                  >
-                    <ShareIcon fontSize='small' />
-                  </IconButton>
-                </Tooltip>
-              </Stack>
+              )}
+              {showRestriction && (
+                <Alert
+                  severity='error'
+                  variant='outlined'
+                  sx={{ my: 1, py: 0.75, px: 1, '& .MuiAlert-message': { width: '100%', py: 0, my: 0 } }}
+                >
+                  <AlertTitle sx={{ fontWeight: 700, fontSize: '0.85rem', mb: 0 }}>Restricted to group</AlertTitle>
+                  <Typography variant='caption' sx={{ display: 'block' }}>
+                    {`You're not allowed to play this game.`}
+                  </Typography>
+                </Alert>
+              )}
 
               <Stack direction='row' alignItems='center' spacing={1}>
                 <Typography variant='body2'> Quiz on : {game?.quiz?.title}</Typography>
@@ -371,11 +413,13 @@ const GameCard = ({ game }) => {
               (!isUserRegistered && isRegistrationOpen && !isGameStarted && !isGameEnded)) && (
               <Button
                 disabled={
-                  game.status !== 'lobby' &&
-                  game.status !== 'approved' &&
-                  !isGameLive &&
-                  !game?.participatedUsers?.find(p => p.email === session?.user?.email)?.completed
+                  showRestriction ||
+                  (game.status !== 'lobby' &&
+                    game.status !== 'approved' &&
+                    !isGameLive &&
+                    !game?.participatedUsers?.find(p => p.email === session?.user?.email)?.completed)
                 }
+                sx={{ cursor: showRestriction ? 'not-allowed' : 'pointer' }}
                 variant='outlined'
                 color='primary'
                 size='small'

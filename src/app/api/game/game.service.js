@@ -12,6 +12,7 @@ import { broadcastLeaderboard } from '../ws/leaderboard/[gameId]/publishers'
 import { broadcastGamesList } from '../ws/games/publishers'
 import { broadcastGameDetails } from '../ws/games/[gameId]/publishers'
 import UserProfile from '@/app/models/profile.model'
+import Group from '@/app/api/groups/group.model'
 
 // Helper to enrich a single game with registeredUsers, participatedUsers, and questions
 async function enrichGameWithDetails(game) {
@@ -59,6 +60,7 @@ export const getOne = async (filter = {}) => {
 
     const game = await Game.findOne({ ...filter, isDeleted: false })
       .populate('quiz')
+      .populate('groupId')
       .populate('createdBy', 'email firstName lastName roles')
       .populate('forwardingAdmin', 'email firstName lastName roles')
       .populate('rewards.sponsors.sponsorshipId')
@@ -93,6 +95,7 @@ export const getAll = async (filter = {}) => {
   try {
     const games = await Game.find({ ...filter, isDeleted: false })
       .populate('quiz')
+      .populate('groupId')
       .populate('createdBy', 'email firstName lastName roles')
       .populate('forwardingAdmin', 'email firstName lastName roles')
       .populate('rewards.sponsors.sponsorshipId')
@@ -124,6 +127,7 @@ export const getAllPublic = async (filter = {}) => {
       status: { $in: ['approved', 'lobby', 'live', 'completed', 'cancelled'] }
     })
       .populate('quiz')
+      .populate('groupId')
       .populate('createdBy', 'email firstName lastName')
       .populate('forwardingAdmin', 'email firstName lastName roles')
       .populate('rewards.sponsors.sponsorshipId')
@@ -159,6 +163,7 @@ export const getAllByEmail = async (email, filter = {}) => {
 
     const games = await Game.find({ creatorEmail: email, isDeleted: false, ...filter })
       .populate('quiz')
+      .populate('groupId')
       .populate('createdBy', 'email firstName lastName roles')
       .populate('forwardingAdmin', 'email firstName lastName roles')
       .populate('rewards.sponsors.sponsorshipId')
@@ -666,12 +671,38 @@ export const joinGame = async (gameId, userData) => {
       _id: gameId,
       status: { $in: ['approved', 'lobby', 'live'] },
       isDeleted: false
-    }).lean()
+    })
+      .populate('groupId')
+      .lean()
     if (!game) {
       return {
         status: 'error',
         result: null,
         message: 'Game not found or not joinable'
+      }
+    }
+
+    // Enforce group membership if game is restricted to a group
+    if (game.groupId) {
+      const groupIdStr = (game.groupId._id || game.groupId).toString()
+      const userGroupIds = (user.groupIds || []).map(g => g.toString())
+      const isMember = userGroupIds.includes(groupIdStr)
+      if (!isMember) {
+        const grp = game.groupId
+        const filters = []
+        if (grp?.ageGroup?.min != null && grp?.ageGroup?.max != null)
+          filters.push(`Age ${grp.ageGroup.min}-${grp.ageGroup.max}`)
+        if (grp?.gender?.length) filters.push(`Gender: ${grp.gender.join(', ')}`)
+        if (grp?.location) {
+          const locParts = [grp.location.city, grp.location.region, grp.location.country].filter(Boolean)
+          if (locParts.length) filters.push(`Location: ${locParts.join(', ')}`)
+        }
+        const filterText = filters.length ? ` Filters: ${filters.join(' | ')}` : ''
+        return {
+          status: 'error',
+          result: null,
+          message: `You are not allowed to register/join this game. This game is restricted to the group "${grp?.groupName || 'Private Group'}".${filterText}`
+        }
       }
     }
 
@@ -748,8 +779,38 @@ export const startGame = async (gameId, userData) => {
     player.status = 'participated'
     player.joinedAt = new Date()
     await player.save()
-    // Get questions
-    const game = await Game.findById(gameId).populate('quiz').lean()
+    // Get questions and verify group restriction again (defense-in-depth)
+    const gameDoc = await Game.findById(gameId).populate('quiz').populate('groupId')
+    const game = gameDoc?.toObject?.() || gameDoc
+    if (!game) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Game not found'
+      }
+    }
+    if (game.groupId) {
+      const groupIdStr = (game.groupId._id || game.groupId).toString()
+      const userGroupIds = (user.groupIds || []).map(g => g.toString())
+      const isMember = userGroupIds.includes(groupIdStr)
+      if (!isMember) {
+        const grp = game.groupId
+        const filters = []
+        if (grp?.ageGroup?.min != null && grp?.ageGroup?.max != null)
+          filters.push(`Age ${grp.ageGroup.min}-${grp.ageGroup.max}`)
+        if (grp?.gender?.length) filters.push(`Gender: ${grp.gender.join(', ')}`)
+        if (grp?.location) {
+          const locParts = [grp.location.city, grp.location.region, grp.location.country].filter(Boolean)
+          if (locParts.length) filters.push(`Location: ${locParts.join(', ')}`)
+        }
+        const filterText = filters.length ? ` Filters: ${filters.join(' | ')}` : ''
+        return {
+          status: 'error',
+          result: null,
+          message: `You are not allowed to start this game. This game is restricted to the group "${grp?.groupName || 'Private Group'}".${filterText}`
+        }
+      }
+    }
     const enrichedGame = await enrichGameWithDetails(game)
     const leaderboard = enrichedGame?.participatedUsers?.map(p => ({
       ...p,
