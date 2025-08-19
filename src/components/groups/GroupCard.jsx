@@ -1,8 +1,14 @@
 import React from 'react'
 import { Card, CardContent, Typography, Stack, Chip, Grid, Box, Divider, Tooltip } from '@mui/material'
 import IconButtonTooltip from '../IconButtonTooltip'
-
-import { Visibility as VisibilityIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material'
+import { 
+  Visibility as VisibilityIcon, 
+  Edit as EditIcon, 
+  Delete as DeleteIcon,
+  People as PeopleIcon,
+  Person as PersonIcon,
+  CalendarToday as CalendarIcon
+} from '@mui/icons-material'
 
 const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup }) => {
   if (!groups.length) {
@@ -18,6 +24,11 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup }) => {
   return (
     <Grid container spacing={2}>
       {groups.map(group => {
+        // Capitalize first letter of group name
+        const groupName = group?.groupName
+          ? group.groupName.charAt(0).toUpperCase() + group.groupName.slice(1)
+          : 'Untitled Group'
+
         return (
           <Grid item xs={12} sm={6} md={4} lg={3} xl={3} key={group?._id || group?.groupName}>
             <Card
@@ -31,29 +42,75 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup }) => {
               }}
             >
               <CardContent sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
-                <Typography variant='h6' align='center' gutterBottom>
-                  {group?.groupName || 'Untitled Group'}
+                <Typography variant='h6' gutterBottom sx={{ fontWeight: 'bold' }}>
+                  {groupName || 'no Groupname is mentioned'}
                 </Typography>
 
                 {group?.description ? (
-                  <Typography variant='body2' color='text.secondary' sx={{ mb: 1.5 }}>
-                    {group.description}
-                  </Typography>
+                  <Tooltip title={group.description} arrow>
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                      sx={{
+                        mb: 1.5,
+                        width: '100%',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}
+                    >
+                      {group.description || 'No description available'}
+                    </Typography>
+                  </Tooltip>
                 ) : null}
 
-                <Typography variant='caption' color='text.secondary'>
-                  Created by:{' '}
-                  {group?.creatorEmail || (group?.createdBy ? String(group.createdBy).slice(0, 8) : 'Unknown')}
-                </Typography>
-                <Typography variant='caption' color='text.secondary'>
-                  users Count : {group?.membersCount || 0}
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                  <PersonIcon fontSize='small' color='action' />
+                  <Tooltip
+                    title={`Created by: ${
+                      group?.creatorEmail || (group?.createdBy ? String(group.createdBy) : 'Unknown')
+                    }`}
+                    arrow
+                  >
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
+                      sx={{
+                        width: '100%',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}
+                    >
+                      {group?.creatorEmail || (group?.createdBy ? String(group.createdBy).slice(0, 8) : 'Unknown')}
+                    </Typography>
+                  </Tooltip>
+                </Box>
+
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <PeopleIcon fontSize='small' color='action' />
+                  <Typography variant='caption' color='text.secondary'>
+                    {group?.membersCount || 0} members
+                  </Typography>
+                </Box>
+
                 <Divider sx={{ my: 1.5 }} />
-                <Box sx={{ display: 'flex', width: '100%' }}>
-                  <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: 0.5, mr: 1 }}>
+
+                <Box sx={{ mb: 1 }}>
+                  <Typography variant='caption' color='text.secondary' sx={{ fontWeight: 'medium' }}>
                     Group by:
                   </Typography>
+                </Box>
 
+                <Box
+                  sx={{
+                    backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                    p: 1,
+                    borderRadius: 1,
+                    maxHeight: 120,
+                    overflowY: 'auto'
+                  }}
+                >
                   <Stack
                     direction='row'
                     spacing={1}
@@ -62,8 +119,7 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup }) => {
                       flexWrap: 'wrap',
                       rowGap: 1,
                       columnGap: 1,
-                      width: '100%',
-                      minHeight: 48
+                      width: '100%'
                     }}
                   >
                     {group?.ageGroup && (
@@ -76,8 +132,7 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup }) => {
                             '& .MuiChip-label': {
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                              maxWidth: '100%'
+                              whiteSpace: 'nowrap'
                             }
                           }}
                         />
@@ -100,8 +155,7 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup }) => {
                             '& .MuiChip-label': {
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                              maxWidth: '100%'
+                              whiteSpace: 'nowrap'
                             }
                           }}
                         />
@@ -122,8 +176,7 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup }) => {
                               '& .MuiChip-label': {
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                maxWidth: '100%'
+                                whiteSpace: 'nowrap'
                               }
                             }}
                           />
