@@ -187,7 +187,7 @@ export const addOne = async groupData => {
       try {
         // Add group to selected users
         await User.updateMany({ _id: { $in: members } }, { $addToSet: { groupIds: savedGroup._id } })
-        console.log(`Updated ${members.length} users with group ID ${savedGroup._id}`)
+        // console.log(`Updated ${members.length} users with group ID ${savedGroup._id}`)
       } catch (updateError) {
         console.error('Error updating users with group ID:', updateError)
         // Don't fail group creation if user update fails
@@ -278,13 +278,13 @@ export const updateOne = async (groupId, updateData) => {
         // Add group to new users
         if (usersToAdd.length > 0) {
           await User.updateMany({ _id: { $in: usersToAdd } }, { $addToSet: { groupIds: groupId } })
-          console.log(`Added group to ${usersToAdd.length} users`)
+          // console.log(`Added group to ${usersToAdd.length} users`)
         }
 
         // Remove group from users who are no longer members
         if (usersToRemove.length > 0) {
           await User.updateMany({ _id: { $in: usersToRemove } }, { $pull: { groupIds: groupId } })
-          console.log(`Removed group from ${usersToRemove.length} users`)
+          // console.log(`Removed group from ${usersToRemove.length} users`)
         }
       } catch (memberUpdateError) {
         console.error('Error updating group members:', memberUpdateError)
@@ -327,7 +327,7 @@ export const deleteOne = async groupId => {
     // Remove group from all users before soft delete
     try {
       await User.updateMany({ groupIds: groupId }, { $pull: { groupIds: groupId } })
-      console.log(`Removed group ${groupId} from all users`)
+      // console.log(`Removed group ${groupId} from all users`)
     } catch (userUpdateError) {
       console.error('Error removing group from users:', userUpdateError)
       // Continue with group deletion even if user update fails

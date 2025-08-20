@@ -12,6 +12,7 @@ const EditGroupPage = ({ groupId = null, groupData = null }) => {
   const router = useRouter()
   const { data: session } = useSession()
   console.log('groupData members array  in the edit page', groupData.members)
+  console.log('groupData  in the edit page', groupData)
   const handleSubmit = async values => {
     try {
       console.log('form Data INTHE EDIT PAGE: ', values)
@@ -66,7 +67,7 @@ const EditGroupPage = ({ groupId = null, groupData = null }) => {
   }
 
   const updatedGroupData = { ...groupData, members: groupData?.members || [] }
-  console.log('i am fetting the updated data' , updatedGroupData);
+  console.log('i am fetting the updated data', updatedGroupData)
 
   return (
     <div className='p-4'>
@@ -76,7 +77,7 @@ const EditGroupPage = ({ groupId = null, groupData = null }) => {
           {groupId ? 'Update the group details below' : 'Fill in the details below to create a new group'}
         </p>
       </div>
-      <CreateGroupForm onSubmit={handleSubmit} onCancel={handleCancel} data={updatedGroupData} />
+      <CreateGroupForm key={updatedGroupData} onSubmit={handleSubmit} onCancel={handleCancel} data={updatedGroupData} />
     </div>
   )
 }

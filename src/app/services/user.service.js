@@ -135,7 +135,7 @@ export async function getAll() {
       })
     }
   } catch (error) {
-    console.log('getting all user profiles error: ', error)
+    // console.log('getting all user profiles error: ', error)
   }
 
   try {
@@ -152,7 +152,7 @@ export async function getAll() {
 
     return { status: 'success', result: mergedUsers, message: 'Users fetched successfully' }
   } catch (error) {
-    console.log(`Error fetching users: ${error}`)
+    // console.log(`Error fetching users: ${error}`)
     return { status: 'error', result: null, message: error.message }
   }
 }
@@ -163,7 +163,7 @@ export async function updateOne({ email, data: updatedData }) {
     const updatedUser = await User.findOneAndUpdate({ email }, updatedData, { new: true }).select('-password') // Return updated user without password
     return { status: 'success', result: updatedUser, message: 'User updated successfully' }
   } catch (error) {
-    console.log(`Error updating user: ${error}`)
+    // console.log(`Error updating user: ${error}`)
     return { status: 'error', result: null, message: error.message }
   }
 }
@@ -198,11 +198,11 @@ export async function add({ data: userData }) {
       await srvSendEmailOtp(userData.email, 'verifyEmail')
       return { status: 'success', result: savedNewUser, message: 'User added successfully' }
     } else {
-      console.log('User not added')
+      // console.log('User not added')
       return { status: 'error', result: null, message: 'User not added' }
     }
   } catch (err) {
-    console.log('Error occurred while creating new user', err)
+    // console.log('Error occurred while creating new user', err)
     return { status: 'error', result: null, message: err.message }
   }
 }
@@ -242,11 +242,11 @@ export async function addByAdmin({ data: userData }) {
       const sendCredentialsResponse = await srvSendCredentials(userData)
       return { status: 'success', result: savedNewUser, message: 'User added successfully' }
     } else {
-      console.log('User not added')
+      // console.log('User not added')
       return { status: 'error', result: null, message: 'User not added' }
     }
   } catch (err) {
-    console.log('Error occurred while creating new user', err)
+    // console.log('Error occurred while creating new user', err)
     return { status: 'error', result: null, message: err.message }
   }
 }
@@ -268,7 +268,7 @@ export async function addOrUpdate({ email, data }) {
         try {
           const updatedUser = await UserProfileService.updateOne({ email, data })
         } catch (error) {
-          console.log('Error updating firstname, lastname, image on Google SignIn', error)
+          // console.log('Error updating firstname, lastname, image on Google SignIn', error)
         }
       }
 
@@ -280,7 +280,7 @@ export async function addOrUpdate({ email, data }) {
       return { status: 'error', ...errorResponse }
     }
   } catch (error) {
-    console.log('Error occurred while adding or updating user', error)
+    // console.log('Error occurred while adding or updating user', error)
     return { status: 'error', result: null, message: error.message }
   }
 }
@@ -372,7 +372,7 @@ export async function addByGoogleSignin({ email, data }) {
         // Filter out fields that are already present in the profile
         const fieldsToCheck = ['firstname', 'lastname', 'image']
         fieldsToCheck.forEach(field => {
-          console.log('FIELD: ', field)
+          // console.log('FIELD: ', field)
           if (profile?.[field]) {
             delete data[field] // Remove the field from data if it exists in profile
           }
@@ -380,14 +380,14 @@ export async function addByGoogleSignin({ email, data }) {
         try {
           const updatedUser = await UserProfileService.updateOne({ email, data })
         } catch (error) {
-          console.log('Error updating firstname, lastname, image on Google SignIn', error)
+          // console.log('Error updating firstname, lastname, image on Google SignIn', error)
         }
       }
       const errorResponse = handleDuplicateUserFound(user)
       return { status: 'success', result: null, message: 'User already exists', ...errorResponse }
     }
   } catch (error) {
-    console.log('Error occurred while adding or updating user', error)
+    // console.log('Error occurred while adding or updating user', error)
     return { status: 'error', result: null, message: error.message }
   }
 }
@@ -458,10 +458,10 @@ export async function login({ email, password }) {
       }
     }
     //check if password is correct
-    console.log('is user authenticated.. no..')
+    // console.log('is user authenticated.. no..')
     const validPassword = await PwdUtils.verifyPassword(password, user.password)
     if (!validPassword) {
-      console.log('invalid password.')
+      // console.log('invalid password.')
 
       return { status: 'error', result: null, message: 'Invalid password' }
     }
@@ -506,7 +506,7 @@ export async function srvSendEmailOtp(email, purpose) {
       }
       result = await updateOne({ email, data: updatedData })
     }
-    console.log('Result:', result)
+    // console.log('Result:', result)
     //construct the message
     // var content = MailService.srvGetVerifyEmailLink({ purpose, otp })
     var purposeDetail = MailService.getPurposeDetail(purpose)
@@ -518,15 +518,15 @@ export async function srvSendEmailOtp(email, purpose) {
       subject: 'OTP: ' + otp + ' to ' + purposeDetail,
       content
     })
-    console.log('Mail Response:', mailResponse)
+    // console.log('Mail Response:', mailResponse)
     return mailResponse
   } catch (error) {
-    console.log('Error occurred while sending', error.message)
+    // console.log('Error occurred while sending', error.message)
   }
 }
 
 export async function srvSendResetPasswordToken(email, locale) {
-  console.log('Locale:', locale)
+  // console.log('Locale:', locale)
   await connectMongo()
   try {
     const existingUser = await User.findOne({ email: email })
@@ -574,17 +574,17 @@ export async function srvSendResetPasswordToken(email, locale) {
       subject: 'Link to reset password',
       content: messageTemplate
     })
-    console.log('Mail Response:', mailResponse)
+    // console.log('Mail Response:', mailResponse)
     return { status: 'success', result: { resetPasswordLink }, message: 'Reset password link sent' }
   } catch (error) {
-    console.log('Error occurred while sending', error)
+    // console.log('Error occurred while sending', error)
     // throw new Error(error.message)
     return { status: 'error', result: null, message: error.message }
   }
 }
 
 export async function srvSendReferralLink({ fromEmail, toEmail, locale }) {
-  // console.log('Locale:', locale);
+  // // console.log('Locale:', locale);
   await connectMongo() // Ensure the database connection is established
 
   try {
@@ -621,7 +621,7 @@ export async function srvSendReferralLink({ fromEmail, toEmail, locale }) {
       content: messageTemplate
     })
 
-    console.log('Mail Response:', mailResponse)
+    // console.log('Mail Response:', mailResponse)
     return { status: 'success', result: mailResponse, message: 'Referral link sent successfully!' }
   } catch (error) {
     console.error('Error occurred while sending referral email:', error)
@@ -659,7 +659,7 @@ export async function srvSendReferrerNotification({ data }) {
       content: messageTemplate
     })
 
-    console.log('Mail Response:', mailResponse)
+    // console.log('Mail Response:', mailResponse)
     return { status: 'success', result: mailResponse, message: 'Notification to referrer sent successfully!' }
   } catch (error) {
     console.error('Error occurred while sending referral email:', error)
@@ -682,7 +682,7 @@ export async function srvSendCredentials(data, locale = 'en') {
       content: messageTemplate
     })
 
-    console.log('Mail Response:', mailResponse)
+    // console.log('Mail Response:', mailResponse)
     return { status: 'success', result: mailResponse, message: 'Credentials sent successfully!' }
   } catch (error) {
     console.error('Error occurred while sending credentials email:', error)
@@ -702,7 +702,7 @@ export async function srvVerifyEmailOtp(email, otp) {
     if (!user) {
       return 0 //("Invalid Token");
     } else {
-      console.log('User fetched..', user)
+      // console.log('User fetched..', user)
       user.isVerified = true
       user.verifyToken = null // Use null to clear the field
       user.verifyTokenExpiry = null // Use null to clear the field
@@ -711,7 +711,7 @@ export async function srvVerifyEmailOtp(email, otp) {
       return 1
     }
   } catch (error) {
-    console.log('Error while saving / verifying otp :', error?.message)
+    // console.log('Error while saving / verifying otp :', error?.message)
     return -1
   }
 }
@@ -719,7 +719,7 @@ export async function srvVerifyEmailOtp(email, otp) {
 export async function srvSendPhoneOtp(email, phone, name) {
   await connectMongo()
   try {
-    console.log('mobile number', phone)
+    // console.log('mobile number', phone)
     // Create a hash token based on the user's ID
     const otp = OtpService.generateOTP()
     // const otp = await bcryptjs.hash(email.toString(), 10)
@@ -733,15 +733,15 @@ export async function srvSendPhoneOtp(email, phone, name) {
     }
     result = await updateOne({ email, data: updatedData })
 
-    console.log('Result:', result)
+    // console.log('Result:', result)
 
     let content = SMSService.getOTPTemplate(phone, otp, name)
     // Send the sms
     const smsResponse = await SMSService.srvSendSMS(content)
-    console.log('SMS Response:', smsResponse)
+    // console.log('SMS Response:', smsResponse)
     return smsResponse
   } catch (error) {
-    console.log('Error occurred while sending sms', error.message)
+    // console.log('Error occurred while sending sms', error.message)
   }
 }
 
@@ -757,7 +757,7 @@ export async function srvVerifyPhoneOtp(email, otp) {
     if (!user) {
       return 0 //("Invalid Token");
     } else {
-      console.log('User fetched..', user)
+      // console.log('User fetched..', user)
       user.isVerified = true
       user.verifyToken = null // Use null to clear the field
       user.verifyTokenExpiry = null // Use null to clear the field
@@ -766,7 +766,7 @@ export async function srvVerifyPhoneOtp(email, otp) {
       return 1
     }
   } catch (error) {
-    console.log('Error while saving / verifying otp :', error?.message)
+    // console.log('Error while saving / verifying otp :', error?.message)
     return -1
   }
 }
@@ -811,7 +811,7 @@ export const setPassword = async ({ email, password }) => {
 }
 
 export const resetPassword = async ({ email, token, password }) => {
-  console.log(`reset password started`)
+  // console.log(`reset password started`)
   await connectMongo()
   try {
     if (!email || !token) {
@@ -838,13 +838,13 @@ export const resetPassword = async ({ email, token, password }) => {
     const hashedPassword = await bcryptjs.hash(password, 10)
     const newData = { password: hashedPassword }
 
-    console.log('Update password')
+    // console.log('Update password')
 
     user = await User.findOneAndUpdate({ email }, newData, { new: true })
     user.forgotPasswordToken = undefined
     user.forgotPasswordTokenExpiry = undefined
 
-    console.log('Updated password')
+    // console.log('Updated password')
 
     await user.save()
 
@@ -927,12 +927,12 @@ export const changePassword = async ({ email, currentPassword, newPassword }) =>
 export const doesUserHavePassword = async (userId, idType = 'email') => {
   await connectMongo()
   try {
-    console.log('Userid and idtype', userId, idType)
+    // console.log('Userid and idtype', userId, idType)
     var query = {}
 
     if (idType === 'email') query = { email: userId }
     if (idType === 'phone') query = { phone: userId }
-    console.log('user fetching query:', query)
+    // console.log('user fetching query:', query)
     const user = await User.findOne(query).select('+password').lean()
     if (!user) {
       throw new Error('User not found.')
@@ -1057,7 +1057,7 @@ const generateUniqueMemberId = async () => {
 //     alertType: 'NEW_LOGIN_INTRO_ALERT',
 //     priority: 1,
 //   });
-//   console.log('New alert created for user login.');
+//   // console.log('New alert created for user login.');
 // }
 // async function addDummyAlertHelper(email) {
 //   await AlertsService.addGivenAlert({
@@ -1065,11 +1065,11 @@ const generateUniqueMemberId = async () => {
 //     alertType: 'DUMMY',
 //     priority: 2,
 //   });
-//   console.log('New alert created for user login.');
+//   // console.log('New alert created for user login.');
 // }
 // async function activateUserAlertsHelper(email) {
 //   await AlertsService.activateAllAlertsOfUser({ email });
-//   console.log('User alerts activated.');
+//   // console.log('User alerts activated.');
 // }
 
 // async function alertActionsOnLogin(email) {

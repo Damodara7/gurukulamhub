@@ -3,6 +3,10 @@ import { API_URLS } from '@/configs/apiConfig'
 import FallBackCard from '@/components/apps/games/FallBackCard'
 import EditGroupPage from '@/views/apps/groups/edit-group'
 
+// Force fresh data on every visit - no caching
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 async function getGroupData(groupId) {
   try {
     const res = await RestApi.get(`${API_URLS.v0.USERS_GROUP}?id=${groupId}`)
@@ -29,7 +33,10 @@ async function getGroupData(groupId) {
 
 export default async function page({ params }) {
   const { id } = params
-  const [groupData] = await Promise.all([getGroupData(id)])
+
+  // Force fresh data by adding cache control
+  const groupData = await getGroupData(id)
+
   if (!groupData) {
     return (
       <FallBackCard content='You can go back to All Groups' path='/management/groups' btnText='Back To All Groups' />

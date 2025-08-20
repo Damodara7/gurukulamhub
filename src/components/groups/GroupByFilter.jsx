@@ -33,7 +33,15 @@ const spinnerStyles = `
   }
 `
 
-const GroupByFilter = ({ users, onFilterChange, initialCriteria = null }) => {
+const GroupByFilter = ({
+  users,
+  onFilterChange,
+  initialCriteria = {
+    ageGroup: null,
+    location: null,
+    gender: null
+  }
+}) => {
   const didInitFromPropsRef = useRef(false)
   const [anchorEl, setAnchorEl] = useState(null)
   const [groupBy, setGroupBy] = useState(null)
@@ -56,11 +64,10 @@ const GroupByFilter = ({ users, onFilterChange, initialCriteria = null }) => {
   const [pendingFilterData, setPendingFilterData] = useState(null)
   const [matchedUsers, setMatchedUsers] = useState([])
   const [unmatchedUsers, setUnmatchedUsers] = useState([])
-  const [combinedCriteria, setCombinedCriteria] = useState({
-    ageGroup: null,
-    location: null,
-    gender: null
-  })
+  const [combinedCriteria, setCombinedCriteria] = useState(initialCriteria)
+
+  console.error('combinedCriteria', combinedCriteria)
+  console.error('initialCriteria', initialCriteria)
 
   const handleClick = event => {
     setAnchorEl(event.currentTarget)
@@ -70,33 +77,37 @@ const GroupByFilter = ({ users, onFilterChange, initialCriteria = null }) => {
     setAnchorEl(null)
   }
 
+  useEffect(() => {
+    setCombinedCriteria(initialCriteria)
+  }, [initialCriteria])
+
   // Initialize with existing filters if in edit mode (once)
   useEffect(() => {
     if (didInitFromPropsRef.current) return
-    if (!initialCriteria) return
+    if (!combinedCriteria) return
     if (!Array.isArray(users) || users.length === 0) return
 
     const filters = []
     let userIds = users.map(user => user._id)
 
-    if (initialCriteria.ageGroup) {
+    if (combinedCriteria.ageGroup) {
       const idsForAge = users
         .filter(u => {
           const age = u?.profile?.age
-          return age != null && age >= initialCriteria.ageGroup.min && age <= initialCriteria.ageGroup.max
+          return age != null && age >= combinedCriteria.ageGroup.min && age <= combinedCriteria.ageGroup.max
         })
         .map(u => u._id)
       filters.push({
         type: 'age',
-        label: `Age: ${initialCriteria.ageGroup.min}-${initialCriteria.ageGroup.max}`,
-        value: initialCriteria.ageGroup,
+        label: `Age: ${combinedCriteria.ageGroup.min}-${combinedCriteria.ageGroup.max}`,
+        value: combinedCriteria.ageGroup,
         userIds: idsForAge
       })
       userIds = userIds.filter(id => idsForAge.includes(id))
     }
 
-    if (initialCriteria.location) {
-      const loc = initialCriteria.location
+    if (combinedCriteria.location) {
+      const loc = combinedCriteria.location
       const parts = [loc.country, loc.region, loc.city].filter(Boolean)
       const idsForLoc = users
         .filter(u => {
@@ -117,8 +128,8 @@ const GroupByFilter = ({ users, onFilterChange, initialCriteria = null }) => {
       userIds = userIds.filter(id => idsForLoc.includes(id))
     }
 
-    if (initialCriteria.gender) {
-      const genders = Array.isArray(initialCriteria.gender) ? initialCriteria.gender : [initialCriteria.gender]
+    if (combinedCriteria.gender) {
+      const genders = Array.isArray(combinedCriteria.gender) ? combinedCriteria.gender : [combinedCriteria.gender]
       const idsForGender = users
         .filter(u => {
           const gender = u?.profile?.gender?.toLowerCase()
@@ -137,10 +148,9 @@ const GroupByFilter = ({ users, onFilterChange, initialCriteria = null }) => {
     setSelectedFilters(filters)
     setMatchedUsers(users.filter(u => userIds.includes(u._id)))
     setUnmatchedUsers(users.filter(u => !userIds.includes(u._id)))
-    setCombinedCriteria(initialCriteria)
 
     didInitFromPropsRef.current = true
-  }, [initialCriteria, users])
+  }, [combinedCriteria, users])
 
   const OperationDialog = ({ open, onClose, onOperationSelect }) => (
     <Dialog open={open} onClose={onClose} maxWidth='xs' fullWidth>

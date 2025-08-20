@@ -23,8 +23,8 @@ export async function getByEmail({ email }) {
     }
 
     let user = await User.findOne({ email }).select('-password').lean()
-    console.log('profile: ', profile)
-    console.log('user: ', user)
+    // console.log('profile: ', profile)
+    // console.log('user: ', user)
     return { status: 'success', result: { profile, user }, message: 'User profile successfully retrieved' };
   } catch (error) {
     console.error('getByEmail function -> Error fetching user profile: ', error)
@@ -308,12 +308,12 @@ export async function getAllEvenDeletedUserProfiles() {
 export const getUserProfile = async (userId, idType = 'email') => {
   await connectMongo()
   try {
-    console.log('Userid and idtype', userId, idType)
+    // console.log('Userid and idtype', userId, idType)
     var query = {}
 
     if (idType === 'email') query = { email: userId }
     if (idType === 'phone') query = { phone: userId }
-    console.log('user profile fetching query:', query)
+    // console.log('user profile fetching query:', query)
     const profile = await UserProfile.findOne(query)
     if (!profile) {
       throw new Error('User profile not found.')
