@@ -2,6 +2,7 @@ import connectMongo from '@/utils/dbConnect-mongo'
 import mongoose from 'mongoose'
 import Group from './group.model.js'
 import User from '@/app/models/user.model.js'
+
 export const getOne = async (filter = {}) => {
   await connectMongo()
   try {
@@ -13,7 +14,21 @@ export const getOne = async (filter = {}) => {
       }
     }
 
-    const group = await Group.findOne({ ...filter, isDeleted: false }).lean()
+    const group = await Group.findOne({ ...filter, isDeleted: false })
+      .lean()
+      .populate([
+        {
+          path: 'members',
+          populate: {
+            path: 'profile'
+          }
+        }
+        // },
+        // {
+        //   path: 'createdBy',
+        //   select: 'firstname lastname email'
+        // }
+      ])
 
     if (!group) {
       return {
@@ -23,14 +38,9 @@ export const getOne = async (filter = {}) => {
       }
     }
 
-    // Derive members from users' groupIds and do not persist on the group
-    const usersInGroup = await User.find({ groupIds: group._id }).lean().populate('profile')
-    console.log('users in group: ', usersInGroup)
-    const derivedMembers = usersInGroup.map(u => u._id)
-
     return {
       status: 'success',
-      result: { ...group, members: derivedMembers,  membersDetails: usersInGroup, membersCount: derivedMembers.length },
+      result: group,
       message: 'Group retrieved successfully'
     }
   } catch (error) {
@@ -49,25 +59,10 @@ export const getAll = async (filter = {}) => {
       .sort({ createdAt: -1 })
       .lean()
 
-    // For each group, get the members from users
-    const groupsWithMembers = await Promise.all(
-      groups.map(async group => {
-        const usersInGroup = await User.find({ groupIds: group._id }, { _id: 1 }).lean()
-        const derivedMembers = usersInGroup.map(u => u._id)
-
-        return {
-          ...group,
-          members: derivedMembers,
-          // membersDetails: usersInGroup,
-          membersCount: derivedMembers.length
-        }
-      })
-    )
-
     return {
       status: 'success',
-      result: groupsWithMembers,
-      message: `Found ${groupsWithMembers.length} groups`
+      result: groups,
+      message: `Found ${groups.length} groups`
     }
   } catch (error) {
     return {
@@ -167,9 +162,8 @@ export const addOne = async groupData => {
       groupData.gender = gendersArray
     }
 
-    /// Create new group instance (without members array as it's not stored in DB)
-    const { members, ...groupDataWithoutMembers } = groupData
-    const newGroup = new Group({ ...groupDataWithoutMembers })
+    // Create new group instance
+    const newGroup = new Group(groupData)
 
     // Validate the group
     const validationError = newGroup.validateSync()
@@ -185,11 +179,11 @@ export const addOne = async groupData => {
     const savedGroup = await newGroup.save()
 
     // Update all selected users' groupIds arrays with the new group ID
-    if (members && members.length > 0) {
+    if (groupData.members && groupData.members.length > 0) {
       try {
         // Add group to selected users
-        await User.updateMany({ _id: { $in: members } }, { $addToSet: { groupIds: savedGroup._id } })
-        console.log(`Updated ${members.length} users with group ID ${savedGroup._id}`)
+        await User.updateMany({ _id: { $in: groupData.members } }, { $addToSet: { groupIds: savedGroup._id } })
+        console.log(`Updated ${groupData.members.length} users with group ID ${savedGroup._id}`)
       } catch (updateError) {
         console.error('Error updating users with group ID:', updateError)
         // Don't fail group creation if user update fails
@@ -198,7 +192,7 @@ export const addOne = async groupData => {
 
     return {
       status: 'success',
-      result: { ...savedGroup.toObject(), members, membersCount: members.length },
+      result: savedGroup.toObject(),
       message: 'Group created successfully'
     }
   } catch (error) {
@@ -242,40 +236,16 @@ export const updateOne = async (groupId, updateData) => {
       }
     }
 
-    // Extract members from update data (they're not stored in the group document)
-    const { members, ...groupUpdateData } = updateData
-
-    // Apply updates to the existing group document
-    Object.keys(groupUpdateData).forEach(key => {
-      if (groupUpdateData[key] !== undefined) {
-        existingGroup[key] = groupUpdateData[key]
-      }
-    })
-
-    // Validate the updated group document
-    const validationError = existingGroup.validateSync()
-    if (validationError) {
-      const errors = Object.values(validationError.errors).map(err => err.message)
-      return {
-        status: 'error',
-        result: null,
-        message: `Validation failed: ${errors.join(', ')}`
-      }
-    }
-
-    // Save the updated group
-    const updatedGroup = await existingGroup.save()
-
     // Handle member synchronization if members array is provided
-    if (members !== undefined) {
+    if (updateData.members !== undefined) {
       try {
         // Get current users in this group
         const currentUsersInGroup = await User.find({ groupIds: groupId }, { _id: 1 }).lean()
         const currentUserIds = currentUsersInGroup.map(u => u._id.toString())
 
         // Find users to add and remove
-        const usersToAdd = members.filter(userId => !currentUserIds.includes(userId.toString()))
-        const usersToRemove = currentUserIds.filter(userId => !members.includes(userId.toString()))
+        const usersToAdd = updateData.members.filter(userId => !currentUserIds.includes(userId.toString()))
+        const usersToRemove = currentUserIds.filter(userId => !updateData.members.includes(userId.toString()))
 
         // Add group to new users
         if (usersToAdd.length > 0) {
@@ -294,13 +264,30 @@ export const updateOne = async (groupId, updateData) => {
       }
     }
 
-    // Get updated members list for response
-    const updatedUsersInGroup = await User.find({ groupIds: groupId }, { _id: 1 }).lean()
-    const updatedMembers = updatedUsersInGroup.map(u => u._id)
+    // Apply updates to the existing group document
+    Object.keys(updateData).forEach(key => {
+      if (updateData[key] !== undefined) {
+        existingGroup[key] = updateData[key]
+      }
+    })
+
+    // Validate the updated group document
+    const validationError = existingGroup.validateSync()
+    if (validationError) {
+      const errors = Object.values(validationError.errors).map(err => err.message)
+      return {
+        status: 'error',
+        result: null,
+        message: `Validation failed: ${errors.join(', ')}`
+      }
+    }
+
+    // Save the updated group
+    const updatedGroup = await existingGroup.save()
 
     return {
       status: 'success',
-      result: { ...updatedGroup.toObject(), members: updatedMembers },
+      result: updatedGroup.toObject(),
       message: 'Group updated successfully'
     }
   } catch (error) {

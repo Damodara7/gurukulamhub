@@ -34,18 +34,18 @@ export const authOptions = {
          * For e.g. return { id: 1, name: 'J Smith', email: 'jsmith@example.com' }
          * You can also use the `req` object to obtain additional parameters (i.e., the request IP address)
          */
-        console.log('credentials')
+        // console.log('credentials')
         const { email, password, mobile, loginMethod } = credentials
 
         if (loginMethod === 'mobile') {
           try {
             const result = await RestApi.post(`${API_URLS.v0.USERS_MOBILE_LOGIN}`, {email})
             // const result = await clientApi.getUserProfileByEmail(email)
-            console.log('result of mobile signin: ', result)
+            // console.log('result of mobile signin: ', result)
             if (result?.status === 'success') {
               const { profile, user } = result?.result
               let userData = { id: profile?._id, firstname: profile?.firstname, lastname: profile?.lastname, email: profile?.email, image: profile?.image, phone: profile?.phone, name: profile?.firstname + " " + profile?.lastname }
-              console.log('user data to be send to session: ', userData)
+              // console.log('user data to be send to session: ', userData)
               return userData
             } else {
               throw new Error(result?.message)
@@ -60,10 +60,10 @@ export const authOptions = {
             const result = await RestApi.post(API_URLS.v0.USERS_LOGIN, { email, password })
             // const result = await clientApi.loginUser(email, password)
 
-            console.log('CREDENTIALS LOGIN RESULT in auth.js : ', result)
+            // console.log('CREDENTIALS LOGIN RESULT in auth.js : ', result)
             if (result?.status === 'success') {
               // ** Set the user data in the session
-              // console.log('User result in credentials signin in auth.js :', result.result)
+              // // console.log('User result in credentials signin in auth.js :', result.result)
               return result.result
 
             } else {
@@ -125,15 +125,15 @@ export const authOptions = {
      * via `jwt()` callback to make them accessible in the `session()` callback
      */
     async jwt({ token, trigger, session }) {
-      console.log('TOKEN: ', token);
-      // console.log('USER: ', user);
+      // console.log('TOKEN: ', token);
+      // // console.log('USER: ', user);
       if (token.email) {
         try {
           const result = await RestApi.get(`${API_URLS.v0.USERS_PROFILE}/${token.email}`)
           // const result = await clientApi.getUserProfileByEmail(token.email)
           const { profile, user } = result?.result
-          console.log('PROFILE: ', profile)
-          console.log('USER: ', user)
+          // console.log('PROFILE: ', profile)
+          // console.log('USER: ', user)
           if (result?.status === 'success') {
             token.id = user?._id
             token.roles = user?.roles
@@ -146,15 +146,15 @@ export const authOptions = {
             token.lastname = profile?.lastname
             token.image = profile?.image
           } else {
-            console.log("Error fetching user profile data for jwt", result?.message)
+            // console.log("Error fetching user profile data for jwt", result?.message)
           }
         } catch (error) {
-          console.log("Error fetching user profile data for jwt(catch): ", error)
+          // console.log("Error fetching user profile data for jwt(catch): ", error)
         }
       }
 
       if (trigger === 'update' && session) {
-        console.log("$$$$$$$$$$ Trigger update $$$$$$", session.currentGameId)
+        // console.log("$$$$$$$$$$ Trigger update $$$$$$", session.currentGameId)
         token.currentGameId = session.currentGameId;
       }
       return token
@@ -164,7 +164,7 @@ export const authOptions = {
       if (trigger === "update") {
         // Make sure the updated value is reflected on the client
         session.currentGameId = token.currentGameId
-        // console.log(" %%%%%%%%%%% Updated the session.name  %%%%%%%%%%% ",session.currentGameId)
+        // // console.log(" %%%%%%%%%%% Updated the session.name  %%%%%%%%%%% ",session.currentGameId)
       }
 
       /*************** */
@@ -208,7 +208,7 @@ export const authOptions = {
         // return true
         if (user) {
           // Create or Update User
-          console.log('USER IN GOOGLE SIGNIN: ', user)
+          // console.log('USER IN GOOGLE SIGNIN: ', user)
           try {
             const nameParts = user?.name?.trim()?.split(' ') || []
             const lastname = nameParts?.pop() || ''  // Removes and returns the last word
@@ -227,12 +227,12 @@ export const authOptions = {
               data.image = user.image
             }
 
-            console.log(data)
+            // console.log(data)
 
             const result = await RestApi.post(API_URLS.v0.USERS_SIGNIN_WITH_GOOGLE, data)
             // const result = await clientApi.addOrUpdateUserByGoogleSignin(data)
 
-            console.log('USERS_SIGNIN_WITH_GOOGLE user creation Result is....', result)
+            // console.log('USERS_SIGNIN_WITH_GOOGLE user creation Result is....', result)
 
             if (result?.status === 'success') {
 
@@ -244,16 +244,16 @@ export const authOptions = {
           } catch (err) {
             console.error('Signup Error (catch block):', err)
           }
-          console.log('RETURNING TRUE FOR GOOGLE SIGNIN')
+          // console.log('RETURNING TRUE FOR GOOGLE SIGNIN')
 
           return true
         }
-        console.log('RETURNING FALSE FOR GOOGLE SIGNIN')
+        // console.log('RETURNING FALSE FOR GOOGLE SIGNIN')
         return false
       }
       if (account?.provider === 'credentials') {
         if (user) {
-          console.log('RETURNING TRUE FOR CREDENTIALS SIGNIN')
+          // console.log('RETURNING TRUE FOR CREDENTIALS SIGNIN')
           return true
         }
         return false

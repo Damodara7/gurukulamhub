@@ -33,7 +33,15 @@ const spinnerStyles = `
   }
 `
 
-const GroupByFilter = ({ users, onFilterChange, initialCriteria = null }) => {
+const GroupByFilter = ({
+  users,
+  onFilterChange,
+  initialCriteria = {
+    ageGroup: null,
+    location: null,
+    gender: null
+  }
+}) => {
   const didInitFromPropsRef = useRef(false)
   const [anchorEl, setAnchorEl] = useState(null)
   const [groupBy, setGroupBy] = useState(null)
@@ -56,11 +64,10 @@ const GroupByFilter = ({ users, onFilterChange, initialCriteria = null }) => {
   const [pendingFilterData, setPendingFilterData] = useState(null)
   const [matchedUsers, setMatchedUsers] = useState([])
   const [unmatchedUsers, setUnmatchedUsers] = useState([])
-  const [combinedCriteria, setCombinedCriteria] = useState({
-    ageGroup: null,
-    location: null,
-    gender: null
-  })
+  const [combinedCriteria, setCombinedCriteria] = useState(initialCriteria)
+
+  console.error('combinedCriteria', combinedCriteria)
+  console.error('initialCriteria', initialCriteria)
 
   const handleClick = event => {
     setAnchorEl(event.currentTarget)
@@ -70,33 +77,37 @@ const GroupByFilter = ({ users, onFilterChange, initialCriteria = null }) => {
     setAnchorEl(null)
   }
 
+  useEffect(() => {
+    setCombinedCriteria(initialCriteria)
+  }, [initialCriteria])
+
   // Initialize with existing filters if in edit mode (once)
   useEffect(() => {
     if (didInitFromPropsRef.current) return
-    if (!initialCriteria) return
+    if (!combinedCriteria) return
     if (!Array.isArray(users) || users.length === 0) return
 
     const filters = []
     let userIds = users.map(user => user._id)
 
-    if (initialCriteria.ageGroup) {
+    if (combinedCriteria.ageGroup) {
       const idsForAge = users
         .filter(u => {
           const age = u?.profile?.age
-          return age != null && age >= initialCriteria.ageGroup.min && age <= initialCriteria.ageGroup.max
+          return age != null && age >= combinedCriteria.ageGroup.min && age <= combinedCriteria.ageGroup.max
         })
         .map(u => u._id)
       filters.push({
         type: 'age',
-        label: `Age: ${initialCriteria.ageGroup.min}-${initialCriteria.ageGroup.max}`,
-        value: initialCriteria.ageGroup,
+        label: `Age: ${combinedCriteria.ageGroup.min}-${combinedCriteria.ageGroup.max}`,
+        value: combinedCriteria.ageGroup,
         userIds: idsForAge
       })
       userIds = userIds.filter(id => idsForAge.includes(id))
     }
 
-    if (initialCriteria.location) {
-      const loc = initialCriteria.location
+    if (combinedCriteria.location) {
+      const loc = combinedCriteria.location
       const parts = [loc.country, loc.region, loc.city].filter(Boolean)
       const idsForLoc = users
         .filter(u => {
@@ -117,8 +128,8 @@ const GroupByFilter = ({ users, onFilterChange, initialCriteria = null }) => {
       userIds = userIds.filter(id => idsForLoc.includes(id))
     }
 
-    if (initialCriteria.gender) {
-      const genders = Array.isArray(initialCriteria.gender) ? initialCriteria.gender : [initialCriteria.gender]
+    if (combinedCriteria.gender) {
+      const genders = Array.isArray(combinedCriteria.gender) ? combinedCriteria.gender : [combinedCriteria.gender]
       const idsForGender = users
         .filter(u => {
           const gender = u?.profile?.gender?.toLowerCase()
@@ -137,10 +148,9 @@ const GroupByFilter = ({ users, onFilterChange, initialCriteria = null }) => {
     setSelectedFilters(filters)
     setMatchedUsers(users.filter(u => userIds.includes(u._id)))
     setUnmatchedUsers(users.filter(u => !userIds.includes(u._id)))
-    setCombinedCriteria(initialCriteria)
 
     didInitFromPropsRef.current = true
-  }, [initialCriteria, users])
+  }, [combinedCriteria, users])
 
   const OperationDialog = ({ open, onClose, onOperationSelect }) => (
     <Dialog open={open} onClose={onClose} maxWidth='xs' fullWidth>
@@ -849,41 +859,51 @@ const GroupByFilter = ({ users, onFilterChange, initialCriteria = null }) => {
                   { key: 'other', label: 'Other', icon: '👤' }
                 ].map(gender => (
                   <Grid item xs={12} sm={4} key={gender.key}>
-                    <Box
+                    <FormControlLabel
+                      fullWidth
+                      control={
+                        <Checkbox
+                          checked={filters.gender[gender.key]}
+                          onChange={e => handleFilterChange('gender', gender.key, e.target.checked)}
+                          sx={{ mr: 1 }}
+                        />
+                      }
+                      label={
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Typography
+                            variant='h6'
+                            sx={{
+                              color: filters.gender[gender.key] ? 'white' : 'inherit'
+                            }}
+                          >
+                            {gender.icon}
+                          </Typography>
+                          <Typography
+                            variant='body1'
+                            sx={{
+                              fontWeight: 500,
+                              color: filters.gender[gender.key] ? 'white' : 'inherit'
+                            }}
+                          >
+                            {gender.label}
+                          </Typography>
+                        </Box>
+                      }
                       sx={{
-                        p: 2,
+                        m: 0,
+                        width: '100%',
                         border: '2px solid',
                         borderColor: filters.gender[gender.key] ? 'primary.main' : 'divider',
                         borderRadius: 2,
-                        bgcolor: filters.gender[gender.key] ? 'primary.light' : 'background.paper',
+                        bgcolor: filters.gender[gender.key] ? 'primary.main' : 'background.paper',
                         cursor: 'pointer',
                         transition: 'all 0.2s ease-in-out',
                         '&:hover': {
                           borderColor: 'primary.main',
-                          bgcolor: filters.gender[gender.key] ? 'primary.light' : 'action.hover'
+                          bgcolor: filters.gender[gender.key] ? 'primary.main' : 'action.hover'
                         }
                       }}
-                      onClick={() => handleFilterChange('gender', gender.key, !filters.gender[gender.key])}
-                    >
-                      <FormControlLabel
-                        control={
-                          <Checkbox
-                            checked={filters.gender[gender.key]}
-                            onChange={e => handleFilterChange('gender', gender.key, e.target.checked)}
-                            sx={{ mr: 1 }}
-                          />
-                        }
-                        label={
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Typography variant='h6'>{gender.icon}</Typography>
-                            <Typography variant='body1' sx={{ fontWeight: 500 }}>
-                              {gender.label}
-                            </Typography>
-                          </Box>
-                        }
-                        sx={{ m: 0, width: '100%' }}
-                      />
-                    </Box>
+                    />
                   </Grid>
                 ))}
               </Grid>
@@ -892,13 +912,15 @@ const GroupByFilter = ({ users, onFilterChange, initialCriteria = null }) => {
         </DialogContent>
 
         <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={closeFilterDialog} variant='outlined' sx={{ borderRadius: 2, px: 3 }}>
+          <Button onClick={closeFilterDialog} variant='outlined'>
             Cancel
           </Button>
           <Button
             onClick={applyFilters}
+            component='label'
             variant='contained'
-            sx={{ borderRadius: 2, px: 3 }}
+            color='primary'
+            style={{ color: 'white' }}
             disabled={
               (groupBy === 'age' && !filters.age.min && !filters.age.max) ||
               (groupBy === 'location' && !filters.location.country) ||
@@ -907,6 +929,16 @@ const GroupByFilter = ({ users, onFilterChange, initialCriteria = null }) => {
           >
             Apply Filters
           </Button>
+          {/* <Button
+            onClick={handleSubmit}
+            component='label'
+            variant='contained'
+            color='primary'
+            style={{ color: 'white' }}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Saving...' : 'Save Group'}
+          </Button> */}
         </DialogActions>
       </Dialog>
 

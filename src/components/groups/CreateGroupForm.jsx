@@ -381,16 +381,9 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
               <Grid item xs={12}>
                 <GroupByFilter
                   users={users}
+                  key={data}
                   onFilterChange={(userIds, criteria) => handleFilterChange(userIds, criteria)}
-                  initialCriteria={
-                    data?.ageGroup || data?.location || data?.gender
-                      ? {
-                          ageGroup: data?.ageGroup,
-                          location: data?.location,
-                          gender: data?.gender
-                        }
-                      : null
-                  }
+                  initialCriteria={filterCriteria}
                 />
               </Grid>
 
