@@ -1,5 +1,4 @@
 import mongoose from 'mongoose'
-import User from '@/app/models/user.model'
 
 const locationSchema = new mongoose.Schema({
   country: { type: String },
@@ -27,7 +26,12 @@ export const groupSchema = new mongoose.Schema(
       enum: ['male', 'female', 'other']
     },
     ageGroup: ageGroupSchema,
-
+    members: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'users'
+      }
+    ],
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'users',

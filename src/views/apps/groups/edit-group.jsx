@@ -65,8 +65,8 @@ const EditGroupPage = ({ groupId = null }) => {
         ...values,
         updatedBy: session?.user?.id,
         updaterEmail: session?.user?.email,
-        membersCount: values.members.length,
         members: values.members,
+        membersCount: values.members.length,
         // Ensure filter criteria is included
         ageGroup: values.ageGroup,
         location: values.location,
