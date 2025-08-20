@@ -8,30 +8,45 @@ import { Box, CircularProgress, Typography } from '@mui/material'
 export default function Page({ params }) {
   const { id } = params
   const [groupData, setGroupData] = useState(null)
+  const [gamesData, setGamesData] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    const fetchGroupData = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true)
-        const result = await RestApi.get(`${API_URLS.v0.USERS_GROUP}?id=${id}`)
-        if (result?.status === 'success') {
-          setGroupData(result.result)
-          console.log('groupdata in the group details page', result.result)
+        setError(null)
+
+        // Fetch group data and games data in parallel
+        const [groupResult, gamesResult] = await Promise.all([
+          RestApi.get(`${API_URLS.v0.USERS_GROUP}?id=${id}`),
+          RestApi.get(`${API_URLS.v0.USERS_GAME}?groupId=${id}`)
+        ])
+
+        if (groupResult?.status === 'success') {
+          setGroupData(groupResult.result)
+          console.log('groupdata in the group details page', groupResult.result)
         } else {
-          setError(result.message || 'Failed to fetch group data')
+          setError(groupResult.message || 'Failed to fetch group data')
+        }
+
+        if (gamesResult?.status === 'success') {
+          setGamesData(gamesResult.result || [])
+        } else {
+          console.warn('Failed to fetch games:', gamesResult.message)
+          // Don't set error for games failure, just log warning
         }
       } catch (error) {
-        console.error('Error fetching group:', error)
-        setError('An error occurred while fetching group data')
+        console.error('Error fetching data:', error)
+        setError('An error occurred while fetching data')
       } finally {
         setLoading(false)
       }
     }
 
     if (id) {
-      fetchGroupData()
+      fetchData()
     }
   }, [id])
 
@@ -53,5 +68,5 @@ export default function Page({ params }) {
     )
   }
 
-  return <GroupdetailsPage groupId={id} groupData={groupData} />
+  return <GroupdetailsPage groupId={id} groupData={groupData} gamesData={gamesData} />
 }

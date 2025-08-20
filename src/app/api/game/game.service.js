@@ -186,6 +186,42 @@ export const getAllByEmail = async (email, filter = {}) => {
   }
 }
 
+export const getAllByGroupId = async (groupId, filter = {}) => {
+  await connectMongo()
+  try {
+    if (!groupId) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Valid group ID is required'
+      }
+    }
+
+    const games = await Game.find({ groupId: groupId, isDeleted: false, ...filter })
+      .populate('quiz')
+      .populate('groupId')
+      .populate('createdBy', 'email firstName lastName roles')
+      .populate('forwardingAdmin', 'email firstName lastName roles')
+      .populate('rewards.sponsors.sponsorshipId')
+      .sort({ startTime: -1 })
+      .lean()
+
+    const enrichedGames = await enrichGamesWithDetails(games)
+
+    return {
+      status: 'success',
+      result: enrichedGames,
+      message: `Found ${games.length} games for group ${groupId}`
+    }
+  } catch (error) {
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to retrieve games by group ID'
+    }
+  }
+}
+
 export const addOne = async gameData => {
   await connectMongo()
   try {
@@ -235,7 +271,7 @@ export const addOne = async gameData => {
     }
 
     // Create new game instance
-    const newGame = new Game({ 
+    const newGame = new Game({
       ...gameData,
       groupId: gameData.groupId || null
     })
@@ -701,7 +737,9 @@ export const joinGame = async (gameId, userData) => {
         return {
           status: 'error',
           result: null,
-          message: `You are not allowed to register/join this game. This game is restricted to the group "${grp?.groupName || 'Private Group'}".${filterText}`
+          message: `You are not allowed to register/join this game. This game is restricted to the group "${
+            grp?.groupName || 'Private Group'
+          }".${filterText}`
         }
       }
     }
@@ -807,7 +845,9 @@ export const startGame = async (gameId, userData) => {
         return {
           status: 'error',
           result: null,
-          message: `You are not allowed to start this game. This game is restricted to the group "${grp?.groupName || 'Private Group'}".${filterText}`
+          message: `You are not allowed to start this game. This game is restricted to the group "${
+            grp?.groupName || 'Private Group'
+          }".${filterText}`
         }
       }
     }

@@ -1,19 +1,27 @@
 'use client'
-import React from 'react'
-import { Box, Typography, Chip, Avatar, Card, CardContent, Divider, Grid, Paper } from '@mui/material'
+import React, { useState, useEffect } from 'react'
+import { Box, Typography, Chip, Avatar, Card, CardContent, Divider, Grid, Paper, Button } from '@mui/material'
 import {
   Group as GroupIcon,
   LocationOn as LocationIcon,
   Person as PersonIcon,
-  Cake as CakeIcon
+  Cake as CakeIcon,
+  SportsEsports as GameIcon,
+  Visibility as VisibilityIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  OpenInNew as OpenInNewIcon
 } from '@mui/icons-material'
+import { format } from 'date-fns'
+import { useRouter } from 'next/navigation'
 
-const GroupdetailsPage = ({ groupId, groupData }) => {
+const GroupdetailsPage = ({ groupData, gamesData = [] }) => {
   // Debug: Log the received data structure
   console.log('GroupDetailsPage - Received groupData:', groupData)
   console.log('GroupDetailsPage - Members:', groupData?.members)
   console.log('GroupDetailsPage - First member profile:', groupData?.members?.[0]?.profile)
-
+  console.log('GroupDetailsPage - Games:', gamesData)
+  const router = useRouter()
   // Helper function to get filter chips
   const getFilterChips = () => {
     const chips = []
@@ -241,6 +249,99 @@ const GroupdetailsPage = ({ groupId, groupData }) => {
             <Box sx={{ textAlign: 'center', py: 4 }}>
               <Typography variant='body1' color='text.secondary'>
                 No members in this group
+              </Typography>
+            </Box>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Group Games Section */}
+      <Card sx={{ mt: 4 }}>
+        <CardContent>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+            <Typography variant='h6' sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <GameIcon />
+              Group Games
+            </Typography>
+            <Typography variant='body2' color='text.secondary'>
+              {gamesData.length} games
+            </Typography>
+          </Box>
+
+          <Divider sx={{ mb: 3 }} />
+
+          {gamesData.length > 0 ? (
+            <Paper
+              sx={{
+                maxHeight: '400px',
+                overflow: 'auto',
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 1
+              }}
+            >
+              <Box sx={{ p: 2 }}>
+                {gamesData.map((game, index) => (
+                  <Box
+                    key={game._id || index}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 2,
+                      py: 1.5,
+                      borderBottom: index < gamesData.length - 1 ? '1px solid' : 'none',
+                      borderColor: 'divider'
+                    }}
+                  >
+                    <Avatar
+                      src={game.thumbnailPoster}
+                      sx={{
+                        width: 48,
+                        height: 48,
+                        bgcolor: 'primary.main',
+                        fontSize: '1.2rem',
+                        fontWeight: 600
+                      }}
+                    >
+                      {game.title?.[0]?.toUpperCase() || 'G'}
+                    </Avatar>
+
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography variant='subtitle1' sx={{ fontWeight: 600, mb: 0.5 }}>
+                        {game.title || 'Untitled Game'}
+                      </Typography>
+
+                      {game.description && (
+                        <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
+                          {game.description}
+                        </Typography>
+                      )}
+                    </Box>
+
+                    {/* External Link Button */}
+                    <Button
+                      size='small'
+                      variant='outlined'
+                      color='primary'
+                      onClick={() => router.push(`/management/games/${game._id}`)}
+                      sx={{
+                        minWidth: 'auto',
+                        p: 1,
+                        borderRadius: '50%',
+                        width: 40,
+                        height: 40
+                      }}
+                    >
+                      <OpenInNewIcon sx={{ fontSize: 20 }} />
+                    </Button>
+                  </Box>
+                ))}
+              </Box>
+            </Paper>
+          ) : (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <Typography variant='body1' color='text.secondary'>
+                No games found for this group
               </Typography>
             </Box>
           )}
