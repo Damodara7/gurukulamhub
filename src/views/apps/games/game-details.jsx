@@ -11,6 +11,7 @@ import ParticipatedPlayersTable from '@/components/apps/games/game-details/Parti
 import GameLocationInfo from '@/components/apps/games/game-details/GameLocationInfo'
 import GameStatistics from '@/components/apps/games/game-details/GameStatistics'
 import AdminLeaderboard from '@/components/apps/games/game-details/AdminLeaderboard'
+import GameGroupInfo from '@/components/apps/games/game-details/GameGroupInfo'
 import { useRouter } from 'next/navigation'
 import FallBackCard from '@/components/apps/games/FallBackCard'
 
@@ -68,6 +69,9 @@ export default function GameDetailsPage({ game: initialGame = null, gameId }) {
     <Box sx={{ p: 3 }}>
       {/* Game Header Section */}
       <GameHeader game={game} />
+
+      {/* Group Information Section */}
+      <GameGroupInfo game={game} />
 
       {/* Promotional Video Section */}
       {game.promotionalVideoUrl && (

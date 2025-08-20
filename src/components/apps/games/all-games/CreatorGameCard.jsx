@@ -1,6 +1,6 @@
 // components/apps/games/all-games/GameCard.js
 import React from 'react'
-import { Alert, Box, Button, Card, CardContent, CardMedia, Chip, Stack, Typography, useTheme } from '@mui/material'
+import { Alert, Box, Button, Card, CardContent, CardMedia, Chip, Stack, Typography, useTheme, Tooltip } from '@mui/material'
 import { format } from 'date-fns'
 import { 
   AccessTime as AccessTimeIcon,
@@ -97,6 +97,23 @@ const CreatorGameCard = ({ game, isSuperUser = false, onViewGame, onEditGame, on
             >
               {game.description}
             </Typography>
+
+            {/* Group Information */}
+            {game?.groupId && (
+              <Box sx={{ mb: 2 }}>
+                <Chip
+                  label={`Restricted to group - "${game.groupId?.groupName || 'Private Group'}"`}
+                  color='error'
+                  variant='filled'
+                  size='small'
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: '0.8rem',
+                    textTransform: 'none'
+                  }}
+                />
+              </Box>
+            )}
 
             {isSuperUser && game.status === 'created' && (
               <Alert
