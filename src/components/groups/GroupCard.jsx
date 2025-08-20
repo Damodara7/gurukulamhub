@@ -1,9 +1,9 @@
 import React from 'react'
 import { Card, CardContent, Typography, Stack, Chip, Grid, Box, Divider, Tooltip } from '@mui/material'
 import IconButtonTooltip from '../IconButtonTooltip'
-import { 
-  Visibility as VisibilityIcon, 
-  Edit as EditIcon, 
+import {
+  Visibility as VisibilityIcon,
+  Edit as EditIcon,
   Delete as DeleteIcon,
   People as PeopleIcon,
   Person as PersonIcon,
@@ -196,24 +196,25 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup }) => {
                       )}
                   </Stack>
                 </Box>
-                <Stack
-                  direction='row'
-                  spacing={1}
-                  gap={1}
-                  justifyContent='center'
-                  className='border border-gray-200 rounded-md p-1'
-                  mt={2}
-                >
-                  <IconButtonTooltip title='View Group Details' onClick={() => onViewGroup(group._id)} color='info'>
-                    <VisibilityIcon />
-                  </IconButtonTooltip>
-                  <IconButtonTooltip title='Edit Group' onClick={() => onEditGroup(group._id)} color='warning'>
-                    <EditIcon />
-                  </IconButtonTooltip>
-                  <IconButtonTooltip title='Delete Group' onClick={() => onDeleteGroup(group)} color='error'>
-                    <DeleteIcon />
-                  </IconButtonTooltip>
-                </Stack>
+                <Box sx={{ mt: 'auto', pt: 2 }}>
+                  <Stack
+                    direction='row'
+                    spacing={1}
+                    gap={1}
+                    justifyContent='center'
+                    className='border border-gray-200 rounded-md p-1'
+                  >
+                    <IconButtonTooltip title='View Group Details' onClick={() => onViewGroup(group._id)} color='info'>
+                      <VisibilityIcon />
+                    </IconButtonTooltip>
+                    <IconButtonTooltip title='Edit Group' onClick={() => onEditGroup(group._id)} color='warning'>
+                      <EditIcon />
+                    </IconButtonTooltip>
+                    <IconButtonTooltip title='Delete Group' onClick={() => onDeleteGroup(group)} color='error'>
+                      <DeleteIcon />
+                    </IconButtonTooltip>
+                  </Stack>
+                </Box>
               </CardContent>
             </Card>
           </Grid>

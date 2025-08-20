@@ -82,7 +82,7 @@ const AllGroupsPage = () => {
 
   const handleViewGroup = groupId => {
     console.log('View group:', groupId)
-    router.push(`/groups/${groupId}`)
+    router.push(`/management/groups/${groupId}`)
   }
   const handleCreateNewGroup = () => {
     router.push('/management/groups/create')
