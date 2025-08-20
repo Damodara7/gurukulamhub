@@ -859,41 +859,51 @@ const GroupByFilter = ({
                   { key: 'other', label: 'Other', icon: '👤' }
                 ].map(gender => (
                   <Grid item xs={12} sm={4} key={gender.key}>
-                    <Box
+                    <FormControlLabel
+                      fullWidth
+                      control={
+                        <Checkbox
+                          checked={filters.gender[gender.key]}
+                          onChange={e => handleFilterChange('gender', gender.key, e.target.checked)}
+                          sx={{ mr: 1 }}
+                        />
+                      }
+                      label={
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Typography
+                            variant='h6'
+                            sx={{
+                              color: filters.gender[gender.key] ? 'white' : 'inherit'
+                            }}
+                          >
+                            {gender.icon}
+                          </Typography>
+                          <Typography
+                            variant='body1'
+                            sx={{
+                              fontWeight: 500,
+                              color: filters.gender[gender.key] ? 'white' : 'inherit'
+                            }}
+                          >
+                            {gender.label}
+                          </Typography>
+                        </Box>
+                      }
                       sx={{
-                        p: 2,
+                        m: 0,
+                        width: '100%',
                         border: '2px solid',
                         borderColor: filters.gender[gender.key] ? 'primary.main' : 'divider',
                         borderRadius: 2,
-                        bgcolor: filters.gender[gender.key] ? 'primary.light' : 'background.paper',
+                        bgcolor: filters.gender[gender.key] ? 'primary.main' : 'background.paper',
                         cursor: 'pointer',
                         transition: 'all 0.2s ease-in-out',
                         '&:hover': {
                           borderColor: 'primary.main',
-                          bgcolor: filters.gender[gender.key] ? 'primary.light' : 'action.hover'
+                          bgcolor: filters.gender[gender.key] ? 'primary.main' : 'action.hover'
                         }
                       }}
-                      onClick={() => handleFilterChange('gender', gender.key, !filters.gender[gender.key])}
-                    >
-                      <FormControlLabel
-                        control={
-                          <Checkbox
-                            checked={filters.gender[gender.key]}
-                            onChange={e => handleFilterChange('gender', gender.key, e.target.checked)}
-                            sx={{ mr: 1 }}
-                          />
-                        }
-                        label={
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Typography variant='h6'>{gender.icon}</Typography>
-                            <Typography variant='body1' sx={{ fontWeight: 500 }}>
-                              {gender.label}
-                            </Typography>
-                          </Box>
-                        }
-                        sx={{ m: 0, width: '100%' }}
-                      />
-                    </Box>
+                    />
                   </Grid>
                 ))}
               </Grid>
@@ -902,13 +912,15 @@ const GroupByFilter = ({
         </DialogContent>
 
         <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={closeFilterDialog} variant='outlined' sx={{ borderRadius: 2, px: 3 }}>
+          <Button onClick={closeFilterDialog} variant='outlined'>
             Cancel
           </Button>
           <Button
             onClick={applyFilters}
+            component='label'
             variant='contained'
-            sx={{ borderRadius: 2, px: 3 }}
+            color='primary'
+            style={{ color: 'white' }}
             disabled={
               (groupBy === 'age' && !filters.age.min && !filters.age.max) ||
               (groupBy === 'location' && !filters.location.country) ||
@@ -917,6 +929,16 @@ const GroupByFilter = ({
           >
             Apply Filters
           </Button>
+          {/* <Button
+            onClick={handleSubmit}
+            component='label'
+            variant='contained'
+            color='primary'
+            style={{ color: 'white' }}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Saving...' : 'Save Group'}
+          </Button> */}
         </DialogActions>
       </Dialog>
 
