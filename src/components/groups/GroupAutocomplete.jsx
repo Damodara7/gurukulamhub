@@ -75,92 +75,42 @@ const GroupAutocomplete = ({
 
   const handleCreateGroup = async groupData => {
     try {
-      // Get user ID from database using email from session
-      let userId = null
-      try {
-        const userResult = await RestApi.get(`${API_URLS.v0.USER}`)
-        if (userResult?.status === 'success' && userResult.result) {
-          const users = Array.isArray(userResult.result) ? userResult.result : [userResult.result]
-          const user = users.find(u => u.email === session.user.email)
-          if (user) {
-            userId = user._id
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching user ID:', error)
-        toast.error('Failed to fetch user information. Please try again.')
-        return
-      }
-
-      if (!userId) {
-        toast.error('User ID not found. Please login again.')
-        return
-      }
-
-      // Prepare the payload with all necessary fields
+      console.log('form Data', groupData)
+      
+      // Prepare the payload
       const payload = {
         groupName: groupData.groupName,
         description: groupData.description,
         location: groupData.location,
         gender: groupData.gender,
         ageGroup: groupData.ageGroup,
-        createdBy: userId,
-        creatorEmail: session.user.email,
-        members: groupData.members || []
+        createdBy: session?.user?.id, // Use the session user ID directly
+        creatorEmail: session?.user?.email,
+        members: groupData.members || [],
+        membersCount: groupData.members?.length || 0
       }
 
+      console.log('payload data ', payload)
+
+      // Call your API
       const result = await RestApi.post(API_URLS.v0.USERS_GROUP, payload)
+      console.log('result', result)
+
       if (result?.status === 'success') {
         const groupId = result.result._id
-
-        // Update users with the new group ID if members are selected
-        if (groupData.members && groupData.members.length > 0) {
-          try {
-            await Promise.all(
-              groupData.members.map(async userId => {
-                const userResult = await RestApi.get(`${API_URLS.v0.USER}`)
-                if (userResult?.status === 'success' && userResult.result) {
-                  const users = Array.isArray(userResult.result) ? userResult.result : [userResult.result]
-                  const user = users.find(u => u._id === userId)
-
-                  if (user && user.email) {
-                    const currentUserResult = await RestApi.get(`${API_URLS.v0.USER}`)
-                    let currentUser = null
-                    if (currentUserResult?.status === 'success' && currentUserResult.result) {
-                      const allUsers = Array.isArray(currentUserResult.result)
-                        ? currentUserResult.result
-                        : [currentUserResult.result]
-                      currentUser = allUsers.find(u => u._id === userId)
-                    }
-
-                    if (currentUser) {
-                      const currentGroupIds = currentUser.groupIds || []
-                      const updatedGroupIds = [...new Set([...currentGroupIds, groupId])]
-
-                      await RestApi.put(`${API_URLS.v0.USER}`, {
-                        email: user.email,
-                        groupIds: updatedGroupIds
-                      })
-                    }
-                  }
-                }
-              })
-            )
-          } catch (error) {
-            console.error('Error updating users:', error)
-            toast.warning('Group created but some users could not be updated')
-          }
-        }
-
+        console.log('Group created successfully with ID:', groupId)
         toast.success('Group created successfully!')
         setOpenCreateDialog(false)
+        
         // Refresh groups list
         await fetchGroups()
+        
         // Auto-select the newly created group
         const newGroup = result.result
         setSelectedGroup(newGroup)
         onChange(newGroup._id)
       } else {
+        console.error('Error creating group:', result.message)
         toast.error(result?.message || 'Failed to create group')
       }
     } catch (error) {

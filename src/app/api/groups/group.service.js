@@ -24,12 +24,13 @@ export const getOne = async (filter = {}) => {
     }
 
     // Derive members from users' groupIds and do not persist on the group
-    const usersInGroup = await User.find({ groupIds: group._id }, { _id: 1 }).lean()
+    const usersInGroup = await User.find({ groupIds: group._id }).lean().populate('profile')
+    console.log('users in group: ', usersInGroup)
     const derivedMembers = usersInGroup.map(u => u._id)
 
     return {
       status: 'success',
-      result: { ...group, members: derivedMembers, membersCount: derivedMembers.length },
+      result: { ...group, members: derivedMembers,  membersDetails: usersInGroup, membersCount: derivedMembers.length },
       message: 'Group retrieved successfully'
     }
   } catch (error) {
@@ -57,6 +58,7 @@ export const getAll = async (filter = {}) => {
         return {
           ...group,
           members: derivedMembers,
+          // membersDetails: usersInGroup,
           membersCount: derivedMembers.length
         }
       })
@@ -196,7 +198,7 @@ export const addOne = async groupData => {
 
     return {
       status: 'success',
-      result: { ...savedGroup.toObject(), members },
+      result: { ...savedGroup.toObject(), members, membersCount: members.length },
       message: 'Group created successfully'
     }
   } catch (error) {

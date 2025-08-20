@@ -149,7 +149,7 @@ const GameGroupInfo = ({ game }) => {
               ) : group.membersCount > 0 ? (
                 <Box sx={{ maxHeight: 200, overflowY: 'auto' }}>
                   <Stack spacing={1}>
-                    {group.members?.map((member, index) => (
+                    {group.membersDetails?.map((member, index) => (
                       <Box
                         key={member._id || index}
                         sx={{
@@ -163,15 +163,15 @@ const GameGroupInfo = ({ game }) => {
                         }}
                       >
                         <Avatar sx={{ width: 32, height: 32, mr: 1, fontSize: '0.875rem' }}>
-                          {member.firstName?.[0] || member.email?.[0] || 'U'}
+                          {member.profile?.firstname?.[0] || member.email?.[0] || 'U'}
                         </Avatar>
                         <Box sx={{ flex: 1, minWidth: 0 }}>
                           <Typography variant="body2" noWrap>
-                            {member.firstName && member.lastName
-                              ? `${member.firstName} ${member.lastName}`
+                            {member.profile?.firstname && member.profile?.lastname
+                              ? `${member.profile?.firstname} ${member.profile?.lastname}`
                               : member.email}
                           </Typography>
-                          {member.firstName && (
+                          {member.profile?.firstname && (
                             <Typography variant="caption" color="text.secondary" noWrap>
                               {member.email}
                             </Typography>
