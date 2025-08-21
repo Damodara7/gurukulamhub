@@ -90,7 +90,7 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup }) => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <PeopleIcon fontSize='small' color='action' />
                   <Typography variant='caption' color='text.secondary'>
-                    {group?.membersCount || 0} members
+                    {group?.membersCount === 0 ? 'No Members': group?.membersCount > 1 ? `${group?.membersCount} members` : `${group?.membersCount} member`}
                   </Typography>
                 </Box>
 

@@ -164,7 +164,7 @@ const GroupdetailsPage = ({ groupData, gamesData = [] }) => {
               Group Members
             </Typography>
             <Typography variant='body2' color='text.secondary'>
-              {groupData?.membersCount || groupData?.members?.length || 0} members
+              {groupData?.membersCount === 0 ? 'No Members': groupData?.membersCount > 1 ? `${groupData?.membersCount} members` : `${groupData?.membersCount} member`}
             </Typography>
           </Box>
 
@@ -199,7 +199,8 @@ const GroupdetailsPage = ({ groupData, gamesData = [] }) => {
                         height: 48,
                         bgcolor: 'primary.main',
                         fontSize: '1.2rem',
-                        fontWeight: 600
+                        fontWeight: 600,
+                        color: 'white'
                       }}
                     >
                       {member?.profile?.firstname?.[0] || member?.profile?.lastname?.[0] || 'U'}
@@ -209,7 +210,7 @@ const GroupdetailsPage = ({ groupData, gamesData = [] }) => {
                       <Typography variant='subtitle1' sx={{ fontWeight: 600, mb: 0.5 }}>
                         {member?.profile?.firstname && member?.profile?.lastname
                           ? `${member?.profile?.firstname} ${member?.profile?.lastname}`
-                          : member?.profile?.firstname || member?.profile?.lastname || 'No Name'}
+                          : member?.profile?.firstname || member?.profile?.lastname }
                       </Typography>
 
                       <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
@@ -264,7 +265,7 @@ const GroupdetailsPage = ({ groupData, gamesData = [] }) => {
               Group Games
             </Typography>
             <Typography variant='body2' color='text.secondary'>
-              {gamesData.length} games
+              {gamesData.length === 0 ? 'No Games': gamesData.length > 1 ? `${gamesData.length} games` : `${gamesData.length} game`}
             </Typography>
           </Box>
 
@@ -341,7 +342,7 @@ const GroupdetailsPage = ({ groupData, gamesData = [] }) => {
           ) : (
             <Box sx={{ textAlign: 'center', py: 4 }}>
               <Typography variant='body1' color='text.secondary'>
-                No games found for this group
+                No games in this group
               </Typography>
             </Box>
           )}
