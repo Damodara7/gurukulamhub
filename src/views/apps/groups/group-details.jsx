@@ -199,7 +199,8 @@ const GroupdetailsPage = ({ groupData, gamesData = [] }) => {
                         height: 48,
                         bgcolor: 'primary.main',
                         fontSize: '1.2rem',
-                        fontWeight: 600
+                        fontWeight: 600,
+                        color: 'white'
                       }}
                     >
                       {member?.profile?.firstname?.[0] || member?.profile?.lastname?.[0] || 'U'}
@@ -209,7 +210,7 @@ const GroupdetailsPage = ({ groupData, gamesData = [] }) => {
                       <Typography variant='subtitle1' sx={{ fontWeight: 600, mb: 0.5 }}>
                         {member?.profile?.firstname && member?.profile?.lastname
                           ? `${member?.profile?.firstname} ${member?.profile?.lastname}`
-                          : member?.profile?.firstname || member?.profile?.lastname || 'No Name'}
+                          : member?.profile?.firstname || member?.profile?.lastname }
                       </Typography>
 
                       <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>

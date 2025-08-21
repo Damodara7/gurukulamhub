@@ -1,4 +1,3 @@
-
 'use client'
 import React, { useEffect, useState } from 'react'
 import {
@@ -88,7 +87,7 @@ const UserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUserIds 
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
-
+  console.log('selectedUsers in the multi select component', selectedUsers)
   useEffect(() => {
     if (selectedUsers.length === users.length) {
       setSelectAll(true)
@@ -123,7 +122,6 @@ const UserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUserIds 
     onSelectChange(newSelected)
   }
 
-
   const handleRemoveUser = (userId, e) => {
     e.stopPropagation()
     handleToggle(userId)
@@ -136,6 +134,8 @@ const UserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUserIds 
   const renderSelectedUsers = () => {
     const selected = getSelectedUsers()
     const displayUsers = selected.slice(0, maxVisible)
+
+    console.log('display users  ' , displayUsers)
 
     return (
       <Box

@@ -38,7 +38,7 @@ const EditGroupPage = ({ groupId = null }) => {
             ageGroup: data.ageGroup || null,
             location: data.location || null,
             gender: data.gender || null,
-            members: data.members || []
+            members: data?.members?.map(member => member._id) || []
           }
 
           setGroupData(transformedData)

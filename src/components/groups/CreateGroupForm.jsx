@@ -74,7 +74,7 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
     location: null,
     gender: null
   })
-
+  console.log('selected user in the creategroup form ', selectedUsers)
   //if edit group?
 
   useEffect(() => {
@@ -86,17 +86,14 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
         description: data.description || '',
         members: data.members || []
       })
-
       // Set initial filter criteria from group data
       setFilterCriteria({
         ageGroup: data.ageGroup || null,
         location: data.location || null,
         gender: data.gender || null
       })
-
       // Set initial selected users
       setSelectedUsers(data.members || [])
-
       // Calculate matched users based on filters if they exist
       if (data.ageGroup || data.location || data.gender) {
         const filteredUserIds = filterUsersByCriteria(users, {
@@ -117,7 +114,7 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
       }
     }
   }, [data, users])
-
+  console.log('selected user in the creategroup after the  useeffect ', selectedUsers)
   // Helper function to filter users based on criteria
   const filterUsersByCriteria = (users, criteria) => {
     return users
@@ -323,6 +320,7 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
     setSelectedUsers(newSelectedUsers)
   }
 
+  console.log('selected user in the creategroup form after the handleUserSelection ', selectedUsers)
   return (
     <Box>
       {/* {!isInline && ( */}
