@@ -406,7 +406,7 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
                     variant='contained'
                     color='primary'
                     style={{ color: 'white' }}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || selectedUsers.length === 0}
                   >
                     {isSubmitting ? 'Saving...' : 'Save Group'}
                   </Button>

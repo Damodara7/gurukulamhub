@@ -264,12 +264,12 @@ const UserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUserIds 
         onClick={() => setOpen(true)}
         sx={{
           border: 1,
-          borderColor: 'divider',
+          borderColor: selectedUsers.length === 0 ? 'error.main' : 'divider',
           borderRadius: 1,
           p: 2,
           cursor: 'pointer',
           '&:hover': {
-            borderColor: 'text.primary'
+            borderColor: selectedUsers.length === 0 ? 'error.main' : 'text.primary'
           },
           minHeight: 60,
           minWidth: 300,
@@ -281,8 +281,8 @@ const UserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUserIds 
         {selectedUsers.length > 0 ? (
           renderSelectedUsers()
         ) : (
-          <Typography color='textSecondary'>
-            Select members ({selectedUsers.length} / {users.length}) available
+          <Typography color={selectedUsers.length === 0 ? 'error.main' : 'textSecondary'} sx={{ textAlign: 'center' }}>
+            currently there are no users, change the filter to see the users and then create the group
           </Typography>
         )}
       </Box>
