@@ -22,14 +22,9 @@ export const getOne = async (filter = {}) => {
           populate: {
             path: 'profile'
           }
-        }
-        // },
-        // {
-        //   path: 'createdBy',
-        //   select: 'firstname lastname email'
-        // }
+        },
       ])
-
+    console.log('filter', filter)
     if (!group) {
       return {
         status: 'error',
@@ -58,7 +53,14 @@ export const getAll = async (filter = {}) => {
     const groups = await Group.find({ ...filter, isDeleted: false })
       .sort({ createdAt: -1 })
       .lean()
-
+      .populate([
+        {
+          path: 'members',
+          populate: {
+            path: 'profile'
+          }
+        }
+      ])
     return {
       status: 'success',
       result: groups,
@@ -79,7 +81,7 @@ export const addOne = async groupData => {
     const user = await User.findOne({ email: groupData.creatorEmail })
     groupData.createdBy = user._id
     // Validate required fields
-
+    console.log('groupData', groupData)
     const requiredFields = ['groupName', 'description', 'createdBy', 'creatorEmail']
     const missingFields = requiredFields.filter(field => !groupData[field])
 
