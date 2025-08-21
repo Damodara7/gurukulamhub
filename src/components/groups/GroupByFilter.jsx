@@ -19,9 +19,11 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions
+  DialogActions,
+  IconButton,
+  Tooltip
 } from '@mui/material'
-import { ArrowDropDown as ArrowDropDownIcon, Close as CloseIcon } from '@mui/icons-material'
+import { ArrowDropDown as ArrowDropDownIcon, Close as CloseIcon, Edit as EditIcon } from '@mui/icons-material'
 import * as RestApi from '@/utils/restApiUtil'
 import CountryRegionDropdown from '@/views/pages/auth/register-multi-steps/CountryRegionDropdown'
 
@@ -65,6 +67,8 @@ const GroupByFilter = ({
   const [matchedUsers, setMatchedUsers] = useState([])
   const [unmatchedUsers, setUnmatchedUsers] = useState([])
   const [combinedCriteria, setCombinedCriteria] = useState(initialCriteria)
+  const [editingFilter, setEditingFilter] = useState(null)
+  const [isEditMode, setIsEditMode] = useState(false)
 
   console.error('combinedCriteria', combinedCriteria)
   console.error('initialCriteria', initialCriteria)
@@ -75,6 +79,70 @@ const GroupByFilter = ({
 
   const handleClose = () => {
     setAnchorEl(null)
+  }
+
+  // Check if a filter type is already applied
+  const isFilterTypeApplied = filterType => {
+    return selectedFilters.some(filter => filter.type === filterType)
+  }
+
+  // Get the applied filter of a specific type
+  const getAppliedFilter = filterType => {
+    return selectedFilters.find(filter => filter.type === filterType)
+  }
+
+  // Handle edit filter click
+  const handleEditFilter = (filter, index) => {
+    console.log('handleEditFilter called with:', filter, index)
+    setEditingFilter({ ...filter, index })
+    setIsEditMode(true)
+
+    // Set the groupBy to the filter type
+    setGroupBy(filter.type)
+
+    // Populate the filters state with existing values
+    if (filter.type === 'age') {
+      console.log('Setting age filters:', filter.value)
+      setFilters(prev => ({
+        ...prev,
+        age: { min: filter.value.min.toString(), max: filter.value.max.toString() }
+      }))
+    } else if (filter.type === 'location') {
+      console.log('Setting location filters:', filter.value)
+      setFilters(prev => ({
+        ...prev,
+        location: {
+          country: filter.value.country || '',
+          state: filter.value.state || filter.value.region || '',
+          city: filter.value.city || ''
+        }
+      }))
+      // Set the country object and region for location editing
+      if (filter.value.country) {
+        // Create a basic country object for editing
+        setSelectedCountryObject({
+          country: filter.value.country,
+          regions: [] // We'll need to fetch this if needed
+        })
+        setSelectedRegion(filter.value.state || filter.value.region || '')
+        setSelectedCity(filter.value.city || '')
+        if (filter.value.state || filter.value.region) {
+          getCitiesData(filter.value.state || filter.value.region)
+        }
+        // Fetch country regions for the dropdown
+        getCountryRegions(filter.value.country).then(regions => {
+          setSelectedCountryObject(prev => ({ ...prev, regions }))
+        })
+      }
+    } else if (filter.type === 'gender') {
+      console.log('Setting gender filters:', filter.value)
+      setFilters(prev => ({
+        ...prev,
+        gender: filter.value
+      }))
+    }
+
+    setShowFilterDialog(true)
   }
 
   useEffect(() => {
@@ -183,6 +251,8 @@ const GroupByFilter = ({
   const closeFilterDialog = () => {
     setShowFilterDialog(false)
     setGroupBy(null)
+    setIsEditMode(false)
+    setEditingFilter(null)
     setFilters({
       age: { min: '', max: '' },
       location: { country: '', state: '', city: '' },
@@ -206,6 +276,20 @@ const GroupByFilter = ({
     } finally {
       setLoading(prev => ({ ...prev, fetchCities: false }))
     }
+  }
+
+  const getCountryRegions = async countryCode => {
+    try {
+      // This would need to be implemented based on your API structure
+      // For now, we'll use a placeholder
+      const result = await RestApi.get(`/api/countries/${countryCode}/regions`)
+      if (result?.status === 'success') {
+        return result.result || []
+      }
+    } catch (error) {
+      console.error('Error fetching country regions:', error)
+    }
+    return []
   }
 
   const handleCountryChange = countryObject => {
@@ -354,6 +438,9 @@ const GroupByFilter = ({
   }
 
   const applyFilters = () => {
+    console.log('applyFilters called, isEditMode:', isEditMode, 'editingFilter:', editingFilter)
+    console.log('Current filters state:', filters)
+
     const newFilters = []
     let filteredUserIds = []
     let criteria = {
@@ -365,6 +452,8 @@ const GroupByFilter = ({
     if (groupBy === 'age' && (filters.age.min || filters.age.max)) {
       const minAge = parseInt(filters.age.min) || 0
       const maxAge = parseInt(filters.age.max) || 100
+
+      console.log('Processing age filter:', { minAge, maxAge })
 
       // Enhanced age validation
       if (minAge < 0 || maxAge < 0) {
@@ -401,6 +490,8 @@ const GroupByFilter = ({
         }
       })
 
+      console.log('Age filter matched users:', filteredUserIds.length)
+
       newFilters.push({
         type: 'age',
         label: `Age: ${minAge}${maxAge !== 100 ? `-${maxAge}` : '+'}`,
@@ -414,6 +505,8 @@ const GroupByFilter = ({
     }
 
     if (groupBy === 'location') {
+      console.log('Processing location filter:', filters.location)
+
       users.forEach(user => {
         const profile = user.profile || {}
         const countryMatch =
@@ -431,6 +524,8 @@ const GroupByFilter = ({
         }
       })
 
+      console.log('Location filter matched users:', filteredUserIds.length)
+
       // Always record the selected location filter as a chip, even if no users match
       const locationParts = [filters.location.country, filters.location.state, filters.location.city].filter(Boolean)
       newFilters.push({
@@ -446,10 +541,14 @@ const GroupByFilter = ({
     }
 
     if (groupBy === 'gender') {
+      console.log('Processing gender filter:', filters.gender)
+
       const selectedGenders = []
       if (filters.gender.male) selectedGenders.push('male')
       if (filters.gender.female) selectedGenders.push('female')
       if (filters.gender.other) selectedGenders.push('other')
+
+      console.log('Selected genders:', selectedGenders)
 
       if (selectedGenders.length > 0) {
         users.forEach(user => {
@@ -458,6 +557,8 @@ const GroupByFilter = ({
             filteredUserIds.push(user._id)
           }
         })
+
+        console.log('Gender filter matched users:', filteredUserIds.length)
 
         newFilters.push({
           type: 'gender',
@@ -470,7 +571,125 @@ const GroupByFilter = ({
     }
 
     if (newFilters.length === 0) {
+      console.log('No filters to apply, closing dialog')
       closeFilterDialog() // Close dialog if no filters were applied
+      return
+    }
+
+    console.log('Final newFilters:', newFilters)
+    console.log('Final filteredUserIds:', filteredUserIds)
+    console.log('Final criteria:', criteria)
+
+    // Handle editing existing filter
+    if (isEditMode && editingFilter) {
+      console.log('Editing filter:', editingFilter)
+      console.log('New filter values:', newFilters)
+
+      // Remove the old filter and add the new one
+      const updatedFilters = selectedFilters.filter((_, i) => i !== editingFilter.index)
+      const updatedSelectedFilters = [...updatedFilters, ...newFilters]
+
+      // Recalculate combined results by reapplying all filters to users
+      let combinedUserIds = []
+
+      // Apply each filter to get the filtered user IDs
+      updatedSelectedFilters.forEach(filter => {
+        let filterUserIds = []
+
+        if (filter.type === 'age' && filter.value) {
+          console.log('Applying age filter:', filter.value)
+          users.forEach(user => {
+            const userAge = user.profile?.age
+            const hasAge = userAge !== undefined && userAge !== null
+            const ageMatches = hasAge && userAge >= filter.value.min && userAge <= filter.value.max
+            if (ageMatches) {
+              filterUserIds.push(user._id)
+            }
+          })
+          console.log('Age filter matched users:', filterUserIds.length)
+        } else if (filter.type === 'location' && filter.value) {
+          console.log('Applying location filter:', filter.value)
+          users.forEach(user => {
+            const profile = user.profile || {}
+            const countryMatch =
+              !filter.value.country ||
+              (profile.country && profile.country.toLowerCase() === filter.value.country.toLowerCase())
+            const stateMatch =
+              !filter.value.state ||
+              (profile.region && profile.region.toLowerCase() === filter.value.state.toLowerCase())
+            const cityMatch =
+              !filter.value.city ||
+              (profile.locality && profile.locality.toLowerCase() === filter.value.city.toLowerCase())
+
+            if (countryMatch && stateMatch && cityMatch) {
+              filterUserIds.push(user._id)
+            }
+          })
+          console.log('Location filter matched users:', filterUserIds.length)
+        } else if (filter.type === 'gender' && filter.value) {
+          console.log('Applying gender filter:', filter.value)
+          const selectedGenders = Object.entries(filter.value)
+            .filter(([, isOn]) => Boolean(isOn))
+            .map(([key]) => key)
+
+          users.forEach(user => {
+            const userGender = user.profile?.gender?.toLowerCase()
+            if (userGender && selectedGenders.includes(userGender)) {
+              filterUserIds.push(user._id)
+            }
+          })
+          console.log('Gender filter matched users:', filterUserIds.length)
+        }
+
+        // Combine with previous results using AND operation (default)
+        if (combinedUserIds.length === 0) {
+          combinedUserIds = filterUserIds
+        } else {
+          combinedUserIds = combinedUserIds.filter(id => filterUserIds.includes(id))
+        }
+
+        // Update the filter with the calculated user IDs
+        filter.userIds = filterUserIds
+      })
+
+      console.log('Final combined user IDs:', combinedUserIds.length)
+
+      setSelectedFilters(updatedSelectedFilters)
+
+      // Update matched/unmatched users
+      const matched = users.filter(user => combinedUserIds.includes(user._id))
+      const unmatched = users.filter(user => !combinedUserIds.includes(user._id))
+      setMatchedUsers(matched)
+      setUnmatchedUsers(unmatched)
+
+      // Recompute cumulative criteria
+      const nextCombinedCriteria = {
+        ageGroup: null,
+        location: null,
+        gender: null
+      }
+      updatedSelectedFilters.forEach(filter => {
+        if (filter.type === 'age' && filter.value) {
+          nextCombinedCriteria.ageGroup = { min: filter.value.min, max: filter.value.max }
+        }
+        if (filter.type === 'location' && filter.value) {
+          nextCombinedCriteria.location = {
+            country: filter.value.country || '',
+            region: filter.value.state || '',
+            city: filter.value.city || ''
+          }
+        }
+        if (filter.type === 'gender' && filter.value) {
+          const selected = Object.entries(filter.value)
+            .filter(([, isOn]) => Boolean(isOn))
+            .map(([key]) => key)
+          nextCombinedCriteria.gender = selected.length > 0 ? selected : null
+        }
+      })
+
+      setCombinedCriteria(nextCombinedCriteria)
+      onFilterChange(combinedUserIds, nextCombinedCriteria)
+      closeFilterDialog()
       return
     }
 
@@ -560,8 +779,20 @@ const GroupByFilter = ({
       <style>{spinnerStyles}</style>
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <Box>
-          <Button variant='outlined' onClick={handleClick} endIcon={<ArrowDropDownIcon />} sx={{ minWidth: 120 }}>
-            Group By
+          <Button
+            variant='outlined'
+            onClick={handleClick}
+            endIcon={<ArrowDropDownIcon />}
+            sx={{
+              minWidth: 120,
+              ...(selectedFilters.length > 0 && {
+                borderColor: 'primary.main',
+                color: 'primary.main',
+                fontWeight: 500
+              })
+            }}
+          >
+            Group By {selectedFilters.length > 0 && `(${selectedFilters.length})`}
           </Button>
         </Box>
 
@@ -572,29 +803,79 @@ const GroupByFilter = ({
               alignItems: 'center',
               gap: 1,
               maxWidth: '100%',
-              overflow: 'auto',
-              flexWrap: { xs: 'nowrap', sm: 'wrap' }
+              overflow: 'visible',
+              flexWrap: 'wrap'
             }}
           >
             <Typography sx={{ mr: 1, flexShrink: 0 }}>Filters:</Typography>
             <Box
               sx={{
                 display: 'flex',
-                gap: 1,
+                gap: 2,
                 alignItems: 'center',
                 flexWrap: 'wrap'
               }}
             >
               {selectedFilters.map((filter, index) => (
                 <Chip
-                  key={index}
-                  label={filter.label}
+                  label={
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 0.5,
+                        mr: 1,
+                        minWidth: 0,
+                        flex: 1
+                      }}
+                    >
+                      <Typography
+                        variant='body2'
+                        sx={{
+                          flex: 1,
+                          minWidth: 0,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        {filter.label}
+                      </Typography>
+                      <Tooltip title='edit' arrow>
+                        <EditIcon sx={{ fontSize: 16, opacity: 0.7, flexShrink: 0, ml: 4 }} />
+                      </Tooltip>
+                    </Box>
+                  }
                   onDelete={() => handleDeleteFilter(index)}
-                  deleteIcon={<CloseIcon />}
+                  deleteIcon={
+                    <Tooltip title='remove' arrow>
+                      <CloseIcon />
+                    </Tooltip>
+                  }
+                  onClick={() => handleEditFilter(filter, index)}
                   sx={{
-                    maxWidth: 200,
+                    maxWidth: 250,
                     textOverflow: 'ellipsis',
-                    overflow: 'hidden'
+                    overflow: 'hidden',
+                    cursor: 'pointer',
+                    height: 'auto',
+                    '& .MuiChip-deleteIcon': {
+                      visibility: 'visible',
+                      marginRight: '4px',
+                      marginLeft: '0px',
+                      '&:hover': {
+                        backgroundColor: 'transparent',
+                        color: 'inherit'
+                      }
+                    },
+                    '& .MuiChip-label': {
+                      paddingRight: '0px',
+                      paddingLeft: '10px',
+                      height: 'auto',
+                      minHeight: '35px',
+                      display: 'flex',
+                      alignItems: 'center'
+                    }
                   }}
                 />
               ))}
@@ -613,9 +894,42 @@ const GroupByFilter = ({
           }
         }}
       >
-        <MenuItem onClick={() => handleGroupBySelect('age')}>Age</MenuItem>
-        <MenuItem onClick={() => handleGroupBySelect('location')}>Location</MenuItem>
-        <MenuItem onClick={() => handleGroupBySelect('gender')}>Gender</MenuItem>
+        <MenuItem
+          onClick={() => handleGroupBySelect('age')}
+          disabled={isFilterTypeApplied('age')}
+          sx={{
+            '&.Mui-disabled': {
+              opacity: 0.5,
+              fontStyle: 'italic'
+            }
+          }}
+        >
+          Age {isFilterTypeApplied('age') && '(Already Applied)'}
+        </MenuItem>
+        <MenuItem
+          onClick={() => handleGroupBySelect('location')}
+          disabled={isFilterTypeApplied('location')}
+          sx={{
+            '&.Mui-disabled': {
+              opacity: 0.5,
+              fontStyle: 'italic'
+            }
+          }}
+        >
+          Location {isFilterTypeApplied('location') && '(Already Applied)'}
+        </MenuItem>
+        <MenuItem
+          onClick={() => handleGroupBySelect('gender')}
+          disabled={isFilterTypeApplied('gender')}
+          sx={{
+            '&.Mui-disabled': {
+              opacity: 0.5,
+              fontStyle: 'italic'
+            }
+          }}
+        >
+          Gender {isFilterTypeApplied('gender') && '(Already Applied)'}
+        </MenuItem>
       </Menu>
 
       {/* Filter Dialog */}
@@ -640,14 +954,16 @@ const GroupByFilter = ({
           }}
         >
           <Typography variant='h6' component='div' sx={{ fontWeight: 600 }}>
-            {groupBy === 'age' && 'Filter by Age Range'}
-            {groupBy === 'location' && 'Filter by Location'}
-            {groupBy === 'gender' && 'Filter by Gender'}
+            {isEditMode ? 'Edit ' : 'Filter by '}
+            {groupBy === 'age' && 'Age Range'}
+            {groupBy === 'location' && 'Location'}
+            {groupBy === 'gender' && 'Gender'}
           </Typography>
           <Typography variant='body2' color='text.secondary' sx={{ mt: 0.5 }}>
-            {groupBy === 'age' && 'Select the age range to filter users'}
-            {groupBy === 'location' && 'Choose country, region, and city to filter users'}
-            {groupBy === 'gender' && 'Select gender(s) to filter users'}
+            {isEditMode ? 'Update the ' : 'Select the '}
+            {groupBy === 'age' && 'age range to filter users'}
+            {groupBy === 'location' && 'country, region, and city to filter users'}
+            {groupBy === 'gender' && 'gender(s) to filter users'}
           </Typography>
         </DialogTitle>
 
@@ -927,7 +1243,7 @@ const GroupByFilter = ({
               (groupBy === 'gender' && !Object.values(filters.gender).some(Boolean))
             }
           >
-            Apply Filters
+            {isEditMode ? 'Update Filter' : 'Apply Filters'}
           </Button>
           {/* <Button
             onClick={handleSubmit}
