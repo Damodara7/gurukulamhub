@@ -135,7 +135,7 @@ const UserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUserIds 
     const selected = getSelectedUsers()
     const displayUsers = selected.slice(0, maxVisible)
 
-    console.log('display users  ' , displayUsers)
+    console.log('display users  ', displayUsers)
 
     return (
       <Box

@@ -818,6 +818,7 @@ const GroupByFilter = ({
             >
               {selectedFilters.map((filter, index) => (
                 <Chip
+                  key={index}
                   label={
                     <Box
                       sx={{
@@ -863,9 +864,10 @@ const GroupByFilter = ({
                       visibility: 'visible',
                       marginRight: '4px',
                       marginLeft: '0px',
+                      color: 'black',
                       '&:hover': {
                         backgroundColor: 'transparent',
-                        color: 'inherit'
+                        color: 'black'
                       }
                     },
                     '& .MuiChip-label': {
