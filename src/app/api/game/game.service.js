@@ -60,7 +60,15 @@ export const getOne = async (filter = {}) => {
 
     const game = await Game.findOne({ ...filter, isDeleted: false })
       .populate('quiz')
-      .populate('groupId')
+      .populate({
+        path: 'groupId',
+        populate: {
+          path: 'members',
+          populate: {
+            path: 'profile',
+          }
+        }
+      })
       .populate('createdBy', 'email firstName lastName roles')
       .populate('forwardingAdmin', 'email firstName lastName roles')
       .populate('rewards.sponsors.sponsorshipId')

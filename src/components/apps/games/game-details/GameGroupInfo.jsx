@@ -25,33 +25,36 @@ import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 
 const GameGroupInfo = ({ game }) => {
-  const [groupDetails, setGroupDetails] = useState(null)
+//   const [groupDetails, setGroupDetails] = useState(null)
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    if (game?.groupId?._id) {
-      fetchGroupDetails()
-    }
-  }, [game?.groupId?._id])
+//   useEffect(() => {
+//     if (game?.groupId?._id) {
+//       fetchGroupDetails()
+//     }
+//   }, [game?.groupId?._id])
 
-  const fetchGroupDetails = async () => {
-    setLoading(true)
-    try {
-      // Fetch the group details directly
-      const res = await RestApi.get(`${API_URLS.v0.USERS_GROUP}?id=${game.groupId._id}`)
-      if (res?.status === 'success' && res.result) {
-        setGroupDetails(res.result)
-      }
-    } catch (error) {
-      console.error('Error fetching group details:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+//   const fetchGroupDetails = async () => {
+//     setLoading(true)
+//     try {
+//       // Fetch the group details directly
+//       const res = await RestApi.get(`${API_URLS.v0.USERS_GROUP}?id=${game.groupId._id || game.groupId}`)
+//       if (res?.status === 'success' && res.result) {
+//         setGroupDetails(res.result)
+//       }
+//     } catch (error) {
+//       console.error('Error fetching group details:', error)
+//     } finally {
+//       setLoading(false)
+//     }
+//   }
 
   if (!game?.groupId) return null
 
-  const group = groupDetails || game.groupId
+//   const group = groupDetails || game.groupId
+  const group = game.groupId
+
+  console.log('group details: ', group)
 
   return (
     <Card sx={{ mb: 3 }}>
@@ -149,7 +152,7 @@ const GameGroupInfo = ({ game }) => {
               ) : group.membersCount > 0 ? (
                 <Box sx={{ maxHeight: 200, overflowY: 'auto' }}>
                   <Stack spacing={1}>
-                    {group.membersDetails?.map((member, index) => (
+                    {group.members?.map((member, index) => (
                       <Box
                         key={member._id || index}
                         sx={{

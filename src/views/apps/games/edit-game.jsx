@@ -189,7 +189,11 @@ function EditGamePage({ gameData = null, gameId = null, isSuperUser = false }) {
     })
   }
 
-  const updatedGameData = { ...gameData, rewards: transformRewardsFromDB(gameData?.rewards || []) }
+  const updatedGameData = {
+    ...gameData,
+    groupId: gameData?.groupId?._id || gameData?.groupId,
+    rewards: transformRewardsFromDB(gameData?.rewards || [])
+  }
 
   return (
     <div className='p-4'>

@@ -115,7 +115,8 @@ const SponsorshipList = ({ tableData, sponsorType = 'all' }) => {
             />
           )
         },
-        (sponsorType === 'all' || sponsorType === 'game') && {
+        // (sponsorType === 'all' || sponsorType === 'game') && {
+        {
           id: 'games',
           ...columnHelper.accessor('games', {
             header: 'Sponsored Games',
@@ -124,7 +125,8 @@ const SponsorshipList = ({ tableData, sponsorType = 'all' }) => {
             }
           })
         },
-        (sponsorType === 'all' || sponsorType === 'quiz') && {
+        // (sponsorType === 'all' || sponsorType === 'quiz') && {
+          {
           id: 'quizzes',
           accessorFn: row => row.quizzes?.map(q => q.title).join(', ') || '',
           ...columnHelper.accessor('quizzes', {
@@ -136,7 +138,8 @@ const SponsorshipList = ({ tableData, sponsorType = 'all' }) => {
             }
           })
         },
-        (sponsorType === 'all' || sponsorType === 'area' || sponsorType === 'quiz') && {
+        // (sponsorType === 'all' || sponsorType === 'area' || sponsorType === 'quiz') && {
+          {
           id: 'location',
           ...columnHelper.accessor('location', {
             header: 'Sponsored By Area',
@@ -320,7 +323,7 @@ const SponsorshipList = ({ tableData, sponsorType = 'all' }) => {
           ...columnHelper.accessor('status', {
             header: 'Status',
             cell: ({ row }) => {
-              const { rewardType, sponsorshipStatus, nonCashSponsorshipStatus } = row.original
+              const { rewardType, sponsorshipStatus, nonCashSponsorshipStatus, nonCashSponsorshipRejectionReason, rejectorEmail } = row.original
               const status = rewardType === 'cash' ? sponsorshipStatus : nonCashSponsorshipStatus
               const statusColor = {
                 created: 'default',
@@ -331,7 +334,82 @@ const SponsorshipList = ({ tableData, sponsorType = 'all' }) => {
                 rejected: 'error'
               }[status] || 'default'
               
-              return <Chip size='small' color={statusColor} label={status} />
+              return (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                  <Chip size='small' color={statusColor} label={status} />
+                  {status === 'pending' && rewardType === 'physicalGift' && (
+                    <Typography variant='caption' color='warning.main' sx={{ fontSize: '0.75rem' }}>
+                      Awaiting admin response
+                    </Typography>
+                  )}
+                  {status === 'rejected' && rewardType === 'physicalGift' && (
+                    <>
+                      {rejectorEmail && nonCashSponsorshipRejectionReason && (
+                        <Tooltip 
+                          title={
+                            <Box sx={{ p: 1 }}>
+                              <Typography variant="body2" sx={{ color: 'white', mb: 0.5 }}>
+                                <strong>Rejected by:</strong> {rejectorEmail}
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: 'white' }}>
+                                <strong>Reason:</strong> {nonCashSponsorshipRejectionReason}
+                              </Typography>
+                            </Box>
+                          } 
+                          placement="top"
+                        >
+                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, cursor: 'pointer' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                              <Box
+                                sx={{
+                                  width: 16,
+                                  height: 16,
+                                  borderRadius: '50%',
+                                  backgroundColor: 'primary.main',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: '0.6rem',
+                                  color: 'white',
+                                  fontWeight: 'bold'
+                                }}
+                              >
+                                {rejectorEmail.charAt(0).toUpperCase()}
+                              </Box>
+                              <Typography 
+                                variant='caption' 
+                                color='text.secondary' 
+                                sx={{ 
+                                  fontSize: '0.75rem', 
+                                  maxWidth: '150px',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap'
+                                }}
+                              >
+                                {rejectorEmail}
+                              </Typography>
+                            </Box>
+                            <Typography 
+                              variant='caption' 
+                              color='error.main' 
+                              sx={{ 
+                                fontSize: '0.75rem',
+                                maxWidth: '150px',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              {nonCashSponsorshipRejectionReason}
+                            </Typography>
+                          </Box>
+                        </Tooltip>
+                      )}
+                    </>
+                  )}
+                </Box>
+              )
             }
           })
         }
@@ -396,11 +474,12 @@ const SponsorshipList = ({ tableData, sponsorType = 'all' }) => {
                 </div>
               }
             />
+            {/* Commented out games, quizzes, and area tabs as requested
             <Tab
               value='game'
               label={
                 <div className='flex items-center gap-1.5'>
-                  {/* <DraftsOutlinedIcon /> */}
+                  <DraftsOutlinedIcon />
                   Games
                 </div>
               }
@@ -409,7 +488,7 @@ const SponsorshipList = ({ tableData, sponsorType = 'all' }) => {
               value='quiz'
               label={
                 <div className='flex items-center gap-1.5'>
-                  {/* <PendingActionsOutlinedIcon /> */}
+                  <PendingActionsOutlinedIcon />
                   Quizzes
                 </div>
               }
@@ -418,8 +497,27 @@ const SponsorshipList = ({ tableData, sponsorType = 'all' }) => {
               value='area'
               label={
                 <div className='flex items-center gap-1.5'>
-                  {/* <PendingActionsOutlinedIcon /> */}
+                  <PendingActionsOutlinedIcon />
                   Area
+                </div>
+              }
+            />
+            */}
+            <Tab
+              value='awaiting'
+              label={
+                <div className='flex items-center gap-1.5'>
+                  {/* <PendingActionsOutlinedIcon /> */}
+                  Awaiting Admin Response
+                </div>
+              }
+            />
+            <Tab
+              value='rejected'
+              label={
+                <div className='flex items-center gap-1.5'>
+                  {/* <CancelOutlinedIcon /> */}
+                  Rejected
                 </div>
               }
             />

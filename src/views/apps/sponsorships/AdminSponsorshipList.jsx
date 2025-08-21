@@ -42,12 +42,13 @@ import { API_URLS } from '@/configs/apiConfig'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
-import { Box, Divider, FormControl, Grid, InputLabel, MenuItem, Select, Tab } from '@mui/material'
+import { Avatar, Box, Divider, FormControl, Grid, IconButton, InputLabel, MenuItem, Select, Tab } from '@mui/material'
 import { revalidatePath } from 'next/cache'
 import React from 'react'
 import { Tooltip } from '@mui/material'
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney'
 import CardGiftcardIcon from '@mui/icons-material/CardGiftcard'
+import { useSession } from 'next-auth/react'
 
 const fuzzyFilter = (row, columnId, value, addMeta) => {
   // Rank the item
@@ -86,6 +87,7 @@ const columnHelper = createColumnHelper()
 
 const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatus = 'all' }) => {
   const router = useRouter()
+  const {data: session} = useSession()
   const searchParams = useSearchParams()
   const [rowSelection, setRowSelection] = useState({})
 
@@ -106,6 +108,43 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
     }
 
     router.push(`?${params.toString()}`)
+  }
+
+  async function handleCompleteSponsorship(sponsorshipId) {
+    try {
+      const response = await RestApi.put(`${API_URLS.v0.SPONSORSHIP}`, {
+        id: sponsorshipId,
+        nonCashSponsorshipStatus: 'completed'
+      })
+      
+      if (response.status === 'success') {
+        // Refresh the page or update the data
+        window.location.reload()
+      }
+    } catch (error) {
+      console.error('Error completing sponsorship:', error)
+    }
+  }
+
+  async function handleRejectSponsorship(sponsorshipId) {
+    const rejectionReason = prompt('Please provide a reason for rejection:')
+    if (rejectionReason) {
+      try {
+        const response = await RestApi.put(`${API_URLS.v0.SPONSORSHIP}`, {
+          id: sponsorshipId,
+          nonCashSponsorshipStatus: 'rejected',
+          nonCashSponsorshipRejectionReason: rejectionReason,
+          rejectorEmail: session?.user?.email
+        })
+        
+        if (response.status === 'success') {
+          // Refresh the page or update the data
+          window.location.reload()
+        }
+      } catch (error) {
+        console.error('Error rejecting sponsorship:', error)
+      }
+    }
   }
 
   const columns = useMemo(
@@ -178,7 +217,8 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
             )
           }
         }),
-        (sponsorType === 'all' || sponsorType === 'game') && {
+        // (sponsorType === 'all' || sponsorType === 'game') && {
+          {
           id: 'games',
           ...columnHelper.accessor('games', {
             header: 'Sponsored Games',
@@ -187,7 +227,8 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
             )
           })
         },
-        (sponsorType === 'all' || sponsorType === 'quiz') && {
+        // (sponsorType === 'all' || sponsorType === 'quiz') && {
+        {
           id: 'quizzes',
           accessorFn: row => row.quizzes?.map(q => q.title).join(', ') || '',
           ...columnHelper.accessor('quizzes', {
@@ -197,7 +238,8 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
             )
           })
         },
-        (sponsorType === 'all' || sponsorType === 'area' || sponsorType === 'quiz') && {
+        // (sponsorType === 'all' || sponsorType === 'area' || sponsorType === 'quiz') && {
+          {
           id: 'location',
           ...columnHelper.accessor('location', {
             header: 'Sponsored By Area',
@@ -372,7 +414,7 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
           ...columnHelper.accessor('sponsorshipStatus', {
             header: 'Status',
             cell: ({ row }) => {
-              const { rewardType, sponsorshipStatus, nonCashSponsorshipStatus } = row.original
+              const { rewardType, sponsorshipStatus, nonCashSponsorshipStatus, nonCashSponsorshipRejectionReason, rejectorEmail } = row.original
               const status = rewardType === 'cash' ? sponsorshipStatus : nonCashSponsorshipStatus
               const statusColor = {
                 created: 'default',
@@ -382,9 +424,144 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
                 expired: 'secondary',
                 rejected: 'error'
               }[status] || 'default'
-              return <Chip size='small' color={statusColor} label={status} />
+              
+              return (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  <Chip size='small' color={statusColor} label={status} />
+                  {status === 'rejected' && rewardType === 'physicalGift' && (
+                    <>
+                      {rejectorEmail && nonCashSponsorshipRejectionReason && (
+                        <Tooltip 
+                          title={
+                            <Box sx={{ p: 1 }}>
+                              <Typography variant="body2" sx={{ color: 'white', mb: 0.5 }}>
+                                <strong>Rejected by:</strong> {rejectorEmail}
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: 'white' }}>
+                                <strong>Reason:</strong> {nonCashSponsorshipRejectionReason}
+                              </Typography>
+                            </Box>
+                          } 
+                          placement="top"
+                        >
+                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, cursor: 'pointer' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                              <Box
+                                sx={{
+                                  width: 16,
+                                  height: 16,
+                                  borderRadius: '50%',
+                                  backgroundColor: 'primary.main',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: '0.6rem',
+                                  color: 'white',
+                                  fontWeight: 'bold'
+                                }}
+                              >
+                                {rejectorEmail.charAt(0).toUpperCase()}
+                              </Box>
+                              <Typography 
+                                variant='caption' 
+                                color='text.secondary' 
+                                sx={{ 
+                                  fontSize: '0.75rem', 
+                                  maxWidth: '150px',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap'
+                                }}
+                              >
+                                {rejectorEmail}
+                              </Typography>
+                            </Box>
+                            <Typography 
+                              variant='caption' 
+                              color='error.main' 
+                              sx={{ 
+                                fontSize: '0.75rem',
+                                maxWidth: '150px',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              {nonCashSponsorshipRejectionReason}
+                            </Typography>
+                          </Box>
+                        </Tooltip>
+                      )}
+                    </>
+                  )}
+                </Box>
+              )
             }
           })
+        },
+        {
+          id: 'actions',
+          header: 'Actions',
+          cell: ({ row }) => {
+            const { rewardType, nonCashSponsorshipStatus } = row.original
+            if (rewardType === 'physicalGift' && nonCashSponsorshipStatus === 'pending') {
+              return (
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Tooltip title="View Details">
+                    <Link
+                      href={`/management/sponsorships/${row.original._id}`}
+                      style={{ textDecoration: 'none' }}
+                    >
+                      <IconButton
+                        size="small"
+                        color="info"
+                      >
+                        <i className="ri-eye-line" />
+                      </IconButton>
+                    </Link>
+                  </Tooltip>
+                  <Tooltip title="Complete">
+                    <IconButton
+                      size="small"
+                      color="success"
+                      onClick={() => handleCompleteSponsorship(row.original._id)}
+                    >
+                      <i className="ri-check-line" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Reject">
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onClick={() => handleRejectSponsorship(row.original._id)}
+                    >
+                      <i className="ri-close-line" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              )
+            } else if (rewardType === 'physicalGift' && nonCashSponsorshipStatus === 'rejected') {
+              // Show only view action for rejected sponsorships
+              return (
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Tooltip title="View Details">
+                    <Link
+                      href={`/management/sponsorships/${row.original._id}`}
+                      style={{ textDecoration: 'none' }}
+                    >
+                      <IconButton
+                        size="small"
+                        color="info"
+                      >
+                        <i className="ri-eye-line" />
+                      </IconButton>
+                    </Link>
+                  </Tooltip>
+                </Box>
+              )
+            }
+            return null
+          }
         }
       ].filter(Boolean),
     [sponsorType]
@@ -429,7 +606,11 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
               //   revalidatePath('/sponsor/list', 'page')
               let url = `/management/sponsorships`
               if (val !== 'all') {
-                url += `?sponsorType=${val}`
+                if (val === 'awaiting' || val === 'rejected') {
+                  url += `?sponsorType=${val}`
+                } else {
+                  url += `?sponsorType=${val}`
+                }
               }
               router.push(url)
             }}
@@ -447,11 +628,10 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
                 </div>
               }
             />
-            <Tab
+            {/* <Tab
               value='game'
               label={
                 <div className='flex items-center gap-1.5'>
-                  {/* <DraftsOutlinedIcon /> */}
                   Games
                 </div>
               }
@@ -460,7 +640,6 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
               value='quiz'
               label={
                 <div className='flex items-center gap-1.5'>
-                  {/* <PendingActionsOutlinedIcon /> */}
                   Quizzes
                 </div>
               }
@@ -469,8 +648,25 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
               value='area'
               label={
                 <div className='flex items-center gap-1.5'>
-                  {/* <PendingActionsOutlinedIcon /> */}
                   Area
+                </div>
+              }
+            /> */}
+            <Tab
+              value='awaiting'
+              label={
+                <div className='flex items-center gap-1.5'>
+                  {/* <PendingActionsOutlinedIcon /> */}
+                  Awaiting Admin Action
+                </div>
+              }
+            />
+            <Tab
+              value='rejected'
+              label={
+                <div className='flex items-center gap-1.5'>
+                  {/* <CancelOutlinedIcon /> */}
+                  Rejected
                 </div>
               }
             />

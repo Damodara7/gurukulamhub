@@ -83,6 +83,12 @@ const sponsorshipSchema = new mongoose.Schema(
       //   return this.rewardType === 'physicalGift'
       // }
     },
+    nonCashSponsorshipRejectionReason: {
+      type: String
+    },
+    rejectorEmail: {
+      type: String
+    },
     sponsorshipStatus: {
       type: String,
       enum: ['created', 'pending', 'failed', 'completed', 'expired'],

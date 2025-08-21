@@ -26,38 +26,111 @@ export async function getAll({ queryParams }) {
     console.log({ queryParams })
 
     // Extract parameters from queryParams
-    const { quizId, country, region, city, status, email, ...otherParams } = queryParams
+    const { quizId, country, region, city, status, email, sponsorType, ...otherParams } = queryParams
 
     // Build the base query
     const query = { ...otherParams }
 
-    // Handle quizId filter
-    if (quizId) {
+    // Handle awaiting admin action filter
+    if (sponsorType === 'awaiting') {
+      query.rewardType = 'physicalGift'
+      query.nonCashSponsorshipStatus = 'pending'
+      // Remove sponsorType from query to avoid conflicts
+      delete query.sponsorType
+    } else if (sponsorType === 'rejected') {
+      // Handle rejected physical gift sponsorships filter
+      query.rewardType = 'physicalGift'
+      query.nonCashSponsorshipStatus = 'rejected'
+      // Remove sponsorType from query to avoid conflicts
+      delete query.sponsorType
+    }
+
+    // Handle quizId filter (but not for awaiting or rejected filters)
+    if (quizId && sponsorType !== 'awaiting' && sponsorType !== 'rejected') {
       query.$or = [
         { quizzes: quizId }, // Sponsorships that include this specific quiz
         { quizzes: { $size: 0 } } // Sponsorships that apply to any quiz (empty array)
       ]
     }
     
-    if (email) {
+    if (email && sponsorType !== 'awaiting' && sponsorType !== 'rejected') {
       query.accountHolderEmail = email
     }
 
-    // Handle status filter if provided
-    if (status) {
-      query.$or = [
-        {
-          rewardType: 'cash',
-          sponsorshipStatus: status,
-          nonCashSponsorshipStatus: { $exists: false } // Ensure this field doesn't exist
-        },
-        {
-          rewardType: 'physicalGift',
-          nonCashSponsorshipStatus: status,
-          sponsorshipStatus: { $exists: false } // Ensure this field doesn't exist
-        }
-      ]
-    } else {
+    // Handle status filter if provided (but not for awaiting or rejected filters)
+    if (status && sponsorType !== 'awaiting' && sponsorType !== 'rejected') {
+      // Parse comma-separated status values
+      const statusArray = status.split(',')
+      
+      if (statusArray.includes('pending_physical_only') && statusArray.includes('rejected_physical_only')) {
+        // Special case: completed for both types + pending for physical gifts + rejected for physical gifts
+        query.$or = [
+          {
+            rewardType: 'cash',
+            sponsorshipStatus: 'completed',
+            nonCashSponsorshipStatus: { $exists: false }
+          },
+          {
+            rewardType: 'physicalGift',
+            $or: [
+              { nonCashSponsorshipStatus: 'completed' },
+              { nonCashSponsorshipStatus: 'pending' },
+              { nonCashSponsorshipStatus: 'rejected' }
+            ],
+            sponsorshipStatus: { $exists: false }
+          }
+        ]
+      } else if (statusArray.includes('pending_physical_only')) {
+        // Special case: completed for both types + pending for physical gifts only
+        query.$or = [
+          {
+            rewardType: 'cash',
+            sponsorshipStatus: 'completed',
+            nonCashSponsorshipStatus: { $exists: false }
+          },
+          {
+            rewardType: 'physicalGift',
+            $or: [
+              { nonCashSponsorshipStatus: 'completed' },
+              { nonCashSponsorshipStatus: 'pending' }
+            ],
+            sponsorshipStatus: { $exists: false }
+          }
+        ]
+      } else if (statusArray.includes('rejected_physical_only')) {
+        // Special case: completed for both types + pending for physical gifts + rejected for physical gifts only
+        query.$or = [
+          {
+            rewardType: 'cash',
+            sponsorshipStatus: 'completed',
+            nonCashSponsorshipStatus: { $exists: false }
+          },
+          {
+            rewardType: 'physicalGift',
+            $or: [
+              { nonCashSponsorshipStatus: 'completed' },
+              { nonCashSponsorshipStatus: 'pending' },
+              { nonCashSponsorshipStatus: 'rejected' }
+            ],
+            sponsorshipStatus: { $exists: false }
+          }
+        ]
+      } else {
+        // Regular status filtering
+        query.$or = [
+          {
+            rewardType: 'cash',
+            sponsorshipStatus: { $in: statusArray },
+            nonCashSponsorshipStatus: { $exists: false } // Ensure this field doesn't exist
+          },
+          {
+            rewardType: 'physicalGift',
+            nonCashSponsorshipStatus: { $in: statusArray },
+            sponsorshipStatus: { $exists: false } // Ensure this field doesn't exist
+          }
+        ]
+      }
+    } else if (!status && sponsorType !== 'awaiting' && sponsorType !== 'rejected') {
       // When no status filter is applied, ensure we get all sponsorships
       query.$or = [
         { rewardType: 'cash', sponsorshipStatus: { $exists: true } },
@@ -84,6 +157,7 @@ export async function getAll({ queryParams }) {
       //     path: 'profile'
       //   }
       // })
+      .sort({ createdAt: -1 })
 
     if (sponsorships?.length > 0 && (country || region || city)) {
       console.log('Sponsorships found by quizId')
@@ -114,6 +188,15 @@ export async function getAll({ queryParams }) {
 
         console.log({ locationQuery })
 
+        // For awaiting filter, we need to ensure we don't override the rewardType and status
+        if (sponsorType === 'awaiting') {
+          locationQuery.rewardType = 'physicalGift'
+          locationQuery.nonCashSponsorshipStatus = 'pending'
+        } else if (sponsorType === 'rejected') {
+          locationQuery.rewardType = 'physicalGift'
+          locationQuery.nonCashSponsorshipStatus = 'rejected'
+        }
+
         sponsorships = await Sponsorship.find({ ...query, ...locationQuery })
       }
     }
@@ -131,12 +214,44 @@ export async function addOne({ data }) {
   try {
     await connectMongo()
 
-    const sponsorship = new Sponsorship({ ...data, sponsorshipExpiresAt: new Date(Date.now() + 2 * 60 * 1000) })
+    // Set initial status based on reward type
+    const initialData = { ...data, sponsorshipExpiresAt: new Date(Date.now() + 2 * 60 * 1000) }
+    
+    if (data.rewardType === 'physicalGift') {
+      initialData.nonCashSponsorshipStatus = 'pending'
+    } else if (data.rewardType === 'cash') {
+      initialData.sponsorshipStatus = 'created'
+    }
+    
+    const sponsorship = new Sponsorship(initialData)
     await sponsorship.save()
 
     console.log(sponsorship)
 
     return { status: 'success', message: 'Sponsorship created successfully', result: sponsorship }
+  } catch (err) {
+    console.error(err)
+    return { status: 'error', message: err.message, result: null }
+  }
+}
+
+export async function updateOne({ data }) {
+  try {
+    await connectMongo()
+
+    const { id, ...updateData } = data
+
+    const sponsorship = await Sponsorship.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    ).populate('quizzes', 'title _id')
+
+    if (!sponsorship) {
+      return { status: 'error', message: 'Sponsorship not found', result: null }
+    }
+
+    return { status: 'success', message: 'Sponsorship updated successfully', result: sponsorship }
   } catch (err) {
     console.error(err)
     return { status: 'error', message: err.message, result: null }

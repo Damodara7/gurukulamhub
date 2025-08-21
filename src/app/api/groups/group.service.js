@@ -16,19 +16,13 @@ export const getOne = async (filter = {}) => {
 
     const group = await Group.findOne({ ...filter, isDeleted: false })
       .lean()
-      .populate([
+      .populate(
         {
           path: 'members',
           populate: {
             path: 'profile'
           }
-        }
-        // },
-        // {
-        //   path: 'createdBy',
-        //   select: 'firstname lastname email'
-        // }
-      ])
+        })
 
     if (!group) {
       return {

@@ -37,3 +37,17 @@ export async function POST(request) {
     return ApiResponseUtils.sendErrorResponse(errorResponse)
   }
 }
+
+export async function PUT(request) {
+  const reqBody = await request.json()
+
+  const response = await SponsorshipService.updateOne({ data: reqBody })
+
+  if (response.status === 'success') {
+    const successResponse = ApiResponseUtils.createSuccessResponse(response.message, response.result)
+    return ApiResponseUtils.sendSuccessResponse(successResponse)
+  } else {
+    const errorResponse = ApiResponseUtils.createErrorResponse(response.message)
+    return ApiResponseUtils.sendErrorResponse(errorResponse)
+  }
+}
