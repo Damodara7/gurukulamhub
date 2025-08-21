@@ -64,6 +64,32 @@ const ViewDetails = ({ game }) => {
   const { data: session } = useSession()
   const [currentUserGroupIds, setCurrentUserGroupIds] = useState([])
   const [isRestricted, setIsRestricted] = useState(false)
+  
+  // Compute restriction show message
+  useEffect(() => {
+    const fetchAndCompute = async () => {
+      try {
+        if (!game?.groupId) {
+          setIsRestricted(false)
+          return
+        }
+        if (!session?.user?.email) return
+        const res = await RestApi.get(`${API_URLS.v0.USER}`)
+        if (res?.status === 'success' && res.result) {
+          const users = Array.isArray(res.result) ? res.result : [res.result]
+          const user = users.find(u => u.email === session.user.email)
+          const groupIds = (user?.groupIds || []).map(g => g?._id?.toString?.() || g?.toString?.() || g)
+          setCurrentUserGroupIds(groupIds)
+          const groupIdStr = (game.groupId?._id || game.groupId).toString()
+          setIsRestricted(!groupIds.includes(groupIdStr))
+        }
+      } catch (e) {
+        // noop
+      }
+    }
+    fetchAndCompute()
+  }, [game?.groupId, session?.user?.email])
+
   const handleCopyPin = () => {
     navigator.clipboard.writeText(game.pin)
     setCopyTooltip('Copied!')
@@ -71,6 +97,8 @@ const ViewDetails = ({ game }) => {
   }
 
   console.log('we are getting game data', game)
+  
+  // Early return after all hooks
   if (!game) {
     return (
       <Box display='flex' flexDirection='column' alignItems='center' bgcolor='#f5f5f5' px={2} py={4} gap={4}>
@@ -102,31 +130,7 @@ const ViewDetails = ({ game }) => {
     )
   }
   console.log('game data', game)
-
-  // Compute restriction show message
-  useEffect(() => {
-    const fetchAndCompute = async () => {
-      try {
-        if (!game?.groupId) {
-          setIsRestricted(false)
-          return
-        }
-        if (!session?.user?.email) return
-        const res = await RestApi.get(`${API_URLS.v0.USER}`)
-        if (res?.status === 'success' && res.result) {
-          const users = Array.isArray(res.result) ? res.result : [res.result]
-          const user = users.find(u => u.email === session.user.email)
-          const groupIds = (user?.groupIds || []).map(g => g?._id?.toString?.() || g?.toString?.() || g)
-          setCurrentUserGroupIds(groupIds)
-          const groupIdStr = (game.groupId?._id || game.groupId).toString()
-          setIsRestricted(!groupIds.includes(groupIdStr))
-        }
-      } catch (e) {
-        // noop
-      }
-    }
-    fetchAndCompute()
-  }, [game?.groupId, session?.user?.email])
+  
   const getStatusChip = () => {
     const statusConfig = {
       created: { color: 'default', label: 'Pending', icon: <AccessTime /> },
