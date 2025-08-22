@@ -205,19 +205,21 @@ const UserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUserIds 
                     {getDisplayName(user).split(' ')[0]}
                   </Typography>
                 </Tooltip>
-                <IconButton
-                  size='small'
-                  onClick={e => handleRemoveUser(user._id, e)}
-                  sx={{
-                    color: 'error.main',
-                    '&:hover': {
-                      backgroundColor: 'rgba(255, 0, 0, 0.1)'
-                    },
-                    p: 0
-                  }}
-                >
-                  <CloseIcon sx={{ fontSize: 12 }} />
-                </IconButton>
+                <Tooltip title='remove user' placement='bottom' arrow>
+                  <IconButton
+                    size='small'
+                    onClick={e => handleRemoveUser(user._id, e)}
+                    sx={{
+                      color: 'error.main',
+                      '&:hover': {
+                        backgroundColor: 'rgba(255, 0, 0, 0.1)'
+                      },
+                      p: 0
+                    }}
+                  >
+                    <CloseIcon sx={{ fontSize: 12 }} />
+                  </IconButton>
+                </Tooltip>
               </Box>
             </Box>
           ))}
