@@ -26,39 +26,39 @@ export async function getAll({ queryParams }) {
     console.log({ queryParams })
 
     // Extract parameters from queryParams
-    const { quizId, country, region, city, status, email, sponsorType, ...otherParams } = queryParams
+    const { quizId, country, region, city, status, email, sponsorType, filter, ...otherParams } = queryParams
 
     // Build the base query
     const query = { ...otherParams }
 
     // Handle awaiting admin action filter
-    if (sponsorType === 'awaiting') {
+    if (filter === 'awaiting') {
       query.rewardType = 'physicalGift'
       query.nonCashSponsorshipStatus = 'pending'
-      // Remove sponsorType from query to avoid conflicts
-      delete query.sponsorType
-    } else if (sponsorType === 'rejected') {
+      // Remove filter from query to avoid conflicts
+      delete query.filter
+    } else if (filter === 'rejected') {
       // Handle rejected physical gift sponsorships filter
       query.rewardType = 'physicalGift'
       query.nonCashSponsorshipStatus = 'rejected'
-      // Remove sponsorType from query to avoid conflicts
-      delete query.sponsorType
+      // Remove filter from query to avoid conflicts
+      delete query.filter
     }
 
     // Handle quizId filter (but not for awaiting or rejected filters)
-    if (quizId && sponsorType !== 'awaiting' && sponsorType !== 'rejected') {
+    if (quizId && filter !== 'awaiting' && filter !== 'rejected') {
       query.$or = [
         { quizzes: quizId }, // Sponsorships that include this specific quiz
         { quizzes: { $size: 0 } } // Sponsorships that apply to any quiz (empty array)
       ]
     }
     
-    if (email && sponsorType !== 'awaiting' && sponsorType !== 'rejected') {
+    if (email && filter !== 'awaiting' && filter !== 'rejected') {
       query.accountHolderEmail = email
     }
 
     // Handle status filter if provided (but not for awaiting or rejected filters)
-    if (status && sponsorType !== 'awaiting' && sponsorType !== 'rejected') {
+    if (status && filter !== 'awaiting' && filter !== 'rejected') {
       // Parse comma-separated status values
       const statusArray = status.split(',')
       
@@ -130,7 +130,7 @@ export async function getAll({ queryParams }) {
           }
         ]
       }
-    } else if (!status && sponsorType !== 'awaiting' && sponsorType !== 'rejected') {
+    } else if (!status && filter !== 'awaiting' && filter !== 'rejected') {
       // When no status filter is applied, ensure we get all sponsorships
       query.$or = [
         { rewardType: 'cash', sponsorshipStatus: { $exists: true } },
@@ -189,10 +189,10 @@ export async function getAll({ queryParams }) {
         console.log({ locationQuery })
 
         // For awaiting filter, we need to ensure we don't override the rewardType and status
-        if (sponsorType === 'awaiting') {
+        if (filter === 'awaiting') {
           locationQuery.rewardType = 'physicalGift'
           locationQuery.nonCashSponsorshipStatus = 'pending'
-        } else if (sponsorType === 'rejected') {
+        } else if (filter === 'rejected') {
           locationQuery.rewardType = 'physicalGift'
           locationQuery.nonCashSponsorshipStatus = 'rejected'
         }

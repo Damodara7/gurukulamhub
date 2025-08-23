@@ -84,25 +84,16 @@ const GroupdetailsPage = ({ groupData, gamesData = [] }) => {
       })
     }
 
-    // Show location fields only if group has location filter
+    // Show location as single chip if group has location filter
     if (groupData?.location) {
-      if (groupData.location.city && member.profile?.locality) {
+      const locationParts = []
+      if (groupData.location.city && member.profile?.locality) locationParts.push(member.profile.locality)
+      if (groupData.location.region && member.profile?.region) locationParts.push(member.profile.region)
+      if (groupData.location.country && member.profile?.country) locationParts.push(member.profile.country)
+      
+      if (locationParts.length > 0) {
         chips.push({
-          label: `City: ${member.profile.locality}`,
-          color: 'secondary'
-        })
-      }
-
-      if (groupData.location.region && member.profile?.region) {
-        chips.push({
-          label: `Region: ${member.profile.region}`,
-          color: 'secondary'
-        })
-      }
-
-      if (groupData.location.country && member.profile?.country) {
-        chips.push({
-          label: `Country: ${member.profile.country}`,
+          label: `Location: ${locationParts.join(', ')}`,
           color: 'secondary'
         })
       }

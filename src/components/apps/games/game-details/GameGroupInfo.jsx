@@ -86,53 +86,65 @@ const GameGroupInfo = ({ game }) => {
                 <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
                   Group Filters
                 </Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                  {group?.ageGroup?.min != null && group?.ageGroup?.max != null && (
-                    <Chip
-                      icon={<AccessTimeIcon />}
-                      label={`Age: ${group.ageGroup.min}-${group.ageGroup.max}`}
-                      variant="outlined"
-                      size="small"
-                      color="primary"
-                    />
-                  )}
-                  {group?.gender && (
-                    <Chip
-                      icon={<PersonIcon />}
-                      label={`Gender: ${Array.isArray(group.gender) ? group.gender.join(', ') : group.gender}`}
-                      variant="outlined"
-                      size="small"
-                      color="primary"
-                    />
-                  )}
-                  {group?.location?.city && (
-                    <Chip
-                      icon={<LocationIcon />}
-                      label={`City: ${group.location.city}`}
-                      variant="outlined"
-                      size="small"
-                      color="primary"
-                    />
-                  )}
-                  {group?.location?.region && (
-                    <Chip
-                      icon={<LocationIcon />}
-                      label={`Region: ${group.location.region}`}
-                      variant="outlined"
-                      size="small"
-                      color="primary"
-                    />
-                  )}
-                  {group?.location?.country && (
-                    <Chip
-                      icon={<LocationIcon />}
-                      label={`Country: ${group.location.country}`}
-                      variant="outlined"
-                      size="small"
-                      color="primary"
-                    />
-                  )}
-                </Box>
+                {(() => {
+                  const filterChips = []
+                  
+                  if (group?.ageGroup?.min != null && group?.ageGroup?.max != null) {
+                    filterChips.push(
+                      <Chip
+                        key="age"
+                        icon={<AccessTimeIcon sx={{ fontSize: 16 }} />}
+                        label={`Age: ${group.ageGroup.min}-${group.ageGroup.max}`}
+                        variant="outlined"
+                        size="small"
+                        color="primary"
+                      />
+                    )
+                  }
+                  
+                  if (group?.gender && Array.isArray(group.gender) && group.gender.length > 0) {
+                    filterChips.push(
+                      <Chip
+                        key="gender"
+                        icon={<PersonIcon sx={{ fontSize: 16 }} />}
+                        label={`Gender: ${group.gender.map(g => g.charAt(0).toUpperCase() + g.slice(1)).join(', ')}`}
+                        variant="outlined"
+                        size="small"
+                        color="success"
+                      />
+                    )
+                  }
+                  
+                  if (group?.location) {
+                    const locationParts = []
+                    if (group.location.country) locationParts.push(group.location.country)
+                    if (group.location.region) locationParts.push(group.location.region)
+                    if (group.location.city) locationParts.push(group.location.city)
+                    
+                    if (locationParts.length > 0) {
+                      filterChips.push(
+                        <Chip
+                          key="location"
+                          icon={<LocationIcon sx={{ fontSize: 16 }} />}
+                          label={`Location: ${locationParts.join(', ')}`}
+                          variant="outlined"
+                          size="small"
+                          color="secondary"
+                        />
+                      )
+                    }
+                  }
+
+                  return filterChips.length > 0 ? (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      {filterChips}
+                    </Box>
+                  ) : (
+                    <Typography variant='body2' color='text.secondary' sx={{ fontStyle: 'italic' }}>
+                      No filters applied
+                    </Typography>
+                  )
+                })()}
               </Box>
             </Stack>
           </Grid>
