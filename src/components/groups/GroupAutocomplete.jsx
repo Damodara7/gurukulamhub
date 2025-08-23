@@ -14,7 +14,14 @@ import {
   IconButton,
   Tooltip
 } from '@mui/material'
-import { Add as AddIcon, Group as GroupIcon, Visibility as VisibilityIcon } from '@mui/icons-material'
+import { 
+  Add as AddIcon, 
+  Group as GroupIcon, 
+  Visibility as VisibilityIcon,
+  Cake as CakeIcon,
+  Person as PersonIcon,
+  LocationOn as LocationIcon
+} from '@mui/icons-material'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { toast } from 'react-toastify'
@@ -142,13 +149,65 @@ const GroupAutocomplete = ({
         <Typography variant='body2' color='text.secondary'>
           {option.description}
         </Typography>
-        <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
-          {option.ageGroup && (
-            <Chip size='small' label={`Age: ${option.ageGroup.min}-${option.ageGroup.max}`} variant='outlined' />
-          )}
-          {option.gender && <Chip size='small' label={`Gender: ${option.gender}`} variant='outlined' />}
-          {option.location?.city && <Chip size='small' label={`${option.location.city}`} variant='outlined' />}
-        </Box>
+        {(() => {
+          const filterChips = []
+          
+          if (option.ageGroup?.min && option.ageGroup?.max) {
+            filterChips.push(
+              <Chip 
+                key="age"
+                size='small' 
+                icon={<CakeIcon sx={{ fontSize: 16 }} />}
+                label={`Age: ${option.ageGroup.min}-${option.ageGroup.max}`} 
+                variant='outlined' 
+                color='primary'
+              />
+            )
+          }
+          
+          if (option.gender && Array.isArray(option.gender) && option.gender.length > 0) {
+            filterChips.push(
+              <Chip 
+                key="gender"
+                size='small' 
+                icon={<PersonIcon sx={{ fontSize: 16 }} />}
+                label={`Gender: ${option.gender.map(g => g.charAt(0).toUpperCase() + g.slice(1)).join(', ')}`} 
+                variant='outlined' 
+                color='success'
+              />
+            )
+          }
+          
+          if (option.location) {
+            const locationParts = []
+            if (option.location.country) locationParts.push(option.location.country)
+            if (option.location.region) locationParts.push(option.location.region)
+            if (option.location.city) locationParts.push(option.location.city)
+            
+            if (locationParts.length > 0) {
+              filterChips.push(
+                <Chip 
+                  key="location"
+                  size='small' 
+                  icon={<LocationIcon sx={{ fontSize: 16 }} />}
+                  label={`Location: ${locationParts.join(', ')}`} 
+                  variant='outlined' 
+                  color='secondary'
+                />
+              )
+            }
+          }
+
+          return filterChips.length > 0 ? (
+            <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
+              {filterChips}
+            </Box>
+          ) : (
+            <Typography variant='caption' color='text.secondary' sx={{ fontStyle: 'italic', mt: 0.5 }}>
+              No filters applied
+            </Typography>
+          )
+        })()}
       </Box>
       <Box sx={{ display: 'flex', gap: 1, ml: 2 }}>
         <Tooltip title='View group details'>

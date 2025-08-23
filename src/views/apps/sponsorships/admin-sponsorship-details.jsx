@@ -63,7 +63,7 @@ const SponsorshipDetailPage = ({id=null}) => {
       })
       
       if (response.status === 'success') {
-        router.push('/management/sponsorships?sponsorType=awaiting')
+        router.push('/management/sponsorships?filter=awaiting')
       }
     } catch (error) {
       console.error('Error completing sponsorship:', error)
@@ -86,7 +86,7 @@ const SponsorshipDetailPage = ({id=null}) => {
       
       if (response.status === 'success') {
         setRejectDialogOpen(false)
-        router.push('/management/sponsorships?sponsorType=awaiting')
+        router.push('/management/sponsorships?filter=awaiting')
       }
     } catch (error) {
       console.error('Error rejecting sponsorship:', error)

@@ -40,7 +40,9 @@ import {
   AttachMoney,
   CardGiftcard,
   ContentCopy,
-  Share as ShareIcon
+  Share as ShareIcon,
+  Group as GroupIcon,
+  Cake as CakeIcon
 } from '@mui/icons-material'
 import VideoAd from '@/views/apps/advertisements/VideoAd/VideoAd'
 import ImagePopup from '@/components/ImagePopup'
@@ -232,29 +234,63 @@ const ViewDetails = ({ game }) => {
                   <Typography variant='body2' sx={{ mb: 0.75 }}>
                     You are not allowed to register/join this game.
                   </Typography>
-                  {game?.groupId && (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  <Typography variant='h6' sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <GroupIcon />
+                      Group Filters
+                    </Typography>
+
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                      {/* Age Filter */}
                       {game.groupId?.ageGroup?.min != null && game.groupId?.ageGroup?.max != null && (
-                        <Chip size='small' label={`Age: ${game.groupId.ageGroup.min}-${game.groupId.ageGroup.max}`} color='error' variant='outlined' />
+                        <Chip
+                          icon={<CakeIcon sx={{ fontSize: 16 }} />}
+                          label={`Age: ${game.groupId.ageGroup.min}-${game.groupId.ageGroup.max}`}
+                          color='primary'
+                          variant='outlined'
+                          sx={{ mb: 1 }}
+                        />
                       )}
-                      {(() => {
-                        const g = game.groupId?.gender
-                        const arr = Array.isArray(g) ? g : g ? [g] : []
-                        return arr.length > 0 ? (
-                          <Chip size='small' label={`Gender: ${arr.join(', ')}`} color='error' variant='outlined' />
-                        ) : null
-                      })()}
-                      {game.groupId?.location?.city && (
-                        <Chip size='small' label={`${game.groupId.location.city}`} color='error' variant='outlined' />
+
+                      {/* Location Filter */}
+                      {game.groupId?.location && (
+                        (() => {
+                          const locationParts = []
+                          if (game.groupId.location.country) locationParts.push(game.groupId.location.country)
+                          if (game.groupId.location.region) locationParts.push(game.groupId.location.region)
+                          if (game.groupId.location.city) locationParts.push(game.groupId.location.city)
+
+                          return locationParts.length > 0 ? (
+                            <Chip
+                              icon={<LocationOn sx={{ fontSize: 16 }} />}
+                              label={`Location: ${locationParts.join(', ')}`}
+                              color='secondary'
+                              variant='outlined'
+                              sx={{ mb: 1 }}
+                            />
+                          ) : null
+                        })()
                       )}
-                      {game.groupId?.location?.region && (
-                        <Chip size='small' label={`${game.groupId.location.region}`} color='error' variant='outlined' />
+
+                      {/* Gender Filter */}
+                      {game.groupId?.gender && Array.isArray(game.groupId.gender) && game.groupId.gender.length > 0 && (
+                        <Chip
+                          icon={<Person sx={{ fontSize: 16 }} />}
+                          label={`Gender: ${game.groupId.gender.map(g => g.charAt(0).toUpperCase() + g.slice(1)).join(', ')}`}
+                          color='success'
+                          variant='outlined'
+                          sx={{ mb: 1 }}
+                        />
                       )}
-                      {game.groupId?.location?.country && (
-                        <Chip size='small' label={`${game.groupId.location.country}`} color='error' variant='outlined' />
+
+                      {/* Show message if no filters */}
+                      {(!game.groupId?.ageGroup?.min || !game.groupId?.ageGroup?.max) && 
+                       !game.groupId?.location && 
+                       (!game.groupId?.gender || game.groupId.gender.length === 0) && (
+                        <Typography variant='body2' color='text.secondary' sx={{ fontStyle: 'italic' }}>
+                          No filters applied
+                        </Typography>
                       )}
                     </Box>
-                  )}
                 </Alert>
               )}
 

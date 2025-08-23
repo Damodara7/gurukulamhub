@@ -6,11 +6,14 @@ import * as RestApi from '@/utils/restApiUtil'
 export const dynamic = 'force-dynamic'
 
 async function page({ searchParams }) {
-  const { sponsorType, sponsorshipStatus } = searchParams
+  const { sponsorType, sponsorshipStatus, filter } = searchParams
 
   let url = `${API_URLS.v0.SPONSORSHIP}`
   const params = []
 
+  if (filter) {
+    params.push(`filter=${filter}`)
+  }
   if (sponsorType) {
     params.push(`sponsorType=${sponsorType}`)
   }
@@ -28,10 +31,11 @@ async function page({ searchParams }) {
   console.log(res)
   return (
     <AdminSponsorshipList
-      key={`${sponsorType}-${sponsorshipStatus}`}
+      key={`${filter}-${sponsorType}-${sponsorshipStatus}`}
       tableData={res.result}
       sponsorType={sponsorType || 'all'}
       sponsorshipStatus={sponsorshipStatus || 'all'}
+      filter={filter}
     />
   )
 }

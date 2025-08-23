@@ -49,6 +49,11 @@ import { Tooltip } from '@mui/material'
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney'
 import CardGiftcardIcon from '@mui/icons-material/CardGiftcard'
 import { useSession } from 'next-auth/react'
+import Dialog from '@mui/material/Dialog'
+import DialogTitle from '@mui/material/DialogTitle'
+import DialogContent from '@mui/material/DialogContent'
+import DialogActions from '@mui/material/DialogActions'
+import Button from '@mui/material/Button'
 
 const fuzzyFilter = (row, columnId, value, addMeta) => {
   // Rank the item
@@ -85,7 +90,7 @@ const DebouncedInput = ({ value: initialValue, onChange, debounce = 500, ...prop
 // Column Definitions
 const columnHelper = createColumnHelper()
 
-const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatus = 'all' }) => {
+const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatus = 'all', filter }) => {
   const router = useRouter()
   const {data: session} = useSession()
   const searchParams = useSearchParams()
@@ -93,6 +98,9 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
 
   const [data, setData] = useState(...[tableData])
   const [globalFilter, setGlobalFilter] = useState('')
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false)
+  const [rejectionReason, setRejectionReason] = useState('')
+  const [selectedSponsorshipId, setSelectedSponsorshipId] = useState(null)
 
   // Hooks
   const { lang: locale } = useParams()
@@ -126,24 +134,34 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
     }
   }
 
-  async function handleRejectSponsorship(sponsorshipId) {
-    const rejectionReason = prompt('Please provide a reason for rejection:')
-    if (rejectionReason) {
-      try {
-        const response = await RestApi.put(`${API_URLS.v0.SPONSORSHIP}`, {
-          id: sponsorshipId,
-          nonCashSponsorshipStatus: 'rejected',
-          nonCashSponsorshipRejectionReason: rejectionReason,
-          rejectorEmail: session?.user?.email
-        })
-        
-        if (response.status === 'success') {
-          // Refresh the page or update the data
-          window.location.reload()
-        }
-      } catch (error) {
-        console.error('Error rejecting sponsorship:', error)
+  function handleRejectSponsorship(sponsorshipId) {
+    setSelectedSponsorshipId(sponsorshipId)
+    setRejectDialogOpen(true)
+  }
+
+  async function confirmRejectSponsorship() {
+    if (!rejectionReason.trim()) {
+      alert('Please provide a rejection reason')
+      return
+    }
+
+    try {
+      const response = await RestApi.put(`${API_URLS.v0.SPONSORSHIP}`, {
+        id: selectedSponsorshipId,
+        nonCashSponsorshipStatus: 'rejected',
+        nonCashSponsorshipRejectionReason: rejectionReason,
+        rejectorEmail: session?.user?.email
+      })
+      
+      if (response.status === 'success') {
+        setRejectDialogOpen(false)
+        setRejectionReason('')
+        setSelectedSponsorshipId(null)
+        // Refresh the page or update the data
+        window.location.reload()
       }
+    } catch (error) {
+      console.error('Error rejecting sponsorship:', error)
     }
   }
 
@@ -564,7 +582,7 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
           }
         }
       ].filter(Boolean),
-    [sponsorType]
+    [sponsorType, filter]
   )
 
   const table = useReactTable({
@@ -600,17 +618,15 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
   return (
     <>
       <Box className='mb-2 flex justify-center'>
-        <TabContext value={sponsorType}>
+        <TabContext value={filter || sponsorType}>
           <CustomTabList
             onChange={(e, val) => {
               //   revalidatePath('/sponsor/list', 'page')
               let url = `/management/sponsorships`
-              if (val !== 'all') {
-                if (val === 'awaiting' || val === 'rejected') {
-                  url += `?sponsorType=${val}`
-                } else {
-                  url += `?sponsorType=${val}`
-                }
+              if (val === 'awaiting' || val === 'rejected') {
+                url += `?filter=${val}`
+              } else if (val !== 'all') {
+                url += `?sponsorType=${val}`
               }
               router.push(url)
             }}
@@ -773,6 +789,32 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
           onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
         />
       </Card>
+
+      {/* Rejection Dialog */}
+      <Dialog maxWidth={'sm'} fullWidth open={rejectDialogOpen} onClose={() => setRejectDialogOpen(false)}>
+        <DialogTitle>Reject Sponsorship</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
+            Please provide a reason for rejecting this sponsorship.
+          </Typography>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Rejection Reason"
+            type="text"
+            fullWidth
+            variant="outlined"
+            value={rejectionReason}
+            onChange={(e) => setRejectionReason(e.target.value)}
+            multiline
+            rows={4}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRejectDialogOpen(false)}>Cancel</Button>
+          <Button onClick={confirmRejectSponsorship} color="error">Reject</Button>
+        </DialogActions>
+      </Dialog>
     </>
   )
 }

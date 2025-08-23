@@ -80,7 +80,7 @@ const DebouncedInput = ({ value: initialValue, onChange, debounce = 500, ...prop
 // Column Definitions
 const columnHelper = createColumnHelper()
 
-const SponsorshipList = ({ tableData, sponsorType = 'all' }) => {
+const SponsorshipList = ({ tableData, sponsorType = 'all', filter }) => {
   const router = useRouter()
   const [rowSelection, setRowSelection] = useState({})
 
@@ -450,12 +450,14 @@ const SponsorshipList = ({ tableData, sponsorType = 'all' }) => {
   return (
     <>
       <Box className='mb-2 flex justify-center'>
-        <TabContext value={sponsorType}>
+        <TabContext value={filter || sponsorType}>
           <CustomTabList
             onChange={(e, val) => {
               //   revalidatePath('/sponsor/list', 'page')
               let url = `/sponsor/list`
-              if (val !== 'all') {
+              if (val === 'awaiting' || val === 'rejected') {
+                url += `?filter=${val}`
+              } else if (val !== 'all') {
                 url += `?sponsorType=${val}`
               }
               router.push(url)
