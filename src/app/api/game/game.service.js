@@ -65,7 +65,7 @@ export const getOne = async (filter = {}) => {
         populate: {
           path: 'members',
           populate: {
-            path: 'profile',
+            path: 'profile'
           }
         }
       })
@@ -727,7 +727,7 @@ export const joinGame = async (gameId, userData) => {
     }
 
     // Enforce group membership if game is restricted to a group
-    if (game.groupId) {
+    if (game.groupId && game.groupId._id) {
       const groupIdStr = (game.groupId._id || game.groupId).toString()
       const userGroupIds = (user.groupIds || []).map(g => g.toString())
       const isMember = userGroupIds.includes(groupIdStr)
@@ -835,7 +835,7 @@ export const startGame = async (gameId, userData) => {
         message: 'Game not found'
       }
     }
-    if (game.groupId) {
+    if (game.groupId && game.groupId._id) {
       const groupIdStr = (game.groupId._id || game.groupId).toString()
       const userGroupIds = (user.groupIds || []).map(g => g.toString())
       const isMember = userGroupIds.includes(groupIdStr)
@@ -1498,5 +1498,40 @@ export async function broadcastGameDetailsUpdates(gameId, updatedGame = null) {
     }
   } catch (e) {
     console.error('Failed to broadcast game details:', e)
+  }
+}
+
+// Function to clean up orphaned groupId references in games
+export const cleanupOrphanedGroupReferences = async () => {
+  await connectMongo()
+  try {
+    // Find all games that have a groupId but the group doesn't exist or is deleted
+    const gamesWithGroupId = await Game.find({
+      groupId: { $exists: true, $ne: null },
+      isDeleted: false
+    }).populate('groupId')
+
+    let cleanedCount = 0
+
+    for (const game of gamesWithGroupId) {
+      // Check if the group exists and is not deleted
+      if (!game.groupId || game.groupId.isDeleted) {
+        await Game.updateOne({ _id: game._id }, { $unset: { groupId: 1 } })
+        cleanedCount++
+        console.log(`Cleaned up orphaned groupId reference in game ${game._id}`)
+      }
+    }
+
+    return {
+      status: 'success',
+      result: { cleanedCount },
+      message: `Cleaned up ${cleanedCount} orphaned group references in games`
+    }
+  } catch (error) {
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to cleanup orphaned group references'
+    }
   }
 }

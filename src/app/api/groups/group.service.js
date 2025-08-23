@@ -2,6 +2,7 @@ import connectMongo from '@/utils/dbConnect-mongo'
 import mongoose from 'mongoose'
 import Group from './group.model.js'
 import User from '@/app/models/user.model.js'
+import Game from '../game/game.model.js'
 
 export const getOne = async (filter = {}) => {
   await connectMongo()
@@ -16,14 +17,12 @@ export const getOne = async (filter = {}) => {
 
     const group = await Group.findOne({ ...filter, isDeleted: false })
       .lean()
-      .populate(
-        {
-          path: 'members',
-          populate: {
-            path: 'profile'
-          }
+      .populate({
+        path: 'members',
+        populate: {
+          path: 'profile'
         }
-      )
+      })
     console.log('filter', filter)
 
     if (!group) {
@@ -325,6 +324,15 @@ export const deleteOne = async groupId => {
       // Continue with group deletion even if user update fails
     }
 
+    // Remove groupId from all games that reference this group
+    try {
+      await Game.updateMany({ groupId: groupId }, { $unset: { groupId: 1 } })
+      console.log(`Removed groupId ${groupId} from all games`)
+    } catch (gameUpdateError) {
+      console.error('Error removing groupId from games:', gameUpdateError)
+      // Continue with group deletion even if game update fails
+    }
+
     // Perform soft delete
     existingGroup.isDeleted = true
     existingGroup.deletedAt = new Date()
@@ -342,6 +350,92 @@ export const deleteOne = async groupId => {
       status: 'error',
       result: null,
       message: error.message || 'Failed to delete group'
+    }
+  }
+}
+
+// Function to permanently delete a group and clean up all references
+export const hardDeleteOne = async groupId => {
+  await connectMongo()
+  try {
+    // Find the existing group by ID
+    const existingGroup = await Group.findOne({ _id: groupId })
+
+    if (!existingGroup) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Group not found'
+      }
+    }
+
+    // Remove group from all users
+    try {
+      await User.updateMany({ groupIds: groupId }, { $pull: { groupIds: groupId } })
+      console.log(`Removed group ${groupId} from all users`)
+    } catch (userUpdateError) {
+      console.error('Error removing group from users:', userUpdateError)
+      // Continue with group deletion even if user update fails
+    }
+
+    // Remove groupId from all games that reference this group
+    try {
+      await Game.updateMany({ groupId: groupId }, { $unset: { groupId: 1 } })
+      console.log(`Removed groupId ${groupId} from all games`)
+    } catch (gameUpdateError) {
+      console.error('Error removing groupId from games:', gameUpdateError)
+      // Continue with group deletion even if game update fails
+    }
+
+    // Permanently delete the group
+    await Group.deleteOne({ _id: groupId })
+
+    return {
+      status: 'success',
+      result: null,
+      message: 'Group permanently deleted and all references cleaned up'
+    }
+  } catch (error) {
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to permanently delete group'
+    }
+  }
+}
+
+// Function to restore a soft-deleted group
+export const restoreOne = async groupId => {
+  await connectMongo()
+  try {
+    // Find the soft-deleted group by ID
+    const existingGroup = await Group.findOne({ _id: groupId, isDeleted: true })
+
+    if (!existingGroup) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Soft-deleted group not found'
+      }
+    }
+
+    // Restore the group
+    existingGroup.isDeleted = false
+    existingGroup.deletedAt = undefined
+
+    // Save the updated group
+    const restoredGroup = await existingGroup.save()
+
+    return {
+      status: 'success',
+      result: restoredGroup,
+      message: 'Group restored successfully'
+    }
+  } catch (error) {
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to restore group'
     }
   }
 }

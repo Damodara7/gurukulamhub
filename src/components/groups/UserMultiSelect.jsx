@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import {
   Avatar,
   Box,
@@ -66,27 +66,55 @@ const UserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUserIds 
   const [open, setOpen] = useState(false)
   const [selectAll, setSelectAll] = useState(true)
   const [intermediate, setIntermediate] = useState(false)
-  const [maxVisible, setMaxVisible] = useState(4)
+  const [visibleUsers, setVisibleUsers] = useState([])
+  const [overflowCount, setOverflowCount] = useState(0)
+  const containerRef = useRef(null)
 
+  // Calculate how many users can fit in one line based on container width
   useEffect(() => {
-    const handleResize = () => {
-      if (typeof window !== 'undefined') {
-        if (window.innerWidth >= 1200) {
-          setMaxVisible(16)
-        } else if (window.innerWidth >= 900) {
-          setMaxVisible(12)
-        } else if (window.innerWidth >= 600) {
-          setMaxVisible(8)
-        } else {
-          setMaxVisible(4)
-        }
-      }
+    const calculateVisibleUsers = () => {
+      if (!containerRef.current) return
+
+      const container = containerRef.current
+      const containerWidth = container.offsetWidth
+      const userItemWidth = 60 // Reduced width of each user item
+      const gap = 4 // Reduced gap between users
+      const countWidth = 70 // Reduced width of the count display
+      const countMargin = 8 // Reduced margin of the count display
+
+      // Calculate how many users can fit in one line, leaving minimal space for count
+      const availableWidth = containerWidth - countWidth - countMargin - gap
+      const maxUsersPerLine = Math.floor(availableWidth / (userItemWidth + gap))
+
+      // Ensure at least 1 user is shown, but try to show more
+      const maxVisible = Math.max(1, Math.min(maxUsersPerLine + 1, maxUsersPerLine))
+
+      // Get selected users
+      const selected = users.filter(user => selectedUsers.includes(user._id))
+
+      // Show users that fit in one line
+      const visible = selected.slice(0, maxVisible)
+      const overflow = selected.length - maxVisible
+
+      setVisibleUsers(visible)
+      setOverflowCount(overflow > 0 ? overflow : 0)
     }
 
-    handleResize()
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
+    // Initial calculation
+    calculateVisibleUsers()
+
+    // Recalculate on resize
+    const resizeObserver = new ResizeObserver(calculateVisibleUsers)
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current)
+    }
+
+    // Cleanup
+    return () => {
+      resizeObserver.disconnect()
+    }
+  }, [users, selectedUsers])
+
   console.log('selectedUsers in the multi select component', selectedUsers)
   useEffect(() => {
     if (selectedUsers.length === users.length) {
@@ -132,109 +160,176 @@ const UserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUserIds 
   }
 
   const renderSelectedUsers = () => {
-    const selected = getSelectedUsers()
-    const displayUsers = selected.slice(0, maxVisible)
-
-    console.log('display users  ', displayUsers)
-
     return (
       <Box
+        ref={containerRef}
         sx={{
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          minHeight: 64,
+          flexDirection: 'column',
           width: '100%',
-          overflow: 'hidden'
+          minHeight: 64
         }}
       >
+        {/* Users display in one line with count on right */}
         <Box
           sx={{
             display: 'flex',
-            gap: 2,
             alignItems: 'center',
-            flexWrap: 'wrap',
-            flex: 1,
-            minWidth: 0
+            width: '100%',
+            mb: 1
           }}
         >
-          {displayUsers.map(user => (
-            <Box
-              key={user._id}
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                width: 70,
-                position: 'relative'
-              }}
-            >
-              <Avatar
-                src={user?.image || user?.profile?.image}
+          {/* Users container - responsive width */}
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 0.5,
+              alignItems: 'center',
+              flexWrap: 'nowrap',
+              overflow: 'hidden',
+              flex: 1,
+              mr: 1
+            }}
+          >
+            {visibleUsers.map(user => (
+              <Box
+                key={user._id}
                 sx={{
-                  width: 40,
-                  height: 40,
-                  mb: 0.5
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  width: 60,
+                  position: 'relative',
+                  flexShrink: 0
                 }}
               >
-                {getInitials(user)}
-              </Avatar>
+                <Avatar
+                  src={user?.image || user?.profile?.image}
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    mb: 0.5
+                  }}
+                >
+                  {getInitials(user)}
+                </Avatar>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    backgroundColor: 'grey.100',
+                    borderRadius: 1,
+                    px: 1,
+                    width: '100%',
+                    justifyContent: 'space-between',
+                    minHeight: 20
+                  }}
+                >
+                  <Tooltip title={getDisplayName(user)} placement='bottom' arrow>
+                    <Typography
+                      variant='body2'
+                      sx={{
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        flex: 1,
+                        mr: 0.5,
+                        fontSize: '0.75rem'
+                      }}
+                    >
+                      {getDisplayName(user).split(' ')[0]}
+                    </Typography>
+                  </Tooltip>
+                  <Tooltip title='remove user' placement='bottom' arrow>
+                    <IconButton
+                      size='small'
+                      onClick={e => handleRemoveUser(user._id, e)}
+                      sx={{
+                        color: 'error.main',
+                        '&:hover': {
+                          backgroundColor: 'rgba(255, 0, 0, 0.1)'
+                        },
+                        p: 0,
+                        minWidth: 16,
+                        minHeight: 16
+                      }}
+                    >
+                      <CloseIcon sx={{ fontSize: 12 }} />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </Box>
+            ))}
+
+            {/* Overflow indicator */}
+            {overflowCount > 0 && (
               <Box
                 sx={{
                   display: 'flex',
+                  flexDirection: 'column',
                   alignItems: 'center',
-                  backgroundColor: 'grey.100',
-                  borderRadius: 1,
-                  px: 1,
-                  width: '90%',
-                  justifyContent: 'space-between',
-                  minHeight: 20
+                  width: 60,
+                  position: 'relative',
+                  flexShrink: 0
                 }}
               >
-                <Tooltip title={getDisplayName(user)} placement='bottom' arrow>
+                <Avatar
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    mb: 0.5,
+                    backgroundColor: 'grey.300',
+                    color: 'grey.600'
+                  }}
+                >
+                  ...
+                </Avatar>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    backgroundColor: 'grey.200',
+                    borderRadius: 1,
+                    px: 1,
+                    width: '100%',
+                    justifyContent: 'center',
+                    minHeight: 20
+                  }}
+                >
                   <Typography
                     variant='body2'
                     sx={{
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      flex: 1,
-                      mr: 0.5
+                      fontSize: '0.75rem',
+                      color: 'grey.600',
+                      fontWeight: 500
                     }}
                   >
-                    {getDisplayName(user).split(' ')[0]}
+                    +{overflowCount}
                   </Typography>
-                </Tooltip>
-                <Tooltip title='remove user' placement='bottom' arrow>
-                  <IconButton
-                    size='small'
-                    onClick={e => handleRemoveUser(user._id, e)}
-                    sx={{
-                      color: 'error.main',
-                      '&:hover': {
-                        backgroundColor: 'rgba(255, 0, 0, 0.1)'
-                      },
-                      p: 0
-                    }}
-                  >
-                    <CloseIcon sx={{ fontSize: 12 }} />
-                  </IconButton>
-                </Tooltip>
+                </Box>
               </Box>
-            </Box>
-          ))}
-        </Box>
+            )}
+          </Box>
 
-        <Typography
-          variant='body2'
-          sx={{
-            ml: 2,
-            minWidth: 60,
-            textAlign: 'right'
-          }}
-        >
-          {selectedUsers.length}/{users.length}
-        </Typography>
+          {/* Total count on the right - fixed width, simple styling */}
+          <Box
+            sx={{
+              width: 80,
+              flexShrink: 0,
+              textAlign: 'right'
+            }}
+          >
+            <Typography
+              variant='body2'
+              sx={{
+                fontSize: '0.875rem',
+                fontWeight: 500
+              }}
+            >
+              {selectedUsers.length} / {users.length}
+            </Typography>
+          </Box>
+        </Box>
       </Box>
     )
   }
@@ -266,13 +361,10 @@ const UserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUserIds 
         onClick={() => setOpen(true)}
         sx={{
           border: 1,
-          borderColor: selectedUsers.length === 0 ? 'error.main' : 'divider',
           borderRadius: 1,
           p: 2,
           cursor: 'pointer',
-          '&:hover': {
-            borderColor: selectedUsers.length === 0 ? 'error.main' : 'text.primary'
-          },
+
           minHeight: 60,
           minWidth: 300,
           display: 'flex',
@@ -283,8 +375,8 @@ const UserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUserIds 
         {selectedUsers.length > 0 ? (
           renderSelectedUsers()
         ) : (
-          <Typography color={selectedUsers.length === 0 ? 'error.main' : 'textSecondary'} sx={{ textAlign: 'center' }}>
-            currently there are no users, change the filter to see the users and then create the group
+          <Typography sx={{ textAlign: 'center' }}>
+            {`Selected Users (${selectedUsers.length} / ${users.length})`}
           </Typography>
         )}
       </Box>
