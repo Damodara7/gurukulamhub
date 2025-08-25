@@ -23,7 +23,7 @@ export async function GET(req) {
       if (email) {
         artifact = await ArtifactService.getAllByEmail(email, { ...rest })
       } else if (audienceId) {
-        artifact = await ArtifactService.getAllByGroupId(audienceId, { ...rest })
+        artifact = await ArtifactService.getAllByAudienceId(audienceId, { ...rest })
       } else {
         artifact = await ArtifactService.getAll({ ...rest })
       }
