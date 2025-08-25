@@ -2,12 +2,12 @@
 import React, { useState, useEffect } from 'react'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
-import GroupdetailsPage from '@/views/apps/groups/group-details'
+import AudiencedetailsPage from '@/views/apps/audience/audience-details'
 import { Box, CircularProgress, Typography } from '@mui/material'
 
 export default function Page({ params }) {
   const { id } = params
-  const [groupData, setGroupData] = useState(null)
+  const [audienceData, setAudienceData] = useState(null)
   const [gamesData, setGamesData] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -18,17 +18,17 @@ export default function Page({ params }) {
         setLoading(true)
         setError(null)
 
-        // Fetch group data and games data in parallel
-        const [groupResult, gamesResult] = await Promise.all([
-          RestApi.get(`${API_URLS.v0.USERS_GROUP}?id=${id}`),
-          RestApi.get(`${API_URLS.v0.USERS_GAME}?groupId=${id}`)
+        // Fetch audience data and games data in parallel
+        const [audienceResult, gamesResult] = await Promise.all([
+          RestApi.get(`${API_URLS.v0.USERS_AUDIENCE}?id=${id}`),
+          RestApi.get(`${API_URLS.v0.USERS_GAME}?audienceId=${id}`)
         ])
 
-        if (groupResult?.status === 'success') {
-          setGroupData(groupResult.result)
-          console.log('groupdata in the group details page', groupResult.result)
+        if (audienceResult?.status === 'success') {
+          setAudienceData(audienceResult.result)
+          console.log('audiencedata in the audience details page', audienceResult.result)
         } else {
-          setError(groupResult.message || 'Failed to fetch group data')
+          setError(audienceResult.message || 'Failed to fetch audience data')
         }
 
         if (gamesResult?.status === 'success') {
@@ -58,15 +58,15 @@ export default function Page({ params }) {
     )
   }
 
-  if (error || !groupData) {
+  if (error || !audienceData) {
     return (
       <Box sx={{ p: 4, textAlign: 'center' }}>
         <Typography variant='h6' color='error'>
-          {error || 'No group found'}
+          {error || 'No audience found'}
         </Typography>
       </Box>
     )
   }
 
-  return <GroupdetailsPage groupId={id} groupData={groupData} gamesData={gamesData} />
+  return <AudiencedetailsPage audienceId={id} audienceData={audienceData} gamesData={gamesData} />
 }

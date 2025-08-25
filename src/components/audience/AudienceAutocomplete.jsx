@@ -14,9 +14,9 @@ import {
   IconButton,
   Tooltip
 } from '@mui/material'
-import { 
-  Add as AddIcon, 
-  Group as GroupIcon, 
+import {
+  Add as AddIcon,
+  Group as GroupIcon,
   Visibility as VisibilityIcon,
   Cake as CakeIcon,
   Person as PersonIcon,
@@ -25,115 +25,115 @@ import {
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { toast } from 'react-toastify'
-import CreateGroupForm from './CreateGroupForm'
-import GroupDetailsPopup from './GroupDetailsPopup'
+import CreateAudienceForm from './CreateAduienceForm'
+import AudienceDetailsPopup from './AudienceDetailsPopup'
 import { useSession } from 'next-auth/react'
 
-const GroupAutocomplete = ({
+const AudienceAutocomplete = ({
   value,
   onChange,
-  label = 'Select Group (Optional)',
-  placeholder = 'Search groups...'
+  label = 'Select Audience (Optional)',
+  placeholder = 'Search audiences...'
 }) => {
-  const [groups, setGroups] = useState([])
+  const [audiences, setAudiences] = useState([])
   const [loading, setLoading] = useState(false)
   const [openCreateDialog, setOpenCreateDialog] = useState(false)
   const [openDetailsDialog, setOpenDetailsDialog] = useState(false)
-  const [selectedGroup, setSelectedGroup] = useState(null)
+  const [selectedAudience, setSelectedAudience] = useState(null)
   const { data: session } = useSession()
 
-  // Fetch groups on component mount
+  // Fetch audiences on component mount
   useEffect(() => {
-    fetchGroups()
+    fetchAudiences()
   }, [])
 
   // Set initial value if provided
   useEffect(() => {
-    if (value && groups.length > 0) {
-      const group = groups.find(g => g._id === value)
-      if (group) {
-        setSelectedGroup(group)
+    if (value && audiences.length > 0) {
+      const audience = audiences.find(a => a._id === value)
+      if (audience) {
+        setSelectedAudience(audience)
       }
     }
-  }, [value, groups])
+  }, [value, audiences])
 
-  const fetchGroups = async () => {
+  const fetchAudiences = async () => {
     setLoading(true)
     try {
-      const res = await RestApi.get(`${API_URLS.v0.USERS_GROUP}`)
+      const res = await RestApi.get(`${API_URLS.v0.USERS_AUDIENCE}`)
       if (res?.status === 'success') {
-        setGroups(res.result || [])
+        setAudiences(res.result || [])
       } else {
-        console.error('Error fetching groups:', res)
-        toast.error('Failed to load groups')
+          console.error('Error fetching audiences:', res)
+        toast.error('Failed to load audiences')
       }
     } catch (error) {
-      console.error('Error fetching groups:', error)
-      toast.error('An error occurred while loading groups')
+      console.error('Error fetching audiences:', error)
+      toast.error('An error occurred while loading audiences')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleGroupSelect = (event, newValue) => {
-    setSelectedGroup(newValue)
+  const handleAudienceSelect = (event, newValue) => {
+    setSelectedAudience(newValue)
     onChange(newValue?._id || null)
   }
 
-  const handleCreateGroup = async groupData => {
+  const handleCreateAudience = async audienceData => {
     try {
-      console.log('form Data', groupData)
-      
+      console.log('form Data', audienceData)
+
       // Prepare the payload
       const payload = {
-        groupName: groupData.groupName,
-        description: groupData.description,
-        location: groupData.location,
-        gender: groupData.gender,
-        ageGroup: groupData.ageGroup,
+        audienceName: audienceData.audienceName,
+        description: audienceData.description,
+        location: audienceData.location,
+        gender: audienceData.gender,
+        ageGroup: audienceData.ageGroup,
         createdBy: session?.user?.id, // Use the session user ID directly
         creatorEmail: session?.user?.email,
-        members: groupData.members || [],
-        membersCount: groupData.members?.length || 0
+        members: audienceData.members || [],
+        membersCount: audienceData.members?.length || 0
       }
 
       console.log('payload data ', payload)
 
       // Call your API
-      const result = await RestApi.post(API_URLS.v0.USERS_GROUP, payload)
+      const result = await RestApi.post(API_URLS.v0.USERS_AUDIENCE, payload)
       console.log('result', result)
 
       if (result?.status === 'success') {
-        const groupId = result.result._id
-        console.log('Group created successfully with ID:', groupId)
-        toast.success('Group created successfully!')
+        const audienceId = result.result._id
+        console.log('Audience created successfully with ID:', audienceId)
+        toast.success('Audience created successfully!')
         setOpenCreateDialog(false)
-        
+
         // Refresh groups list
-        await fetchGroups()
-        
-        // Auto-select the newly created group
-        const newGroup = result.result
-        setSelectedGroup(newGroup)
-        onChange(newGroup._id)
+        await fetchAudiences()
+
+        // Auto-select the newly created audience
+        const newAudience = result.result
+        setSelectedAudience(newAudience)
+        onChange(newAudience._id)
       } else {
-        console.error('Error creating group:', result.message)
-        toast.error(result?.message || 'Failed to create group')
+        console.error('Error creating audience:', result.message)
+        toast.error(result?.message || 'Failed to create audience')
       }
     } catch (error) {
-      console.error('Error creating group:', error)
-      toast.error('An error occurred while creating the group')
+      console.error('Error creating audience:', error)
+      toast.error('An error occurred while creating the audience')
     }
   }
 
-  const handleViewGroupDetails = group => {
-    setSelectedGroup(group)
+  const handleViewAudienceDetails = audience => {
+    setSelectedAudience(audience)
     setOpenDetailsDialog(true)
   }
 
   const getOptionLabel = option => {
     if (typeof option === 'string') return option
-    return option?.groupName || ''
+    return option?.audienceName || ''
   }
 
   const renderOption = (props, option) => (
@@ -144,54 +144,54 @@ const GroupAutocomplete = ({
     >
       <Box sx={{ flex: 1 }}>
         <Typography variant='body1' fontWeight='medium'>
-          {option.groupName}
+          {option.audienceName}
         </Typography>
         <Typography variant='body2' color='text.secondary'>
           {option.description}
         </Typography>
         {(() => {
           const filterChips = []
-          
+
           if (option.ageGroup?.min && option.ageGroup?.max) {
             filterChips.push(
-              <Chip 
-                key="age"
-                size='small' 
+              <Chip
+                key='age'
+                size='small'
                 icon={<CakeIcon sx={{ fontSize: 16 }} />}
-                label={`Age: ${option.ageGroup.min}-${option.ageGroup.max}`} 
-                variant='outlined' 
+                label={`Age: ${option.ageGroup.min}-${option.ageGroup.max}`}
+                variant='outlined'
                 color='primary'
               />
             )
           }
-          
+
           if (option.gender && Array.isArray(option.gender) && option.gender.length > 0) {
             filterChips.push(
-              <Chip 
-                key="gender"
-                size='small' 
+              <Chip
+                key='gender'
+                size='small'
                 icon={<PersonIcon sx={{ fontSize: 16 }} />}
-                label={`Gender: ${option.gender.map(g => g.charAt(0).toUpperCase() + g.slice(1)).join(', ')}`} 
-                variant='outlined' 
+                label={`Gender: ${option.gender.map(g => g.charAt(0).toUpperCase() + g.slice(1)).join(', ')}`}
+                variant='outlined'
                 color='success'
               />
             )
           }
-          
+
           if (option.location) {
             const locationParts = []
             if (option.location.country) locationParts.push(option.location.country)
             if (option.location.region) locationParts.push(option.location.region)
             if (option.location.city) locationParts.push(option.location.city)
-            
+
             if (locationParts.length > 0) {
               filterChips.push(
-                <Chip 
-                  key="location"
-                  size='small' 
+                <Chip
+                  key='location'
+                  size='small'
                   icon={<LocationIcon sx={{ fontSize: 16 }} />}
-                  label={`Location: ${locationParts.join(', ')}`} 
-                  variant='outlined' 
+                  label={`Location: ${locationParts.join(', ')}`}
+                  variant='outlined'
                   color='secondary'
                 />
               )
@@ -199,9 +199,7 @@ const GroupAutocomplete = ({
           }
 
           return filterChips.length > 0 ? (
-            <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
-              {filterChips}
-            </Box>
+            <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>{filterChips}</Box>
           ) : (
             <Typography variant='caption' color='text.secondary' sx={{ fontStyle: 'italic', mt: 0.5 }}>
               No filters applied
@@ -210,12 +208,12 @@ const GroupAutocomplete = ({
         })()}
       </Box>
       <Box sx={{ display: 'flex', gap: 1, ml: 2 }}>
-        <Tooltip title='View group details'>
+        <Tooltip title='View audience details'>
           <IconButton
             size='small'
             onClick={e => {
               e.stopPropagation()
-              handleViewGroupDetails(option)
+              handleViewAudienceDetails(option)
             }}
           >
             <VisibilityIcon fontSize='small' />
@@ -237,9 +235,9 @@ const GroupAutocomplete = ({
       <Box sx={{ display: 'flex', gap: 1 }}>
         <Autocomplete
           sx={{ flex: 1 }}
-          options={groups}
-          value={selectedGroup}
-          onChange={handleGroupSelect}
+          options={audiences}
+          value={selectedAudience}
+          onChange={handleAudienceSelect}
           getOptionLabel={getOptionLabel}
           renderOption={renderOption}
           loading={loading}
@@ -267,18 +265,18 @@ const GroupAutocomplete = ({
         </Button>
       </Box>
 
-      {/* Create Group Dialog */}
+      {/* Create Audience Dialog */}
       <Dialog open={openCreateDialog} onClose={() => setOpenCreateDialog(false)} maxWidth='md' fullWidth>
-        <DialogTitle>Create New Group</DialogTitle>
+        <DialogTitle>Create New Audience</DialogTitle>
         <DialogContent>
-          <CreateGroupForm onSubmit={handleCreateGroup} onCancel={() => setOpenCreateDialog(false)} isInline={true} />
+          <CreateAudienceForm onSubmit={handleCreateAudience} onCancel={() => setOpenCreateDialog(false)} isInline={true} />
         </DialogContent>
       </Dialog>
 
-      {/* Group Details Dialog */}
-      <GroupDetailsPopup open={openDetailsDialog} group={selectedGroup} onClose={() => setOpenDetailsDialog(false)} />
+      {/* Audience Details Dialog */}
+      <AudienceDetailsPopup open={openDetailsDialog} audience={selectedAudience} onClose={() => setOpenDetailsDialog(false)} />
     </Box>
   )
 }
 
-export default GroupAutocomplete
+  export default AudienceAutocomplete

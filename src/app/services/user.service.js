@@ -99,10 +99,10 @@ export async function getByReferralToken({ referralToken }) {
   }
 }
 
-export async function addGroupToUser(userId, groupId) {
+export async function addGroupToUser(userId, audienceId) {
   await connectMongo()
   try {
-    const updatedUser = await User.findByIdAndUpdate(userId, { $addToSet: { groupIds: groupId } }, { new: true })
+    const updatedUser = await User.findByIdAndUpdate(userId, { $addToSet: { groupIds: audienceId } }, { new: true })
 
     if (!updatedUser) {
       return { status: 'error', result: null, message: 'User not found' }
@@ -114,7 +114,6 @@ export async function addGroupToUser(userId, groupId) {
     return { status: 'error', result: null, message: error.message }
   }
 }
-
 
 export async function getAll() {
   await connectMongo() // Connect to the MongoDB database
@@ -311,7 +310,7 @@ export async function addByGoogleSignin({ email, data }) {
       newUserData.loginCount = newUserData.loginCount + 1
 
       // Save the user to database first
-      const savedUser = await newUserData.save();
+      const savedUser = await newUserData.save()
 
       // Synchronize all alerts from AlertModel to the user's alerts list on login
       await UserAlertService.addAllAlertsToOneUser({ email })

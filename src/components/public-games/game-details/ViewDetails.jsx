@@ -64,14 +64,14 @@ const ViewDetails = ({ game }) => {
   const [sharePopupOpen, setSharePopupOpen] = useState(false)
   const router = useRouter()
   const { data: session } = useSession()
-  const [currentUserGroupIds, setCurrentUserGroupIds] = useState([])
+  const [currentUseraudienceIds, setCurrentUseraudienceIds] = useState([])
   const [isRestricted, setIsRestricted] = useState(false)
-  
+
   // Compute restriction show message
   useEffect(() => {
     const fetchAndCompute = async () => {
       try {
-        if (!game?.groupId) {
+        if (!game?.audienceId) {
           setIsRestricted(false)
           return
         }
@@ -80,17 +80,17 @@ const ViewDetails = ({ game }) => {
         if (res?.status === 'success' && res.result) {
           const users = Array.isArray(res.result) ? res.result : [res.result]
           const user = users.find(u => u.email === session.user.email)
-          const groupIds = (user?.groupIds || []).map(g => g?._id?.toString?.() || g?.toString?.() || g)
-          setCurrentUserGroupIds(groupIds)
-          const groupIdStr = (game.groupId?._id || game.groupId).toString()
-          setIsRestricted(!groupIds.includes(groupIdStr))
+          const audienceIds = (user?.audienceIds || []).map(g => g?._id?.toString?.() || g?.toString?.() || g)
+          setCurrentUseraudienceIds(audienceIds)
+          const audienceIdStr = (game.audienceId?._id || game.audienceId).toString()
+          setIsRestricted(!audienceIds.includes(audienceIdStr))
         }
       } catch (e) {
         // noop
       }
     }
     fetchAndCompute()
-  }, [game?.groupId, session?.user?.email])
+  }, [game?.audienceId, session?.user?.email])
 
   const handleCopyPin = () => {
     navigator.clipboard.writeText(game.pin)
@@ -99,7 +99,7 @@ const ViewDetails = ({ game }) => {
   }
 
   console.log('we are getting game data', game)
-  
+
   // Early return after all hooks
   if (!game) {
     return (
@@ -132,7 +132,7 @@ const ViewDetails = ({ game }) => {
     )
   }
   console.log('game data', game)
-  
+
   const getStatusChip = () => {
     const statusConfig = {
       created: { color: 'default', label: 'Pending', icon: <AccessTime /> },
@@ -229,68 +229,74 @@ const ViewDetails = ({ game }) => {
               {isRestricted && (
                 <Alert severity='error' variant='outlined' sx={{ mb: 1 }}>
                   <AlertTitle sx={{ fontWeight: 700 }}>
-                    {`Restricted to group${game?.groupId?.groupName ? `: ${game.groupId.groupName}` : ''}`}
+                    {`Restricted to group${game?.audienceId?.audienceName ? `: ${game.audienceId.audienceName}` : ''}`}
                   </AlertTitle>
                   <Typography variant='body2' sx={{ mb: 0.75 }}>
                     You are not allowed to register/join this game.
                   </Typography>
-                  <Typography variant='h6' sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <GroupIcon />
-                      Group Filters
-                    </Typography>
+                  <Typography
+                    variant='h6'
+                    sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
+                  >
+                    <GroupIcon />
+                    Group Filters
+                  </Typography>
 
-                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                      {/* Age Filter */}
-                      {game.groupId?.ageGroup?.min != null && game.groupId?.ageGroup?.max != null && (
-                        <Chip
-                          icon={<CakeIcon sx={{ fontSize: 16 }} />}
-                          label={`Age: ${game.groupId.ageGroup.min}-${game.groupId.ageGroup.max}`}
-                          color='primary'
-                          variant='outlined'
-                          sx={{ mb: 1 }}
-                        />
-                      )}
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                    {/* Age Filter */}
+                    {game.audienceId?.ageGroup?.min != null && game.audienceId?.ageGroup?.max != null && (
+                      <Chip
+                        icon={<CakeIcon sx={{ fontSize: 16 }} />}
+                        label={`Age: ${game.audienceId.ageGroup.min}-${game.audienceId.ageGroup.max}`}
+                        color='primary'
+                        variant='outlined'
+                        sx={{ mb: 1 }}
+                      />
+                    )}
 
-                      {/* Location Filter */}
-                      {game.groupId?.location && (
-                        (() => {
-                          const locationParts = []
-                          if (game.groupId.location.country) locationParts.push(game.groupId.location.country)
-                          if (game.groupId.location.region) locationParts.push(game.groupId.location.region)
-                          if (game.groupId.location.city) locationParts.push(game.groupId.location.city)
+                    {/* Location Filter */}
+                    {game.audienceId?.location &&
+                      (() => {
+                        const locationParts = []
+                        if (game.audienceId.location.country) locationParts.push(game.audienceId.location.country)
+                        if (game.audienceId.location.region) locationParts.push(game.audienceId.location.region)
+                        if (game.audienceId.location.city) locationParts.push(game.audienceId.location.city)
 
-                          return locationParts.length > 0 ? (
-                            <Chip
-                              icon={<LocationOn sx={{ fontSize: 16 }} />}
-                              label={`Location: ${locationParts.join(', ')}`}
-                              color='secondary'
-                              variant='outlined'
-                              sx={{ mb: 1 }}
-                            />
-                          ) : null
-                        })()
-                      )}
+                        return locationParts.length > 0 ? (
+                          <Chip
+                            icon={<LocationOn sx={{ fontSize: 16 }} />}
+                            label={`Location: ${locationParts.join(', ')}`}
+                            color='secondary'
+                            variant='outlined'
+                            sx={{ mb: 1 }}
+                          />
+                        ) : null
+                      })()}
 
-                      {/* Gender Filter */}
-                      {game.groupId?.gender && Array.isArray(game.groupId.gender) && game.groupId.gender.length > 0 && (
+                    {/* Gender Filter */}
+                    {game.audienceId?.gender &&
+                      Array.isArray(game.audienceId.gender) &&
+                      game.audienceId.gender.length > 0 && (
                         <Chip
                           icon={<Person sx={{ fontSize: 16 }} />}
-                          label={`Gender: ${game.groupId.gender.map(g => g.charAt(0).toUpperCase() + g.slice(1)).join(', ')}`}
+                          label={`Gender: ${game.audienceId.gender
+                            .map(g => g.charAt(0).toUpperCase() + g.slice(1))
+                            .join(', ')}`}
                           color='success'
                           variant='outlined'
                           sx={{ mb: 1 }}
                         />
                       )}
 
-                      {/* Show message if no filters */}
-                      {(!game.groupId?.ageGroup?.min || !game.groupId?.ageGroup?.max) && 
-                       !game.groupId?.location && 
-                       (!game.groupId?.gender || game.groupId.gender.length === 0) && (
+                    {/* Show message if no filters */}
+                    {(!game.audienceId?.ageGroup?.min || !game.audienceId?.ageGroup?.max) &&
+                      !game.audienceId?.location &&
+                      (!game.audienceId?.gender || game.audienceId.gender.length === 0) && (
                         <Typography variant='body2' color='text.secondary' sx={{ fontStyle: 'italic' }}>
                           No filters applied
                         </Typography>
                       )}
-                    </Box>
+                  </Box>
                 </Alert>
               )}
 
@@ -313,7 +319,7 @@ const ViewDetails = ({ game }) => {
             </Stack>
             <ShareGamePopup open={sharePopupOpen} onClose={() => setSharePopupOpen(false)} game={game} />
           </Card>
-          
+
           {/* Quiz Details */}
           <Card sx={{ borderRadius: 2, p: 3, order: { md: 2 }, display: { xs: 'none', md: 'block' } }}>
             <CardContent>

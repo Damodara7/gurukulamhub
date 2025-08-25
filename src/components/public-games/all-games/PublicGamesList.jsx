@@ -18,7 +18,7 @@ const PublicGamesList = ({ games, loading, error, setGames }) => {
   // If setGames is not provided, use local state for demonstration
   const [localGames, setLocalGames] = useState(games)
   const gamesToUse = setGames ? games : localGames
-  const [currentUserGroupIds, setCurrentUserGroupIds] = useState([])
+  const [currentUseraudienceIds, setCurrentUseraudienceIds] = useState([])
 
   useEffect(() => {
     // console.log('games', games)
@@ -64,7 +64,7 @@ const PublicGamesList = ({ games, loading, error, setGames }) => {
     }
   }, [])
 
-  // Fetch current user's groupIds once
+  // Fetch current user's audienceIds once
   useEffect(() => {
     const fetchUserGroups = async () => {
       try {
@@ -72,8 +72,8 @@ const PublicGamesList = ({ games, loading, error, setGames }) => {
         const res = await RestApi.get(`${API_URLS.v0.USER}/${session.user.email}`)
         if (res?.status === 'success') {
           const user = res.result
-          console.log('Current user group Ids', user.groupIds)
-          if (user?.groupIds) setCurrentUserGroupIds(user.groupIds.map(g => g?.toString?.() || g))
+          console.log('Current user group Ids', user.audienceIds)
+          if (user?.audienceIds) setCurrentUseraudienceIds(user.audienceIds.map(g => g?.toString?.() || g))
         }
       } catch (e) {
         // silent fail
@@ -155,7 +155,7 @@ const PublicGamesList = ({ games, loading, error, setGames }) => {
         <Grid container spacing={2}>
           {filteredGames.map((game) => (
             <Grid item key={game._id || game.id} xs={12} sm={6} md={4} lg={3}>
-              <GameCard game={game} currentUserGroupIds={currentUserGroupIds} />
+              <GameCard game={game} currentUseraudienceIds={currentUseraudienceIds} />
             </Grid>
           ))}
         </Grid>

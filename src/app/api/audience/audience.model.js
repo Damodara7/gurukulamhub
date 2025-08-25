@@ -11,9 +11,9 @@ const ageGroupSchema = new mongoose.Schema({
   max: { type: Number, min: 0, max: 120 }
 })
 
-export const groupSchema = new mongoose.Schema(
+export const audienceSchema = new mongoose.Schema(
   {
-    groupName: {
+    audienceName: {
       type: String,
       required: true
     },
@@ -65,9 +65,9 @@ export const groupSchema = new mongoose.Schema(
 )
 
 // Add indexes for better performance
-groupSchema.index({ groupName: 1 }, { unique: true })
-groupSchema.index({ createdBy: 1 })
+audienceSchema.index({ audienceName: 1 }, { unique: true })
+audienceSchema.index({ createdBy: 1 })
 
-const Group = mongoose.models?.groups || mongoose.model('groups', groupSchema)
+const Audience = mongoose.models?.audiences || mongoose.model('audiences', audienceSchema)
 
-export default Group
+export default Audience

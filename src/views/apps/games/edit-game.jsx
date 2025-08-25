@@ -191,7 +191,7 @@ function EditGamePage({ gameData = null, gameId = null, isSuperUser = false }) {
 
   const updatedGameData = {
     ...gameData,
-    groupId: gameData?.groupId?._id || gameData?.groupId,
+    audienceId: gameData?.audienceId?._id || gameData?.audienceId,
     rewards: transformRewardsFromDB(gameData?.rewards || [])
   }
 

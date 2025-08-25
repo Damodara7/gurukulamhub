@@ -10,12 +10,12 @@ import {
   CalendarToday as CalendarIcon
 } from '@mui/icons-material'
 
-const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup }) => {
-  if (!groups.length) {
+const AudienceCard = ({ audiences, onEditAudience, onViewAudience, onDeleteAudience }) => {
+  if (!audiences.length) {
     return (
       <Box display='flex' justifyContent='center' mt={4}>
         <Typography variant='body1' color='text.secondary'>
-          No groups found
+          No audiences found
         </Typography>
       </Box>
     )
@@ -23,14 +23,14 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup }) => {
 
   return (
     <Grid container spacing={2}>
-      {groups.map(group => {
-        // Capitalize first letter of group name
-        const groupName = group?.groupName
-          ? group.groupName.charAt(0).toUpperCase() + group.groupName.slice(1)
-          : 'Untitled Group'
+      {audiences.map(audience => {
+        // Capitalize first letter of audience name
+        const audienceName = audience?.audienceName
+          ? audience.audienceName.charAt(0).toUpperCase() + audience.audienceName.slice(1)
+          : 'Untitled Audience'
 
         return (
-          <Grid item xs={12} sm={6} md={4} lg={3} xl={3} key={group?._id || group?.groupName}>
+          <Grid item xs={12} sm={6} md={4} lg={3} xl={3} key={audience?._id || audience?.audienceName}>
             <Card
               variant='outlined'
               sx={{
@@ -43,11 +43,11 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup }) => {
             >
               <CardContent sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
                 <Typography variant='h6' gutterBottom sx={{ fontWeight: 'bold' }}>
-                  {groupName || 'no Groupname is mentioned'}
+                  {audienceName || 'no Audiencename is mentioned'}
                 </Typography>
 
-                {group?.description ? (
-                  <Tooltip title={group.description} arrow>
+                {audience?.description ? (
+                    <Tooltip title={audience.description} arrow>
                     <Typography
                       variant='body2'
                       color='text.secondary'
@@ -59,7 +59,7 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup }) => {
                         textOverflow: 'ellipsis'
                       }}
                     >
-                      {group.description || 'No description available'}
+                      {audience.description || 'No description available'}
                     </Typography>
                   </Tooltip>
                 ) : null}
@@ -68,7 +68,7 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup }) => {
                   <PersonIcon fontSize='small' color='action' />
                   <Tooltip
                     title={`Created by: ${
-                      group?.creatorEmail || (group?.createdBy ? String(group.createdBy) : 'Unknown')
+                      audience?.creatorEmail || (audience?.createdBy ? String(audience.createdBy) : 'Unknown')
                     }`}
                     arrow
                   >
@@ -82,7 +82,7 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup }) => {
                         textOverflow: 'ellipsis'
                       }}
                     >
-                      {group?.creatorEmail || (group?.createdBy ? String(group.createdBy).slice(0, 8) : 'Unknown')}
+                      {audience?.creatorEmail || (audience?.createdBy ? String(audience.createdBy).slice(0, 8) : 'Unknown')}
                     </Typography>
                   </Tooltip>
                 </Box>
@@ -90,7 +90,7 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup }) => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <PeopleIcon fontSize='small' color='action' />
                   <Typography variant='caption' color='text.secondary'>
-                    {group?.membersCount === 0 ? 'No Members': group?.membersCount > 1 ? `${group?.membersCount} members` : `${group?.membersCount} member`}
+                    {audience?.membersCount === 0 ? 'No Members': audience?.membersCount > 1 ? `${audience?.membersCount} members` : `${audience?.membersCount} member`}
                   </Typography>
                 </Box>
 
@@ -122,11 +122,11 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup }) => {
                       width: '100%'
                     }}
                   >
-                    {group?.ageGroup && (
-                      <Tooltip arrow title={`Age: ${group.ageGroup.min}-${group.ageGroup.max}`}>
+                    {audience?.ageGroup && (
+                      <Tooltip arrow title={`Age: ${audience.ageGroup.min}-${audience.ageGroup.max}`}>
                         <Chip
                           size='small'
-                          label={`Age: ${group.ageGroup.min}-${group.ageGroup.max}`}
+                          label={`Age: ${audience.ageGroup.min}-${audience.ageGroup.max}`}
                           sx={{
                             maxWidth: 100,
                             '& .MuiChip-label': {
@@ -138,17 +138,17 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup }) => {
                         />
                       </Tooltip>
                     )}
-                    {group?.gender && (
+                    {audience?.gender && (
                       <Tooltip
                         arrow
                         title={`Gender: ${
-                          Array.isArray(group.gender) ? group.gender.join(', ') : String(group.gender)
+                          Array.isArray(audience.gender) ? audience.gender.join(', ') : String(audience.gender)
                         }`}
                       >
                         <Chip
                           size='small'
                           label={`Gender: ${
-                            Array.isArray(group.gender) ? group.gender.join(', ') : String(group.gender)
+                            Array.isArray(audience.gender) ? audience.gender.join(', ') : String(audience.gender)
                           }`}
                           sx={{
                             maxWidth: 120,
@@ -162,7 +162,7 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup }) => {
                       </Tooltip>
                     )}
                     {(() => {
-                      const parts = [group?.location?.country, group?.location?.region, group?.location?.city].filter(
+                      const parts = [audience?.location?.country, audience?.location?.region, audience?.location?.city].filter(
                         Boolean
                       )
                       const label = parts.length > 0 ? `Location: ${parts.join(', ')}` : null
@@ -183,11 +183,11 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup }) => {
                         </Tooltip>
                       ) : null
                     })()}
-                    {!group?.ageGroup &&
-                      !group?.gender &&
-                      !group?.location?.country &&
-                      !group?.location?.region &&
-                      !group?.location?.city && (
+                    {!audience?.ageGroup &&
+                      !audience?.gender &&
+                      !audience?.location?.country &&
+                      !audience?.location?.region &&
+                      !audience?.location?.city && (
                         <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                           <Typography variant='caption' color='text.secondary'>
                             No filters applied
@@ -204,13 +204,13 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup }) => {
                     justifyContent='center'
                     className='border border-gray-200 rounded-md p-1'
                   >
-                    <IconButtonTooltip title='View Group Details' onClick={() => onViewGroup(group._id)} color='info'>
+                    <IconButtonTooltip title='View Audience Details' onClick={() => onViewAudience(audience._id)} color='info'>
                       <VisibilityIcon />
                     </IconButtonTooltip>
-                    <IconButtonTooltip title='Edit Group' onClick={() => onEditGroup(group._id)} color='warning'>
+                    <IconButtonTooltip title='Edit Audience' onClick={() => onEditAudience(audience._id)} color='warning'>
                       <EditIcon />
                     </IconButtonTooltip>
-                    <IconButtonTooltip title='Delete Group' onClick={() => onDeleteGroup(group)} color='error'>
+                    <IconButtonTooltip title='Delete Audience' onClick={() => onDeleteAudience(audience)} color='error'>
                       <DeleteIcon />
                     </IconButtonTooltip>
                   </Stack>
@@ -224,4 +224,4 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup }) => {
   )
 }
 
-export default GroupCard
+  export default AudienceCard

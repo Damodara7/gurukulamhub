@@ -50,12 +50,12 @@ import { API_URLS } from '@/configs/apiConfig'
 import Loading from '@/components/Loading'
 import { getCountryByName } from '@/utils/countryRegionUtil'
 import { timezones } from '@/data/timezones'
-import { gmttimezones } from '@/data/gmttimezones';
+import { gmttimezones } from '@/data/gmttimezones'
 import { countryTimezones } from '@/data/country-timezones'
 import moment, { tz } from 'moment-timezone'
 import { userAgent } from 'next/server'
 import { convertWithGMTOffset } from '@/utils/timezoneconverter'
-import GroupAutocomplete from '@/components/groups/GroupAutocomplete'
+import AudienceAutocomplete from '@/components/audience/AudienceAutocomplete'
 
 // Reward position options
 const POSITION_OPTIONS = [1, 2, 3, 4, 5]
@@ -181,7 +181,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
     limitPlayers: false,
     maxPlayers: 100000,
     tags: [],
-    groupId: null,
+    audienceId: null,
     // location: {
     //   country: '',
     //   region: '',
@@ -248,7 +248,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
     thumbnailPoster: useRef(),
     tags: useRef(),
     forwardType: useRef(),
-    gameMode: useRef(),
+    gameMode: useRef()
     // creatorZipcode: useRef(),
     // creatorTimezone: useRef(),
     // creatorCountry: useRef()
@@ -267,55 +267,53 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
         duration: data?.duration ? Math.floor(data.duration / 60) : '',
         gameMode: data?.gameMode || 'live',
         timezone: gmttimezones.find(tz => tz.value === data?.timezone) || {},
-        groupId: data?.groupId || null,
+        audienceId: data?.audienceId || null
         // creatorZipcode: data?.creatorZipcode || '',
         // creatorTimezone: data?.creatorTimezone || '',
         // creatorCountry: data?.creatorCountry || ''
       })
-    //   setSelectedCountryObject(
-    //     data?.location?.country
-    //       ? { country: data?.location?.country, countryCode: getCountryByName(data?.location?.country)?.countryCode }
-    //       : null
-    //   )
-    //   setSelectedRegion(data?.location?.region || '')
-    //   setSelectedCity(data?.location?.city || '')
-    //   setSelectedPincode(data?.location?.zipcode || '')
-    //   // Set the admin country if creatorCountry exists
-    //   if (data?.creatorCountry) {
-    //     const adminCountry = {
-    //       country: data.creatorCountry,
-    //       countryCode: getCountryByName(data.creatorCountry)?.countryCode
-    //     }
-    //     setSelectedAdminCountry(adminCountry)
-    //   }
-    
-  }
+      //   setSelectedCountryObject(
+      //     data?.location?.country
+      //       ? { country: data?.location?.country, countryCode: getCountryByName(data?.location?.country)?.countryCode }
+      //       : null
+      //   )
+      //   setSelectedRegion(data?.location?.region || '')
+      //   setSelectedCity(data?.location?.city || '')
+      //   setSelectedPincode(data?.location?.zipcode || '')
+      //   // Set the admin country if creatorCountry exists
+      //   if (data?.creatorCountry) {
+      //     const adminCountry = {
+      //       country: data.creatorCountry,
+      //       countryCode: getCountryByName(data.creatorCountry)?.countryCode
+      //     }
+      //     setSelectedAdminCountry(adminCountry)
+      //   }
+    }
   }, [data])
-  
+
   useEffect(() => {
     const usedPositions = formData?.rewards?.map(r => r.position)
     setAvailablePositions(POSITION_OPTIONS.filter(pos => !usedPositions.includes(pos)))
   }, [formData?.rewards])
 
- useEffect(() => {
-   if (formData.startTime && formData.timezone?.value) {
-     // IST is GMT+05:30 - we pass it as an object to match your timezone data structure
-     const istOffset = { value: '+05:30' }
+  useEffect(() => {
+    if (formData.startTime && formData.timezone?.value) {
+      // IST is GMT+05:30 - we pass it as an object to match your timezone data structure
+      const istOffset = { value: '+05:30' }
 
-     const localTime = convertWithGMTOffset(formData.startTime, istOffset, formData.timezone.value)
+      const localTime = convertWithGMTOffset(formData.startTime, istOffset, formData.timezone.value)
 
-     if (localTime) {
-       // Format the timezone display (e.g., "GMT+05:30")
-       const tzDisplay = formData.timezone?.value ? `GMT${formData.timezone.value}` : ''
-      //  console.log( 'formdata' , formData.timezone);
-      //  console.log('timezonevalue' , formData.timezone.value);
-       setLocalTimeDisplay(localTime.format('YYYY-MM-DD hh:mm A') + ` (${tzDisplay})`)
-     }
-
-   } else {
-     setLocalTimeDisplay(null)
-   }
- }, [formData.startTime, formData.timezone])
+      if (localTime) {
+        // Format the timezone display (e.g., "GMT+05:30")
+        const tzDisplay = formData.timezone?.value ? `GMT${formData.timezone.value}` : ''
+        //  console.log( 'formdata' , formData.timezone);
+        //  console.log('timezonevalue' , formData.timezone.value);
+        setLocalTimeDisplay(localTime.format('YYYY-MM-DD hh:mm A') + ` (${tzDisplay})`)
+      }
+    } else {
+      setLocalTimeDisplay(null)
+    }
+  }, [formData.startTime, formData.timezone])
 
   // Fetch Cities from DB
   const getCitiesData = async (region = '') => {
@@ -613,7 +611,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
     const submission = {
       ...formData,
 
-      timezone: formData?.timezone?.value || '',
+      timezone: formData?.timezone?.value || ''
       // creatorZipcode: formData.creatorZipcode,
       // creatorTimezone: formData.timezone,
       // creatorCountry: selectedAdminCountry?.country || '',
@@ -888,15 +886,15 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
         </FormControl>
       </Grid>
 
-      {/* Group Selection */}
+      {/* Audience Selection */}
       <Grid item xs={12}>
-        <GroupAutocomplete
-          value={formData.groupId}
-          onChange={(groupId) => {
-            setFormData(prev => ({ ...prev, groupId }))
+        <AudienceAutocomplete
+          value={formData.audienceId}
+          onChange={audienceId => {
+            setFormData(prev => ({ ...prev, audienceId }))
           }}
-          label="Target Audience Group (Optional)"
-          placeholder="Search for a group to restrict game access..."
+          label='Target Audience (Optional)'
+          placeholder='Search for a audience to restrict game access...'
         />
       </Grid>
       <Grid item xs={12}>

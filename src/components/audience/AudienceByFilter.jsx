@@ -35,7 +35,7 @@ const spinnerStyles = `
   }
 `
 
-const GroupByFilter = ({
+const AudienceByFilter = ({
   users,
   onFilterChange,
   initialCriteria = {
@@ -1268,5 +1268,4 @@ const GroupByFilter = ({
     </Box>
   )
 }
-
-export default GroupByFilter
+export default AudienceByFilter

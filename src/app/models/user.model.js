@@ -26,10 +26,10 @@ export const userSchema = new mongoose.Schema(
       type: [String],
       default: []
     },
-    groupIds: [
+    audienceIds: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'groups',
+        ref: 'audiences',
         index: true
       }
     ],
