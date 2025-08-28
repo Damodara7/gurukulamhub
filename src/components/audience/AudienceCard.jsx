@@ -204,15 +204,15 @@ const AudienceCard = ({ audiences, onEditAudience, onViewAudience, onDeleteAudie
                     justifyContent='center'
                     className='border border-gray-200 rounded-md p-1'
                   >
-                    <IconButtonTooltip title='View Audience Details' onClick={() => onViewAudience(audience._id)} color='info'>
+                    <IconButtonTooltip title='View Details' onClick={() => onViewAudience(audience._id)} color='info'>
                       <VisibilityIcon />
                     </IconButtonTooltip>
-                    <IconButtonTooltip title='Edit Audience' onClick={() => onEditAudience(audience._id)} color='warning'>
-                      <EditIcon />
+                    <IconButtonTooltip title='Edit' onClick={() => onEditAudience(audience._id)} color='warning'>
+                      <EditIcon  />
                     </IconButtonTooltip>
-                    <IconButtonTooltip title='Delete Audience' onClick={() => onDeleteAudience(audience)} color='error'>
+                    <IconButtonTooltip title='Delete' onClick={() => onDeleteAudience(audience)} color='error'>
                       <DeleteIcon />
-                    </IconButtonTooltip>
+                    </IconButtonTooltip>  
                   </Stack>
                 </Box>
               </CardContent>
