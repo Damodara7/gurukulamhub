@@ -66,10 +66,10 @@ const StartPlayGame = ({ game }) => {
   if (error || !data) {
     return (
       <FallBackCard
-        content='You can go back to public games'
+        content='You can go back to Home page'
         error={error}
-        path='/public-games'
-        btnText='Back to Public Games'
+        path='/'
+        btnText='Back to Home'
       />
     )
   }

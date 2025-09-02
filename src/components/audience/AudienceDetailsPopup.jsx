@@ -26,6 +26,7 @@ import {
 } from '@mui/icons-material'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
+import AudienceFallBackCard from './AudienceFallBackCard'
 
 const AudienceDetailsPopup = ({ open, audience, onClose }) => {
   const [users, setUsers] = useState([])
@@ -66,7 +67,7 @@ const AudienceDetailsPopup = ({ open, audience, onClose }) => {
     }
   }
 
-  if (!audience) return null
+  if (!audience) return <AudienceFallBackCard content='Audience not found' path='/' btnText='Back To Home Page'/>
 
   const formatDate = dateString => {
     if (!dateString) return 'N/A'

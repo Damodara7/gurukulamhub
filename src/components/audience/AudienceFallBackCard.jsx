@@ -3,14 +3,14 @@ import React from 'react'
 import { Box, Button, Card, CardContent, Typography } from '@mui/material'
 import { useRouter } from 'next/navigation'
 
-function FallBackCard({ error = null, path = '/', content = null, btnText = null, children = null }) {
+const AudienceFallBackCard = ({ error = null, path = '/', content = null, btnText = null, children = null }) => {
   const router = useRouter()
   return (
     <Box display='flex' flexDirection='column' alignItems='center' bgcolor='f5f5f5' px={2} py={4} gap={4}>
       <Card sx={{ maxwidth: 600, p: 3, textAlign: 'center' }}>
         <CardContent>
           <Typography variant='h4' gutterBottom>
-            {error ? '⚠️  Error Occurred' : '🎮 Games are Not Available'}
+            {error ? '⚠️  Error Occurred' : '👥 Audience Not Available'}
           </Typography>
           {error ? (
             <Typography color='error' variant='body1' sx={{ mt: 2 }}>
@@ -33,4 +33,4 @@ function FallBackCard({ error = null, path = '/', content = null, btnText = null
   )
 }
 
-export default FallBackCard
+export default AudienceFallBackCard

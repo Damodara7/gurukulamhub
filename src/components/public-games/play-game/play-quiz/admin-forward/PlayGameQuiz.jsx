@@ -344,7 +344,7 @@ export default function AdminForwardPlayGame({ game: initialGame }) {
         <Card sx={{ maxWidth: 500, p: 3, textAlign: 'center' }}>
           <CardContent>
             <Typography variant='h5' gutterBottom>
-              {'🎮 Game is Not Available'}
+              {'🎮 Games are Not Available'}
             </Typography>
 
             <Typography variant='body1' sx={{ mt: 2 }}>

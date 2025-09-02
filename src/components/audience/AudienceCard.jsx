@@ -9,15 +9,12 @@ import {
   Person as PersonIcon,
   CalendarToday as CalendarIcon
 } from '@mui/icons-material'
+import AudienceFallBackCard from './AudienceFallBackCard'
 
 const AudienceCard = ({ audiences, onEditAudience, onViewAudience, onDeleteAudience }) => {
   if (!audiences.length) {
     return (
-      <Box display='flex' justifyContent='center' mt={4}>
-        <Typography variant='body1' color='text.secondary'>
-          No audiences found
-        </Typography>
-      </Box>
+      <AudienceFallBackCard content='No audiences found' path='/' btnText='Back To Home Page'/>
     )
   }
 

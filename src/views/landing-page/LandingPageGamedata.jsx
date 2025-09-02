@@ -162,153 +162,195 @@ function LandingPageGamedata() {
                 Popular Games
               </Typography>
 
-              <Button
-                variant='outlined'
-                size='small'
-                onClick={handleViewAll}
-                sx={{
-                  fontWeight: 600,
-                  minWidth: 120, // Prevents button width collapse
-                  position: 'relative' // Helps with spinner positioning
-                }}
-                disabled={isCheckingAuth || status === 'loading'}
-              >
-                {isCheckingAuth || status === 'loading' ? (
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <CircularProgress
-                      size={20}
-                      thickness={4}
-                      sx={{
-                        color: 'primary.main', // Force color
-                        marginRight: '8px'
-                      }}
-                    />
-                  </Box>
-                ) : (
-                  'View All Games'
-                )}
-              </Button>
+              {gameData.length > 0 && (
+                <Button
+                  variant='outlined'
+                  size='small'
+                  onClick={handleViewAll}
+                  sx={{
+                    fontWeight: 600,
+                    minWidth: 120, // Prevents button width collapse
+                    position: 'relative' // Helps with spinner positioning
+                  }}
+                  disabled={isCheckingAuth || status === 'loading'}
+                >
+                  {isCheckingAuth || status === 'loading' ? (
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <CircularProgress
+                        size={20}
+                        thickness={4}
+                        sx={{
+                          color: 'primary.main', // Force color
+                          marginRight: '8px'
+                        }}
+                      />
+                    </Box>
+                  ) : (
+                    'View All Games'
+                  )}
+                </Button>
+              )}
             </>
           )}
         </Box>
 
-        {/* Horizontal scroll container Game Cards */}
-        <Box
-          sx={{
-            display: 'flex',
-            gap: 3,
-            overflowX: 'auto',
-            overflowY: 'hidden',
-            scrollSnapType: 'x mandatory',
-            msOverflowStyle: 'auto',
-            scrollbarWidth: 'thin',
-            alignItems: 'center'
-          }}
-        >
-          {loading
-            ? renderCardSkeleton()
-            : gameData.slice(0, 7).map(game => (
-                <Box
-                  key={game._id}
+        {/* Content Area */}
+        {loading ? (
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 3,
+              overflowX: 'auto',
+              overflowY: 'hidden',
+              scrollSnapType: 'x mandatory',
+              msOverflowStyle: 'auto',
+              scrollbarWidth: 'thin',
+              alignItems: 'center'
+            }}
+          >
+            {renderCardSkeleton()}
+          </Box>
+        ) : gameData.length > 0 ? (
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 3,
+              overflowX: 'auto',
+              overflowY: 'hidden',
+              scrollSnapType: 'x mandatory',
+              msOverflowStyle: 'auto',
+              scrollbarWidth: 'thin',
+              alignItems: 'center'
+            }}
+          >
+            {gameData.slice(0, 7).map(game => (
+              <Box
+                key={game._id}
+                sx={{
+                  flex: `0 0 ${cardWidth}px`,
+                  scrollSnapAlign: 'start'
+                }}
+              >
+                <Card
                   sx={{
-                    flex: `0 0 ${cardWidth}px`,
-                    scrollSnapAlign: 'start'
+                    width: cardWidth,
+                    height: cardHeight,
+                    my: 2,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    transition: 'transform 0.3s ease',
+                    '&:hover': {
+                      transform: 'scale(1.03)',
+                      boxShadow: theme.shadows[6]
+                    }
                   }}
                 >
-                  <Card
+                  <CardMedia
+                    component='img'
+                    height='100'
+                    image={game?.thumbnailPoster || imagePlaceholder.src}
+                    alt={game.title}
+                    sx={{ objectFit: 'cover' }}
+                    onError={e => {
+                      e.target.src = imagePlaceholder.src
+                    }}
+                  />
+                  <CardContent
                     sx={{
-                      width: cardWidth,
-                      height: cardHeight,
-                      my: 2,
+                      flexGrow: 1,
                       display: 'flex',
-                      flexDirection: 'column',
-                      transition: 'transform 0.3s ease',
-                      '&:hover': {
-                        transform: 'scale(1.03)',
-                        boxShadow: theme.shadows[6]
-                      }
+                      flexDirection: 'column'
                     }}
                   >
-                    <CardMedia
-                      component='img'
-                      height='100'
-                      image={game?.thumbnailPoster || imagePlaceholder.src}
-                      alt={game.title}
-                      sx={{ objectFit: 'cover' }}
-                      onError={e => {
-                        e.target.src = imagePlaceholder.src
-                      }}
-                    />
-                    <CardContent
+                    <Typography gutterBottom variant='h6' fontWeight={600} noWrap>
+                      {game.title || 'Not Specified'}
+                    </Typography>
+
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
                       sx={{
-                        flexGrow: 1,
-                        display: 'flex',
-                        flexDirection: 'column'
+                        height: 20,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden'
                       }}
                     >
-                      <Typography gutterBottom variant='h6' fontWeight={600} noWrap>
-                        {game.title || 'Not Specified'}
-                      </Typography>
+                      {game.description || 'No description available'}
+                    </Typography>
 
-                      <Typography
-                        variant='caption'
-                        color='text.secondary'
-                        sx={{
-                          height: 20,
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
-                          overflow: 'hidden'
-                        }}
-                      >
-                        {game.description || 'No description available'}
-                      </Typography>
-
-                      <Box>
-                        <Stack spacing={0.25}>
-                          <Stack direction='row' alignItems='center' spacing={1}>
-                            <EventIcon fontSize='small' color='action' />
-                            <Typography variant='body2'>{formatGameDate(game.startTime)}</Typography>
-                          </Stack>
-
-                          <Stack direction='row' alignItems='center' spacing={1}>
-                            <LocationOnIcon fontSize='small' color='action' />
-                            <Typography variant='body2'>
-                              {game?.location?.city || game?.location?.region || game?.location?.country || 'Any Where'}
-                            </Typography>
-                          </Stack>
-
-                          <Stack direction='row' alignItems='center' spacing={1}>
-                            <EmojiEventsIcon fontSize='small' color='action' />
-                            <Typography variant='body2'>
-                              {(() => {
-                                if (!game?.rewards?.length) return 'No rewards'
-                                const firstReward = [...game.rewards].sort((a, b) => a.position - b.position)[0]
-                                const sponsor = firstReward?.sponsors?.[0]
-                                const rewardType = sponsor?.rewardDetails?.rewardType
-
-                                if (rewardType === 'cash') {
-                                  return new Intl.NumberFormat(undefined, {
-                                    style: 'currency',
-                                    currency: sponsor?.rewardDetails?.currency || 'INR'
-                                  }).format(firstReward.rewardValuePerWinner)
-                                }
-
-                                if (rewardType === 'physicalGift') {
-                                  return sponsor?.rewardDetails?.nonCashReward
-                                }
-
-                                return 'Custom Reward'
-                              })()}
-                            </Typography>
-                          </Stack>
+                    <Box>
+                      <Stack spacing={0.25}>
+                        <Stack direction='row' alignItems='center' spacing={1}>
+                          <EventIcon fontSize='small' color='action' />
+                          <Typography variant='body2'>{formatGameDate(game.startTime)}</Typography>
                         </Stack>
-                      </Box>
-                    </CardContent>
-                  </Card>
-                </Box>
-              ))}
-        </Box>
+
+                        <Stack direction='row' alignItems='center' spacing={1}>
+                          <LocationOnIcon fontSize='small' color='action' />
+                          <Typography variant='body2'>
+                            {game?.location?.city || game?.location?.region || game?.location?.country || 'Any Where'}
+                          </Typography>
+                        </Stack>
+
+                        <Stack direction='row' alignItems='center' spacing={1}>
+                          <EmojiEventsIcon fontSize='small' color='action' />
+                          <Typography variant='body2'>
+                            {(() => {
+                              if (!game?.rewards?.length) return 'No rewards'
+                              const firstReward = [...game.rewards].sort((a, b) => a.position - b.position)[0]
+                              const sponsor = firstReward?.sponsors?.[0]
+                              const rewardType = sponsor?.rewardDetails?.rewardType
+
+                              if (rewardType === 'cash') {
+                                return new Intl.NumberFormat(undefined, {
+                                  style: 'currency',
+                                  currency: sponsor?.rewardDetails?.currency || 'INR'
+                                }).format(firstReward.rewardValuePerWinner)
+                              }
+
+                              if (rewardType === 'physicalGift') {
+                                return sponsor?.rewardDetails?.nonCashReward
+                              }
+
+                              return 'Custom Reward'
+                            })()}
+                          </Typography>
+                        </Stack>
+                      </Stack>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Box>
+            ))}
+          </Box>
+        ) : (
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              py: 8,
+              textAlign: 'center'
+            }}
+          >
+            <EmojiEventsIcon
+              sx={{
+                fontSize: 64,
+                color: 'text.secondary',
+                mb: 2
+              }}
+            />
+            <Typography variant='h6' color='text.secondary' gutterBottom>
+              No Games Available
+            </Typography>
+            <Typography variant='body2' color='text.secondary'>
+              We don't have any games at the moment. Check back later for exciting games!
+            </Typography>
+          </Box>
+        )}
       </Container>
     </Box>
   )

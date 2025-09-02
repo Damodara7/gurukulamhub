@@ -3,13 +3,13 @@
 
 import React, { useRef, useEffect, useState } from 'react'
 import GameCard from './GameCard'
-import { Box, Grid, Typography } from '@mui/material'
+import { Box, Grid } from '@mui/material'
 import { useSession } from 'next-auth/react'
 import { useSearchParams } from 'next/navigation'
 import Loading from '@/components/Loading'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
-
+import FallBackCard from '@/components/apps/games/FallBackCard'
 const PublicGamesList = ({ games, loading, error, setGames }) => {
   const searchParams = useSearchParams()
   const { data: session } = useSession()
@@ -140,17 +140,15 @@ const PublicGamesList = ({ games, loading, error, setGames }) => {
   if (error) {
     return (
       <Box p={4}>
-        <Typography color='error'>Error: {error}</Typography>
+        <FallBackCard error={error} content='Error: {error}' path='/' btnText='Back To Home Page'/>
       </Box>
     )
-  }
+  } 
 
   return (
     <>
       {filteredGames.length === 0 ? (
-        <Box p={4}>
-          <Typography>No games found.</Typography>
-        </Box>
+        <FallBackCard content='No games found.' path='/' btnText='Back To Home Page'/>
       ) : (
         <Grid container spacing={2}>
           {filteredGames.map((game) => (

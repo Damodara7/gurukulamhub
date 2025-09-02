@@ -295,7 +295,7 @@ async function joinGame(gamePin, playerId) {
 
     if (!game) {
       console.log(`Game with pin ${gamePin} is not available for joining.`);
-      return { success: false, message: 'Game is not available.' };
+      return { success: false, message: 'Games are not available.' };
     }
 
     console.log("Players..", game.players)

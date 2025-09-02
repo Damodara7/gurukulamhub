@@ -13,7 +13,7 @@ import { toast } from 'react-toastify'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { useRouter } from 'next/navigation'
-
+import FallBackCard from '@/components/apps/games/FallBackCard'
 const CreatorGameList = ({ games = [], loading = false, onRefresh, setGames, isSuperUser = false }) => {
   const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false) // Manage confirmation dialog
   const [gameToDelete, setGameToDelete] = useState(null) // Track the game to delete
@@ -163,11 +163,11 @@ const CreatorGameList = ({ games = [], loading = false, onRefresh, setGames, isS
     <>
       <Container maxWidth='xl' sx={{ position: 'relative', pb: 10 }}>
         {gamesToUse.length === 0 ? (
-          <Box textAlign='center' py={6}>
-            <Typography variant='body1' color='text.secondary'>
-              No games found
-            </Typography>
-          </Box>
+          <FallBackCard
+            content='No games found.'
+            path='/'
+            btnText='Back To Home Page'
+          />
         ) : (
           <Grid container spacing={3}>
             {gamesToUse.map(game => (

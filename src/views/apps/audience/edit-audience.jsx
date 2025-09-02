@@ -5,7 +5,7 @@ import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { toast } from 'react-toastify'
 import CreateAudienceForm from '@/components/audience/CreateAduienceForm'
-import FallBackCard from '@/components/apps/games/FallBackCard'
+import AudienceFallBackCard from '@/components/audience/AudienceFallBackCard'
 
 const EditAudiencePage = ({ audienceId = null }) => {
   const [loading, setLoading] = useState(true)
@@ -113,7 +113,8 @@ const EditAudiencePage = ({ audienceId = null }) => {
   // Show error state
   if (error || !audienceData) {
     return (
-      <FallBackCard
+      <AudienceFallBackCard
+        error={error}
         content='Failed to load audience data. You can go back to All Audiences'
         path='/management/audience'
         btnText='Back To All Audiences'
