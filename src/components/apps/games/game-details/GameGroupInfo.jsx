@@ -29,16 +29,16 @@ const GameGroupInfo = ({ game }) => {
   const [loading, setLoading] = useState(false)
 
   //   useEffect(() => {
-  //     if (game?.audienceId?._id) {
+  //     if (game?.groupId?._id) {
   //       fetchGroupDetails()
   //     }
-  //   }, [game?.audienceId?._id])
+  //   }, [game?.groupId?._id])
 
   //   const fetchGroupDetails = async () => {
   //     setLoading(true)
   //     try {
   //       // Fetch the group details directly
-  //       const res = await RestApi.get(`${API_URLS.v0.USERS_GROUP}?id=${game.audienceId._id || game.audienceId}`)
+  //       const res = await RestApi.get(`${API_URLS.v0.USERS_GROUP}?id=${game.groupId._id || game.groupId}`)
   //       if (res?.status === 'success' && res.result) {
   //         setGroupDetails(res.result)
   //       }
@@ -49,10 +49,10 @@ const GameGroupInfo = ({ game }) => {
   //     }
   //   }
 
-  if (!game?.audienceId) return null
+  if (!game?.groupId) return null
 
-  //   const group = groupDetails || game.audienceId
-  const group = game.audienceId
+  //   const group = groupDetails || game.groupId
+  const group = game.groupId
 
   console.log('group details: ', group)
 
@@ -72,7 +72,7 @@ const GameGroupInfo = ({ game }) => {
             <Stack spacing={2}>
               <Box>
                 <Typography variant='subtitle1' fontWeight={600} color='primary'>
-                  {group.audienceName || 'Private Group'}
+                  {group.groupName || 'Private Group'}
                 </Typography>
                 {group.description && (
                   <Typography variant='body2' color='text.secondary' sx={{ mt: 0.5 }}>
@@ -209,7 +209,7 @@ const GameGroupInfo = ({ game }) => {
         <Alert severity='error' variant='standard'>
           <AlertTitle>Access Control</AlertTitle>
           <Typography variant='body2'>
-            This game is restricted to members of the "{group.audienceName || 'Private Group'}" group only. Users must be
+            This game is restricted to members of the "{group.groupName || 'Private Group'}" group only. Users must be
             part of this group to register and participate in the game.
           </Typography>
         </Alert>

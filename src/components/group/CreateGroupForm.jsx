@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
-import AudienceByFilter from './AudienceByFilter'
+import GroupByFilter from './GroupByFilter'
 import {
   Button,
   Card,
@@ -24,14 +24,14 @@ const validateForm = formData => {
   const errors = {}
 
   // Group name validation
-  if (!formData.audienceName) {
-    errors.audienceName = 'Audience name is required'
-  } else if (formData.audienceName.trim().length < 3) {
-    errors.audienceName = 'Audience name must be at least 3 characters long'
-  } else if (formData.audienceName.trim().length > 50) {
-    errors.audienceName = 'Audience name must be less than 50 characters'
-  } else if (!/^[a-zA-Z0-9\s\-_]+$/.test(formData.audienceName.trim())) {
-    errors.audienceName = 'Audience name can only contain letters, numbers, spaces, hyphens, and underscores'
+  if (!formData.groupName) {
+    errors.groupName = 'Group name is required'
+  } else if (formData.groupName.trim().length < 3) {
+    errors.groupName = 'Group name must be at least 3 characters long'
+  } else if (formData.groupName.trim().length > 50) {
+    errors.groupName = 'Group name must be less than 50 characters'
+  } else if (!/^[a-zA-Z0-9\s\-_]+$/.test(formData.groupName.trim())) {
+    errors.groupName = 'Group name can only contain letters, numbers, spaces, hyphens, and underscores'
   }
 
   // Description validation
@@ -46,11 +46,11 @@ const validateForm = formData => {
   return errors
 }
 
-const formFieldOrder = ['audienceName', 'description']
+const formFieldOrder = ['groupName', 'description']
 
-const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
+const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
   const initialFormData = {
-    audienceName: '',
+    groupName: '',
     description: ''
   }
   const { data: session } = useSession()
@@ -74,15 +74,15 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
     location: null,
     gender: null
   })
-  console.log('selected user in the createAudience form ', selectedUsers)
-  //if edit audience?
+  console.log('selected user in the creategroup form ', selectedUsers)
+  //if edit group?
 
   useEffect(() => {
     if (data) {
       console.log('edit mode data', data)
       setFormData({
         ...initialFormData,
-        audienceName: data.audienceName || '',
+        groupName: data.groupName || '',
         description: data.description || '',
         members: data.members || []
       })
@@ -114,7 +114,7 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
       }
     }
   }, [data, users])
-  console.log('selected user in the createAudience after the  useeffect ', selectedUsers)
+  console.log('selected user in the creategroup after the  useeffect ', selectedUsers)
   // Helper function to filter users based on criteria
   const filterUsersByCriteria = (users, criteria) => {
     return users
@@ -176,7 +176,7 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
 
   // Create refs for each field
   const fieldRefs = {
-    audienceName: useRef(),
+    groupName: useRef(),
     description: useRef()
   }
 
@@ -243,7 +243,7 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
 
     // Mark all fields as touched
     const touchedFields = {
-      audienceName: true,
+      groupName: true,
       description: true
     }
     setTouches(touchedFields)
@@ -284,7 +284,7 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
     // Prepare submission data
     const submission = {
       _id: data?._id || null, // Include ID for updates
-      audienceName: formData.audienceName.trim(),
+      groupName: formData.groupName.trim(),
       description: formData.description.trim(),
       ...filterCriteria, // Include the current filter criteria
       createdBy: data?.createdBy || session?.user?.id || null,
@@ -296,7 +296,7 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
     try {
       await onSubmit(submission)
     } catch (error) {
-      setErrorMessage(error.message || 'Failed to save audience')
+      setErrorMessage(error.message || 'Failed to save group')
       setShowErrorSnackbar(true)
     } finally {
       setIsSubmitting(false)
@@ -320,7 +320,7 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
     setSelectedUsers(newSelectedUsers)
   }
 
-  console.log('selected user in the createAudience form after the handleUserSelection ', selectedUsers)
+  console.log('selected user in the creategroup form after the handleUserSelection ', selectedUsers)
   return (
     <Box>
       {/* {!isInline && ( */}
@@ -343,15 +343,15 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label='Audience Name'
-                  name='audienceName'
-                  value={formData.audienceName}
+                  label='group Name'
+                  name='groupName'
+                  value={formData.groupName}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  error={!!errors.audienceName && touches.audienceName}
-                  helperText={errors.audienceName}
+                  error={!!errors.groupName && touches.groupName}
+                  helperText={errors.groupName}
                   required
-                  inputRef={fieldRefs.audienceName}
+                  inputRef={fieldRefs.groupName}
                   inputProps={{
                     maxLength: 50
                   }}
@@ -377,7 +377,7 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
                 />
               </Grid>
               <Grid item xs={12}>
-                <AudienceByFilter
+                <GroupByFilter
                   users={users}
                   key={data}
                   onFilterChange={(userIds, criteria) => handleFilterChange(userIds, criteria)}
@@ -386,7 +386,7 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
               </Grid>
 
               <Grid item xs={12}>
-                <Typography>Audience Members</Typography>
+                <Typography>group Members</Typography>
                 <UserMultiSelect
                   users={users}
                   selectedUsers={selectedUsers}
@@ -408,7 +408,7 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
                     style={{ color: 'white' }}
                     disabled={isSubmitting || selectedUsers.length === 0}
                   >
-                    {isSubmitting ? 'Saving...' : 'Save Audience'}
+                    {isSubmitting ? 'Saving...' : 'Save group'}
                   </Button>
                 </Stack>
               </Grid>
@@ -421,4 +421,4 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
   )
 }
 
-export default CreateAudienceForm
+export default CreateGroupForm

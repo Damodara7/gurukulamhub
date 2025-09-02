@@ -55,7 +55,7 @@ import { countryTimezones } from '@/data/country-timezones'
 import moment, { tz } from 'moment-timezone'
 import { userAgent } from 'next/server'
 import { convertWithGMTOffset } from '@/utils/timezoneconverter'
-import AudienceAutocomplete from '@/components/audience/AudienceAutocomplete'
+import GroupAutocomplete from '@/components/group/GroupAutocomplete'
 
 // Reward position options
 const POSITION_OPTIONS = [1, 2, 3, 4, 5]
@@ -181,7 +181,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
     limitPlayers: false,
     maxPlayers: 100000,
     tags: [],
-    audienceId: null,
+    groupId: null,
     // location: {
     //   country: '',
     //   region: '',
@@ -267,7 +267,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
         duration: data?.duration ? Math.floor(data.duration / 60) : '',
         gameMode: data?.gameMode || 'live',
         timezone: gmttimezones.find(tz => tz.value === data?.timezone) || {},
-        audienceId: data?.audienceId || null
+        groupId: data?.groupId || null
         // creatorZipcode: data?.creatorZipcode || '',
         // creatorTimezone: data?.creatorTimezone || '',
         // creatorCountry: data?.creatorCountry || ''
@@ -886,15 +886,15 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
         </FormControl>
       </Grid>
 
-      {/* Audience Selection */}
+      {/* Group Selection */}
       <Grid item xs={12}>
-        <AudienceAutocomplete
-          value={formData.audienceId}
-          onChange={audienceId => {
-            setFormData(prev => ({ ...prev, audienceId }))
+        <GroupAutocomplete
+          value={formData.groupId}
+          onChange={groupId => {
+            setFormData(prev => ({ ...prev, groupId }))
           }}
-          label='Target Audience (Optional)'
-          placeholder='Search for a audience to restrict game access...'
+          label='Target Group (Optional)'
+          placeholder='Search for a group to restrict game access...'
         />
       </Grid>
       <Grid item xs={12}>

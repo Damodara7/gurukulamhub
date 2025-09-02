@@ -595,7 +595,7 @@ const AddAdvDrawer = ({ open, handleClose, mode = 'add', data = null, onRefresh 
             </Typography>
 
             <Typography variant='body1'>
-              Define the target audience for advertisements based on their geographical location:
+              Define the target group for advertisements based on their geographical location:
             </Typography>
 
             <ul>

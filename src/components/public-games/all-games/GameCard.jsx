@@ -39,7 +39,7 @@ import {
   Share as ShareIcon
 } from '@mui/icons-material'
 
-const GameCard = ({ game, currentUseraudienceIds = [] }) => {
+const GameCard = ({ game, currentUsergroupIds = [] }) => {
   const { data: session } = useSession()
   const router = useRouter()
   const theme = useTheme()
@@ -48,13 +48,13 @@ const GameCard = ({ game, currentUseraudienceIds = [] }) => {
   const [sharePopupOpen, setSharePopupOpen] = useState(false)
 
   // Group restriction logic
-  const groupObj = game?.audienceId && (game.audienceId._id ? game.audienceId : null)
-  const audienceIdStr = game?.audienceId ? (game.audienceId._id || game.audienceId).toString() : null
-  const isAudienceRestricted = Boolean(audienceIdStr)
-  const isUserMemberOfGroup = !isAudienceRestricted
+  const groupObj = game?.groupId && (game.groupId._id ? game.groupId : null)
+  const groupIdStr = game?.groupId ? (game.groupId._id || game.groupId).toString() : null
+  const isGroupRestricted = Boolean(groupIdStr)
+  const isUserMemberOfGroup = !isGroupRestricted
     ? true
-    : (currentUseraudienceIds || []).map(g => (g?._id ? g._id.toString() : g.toString())).includes(audienceIdStr)
-  const showAudienceRestriction = isAudienceRestricted && !isUserMemberOfGroup
+    : (currentUsergroupIds || []).map(g => (g?._id ? g._id.toString() : g.toString())).includes(groupIdStr)
+  const showGroupRestriction = isGroupRestricted && !isUserMemberOfGroup
 
   // Build compact filters text safely
   const filtersParts = []
@@ -291,7 +291,7 @@ const GameCard = ({ game, currentUseraudienceIds = [] }) => {
           <Box sx={{ flex: 1, my: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
             <Stack spacing={1}>
               {/* Game Status Info - Added at the top */}
-              {!showAudienceRestriction && (
+              {!showGroupRestriction && (
                 <Stack direction='row' alignItems='flex-start' spacing={1}>
                   <Box sx={{ color: gameStatusInfo.color }}>{gameStatusInfo.icon}</Box>
                   <Typography variant='body2' sx={{ color: gameStatusInfo.color, fontWeight: 500 }}>
@@ -299,7 +299,7 @@ const GameCard = ({ game, currentUseraudienceIds = [] }) => {
                   </Typography>
                 </Stack>
               )}
-              {showAudienceRestriction && (
+              {showGroupRestriction && (
                 <Alert
                   severity='error'
                   variant='outlined'
@@ -413,13 +413,13 @@ const GameCard = ({ game, currentUseraudienceIds = [] }) => {
               (!isUserRegistered && isRegistrationOpen && !isGameStarted && !isGameEnded)) && (
               <Button
                 disabled={
-                  showAudienceRestriction ||
+                  showGroupRestriction ||
                   (game.status !== 'lobby' &&
                     game.status !== 'approved' &&
                     !isGameLive &&
                     !game?.participatedUsers?.find(p => p.email === session?.user?.email)?.completed)
                 }
-                sx={{ cursor: showAudienceRestriction ? 'not-allowed' : 'pointer' }}
+                sx={{ cursor: showGroupRestriction ? 'not-allowed' : 'pointer' }}
                 variant='outlined'
                 color='primary'
                 size='small'

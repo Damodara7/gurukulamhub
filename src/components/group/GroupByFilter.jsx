@@ -35,7 +35,7 @@ const spinnerStyles = `
   }
 `
 
-const AudienceByFilter = ({
+const GroupByFilter = ({
   users,
   onFilterChange,
   initialCriteria = {
@@ -70,8 +70,8 @@ const AudienceByFilter = ({
   const [editingFilter, setEditingFilter] = useState(null)
   const [isEditMode, setIsEditMode] = useState(false)
 
-  console.error('combinedCriteria', combinedCriteria)
-  console.error('initialCriteria', initialCriteria)
+  console.log('combinedCriteria', combinedCriteria)
+  console.log('initialCriteria', initialCriteria)
 
   const handleClick = event => {
     setAnchorEl(event.currentTarget)
@@ -1268,4 +1268,4 @@ const AudienceByFilter = ({
     </Box>
   )
 }
-export default AudienceByFilter
+export default GroupByFilter

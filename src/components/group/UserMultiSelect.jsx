@@ -382,7 +382,7 @@ const UserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUserIds 
       </Box>
 
       <Dialog open={open} onClose={() => setOpen(false)} maxWidth='xl' fullWidth>
-        <DialogTitle>Select Audience Members</DialogTitle>
+        <DialogTitle>Select Group Members</DialogTitle>
         <DialogContent>
           <Paper sx={{ maxHeight: 600, overflow: 'auto' }}>
             <List dense>

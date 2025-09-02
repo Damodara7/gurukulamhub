@@ -50,7 +50,7 @@ import CancelIcon from '@mui/icons-material/Cancel'
 import RewardSponsorCard from '@/components/apps/games/game-details/RewardSponsorsList'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
-
+import FallBackCard from '@/components/apps/games/FallBackCard'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Leaderboard from '../play-game/Leaderboard'
@@ -64,14 +64,14 @@ const ViewDetails = ({ game }) => {
   const [sharePopupOpen, setSharePopupOpen] = useState(false)
   const router = useRouter()
   const { data: session } = useSession()
-  const [currentUseraudienceIds, setCurrentUseraudienceIds] = useState([])
+  const [currentUsergroupIds, setCurrentUsergroupIds] = useState([])
   const [isRestricted, setIsRestricted] = useState(false)
 
   // Compute restriction show message
   useEffect(() => {
     const fetchAndCompute = async () => {
       try {
-        if (!game?.audienceId) {
+        if (!game?.groupId) {
           setIsRestricted(false)
           return
         }
@@ -80,17 +80,17 @@ const ViewDetails = ({ game }) => {
         if (res?.status === 'success' && res.result) {
           const users = Array.isArray(res.result) ? res.result : [res.result]
           const user = users.find(u => u.email === session.user.email)
-          const audienceIds = (user?.audienceIds || []).map(g => g?._id?.toString?.() || g?.toString?.() || g)
-          setCurrentUseraudienceIds(audienceIds)
-          const audienceIdStr = (game.audienceId?._id || game.audienceId).toString()
-          setIsRestricted(!audienceIds.includes(audienceIdStr))
+          const groupIds = (user?.groupIds || []).map(g => g?._id?.toString?.() || g?.toString?.() || g)
+          setCurrentUsergroupIds(groupIds)
+          const groupIdStr = (game.groupId?._id || game.groupId).toString()
+          setIsRestricted(!groupIds.includes(groupIdStr))
         }
       } catch (e) {
         // noop
       }
     }
     fetchAndCompute()
-  }, [game?.audienceId, session?.user?.email])
+  }, [game?.groupId, session?.user?.email])
 
   const handleCopyPin = () => {
     navigator.clipboard.writeText(game.pin)
@@ -204,7 +204,7 @@ const ViewDetails = ({ game }) => {
               {isRestricted && (
                 <Alert severity='error' variant='outlined' sx={{ mb: 1 }}>
                   <AlertTitle sx={{ fontWeight: 700 }}>
-                    {`Restricted to group${game?.audienceId?.audienceName ? `: ${game.audienceId.audienceName}` : ''}`}
+                    {`Restricted to group${game?.groupId?.groupName ? `: ${game.groupId.groupName}` : ''}`}
                   </AlertTitle>
                   <Typography variant='body2' sx={{ mb: 0.75 }}>
                     You are not allowed to register/join this game.
@@ -219,10 +219,10 @@ const ViewDetails = ({ game }) => {
 
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                     {/* Age Filter */}
-                    {game.audienceId?.ageGroup?.min != null && game.audienceId?.ageGroup?.max != null && (
+                    {game.groupId?.ageGroup?.min != null && game.groupId?.ageGroup?.max != null && (
                       <Chip
                         icon={<CakeIcon sx={{ fontSize: 16 }} />}
-                        label={`Age: ${game.audienceId.ageGroup.min}-${game.audienceId.ageGroup.max}`}
+                        label={`Age: ${game.groupId.ageGroup.min}-${game.groupId.ageGroup.max}`}
                         color='primary'
                         variant='outlined'
                         sx={{ mb: 1 }}
@@ -230,12 +230,12 @@ const ViewDetails = ({ game }) => {
                     )}
 
                     {/* Location Filter */}
-                    {game.audienceId?.location &&
+                    {game.groupId?.location &&
                       (() => {
                         const locationParts = []
-                        if (game.audienceId.location.country) locationParts.push(game.audienceId.location.country)
-                        if (game.audienceId.location.region) locationParts.push(game.audienceId.location.region)
-                        if (game.audienceId.location.city) locationParts.push(game.audienceId.location.city)
+                        if (game.groupId.location.country) locationParts.push(game.groupId.location.country)
+                        if (game.groupId.location.region) locationParts.push(game.groupId.location.region)
+                        if (game.groupId.location.city) locationParts.push(game.groupId.location.city)
 
                         return locationParts.length > 0 ? (
                           <Chip
@@ -249,12 +249,12 @@ const ViewDetails = ({ game }) => {
                       })()}
 
                     {/* Gender Filter */}
-                    {game.audienceId?.gender &&
-                      Array.isArray(game.audienceId.gender) &&
-                      game.audienceId.gender.length > 0 && (
+                    {game.groupId?.gender &&
+                      Array.isArray(game.groupId.gender) &&
+                      game.groupId.gender.length > 0 && (
                         <Chip
                           icon={<Person sx={{ fontSize: 16 }} />}
-                          label={`Gender: ${game.audienceId.gender
+                          label={`Gender: ${game.groupId.gender
                             .map(g => g.charAt(0).toUpperCase() + g.slice(1))
                             .join(', ')}`}
                           color='success'
@@ -264,9 +264,9 @@ const ViewDetails = ({ game }) => {
                       )}
 
                     {/* Show message if no filters */}
-                    {(!game.audienceId?.ageGroup?.min || !game.audienceId?.ageGroup?.max) &&
-                      !game.audienceId?.location &&
-                      (!game.audienceId?.gender || game.audienceId.gender.length === 0) && (
+                    {(!game.groupId?.ageGroup?.min || !game.groupId?.ageGroup?.max) &&
+                      !game.groupId?.location &&
+                      (!game.groupId?.gender || game.groupId.gender.length === 0) && (
                         <Typography variant='body2' color='text.secondary' sx={{ fontStyle: 'italic' }}>
                           No filters applied
                         </Typography>

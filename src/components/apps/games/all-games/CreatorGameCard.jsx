@@ -99,10 +99,10 @@ const CreatorGameCard = ({ game, isSuperUser = false, onViewGame, onEditGame, on
             </Typography>
 
             {/* Group Information */}
-            {game?.audienceId && (
+            {game?.groupId && (
               <Box sx={{ mb: 2 }}>
                 <Chip
-                  label={`Restricted to group - "${game.audienceId?.audienceName || 'Private Group'}"`}
+                  label={`Restricted to group - "${game.groupId?.groupName || 'Private Group'}"`}
                   color='error'
                   variant='filled'
                   size='small'

@@ -1,8 +1,8 @@
-import * as AudienceService from './audience.service.js'
+import * as GroupService from './group.service.js'
 import * as ApiResponseUtils from '@/utils/apiResponses'
 
-const Artifact = 'Audiences'
-const ArtifactService = AudienceService
+const Artifact = 'Groups'
+const ArtifactService = GroupService
 
 export async function GET(req) {
   try {
@@ -36,7 +36,7 @@ export async function GET(req) {
 
 export async function POST(request) {
   try {
-    console.log('Received request to create audience')
+    console.log('Received request to create group')
     const reqBody = await request.json()
     console.log('Request body:', reqBody)
 
@@ -68,15 +68,15 @@ export async function PUT(request) {
   try {
     const reqBody = await request.json()
 
-    // Extract audience ID from request body
-    const audienceId = reqBody._id
-    if (!audienceId) {
-      const errorResponse = ApiResponseUtils.createErrorResponse('Audience ID is required')
+    // Extract group ID from request body
+    const groupId = reqBody._id
+    if (!groupId) {
+      const errorResponse = ApiResponseUtils.createErrorResponse('Group ID is required')
       return ApiResponseUtils.sendErrorResponse(errorResponse)
     }
 
-    // Update the audience using the service
-    const updateResult = await AudienceService.updateOne(audienceId, reqBody)
+    // Update the group using the service
+    const updateResult = await GroupService.updateOne(groupId, reqBody)
 
     if (updateResult.status === 'success') {
       const successResponse = ApiResponseUtils.createSuccessResponse(updateResult.message, updateResult.result)
@@ -97,15 +97,12 @@ export async function DELETE(req) {
   const id = searchParams.get('id')
 
   try {
-    const deletedAudience = await ArtifactService.deleteOne(id)
-    if (deletedAudience.status === 'success') {
-      var successResponse = ApiResponseUtils.createSuccessResponse(
-        'Audience deleted successfully',
-        deletedAudience.result
-      )
+    const deletedGroup = await ArtifactService.deleteOne(id)
+    if (deletedGroup.status === 'success') {
+      var successResponse = ApiResponseUtils.createSuccessResponse('Group deleted successfully', deletedGroup.result)
       return ApiResponseUtils.sendSuccessResponse(successResponse)
     } else {
-      const errorResponse = ApiResponseUtils.createErrorResponse(deletedAudience.message)
+      const errorResponse = ApiResponseUtils.createErrorResponse(deletedGroup.message)
       return ApiResponseUtils.sendErrorResponse(errorResponse)
     }
   } catch (error) {

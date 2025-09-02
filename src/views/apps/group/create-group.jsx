@@ -5,8 +5,8 @@ import { API_URLS } from '@/configs/apiConfig'
 import { useRouter } from 'next/navigation'
 import { toast } from 'react-toastify'
 import { useSession } from 'next-auth/react'
-import CreateAudienceForm from '@/components/audience/CreateAduienceForm'
-function CreateAudiencePage() {
+import CreateGroupForm from '@/components/group/CreateGroupForm'
+function CreateGroupPage() {
   const { data: session } = useSession()
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -16,7 +16,7 @@ function CreateAudiencePage() {
       console.log(' form Data', values)
       // Prepare the payload
       const payload = {
-        audienceName: values.audienceName,
+        groupName: values.groupName,
         description: values.description,
         location: values.location,
         gender: values.gender,
@@ -30,40 +30,43 @@ function CreateAudiencePage() {
       console.log('payload data ', payload)
 
       // Call your API
-      const result = await RestApi.post(API_URLS.v0.USERS_AUDIENCE, payload)
+      const result = await RestApi.post(API_URLS.v0.USERS_GROUP, payload)
       console.log('result', result)
 
       if (result?.status === 'success') {
-        const audienceId = result.result._id
-        console.log('Audience created successfully with ID:', audienceId)
-        toast.success('Audience created successfully!')
-        router.push('/management/audience')
+        const groupId = result.result._id
+        console.log('Group created successfully with ID:', groupId)
+        toast.success('Group created successfully!')
+        router.push('/management/group')
       } else {
-        console.error('Error creating audience:', result.message)
-        toast.error(result?.message || 'Failed to create audience')
+        console.error('Error creating group:', result)
+        const errorMessage = result?.message || result?.error || 'Failed to create group'
+        toast.error(errorMessage)
       }
     } catch (error) {
-      console.error('Error creating audience:', error)
-      toast.error('An error occurred while creating the audience')
+      console.error('Error creating group:', error)
+      const errorMessage =
+        error?.message || error?.response?.data?.message || 'An error occurred while creating the group'
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }
   }
 
   const handleCancel = () => {
-    router.push('/management/audience') // Redirect to groups list
+    router.push('/management/group') // Redirect to groups list
   }
 
   return (
     <div className='p-4'>
       <div className='mb-6'>
-        <h1 className='text-2xl font-bold'>Create New Audience</h1>
-        <p className='text-muted-foreground'>Fill in the details below to create a new audience</p>
+        <h1 className='text-2xl font-bold'>Create New Group</h1>
+        <p className='text-muted-foreground'>Fill in the details below to create a new group</p>
       </div>
 
-      <CreateAudienceForm onSubmit={handleSubmit} onCancel={handleCancel} loading={loading} />
+      <CreateGroupForm onSubmit={handleSubmit} onCancel={handleCancel} loading={loading} />
     </div>
   )
 }
 
-export default CreateAudiencePage
+export default CreateGroupPage

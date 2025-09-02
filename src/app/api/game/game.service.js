@@ -12,7 +12,7 @@ import { broadcastLeaderboard } from '../ws/leaderboard/[gameId]/publishers'
 import { broadcastGamesList } from '../ws/games/publishers'
 import { broadcastGameDetails } from '../ws/games/[gameId]/publishers'
 import UserProfile from '@/app/models/profile.model'
-import Group from '@/app/api/audience/audience.model'
+import Group from '@/app/api/group/group.model'
 
 // Helper to enrich a single game with registeredUsers, participatedUsers, and questions
 async function enrichGameWithDetails(game) {
@@ -61,7 +61,7 @@ export const getOne = async (filter = {}) => {
     const game = await Game.findOne({ ...filter, isDeleted: false })
       .populate('quiz')
       .populate({
-        path: 'audienceId',
+        path: 'groupId',
         populate: {
           path: 'members',
           populate: {
@@ -103,7 +103,7 @@ export const getAll = async (filter = {}) => {
   try {
     const games = await Game.find({ ...filter, isDeleted: false })
       .populate('quiz')
-      .populate('audienceId')
+      .populate('groupId')
       .populate('createdBy', 'email firstName lastName roles')
       .populate('forwardingAdmin', 'email firstName lastName roles')
       .populate('rewards.sponsors.sponsorshipId')
@@ -135,7 +135,7 @@ export const getAllPublic = async (filter = {}) => {
       status: { $in: ['approved', 'lobby', 'live', 'completed', 'cancelled'] }
     })
       .populate('quiz')
-      .populate('audienceId')
+      .populate('groupId')
       .populate('createdBy', 'email firstName lastName')
       .populate('forwardingAdmin', 'email firstName lastName roles')
       .populate('rewards.sponsors.sponsorshipId')
@@ -171,7 +171,7 @@ export const getAllByEmail = async (email, filter = {}) => {
 
     const games = await Game.find({ creatorEmail: email, isDeleted: false, ...filter })
       .populate('quiz')
-      .populate('audienceId')
+      .populate('groupId')
       .populate('createdBy', 'email firstName lastName roles')
       .populate('forwardingAdmin', 'email firstName lastName roles')
       .populate('rewards.sponsors.sponsorshipId')
@@ -194,20 +194,20 @@ export const getAllByEmail = async (email, filter = {}) => {
   }
 }
 
-export const getAllByAudienceId = async (audienceId, filter = {}) => {
+export const getAllByGroupId = async (groupId, filter = {}) => {
   await connectMongo()
   try {
-    if (!audienceId) {
+    if (!groupId) {
       return {
         status: 'error',
         result: null,
-        message: 'Valid audience ID is required'
+        message: 'Valid group ID is required'
       }
     }
 
-    const games = await Game.find({ audienceId: audienceId, isDeleted: false, ...filter })
+    const games = await Game.find({ groupId: groupId, isDeleted: false, ...filter })
       .populate('quiz')
-      .populate('audienceId')
+      .populate('groupId')
       .populate('createdBy', 'email firstName lastName roles')
       .populate('forwardingAdmin', 'email firstName lastName roles')
       .populate('rewards.sponsors.sponsorshipId')
@@ -219,13 +219,13 @@ export const getAllByAudienceId = async (audienceId, filter = {}) => {
     return {
       status: 'success',
       result: enrichedGames,
-      message: `Found ${games.length} games for audience ${audienceId}`
+      message: `Found ${games.length} games for group ${groupId}`
     }
   } catch (error) {
     return {
       status: 'error',
       result: null,
-      message: error.message || 'Failed to retrieve games by audience ID'
+      message: error.message || 'Failed to retrieve games by group ID'
     }
   }
 }
@@ -281,7 +281,7 @@ export const addOne = async gameData => {
     // Create new game instance
     const newGame = new Game({
       ...gameData,
-      audienceId: gameData.audienceId || null
+      groupId: gameData.groupId || null
     })
     // const newGame = new Game({
     //   title: gameData.title,
@@ -718,7 +718,7 @@ export const joinGame = async (gameId, userData) => {
       status: { $in: ['approved', 'lobby', 'live'] },
       isDeleted: false
     })
-      .populate('audienceId')
+      .populate('groupId')
       .lean()
     if (!game) {
       return {
@@ -729,12 +729,12 @@ export const joinGame = async (gameId, userData) => {
     }
 
     // Enforce group membership if game is restricted to a group
-    if (game.audienceId && game.audienceId._id) {
-      const audienceIdStr = (game.audienceId._id || game.audienceId).toString()
-      const useraudienceIds = (user.audienceIds || []).map(g => g.toString())
-      const isMember = useraudienceIds.includes(audienceIdStr)
+    if (game.groupId && game.groupId._id) {
+      const groupIdStr = (game.groupId._id || game.groupId).toString()
+      const usergroupIds = (user.groupIds || []).map(g => g.toString())
+      const isMember = usergroupIds.includes(groupIdStr)
       if (!isMember) {
-        const grp = game.audienceId
+        const grp = game.groupId
         const filters = []
         if (grp?.ageGroup?.min != null && grp?.ageGroup?.max != null)
           filters.push(`Age ${grp.ageGroup.min}-${grp.ageGroup.max}`)
@@ -748,7 +748,7 @@ export const joinGame = async (gameId, userData) => {
           status: 'error',
           result: null,
           message: `You are not allowed to register/join this game. This game is restricted to the group "${
-            grp?.audienceName || 'Private Group'
+            grp?.groupName || 'Private Group'
           }".${filterText}`
         }
       }
@@ -828,7 +828,7 @@ export const startGame = async (gameId, userData) => {
     player.joinedAt = new Date()
     await player.save()
     // Get questions and verify group restriction again (defense-in-depth)
-    const gameDoc = await Game.findById(gameId).populate('quiz').populate('audienceId')
+    const gameDoc = await Game.findById(gameId).populate('quiz').populate('groupId')
     const game = gameDoc?.toObject?.() || gameDoc
     if (!game) {
       return {
@@ -837,12 +837,12 @@ export const startGame = async (gameId, userData) => {
         message: 'Game not found'
       }
     }
-    if (game.audienceId && game.audienceId._id) {
-      const audienceIdStr = (game.audienceId._id || game.audienceId).toString()
-      const useraudienceIds = (user.audienceIds || []).map(g => g.toString())
-      const isMember = useraudienceIds.includes(audienceIdStr)
+    if (game.groupId && game.groupId._id) {
+      const groupIdStr = (game.groupId._id || game.groupId).toString()
+      const usergroupIds = (user.groupIds || []).map(g => g.toString())
+      const isMember = usergroupIds.includes(groupIdStr)
       if (!isMember) {
-        const grp = game.audienceId
+        const grp = game.groupId
         const filters = []
         if (grp?.ageGroup?.min != null && grp?.ageGroup?.max != null)
           filters.push(`Age ${grp.ageGroup.min}-${grp.ageGroup.max}`)
@@ -856,7 +856,7 @@ export const startGame = async (gameId, userData) => {
           status: 'error',
           result: null,
           message: `You are not allowed to start this game. This game is restricted to the group "${
-            grp?.audienceName || 'Private Group'
+            grp?.groupName || 'Private Group'
           }".${filterText}`
         }
       }
@@ -1503,24 +1503,24 @@ export async function broadcastGameDetailsUpdates(gameId, updatedGame = null) {
   }
 }
 
-// Function to clean up orphaned audienceId references in games
+// Function to clean up orphaned groupId references in games
 export const cleanupOrphanedGroupReferences = async () => {
   await connectMongo()
   try {
-    // Find all games that have a audienceId but the group doesn't exist or is deleted
-    const gamesWithaudienceId = await Game.find({
-      audienceId: { $exists: true, $ne: null },
+    // Find all games that have a groupId but the group doesn't exist or is deleted
+    const gamesWithgroupId = await Game.find({
+      groupId: { $exists: true, $ne: null },
       isDeleted: false
-    }).populate('audienceId')
+    }).populate('groupId')
 
     let cleanedCount = 0
 
-    for (const game of gamesWithaudienceId) {
+    for (const game of gamesWithgroupId) {
       // Check if the group exists and is not deleted
-      if (!game.audienceId || game.audienceId.isDeleted) {
-        await Game.updateOne({ _id: game._id }, { $unset: { audienceId: 1 } })
+      if (!game.groupId || game.groupId.isDeleted) {
+        await Game.updateOne({ _id: game._id }, { $unset: { groupId: 1 } })
         cleanedCount++
-        console.log(`Cleaned up orphaned audienceId reference in game ${game._id}`)
+        console.log(`Cleaned up orphaned groupId reference in game ${game._id}`)
       }
     }
 

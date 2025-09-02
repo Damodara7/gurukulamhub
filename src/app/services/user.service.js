@@ -99,10 +99,10 @@ export async function getByReferralToken({ referralToken }) {
   }
 }
 
-export async function addGroupToUser(userId, audienceId) {
+export async function addGroupToUser(userId, groupId) {
   await connectMongo()
   try {
-    const updatedUser = await User.findByIdAndUpdate(userId, { $addToSet: { groupIds: audienceId } }, { new: true })
+    const updatedUser = await User.findByIdAndUpdate(userId, { $addToSet: { groupIds: groupId } }, { new: true })
 
     if (!updatedUser) {
       return { status: 'error', result: null, message: 'User not found' }

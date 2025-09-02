@@ -15,31 +15,31 @@ import {
 import { format } from 'date-fns'
 import { useRouter } from 'next/navigation'
 
-const AudiencedetailsPage = ({ audienceData, gamesData = [] }) => {
+const GroupDetailsPage = ({ groupData, gamesData = [] }) => {
   // Debug: Log the received data structure
-  console.log('AudienceDetailsPage - Received audienceData:', audienceData)
-  console.log('AudienceDetailsPage - Members:', audienceData?.members)
-  console.log('AudienceDetailsPage - First member profile:', audienceData?.members?.[0]?.profile)
-  console.log('AudienceDetailsPage - Games:', gamesData)
+  console.log('GroupDetailsPage - Received groupData:', groupData)
+  console.log('GroupDetailsPage - Members:', groupData?.members)
+  console.log('GroupDetailsPage - First member profile:', groupData?.members?.[0]?.profile)
+  console.log('GroupDetailsPage - Games:', gamesData)
   const router = useRouter()
   // Helper function to get filter chips
   const getFilterChips = () => {
     const chips = []
     // Age filter
-    if (audienceData?.ageGroup?.min && audienceData?.ageGroup?.max) {
+    if (groupData?.ageGroup?.min && groupData?.ageGroup?.max) {
       chips.push({
         icon: <CakeIcon sx={{ fontSize: 16 }} />,
-        label: `Age: ${audienceData.ageGroup.min}-${audienceData.ageGroup.max}`,
+        label: `Age: ${groupData.ageGroup.min}-${groupData.ageGroup.max}`,
         color: 'primary'
       })
     }
 
     // Location filter
-    if (audienceData?.location) {
+    if (groupData?.location) {
       const locationParts = []
-      if (audienceData.location.country) locationParts.push(audienceData.location.country)
-      if (audienceData.location.region) locationParts.push(audienceData.location.region)
-      if (audienceData.location.city) locationParts.push(audienceData.location.city)
+      if (groupData.location.country) locationParts.push(groupData.location.country)  
+      if (groupData.location.region) locationParts.push(groupData.location.region)
+      if (groupData.location.city) locationParts.push(groupData.location.city)
 
       if (locationParts.length > 0) {
         chips.push({
@@ -51,8 +51,8 @@ const AudiencedetailsPage = ({ audienceData, gamesData = [] }) => {
     }
 
     // Gender filter
-    if (audienceData?.gender && Array.isArray(audienceData.gender) && audienceData.gender.length > 0) {
-      const genderLabels = audienceData.gender.map(g => g.charAt(0).toUpperCase() + g.slice(1))
+    if (groupData?.gender && Array.isArray(groupData.gender) && groupData.gender.length > 0) {
+      const genderLabels = groupData.gender.map(g => g.charAt(0).toUpperCase() + g.slice(1))
       chips.push({
         icon: <PersonIcon sx={{ fontSize: 16 }} />,
         label: `Gender: ${genderLabels.join(', ')}`,
@@ -69,7 +69,7 @@ const AudiencedetailsPage = ({ audienceData, gamesData = [] }) => {
     const chips = []
 
     // Show age only if group has age filter
-    if (audienceData?.ageGroup?.min && audienceData?.ageGroup?.max && member.profile?.age) {
+    if (groupData?.ageGroup?.min && groupData?.ageGroup?.max && member.profile?.age) {
       chips.push({
         label: `Age: ${member.profile.age}`,
         color: 'primary'
@@ -77,7 +77,7 @@ const AudiencedetailsPage = ({ audienceData, gamesData = [] }) => {
     }
 
     // Show gender only if group has gender filter
-    if (audienceData?.gender && Array.isArray(audienceData.gender) && audienceData.gender.length > 0 && member.profile?.gender) {
+    if (groupData?.gender && Array.isArray(groupData.gender) && groupData.gender.length > 0 && member.profile?.gender) {
       chips.push({
         label: `Gender: ${member.profile.gender.charAt(0).toUpperCase() + member.profile.gender.slice(1)}`,
         color: 'success'
@@ -85,11 +85,11 @@ const AudiencedetailsPage = ({ audienceData, gamesData = [] }) => {
     }
 
     // Show location as single chip if group has location filter
-    if (audienceData?.location) {
+    if (groupData?.location) {
       const locationParts = []
-      if (audienceData.location.city && member.profile?.locality) locationParts.push(member.profile.locality)
-      if (audienceData.location.region && member.profile?.region) locationParts.push(member.profile.region)
-      if (audienceData.location.country && member.profile?.country) locationParts.push(member.profile.country)
+      if (groupData.location.city && member.profile?.locality) locationParts.push(member.profile.locality)
+      if (groupData.location.region && member.profile?.region) locationParts.push(member.profile.region)
+      if (groupData.location.country && member.profile?.country) locationParts.push(member.profile.country)
       
       if (locationParts.length > 0) {
         chips.push({
@@ -107,12 +107,12 @@ const AudiencedetailsPage = ({ audienceData, gamesData = [] }) => {
       {/* Group Header */}
       <Box sx={{ mb: 4 }}>
         <Typography variant='h4' component='h1' sx={{ fontWeight: 600, mb: 2 }}>
-          {audienceData?.audienceName || 'Audience Details'}
+          {groupData?.groupName || 'Group Details'}
         </Typography>
 
-        {audienceData?.description && (
+        {groupData?.description && (
           <Typography variant='body1' color='text.secondary' sx={{ mb: 3 }}>
-            {audienceData.description}
+            {groupData.description}
           </Typography>
         )}
       </Box>
@@ -155,13 +155,13 @@ const AudiencedetailsPage = ({ audienceData, gamesData = [] }) => {
               Group Members
             </Typography>
             <Typography variant='body2' color='text.secondary'>
-              {audienceData?.membersCount === 0 ? 'No Members': audienceData?.membersCount > 1 ? `${audienceData?.membersCount} members` : `${audienceData?.membersCount} member`}
+              {groupData?.membersCount === 0 ? 'No Members': groupData?.membersCount > 1 ? `${groupData?.membersCount} members` : `${groupData?.membersCount} member`}
             </Typography>
           </Box>
 
           <Divider sx={{ mb: 3 }} />
 
-          {audienceData?.members && audienceData.members.length > 0 ? (
+          {groupData?.members && groupData.members.length > 0 ? (
             <Paper
               sx={{
                 maxHeight: '400px',
@@ -172,7 +172,7 @@ const AudiencedetailsPage = ({ audienceData, gamesData = [] }) => {
               }}
             >
               <Box sx={{ p: 2 }}>
-                {audienceData.members.map((member, index) => (
+                {groupData.members.map((member, index) => (
                   <Box
                     key={member._id || index}
                     sx={{
@@ -180,7 +180,7 @@ const AudiencedetailsPage = ({ audienceData, gamesData = [] }) => {
                       alignItems: 'center',
                       gap: 2,
                       py: 1.5,
-                      borderBottom: index < audienceData.members.length - 1 ? '1px solid' : 'none',
+                      borderBottom: index < groupData.members.length - 1 ? '1px solid' : 'none',
                       borderColor: 'divider'
                     }}
                   >
@@ -343,4 +343,4 @@ const AudiencedetailsPage = ({ audienceData, gamesData = [] }) => {
   )
 }
 
-export default AudiencedetailsPage
+export default GroupDetailsPage

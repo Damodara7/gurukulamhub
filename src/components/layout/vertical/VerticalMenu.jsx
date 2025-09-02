@@ -104,7 +104,7 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
     { key: 'hasManageUserAlertsViewPermission', feature: FEATURES_LOOKUP.USER_ALERTS },
     { key: 'hasSponsorshipViewPermission', feature: FEATURES_LOOKUP.SPONSORSHIPS },
     { key: 'hasManageSponsorshipViewPermission', feature: FEATURES_LOOKUP.MANAGE_SPONSORSHIPS },
-    // {key:'hasManageGroupsViewPermission' , feature: FEATURES_LOOKUP.USERS_GROUP},
+    {key:'hasManageGroupsViewPermission' , feature: FEATURES_LOOKUP.USERS_GROUP},
     {key:'hasManageAudiencesViewPermission' , feature: FEATURES_LOOKUP.USERS_AUDIENCE}
   ]
 
@@ -316,15 +316,15 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
               <MenuItem href={`/${locale}/management/games/create`}>{dictionary['navigation'].create}</MenuItem>
             </SubMenu>
 
-            {/* <SubMenu label={dictionary['navigation'].manageGroups} icon={<i className='ri-group-line' />}>
-              <MenuItem href={`/${locale}/management/groups`}>{dictionary['navigation'].all}</MenuItem>
-              <MenuItem href={`/${locale}/management/groups/create`}>{dictionary['navigation'].create}</MenuItem>
-            </SubMenu> */}
+            <SubMenu label={dictionary['navigation'].manageGroups} icon={<i className='ri-group-line' />}>
+              <MenuItem href={`/${locale}/management/group`}>{dictionary['navigation'].all}</MenuItem>
+              <MenuItem href={`/${locale}/management/group/create`}>{dictionary['navigation'].create}</MenuItem>
+            </SubMenu>
 
-            <SubMenu label={dictionary['navigation'].manageAudiences} icon={<i className='ri-group-line' />}>
+            {/* <SubMenu label={dictionary['navigation'].manageAudiences} icon={<i className='ri-group-line' />}>
               <MenuItem href={`/${locale}/management/audience`}>{dictionary['navigation'].all}</MenuItem>
               <MenuItem href={`/${locale}/management/audience/create`}>{dictionary['navigation'].create}</MenuItem>
-            </SubMenu>
+            </SubMenu> */}
 
             <SubMenu label={dictionary['navigation'].manageUsers} icon={<i className='ri-group-line' />}>
               <MenuItem href={`/${locale}/management/user/list`}>{dictionary['navigation'].list}</MenuItem>

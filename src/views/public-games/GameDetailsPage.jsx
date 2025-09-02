@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation' // Using App Router
 import ViewDetails from '@/components/public-games/game-details/ViewDetails'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
-import { CircularProgress, Box, Typography, Card, CardContent, Button } from '@mui/material'
+import { CircularProgress, Box } from '@mui/material'
 import FallBackCard from '@/components/apps/games/FallBackCard'
 
 const GameDetailsPage = () => {

@@ -26,48 +26,48 @@ import {
 } from '@mui/icons-material'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
-import AudienceFallBackCard from './AudienceFallBackCard'
+import GroupFallBackCard from './GroupFallBackCard'
 
-const AudienceDetailsPopup = ({ open, audience, onClose }) => {
+const GroupDetailsPopup = ({ open, group, onClose }) => {
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    if (open && audience) {
-      fetchAudienceUsers()
+    if (open && group) {
+      fetchGroupUsers()
     }
-  }, [open, audience])
+  }, [open, group])
 
-  const fetchAudienceUsers = async () => {
-    if (!audience) return
+  const fetchGroupUsers = async () => {
+    if (!group) return
 
     setLoading(true)
     setError(null)
 
     try {
-      // Fetch all users and filter by audienceIds
+      // Fetch all users and filter by groupIds
       const result = await RestApi.get(`${API_URLS.v0.USER}`)
       if (result?.status === 'success') {
         const allUsers = Array.isArray(result.result) ? result.result : [result.result]
-        const audienceUsers = allUsers.filter(user => user.audienceIds && user.audienceIds.includes(audience._id))
+        const groupUsers = allUsers.filter(user => user.groupIds && user.groupIds.includes(group._id))
 
         // For now, we'll work with the basic user data
         // In a real implementation, you might want to fetch profile data separately
         // or modify the API to populate profile data
-        setUsers(audienceUsers)
+        setUsers(groupUsers)
       } else {
-        setError('Failed to fetch audience members')
+        setError('Failed to fetch group members')
       }
     } catch (error) {
-      console.error('Error fetching audience users:', error)
-      setError('An error occurred while fetching audience members')
+      console.error('Error fetching group users:', error)
+      setError('An error occurred while fetching group members')
     } finally {
       setLoading(false)
     }
   }
 
-  if (!audience) return <AudienceFallBackCard content='Audience not found' path='/' btnText='Back To Home Page'/>
+  if (!group) return <GroupFallBackCard content='Group not found' path='/' btnText='Back To Home Page' />
 
   const formatDate = dateString => {
     if (!dateString) return 'N/A'
@@ -79,7 +79,7 @@ const AudienceDetailsPopup = ({ open, audience, onClose }) => {
       <DialogTitle>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <GroupIcon color='primary' />
-          <Typography variant='h6'>{audience.audienceName}</Typography>
+          <Typography variant='h6'>{group.groupName}</Typography>
         </Box>
       </DialogTitle>
 
@@ -93,55 +93,55 @@ const AudienceDetailsPopup = ({ open, audience, onClose }) => {
         {/* Group Information */}
         <Box sx={{ mb: 3 }}>
           <Typography variant='h6' gutterBottom>
-            Audience Information
+            Group Information
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
-            {audience.description && (
+            {group.description && (
               <Typography variant='body2' color='text.secondary'>
-                {audience.description}
+                {group.description}
               </Typography>
             )}
           </Box>
 
           {(() => {
             const filterChips = []
-            
-            if (audience.ageGroup?.min && audience.ageGroup?.max) {
+
+            if (group.ageGroup?.min && group.ageGroup?.max) {
               filterChips.push(
                 <Chip
-                  key="age"
+                  key='age'
                   icon={<CakeIcon sx={{ fontSize: 16 }} />}
-                  label={`Age: ${audience.ageGroup.min}-${audience.ageGroup.max}`}
+                  label={`Age: ${group.ageGroup.min}-${group.ageGroup.max}`}
                   variant='outlined'
                   size='small'
                   color='primary'
                 />
               )
             }
-            
-            if (audience.gender && Array.isArray(audience.gender) && audience.gender.length > 0) {
+
+            if (group.gender && Array.isArray(group.gender) && group.gender.length > 0) {
               filterChips.push(
                 <Chip
-                  key="gender"
+                  key='gender'
                   icon={<PersonIcon sx={{ fontSize: 16 }} />}
-                  label={`Gender: ${audience.gender.map(g => g.charAt(0).toUpperCase() + g.slice(1)).join(', ')}`}
+                  label={`Gender: ${group.gender.map(g => g.charAt(0).toUpperCase() + g.slice(1)).join(', ')}`}
                   variant='outlined'
                   size='small'
                   color='success'
                 />
               )
             }
-            
-            if (audience.location) {
+
+            if (group.location) {
               const locationParts = []
-              if (audience.location.country) locationParts.push(audience.location.country)
-              if (audience.location.region) locationParts.push(audience.location.region)
-              if (audience.location.city) locationParts.push(audience.location.city)
+              if (group.location.country) locationParts.push(group.location.country)
+              if (group.location.region) locationParts.push(group.location.region)
+              if (group.location.city) locationParts.push(group.location.city)
 
               if (locationParts.length > 0) {
                 filterChips.push(
                   <Chip
-                    key="location"
+                    key='location'
                     icon={<LocationIcon sx={{ fontSize: 16 }} />}
                     label={`Location: ${locationParts.join(', ')}`}
                     variant='outlined'
@@ -153,9 +153,7 @@ const AudienceDetailsPopup = ({ open, audience, onClose }) => {
             }
 
             return filterChips.length > 0 ? (
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                {filterChips}
-              </Box>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>{filterChips}</Box>
             ) : (
               <Typography variant='body2' color='text.secondary' sx={{ fontStyle: 'italic' }}>
                 No filters applied
@@ -164,7 +162,7 @@ const AudienceDetailsPopup = ({ open, audience, onClose }) => {
           })()}
 
           <Box sx={{ mt: 2, display: 'flex', gap: 2, color: 'text.secondary' }}>
-            <Typography variant='body2'>Created: {formatDate(audience.createdAt)}</Typography>
+            <Typography variant='body2'>Created: {formatDate(group.createdAt)}</Typography>
             <Typography variant='body2'>Members: {users.length}</Typography>
           </Box>
         </Box>
@@ -174,7 +172,7 @@ const AudienceDetailsPopup = ({ open, audience, onClose }) => {
         {/* Group Members */}
         <Box>
           <Typography variant='h6' gutterBottom>
-            Audience Members ({users.length})
+            Group Members ({users.length})
           </Typography>
 
           {loading ? (
@@ -183,7 +181,7 @@ const AudienceDetailsPopup = ({ open, audience, onClose }) => {
             </Box>
           ) : users.length === 0 ? (
             <Typography variant='body2' color='text.secondary' sx={{ textAlign: 'center', py: 3 }}>
-              No members found in this audience
+              No members found in this group
             </Typography>
           ) : (
             <List sx={{ maxHeight: 400, overflow: 'auto' }}>
@@ -241,7 +239,7 @@ const AudienceDetailsPopup = ({ open, audience, onClose }) => {
                               const chips = []
 
                               // Show age only if group has age filter
-                              if (audience?.ageGroup?.min && audience?.ageGroup?.max && user.profile?.age) {
+                              if (group?.ageGroup?.min && group?.ageGroup?.max && user.profile?.age) {
                                 chips.push({
                                   label: `Age: ${user.profile.age}`,
                                   color: 'primary'
@@ -250,9 +248,9 @@ const AudienceDetailsPopup = ({ open, audience, onClose }) => {
 
                               // Show gender only if group has gender filter
                               if (
-                                audience?.gender &&
-                                Array.isArray(audience.gender) &&
-                                audience.gender.length > 0 &&
+                                group?.gender &&
+                                Array.isArray(group.gender) &&
+                                group.gender.length > 0 &&
                                 user.profile?.gender
                               ) {
                                 chips.push({
@@ -264,13 +262,13 @@ const AudienceDetailsPopup = ({ open, audience, onClose }) => {
                               }
 
                               // Show location as single chip if group has location filter
-                              if (audience?.location) {
+                              if (group?.location) {
                                 const locationParts = []
-                                if (audience.location.city && user.profile?.locality)
+                                if (group.location.city && user.profile?.locality)
                                   locationParts.push(user.profile.locality)
-                                if (audience.location.region && user.profile?.region)
+                                if (group.location.region && user.profile?.region)
                                   locationParts.push(user.profile.region)
-                                if (audience.location.country && user.profile?.country)
+                                if (group.location.country && user.profile?.country)
                                   locationParts.push(user.profile.country)
 
                                 if (locationParts.length > 0) {
@@ -325,4 +323,4 @@ const AudienceDetailsPopup = ({ open, audience, onClose }) => {
   )
 }
 
-export default AudienceDetailsPopup
+export default GroupDetailsPopup

@@ -25,115 +25,115 @@ import {
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { toast } from 'react-toastify'
-import CreateAudienceForm from './CreateAduienceForm'
-import AudienceDetailsPopup from './AudienceDetailsPopup'
+import CreateGroupForm from './CreateGroupForm'
+import GroupDetailsPopup from './GroupDetailsPopup'
 import { useSession } from 'next-auth/react'
 
-const AudienceAutocomplete = ({
+const GroupAutocomplete = ({
   value,
   onChange,
-  label = 'Select Audience (Optional)',
-  placeholder = 'Search audiences...'
+  label = 'Select Group (Optional)',
+  placeholder = 'Search groups...'
 }) => {
-  const [audiences, setAudiences] = useState([])
+  const [groups, setGroups] = useState([])
   const [loading, setLoading] = useState(false)
   const [openCreateDialog, setOpenCreateDialog] = useState(false)
   const [openDetailsDialog, setOpenDetailsDialog] = useState(false)
-  const [selectedAudience, setSelectedAudience] = useState(null)
+  const [selectedGroup, setSelectedGroup] = useState(null)
   const { data: session } = useSession()
 
-  // Fetch audiences on component mount
+  // Fetch groups on component mount
   useEffect(() => {
-    fetchAudiences()
+    fetchGroups()
   }, [])
 
   // Set initial value if provided
   useEffect(() => {
-    if (value && audiences.length > 0) {
-      const audience = audiences.find(a => a._id === value)
-      if (audience) {
-        setSelectedAudience(audience)
+    if (value && groups.length > 0) {
+      const group = groups.find(a => a._id === value)
+      if (group) {
+        setSelectedGroup(group)
       }
     }
-  }, [value, audiences])
+  }, [value, groups])
 
-  const fetchAudiences = async () => {
+  const fetchGroups = async () => {
     setLoading(true)
     try {
-      const res = await RestApi.get(`${API_URLS.v0.USERS_AUDIENCE}`)
+      const res = await RestApi.get(`${API_URLS.v0.USERS_GROUP}`)
       if (res?.status === 'success') {
-        setAudiences(res.result || [])
+        setGroups(res.result || [])
       } else {
-          console.error('Error fetching audiences:', res)
-        toast.error('Failed to load audiences')
+        console.error('Error fetching groups:', res)
+        toast.error('Failed to load groups')
       }
     } catch (error) {
-      console.error('Error fetching audiences:', error)
-      toast.error('An error occurred while loading audiences')
+      console.error('Error fetching groups:', error)
+      toast.error('An error occurred while loading groups')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleAudienceSelect = (event, newValue) => {
-    setSelectedAudience(newValue)
+  const handleGroupSelect = (event, newValue) => {
+    setSelectedGroup(newValue)
     onChange(newValue?._id || null)
   }
 
-  const handleCreateAudience = async audienceData => {
+  const handleCreateGroup = async groupData => {
     try {
-      console.log('form Data', audienceData)
+      console.log('form Data', groupData)
 
       // Prepare the payload
       const payload = {
-        audienceName: audienceData.audienceName,
-        description: audienceData.description,
-        location: audienceData.location,
-        gender: audienceData.gender,
-        ageGroup: audienceData.ageGroup,
+        groupName: groupData.groupName,
+        description: groupData.description,
+        location: groupData.location,
+        gender: groupData.gender,
+        ageGroup: groupData.ageGroup,
         createdBy: session?.user?.id, // Use the session user ID directly
         creatorEmail: session?.user?.email,
-        members: audienceData.members || [],
-        membersCount: audienceData.members?.length || 0
+        members: groupData.members || [],
+        membersCount: groupData.members?.length || 0
       }
 
       console.log('payload data ', payload)
 
       // Call your API
-      const result = await RestApi.post(API_URLS.v0.USERS_AUDIENCE, payload)
+      const result = await RestApi.post(API_URLS.v0.USERS_GROUP, payload)
       console.log('result', result)
 
       if (result?.status === 'success') {
-        const audienceId = result.result._id
-        console.log('Audience created successfully with ID:', audienceId)
-        toast.success('Audience created successfully!')
+        const groupId = result.result._id
+        console.log('Group created successfully with ID:', groupId)
+        toast.success('Group created successfully!')
         setOpenCreateDialog(false)
 
         // Refresh groups list
-        await fetchAudiences()
+        await fetchGroups()
 
-        // Auto-select the newly created audience
-        const newAudience = result.result
-        setSelectedAudience(newAudience)
-        onChange(newAudience._id)
+        // Auto-select the newly created group
+        const newGroup = result.result
+        setSelectedGroup(newGroup)
+        onChange(newGroup._id)
       } else {
-        console.error('Error creating audience:', result.message)
-        toast.error(result?.message || 'Failed to create audience')
+        console.error('Error creating group:', result.message)
+        toast.error(result?.message || 'Failed to create group')
       }
     } catch (error) {
-      console.error('Error creating audience:', error)
-      toast.error('An error occurred while creating the audience')
+      console.error('Error creating group:', error)
+      toast.error('An error occurred while creating the group')
     }
   }
 
-  const handleViewAudienceDetails = audience => {
-    setSelectedAudience(audience)
+  const handleViewGroupDetails = group => {
+    setSelectedGroup(group)
     setOpenDetailsDialog(true)
   }
 
   const getOptionLabel = option => {
     if (typeof option === 'string') return option
-    return option?.audienceName || ''
+    return option?.groupName || ''
   }
 
   const renderOption = (props, option) => (
@@ -144,7 +144,7 @@ const AudienceAutocomplete = ({
     >
       <Box sx={{ flex: 1 }}>
         <Typography variant='body1' fontWeight='medium'>
-          {option.audienceName}
+          {option.groupName}
         </Typography>
         <Typography variant='body2' color='text.secondary'>
           {option.description}
@@ -208,12 +208,12 @@ const AudienceAutocomplete = ({
         })()}
       </Box>
       <Box sx={{ display: 'flex', gap: 1, ml: 2 }}>
-        <Tooltip title='View audience details'>
+        <Tooltip title='View group details'>
           <IconButton
             size='small'
             onClick={e => {
               e.stopPropagation()
-              handleViewAudienceDetails(option)
+              handleViewGroupDetails(option)
             }}
           >
             <VisibilityIcon fontSize='small' />
@@ -235,9 +235,9 @@ const AudienceAutocomplete = ({
       <Box sx={{ display: 'flex', gap: 1 }}>
         <Autocomplete
           sx={{ flex: 1 }}
-          options={audiences}
-          value={selectedAudience}
-          onChange={handleAudienceSelect}
+          options={groups}
+          value={selectedGroup}
+          onChange={handleGroupSelect}
           getOptionLabel={getOptionLabel}
           renderOption={renderOption}
           loading={loading}
@@ -265,18 +265,26 @@ const AudienceAutocomplete = ({
         </Button>
       </Box>
 
-      {/* Create Audience Dialog */}
+      {/* Create Group Dialog */}
       <Dialog open={openCreateDialog} onClose={() => setOpenCreateDialog(false)} maxWidth='md' fullWidth>
-        <DialogTitle>Create New Audience</DialogTitle>
+        <DialogTitle>Create New Group</DialogTitle>
         <DialogContent>
-          <CreateAudienceForm onSubmit={handleCreateAudience} onCancel={() => setOpenCreateDialog(false)} isInline={true} />
+          <CreateGroupForm
+            onSubmit={handleCreateGroup}
+            onCancel={() => setOpenCreateDialog(false)}
+            isInline={true}
+          />
         </DialogContent>
       </Dialog>
 
-      {/* Audience Details Dialog */}
-      <AudienceDetailsPopup open={openDetailsDialog} audience={selectedAudience} onClose={() => setOpenDetailsDialog(false)} />
+      {/* Group Details Dialog */}
+      <GroupDetailsPopup
+        open={openDetailsDialog}
+        group={selectedGroup}
+        onClose={() => setOpenDetailsDialog(false)}
+      />
     </Box>
   )
 }
 
-  export default AudienceAutocomplete
+export default GroupAutocomplete

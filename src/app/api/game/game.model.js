@@ -225,9 +225,9 @@ const gameSchema = new mongoose.Schema(
     },
     deleterEmail: String,
     tags: [String],
-    audienceId: {
+    groupId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'audiences'
+      ref: 'groups'
     },
     isDeleted: {
       type: Boolean,
