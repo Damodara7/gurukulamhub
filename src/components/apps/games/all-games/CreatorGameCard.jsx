@@ -1,8 +1,20 @@
 // components/apps/games/all-games/GameCard.js
 import React from 'react'
-import { Alert, Box, Button, Card, CardContent, CardMedia, Chip, Stack, Typography, useTheme, Tooltip } from '@mui/material'
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  CardMedia,
+  Chip,
+  Stack,
+  Typography,
+  useTheme,
+  Tooltip
+} from '@mui/material'
 import { format } from 'date-fns'
-import { 
+import {
   AccessTime as AccessTimeIcon,
   People as PeopleIcon,
   Person as PersonIcon,
@@ -27,7 +39,8 @@ const getStatusChip = status => {
     lobby: { color: 'primary', label: 'Lobby' },
     live: { color: 'error', label: 'Live' },
     completed: { color: 'success', label: 'Completed' },
-    cancelled: { color: 'warning', label: 'Cancelled' }
+    cancelled: { color: 'warning', label: 'Cancelled' },
+    default: { color: 'default', label: 'Unknown' }
   }
 
   const config = statusConfig[status] || statusConfig.default
@@ -46,7 +59,16 @@ const getStatusChip = status => {
   )
 }
 
-const CreatorGameCard = ({ game, isSuperUser = false, onViewGame, onEditGame, onApproveGame, onDeleteGame, onLeaderboard , onAdminForward}) => {
+const CreatorGameCard = ({
+  game,
+  isSuperUser = false,
+  onViewGame,
+  onEditGame,
+  onApproveGame,
+  onDeleteGame,
+  onLeaderboard,
+  onAdminForward
+}) => {
   const { data: session } = useSession()
   const theme = useTheme()
 
@@ -163,13 +185,29 @@ const CreatorGameCard = ({ game, isSuperUser = false, onViewGame, onEditGame, on
             <Stack spacing={1} mb={3}>
               <Stack direction='row' alignItems='center' spacing={1}>
                 <EventIcon fontSize='small' color='action' />
-                <Typography variant='body2'>{format(new Date(game.startTime), 'PPpp')}</Typography>
+                <Typography variant='body2'>
+                  {game.startTime
+                    ? (() => {
+                        try {
+                          const date = new Date(game.startTime)
+                          if (isNaN(date.getTime())) {
+                            return 'Invalid date'
+                          }
+                          return format(date, 'PPpp')
+                        } catch (error) {
+                          return 'Invalid date'
+                        }
+                      })()
+                    : 'No start time'}
+                </Typography>
               </Stack>
 
-              {!game?.forwardType === 'admin' && <Stack direction='row' alignItems='center' spacing={1}>
-                <AccessTimeIcon fontSize='small' color='action' />
-                <Typography variant='body2'>{Math.floor(game.duration / 60)} minutes</Typography>
-              </Stack>}
+              {!game?.forwardType === 'admin' && (
+                <Stack direction='row' alignItems='center' spacing={1}>
+                  <AccessTimeIcon fontSize='small' color='action' />
+                  <Typography variant='body2'>{Math.floor(game.duration / 60)} minutes</Typography>
+                </Stack>
+              )}
 
               <Stack direction='row' alignItems='center' spacing={1}>
                 <PeopleIcon fontSize='small' color='action' />
@@ -224,11 +262,13 @@ const CreatorGameCard = ({ game, isSuperUser = false, onViewGame, onEditGame, on
                   <DeleteIcon />
                 </IconButtonTooltip>
               )}
-            { game?.forwardType === 'admin' && !['cancelled' , 'completed'].includes(game?.status) && (!game?.forwardingAdmin || game?.forwardingAdmin?.email ===  session?.user?.email)  &&(
-              <IconButtonTooltip title='Admin Forward' onClick={() => onAdminForward(game)} color='warning'>
-                <SettingsIcon />
-              </IconButtonTooltip>
-            )}
+            {game?.forwardType === 'admin' &&
+              !['cancelled', 'completed'].includes(game?.status) &&
+              (!game?.forwardingAdmin || game?.forwardingAdmin?.email === session?.user?.email) && (
+                <IconButtonTooltip title='Admin Forward' onClick={() => onAdminForward(game)} color='warning'>
+                  <SettingsIcon />
+                </IconButtonTooltip>
+              )}
           </Stack>
         </Box>
       </CardContent>

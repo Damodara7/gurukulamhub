@@ -67,7 +67,7 @@ const GroupDetailsPopup = ({ open, group, onClose }) => {
     }
   }
 
-  if (!group) return <GroupFallBackCard content='Group not found' path='/' btnText='Back To Home Page' />
+  if (!group) return null
 
   const formatDate = dateString => {
     if (!dateString) return 'N/A'
