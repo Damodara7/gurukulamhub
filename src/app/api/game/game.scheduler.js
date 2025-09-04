@@ -278,7 +278,8 @@ export async function reschedulePendingGames() {
 
     const pendingGames = await Game.find({
       isDeleted: false,
-      $or: [{ status: 'approved', startTime: { $gt: now } }, { status: 'lobby' }, { status: 'live' }]
+      $or: [{ status: 'approved', startTime: { $gt: now } }, { status: 'lobby' }, { status: 'live' }],
+      status: { $nin: ['awaiting_sponsorship', 'sponsored'] } // Exclude awaiting_sponsorship and sponsored games
     })
 
     console.log(`📌 Rescheduling ${pendingGames.length} games`)

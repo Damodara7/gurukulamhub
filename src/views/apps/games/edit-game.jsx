@@ -9,11 +9,14 @@ import { useSession } from 'next-auth/react'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import GameForm from '@/components/apps/games/GameForm'
+import GameCreationModeSelector from '@/components/apps/games/GameCreationModeSelector'
+import GameRequestSponsorshipForm from '@/components/apps/games/GameRequestSponsorshipForm'
 import NonEditableGamePage from '@/components/apps/games/game-details/NonEditableGamePage'
 function EditGamePage({ gameData = null, gameId = null, isSuperUser = false }) {
   const { data: session } = useSession()
   const [quizzes, setQuizzes] = useState([])
   const [loading, setLoading] = useState(true)
+  const [creationMode, setCreationMode] = useState(null) // null, 'existing_sponsors', 'request_sponsorship'
   const router = useRouter()
 
   useEffect(() => {
@@ -44,20 +47,24 @@ function EditGamePage({ gameData = null, gameId = null, isSuperUser = false }) {
     try {
       console.log('formData: ', values)
       setLoading(true)
-      // Convert dates to ISO strings for API
+      
+      // Handle different creation modes
       let payload = {
         ...values,
         updatedBy: session?.user?.id,
         updaterEmail: session?.user?.email,
-        startTime: values.startTime, //.toISOString()
-        registrationEndTime: values.requireRegistration ? values.registrationEndTime : null,
-        // Ensure duration is a number
-        duration: Number(values.duration) * 60, // because duration entered by user is in minutes
-        // Ensure maxPlayers is a number
-        maxPlayers: values.limitPlayers ? Number(values.maxPlayers) : 100000,
-        // Convert rewards to proper format
-        rewards:
-          values?.rewards.map(reward => ({
+      }
+
+      if (creationMode === 'existing_sponsors') {
+        // Original flow - with scheduling
+        payload = {
+          ...payload,
+          startTime: values.startTime,
+          registrationEndTime: values.requireRegistration ? values.registrationEndTime : null,
+          timezone: values.timezone,
+          duration: Number(values.duration) * 60,
+          maxPlayers: values.limitPlayers ? Number(values.maxPlayers) : 100000,
+          rewards: values?.rewards.map(reward => ({
             ...(reward._id && { _id: reward._id }),
             position: reward.position,
             numberOfWinnersForThisPosition: reward.numberOfWinnersForThisPosition,
@@ -83,6 +90,33 @@ function EditGamePage({ gameData = null, gameId = null, isSuperUser = false }) {
             })),
             winners: reward.winners || []
           })) || []
+        }
+      } else if (creationMode === 'request_sponsorship') {
+        // New flow - requesting sponsorship
+        payload = {
+          ...payload,
+          status: 'awaiting_sponsorship',
+          gameMode: values.gameMode,
+          duration: values.gameMode === 'self-paced' ? Number(values.duration) * 60 : null,
+          maxPlayers: values.limitPlayers ? Number(values.maxPlayers) : 100000,
+          rewards: values?.rewards?.map(reward => ({
+            ...(reward._id && { _id: reward._id }),
+            position: reward.position,
+            numberOfWinnersForThisPosition: reward.numberOfWinnersForThisPosition,
+            rewardValuePerWinner: reward.rewardValuePerWinner,
+            rewardType: reward.rewardType,
+            currency: reward.currency,
+            nonCashReward: reward.nonCashReward,
+            sponsors: reward.sponsors?.map(sponsor => ({
+              ...(sponsor._id && { _id: sponsor._id }),
+              email: sponsor.email,
+              sponsorshipId: sponsor.sponsorshipId,
+              allocated: sponsor.allocated,
+              rewardType: sponsor.rewardType,
+              currency: sponsor.currency
+            })) || []
+          })) || []
+        }
       }
 
       if (gameData?.status === 'cancelled') {
@@ -92,6 +126,19 @@ function EditGamePage({ gameData = null, gameId = null, isSuperUser = false }) {
           ...(isSuperUser
             ? { status: 'created', approvedBy: null, approverEmail: null, approvedAt: null }
             : { status: 'approved', approverEmail: session?.user?.email, approvedAt: new Date() })
+        }
+      } else if (gameData?.status === 'sponsored') {
+        // For sponsored games, allow scheduling by transitioning to approved status
+        payload = {
+          ...payload,
+          status: 'approved',
+          approverEmail: session?.user?.email,
+          approvedAt: new Date(),
+          startTime: values.startTime,
+          registrationEndTime: values.requireRegistration ? values.registrationEndTime : null,
+          timezone: values.timezone,
+          duration: values.gameMode === 'self-paced' ? Number(values.duration) * 60 : null,
+          maxPlayers: values.limitPlayers ? Number(values.maxPlayers) : 100000
         }
       }
       console.log('payload: ', payload)
@@ -107,7 +154,7 @@ function EditGamePage({ gameData = null, gameId = null, isSuperUser = false }) {
 
       if (result?.status === 'success') {
         toast.success(`Game ${gameId ? 'updated' : 'created'} successfully!`)
-        router.push(isSuperUser ? '/manage-games' : '/management/games') // Redirect to games list
+        router.push(isSuperUser ? '/manage-games' : '/management/games')
       } else {
         console.error(`Error ${gameId ? 'updating' : 'creating'} game:`, result.message)
         toast.error(result?.message || `Failed to ${gameId ? 'update' : 'create'} game`)
@@ -121,7 +168,15 @@ function EditGamePage({ gameData = null, gameId = null, isSuperUser = false }) {
   }
 
   const handleCancel = () => {
-    router.push(isSuperUser ? '/manage-games' : '/management/games') // Redirect to games list
+    if (creationMode) {
+      setCreationMode(null)
+    } else {
+      router.push(isSuperUser ? '/manage-games' : '/management/games')
+    }
+  }
+
+  const handleModeSelect = (mode) => {
+    setCreationMode(mode)
   }
 
   if (loading && (quizzes.length === 0 || (gameId && !gameData))) {
@@ -134,7 +189,7 @@ function EditGamePage({ gameData = null, gameId = null, isSuperUser = false }) {
 
   //main conditional rendering
 
-  if (!['created', 'approved', 'cancelled'].includes(gameData?.status)) {
+  if (!['created', 'approved', 'cancelled', 'sponsored'].includes(gameData?.status)) {
     return <NonEditableGamePage gameData={gameData} />
   }
 
@@ -195,17 +250,46 @@ function EditGamePage({ gameData = null, gameId = null, isSuperUser = false }) {
     rewards: transformRewardsFromDB(gameData?.rewards || [])
   }
 
+  // Show mode selector for new games only
+  if (!gameId && !creationMode) {
+    return (
+      <div className='p-4'>
+        <GameCreationModeSelector onModeSelect={handleModeSelect} />
+      </div>
+    )
+  }
+
   return (
     <div className='p-4'>
       <div className='mb-6'>
-        <h1 className='text-2xl font-bold'>{gameId ? 'Edit Game' : 'Create New Game'}</h1>
+        <h1 className='text-2xl font-bold'>
+          {gameId ? 'Edit Game' : 
+           creationMode === 'existing_sponsors' ? 'Create & Schedule Game' : 
+           'Create Game & Request Sponsorship'}
+        </h1>
         <p className='text-muted-foreground'>
-          {gameId ? 'Update the game details below' : 'Fill in the details below to create a new game'}
+          {gameId ? 'Update the game details below' : 
+           creationMode === 'existing_sponsors' ? 'Fill in the details below to create and schedule your game' :
+           'Fill in the details below to create your game and request sponsorships'}
         </p>
       </div>
 
       <LocalizationProvider dateAdapter={AdapterDayjs}>
-        <GameForm onSubmit={handleSubmit} quizzes={quizzes} onCancel={handleCancel} data={updatedGameData} />
+        {creationMode === 'request_sponsorship' ? (
+          <GameRequestSponsorshipForm 
+            onSubmit={handleSubmit} 
+            quizzes={quizzes} 
+            onCancel={handleCancel} 
+            data={updatedGameData} 
+          />
+        ) : (
+          <GameForm 
+            onSubmit={handleSubmit} 
+            quizzes={quizzes} 
+            onCancel={handleCancel} 
+            data={updatedGameData} 
+          />
+        )}
       </LocalizationProvider>
     </div>
   )

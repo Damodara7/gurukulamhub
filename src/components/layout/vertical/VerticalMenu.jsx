@@ -245,7 +245,7 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
 
           <SubMenu label={dictionary['navigation'].sponsorship} icon={<i className='ri-wallet-3-line' />}>
             <MenuItem href={`/${locale}/sponsor/list`}>{dictionary['navigation'].list}</MenuItem>
-            {/* <MenuItem href={`/${locale}/sponsor/games`}>{dictionary['navigation'].sponsorGames}</MenuItem> */}
+            <MenuItem href={`/${locale}/sponsor/games`}>{dictionary['navigation'].sponsorGames}</MenuItem>
             <MenuItem href={`/${locale}/sponsor/quizzes`}>{dictionary['navigation'].sponsorQuizzes}</MenuItem>
             {/* <MenuItem href={`/${locale}/sponsor/area`}>{dictionary['navigation'].sponsorByArea}</MenuItem> */}
           </SubMenu>
