@@ -26,6 +26,11 @@ export const groupSchema = new mongoose.Schema(
       enum: ['male', 'female', 'other']
     },
     ageGroup: ageGroupSchema,
+    status: {
+      type: String,
+      enum: ['public', 'private'],
+      default: 'public'
+    },
     members: [
       {
         type: mongoose.Schema.Types.ObjectId,

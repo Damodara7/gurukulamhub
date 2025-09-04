@@ -29,7 +29,7 @@ export const getOne = async (filter = {}) => {
       return {
         status: 'error',
         result: null,
-        message: 'Group not found'  
+        message: 'Group not found'
       }
     }
 
@@ -78,7 +78,7 @@ export const getAll = async (filter = {}) => {
 export const addOne = async groupData => {
   await connectMongo()
   try {
-        const user = await User.findOne({ email: groupData.creatorEmail })
+    const user = await User.findOne({ email: groupData.creatorEmail })
     groupData.createdBy = user._id
     // Validate required fields
     console.log('groupData', groupData)
@@ -141,7 +141,7 @@ export const addOne = async groupData => {
     if (groupData.gender) {
       const allowedGenders = ['male', 'female', 'other']
       let gendersArray
-          if (Array.isArray(groupData.gender)) {
+      if (Array.isArray(groupData.gender)) {
         gendersArray = groupData.gender
       } else if (typeof groupData.gender === 'object' && groupData.gender !== null) {
         gendersArray = Object.entries(groupData.gender)
@@ -305,7 +305,7 @@ export const deleteOne = async groupId => {
   await connectMongo()
   try {
     // Find the existing group by ID and ensure it's not already deleted
-      const existingGroup = await Group.findOne({ _id: groupId, isDeleted: false })
+    const existingGroup = await Group.findOne({ _id: groupId, isDeleted: false })
 
     if (!existingGroup) {
       return {
@@ -317,7 +317,7 @@ export const deleteOne = async groupId => {
 
     // Remove group from all users before soft delete
     try {
-          await User.updateMany({ groupIds: groupId }, { $pull: { groupIds: groupId } })
+      await User.updateMany({ groupIds: groupId }, { $pull: { groupIds: groupId } })
       console.log(`Removed group ${groupId} from all users`)
     } catch (userUpdateError) {
       console.error('Error removing group from users:', userUpdateError)
@@ -394,7 +394,7 @@ export const hardDeleteOne = async groupId => {
       status: 'success',
       result: null,
       message: 'Group permanently deleted and all references cleaned up'
-    } 
+    }
   } catch (error) {
     return {
       status: 'error',

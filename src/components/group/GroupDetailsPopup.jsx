@@ -22,7 +22,9 @@ import {
   Group as GroupIcon,
   Person as PersonIcon,
   LocationOn as LocationIcon,
-  Cake as CakeIcon
+  Cake as CakeIcon,
+  Public as PublicIcon,
+  Lock as LockIcon
 } from '@mui/icons-material'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
@@ -100,6 +102,26 @@ const GroupDetailsPopup = ({ open, group, onClose }) => {
               <Typography variant='body2' color='text.secondary'>
                 {group.description}
               </Typography>
+            )}
+          </Box>
+
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+            {group?.status === 'public' ? (
+              <Chip
+                icon={<PublicIcon sx={{ fontSize: 16 }} />}
+                label='Public Group'
+                variant='outlined'
+                size='small'
+                color='success'
+              />
+            ) : (
+              <Chip
+                icon={<LockIcon sx={{ fontSize: 16 }} />}
+                label='Private Group'
+                variant='outlined'
+                size='small'
+                color='warning'
+              />
             )}
           </Box>
 

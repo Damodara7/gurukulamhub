@@ -91,6 +91,7 @@ const GroupAutocomplete = ({
         location: groupData.location,
         gender: groupData.gender,
         ageGroup: groupData.ageGroup,
+        status: groupData.status,
         createdBy: session?.user?.id, // Use the session user ID directly
         creatorEmail: session?.user?.email,
         members: groupData.members || [],
@@ -269,20 +270,12 @@ const GroupAutocomplete = ({
       <Dialog open={openCreateDialog} onClose={() => setOpenCreateDialog(false)} maxWidth='md' fullWidth>
         <DialogTitle>Create New Group</DialogTitle>
         <DialogContent>
-          <CreateGroupForm
-            onSubmit={handleCreateGroup}
-            onCancel={() => setOpenCreateDialog(false)}
-            isInline={true}
-          />
+          <CreateGroupForm onSubmit={handleCreateGroup} onCancel={() => setOpenCreateDialog(false)} isInline={true} />
         </DialogContent>
       </Dialog>
 
       {/* Group Details Dialog */}
-      <GroupDetailsPopup
-        open={openDetailsDialog}
-        group={selectedGroup}
-        onClose={() => setOpenDetailsDialog(false)}
-      />
+      <GroupDetailsPopup open={openDetailsDialog} group={selectedGroup} onClose={() => setOpenDetailsDialog(false)} />
     </Box>
   )
 }

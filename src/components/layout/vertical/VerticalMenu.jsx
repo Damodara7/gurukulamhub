@@ -105,7 +105,9 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
     { key: 'hasSponsorshipViewPermission', feature: FEATURES_LOOKUP.SPONSORSHIPS },
     { key: 'hasManageSponsorshipViewPermission', feature: FEATURES_LOOKUP.MANAGE_SPONSORSHIPS },
     {key:'hasManageGroupsViewPermission' , feature: FEATURES_LOOKUP.USERS_GROUP},
-    {key:'hasManageAudiencesViewPermission' , feature: FEATURES_LOOKUP.USERS_AUDIENCE}
+    {key:'hasManageAudiencesViewPermission' , feature: FEATURES_LOOKUP.USERS_AUDIENCE},
+    {key:'hasPublicGroupsViewPermission' , feature: FEATURES_LOOKUP.PUBLIC_GROUPS},
+    {key:'hasMyGroupsViewPermission' , feature: FEATURES_LOOKUP.MY_GROUPS}
   ]
 
   // Generate permission variables dynamically
@@ -132,6 +134,8 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
     hasManageAdvtViewPermission,
     hasManageGroupsViewPermission,
     hasManageAudiencesViewPermission,
+    hasPublicGroupsViewPermission,
+    hasMyGroupsViewPermission,
     hasManageQuizzesViewPermission,
     // hasManageGamesViewPermission,
     hasManageGamesViewPermission,
@@ -158,6 +162,8 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
     hasManageEventsViewPermission ||
     hasManageGroupsViewPermission ||
     hasManageAudiencesViewPermission ||
+    hasPublicGroupsViewPermission ||
+    hasMyGroupsViewPermission ||
     hasManageUsersViewPermission
 
   return (
@@ -218,6 +224,10 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
 
           <MenuItem href={`/${locale}/public-games/join`}>{dictionary['navigation'].join}</MenuItem>
         </SubMenu>
+
+        <MenuItem href={`/${locale}/mygroups`} icon={<i className='ri-group-line' />}>
+          {dictionary['navigation'].myGroups}
+        </MenuItem>
 
         <MenuSection label={dictionary['navigation'].mypages}>
           {!userRoles?.includes(ROLES_LOOKUP.ADMIN) && (

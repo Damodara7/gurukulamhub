@@ -15,7 +15,11 @@ import {
   Snackbar,
   Alert,
   Stack,
-  Box
+  Box,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material'
 
 import UserMultiSelect from './UserMultiSelect'
@@ -51,7 +55,8 @@ const formFieldOrder = ['groupName', 'description']
 const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
   const initialFormData = {
     groupName: '',
-    description: ''
+    description: '',
+    status: 'public'
   }
   const { data: session } = useSession()
   const [formData, setFormData] = useState(initialFormData)
@@ -84,6 +89,7 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
         ...initialFormData,
         groupName: data.groupName || '',
         description: data.description || '',
+        status: data.status || 'public',
         members: data.members || []
       })
       // Set initial filter criteria from group data
@@ -181,7 +187,7 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
   }
 
   const handleChange = e => {
-    const { name, value } = e.target
+    const { name, value, type, checked } = e.target
     setTouches(prev => ({ ...prev, [name]: true }))
 
     // Clear error when user starts typing
@@ -206,7 +212,7 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
     } else {
       setFormData(prev => ({
         ...prev,
-        [name]: value
+        [name]: type === 'checkbox' ? checked : value
       }))
     }
   }
@@ -286,6 +292,7 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
       _id: data?._id || null, // Include ID for updates
       groupName: formData.groupName.trim(),
       description: formData.description.trim(),
+      status: formData.status,
       ...filterCriteria, // Include the current filter criteria
       createdBy: data?.createdBy || session?.user?.id || null,
       creatorEmail: data?.creatorEmail || session?.user?.email || null,
@@ -376,6 +383,23 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
                   }}
                 />
               </Grid>
+
+              <Grid item xs={12}>
+                <FormControl fullWidth>
+                  <InputLabel id='status-label'>Group Status</InputLabel>
+                  <Select
+                    labelId='status-label'
+                    name='status'
+                    value={formData.status}
+                    onChange={handleChange}
+                    label='Group Status'
+                  >
+                    <MenuItem value='public'>Public</MenuItem>
+                    <MenuItem value='private'>Private</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+
               <Grid item xs={12}>
                 <GroupByFilter
                   users={users}

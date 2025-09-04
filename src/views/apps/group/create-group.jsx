@@ -21,6 +21,7 @@ function CreateGroupPage() {
         location: values.location,
         gender: values.gender,
         ageGroup: values.ageGroup,
+        status: values.status,
         createdBy: session?.user?.id, // Use the found user ID
         creatorEmail: session?.user?.email,
         members: values.members,

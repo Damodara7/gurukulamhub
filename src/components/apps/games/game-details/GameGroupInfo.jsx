@@ -19,7 +19,9 @@ import {
   People as PeopleIcon,
   AccessTime as AccessTimeIcon,
   LocationOn as LocationIcon,
-  Person as PersonIcon
+  Person as PersonIcon,
+  Public as PublicIcon,
+  Lock as LockIcon
 } from '@mui/icons-material'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
@@ -79,6 +81,25 @@ const GameGroupInfo = ({ game }) => {
                     {group.description}
                   </Typography>
                 )}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+                  {group?.status === 'public' ? (
+                    <Chip
+                      icon={<PublicIcon sx={{ fontSize: 16 }} />}
+                      label='Public Group'
+                      variant='outlined'
+                      size='small'
+                      color='success'
+                    />
+                  ) : (
+                    <Chip
+                      icon={<LockIcon sx={{ fontSize: 16 }} />}
+                      label='Private Group'
+                      variant='outlined'
+                      size='small'
+                      color='warning'
+                    />
+                  )}
+                </Box>
               </Box>
 
               {/* Group Filters */}

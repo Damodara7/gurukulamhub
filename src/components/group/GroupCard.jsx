@@ -7,7 +7,9 @@ import {
   Delete as DeleteIcon,
   People as PeopleIcon,
   Person as PersonIcon,
-  CalendarToday as CalendarIcon
+  CalendarToday as CalendarIcon,
+  Public as PublicIcon,
+  Lock as LockIcon
 } from '@mui/icons-material'
 import GroupFallBackCard from './GroupFallBackCard'
 
@@ -40,6 +42,26 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup }) => {
                 <Typography variant='h6' gutterBottom sx={{ fontWeight: 'bold' }}>
                   {groupName || 'no Groupname is mentioned'}
                 </Typography>
+
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                  {group?.status === 'public' ? (
+                    <Chip
+                      size='small'
+                      icon={<PublicIcon sx={{ fontSize: 16 }} />}
+                      label='Public'
+                      color='success'
+                      variant='outlined'
+                    />
+                  ) : (
+                    <Chip
+                      size='small'
+                      icon={<LockIcon sx={{ fontSize: 16 }} />}
+                      label='Private'
+                      color='warning'
+                      variant='outlined'
+                    />
+                  )}
+                </Box>
 
                 {group?.description ? (
                   <Tooltip title={group.description} arrow>
@@ -77,8 +99,7 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup }) => {
                         textOverflow: 'ellipsis'
                       }}
                     >
-                      {group?.creatorEmail ||
-                        (group?.createdBy ? String(group.createdBy).slice(0, 8) : 'Unknown')}
+                      {group?.creatorEmail || (group?.createdBy ? String(group.createdBy).slice(0, 8) : 'Unknown')}
                     </Typography>
                   </Tooltip>
                 </Box>
@@ -162,11 +183,9 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup }) => {
                       </Tooltip>
                     )}
                     {(() => {
-                      const parts = [
-                        group?.location?.country,
-                        group?.location?.region,
-                        group?.location?.city
-                      ].filter(Boolean)
+                      const parts = [group?.location?.country, group?.location?.region, group?.location?.city].filter(
+                        Boolean
+                      )
                       const label = parts.length > 0 ? `Location: ${parts.join(', ')}` : null
                       return label ? (
                         <Tooltip arrow title={label}>
