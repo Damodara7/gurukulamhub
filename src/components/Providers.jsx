@@ -1,6 +1,7 @@
 // Context Imports
 import { NextAuthProvider } from '@/contexts/nextAuthProvider'
-import { GameProvider  } from '@/contexts/GameContext'
+import { GameProvider } from '@/contexts/GameContext'
+import { GroupProvider } from '@/contexts/GroupContext'
 import { VerticalNavProvider } from '@menu/contexts/verticalNavContext'
 import { SettingsProvider } from '@core/contexts/settingsContext'
 import ThemeProvider from '@components/theme'
@@ -34,8 +35,8 @@ const Providers = async props => {
       <VerticalNavProvider>
         <SettingsProvider settingsCookie={settingsCookie} mode={mode} demoName={demoName}>
           <ThemeProvider direction={direction} systemMode={systemMode}>
-          <GameProvider>
-            {children}
+            <GameProvider>
+              <GroupProvider>{children}</GroupProvider>
             </GameProvider>
             <AppReactToastify position={themeConfig.toastPosition} hideProgressBar rtl={direction === 'rtl'} />
           </ThemeProvider>

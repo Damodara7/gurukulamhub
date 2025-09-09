@@ -17,10 +17,10 @@ import { useRouter } from 'next/navigation'
 
 const GroupDetailsPage = ({ groupData, gamesData = [] }) => {
   // Debug: Log the received data structure
-  console.log('GroupDetailsPage - Received groupData:', groupData)
-  console.log('GroupDetailsPage - Members:', groupData?.members)
-  console.log('GroupDetailsPage - First member profile:', groupData?.members?.[0]?.profile)
-  console.log('GroupDetailsPage - Games:', gamesData)
+  // console.log('GroupDetailsPage - Received groupData:', groupData)
+  // console.log('GroupDetailsPage - Members:', groupData?.members)
+  // console.log('GroupDetailsPage - First member profile:', groupData?.members?.[0]?.profile)
+  // console.log('GroupDetailsPage - Games:', gamesData)
   const router = useRouter()
   // Helper function to get filter chips
   const getFilterChips = () => {

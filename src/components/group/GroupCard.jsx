@@ -1,5 +1,5 @@
-import React from 'react'
-import { Card, CardContent, Typography, Stack, Chip, Grid, Box, Divider, Tooltip } from '@mui/material'
+import React, { useState, useEffect } from 'react'
+import { Card, CardContent, Typography, Stack, Chip, Grid, Box, Divider, Tooltip, Badge, Button } from '@mui/material'
 import IconButtonTooltip from '../IconButtonTooltip'
 import {
   Visibility as VisibilityIcon,
@@ -9,11 +9,93 @@ import {
   Person as PersonIcon,
   CalendarToday as CalendarIcon,
   Public as PublicIcon,
-  Lock as LockIcon
+  Lock as LockIcon,
+  GroupAdd as GroupAddIcon
 } from '@mui/icons-material'
 import GroupFallBackCard from './GroupFallBackCard'
+import JoinRequestManager from './JoinRequestManager'
+import * as RestApi from '@/utils/restApiUtil'
+import { API_URLS } from '@/configs/apiConfig'
+import { useSession } from 'next-auth/react'
 
-const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup }) => {
+const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup, onGroupCreated, onRefreshGroups }) => {
+  const { data: session } = useSession()
+  const [pendingRequests, setPendingRequests] = useState({})
+  const [joinRequestOpen, setJoinRequestOpen] = useState(false)
+  const [selectedGroup, setSelectedGroup] = useState(null)
+
+  // Check for pending requests for each group
+  useEffect(() => {
+    const checkPendingRequests = async () => {
+      if (!session?.user?.email) return
+
+      for (const group of groups) {
+        try {
+          const result = await RestApi.get(`${API_URLS.v0.USERS_GROUP_REQUEST}?groupId=${group._id}&status=pending`)
+          if (result?.status === 'success') {
+            setPendingRequests(prev => ({
+              ...prev,
+              [group._id]: result.result?.length || 0
+            }))
+          }
+        } catch (error) {
+          console.error('Error checking pending requests:', error)
+        }
+      }
+    }
+
+    checkPendingRequests()
+  }, [groups, session?.user?.email])
+
+  const handleJoinRequestClick = group => {
+    setSelectedGroup(group)
+    setJoinRequestOpen(true)
+  }
+
+  const handleRequestProcessed = () => {
+    // Refresh pending requests count
+    const checkPendingRequests = async () => {
+      if (!selectedGroup) return
+
+      try {
+        const result = await RestApi.get(
+          `${API_URLS.v0.USERS_GROUP_REQUEST}?groupId=${selectedGroup._id}&status=pending`
+        )
+        if (result?.status === 'success') {
+          setPendingRequests(prev => ({
+            ...prev,
+            [selectedGroup._id]: result.result?.length || 0
+          }))
+        }
+      } catch (error) {
+        console.error('Error checking pending requests:', error)
+      }
+    }
+
+    // Refresh group data to update member count
+    const refreshGroupData = async () => {
+      if (!selectedGroup) return
+
+      try {
+        const result = await RestApi.get(`${API_URLS.v0.GROUPS}/${selectedGroup._id}`)
+        if (result?.status === 'success') {
+          // Update the group in the groups array
+          const updatedGroup = result.result
+          // Trigger a re-render by updating the groups prop
+          // This will be handled by the parent component
+          if (onRequestProcessed) {
+            onRequestProcessed(updatedGroup)
+          }
+        }
+      } catch (error) {
+        console.error('Error refreshing group data:', error)
+      }
+    }
+
+    checkPendingRequests()
+    refreshGroupData()
+  }
+
   if (!groups.length) {
     return <GroupFallBackCard content='No groups found' path='/' btnText='Back To Home Page' />
   }
@@ -234,6 +316,17 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup }) => {
                     <IconButtonTooltip title='Delete' onClick={() => onDeleteGroup(group)} color='error'>
                       <DeleteIcon />
                     </IconButtonTooltip>
+                    {pendingRequests[group._id] > 0 && (
+                      <Badge badgeContent={pendingRequests[group._id]} color='error'>
+                        <IconButtonTooltip
+                          title={`${pendingRequests[group._id]} pending join requests`}
+                          onClick={() => handleJoinRequestClick(group)}
+                          color='primary'
+                        >
+                          <GroupAddIcon />
+                        </IconButtonTooltip>
+                      </Badge>
+                    )}
                   </Stack>
                 </Box>
               </CardContent>
@@ -241,6 +334,14 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup }) => {
           </Grid>
         )
       })}
+      <JoinRequestManager
+        open={joinRequestOpen}
+        group={selectedGroup}
+        onClose={() => setJoinRequestOpen(false)}
+        onRequestProcessed={handleRequestProcessed}
+        onGroupCreated={onGroupCreated}
+        onRefreshGroups={onRefreshGroups}
+      />
     </Grid>
   )
 }

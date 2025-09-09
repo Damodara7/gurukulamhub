@@ -64,7 +64,24 @@ export const groupSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'users'
     },
-    deletorEmail: String
+    deletorEmail: String,
+    joinRequests: [
+      {
+        email: String,
+        status: {
+          type: String,
+          enum: ['pending', 'approved', 'rejected'],
+          default: 'pending'
+        },
+        requestedAt: {
+          type: Date,
+          default: Date.now
+        },
+        processedAt: Date,
+        processedBy: String,
+        rejectionReason: String
+      }
+    ]
   },
   { timestamps: true }
 )

@@ -41,7 +41,9 @@ export const API_URLS = {
     USER_ALERTS: `${API_BASE_URL}/user-alerts`,
     USER_LEARNING: `${API_BASE_URL}/user-learning`,
     SPONSORSHIP: `${API_BASE_URL}/sponsorship`,
-    SPONSORSHIP_PAYMENT: `${API_BASE_URL}/sponsorship-payment`
+    SPONSORSHIP_PAYMENT: `${API_BASE_URL}/sponsorship-payment`,
+    USERS_GROUP_REQUEST: `${API_BASE_URL}/group-request`
+
     // Add more URLs for API version 1
   },
   v1: {
@@ -81,7 +83,10 @@ export const API_URLS = {
     USER_ALERTS: `${API_BASE_URL}/v1/user-alerts`,
     USER_LEARNING: `${API_BASE_URL}/v1/user-learning`,
     SPONSORSHIP: `${API_BASE_URL}/v1/sponsorship`,
-    SPONSORSHIP_PAYMENT: `${API_BASE_URL}/v1/sponsorship-payment`
+    SPONSORSHIP_PAYMENT: `${API_BASE_URL}/v1/sponsorship-payment`,
+    USERS_GROUP_REQUEST: `${API_BASE_URL}/v1/group-request`
+
+
     // Add more URLs for API version 1
   },
   v2: {

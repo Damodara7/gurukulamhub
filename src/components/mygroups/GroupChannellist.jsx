@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Box,
   Typography,
@@ -14,31 +14,230 @@ import {
   ListItemText,
   Divider,
   TextField,
-  InputAdornment
+  InputAdornment,
+  CircularProgress
 } from '@mui/material'
 import {
   Group as GroupIcon,
   Campaign as ChannelIcon,
   Public as PublicIcon,
   Lock as LockIcon,
-  Search as SearchIcon
+  Search as SearchIcon,
+  CheckCircle as CheckCircleIcon,
+  Cancel as CancelIcon,
+  HourglassEmpty as HourglassEmptyIcon
 } from '@mui/icons-material'
+import * as RestApi from '@/utils/restApiUtil'
+import { API_URLS } from '@/configs/apiConfig'
+import { useSession } from 'next-auth/react'
+import { toast } from 'react-toastify'
+import GroupCard from '../group/GroupCard'
 
-const GroupChannellist = ({ groups = [], channels = [] }) => {
-  console.log('hello welcome to this page')
+const GroupChannellist = ({ groups = [], channels = [], onGroupUpdate, onGroupCreated, onRefreshGroups }) => {
+  const { data: session } = useSession()
   const [viewMode, setViewMode] = useState('groups')
   const [searchQuery, setSearchQuery] = useState('')
+  const [requestStatus, setRequestStatus] = useState({})
+  const [requestDetails, setRequestDetails] = useState({})
+  const [loading, setLoading] = useState({})
+  const [scrollContainerRef, setScrollContainerRef] = useState(null)
 
   console.log('GroupChannellist received - groups:', groups.length, 'channels:', channels.length)
   console.log('Groups data:', groups)
   console.log('Channels data:', channels)
 
-  console.log('viewMode')
+  // Check request status for each channel
+  useEffect(() => {
+    const checkRequestStatus = async () => {
+      if (!session?.user?.email || channels.length === 0) return
+
+      for (const channel of channels) {
+        try {
+          // Check user's request status for this group
+          const result = await RestApi.get(`${API_URLS.v0.USERS_GROUP_REQUEST}?groupId=${channel._id}`)
+          console.log('API result for channel', channel._id, ':', result)
+
+          let userRequest = null
+          let status = 'none'
+
+          if (result?.status === 'success' && Array.isArray(result.result)) {
+            userRequest = result.result.find(req => req.userEmail === session.user.email)
+            if (userRequest) {
+              status = userRequest.status
+              console.log('User request found:', userRequest)
+              console.log('Rejection reason:', userRequest.rejectedReason)
+            }
+          }
+
+          setRequestStatus(prev => ({
+            ...prev,
+            [channel._id]: status
+          }))
+
+          if (userRequest) {
+            console.log('Setting request details for channel:', channel._id, userRequest)
+            setRequestDetails(prev => ({
+              ...prev,
+              [channel._id]: userRequest
+            }))
+          }
+        } catch (error) {
+          console.error('Error checking request status:', error)
+          // Set status to 'none' on error
+          setRequestStatus(prev => ({
+            ...prev,
+            [channel._id]: 'none'
+          }))
+        }
+      }
+    }
+
+    checkRequestStatus()
+  }, [channels, session?.user?.email])
+
+  // Refresh request status periodically for rejected requests
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const hasRejectedRequests = Object.values(requestStatus).some(status => status === 'rejected')
+      if (hasRejectedRequests && channels.length > 0) {
+        console.log('Refreshing request status for rejected requests...')
+        // Re-check request status for all channels
+        const checkRequestStatus = async () => {
+          if (!session?.user?.email) return
+
+          for (const channel of channels) {
+            try {
+              const result = await RestApi.get(`${API_URLS.v0.USERS_GROUP_REQUEST}?groupId=${channel._id}`)
+              if (result?.status === 'success' && Array.isArray(result.result)) {
+                const userRequest = result.result.find(req => req.userEmail === session.user.email)
+                if (userRequest) {
+                  console.log('Updating request details for channel:', channel._id, userRequest)
+                  console.log('Rejection reason:', userRequest.rejectedReason)
+
+                  // Update both status and details
+                  setRequestStatus(prev => ({
+                    ...prev,
+                    [channel._id]: userRequest.status
+                  }))
+
+                  setRequestDetails(prev => ({
+                    ...prev,
+                    [channel._id]: userRequest
+                  }))
+                }
+              }
+            } catch (error) {
+              console.error('Error refreshing request status:', error)
+            }
+          }
+        }
+        checkRequestStatus()
+      }
+    }, 5000) // Check every 5 seconds
+
+    return () => clearInterval(interval)
+  }, [requestStatus, channels, session?.user?.email])
+
+  const handleSendRequest = async channelId => {
+    if (!session?.user?.email) {
+      toast.error('Please log in to send join request')
+      return
+    }
+
+    setLoading(prev => ({ ...prev, [channelId]: true }))
+    try {
+      console.log('API_URLS.v0.USERS_GROUP_REQUEST:', API_URLS.v0.USERS_GROUP_REQUEST)
+      console.log('Sending request with groupId:', channelId)
+
+      const result = await RestApi.post(`${API_URLS.v0.USERS_GROUP_REQUEST}`, {
+        groupId: channelId
+      })
+      console.log('API Response:', result)
+      if (result?.status === 'success') {
+        toast.success('Join request sent successfully!')
+        setRequestStatus(prev => ({ ...prev, [channelId]: 'pending' }))
+        // Clear any previous request details
+        setRequestDetails(prev => ({ ...prev, [channelId]: null }))
+        // Refresh groups data to update any pending request counts
+        if (onRefreshGroups) {
+          onRefreshGroups()
+        }
+      } else {
+        toast.error(result?.message || 'Failed to send join request')
+      }
+    } catch (error) {
+      console.error('Error sending join request:', error)
+      toast.error('An error occurred while sending join request')
+    } finally {
+      setLoading(prev => ({ ...prev, [channelId]: false }))
+    }
+  }
+
+  const getRequestButton = channel => {
+    const status = requestStatus[channel._id] || 'none'
+    const requestDetail = requestDetails[channel._id]
+    const isLoading = loading[channel._id]
+
+    console.log('Rendering button for channel:', channel._id, 'status:', status, 'requestDetail:', requestDetail)
+    console.log('Rejection reason:', requestDetail?.rejectedReason)
+    console.log('Full requestDetail object:', JSON.stringify(requestDetail, null, 2))
+
+    // Return loading state if currently loading
+    if (isLoading) {
+      return (
+        <Button variant='outlined' size='small' disabled startIcon={<CircularProgress size={16} />}>
+          Sending...
+        </Button>
+      )
+    }
+
+    // Use ternary operators instead of switch statement
+    return status === 'pending' ? (
+      <Button variant='outlined' size='small' startIcon={<HourglassEmptyIcon />} color='warning'>
+        Pending Approval
+      </Button>
+    ) : status === 'approved' ? (
+      <Button variant='outlined' size='small' startIcon={<CheckCircleIcon />} color='success' disabled>
+        Approved
+      </Button>
+    ) : status === 'rejected' ? (
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <Button variant='outlined' size='small' startIcon={<CancelIcon />} color='error' disabled>
+          Rejected
+        </Button>
+        {requestDetail?.rejectedReason ? (
+          <Typography
+            variant='caption'
+            color='error'
+            sx={{ fontSize: '0.7rem', textAlign: 'center', display: 'block', mt: 0.5 }}
+          >
+            Reason: {requestDetail?.rejectedReason}
+          </Typography>
+        ) : (
+          <Typography
+            variant='caption'
+            color='text.secondary'
+            sx={{ fontSize: '0.7rem', textAlign: 'center', display: 'block', mt: 0.5, fontStyle: 'italic' }}
+          >
+            No reason provided
+          </Typography>
+        )}
+      </Box>
+    ) : (
+      <Button variant='contained' size='small' onClick={() => handleSendRequest(channel._id)}>
+        Send Request
+      </Button>
+    )
+  }
 
   // Filter channels based on search query
-  const filteredChannels = channels.filter(channel =>
-    channel.groupName?.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const filteredChannels = channels.filter(channel => {
+    if (!searchQuery.trim()) return true
+    return (
+      channel.groupName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      channel.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  })
 
   // Handle view mode change and clear search
   const handleViewModeChange = mode => {
@@ -225,7 +424,7 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
   const currentTitle = viewMode === 'groups' ? 'My Groups' : 'Channels'
 
   return (
-    <Box>
+    <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Header with Toggle Buttons */}
       <Box
         sx={{
