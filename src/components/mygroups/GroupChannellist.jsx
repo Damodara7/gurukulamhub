@@ -15,7 +15,8 @@ import {
   Divider,
   TextField,
   InputAdornment,
-  CircularProgress
+  CircularProgress,
+  Tooltip
 } from '@mui/material'
 import {
   Group as GroupIcon,
@@ -33,14 +34,13 @@ import { useSession } from 'next-auth/react'
 import { toast } from 'react-toastify'
 import GroupCard from '../group/GroupCard'
 
-const GroupChannellist = ({ groups = [], channels = [], onGroupUpdate, onGroupCreated, onRefreshGroups }) => {
+const GroupChannellist = ({ groups = [], channels = [], onRefreshGroups }) => {
   const { data: session } = useSession()
   const [viewMode, setViewMode] = useState('groups')
   const [searchQuery, setSearchQuery] = useState('')
   const [requestStatus, setRequestStatus] = useState({})
   const [requestDetails, setRequestDetails] = useState({})
   const [loading, setLoading] = useState({})
-  const [scrollContainerRef, setScrollContainerRef] = useState(null)
 
   console.log('GroupChannellist received - groups:', groups.length, 'channels:', channels.length)
   console.log('Groups data:', groups)
@@ -275,19 +275,21 @@ const GroupChannellist = ({ groups = [], channels = [], onGroupUpdate, onGroupCr
       <ListItemText
         primary={
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Typography
-              variant='subtitle1'
-              sx={{
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                flex: 1,
-                mr: 1,
-                maxWidth: '100px'
-              }}
-            >
-              {item.groupName || 'Untitled Group'}
-            </Typography>
+            <Tooltip title={item.groupName || 'Untitled Group'} arrow>
+              <Typography
+                variant='subtitle1'
+                sx={{
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  flex: 1,
+                  mr: 1,
+                  maxWidth: '100px'
+                }}
+              >
+                {item.groupName || 'Untitled Group'}
+              </Typography>
+            </Tooltip>
 
             <Chip
               size='small'
@@ -304,19 +306,21 @@ const GroupChannellist = ({ groups = [], channels = [], onGroupUpdate, onGroupCr
         secondary={
           <Box>
             {item.description && (
-              <Typography
-                variant='body2'
-                color='text.secondary'
-                sx={{
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  mb: 0.5,
-                  maxWidth: '200px'
-                }}
-              >
-                {item.description}
-              </Typography>
+              <Tooltip title={item.description} arrow>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                  sx={{
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    mb: 0.5,
+                    maxWidth: '200px'
+                  }}
+                >
+                  {item.description}
+                </Typography>
+              </Tooltip>
             )}
             <Typography variant='caption' color='text.secondary'>
               {item.membersCount || item.members?.length || 0} members
@@ -355,19 +359,21 @@ const GroupChannellist = ({ groups = [], channels = [], onGroupUpdate, onGroupCr
       <ListItemText
         primary={
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Typography
-              variant='subtitle1'
-              sx={{
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                flex: 1,
-                mr: 1,
-                maxWidth: '150px'
-              }}
-            >
-              {item.groupName || 'Untitled Channel'}
-            </Typography>
+            <Tooltip title={item.groupName || 'Untitled Channel'} arrow>
+              <Typography
+                variant='subtitle1'
+                sx={{
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  flex: 1,
+                  mr: 1,
+                  maxWidth: '150px'
+                }}
+              >
+                {item.groupName || 'Untitled Channel'}
+              </Typography>
+            </Tooltip>
 
             <Chip
               size='small'
@@ -382,19 +388,21 @@ const GroupChannellist = ({ groups = [], channels = [], onGroupUpdate, onGroupCr
         secondary={
           <Box>
             {item.description && (
-              <Typography
-                variant='body2'
-                color='text.secondary'
-                sx={{
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  mb: 0.5,
-                  maxWidth: '250px'
-                }}
-              >
-                {item.description}
-              </Typography>
+              <Tooltip title={item.description} arrow>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                  sx={{
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    mb: 0.5,
+                    maxWidth: '250px'
+                  }}
+                >
+                  {item.description}
+                </Typography>
+              </Tooltip>
             )}
             <Typography variant='caption' color='text.secondary'>
               {item.membersCount || item.members?.length || 0} members

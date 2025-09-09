@@ -121,11 +121,25 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup, onGroupCre
               }}
             >
               <CardContent sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
-                <Typography variant='h6' gutterBottom sx={{ fontWeight: 'bold' }}>
-                  {groupName || 'no Groupname is mentioned'}
-                </Typography>
+                {/* Group Name and Status */}
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                  <Tooltip title={groupName || 'no Groupname is mentioned'} arrow>
+                    <Typography
+                      variant='h6'
+                      sx={{
+                        fontWeight: 'bold',
+                        maxWidth: '150px',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        flex: 1,
+                        mr: 1
+                      }}
+                    >
+                      {groupName || 'no Groupname is mentioned'}
+                    </Typography>
+                  </Tooltip>
 
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   {group?.status === 'public' ? (
                     <Chip
                       size='small'
@@ -152,7 +166,7 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup, onGroupCre
                       color='text.secondary'
                       sx={{
                         mb: 1.5,
-                        width: '100%',
+                        maxWidth: '250px',
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis'
