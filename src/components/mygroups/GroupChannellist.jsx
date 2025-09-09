@@ -282,7 +282,8 @@ const GroupChannellist = ({ groups = [], channels = [], onGroupUpdate, onGroupCr
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
                 flex: 1,
-                mr: 1
+                mr: 1,
+                maxWidth: '100px'
               }}
             >
               {item.groupName || 'Untitled Group'}
@@ -310,7 +311,8 @@ const GroupChannellist = ({ groups = [], channels = [], onGroupUpdate, onGroupCr
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
-                  mb: 0.5
+                  mb: 0.5,
+                  maxWidth: '200px'
                 }}
               >
                 {item.description}
@@ -360,7 +362,8 @@ const GroupChannellist = ({ groups = [], channels = [], onGroupUpdate, onGroupCr
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
                 flex: 1,
-                mr: 1
+                mr: 1,
+                maxWidth: '150px'
               }}
             >
               {item.groupName || 'Untitled Channel'}
@@ -386,7 +389,8 @@ const GroupChannellist = ({ groups = [], channels = [], onGroupUpdate, onGroupCr
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
-                  mb: 0.5
+                  mb: 0.5,
+                  maxWidth: '250px'
                 }}
               >
                 {item.description}
@@ -437,7 +441,8 @@ const GroupChannellist = ({ groups = [], channels = [], onGroupUpdate, onGroupCr
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: 5
+          gap: 5,
+          backgroundColor: 'background.paper'
         }}
       >
         <Box sx={{ display: 'flex', gap: 1 }}>
@@ -503,35 +508,59 @@ const GroupChannellist = ({ groups = [], channels = [], onGroupUpdate, onGroupCr
         )}
       </Box>
 
-      {/* Content */}
-      {currentData.length === 0 ? (
-        <Box
-          sx={{
-            textAlign: 'center',
-            py: 6,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 2
-          }}
-        >
-          <Avatar sx={{ bgcolor: 'grey.300', width: 80, height: 80 }}>
-            {viewMode === 'groups' ? <GroupIcon sx={{ fontSize: 40 }} /> : <ChannelIcon sx={{ fontSize: 40 }} />}
-          </Avatar>
-          <Typography variant='h6' color='text.secondary'>
-            {viewMode === 'groups' ? 'You are not a member of any groups yet' : 'No public channels available'}
-          </Typography>
-          <Typography variant='body2' color='text.secondary'>
-            {viewMode === 'groups' ? 'Join groups to see them here' : 'Check back later for new public channels'}
-          </Typography>
-        </Box>
-      ) : (
-        <Box sx={{ p: 2 }}>
-          {viewMode === 'groups'
-            ? groups.map(item => renderGroupItem(item))
-            : filteredChannels.map(item => renderChannelItem(item))}
-        </Box>
-      )}
+      {/* Content with scrollable area */}
+      <Box sx={{ flex: 1, overflow: 'hidden' }}>
+        {currentData.length === 0 ? (
+          <Box
+            sx={{
+              textAlign: 'center',
+              py: 6,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 2,
+              height: '100%',
+              justifyContent: 'center'
+            }}
+          >
+            <Avatar sx={{ bgcolor: 'grey.300', width: 80, height: 80 }}>
+              {viewMode === 'groups' ? <GroupIcon sx={{ fontSize: 40 }} /> : <ChannelIcon sx={{ fontSize: 40 }} />}
+            </Avatar>
+            <Typography variant='h6' color='text.secondary'>
+              {viewMode === 'groups' ? 'You are not a member of any groups yet' : 'No public channels available'}
+            </Typography>
+            <Typography variant='body2' color='text.secondary'>
+              {viewMode === 'groups' ? 'Join groups to see them here' : 'Check back later for new public channels'}
+            </Typography>
+          </Box>
+        ) : (
+          <Box
+            sx={{
+              height: '100%',
+              overflow: 'auto',
+              p: 2,
+              '&::-webkit-scrollbar': {
+                width: '8px'
+              },
+              '&::-webkit-scrollbar-track': {
+                background: '#f1f1f1',
+                borderRadius: '4px'
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: '#c1c1c1',
+                borderRadius: '4px',
+                '&:hover': {
+                  background: '#a8a8a8'
+                }
+              }
+            }}
+          >
+            {viewMode === 'groups'
+              ? groups.map(item => renderGroupItem(item))
+              : filteredChannels.map(item => renderChannelItem(item))}
+          </Box>
+        )}
+      </Box>
     </Box>
   )
 }
