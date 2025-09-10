@@ -3,6 +3,7 @@ import mongoose from 'mongoose'
 import Group from './group.model.js'
 import User from '@/app/models/user.model.js'
 import Game from '../game/game.model.js'
+import GroupRequest from '../group-request/group-request.model.js'
 
 export const getOne = async (filter = {}) => {
   await connectMongo()
@@ -333,6 +334,15 @@ export const deleteOne = async groupId => {
       // Continue with group deletion even if game update fails
     }
 
+    // Delete all group requests associated with this group
+    try {
+      const deleteResult = await GroupRequest.deleteMany({ groupId: groupId })
+      console.log(`Deleted ${deleteResult.deletedCount} group requests for group ${groupId}`)
+    } catch (groupRequestError) {
+      console.error('Error deleting group requests:', groupRequestError)
+      // Continue with group deletion even if group request cleanup fails
+    }
+
     // Perform soft delete
     existingGroup.isDeleted = true
     existingGroup.deletedAt = new Date()
@@ -385,6 +395,15 @@ export const hardDeleteOne = async groupId => {
     } catch (gameUpdateError) {
       console.error('Error removing groupId from games:', gameUpdateError)
       // Continue with group deletion even if game update fails
+    }
+
+    // Delete all group requests associated with this group
+    try {
+      const deleteResult = await GroupRequest.deleteMany({ groupId: groupId })
+      console.log(`Deleted ${deleteResult.deletedCount} group requests for group ${groupId}`)
+    } catch (groupRequestError) {
+      console.error('Error deleting group requests:', groupRequestError)
+      // Continue with group deletion even if group request cleanup fails
     }
 
     // Permanently delete the group

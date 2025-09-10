@@ -1,22 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import {
-  Card,
-  CardContent,
-  Typography,
-  Stack,
-  Chip,
-  Grid,
-  Box,
-  Divider,
-  Tooltip,
-  Badge,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  DialogContentText
-} from '@mui/material'
+import { Card, CardContent, Typography, Stack, Chip, Grid, Box, Divider, Tooltip, Badge, Button } from '@mui/material'
 import IconButtonTooltip from '../IconButtonTooltip'
 import {
   Visibility as VisibilityIcon,
@@ -31,19 +14,19 @@ import {
 } from '@mui/icons-material'
 import GroupFallBackCard from './GroupFallBackCard'
 import JoinRequestManager from './JoinRequestManager'
+import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { useSession } from 'next-auth/react'
 import { toast } from 'react-toastify'
 
-const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup, onGroupCreated, onRefreshGroups }) => {
+const GroupCard = ({ groups, onEditGroup, onViewGroup, onGroupCreated }) => {
   const { data: session } = useSession()
   const [pendingRequests, setPendingRequests] = useState({})
   const [joinRequestOpen, setJoinRequestOpen] = useState(false)
   const [selectedGroup, setSelectedGroup] = useState(null)
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false)
   const [groupToDelete, setGroupToDelete] = useState(null)
-  const [deleting, setDeleting] = useState(false)
 
   // Check for pending requests for each group
   useEffect(() => {
@@ -75,38 +58,29 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup, onGroupCre
 
   const handleDeleteClick = group => {
     setGroupToDelete(group)
-    setDeleteDialogOpen(true)
+    setConfirmationDialogOpen(true)
   }
 
-  const handleDeleteConfirm = async () => {
+  const handleFinalDeleteGroup = async () => {
     if (!groupToDelete) return
 
-    setDeleting(true)
     try {
-      const result = await RestApi.del(`${API_URLS.v0.GROUPS}?id=${groupToDelete._id}`)
+      console.log('Attempting to delete group:', groupToDelete._id)
+      const result = await RestApi.del(`${API_URLS.v0.USERS_GROUP}?id=${groupToDelete._id}`)
+      console.log('Delete group API response:', result)
 
       if (result?.status === 'success') {
-        toast.success('Group deleted successfully!')
-        setDeleteDialogOpen(false)
-        setGroupToDelete(null)
-        // Refresh groups data
-        if (onRefreshGroups) {
-          onRefreshGroups()
-        }
+        console.log('Group deleted successfully')
+        // Group will remain visible until page refresh
+        // WebSocket implementation will handle real-time updates later
       } else {
-        toast.error(result?.message || 'Failed to delete group')
+        console.error('Error deleting group:', result)
+        throw new Error(result?.message || 'Failed to delete group')
       }
     } catch (error) {
       console.error('Error deleting group:', error)
-      toast.error('An error occurred while deleting the group')
-    } finally {
-      setDeleting(false)
+      throw error
     }
-  }
-
-  const handleDeleteCancel = () => {
-    setDeleteDialogOpen(false)
-    setGroupToDelete(null)
   }
 
   const handleRequestProcessed = () => {
@@ -411,32 +385,18 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup, onGroupCre
         onClose={() => setJoinRequestOpen(false)}
         onRequestProcessed={handleRequestProcessed}
         onGroupCreated={onGroupCreated}
-        onRefreshGroups={onRefreshGroups}
       />
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog
-        open={deleteDialogOpen}
-        onClose={handleDeleteCancel}
-        aria-labelledby='delete-dialog-title'
-        aria-describedby='delete-dialog-description'
-      >
-        <DialogTitle id='delete-dialog-title'>Delete Group</DialogTitle>
-        <DialogContent>
-          <DialogContentText id='delete-dialog-description'>
-            Are you sure you want to delete the group "{groupToDelete?.groupName}"? This action cannot be undone and
-            will remove all group data including members and settings.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDeleteCancel} disabled={deleting}>
-            Cancel
-          </Button>
-          <Button onClick={handleDeleteConfirm} color='error' variant='contained' disabled={deleting}>
-            {deleting ? 'Deleting...' : 'Delete'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* Confirmation Dialog */}
+      <ConfirmationDialog
+        open={confirmationDialogOpen}
+        setOpen={setConfirmationDialogOpen}
+        type='delete-group'
+        onConfirm={() => {
+          handleFinalDeleteGroup()
+          setGroupToDelete(null) // Reset after confirmation
+        }}
+      />
     </Grid>
   )
 }

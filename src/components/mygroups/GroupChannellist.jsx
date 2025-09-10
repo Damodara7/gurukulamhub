@@ -34,7 +34,7 @@ import { useSession } from 'next-auth/react'
 import { toast } from 'react-toastify'
 import GroupCard from '../group/GroupCard'
 
-const GroupChannellist = ({ groups = [], channels = [], onRefreshGroups, onRequestProcessed }) => {
+const GroupChannellist = ({ groups = [], channels = [], onRequestProcessed }) => {
   const { data: session } = useSession()
   const [viewMode, setViewMode] = useState('groups')
   const [searchQuery, setSearchQuery] = useState('')
@@ -137,9 +137,6 @@ const GroupChannellist = ({ groups = [], channels = [], onRefreshGroups, onReque
                     if (onRequestProcessed) {
                       onRequestProcessed()
                     }
-                    if (onRefreshGroups) {
-                      onRefreshGroups()
-                    }
                   }
                 }
               }
@@ -153,7 +150,7 @@ const GroupChannellist = ({ groups = [], channels = [], onRefreshGroups, onReque
     }, 5000) // Check every 5 seconds
 
     return () => clearInterval(interval)
-  }, [requestStatus, channels, session?.user?.email, onRequestProcessed, onRefreshGroups])
+  }, [requestStatus, channels, session?.user?.email, onRequestProcessed])
 
   // Store the view mode when user manually switches to channels
   const [userSelectedChannels, setUserSelectedChannels] = useState(false)

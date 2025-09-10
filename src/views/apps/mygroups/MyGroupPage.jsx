@@ -121,11 +121,6 @@ export default function MyGroupsPage() {
     setChannels(prevChannels => prevChannels.filter(channel => channel._id !== newGroup._id))
   }
 
-  const refreshGroupsData = () => {
-    // Refresh all groups data
-    getGroupsData()
-  }
-
   const handleRequestProcessed = () => {
     // When a request is processed (approved), refresh the groups data
     // This will move the group from channels to groups if the user was approved
@@ -139,7 +134,6 @@ export default function MyGroupsPage() {
         channels={channels}
         onGroupUpdate={handleGroupUpdate}
         onGroupCreated={handleGroupCreated}
-        onRefreshGroups={refreshGroupsData}
         onRequestProcessed={handleRequestProcessed}
       />
     </Box>
