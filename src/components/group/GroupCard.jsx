@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Card, CardContent, Typography, Stack, Chip, Grid, Box, Divider, Tooltip, Badge, Button } from '@mui/material'
+import { Card, CardContent, Typography, Stack, Chip, Grid, Box, Divider, Tooltip, Badge, Button, Dialog, DialogTitle, DialogContent, DialogActions, DialogContentText } from '@mui/material'
 import IconButtonTooltip from '../IconButtonTooltip'
 import {
   Visibility as VisibilityIcon,
@@ -17,12 +17,16 @@ import JoinRequestManager from './JoinRequestManager'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { useSession } from 'next-auth/react'
+import { toast } from 'react-toastify'
 
 const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup, onGroupCreated, onRefreshGroups }) => {
   const { data: session } = useSession()
   const [pendingRequests, setPendingRequests] = useState({})
   const [joinRequestOpen, setJoinRequestOpen] = useState(false)
   const [selectedGroup, setSelectedGroup] = useState(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [groupToDelete, setGroupToDelete] = useState(null)
+  const [deleting, setDeleting] = useState(false)
 
   // Check for pending requests for each group
   useEffect(() => {
@@ -50,6 +54,42 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup, onGroupCre
   const handleJoinRequestClick = group => {
     setSelectedGroup(group)
     setJoinRequestOpen(true)
+  }
+
+  const handleDeleteClick = group => {
+    setGroupToDelete(group)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!groupToDelete) return
+
+    setDeleting(true)
+    try {
+      const result = await RestApi.del(`${API_URLS.v0.GROUPS}?id=${groupToDelete._id}`)
+      
+      if (result?.status === 'success') {
+        toast.success('Group deleted successfully!')
+        setDeleteDialogOpen(false)
+        setGroupToDelete(null)
+        // Refresh groups data
+        if (onRefreshGroups) {
+          onRefreshGroups()
+        }
+      } else {
+        toast.error(result?.message || 'Failed to delete group')
+      }
+    } catch (error) {
+      console.error('Error deleting group:', error)
+      toast.error('An error occurred while deleting the group')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false)
+    setGroupToDelete(null)
   }
 
   const handleRequestProcessed = () => {
@@ -327,7 +367,7 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup, onGroupCre
                     <IconButtonTooltip title='Edit' onClick={() => onEditGroup(group._id)} color='warning'>
                       <EditIcon />
                     </IconButtonTooltip>
-                    <IconButtonTooltip title='Delete' onClick={() => onDeleteGroup(group)} color='error'>
+                    <IconButtonTooltip title='Delete' onClick={() => handleDeleteClick(group)} color='error'>
                       <DeleteIcon />
                     </IconButtonTooltip>
                     {pendingRequests[group._id] > 0 && (
@@ -356,6 +396,37 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup, onGroupCre
         onGroupCreated={onGroupCreated}
         onRefreshGroups={onRefreshGroups}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleDeleteCancel}
+        aria-labelledby="delete-dialog-title"
+        aria-describedby="delete-dialog-description"
+      >
+        <DialogTitle id="delete-dialog-title">
+          Delete Group
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="delete-dialog-description">
+            Are you sure you want to delete the group "{groupToDelete?.groupName}"? 
+            This action cannot be undone and will remove all group data including members and settings.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteCancel} disabled={deleting}>
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleDeleteConfirm} 
+            color="error" 
+            variant="contained"
+            disabled={deleting}
+          >
+            {deleting ? 'Deleting...' : 'Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Grid>
   )
 }
