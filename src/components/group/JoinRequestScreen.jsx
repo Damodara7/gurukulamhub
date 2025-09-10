@@ -41,7 +41,15 @@ import { toast } from 'react-toastify'
 import UserDetailsPopup from './UserDetailsPopup'
 import { useRouter } from 'next/navigation'
 
-const JoinRequestScreen = ({ group, onGroupCreated, onBack }) => {
+// Tab constants using string values
+const values = {
+  pending: 'pending',
+  all: 'all',
+  approved: 'approved',
+  rejected: 'rejected'
+}
+
+const JoinRequestScreen = ({ group, removebutton }) => {
   const router = useRouter()
   const [requests, setRequests] = useState([])
   const [loading, setLoading] = useState(false)
@@ -51,7 +59,7 @@ const JoinRequestScreen = ({ group, onGroupCreated, onBack }) => {
   const [showRejectDialog, setShowRejectDialog] = useState(false)
   const [showUserDetails, setShowUserDetails] = useState(false)
   const [selectedUserDetails, setSelectedUserDetails] = useState(null)
-  const [activeTab, setActiveTab] = useState(0) // 0: pending, 1: all, 2: approved, 3: rejected
+  const [activeTab, setActiveTab] = useState(values.all)
 
   useEffect(() => {
     if (group) {
@@ -164,18 +172,17 @@ const JoinRequestScreen = ({ group, onGroupCreated, onBack }) => {
 
   // Filter requests based on active tab
   const getFilteredRequests = () => {
-    switch (activeTab) {
-      case 0: // Pending
-        return requests.filter(req => req.status === 'pending')
-      case 1: // All
-        return requests
-      case 2: // Approved
-        return requests.filter(req => req.status === 'approved')
-      case 3: // Rejected
-        return requests.filter(req => req.status === 'rejected')
-      default:
-        return requests
+    if (activeTab === values.pending) {
+      return requests.filter(req => req.status === 'pending')
     }
+    if (activeTab === values.approved) {
+      return requests.filter(req => req.status === 'approved')
+    }
+    if (activeTab === values.rejected) {
+      return requests.filter(req => req.status === 'rejected')
+    }
+    // Default to all requests
+    return requests
   }
 
   const filteredRequests = getFilteredRequests()
@@ -231,6 +238,19 @@ const JoinRequestScreen = ({ group, onGroupCreated, onBack }) => {
           }}
         >
           <Tab
+            value={values.all}
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <PersonIcon fontSize='small' />
+                <Typography>All</Typography>
+                {statusCounts.all > 0 && (
+                  <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>({statusCounts.all})</Typography>
+                )}
+              </Box>
+            }
+          />
+          <Tab
+            value={values.pending}
             label={
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <AccessTimeIcon fontSize='small' />
@@ -243,18 +263,9 @@ const JoinRequestScreen = ({ group, onGroupCreated, onBack }) => {
               </Box>
             }
           />
+
           <Tab
-            label={
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <PersonIcon fontSize='small' />
-                <Typography>All</Typography>
-                {statusCounts.all > 0 && (
-                  <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>({statusCounts.all})</Typography>
-                )}
-              </Box>
-            }
-          />
-          <Tab
+            value={values.approved}
             label={
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <CheckCircleIcon fontSize='small' />
@@ -268,6 +279,7 @@ const JoinRequestScreen = ({ group, onGroupCreated, onBack }) => {
             }
           />
           <Tab
+            value={values.rejected}
             label={
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <CancelIcon fontSize='small' />
@@ -307,15 +319,14 @@ const JoinRequestScreen = ({ group, onGroupCreated, onBack }) => {
               <PersonIcon sx={{ fontSize: 60, color: '#9ca3af' }} />
             </Box>
             <Typography variant='h6' color='text.secondary' sx={{ mb: 1, fontWeight: 500 }}>
-              No {activeTab === 0 ? 'pending' : activeTab === 1 ? '' : activeTab === 2 ? 'approved' : 'rejected'}{' '}
-              requests
+              No {activeTab === values.all ? '' : activeTab} requests
             </Typography>
             <Typography variant='body2' color='text.secondary'>
-              {activeTab === 0
+              {activeTab === values.pending
                 ? 'All join requests have been processed'
-                : activeTab === 1
+                : activeTab === values.all
                   ? 'No join requests found'
-                  : activeTab === 2
+                  : activeTab === values.approved
                     ? 'No approved requests yet'
                     : 'No rejected requests yet'}
             </Typography>
@@ -428,6 +439,7 @@ const JoinRequestScreen = ({ group, onGroupCreated, onBack }) => {
       </Box>
 
       {/* Bottom Back Button */}
+      {!removebutton && (
       <Box sx={{ p: 3, bgcolor: '#fff', borderTop: '1px solid #e5e7eb' }}>
         <Box sx={{ display: 'flex', justifyContent: 'center' }}>
           <Button
@@ -446,6 +458,7 @@ const JoinRequestScreen = ({ group, onGroupCreated, onBack }) => {
           </Button>
         </Box>
       </Box>
+      )}
 
       {/* Rejection Dialog */}
       {showRejectDialog && (
