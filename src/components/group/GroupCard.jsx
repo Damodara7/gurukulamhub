@@ -1,5 +1,22 @@
 import React, { useState, useEffect } from 'react'
-import { Card, CardContent, Typography, Stack, Chip, Grid, Box, Divider, Tooltip, Badge, Button, Dialog, DialogTitle, DialogContent, DialogActions, DialogContentText } from '@mui/material'
+import {
+  Card,
+  CardContent,
+  Typography,
+  Stack,
+  Chip,
+  Grid,
+  Box,
+  Divider,
+  Tooltip,
+  Badge,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  DialogContentText
+} from '@mui/material'
 import IconButtonTooltip from '../IconButtonTooltip'
 import {
   Visibility as VisibilityIcon,
@@ -67,7 +84,7 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup, onGroupCre
     setDeleting(true)
     try {
       const result = await RestApi.del(`${API_URLS.v0.GROUPS}?id=${groupToDelete._id}`)
-      
+
       if (result?.status === 'success') {
         toast.success('Group deleted successfully!')
         setDeleteDialogOpen(false)
@@ -370,7 +387,7 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup, onGroupCre
                     <IconButtonTooltip title='Delete' onClick={() => handleDeleteClick(group)} color='error'>
                       <DeleteIcon />
                     </IconButtonTooltip>
-                    {pendingRequests[group._id] > 0 && (
+                    {pendingRequests[group._id] > 0 && session?.user?.email === group?.creatorEmail && (
                       <Badge badgeContent={pendingRequests[group._id]} color='error'>
                         <IconButtonTooltip
                           title={`${pendingRequests[group._id]} pending join requests`}
@@ -401,28 +418,21 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onDeleteGroup, onGroupCre
       <Dialog
         open={deleteDialogOpen}
         onClose={handleDeleteCancel}
-        aria-labelledby="delete-dialog-title"
-        aria-describedby="delete-dialog-description"
+        aria-labelledby='delete-dialog-title'
+        aria-describedby='delete-dialog-description'
       >
-        <DialogTitle id="delete-dialog-title">
-          Delete Group
-        </DialogTitle>
+        <DialogTitle id='delete-dialog-title'>Delete Group</DialogTitle>
         <DialogContent>
-          <DialogContentText id="delete-dialog-description">
-            Are you sure you want to delete the group "{groupToDelete?.groupName}"? 
-            This action cannot be undone and will remove all group data including members and settings.
+          <DialogContentText id='delete-dialog-description'>
+            Are you sure you want to delete the group "{groupToDelete?.groupName}"? This action cannot be undone and
+            will remove all group data including members and settings.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleDeleteCancel} disabled={deleting}>
             Cancel
           </Button>
-          <Button 
-            onClick={handleDeleteConfirm} 
-            color="error" 
-            variant="contained"
-            disabled={deleting}
-          >
+          <Button onClick={handleDeleteConfirm} color='error' variant='contained' disabled={deleting}>
             {deleting ? 'Deleting...' : 'Delete'}
           </Button>
         </DialogActions>

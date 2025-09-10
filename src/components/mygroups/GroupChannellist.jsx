@@ -34,13 +34,14 @@ import { useSession } from 'next-auth/react'
 import { toast } from 'react-toastify'
 import GroupCard from '../group/GroupCard'
 
-const GroupChannellist = ({ groups = [], channels = [], onRefreshGroups }) => {
+const GroupChannellist = ({ groups = [], channels = [], onRefreshGroups, onRequestProcessed }) => {
   const { data: session } = useSession()
   const [viewMode, setViewMode] = useState('groups')
   const [searchQuery, setSearchQuery] = useState('')
   const [requestStatus, setRequestStatus] = useState({})
   const [requestDetails, setRequestDetails] = useState({})
   const [loading, setLoading] = useState({})
+  const [isSendingRequest, setIsSendingRequest] = useState(false)
 
   console.log('GroupChannellist received - groups:', groups.length, 'channels:', channels.length)
   console.log('Groups data:', groups)
@@ -95,12 +96,14 @@ const GroupChannellist = ({ groups = [], channels = [], onRefreshGroups }) => {
     checkRequestStatus()
   }, [channels, session?.user?.email])
 
-  // Refresh request status periodically for rejected requests
+  // Refresh request status periodically for all requests
   useEffect(() => {
     const interval = setInterval(() => {
+      const hasPendingRequests = Object.values(requestStatus).some(status => status === 'pending')
       const hasRejectedRequests = Object.values(requestStatus).some(status => status === 'rejected')
-      if (hasRejectedRequests && channels.length > 0) {
-        console.log('Refreshing request status for rejected requests...')
+
+      if ((hasPendingRequests || hasRejectedRequests) && channels.length > 0) {
+        console.log('Refreshing request status for all requests...')
         // Re-check request status for all channels
         const checkRequestStatus = async () => {
           if (!session?.user?.email) return
@@ -112,7 +115,10 @@ const GroupChannellist = ({ groups = [], channels = [], onRefreshGroups }) => {
                 const userRequest = result.result.find(req => req.userEmail === session.user.email)
                 if (userRequest) {
                   console.log('Updating request details for channel:', channel._id, userRequest)
+                  console.log('Request status:', userRequest.status)
                   console.log('Rejection reason:', userRequest.rejectedReason)
+
+                  const previousStatus = requestStatus[channel._id]
 
                   // Update both status and details
                   setRequestStatus(prev => ({
@@ -124,6 +130,17 @@ const GroupChannellist = ({ groups = [], channels = [], onRefreshGroups }) => {
                     ...prev,
                     [channel._id]: userRequest
                   }))
+
+                  // If request was approved, notify parent to refresh groups
+                  if (previousStatus === 'pending' && userRequest.status === 'approved') {
+                    console.log('Request approved! Refreshing groups...')
+                    if (onRequestProcessed) {
+                      onRequestProcessed()
+                    }
+                    if (onRefreshGroups) {
+                      onRefreshGroups()
+                    }
+                  }
                 }
               }
             } catch (error) {
@@ -136,7 +153,20 @@ const GroupChannellist = ({ groups = [], channels = [], onRefreshGroups }) => {
     }, 5000) // Check every 5 seconds
 
     return () => clearInterval(interval)
-  }, [requestStatus, channels, session?.user?.email])
+  }, [requestStatus, channels, session?.user?.email, onRequestProcessed, onRefreshGroups])
+
+  // Store the view mode when user manually switches to channels
+  const [userSelectedChannels, setUserSelectedChannels] = useState(false)
+
+  // Maintain channels view when user has manually selected it and is sending requests
+  useEffect(() => {
+    if (userSelectedChannels && isSendingRequest) {
+      // If user manually selected channels and is sending a request, stay on channels
+      if (viewMode !== 'channels') {
+        setViewMode('channels')
+      }
+    }
+  }, [userSelectedChannels, isSendingRequest, viewMode])
 
   const handleSendRequest = async channelId => {
     if (!session?.user?.email) {
@@ -144,6 +174,7 @@ const GroupChannellist = ({ groups = [], channels = [], onRefreshGroups }) => {
       return
     }
 
+    setIsSendingRequest(true)
     setLoading(prev => ({ ...prev, [channelId]: true }))
     try {
       console.log('API_URLS.v0.USERS_GROUP_REQUEST:', API_URLS.v0.USERS_GROUP_REQUEST)
@@ -158,10 +189,8 @@ const GroupChannellist = ({ groups = [], channels = [], onRefreshGroups }) => {
         setRequestStatus(prev => ({ ...prev, [channelId]: 'pending' }))
         // Clear any previous request details
         setRequestDetails(prev => ({ ...prev, [channelId]: null }))
-        // Refresh groups data to update any pending request counts
-        if (onRefreshGroups) {
-          onRefreshGroups()
-        }
+        // Don't refresh groups data immediately - let the periodic check handle it
+        // This prevents the page from refreshing and switching tabs when sending requests
       } else {
         toast.error(result?.message || 'Failed to send join request')
       }
@@ -170,6 +199,7 @@ const GroupChannellist = ({ groups = [], channels = [], onRefreshGroups }) => {
       toast.error('An error occurred while sending join request')
     } finally {
       setLoading(prev => ({ ...prev, [channelId]: false }))
+      setIsSendingRequest(false)
     }
   }
 
@@ -194,7 +224,7 @@ const GroupChannellist = ({ groups = [], channels = [], onRefreshGroups }) => {
     // Use ternary operators instead of switch statement
     return status === 'pending' ? (
       <Button variant='outlined' size='small' startIcon={<HourglassEmptyIcon />} color='warning'>
-        Pending Approval
+        Approval Pending
       </Button>
     ) : status === 'approved' ? (
       <Button variant='outlined' size='small' startIcon={<CheckCircleIcon />} color='success' disabled>
@@ -224,7 +254,13 @@ const GroupChannellist = ({ groups = [], channels = [], onRefreshGroups }) => {
         )}
       </Box>
     ) : (
-      <Button variant='contained' size='small' onClick={() => handleSendRequest(channel._id)}>
+      <Button
+        variant='contained'
+        component='label'
+        size='small'
+        sx={{ color: 'white' }}
+        onClick={() => handleSendRequest(channel._id)}
+      >
         Send Request
       </Button>
     )
@@ -244,6 +280,9 @@ const GroupChannellist = ({ groups = [], channels = [], onRefreshGroups }) => {
     setViewMode(mode)
     if (mode === 'groups') {
       setSearchQuery('') // Clear search when switching to groups
+      setUserSelectedChannels(false) // Reset the flag when user goes to groups
+    } else if (mode === 'channels') {
+      setUserSelectedChannels(true) // Mark that user manually selected channels
     }
   }
 
@@ -411,24 +450,7 @@ const GroupChannellist = ({ groups = [], channels = [], onRefreshGroups }) => {
         }
       />
 
-      <Button
-        variant='contained'
-        component='label'
-        size='small'
-        sx={{
-          textTransform: 'none',
-          borderRadius: 2,
-          color: 'white',
-          minWidth: 'auto',
-          px: 2
-        }}
-        onClick={() => {
-          console.log('Send request clicked for channel:', item.groupName)
-          // TODO: Implement send request functionality
-        }}
-      >
-        Sent request
-      </Button>
+      {getRequestButton(item)}
     </ListItem>
   )
 

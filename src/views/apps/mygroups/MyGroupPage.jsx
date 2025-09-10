@@ -36,18 +36,19 @@ export default function MyGroupsPage() {
         // console.log('Current user email:', userEmail)
 
         // Filter user's groups (groups where user is a member)
+        // We need to check both the members array and the user's groupIds
         const userGroupsFiltered = groups.filter(group => {
-          const isMember = group.members?.some(member => {
-            // Check if member is a user object with email or just an ObjectId
+          // First check if user is in the members array
+          const isMemberInArray = group.members?.some(member => {
             if (typeof member === 'object' && member.email) {
               return member.email === userEmail
             }
-            // If member is just an ObjectId, we need to check differently
-            // For now, we'll use a different approach - check if user is in groupIds
             return false
           })
-          // console.log(`Group "${group.groupName}": isMember=${isMember}`)
-          return isMember
+
+          // For now, we'll rely on the groupIds approach which should be updated
+          // when a user is added to a group through the request approval process
+          return isMemberInArray
         })
         setUserGroups(userGroupsFiltered)
 
@@ -83,7 +84,7 @@ export default function MyGroupsPage() {
     if (session?.user?.email) {
       getGroupsData()
     }
-  }, [ session?.user?.email])
+  }, [session?.user?.email])
 
   // console.log('All groups:', allGroups.length)
   // console.log('User groups:', userGroups.length)
@@ -125,6 +126,12 @@ export default function MyGroupsPage() {
     getGroupsData()
   }
 
+  const handleRequestProcessed = () => {
+    // When a request is processed (approved), refresh the groups data
+    // This will move the group from channels to groups if the user was approved
+    getGroupsData()
+  }
+
   return (
     <Box sx={{ height: '100vh', overflow: 'hidden' }}>
       <GroupChannellist
@@ -133,6 +140,7 @@ export default function MyGroupsPage() {
         onGroupUpdate={handleGroupUpdate}
         onGroupCreated={handleGroupCreated}
         onRefreshGroups={refreshGroupsData}
+        onRequestProcessed={handleRequestProcessed}
       />
     </Box>
   )
