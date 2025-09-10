@@ -13,18 +13,17 @@ import {
   GroupAdd as GroupAddIcon
 } from '@mui/icons-material'
 import GroupFallBackCard from './GroupFallBackCard'
-import JoinRequestManager from './JoinRequestManager'
 import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import { toast } from 'react-toastify'
 
 const GroupCard = ({ groups, onEditGroup, onViewGroup, onGroupCreated }) => {
   const { data: session } = useSession()
+  const router = useRouter()
   const [pendingRequests, setPendingRequests] = useState({})
-  const [joinRequestOpen, setJoinRequestOpen] = useState(false)
-  const [selectedGroup, setSelectedGroup] = useState(null)
   const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false)
   const [groupToDelete, setGroupToDelete] = useState(null)
 
@@ -52,8 +51,8 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onGroupCreated }) => {
   }, [groups, session?.user?.email])
 
   const handleJoinRequestClick = group => {
-    setSelectedGroup(group)
-    setJoinRequestOpen(true)
+    // Navigate to the group request page with groupId in the URL path
+    router.push(`/management/group/${group._id}/request`)
   }
 
   const handleDeleteClick = group => {
@@ -81,50 +80,6 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onGroupCreated }) => {
       console.error('Error deleting group:', error)
       throw error
     }
-  }
-
-  const handleRequestProcessed = () => {
-    // Refresh pending requests count
-    const checkPendingRequests = async () => {
-      if (!selectedGroup) return
-
-      try {
-        const result = await RestApi.get(
-          `${API_URLS.v0.USERS_GROUP_REQUEST}?groupId=${selectedGroup._id}&status=pending`
-        )
-        if (result?.status === 'success') {
-          setPendingRequests(prev => ({
-            ...prev,
-            [selectedGroup._id]: result.result?.length || 0
-          }))
-        }
-      } catch (error) {
-        console.error('Error checking pending requests:', error)
-      }
-    }
-
-    // Refresh group data to update member count
-    const refreshGroupData = async () => {
-      if (!selectedGroup) return
-
-      try {
-        const result = await RestApi.get(`${API_URLS.v0.GROUPS}/${selectedGroup._id}`)
-        if (result?.status === 'success') {
-          // Update the group in the groups array
-          const updatedGroup = result.result
-          // Trigger a re-render by updating the groups prop
-          // This will be handled by the parent component
-          if (onRequestProcessed) {
-            onRequestProcessed(updatedGroup)
-          }
-        }
-      } catch (error) {
-        console.error('Error refreshing group data:', error)
-      }
-    }
-
-    checkPendingRequests()
-    refreshGroupData()
   }
 
   if (!groups.length) {
@@ -379,13 +334,6 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup, onGroupCreated }) => {
           </Grid>
         )
       })}
-      <JoinRequestManager
-        open={joinRequestOpen}
-        group={selectedGroup}
-        onClose={() => setJoinRequestOpen(false)}
-        onRequestProcessed={handleRequestProcessed}
-        onGroupCreated={onGroupCreated}
-      />
 
       {/* Confirmation Dialog */}
       <ConfirmationDialog
