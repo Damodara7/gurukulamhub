@@ -43,11 +43,8 @@ const GroupChannellist = ({ groups = [], channels = [], onRequestProcessed }) =>
   const [loading, setLoading] = useState({})
   const [isSendingRequest, setIsSendingRequest] = useState(false)
 
-  console.log('GroupChannellist received - groups:', groups.length, 'channels:', channels.length)
-  console.log('Groups data:', groups)
-  console.log('Channels data:', channels)
-
   // Check request status for each channel
+  //To show correct button state (Send Request, Pending, Approved, Rejected)
   useEffect(() => {
     const checkRequestStatus = async () => {
       if (!session?.user?.email || channels.length === 0) return
@@ -56,7 +53,6 @@ const GroupChannellist = ({ groups = [], channels = [], onRequestProcessed }) =>
         try {
           // Check user's request status for this group
           const result = await RestApi.get(`${API_URLS.v0.USERS_GROUP_REQUEST}?groupId=${channel._id}`)
-          console.log('API result for channel', channel._id, ':', result)
 
           let userRequest = null
           let status = 'none'
@@ -65,8 +61,6 @@ const GroupChannellist = ({ groups = [], channels = [], onRequestProcessed }) =>
             userRequest = result.result.find(req => req.userEmail === session.user.email)
             if (userRequest) {
               status = userRequest.status
-              console.log('User request found:', userRequest)
-              console.log('Rejection reason:', userRequest.rejectedReason)
             }
           }
 
@@ -76,7 +70,6 @@ const GroupChannellist = ({ groups = [], channels = [], onRequestProcessed }) =>
           }))
 
           if (userRequest) {
-            console.log('Setting request details for channel:', channel._id, userRequest)
             setRequestDetails(prev => ({
               ...prev,
               [channel._id]: userRequest
@@ -96,66 +89,12 @@ const GroupChannellist = ({ groups = [], channels = [], onRequestProcessed }) =>
     checkRequestStatus()
   }, [channels, session?.user?.email])
 
-  // Refresh request status periodically for all requests
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const hasPendingRequests = Object.values(requestStatus).some(status => status === 'pending')
-      const hasRejectedRequests = Object.values(requestStatus).some(status => status === 'rejected')
-
-      if ((hasPendingRequests || hasRejectedRequests) && channels.length > 0) {
-        console.log('Refreshing request status for all requests...')
-        // Re-check request status for all channels
-        const checkRequestStatus = async () => {
-          if (!session?.user?.email) return
-
-          for (const channel of channels) {
-            try {
-              const result = await RestApi.get(`${API_URLS.v0.USERS_GROUP_REQUEST}?groupId=${channel._id}`)
-              if (result?.status === 'success' && Array.isArray(result.result)) {
-                const userRequest = result.result.find(req => req.userEmail === session.user.email)
-                if (userRequest) {
-                  console.log('Updating request details for channel:', channel._id, userRequest)
-                  console.log('Request status:', userRequest.status)
-                  console.log('Rejection reason:', userRequest.rejectedReason)
-
-                  const previousStatus = requestStatus[channel._id]
-
-                  // Update both status and details
-                  setRequestStatus(prev => ({
-                    ...prev,
-                    [channel._id]: userRequest.status
-                  }))
-
-                  setRequestDetails(prev => ({
-                    ...prev,
-                    [channel._id]: userRequest
-                  }))
-
-                  // If request was approved, notify parent to refresh groups
-                  if (previousStatus === 'pending' && userRequest.status === 'approved') {
-                    console.log('Request approved! Refreshing groups...')
-                    if (onRequestProcessed) {
-                      onRequestProcessed()
-                    }
-                  }
-                }
-              }
-            } catch (error) {
-              console.error('Error refreshing request status:', error)
-            }
-          }
-        }
-        checkRequestStatus()
-      }
-    }, 5000) // Check every 5 seconds
-
-    return () => clearInterval(interval)
-  }, [requestStatus, channels, session?.user?.email, onRequestProcessed])
-
   // Store the view mode when user manually switches to channels
   const [userSelectedChannels, setUserSelectedChannels] = useState(false)
 
   // Maintain channels view when user has manually selected it and is sending requests
+  // Keeps user on "Channels" tab when they're sending requests
+  // To prevent the page from refreshing and switching tabs when sending requests
   useEffect(() => {
     if (userSelectedChannels && isSendingRequest) {
       // If user manually selected channels and is sending a request, stay on channels
@@ -165,6 +104,7 @@ const GroupChannellist = ({ groups = [], channels = [], onRequestProcessed }) =>
     }
   }, [userSelectedChannels, isSendingRequest, viewMode])
 
+  // To send join request to a channel
   const handleSendRequest = async channelId => {
     if (!session?.user?.email) {
       toast.error('Please log in to send join request')
@@ -174,19 +114,15 @@ const GroupChannellist = ({ groups = [], channels = [], onRequestProcessed }) =>
     setIsSendingRequest(true)
     setLoading(prev => ({ ...prev, [channelId]: true }))
     try {
-      console.log('API_URLS.v0.USERS_GROUP_REQUEST:', API_URLS.v0.USERS_GROUP_REQUEST)
-      console.log('Sending request with groupId:', channelId)
-
       const result = await RestApi.post(`${API_URLS.v0.USERS_GROUP_REQUEST}`, {
         groupId: channelId
       })
-      console.log('API Response:', result)
       if (result?.status === 'success') {
         toast.success('Join request sent successfully!')
         setRequestStatus(prev => ({ ...prev, [channelId]: 'pending' }))
         // Clear any previous request details
         setRequestDetails(prev => ({ ...prev, [channelId]: null }))
-        // Don't refresh groups data immediately - let the periodic check handle it
+        // Don't refresh groups data immediately - WebSocket will handle real-time updates
         // This prevents the page from refreshing and switching tabs when sending requests
       } else {
         toast.error(result?.message || 'Failed to send join request')
@@ -204,10 +140,6 @@ const GroupChannellist = ({ groups = [], channels = [], onRequestProcessed }) =>
     const status = requestStatus[channel._id] || 'none'
     const requestDetail = requestDetails[channel._id]
     const isLoading = loading[channel._id]
-
-    console.log('Rendering button for channel:', channel._id, 'status:', status, 'requestDetail:', requestDetail)
-    console.log('Rejection reason:', requestDetail?.rejectedReason)
-    console.log('Full requestDetail object:', JSON.stringify(requestDetail, null, 2))
 
     // Return loading state if currently loading
     if (isLoading) {
