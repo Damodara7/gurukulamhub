@@ -157,17 +157,30 @@ const JoinRequestScreen = ({ group, removebutton }) => {
     setSelectedUserDetails(null)
   }
 
-  const getStatusChip = status => {
-    switch (status) {
-      case 'pending':
-        return <Chip icon={<AccessTimeIcon />} label='Pending' color='warning' size='small' variant='outlined' />
-      case 'approved':
-        return <Chip icon={<CheckCircleIcon />} label='Approved' color='success' size='small' variant='outlined' />
-      case 'rejected':
-        return <Chip icon={<CancelIcon />} label='Rejected' color='error' size='small' variant='outlined' />
-      default:
-        return null
+  // Status chip configuration object
+  const statusChipConfig = {
+    pending: {
+      icon: <AccessTimeIcon />,
+      label: 'Pending',
+      color: 'warning'
+    },
+    approved: {
+      icon: <CheckCircleIcon />,
+      label: 'Approved',
+      color: 'success'
+    },
+    rejected: {
+      icon: <CancelIcon />,
+      label: 'Rejected',
+      color: 'error'
     }
+  }
+
+  const getStatusChip = status => {
+    const config = statusChipConfig[status]
+    if (!config) return null
+
+    return <Chip icon={config.icon} label={config.label} color={config.color} size='small' variant='outlined' />
   }
 
   // Filter requests based on active tab
@@ -440,24 +453,24 @@ const JoinRequestScreen = ({ group, removebutton }) => {
 
       {/* Bottom Back Button */}
       {!removebutton && (
-      <Box sx={{ p: 3, bgcolor: '#fff', borderTop: '1px solid #e5e7eb' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-          <Button
-            variant='contained'
-            component='label'
-            onClick={() => router.push('/management/group')}
-            sx={{
-              px: 4,
-              py: 1.5,
-              borderRadius: 2,
-              fontWeight: 600,
-              color: 'white'
-            }}
-          >
-            Back to Groups
-          </Button>
+        <Box sx={{ p: 3, bgcolor: '#fff', borderTop: '1px solid #e5e7eb' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+            <Button
+              variant='contained'
+              component='label'
+              onClick={() => router.push('/management/group')}
+              sx={{
+                px: 4,
+                py: 1.5,
+                borderRadius: 2,
+                fontWeight: 600,
+                color: 'white'
+              }}
+            >
+              Back to Groups
+            </Button>
+          </Box>
         </Box>
-      </Box>
       )}
 
       {/* Rejection Dialog */}

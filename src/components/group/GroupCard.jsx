@@ -20,7 +20,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'react-toastify'
 
-const GroupCard = ({ groups, onEditGroup, onViewGroup, onGroupCreated }) => {
+const GroupCard = ({ groups, onEditGroup, onViewGroup }) => {
   const { data: session } = useSession()
   const router = useRouter()
   const [pendingRequests, setPendingRequests] = useState({})

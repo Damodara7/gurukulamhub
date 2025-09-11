@@ -1,11 +1,10 @@
 'use client'
 import React, { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { Box, Typography, Button, CircularProgress, Alert } from '@mui/material'
+import { Box, Button, CircularProgress, Alert } from '@mui/material'
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
-import { toast } from 'react-toastify'
 import JoinRequestScreen from '@/components/group/JoinRequestScreen'
 
 const GroupRequestPage = () => {
@@ -46,17 +45,6 @@ const GroupRequestPage = () => {
     } finally {
       setLoading(false)
     }
-  }
-
-  const handleBack = () => {
-    router.back() // Navigate back when closing
-  }
-
-  // Removed handleRequestProcessed - no automatic refreshes
-
-  const handleGroupCreated = () => {
-    // Handle group created logic if needed
-    console.log('Group created')
   }
 
   if (loading) {
@@ -111,6 +99,6 @@ const GroupRequestPage = () => {
     )
   }
 
-  return <JoinRequestScreen group={group} onGroupCreated={handleGroupCreated} onBack={handleBack} />
+  return <JoinRequestScreen group={group} />
 }
 export default GroupRequestPage
