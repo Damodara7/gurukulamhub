@@ -13,6 +13,10 @@ const AllGroupPage = () => {
   const [groups, setGroups] = useState([])
   const [loading, setLoading] = useState(true)
   const { data: session } = useSession()
+  const [socket, setSocket] = useState(null)
+  const [isConnected, setIsConnected] = useState(false)
+
+  // Note: Individual handlers removed - WebSocket now updates entire state directly
 
   const fetchGroup = async () => {
     setLoading(true)
@@ -39,6 +43,47 @@ const AllGroupPage = () => {
 
   useEffect(() => {
     fetchGroup()
+  }, [])
+
+  // WebSocket connection for groups list updates
+  useEffect(() => {
+    const wsUrl =
+      typeof window !== 'undefined'
+        ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/api/ws/groups`
+        : ''
+    if (wsUrl) {
+      const wsRef = new WebSocket(wsUrl)
+      wsRef.onopen = () => {
+        console.log('[WS] AllGroupPage connected to groups list updates')
+        setIsConnected(true)
+        setSocket(wsRef)
+      }
+      wsRef.onmessage = event => {
+        try {
+          const msg = JSON.parse(event.data)
+          if (msg.type === 'groupsList') {
+            console.log('[WS] AllGroupPage received groups list update:', msg.data)
+
+            // Update groups state directly (like games do) - no refresh feeling
+            setGroups(msg.data || [])
+          }
+        } catch (e) {
+          console.error('[WS] AllGroupPage error parsing groups list message', e)
+        }
+      }
+      wsRef.onerror = err => {
+        console.error('[WS] AllGroupPage groups list error', err)
+        setIsConnected(false)
+      }
+      wsRef.onclose = () => {
+        console.log('[WS] AllGroupPage groups list connection closed')
+        setIsConnected(false)
+      }
+
+      return () => {
+        wsRef.close()
+      }
+    }
   }, [])
 
   if (loading) {

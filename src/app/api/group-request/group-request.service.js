@@ -3,6 +3,9 @@ import mongoose from 'mongoose'
 import GroupRequest from './group-request.model.js'
 import Group from '../group/group.model.js'
 import User from '@/app/models/user.model.js'
+import { broadcastGroupRequests } from '../ws/group-requests/[groupId]/publishers.js'
+import { broadcastToUser } from '../ws/users/[userEmail]/publishers.js'
+import { broadcastGroupsListUpdates } from '../group/group.service.js'
 
 export const createRequest = async requestData => {
   await connectMongo()
@@ -76,6 +79,18 @@ export const createRequest = async requestData => {
     // Create new request
     const newRequest = new GroupRequest(requestData)
     const savedRequest = await newRequest.save()
+
+    // Broadcast WebSocket event for group request sent
+    try {
+      broadcastGroupRequests(requestData.groupId, {
+        type: 'requestSent',
+        ...savedRequest.toObject(),
+        groupId: requestData.groupId,
+        userEmail: requestData.userEmail
+      })
+    } catch (wsError) {
+      console.error('Error broadcasting group request sent event:', wsError)
+    }
 
     return {
       status: 'success',
@@ -275,6 +290,27 @@ export const approveRequest = async (requestId, adminEmail) => {
       }
     }
 
+    // Broadcast WebSocket event for group request approved
+    try {
+      const requestData = {
+        type: 'requestApproved',
+        ...request.toObject(),
+        groupId: request.groupId,
+        userEmail: request.userEmail
+      }
+      // Broadcast to admins (group request room)
+      broadcastGroupRequests(request.groupId, requestData)
+      // Broadcast to the specific user
+      broadcastToUser(request.userEmail, {
+        type: 'groupRequestApproved',
+        requestData: requestData
+      })
+      // Broadcast groups list update to trigger user-side group/channel re-evaluation
+      broadcastGroupsListUpdates()
+    } catch (wsError) {
+      console.error('Error broadcasting group request approved event:', wsError)
+    }
+
     return {
       status: 'success',
       result: request.toObject(),
@@ -356,6 +392,27 @@ export const rejectRequest = async (requestId, adminEmail, rejectionReason) => {
     request.rejectedReason = rejectionReason.trim()
 
     await request.save()
+
+    // Broadcast WebSocket event for group request rejected
+    try {
+      const requestData = {
+        type: 'requestRejected',
+        ...request.toObject(),
+        groupId: request.groupId,
+        userEmail: request.userEmail
+      }
+      // Broadcast to admins (group request room)
+      broadcastGroupRequests(request.groupId, requestData)
+      // Broadcast to the specific user
+      broadcastToUser(request.userEmail, {
+        type: 'groupRequestRejected',
+        requestData: requestData
+      })
+      // Broadcast groups list update to trigger user-side group/channel re-evaluation
+      broadcastGroupsListUpdates()
+    } catch (wsError) {
+      console.error('Error broadcasting group request rejected event:', wsError)
+    }
 
     return {
       status: 'success',

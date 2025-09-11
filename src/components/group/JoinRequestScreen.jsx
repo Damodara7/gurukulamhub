@@ -40,6 +40,7 @@ import { API_URLS } from '@/configs/apiConfig'
 import { toast } from 'react-toastify'
 import UserDetailsPopup from './UserDetailsPopup'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 
 // Tab constants using string values
 const values = {
@@ -51,6 +52,7 @@ const values = {
 
 const JoinRequestScreen = ({ group, removebutton }) => {
   const router = useRouter()
+  const { data: session } = useSession()
   const [requests, setRequests] = useState([])
   const [loading, setLoading] = useState(false)
   const [processing, setProcessing] = useState({})
@@ -59,13 +61,101 @@ const JoinRequestScreen = ({ group, removebutton }) => {
   const [showRejectDialog, setShowRejectDialog] = useState(false)
   const [showUserDetails, setShowUserDetails] = useState(false)
   const [selectedUserDetails, setSelectedUserDetails] = useState(null)
-  const [activeTab, setActiveTab] = useState(values.all)
+  const [activeTab, setActiveTab] = useState(values.pending)
+  const [socket, setSocket] = useState(null)
+  const [isConnected, setIsConnected] = useState(false)
 
   useEffect(() => {
     if (group) {
       fetchPendingRequests()
     }
   }, [group])
+
+  // WebSocket connection for group requests
+  useEffect(() => {
+    if (!group?._id) return
+
+    const wsUrl =
+      typeof window !== 'undefined'
+        ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/api/ws/group-requests/${
+            group._id
+          }`
+        : ''
+    if (wsUrl) {
+      const wsRef = new WebSocket(wsUrl)
+      wsRef.onopen = () => {
+        console.log(`[WS] Connected to group requests for group ${group._id}`)
+        setIsConnected(true)
+        setSocket(wsRef)
+      }
+      wsRef.onmessage = event => {
+        try {
+          const msg = JSON.parse(event.data)
+          if (msg.type === 'groupRequests') {
+            console.log('[WS] Group requests updated:', msg.data)
+
+            switch (msg.data.type) {
+              case 'requestSent':
+                console.log('New group request received:', msg.data)
+                if (msg.data.groupId === group?._id) {
+                  // Add new request to the list
+                  setRequests(prev => [msg.data, ...prev])
+                }
+                break
+
+              case 'requestApproved':
+                console.log('Group request approved:', msg.data)
+                if (msg.data.groupId === group?._id) {
+                  // Update the request status in the list
+                  setRequests(prev =>
+                    prev.map(req =>
+                      req._id === msg.data._id ? { ...req, status: 'approved', approvedAt: msg.data.approvedAt } : req
+                    )
+                  )
+                }
+                break
+
+              case 'requestRejected':
+                console.log('Group request rejected:', msg.data)
+                if (msg.data.groupId === group?._id) {
+                  // Update the request status in the list
+                  setRequests(prev =>
+                    prev.map(req =>
+                      req._id === msg.data._id
+                        ? {
+                            ...req,
+                            status: 'rejected',
+                            rejectedAt: msg.data.rejectedAt,
+                            rejectedReason: msg.data.rejectedReason
+                          }
+                        : req
+                    )
+                  )
+                }
+                break
+
+              default:
+                console.log('Unknown request type:', msg.data.type)
+            }
+          }
+        } catch (e) {
+          console.error('[WS] Error parsing group requests message', e)
+        }
+      }
+      wsRef.onerror = err => {
+        console.error(`[WS] Group requests error for group ${group._id}`, err)
+        setIsConnected(false)
+      }
+      wsRef.onclose = () => {
+        console.log(`[WS] Group requests connection closed for group ${group._id}`)
+        setIsConnected(false)
+      }
+
+      return () => {
+        wsRef.close()
+      }
+    }
+  }, [group?._id])
 
   const fetchPendingRequests = async () => {
     if (!group?._id) return
@@ -246,7 +336,8 @@ const JoinRequestScreen = ({ group, removebutton }) => {
             '& .MuiTab-root': {
               textTransform: 'none',
               fontWeight: 500,
-              minHeight: 48
+              minHeight: 48,
+              fontSize: removebutton ? '0.75rem' : '0.875rem'
             }
           }}
         >
@@ -255,9 +346,11 @@ const JoinRequestScreen = ({ group, removebutton }) => {
             label={
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <PersonIcon fontSize='small' />
-                <Typography>All</Typography>
+                <Typography sx={{ fontSize: removebutton ? '0.75rem' : '0.875rem' }}>All</Typography>
                 {statusCounts.all > 0 && (
-                  <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>({statusCounts.all})</Typography>
+                  <Typography sx={{ color: 'text.secondary', fontSize: removebutton ? '0.7rem' : '0.875rem' }}>
+                    ({statusCounts.all})
+                  </Typography>
                 )}
               </Box>
             }
@@ -267,9 +360,9 @@ const JoinRequestScreen = ({ group, removebutton }) => {
             label={
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <AccessTimeIcon fontSize='small' />
-                <Typography>Pending</Typography>
+                <Typography sx={{ fontSize: removebutton ? '0.75rem' : '0.875rem' }}>Pending</Typography>
                 {statusCounts.pending > 0 && (
-                  <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                  <Typography sx={{ color: 'text.secondary', fontSize: removebutton ? '0.7rem' : '0.875rem' }}>
                     ({statusCounts.pending})
                   </Typography>
                 )}
@@ -282,9 +375,9 @@ const JoinRequestScreen = ({ group, removebutton }) => {
             label={
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <CheckCircleIcon fontSize='small' />
-                <Typography>Approved</Typography>
+                <Typography sx={{ fontSize: removebutton ? '0.75rem' : '0.875rem' }}>Approved</Typography>
                 {statusCounts.approved > 0 && (
-                  <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                  <Typography sx={{ color: 'text.secondary', fontSize: removebutton ? '0.7rem' : '0.875rem' }}>
                     ({statusCounts.approved})
                   </Typography>
                 )}
@@ -296,9 +389,9 @@ const JoinRequestScreen = ({ group, removebutton }) => {
             label={
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <CancelIcon fontSize='small' />
-                <Typography>Rejected</Typography>
+                <Typography sx={{ fontSize: removebutton ? '0.75rem' : '0.875rem' }}>Rejected</Typography>
                 {statusCounts.rejected > 0 && (
-                  <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                  <Typography sx={{ color: 'text.secondary', fontSize: removebutton ? '0.7rem' : '0.875rem' }}>
                     ({statusCounts.rejected})
                   </Typography>
                 )}
@@ -377,7 +470,17 @@ const JoinRequestScreen = ({ group, removebutton }) => {
                   <ListItemText
                     primary={
                       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <Typography variant='subtitle1' sx={{ fontWeight: 600, color: '#1f2937' }}>
+                        <Typography
+                          variant='subtitle1'
+                          sx={{
+                            fontWeight: 600,
+                            color: '#1f2937',
+                            width: '150px',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
                           {request.userDetails?.profile?.firstname && request.userDetails?.profile?.lastname
                             ? `${request.userDetails.profile.firstname} ${request.userDetails.profile.lastname}`
                             : request.userDetails?.profile?.firstname || 'Unknown User'}
@@ -389,14 +492,35 @@ const JoinRequestScreen = ({ group, removebutton }) => {
                     }
                     secondary={
                       <Box>
-                        <Typography variant='body2' color='text.secondary' sx={{ mb: 0.5 }}>
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                          sx={{
+                            mb: 0.5,
+                            width: '200px',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
                           {request.userEmail}
                         </Typography>
                         <Typography variant='caption' color='text.secondary'>
                           Requested on {new Date(request.createdAt).toLocaleDateString()}
                         </Typography>
                         {request.rejectedReason && (
-                          <Typography variant='caption' color='error' sx={{ display: 'block', mt: 0.5 }}>
+                          <Typography
+                            variant='caption'
+                            color='error'
+                            sx={{
+                              display: 'block',
+                              width: '250px',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              mt: 0.5
+                            }}
+                          >
                             Reason: {request.rejectedReason}
                           </Typography>
                         )}

@@ -26,6 +26,7 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup }) => {
   const [pendingRequests, setPendingRequests] = useState({})
   const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false)
   const [groupToDelete, setGroupToDelete] = useState(null)
+  // WebSocket handling moved to parent component (AllGroupPage)
 
   // Check for pending requests for each group
   useEffect(() => {
@@ -50,6 +51,75 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup }) => {
     checkPendingRequests()
   }, [groups, session?.user?.email])
 
+  // WebSocket connection for group request updates
+  useEffect(() => {
+    if (!session?.user?.email || groups.length === 0) return
+
+    // Create WebSocket connections for each group's request updates
+    const groupIds = groups.map(group => group._id)
+    const wsConnections = []
+
+    groupIds.forEach(groupId => {
+      const wsUrl =
+        typeof window !== 'undefined'
+          ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${
+              window.location.host
+            }/api/ws/group-requests/${groupId}`
+          : ''
+
+      if (wsUrl) {
+        const wsRef = new WebSocket(wsUrl)
+        wsConnections.push(wsRef)
+
+        wsRef.onopen = () => {
+          console.log(`[WS] GroupCard connected to group requests for group ${groupId}`)
+        }
+
+        wsRef.onmessage = event => {
+          try {
+            const msg = JSON.parse(event.data)
+            if (msg.type === 'groupRequests') {
+              console.log('[WS] GroupCard received group request update:', msg.data)
+
+              if (msg.data.type === 'requestSent') {
+                // Update pending request count for this group
+                setPendingRequests(prev => ({
+                  ...prev,
+                  [groupId]: (prev[groupId] || 0) + 1
+                }))
+              } else if (msg.data.type === 'requestApproved' || msg.data.type === 'requestRejected') {
+                // Decrease pending request count for this group
+                setPendingRequests(prev => ({
+                  ...prev,
+                  [groupId]: Math.max(0, (prev[groupId] || 0) - 1)
+                }))
+              }
+            }
+          } catch (e) {
+            console.error('[WS] GroupCard error parsing group request message', e)
+          }
+        }
+
+        wsRef.onerror = err => {
+          console.error(`[WS] GroupCard group request error for group ${groupId}`, err)
+        }
+
+        wsRef.onclose = () => {
+          console.log(`[WS] GroupCard group request connection closed for group ${groupId}`)
+        }
+      }
+    })
+
+    return () => {
+      // Clean up all WebSocket connections
+      wsConnections.forEach(wsRef => {
+        if (wsRef.readyState === WebSocket.OPEN) {
+          wsRef.close()
+        }
+      })
+    }
+  }, [groups, session?.user?.email])
+
   const handleJoinRequestClick = group => {
     // Navigate to the group request page with groupId in the URL path
     router.push(`/management/group/${group._id}/request`)
@@ -70,8 +140,10 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup }) => {
 
       if (result?.status === 'success') {
         console.log('Group deleted successfully')
-        // Group will remain visible until page refresh
-        // WebSocket implementation will handle real-time updates later
+        // WebSocket will handle real-time updates automatically
+        // Close the confirmation dialog
+        setConfirmationDialogOpen(false)
+        setGroupToDelete(null)
       } else {
         console.error('Error deleting group:', result)
         throw new Error(result?.message || 'Failed to delete group')

@@ -4,6 +4,8 @@ import Group from './group.model.js'
 import User from '@/app/models/user.model.js'
 import Game from '../game/game.model.js'
 import GroupRequest from '../group-request/group-request.model.js'
+import { broadcastGroupsList } from '../ws/groups/publishers'
+import { broadcastGroupDetails } from '../ws/groups/[groupId]/publishers'
 
 export const getOne = async (filter = {}) => {
   await connectMongo()
@@ -193,6 +195,13 @@ export const addOne = async groupData => {
       }
     }
 
+    // Broadcast WebSocket event for group creation
+    try {
+      broadcastGroupsListUpdates()
+    } catch (wsError) {
+      console.error('Error broadcasting group created event:', wsError)
+    }
+
     return {
       status: 'success',
       result: savedGroup.toObject(),
@@ -288,6 +297,14 @@ export const updateOne = async (groupId, updateData) => {
     // Save the updated group
     const updatedGroup = await existingGroup.save()
 
+    // Broadcast WebSocket event for group update
+    try {
+      broadcastGroupsListUpdates()
+      broadcastGroupDetails(groupId, updatedGroup.toObject())
+    } catch (wsError) {
+      console.error('Error broadcasting group updated event:', wsError)
+    }
+
     return {
       status: 'success',
       result: updatedGroup.toObject(),
@@ -349,6 +366,13 @@ export const deleteOne = async groupId => {
 
     // Save the updated group
     const deletedGroup = await existingGroup.save()
+
+    // Broadcast WebSocket event for group deletion
+    try {
+      broadcastGroupsListUpdates()
+    } catch (wsError) {
+      console.error('Error broadcasting group deleted event:', wsError)
+    }
 
     return {
       status: 'success',
@@ -726,5 +750,16 @@ export const cancelJoinRequest = async (groupId, userEmail) => {
       result: null,
       message: error.message || 'Failed to cancel join request'
     }
+  }
+}
+
+export async function broadcastGroupsListUpdates() {
+  try {
+    const groupsRes = await getAll()
+    if (groupsRes.status === 'success') {
+      broadcastGroupsList(groupsRes.result)
+    }
+  } catch (error) {
+    console.error('Error broadcasting groups list updates:', error)
   }
 }

@@ -104,12 +104,33 @@ const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
     <Box sx={{ p: 4, maxWidth: '1200px', margin: '0 auto' }}>
       {/* Group Header */}
       <Box sx={{ mb: 4 }}>
-        <Typography variant='h4' component='h1' sx={{ fontWeight: 600, mb: 2 }}>
+        <Typography
+          variant='h4'
+          component='h1'
+          sx={{
+            fontWeight: 600,
+            mb: 2,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            maxWidth: '100%'
+          }}
+        >
           {groupData?.groupName || 'Group Details'}
         </Typography>
 
         {groupData?.description && (
-          <Typography variant='body1' color='text.secondary' sx={{ mb: 3 }}>
+          <Typography
+            variant='body1'
+            color='text.secondary'
+            sx={{
+              mb: 3,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              maxWidth: '100%'
+            }}
+          >
             {groupData.description}
           </Typography>
         )}
@@ -350,27 +371,27 @@ const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
       {isAdmin && (
         <Card sx={{ mt: 4 }}>
           <CardContent>
-            <JoinRequestScreen group={groupData} removebutton={true}/>
+            <JoinRequestScreen group={groupData} removebutton={true} />
           </CardContent>
         </Card>
       )}
-        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-          <Button
-            variant='contained'
-            component='label'
-            onClick={() => router.push('/management/group')}
-            sx={{
-              mt: 2,
-              px: 4,
-              py: 2,
-              borderRadius: 2,
-              fontWeight: 600,
-              color: 'white'
-            }}
-          >
-            Back to Groups
-          </Button>
-        </Box>
+      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+        <Button
+          variant='contained'
+          component='label'
+          onClick={() => router.push('/management/group')}
+          sx={{
+            mt: 2,
+            px: 4,
+            py: 2,
+            borderRadius: 2,
+            fontWeight: 600,
+            color: 'white'
+          }}
+        >
+          Back to Groups
+        </Button>
+      </Box>
     </Box>
   )
 }

@@ -40,6 +40,10 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
   const [requestStatus, setRequestStatus] = useState({})
   const [requestDetails, setRequestDetails] = useState({})
   const [loading, setLoading] = useState({})
+  const [socket, setSocket] = useState(null)
+  const [isConnected, setIsConnected] = useState(false)
+  const [userSocket, setUserSocket] = useState(null)
+  const [isUserConnected, setIsUserConnected] = useState(false)
 
   // Check request status for each channel
   //To show correct button state (Send Request, Pending, Approved, Rejected)
@@ -76,6 +80,166 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
         } catch (error) {
           console.error('Error checking request status:', error)
           // Set status to 'none' on error
+          setRequestStatus(prev => ({
+            ...prev,
+            [channel._id]: 'none'
+          }))
+        }
+      }
+    }
+
+    checkRequestStatus()
+  }, [channels, session?.user?.email])
+
+  // WebSocket connection for user-specific updates
+  useEffect(() => {
+    if (!session?.user?.email) return
+
+    const userWsUrl =
+      typeof window !== 'undefined'
+        ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${
+            window.location.host
+          }/api/ws/users/${encodeURIComponent(session.user.email)}`
+        : ''
+    if (userWsUrl) {
+      const userWsRef = new WebSocket(userWsUrl)
+      userWsRef.onopen = () => {
+        console.log('[WS] Connected to user-specific updates')
+        setIsUserConnected(true)
+        setUserSocket(userWsRef)
+      }
+      userWsRef.onmessage = event => {
+        try {
+          const msg = JSON.parse(event.data)
+          if (msg.type === 'userUpdate') {
+            console.log('[WS] User update received:', msg.data)
+
+            if (msg.data.type === 'groupRequestApproved') {
+              const requestData = msg.data.requestData
+              console.log('Group request approved for user:', requestData)
+
+              // Update request status to approved
+              setRequestStatus(prev => ({
+                ...prev,
+                [requestData.groupId]: 'approved'
+              }))
+              setRequestDetails(prev => ({
+                ...prev,
+                [requestData.groupId]: requestData
+              }))
+
+              // Show success message
+              toast.success('Your join request has been approved!')
+            } else if (msg.data.type === 'groupRequestRejected') {
+              const requestData = msg.data.requestData
+              console.log('Group request rejected for user:', requestData)
+
+              // Update request status to rejected
+              setRequestStatus(prev => ({
+                ...prev,
+                [requestData.groupId]: 'rejected'
+              }))
+              setRequestDetails(prev => ({
+                ...prev,
+                [requestData.groupId]: requestData
+              }))
+
+              // Show rejection message
+              toast.error(
+                `Your join request was rejected. Reason: ${requestData.rejectedReason || 'No reason provided'}`
+              )
+            }
+          }
+        } catch (e) {
+          console.error('[WS] Error parsing user update message', e)
+        }
+      }
+      userWsRef.onerror = err => {
+        console.error('[WS] User-specific WebSocket error', err)
+        setIsUserConnected(false)
+      }
+      userWsRef.onclose = () => {
+        console.log('[WS] User-specific WebSocket connection closed')
+        setIsUserConnected(false)
+      }
+
+      return () => {
+        userWsRef.close()
+      }
+    }
+  }, [session?.user?.email])
+
+  // WebSocket connection for groups list updates
+  useEffect(() => {
+    const wsUrl =
+      typeof window !== 'undefined'
+        ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/api/ws/groups`
+        : ''
+    if (wsUrl) {
+      const wsRef = new WebSocket(wsUrl)
+      wsRef.onopen = () => {
+        console.log('[WS] Connected to groups list updates')
+        setIsConnected(true)
+        setSocket(wsRef)
+      }
+      wsRef.onmessage = event => {
+        try {
+          const msg = JSON.parse(event.data)
+          if (msg.type === 'groupsList') {
+            // Groups list updated - the parent MyGroupPage will handle the data processing
+            // and update the channels prop, which will trigger the request status check
+            console.log('[WS] Groups list updated, parent will handle data processing')
+          }
+        } catch (e) {
+          console.error('[WS] Error parsing groups list message', e)
+        }
+      }
+      wsRef.onerror = err => {
+        console.error('[WS] Groups list error', err)
+        setIsConnected(false)
+      }
+      wsRef.onclose = () => {
+        console.log('[WS] Groups list connection closed')
+        setIsConnected(false)
+      }
+
+      return () => {
+        wsRef.close()
+      }
+    }
+  }, [session?.user?.email])
+
+  // Check request status when channels prop changes (e.g., after groups list update)
+  useEffect(() => {
+    const checkRequestStatus = async () => {
+      if (!session?.user?.email || channels.length === 0) return
+
+      for (const channel of channels) {
+        try {
+          const result = await RestApi.get(`${API_URLS.v0.USERS_GROUP_REQUEST}?groupId=${channel._id}`)
+          let userRequest = null
+          let status = 'none'
+
+          if (result?.status === 'success' && Array.isArray(result.result)) {
+            userRequest = result.result.find(req => req.userEmail === session.user.email)
+            if (userRequest) {
+              status = userRequest.status
+            }
+          }
+
+          setRequestStatus(prev => ({
+            ...prev,
+            [channel._id]: status
+          }))
+
+          if (userRequest) {
+            setRequestDetails(prev => ({
+              ...prev,
+              [channel._id]: userRequest
+            }))
+          }
+        } catch (error) {
+          console.error('Error checking request status:', error)
           setRequestStatus(prev => ({
             ...prev,
             [channel._id]: 'none'
@@ -136,30 +300,62 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
     // Use ternary operators instead of switch statement
     return status === 'pending' ? (
       <Button variant='outlined' size='small' startIcon={<HourglassEmptyIcon />} color='warning'>
-        Approval Pending
+        Pending
       </Button>
     ) : status === 'approved' ? (
-      <Button variant='outlined' size='small' startIcon={<CheckCircleIcon />} color='success' disabled>
-        Approved
-      </Button>
+      <Chip
+        icon={<CheckCircleIcon />}
+        label='Approved'
+        color='success'
+        variant='outlined'
+        size='small'
+        sx={{ width: '100px' }}
+      />
     ) : status === 'rejected' ? (
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-        <Button variant='outlined' size='small' startIcon={<CancelIcon />} color='error' disabled>
-          Rejected
-        </Button>
+        <Chip
+          icon={<CancelIcon />}
+          label='Rejected'
+          color='error'
+          variant='outlined'
+          size='small'
+          sx={{ width: '100px' }}
+        />
         {requestDetail?.rejectedReason ? (
-          <Typography
-            variant='caption'
-            color='error'
-            sx={{ fontSize: '0.7rem', textAlign: 'center', display: 'block', mt: 0.5 }}
-          >
-            Reason: {requestDetail?.rejectedReason}
-          </Typography>
+          <Tooltip title={`Reason: ${requestDetail.rejectedReason}`} arrow placement='top'>
+            <Typography
+              variant='caption'
+              color='error'
+              sx={{
+                fontSize: '0.7rem',
+                textAlign: 'center',
+                display: 'block',
+                mt: 0.5,
+                width: '100px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                cursor: 'help',
+                height: '20px',
+                lineHeight: '20px'
+              }}
+            >
+              Reason: {requestDetail?.rejectedReason}
+            </Typography>
+          </Tooltip>
         ) : (
           <Typography
             variant='caption'
             color='text.secondary'
-            sx={{ fontSize: '0.7rem', textAlign: 'center', display: 'block', mt: 0.5, fontStyle: 'italic' }}
+            sx={{
+              fontSize: '0.7rem',
+              textAlign: 'center',
+              display: 'block',
+              mt: 0.5,
+              fontStyle: 'italic',
+              height: '20px',
+              lineHeight: '20px'
+            }}
           >
             No reason provided
           </Typography>
@@ -170,7 +366,7 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
         variant='contained'
         component='label'
         size='small'
-        sx={{ color: 'white' }}
+        sx={{ color: 'white', width: '140px' }}
         onClick={() => handleSendRequest(channel._id)}
       >
         Send Request
@@ -235,7 +431,7 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
                   whiteSpace: 'nowrap',
                   flex: 1,
                   mr: 1,
-                  maxWidth: '100px'
+                  width: '120px'
                 }}
               >
                 {item.groupName || 'Untitled Group'}
@@ -250,7 +446,7 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
               label={item?.status === 'public' ? 'Public' : 'Private'}
               color={item?.status === 'public' ? 'success' : 'warning'}
               variant='outlined'
-              sx={{ minWidth: 'auto' }}
+              sx={{ Width: 'auto' }}
             />
           </Box>
         }
@@ -266,7 +462,7 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',
                     mb: 0.5,
-                    maxWidth: '200px'
+                    width: '200px'
                   }}
                 >
                   {item.description}
@@ -319,7 +515,7 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
                   whiteSpace: 'nowrap',
                   flex: 1,
                   mr: 1,
-                  maxWidth: '150px'
+                  width: '120px'
                 }}
               >
                 {item.groupName || 'Untitled Channel'}
@@ -332,7 +528,7 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
               label='Channel'
               color='primary'
               variant='outlined'
-              sx={{ minWidth: 'auto' }}
+              sx={{ Width: 'auto' }}
             />
           </Box>
         }
@@ -348,7 +544,7 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',
                     mb: 0.5,
-                    maxWidth: '250px'
+                    width: '200px'
                   }}
                 >
                   {item.description}
