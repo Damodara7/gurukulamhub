@@ -87,15 +87,9 @@ export default function MyGroupsPage() {
     )
   }
 
-  const handleRequestProcessed = () => {
-    // When a request is processed (approved), refresh the groups data
-    // This will move the group from channels to groups if the user was approved
-    getGroupsData()
-  }
-
   return (
     <Box sx={{ height: '100vh', overflow: 'hidden' }}>
-      <GroupChannellist groups={userGroups} channels={channels} onRequestProcessed={handleRequestProcessed} />
+      <GroupChannellist groups={userGroups} channels={channels} />
     </Box>
   )
 }

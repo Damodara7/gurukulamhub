@@ -32,16 +32,14 @@ import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { useSession } from 'next-auth/react'
 import { toast } from 'react-toastify'
-import GroupCard from '../group/GroupCard'
 
-const GroupChannellist = ({ groups = [], channels = [], onRequestProcessed }) => {
+const GroupChannellist = ({ groups = [], channels = [] }) => {
   const { data: session } = useSession()
   const [viewMode, setViewMode] = useState('groups')
   const [searchQuery, setSearchQuery] = useState('')
   const [requestStatus, setRequestStatus] = useState({})
   const [requestDetails, setRequestDetails] = useState({})
   const [loading, setLoading] = useState({})
-  const [isSendingRequest, setIsSendingRequest] = useState(false)
 
   // Check request status for each channel
   //To show correct button state (Send Request, Pending, Approved, Rejected)
@@ -92,18 +90,6 @@ const GroupChannellist = ({ groups = [], channels = [], onRequestProcessed }) =>
   // Store the view mode when user manually switches to channels
   const [userSelectedChannels, setUserSelectedChannels] = useState(false)
 
-  // Maintain channels view when user has manually selected it and is sending requests
-  // Keeps user on "Channels" tab when they're sending requests
-  // To prevent the page from refreshing and switching tabs when sending requests
-  useEffect(() => {
-    if (userSelectedChannels && isSendingRequest) {
-      // If user manually selected channels and is sending a request, stay on channels
-      if (viewMode !== 'channels') {
-        setViewMode('channels')
-      }
-    }
-  }, [userSelectedChannels, isSendingRequest, viewMode])
-
   // To send join request to a channel
   const handleSendRequest = async channelId => {
     if (!session?.user?.email) {
@@ -111,7 +97,6 @@ const GroupChannellist = ({ groups = [], channels = [], onRequestProcessed }) =>
       return
     }
 
-    setIsSendingRequest(true)
     setLoading(prev => ({ ...prev, [channelId]: true }))
     try {
       const result = await RestApi.post(`${API_URLS.v0.USERS_GROUP_REQUEST}`, {
@@ -123,7 +108,6 @@ const GroupChannellist = ({ groups = [], channels = [], onRequestProcessed }) =>
         // Clear any previous request details
         setRequestDetails(prev => ({ ...prev, [channelId]: null }))
         // Don't refresh groups data immediately - WebSocket will handle real-time updates
-        // This prevents the page from refreshing and switching tabs when sending requests
       } else {
         toast.error(result?.message || 'Failed to send join request')
       }
@@ -132,7 +116,6 @@ const GroupChannellist = ({ groups = [], channels = [], onRequestProcessed }) =>
       toast.error('An error occurred while sending join request')
     } finally {
       setLoading(prev => ({ ...prev, [channelId]: false }))
-      setIsSendingRequest(false)
     }
   }
 
