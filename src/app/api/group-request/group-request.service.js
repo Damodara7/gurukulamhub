@@ -280,14 +280,8 @@ export const approveRequest = async (requestId, adminEmail) => {
         await group.save()
       }
 
-      // Add group to user's groupIds
-      if (!user.groupIds) {
-        user.groupIds = []
-      }
-      if (!user.groupIds.includes(request.groupId)) {
-        user.groupIds.push(request.groupId)
-        await user.save()
-      }
+      // Add group to user's groupIds using $addToSet to prevent duplicates
+      await User.updateOne({ _id: user._id }, { $addToSet: { groupIds: request.groupId } })
     }
 
     // Broadcast WebSocket event for group request approved
@@ -393,6 +387,18 @@ export const rejectRequest = async (requestId, adminEmail, rejectionReason) => {
 
     await request.save()
 
+    // Clean up user's groupIds if they were previously added
+    try {
+      const user = await User.findOne({ email: request.userEmail })
+      if (user && user.groupIds && user.groupIds.includes(request.groupId)) {
+        await User.updateOne({ _id: user._id }, { $pull: { groupIds: request.groupId } })
+        console.log(`Removed group ${request.groupId} from user ${request.userEmail} after rejection`)
+      }
+    } catch (userUpdateError) {
+      console.error('Error removing group from user after rejection:', userUpdateError)
+      // Don't fail the rejection if user update fails
+    }
+
     // Broadcast WebSocket event for group request rejected
     try {
       const requestData = {
@@ -455,6 +461,18 @@ export const cancelRequest = async (requestId, userEmail) => {
         result: null,
         message: 'Pending request not found'
       }
+    }
+
+    // Clean up user's groupIds if they were previously added
+    try {
+      const user = await User.findOne({ email: userEmail })
+      if (user && user.groupIds && user.groupIds.includes(request.groupId)) {
+        await User.updateOne({ _id: user._id }, { $pull: { groupIds: request.groupId } })
+        console.log(`Removed group ${request.groupId} from user ${userEmail} after request cancellation`)
+      }
+    } catch (userUpdateError) {
+      console.error('Error removing group from user after cancellation:', userUpdateError)
+      // Don't fail the cancellation if user update fails
     }
 
     // Delete the request

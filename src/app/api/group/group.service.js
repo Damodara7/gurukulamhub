@@ -685,14 +685,8 @@ export const processJoinRequest = async (groupId, userEmail, action, rejectionRe
           group.membersCount = group.members.length
         }
 
-        // Add group to user's groupIds
-        if (!user.groupIds) {
-          user.groupIds = []
-        }
-        if (!user.groupIds.includes(group._id)) {
-          user.groupIds.push(group._id)
-          await user.save()
-        }
+        // Add group to user's groupIds using $addToSet to prevent duplicates
+        await User.updateOne({ _id: user._id }, { $addToSet: { groupIds: group._id } })
       }
     }
 

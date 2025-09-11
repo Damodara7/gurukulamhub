@@ -1076,3 +1076,71 @@ const generateUniqueMemberId = async () => {
 //   await addDummyAlertHelper(email);
 //   await activateUserAlertsHelper(email);
 // }
+
+export const removeGroupFromUser = async (userId, groupId) => {
+  await connectMongo()
+  try {
+    const updatedUser = await User.findByIdAndUpdate(userId, { $pull: { groupIds: groupId } }, { new: true })
+
+    if (!updatedUser) {
+      return { status: 'error', result: null, message: 'User not found' }
+    }
+
+    return { status: 'success', result: updatedUser, message: 'Group removed from user successfully' }
+  } catch (error) {
+    console.error('removeGroupFromUser function -> Error updating user:', error)
+    return { status: 'error', result: null, message: error.message }
+  }
+}
+
+// Function to clean up orphaned groupIds from users
+export const cleanupOrphanedGroupIds = async () => {
+  await connectMongo()
+  try {
+    // Import Group model
+    const Group = (await import('../api/group/group.model.js')).default
+
+    // Find all users with groupIds
+    const usersWithGroups = await User.find({ groupIds: { $exists: true, $ne: [] } }).lean()
+
+    let cleanedCount = 0
+
+    for (const user of usersWithGroups) {
+      if (user.groupIds && user.groupIds.length > 0) {
+        // Check which groupIds are valid (group exists and is not deleted)
+        const validGroupIds = []
+
+        for (const groupId of user.groupIds) {
+          try {
+            const group = await Group.findOne({ _id: groupId, isDeleted: false })
+            if (group) {
+              validGroupIds.push(groupId)
+            }
+          } catch (error) {
+            console.error(`Error checking group ${groupId}:`, error)
+          }
+        }
+
+        // Update user if there are invalid groupIds
+        if (validGroupIds.length !== user.groupIds.length) {
+          await User.updateOne({ _id: user._id }, { $set: { groupIds: validGroupIds } })
+          cleanedCount++
+          console.log(`Cleaned up orphaned groupIds for user ${user.email}`)
+        }
+      }
+    }
+
+    return {
+      status: 'success',
+      result: { cleanedCount },
+      message: `Cleaned up ${cleanedCount} users with orphaned groupIds`
+    }
+  } catch (error) {
+    console.error('cleanupOrphanedGroupIds function -> Error cleaning up orphaned groupIds:', error)
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to cleanup orphaned groupIds'
+    }
+  }
+}
