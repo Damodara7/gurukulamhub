@@ -1014,23 +1014,24 @@ const AccountDetails = () => {
               src={imgSrc || session?.user?.image || '/images/avatars/1.png'}
               alt='Profile'
             />
-              <IconButtonTooltip title='Upload'
-                component='label'
-                size='large'
-                color='primary'
-                className='absolute bottom-2 left-1/2 transform -translate-x-1/2 w-[100px] p-0 flex items-center justify-center bg-white bg-opacity-75 rounded-none opacity-0 group-hover:opacity-100 transition-opacity'
-                htmlFor='account-settings-upload-image'
-              >
-                <CloudUploadIcon />
-                <input
-                  hidden
-                  type='file'
-                  // value={fileInput}
-                  accept='.jpg, .png, .jpeg'
-                  onChange={handleFileInputChange}
-                  id='account-settings-upload-image'
-                />
-              </IconButtonTooltip>
+            <IconButtonTooltip
+              title='Upload'
+              component='label'
+              size='large'
+              color='primary'
+              className='absolute bottom-2 left-1/2 transform -translate-x-1/2 w-[100px] p-0 flex items-center justify-center bg-white bg-opacity-75 rounded-none opacity-0 group-hover:opacity-100 transition-opacity'
+              htmlFor='account-settings-upload-image'
+            >
+              <CloudUploadIcon />
+              <input
+                hidden
+                type='file'
+                // value={fileInput}
+                accept='.jpg, .png, .jpeg'
+                onChange={handleFileInputChange}
+                id='account-settings-upload-image'
+              />
+            </IconButtonTooltip>
           </div>
 
           {/* My Member Id */}
@@ -1085,7 +1086,7 @@ const AccountDetails = () => {
             />
 
             {/* ----Voter Id---- */}
-            {/* <VoterIdInfo
+            <VoterIdInfo
               voterIdPhotos={voterIdPhotos}
               handleVoterIdPhotoDelete={handleVoterIdPhotoDelete}
               handleVoterIdPhotosInputChange={handleVoterIdPhotosInputChange}
@@ -1099,7 +1100,7 @@ const AccountDetails = () => {
               formData={formData}
               handleFormChange={handleFormChange}
               handleVerifyEpic={handleVerifyEpic}
-            /> */}
+            />
             {/* ----Address---- */}
             <AddressInfo
               formData={formData}

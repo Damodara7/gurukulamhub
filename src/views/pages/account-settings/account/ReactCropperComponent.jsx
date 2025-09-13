@@ -17,7 +17,14 @@ const dataURLtoFile = (dataurl, filename) => {
   return new File([u8arr], filename, { type: mime })
 }
 
-export const ReactCropperComponent = ({ image, side, onDelete, setImage, setIsCropMode, setImageFile }) => {
+export const ReactCropperComponent = ({
+  image,
+  side,
+  onDelete,
+  setImage,
+  setIsCropMode,
+  setImageFile
+}) => {
   const [cropData, setCropData] = useState('#')
   const cropperRef = useRef(null)
   const [errorMessage, setErrorMessage] = useState('')
@@ -27,65 +34,21 @@ export const ReactCropperComponent = ({ image, side, onDelete, setImage, setIsCr
       const cropper = cropperRef.current?.cropper
       console.log('cropped canva', cropper)
 
-      const url = cropperRef.current?.cropper.getCroppedCanvas().toDataURL()
+      // Get cropped canvas with tight cropping (no excess space)
+      const croppedCanvas = cropperRef.current?.cropper.getCroppedCanvas({
+        width: cropperRef.current?.cropper.getCropBoxData().width,
+        height: cropperRef.current?.cropper.getCropBoxData().height,
+        imageSmoothingEnabled: true,
+        imageSmoothingQuality: 'high'
+      })
+
+      const url = croppedCanvas.toDataURL('image/jpeg', 0.9) // 90% quality
       const file = dataURLtoFile(url, `${side}_voter_id.jpg`)
       setImageFile(prev => ({ ...prev, [side]: file }))
       console.log('Cropped image URL:', url)
       console.log('Cropped image file:', file)
 
-      const base64Data = url.split(',')[1]
-      const binaryString = window.atob(base64Data)
-      const len = binaryString.length
-      const byteArray = new Uint8Array(len)
-      for (let i = 0; i < len; i++) {
-        byteArray[i] = binaryString.charCodeAt(i)
-      }
-      const blob = new Blob([byteArray], { type: 'image/png' })
-      const sizeInKB = blob.size / 1024
-
-      if (sizeInKB > 100) {
-        setErrorMessage('Cropped image size exceeds 100 KB. Please crop a smaller area or reduce image quality.')
-        return
-      }
-
-      //   let quality = 1 // Start with high quality
-      //   let sizeInKB = 0
-      //   let url1
-
-      //   do {
-      //     url1 = cropper
-      //       .getCroppedCanvas({
-      //         width: cropper.getCanvasData().width * quality,
-      //         height: cropper.getCanvasData().height * quality
-      //       })
-      //       .toDataURL('image/jpeg', quality)
-
-      //     const base64Data = url1.split(',')[1]
-      //     const binaryString = window.atob(base64Data)
-      //     const len = binaryString.length
-      //     const byteArray = new Uint8Array(len)
-      //     for (let i = 0; i < len; i++) {
-      //       byteArray[i] = binaryString.charCodeAt(i)
-      //     }
-      //     const blob = new Blob([byteArray], { type: 'image/jpeg' })
-      //     sizeInKB = blob.size / 1024
-
-      //     if (sizeInKB > 200) {
-      //       quality -= 0.1 // Reduce quality by 10%
-      //     }
-      //   } while (sizeInKB > 200 && quality > 0)
-
-      //   if (sizeInKB > 200) {
-      //     setErrorMessage(
-      //       'Cropped image size exceeds 100 KB even at the lowest quality. Please crop a smaller area or reduce image quality.'
-      //     )
-      //     return
-      //   }
-
-      //   const file = dataURLtoFile(url1, `${side}_voter_id.jpg`)
-      //   console.log(`Cropped image file: ${file}`)
-
-      setCropData(cropperRef.current?.cropper.getCroppedCanvas().toDataURL())
+      setCropData(url)
       setImage(prev => ({ ...prev, [side]: url }))
       setIsCropMode(prev => ({ ...prev, [side]: false }))
       setErrorMessage('')
@@ -93,23 +56,10 @@ export const ReactCropperComponent = ({ image, side, onDelete, setImage, setIsCr
   }
 
   return (
-    <Box
-      sx={{
-        position: 'relative',
-        width: '300px',
-        height: '300px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '0.5rem',
-        // border: '1px solid #cacaca',
-        background: 'rgba(201,186,228,0.25)',
-        padding: '5px',
-        borderRadius: '10px'
-      }}
-    >
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
       <Cropper
-        style={{ height: 250, width: '100%', flex: 1 }}
-        initialAspectRatio={1}
+        style={{ height: 250, width: '500px' }}
+        initialAspectRatio={null} // Allow free aspect ratio
         preview='.img-preview'
         src={image}
         ref={cropperRef}
@@ -120,12 +70,20 @@ export const ReactCropperComponent = ({ image, side, onDelete, setImage, setIsCr
         background={false}
         responsive={true}
         checkOrientation={false} // https://github.com/fengyuanchen/cropperjs/issues/671
+        autoCropArea={0.8} // Start with 80% of the image cropped
+        cropBoxResizable={true}
+        cropBoxMovable={true}
+        toggleDragModeOnDblclick={false}
       />
+
+      {/* Error message */}
       {errorMessage && (
-        <Typography color='error' variant='body2'>
+        <Typography color='error' variant='body2' sx={{ fontSize: '0.75rem', lineHeight: 1.2 }}>
           {errorMessage}
         </Typography>
       )}
+
+      {/* Button section */}
       <Stack flexDirection='row' gap='0.5rem' alignItems='center' sx={{ alignSelf: 'flex-end' }}>
         <Button variant='text' color='error' size='small' onClick={() => onDelete(side)}>
           <DeleteIcon />

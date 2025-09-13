@@ -1,5 +1,5 @@
 import React from 'react'
-import { Box, Button, Divider, Grid, Stack, styled, TextField  } from '@mui/material'
+import { Box, Button, Divider, Grid, Stack, styled, TextField } from '@mui/material'
 // react-icons Imports
 import CloudUploadIcon from '@mui/icons-material/CloudUpload'
 import DeleteIcon from '@mui/icons-material/Delete'
@@ -40,30 +40,34 @@ function VoterIdInfo({
       </Grid>
 
       {/* Voter Id Front-Side */}
-      <Grid item xs={12} sm={6} display='flex' flexDirection='column' justifyContent='center' alignItems='strech'>
+      <Grid
+        item
+        xs={12}
+        sm={6}
+        display='flex'
+        flexDirection='column'
+        justifyContent='flex-start'
+        alignItems='flex-start'
+      >
         {voterIdPhotos.front ? (
           !isCropMode.front ? (
-            <Box
-              sx={{
-                position: 'relative',
-                width: '250px',
-                height: '250px',
-                background: 'rgba(201,186,228,0.25)',
-                padding: '5px',
-                borderRadius: '10px'
-              }}
-            >
-              <img
-                src={voterIdPhotos.front}
-                alt='Voter ID Front'
-                style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '5px' }}
-              />
-              <Stack
-                flexDirection='row'
-                gap='0.5rem'
-                alignItems='center'
-                sx={{ position: 'absolute', bottom: 0, right: 5 }}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <Box
+                sx={{
+                  width: '500px',
+                  height: '250px',
+                  // background: 'rgba(201,186,228,0.25)',
+                  padding: '5px',
+                  borderRadius: '10px'
+                }}
               >
+                <img
+                  src={voterIdPhotos.front}
+                  alt='Voter ID Front'
+                  style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '2px' }}
+                />
+              </Box>
+              <Stack flexDirection='row' gap='0.5rem' alignItems='center' sx={{ alignSelf: 'center' }}>
                 <Button variant='text' color='error' size='small' onClick={() => handleVoterIdPhotoDelete('front')}>
                   <DeleteIcon />
                 </Button>
@@ -96,13 +100,11 @@ function VoterIdInfo({
           <Button
             component='label'
             variant='outlined'
-            sx={
-              {
-                // width: '150px',
-                // height: '90px',
-                // color: 'white'
-              }
-            }
+            sx={{
+              width: '100%',
+              height: '50px',
+              color: 'primary'
+            }}
             startIcon={<CloudUploadIcon />}
           >
             Upload Voter Id Front-Side
@@ -116,31 +118,36 @@ function VoterIdInfo({
       </Grid>
 
       {/* Voter Id Back-Side */}
-      <Grid item xs={12} sm={6} display='flex' flexDirection='column' justifyContent='center' alignItems='strech'>
+      <Grid
+        item
+        xs={12}
+        sm={6}
+        display='flex'
+        flexDirection='column'
+        justifyContent='flex-start'
+        alignItems='flex-start'
+      >
         {voterIdPhotos.back ? (
           !isCropMode.back ? (
-            <Box
-              sx={{
-                position: 'relative',
-                width: '250px',
-                height: '250px',
-                // border: '1px solid #cacaca',
-                background: 'rgba(201,186,228,0.25)',
-                padding: '5px',
-                borderRadius: '10px'
-              }}
-            >
-              <img
-                src={voterIdPhotos.back}
-                alt='Voter ID Back'
-                style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '5px' }}
-              />
-              <Stack
-                flexDirection='row'
-                gap='0.5rem'
-                alignItems='center'
-                sx={{ position: 'absolute', bottom: 0, right: 5 }}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <Box
+                sx={{
+                  width: '500px',
+                  height: '250px',
+                  // background: 'rgba(201,186,228,0.25)',
+                  padding: '5px',
+                  borderRadius: '10px',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}
               >
+                <img
+                  src={voterIdPhotos.back}
+                  alt='Voter ID Back'
+                  style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '5px' }}
+                />
+              </Box>
+              <Stack flexDirection='row' gap='0.5rem' alignItems='center' sx={{ alignSelf: 'center' }}>
                 <Button variant='text' color='error' size='small' onClick={() => handleVoterIdPhotoDelete('back')}>
                   <DeleteIcon />
                 </Button>
@@ -173,13 +180,7 @@ function VoterIdInfo({
           <Button
             component='label'
             variant='outlined'
-            sx={
-              {
-                // width: '150px',
-                // height: '90px',
-                // color: 'white'
-              }
-            }
+            sx={{ width: '100%', height: '50px', color: 'primary' }}
             startIcon={<CloudUploadIcon />}
           >
             Upload Voter Id Back-Side
@@ -199,7 +200,7 @@ function VoterIdInfo({
               name='voterId'
               fullWidth
               label='Voter Id (EPIC)'
-              value={formData.voterId}
+              value={formData.voterId?.epicNumber || ''}
               placeholder='XXXXXXXXXX'
               onChange={e => handleFormChange('voterId', e.target.value)}
               error={!isEpicValid} // Set error state based on EPIC validation
@@ -220,7 +221,7 @@ function VoterIdInfo({
                     : 'primary'
               }
               onClick={handleVerifyEpic}
-              disabled={!formData.voterId || !isEpicValid || isEpicVerifyClicked} // Disable button if no voter ID or invalid format
+              disabled={!formData.voterId?.epicNumber || !isEpicValid || isEpicVerifyClicked} // Disable button if no voter ID or invalid format
             >
               {isEpicVerifyClicked && isEpicVerified
                 ? 'Verified'
