@@ -36,77 +36,85 @@ const workingPositionSchema = new mongoose.Schema({
   description: { type: String }
 })
 
-const userProfileSchema = new mongoose.Schema({
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    index: true
+const userProfileSchema = new mongoose.Schema(
+  {
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true
+    },
+    age: {
+      type: Number,
+      validate: {
+        validator: value => value >= 6 && value <= 120,
+        message: 'Age must be between 6 and 120.'
+      }
+    },
+    firstname: { type: String },
+    lastname: { type: String },
+    image: { type: String },
+    gender: { type: String },
+    referredBy: { type: String, default: 'none@gurukulamhub.com' },
+    phone: { type: String },
+    accountType: { type: String },
+    nickname: { type: String },
+    roleInOrganization: { type: String },
+    address: { type: String },
+    country: { type: String },
+    countryCode: { type: String },
+    countryDialCode: { type: Number },
+    region: { type: String },
+    zipcode: { type: String },
+    locality: { type: String },
+    street: { type: String },
+    colony: { type: String },
+    village: { type: String },
+    timezone: { type: String },
+    religion: { type: String },
+    caste: { type: String },
+    category: { type: String },
+    motherTongue: { type: String },
+    languages: { type: [languageSchema] },
+    knownLanguageIds: {
+      type: [String]
+    },
+    associatedOrganizations: { type: [associatedOrganizationSchema] },
+    activeAssociatedOrganizationIds: { type: [String] },
+    currency: { type: String },
+    voterId: {
+      epicNumber: { type: String },
+      frontImage: { type: String }, // URL or base64 of front image
+      backImage: { type: String }, // URL or base64 of back image
+      isVerified: { type: Boolean, default: false }
+    },
+    linkedInUrl: { type: String },
+    facebookUrl: { type: String },
+    instagramUrl: { type: String },
+    openToWork: { type: Boolean },
+    hiring: { type: Boolean },
+    organization: { type: String },
+    organizationRegistrationNumber: { type: String },
+    organizationGSTNumber: { type: String },
+    organizationPANNumber: { type: String },
+    websiteUrl: { type: String },
+    coordinates: {
+      type: [Number],
+      index: '2d'
+    },
+    schools: [schoolSchema],
+    workingPositions: [workingPositionSchema],
+    currentSchoolId: {
+      type: String
+    },
+    currentWorkingPositionId: {
+      type: String
+    },
+    networkLevel: { type: Number, default: 0 },
+    referralPoints: { type: Number, default: 0 }
   },
-  age: {
-    type: Number,
-    validate: {
-      validator: value => value >= 6 && value <= 120,
-      message: 'Age must be between 6 and 120.'
-    }
-  },
-  firstname: { type: String },
-  lastname: { type: String },
-  image: { type: String },
-  gender: { type: String },
-  referredBy: { type: String, default: 'none@gurukulamhub.com' },
-  phone: { type: String },
-  accountType: { type: String },
-  nickname: { type: String },
-  roleInOrganization: { type: String },
-  address: { type: String },
-  country: { type: String },
-  countryCode: { type: String },
-  countryDialCode: { type: Number },
-  region: { type: String },
-  zipcode: { type: String },
-  locality: { type: String },
-  street: { type: String },
-  colony: { type: String },
-  village: { type: String },
-  timezone: { type: String },
-  religion: { type: String },
-  caste: { type: String },
-  category: { type: String },
-  motherTongue: { type: String },
-  languages: { type: [languageSchema] },
-  knownLanguageIds: {
-    type: [String]
-  },
-  associatedOrganizations: { type: [associatedOrganizationSchema] },
-  activeAssociatedOrganizationIds: { type: [String] },
-  currency: { type: String },
-  voterId: { type: String },
-  linkedInUrl: { type: String },
-  facebookUrl: { type: String },
-  instagramUrl: { type: String },
-  openToWork: { type: Boolean },
-  hiring: { type: Boolean },
-  organization: { type: String },
-  organizationRegistrationNumber: { type: String },
-  organizationGSTNumber: { type: String },
-  organizationPANNumber: { type: String },
-  websiteUrl: { type: String },
-  coordinates: {
-    type: [Number],
-    index: '2d'
-  },
-  schools: [schoolSchema],
-  workingPositions: [workingPositionSchema],
-  currentSchoolId: {
-    type: String
-  },
-  currentWorkingPositionId: {
-    type: String
-  },
-  networkLevel: { type: Number, default: 0 },
-  referralPoints: { type: Number, default: 0 }
-}, {timestamps: true})
+  { timestamps: true }
+)
 
 const UserProfile = mongoose.models.userprofiles || mongoose.model('userprofiles', userProfileSchema)
 

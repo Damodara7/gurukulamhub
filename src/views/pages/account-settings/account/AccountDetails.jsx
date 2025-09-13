@@ -110,7 +110,12 @@ const initialData = {
   category: '',
   knownLanguageIds: [],
   motherTongue: '',
-  voterId: '',
+  voterId: {
+    epicNumber: '',
+    frontImage: '',
+    backImage: '',
+    isVerified: false
+  },
   currentSchoolId: '',
   currentWorkingPositionId: '',
   linkedInUrl: '',
@@ -331,6 +336,37 @@ const AccountDetails = () => {
         setGetLoading(false)
         setFormData({ ...formData, ...profile, memberId: user?.memberId })
 
+        // Handle voter ID data
+        if (profile?.voterId) {
+          if (typeof profile.voterId === 'string') {
+            // Handle old string format
+            setFormData(prev => ({
+              ...prev,
+              voterId: {
+                ...prev.voterId,
+                epicNumber: profile.voterId
+              }
+            }))
+          } else if (profile.voterId.epicNumber) {
+            // Handle new object format
+            setFormData(prev => ({
+              ...prev,
+              voterId: {
+                epicNumber: profile.voterId.epicNumber || '',
+                frontImage: profile.voterId.frontImage || '',
+                backImage: profile.voterId.backImage || '',
+                isVerified: profile.voterId.isVerified || false
+              }
+            }))
+
+            // Set voter ID photos for display
+            setVoterIdPhotos({
+              front: profile.voterId.frontImage || '',
+              back: profile.voterId.backImage || ''
+            })
+          }
+        }
+
         if (profile?.image) {
           setImgSrc(profile.image)
         }
@@ -505,6 +541,14 @@ const AccountDetails = () => {
       setIsEpicValid(validateEpic(value)) // Validate EPIC
       setIsEpicVerifyClicked(false)
       // setIsEpicVerified(false)
+      setFormData(prev => ({
+        ...prev,
+        voterId: {
+          ...prev.voterId,
+          epicNumber: value
+        }
+      }))
+      return
     }
     if (field === 'linkedInUrl') {
       setIsUrlsValid(prev => ({ ...prev, [field]: validateUrl(field, value) }))
@@ -556,22 +600,13 @@ const AccountDetails = () => {
   }
 
   const validateEpic = epic => {
-    // Step 1: Check length
+    // Check if EPIC is exactly 10 characters (numbers and letters)
     if (epic.length !== 10) {
       return false
     }
 
-    // Step 2: Split into alphabetic and numeric parts
-    const alphaPart = epic.slice(0, 3)
-    const numericPart = epic.slice(3)
-
-    // Step 3: Check alphabetic part
-    if (!/^[A-Z]+$/.test(alphaPart)) {
-      return false
-    }
-
-    // Step 4: Check numeric part
-    if (!/^\d+$/.test(numericPart)) {
+    // Check if all characters are alphanumeric (letters and numbers)
+    if (!/^[A-Za-z0-9]{10}$/.test(epic)) {
       return false
     }
 
@@ -948,7 +983,18 @@ const AccountDetails = () => {
     const { files } = file.target
 
     if (files && files.length !== 0) {
-      reader.onload = () => setVoterIdPhotos(prev => ({ ...prev, [side]: reader.result }))
+      reader.onload = () => {
+        const imageData = reader.result
+        setVoterIdPhotos(prev => ({ ...prev, [side]: imageData }))
+        // Also update the form data
+        setFormData(prev => ({
+          ...prev,
+          voterId: {
+            ...prev.voterId,
+            [side === 'front' ? 'frontImage' : 'backImage']: imageData
+          }
+        }))
+      }
       reader.readAsDataURL(files[0])
     }
   }
@@ -956,6 +1002,26 @@ const AccountDetails = () => {
   const handleVoterIdPhotoDelete = side => {
     setVoterIdPhotos(prev => ({ ...prev, [side]: '' }))
     setIsCropMode(prev => ({ ...prev, [side]: true }))
+    // Also update the form data
+    setFormData(prev => ({
+      ...prev,
+      voterId: {
+        ...prev.voterId,
+        [side === 'front' ? 'frontImage' : 'backImage']: ''
+      }
+    }))
+  }
+
+  const handleVoterIdImageCrop = (side, croppedImageUrl) => {
+    // Update both local state and form data with cropped image
+    setVoterIdPhotos(prev => ({ ...prev, [side]: croppedImageUrl }))
+    setFormData(prev => ({
+      ...prev,
+      voterId: {
+        ...prev.voterId,
+        [side === 'front' ? 'frontImage' : 'backImage']: croppedImageUrl
+      }
+    }))
   }
 
   // const validatePhone = (value, countryDialCode) => {
@@ -1100,6 +1166,7 @@ const AccountDetails = () => {
               formData={formData}
               handleFormChange={handleFormChange}
               handleVerifyEpic={handleVerifyEpic}
+              handleVoterIdImageCrop={handleVoterIdImageCrop}
             />
             {/* ----Address---- */}
             <AddressInfo

@@ -19,7 +19,8 @@ function VoterIdInfo({
   isEpicVerified,
   formData,
   handleFormChange,
-  handleVerifyEpic
+  handleVerifyEpic,
+  handleVoterIdImageCrop
 }) {
   const VisuallyHiddenInput = styled('input')({
     clip: 'rect(0 0 0 0)',
@@ -94,6 +95,7 @@ function VoterIdInfo({
               setImage={setVoterIdPhotos}
               setIsCropMode={setIsCropMode}
               onDelete={handleVoterIdPhotoDelete}
+              onImageCrop={handleVoterIdImageCrop}
             />
           )
         ) : (
@@ -174,6 +176,7 @@ function VoterIdInfo({
               setImage={setVoterIdPhotos}
               setIsCropMode={setIsCropMode}
               onDelete={handleVoterIdPhotoDelete}
+              onImageCrop={handleVoterIdImageCrop}
             />
           )
         ) : (
@@ -201,10 +204,16 @@ function VoterIdInfo({
               fullWidth
               label='Voter Id (EPIC)'
               value={formData.voterId?.epicNumber || ''}
-              placeholder='XXXXXXXXXX'
-              onChange={e => handleFormChange('voterId', e.target.value)}
+              placeholder='ABC1234567'
+              onChange={e => {
+                const value = e.target.value
+                // Limit input to 10 characters
+                if (value.length <= 10) {
+                  handleFormChange('voterId', value)
+                }
+              }}
               error={!isEpicValid} // Set error state based on EPIC validation
-              helperText={!isEpicValid ? 'Invalid EPIC format' : ''}
+              helperText={!isEpicValid ? 'EPIC must be exactly 10 characters (letters and numbers)' : ''}
             />
           </Grid>
           <Grid item xs={12} sm={3}>

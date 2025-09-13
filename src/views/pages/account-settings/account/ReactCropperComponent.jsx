@@ -23,7 +23,8 @@ export const ReactCropperComponent = ({
   onDelete,
   setImage,
   setIsCropMode,
-  setImageFile
+  setImageFile,
+  onImageCrop
 }) => {
   const [cropData, setCropData] = useState('#')
   const cropperRef = useRef(null)
@@ -52,6 +53,11 @@ export const ReactCropperComponent = ({
       setImage(prev => ({ ...prev, [side]: url }))
       setIsCropMode(prev => ({ ...prev, [side]: false }))
       setErrorMessage('')
+
+      // Notify parent component about the cropped image
+      if (onImageCrop) {
+        onImageCrop(side, url)
+      }
     }
   }
 
