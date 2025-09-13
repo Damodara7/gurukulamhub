@@ -29,7 +29,7 @@ export const groupSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: ['public', 'private'],
-      default: 'public'
+      default: 'private'
     },
     members: [
       {
@@ -64,24 +64,7 @@ export const groupSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'users'
     },
-    deletorEmail: String,
-    joinRequests: [
-      {
-        email: String,
-        status: {
-          type: String,
-          enum: ['pending', 'approved', 'rejected'],
-          default: 'pending'
-        },
-        requestedAt: {
-          type: Date,
-          default: Date.now
-        },
-        processedAt: Date,
-        processedBy: String,
-        rejectionReason: String
-      }
-    ]
+    deletorEmail: String
   },
   { timestamps: true }
 )

@@ -56,7 +56,7 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
   const initialFormData = {
     groupName: '',
     description: '',
-    status: 'public'
+    status: 'private'
   }
   const { data: session } = useSession()
   const [formData, setFormData] = useState(initialFormData)
@@ -89,7 +89,7 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
         ...initialFormData,
         groupName: data.groupName || '',
         description: data.description || '',
-        status: data.status || 'public',
+        status: data.status || 'private',
         members: data.members || []
       })
       // Set initial filter criteria from group data
