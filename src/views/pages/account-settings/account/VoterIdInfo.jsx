@@ -14,12 +14,9 @@ function VoterIdInfo({
   setVoterIdPhotos,
   setIsCropMode,
   isCropMode,
-  isEpicVerifyClicked,
   isEpicValid,
-  isEpicVerified,
   formData,
   handleFormChange,
-  handleVerifyEpic,
   handleVoterIdImageCrop
 }) {
   const VisuallyHiddenInput = styled('input')({
@@ -197,49 +194,22 @@ function VoterIdInfo({
       </Grid>
       {/* Voter Id EPIC Input */}
       <Grid item xs={12} sm={6}>
-        <Grid container alignItems={'center'} justifyContent='center' spacing={2}>
-          <Grid item xs={12} sm={9}>
-            <TextField
-              name='voterId'
-              fullWidth
-              label='Voter Id (EPIC)'
-              value={formData.voterId?.epicNumber || ''}
-              placeholder='ABC1234567'
-              onChange={e => {
-                const value = e.target.value
-                // Limit input to 10 characters
-                if (value.length <= 10) {
-                  handleFormChange('voterId', value)
-                }
-              }}
-              error={!isEpicValid} // Set error state based on EPIC validation
-              helperText={!isEpicValid ? 'EPIC must be exactly 10 characters (letters and numbers)' : ''}
-            />
-          </Grid>
-          <Grid item xs={12} sm={3}>
-            <Button
-              variant='contained'
-              style={{ color: 'white' }}
-              component='label'
-              size='small'
-              color={
-                isEpicVerifyClicked && isEpicVerified
-                  ? 'success'
-                  : isEpicVerifyClicked && !isEpicVerified
-                    ? 'error'
-                    : 'primary'
-              }
-              onClick={handleVerifyEpic}
-              disabled={!formData.voterId?.epicNumber || !isEpicValid || isEpicVerifyClicked} // Disable button if no voter ID or invalid format
-            >
-              {isEpicVerifyClicked && isEpicVerified
-                ? 'Verified'
-                : isEpicVerifyClicked && !isEpicVerified
-                  ? 'Invalid'
-                  : 'Verify'}
-            </Button>
-          </Grid>
-        </Grid>
+        <TextField
+          name='voterId'
+          fullWidth
+          label='Voter Id (EPIC)'
+          value={formData.voterId?.epicNumber || ''}
+          placeholder='ABC1234567'
+          onChange={e => {
+            const value = e.target.value
+            // Limit input to 10 characters
+            if (value.length <= 10) {
+              handleFormChange('voterId', value)
+            }
+          }}
+          error={!isEpicValid} // Set error state based on EPIC validation
+          helperText={!isEpicValid ? 'EPIC must be exactly 10 characters (letters and numbers)' : ''}
+        />
       </Grid>
     </>
   )

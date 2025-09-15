@@ -36,6 +36,7 @@ import { RiAddFill, RiCloseFill } from 'react-icons/ri'
 import { IoMdAttach } from 'react-icons/io'
 import CloudUploadIcon from '@mui/icons-material/CloudUpload'
 import DeleteIcon from '@mui/icons-material/Delete'
+import EditIcon from '@mui/icons-material/Edit'
 import CropIcon from '@mui/icons-material/Crop'
 
 // MUI Imports
@@ -43,7 +44,6 @@ import Grid from '@mui/material/Grid'
 import { styled } from '@mui/material/styles'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import Typography from '@mui/material/Typography'
 import TextField from '@mui/material/TextField'
 import FormControl from '@mui/material/FormControl'
 import InputLabel from '@mui/material/InputLabel'
@@ -63,6 +63,7 @@ import {
   RadioGroup,
   Stack,
   Tooltip,
+  Typography,
   useTheme
 } from '@mui/material'
 import {
@@ -113,9 +114,9 @@ const initialData = {
   voterId: {
     epicNumber: '',
     frontImage: '',
-    backImage: '',
-    isVerified: false
+    backImage: ''
   },
+  schools: [],
   currentSchoolId: '',
   currentWorkingPositionId: '',
   linkedInUrl: '',
@@ -154,14 +155,15 @@ const AccountDetails = () => {
 
   const [isEpicValid, setIsEpicValid] = useState(true) // State to manage EPIC validity
   const [isUrlsValid, setIsUrlsValid] = useState({ instagramUrl: true, linkedInUrl: true, facebookUrl: true }) // State to
-  const [isEpicVerified, setIsEpicVerified] = useState(false)
-  const [isEpicVerifyClicked, setIsEpicVerifyClicked] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState({
     language: false,
     education: false,
     workingPosition: false,
     associatedOrganization: false
   })
+  const [editingEducation, setEditingEducation] = useState(null)
+  const [editingWorkingPosition, setEditingWorkingPosition] = useState(null)
+  const [editingAssociatedOrganization, setEditingAssociatedOrganization] = useState(null)
   const [isFormSubmitting, setIsFormSubmitting] = useState(false)
   const [isFormValid, setIsFormValid] = useState(true)
   const [getLoading, setGetLoading] = useState(false)
@@ -173,7 +175,8 @@ const AccountDetails = () => {
   const [profilePercentage, setProfilePercentage] = useState(0)
   const [voterIdPhotos, setVoterIdPhotos] = useState({ front: '', back: '' })
   const [voterIdPhotoFiles, setVoterIdPhotoFiles] = useState({ front: '', back: '' })
-  const [isCropMode, setIsCropMode] = useState({ front: true, back: true })
+  const [isCropMode, setIsCropMode] = useState({ front: false, back: false })
+  const [profileData, setProfileData] = useState(null)
 
   const [selectedCountry, setSelectedCountry] = useState('')
   const [selectedCountryObject, setSelectedCountryObject] = useState(null)
@@ -334,7 +337,18 @@ const AccountDetails = () => {
         setProfilePercentage(profileCompletionPercentage)
         // toast.success('User profile Fetched Successfully .')
         setGetLoading(false)
-        setFormData({ ...formData, ...profile, memberId: user?.memberId })
+        // Filter out education data for non-INDIVIDUAL account types
+        let filteredProfile = { ...profile }
+        if (profile?.accountType !== 'INDIVIDUAL') {
+          filteredProfile = {
+            ...profile,
+            schools: [],
+            currentSchoolId: ''
+          }
+        }
+
+        setFormData({ ...formData, ...filteredProfile, memberId: user?.memberId })
+        setProfileData(profile) // Keep original profile data for other purposes
 
         // Handle voter ID data
         if (profile?.voterId) {
@@ -347,15 +361,14 @@ const AccountDetails = () => {
                 epicNumber: profile.voterId
               }
             }))
-          } else if (profile.voterId.epicNumber) {
+          } else if (typeof profile.voterId === 'object') {
             // Handle new object format
             setFormData(prev => ({
               ...prev,
               voterId: {
                 epicNumber: profile.voterId.epicNumber || '',
                 frontImage: profile.voterId.frontImage || '',
-                backImage: profile.voterId.backImage || '',
-                isVerified: profile.voterId.isVerified || false
+                backImage: profile.voterId.backImage || ''
               }
             }))
 
@@ -364,7 +377,17 @@ const AccountDetails = () => {
               front: profile.voterId.frontImage || '',
               back: profile.voterId.backImage || ''
             })
+
+            // Set crop mode to false for existing images (they should display normally)
+            setIsCropMode({
+              front: !profile.voterId.frontImage, // Only show crop mode if no image exists
+              back: !profile.voterId.backImage // Only show crop mode if no image exists
+            })
           }
+        } else {
+          // No voter ID data exists, reset to initial state
+          setVoterIdPhotos({ front: '', back: '' })
+          setIsCropMode({ front: false, back: false })
         }
 
         if (profile?.image) {
@@ -515,6 +538,69 @@ const AccountDetails = () => {
     setIsModalOpen(prev => ({ ...prev, [identifier]: true }))
   }
 
+  function handleEditEducation(school) {
+    setEditingEducation(school)
+    setIsModalOpen(prev => ({ ...prev, education: true }))
+  }
+
+  async function handleDeleteEducation(schoolId) {
+    if (!schoolId) return
+
+    try {
+      const response = await RestApi.del(`${ApiUrls.v0.USERS_PROFILE}/schools?id=${schoolId}`)
+      if (response.status === 'success') {
+        console.log('Education deleted successfully')
+        handleRefetchUserProfileData()
+      } else {
+        console.error('Error deleting education:', response.message)
+      }
+    } catch (error) {
+      console.error('Error deleting education:', error)
+    }
+  }
+
+  function handleEditWorkingPosition(position) {
+    setEditingWorkingPosition(position)
+    setIsModalOpen(prev => ({ ...prev, workingPosition: true }))
+  }
+
+  async function handleDeleteWorkingPosition(positionId) {
+    if (!positionId) return
+
+    try {
+      const response = await RestApi.del(`${ApiUrls.v0.USERS_PROFILE}/working-positions?id=${positionId}`)
+      if (response.status === 'success') {
+        console.log('Working position deleted successfully')
+        handleRefetchUserProfileData()
+      } else {
+        console.error('Error deleting working position:', response.message)
+      }
+    } catch (error) {
+      console.error('Error deleting working position:', error)
+    }
+  }
+
+  function handleEditAssociatedOrganization(organization) {
+    setEditingAssociatedOrganization(organization)
+    setIsModalOpen(prev => ({ ...prev, associatedOrganization: true }))
+  }
+
+  async function handleDeleteAssociatedOrganization(organizationId) {
+    if (!organizationId) return
+
+    try {
+      const response = await RestApi.del(`${ApiUrls.v0.USERS_PROFILE}/associated-organizations?id=${organizationId}`)
+      if (response.status === 'success') {
+        console.log('Associated organization deleted successfully')
+        handleRefetchUserProfileData()
+      } else {
+        console.error('Error deleting associated organization:', response.message)
+      }
+    } catch (error) {
+      console.error('Error deleting associated organization:', error)
+    }
+  }
+
   const handleDeleteChipFromMultiSelect = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: [...prev[field]].filter(each => each !== value) }))
   }
@@ -538,9 +624,7 @@ const AccountDetails = () => {
 
   const handleFormChange = (field, value) => {
     if (field === 'voterId') {
-      setIsEpicValid(validateEpic(value)) // Validate EPIC
-      setIsEpicVerifyClicked(false)
-      // setIsEpicVerified(false)
+      setIsEpicValid(validateEpic(value)) // Validate EPIC format
       setFormData(prev => ({
         ...prev,
         voterId: {
@@ -611,11 +695,6 @@ const AccountDetails = () => {
     }
 
     return true
-  }
-
-  function handleVerifyEpic() {
-    setIsEpicVerifyClicked(true)
-    setIsEpicVerified(prev => !prev)
   }
 
   function getLanguageLabel(value) {
@@ -735,7 +814,7 @@ const AccountDetails = () => {
     }
 
     if (data.accountType === 'BUSINESS' || data.accountType === 'NGO') {
-      data = { ...data, school: '', openToWork: false, nickname: '' }
+      data = { ...data, school: '', openToWork: false, nickname: '', schools: [], currentSchoolId: '' }
     } else if (data.accountType === 'INDIVIDUAL') {
       data = {
         ...data,
@@ -994,6 +1073,8 @@ const AccountDetails = () => {
             [side === 'front' ? 'frontImage' : 'backImage']: imageData
           }
         }))
+        // Set crop mode to true for the uploaded image
+        setIsCropMode(prev => ({ ...prev, [side]: true }))
       }
       reader.readAsDataURL(files[0])
     }
@@ -1001,7 +1082,7 @@ const AccountDetails = () => {
 
   const handleVoterIdPhotoDelete = side => {
     setVoterIdPhotos(prev => ({ ...prev, [side]: '' }))
-    setIsCropMode(prev => ({ ...prev, [side]: true }))
+    setIsCropMode(prev => ({ ...prev, [side]: false }))
     // Also update the form data
     setFormData(prev => ({
       ...prev,
@@ -1160,12 +1241,9 @@ const AccountDetails = () => {
               setVoterIdPhotos={setVoterIdPhotos}
               setIsCropMode={setIsCropMode}
               isCropMode={isCropMode}
-              isEpicVerifyClicked={isEpicVerifyClicked}
               isEpicValid={isEpicValid}
-              isEpicVerified={isEpicVerified}
               formData={formData}
               handleFormChange={handleFormChange}
-              handleVerifyEpic={handleVerifyEpic}
               handleVoterIdImageCrop={handleVoterIdImageCrop}
             />
             {/* ----Address---- */}
@@ -1196,33 +1274,121 @@ const AccountDetails = () => {
                 <Grid item xs={12} marginLeft={'0.25rem'}>
                   <Divider> Education </Divider>
                 </Grid>
-                {/* School */}
+                {/* Add Education Button */}
                 <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth>
-                    <InputLabel>School</InputLabel>
-                    <Select
-                      label='School'
-                      name='currentSchoolId'
-                      value={formData.currentSchoolId}
-                      onChange={e => handleFormChange('currentSchoolId', e.target.value)}
-                    >
-                      {schoolOptions.map(each => (
-                        <MenuItem key={each.value} value={each.value}>
-                          {each.label}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                    <Button
-                      startIcon={<RiAddFill />}
-                      sx={{ alignSelf: 'flex-start' }}
-                      variant='text'
-                      color='primary'
-                      onClick={() => handleOpenModal('education')}
-                    >
-                      Add Education
-                    </Button>
-                  </FormControl>
+                  <Button
+                    startIcon={<RiAddFill />}
+                    sx={{ alignSelf: 'flex-start' }}
+                    variant='text'
+                    color='primary'
+                    onClick={() => handleOpenModal('education')}
+                  >
+                    Add Education
+                  </Button>
                 </Grid>
+
+                {/* Display Education List */}
+                {profileData?.schools && profileData.schools.length > 0 && (
+                  <Grid item xs={12}>
+                    <Box sx={{ mt: 2 }}>
+                      <Grid container spacing={2}>
+                        {profileData.schools.map((school, index) => (
+                          <Grid item xs={12} md={6} key={school._id || index}>
+                            <Box
+                              sx={{
+                                p: 2,
+                                height: '100%',
+                                border: '1px solid',
+                                borderColor: 'divider',
+                                borderRadius: 1,
+                                backgroundColor: 'background.paper'
+                              }}
+                            >
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                <Box sx={{ flex: 1, minWidth: 0 }}>
+                                  <Typography
+                                    variant='h6'
+                                    sx={{
+                                      fontWeight: 'bold',
+                                      mb: 1,
+                                      width: '300px',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      whiteSpace: 'nowrap'
+                                    }}
+                                  >
+                                    {school.highestQualification === '7th Grade' ||
+                                    school.highestQualification === '10th Grade'
+                                      ? 'School Name'
+                                      : 'College Name'}
+                                    : {school.school}
+                                  </Typography>
+                                  {school.degree && (
+                                    <Typography
+                                      variant='body1'
+                                      color='text.secondary'
+                                      sx={{
+                                        mb: 0.5,
+                                        width: '300px',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap'
+                                      }}
+                                    >
+                                      <strong>Degree:</strong> {school.degree}
+                                    </Typography>
+                                  )}
+                                  {school.fieldOfStudy && (
+                                    <Typography
+                                      variant='body1'
+                                      color='text.secondary'
+                                      sx={{
+                                        mb: 0.5,
+                                        width: '300px',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap'
+                                      }}
+                                    >
+                                      <strong>Field of Study:</strong> {school.fieldOfStudy}
+                                    </Typography>
+                                  )}
+                                  {school.highestQualification && (
+                                    <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
+                                      <strong>Highest Qualification:</strong> {school.highestQualification}
+                                    </Typography>
+                                  )}
+                                  <Typography variant='body2' color='text.secondary' sx={{ mb: 0.5 }}>
+                                    <strong>Duration:</strong>{' '}
+                                    {school.startDate ? new Date(school.startDate).toLocaleDateString() : 'N/A'} -{' '}
+                                    {school.endDate ? new Date(school.endDate).toLocaleDateString() : 'Present'}
+                                  </Typography>
+                                  {school.description && (
+                                    <Typography variant='body2' sx={{ mt: 1 }}>
+                                      <strong>Description:</strong> {school.description}
+                                    </Typography>
+                                  )}
+                                </Box>
+                                <Box sx={{ display: 'flex', gap: 1 }}>
+                                  <IconButton size='small' color='primary' onClick={() => handleEditEducation(school)}>
+                                    <EditIcon fontSize='small' />
+                                  </IconButton>
+                                  <IconButton
+                                    size='small'
+                                    color='error'
+                                    onClick={() => handleDeleteEducation(school._id)}
+                                  >
+                                    <DeleteIcon fontSize='small' />
+                                  </IconButton>
+                                </Box>
+                              </Box>
+                            </Box>
+                          </Grid>
+                        ))}
+                      </Grid>
+                    </Box>
+                  </Grid>
+                )}
               </>
             )}
 
@@ -1230,35 +1396,20 @@ const AccountDetails = () => {
             <Grid item xs={12} marginLeft={'0.25rem'}>
               <Divider> Work History </Divider>
             </Grid>
-            {/* Current Working Position */}
+            {/* Add New Position Button and Open To Work / Hiring */}
             <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel>Current Position</InputLabel>
-                <Select
-                  label='Current Position'
-                  name='currentWorkingPositionId'
-                  value={formData.currentWorkingPositionId}
-                  onChange={e => handleFormChange('currentWorkingPositionId', e.target.value)}
-                >
-                  {workingPositionOptions.map(each => (
-                    <MenuItem key={each.value} value={each.value}>
-                      {each.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-                <Button
-                  startIcon={<RiAddFill />}
-                  sx={{ alignSelf: 'flex-start' }}
-                  variant='text'
-                  color='primary'
-                  onClick={() => handleOpenModal('workingPosition')}
-                >
-                  Add New Position
-                </Button>
-              </FormControl>
+              <Button
+                startIcon={<RiAddFill />}
+                sx={{ alignSelf: 'flex-start' }}
+                variant='text'
+                color='primary'
+                onClick={() => handleOpenModal('workingPosition')}
+              >
+                Add New Position
+              </Button>
             </Grid>
 
-            {/* Open To Work */}
+            {/* Open To Work for Individual */}
             {formData.accountType === 'INDIVIDUAL' && (
               <Grid item xs={12} sm={6}>
                 <FormGroup sx={{ width: '100%' }}>
@@ -1277,7 +1428,7 @@ const AccountDetails = () => {
               </Grid>
             )}
 
-            {/* Hiring */}
+            {/* Hiring for Business/NGO */}
             {(formData.accountType === 'BUSINESS' || formData.accountType === 'NGO') && (
               <Grid item xs={12} sm={6}>
                 <FormGroup sx={{ width: '100%' }}>
@@ -1293,6 +1444,192 @@ const AccountDetails = () => {
                     }
                   </Stack>
                 </FormGroup>
+              </Grid>
+            )}
+
+            {/* Display Working Positions List */}
+            {profileData?.workingPositions && profileData.workingPositions.length > 0 && (
+              <Grid item xs={12}>
+                <Box sx={{ mt: 2 }}>
+                  <Grid container spacing={2}>
+                    {profileData.workingPositions.map((position, index) => (
+                      <Grid item xs={12} md={6} key={position._id || index}>
+                        <Box
+                          sx={{
+                            p: 2,
+                            height: '100%',
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            borderRadius: 1,
+                            backgroundColor: 'background.paper'
+                          }}
+                        >
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <Box sx={{ flex: 1, minWidth: 0 }}>
+                              <Typography
+                                variant='h6'
+                                sx={{
+                                  fontWeight: 'bold',
+                                  mb: 1,
+                                  width: '300px',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap'
+                                }}
+                              >
+                                <strong>Job Title:</strong> {position.title}
+                              </Typography>
+                              <Typography
+                                variant='body1'
+                                color='text.secondary'
+                                sx={{
+                                  mb: 0.5,
+                                  width: '300px',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap'
+                                }}
+                              >
+                                <strong>Company:</strong> {position.companyName}
+                              </Typography>
+                              {position.employmentType && (
+                                <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
+                                  <strong>Employment Type:</strong> {position.employmentType}
+                                </Typography>
+                              )}
+                              {position.location && (
+                                <Typography variant='body2' color='text.secondary' sx={{ mb: 0.5 }}>
+                                  <strong>Location:</strong> {position.location}
+                                </Typography>
+                              )}
+                              <Typography variant='body2' color='text.secondary' sx={{ mb: 0.5 }}>
+                                <strong>Duration:</strong>{' '}
+                                {position.startDate ? new Date(position.startDate).toLocaleDateString() : 'N/A'} -{' '}
+                                {position.isCurrentlyWorking
+                                  ? 'Present'
+                                  : position.endDate
+                                    ? new Date(position.endDate).toLocaleDateString()
+                                    : 'N/A'}
+                              </Typography>
+                              {position.description && (
+                                <Typography variant='body2' sx={{ mt: 1 }}>
+                                  <strong>Description:</strong> {position.description}
+                                </Typography>
+                              )}
+                            </Box>
+                            <Box sx={{ display: 'flex', gap: 1 }}>
+                              <IconButton
+                                size='small'
+                                color='primary'
+                                onClick={() => handleEditWorkingPosition(position)}
+                              >
+                                <EditIcon fontSize='small' />
+                              </IconButton>
+                              <IconButton
+                                size='small'
+                                color='error'
+                                onClick={() => handleDeleteWorkingPosition(position._id)}
+                              >
+                                <DeleteIcon fontSize='small' />
+                              </IconButton>
+                            </Box>
+                          </Box>
+                        </Box>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </Box>
+              </Grid>
+            )}
+
+            {/* Add New Associated Organization Button */}
+            <Grid item xs={12} sm={6}>
+              <Button
+                startIcon={<RiAddFill />}
+                sx={{ alignSelf: 'flex-start' }}
+                variant='text'
+                color='primary'
+                onClick={() => handleOpenModal('associatedOrganization')}
+              >
+                Add New Associated Organization
+              </Button>
+            </Grid>
+
+            {/* Display Associated Organizations List */}
+            {profileData?.associatedOrganizations && profileData.associatedOrganizations.length > 0 && (
+              <Grid item xs={12}>
+                <Box sx={{ mt: 2 }}>
+                  <Grid container spacing={2}>
+                    {profileData.associatedOrganizations.map((organization, index) => (
+                      <Grid item xs={12} md={6} key={organization._id || index}>
+                        <Box
+                          sx={{
+                            p: 2,
+                            height: '100%',
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            borderRadius: 1,
+                            backgroundColor: 'background.paper'
+                          }}
+                        >
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <Box sx={{ flex: 1, minWidth: 0 }}>
+                              <Typography
+                                variant='h6'
+                                sx={{
+                                  fontWeight: 'bold',
+                                  mb: 1,
+                                  width: '300px',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap'
+                                }}
+                              >
+                                <strong>Organization:</strong> {organization.organization}
+                              </Typography>
+                              {organization.organizationType && (
+                                <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
+                                  <strong>Organization Type:</strong> {organization.organizationType}
+                                </Typography>
+                              )}
+                              {organization.websiteUrl && (
+                                <Typography
+                                  variant='body2'
+                                  color='text.secondary'
+                                  sx={{
+                                    mb: 0.5,
+                                    width: '300px',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap'
+                                  }}
+                                >
+                                  <strong>Website:</strong> {organization.websiteUrl}
+                                </Typography>
+                              )}
+                            </Box>
+                            <Box sx={{ display: 'flex', gap: 1 }}>
+                              <IconButton
+                                size='small'
+                                color='primary'
+                                onClick={() => handleEditAssociatedOrganization(organization)}
+                              >
+                                <EditIcon fontSize='small' />
+                              </IconButton>
+                              <IconButton
+                                size='small'
+                                color='error'
+                                onClick={() => handleDeleteAssociatedOrganization(organization._id)}
+                              >
+                                <DeleteIcon fontSize='small' />
+                              </IconButton>
+                            </Box>
+                          </Box>
+                        </Box>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </Box>
               </Grid>
             )}
 
@@ -1441,53 +1778,6 @@ const AccountDetails = () => {
               </>
             )}
 
-            {/* Associated Organizations */}
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel>Associated Organizations</InputLabel>
-                <Select
-                  multiple
-                  name='activeAssociatedOrganizationIds'
-                  label=' Associated Organizations'
-                  value={formData.activeAssociatedOrganizationIds}
-                  onChange={e => handleFormChange('activeAssociatedOrganizationIds', e.target.value)}
-                  renderValue={selected => (
-                    <div className='flex flex-wrap gap-2'>
-                      {selected &&
-                        selected.length > 0 &&
-                        selected.map(value => (
-                          <Chip
-                            key={value}
-                            clickable
-                            deleteIcon={
-                              <i className='ri-close-circle-fill' onMouseDown={event => event.stopPropagation()}></i>
-                            }
-                            size='small'
-                            label={getAssocaiatedOrganizationLabel(value)}
-                            onDelete={() => handleDeleteChipFromMultiSelect('activeAssociatedOrganizationIds', value)}
-                          />
-                        ))}
-                    </div>
-                  )}
-                >
-                  {associatedOrganizationOptions.map(each => (
-                    <MenuItem key={each.value} value={each.value}>
-                      {each.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <Button
-                startIcon={<RiAddFill />}
-                sx={{ alignSelf: 'flex-start' }}
-                variant='text'
-                color='primary'
-                onClick={() => handleOpenModal('associatedOrganization')}
-              >
-                Add New Associated Organization
-              </Button>
-            </Grid>
-
             {/* ----Upload Resume---- */}
             {formData.accountType === 'INDIVIDUAL' && (
               <>
@@ -1535,24 +1825,39 @@ const AccountDetails = () => {
               <NewAssociatedOrganization
                 email={session?.user?.email}
                 open={isModalOpen.associatedOrganization}
-                onClose={() => handleCloseModal('associatedOrganization')}
+                onClose={() => {
+                  setEditingAssociatedOrganization(null)
+                  handleCloseModal('associatedOrganization')
+                }}
                 onRefetchUserProfileData={handleRefetchUserProfileData}
+                existingOrganizations={profileData?.associatedOrganizations || []}
+                editingOrganization={editingAssociatedOrganization}
               />
             )}
             {isModalOpen.education && (
               <EducationModal
                 email={session?.user?.email}
                 open={isModalOpen.education}
-                onClose={() => handleCloseModal('education')}
+                onClose={() => {
+                  setEditingEducation(null)
+                  handleCloseModal('education')
+                }}
                 onRefetchUserProfileData={handleRefetchUserProfileData}
+                existingSchools={profileData?.schools || []}
+                editingEducation={editingEducation}
               />
             )}
             {isModalOpen.workingPosition && (
               <CurrentWorkingPositionModal
                 email={session?.user?.email}
                 open={isModalOpen.workingPosition}
-                onClose={() => handleCloseModal('workingPosition')}
+                onClose={() => {
+                  setEditingWorkingPosition(null)
+                  handleCloseModal('workingPosition')
+                }}
                 onRefetchUserProfileData={handleRefetchUserProfileData}
+                existingPositions={profileData?.workingPositions || []}
+                editingPosition={editingWorkingPosition}
               />
             )}
 

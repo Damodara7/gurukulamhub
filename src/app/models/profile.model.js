@@ -21,7 +21,8 @@ const schoolSchema = new mongoose.Schema({
   fieldOfStudy: { type: String },
   startDate: { type: Date },
   endDate: { type: Date },
-  description: { type: String }
+  description: { type: String },
+  type: { type: String, default: 'education' }
 })
 
 const workingPositionSchema = new mongoose.Schema({
@@ -33,7 +34,8 @@ const workingPositionSchema = new mongoose.Schema({
   isCurrentlyWorking: { type: Boolean, default: true },
   startDate: { type: Date },
   endDate: { type: Date },
-  description: { type: String }
+  description: { type: String },
+  type: { type: String, default: 'work' }
 })
 
 const userProfileSchema = new mongoose.Schema(
@@ -85,8 +87,7 @@ const userProfileSchema = new mongoose.Schema(
     voterId: {
       epicNumber: { type: String },
       frontImage: { type: String }, // URL or base64 of front image
-      backImage: { type: String }, // URL or base64 of back image
-      isVerified: { type: Boolean, default: false }
+      backImage: { type: String } // URL or base64 of back image
     },
     linkedInUrl: { type: String },
     facebookUrl: { type: String },

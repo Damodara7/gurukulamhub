@@ -12,20 +12,25 @@ import {
   InputLabel,
   MenuItem,
   Select,
-  TextField
+  TextField,
+  Box,
+  Typography,
+  IconButton,
+  Divider,
+  Chip,
+  Stack
 } from '@mui/material'
 import React, { useEffect, useState } from 'react'
 
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS as ApiUrls } from '@/configs/apiConfig'
-import * as clientApi from '@/app/api/client/client.api'
 
 import { DemoContainer } from '@mui/x-date-pickers/internals/demo'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { DatePicker } from '@mui/x-date-pickers'
 import dayjs from 'dayjs'
-import { toast } from 'react-toastify'
+
 
 const initialFormData = {
   title: '',
@@ -39,7 +44,7 @@ const initialFormData = {
   description: ''
 }
 
-function CurrentWorkingPositionModal({ open, onClose, email, onRefetchUserProfileData }) {
+function CurrentWorkingPositionModal({ open, onClose, email, onRefetchUserProfileData, existingPositions = [] }) {
   const [formData, setFormData] = useState(initialFormData)
   const [isFormValid, setIsFormValid] = useState(true)
   const [isFormSubmitting, setIsFormSubmitting] = useState(false)
@@ -70,7 +75,6 @@ function CurrentWorkingPositionModal({ open, onClose, email, onRefetchUserProfil
         email,
         workingPosition: formData
       })
-      // const response = await clientApi.addWorkingPosition(email, formData)
 
       if (response.status === 'success') {
         // Optionally update local state or refetch data

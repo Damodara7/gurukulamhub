@@ -9,20 +9,21 @@ import {
   InputLabel,
   MenuItem,
   Select,
-  TextField
+  TextField,
+  Box,
+  Typography,
+  IconButton,
+  Divider
 } from '@mui/material'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS as ApiUrls } from '@/configs/apiConfig'
-import * as clientApi from '@/app/api/client/client.api'
-
 import { DemoContainer } from '@mui/x-date-pickers/internals/demo'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { DatePicker } from '@mui/x-date-pickers'
 import dayjs from 'dayjs'
-import { toast } from 'react-toastify'
 
 const initialFormData = {
   school: '',
@@ -49,10 +50,34 @@ const highestQualificationOptions = [
   'Other'
 ]
 
-function EducationModal({ open, onClose, email, onRefetchUserProfileData }) {
+function EducationModal({
+  open,
+  onClose,
+  email,
+  onRefetchUserProfileData,
+  existingSchools = [],
+  editingEducation = null
+}) {
   const [formData, setFormData] = useState(initialFormData)
   const [isFormValid, setIsFormValid] = useState(true)
   const [isFormSubmitting, setIsFormSubmitting] = useState(false)
+
+  // Populate form data when editing
+  useEffect(() => {
+    if (editingEducation) {
+      setFormData({
+        school: editingEducation.school || '',
+        degree: editingEducation.degree || '',
+        highestQualification: editingEducation.highestQualification || '',
+        fieldOfStudy: editingEducation.fieldOfStudy || '',
+        startDate: editingEducation.startDate || '',
+        endDate: editingEducation.endDate || '',
+        description: editingEducation.description || ''
+      })
+    } else {
+      setFormData(initialFormData)
+    }
+  }, [editingEducation])
 
   function handleClose() {
     setFormData(initialFormData)
@@ -76,22 +101,29 @@ function EducationModal({ open, onClose, email, onRefetchUserProfileData }) {
     setIsFormValid(true)
 
     try {
-      // Make API request to add new education details
-      const response = await RestApi.post(`${ApiUrls.v0.USERS_PROFILE}/schools`, { email, school: formData })
-      // const response = await clientApi.addSchool(email, formData)
+      let response
+      if (editingEducation) {
+        // Update existing education
+        response = await RestApi.put(`${ApiUrls.v0.USERS_PROFILE}/schools?id=${editingEducation._id}`, {
+          email,
+          school: formData
+        })
+      } else {
+        // Add new education
+        response = await RestApi.post(`${ApiUrls.v0.USERS_PROFILE}/schools`, {
+          email,
+          school: formData
+        })
+      }
 
       if (response.status === 'success') {
-        // Optionally update local state or refetch data
-        console.log('Education details added successfully:', response.result)
-        // toast.success('Education details added successfully.')
+        console.log('Education details saved successfully:', response.result)
         onClose()
         onRefetchUserProfileData()
       } else {
-        // toast.error('Error: ' + response.message)
-        console.error('Error adding education details:', response.message)
+        console.error('Error saving education details:', response.message)
       }
     } catch (error) {
-      // toast.error('An unexpected error occurred.')
       console.error('Unexpected error:', error)
     } finally {
       setIsFormSubmitting(false)
@@ -101,7 +133,7 @@ function EducationModal({ open, onClose, email, onRefetchUserProfileData }) {
   return (
     <Grid xs={12} sm={8} md={6}>
       <Dialog sx={{ width: '100%', margin: 'auto' }} open={open} onClose={handleClose}>
-        <DialogTitle>Add Your Education</DialogTitle>
+        <DialogTitle>{editingEducation ? 'Edit Education' : 'Add Your Education'}</DialogTitle>
 
         <DialogContent>
           <form>
@@ -223,7 +255,7 @@ function EducationModal({ open, onClose, email, onRefetchUserProfileData }) {
             {/* Actions */}
             <Grid item xs={12} className='flex gap-4 flex-wrap'>
               <Button disabled={isFormSubmitting} variant='contained' type='submit' onClick={handleSubmit}>
-                Save
+                {editingEducation ? 'Update' : 'Save'}
               </Button>
               <Button variant='outlined' type='reset' color='secondary' onClick={handleClose}>
                 Close
