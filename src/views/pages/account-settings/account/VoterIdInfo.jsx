@@ -5,6 +5,8 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload'
 import DeleteIcon from '@mui/icons-material/Delete'
 import CropIcon from '@mui/icons-material/Crop'
 import ReactCropperComponent from '@views/pages/account-settings/account/ReactCropperComponent'
+import * as RestApi from '@/utils/restApiUtil'
+import { API_URLS } from '@/configs/apiConfig'
 
 function VoterIdInfo({
   voterIdPhotos,
@@ -17,7 +19,9 @@ function VoterIdInfo({
   isEpicValid,
   formData,
   handleFormChange,
-  handleVoterIdImageCrop
+  handleVoterIdImageCrop,
+  session,
+  onRefetchUserProfileData
 }) {
   const VisuallyHiddenInput = styled('input')({
     clip: 'rect(0 0 0 0)',
@@ -31,6 +35,38 @@ function VoterIdInfo({
     width: 1
   })
 
+  // Function to handle voter ID updates using dedicated API
+  const handleVoterIdUpdate = async voterIdData => {
+    try {
+      let response
+      if (formData.voterId?.epicNumber) {
+        // Update existing voter ID
+        response = await RestApi.put(`${API_URLS.v0.USERS_PROFILE}/voter-id`, {
+          email: session?.user?.email,
+          voterId: voterIdData
+        })
+      } else {
+        // Add new voter ID
+        response = await RestApi.post(`${API_URLS.v0.USERS_PROFILE}/voter-id`, {
+          email: session?.user?.email,
+          voterId: voterIdData
+        })
+      }
+
+      if (response.status === 'success') {
+        console.log('Voter ID updated successfully:', response.result)
+        onRefetchUserProfileData()
+        return true
+      } else {
+        console.error('Error updating voter ID:', response.message)
+        return false
+      }
+    } catch (error) {
+      console.error('Unexpected error updating voter ID:', error)
+      return false
+    }
+  }
+
   return (
     <>
       <Grid item xs={12} marginLeft={'0.25rem'}>
@@ -42,21 +78,25 @@ function VoterIdInfo({
         item
         xs={12}
         sm={6}
+        md={6}
         display='flex'
         flexDirection='column'
         justifyContent='flex-start'
-        alignItems='flex-start'
+        alignItems='center'
+        sx={{ padding: { xs: '8px', sm: '16px' } }}
       >
         {voterIdPhotos.front ? (
           !isCropMode.front ? (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%' }}>
               <Box
                 sx={{
-                  width: '500px',
-                  height: '250px',
+                  width: '100%',
+                  maxWidth: { xs: '100%', sm: '400px', md: '500px' },
+                  height: { xs: '200px', sm: '220px', md: '250px' },
                   // background: 'rgba(201,186,228,0.25)',
                   padding: '5px',
-                  borderRadius: '10px'
+                  borderRadius: '10px',
+                  margin: '0 auto'
                 }}
               >
                 <img
@@ -101,8 +141,10 @@ function VoterIdInfo({
             variant='outlined'
             sx={{
               width: '100%',
+              maxWidth: { xs: '100%', sm: '400px', md: '500px' },
               height: '50px',
-              color: 'primary'
+              color: 'primary',
+              margin: '0 auto'
             }}
             startIcon={<CloudUploadIcon />}
           >
@@ -121,23 +163,27 @@ function VoterIdInfo({
         item
         xs={12}
         sm={6}
+        md={6}
         display='flex'
         flexDirection='column'
         justifyContent='flex-start'
-        alignItems='flex-start'
+        alignItems='center'
+        sx={{ padding: { xs: '8px', sm: '16px' } }}
       >
         {voterIdPhotos.back ? (
           !isCropMode.back ? (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%' }}>
               <Box
                 sx={{
-                  width: '500px',
-                  height: '250px',
+                  width: '100%',
+                  maxWidth: { xs: '100%', sm: '400px', md: '500px' },
+                  height: { xs: '200px', sm: '220px', md: '250px' },
                   // background: 'rgba(201,186,228,0.25)',
                   padding: '5px',
                   borderRadius: '10px',
                   position: 'relative',
-                  overflow: 'hidden'
+                  overflow: 'hidden',
+                  margin: '0 auto'
                 }}
               >
                 <img
@@ -180,7 +226,13 @@ function VoterIdInfo({
           <Button
             component='label'
             variant='outlined'
-            sx={{ width: '100%', height: '50px', color: 'primary' }}
+            sx={{
+              width: '100%',
+              maxWidth: { xs: '100%', sm: '400px', md: '500px' },
+              height: '50px',
+              color: 'primary',
+              margin: '0 auto'
+            }}
             startIcon={<CloudUploadIcon />}
           >
             Upload Voter Id Back-Side
@@ -193,7 +245,7 @@ function VoterIdInfo({
         )}
       </Grid>
       {/* Voter Id EPIC Input */}
-      <Grid item xs={12} sm={6}>
+      <Grid item xs={12} sm={6} md={6} sx={{ padding: { xs: '8px', sm: '16px' } }}>
         <TextField
           name='voterId'
           fullWidth
@@ -204,7 +256,15 @@ function VoterIdInfo({
             const value = e.target.value
             // Limit input to 10 characters
             if (value.length <= 10) {
+              // Update local form data immediately for UI responsiveness
               handleFormChange('voterId', value)
+
+              // Update voter ID using dedicated API
+              const voterIdData = {
+                ...formData.voterId,
+                epicNumber: value
+              }
+              handleVoterIdUpdate(voterIdData)
             }
           }}
           error={!isEpicValid} // Set error state based on EPIC validation

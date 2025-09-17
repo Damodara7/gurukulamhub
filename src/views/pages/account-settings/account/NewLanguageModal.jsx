@@ -15,7 +15,7 @@ import {
 } from '@mui/material'
 import React, { useState } from 'react'
 import * as RestApi from '@/utils/restApiUtil'
-import { API_URLS as ApiUrls } from '@/configs/apiConfig'
+import { API_URLS } from '@/configs/apiConfig'
 import * as clientApi from '@/app/api/client/client.api'
 import { toast } from 'react-toastify'
 
@@ -83,7 +83,7 @@ function NewLanguageModal({ open, onClose, email, onRefetchUserProfileData }) {
 
     try {
       // Make API request to add new language details
-      const response = await RestApi.post(`${ApiUrls.v0.USERS_PROFILE}/languages`, {
+      const response = await RestApi.post(`${API_URLS.v0.USERS_PROFILE}/languages`, {
         email,
         language: { ...formData }
       })

@@ -15,7 +15,7 @@ import React, { useState } from 'react'
 
 import * as RestApi from '@/utils/restApiUtil'
 import * as clientApi from '@/app/api/client/client.api'
-import { API_URLS as ApiUrls } from '@/configs/apiConfig'
+import { API_URLS } from '@/configs/apiConfig'
 
 import { DemoContainer } from '@mui/x-date-pickers/internals/demo'
 import { LocalizationProvider } from '@mui/x-date-pickers-pro/LocalizationProvider'
@@ -69,7 +69,7 @@ function NewAssociatedOrganization({ open, onClose, email, onRefetchUserProfileD
 
     try {
       // Make API request to add new Associated Organization details
-      const response = await RestApi.post(`${ApiUrls.v0.USERS_PROFILE}/associated-organizations`, {
+        const response = await RestApi.post(`${API_URLS.v0.USERS_PROFILE}/associated-organizations`, {
         email,
         organization: formData
       })

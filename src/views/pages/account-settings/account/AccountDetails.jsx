@@ -4,7 +4,7 @@ import countryList from 'react-select-country-list'
 import ReactCropperComponet, { ReactCropperComponent } from './ReactCropperComponent'
 
 import * as RestApi from '@/utils/restApiUtil'
-import { API_URLS as ApiUrls } from '@/configs/apiConfig'
+import { API_URLS } from '@/configs/apiConfig'
 import { toast } from 'react-toastify'
 import { useSession } from 'next-auth/react'
 
@@ -324,7 +324,7 @@ const AccountDetails = () => {
     async function getData() {
       // toast.success('Fetching user profile now...')
       setGetLoading(true)
-      const result = await RestApi.get(`${ApiUrls.v0.USERS_PROFILE}/${session.user.email}`)
+      const result = await RestApi.get(`${API_URLS.v0.USERS_PROFILE}/${session.user.email}`)
       // const result = await clientApi.getUserProfileByEmail(session.user.email)
 
       console.log('RESULT: ', result)
@@ -547,7 +547,7 @@ const AccountDetails = () => {
     if (!schoolId) return
 
     try {
-      const response = await RestApi.del(`${ApiUrls.v0.USERS_PROFILE}/schools?id=${schoolId}`)
+      const response = await RestApi.del(`${API_URLS.v0.USERS_PROFILE}/schools?id=${schoolId}`)
       if (response.status === 'success') {
         console.log('Education deleted successfully')
         handleRefetchUserProfileData()
@@ -568,7 +568,7 @@ const AccountDetails = () => {
     if (!positionId) return
 
     try {
-      const response = await RestApi.del(`${ApiUrls.v0.USERS_PROFILE}/working-positions?id=${positionId}`)
+      const response = await RestApi.del(`${API_URLS.v0.USERS_PROFILE}/working-positions?id=${positionId}`)
       if (response.status === 'success') {
         console.log('Working position deleted successfully')
         handleRefetchUserProfileData()
@@ -589,7 +589,7 @@ const AccountDetails = () => {
     if (!organizationId) return
 
     try {
-      const response = await RestApi.del(`${ApiUrls.v0.USERS_PROFILE}/associated-organizations?id=${organizationId}`)
+      const response = await RestApi.del(`${API_URLS.v0.USERS_PROFILE}/associated-organizations?id=${organizationId}`)
       if (response.status === 'success') {
         console.log('Associated organization deleted successfully')
         handleRefetchUserProfileData()
@@ -830,9 +830,14 @@ const AccountDetails = () => {
       }
     }
 
+    // Remove voter ID from main profile update since it's handled separately
+    if (data.voterId) {
+      delete data.voterId
+    }
+
     console.log('User profile data sending to POST:', data)
 
-    const result = await RestApi.put(`${ApiUrls.v0.USERS_PROFILE}/${session?.user?.email}`, data)
+    const result = await RestApi.put(`${API_URLS.v0.USERS_PROFILE}/${session?.user?.email}`, data)
     // const result = await clientApi.updateUserProfile(session.user.email, data)
     if (result.status === 'success') {
       console.log('Updated  result', result.result)
@@ -1057,22 +1062,60 @@ const AccountDetails = () => {
     }
   }
 
-  const handleVoterIdPhotosInputChange = (file, side) => {
+  // Consolidated function to handle voter ID updates
+  const updateVoterIdData = async voterIdData => {
+    try {
+      let response
+      if (formData.voterId?.epicNumber) {
+        // Update existing voter ID
+        response = await RestApi.put(`${API_URLS.v0.USERS_PROFILE}/voter-id`, {
+          email: session?.user?.email,
+          voterId: voterIdData
+        })
+      } else {
+        // Add new voter ID
+        response = await RestApi.post(`${API_URLS.v0.USERS_PROFILE}/voter-id`, {
+          email: session?.user?.email,
+          voterId: voterIdData
+        })
+      }
+
+      if (response.status === 'success') {
+        console.log('Voter ID updated successfully:', response.result)
+        // Update local form data
+        setFormData(prev => ({
+          ...prev,
+          voterId: voterIdData
+        }))
+        handleRefetchUserProfileData()
+        return true
+      } else {
+        console.error('Error updating voter ID:', response.message)
+        return false
+      }
+    } catch (error) {
+      console.error('Unexpected error updating voter ID:', error)
+      return false
+    }
+  }
+
+  const handleVoterIdPhotosInputChange = async (file, side) => {
     const reader = new FileReader()
     const { files } = file.target
 
     if (files && files.length !== 0) {
-      reader.onload = () => {
+      reader.onload = async () => {
         const imageData = reader.result
         setVoterIdPhotos(prev => ({ ...prev, [side]: imageData }))
-        // Also update the form data
-        setFormData(prev => ({
-          ...prev,
-          voterId: {
-            ...prev.voterId,
-            [side === 'front' ? 'frontImage' : 'backImage']: imageData
-          }
-        }))
+
+        // Update voter ID via consolidated function
+        const voterIdData = {
+          ...formData.voterId,
+          [side === 'front' ? 'frontImage' : 'backImage']: imageData
+        }
+
+        await updateVoterIdData(voterIdData)
+
         // Set crop mode to true for the uploaded image
         setIsCropMode(prev => ({ ...prev, [side]: true }))
       }
@@ -1080,29 +1123,30 @@ const AccountDetails = () => {
     }
   }
 
-  const handleVoterIdPhotoDelete = side => {
+  const handleVoterIdPhotoDelete = async side => {
     setVoterIdPhotos(prev => ({ ...prev, [side]: '' }))
     setIsCropMode(prev => ({ ...prev, [side]: false }))
-    // Also update the form data
-    setFormData(prev => ({
-      ...prev,
-      voterId: {
-        ...prev.voterId,
-        [side === 'front' ? 'frontImage' : 'backImage']: ''
-      }
-    }))
+
+    // Update voter ID via consolidated function
+    const voterIdData = {
+      ...formData.voterId,
+      [side === 'front' ? 'frontImage' : 'backImage']: ''
+    }
+
+    await updateVoterIdData(voterIdData)
   }
 
-  const handleVoterIdImageCrop = (side, croppedImageUrl) => {
+  const handleVoterIdImageCrop = async (side, croppedImageUrl) => {
     // Update both local state and form data with cropped image
     setVoterIdPhotos(prev => ({ ...prev, [side]: croppedImageUrl }))
-    setFormData(prev => ({
-      ...prev,
-      voterId: {
-        ...prev.voterId,
-        [side === 'front' ? 'frontImage' : 'backImage']: croppedImageUrl
-      }
-    }))
+
+    // Update voter ID via consolidated function
+    const voterIdData = {
+      ...formData.voterId,
+      [side === 'front' ? 'frontImage' : 'backImage']: croppedImageUrl
+    }
+
+    await updateVoterIdData(voterIdData)
   }
 
   // const validatePhone = (value, countryDialCode) => {
@@ -1245,6 +1289,8 @@ const AccountDetails = () => {
               formData={formData}
               handleFormChange={handleFormChange}
               handleVoterIdImageCrop={handleVoterIdImageCrop}
+              session={session}
+              onRefetchUserProfileData={handleRefetchUserProfileData}
             />
             {/* ----Address---- */}
             <AddressInfo

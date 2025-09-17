@@ -18,7 +18,7 @@ import {
 import React, { useState, useEffect } from 'react'
 
 import * as RestApi from '@/utils/restApiUtil'
-import { API_URLS as ApiUrls } from '@/configs/apiConfig'
+import { API_URLS } from '@/configs/apiConfig'
 import { DemoContainer } from '@mui/x-date-pickers/internals/demo'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
@@ -104,13 +104,13 @@ function EducationModal({
       let response
       if (editingEducation) {
         // Update existing education
-        response = await RestApi.put(`${ApiUrls.v0.USERS_PROFILE}/schools?id=${editingEducation._id}`, {
+        response = await RestApi.put(`${API_URLS.v0.USERS_PROFILE}/schools?id=${editingEducation._id}`, {
           email,
           school: formData
         })
       } else {
         // Add new education
-        response = await RestApi.post(`${ApiUrls.v0.USERS_PROFILE}/schools`, {
+        response = await RestApi.post(`${API_URLS.v0.USERS_PROFILE}/schools`, {
           email,
           school: formData
         })
