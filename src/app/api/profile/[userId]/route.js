@@ -8,10 +8,13 @@ export async function GET(req, { params }) {
     console.log('UserId is:', userLoginId)
     const profileResult = await getByEmail({ email: userLoginId })
     if (profileResult.status === 'success') {
-      var successResponse = ApiResponseUtils.createSuccessResponse('User profile created successfully', profileResult.result)
+      var successResponse = ApiResponseUtils.createSuccessResponse(
+        'User profile created successfully',
+        profileResult.result
+      )
       return ApiResponseUtils.sendSuccessResponse(successResponse)
     }
-    const errorResponse = ApiResponseUtils.createErrorResponse(profileResult.message)
+    const errorResponse = ApiResponseUtils.createErrorResponse(createdProfileResult.message)
     return ApiResponseUtils.sendErrorResponse(errorResponse)
   } catch (error) {
     console.error('api/profile/[userId] GET -> Error fetching user:', error)
@@ -33,14 +36,17 @@ export async function PUT(request, { params }) {
 
     const createdProfileResult = await addOrUpdate({ email, data: updateDataRequest })
 
-    if (createdProfileResult.status = 'success') {
+    if (createdProfileResult.status === 'success') {
       console.log('User Profile registered/updated Successfully ():')
 
-      var successResponse = ApiResponseUtils.createSuccessResponse('User profile updated successfully', createdProfileResult.result)
+      var successResponse = ApiResponseUtils.createSuccessResponse(
+        'User profile updated successfully',
+        createdProfileResult.result
+      )
       return ApiResponseUtils.sendSuccessResponse(successResponse)
     } else {
       console.log('User Profile registration/update error.')
-      const errorResponse = ApiResponseUtils.createErrorResponse(profileResult.message)
+      const errorResponse = ApiResponseUtils.createErrorResponse(createdProfileResult.message)
       return ApiResponseUtils.sendErrorResponse(errorResponse)
     }
   } catch (error) {
@@ -66,11 +72,14 @@ export async function POST(request, { params }) {
     if (createdProfileResult.status === 'success') {
       console.log('User Profile registered/updated Successfully ():')
 
-      var successResponse = ApiResponseUtils.createSuccessResponse('User profile updated successfully', createdProfile)
+      var successResponse = ApiResponseUtils.createSuccessResponse(
+        'User profile updated successfully',
+        createdProfileResult.result
+      )
       return ApiResponseUtils.sendSuccessResponse(successResponse)
     } else {
       console.log('User Profile registration/update error.')
-      const errorResponse = ApiResponseUtils.createErrorResponse(profileResult.message)
+      const errorResponse = ApiResponseUtils.createErrorResponse(createdProfileResult.message)
       return ApiResponseUtils.sendErrorResponse(errorResponse)
     }
   } catch (error) {

@@ -118,12 +118,15 @@ function EducationModal({
 
       if (response.status === 'success') {
         console.log('Education details saved successfully:', response.result)
+        toast.success('Education details saved successfully.')
         onClose()
         onRefetchUserProfileData()
       } else {
+        toast.error('Error: ' + response.message)
         console.error('Error saving education details:', response.message)
       }
     } catch (error) {
+      toast.error('An unexpected error occurred.')
       console.error('Unexpected error:', error)
     } finally {
       setIsFormSubmitting(false)

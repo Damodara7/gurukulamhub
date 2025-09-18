@@ -30,7 +30,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { DatePicker } from '@mui/x-date-pickers'
 import dayjs from 'dayjs'
-
+import { toast } from 'react-toastify'
 
 const initialFormData = {
   title: '',
@@ -79,15 +79,15 @@ function CurrentWorkingPositionModal({ open, onClose, email, onRefetchUserProfil
       if (response.status === 'success') {
         // Optionally update local state or refetch data
         console.log('Working position details added successfully:', response.result)
-        // toast.success('Working position details added successfully.')
+        toast.success('Working position details added successfully.')
         onClose()
         onRefetchUserProfileData()
       } else {
-        // toast.error('Error: ' + response.message)
+        toast.error('Error: ' + response.message)
         console.error('Error adding working position details:', response.message)
       }
     } catch (error) {
-      // toast.error('An unexpected error occurred.')
+      toast.error('An unexpected error occurred.')
       console.error('Unexpected error:', error)
     } finally {
       setIsFormSubmitting(false)

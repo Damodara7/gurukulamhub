@@ -7,6 +7,7 @@ import CropIcon from '@mui/icons-material/Crop'
 import ReactCropperComponent from '@views/pages/account-settings/account/ReactCropperComponent'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
+import { toast } from 'react-toastify'
 
 function VoterIdInfo({
   voterIdPhotos,
@@ -55,13 +56,16 @@ function VoterIdInfo({
 
       if (response.status === 'success') {
         console.log('Voter ID updated successfully:', response.result)
+        toast.success('Voter ID updated successfully.')
         onRefetchUserProfileData()
         return true
       } else {
+        toast.error('Error: ' + response.message)
         console.error('Error updating voter ID:', response.message)
         return false
       }
     } catch (error) {
+      toast.error('An unexpected error occurred.')
       console.error('Unexpected error updating voter ID:', error)
       return false
     }

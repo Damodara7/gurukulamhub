@@ -69,7 +69,7 @@ function NewAssociatedOrganization({ open, onClose, email, onRefetchUserProfileD
 
     try {
       // Make API request to add new Associated Organization details
-        const response = await RestApi.post(`${API_URLS.v0.USERS_PROFILE}/associated-organizations`, {
+      const response = await RestApi.post(`${API_URLS.v0.USERS_PROFILE}/associated-organizations`, {
         email,
         organization: formData
       })
@@ -78,15 +78,15 @@ function NewAssociatedOrganization({ open, onClose, email, onRefetchUserProfileD
       if (response.status === 'success') {
         // Optionally update local state or refetch data
         console.log('Associated Organization details added successfully:', response.result)
-        // toast.success('Associated Organization details added successfully.')
+        toast.success('Associated Organization details added successfully.')
         onClose()
         onRefetchUserProfileData()
       } else {
-        // toast.error('Error: ' + response.message)
+        toast.error('Error: ' + response.message)
         console.error('Error adding associated organization details:', response)
       }
     } catch (error) {
-      // toast.error('An unexpected error occurred.')
+      toast.error('An unexpected error occurred.')
       console.error('Unexpected error:', error)
     } finally {
       setIsFormSubmitting(false)

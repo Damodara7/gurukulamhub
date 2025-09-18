@@ -550,11 +550,14 @@ const AccountDetails = () => {
       const response = await RestApi.del(`${API_URLS.v0.USERS_PROFILE}/schools?id=${schoolId}`)
       if (response.status === 'success') {
         console.log('Education deleted successfully')
+        toast.success('Education deleted successfully.')
         handleRefetchUserProfileData()
       } else {
+        toast.error('Error: ' + response.message)
         console.error('Error deleting education:', response.message)
       }
     } catch (error) {
+      toast.error('An unexpected error occurred.')
       console.error('Error deleting education:', error)
     }
   }
@@ -571,11 +574,14 @@ const AccountDetails = () => {
       const response = await RestApi.del(`${API_URLS.v0.USERS_PROFILE}/working-positions?id=${positionId}`)
       if (response.status === 'success') {
         console.log('Working position deleted successfully')
+        toast.success('Working position deleted successfully.')
         handleRefetchUserProfileData()
       } else {
+        toast.error('Error: ' + response.message)
         console.error('Error deleting working position:', response.message)
       }
     } catch (error) {
+      toast.error('An unexpected error occurred.')
       console.error('Error deleting working position:', error)
     }
   }
@@ -592,11 +598,14 @@ const AccountDetails = () => {
       const response = await RestApi.del(`${API_URLS.v0.USERS_PROFILE}/associated-organizations?id=${organizationId}`)
       if (response.status === 'success') {
         console.log('Associated organization deleted successfully')
+        toast.success('Associated organization deleted successfully.')
         handleRefetchUserProfileData()
       } else {
+        toast.error('Error: ' + response.message)
         console.error('Error deleting associated organization:', response.message)
       }
     } catch (error) {
+      toast.error('An unexpected error occurred.')
       console.error('Error deleting associated organization:', error)
     }
   }
@@ -1443,55 +1452,55 @@ const AccountDetails = () => {
               <Divider> Work History </Divider>
             </Grid>
             {/* Add New Position Button and Open To Work / Hiring */}
-            <Grid item xs={12} sm={6}>
-              <Button
-                startIcon={<RiAddFill />}
-                sx={{ alignSelf: 'flex-start' }}
-                variant='text'
-                color='primary'
-                onClick={() => handleOpenModal('workingPosition')}
+            <Grid item xs={12}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  width: '100%',
+                  gap: 2
+                }}
               >
-                Add New Position
-              </Button>
+                {/* Add New Position Button - Left Side */}
+                <Button
+                  startIcon={<RiAddFill />}
+                  variant='text'
+                  color='primary'
+                  onClick={() => handleOpenModal('workingPosition')}
+                  sx={{ flexShrink: 0 }}
+                >
+                  Add New Position
+                </Button>
+
+                {/* Open To Work for Individual - Right Side */}
+                {formData.accountType === 'INDIVIDUAL' && (
+                  <FormGroup sx={{ flexShrink: 0 }}>
+                    <FormControlLabel
+                      checked={formData.openToWork}
+                      control={<Checkbox />}
+                      label='Open to work'
+                      name='openToWork'
+                      onChange={(e, checked) => handleFormChange('openToWork', checked)}
+                    />
+                  </FormGroup>
+                )}
+
+                {/* Hiring for Business/NGO - Right Side */}
+                {(formData.accountType === 'BUSINESS' || formData.accountType === 'NGO') && (
+                  <FormGroup sx={{ flexShrink: 0 }}>
+                    <FormControlLabel
+                      name='hiring'
+                      checked={formData.hiring}
+                      control={<Checkbox />}
+                      label='Hiring'
+                      onChange={(e, checked) => handleFormChange('hiring', checked)}
+                    />
+                  </FormGroup>
+                )}
+              </Box>
             </Grid>
-
-            {/* Open To Work for Individual */}
-            {formData.accountType === 'INDIVIDUAL' && (
-              <Grid item xs={12} sm={6}>
-                <FormGroup sx={{ width: '100%' }}>
-                  <Stack sx={{ width: '100%' }} flexDirection='row' justifyContent={'center'}>
-                    {
-                      <FormControlLabel
-                        checked={formData.openToWork}
-                        control={<Checkbox />}
-                        label='Open to work'
-                        name='openToWork'
-                        onChange={(e, checked) => handleFormChange('openToWork', checked)}
-                      />
-                    }
-                  </Stack>
-                </FormGroup>
-              </Grid>
-            )}
-
-            {/* Hiring for Business/NGO */}
-            {(formData.accountType === 'BUSINESS' || formData.accountType === 'NGO') && (
-              <Grid item xs={12} sm={6}>
-                <FormGroup sx={{ width: '100%' }}>
-                  <Stack sx={{ width: '100%' }} flexDirection='row' justifyContent={'center'}>
-                    {
-                      <FormControlLabel
-                        name='hiring'
-                        checked={formData.hiring}
-                        control={<Checkbox />}
-                        label='Hiring'
-                        onChange={(e, checked) => handleFormChange('hiring', checked)}
-                      />
-                    }
-                  </Stack>
-                </FormGroup>
-              </Grid>
-            )}
 
             {/* Display Working Positions List */}
             {profileData?.workingPositions && profileData.workingPositions.length > 0 && (

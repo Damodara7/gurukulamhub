@@ -49,7 +49,7 @@ const userProfileSchema = new mongoose.Schema(
     age: {
       type: Number,
       validate: {
-        validator: value => value >= 6 && value <= 120,
+        validator: value => value === null || value === undefined || (value >= 6 && value <= 120),
         message: 'Age must be between 6 and 120.'
       }
     },
