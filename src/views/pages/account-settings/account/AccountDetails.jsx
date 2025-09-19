@@ -614,6 +614,26 @@ const AccountDetails = () => {
     setFormData(prev => ({ ...prev, [field]: [...prev[field]].filter(each => each !== value) }))
   }
 
+  async function handleDeleteLanguage(languageId) {
+    if (!languageId) return
+
+    try {
+      const response = await RestApi.del(`${API_URLS.v0.USERS_PROFILE}/languages?id=${languageId}`)
+      if (response.status === 'success') {
+        console.log('Language deleted successfully')
+        toast.success('Language deleted successfully.')
+        // Refetch user profile data to update the UI
+        setShouldRefetchData(prev => !prev)
+      } else {
+        toast.error('Error: ' + response.message)
+        console.error('Error deleting language:', response.message)
+      }
+    } catch (error) {
+      toast.error('An unexpected error occurred.')
+      console.error('Error deleting language:', error)
+    }
+  }
+
   function validateUrl(field, value) {
     if (field === 'linkedInUrl') {
       const linkedinRegex = /^https:\/\/(www\.)?linkedin\.com\/in\/[a-zA-Z0-9_-]+\/?$/
@@ -1283,6 +1303,7 @@ const AccountDetails = () => {
               handleOpenModal={handleOpenModal}
               languageOptions={languageOptions}
               handleDeleteChipFromMultiSelect={handleDeleteChipFromMultiSelect}
+              handleDeleteLanguage={handleDeleteLanguage}
             />
 
             {/* ----Voter Id---- */}
@@ -1886,7 +1907,7 @@ const AccountDetails = () => {
                 }}
                 onRefetchUserProfileData={handleRefetchUserProfileData}
                 existingOrganizations={profileData?.associatedOrganizations || []}
-                editingOrganization={editingAssociatedOrganization}
+                editingAssociatedOrganization={editingAssociatedOrganization}
               />
             )}
             {isModalOpen.education && (
@@ -1912,7 +1933,7 @@ const AccountDetails = () => {
                 }}
                 onRefetchUserProfileData={handleRefetchUserProfileData}
                 existingPositions={profileData?.workingPositions || []}
-                editingPosition={editingWorkingPosition}
+                editingWorkingPosition={editingWorkingPosition}
               />
             )}
 

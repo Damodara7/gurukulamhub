@@ -11,7 +11,8 @@ import {
   Grid,
   InputLabel,
   MenuItem,
-  Select
+  Select,
+  Stack
 } from '@mui/material'
 import React, { useState } from 'react'
 import * as RestApi from '@/utils/restApiUtil'
@@ -191,16 +192,22 @@ function NewLanguageModal({ open, onClose, email, onRefetchUserProfileData }) {
         </DialogContent>
 
         <DialogActions>
-          <Grid container xs={12}>
-            {/* Actions */}
-            <Grid item xs={12} className='flex gap-4 flex-wrap'>
-              <Button disabled={isFormSubmitting} variant='contained' type='submit' onClick={handleSubmit}>
-                Save
+          <Grid item xs={12} mt={4}>
+            <Stack direction='row' spacing={2} justifyContent='center'>
+              <Button variant='outlined' onClick={handleClose} disabled={isFormSubmitting}>
+                Cancel
               </Button>
-              <Button variant='outlined' type='reset' color='secondary' onClick={handleClose}>
-                Close
+              <Button
+                onClick={handleSubmit}
+                component='label'
+                variant='contained'
+                color='primary'
+                style={{ color: 'white' }}
+                disabled={isFormSubmitting}
+              >
+                {isFormSubmitting ? 'Saving...' : 'Save language'}
               </Button>
-            </Grid>
+            </Stack>
           </Grid>
         </DialogActions>
       </Dialog>

@@ -56,7 +56,6 @@ function VoterIdInfo({
 
       if (response.status === 'success') {
         console.log('Voter ID updated successfully:', response.result)
-        toast.success('Voter ID updated successfully.')
         onRefetchUserProfileData()
         return true
       } else {

@@ -71,6 +71,7 @@ function PersonelInfo({
   phoneProps,
   getLanguageLabel,
   handleDeleteChipFromMultiSelect,
+  handleDeleteLanguage,
   handleOpenModal,
   languageOptions
 }) {
@@ -215,7 +216,7 @@ function PersonelInfo({
                       }
                       size='small'
                       label={getLanguageLabel(value)}
-                      onDelete={() => handleDeleteChipFromMultiSelect('knownLanguageIds', value)}
+                      onDelete={() => handleDeleteLanguage(value)}
                     />
                   ))}
               </div>

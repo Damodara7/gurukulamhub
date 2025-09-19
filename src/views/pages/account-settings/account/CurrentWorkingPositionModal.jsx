@@ -44,10 +44,37 @@ const initialFormData = {
   description: ''
 }
 
-function CurrentWorkingPositionModal({ open, onClose, email, onRefetchUserProfileData, existingPositions = [] }) {
+function CurrentWorkingPositionModal({
+  open,
+  onClose,
+  email,
+  onRefetchUserProfileData,
+  existingPositions = [],
+  editingWorkingPosition = null
+}) {
   const [formData, setFormData] = useState(initialFormData)
   const [isFormValid, setIsFormValid] = useState(true)
   const [isFormSubmitting, setIsFormSubmitting] = useState(false)
+
+  // Populate form data when editing
+  useEffect(() => {
+    if (editingWorkingPosition) {
+      setFormData({
+        title: editingWorkingPosition.title || '',
+        employmentType: editingWorkingPosition.employmentType || '',
+        companyName: editingWorkingPosition.companyName || '',
+        location: editingWorkingPosition.location || '',
+        locationType: editingWorkingPosition.locationType || '',
+        isCurrentlyWorking:
+          editingWorkingPosition.isCurrentlyWorking !== undefined ? editingWorkingPosition.isCurrentlyWorking : true,
+        startDate: editingWorkingPosition.startDate || '',
+        endDate: editingWorkingPosition.endDate || '',
+        description: editingWorkingPosition.description || ''
+      })
+    } else {
+      setFormData(initialFormData)
+    }
+  }, [editingWorkingPosition])
 
   function handleClose() {
     setFormData(initialFormData)
@@ -70,16 +97,27 @@ function CurrentWorkingPositionModal({ open, onClose, email, onRefetchUserProfil
     setIsFormValid(true)
 
     try {
-      // Make API request to add new working position details
-      const response = await RestApi.post(`${ApiUrls.v0.USERS_PROFILE}/working-positions`, {
-        email,
-        workingPosition: formData
-      })
+      let response
+      if (editingWorkingPosition) {
+        // Update existing working position
+        response = await RestApi.put(`${ApiUrls.v0.USERS_PROFILE}/working-positions?id=${editingWorkingPosition._id}`, {
+          email,
+          workingPosition: formData
+        })
+      } else {
+        // Add new working position
+        response = await RestApi.post(`${ApiUrls.v0.USERS_PROFILE}/working-positions`, {
+          email,
+          workingPosition: formData
+        })
+      }
 
       if (response.status === 'success') {
         // Optionally update local state or refetch data
-        console.log('Working position details added successfully:', response.result)
-        toast.success('Working position details added successfully.')
+        console.log('Working position details saved successfully:', response.result)
+        toast.success(
+          editingWorkingPosition ? 'Working position updated successfully.' : 'Working position added successfully.'
+        )
         onClose()
         onRefetchUserProfileData()
       } else {
@@ -103,7 +141,7 @@ function CurrentWorkingPositionModal({ open, onClose, email, onRefetchUserProfil
   return (
     <Grid xs={12} sm={8} md={6}>
       <Dialog sx={{ width: '100%', margin: 'auto' }} open={open} onClose={handleClose}>
-        <DialogTitle>Add Your Experience</DialogTitle>
+        <DialogTitle>{editingWorkingPosition ? 'Edit Working Position' : 'Add Your Experience'}</DialogTitle>
 
         <DialogContent>
           <form>
@@ -262,16 +300,22 @@ function CurrentWorkingPositionModal({ open, onClose, email, onRefetchUserProfil
         </DialogContent>
 
         <DialogActions>
-          <Grid container xs={12}>
-            {/* Actions */}
-            <Grid item xs={12} className='flex gap-4 flex-wrap'>
-              <Button disabled={isFormSubmitting} variant='contained' type='submit' onClick={handleSubmit}>
-                Save
+          <Grid item xs={12} mt={4}>
+            <Stack direction='row' spacing={2} justifyContent='center'>
+              <Button variant='outlined' onClick={handleClose} disabled={isFormSubmitting}>
+                Cancel
               </Button>
-              <Button variant='outlined' type='reset' color='secondary' onClick={handleClose}>
-                Close
+              <Button
+                onClick={handleSubmit}
+                component='label'
+                variant='contained'
+                color='primary'
+                style={{ color: 'white' }}
+                disabled={isFormSubmitting}
+              >
+                {isFormSubmitting ? 'Saving...' : editingWorkingPosition ? 'Update position' : 'Save position'}
               </Button>
-            </Grid>
+            </Stack>
           </Grid>
         </DialogActions>
       </Dialog>

@@ -9,9 +9,10 @@ import {
   InputLabel,
   MenuItem,
   Select,
-  TextField
+  TextField,
+  Stack
 } from '@mui/material'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 
 import * as RestApi from '@/utils/restApiUtil'
 import * as clientApi from '@/app/api/client/client.api'
@@ -41,10 +42,29 @@ const associatedOrganizationTypeOptions = [
   { value: 'Others', label: 'Others' }
 ]
 
-function NewAssociatedOrganization({ open, onClose, email, onRefetchUserProfileData }) {
+function NewAssociatedOrganization({
+  open,
+  onClose,
+  email,
+  onRefetchUserProfileData,
+  editingAssociatedOrganization = null
+}) {
   const [formData, setFormData] = useState(initialFormData)
   const [isFormValid, setIsFormValid] = useState(true)
   const [isFormSubmitting, setIsFormSubmitting] = useState(false)
+
+  // Populate form data when editing
+  useEffect(() => {
+    if (editingAssociatedOrganization) {
+      setFormData({
+        organization: editingAssociatedOrganization.organization || '',
+        organizationType: editingAssociatedOrganization.organizationType || '',
+        websiteUrl: editingAssociatedOrganization.websiteUrl || ''
+      })
+    } else {
+      setFormData(initialFormData)
+    }
+  }, [editingAssociatedOrganization])
 
   function handleClose() {
     setFormData(initialFormData)
@@ -68,17 +88,33 @@ function NewAssociatedOrganization({ open, onClose, email, onRefetchUserProfileD
     setIsFormValid(true)
 
     try {
-      // Make API request to add new Associated Organization details
-      const response = await RestApi.post(`${API_URLS.v0.USERS_PROFILE}/associated-organizations`, {
-        email,
-        organization: formData
-      })
+      let response
+      if (editingAssociatedOrganization) {
+        // Update existing associated organization
+        response = await RestApi.put(
+          `${API_URLS.v0.USERS_PROFILE}/associated-organizations?id=${editingAssociatedOrganization._id}`,
+          {
+            email,
+            organization: formData
+          }
+        )
+      } else {
+        // Add new associated organization
+        response = await RestApi.post(`${API_URLS.v0.USERS_PROFILE}/associated-organizations`, {
+          email,
+          organization: formData
+        })
+      }
       // const response = await clientApi.addAssociatedOrganization(email, formData)
 
       if (response.status === 'success') {
         // Optionally update local state or refetch data
-        console.log('Associated Organization details added successfully:', response.result)
-        toast.success('Associated Organization details added successfully.')
+        console.log('Associated Organization details saved successfully:', response.result)
+        toast.success(
+          editingAssociatedOrganization
+            ? 'Associated organization updated successfully.'
+            : 'Associated organization added successfully.'
+        )
         onClose()
         onRefetchUserProfileData()
       } else {
@@ -96,7 +132,9 @@ function NewAssociatedOrganization({ open, onClose, email, onRefetchUserProfileD
   return (
     <Grid xs={12} sm={8} md={6}>
       <Dialog sx={{ width: '100%', margin: 'auto' }} open={open} onClose={handleClose}>
-        <DialogTitle>Add Associated Organization</DialogTitle>
+        <DialogTitle>
+          {editingAssociatedOrganization ? 'Edit Associated Organization' : 'Add Associated Organization'}
+        </DialogTitle>
 
         <DialogContent>
           <form>
@@ -154,16 +192,26 @@ function NewAssociatedOrganization({ open, onClose, email, onRefetchUserProfileD
         </DialogContent>
 
         <DialogActions>
-          <Grid container xs={12}>
-            {/* Actions */}
-            <Grid item xs={12} className='flex gap-4 flex-wrap'>
-              <Button disabled={isFormSubmitting} variant='contained' type='submit' onClick={handleSubmit}>
-                Save
+          <Grid item xs={12} mt={4}>
+            <Stack direction='row' spacing={2} justifyContent='center'>
+              <Button variant='outlined' onClick={handleClose} disabled={isFormSubmitting}>
+                Cancel
               </Button>
-              <Button variant='outlined' type='reset' color='secondary' onClick={handleClose}>
-                Close
+              <Button
+                onClick={handleSubmit}
+                component='label'
+                variant='contained'
+                color='primary'
+                style={{ color: 'white' }}
+                disabled={isFormSubmitting}
+              >
+                {isFormSubmitting
+                  ? 'Saving...'
+                  : editingAssociatedOrganization
+                    ? 'Update organization'
+                    : 'Save organization'}
               </Button>
-            </Grid>
+            </Stack>
           </Grid>
         </DialogActions>
       </Dialog>

@@ -13,10 +13,11 @@ import {
   Box,
   Typography,
   IconButton,
-  Divider
+  Divider,
+  Stack
 } from '@mui/material'
 import React, { useState, useEffect } from 'react'
-
+import { toast } from 'react-toastify'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { DemoContainer } from '@mui/x-date-pickers/internals/demo'
@@ -254,16 +255,22 @@ function EducationModal({
         </DialogContent>
 
         <DialogActions>
-          <Grid container xs={12}>
-            {/* Actions */}
-            <Grid item xs={12} className='flex gap-4 flex-wrap'>
-              <Button disabled={isFormSubmitting} variant='contained' type='submit' onClick={handleSubmit}>
-                {editingEducation ? 'Update' : 'Save'}
+          <Grid item xs={12} mt={4}>
+            <Stack direction='row' spacing={2} justifyContent='center'>
+              <Button variant='outlined' onClick={handleClose} disabled={isFormSubmitting}>
+                Cancel
               </Button>
-              <Button variant='outlined' type='reset' color='secondary' onClick={handleClose}>
-                Close
+              <Button
+                onClick={handleSubmit}
+                component='label'
+                variant='contained'
+                color='primary'
+                style={{ color: 'white' }}
+                disabled={isFormSubmitting}
+              >
+                {isFormSubmitting ? 'Saving...' : editingEducation ? 'Update' : 'Save education'}
               </Button>
-            </Grid>
+            </Stack>
           </Grid>
         </DialogActions>
       </Dialog>
