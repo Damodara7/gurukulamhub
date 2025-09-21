@@ -5,9 +5,6 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload'
 import DeleteIcon from '@mui/icons-material/Delete'
 import CropIcon from '@mui/icons-material/Crop'
 import ReactCropperComponent from '@views/pages/account-settings/account/ReactCropperComponent'
-import * as RestApi from '@/utils/restApiUtil'
-import { API_URLS } from '@/configs/apiConfig'
-import { toast } from 'react-toastify'
 
 function VoterIdInfo({
   voterIdPhotos,
@@ -20,9 +17,7 @@ function VoterIdInfo({
   isEpicValid,
   formData,
   handleFormChange,
-  handleVoterIdImageCrop,
-  session,
-  onRefetchUserProfileData
+  handleVoterIdImageCrop
 }) {
   const VisuallyHiddenInput = styled('input')({
     clip: 'rect(0 0 0 0)',
@@ -35,40 +30,6 @@ function VoterIdInfo({
     whiteSpace: 'nowrap',
     width: 1
   })
-
-  // Function to handle voter ID updates using dedicated API
-  const handleVoterIdUpdate = async voterIdData => {
-    try {
-      let response
-      if (formData.voterId?.epicNumber) {
-        // Update existing voter ID
-        response = await RestApi.put(`${API_URLS.v0.USERS_PROFILE}/voter-id`, {
-          email: session?.user?.email,
-          voterId: voterIdData
-        })
-      } else {
-        // Add new voter ID
-        response = await RestApi.post(`${API_URLS.v0.USERS_PROFILE}/voter-id`, {
-          email: session?.user?.email,
-          voterId: voterIdData
-        })
-      }
-
-      if (response.status === 'success') {
-        console.log('Voter ID updated successfully:', response.result)
-        onRefetchUserProfileData()
-        return true
-      } else {
-        toast.error('Error: ' + response.message)
-        console.error('Error updating voter ID:', response.message)
-        return false
-      }
-    } catch (error) {
-      toast.error('An unexpected error occurred.')
-      console.error('Unexpected error updating voter ID:', error)
-      return false
-    }
-  }
 
   return (
     <>
@@ -261,13 +222,6 @@ function VoterIdInfo({
             if (value.length <= 10) {
               // Update local form data immediately for UI responsiveness
               handleFormChange('voterId', value)
-
-              // Update voter ID using dedicated API
-              const voterIdData = {
-                ...formData.voterId,
-                epicNumber: value
-              }
-              handleVoterIdUpdate(voterIdData)
             }
           }}
           error={!isEpicValid} // Set error state based on EPIC validation

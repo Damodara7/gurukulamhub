@@ -4,26 +4,19 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  DialogContentText,
   FormControl,
   Grid,
   InputLabel,
   MenuItem,
   Select,
   TextField,
-  Stack
+  Stack,
+  Box,
+  Typography
 } from '@mui/material'
 import React, { useState, useEffect } from 'react'
-
-import * as RestApi from '@/utils/restApiUtil'
-import * as clientApi from '@/app/api/client/client.api'
-import { API_URLS } from '@/configs/apiConfig'
-
-import { DemoContainer } from '@mui/x-date-pickers/internals/demo'
-import { LocalizationProvider } from '@mui/x-date-pickers-pro/LocalizationProvider'
-import { AdapterDayjs } from '@mui/x-date-pickers-pro/AdapterDayjs'
-import { DatePicker } from '@mui/x-date-pickers'
-import dayjs from 'dayjs'
-import { toast } from 'react-toastify'
+import { Edit as EditIcon } from '@mui/icons-material'
 
 const initialFormData = {
   organization: '',
@@ -46,7 +39,8 @@ function NewAssociatedOrganization({
   open,
   onClose,
   email,
-  onRefetchUserProfileData,
+  onAddOrganizationToState,
+  onUpdateOrganizationInState,
   editingAssociatedOrganization = null
 }) {
   const [formData, setFormData] = useState(initialFormData)
@@ -75,7 +69,7 @@ function NewAssociatedOrganization({
   const handleFormChange = (field, value) => {
     setFormData({ ...formData, [field]: value })
   }
-  async function handleSubmit() {
+  function handleSubmit() {
     // Validate form
     setIsFormSubmitting(true)
 
@@ -88,41 +82,29 @@ function NewAssociatedOrganization({
     setIsFormValid(true)
 
     try {
-      let response
       if (editingAssociatedOrganization) {
-        // Update existing associated organization
-        response = await RestApi.put(
-          `${API_URLS.v0.USERS_PROFILE}/associated-organizations?id=${editingAssociatedOrganization._id}`,
-          {
-            email,
-            organization: formData
-          }
-        )
+        // Update existing associated organization in state
+        const updatedOrganization = {
+          _id: editingAssociatedOrganization._id,
+          organization: formData.organization,
+          organizationType: formData.organizationType,
+          websiteUrl: formData.websiteUrl
+        }
+        onUpdateOrganizationInState(updatedOrganization)
       } else {
-        // Add new associated organization
-        response = await RestApi.post(`${API_URLS.v0.USERS_PROFILE}/associated-organizations`, {
-          email,
-          organization: formData
-        })
+        // Add new associated organization to state
+        const newOrganization = {
+          _id: `temp_${Date.now()}`, // Temporary ID for state management
+          organization: formData.organization,
+          organizationType: formData.organizationType,
+          websiteUrl: formData.websiteUrl
+        }
+        onAddOrganizationToState(newOrganization)
       }
-      // const response = await clientApi.addAssociatedOrganization(email, formData)
 
-      if (response.status === 'success') {
-        // Optionally update local state or refetch data
-        console.log('Associated Organization details saved successfully:', response.result)
-        toast.success(
-          editingAssociatedOrganization
-            ? 'Associated organization updated successfully.'
-            : 'Associated organization added successfully.'
-        )
-        onClose()
-        onRefetchUserProfileData()
-      } else {
-        toast.error('Error: ' + response.message)
-        console.error('Error adding associated organization details:', response)
-      }
+      console.log('Associated organization added to state successfully')
+      onClose()
     } catch (error) {
-      toast.error('An unexpected error occurred.')
       console.error('Unexpected error:', error)
     } finally {
       setIsFormSubmitting(false)
@@ -216,6 +198,76 @@ function NewAssociatedOrganization({
         </DialogActions>
       </Dialog>
     </Grid>
+  )
+}
+
+// Associated Organization View Modal Component
+export function AssociatedOrganizationViewModal({ open, onClose, organization, onEdit }) {
+  function handleEdit() {
+    onEdit(organization)
+    onClose()
+  }
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth='md' fullWidth>
+      <DialogTitle>Associated Organization Details</DialogTitle>
+      <DialogContent>
+        {organization && (
+          <Box sx={{ pt: 1 }}>
+            <DialogContentText>
+              <Box sx={{ mb: 2 }}>
+                <Typography variant='h6' sx={{ fontWeight: 'bold', mb: 1 }}>
+                  Organization Name
+                </Typography>
+                <Typography variant='body1'>{organization.organization}</Typography>
+              </Box>
+
+              <Box sx={{ mb: 2 }}>
+                <Typography variant='h6' sx={{ fontWeight: 'bold', mb: 1 }}>
+                  Organization Type
+                </Typography>
+                <Typography variant='body1'>{organization.organizationType}</Typography>
+              </Box>
+
+              {organization.websiteUrl && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant='h6' sx={{ fontWeight: 'bold', mb: 1 }}>
+                    Website URL
+                  </Typography>
+                  <Typography variant='body1'>
+                    <a
+                      href={organization.websiteUrl}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      style={{ color: 'inherit', textDecoration: 'underline' }}
+                    >
+                      {organization.websiteUrl}
+                    </a>
+                  </Typography>
+                </Box>
+              )}
+            </DialogContentText>
+          </Box>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} variant='outlined'>
+          Close
+        </Button>
+        <Button
+          onClick={handleEdit}
+          variant='contained'
+          color='primary'
+          component='label'
+          sx={{
+            color: 'white'
+          }}
+          startIcon={<EditIcon />}
+        >
+          Edit
+        </Button>
+      </DialogActions>
+    </Dialog>
   )
 }
 

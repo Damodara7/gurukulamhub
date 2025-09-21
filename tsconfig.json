@@ -69,7 +69,7 @@
     "src/lib/auth.js",
     "src/app/services/mail.service.js",
     "src/app/api/profile/route.js",
-    "src/app/services/profile.service.js",
+    "src/app/api/profile/profile.service.js",
     "src/app/api/profile/[userId]/route.js",
     "src/app/api/profile/referrer/route.js",
     "src/utils/dbConnect-mongo.js"

@@ -11,7 +11,7 @@ import Player from '@/app/api/player/player.model'
 import { broadcastLeaderboard } from '../ws/leaderboard/[gameId]/publishers'
 import { broadcastGamesList } from '../ws/games/publishers'
 import { broadcastGameDetails } from '../ws/games/[gameId]/publishers'
-import UserProfile from '@/app/models/profile.model'
+import UserProfile from '@/app/api/profile/profile.model'
 import Group from '@/app/api/group/group.model'
 
 // Helper to enrich a single game with registeredUsers, participatedUsers, and questions

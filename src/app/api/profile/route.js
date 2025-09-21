@@ -1,89 +1,127 @@
-// Next Imports
+import * as ProfileService from './profile.service.js'
 import * as ApiResponseUtils from '@/utils/apiResponses'
-import * as UserProfileService from '@/app/services/profile.service'
 
-// export async function POST(request) {
-//   // await dbConnect()
+const Artifact = 'Profiles'
+const ArtifactService = ProfileService
 
-//   console.log('We are inside /api/profile post request....')
-//   try {
-//     // Vars
-//     console.log('Request Type:', request.headers.get('content-type'))
-//     console.log('Body Details...', request.body)
-//     //Reading JSON input of the body...
-//     const updateDataRequest = await request.json()
-//     console.log('Body Details...', updateDataRequest)
-
-//     // Call the Create user profile function
-//     const createdProfileResult = await updateUserProfile(updateDataRequest.email, updateDataRequest)
-
-//     if (createdProfileResult) {
-//       console.log('User Profile creation Successfully ():')
-
-//       var successResponse = ApiResponseUtils.createSuccessResponse('User profile created successfully', createdProfileResult)
-//       return ApiResponseUtils.sendSuccessResponse(successResponse)
-//     } else {
-//       throw new Error('Creating user profile failed.')
-//     }
-//   } catch (error) {
-//     const errorResponse = ApiResponseUtils.createErrorResponse(error.message)
-//     return ApiResponseUtils.sendErrorResponse(errorResponse)
-//   }
-// }
-
-export async function POST(request) {
-  console.log('We are inside /api/profile/route.js post request....')
+export async function GET(req) {
   try {
-    // Vars
-    // console.log('Request Type:', request.headers.get('content-type'))
-    // console.log('Body Details...', request.body)
-    //Reading JSON input of the body...
-    const updateDataRequest = await request.json()
-    console.log('Body Details...', updateDataRequest)
+    const url = new URL(req.url)
+    const searchParams = new URLSearchParams(url.searchParams)
+    // Convert searchParams to an object
+    const queryParamsObj = Object.fromEntries(searchParams.entries())
 
-    const createdProfileResult = await UserProfileService.addOrUpdate({ email: updateDataRequest.email, data: updateDataRequest })
+    const { id, email, ...rest } = queryParamsObj
 
-    if (createdProfileResult.status === 'success') {
-      console.log('User Profile registered/updated Successfully ():')
+    let artifact
 
-      var successResponse = ApiResponseUtils.createSuccessResponse('User profile updated successfully', createdProfileResult.result)
-      return ApiResponseUtils.sendSuccessResponse(successResponse)
+    if (id) {
+      artifact = await ArtifactService.getById({ id, ...rest })
+    } else if (email) {
+      artifact = await ArtifactService.getByEmail({ email, ...rest })
     } else {
-      console.log('User Profile registration/update error.')
-      const errorResponse = ApiResponseUtils.createErrorResponse(createdProfileResult.message)
+      artifact = await ArtifactService.getAll({ ...rest })
+    }
+
+    if (artifact.status === 'success') {
+      var successResponse = ApiResponseUtils.createSuccessResponse(artifact.message, artifact.result)
+      return ApiResponseUtils.sendSuccessResponse(successResponse)
+    } else if (artifact.status === 'error') {
+      var errorResponse = ApiResponseUtils.createErrorResponse(artifact.message)
       return ApiResponseUtils.sendErrorResponse(errorResponse)
     }
   } catch (error) {
+    var errorResponse = ApiResponseUtils.createErrorResponse(error.message)
+    return ApiResponseUtils.sendErrorResponse(errorResponse)
+  }
+}
+
+export async function POST(request) {
+  try {
+    console.log('Received request to create profile')
+    const reqBody = await request.json()
+    console.log('Request body:', reqBody)
+
+    const newArtifact = await ArtifactService.add({
+      data: reqBody
+    })
+
+    console.log('Service response:', newArtifact)
+
+    if (newArtifact?.status === 'success') {
+      var successResponse = ApiResponseUtils.createSuccessResponse(
+        `New ${Artifact} created successfully`,
+        newArtifact?.result
+      )
+      return ApiResponseUtils.sendSuccessResponse(successResponse)
+    } else {
+      console.error('Service error:', newArtifact)
+      const errorResponse = ApiResponseUtils.createErrorResponse(newArtifact?.message || 'Unknown error')
+      return ApiResponseUtils.sendErrorResponse(errorResponse)
+    }
+  } catch (error) {
+    console.error('Route error:', error)
     const errorResponse = ApiResponseUtils.createErrorResponse(error.message)
     return ApiResponseUtils.sendErrorResponse(errorResponse)
   }
 }
 
-// extra
 export async function PUT(request) {
-  console.log('We are inside /api/profile/route.js put request....')
   try {
-    // Vars
-    console.log('Request Type:', request.headers.get('content-type'))
-    console.log('Body Details...', request.body)
-    //Reading JSON input of the body...
-    const updateDataRequest = await request.json()
-    console.log('Body Details...', updateDataRequest)
+    const reqBody = await request.json()
 
-    const createdProfileResult = await UserProfileService.addOrUpdate({ email: updateDataRequest.email, data: updateDataRequest })
+    // Extract profile email from request body
+    const email = reqBody.email
+    if (!email) {
+      const errorResponse = ApiResponseUtils.createErrorResponse('Email is required')
+      return ApiResponseUtils.sendErrorResponse(errorResponse)
+    }
 
-    if (createdProfileResult.status === 'success') {
-      console.log('User Profile registered/updated Successfully ():')
+    // Update the profile using the dedicated service function
+    const updateResult = await ArtifactService.updateProfileByEmail({ email, data: reqBody })
 
-      var successResponse = ApiResponseUtils.createSuccessResponse('User profile updated successfully', createdProfileResult.result)
+    if (updateResult.status === 'success') {
+      const successResponse = ApiResponseUtils.createSuccessResponse(updateResult.message, updateResult.result)
       return ApiResponseUtils.sendSuccessResponse(successResponse)
     } else {
-      console.log('User Profile registration/update error.')
-      const errorResponse = ApiResponseUtils.createErrorResponse(createdProfileResult.message)
+      const errorResponse = ApiResponseUtils.createErrorResponse(updateResult.message)
       return ApiResponseUtils.sendErrorResponse(errorResponse)
     }
   } catch (error) {
-    const errorResponse = ApiResponseUtils.createErrorResponse(error.message)
+    const errorResponse = ApiResponseUtils.createErrorResponse(error.message || 'Internal server error')
+    return ApiResponseUtils.sendErrorResponse(errorResponse)
+  }
+}
+
+export async function DELETE(req) {
+  const url = new URL(req.url)
+  const searchParams = new URLSearchParams(url.searchParams)
+  const email = searchParams.get('email')
+  const id = searchParams.get('id')
+
+  try {
+    let deleteResult
+
+    if (email) {
+      // Delete profile by email using dedicated service function
+      deleteResult = await ArtifactService.deleteProfileByEmail({ email })
+    } else if (id) {
+      // Delete profile by ID using dedicated service function
+      deleteResult = await ArtifactService.deleteProfileById({ id })
+    } else {
+      const errorResponse = ApiResponseUtils.createErrorResponse('Email or ID parameter is required')
+      return ApiResponseUtils.sendErrorResponse(errorResponse)
+    }
+
+    if (deleteResult.status === 'success') {
+      var successResponse = ApiResponseUtils.createSuccessResponse(deleteResult.message, deleteResult.result)
+      return ApiResponseUtils.sendSuccessResponse(successResponse)
+    } else {
+      const errorResponse = ApiResponseUtils.createErrorResponse(deleteResult.message)
+      return ApiResponseUtils.sendErrorResponse(errorResponse)
+    }
+  } catch (error) {
+    var errorResponse = ApiResponseUtils.createErrorResponse(error.message)
     return ApiResponseUtils.sendErrorResponse(errorResponse)
   }
 }

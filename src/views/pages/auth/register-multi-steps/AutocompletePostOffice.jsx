@@ -7,8 +7,7 @@ const AutocompletePostOffice = ({ loading, postOffices, setSelectedLocality, sel
   console.log('post offices: ', postOffices)
   console.log('selected locality: ', selectedLocality)
   const localityValue =
-    postOffices?.find(each => each.VillageOrLocalityName + '-' + each['OfficeName'] === selectedLocality) ||
-    ''
+    postOffices?.find(each => each.VillageOrLocalityName + '-' + each['OfficeName'] === selectedLocality) || ''
   return (
     <>
       {!loading && postOffices?.length > 0 && (

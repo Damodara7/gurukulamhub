@@ -1,5 +1,5 @@
 import mongoose from 'mongoose'
-import UserProfile from './profile.model'
+import UserProfile from '../api/profile/profile.model'
 
 export const userSchema = new mongoose.Schema(
   {

@@ -5,15 +5,15 @@ import {
   createSuccessResponse,
   createErrorResponse
 } from '@/utils/apiResponses'
-import * as UserProfileService from '@/app/services/profile.service'
+import * as UserProfileService from '../profile.service.js'
 
 export async function GET(req) {
-  const {searchParams} = new URL(req.url)
+  const { searchParams } = new URL(req.url)
 
   // console.log("userId: " + searchParams.get("userId"));
   // console.log("Search Params",searchParams);
   const email = searchParams.get('email')
-  const detailsResult = await UserProfileService.getByEmail({email})
+  const detailsResult = await UserProfileService.getByEmail({ email })
   console.log('Retrieved details:', detailsResult)
   if (detailsResult.status === 'success') {
     const curated = {
@@ -41,7 +41,10 @@ export async function PUT(request) {
     console.log('Body Details...', updateDataRequest)
 
     if (updateDataRequest.referredBy) {
-      await UserProfileService.updateReferral({ email: updateDataRequest.email, data: { referredBy: updateDataRequest.referredBy } })
+      await UserProfileService.updateReferral({
+        email: updateDataRequest.email,
+        data: { referredBy: updateDataRequest.referredBy }
+      })
     } else {
       await setNetworkLevel(updateDataRequest.email, 0)
     }

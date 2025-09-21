@@ -4,26 +4,6 @@ import CountryRegionDropdown from '../../auth/register-multi-steps/CountryRegion
 import AutocompletePostOffice from '../../auth/register-multi-steps/AutocompletePostOffice'
 import AutocompletePincode from '../../auth/register-multi-steps/AutocompletePincode'
 
-const timezoneOptions = [
-  { value: 'gmt-12', label: '(GMT-12:00) International Date Line West' },
-  { value: 'gmt-11', label: '(GMT-11:00) Midway Island, Samoa' },
-  { value: 'gmt-10', label: '(GMT-10:00) Hawaii' },
-  { value: 'gmt-09', label: '(GMT-09:00) Alaska' },
-  { value: 'gmt-08', label: '(GMT-08:00) Pacific Time (US & Canada)' },
-  { value: 'gmt-08-baja', label: '(GMT-08:00) Tijuana, Baja California' },
-  { value: 'gmt-07', label: '(GMT-07:00) Chihuahua, La Paz, Mazatlan' },
-  { value: 'gmt-07-mt', label: '(GMT-07:00) Mountain Time (US & Canada)' },
-  { value: 'gmt-06', label: '(GMT-06:00) Central America' },
-  { value: 'gmt-06-ct', label: '(GMT-06:00) Central Time (US & Canada)' },
-  { value: 'gmt-06-mc', label: '(GMT-06:00) Guadalajara, Mexico City, Monterrey' },
-  { value: 'gmt-06-sk', label: '(GMT-06:00) Saskatchewan' },
-  { value: 'gmt-05', label: '(GMT-05:00) Bogota, Lima, Quito, Rio Branco' },
-  { value: 'gmt-05-et', label: '(GMT-05:00) Eastern Time (US & Canada)' },
-  { value: 'gmt-05-ind', label: '(GMT-05:00) Indiana (East)' },
-  { value: 'gmt-04', label: '(GMT-04:00) Atlantic Time (Canada)' },
-  { value: 'gmt-04-clp', label: '(GMT-04:00) Caracas, La Paz' }
-]
-
 function AddressInfo({
   formData,
   handleFormChange,
@@ -37,12 +17,14 @@ function AddressInfo({
   selectedRegion,
   postOffices,
   fetchPostOffices,
+  fetchPinCodesForState,
   loadingPincodesOrPostOffices,
   selectedZipcode,
   setSelectedZipcode,
   pinCodes,
   setSelectedLocality,
-  selectedLocality
+  selectedLocality,
+  filteredTimezones
 }) {
   return (
     <>
@@ -69,7 +51,22 @@ function AddressInfo({
           <FormControl fullWidth>
             <Autocomplete
               autoHighlight
-              onChange={(e, newValue) => setSelectedRegion(newValue)}
+              onChange={(e, newValue) => {
+                setSelectedRegion(newValue)
+                handleFormChange('region', newValue)
+                // Clear dependent fields when region changes
+                setSelectedZipcode('')
+                setSelectedLocality('')
+                // Clear both pincode/postoffice and zipcode/locality fields
+                handleFormChange('pincode', '')
+                handleFormChange('postoffice', '')
+                handleFormChange('zipcode', '')
+                handleFormChange('locality', '')
+                // Fetch pincodes for the selected state
+                if (newValue) {
+                  fetchPinCodesForState(newValue)
+                }
+              }}
               id='autocomplete-region-select'
               options={selectedCountryObject?.regions || []}
               getOptionLabel={option => option || ''}
@@ -91,7 +88,7 @@ function AddressInfo({
       )}
 
       {/* PinCode */}
-      {selectedCountryObject?.country === 'India' && (
+      {selectedCountryObject?.country === 'India' && selectedRegion && (
         <Grid item xs={12} sm={6}>
           <FormControl fullWidth>
             <AutocompletePincode
@@ -99,7 +96,10 @@ function AddressInfo({
               loading={loadingPincodesOrPostOffices}
               pinCodes={pinCodes}
               selectedZipcode={selectedZipcode}
-              setSelectedZipcode={setSelectedZipcode}
+              setSelectedZipcode={value => {
+                setSelectedZipcode(value)
+                // The useEffect in AccountDetails will handle formData.pincode
+              }}
             />
           </FormControl>
         </Grid>
@@ -113,34 +113,78 @@ function AddressInfo({
               postOffices={postOffices}
               loading={loadingPincodesOrPostOffices}
               selectedLocality={selectedLocality}
-              setSelectedLocality={setSelectedLocality}
+              setSelectedLocality={value => {
+                setSelectedLocality(value)
+                // The useEffect in AccountDetails will handle formData.postoffice
+              }}
             />
           </FormControl>
         </Grid>
       )}
 
-      {selectedCountryObject?.country !== 'India' && (
+      {/* Additional fields for India - Street, Colony, Village */}
+      {selectedCountryObject?.country === 'India' && selectedLocality && (
+        <>
+          {/* Street */}
+          <Grid item xs={12} sm={6}>
+            <TextField
+              name='street'
+              fullWidth
+              label='Street'
+              value={formData.street}
+              placeholder='Street'
+              onChange={e => handleFormChange('street', e.target.value)}
+            />
+          </Grid>
+
+          {/* Colony */}
+          <Grid item xs={12} sm={6}>
+            <TextField
+              name='colony'
+              fullWidth
+              label='Colony'
+              value={formData.colony}
+              placeholder='Colony'
+              onChange={e => handleFormChange('colony', e.target.value)}
+            />
+          </Grid>
+
+          {/* Village */}
+          <Grid item xs={12} sm={6}>
+            <TextField
+              name='village'
+              fullWidth
+              label='Village'
+              value={formData.village}
+              placeholder='Village'
+              onChange={e => handleFormChange('village', e.target.value)}
+            />
+          </Grid>
+        </>
+      )}
+
+      {selectedCountryObject?.country && selectedCountryObject?.country !== 'India' && (
         <Grid item xs={12} sm={6}>
           <FormControl fullWidth>
             <TextField
-              value={selectedZipcode}
+              value={formData.zipcode}
               fullWidth
               label='Enter Your Zip Code'
               onChange={e => {
-                setSelectedZipcode(e.target.value)
+                handleFormChange('zipcode', e.target.value)
               }}
-            ></TextField>
+            />
           </FormControl>
         </Grid>
       )}
 
-      {selectedCountryObject?.country !== 'India' && (
+      {selectedCountryObject?.country && selectedCountryObject?.country !== 'India' && (
         <Grid item xs={12} sm={6}>
           <FormControl fullWidth>
             <TextField
-              value={selectedLocality}
+              value={formData.locality}
               onChange={e => {
-                setSelectedLocality(e.target.value)
+                handleFormChange('locality', e.target.value)
               }}
               fullWidth
               label='Enter Your Locality/City/Village'
@@ -149,44 +193,8 @@ function AddressInfo({
         </Grid>
       )}
 
-      {/* Street */}
-      <Grid item xs={12} sm={6}>
-        <TextField
-          name='street'
-          fullWidth
-          label='Street'
-          value={formData.street}
-          placeholder='Street'
-          onChange={e => handleFormChange('street', e.target.value)}
-        />
-      </Grid>
-
-      {/* Colony */}
-      <Grid item xs={12} sm={6}>
-        <TextField
-          name='colony'
-          fullWidth
-          label='Colony'
-          value={formData.colony}
-          placeholder='Colony'
-          onChange={e => handleFormChange('colony', e.target.value)}
-        />
-      </Grid>
-
-      {/* Village */}
-      <Grid item xs={12} sm={6}>
-        <TextField
-          name='village'
-          fullWidth
-          label='Village'
-          value={formData.village}
-          placeholder='Village'
-          onChange={e => handleFormChange('village', e.target.value)}
-        />
-      </Grid>
-
       {/* TimeZone */}
-      <Grid item xs={12} sm={6}>
+      {/* <Grid item xs={12} sm={6}>
         <FormControl fullWidth>
           <InputLabel>TimeZone</InputLabel>
           <Select
@@ -196,14 +204,16 @@ function AddressInfo({
             onChange={e => handleFormChange('timezone', e.target.value)}
             MenuProps={{ PaperProps: { style: { maxHeight: 250 } } }}
           >
-            {timezoneOptions.map(each => (
-              <MenuItem key={each.value} value={each.value}>
-                {each.label}
-              </MenuItem>
-            ))}
+            {filteredTimezones &&
+              filteredTimezones.length > 0 &&
+              filteredTimezones.map(timezone => (
+                <MenuItem key={timezone.timezoneWithGMT} value={timezone.timezoneWithGMT}>
+                  {timezone.timezoneWithGMT} - {timezone.country}
+                </MenuItem>
+              ))}
           </Select>
         </FormControl>
-      </Grid>
+      </Grid> */}
     </>
   )
 }

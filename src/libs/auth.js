@@ -39,12 +39,20 @@ export const authOptions = {
 
         if (loginMethod === 'mobile') {
           try {
-            const result = await RestApi.post(`${API_URLS.v0.USERS_MOBILE_LOGIN}`, {email})
+            const result = await RestApi.post(`${API_URLS.v0.USERS_MOBILE_LOGIN}`, { email })
             // const result = await clientApi.getUserProfileByEmail(email)
             // console.log('result of mobile signin: ', result)
             if (result?.status === 'success') {
               const { profile, user } = result?.result
-              let userData = { id: profile?._id, firstname: profile?.firstname, lastname: profile?.lastname, email: profile?.email, image: profile?.image, phone: profile?.phone, name: profile?.firstname + " " + profile?.lastname }
+              let userData = {
+                id: profile?._id,
+                firstname: profile?.firstname,
+                lastname: profile?.lastname,
+                email: profile?.email,
+                image: profile?.image,
+                phone: profile?.phone,
+                name: profile?.firstname + ' ' + profile?.lastname
+              }
               // console.log('user data to be send to session: ', userData)
               return userData
             } else {
@@ -53,8 +61,7 @@ export const authOptions = {
           } catch (e) {
             throw new Error(e?.message)
           }
-        }
-        else {
+        } else {
           try {
             // ** Login API Call to match the user credentials and receive user data in response along with his role
             const result = await RestApi.post(API_URLS.v0.USERS_LOGIN, { email, password })
@@ -65,7 +72,6 @@ export const authOptions = {
               // ** Set the user data in the session
               // // console.log('User result in credentials signin in auth.js :', result.result)
               return result.result
-
             } else {
               throw new Error(result?.message)
               // return { error: result?.message }
@@ -91,7 +97,7 @@ export const authOptions = {
         params: {
           prompt: 'consent'
         }
-      },
+      }
     })
 
     // ** ...add more providers here
@@ -129,7 +135,7 @@ export const authOptions = {
       // // console.log('USER: ', user);
       if (token.email) {
         try {
-          const result = await RestApi.get(`${API_URLS.v0.USERS_PROFILE}/${token.email}`)
+          const result = await RestApi.get(`${API_URLS.v0.USERS_PROFILE}?email=${token.email}`)
           // const result = await clientApi.getUserProfileByEmail(token.email)
           const { profile, user } = result?.result
           // console.log('PROFILE: ', profile)
@@ -141,7 +147,7 @@ export const authOptions = {
             token.referralToken = user?.referralToken
             token.loginCount = user?.loginCount
             token.memberId = user?.memberId
-            token.name = profile?.firstname + " " + profile?.lastname
+            token.name = profile?.firstname + ' ' + profile?.lastname
             token.firstname = profile?.firstname
             token.lastname = profile?.lastname
             token.image = profile?.image
@@ -155,13 +161,13 @@ export const authOptions = {
 
       if (trigger === 'update' && session) {
         // console.log("$$$$$$$$$$ Trigger update $$$$$$", session.currentGameId)
-        token.currentGameId = session.currentGameId;
+        token.currentGameId = session.currentGameId
       }
       return token
     },
     async session({ session, token, trigger, newSession }) {
       //currentlyl not working in nextauth v5 beta.
-      if (trigger === "update") {
+      if (trigger === 'update') {
         // Make sure the updated value is reflected on the client
         session.currentGameId = token.currentGameId
         // // console.log(" %%%%%%%%%%% Updated the session.name  %%%%%%%%%%% ",session.currentGameId)
@@ -169,7 +175,7 @@ export const authOptions = {
 
       /*************** */
       //NOTE : if the token.currentGameId exists then only it will set .no invalid values like null appear.
-      session.currentGameId = token.currentGameId;
+      session.currentGameId = token.currentGameId
       /************ */
 
       if (session.user) {
@@ -211,7 +217,7 @@ export const authOptions = {
           // console.log('USER IN GOOGLE SIGNIN: ', user)
           try {
             const nameParts = user?.name?.trim()?.split(' ') || []
-            const lastname = nameParts?.pop() || ''  // Removes and returns the last word
+            const lastname = nameParts?.pop() || '' // Removes and returns the last word
             const firstname = nameParts?.join(' ') || ''
 
             let data = {
@@ -235,7 +241,6 @@ export const authOptions = {
             // console.log('USERS_SIGNIN_WITH_GOOGLE user creation Result is....', result)
 
             if (result?.status === 'success') {
-
             } else {
               console.error('User profile create/update failed.', result?.message)
               return false
@@ -259,8 +264,7 @@ export const authOptions = {
         return false
       }
       return true
-    },
-    
+    }
   },
   pages: {
     signIn: '/login'

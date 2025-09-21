@@ -4,6 +4,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  DialogContentText,
   FormControl,
   Grid,
   InputLabel,
@@ -17,13 +18,11 @@ import {
   Stack
 } from '@mui/material'
 import React, { useState, useEffect } from 'react'
-import { toast } from 'react-toastify'
-import * as RestApi from '@/utils/restApiUtil'
-import { API_URLS } from '@/configs/apiConfig'
 import { DemoContainer } from '@mui/x-date-pickers/internals/demo'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { DatePicker } from '@mui/x-date-pickers'
+import { Edit as EditIcon } from '@mui/icons-material'
 import dayjs from 'dayjs'
 
 const initialFormData = {
@@ -55,7 +54,8 @@ function EducationModal({
   open,
   onClose,
   email,
-  onRefetchUserProfileData,
+  onAddEducationToState,
+  onUpdateEducationInState,
   existingSchools = [],
   editingEducation = null
 }) {
@@ -89,7 +89,7 @@ function EducationModal({
   const handleFormChange = (field, value) => {
     setFormData({ ...formData, [field]: value })
   }
-  async function handleSubmit() {
+  function handleSubmit() {
     // Validate form
     setIsFormSubmitting(true)
 
@@ -102,32 +102,37 @@ function EducationModal({
     setIsFormValid(true)
 
     try {
-      let response
       if (editingEducation) {
-        // Update existing education
-        response = await RestApi.put(`${API_URLS.v0.USERS_PROFILE}/schools?id=${editingEducation._id}`, {
-          email,
-          school: formData
-        })
+        // Update existing education in state
+        const updatedEducation = {
+          _id: editingEducation._id,
+          school: formData.school,
+          degree: formData.degree,
+          highestQualification: formData.highestQualification,
+          fieldOfStudy: formData.fieldOfStudy,
+          startDate: formData.startDate,
+          endDate: formData.endDate,
+          description: formData.description
+        }
+        onUpdateEducationInState(updatedEducation)
       } else {
-        // Add new education
-        response = await RestApi.post(`${API_URLS.v0.USERS_PROFILE}/schools`, {
-          email,
-          school: formData
-        })
+        // Add new education to state
+        const newEducation = {
+          _id: `temp_${Date.now()}`, // Temporary ID for state management
+          school: formData.school,
+          degree: formData.degree,
+          highestQualification: formData.highestQualification,
+          fieldOfStudy: formData.fieldOfStudy,
+          startDate: formData.startDate,
+          endDate: formData.endDate,
+          description: formData.description
+        }
+        onAddEducationToState(newEducation)
       }
 
-      if (response.status === 'success') {
-        console.log('Education details saved successfully:', response.result)
-        toast.success('Education details saved successfully.')
-        onClose()
-        onRefetchUserProfileData()
-      } else {
-        toast.error('Error: ' + response.message)
-        console.error('Error saving education details:', response.message)
-      }
+      console.log('Education added to state successfully')
+      onClose()
     } catch (error) {
-      toast.error('An unexpected error occurred.')
       console.error('Unexpected error:', error)
     } finally {
       setIsFormSubmitting(false)
@@ -275,6 +280,99 @@ function EducationModal({
         </DialogActions>
       </Dialog>
     </Grid>
+  )
+}
+
+// Education View Modal Component
+export function EducationViewModal({ open, onClose, education, onEdit }) {
+  function handleEdit() {
+    onEdit(education)
+    onClose()
+  }
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth='md' fullWidth>
+      <DialogTitle>Education Details</DialogTitle>
+      <DialogContent>
+        {education && (
+          <Box sx={{ pt: 1 }}>
+            <DialogContentText>
+              <Box sx={{ mb: 2 }}>
+                <Typography variant='h6' sx={{ fontWeight: 'bold', mb: 1 }}>
+                  {education.highestQualification === '7th Grade' || education.highestQualification === '10th Grade'
+                    ? 'School Name'
+                    : 'College Name'}
+                </Typography>
+                <Typography variant='body1'>{education.school}</Typography>
+              </Box>
+
+              {education.degree && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant='h6' sx={{ fontWeight: 'bold', mb: 1 }}>
+                    Degree
+                  </Typography>
+                  <Typography variant='body1'>{education.degree}</Typography>
+                </Box>
+              )}
+
+              {education.fieldOfStudy && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant='h6' sx={{ fontWeight: 'bold', mb: 1 }}>
+                    Field of Study
+                  </Typography>
+                  <Typography variant='body1'>{education.fieldOfStudy}</Typography>
+                </Box>
+              )}
+
+              {education.highestQualification && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant='h6' sx={{ fontWeight: 'bold', mb: 1 }}>
+                    Highest Qualification
+                  </Typography>
+                  <Typography variant='body1'>{education.highestQualification}</Typography>
+                </Box>
+              )}
+
+              <Box sx={{ mb: 2 }}>
+                <Typography variant='h6' sx={{ fontWeight: 'bold', mb: 1 }}>
+                  Duration
+                </Typography>
+                <Typography variant='body1'>
+                  {education.startDate ? new Date(education.startDate).toLocaleDateString() : 'N/A'} -{' '}
+                  {education.endDate ? new Date(education.endDate).toLocaleDateString() : 'Present'}
+                </Typography>
+              </Box>
+
+              {education.description && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant='h6' sx={{ fontWeight: 'bold', mb: 1 }}>
+                    Description
+                  </Typography>
+                  <Typography variant='body1'>{education.description}</Typography>
+                </Box>
+              )}
+            </DialogContentText>
+          </Box>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} variant='outlined'>
+          Close
+        </Button>
+        <Button
+          onClick={handleEdit}
+          variant='contained'
+          color='primary'
+          component='label'
+          sx={{
+            color: 'white'
+          }}
+          startIcon={<EditIcon />}
+        >
+          Edit
+        </Button>
+      </DialogActions>
+    </Dialog>
   )
 }
 

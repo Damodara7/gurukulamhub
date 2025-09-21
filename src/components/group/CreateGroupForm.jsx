@@ -440,7 +440,6 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
           </form>
         </CardContent>
       </Card>
-      {/* )} */}
     </Box>
   )
 }

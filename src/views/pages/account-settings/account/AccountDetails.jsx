@@ -5,16 +5,24 @@ import ReactCropperComponet, { ReactCropperComponent } from './ReactCropperCompo
 
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
+// import timezonesWithGMT from '@/data/timezoneswithgmt'
 import { toast } from 'react-toastify'
 import { useSession } from 'next-auth/react'
 
 // Components Imports
 import SearchableSelect from './SearchableSelect'
-import EducationModal from './EducationModal'
-import NewAssociatedOrganization from './NewAssociatedOrganization'
+import EducationModal, { EducationViewModal } from './EducationModal'
+import NewAssociatedOrganization, { AssociatedOrganizationViewModal } from './NewAssociatedOrganization'
 import NewLanguageModal from './NewLanguageModal'
-import CurrentWorkingPositionModal from './CurrentWorkingPositionModal'
+import CurrentWorkingPositionModal, { WorkingPositionViewModal } from './CurrentWorkingPositionModal'
 import CircularProgressWithValueLabel from './CircularProgressWithValueLabel'
+
+// Section Components Imports
+import EducationSection from './EducationSection'
+import WorkExperienceSection from './WorkExperienceSection'
+import OrganizationSection from './OrganizationSection'
+import BusinessDetailsSection from './BusinessDetailsSection'
+import ResumeSection from './ResumeSection'
 
 // Country region data
 import { CountryRegionData } from '../../../../data/regions'
@@ -29,7 +37,7 @@ import 'react-phone-input-2/lib/style.css'
 import { MuiFileInput } from 'mui-file-input'
 
 // React Imports
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 
 // react-icons Imports
 import { RiAddFill, RiCloseFill } from 'react-icons/ri'
@@ -38,6 +46,7 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload'
 import DeleteIcon from '@mui/icons-material/Delete'
 import EditIcon from '@mui/icons-material/Edit'
 import CropIcon from '@mui/icons-material/Crop'
+import VisibilityIcon from '@mui/icons-material/Visibility'
 
 // MUI Imports
 import Grid from '@mui/material/Grid'
@@ -55,6 +64,11 @@ import {
   Box,
   Button,
   Checkbox,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  DialogContentText,
   Divider,
   FormControlLabel,
   FormGroup,
@@ -104,8 +118,10 @@ const initialData = {
   countryDialCode: '',
   region: '',
   zipcode: '',
+  pincode: '',
+  postoffice: '',
   locality: '',
-  timezone: '',
+  // timezone: '',
   religion: '',
   caste: '',
   category: '',
@@ -135,65 +151,96 @@ const initialData = {
 }
 
 const AccountDetails = () => {
-  // Country options
-  // const options = useMemo(() => countryList().getData(), [])
-
   const { data: session } = useSession()
-
   const theme = useTheme()
 
   // States
   const [formData, setFormData] = useState(initialData)
-  const [fileInput, setFileInput] = useState(null)
-  const [resumeFileInput, setResumeFileInput] = useState(null)
-
-  const [organizationRegistrationDocument, setOrganizationRegistrationDocument] = useState(null)
-  const [organizationGSTDocument, setOrganizationGSTDocument] = useState(null)
-  const [organizationPANDocument, setOrganizationPANDocument] = useState(null)
-
   const [imgSrc, setImgSrc] = useState(null)
-
-  const [isEpicValid, setIsEpicValid] = useState(true) // State to manage EPIC validity
-  const [isUrlsValid, setIsUrlsValid] = useState({ instagramUrl: true, linkedInUrl: true, facebookUrl: true }) // State to
-  const [isModalOpen, setIsModalOpen] = useState({
-    language: false,
-    education: false,
-    workingPosition: false,
-    associatedOrganization: false
-  })
-  const [editingEducation, setEditingEducation] = useState(null)
-  const [editingWorkingPosition, setEditingWorkingPosition] = useState(null)
-  const [editingAssociatedOrganization, setEditingAssociatedOrganization] = useState(null)
-  const [isFormSubmitting, setIsFormSubmitting] = useState(false)
-  const [isFormValid, setIsFormValid] = useState(true)
-  const [getLoading, setGetLoading] = useState(false)
-  const [languageOptions, setLanguageOptions] = useState([])
-  const [associatedOrganizationOptions, setAssociatedOrganizationOptions] = useState([])
-  const [schoolOptions, setSchoolOptions] = useState([])
-  const [workingPositionOptions, setWorkingPositionOptions] = useState([])
-  const [shouldRefetchData, setShouldRefetchData] = useState(false)
-  const [profilePercentage, setProfilePercentage] = useState(0)
-  const [voterIdPhotos, setVoterIdPhotos] = useState({ front: '', back: '' })
-  const [voterIdPhotoFiles, setVoterIdPhotoFiles] = useState({ front: '', back: '' })
-  const [isCropMode, setIsCropMode] = useState({ front: false, back: false })
-  const [profileData, setProfileData] = useState(null)
-
-  const [selectedCountry, setSelectedCountry] = useState('')
-  const [selectedCountryObject, setSelectedCountryObject] = useState(null)
-  const [selectedRegion, setSelectedRegion] = useState('')
-  const [zipcodeFromDb, setZipcodeFromDb] = useState('')
-  const [localityFromDb, setLocalityFromDb] = useState('')
-  const [selectedZipcode, setSelectedZipcode] = useState('')
-  const [selectedLocality, setSelectedLocality] = useState('')
-  const [postOffices, setPostOffices] = useState([])
-  const [loadingPincodesOrPostOffices, setLoadingPincodesOrPostOffices] = useState(false)
-  const [pinCodes, setPinCodes] = useState([])
 
   const [phoneInput, setPhoneInput] = useState('')
   const [phoneValid, setPhoneValid] = useState(false)
   const [isPhoneVerified, setIsPhoneVerified] = useState(false)
   const [countryDialCode, setCountryDialCode] = useState('')
   const [countryCode, setCountryCode] = useState('')
+
+  // Location-related states
+  const [selectedCountry, setSelectedCountry] = useState('')
+  const [selectedCountryObject, setSelectedCountryObject] = useState(null)
+  const [selectedRegion, setSelectedRegion] = useState('')
+  const [selectedZipcode, setSelectedZipcode] = useState('')
+  const [selectedLocality, setSelectedLocality] = useState('')
+  const [zipcodeFromDb, setZipcodeFromDb] = useState('')
+  const [localityFromDb, setLocalityFromDb] = useState('')
+  const [postOffices, setPostOffices] = useState([])
+  const [loadingPincodesOrPostOffices, setLoadingPincodesOrPostOffices] = useState(false)
+  const [pinCodes, setPinCodes] = useState([])
+
+  // Timezone-related states
+  // const [filteredTimezones, setFilteredTimezones] = useState(timezonesWithGMT || [])
+
+  // File-related states
+  const [fileInput, setFileInput] = useState(null)
+  const [resumeFileInput, setResumeFileInput] = useState(null)
+  const [organizationRegistrationDocument, setOrganizationRegistrationDocument] = useState(null)
+  const [organizationGSTDocument, setOrganizationGSTDocument] = useState(null)
+  const [organizationPANDocument, setOrganizationPANDocument] = useState(null)
+
+  // Voter ID related states
+  const [isCropMode, setIsCropMode] = useState({ front: false, back: false })
+  const [voterIdPhotos, setVoterIdPhotos] = useState({ front: '', back: '' })
+  const [voterIdPhotoFiles, setVoterIdPhotoFiles] = useState({ front: '', back: '' })
+
+  // Options-related states
+  const [languageOptions, setLanguageOptions] = useState([])
+  const [associatedOrganizationOptions, setAssociatedOrganizationOptions] = useState([])
+  const [schoolOptions, setSchoolOptions] = useState([])
+  const [workingPositionOptions, setWorkingPositionOptions] = useState([])
+
+  // Pending/removed states for state management
+  const [pendingLanguages, setPendingLanguages] = useState([])
+  const [removedLanguageIds, setRemovedLanguageIds] = useState([])
+  const [pendingVoterId, setPendingVoterId] = useState(null)
+  const [pendingEducations, setPendingEducations] = useState([])
+  const [removedEducationIds, setRemovedEducationIds] = useState([])
+  const [pendingPositions, setPendingPositions] = useState([])
+  const [removedPositionIds, setRemovedPositionIds] = useState([])
+  const [pendingOrganizations, setPendingOrganizations] = useState([])
+  const [removedOrganizationIds, setRemovedOrganizationIds] = useState([])
+
+  // Other state variables
+  const [profileData, setProfileData] = useState(null)
+  const [getLoading, setGetLoading] = useState(false)
+  const [isFormSubmitting, setIsFormSubmitting] = useState(false)
+  const [isFormValid, setIsFormValid] = useState(true)
+  const [shouldRefetchData, setShouldRefetchData] = useState(false)
+  const [profilePercentage, setProfilePercentage] = useState(0)
+
+  // Validation and modal states
+  const [isUrlsValid, setIsUrlsValid] = useState({ instagramUrl: true, linkedInUrl: true, facebookUrl: true })
+  const [isEpicValid, setIsEpicValid] = useState(true)
+  const [isModalOpen, setIsModalOpen] = useState({
+    language: false,
+    education: false,
+    workingPosition: false,
+    associatedOrganization: false
+  })
+
+  // Editing/viewing states
+  const [editingEducation, setEditingEducation] = useState(null)
+  const [editingWorkingPosition, setEditingWorkingPosition] = useState(null)
+  const [editingAssociatedOrganization, setEditingAssociatedOrganization] = useState(null)
+  const [viewingPosition, setViewingPosition] = useState(null)
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false)
+  const [viewingOrganization, setViewingOrganization] = useState(null)
+  const [isViewOrgModalOpen, setIsViewOrgModalOpen] = useState(false)
+  const [viewingEducation, setViewingEducation] = useState(null)
+  const [isViewEducationModalOpen, setIsViewEducationModalOpen] = useState(false)
+
+  // Refs for timer cleanup
+  const viewModalTimerRef = useRef(null)
+  const viewEducationTimerRef = useRef(null)
+  const viewOrgTimerRef = useRef(null)
 
   useEffect(() => {
     if (session && session.user) {
@@ -212,12 +259,7 @@ const AccountDetails = () => {
   useEffect(() => {
     setFormData(prev => ({ ...prev, region: selectedRegion }))
   }, [selectedRegion])
-  useEffect(() => {
-    setFormData(prev => ({ ...prev, zipcode: selectedZipcode }))
-  }, [selectedZipcode])
-  useEffect(() => {
-    setFormData(prev => ({ ...prev, locality: selectedLocality }))
-  }, [selectedLocality])
+  // Removed conflicting useEffect hooks - zipcode/locality are now handled by country-specific logic
 
   async function getProfilePhoto() {
     // image url
@@ -324,140 +366,188 @@ const AccountDetails = () => {
     async function getData() {
       // toast.success('Fetching user profile now...')
       setGetLoading(true)
-      const result = await RestApi.get(`${API_URLS.v0.USERS_PROFILE}/${session.user.email}`)
-      // const result = await clientApi.getUserProfileByEmail(session.user.email)
+      try {
+        const result = await RestApi.get(`${API_URLS.v0.USERS_PROFILE}?email=${session.user.email}`)
+        // const result = await clientApi.getUserProfileByEmail(session.user.email)
 
-      console.log('RESULT: ', result)
-      if (result?.status === 'success') {
-        console.log('User profile Fetched result', result)
-        const { profile, user } = result?.result
+        console.log('RESULT: ', result)
+        if (result?.status === 'success') {
+          console.log('User profile Fetched result', result)
+          const { profile, user } = result?.result
 
-        const profileCompletionPercentage = calculateProfileCompletion(profile)
-        console.log(`Profile Completion Percentage: ${profileCompletionPercentage}%`)
-        setProfilePercentage(profileCompletionPercentage)
-        // toast.success('User profile Fetched Successfully .')
-        setGetLoading(false)
-        // Filter out education data for non-INDIVIDUAL account types
-        let filteredProfile = { ...profile }
-        if (profile?.accountType !== 'INDIVIDUAL') {
-          filteredProfile = {
-            ...profile,
-            schools: [],
-            currentSchoolId: ''
+          const profileCompletionPercentage = calculateProfileCompletion(profile)
+          console.log(`Profile Completion Percentage: ${profileCompletionPercentage}%`)
+          setProfilePercentage(profileCompletionPercentage)
+          // toast.success('User profile Fetched Successfully .')
+          setGetLoading(false)
+          // Filter out education data for non-INDIVIDUAL account types
+          let filteredProfile = { ...profile }
+          if (profile?.accountType !== 'INDIVIDUAL') {
+            filteredProfile = {
+              ...profile,
+              schools: [],
+              currentSchoolId: ''
+            }
           }
-        }
 
-        setFormData({ ...formData, ...filteredProfile, memberId: user?.memberId })
-        setProfileData(profile) // Keep original profile data for other purposes
+          // Update knownLanguageIds to include all language IDs from the database
+          const updatedKnownLanguageIds = profile?.languages?.map(lang => lang._id) || []
 
-        // Handle voter ID data
-        if (profile?.voterId) {
-          if (typeof profile.voterId === 'string') {
-            // Handle old string format
-            setFormData(prev => ({
-              ...prev,
-              voterId: {
-                ...prev.voterId,
-                epicNumber: profile.voterId
-              }
-            }))
-          } else if (typeof profile.voterId === 'object') {
-            // Handle new object format
-            setFormData(prev => ({
-              ...prev,
-              voterId: {
-                epicNumber: profile.voterId.epicNumber || '',
-                frontImage: profile.voterId.frontImage || '',
-                backImage: profile.voterId.backImage || ''
-              }
-            }))
+          setFormData({
+            ...formData,
+            ...filteredProfile,
+            memberId: user?.memberId,
+            knownLanguageIds: updatedKnownLanguageIds
+          })
+          setProfileData(profile) // Keep original profile data for other purposes
 
-            // Set voter ID photos for display
-            setVoterIdPhotos({
-              front: profile.voterId.frontImage || '',
-              back: profile.voterId.backImage || ''
-            })
+          // Handle voter ID data
+          if (profile?.voterId) {
+            if (typeof profile.voterId === 'string') {
+              // Handle old string format
+              setFormData(prev => ({
+                ...prev,
+                voterId: {
+                  ...prev.voterId,
+                  epicNumber: profile.voterId
+                }
+              }))
+            } else if (typeof profile.voterId === 'object') {
+              // Handle new object format
+              setFormData(prev => ({
+                ...prev,
+                voterId: {
+                  epicNumber: profile.voterId.epicNumber || '',
+                  frontImage: profile.voterId.frontImage || '',
+                  backImage: profile.voterId.backImage || ''
+                }
+              }))
 
-            // Set crop mode to false for existing images (they should display normally)
-            setIsCropMode({
-              front: !profile.voterId.frontImage, // Only show crop mode if no image exists
-              back: !profile.voterId.backImage // Only show crop mode if no image exists
-            })
+              // Set voter ID photos for display
+              setVoterIdPhotos({
+                front: profile.voterId.frontImage || '',
+                back: profile.voterId.backImage || ''
+              })
+
+              // Set crop mode to false for existing images (they should display normally)
+              setIsCropMode({
+                front: !profile.voterId.frontImage, // Only show crop mode if no image exists
+                back: !profile.voterId.backImage // Only show crop mode if no image exists
+              })
+            }
+          } else {
+            // No voter ID data exists, reset to initial state
+            setVoterIdPhotos({ front: '', back: '' })
+            setIsCropMode({ front: false, back: false })
           }
+
+          if (profile?.image) {
+            setImgSrc(profile.image)
+          }
+          if (profile?.schools?.length > 0) {
+            setSchoolOptions(profile.schools.map(item => ({ value: item._id, label: item.school })))
+          }
+          if (profile?.workingPositions?.length > 0) {
+            setWorkingPositionOptions(profile.workingPositions.map(item => ({ value: item._id, label: item.title })))
+          }
+          if (profile?.languages?.length > 0) {
+            setLanguageOptions(profile.languages.map(item => ({ value: item._id, label: item.language })))
+          }
+          if (profile?.associatedOrganizations?.length > 0) {
+            setAssociatedOrganizationOptions(
+              profile.associatedOrganizations.map(item => ({ value: item._id, label: item.organization }))
+            )
+          }
+          if (profile?.country && profile?.country.trim() !== '') {
+            setSelectedCountry(profile.country)
+          } else {
+            // Clear country state if database value is empty
+            setSelectedCountry('')
+            setSelectedCountryObject(null)
+          }
+          if (profile?.region && profile?.region.trim() !== '') {
+            setSelectedRegion(profile.region)
+          } else {
+            // Clear region state if database value is empty
+            setSelectedRegion('')
+          }
+          // Handle address fields based on country
+          if (profile?.country === 'India') {
+            // For India: load pincode and postoffice into selectedZipcode and selectedLocality
+            if (profile?.pincode && profile?.pincode.trim() !== '') {
+              setZipcodeFromDb(profile?.pincode)
+              setSelectedZipcode(profile?.pincode)
+            } else {
+              setZipcodeFromDb('')
+              setSelectedZipcode('')
+            }
+            if (profile?.postoffice && profile?.postoffice.trim() !== '') {
+              setLocalityFromDb(profile?.postoffice)
+              setSelectedLocality(profile?.postoffice)
+            } else {
+              setLocalityFromDb('')
+              setSelectedLocality('')
+            }
+          } else {
+            // For non-India: load zipcode and locality into selectedZipcode and selectedLocality
+            if (profile?.zipcode && profile?.zipcode.trim() !== '') {
+              setZipcodeFromDb(profile?.zipcode)
+              setSelectedZipcode(profile?.zipcode)
+            } else {
+              setZipcodeFromDb('')
+              setSelectedZipcode('')
+            }
+            if (profile?.locality && profile?.locality.trim() !== '') {
+              setLocalityFromDb(profile?.locality)
+              setSelectedLocality(profile?.locality)
+            } else {
+              setLocalityFromDb('')
+              setSelectedLocality('')
+            }
+          }
+          if (profile?.phone && profile?.countryDialCode) {
+            setPhoneInput(profile?.countryDialCode + profile?.phone)
+            validatePhone(profile?.countryDialCode + profile?.phone, profile?.countryDialCode)
+          }
+          if (profile?.countryCode) {
+            setCountryCode(profile.countryCode)
+            // Map country code to country name
+            const countryObj = CountryRegionData.find(
+              data => data[1]?.toLowerCase() === profile.countryCode?.toLowerCase()
+            )
+
+            if (countryObj) {
+              // console.log('Mapped Country Object:', countryObj)
+              setSelectedCountryObject({ country: countryObj[0], countryCode: countryObj[1] })
+              setSelectedCountry(countryObj[0])
+            }
+          }
+          if (profile?.countryDialCode) {
+            setCountryDialCode(profile.countryDialCode)
+          }
+
+          // Getting files as per account type
+
+          await getProfilePhoto() // Common for Individual & Organization
+
+          if (profile?.accountType === 'INDIVIDUAL') {
+            await getResumeFile()
+          } else {
+            await getOrganizationRegistrationDoc()
+            await getOrganizationGSTDoc()
+            await getOrganizationPANDoc()
+          }
+          // handleClose();
         } else {
-          // No voter ID data exists, reset to initial state
-          setVoterIdPhotos({ front: '', back: '' })
-          setIsCropMode({ front: false, back: false })
+          // toast.error('Error:' + result.message)
+          setGetLoading(false)
+          // setFormData({ ...formData, ...profile })
         }
-
-        if (profile?.image) {
-          setImgSrc(profile.image)
-        }
-        if (profile?.schools?.length > 0) {
-          setSchoolOptions(profile.schools.map(item => ({ value: item._id, label: item.school })))
-        }
-        if (profile?.workingPositions?.length > 0) {
-          setWorkingPositionOptions(profile.workingPositions.map(item => ({ value: item._id, label: item.title })))
-        }
-        if (profile?.languages?.length > 0) {
-          setLanguageOptions(profile.languages.map(item => ({ value: item._id, label: item.language })))
-        }
-        if (profile?.associatedOrganizations?.length > 0) {
-          setAssociatedOrganizationOptions(
-            profile.associatedOrganizations.map(item => ({ value: item._id, label: item.organization }))
-          )
-        }
-        if (profile?.country) {
-          setSelectedCountry(profile.country)
-        }
-        if (profile?.region) {
-          setSelectedRegion(profile.region)
-        }
-        if (profile?.zipcode) {
-          setZipcodeFromDb(profile?.zipcode)
-          setSelectedZipcode(profile?.zipcode)
-        }
-        if (profile?.locality) {
-          setLocalityFromDb(profile?.locality)
-          setSelectedLocality(profile?.locality)
-        }
-        if (profile?.phone && profile?.countryDialCode) {
-          setPhoneInput(profile?.countryDialCode + profile?.phone)
-          validatePhone(profile?.countryDialCode + profile?.phone, profile?.countryDialCode)
-        }
-        if (profile?.countryCode) {
-          setCountryCode(profile.countryCode)
-          // Map country code to country name
-          const countryObj = CountryRegionData.find(
-            data => data[1]?.toLowerCase() === profile.countryCode?.toLowerCase()
-          )
-
-          if (countryObj) {
-            // console.log('Mapped Country Object:', countryObj)
-            setSelectedCountryObject({ country: countryObj[0], countryCode: countryObj[1] })
-            setSelectedCountry(countryObj[0])
-          }
-        }
-        if (profile?.countryDialCode) {
-          setCountryDialCode(profile.countryDialCode)
-        }
-
-        // Getting files as per account type
-
-        await getProfilePhoto() // Common for Individual & Organization
-
-        if (profile?.accountType === 'INDIVIDUAL') {
-          await getResumeFile()
-        } else {
-          await getOrganizationRegistrationDoc()
-          await getOrganizationGSTDoc()
-          await getOrganizationPANDoc()
-        }
-        // handleClose();
-      } else {
-        // toast.error('Error:' + result.message)
+      } catch (error) {
+        console.error('Error fetching profile data:', error)
         setGetLoading(false)
-        // setFormData({ ...formData, ...profile })
+        // Don't show error toast for background refetch to avoid user confusion
+        // The optimistic update already shows the correct data
       }
     }
 
@@ -466,6 +556,15 @@ const AccountDetails = () => {
     }
     console.log('THE USER PROFILE RESULT ')
   }, [session, shouldRefetchData])
+
+  // Cleanup timers on component unmount
+  useEffect(() => {
+    return () => {
+      if (viewModalTimerRef.current) clearTimeout(viewModalTimerRef.current)
+      if (viewEducationTimerRef.current) clearTimeout(viewEducationTimerRef.current)
+      if (viewOrgTimerRef.current) clearTimeout(viewOrgTimerRef.current)
+    }
+  }, [])
 
   useEffect(() => {
     if (selectedRegion) {
@@ -476,7 +575,19 @@ const AccountDetails = () => {
     }
   }, [selectedRegion])
 
+  // Filter timezones when country changes
+  // useEffect(() => {
+  //   if (selectedCountry) {
+  //     filterTimezonesByCountry(selectedCountry)
+  //   }
+  // }, [selectedCountry])
+
   const fetchPinCodesForState = async selectedStateName => {
+    if (!selectedStateName) {
+      setPinCodes([])
+      setPostOffices([])
+      return
+    }
     console.log('Selected selectedStateName:', selectedStateName)
     setLoadingPincodesOrPostOffices(true)
     try {
@@ -484,9 +595,10 @@ const AccountDetails = () => {
 
       const data = await response.json()
       console.log('pinCode data...', data)
-      setPinCodes(data?.PinCodes || [])
+      setPinCodes(data?.pinCodes || data?.PinCodes || [])
     } catch (e) {
-      setLoadingPincodesOrPostOffices(false)
+      console.error('Error fetching pincodes:', e)
+      setPinCodes([])
     } finally {
       setLoadingPincodesOrPostOffices(false)
     }
@@ -494,6 +606,11 @@ const AccountDetails = () => {
 
   const fetchPostOffices = async selectedZipcode => {
     console.log('Selected zipcode Object:', selectedZipcode)
+
+    // Clear selectedLocality when fetching new post offices for a different zipcode
+    setSelectedLocality('')
+    handleFormChange('postoffice', '')
+
     setLoadingPincodesOrPostOffices(true)
     try {
       const response = await fetch(`http://localhost:3000/api/localities/${selectedZipcode}`)
@@ -526,6 +643,90 @@ const AccountDetails = () => {
     }
   }, [selectedZipcode])
 
+  // Sync state variables with formData
+  useEffect(() => {
+    setFormData(prev => ({ ...prev, country: selectedCountry }))
+  }, [selectedCountry])
+
+  useEffect(() => {
+    setFormData(prev => ({ ...prev, region: selectedRegion }))
+  }, [selectedRegion])
+
+  // Clear selectedZipcode and selectedLocality when switching to India to prevent old data
+  useEffect(() => {
+    if (selectedCountry === 'India') {
+      setSelectedZipcode('')
+      setSelectedLocality('')
+    }
+  }, [selectedCountry])
+
+  // Handle zipcode/pincode based on country
+  useEffect(() => {
+    if (selectedCountry === 'India') {
+      // For India: store selectedZipcode in pincode field, clear zipcode
+      // Only store if selectedZipcode is not empty (to prevent old data from appearing)
+      setFormData(prev => ({
+        ...prev,
+        pincode: selectedZipcode || '',
+        zipcode: '' // Clear zipcode for India
+      }))
+    } else {
+      // For non-India or empty country: clear pincode, don't auto-store selectedZipcode
+      // The manual text field will handle zipcode storage
+      setFormData(prev => ({
+        ...prev,
+        pincode: '' // Clear pincode for non-India and empty country
+      }))
+
+      // If country is empty (removed), also clear zipcode
+      if (!selectedCountry || selectedCountry === '') {
+        setFormData(prev => ({
+          ...prev,
+          zipcode: '' // Clear zipcode when country is removed
+        }))
+      }
+    }
+  }, [selectedZipcode, selectedCountry])
+
+  // Clear zipcode and locality when country is removed (empty)
+  useEffect(() => {
+    if (!selectedCountry || selectedCountry === '') {
+      setFormData(prev => ({
+        ...prev,
+        zipcode: '',
+        locality: ''
+      }))
+    }
+  }, [selectedCountry])
+
+  // Handle locality/postoffice based on country
+  useEffect(() => {
+    if (selectedCountry === 'India') {
+      // For India: store selectedLocality in postoffice field, clear locality
+      // Only store if selectedLocality is not empty (to prevent old data from appearing)
+      setFormData(prev => ({
+        ...prev,
+        postoffice: selectedLocality || '',
+        locality: '' // Clear locality for India
+      }))
+    } else {
+      // For non-India or empty country: clear postoffice, don't auto-store selectedLocality
+      // The manual text field will handle locality storage
+      setFormData(prev => ({
+        ...prev,
+        postoffice: '' // Clear postoffice for non-India and empty country
+      }))
+
+      // If country is empty (removed), also clear locality
+      if (!selectedCountry || selectedCountry === '') {
+        setFormData(prev => ({
+          ...prev,
+          locality: '' // Clear locality when country is removed
+        }))
+      }
+    }
+  }, [selectedLocality, selectedCountry])
+
   const getCountryCodeByCountry = countryName => {
     const result = CountryRegionData.find(([country]) => country === countryName)
     return result ? result[1] : null
@@ -543,23 +744,17 @@ const AccountDetails = () => {
     setIsModalOpen(prev => ({ ...prev, education: true }))
   }
 
-  async function handleDeleteEducation(schoolId) {
+  function handleDeleteEducation(schoolId) {
     if (!schoolId) return
 
-    try {
-      const response = await RestApi.del(`${API_URLS.v0.USERS_PROFILE}/schools?id=${schoolId}`)
-      if (response.status === 'success') {
-        console.log('Education deleted successfully')
-        toast.success('Education deleted successfully.')
-        handleRefetchUserProfileData()
-      } else {
-        toast.error('Error: ' + response.message)
-        console.error('Error deleting education:', response.message)
-      }
-    } catch (error) {
-      toast.error('An unexpected error occurred.')
-      console.error('Error deleting education:', error)
+    // Check if it's a pending education (starts with 'temp_')
+    if (schoolId.startsWith('temp_')) {
+      handleRemovePendingEducation(schoolId)
+      return
     }
+
+    // Handle existing education deletion - just mark for removal
+    handleRemoveExistingEducation(schoolId)
   }
 
   function handleEditWorkingPosition(position) {
@@ -567,23 +762,71 @@ const AccountDetails = () => {
     setIsModalOpen(prev => ({ ...prev, workingPosition: true }))
   }
 
-  async function handleDeleteWorkingPosition(positionId) {
+  function handleViewWorkingPosition(position) {
+    setViewingPosition(position)
+    setIsViewModalOpen(true)
+  }
+
+  function handleCloseViewModal() {
+    setIsViewModalOpen(false)
+    // Clear any existing timer
+    if (viewModalTimerRef.current) {
+      clearTimeout(viewModalTimerRef.current)
+    }
+    // Clear the viewing position after a small delay to ensure smooth closing
+    viewModalTimerRef.current = setTimeout(() => {
+      setViewingPosition(null)
+      viewModalTimerRef.current = null
+    }, 150)
+  }
+
+  function handleViewEducation(education) {
+    setViewingEducation(education)
+    setIsViewEducationModalOpen(true)
+  }
+
+  function handleCloseViewEducationModal() {
+    setIsViewEducationModalOpen(false)
+    // Clear any existing timer
+    if (viewEducationTimerRef.current) {
+      clearTimeout(viewEducationTimerRef.current)
+    }
+    // Clear the viewing education after a small delay to ensure smooth closing
+    viewEducationTimerRef.current = setTimeout(() => {
+      setViewingEducation(null)
+      viewEducationTimerRef.current = null
+    }, 150)
+  }
+
+  function handleViewAssociatedOrganization(organization) {
+    setViewingOrganization(organization)
+    setIsViewOrgModalOpen(true)
+  }
+
+  function handleCloseViewOrgModal() {
+    setIsViewOrgModalOpen(false)
+    // Clear any existing timer
+    if (viewOrgTimerRef.current) {
+      clearTimeout(viewOrgTimerRef.current)
+    }
+    // Clear the viewing organization after a small delay to ensure smooth closing
+    viewOrgTimerRef.current = setTimeout(() => {
+      setViewingOrganization(null)
+      viewOrgTimerRef.current = null
+    }, 150)
+  }
+
+  function handleDeleteWorkingPosition(positionId) {
     if (!positionId) return
 
-    try {
-      const response = await RestApi.del(`${API_URLS.v0.USERS_PROFILE}/working-positions?id=${positionId}`)
-      if (response.status === 'success') {
-        console.log('Working position deleted successfully')
-        toast.success('Working position deleted successfully.')
-        handleRefetchUserProfileData()
-      } else {
-        toast.error('Error: ' + response.message)
-        console.error('Error deleting working position:', response.message)
-      }
-    } catch (error) {
-      toast.error('An unexpected error occurred.')
-      console.error('Error deleting working position:', error)
+    // Check if it's a pending position (starts with 'temp_')
+    if (positionId.startsWith('temp_')) {
+      handleRemovePendingPosition(positionId)
+      return
     }
+
+    // Handle existing position deletion - just mark for removal
+    handleRemoveExistingPosition(positionId)
   }
 
   function handleEditAssociatedOrganization(organization) {
@@ -591,47 +834,34 @@ const AccountDetails = () => {
     setIsModalOpen(prev => ({ ...prev, associatedOrganization: true }))
   }
 
-  async function handleDeleteAssociatedOrganization(organizationId) {
+  function handleDeleteAssociatedOrganization(organizationId) {
     if (!organizationId) return
 
-    try {
-      const response = await RestApi.del(`${API_URLS.v0.USERS_PROFILE}/associated-organizations?id=${organizationId}`)
-      if (response.status === 'success') {
-        console.log('Associated organization deleted successfully')
-        toast.success('Associated organization deleted successfully.')
-        handleRefetchUserProfileData()
-      } else {
-        toast.error('Error: ' + response.message)
-        console.error('Error deleting associated organization:', response.message)
-      }
-    } catch (error) {
-      toast.error('An unexpected error occurred.')
-      console.error('Error deleting associated organization:', error)
+    // Check if it's a pending organization (starts with 'temp_')
+    if (organizationId.startsWith('temp_')) {
+      handleRemovePendingOrganization(organizationId)
+      return
     }
+
+    // Handle existing organization deletion - just mark for removal
+    handleRemoveExistingOrganization(organizationId)
   }
 
   const handleDeleteChipFromMultiSelect = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: [...prev[field]].filter(each => each !== value) }))
   }
 
-  async function handleDeleteLanguage(languageId) {
+  function handleDeleteLanguage(languageId) {
     if (!languageId) return
 
-    try {
-      const response = await RestApi.del(`${API_URLS.v0.USERS_PROFILE}/languages?id=${languageId}`)
-      if (response.status === 'success') {
-        console.log('Language deleted successfully')
-        toast.success('Language deleted successfully.')
-        // Refetch user profile data to update the UI
-        setShouldRefetchData(prev => !prev)
-      } else {
-        toast.error('Error: ' + response.message)
-        console.error('Error deleting language:', response.message)
-      }
-    } catch (error) {
-      toast.error('An unexpected error occurred.')
-      console.error('Error deleting language:', error)
+    // Check if it's a pending language (starts with 'temp_')
+    if (languageId.startsWith('temp_')) {
+      handleRemovePendingLanguage(languageId)
+      return
     }
+
+    // Handle existing language deletion - just remove from state
+    handleRemoveExistingLanguage(languageId)
   }
 
   function validateUrl(field, value) {
@@ -651,16 +881,157 @@ const AccountDetails = () => {
     setShouldRefetchData(prev => !prev)
   }
 
+  // Function to add language to pending state
+  function handleAddLanguageToState(newLanguage) {
+    setPendingLanguages(prev => [...prev, newLanguage])
+
+    // Also update the language options for display
+    setLanguageOptions(prev => [...prev, { value: newLanguage._id, label: newLanguage.language }])
+
+    // Update formData to include the new language ID
+    setFormData(prev => ({
+      ...prev,
+      knownLanguageIds: [...prev.knownLanguageIds, newLanguage._id]
+    }))
+  }
+
+  // Function to remove language from pending state
+  function handleRemovePendingLanguage(languageId) {
+    setPendingLanguages(prev => prev.filter(lang => lang._id !== languageId))
+    setLanguageOptions(prev => prev.filter(option => option.value !== languageId))
+    setFormData(prev => ({
+      ...prev,
+      knownLanguageIds: prev.knownLanguageIds.filter(id => id !== languageId)
+    }))
+  }
+
+  // Function to remove existing language from state (mark for removal)
+  function handleRemoveExistingLanguage(languageId) {
+    // Add to removed languages list
+    setRemovedLanguageIds(prev => [...prev, languageId])
+
+    // Remove from UI immediately
+    setLanguageOptions(prev => prev.filter(option => option.value !== languageId))
+    setFormData(prev => ({
+      ...prev,
+      knownLanguageIds: prev.knownLanguageIds.filter(id => id !== languageId)
+    }))
+  }
+
+  // Function to add education to pending state
+  function handleAddEducationToState(newEducation) {
+    setPendingEducations(prev => [...prev, newEducation])
+  }
+
+  // Function to update education in pending state
+  function handleUpdateEducationInState(updatedEducation) {
+    // Check if it's a pending education (temp ID) or existing education
+    if (updatedEducation._id.startsWith('temp_')) {
+      // Update existing pending education
+      setPendingEducations(prev => prev.map(edu => (edu._id === updatedEducation._id ? updatedEducation : edu)))
+    } else {
+      // For existing education, mark original for removal and add updated version to pending with new temp ID
+      setRemovedEducationIds(prev => [...prev, updatedEducation._id])
+      const updatedEducationWithTempId = {
+        ...updatedEducation,
+        _id: `temp_${Date.now()}` // New temp ID for the updated version
+      }
+      setPendingEducations(prev => [...prev, updatedEducationWithTempId])
+    }
+  }
+
+  // Function to remove education from pending state
+  function handleRemovePendingEducation(educationId) {
+    setPendingEducations(prev => prev.filter(edu => edu._id !== educationId))
+  }
+
+  // Function to remove existing education from state (mark for removal)
+  function handleRemoveExistingEducation(educationId) {
+    // Add to removed education list
+    setRemovedEducationIds(prev => [...prev, educationId])
+  }
+
+  // Function to add position to pending state
+  function handleAddPositionToState(newPosition) {
+    setPendingPositions(prev => [...prev, newPosition])
+  }
+
+  // Function to update position in pending state
+  function handleUpdatePositionInState(updatedPosition) {
+    // Check if it's a pending position (temp ID) or existing position
+    if (updatedPosition._id.startsWith('temp_')) {
+      // Update existing pending position
+      setPendingPositions(prev => prev.map(pos => (pos._id === updatedPosition._id ? updatedPosition : pos)))
+    } else {
+      // For existing position, mark original for removal and add updated version to pending with new temp ID
+      setRemovedPositionIds(prev => [...prev, updatedPosition._id])
+      const updatedPositionWithTempId = {
+        ...updatedPosition,
+        _id: `temp_${Date.now()}` // New temp ID for the updated version
+      }
+      setPendingPositions(prev => [...prev, updatedPositionWithTempId])
+    }
+  }
+
+  // Function to remove position from pending state
+  function handleRemovePendingPosition(positionId) {
+    setPendingPositions(prev => prev.filter(pos => pos._id !== positionId))
+  }
+
+  // Function to remove existing position from state (mark for removal)
+  function handleRemoveExistingPosition(positionId) {
+    // Add to removed position list
+    setRemovedPositionIds(prev => [...prev, positionId])
+  }
+
+  // Function to add organization to pending state
+  function handleAddOrganizationToState(newOrganization) {
+    setPendingOrganizations(prev => [...prev, newOrganization])
+  }
+
+  // Function to update organization in pending state
+  function handleUpdateOrganizationInState(updatedOrganization) {
+    // Check if it's a pending organization (temp ID) or existing organization
+    if (updatedOrganization._id.startsWith('temp_')) {
+      // Update existing pending organization
+      setPendingOrganizations(prev =>
+        prev.map(org => (org._id === updatedOrganization._id ? updatedOrganization : org))
+      )
+    } else {
+      // For existing organization, mark original for removal and add updated version to pending with new temp ID
+      setRemovedOrganizationIds(prev => [...prev, updatedOrganization._id])
+      const updatedOrganizationWithTempId = {
+        ...updatedOrganization,
+        _id: `temp_${Date.now()}` // New temp ID for the updated version
+      }
+      setPendingOrganizations(prev => [...prev, updatedOrganizationWithTempId])
+    }
+  }
+
+  // Function to remove organization from pending state
+  function handleRemovePendingOrganization(organizationId) {
+    setPendingOrganizations(prev => prev.filter(org => org._id !== organizationId))
+  }
+
+  // Function to remove existing organization from state (mark for removal)
+  function handleRemoveExistingOrganization(organizationId) {
+    // Add to removed organization list
+    setRemovedOrganizationIds(prev => [...prev, organizationId])
+  }
+
   const handleFormChange = (field, value) => {
     if (field === 'voterId') {
       setIsEpicValid(validateEpic(value)) // Validate EPIC format
+      const updatedVoterId = {
+        ...formData.voterId,
+        epicNumber: value
+      }
       setFormData(prev => ({
         ...prev,
-        voterId: {
-          ...prev.voterId,
-          epicNumber: value
-        }
+        voterId: updatedVoterId
       }))
+      // Also update pending voter ID state
+      setPendingVoterId(updatedVoterId)
       return
     }
     if (field === 'linkedInUrl') {
@@ -727,7 +1098,27 @@ const AccountDetails = () => {
   }
 
   function getLanguageLabel(value) {
-    return languageOptions.find(option => option.value === value)?.label || 'Unknown'
+    // First try to find in languageOptions (for existing languages)
+    const option = languageOptions.find(option => option.value === value)
+    if (option) {
+      return option.label
+    }
+
+    // If not found, try to find in profileData.languages (for newly added languages)
+    if (profileData?.languages) {
+      const language = profileData.languages.find(lang => lang._id === value)
+      if (language) {
+        return language.language
+      }
+    }
+
+    // If still not found, try to find in pendingLanguages (for temporary languages)
+    const pendingLanguage = pendingLanguages.find(lang => lang._id === value)
+    if (pendingLanguage) {
+      return pendingLanguage.language
+    }
+
+    return 'Unknown'
   }
 
   function getAssocaiatedOrganizationLabel(value) {
@@ -738,12 +1129,81 @@ const AccountDetails = () => {
     return phoneInput.startsWith(countryDialCode) ? phoneInput.slice(countryDialCode.length) : phoneInput
   }
 
+  // Function to filter timezones based on selected country
+  // const filterTimezonesByCountry = countryName => {
+  //   if (!countryName || !timezonesWithGMT) {
+  //     setFilteredTimezones(timezonesWithGMT || [])
+  //     return
+  //   }
+
+  //   const filtered = timezonesWithGMT.filter(timezone => {
+  //     // Check if the country name appears in the timezone's country field
+  //     return (
+  //       timezone.country.toLowerCase().includes(countryName.toLowerCase()) ||
+  //       timezone.countryCode.toLowerCase().includes(countryName.toLowerCase())
+  //     )
+  //   })
+
+  //   setFilteredTimezones(filtered)
+
+  //   // If only one timezone found for this country, auto-select it
+  //   if (filtered.length === 1) {
+  //     handleFormChange('timezone', filtered[0].timezoneWithGMT)
+  //   }
+  // }
+
   function handleChangeCountry(countryValue) {
-    setSelectedRegion('') // Reset region when country changes
+    // Clear all address fields when country changes (same as registration flow)
+    setSelectedRegion('')
+    setSelectedZipcode('')
+    setSelectedLocality('')
+    setPinCodes([])
+    setPostOffices([])
+
+    // Clear all address fields in formData
+    handleFormChange('region', '')
+    handleFormChange('zipcode', '')
+    handleFormChange('locality', '')
+    handleFormChange('pincode', '')
+    handleFormChange('postoffice', '')
+    handleFormChange('street', '')
+    handleFormChange('colony', '')
+    handleFormChange('village', '')
+
     setCountryCode(countryValue?.countryCode || '')
+
+    // Update formData with selected country
+    if (countryValue && countryValue.country) {
+      handleFormChange('country', countryValue.country)
+      handleFormChange('countryCode', countryValue.countryCode)
+    } else {
+      handleFormChange('country', '')
+      handleFormChange('countryCode', '')
+      setSelectedCountry('')
+      setSelectedCountryObject(null)
+
+      // Directly clear all address fields when country is removed
+      setFormData(prev => ({
+        ...prev,
+        country: '',
+        countryCode: '',
+        region: '',
+        zipcode: '',
+        locality: '',
+        pincode: '',
+        postoffice: '',
+        street: '',
+        colony: '',
+        village: ''
+      }))
+      return
+    }
 
     if (countryValue) {
       const countryObj = countries.find(country => country.countryCode === countryValue.countryCode)
+
+      // Filter timezones based on selected country
+      // filterTimezonesByCountry(countryValue.country)
       if (countryObj) {
         if (formData.countryDialCode !== +countryObj.countryDialCode) {
           setCountryDialCode(countryObj.countryDialCode)
@@ -788,111 +1248,304 @@ const AccountDetails = () => {
     setIsFormSubmitting(true)
     // toast.success('Updating user profile...')
 
-    if (
-      (formData.age && (+formData.age > 120 || +formData.age < 6)) ||
-      (formData.linkedInUrl && !isUrlsValid.linkedInUrl) ||
-      (formData.facebookUrl && !isUrlsValid.facebookUrl) ||
-      (formData.instagramUrl && !isUrlsValid.instagramUrl)
-    ) {
-      setIsFormValid(false)
-      setIsFormSubmitting(false)
-      // toast.error('Invalid form data. Recheck and submit valid data.')
-      return
-    }
+    try {
+      if (
+        (formData.age && (+formData.age > 120 || +formData.age < 6)) ||
+        (formData.linkedInUrl && !isUrlsValid.linkedInUrl) ||
+        (formData.facebookUrl && !isUrlsValid.facebookUrl) ||
+        (formData.instagramUrl && !isUrlsValid.instagramUrl)
+      ) {
+        setIsFormValid(false)
+        setIsFormSubmitting(false)
+        // toast.error('Invalid form data. Recheck and submit valid data.')
+        return
+      }
 
-    setIsFormValid(true)
+      setIsFormValid(true)
 
-    let allFormData = {}
-
-    for (let key in formData) {
-      if (typeof formData[key] === 'string') {
-        if (formData[key].trim() !== '') {
-          allFormData[key] = formData[key]
+      // Efficiently process form data using Object.entries and reduce
+      const allFormData = Object.entries(formData).reduce((acc, [key, value]) => {
+        // Always include address fields even if empty (to allow clearing them)
+        const addressFields = [
+          'country',
+          'countryCode',
+          'region',
+          'zipcode',
+          'locality',
+          'pincode',
+          'postoffice',
+          'street',
+          'colony',
+          'village'
+        ]
+        if (addressFields.includes(key)) {
+          acc[key] = value || '' // Include address fields even if empty
         }
-      } else if (Array.isArray(formData[key])) {
-        if (formData[key].length > 0) {
-          allFormData[key] = formData[key]
+        // Handle string values
+        else if (typeof value === 'string' && value.trim()) {
+          acc[key] = value
         }
-      } else if (typeof formData[key] !== 'NaN') {
-        allFormData[key] = formData[key]
+        // Handle array values
+        else if (Array.isArray(value) && value.length > 0) {
+          acc[key] = value
+        }
+        // Handle other non-null, non-undefined, non-empty values
+        else if (value !== null && value !== undefined && value !== '') {
+          acc[key] = value
+        }
+        return acc
+      }, {})
+
+      let data = { ...allFormData, age: +allFormData.age }
+
+      // Debug: Log address fields to verify they're included
+      console.log('Address fields being sent:', {
+        country: data.country,
+        region: data.region,
+        zipcode: data.zipcode,
+        locality: data.locality,
+        street: data.street,
+        colony: data.colony,
+        village: data.village
+      })
+
+      if (phoneInput && phoneValid && isPhoneVerified) {
+        console.log({ phoneInput, countryDialCode })
+        const phone = getPhoneWithoutCountryDialCode(phoneInput, String(countryDialCode))
+        console.log({ phone })
+        data = {
+          ...data,
+          phone: phone
+        }
       }
-    }
-
-    let data = { ...allFormData, age: +allFormData.age }
-
-    if (phoneInput && phoneValid && isPhoneVerified) {
-      console.log({ phoneInput, countryDialCode })
-      const phone = getPhoneWithoutCountryDialCode(phoneInput, String(countryDialCode))
-      console.log({ phone })
-      data = {
-        ...data,
-        phone: phone
+      if (!phoneInput) {
+        data = {
+          ...data,
+          phone: ''
+        }
       }
-    }
-    if (!phoneInput) {
-      data = {
-        ...data,
-        phone: ''
+      if (countryDialCode) {
+        data = { ...data, countryDialCode }
       }
-    }
-    if (countryDialCode) {
-      data = { ...data, countryDialCode }
-    }
-    if (countryCode) {
-      data = { ...data, countryCode }
-    }
-
-    if (data.accountType === 'BUSINESS' || data.accountType === 'NGO') {
-      data = { ...data, school: '', openToWork: false, nickname: '', schools: [], currentSchoolId: '' }
-    } else if (data.accountType === 'INDIVIDUAL') {
-      data = {
-        ...data,
-        organization: '',
-        organizationRegistrationNumber: '',
-        organizationGSTNumber: '',
-        organizationPANNumber: '',
-        websiteUrl: '',
-        hiring: false,
-        associatedOrganization: '',
-        associatedOrganizationType: '',
-        associatedOrganizationWebsiteUrl: ''
+      if (countryCode) {
+        data = { ...data, countryCode }
       }
-    }
 
-    // Remove voter ID from main profile update since it's handled separately
-    if (data.voterId) {
-      delete data.voterId
-    }
+      if (data.accountType === 'BUSINESS' || data.accountType === 'NGO') {
+        data = { ...data, school: '', openToWork: false, nickname: '', schools: [], currentSchoolId: '' }
+      } else if (data.accountType === 'INDIVIDUAL') {
+        data = {
+          ...data,
+          organization: '',
+          organizationRegistrationNumber: '',
+          organizationGSTNumber: '',
+          organizationPANNumber: '',
+          websiteUrl: '',
+          hiring: false,
+          associatedOrganization: '',
+          associatedOrganizationType: '',
+          associatedOrganizationWebsiteUrl: ''
+        }
+      }
 
-    console.log('User profile data sending to POST:', data)
+      // Handle voter ID - include pending changes
+      if (pendingVoterId) {
+        data.voterId = pendingVoterId
+      }
 
-    const result = await RestApi.put(`${API_URLS.v0.USERS_PROFILE}/${session?.user?.email}`, data)
-    // const result = await clientApi.updateUserProfile(session.user.email, data)
-    if (result.status === 'success') {
-      console.log('Updated  result', result.result)
-      // toast.success('User profile Updated .')
-      console.log('user profile updating result', result.result)
-      if (result.result.accountType === 'INDIVIDUAL') {
-        await handleUploadResumeFileToS3()
+      // Generic function to process entity changes (eliminates code duplication)
+      const processEntityChanges = (pendingItems, removedIds, currentItems, dataKey, fieldsToExtract) => {
+        if (pendingItems.length > 0 || removedIds.length > 0) {
+          // Filter out removed items
+          const filteredItems = currentItems.filter(item => !removedIds.includes(item._id))
 
-        await handleDeleteFileFromS3(`${session?.user?.email}/organization_registration`)
-        await handleDeleteFileFromS3(`${session?.user?.email}/organization_gst`)
-        await handleDeleteFileFromS3(`${session?.user?.email}/organization_pan`)
+          // Extract only required fields from pending items (remove temp IDs)
+          const newItems = pendingItems.map(item => {
+            const cleanItem = {}
+            fieldsToExtract.forEach(field => {
+              cleanItem[field] = item[field]
+            })
+            return cleanItem
+          })
+
+          // Combine filtered existing items with new ones
+          data[dataKey] = [...filteredItems, ...newItems]
+        }
+      }
+
+      // Process different entity types using the generic function
+      processEntityChanges(pendingLanguages, removedLanguageIds, profileData?.languages || [], 'languages', [
+        'language',
+        'canRead',
+        'canWrite',
+        'canSpeak'
+      ])
+
+      processEntityChanges(pendingEducations, removedEducationIds, profileData?.schools || [], 'schools', [
+        'school',
+        'degree',
+        'highestQualification',
+        'fieldOfStudy',
+        'startDate',
+        'endDate',
+        'description'
+      ])
+
+      processEntityChanges(
+        pendingPositions,
+        removedPositionIds,
+        profileData?.workingPositions || [],
+        'workingPositions',
+        [
+          'title',
+          'employmentType',
+          'companyName',
+          'location',
+          'locationType',
+          'isCurrentlyWorking',
+          'startDate',
+          'endDate',
+          'description'
+        ]
+      )
+
+      processEntityChanges(
+        pendingOrganizations,
+        removedOrganizationIds,
+        profileData?.associatedOrganizations || [],
+        'associatedOrganizations',
+        ['organization', 'organizationType', 'websiteUrl']
+      )
+
+      console.log('User profile data sending to POST:', data)
+
+      const result = await RestApi.put(API_URLS.v0.USERS_PROFILE, { email: session?.user?.email, ...data })
+      // const result = await clientApi.updateUserProfile(session.user.email, data)
+      if (result.status === 'success') {
+        console.log('Updated  result', result.result)
+        toast.success('Profile updated successfully!')
+        console.log('user profile updating result', result.result)
+        if (result.result.accountType === 'INDIVIDUAL') {
+          await handleUploadResumeFileToS3()
+
+          await handleDeleteFileFromS3(`${session?.user?.email}/organization_registration`)
+          await handleDeleteFileFromS3(`${session?.user?.email}/organization_gst`)
+          await handleDeleteFileFromS3(`${session?.user?.email}/organization_pan`)
+        } else {
+          await handleUploadOrganizationRegistrationDocToS3()
+          await handleUploadOrganizationGSTDocToS3()
+          await handleUploadOrganizationPANDocToS3()
+        }
+
+        await handleUploadProfilePhotoToS3()
+
+        // Optimistically update profileData to prevent flicker
+        const updatedProfile = { ...profileData }
+
+        // Update languages optimistically
+        if (pendingLanguages.length > 0 || removedLanguageIds.length > 0) {
+          const currentLanguages = profileData?.languages || []
+          const filteredLanguages = currentLanguages.filter(lang => !removedLanguageIds.includes(lang._id))
+          const newLanguages = pendingLanguages.map(lang => ({
+            language: lang.language,
+            canRead: lang.canRead,
+            canWrite: lang.canWrite,
+            canSpeak: lang.canSpeak
+          }))
+          updatedProfile.languages = [...filteredLanguages, ...newLanguages]
+        }
+
+        // Update education optimistically
+        if (pendingEducations.length > 0 || removedEducationIds.length > 0) {
+          const currentEducations = profileData?.schools || []
+          const filteredEducations = currentEducations.filter(edu => !removedEducationIds.includes(edu._id))
+          const newEducations = pendingEducations.map(edu => ({
+            school: edu.school,
+            degree: edu.degree,
+            highestQualification: edu.highestQualification,
+            fieldOfStudy: edu.fieldOfStudy,
+            startDate: edu.startDate,
+            endDate: edu.endDate,
+            description: edu.description
+          }))
+          updatedProfile.schools = [...filteredEducations, ...newEducations]
+        }
+
+        // Update working positions optimistically
+        if (pendingPositions.length > 0 || removedPositionIds.length > 0) {
+          const currentPositions = profileData?.workingPositions || []
+          const filteredPositions = currentPositions.filter(pos => !removedPositionIds.includes(pos._id))
+          const newPositions = pendingPositions.map(pos => ({
+            title: pos.title,
+            employmentType: pos.employmentType,
+            companyName: pos.companyName,
+            location: pos.location,
+            locationType: pos.locationType,
+            isCurrentlyWorking: pos.isCurrentlyWorking,
+            startDate: pos.startDate,
+            endDate: pos.endDate,
+            description: pos.description
+          }))
+          updatedProfile.workingPositions = [...filteredPositions, ...newPositions]
+        }
+
+        // Update organizations optimistically
+        if (pendingOrganizations.length > 0 || removedOrganizationIds.length > 0) {
+          const currentOrganizations = profileData?.associatedOrganizations || []
+          const filteredOrganizations = currentOrganizations.filter(org => !removedOrganizationIds.includes(org._id))
+          const newOrganizations = pendingOrganizations.map(org => ({
+            organization: org.organization,
+            organizationType: org.organizationType,
+            websiteUrl: org.websiteUrl
+          }))
+          updatedProfile.associatedOrganizations = [...filteredOrganizations, ...newOrganizations]
+        }
+
+        // Update voter ID optimistically
+        if (pendingVoterId) {
+          updatedProfile.voterId = pendingVoterId
+        }
+
+        // Update profileData immediately to prevent flicker
+        setProfileData(updatedProfile)
+
+        // Clear pending and removed states after optimistic update
+        setPendingLanguages([])
+        setRemovedLanguageIds([])
+        setPendingVoterId(null)
+        setPendingEducations([])
+        setRemovedEducationIds([])
+        setPendingPositions([])
+        setRemovedPositionIds([])
+        setPendingOrganizations([])
+        setRemovedOrganizationIds([])
+
+        // Refetch user profile data in background to ensure data consistency
+        // This will update the profileData with real database IDs
+        setShouldRefetchData(prev => !prev)
+
+        setIsFormSubmitting(false)
       } else {
-        await handleUploadOrganizationRegistrationDocToS3()
-        await handleUploadOrganizationGSTDocToS3()
-        await handleUploadOrganizationPANDocToS3()
+        console.error('Error in handleSubmit:', result, result?.message)
+
+        // Handle validation errors
+        if (result?.errors && Array.isArray(result.errors)) {
+          const errorMessages = result.errors.slice(0, 3) // Show first 3 errors
+          errorMessages.forEach(error => {
+            toast.error(error)
+          })
+          if (result.errors.length > 3) {
+            toast.error(`And ${result.errors.length - 3} more validation errors...`)
+          }
+        } else {
+          toast.error(result?.message || 'Failed to update profile. Please try again.')
+        }
+
+        setIsFormSubmitting(false)
       }
-
-      await handleUploadProfilePhotoToS3()
-
-      setFormData(initialData)
-      setIsFormSubmitting(false)
-      handleResetForm()
-    } else {
-      console.error('Error in handleSubmit:', result, result?.message)
-      // toast.error('Error:' + result.message)
-      // toast.error('Error:', result)
+    } catch (error) {
+      console.error('Unexpected error in handleSubmit:', error)
+      toast.error('An unexpected error occurred. Please try again.')
       setIsFormSubmitting(false)
     }
   }
@@ -1091,59 +1744,22 @@ const AccountDetails = () => {
     }
   }
 
-  // Consolidated function to handle voter ID updates
-  const updateVoterIdData = async voterIdData => {
-    try {
-      let response
-      if (formData.voterId?.epicNumber) {
-        // Update existing voter ID
-        response = await RestApi.put(`${API_URLS.v0.USERS_PROFILE}/voter-id`, {
-          email: session?.user?.email,
-          voterId: voterIdData
-        })
-      } else {
-        // Add new voter ID
-        response = await RestApi.post(`${API_URLS.v0.USERS_PROFILE}/voter-id`, {
-          email: session?.user?.email,
-          voterId: voterIdData
-        })
-      }
-
-      if (response.status === 'success') {
-        console.log('Voter ID updated successfully:', response.result)
-        // Update local form data
-        setFormData(prev => ({
-          ...prev,
-          voterId: voterIdData
-        }))
-        handleRefetchUserProfileData()
-        return true
-      } else {
-        console.error('Error updating voter ID:', response.message)
-        return false
-      }
-    } catch (error) {
-      console.error('Unexpected error updating voter ID:', error)
-      return false
-    }
-  }
-
-  const handleVoterIdPhotosInputChange = async (file, side) => {
+  const handleVoterIdPhotosInputChange = (file, side) => {
     const reader = new FileReader()
     const { files } = file.target
 
     if (files && files.length !== 0) {
-      reader.onload = async () => {
+      reader.onload = () => {
         const imageData = reader.result
         setVoterIdPhotos(prev => ({ ...prev, [side]: imageData }))
 
-        // Update voter ID via consolidated function
-        const voterIdData = {
-          ...formData.voterId,
+        // Update pending voter ID state - use current pendingVoterId as base, fallback to formData.voterId
+        const currentVoterId = pendingVoterId || formData.voterId || {}
+        const updatedVoterId = {
+          ...currentVoterId,
           [side === 'front' ? 'frontImage' : 'backImage']: imageData
         }
-
-        await updateVoterIdData(voterIdData)
+        setPendingVoterId(updatedVoterId)
 
         // Set crop mode to true for the uploaded image
         setIsCropMode(prev => ({ ...prev, [side]: true }))
@@ -1152,30 +1768,30 @@ const AccountDetails = () => {
     }
   }
 
-  const handleVoterIdPhotoDelete = async side => {
+  const handleVoterIdPhotoDelete = side => {
     setVoterIdPhotos(prev => ({ ...prev, [side]: '' }))
     setIsCropMode(prev => ({ ...prev, [side]: false }))
 
-    // Update voter ID via consolidated function
-    const voterIdData = {
-      ...formData.voterId,
+    // Update pending voter ID state - use current pendingVoterId as base, fallback to formData.voterId
+    const currentVoterId = pendingVoterId || formData.voterId || {}
+    const updatedVoterId = {
+      ...currentVoterId,
       [side === 'front' ? 'frontImage' : 'backImage']: ''
     }
-
-    await updateVoterIdData(voterIdData)
+    setPendingVoterId(updatedVoterId)
   }
 
-  const handleVoterIdImageCrop = async (side, croppedImageUrl) => {
+  const handleVoterIdImageCrop = (side, croppedImageUrl) => {
     // Update both local state and form data with cropped image
     setVoterIdPhotos(prev => ({ ...prev, [side]: croppedImageUrl }))
 
-    // Update voter ID via consolidated function
-    const voterIdData = {
-      ...formData.voterId,
+    // Update pending voter ID state - use current pendingVoterId as base, fallback to formData.voterId
+    const currentVoterId = pendingVoterId || formData.voterId || {}
+    const updatedVoterId = {
+      ...currentVoterId,
       [side === 'front' ? 'frontImage' : 'backImage']: croppedImageUrl
     }
-
-    await updateVoterIdData(voterIdData)
+    setPendingVoterId(updatedVoterId)
   }
 
   // const validatePhone = (value, countryDialCode) => {
@@ -1319,8 +1935,6 @@ const AccountDetails = () => {
               formData={formData}
               handleFormChange={handleFormChange}
               handleVoterIdImageCrop={handleVoterIdImageCrop}
-              session={session}
-              onRefetchUserProfileData={handleRefetchUserProfileData}
             />
             {/* ----Address---- */}
             <AddressInfo
@@ -1336,555 +1950,106 @@ const AccountDetails = () => {
               selectedRegion={selectedRegion}
               postOffices={postOffices}
               fetchPostOffices={fetchPostOffices}
+              fetchPinCodesForState={fetchPinCodesForState}
               loadingPincodesOrPostOffices={loadingPincodesOrPostOffices}
               selectedZipcode={selectedZipcode}
               setSelectedZipcode={setSelectedZipcode}
               pinCodes={pinCodes}
               setSelectedLocality={setSelectedLocality}
               selectedLocality={selectedLocality}
+              // filteredTimezones={filteredTimezones}
             />
 
-            {/* ----Education---- */}
-            {formData.accountType === 'INDIVIDUAL' && (
-              <>
-                <Grid item xs={12} marginLeft={'0.25rem'}>
-                  <Divider> Education </Divider>
-                </Grid>
-                {/* Add Education Button */}
-                <Grid item xs={12} sm={6}>
-                  <Button
-                    startIcon={<RiAddFill />}
-                    sx={{ alignSelf: 'flex-start' }}
-                    variant='text'
-                    color='primary'
-                    onClick={() => handleOpenModal('education')}
-                  >
-                    Add Education
-                  </Button>
-                </Grid>
+            {/* Education Section */}
+            <EducationSection
+              formData={formData}
+              profileData={profileData}
+              pendingEducations={pendingEducations}
+              removedEducationIds={removedEducationIds}
+              isModalOpen={isModalOpen}
+              editingEducation={editingEducation}
+              viewingEducation={viewingEducation}
+              isViewEducationModalOpen={isViewEducationModalOpen}
+              handleOpenModal={handleOpenModal}
+              handleCloseModal={handleCloseModal}
+              handleCloseViewEducationModal={handleCloseViewEducationModal}
+              handleEditEducation={handleEditEducation}
+              handleViewEducation={handleViewEducation}
+              handleDeleteEducation={handleDeleteEducation}
+              handleAddEducationToState={handleAddEducationToState}
+              handleUpdateEducationInState={handleUpdateEducationInState}
+              session={session}
+            />
 
-                {/* Display Education List */}
-                {profileData?.schools && profileData.schools.length > 0 && (
-                  <Grid item xs={12}>
-                    <Box sx={{ mt: 2 }}>
-                      <Grid container spacing={2}>
-                        {profileData.schools.map((school, index) => (
-                          <Grid item xs={12} md={6} key={school._id || index}>
-                            <Box
-                              sx={{
-                                p: 2,
-                                height: '100%',
-                                border: '1px solid',
-                                borderColor: 'divider',
-                                borderRadius: 1,
-                                backgroundColor: 'background.paper'
-                              }}
-                            >
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                <Box sx={{ flex: 1, minWidth: 0 }}>
-                                  <Typography
-                                    variant='h6'
-                                    sx={{
-                                      fontWeight: 'bold',
-                                      mb: 1,
-                                      width: '300px',
-                                      overflow: 'hidden',
-                                      textOverflow: 'ellipsis',
-                                      whiteSpace: 'nowrap'
-                                    }}
-                                  >
-                                    {school.highestQualification === '7th Grade' ||
-                                    school.highestQualification === '10th Grade'
-                                      ? 'School Name'
-                                      : 'College Name'}
-                                    : {school.school}
-                                  </Typography>
-                                  {school.degree && (
-                                    <Typography
-                                      variant='body1'
-                                      color='text.secondary'
-                                      sx={{
-                                        mb: 0.5,
-                                        width: '300px',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap'
-                                      }}
-                                    >
-                                      <strong>Degree:</strong> {school.degree}
-                                    </Typography>
-                                  )}
-                                  {school.fieldOfStudy && (
-                                    <Typography
-                                      variant='body1'
-                                      color='text.secondary'
-                                      sx={{
-                                        mb: 0.5,
-                                        width: '300px',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap'
-                                      }}
-                                    >
-                                      <strong>Field of Study:</strong> {school.fieldOfStudy}
-                                    </Typography>
-                                  )}
-                                  {school.highestQualification && (
-                                    <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
-                                      <strong>Highest Qualification:</strong> {school.highestQualification}
-                                    </Typography>
-                                  )}
-                                  <Typography variant='body2' color='text.secondary' sx={{ mb: 0.5 }}>
-                                    <strong>Duration:</strong>{' '}
-                                    {school.startDate ? new Date(school.startDate).toLocaleDateString() : 'N/A'} -{' '}
-                                    {school.endDate ? new Date(school.endDate).toLocaleDateString() : 'Present'}
-                                  </Typography>
-                                  {school.description && (
-                                    <Typography variant='body2' sx={{ mt: 1 }}>
-                                      <strong>Description:</strong> {school.description}
-                                    </Typography>
-                                  )}
-                                </Box>
-                                <Box sx={{ display: 'flex', gap: 1 }}>
-                                  <IconButton size='small' color='primary' onClick={() => handleEditEducation(school)}>
-                                    <EditIcon fontSize='small' />
-                                  </IconButton>
-                                  <IconButton
-                                    size='small'
-                                    color='error'
-                                    onClick={() => handleDeleteEducation(school._id)}
-                                  >
-                                    <DeleteIcon fontSize='small' />
-                                  </IconButton>
-                                </Box>
-                              </Box>
-                            </Box>
-                          </Grid>
-                        ))}
-                      </Grid>
-                    </Box>
-                  </Grid>
-                )}
-              </>
-            )}
+            {/* Work Experience Section */}
+            <WorkExperienceSection
+              formData={formData}
+              profileData={profileData}
+              pendingPositions={pendingPositions}
+              removedPositionIds={removedPositionIds}
+              isModalOpen={isModalOpen}
+              editingWorkingPosition={editingWorkingPosition}
+              viewingPosition={viewingPosition}
+              isViewWorkingPositionModalOpen={isViewModalOpen}
+              handleOpenModal={handleOpenModal}
+              handleCloseModal={handleCloseModal}
+              handleCloseViewWorkingPositionModal={handleCloseViewModal}
+              handleEditWorkingPosition={handleEditWorkingPosition}
+              handleViewWorkingPosition={handleViewWorkingPosition}
+              handleDeleteWorkingPosition={handleDeleteWorkingPosition}
+              handleAddWorkingPositionToState={handleAddPositionToState}
+              handleUpdateWorkingPositionInState={handleUpdatePositionInState}
+              handleFormChange={handleFormChange}
+              session={session}
+            />
 
-            {/* ----Work History---- */}
-            <Grid item xs={12} marginLeft={'0.25rem'}>
-              <Divider> Work History </Divider>
-            </Grid>
-            {/* Add New Position Button and Open To Work / Hiring */}
-            <Grid item xs={12}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  width: '100%',
-                  gap: 2
-                }}
-              >
-                {/* Add New Position Button - Left Side */}
-                <Button
-                  startIcon={<RiAddFill />}
-                  variant='text'
-                  color='primary'
-                  onClick={() => handleOpenModal('workingPosition')}
-                  sx={{ flexShrink: 0 }}
-                >
-                  Add New Position
-                </Button>
+            {/* Organization Section */}
+            <OrganizationSection
+              formData={formData}
+              profileData={profileData}
+              pendingOrganizations={pendingOrganizations}
+              removedOrganizationIds={removedOrganizationIds}
+              isModalOpen={isModalOpen}
+              editingAssociatedOrganization={editingAssociatedOrganization}
+              viewingOrganization={viewingOrganization}
+              isViewAssociatedOrganizationModalOpen={isViewOrgModalOpen}
+              handleOpenModal={handleOpenModal}
+              handleCloseModal={handleCloseModal}
+              handleCloseViewAssociatedOrganizationModal={handleCloseViewOrgModal}
+              handleEditAssociatedOrganization={handleEditAssociatedOrganization}
+              handleViewAssociatedOrganization={handleViewAssociatedOrganization}
+              handleDeleteAssociatedOrganization={handleDeleteAssociatedOrganization}
+              handleAddAssociatedOrganizationToState={handleAddOrganizationToState}
+              handleUpdateAssociatedOrganizationInState={handleUpdateOrganizationInState}
+              session={session}
+            />
 
-                {/* Open To Work for Individual - Right Side */}
-                {formData.accountType === 'INDIVIDUAL' && (
-                  <FormGroup sx={{ flexShrink: 0 }}>
-                    <FormControlLabel
-                      checked={formData.openToWork}
-                      control={<Checkbox />}
-                      label='Open to work'
-                      name='openToWork'
-                      onChange={(e, checked) => handleFormChange('openToWork', checked)}
-                    />
-                  </FormGroup>
-                )}
+            {/* Business Details Section */}
+            <BusinessDetailsSection
+              formData={formData}
+              handleFormChange={handleFormChange}
+              organizationRegistrationDocument={organizationRegistrationDocument}
+              organizationGSTDocument={organizationGSTDocument}
+              organizationPANDocument={organizationPANDocument}
+              handleOrganizationRegistrationDocumentChange={e =>
+                handleFileInputChangeByFieldName('organizationRegistrationDocument', e)
+              }
+              handleOrganizationGSTDocumentChange={e => handleFileInputChangeByFieldName('organizationGSTDocument', e)}
+              handleOrganizationPANDocumentChange={e => handleFileInputChangeByFieldName('organizationPANDocument', e)}
+              uploadOrganizationRegistrationDocToS3={handleUploadOrganizationRegistrationDocToS3}
+              uploadOrganizationGSTDocToS3={handleUploadOrganizationGSTDocToS3}
+              uploadOrganizationPANDocToS3={handleUploadOrganizationPANDocToS3}
+              deleteFileFromS3Handler={handleDeleteFileFromS3}
+            />
 
-                {/* Hiring for Business/NGO - Right Side */}
-                {(formData.accountType === 'BUSINESS' || formData.accountType === 'NGO') && (
-                  <FormGroup sx={{ flexShrink: 0 }}>
-                    <FormControlLabel
-                      name='hiring'
-                      checked={formData.hiring}
-                      control={<Checkbox />}
-                      label='Hiring'
-                      onChange={(e, checked) => handleFormChange('hiring', checked)}
-                    />
-                  </FormGroup>
-                )}
-              </Box>
-            </Grid>
-
-            {/* Display Working Positions List */}
-            {profileData?.workingPositions && profileData.workingPositions.length > 0 && (
-              <Grid item xs={12}>
-                <Box sx={{ mt: 2 }}>
-                  <Grid container spacing={2}>
-                    {profileData.workingPositions.map((position, index) => (
-                      <Grid item xs={12} md={6} key={position._id || index}>
-                        <Box
-                          sx={{
-                            p: 2,
-                            height: '100%',
-                            border: '1px solid',
-                            borderColor: 'divider',
-                            borderRadius: 1,
-                            backgroundColor: 'background.paper'
-                          }}
-                        >
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                            <Box sx={{ flex: 1, minWidth: 0 }}>
-                              <Typography
-                                variant='h6'
-                                sx={{
-                                  fontWeight: 'bold',
-                                  mb: 1,
-                                  width: '300px',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap'
-                                }}
-                              >
-                                <strong>Job Title:</strong> {position.title}
-                              </Typography>
-                              <Typography
-                                variant='body1'
-                                color='text.secondary'
-                                sx={{
-                                  mb: 0.5,
-                                  width: '300px',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap'
-                                }}
-                              >
-                                <strong>Company:</strong> {position.companyName}
-                              </Typography>
-                              {position.employmentType && (
-                                <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
-                                  <strong>Employment Type:</strong> {position.employmentType}
-                                </Typography>
-                              )}
-                              {position.location && (
-                                <Typography variant='body2' color='text.secondary' sx={{ mb: 0.5 }}>
-                                  <strong>Location:</strong> {position.location}
-                                </Typography>
-                              )}
-                              <Typography variant='body2' color='text.secondary' sx={{ mb: 0.5 }}>
-                                <strong>Duration:</strong>{' '}
-                                {position.startDate ? new Date(position.startDate).toLocaleDateString() : 'N/A'} -{' '}
-                                {position.isCurrentlyWorking
-                                  ? 'Present'
-                                  : position.endDate
-                                    ? new Date(position.endDate).toLocaleDateString()
-                                    : 'N/A'}
-                              </Typography>
-                              {position.description && (
-                                <Typography variant='body2' sx={{ mt: 1 }}>
-                                  <strong>Description:</strong> {position.description}
-                                </Typography>
-                              )}
-                            </Box>
-                            <Box sx={{ display: 'flex', gap: 1 }}>
-                              <IconButton
-                                size='small'
-                                color='primary'
-                                onClick={() => handleEditWorkingPosition(position)}
-                              >
-                                <EditIcon fontSize='small' />
-                              </IconButton>
-                              <IconButton
-                                size='small'
-                                color='error'
-                                onClick={() => handleDeleteWorkingPosition(position._id)}
-                              >
-                                <DeleteIcon fontSize='small' />
-                              </IconButton>
-                            </Box>
-                          </Box>
-                        </Box>
-                      </Grid>
-                    ))}
-                  </Grid>
-                </Box>
-              </Grid>
-            )}
-
-            {/* Add New Associated Organization Button */}
-            <Grid item xs={12} sm={6}>
-              <Button
-                startIcon={<RiAddFill />}
-                sx={{ alignSelf: 'flex-start' }}
-                variant='text'
-                color='primary'
-                onClick={() => handleOpenModal('associatedOrganization')}
-              >
-                Add New Associated Organization
-              </Button>
-            </Grid>
-
-            {/* Display Associated Organizations List */}
-            {profileData?.associatedOrganizations && profileData.associatedOrganizations.length > 0 && (
-              <Grid item xs={12}>
-                <Box sx={{ mt: 2 }}>
-                  <Grid container spacing={2}>
-                    {profileData.associatedOrganizations.map((organization, index) => (
-                      <Grid item xs={12} md={6} key={organization._id || index}>
-                        <Box
-                          sx={{
-                            p: 2,
-                            height: '100%',
-                            border: '1px solid',
-                            borderColor: 'divider',
-                            borderRadius: 1,
-                            backgroundColor: 'background.paper'
-                          }}
-                        >
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                            <Box sx={{ flex: 1, minWidth: 0 }}>
-                              <Typography
-                                variant='h6'
-                                sx={{
-                                  fontWeight: 'bold',
-                                  mb: 1,
-                                  width: '300px',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap'
-                                }}
-                              >
-                                <strong>Organization:</strong> {organization.organization}
-                              </Typography>
-                              {organization.organizationType && (
-                                <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
-                                  <strong>Organization Type:</strong> {organization.organizationType}
-                                </Typography>
-                              )}
-                              {organization.websiteUrl && (
-                                <Typography
-                                  variant='body2'
-                                  color='text.secondary'
-                                  sx={{
-                                    mb: 0.5,
-                                    width: '300px',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    whiteSpace: 'nowrap'
-                                  }}
-                                >
-                                  <strong>Website:</strong> {organization.websiteUrl}
-                                </Typography>
-                              )}
-                            </Box>
-                            <Box sx={{ display: 'flex', gap: 1 }}>
-                              <IconButton
-                                size='small'
-                                color='primary'
-                                onClick={() => handleEditAssociatedOrganization(organization)}
-                              >
-                                <EditIcon fontSize='small' />
-                              </IconButton>
-                              <IconButton
-                                size='small'
-                                color='error'
-                                onClick={() => handleDeleteAssociatedOrganization(organization._id)}
-                              >
-                                <DeleteIcon fontSize='small' />
-                              </IconButton>
-                            </Box>
-                          </Box>
-                        </Box>
-                      </Grid>
-                    ))}
-                  </Grid>
-                </Box>
-              </Grid>
-            )}
-
-            {/* ----Business Details---- */}
-            {(formData.accountType === 'BUSINESS' || formData.accountType === 'NGO') && (
-              <>
-                <Grid item xs={12} marginLeft={'0.25rem'}>
-                  <Divider>{formData.accountType === 'NGO' ? 'Organization Details' : 'Business Details'}</Divider>
-                </Grid>
-
-                {/* Organization */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    name='organization'
-                    label='Your Organization'
-                    value={formData.organization}
-                    placeholder='ThemeSelection'
-                    onChange={e => handleFormChange('organization', e.target.value)}
-                  />
-                </Grid>
-
-                {/* Website Url */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label={formData.accountType === 'NGO' ? 'Organization Website Url' : 'Business Website Url'}
-                    name='websiteUrl'
-                    value={formData.websiteUrl}
-                    placeholder='Ex: https://www.triesoltech.com'
-                    onChange={e => handleFormChange('websiteUrl', e.target.value)}
-                  />
-                </Grid>
-
-                {/* Registration No. */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label={
-                      formData.accountType === 'NGO' ? 'Organization Registration No.' : 'Business Registration No.'
-                    }
-                    name='organizationRegistrationNumber'
-                    value={formData.organizationRegistrationNumber}
-                    // placeholder='Ex: https://www.triesoltech.com'
-                    onChange={e => handleFormChange('organizationRegistrationNumber', e.target.value)}
-                  />
-                </Grid>
-
-                {/* Registration Document */}
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth>
-                    <MuiFileInput
-                      label={
-                        formData.accountType === 'NGO' ? 'Organization Registration Doc.' : 'Business Registration Doc.'
-                      }
-                      name='organizationRegistrationDocument'
-                      value={organizationRegistrationDocument}
-                      onChange={e => handleFileInputChangeByFieldName('organizationRegistrationDocument', e)}
-                      fullWidth
-                      clearIconButtonProps={{
-                        title: 'Remove',
-                        children: <RiCloseFill />
-                      }}
-                      placeholder='upload registration document (pdf/doc/image)'
-                      InputProps={{
-                        inputProps: {
-                          accept: '.pdf,.doc,.docx,.jpeg,.png,.jpg'
-                        },
-                        startAdornment: <IoMdAttach />
-                      }}
-                    />
-                  </FormControl>
-                </Grid>
-
-                {/* GST No. */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label={formData.accountType === 'NGO' ? 'Organization GST No.' : 'Business GST No.'}
-                    name='organizationGSTNumber'
-                    value={formData.organizationGSTNumber}
-                    // placeholder='Ex: https://www.triesoltech.com'
-                    onChange={e => handleFormChange('organizationGSTNumber', e.target.value)}
-                  />
-                </Grid>
-
-                {/* GST Document */}
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth>
-                    <MuiFileInput
-                      label={formData.accountType === 'NGO' ? 'GST Doc.' : 'Business GST Doc.'}
-                      name='organizationGSTDocument'
-                      value={organizationGSTDocument}
-                      onChange={e => handleFileInputChangeByFieldName('organizationGSTDocument', e)}
-                      fullWidth
-                      clearIconButtonProps={{
-                        title: 'Remove',
-                        children: <RiCloseFill />
-                      }}
-                      placeholder='upload GST document (pdf/doc/image)'
-                      InputProps={{
-                        inputProps: {
-                          accept: '.pdf,.doc,.docx,.jpeg,.png,.jpg'
-                        },
-                        startAdornment: <IoMdAttach />
-                      }}
-                    />
-                  </FormControl>
-                </Grid>
-
-                {/* PAN No. */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label={formData.accountType === 'NGO' ? 'Organization PAN No.' : 'Business PAN No.'}
-                    name='organizationPANNumber'
-                    value={formData.organizationPANNumber}
-                    // placeholder='Ex: https://www.triesoltech.com'
-                    onChange={e => handleFormChange('organizationPANNumber', e.target.value)}
-                  />
-                </Grid>
-
-                {/* PAN Document */}
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth>
-                    <MuiFileInput
-                      label={formData.accountType === 'NGO' ? 'GST Doc.' : 'Business GST Doc.'}
-                      name='organizationPANDocument'
-                      value={organizationPANDocument}
-                      onChange={e => handleFileInputChangeByFieldName('organizationPANDocument', e)}
-                      fullWidth
-                      clearIconButtonProps={{
-                        title: 'Remove',
-                        children: <RiCloseFill />
-                      }}
-                      placeholder='upload PAN document (pdf/doc/image)'
-                      InputProps={{
-                        inputProps: {
-                          accept: '.pdf,.doc,.docx,.jpeg,.png,.jpg'
-                        },
-                        startAdornment: <IoMdAttach />
-                      }}
-                    />
-                  </FormControl>
-                </Grid>
-              </>
-            )}
-
-            {/* ----Upload Resume---- */}
-            {formData.accountType === 'INDIVIDUAL' && (
-              <>
-                <Grid item xs={12} marginLeft={'0.25rem'}>
-                  <Divider> Upload Resume </Divider>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth>
-                    {/* <InputLabel>Resume</InputLabel> */}
-                    <MuiFileInput
-                      label='Resume'
-                      name='resumeFileInput'
-                      value={resumeFileInput}
-                      onChange={handleResumeFileInputChange}
-                      fullWidth
-                      clearIconButtonProps={{
-                        title: 'Remove',
-                        children: <RiCloseFill />
-                      }}
-                      placeholder='upload your resume (.pdf/.doc/.docx)'
-                      InputProps={{
-                        inputProps: {
-                          accept: '.pdf,.doc,.docx'
-                        },
-                        startAdornment: <IoMdAttach />
-                      }}
-                    />
-                  </FormControl>
-                </Grid>
-              </>
-            )}
+            {/* Resume Section */}
+            <ResumeSection
+              formData={formData}
+              resumeFileInput={resumeFileInput}
+              handleResumeFileInputChange={handleResumeFileInputChange}
+              uploadResumeFileToS3={handleUploadResumeFileToS3}
+              deleteFileFromS3Handler={handleDeleteFileFromS3}
+            />
 
             {/* ----Socaial Media Profiles---- */}
             <SocialMediaInfo formData={formData} handleFormChange={handleFormChange} isUrlsValid={isUrlsValid} />
@@ -1894,7 +2059,7 @@ const AccountDetails = () => {
                 email={session?.user?.email}
                 open={isModalOpen.language}
                 onClose={() => handleCloseModal('language')}
-                onRefetchUserProfileData={handleRefetchUserProfileData}
+                onAddLanguageToState={handleAddLanguageToState}
               />
             )}
             {isModalOpen.associatedOrganization && (
@@ -1905,8 +2070,8 @@ const AccountDetails = () => {
                   setEditingAssociatedOrganization(null)
                   handleCloseModal('associatedOrganization')
                 }}
-                onRefetchUserProfileData={handleRefetchUserProfileData}
-                existingOrganizations={profileData?.associatedOrganizations || []}
+                onAddOrganizationToState={handleAddOrganizationToState}
+                onUpdateOrganizationInState={handleUpdateOrganizationInState}
                 editingAssociatedOrganization={editingAssociatedOrganization}
               />
             )}
@@ -1918,7 +2083,8 @@ const AccountDetails = () => {
                   setEditingEducation(null)
                   handleCloseModal('education')
                 }}
-                onRefetchUserProfileData={handleRefetchUserProfileData}
+                onAddEducationToState={handleAddEducationToState}
+                onUpdateEducationInState={handleUpdateEducationInState}
                 existingSchools={profileData?.schools || []}
                 editingEducation={editingEducation}
               />
@@ -1931,33 +2097,60 @@ const AccountDetails = () => {
                   setEditingWorkingPosition(null)
                   handleCloseModal('workingPosition')
                 }}
-                onRefetchUserProfileData={handleRefetchUserProfileData}
+                onAddPositionToState={handleAddPositionToState}
+                onUpdatePositionInState={handleUpdatePositionInState}
                 existingPositions={profileData?.workingPositions || []}
                 editingWorkingPosition={editingWorkingPosition}
               />
             )}
 
+            {/* View Working Position Modal */}
+            <WorkingPositionViewModal
+              open={isViewModalOpen}
+              onClose={handleCloseViewModal}
+              position={viewingPosition}
+              onEdit={handleEditWorkingPosition}
+            />
+
+            {/* View Associated Organization Modal */}
+            <AssociatedOrganizationViewModal
+              open={isViewOrgModalOpen}
+              onClose={handleCloseViewOrgModal}
+              organization={viewingOrganization}
+              onEdit={handleEditAssociatedOrganization}
+            />
+
+            {/* View Education Modal */}
+            <EducationViewModal
+              open={isViewEducationModalOpen}
+              onClose={handleCloseViewEducationModal}
+              education={viewingEducation}
+              onEdit={handleEditEducation}
+            />
+
             {/* Actions */}
-            <Grid item xs={12} className='flex gap-4 flex-wrap'>
-              <Button
-                disabled={
-                  isFormSubmitting ||
-                  getLoading ||
-                  !isEpicValid ||
-                  (formData.facebookUrl && !isUrlsValid.facebookUrl) ||
-                  (formData.instagramUrl && !isUrlsValid.instagramUrl) ||
-                  (formData.linkedInUrl && !isUrlsValid.linkedInUrl)
-                }
-                variant='contained'
-                type='submit'
-                color='primary'
-                style={{ color: 'white', backgroundColor: theme.palette.primary.main }}
-              >
-                Save Changes
-              </Button>
-              <Button variant='outlined' type='reset' color='secondary' onClick={handleResetForm}>
-                Reset
-              </Button>
+            <Grid item xs={12} mt={4}>
+              <Stack direction='row' spacing={2} justifyContent='center'>
+                <Button variant='outlined' type='reset' onClick={handleResetForm}>
+                  Reset
+                </Button>
+                <Button
+                  disabled={
+                    isFormSubmitting ||
+                    getLoading ||
+                    !isEpicValid ||
+                    (formData.facebookUrl && !isUrlsValid.facebookUrl) ||
+                    (formData.instagramUrl && !isUrlsValid.instagramUrl) ||
+                    (formData.linkedInUrl && !isUrlsValid.linkedInUrl)
+                  }
+                  variant='contained'
+                  type='submit'
+                  color='primary'
+                  style={{ color: 'white', backgroundColor: theme.palette.primary.main }}
+                >
+                  {isFormSubmitting ? 'Saving...' : 'Save Changes'}
+                </Button>
+              </Stack>
             </Grid>
           </Grid>
         </form>

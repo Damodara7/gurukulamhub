@@ -1,6 +1,6 @@
 // Next Imports
 import * as ApiResponseUtils from '@/utils/apiResponses'
-import { getByEmail, addOrUpdate } from '@/app/services/profile.service'
+import { getByEmail, addOrUpdate } from '@/app/api/profile/profile.service'
 
 export async function GET(req, { params }) {
   try {
@@ -14,7 +14,7 @@ export async function GET(req, { params }) {
       )
       return ApiResponseUtils.sendSuccessResponse(successResponse)
     }
-    const errorResponse = ApiResponseUtils.createErrorResponse(createdProfileResult.message)
+    const errorResponse = ApiResponseUtils.createErrorResponse(profileResult.message)
     return ApiResponseUtils.sendErrorResponse(errorResponse)
   } catch (error) {
     console.error('api/profile/[userId] GET -> Error fetching user:', error)

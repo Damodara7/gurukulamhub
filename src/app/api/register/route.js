@@ -1,4 +1,4 @@
-import { updateUserProfile } from '../../services/profile.service'
+import { updateUserProfile } from '../profile/profile.service'
 import * as ApiResponseUtils from '@/utils/apiResponses'
 
 export async function POST(request) {

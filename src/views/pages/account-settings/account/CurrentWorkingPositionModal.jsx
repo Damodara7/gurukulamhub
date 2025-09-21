@@ -5,6 +5,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  DialogContentText,
   FormControl,
   FormControlLabel,
   FormHelperText,
@@ -22,15 +23,12 @@ import {
 } from '@mui/material'
 import React, { useEffect, useState } from 'react'
 
-import * as RestApi from '@/utils/restApiUtil'
-import { API_URLS as ApiUrls } from '@/configs/apiConfig'
-
 import { DemoContainer } from '@mui/x-date-pickers/internals/demo'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { DatePicker } from '@mui/x-date-pickers'
+import { Edit as EditIcon } from '@mui/icons-material'
 import dayjs from 'dayjs'
-import { toast } from 'react-toastify'
 
 const initialFormData = {
   title: '',
@@ -48,7 +46,8 @@ function CurrentWorkingPositionModal({
   open,
   onClose,
   email,
-  onRefetchUserProfileData,
+  onAddPositionToState,
+  onUpdatePositionInState,
   existingPositions = [],
   editingWorkingPosition = null
 }) {
@@ -85,9 +84,10 @@ function CurrentWorkingPositionModal({
   const handleFormChange = (field, value) => {
     setFormData({ ...formData, [field]: value })
   }
-  async function handleSubmit() {
-    setIsFormSubmitting(true)
+  function handleSubmit() {
     // Validate form
+    setIsFormSubmitting(true)
+
     if (!formData.title.trim() || !formData.companyName.trim() || !formData.employmentType.trim()) {
       setIsFormValid(false)
       setIsFormSubmitting(false)
@@ -97,35 +97,41 @@ function CurrentWorkingPositionModal({
     setIsFormValid(true)
 
     try {
-      let response
       if (editingWorkingPosition) {
-        // Update existing working position
-        response = await RestApi.put(`${ApiUrls.v0.USERS_PROFILE}/working-positions?id=${editingWorkingPosition._id}`, {
-          email,
-          workingPosition: formData
-        })
+        // Update existing working position in state
+        const updatedPosition = {
+          _id: editingWorkingPosition._id,
+          title: formData.title,
+          employmentType: formData.employmentType,
+          companyName: formData.companyName,
+          location: formData.location,
+          locationType: formData.locationType,
+          isCurrentlyWorking: formData.isCurrentlyWorking,
+          startDate: formData.startDate,
+          endDate: formData.endDate,
+          description: formData.description
+        }
+        onUpdatePositionInState(updatedPosition)
       } else {
-        // Add new working position
-        response = await RestApi.post(`${ApiUrls.v0.USERS_PROFILE}/working-positions`, {
-          email,
-          workingPosition: formData
-        })
+        // Add new working position to state
+        const newPosition = {
+          _id: `temp_${Date.now()}`, // Temporary ID for state management
+          title: formData.title,
+          employmentType: formData.employmentType,
+          companyName: formData.companyName,
+          location: formData.location,
+          locationType: formData.locationType,
+          isCurrentlyWorking: formData.isCurrentlyWorking,
+          startDate: formData.startDate,
+          endDate: formData.endDate,
+          description: formData.description
+        }
+        onAddPositionToState(newPosition)
       }
 
-      if (response.status === 'success') {
-        // Optionally update local state or refetch data
-        console.log('Working position details saved successfully:', response.result)
-        toast.success(
-          editingWorkingPosition ? 'Working position updated successfully.' : 'Working position added successfully.'
-        )
-        onClose()
-        onRefetchUserProfileData()
-      } else {
-        toast.error('Error: ' + response.message)
-        console.error('Error adding working position details:', response.message)
-      }
+      console.log('Working position added to state successfully')
+      onClose()
     } catch (error) {
-      toast.error('An unexpected error occurred.')
       console.error('Unexpected error:', error)
     } finally {
       setIsFormSubmitting(false)
@@ -320,6 +326,115 @@ function CurrentWorkingPositionModal({
         </DialogActions>
       </Dialog>
     </Grid>
+  )
+}
+
+// Working Position View Modal Component
+export function WorkingPositionViewModal({ open, onClose, position, onEdit }) {
+  function handleEdit() {
+    onEdit(position)
+    onClose()
+  }
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth='md' fullWidth>
+      <DialogTitle>Working Position Details</DialogTitle>
+      <DialogContent>
+        {position && (
+          <Box sx={{ pt: 1 }}>
+            <DialogContentText>
+              <Box sx={{ mb: 2 }}>
+                <Typography variant='h6' sx={{ fontWeight: 'bold', mb: 1 }}>
+                  Job Title
+                </Typography>
+                <Typography variant='body1'>{position.title}</Typography>
+              </Box>
+
+              <Box sx={{ mb: 2 }}>
+                <Typography variant='h6' sx={{ fontWeight: 'bold', mb: 1 }}>
+                  Company Name
+                </Typography>
+                <Typography variant='body1'>{position.companyName}</Typography>
+              </Box>
+
+              {position.employmentType && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant='h6' sx={{ fontWeight: 'bold', mb: 1 }}>
+                    Employment Type
+                  </Typography>
+                  <Typography variant='body1'>{position.employmentType}</Typography>
+                </Box>
+              )}
+
+              {position.location && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant='h6' sx={{ fontWeight: 'bold', mb: 1 }}>
+                    Location
+                  </Typography>
+                  <Typography variant='body1'>{position.location}</Typography>
+                </Box>
+              )}
+
+              {position.locationType && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant='h6' sx={{ fontWeight: 'bold', mb: 1 }}>
+                    Location Type
+                  </Typography>
+                  <Typography variant='body1'>{position.locationType}</Typography>
+                </Box>
+              )}
+
+              <Box sx={{ mb: 2 }}>
+                <Typography variant='h6' sx={{ fontWeight: 'bold', mb: 1 }}>
+                  Status
+                </Typography>
+                <Chip
+                  label={position.isCurrentlyWorking ? 'Currently Working' : 'Past Position'}
+                  color={position.isCurrentlyWorking ? 'success' : 'default'}
+                  variant='outlined'
+                />
+              </Box>
+
+              <Box sx={{ mb: 2 }}>
+                <Typography variant='h6' sx={{ fontWeight: 'bold', mb: 1 }}>
+                  Duration
+                </Typography>
+                <Typography variant='body1'>
+                  {position.startDate ? new Date(position.startDate).toLocaleDateString() : 'N/A'} -{' '}
+                  {position.endDate ? new Date(position.endDate).toLocaleDateString() : 'Present'}
+                </Typography>
+              </Box>
+
+              {position.description && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant='h6' sx={{ fontWeight: 'bold', mb: 1 }}>
+                    Description
+                  </Typography>
+                  <Typography variant='body1'>{position.description}</Typography>
+                </Box>
+              )}
+            </DialogContentText>
+          </Box>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} variant='outlined'>
+          Close
+        </Button>
+        <Button
+          onClick={handleEdit}
+          variant='contained'
+          color='primary'
+          component='label'
+          sx={{
+            color: 'white'
+          }}
+          startIcon={<EditIcon />}
+        >
+          Edit
+        </Button>
+      </DialogActions>
+    </Dialog>
   )
 }
 

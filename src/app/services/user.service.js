@@ -4,8 +4,8 @@ import * as MailService from './mail.service'
 import * as OtpService from './otp.service'
 import * as SMSService from './sms.service'
 import User from '../models/user.model'
-import UserProfile from '../models/profile.model'
-import * as UserProfileService from './profile.service'
+import UserProfile from '../api/profile/profile.model'
+import * as UserProfileService from '../api/profile/profile.service'
 import crypto from 'crypto'
 import { resetPasswordTemplate } from '@/utils/email-templates/resetPasswordTemplate'
 import { sendReferralLinkTemplate } from '@/utils/referralTemplate'
@@ -265,7 +265,7 @@ export async function addOrUpdate({ email, data }) {
       // Only update if there's any missing field
       if (Object.keys(data).length > 0) {
         try {
-          const updatedUser = await UserProfileService.updateOne({ email, data })
+          const updatedUser = await UserProfileService.updateProfileByEmail({ email, data })
         } catch (error) {
           // console.log('Error updating firstname, lastname, image on Google SignIn', error)
         }
@@ -377,7 +377,7 @@ export async function addByGoogleSignin({ email, data }) {
           }
         })
         try {
-          const updatedUser = await UserProfileService.updateOne({ email, data })
+          const updatedUser = await UserProfileService.updateProfileByEmail({ email, data })
         } catch (error) {
           // console.log('Error updating firstname, lastname, image on Google SignIn', error)
         }

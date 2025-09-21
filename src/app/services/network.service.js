@@ -1,5 +1,5 @@
 import connectMongo from '@/utils/dbConnect-mongo'
-import UserProfile from '../models/profile.model'
+import UserProfile from '../api/profile/profile.model'
 
 export const getUserNetworkTree = async email => {
   await connectMongo()

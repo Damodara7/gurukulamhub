@@ -15,10 +15,6 @@ import {
   Stack
 } from '@mui/material'
 import React, { useState } from 'react'
-import * as RestApi from '@/utils/restApiUtil'
-import { API_URLS } from '@/configs/apiConfig'
-import * as clientApi from '@/app/api/client/client.api'
-import { toast } from 'react-toastify'
 
 const languageOptions = [
   'Arabic',
@@ -56,7 +52,7 @@ const initialFormData = {
   canSpeak: false
 }
 
-function NewLanguageModal({ open, onClose, email, onRefetchUserProfileData }) {
+function NewLanguageModal({ open, onClose, email, onAddLanguageToState }) {
   const [formData, setFormData] = useState(initialFormData)
   const [isFormValid, setIsFormValid] = useState(true)
   const [isFormSubmitting, setIsFormSubmitting] = useState(false)
@@ -71,7 +67,7 @@ function NewLanguageModal({ open, onClose, email, onRefetchUserProfileData }) {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
-  async function handleSubmit() {
+  function handleSubmit() {
     setIsFormSubmitting(true)
     // Validate form
     if (!formData.language.trim() || (!formData.canRead && !formData.canWrite && !formData.canSpeak)) {
@@ -83,25 +79,19 @@ function NewLanguageModal({ open, onClose, email, onRefetchUserProfileData }) {
     setIsFormValid(true)
 
     try {
-      // Make API request to add new language details
-      const response = await RestApi.post(`${API_URLS.v0.USERS_PROFILE}/languages`, {
-        email,
-        language: { ...formData }
-      })
-      // const response = await clientApi.addLanguage(email, formData)
-
-      if (response.status === 'success') {
-        // Optionally update local state or refetch data
-        console.log('Language details added successfully:', response.result)
-        // toast.success('Language details added successfully.')
-        onClose()
-        onRefetchUserProfileData()
-      } else {
-        // toast.error('Error: ' + response.message)
-        console.error('Error adding language details:', response.message)
+      // Add language to state instead of hitting endpoint
+      const newLanguage = {
+        _id: `temp_${Date.now()}`, // Temporary ID for state management
+        language: formData.language,
+        canRead: formData.canRead,
+        canWrite: formData.canWrite,
+        canSpeak: formData.canSpeak
       }
+
+      onAddLanguageToState(newLanguage)
+      console.log('Language added to state:', newLanguage)
+      onClose()
     } catch (error) {
-      // toast.error('An unexpected error occurred.')
       console.error('Unexpected error:', error)
     } finally {
       setIsFormSubmitting(false)

@@ -200,3 +200,6 @@ const timezones = [
     countryCode: 'KI, TK'
   }
 ]
+
+export { timezones }
+export default timezones
