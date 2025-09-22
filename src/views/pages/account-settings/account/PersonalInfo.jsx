@@ -148,13 +148,29 @@ function PersonelInfo({
             inputProps: {
               min: 6,
               max: 120,
-              step: 1
+              step: 1,
+              maxLength: 3
             }
           }}
-          error={!isFormValid && (formData.age < 6 || formData.age > 120)}
-          helperText={!isFormValid && (formData.age < 6 || formData.age > 120) ? 'Age must be between 6 and 120' : ''}
+          error={formData.age && (formData.age < 6 || formData.age > 120 || formData.age.toString().length > 3)}
+          helperText={
+            formData.age && formData.age.toString().length > 3
+              ? 'Age cannot have more than 3 digits'
+              : formData.age && formData.age < 6
+                ? 'Age must be at least 6 years'
+                : formData.age && formData.age > 120
+                  ? 'Age cannot be more than 120 years'
+                  : ''
+          }
           placeholder='21'
-          onChange={e => handleFormChange('age', e.target.value)}
+          onChange={e => {
+            const value = e.target.value
+            // Prevent input if more than 3 digits
+            if (value && value.toString().length > 3) {
+              return
+            }
+            handleFormChange('age', value)
+          }}
         />
       </Grid>
 

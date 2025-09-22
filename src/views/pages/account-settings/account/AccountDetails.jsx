@@ -471,36 +471,52 @@ const AccountDetails = () => {
             // Clear region state if database value is empty
             setSelectedRegion('')
           }
-          // Handle address fields based on country
+          // Handle address fields based on country - only load if country and region match saved data
           if (profile?.country === 'India') {
-            // For India: load pincode and postoffice into selectedZipcode and selectedLocality
-            if (profile?.pincode && profile?.pincode.trim() !== '') {
-              setZipcodeFromDb(profile?.pincode)
-              setSelectedZipcode(profile?.pincode)
+            // For India: only load pincode and postoffice if the region matches the saved region
+            if (profile?.region === selectedRegion) {
+              if (profile?.pincode && profile?.pincode.trim() !== '') {
+                setZipcodeFromDb(profile?.pincode)
+                setSelectedZipcode(profile?.pincode)
+              } else {
+                setZipcodeFromDb('')
+                setSelectedZipcode('')
+              }
+              if (profile?.postoffice && profile?.postoffice.trim() !== '') {
+                setLocalityFromDb(profile?.postoffice)
+                setSelectedLocality(profile?.postoffice)
+              } else {
+                setLocalityFromDb('')
+                setSelectedLocality('')
+              }
             } else {
+              // Clear pincode and postoffice if region doesn't match
               setZipcodeFromDb('')
               setSelectedZipcode('')
-            }
-            if (profile?.postoffice && profile?.postoffice.trim() !== '') {
-              setLocalityFromDb(profile?.postoffice)
-              setSelectedLocality(profile?.postoffice)
-            } else {
               setLocalityFromDb('')
               setSelectedLocality('')
             }
           } else {
-            // For non-India: load zipcode and locality into selectedZipcode and selectedLocality
-            if (profile?.zipcode && profile?.zipcode.trim() !== '') {
-              setZipcodeFromDb(profile?.zipcode)
-              setSelectedZipcode(profile?.zipcode)
+            // For non-India: only load zipcode and locality if the region matches the saved region
+            if (profile?.region === selectedRegion) {
+              if (profile?.zipcode && profile?.zipcode.trim() !== '') {
+                setZipcodeFromDb(profile?.zipcode)
+                setSelectedZipcode(profile?.zipcode)
+              } else {
+                setZipcodeFromDb('')
+                setSelectedZipcode('')
+              }
+              if (profile?.locality && profile?.locality.trim() !== '') {
+                setLocalityFromDb(profile?.locality)
+                setSelectedLocality(profile?.locality)
+              } else {
+                setLocalityFromDb('')
+                setSelectedLocality('')
+              }
             } else {
+              // Clear zipcode and locality if region doesn't match
               setZipcodeFromDb('')
               setSelectedZipcode('')
-            }
-            if (profile?.locality && profile?.locality.trim() !== '') {
-              setLocalityFromDb(profile?.locality)
-              setSelectedLocality(profile?.locality)
-            } else {
               setLocalityFromDb('')
               setSelectedLocality('')
             }
@@ -1160,6 +1176,10 @@ const AccountDetails = () => {
     setPinCodes([])
     setPostOffices([])
 
+    // Clear database values to prevent them from being reloaded
+    setZipcodeFromDb('')
+    setLocalityFromDb('')
+
     // Clear all address fields in formData
     handleFormChange('region', '')
     handleFormChange('zipcode', '')
@@ -1250,7 +1270,7 @@ const AccountDetails = () => {
 
     try {
       if (
-        (formData.age && (+formData.age > 120 || +formData.age < 6)) ||
+        (formData.age && (+formData.age > 120 || +formData.age < 6 || formData.age.toString().length > 3)) ||
         (formData.linkedInUrl && !isUrlsValid.linkedInUrl) ||
         (formData.facebookUrl && !isUrlsValid.facebookUrl) ||
         (formData.instagramUrl && !isUrlsValid.instagramUrl)
@@ -1426,6 +1446,7 @@ const AccountDetails = () => {
         toast.success('Profile updated successfully!')
         console.log('user profile updating result', result.result)
         if (result.result.accountType === 'INDIVIDUAL') {
+          // Handle S3 uploads for other documents
           await handleUploadResumeFileToS3()
 
           await handleDeleteFileFromS3(`${session?.user?.email}/organization_registration`)
@@ -1957,6 +1978,8 @@ const AccountDetails = () => {
               pinCodes={pinCodes}
               setSelectedLocality={setSelectedLocality}
               selectedLocality={selectedLocality}
+              setZipcodeFromDb={setZipcodeFromDb}
+              setLocalityFromDb={setLocalityFromDb}
               // filteredTimezones={filteredTimezones}
             />
 

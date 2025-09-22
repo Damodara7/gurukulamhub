@@ -24,6 +24,8 @@ function AddressInfo({
   pinCodes,
   setSelectedLocality,
   selectedLocality,
+  setZipcodeFromDb,
+  setLocalityFromDb,
   filteredTimezones
 }) {
   return (
@@ -62,6 +64,9 @@ function AddressInfo({
                 handleFormChange('postoffice', '')
                 handleFormChange('zipcode', '')
                 handleFormChange('locality', '')
+                // Clear database values to prevent them from being reloaded
+                setZipcodeFromDb('')
+                setLocalityFromDb('')
                 // Fetch pincodes for the selected state
                 if (newValue) {
                   fetchPinCodesForState(newValue)
