@@ -44,7 +44,7 @@ import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import Loading from '@/components/Loading'
 import { gmttimezones } from '@/data/gmttimezones'
-import AudienceAutocomplete from '@/components/audience/AudienceAutocomplete'
+import GroupAutocomplete from '@/components/group/GroupAutocomplete'
 
 // Reward position options
 const POSITION_OPTIONS = [1, 2, 3, 4, 5]
@@ -612,8 +612,8 @@ const GameRequestSponsorshipForm = ({ onSubmit, quizzes, onCancel, data = null }
       </Grid>
 
       {/* Audience Selection */}
-      <Grid item xs={12}>
-        <AudienceAutocomplete
+      {/* <Grid item xs={12}>
+        <GroupAutocomplete
           value={formData.audienceId}
           onChange={audienceId => {
             setFormData(prev => ({ ...prev, audienceId }))
@@ -621,7 +621,7 @@ const GameRequestSponsorshipForm = ({ onSubmit, quizzes, onCancel, data = null }
           label='Target Audience (Optional)'
           placeholder='Search for a audience to restrict game access...'
         />
-      </Grid>
+      </Grid> */}
 
       {/* Game Mode Selection */}
       <Grid item xs={12} sm={6}>
