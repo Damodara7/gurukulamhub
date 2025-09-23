@@ -1846,16 +1846,8 @@ const AccountDetails = () => {
       // Update country dial code
       setCountryDialCode(country.dialCode)
 
-      // Map country code to country name
-      const countryObj = CountryRegionData.find(data => data[1]?.toLowerCase() === country.countryCode?.toLowerCase())
-
-      if (countryObj) {
-        // console.log('Mapped Country Object:', countryObj)
-        setSelectedCountryObject({ country: countryObj[0], countryCode: countryObj[1] })
-        setSelectedCountry(countryObj[0])
-      } else {
-        console.warn('Country not found in CountryRegionData:', country.countryCode)
-      }
+      // Note: Removed automatic country mapping to address section
+      // The mobile number country selection should not affect the address country dropdown
     }
   }
 
