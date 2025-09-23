@@ -19,7 +19,14 @@ async function startServer(port = 4000) {
     // Setup Socket Server
     io = new Server(server, {
       cors: {
-        origin: "http://localhost:3000", // Adjust this accordingly this should be your web server....
+        origin: [
+          "http://localhost:3000",
+          "https://gurukulamhub.up.railway.app",
+          "https://gurukulamhub-production.up.railway.app",
+          "https://www.gurukulamhub.com",
+          "https://gurukulamhub.com"
+        ],
+        credentials: true
       }
     });
 
