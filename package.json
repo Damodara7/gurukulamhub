@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev --hostname 0.0.0.0",
     "build": "next build",
-    "start": "next start >> /logs/webapp.log 2>&1 &",
+    "start": "node next-node-express-server.mjs",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx}\"",
