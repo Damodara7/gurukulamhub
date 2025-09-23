@@ -19,7 +19,9 @@ const gamestatuses = [
   { value: 'lobby', label: 'Lobby' },
   { value: 'live', label: 'Live' },
   { value: 'completed', label: 'Completed' },
-  { value: 'cancelled', label: 'Cancelled' }
+  { value: 'cancelled', label: 'Cancelled' },
+  { value: 'awaiting_sponsorship', label: 'Awaiting Sponsorship' },
+  { value: 'sponsored', label: 'Sponsored' }
 ]
 
 const AllGamesPage = ({ creatorEmail = '', isSuperUser = false }) => {

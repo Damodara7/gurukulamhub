@@ -42,9 +42,10 @@ export const API_URLS = {
     USER_LEARNING: `${API_BASE_URL}/user-learning`,
     SPONSORSHIP: `${API_BASE_URL}/sponsorship`,
     SPONSORSHIP_PAYMENT: `${API_BASE_URL}/sponsorship-payment`,
-    USERS_GROUP_REQUEST: `${API_BASE_URL}/group-request`
+    USERS_GROUP_REQUEST: `${API_BASE_URL}/group-request`,
 
-    // Add more URLs for API version 1
+    GAME_SPONSORSHIP: `${API_BASE_URL}/game-sponsorship`,
+    GAME_SPONSORSHIP_PAYMENT: `${API_BASE_URL}/game-sponsorship-payment`
   },
   v1: {
     USERS_SIGNUP: `${API_BASE_URL}/v1/users/signup`,

@@ -92,6 +92,16 @@ const rewardSchema = new mongoose.Schema({
     min: 1
   },
   rewardValuePerWinner: Number,
+  rewardType: {
+    type: String,
+    enum: ['cash', 'physicalGift'],
+    default: 'cash'
+  },
+  currency: {
+    type: String,
+    default: 'INR'
+  },
+  nonCashReward: String,
   sponsors: [sponsorerSchema],
   winners: {
     type: [
@@ -124,11 +134,15 @@ const gameSchema = new mongoose.Schema(
     location: locationSchema,
     startTime: {
       type: Date,
-      required: true
+      required: function() {
+        return this.status !== 'awaiting_sponsorship' && this.status !== 'sponsored'
+      }
     },
     timezone: {
       type: String,
-      required: true
+      required: function() {
+        return this.status !== 'awaiting_sponsorship' && this.status !== 'sponsored'
+      }
     },
     gameMode: {
       type: String,
@@ -155,7 +169,9 @@ const gameSchema = new mongoose.Schema(
     duration: {
       // In seconds
       type: Number,
-      required: true
+      required: function() {
+        return this.status !== 'awaiting_sponsorship' && this.status !== 'sponsored' && this.gameMode === 'self-paced'
+      }
     },
     promotionalVideoUrl: String,
     thumbnailPoster: String,
@@ -182,7 +198,7 @@ const gameSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['created', 'approved', 'lobby', 'live', 'completed', 'cancelled'],
+      enum: ['created', 'approved', 'lobby', 'live', 'completed', 'cancelled', 'awaiting_sponsorship', 'sponsored'],
       default: 'created'
     },
     cancellationReason: String,

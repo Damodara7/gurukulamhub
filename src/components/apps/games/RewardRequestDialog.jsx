@@ -24,7 +24,7 @@ import {
   Chip
 } from '@mui/material'
 import { Add as AddIcon, Close as CloseIcon, Edit as EditIcon, Info as InfoIcon } from '@mui/icons-material'
-import SponsorDialog from './SponsorDialog'
+import SponsorRequestDialog from './SponsorRequestDialog'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { toast } from 'react-toastify'
@@ -35,7 +35,7 @@ const REWARD_TYPES = [
 ]
 const CURRENCY_OPTIONS = ['INR', 'USD', 'EUR', 'GBP']
 
-const RewardDialog = ({
+const RewardRequestDialog = ({
   open,
   onClose,
   reward,
@@ -44,8 +44,7 @@ const RewardDialog = ({
   allPositions,
   isEditing,
   formData,
-  setFormData,
-  gameData = null
+  setFormData
 }) => {
   const [currentReward, setCurrentReward] = useState({
     id: '',
@@ -64,8 +63,6 @@ const RewardDialog = ({
   const [allocationAmount, setAllocationAmount] = useState(0)
   const [originalSponsorships, setOriginalSponsorships] = useState([])
   const [displaySponsorships, setDisplaySponsorships] = useState([])
-
-  console.log('All rewards: ', formData.rewards)
 
   // Calculate total required value based on reward type and number of winners
   const calculateTotalRequired = () => {
@@ -107,6 +104,7 @@ const RewardDialog = ({
       ...prev,
       sponsors: reward && reward?.rewardType === currentReward?.rewardType ? currentReward?.sponsors : []
     }))
+    
     async function getSponsorships() {
       try {
         let searchParams = ['status=completed']
@@ -117,15 +115,6 @@ const RewardDialog = ({
         if (currentReward.rewardType) {
           searchParams.push(`rewardType=${currentReward.rewardType}`)
         }
-        if (formData?.location?.country) {
-          searchParams.push(`country=${formData?.location?.country}`)
-        }
-        if (formData?.location?.region) {
-          searchParams.push(`region=${formData?.location?.region}`)
-        }
-        if (formData?.location?.city) {
-          searchParams.push(`city=${formData?.location?.city}`)
-        }
 
         const url = `${API_URLS.v0.SPONSORSHIP}?${searchParams.join('&')}`
 
@@ -134,56 +123,8 @@ const RewardDialog = ({
         console.log({ getSponsorshipsRes: res })
 
         if (res.status === 'success') {
-          toast.success(res.message)
-
           setOriginalSponsorships(res.result)
-
-          // Calculate initial display values (deducting any existing allocations)
-          const updatedDisplay = res.result.map(sponsorship => {
-            const allocated = calculateExistingAllocations(sponsorship._id, res.result)
-
-            return {
-              ...sponsorship,
-              ...(sponsorship.rewardType === 'cash'
-                ? {
-                    availableAmount: sponsorship.availableAmount - (allocated.cash || 0)
-                  }
-                : {
-                    availableItems: sponsorship.availableItems - (allocated.items || 0)
-                  })
-            }
-          })
-          console.log('updatedDisplay : ', updatedDisplay)
-
-          // 2. Update displaySponsorships with availableItems = actual available + allocated of current
-          if (reward) {
-            const updatedDisplaySponsorshipsAvailability =
-              updatedDisplay?.map(sponsorship => {
-                const foundRewardSponsor = reward?.sponsors?.find(sp => sp?.sponsorshipId === sponsorship?._id)
-                console.log('foundRewardSponsor 1...: ', foundRewardSponsor)
-
-                if (!foundRewardSponsor) return sponsorship
-                console.log('foundRewardSponsor 2...: ', foundRewardSponsor)
-
-                return {
-                  ...sponsorship,
-                  ...(sponsorship?.rewardType === 'cash'
-                    ? {
-                        availableAmount: foundRewardSponsor?.availableAmount + foundRewardSponsor?.allocated
-                        // prevAvailableAmount: sponsorship?.availableAmount + sponsorship?.allocated
-                      } // while editing the available = (actual available + already allocated for that reward)
-                    : {
-                        availableItems: foundRewardSponsor?.availableItems + foundRewardSponsor?.allocated
-                        // prevAvailableItems: sponsorship?.availableItems + sp?.allocated
-                      })
-                }
-              }) || []
-
-            console.log({ updatedDisplaySponsorshipsAvailability })
-            setDisplaySponsorships(updatedDisplaySponsorshipsAvailability)
-          } else {
-            setDisplaySponsorships(updatedDisplay)
-          }
+          setDisplaySponsorships(res.result)
         } else {
           toast.error(res.message)
         }
@@ -196,32 +137,52 @@ const RewardDialog = ({
   }, [
     currentReward.rewardType,
     formData?.quiz,
-    formData?.location?.country,
-    formData?.location?.region,
-    formData?.location?.city,
     formData?.rewards
   ])
 
   useEffect(() => {
+    // Calculate total allocations for each sponsor across all rewards in the form
+    const sponsorAllocations = new Map()
+    
+    if (formData?.rewards) {
+      formData.rewards.forEach(reward => {
+        if (reward.sponsors) {
+          reward.sponsors.forEach(sponsor => {
+            const sponsorId = sponsor.sponsorshipId
+            const currentAllocation = sponsorAllocations.get(sponsorId) || 0
+            sponsorAllocations.set(sponsorId, currentAllocation + (sponsor.allocated || 0))
+          })
+        }
+      })
+    }
+
     // Filter available sponsors based on reward type and selected gift (for physical gifts)
     if (currentReward.rewardType === 'physicalGift') {
       const filtered = displaySponsorships.filter(
-        s =>
-          s.rewardType === 'physicalGift' &&
-          s.nonCashItem === currentReward.nonCashReward &&
-          // Exclude sponsors already added
-          !currentReward.sponsors.some(addedSponsor => addedSponsor?.sponsorshipId === (s?._id || s?.id))
+        s => {
+          const totalAllocated = sponsorAllocations.get(s._id) || 0
+          const availableAfterAllocation = s.availableItems - totalAllocated
+          
+          return s.rewardType === 'physicalGift' &&
+            s.nonCashItem === currentReward.nonCashReward &&
+            availableAfterAllocation > 0 &&
+            // Exclude sponsors already added to this specific reward
+            !currentReward.sponsors.some(addedSponsor => addedSponsor?.sponsorshipId === (s?._id || s?.id))
+        }
       )
-      console.log('filtered PHYSICALGIFT: ', filtered)
       setAvailableSponsors(filtered)
     } else {
       const filtered = displaySponsorships.filter(
-        s =>
-          s.rewardType === currentReward.rewardType &&
-          // Exclude sponsors already added
-          !currentReward.sponsors.some(addedSponsor => addedSponsor?.sponsorshipId === (s?._id || s?.id))
+        s => {
+          const totalAllocated = sponsorAllocations.get(s._id) || 0
+          const availableAfterAllocation = s.availableAmount - totalAllocated
+          
+          return s.rewardType === currentReward.rewardType &&
+            availableAfterAllocation > 0 &&
+            // Exclude sponsors already added to this specific reward
+            !currentReward.sponsors.some(addedSponsor => addedSponsor?.sponsorshipId === (s?._id || s?.id))
+        }
       )
-      console.log('filtered CASH: ', filtered)
       setAvailableSponsors(filtered)
     }
   }, [
@@ -229,36 +190,16 @@ const RewardDialog = ({
     currentReward.rewardType,
     currentReward.nonCashReward,
     currentReward.sponsors,
-    displaySponsorships
+    displaySponsorships,
+    formData?.rewards
   ])
 
   useEffect(() => {
     if (reward) {
-      // 1. Update reward sponsors with availableItems = actual available + allocated of current
-      const updatedSponsors =
-        reward?.sponsors?.map(sp => {
-          return {
-            ...sp,
-            ...(sp?.rewardType === 'cash'
-              ? {
-                  // availableAmount: sp?.availableAmount + sp?.allocated,
-                  prevAvailableAmount: sp?.availableAmount + sp?.allocated
-                } // while editing the available = (actual available + already allocated for that reward)
-              : {
-                  // availableItems: sp?.availableItems + sp?.allocated,
-                  prevAvailableItems: sp?.availableItems + sp?.allocated
-                })
-          }
-        }) || []
-
-      const rewardWithUpdatedSponsors = {
+      setCurrentReward({
         ...reward,
-        numberOfWinnersForThisPosition: 1, // Force to 1 winner per position
-        sponsors: updatedSponsors
-      }
-
-      console.log({ rewardWithUpdatedSponsors })
-      setCurrentReward(rewardWithUpdatedSponsors)
+        numberOfWinnersForThisPosition: 1 // Force to 1 winner per position
+      })
     } else {
       setCurrentReward({
         id: Date.now().toString(),
@@ -272,98 +213,6 @@ const RewardDialog = ({
       })
     }
   }, [reward, open, availablePositions])
-
-  // Helper function to calculate existing allocations
-  const calculateExistingAllocations = (sponsorshipId, sponsorships) => {
-    const result = { cash: 0, items: 0 }
-    const originalRewardSponsorships =
-      sponsorships?.find(s => s?._id === sponsorshipId)?.sponsored?.find(s => s?.game === gameData?._id)
-        ?.rewardSponsorships || []
-
-    console.log('formData.rewards: ', formData.rewards)
-
-    // Handle removed rewards first
-    const currentRewardIds = formData.rewards?.map(r => r?._id || r?.id) || []
-    console.log('currentRewardIds: ', currentRewardIds)
-
-    // Find rewards that were removed
-    const removedRewardIds =
-      originalRewardSponsorships?.map(rs => rs?.rewardId)?.filter(id => !currentRewardIds.includes(id)) || []
-    console.log('removedRewardIds: ', removedRewardIds)
-
-    // Add back allocations from removed rewards
-    const removedRewardSponsorships =
-      originalRewardSponsorships?.filter(x => removedRewardIds.includes(x?.rewardId)) || []
-
-    console.log('removedRewardSponsorships: ', removedRewardSponsorships)
-
-    removedRewardSponsorships.forEach(removedRewardSponsorship => {
-      // Find the reward type from the original sponsorship data
-      const rewardType = sponsorships?.find(s => s?._id === sponsorshipId)?.rewardType
-
-      if (rewardType === 'cash') {
-        result.cash -= parseFloat(removedRewardSponsorship?.allocated) || 0
-      } else {
-        result.items -= parseFloat(removedRewardSponsorship?.allocated) || 0
-      }
-    })
-    console.log('result after removedRewardSponsorships: ', result)
-
-    // Handle existing rewards
-    formData.rewards?.forEach(reward => {
-      const originalRewardSponsorshipsOfThisReward =
-        originalRewardSponsorships?.filter(x => x?.rewardId === reward?._id) || []
-      console.log('originalRewardSponsorshipsOfThisReward: ', originalRewardSponsorshipsOfThisReward)
-
-      const originalRewardSponsorshipIds = originalRewardSponsorshipsOfThisReward?.map(x => x.rewardSponsorshipId) || []
-      const rewardSponsorshipIds = reward.sponsors?.map(x => x.sponsorshipId) || []
-
-      const removedRewardSponsorshipIds =
-        originalRewardSponsorshipIds.filter(x => !rewardSponsorshipIds.includes(x)) || []
-      const removedRewardSponsorships =
-        originalRewardSponsorshipsOfThisReward?.filter(x =>
-          removedRewardSponsorshipIds.includes(x.rewardSponsorshipId)
-        ) || []
-      console.log('removedRewardSponsorships: ', removedRewardSponsorships)
-      removedRewardSponsorships?.forEach(removedRewardSponsorship => {
-        if (removedRewardSponsorship.sponsorshipId === sponsorshipId) {
-          if (reward.rewardType === 'cash') {
-            result.cash -= parseFloat(removedRewardSponsorship?.allocated) || 0
-          } else {
-            result.items -= parseFloat(removedRewardSponsorship?.allocated) || 0
-          }
-        }
-      })
-      reward.sponsors?.forEach(sponsor => {
-        if (sponsor.sponsorshipId === sponsorshipId) {
-          const sponsoredForGame = sponsor?.sponsored?.find(s => s?.game === gameData?._id)
-          if (sponsoredForGame) {
-            console.log('sponsoredForGame: ', sponsoredForGame)
-            const allocatedRewardSponsorship = sponsoredForGame?.rewardSponsorships?.find(
-              s => s?.rewardSponsorshipId === sponsor?._id
-            )
-            if (allocatedRewardSponsorship) {
-              console.log('allocatedRewardSponsorship: ', allocatedRewardSponsorship)
-              if (sponsor.rewardDetails?.rewardType === 'cash') {
-                result.cash -= parseFloat(allocatedRewardSponsorship?.allocated) || 0
-              } else {
-                result.items -= parseFloat(allocatedRewardSponsorship?.allocated) || 0
-              }
-            }
-          }
-          if (sponsor.rewardDetails?.rewardType === 'cash') {
-            result.cash += parseFloat(sponsor?.allocated) || 0
-          } else {
-            result.items += parseFloat(sponsor?.allocated) || 0
-          }
-        }
-      })
-    })
-
-    console.log('result: ', result)
-
-    return result
-  }
 
   const handleAddSponsor = () => {
     setSelectedSponsor(null)
@@ -379,19 +228,22 @@ const RewardDialog = ({
     const updatedReward = { ...currentReward }
     const existingIndex = updatedReward.sponsors.findIndex(s => s?.sponsorshipId === _id)
 
+    // Calculate real-time available amount for this sponsor
+    const realTimeAvailable = getRealTimeAvailableAmount(sponsor)
+
     const sponsorPayload = {
-      ...sponsor, // For SponsorDialog to read values like availableItems/Amount
+      ...sponsor,
       id: Date.now().toString(),
       sponsorshipId: _id,
       email: sponsor.email,
       allocated: parseFloat(allocation),
       ...(sponsor.rewardType === 'cash'
         ? {
-            availableAmount: sponsor.availableAmount - parseFloat(allocation),
+            availableAmount: realTimeAvailable - parseFloat(allocation),
             prevAvailableAmount: sponsor.availableAmount
           }
         : {
-            availableItems: sponsor.availableItems - parseFloat(allocation),
+            availableItems: realTimeAvailable - parseFloat(allocation),
             prevAvailableItems: sponsor.availableItems
           }),
       rewardDetails: {
@@ -433,7 +285,22 @@ const RewardDialog = ({
     const sponsorIndex = updatedReward.sponsors.findIndex(s => (s?._id || s?.id) === sponsorId)
 
     if (sponsorIndex >= 0) {
-      updatedReward.sponsors[sponsorIndex].allocated = parseFloat(newValue) || 0
+      const sponsor = updatedReward.sponsors[sponsorIndex]
+      const newAllocation = parseFloat(newValue) || 0
+      const oldAllocation = sponsor.allocated || 0
+      
+      // Validate against real-time available amount
+      const realTimeAvailable = getRealTimeAvailableAmount(sponsor)
+      if (newAllocation > realTimeAvailable) {
+        return // Don't allow over-allocation
+      }
+      
+      // Update the sponsor's allocated amount
+      updatedReward.sponsors[sponsorIndex] = {
+        ...sponsor,
+        allocated: newAllocation
+      }
+      
       setCurrentReward(updatedReward)
     }
   }
@@ -444,40 +311,9 @@ const RewardDialog = ({
       setValidationError('Value per winner must be greater than 0 for cash rewards')
       return false
     }
-    const totalNeeded = calculateTotalRequired()
-    const totalAllocated = calculateTotalAllocated()
-
-    // Check if any sponsor has allocated more than their available limit
-    const hasOverAllocatedSponsors = currentReward.sponsors.some(sponsor => {
-      const sponsorLimit =
-        currentReward.rewardType === 'cash' ? sponsor.prevAvailableAmount : sponsor.prevAvailableItems
-      return sponsor.allocated > sponsorLimit
-    })
-
-    if (hasOverAllocatedSponsors) {
-      setValidationError('One or more sponsors have allocated more than their available limit')
+    if (currentReward.rewardType === 'physicalGift' && !currentReward.nonCashReward) {
+      setValidationError('Physical gift description is required')
       return false
-    }
-
-    // Cash rewards require exact amount matching
-    if (currentReward.rewardType === 'cash') {
-      if (Math.abs(totalAllocated - totalNeeded) > 0.01) {
-        setValidationError(
-          `Total allocated (${totalAllocated.toFixed(2)}) must exactly match required amount (${totalNeeded.toFixed(
-            2
-          )})`
-        )
-        return false
-      }
-    }
-    // Physical gifts require one item per winner
-    else if (currentReward.rewardType === 'physicalGift') {
-      if (+totalAllocated !== +totalNeeded) {
-        setValidationError(
-          `Total items allocated (${totalAllocated}) must be equal to number of winners (${totalNeeded})`
-        )
-        return false
-      }
     }
 
     setValidationError('')
@@ -485,7 +321,6 @@ const RewardDialog = ({
   }
 
   const handleRemoveSponsor = sponsorId => {
-    // Update currentReward by removing the sponsor
     setCurrentReward({
       ...currentReward,
       sponsors: currentReward.sponsors.filter(s => (s?._id || s?.id) !== sponsorId)
@@ -494,64 +329,15 @@ const RewardDialog = ({
 
   const handleSave = () => {
     if (!validateReward()) return
+    
     // Remove sponsors with allocated=0
     let rewardToSave = {
       ...currentReward,
       sponsors: currentReward.sponsors.filter(s => s.allocated > 0)
     }
-    console.log('rewardToSave before any changes: ', rewardToSave)
-    let updatedDisplaySponsorships = displaySponsorships
-
-    updatedDisplaySponsorships = displaySponsorships.map(sponsorship => {
-      const foundSponsor = currentReward?.sponsors?.find(s => s.sponsorshipId === sponsorship._id)
-
-      console.log('sponsorship: ', sponsorship)
-      console.log('foundSponsor: ', foundSponsor)
-      if (!foundSponsor) return sponsorship
-
-      const updatedSponsorship = {
-        ...sponsorship,
-        ...(foundSponsor.rewardType === 'cash'
-          ? {
-              availableAmount: sponsorship.availableAmount - foundSponsor.allocated,
-              prevAvailableAmount: sponsorship.availableAmount - foundSponsor.allocated
-            }
-          : {
-              availableItems: sponsorship.availableItems - foundSponsor.allocated,
-              prevAvailableItems: sponsorship.availableItems - foundSponsor.allocated
-            })
-      }
-
-      // START:  Update sponsors in the reward to save
-      const updatedRewardSponsors = rewardToSave?.sponsors?.map(s => {
-        if (s.sponsorshipId === sponsorship._id) {
-          return {
-            ...s,
-            ...(s.rewardType === 'cash'
-              ? {
-                  availableAmount: sponsorship.availableAmount - s.allocated,
-                  prevAvailableAmount: sponsorship.availableAmount - s.allocated
-                }
-              : {
-                  availableItems: sponsorship.availableItems - s.allocated,
-                  prevAvailableItems: sponsorship.availableItems - s.allocated
-                })
-          }
-        }
-        return s
-      })
-      rewardToSave.sponsors = updatedRewardSponsors
-      // END:  Update sponsors in the reward to save
-
-      return updatedSponsorship
-    })
-
-    console.log('updatedDisplaySponsorships after updating sponsors : ', updatedDisplaySponsorships)
-    setDisplaySponsorships(updatedDisplaySponsorships)
-
+    
     console.log('rewardToSave: ', rewardToSave)
-    onSave(rewardToSave, updatedDisplaySponsorships)
-
+    onSave(rewardToSave, displaySponsorships)
     onClose()
   }
 
@@ -562,8 +348,32 @@ const RewardDialog = ({
     return Math.max(0, totalNeeded - totalAllocated)
   }
 
-  console.log('New Current Reward: ', currentReward)
-  console.log('New Display Sponsorships: ', displaySponsorships)
+  // Calculate real-time available amount for a sponsor across all rewards
+  const getRealTimeAvailableAmount = (sponsor) => {
+    if (!formData?.rewards) return sponsor.prevAvailableAmount || sponsor.availableAmount
+
+    let totalAllocated = 0
+    
+    // Get the sponsor ID to match against (could be _id or sponsorshipId)
+    const sponsorId = sponsor._id || sponsor.sponsorshipId
+    
+    // Calculate total allocation for this sponsor across all rewards
+    formData.rewards.forEach(reward => {
+      if (reward.sponsors) {
+        reward.sponsors.forEach(s => {
+          if (s.sponsorshipId === sponsorId) {
+            totalAllocated += s.allocated || 0
+          }
+        })
+      }
+    })
+
+    if (sponsor.rewardType === 'cash') {
+      return (sponsor.prevAvailableAmount || sponsor.availableAmount) - totalAllocated
+    } else {
+      return (sponsor.prevAvailableItems || sponsor.availableItems) - totalAllocated
+    }
+  }
 
   return (
     <>
@@ -682,7 +492,6 @@ const RewardDialog = ({
             ) : (
               <Grid item xs={12}>
                 <FormControl fullWidth>
-                  {/* <InputLabel>Physical Gift</InputLabel> */}
                   <Autocomplete
                     options={getPhysicalGiftOptions()}
                     getOptionLabel={option => `${option.label} (Available: ${option.totalAvailable})`}
@@ -726,7 +535,7 @@ const RewardDialog = ({
 
           {/* Sponsors Section */}
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <Typography variant='h6'>Sponsors</Typography>
+            <Typography variant='h6'>Current Sponsors</Typography>
             <Tooltip
               title={
                 currentReward.rewardType === 'cash'
@@ -738,23 +547,23 @@ const RewardDialog = ({
             </Tooltip>
             <Chip
               sx={{ ml: 'auto' }}
-              color='error'
+              color={getRemainingNeed() > 0 ? 'warning' : 'success'}
               variant='outlined'
               label={
-                <Typography variant='body2' color='error'>
-                  Remaining:{' '}
-                  {currentReward.rewardType === 'cash'
-                    ? `${currentReward.currency} ${getRemainingNeed().toFixed(2)}`
-                    : `${getRemainingNeed()} items`}
+                <Typography variant='body2' color={getRemainingNeed() > 0 ? 'warning.main' : 'success.main'}>
+                  {getRemainingNeed() > 0 
+                    ? `Still needs: ${currentReward.rewardType === 'cash' ? `${currentReward.currency} ${getRemainingNeed().toFixed(2)}` : `${getRemainingNeed()} items`}`
+                    : 'Fully sponsored!'
+                  }
                 </Typography>
               }
             />
           </Box>
 
           {currentReward.sponsors.length === 0 ? (
-            <Alert icon={false} color='warning' sx={{ p: 3, textAlign: 'center', mb: 2 }}>
+            <Alert icon={false} color='info' sx={{ p: 3, textAlign: 'center', mb: 2 }}>
               <Typography color='text.secondary' textAlign='center'>
-                No sponsors added yet. Add sponsors to fulfill the reward requirements.
+                No sponsors added yet. You can add existing sponsors or leave this empty to request new sponsorships.
               </Typography>
             </Alert>
           ) : (
@@ -766,8 +575,8 @@ const RewardDialog = ({
                     <Typography>{`${sponsor.fullname} (${sponsor.email})`}</Typography>
                     <Typography variant='body2' color='text.secondary'>
                       {currentReward.rewardType === 'cash'
-                        ? `Available: ${sponsor.currency} ${sponsor.prevAvailableAmount}`
-                        : `Available Items: ${sponsor.prevAvailableItems}`}
+                        ? `Available: ${sponsor.currency} ${getRealTimeAvailableAmount(sponsor)} (Original: ${sponsor.currency} ${sponsor.prevAvailableAmount})`
+                        : `Available Items: ${getRealTimeAvailableAmount(sponsor)} (Original: ${sponsor.prevAvailableItems})`}
                     </Typography>
                   </Box>
                   <TextField
@@ -781,7 +590,8 @@ const RewardDialog = ({
                       if(isNaN(e.target.value)){
                         return
                       }
-                      if(e.target.value > (currentReward.rewardType === 'cash' ? sponsor.prevAvailableAmount : sponsor.prevAvailableItems)){
+                      const realTimeAvailable = getRealTimeAvailableAmount(sponsor)
+                      if(e.target.value > realTimeAvailable){
                         return
                       }
                       handleEditAllocation(sponsor?._id || sponsor?.id, e.target.value)
@@ -801,9 +611,9 @@ const RewardDialog = ({
             startIcon={<AddIcon />}
             onClick={handleAddSponsor}
             fullWidth
-            disabled={getRemainingNeed() <= 0}
+            disabled={availableSponsors.length === 0}
           >
-            Add Sponsor
+            Add Existing Sponsor
           </Button>
         </DialogContent>
 
@@ -816,7 +626,6 @@ const RewardDialog = ({
             style={{ color: 'white' }}
             onClick={handleSave}
             variant='contained'
-            disabled={getRemainingNeed() > 0}
           >
             Save
           </Button>
@@ -824,16 +633,17 @@ const RewardDialog = ({
       </Dialog>
 
       {/* Sponsor Selection Dialog */}
-      <SponsorDialog
+      <SponsorRequestDialog
         open={openSponsorSelection}
         key={openSponsorSelection}
         onClose={handleCloseSponsor}
         currentReward={currentReward}
         availableSponsors={availableSponsors}
         onSave={handleSelectSponsor}
+        formData={formData}
       />
     </>
   )
 }
 
-export default RewardDialog
+export default RewardRequestDialog

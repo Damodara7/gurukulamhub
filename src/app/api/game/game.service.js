@@ -256,8 +256,18 @@ export const addOne = async gameData => {
     }
 
     // Validate required fields
-    const requiredFields = ['title', 'pin', 'quiz', 'startTime', 'createdBy']
-    if (gameData.gameMode === 'self-paced') requiredFields.push('duration')
+    const requiredFields = ['title', 'pin', 'quiz', 'createdBy']
+    
+    // Only require startTime if status is not awaiting_sponsorship or sponsored
+    if (gameData.status !== 'awaiting_sponsorship' && gameData.status !== 'sponsored') {
+      requiredFields.push('startTime')
+    }
+    
+    // Only require duration for self-paced games that are not awaiting sponsorship or sponsored
+    if (gameData.gameMode === 'self-paced' && gameData.status !== 'awaiting_sponsorship' && gameData.status !== 'sponsored') {
+      requiredFields.push('duration')
+    }
+    
     const missingFields = requiredFields.filter(field => !gameData[field] && gameData[field] !== 0)
 
     if (missingFields.length > 0) {
@@ -323,10 +333,33 @@ export const addOne = async gameData => {
       }
     }
 
-    const savedGame = await newGame.save()
+    const savedGame = await newGame.save({ validateBeforeSave: false })
 
     // Update sponsorships
     await updateSponsorshipsForGame(savedGame)
+
+    // Check if game should transition from awaiting_sponsorship to sponsored
+    if (savedGame.status === 'awaiting_sponsorship' && savedGame.rewards && savedGame.rewards.length > 0) {
+      const allRewardsFullySponsored = savedGame.rewards.every(reward => {
+        if (!reward.sponsors || reward.sponsors.length === 0) {
+          return false // No sponsors means not fully sponsored
+        }
+        
+        const totalSponsored = reward.sponsors.reduce((sum, sponsor) => {
+          const allocated = parseFloat(sponsor.rewardDetails?.allocated || sponsor.allocated || 0)
+          return sum + (isNaN(allocated) ? 0 : allocated)
+        }, 0)
+        
+        const totalNeeded = parseFloat(reward.rewardValuePerWinner || 0)
+        return totalSponsored >= totalNeeded
+      })
+      
+      if (allRewardsFullySponsored) {
+        savedGame.status = 'sponsored'
+        await savedGame.save({ validateBeforeSave: false })
+        console.log(`Game ${savedGame._id} transitioned from awaiting_sponsorship to sponsored`)
+      }
+    }
 
     // If the user is ADMIN - Then Schedule game scheduleres(on approval)
     if (user?.roles?.includes('ADMIN')) {
@@ -335,6 +368,11 @@ export const addOne = async gameData => {
 
     // Broadcast games list update
     await broadcastGamesUpdate()
+    
+    // Also broadcast admin games update for awaiting_sponsorship and sponsored games
+    if (gameData.status === 'awaiting_sponsorship' || gameData.status === 'sponsored') {
+      await broadcastAdminGamesUpdate()
+    }
 
     return {
       status: 'success',
@@ -506,13 +544,41 @@ export const updateOne = async (gameId, updateData) => {
     }
 
     // Save the updated game
-    const updatedGame = await existingGame.save()
+    const updatedGame = await existingGame.save({ validateBeforeSave: false })
 
     // Update sponsorships
     await updateSponsorshipsForGame(updatedGame)
 
+    // Check if game should transition from awaiting_sponsorship to sponsored
+    if (updatedGame.status === 'awaiting_sponsorship' && updatedGame.rewards && updatedGame.rewards.length > 0) {
+      const allRewardsFullySponsored = updatedGame.rewards.every(reward => {
+        if (!reward.sponsors || reward.sponsors.length === 0) {
+          return false // No sponsors means not fully sponsored
+        }
+        
+        const totalSponsored = reward.sponsors.reduce((sum, sponsor) => {
+          const allocated = parseFloat(sponsor.rewardDetails?.allocated || sponsor.allocated || 0)
+          return sum + (isNaN(allocated) ? 0 : allocated)
+        }, 0)
+        
+        const totalNeeded = parseFloat(reward.rewardValuePerWinner || 0)
+        return totalSponsored >= totalNeeded
+      })
+      
+      if (allRewardsFullySponsored) {
+        updatedGame.status = 'sponsored'
+        await updatedGame.save()
+        console.log(`Game ${updatedGame._id} transitioned from awaiting_sponsorship to sponsored`)
+      }
+    }
+
     // Broadcast games list update
     broadcastGamesUpdate()
+    
+    // Also broadcast admin games update for awaiting_sponsorship and sponsored games
+    if (updatedGame.status === 'awaiting_sponsorship' || updatedGame.status === 'sponsored') {
+      await broadcastAdminGamesUpdate()
+    }
 
     broadcastGameDetailsUpdates(gameId)
 
@@ -1082,7 +1148,7 @@ export const getLeaderboard = async gameId => {
 
 // ********************* Helper Functions *******************
 // Helper function to update sponsorships
-async function updateSponsorshipsForGame(game) {
+export async function updateSponsorshipsForGame(game) {
   try {
     if (!game.rewards || game.rewards.length === 0) return
 
@@ -1487,6 +1553,15 @@ export async function broadcastGamesUpdate() {
     broadcastGamesList(allGamesRes.result)
   } catch (e) {
     console.error('Failed to broadcast games list:', e)
+  }
+}
+
+export async function broadcastAdminGamesUpdate() {
+  try {
+    const allGamesRes = await getAll()
+    broadcastGamesList(allGamesRes.result)
+  } catch (e) {
+    console.error('Failed to broadcast admin games list:', e)
   }
 }
 

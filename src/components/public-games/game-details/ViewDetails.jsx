@@ -585,8 +585,14 @@ const ViewDetails = ({ game }) => {
                                   <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>
                                     <AttachMoney fontSize='small' color='success' />
                                     <Typography variant='body2'>
-                                      Cash Prize: {reward.rewardValuePerWinner}{' '}
-                                      {reward.sponsors[0]?.rewardDetails?.currency || 'INR'} (per winner)
+                                      Cash Prize: {(() => {
+                                        const totalValue = reward.sponsors.reduce(
+                                          (sum, sponsor) => sum + (sponsor.rewardDetails?.rewardValue || 0),
+                                          0
+                                        );
+                                        return totalValue;
+                                      })()}{' '}
+                                      {reward.sponsors[0]?.rewardDetails?.currency || 'INR'} (Total: {reward.rewardValuePerWinner} per winner)
                                     </Typography>
                                   </Box>
                                 ) : reward.sponsors[0]?.rewardDetails?.rewardType === 'physicalGift' ? (
@@ -598,10 +604,15 @@ const ViewDetails = ({ game }) => {
                                       </Typography>
                                     </Box>
                                     <Typography variant='body2' color='text.secondary' sx={{ ml: 3 }}>
-                                      Worth:{' '}
-                                      {reward.sponsors[0]?.rewardDetails?.rewardValuePerItem ||
+                                      Total Items: {(() => {
+                                        const totalItems = reward.sponsors.reduce(
+                                          (sum, sponsor) => sum + (sponsor.rewardDetails?.numberOfNonCashRewards || 0),
+                                          0
+                                        );
+                                        return totalItems;
+                                      })()} (Worth: {reward.sponsors[0]?.rewardDetails?.rewardValuePerItem ||
                                         reward?.rewardValuePerWinner}{' '}
-                                      {reward.sponsors[0]?.rewardDetails?.currency || 'INR'}
+                                      {reward.sponsors[0]?.rewardDetails?.currency || 'INR'} per item)
                                     </Typography>
                                   </Box>
                                 ) : (

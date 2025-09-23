@@ -40,6 +40,8 @@ const getStatusChip = status => {
     live: { color: 'error', label: 'Live' },
     completed: { color: 'success', label: 'Completed' },
     cancelled: { color: 'warning', label: 'Cancelled' },
+    awaiting_sponsorship: { color: 'warning', label: 'Awaiting Sponsorship' },
+    sponsored: { color: 'info', label: 'Sponsored' },
     default: { color: 'default', label: 'Unknown' }
   }
 
@@ -183,26 +185,14 @@ const CreatorGameCard = ({
             )}
 
             <Stack spacing={1} mb={3}>
-              <Stack direction='row' alignItems='center' spacing={1}>
-                <EventIcon fontSize='small' color='action' />
-                <Typography variant='body2'>
-                  {game.startTime
-                    ? (() => {
-                        try {
-                          const date = new Date(game.startTime)
-                          if (isNaN(date.getTime())) {
-                            return 'Invalid date'
-                          }
-                          return format(date, 'PPpp')
-                        } catch (error) {
-                          return 'Invalid date'
-                        }
-                      })()
-                    : 'No start time'}
-                </Typography>
-              </Stack>
+              {game.startTime && (
+                <Stack direction='row' alignItems='center' spacing={1}>
+                  <EventIcon fontSize='small' color='action' />
+                  <Typography variant='body2'>{format(new Date(game.startTime), 'PPpp')}</Typography>
+                </Stack>
+              )}
 
-              {!game?.forwardType === 'admin' && (
+              {game.duration && !game?.forwardType === 'admin' && (
                 <Stack direction='row' alignItems='center' spacing={1}>
                   <AccessTimeIcon fontSize='small' color='action' />
                   <Typography variant='body2'>{Math.floor(game.duration / 60)} minutes</Typography>
@@ -235,11 +225,15 @@ const CreatorGameCard = ({
             <IconButtonTooltip title='View Details' onClick={() => onViewGame(game._id)} color='info'>
               <VisibilityIcon />
             </IconButtonTooltip>
-            {((session?.user?.roles?.includes('ADMIN') && ['created', 'approved', 'cancelled'].includes(game.status)) ||
+            {((session?.user?.roles?.includes('ADMIN') && ['created', 'approved', 'cancelled', 'sponsored'].includes(game.status)) ||
               (!game.createdBy?.roles?.includes('ADMIN') &&
                 game.creatorEmail === session?.user?.email &&
-                ['created', 'cancelled'].includes(game.status))) && (
-              <IconButtonTooltip title='Edit Game' onClick={() => onEditGame(game._id)} color='warning'>
+                ['created', 'cancelled', 'sponsored'].includes(game.status))) && (
+              <IconButtonTooltip 
+                title={game.status === 'sponsored' ? 'Schedule Game' : 'Edit Game'} 
+                onClick={() => onEditGame(game._id)} 
+                color={game.status === 'sponsored' ? 'info' : 'warning'}
+              >
                 <EditIcon />
               </IconButtonTooltip>
             )}

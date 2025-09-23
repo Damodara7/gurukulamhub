@@ -43,7 +43,13 @@ const sponsorshipSchema = new mongoose.Schema(
       required: true,
       enum: ['individual', 'organization']
     },
-    games: [String],
+    gameId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'game'
+    },
+    rewardId: {
+      type: mongoose.Schema.Types.ObjectId,
+    },
     quizzes: [
       {
         type: mongoose.Schema.Types.ObjectId,

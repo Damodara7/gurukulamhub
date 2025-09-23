@@ -133,7 +133,13 @@ function RewardsList({rewards}) {
                       <AttachMoney color='success' />
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.85 }}>
                         <Typography variant='body1' fontWeight={600}>
-                          {reward.sponsors[0]?.rewardDetails.rewardValue} {reward.sponsors[0]?.rewardDetails?.currency || ''}
+                          {(() => {
+                            const totalValue = reward.sponsors.reduce(
+                              (sum, sponsor) => sum + (sponsor.rewardDetails?.rewardValue || 0),
+                              0
+                            );
+                            return totalValue;
+                          })()} {reward.sponsors[0]?.rewardDetails?.currency || ''}
                           <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 1 }}>
                             ({reward.rewardValuePerWinner} {reward.sponsors[0]?.rewardDetails?.currency || ''} per winner)
                           </Typography>

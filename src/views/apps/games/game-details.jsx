@@ -12,6 +12,8 @@ import GameLocationInfo from '@/components/apps/games/game-details/GameLocationI
 import GameStatistics from '@/components/apps/games/game-details/GameStatistics'
 import AdminLeaderboard from '@/components/apps/games/game-details/AdminLeaderboard'
 import GameGroupInfo from '@/components/apps/games/game-details/GameGroupInfo'
+import AwaitingSponsorshipGamePage from '@/components/apps/games/game-details/AwaitingSponsorshipGamePage'
+import SponsoredGamePage from '@/components/apps/games/game-details/SponsoredGamePage'
 import { useRouter } from 'next/navigation'
 import FallBackCard from '@/components/apps/games/FallBackCard'
 
@@ -64,6 +66,16 @@ export default function GameDetailsPage({ game: initialGame = null, gameId }) {
     return (
       <FallBackCard content='You can go back to All Games' path='/management/games' btnText='Back To All Games' />
     )
+
+  // Show special page for games awaiting sponsorship
+  if (game.status === 'awaiting_sponsorship') {
+    return <AwaitingSponsorshipGamePage game={game} />
+  }
+
+  // Show special page for sponsored games
+  if (game.status === 'sponsored') {
+    return <SponsoredGamePage game={game} />
+  }
 
   return (
     <Box sx={{ p: 3 }}>
