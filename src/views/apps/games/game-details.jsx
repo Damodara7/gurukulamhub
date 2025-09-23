@@ -24,8 +24,8 @@ export default function GameDetailsPage({ game: initialGame = null, gameId }) {
   useEffect(() => {
     if (gameId) {
       const wsUrl =
-        typeof window !== undefined
-          ? `${window.location.protocol === 'https' ? 'wss' : 'ws'}://${window.location.host}/api/ws/games/${gameId}`
+        typeof window !== 'undefined'
+          ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/api/ws/games/${gameId}`
           : ''
 
       if (wsUrl) {

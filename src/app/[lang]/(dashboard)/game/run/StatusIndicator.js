@@ -11,7 +11,6 @@ import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 import io from 'socket.io-client';
 import { styled, keyframes } from '@mui/material';
 
-const SOCKET_URL = 'http://localhost:4000'; // Replace with your WebSocket server URL
 let socket;
 
 const StatusIndicator = ({ gameData, isJoined }) => {
