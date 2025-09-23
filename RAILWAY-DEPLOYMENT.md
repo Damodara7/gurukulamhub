@@ -29,10 +29,10 @@ In Railway dashboard, go to your project → Variables tab and add:
 ```bash
 NEXTAUTH_URL=https://your-app-name.railway.app
 NEXTAUTH_SECRET=LSy/VCrsA5GAvwQhMTGkohdviqCcJLkHPHtrIuJtyJ0=
-DATABASE_URL=file:./dev.db
+DATABASE_URL=mongodb+srv://gurkulhub_dbuser:2025Mongodb@cluster0.dlhzk.mongodb.net/gurkulhub?retryWrites=true&w=majority&appName=Cluster0
 REDIS_URL=redis://localhost:6379
 NODE_ENV=production
-API_BASE_URL=https://your-app-name.railway.app/api
+API_BASE_URL=https://gurukulamhub.up.railway.app/api
 ```
 
 ### Step 4: Railway Will Automatically
@@ -40,7 +40,7 @@ API_BASE_URL=https://your-app-name.railway.app/api
 - ✅ **Install dependencies** (`npm install`)
 - ✅ **Build your app** (`npm run build`)
 - ✅ **Start your app** (`npm start`)
-- ✅ **Provide a URL** like `https://gurukulamhub-production.railway.app`
+- ✅ **Provide a URL** like `https://gurukulamhub.up.railway.app`
 
 ## 🔧 Railway-Specific Configuration
 
@@ -63,12 +63,12 @@ Create a `.env` file for Railway (Railway will use these):
 
 ```bash
 # Railway Environment Variables
-NEXTAUTH_URL=https://gurukulamhub-production.railway.app
+NEXTAUTH_URL=https://gurukulamhub.up.railway.app
 NEXTAUTH_SECRET=LSy/VCrsA5GAvwQhMTGkohdviqCcJLkHPHtrIuJtyJ0=
-DATABASE_URL=file:./dev.db
+DATABASE_URL=mongodb+srv://gurkulhub_dbuser:2025Mongodb@cluster0.dlhzk.mongodb.net/gurkulhub?retryWrites=true&w=majority&appName=Cluster0
 REDIS_URL=redis://localhost:6379
 NODE_ENV=production
-API_BASE_URL=https://gurukulamhub-production.railway.app/api
+API_BASE_URL=https://gurukulamhub.up.railway.app/api
 PORT=3000
 ```
 
@@ -93,7 +93,7 @@ PORT=3000
 
 ## 🌐 Your App Will Be Available At
 
-After deployment: `https://gurukulamhub-production.railway.app`
+After deployment: `https://gurukulamhub.up.railway.app`
 
 ## 🔄 Automatic Updates
 
