@@ -1,6 +1,7 @@
 // apiConfig.prod.js
 
-export const API_BASE_URL = 'http://ec2-13-51-204-221.eu-north-1.compute.amazonaws.com:3000/api'
+// export const API_BASE_URL = 'http://ec2-13-51-204-221.eu-north-1.compute.amazonaws.com:3000/api'
+export const API_BASE_URL = 'https://gurukulamhub-production.up.railway.app/api'
 
 export const API_URLS = {
   v0: {

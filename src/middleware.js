@@ -25,6 +25,7 @@ const HOME_PAGE_URL = '/home' // dashboards/myprogress
 const allowedOrigins = [
   'http://localhost:3000',
   'http://ec2-13-51-204-221.eu-north-1.compute.amazonaws.com:3000',
+  'https://gurukulamhub-production.up.railway.app',
   'https://gurukulamhub.com'
 ]
 
