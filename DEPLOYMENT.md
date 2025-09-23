@@ -98,7 +98,7 @@ nano .env.local
 
 **Required Environment Variables:**
 ```bash
-DATABASE_URL="file:./dev.db"  # Or your production database URL
+DATABASE_URL="mongodb+srv://gurkulhub_dbuser:2025Mongodb@cluster0.dlhzk.mongodb.net/gurkulhub?retryWrites=true&w=majority&appName=Cluster0"
 NEXTAUTH_URL="http://152.57.161.5:3000"
 NEXTAUTH_SECRET="LSy/VCrsA5GAvwQhMTGkohdviqCcJLkHPHtrIuJtyJ0="
 REDIS_URL="redis://localhost:6379"

@@ -51,6 +51,7 @@ nano .env.local
 **Your server IP and secret are already configured:**
 ```bash
 # Your server IP: 152.57.161.5
+DATABASE_URL="mongodb+srv://gurkulhub_dbuser:2025Mongodb@cluster0.dlhzk.mongodb.net/gurkulhub?retryWrites=true&w=majority&appName=Cluster0"
 NEXTAUTH_URL="http://152.57.161.5:3000"
 NEXTAUTH_SECRET="LSy/VCrsA5GAvwQhMTGkohdviqCcJLkHPHtrIuJtyJ0="
 API_BASE_URL="http://152.57.161.5:3000/api"
@@ -100,6 +101,7 @@ Your server IP is `152.57.161.5`, so your configuration would be:
 
 ```bash
 # In .env.local
+DATABASE_URL="mongodb+srv://gurkulhub_dbuser:2025Mongodb@cluster0.dlhzk.mongodb.net/gurkulhub?retryWrites=true&w=majority&appName=Cluster0"
 NEXTAUTH_URL="http://152.57.161.5:3000"
 NEXTAUTH_SECRET="LSy/VCrsA5GAvwQhMTGkohdviqCcJLkHPHtrIuJtyJ0="
 API_BASE_URL="http://152.57.161.5:3000/api"
