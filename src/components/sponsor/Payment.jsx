@@ -40,7 +40,7 @@ function Payment({ sponsorship }) {
             <Typography variant='body2'>Open terminal and run this command:</Typography>
             <Box sx={{ p: 1.5, bgcolor: '#e9ecef', borderRadius: 1, mt: 1, overflow: 'auto' }}>
               <Typography variant='body2' component='code' sx={{ fontFamily: 'monospace' }}>
-                stripe listen --forward-to http://localhost:3000/api/sponsorship-payment/webhooks/stripe --skip-verify
+                stripe listen --forward-to {`${process.env.NEXT_PUBLIC_API_URL}/sponsorship-payment/webhooks/stripe --skip-verify`}
               </Typography>
             </Box>
           </li>

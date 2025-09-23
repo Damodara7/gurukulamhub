@@ -607,7 +607,7 @@ const AccountDetails = () => {
     console.log('Selected selectedStateName:', selectedStateName)
     setLoadingPincodesOrPostOffices(true)
     try {
-      const response = await fetch(`http://localhost:3000/api/pincodes/${selectedStateName}`)
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pincodes/${selectedStateName}`)
 
       const data = await response.json()
       console.log('pinCode data...', data)
@@ -629,7 +629,7 @@ const AccountDetails = () => {
 
     setLoadingPincodesOrPostOffices(true)
     try {
-      const response = await fetch(`http://localhost:3000/api/localities/${selectedZipcode}`)
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/localities/${selectedZipcode}`)
 
       const data = await response.json()
       console.log('pincode data...', data)

@@ -49,7 +49,7 @@ function PaymentForm({ amount, sponsorshipId, currency }) {
           elements: elements,
           clientSecret: data.clientSecret,
           confirmParams: {
-            return_url: `http://localhost:3000/${locale}/sponsor/payment-success?amount=${amount}&sponsorshipId=${
+            return_url: `${process.env.NEXT_PUBLIC_APP_URL}/${locale}/sponsor/payment-success?amount=${amount}&sponsorshipId=${
               data.sponsorshipId || sponsorshipId
             }&paymentId=${data.paymentId}`
           },
