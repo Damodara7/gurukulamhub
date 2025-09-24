@@ -43,17 +43,35 @@ if [ ! -f "$DEPLOY_DIR/.env.local" ]; then
 DATABASE_URL=mongodb+srv://gurkulhub_dbuser:2025Mongodb@cluster0.dlhzk.mongodb.net/gurkulhub?retryWrites=true&w=majority&appName=Cluster0
 
 # NextAuth Configuration
-NEXTAUTH_URL=http://192.168.31.199:3000
+NEXTAUTH_URL=http://$(hostname -I | awk '{print $1}'):3000
 NEXTAUTH_SECRET=LSy/VCrsA5GAvwQhMTGkohdviqCcJLkHPHtrIuJtyJ0=
+
+# Google OAuth Configuration
+GOOGLE_CLIENT_ID=872140549132-k3ndunp63cl0j05mmi9uh1bctrt0pla9.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=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
+
+# API Configuration
+API_URL=http://$(hostname -I | awk '{print $1}'):3000/api
+NEXT_PUBLIC_API_URL=http://$(hostname -I | awk '{print $1}'):3000/api
 
 # Redis Configuration
 REDIS_URL=redis://localhost:6379
 
-# Node Environment
-NODE_ENV=development
+# ReCAPTCHA Configuration
+NEXT_PUBLIC_RECAPTCHA_SITE_KEY=6LdybtIrAAAAAB1ZeuTJ-m-okYqu4tN2YN2Fkjms
+RECAPTCHA_SECRET_KEY=6LdybtIrAAAAAODGKuB-bcesbOlM_qsd1V7SXmEA
 
-# API Configuration
-API_BASE_URL=http://192.168.31.199:3000/api
+# Stripe Configuration
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_51OZar7SBB7wnYOSIs4gZrZqWeEJFlGlKP0KUREQBdJFn4TytYos3hfNb7XSTDeEjZmC0oaNOzZL4MeFrE34SrkXF00rWrNG7Yh
+NEXT_PUBLIC_STRIPE_SECRET_KEY=sk_test_51OZar7SBB7wnYOSIxgxrydQim2M1f1oVPg6ty5yiU7McIYKM1qCwj7fDibjlXCqOps8xMZsDIk686MqiDDh3TsF500xWdlk6VD
+
+# Socket.IO Configuration
+NEXT_PUBLIC_SOCKET_IO_SERVER=http://$(hostname -I | awk '{print $1}'):3000
+SOCKET_SERVER_URL=http://$(hostname -I | awk '{print $1}'):3000
+
+# Other configurations
+NODE_ENV=development
+PORT=3000
 EOF
 fi
 
@@ -75,8 +93,9 @@ pm2 startup 2>/dev/null || true
 echo "Performing health check..."
 sleep 5
 
-# Get server IP for display
-SERVER_IP="192.168.31.199"
+# Get server hostname for display
+SERVER_HOSTNAME=$(hostname)
+SERVER_IP=$(hostname -I | awk '{print $1}')
 
 # Check if the application is responding
 if curl -f http://localhost:3000 >/dev/null 2>&1; then
@@ -91,12 +110,14 @@ echo "Application Name: $APP_NAME"
 echo "Deployment Directory: $DEPLOY_DIR"
 echo "PM2 Process Name: $APP_NAME"
 echo "Port: 3000"
+echo "Server Hostname: $SERVER_HOSTNAME"
 echo "Server IP: $SERVER_IP"
 echo ""
 echo "=== Access Your App ==="
 echo "Local: http://localhost:3000"
 echo "Network: http://$SERVER_IP:3000"
 echo "Any device on same WiFi: http://$SERVER_IP:3000"
+echo "Using hostname: http://$SERVER_HOSTNAME:3000"
 echo ""
 echo "=== Useful Commands ==="
 echo "View logs: pm2 logs $APP_NAME"
