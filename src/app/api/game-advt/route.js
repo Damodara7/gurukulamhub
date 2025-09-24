@@ -1,8 +1,20 @@
 import * as AdvertisementService from './advertisement.service.js'
 import { HttpStatusCode } from '@/utils/HttpStatusCodes'
 import * as ApiResponseUtils from '@/utils/apiResponses'
+// import { NextResponse } from 'next/server'
 const Artifact = 'Games(s)'
 const ArtifactService = AdvertisementService
+
+// export async function OPTIONS() {
+//   return new NextResponse(null, {
+//     status: 200,
+//     headers: {
+//       'Access-Control-Allow-Origin': '*',
+//       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+//       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+//     },
+//   })
+// }
 
 export async function GET(req, { filter }) {
   try {

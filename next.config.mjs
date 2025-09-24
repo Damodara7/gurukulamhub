@@ -17,6 +17,17 @@ const nextConfig = {
       }
     ]
   },
+  allowedDevOrigins: [
+    'http://192.168.31.199:3000',
+    'http://192.168.31.199',
+    'https://192.168.31.199:3000',
+    'https://192.168.31.199',
+    'http://localhost:3000',
+    'http://ec2-13-51-204-221.eu-north-1.compute.amazonaws.com:3000',
+    'https://gurukulamhub-production.up.railway.app',
+    'https://gurukulamhub.up.railway.app',
+    'https://gurukulamhub.com',
+  ],
   reactStrictMode: false,
   experimental: {
     serverActions: {
