@@ -29,6 +29,7 @@ const nextConfig = {
     'https://gurukulamhub-production.up.railway.app',
     'https://gurukulamhub.up.railway.app',
     'https://gurukulamhub.com',
+    'https://willyard-larue-acquiescingly.ngrok-free.dev',
   ],
   reactStrictMode: false,
   experimental: {
