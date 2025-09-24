@@ -4,8 +4,8 @@
 // export const API_BASE_URL = 'https://gurukulamhub-production.up.railway.app/api'
 // export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://gurukulamhub.up.railway.app/api'
 // export const API_BASE_URL = 'https://gurukulamhub.up.railway.app/api'
-// export const API_BASE_URL = 'http://192.168.31.199:3000/api'
-export const API_BASE_URL = 'http://172.17.27.250:3000/api'
+export const API_BASE_URL = 'http://192.168.31.199:3000/api'
+// export const API_BASE_URL = 'http://172.17.27.250:3000/api'
 
 export const API_URLS = {
   v0: {

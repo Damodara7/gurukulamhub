@@ -43,17 +43,17 @@ if [ ! -f "$DEPLOY_DIR/.env.local" ]; then
 DATABASE_URL=mongodb+srv://gurkulhub_dbuser:2025Mongodb@cluster0.dlhzk.mongodb.net/gurkulhub?retryWrites=true&w=majority&appName=Cluster0
 
 # NextAuth Configuration
-NEXTAUTH_URL=http://$(hostname -I | awk '{print $1}'):3000
+NEXTAUTH_URL=http://192.168.31.199:3000
 NEXTAUTH_SECRET=LSy/VCrsA5GAvwQhMTGkohdviqCcJLkHPHtrIuJtyJ0=
 
 # Redis Configuration
 REDIS_URL=redis://localhost:6379
 
 # Node Environment
-NODE_ENV=production
+NODE_ENV=development
 
 # API Configuration
-API_BASE_URL=http://$(hostname -I | awk '{print $1}'):3000/api
+API_BASE_URL=http://192.168.31.199:3000/api
 EOF
 fi
 
@@ -76,7 +76,7 @@ echo "Performing health check..."
 sleep 5
 
 # Get server IP for display
-SERVER_IP=$(hostname -I | awk '{print $1}')
+SERVER_IP="192.168.31.199"
 
 # Check if the application is responding
 if curl -f http://localhost:3000 >/dev/null 2>&1; then
