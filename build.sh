@@ -75,7 +75,8 @@ NEXT_PUBLIC_SOCKET_IO_SERVER=https://willyard-larue-acquiescingly.ngrok-free.dev
 SOCKET_SERVER_URL=https://willyard-larue-acquiescingly.ngrok-free.dev
 
 # Other configurations
-NODE_ENV=development
+# NODE_ENV=development
+NODE_ENV=production
 PORT=3000
 EOF
 fi
