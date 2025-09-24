@@ -98,10 +98,10 @@ pm2 startup 2>/dev/null || true
 echo "Performing health check..."
 sleep 5
 
-# Get server hostname for display
+# Get server information for display
 SERVER_HOSTNAME=$(hostname)
-# SERVER_IP=$(hostname -I | awk '{print $1}')
-SERVER_IP="willyard-larue-acquiescingly.ngrok-free.dev"
+SERVER_IP=$(hostname -I | awk '{print $1}')
+NGROK_URL="https://willyard-larue-acquiescingly.ngrok-free.dev"
 
 # Check if the application is responding
 if curl -f http://localhost:3000 >/dev/null 2>&1; then
@@ -120,10 +120,10 @@ echo "Server Hostname: $SERVER_HOSTNAME"
 echo "Server IP: $SERVER_IP"
 echo ""
 echo "=== Access Your App ==="
-echo "Local: http://localhost:3000"
-echo "Network: http://$SERVER_IP:3000"
-echo "Any device on same WiFi: http://$SERVER_IP:3000"
-echo "Using hostname: http://$SERVER_HOSTNAME:3000"
+echo "🌐 Public Access (ngrok): $NGROK_URL"
+echo "🏠 Local Access: http://localhost:3000"
+echo "📱 Network Access: http://$SERVER_IP:3000"
+echo "🔗 Hostname Access: http://$SERVER_HOSTNAME:3000"
 echo ""
 echo "=== Useful Commands ==="
 echo "View logs: pm2 logs $APP_NAME"
