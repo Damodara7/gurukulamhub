@@ -1,7 +1,7 @@
 let groupRequestClientsByGroupId = globalThis.__groupRequestClientsByGroupId || {}
 globalThis.__groupRequestClientsByGroupId = groupRequestClientsByGroupId
 
-export function SOCKET(client, request, server, context) {
+export function UPGRADE(client, request, server, context) {
   const { groupId } = context.params
   if (!groupRequestClientsByGroupId[groupId]) groupRequestClientsByGroupId[groupId] = new Set()
   groupRequestClientsByGroupId[groupId].add(client)

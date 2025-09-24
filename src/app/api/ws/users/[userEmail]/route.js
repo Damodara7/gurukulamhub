@@ -4,7 +4,7 @@
 let userClientsByEmail = globalThis.__userClientsByEmail || {}
 globalThis.__userClientsByEmail = userClientsByEmail
 
-export function SOCKET(client, request, server, context) {
+export function UPGRADE(client, request, server, context) {
   const { userEmail } = context.params
   if (!userClientsByEmail[userEmail]) userClientsByEmail[userEmail] = new Set()
   userClientsByEmail[userEmail].add(client)

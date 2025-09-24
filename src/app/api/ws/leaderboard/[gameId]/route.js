@@ -4,7 +4,7 @@
 let leaderboardClientsByGame = globalThis.__leaderboardClientsByGame || {}
 globalThis.__leaderboardClientsByGame = leaderboardClientsByGame
 
-export function SOCKET(client, request, server, context) {
+export function UPGRADE(client, request, server, context) {
   const { gameId } = context.params
   if (!leaderboardClientsByGame[gameId]) leaderboardClientsByGame[gameId] = new Set()
   leaderboardClientsByGame[gameId].add(client)

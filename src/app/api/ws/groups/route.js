@@ -4,7 +4,7 @@
 let groupsListClients = globalThis.__groupsListClients || new Set()
 globalThis.__groupsListClients = groupsListClients
 
-export function SOCKET(client, request, server, context) {
+export function UPGRADE(client, request, server, context) {
   groupsListClients.add(client)
   console.log(`[WS] Groups list client connected. Total: ${groupsListClients.size}`)
 

@@ -4,7 +4,7 @@
 let gamesListClients = globalThis.__gamesListClients || new Set()
 globalThis.__gamesListClients = gamesListClients
 
-export function SOCKET(client, request, server, context) {
+export function UPGRADE(client, request, server, context) {
   gamesListClients.add(client)
   console.log(`[WS] Games list client connected. Total: ${gamesListClients.size}`)
 
