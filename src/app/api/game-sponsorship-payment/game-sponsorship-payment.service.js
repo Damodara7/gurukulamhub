@@ -3,7 +3,7 @@ import connectMongo from '@/utils/dbConnect-mongo'
 import Sponsorship from '@/app/api/sponsorship/sponsorship.model'
 import * as GameSponsorshipService from '../game-sponsorship/game-sponsorship.service'
 
-const stripe = Stripe(process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY)
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY)
 
 export async function createPaymentIntent(data) {
   try {
