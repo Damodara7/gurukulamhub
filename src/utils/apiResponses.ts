@@ -7,7 +7,7 @@
 //rather than across numerous API route files.
 
 import { NextResponse } from 'next/server'
-import { HttpStatusCode } from '@/utils/HttpStatusCodes'
+import { HttpStatusCode } from '@/utils/HttpStatusCodes.js'
 import { NextApiRequest } from 'next'
 //import {ShowErrorConfirmationDialog} from '@/components/ShowErrorConfimationDialog'
 

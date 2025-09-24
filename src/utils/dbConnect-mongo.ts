@@ -2,11 +2,11 @@
 // const csv = require('csv-parser');
 import mongoose from 'mongoose'
 
-const MONGODB_URI = process.env.MONGODB_URI
+const MONGODB_URI = process.env.DATABASE_URL || process.env.MONGODB_URI
 const cached: { connection?: typeof mongoose; promise?: Promise<typeof mongoose> } = {}
 async function connectMongo() {
   if (!MONGODB_URI) {
-    throw new Error('Please define the MONGO_URI environment variable inside .env.local')
+    throw new Error('Please define the DATABASE_URL environment variable inside .env.local')
   }
   if (cached.connection) {
     return cached.connection
