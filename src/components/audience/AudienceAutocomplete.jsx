@@ -93,8 +93,7 @@ const AudienceAutocomplete = ({
         ageGroup: audienceData.ageGroup,
         createdBy: session?.user?.id, // Use the session user ID directly
         creatorEmail: session?.user?.email,
-        members: audienceData.members || [],
-        membersCount: audienceData.members?.length || 0
+        membersCount: audienceData.membersCount || 0
       }
 
       console.log('payload data ', payload)

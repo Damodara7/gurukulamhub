@@ -3,9 +3,74 @@ import mongoose from 'mongoose'
 import Audience from './audience.model.js'
 import User from '@/app/models/user.model.js'
 import Game from '../game/game.model.js'
-import GroupRequest from '../group-request/group-request.model.js'
 import { broadcastAudiencesList } from '../ws/audiences/publishers.js'
 import { broadcastAudienceDetails } from '../ws/audiences/[audienceId]/publishers.js'
+
+// Helper function to apply structured filters with operations
+export const applyStructuredFilters = (users, filters) => {
+  if (!filters || filters.length === 0) {
+    return users
+  }
+
+  // Sort filters by order
+  const sortedFilters = [...filters].sort((a, b) => a.order - b.order)
+
+  let resultUserIds = []
+
+  sortedFilters.forEach((filter, index) => {
+    const filteredUserIds = filterUsersBySingleFilter(users, filter)
+
+    if (index === 0) {
+      // First filter - no operation needed
+      resultUserIds = filteredUserIds
+    } else {
+      // Apply operation with previous result
+      if (filter.operation === 'AND') {
+        // Intersection
+        resultUserIds = resultUserIds.filter(id => filteredUserIds.includes(id))
+      } else if (filter.operation === 'OR') {
+        // Union
+        resultUserIds = [...new Set([...resultUserIds, ...filteredUserIds])]
+      }
+    }
+  })
+
+  return users.filter(user => resultUserIds.includes(user._id))
+}
+
+// Helper function to filter users by a single filter
+const filterUsersBySingleFilter = (users, filter) => {
+  return users
+    .filter(user => {
+      const userAge = user.age || user.profile?.age
+      const userGender = user.gender || user.profile?.gender
+      const userCountry = user.country || user.profile?.country
+      const userRegion = user.region || user.profile?.region
+      const userLocality = user.locality || user.profile?.locality
+
+      switch (filter.type) {
+        case 'age':
+          const ageGroup = filter.value
+          return userAge && userAge >= ageGroup.min && userAge <= ageGroup.max
+
+        case 'location':
+          const location = filter.value
+          return (
+            (!location.country || (userCountry && userCountry.toLowerCase() === location.country.toLowerCase())) &&
+            (!location.region || (userRegion && userRegion.toLowerCase() === location.region.toLowerCase())) &&
+            (!location.city || (userLocality && userLocality.toLowerCase() === location.city.toLowerCase()))
+          )
+
+        case 'gender':
+          const genders = Array.isArray(filter.value) ? filter.value : [filter.value]
+          return userGender && genders.includes(userGender.toLowerCase())
+
+        default:
+          return false
+      }
+    })
+    .map(user => user._id)
+}
 
 export const getOne = async (filter = {}) => {
   await connectMongo()
@@ -18,14 +83,7 @@ export const getOne = async (filter = {}) => {
       }
     }
 
-    const audience = await Audience.findOne({ ...filter, isDeleted: false })
-      .lean()
-      .populate({
-        path: 'members',
-        populate: {
-          path: 'profile'
-        }
-      })
+    const audience = await Audience.findOne({ ...filter, isDeleted: false }).lean()
     console.log('filter', filter)
 
     if (!audience) {
@@ -56,14 +114,6 @@ export const getAll = async (filter = {}) => {
     const audiences = await Audience.find({ ...filter, isDeleted: false })
       .sort({ createdAt: -1 })
       .lean()
-      .populate([
-        {
-          path: 'members',
-          populate: {
-            path: 'profile'
-          }
-        }
-      ])
     return {
       status: 'success',
       result: audiences,
@@ -78,13 +128,85 @@ export const getAll = async (filter = {}) => {
   }
 }
 
+// New function to get filtered users for an audience
+export const getFilteredUsers = async audienceId => {
+  await connectMongo()
+  try {
+    console.log('getFilteredUsers called with audienceId:', audienceId)
+
+    // Get the audience
+    const audienceResult = await getOne({ _id: audienceId })
+    console.log('Audience result:', audienceResult)
+
+    if (audienceResult.status !== 'success') {
+      return audienceResult
+    }
+
+    const audience = audienceResult.result
+    console.log('Audience data:', audience)
+
+    // Get all users
+    const users = await User.find({}).select('-password').populate('profile').lean()
+    console.log('Total users found:', users.length)
+
+    // Apply structured filters if they exist
+    let filteredUsers = users
+    if (audience.filters && audience.filters.length > 0) {
+      filteredUsers = applyStructuredFilters(users, audience.filters)
+    } else {
+      // Fallback to legacy filtering for backward compatibility
+      filteredUsers = users.filter(user => {
+        const userAge = user.age || user.profile?.age
+        const userGender = user.gender || user.profile?.gender
+        const userCountry = user.country || user.profile?.country
+        const userRegion = user.region || user.profile?.region
+        const userLocality = user.locality || user.profile?.locality
+
+        const ageMatch =
+          !audience.ageGroup || (userAge && userAge >= audience.ageGroup.min && userAge <= audience.ageGroup.max)
+        const locationMatch =
+          !audience.location ||
+          ((!audience.location.country ||
+            (userCountry && userCountry.toLowerCase() === audience.location.country.toLowerCase())) &&
+            (!audience.location.region ||
+              (userRegion && userRegion.toLowerCase() === audience.location.region.toLowerCase())) &&
+            (!audience.location.city ||
+              (userLocality && userLocality.toLowerCase() === audience.location.city.toLowerCase())))
+        const genderMatch =
+          !audience.gender ||
+          (userGender &&
+            (Array.isArray(audience.gender)
+              ? audience.gender.includes(userGender.toLowerCase())
+              : userGender.toLowerCase() === audience.gender.toLowerCase()))
+
+        return ageMatch && locationMatch && genderMatch
+      })
+    }
+
+    console.log('Final filtered users count:', filteredUsers.length)
+    return {
+      status: 'success',
+      result: filteredUsers,
+      message: `Found ${filteredUsers.length} users matching audience criteria`
+    }
+  } catch (error) {
+    console.error('Error in getFilteredUsers:', error)
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to get filtered users'
+    }
+  }
+}
+
 export const addOne = async audienceData => {
   await connectMongo()
   try {
     const user = await User.findOne({ email: audienceData.creatorEmail })
     audienceData.createdBy = user._id
     // Validate required fields
-    console.log('audienceData', audienceData)
+    console.log('📝 Creating audience with data:', audienceData)
+    console.log('🔍 Structured filters:', audienceData.filters)
     const requiredFields = ['audienceName', 'description', 'createdBy', 'creatorEmail']
     const missingFields = requiredFields.filter(field => !audienceData[field])
 
@@ -168,7 +290,9 @@ export const addOne = async audienceData => {
     }
 
     // Create new audience instance
+    console.log('🔍 About to create audience with data:', JSON.stringify(audienceData, null, 2))
     const newAudience = new Audience(audienceData)
+    console.log('🔍 Audience instance created:', JSON.stringify(newAudience.toObject(), null, 2))
 
     // Validate the audience
     const validationError = newAudience.validateSync()
@@ -182,18 +306,7 @@ export const addOne = async audienceData => {
     }
 
     const savedAudience = await newAudience.save()
-
-    // Update all selected users' audienceIds arrays with the new audience ID
-    if (audienceData.members && audienceData.members.length > 0) {
-      try {
-        // Add audience to selected users
-        await User.updateMany({ _id: { $in: audienceData.members } }, { $addToSet: { audienceIds: savedAudience._id } })
-        console.log(`Updated ${audienceData.members.length} users with audience ID ${savedAudience._id}`)
-      } catch (updateError) {
-        console.error('Error updating users with audience ID:', updateError)
-        // Don't fail audience creation if user update fails
-      }
-    }
+    console.log('💾 Saved audience:', JSON.stringify(savedAudience.toObject(), null, 2))
 
     // Broadcast WebSocket event for audience creation
     try {
@@ -245,34 +358,6 @@ export const updateOne = async (audienceId, updateData) => {
         status: 'error',
         result: null,
         message: 'Audience not found'
-      }
-    }
-
-    // Handle member synchronization if members array is provided
-    if (updateData.members !== undefined) {
-      try {
-        // Get current users in this audience
-        const currentUsersInAudience = await User.find({ audienceIds: audienceId }, { _id: 1 }).lean()
-        const currentUserIds = currentUsersInAudience.map(u => u._id.toString())
-
-        // Find users to add and remove
-        const usersToAdd = updateData.members.filter(userId => !currentUserIds.includes(userId.toString()))
-        const usersToRemove = currentUserIds.filter(userId => !updateData.members.includes(userId.toString()))
-
-        // Add audience to new users
-        if (usersToAdd.length > 0) {
-          await User.updateMany({ _id: { $in: usersToAdd } }, { $addToSet: { audienceIds: audienceId } })
-          console.log(`Added audience to ${usersToAdd.length} users`)
-        }
-
-        // Remove audience from users who are no longer members
-        if (usersToRemove.length > 0) {
-          await User.updateMany({ _id: { $in: usersToRemove } }, { $pull: { audienceIds: audienceId } })
-          console.log(`Removed audience from ${usersToRemove.length} users`)
-        }
-      } catch (memberUpdateError) {
-        console.error('Error updating audience members:', memberUpdateError)
-        // Don't fail the audience update if member synchronization fails
       }
     }
 
@@ -333,15 +418,6 @@ export const deleteOne = async audienceId => {
       }
     }
 
-    // Remove audience from all users before soft delete
-    try {
-      await User.updateMany({ audienceIds: audienceId }, { $pull: { audienceIds: audienceId } })
-      console.log(`Removed audience ${audienceId} from all users`)
-    } catch (userUpdateError) {
-      console.error('Error removing audience from users:', userUpdateError)
-      // Continue with audience deletion even if user update fails
-    }
-
     // Remove audienceId from all games that reference this audience
     try {
       await Game.updateMany({ audienceId: audienceId }, { $unset: { audienceId: 1 } })
@@ -349,15 +425,6 @@ export const deleteOne = async audienceId => {
     } catch (gameUpdateError) {
       console.error('Error removing audienceId from games:', gameUpdateError)
       // Continue with audience deletion even if game update fails
-    }
-
-    // Delete all audience requests associated with this audience
-    try {
-      const deleteResult = await GroupRequest.deleteMany({ audienceId: audienceId })
-      console.log(`Deleted ${deleteResult.deletedCount} audience requests for audience ${audienceId}`)
-    } catch (audienceRequestError) {
-      console.error('Error deleting audience requests:', audienceRequestError)
-      // Continue with audience deletion even if audience request cleanup fails
     }
 
     // Perform soft delete
@@ -403,15 +470,6 @@ export const hardDeleteOne = async audienceId => {
       }
     }
 
-    // Remove audience from all users
-    try {
-      await User.updateMany({ audienceIds: audienceId }, { $pull: { audienceIds: audienceId } })
-      console.log(`Removed audience ${audienceId} from all users`)
-    } catch (userUpdateError) {
-      console.error('Error removing audience from users:', userUpdateError)
-      // Continue with audience deletion even if user update fails
-    }
-
     // Remove audienceId from all games that reference this audience
     try {
       await Game.updateMany({ audienceId: audienceId }, { $unset: { audienceId: 1 } })
@@ -419,15 +477,6 @@ export const hardDeleteOne = async audienceId => {
     } catch (gameUpdateError) {
       console.error('Error removing audienceId from games:', gameUpdateError)
       // Continue with audience deletion even if game update fails
-    }
-
-    // Delete all audience requests associated with this audience
-    try {
-      const deleteResult = await GroupRequest.deleteMany({ audienceId: audienceId })
-      console.log(`Deleted ${deleteResult.deletedCount} audience requests for audience ${audienceId}`)
-    } catch (audienceRequestError) {
-      console.error('Error deleting audience requests:', audienceRequestError)
-      // Continue with audience deletion even if audience request cleanup fails
     }
 
     // Permanently delete the audience
@@ -482,9 +531,6 @@ export const restoreOne = async audienceId => {
     }
   }
 }
-
-// Note: Join request functionality has been moved to the separate audience-request service
-// Use the audience-request API endpoints instead of these methods
 
 export async function broadcastAudiencesListUpdates() {
   try {

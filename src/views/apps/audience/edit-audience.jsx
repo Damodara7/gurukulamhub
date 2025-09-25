@@ -30,14 +30,12 @@ const EditAudiencePage = ({ audienceId = null }) => {
           // Transform the data to match CreateAudienceForm expectations
           const data = res.result
           console.log('i am getting the audience data in the edit mode ', data)
-          console.log('audiencedata members', data.members)
 
           const transformedData = {
             ...data,
             ageGroup: data.ageGroup || null,
             location: data.location || null,
-            gender: data.gender || null,
-            members: data?.members?.map(member => member._id) || []
+            gender: data.gender || null
           }
 
           setAudienceData(transformedData)
@@ -64,8 +62,7 @@ const EditAudiencePage = ({ audienceId = null }) => {
         ...values,
         updatedBy: session?.user?.id,
         updaterEmail: session?.user?.email,
-        members: values.members,
-        membersCount: values.members.length,
+        membersCount: values.membersCount,
         // Ensure filter criteria is included
         ageGroup: values.ageGroup,
         location: values.location,
@@ -122,10 +119,9 @@ const EditAudiencePage = ({ audienceId = null }) => {
     )
   }
 
-  console.log('audienceData members array  in the edit page', audienceData.members)
   console.log('audienceData  in the edit page', audienceData)
 
-  const updatedAudienceData = { ...audienceData, members: audienceData?.members || [] }
+  const updatedAudienceData = { ...audienceData }
   console.log('i am fetting the updated data', updatedAudienceData)
 
   return (

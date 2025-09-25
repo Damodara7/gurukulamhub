@@ -9,8 +9,7 @@ import {
   Person as PersonIcon,
   CalendarToday as CalendarIcon,
   Public as PublicIcon,
-  Lock as LockIcon,
-  GroupAdd as GroupAddIcon
+  Lock as LockIcon
 } from '@mui/icons-material'
 import AudienceFallBackCard from './AudienceFallBackCard'
 import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
@@ -23,109 +22,9 @@ import { toast } from 'react-toastify'
 const AudienceCard = ({ audiences, onEditAudience, onViewAudience }) => {
   const { data: session } = useSession()
   const router = useRouter()
-  const [pendingRequests, setPendingRequests] = useState({})
   const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false)
   const [audienceToDelete, setAudienceToDelete] = useState(null)
   // WebSocket handling moved to parent component (AllAudiencePage)
-
-  // Check for pending requests for each audience
-  useEffect(() => {
-    const checkPendingRequests = async () => {
-      if (!session?.user?.email) return
-
-      for (const audience of audiences) {
-        try {
-          const result = await RestApi.get(
-            `${API_URLS.v0.USERS_AUDIENCE_REQUEST}?audienceId=${audience._id}&status=pending`
-          )
-          if (result?.status === 'success') {
-            setPendingRequests(prev => ({
-              ...prev,
-              [audience._id]: result.result?.length || 0
-            }))
-          }
-        } catch (error) {
-          console.error('Error checking pending requests:', error)
-        }
-      }
-    }
-
-    checkPendingRequests()
-  }, [audiences, session?.user?.email])
-
-  // WebSocket connection for audience request updates
-  useEffect(() => {
-    if (!session?.user?.email || audiences.length === 0) return
-
-    // Create WebSocket connections for each audience's request updates
-    const audienceIds = audiences.map(audience => audience._id)
-    const wsConnections = []
-
-    audienceIds.forEach(audienceId => {
-      const wsUrl =
-        typeof window !== 'undefined'
-          ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${
-              window.location.host
-            }/api/ws/audience-requests/${audienceId}`
-          : ''
-
-      if (wsUrl) {
-        const wsRef = new WebSocket(wsUrl)
-        wsConnections.push(wsRef)
-
-        wsRef.onopen = () => {
-          console.log(`[WS] AudienceCard connected to audience requests for audience ${audienceId}`)
-        }
-
-        wsRef.onmessage = event => {
-          try {
-            const msg = JSON.parse(event.data)
-            if (msg.type === 'audienceRequests') {
-              console.log('[WS] AudienceCard received audience request update:', msg.data)
-
-              if (msg.data.type === 'requestSent') {
-                // Update pending request count for this audience
-                setPendingRequests(prev => ({
-                  ...prev,
-                  [audienceId]: (prev[audienceId] || 0) + 1
-                }))
-              } else if (msg.data.type === 'requestApproved' || msg.data.type === 'requestRejected') {
-                // Decrease pending request count for this audience
-                setPendingRequests(prev => ({
-                  ...prev,
-                  [audienceId]: Math.max(0, (prev[audienceId] || 0) - 1)
-                }))
-              }
-            }
-          } catch (e) {
-            console.error('[WS] AudienceCard error parsing audience request message', e)
-          }
-        }
-
-        wsRef.onerror = err => {
-          console.error(`[WS] AudienceCard audience request error for audience ${audienceId}`, err)
-        }
-
-        wsRef.onclose = () => {
-          console.log(`[WS] AudienceCard audience request connection closed for audience ${audienceId}`)
-        }
-      }
-    })
-
-    return () => {
-      // Clean up all WebSocket connections
-      wsConnections.forEach(wsRef => {
-        if (wsRef.readyState === WebSocket.OPEN) {
-          wsRef.close()
-        }
-      })
-    }
-  }, [audiences, session?.user?.email])
-
-  const handleJoinRequestClick = audience => {
-    // Navigate to the audience request page with audienceId in the URL path
-    router.push(`/management/audience/${audience._id}/request`)
-  }
 
   const handleDeleteClick = audience => {
     setAudienceToDelete(audience)
@@ -377,17 +276,6 @@ const AudienceCard = ({ audiences, onEditAudience, onViewAudience }) => {
                     <IconButtonTooltip title='Delete' onClick={() => handleDeleteClick(audience)} color='error'>
                       <DeleteIcon />
                     </IconButtonTooltip>
-                    {pendingRequests[audience._id] > 0 && session?.user?.email === audience?.creatorEmail && (
-                      <Badge badgeContent={pendingRequests[audience._id]} color='error'>
-                        <IconButtonTooltip
-                          title={`${pendingRequests[audience._id]} pending join requests`}
-                          onClick={() => handleJoinRequestClick(audience)}
-                          color='primary'
-                        >
-                          <GroupAddIcon />
-                        </IconButtonTooltip>
-                      </Badge>
-                    )}
                   </Stack>
                 </Box>
               </CardContent>

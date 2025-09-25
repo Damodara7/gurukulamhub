@@ -11,11 +11,16 @@ export async function GET(req) {
     // Convert searchParams to an object
     const queryParamsObj = Object.fromEntries(searchParams.entries())
 
-    const { id, ...rest } = queryParamsObj
+    const { id, action, ...rest } = queryParamsObj
 
     let artifact
 
-    if (id) {
+    if (id && action === 'users') {
+      // Get filtered users for an audience
+      console.log('Getting filtered users for audience:', id)
+      artifact = await ArtifactService.getFilteredUsers(id)
+      console.log('Filtered users result:', artifact)
+    } else if (id) {
       artifact = await ArtifactService.getOne({ _id: id, ...rest })
     } else {
       artifact = await ArtifactService.getAll({ ...rest })
@@ -99,7 +104,10 @@ export async function DELETE(req) {
   try {
     const deletedAudience = await ArtifactService.deleteOne(id)
     if (deletedAudience.status === 'success') {
-      var successResponse = ApiResponseUtils.createSuccessResponse('Audience deleted successfully', deletedAudience.result)
+      var successResponse = ApiResponseUtils.createSuccessResponse(
+        'Audience deleted successfully',
+        deletedAudience.result
+      )
       return ApiResponseUtils.sendSuccessResponse(successResponse)
     } else {
       const errorResponse = ApiResponseUtils.createErrorResponse(deletedAudience.message)

@@ -69,16 +69,13 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
   const [errorMessage, setErrorMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [users, setUsers] = useState([])
-  const [selectedUsers, setSelectedUsers] = useState([])
   const [matchedUserIds, setMatchedUserIds] = useState([])
-  const [unmatchedUserIds, setUnmatchedUserIds] = useState([])
   // Add this state to track the filter criteria
   const [filterCriteria, setFilterCriteria] = useState({
     ageGroup: null,
     location: null,
     gender: null
   })
-  console.log('selected user in the createaudience form ', selectedUsers)
   //if edit audience?
 
   useEffect(() => {
@@ -87,8 +84,7 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
       setFormData({
         ...initialFormData,
         audienceName: data.audienceName || '',
-        description: data.description || '',
-        members: data.members || []
+        description: data.description || ''
       })
       // Set initial filter criteria from audience data
       setFilterCriteria({
@@ -96,8 +92,6 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
         location: data.location || null,
         gender: data.gender || null
       })
-      // Set initial selected users
-      setSelectedUsers(data.members || [])
       // Calculate matched users based on filters if they exist
       if (data.ageGroup || data.location || data.gender) {
         const filteredUserIds = filterUsersByCriteria(users, {
@@ -106,19 +100,12 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
           gender: data.gender
         })
         setMatchedUserIds(filteredUserIds)
-        setUnmatchedUserIds(users.filter(user => !filteredUserIds.includes(user._id)).map(user => user._id))
-        // If there were no explicit members saved, default selection to filtered users
-        if (!data.members || data.members.length === 0) {
-          setSelectedUsers(filteredUserIds)
-        }
       } else {
-        // If no filters, consider all users as matched
+        // If no filters, show all users initially
         setMatchedUserIds(users.map(user => user._id))
-        setUnmatchedUserIds([])
       }
     }
   }, [data, users])
-  console.log('selected user in the createaudience after the  useeffect ', selectedUsers)
   // Helper function to filter users based on criteria
   const filterUsersByCriteria = (users, criteria) => {
     return users
@@ -160,9 +147,10 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
       const result = await RestApi.get(`${API_URLS.v0.USER}`)
       if (result?.status === 'success') {
         setUsers(result.result || [])
-        // In edit mode, preserve existing selection; otherwise preselect all
-        setSelectedUsers(prev => (data?.members ? prev : result.result?.map(user => user._id) || []))
-        console.log('users data ', result.result)
+        // If no filters applied initially, show all users
+        if (!data?.ageGroup && !data?.location && !data?.gender) {
+          setMatchedUserIds(result.result?.map(user => user._id) || [])
+        }
       }
     } catch (error) {
       console.error('Error fetching users:', error)
@@ -290,12 +278,15 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
       _id: data?._id || null, // Include ID for updates
       audienceName: formData.audienceName.trim(),
       description: formData.description.trim(),
-      ...filterCriteria, // Include the current filter criteria
+      ...filterCriteria, // Include the current filter criteria (legacy)
+      filters: formData.filters || [], // Include structured filters
       createdBy: data?.createdBy || session?.user?.id || null,
       creatorEmail: data?.creatorEmail || session?.user?.email || null,
-      members: selectedUsers,
-      membersCount: selectedUsers.length
+      membersCount: matchedUserIds.length
     }
+
+    console.log('📤 Submitting audience data:', submission)
+    console.log('🔍 Structured filters being sent:', submission.filters)
 
     try {
       await onSubmit(submission)
@@ -308,23 +299,26 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
   }
   // console.log('form data after submission ', formData);
   // Add this to handle filter changes from GroupByFilter
-  const handleFilterChange = (filteredUserIds, criteria) => {
-    setSelectedUsers(filteredUserIds)
+  const handleFilterChange = (filteredUserIds, criteria, structuredFilters) => {
+    console.log('🔄 Filter change received:', {
+      filteredUserIds: filteredUserIds.length,
+      criteria,
+      structuredFilters
+    })
+
     setFilterCriteria(criteria)
-
-    // Calculate which users are matched and unmatched
-    const allUserIds = users.map(user => user._id)
-    const unmatched = allUserIds.filter(id => !filteredUserIds.includes(id))
-
     setMatchedUserIds(filteredUserIds)
-    setUnmatchedUserIds(unmatched)
+    // Store structured filters for backend
+    setFormData(prev => {
+      const updated = {
+        ...prev,
+        filters: structuredFilters || []
+      }
+      console.log('📝 Updated formData.filters:', updated.filters)
+      return updated
+    })
   }
 
-  const handleUserSelection = newSelectedUsers => {
-    setSelectedUsers(newSelectedUsers)
-  }
-
-  console.log('selected user in the createaudience form after the handleUserSelection ', selectedUsers)
   return (
     <Box>
       {/* {!isInline && ( */}
@@ -394,10 +388,8 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
                 <Typography>Audience Members</Typography>
                 <UserMultiSelect
                   users={users}
-                  selectedUsers={selectedUsers}
-                  onSelectChange={handleUserSelection}
                   matchedUserIds={matchedUserIds}
-                  unmatchedUserIds={unmatchedUserIds}
+                  hasFilters={!!(filterCriteria.ageGroup || filterCriteria.location || filterCriteria.gender)}
                 />
               </Grid>
               <Grid item xs={12} mt={4}>
@@ -411,7 +403,7 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
                     variant='contained'
                     color='primary'
                     style={{ color: 'white' }}
-                    disabled={isSubmitting || selectedUsers.length === 0}
+                    disabled={isSubmitting || matchedUserIds.length === 0}
                   >
                     {isSubmitting ? 'Saving...' : 'Save Audience'}
                   </Button>

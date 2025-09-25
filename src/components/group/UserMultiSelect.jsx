@@ -29,16 +29,21 @@ import {
 
 // Helper functions
 const getInitials = user => {
-  const firstInitial = user?.firstname?.[0]?.toUpperCase() || ''
-  const lastInitial = user?.lastname?.[0]?.toUpperCase() || ''
+  const firstname = user?.firstname || user?.profile?.firstname
+  const lastname = user?.lastname || user?.profile?.lastname
+  const firstInitial = firstname?.[0]?.toUpperCase() || ''
+  const lastInitial = lastname?.[0]?.toUpperCase() || ''
   return firstInitial + lastInitial || ''
 }
 
 const getDisplayName = user => {
-  if (user?.firstname && user?.lastname) {
-    return `${user.firstname} ${user.lastname}`
+  const firstname = user?.firstname || user?.profile?.firstname
+  const lastname = user?.lastname || user?.profile?.lastname
+
+  if (firstname && lastname) {
+    return `${firstname} ${lastname}`
   }
-  return user?.firstname || user?.lastname || 'No name'
+  return firstname || lastname || 'No name'
 }
 
 const getLocation = user => {

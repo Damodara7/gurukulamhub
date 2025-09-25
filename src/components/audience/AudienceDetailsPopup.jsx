@@ -48,15 +48,11 @@ const AudienceDetailsPopup = ({ open, audience, onClose }) => {
     setError(null)
 
     try {
-      // Fetch all users and filter by audienceIds
+      // Fetch all users and filter based on audience criteria
       const result = await RestApi.get(`${API_URLS.v0.USER}`)
       if (result?.status === 'success') {
         const allUsers = Array.isArray(result.result) ? result.result : [result.result]
-        const audienceUsers = allUsers.filter(user => user.audienceIds && user.audienceIds.includes(audience._id))
-
-        // For now, we'll work with the basic user data
-        // In a real implementation, you might want to fetch profile data separately
-        // or modify the API to populate profile data
+        const audienceUsers = filterUsersByAudienceCriteria(allUsers, audience)
         setUsers(audienceUsers)
       } else {
         setError('Failed to fetch audience members')
@@ -67,6 +63,38 @@ const AudienceDetailsPopup = ({ open, audience, onClose }) => {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Helper function to filter users based on audience criteria
+  const filterUsersByAudienceCriteria = (users, audience) => {
+    return users.filter(user => {
+      const profile = user.profile || {}
+
+      // Age filter
+      const ageMatch =
+        !audience.ageGroup ||
+        (profile.age && profile.age >= audience.ageGroup.min && profile.age <= audience.ageGroup.max)
+
+      // Location filter
+      const locationMatch =
+        !audience.location ||
+        ((!audience.location.country ||
+          (profile.country && profile.country.toLowerCase() === audience.location.country.toLowerCase())) &&
+          (!audience.location.region ||
+            (profile.region && profile.region.toLowerCase() === audience.location.region.toLowerCase())) &&
+          (!audience.location.city ||
+            (profile.locality && profile.locality.toLowerCase() === audience.location.city.toLowerCase())))
+
+      // Gender filter
+      const genderMatch =
+        !audience.gender ||
+        (profile.gender &&
+          (Array.isArray(audience.gender)
+            ? audience.gender.includes(profile.gender.toLowerCase())
+            : profile.gender.toLowerCase() === audience.gender.toLowerCase()))
+
+      return ageMatch && locationMatch && genderMatch
+    })
   }
 
   if (!audience) return null

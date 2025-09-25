@@ -118,40 +118,11 @@ export async function addGroupToUser(userId, groupId) {
 export async function getAll() {
   await connectMongo() // Connect to the MongoDB database
 
-  let userProfiles = []
   try {
-    const result = await UserProfileService.getAll()
-    if (result.status === 'success') {
-      userProfiles = result?.result?.map(userProfile => {
-        return {
-          email: userProfile.email,
-          firstname: userProfile?.firstname,
-          lastname: userProfile?.lastname,
-          nickname: userProfile?.nickname,
-          phone: userProfile?.phone,
-          image: userProfile?.image
-        }
-      })
-    }
+    const users = await User.find({}).select('-password').sort({ createdAt: -1 }).populate('profile').lean()
+    return { status: 'success', result: users, message: 'Users fetched successfully' }
   } catch (error) {
-    // console.log('getting all user profiles error: ', error)
-  }
-
-  try {
-    const users = await User.find({}).select('-password').sort({ createdAt: -1 }).populate('profile') // Fetch all users, exclude passwords
-
-    // Merge users with userProfiles based on matching emails
-    const mergedUsers = users.map(user => {
-      const matchingProfile = userProfiles.find(profile => profile.email === user.email)
-      return {
-        ...user.toObject(), // Convert mongoose document to plain object
-        ...matchingProfile // Add profile fields if a matching profile is found
-      }
-    })
-
-    return { status: 'success', result: mergedUsers, message: 'Users fetched successfully' }
-  } catch (error) {
-    // console.log(`Error fetching users: ${error}`)
+    console.error(`Error fetching users: ${error}`)
     return { status: 'error', result: null, message: error.message }
   }
 }

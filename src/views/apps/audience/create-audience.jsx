@@ -23,7 +23,6 @@ function CreateAudiencePage() {
         ageGroup: values.ageGroup,
         createdBy: session?.user?.id, // Use the found user ID
         creatorEmail: session?.user?.email,
-        members: values.members,
         membersCount: values.membersCount
       }
 

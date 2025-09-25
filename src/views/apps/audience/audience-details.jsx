@@ -1,25 +1,170 @@
 'use client'
-import React from 'react'
-import { Box, Typography, Chip, Avatar, Card, CardContent, Divider, Paper, Button } from '@mui/material'
+import React, { useState, useEffect } from 'react'
+import {
+  Box,
+  Typography,
+  Chip,
+  Avatar,
+  Card,
+  CardContent,
+  Divider,
+  Paper,
+  Button,
+  CircularProgress
+} from '@mui/material'
 import {
   Group as GroupIcon,
   LocationOn as LocationIcon,
   Person as PersonIcon,
   Cake as CakeIcon,
   SportsEsports as GameIcon,
-  OpenInNew as OpenInNewIcon
+  OpenInNew as OpenInNewIcon,
+  ArrowBack as ArrowBackIcon
 } from '@mui/icons-material'
 import { format } from 'date-fns'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import JoinRequestScreen from '@/components/audience/JoinRequestScreenaudience'
+import * as RestApi from '@/utils/restApiUtil'
+import { API_URLS } from '@/configs/apiConfig'
 
 const AudienceDetailsPage = ({ audienceId, audienceData, gamesData = [] }) => {
   const router = useRouter()
   const { data: session } = useSession()
 
+  // State for managing users
+  const [users, setUsers] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+
   // Check if current user is admin of this audience
   const isAdmin = session?.user?.email === audienceData?.creatorEmail
+
+  // Fetch users and filter based on audience criteria
+  useEffect(() => {
+    if (audienceData) {
+      fetchAndFilterUsers()
+    }
+  }, [audienceData])
+
+  // const fetchAudience = async () => {
+  //   setLoading(true)
+  //   try {
+  //     const res = await RestApi.get(`${API_URLS.v0.USERS_AUDIENCE}`)
+  //     console.log('Complete API response:', res)
+
+  //     if (res?.status === 'success') {
+  //       setAudiences(res.result || [])
+  //       console.log('total audience data', res.result)
+  //     } else {
+  //       console.error('Error fetching audience:', res)
+  //       toast.error('Failed to load audience')
+  //       setAudiences([])
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching audience:', error)
+  //     toast.error('An error occurred while loading audience')
+  //     setAudiences([])
+  //   } finally {
+  //     setLoading(false)
+  //   }
+  // }
+
+  const fetchAndFilterUsers = async () => {
+    setLoading(true)
+    setError(null)
+
+    try {
+      console.log('Fetching users for audienceId:', audienceId)
+
+      // Try the new API endpoint first
+      try {
+        console.log('Trying new API endpoint:', `${API_URLS.v0.USERS_AUDIENCE}?id=${audienceId}&action=users`)
+        const result = await RestApi.get(`${API_URLS.v0.USERS_AUDIENCE}?id=${audienceId}&action=users`)
+        console.log('New API Response:', result)
+
+        if (result?.status === 'success') {
+          const filteredUsers = Array.isArray(result.result) ? result.result : [result.result]
+          console.log('Filtered users from new API:', filteredUsers.length)
+          setUsers(filteredUsers)
+          return
+        }
+      } catch (newApiError) {
+        console.log('New API failed, falling back to legacy approach:', newApiError)
+      }
+
+      // Fallback to legacy approach
+      console.log('Using legacy approach')
+      const result = await RestApi.get(`${API_URLS.v0.USER}`)
+      if (result?.status === 'success') {
+        const allUsers = Array.isArray(result.result) ? result.result : [result.result]
+        console.log('All users fetched:', allUsers.length)
+        console.log('Audience criteria:', audienceData)
+        const filteredUsers = filterUsersByAudienceCriteria(allUsers, audienceData)
+        console.log('Filtered users:', filteredUsers.length)
+        setUsers(filteredUsers)
+      } else {
+        setError('Failed to fetch users')
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error)
+      setError('An error occurred while fetching users')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Helper function to filter users based on audience criteria
+  const filterUsersByAudienceCriteria = (users, audience) => {
+    return users.filter(user => {
+      // Handle both merged and nested profile data structures
+      const userAge = user.age || user.profile?.age
+      const userGender = user.gender || user.profile?.gender
+      const userCountry = user.country || user.profile?.country
+      const userRegion = user.region || user.profile?.region
+      const userLocality = user.locality || user.profile?.locality
+
+      // Age filter
+      const ageMatch =
+        !audience.ageGroup || (userAge && userAge >= audience.ageGroup.min && userAge <= audience.ageGroup.max)
+
+      // Location filter
+      const locationMatch =
+        !audience.location ||
+        ((!audience.location.country ||
+          (userCountry && userCountry.toLowerCase() === audience.location.country.toLowerCase())) &&
+          (!audience.location.region ||
+            (userRegion && userRegion.toLowerCase() === audience.location.region.toLowerCase())) &&
+          (!audience.location.city ||
+            (userLocality && userLocality.toLowerCase() === audience.location.city.toLowerCase())))
+
+      // Gender filter
+      const genderMatch =
+        !audience.gender ||
+        (userGender &&
+          (Array.isArray(audience.gender)
+            ? audience.gender.includes(userGender.toLowerCase())
+            : userGender.toLowerCase() === audience.gender.toLowerCase()))
+
+      // Debug logging for first user
+      if (users.indexOf(user) === 0) {
+        console.log('Filtering user:', {
+          email: user.email,
+          userAge,
+          userGender,
+          userCountry,
+          userRegion,
+          userLocality,
+          profileData: user.profile,
+          ageMatch,
+          locationMatch,
+          genderMatch,
+          finalMatch: ageMatch && locationMatch && genderMatch
+        })
+      }
+
+      return ageMatch && locationMatch && genderMatch
+    })
+  }
   // Helper function to get filter chips
   const getFilterChips = () => {
     const chips = []
@@ -179,17 +324,32 @@ const AudienceDetailsPage = ({ audienceId, audienceData, gamesData = [] }) => {
               Audience Members
             </Typography>
             <Typography variant='body2' color='text.secondary'>
-              {audienceData?.membersCount === 0
-                ? 'No Members'
-                : audienceData?.membersCount > 1
-                  ? `${audienceData?.membersCount} members`
-                  : `${audienceData?.membersCount} member`}
+              {loading
+                ? 'Loading...'
+                : users.length === 0
+                  ? 'No Members'
+                  : users.length > 1
+                    ? `${users.length} members`
+                    : `${users.length} member`}
             </Typography>
           </Box>
 
           <Divider sx={{ mb: 3 }} />
 
-          {audienceData?.members && audienceData.members.length > 0 ? (
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : error ? (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <Typography variant='body1' color='error' sx={{ mb: 2 }}>
+                {error}
+              </Typography>
+              <Button variant='outlined' onClick={fetchAndFilterUsers}>
+                Retry
+              </Button>
+            </Box>
+          ) : users.length > 0 ? (
             <Paper
               sx={{
                 maxHeight: '400px',
@@ -200,15 +360,15 @@ const AudienceDetailsPage = ({ audienceId, audienceData, gamesData = [] }) => {
               }}
             >
               <Box sx={{ p: 2 }}>
-                {audienceData.members.map((member, index) => (
+                {users.map((user, index) => (
                   <Box
-                    key={member._id || index}
+                    key={user._id || index}
                     sx={{
                       display: 'flex',
                       alignItems: 'center',
                       gap: 2,
                       py: 1.5,
-                      borderBottom: index < audienceData.members.length - 1 ? '1px solid' : 'none',
+                      borderBottom: index < users.length - 1 ? '1px solid' : 'none',
                       borderColor: 'divider'
                     }}
                   >
@@ -222,42 +382,71 @@ const AudienceDetailsPage = ({ audienceId, audienceData, gamesData = [] }) => {
                         color: 'white'
                       }}
                     >
-                      {member?.profile?.firstname?.[0] || member?.profile?.lastname?.[0] || 'U'}
+                      {(user?.firstname || user?.profile?.firstname)?.[0] ||
+                        (user?.lastname || user?.profile?.lastname)?.[0] ||
+                        user?.email?.[0]?.toUpperCase() ||
+                        'U'}
                     </Avatar>
 
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Typography variant='subtitle1' sx={{ fontWeight: 600, mb: 0.5 }}>
-                        {member?.profile?.firstname && member?.profile?.lastname
-                          ? `${member?.profile?.firstname} ${member?.profile?.lastname}`
-                          : member?.profile?.firstname || member?.profile?.lastname}
+                        {(user?.firstname || user?.profile?.firstname) && (user?.lastname || user?.profile?.lastname)
+                          ? `${user?.firstname || user?.profile?.firstname} ${
+                              user?.lastname || user?.profile?.lastname
+                            }`
+                          : user?.firstname ||
+                            user?.profile?.firstname ||
+                            user?.lastname ||
+                            user?.profile?.lastname ||
+                            user?.email}
                       </Typography>
 
                       <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
-                        {member.email}
+                        {user.email}
                       </Typography>
 
-                      {/* Show only filter-related information based on audience filters */}
+                      {/* Show user profile information */}
                       <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
-                        {getMemberFilterChips(member).length > 0 ? (
-                          <>
-                            <Typography variant='body2' sx={{ fontWeight: 500, color: 'text.secondary' }}>
-                              Users Criteria:
-                            </Typography>
-                            {getMemberFilterChips(member).map((chip, chipIndex) => (
-                              <Chip
-                                key={chipIndex}
-                                size='small'
-                                label={chip.label}
-                                variant='outlined'
-                                color={chip.color}
-                                sx={{ fontSize: '0.75rem' }}
-                              />
-                            ))}
-                          </>
-                        ) : (
-                          <Typography variant='caption' color='text.secondary' sx={{ fontStyle: 'italic' }}>
-                            No criteria applied
-                          </Typography>
+                        {(user.age || user.profile?.age) && (
+                          <Chip
+                            size='small'
+                            icon={<CakeIcon sx={{ fontSize: 14 }} />}
+                            label={`Age: ${user.age || user.profile?.age}`}
+                            variant='outlined'
+                            color='primary'
+                            sx={{ fontSize: '0.75rem' }}
+                          />
+                        )}
+                        {(user.gender || user.profile?.gender) && (
+                          <Chip
+                            size='small'
+                            icon={<PersonIcon sx={{ fontSize: 14 }} />}
+                            label={`Gender: ${user.gender || user.profile?.gender}`}
+                            variant='outlined'
+                            color='secondary'
+                            sx={{ fontSize: '0.75rem' }}
+                          />
+                        )}
+                        {(user.country ||
+                          user.profile?.country ||
+                          user.region ||
+                          user.profile?.region ||
+                          user.locality ||
+                          user.profile?.locality) && (
+                          <Chip
+                            size='small'
+                            icon={<LocationIcon sx={{ fontSize: 14 }} />}
+                            label={`Location: ${[
+                              user.country || user.profile?.country,
+                              user.region || user.profile?.region,
+                              user.locality || user.profile?.locality
+                            ]
+                              .filter(Boolean)
+                              .join(', ')}`}
+                            variant='outlined'
+                            color='default'
+                            sx={{ fontSize: '0.75rem' }}
+                          />
                         )}
                       </Box>
                     </Box>
@@ -268,7 +457,7 @@ const AudienceDetailsPage = ({ audienceId, audienceData, gamesData = [] }) => {
           ) : (
             <Box sx={{ textAlign: 'center', py: 4 }}>
               <Typography variant='body1' color='text.secondary'>
-                No members in this audience
+                No users match the current filter criteria
               </Typography>
             </Box>
           )}
@@ -373,13 +562,6 @@ const AudienceDetailsPage = ({ audienceId, audienceData, gamesData = [] }) => {
       </Card>
 
       {/* Join Requests Section - Only show for admins */}
-      {isAdmin && (
-        <Card sx={{ mt: 4 }}>
-          <CardContent>
-            <JoinRequestScreen audience={audienceData} removebutton={true} />
-          </CardContent>
-        </Card>
-      )}
       <Box sx={{ display: 'flex', justifyContent: 'center' }}>
         <Button
           variant='contained'
