@@ -344,39 +344,114 @@ const AudienceByFilter = ({
     }))
   }
 
+  // Helper function to generate dynamic order and operation data
+  const generateOrderAndOperations = filters => {
+    const orderAndOps = {
+      ageOrder: null,
+      ageOperation: null,
+      locationOrder: null,
+      locationOperation: null,
+      genderOrder: null,
+      genderOperation: null
+    }
+
+    // Sort filters by their order to process them correctly
+    const sortedFilters = [...filters].sort((a, b) => a.order - b.order)
+
+    console.log(
+      '🔍 Generating order and operations for filters:',
+      sortedFilters.map(f => ({
+        type: f.type,
+        order: f.order,
+        operation: f.operation
+      }))
+    )
+
+    sortedFilters.forEach((filter, index) => {
+      if (filter.type === 'age') {
+        orderAndOps.ageOrder = filter.order
+        // First n-1 filters get operations, last filter gets null
+        orderAndOps.ageOperation = index < sortedFilters.length - 1 ? filter.operation : null
+      } else if (filter.type === 'location') {
+        orderAndOps.locationOrder = filter.order
+        orderAndOps.locationOperation = index < sortedFilters.length - 1 ? filter.operation : null
+      } else if (filter.type === 'gender') {
+        orderAndOps.genderOrder = filter.order
+        orderAndOps.genderOperation = index < sortedFilters.length - 1 ? filter.operation : null
+      }
+    })
+
+    console.log('🔍 Generated order and operations:', orderAndOps)
+    return orderAndOps
+  }
+
   const applyFilterWithOperation = (newFilters, filteredUserIds, criteria, operation) => {
     let updatedFilters = []
     let combinedUserIds = []
 
     if (selectedFilters.length === 0) {
-      // First filter - just add it without any operation
+      // First filter - assign order 1
       updatedFilters = newFilters.map(f => ({
         ...f,
-        userIds: filteredUserIds
-        // No operation field for first filter
+        userIds: filteredUserIds,
+        order: 1,
+        operation: operation || null // First filter gets the operation
       }))
       combinedUserIds = filteredUserIds
     } else {
-      // Subsequent filters - combine based on selected operation
+      // Subsequent filters - assign next order based on sequence
+      const nextOrder = Math.max(...selectedFilters.map(f => f.order || 0)) + 1
+
       updatedFilters = [
         ...selectedFilters,
         ...newFilters.map(f => ({
           ...f,
           userIds: filteredUserIds,
-          operation: operation || 'AND' // Default to AND if no operation specified
+          order: nextOrder,
+          operation: operation || null // Operation will be assigned based on position
         }))
       ]
 
-      if (operation === 'AND') {
-        // Intersection of all filter results
-        combinedUserIds = updatedFilters.reduce((acc, filter) => {
-          if (acc.length === 0) return filter.userIds
-          return acc.filter(id => filter.userIds.includes(id))
-        }, [])
-      } else {
-        // OR - Union of all filter results
-        combinedUserIds = [...new Set(updatedFilters.flatMap(filter => filter.userIds))]
+      // Assign operations correctly: operation gets assigned to the PREVIOUS filter
+      const sortedFilters = [...updatedFilters].sort((a, b) => a.order - b.order)
+
+      // Apply the operation to the PREVIOUS filter (not the current one)
+      if (operation && sortedFilters.length > 1) {
+        // Find the previous filter (the one before the newly added filter)
+        const previousFilter = sortedFilters.find(f => f.order === nextOrder - 1)
+        if (previousFilter) {
+          console.log(
+            '🔍 Assigning operation',
+            operation,
+            'to previous filter:',
+            previousFilter.type,
+            'order:',
+            previousFilter.order
+          )
+          previousFilter.operation = operation
+        }
       }
+
+      // Ensure the last filter always has null operation
+      sortedFilters.forEach((filter, index) => {
+        if (index === sortedFilters.length - 1) {
+          filter.operation = null
+        }
+      })
+
+      // Apply operations based on order
+      sortedFilters.forEach((filter, index) => {
+        if (index === 0) {
+          combinedUserIds = filter.userIds
+        } else {
+          // Apply the operation from the current filter to combine with previous result
+          if (filter.operation === 'AND') {
+            combinedUserIds = combinedUserIds.filter(id => filter.userIds.includes(id))
+          } else if (filter.operation === 'OR') {
+            combinedUserIds = [...new Set([...combinedUserIds, ...filter.userIds])]
+          }
+        }
+      })
     }
 
     setSelectedFilters(updatedFilters)
@@ -425,8 +500,11 @@ const AudienceByFilter = ({
     setSelectedRegion('')
     setSelectedCity('')
 
-    // Call parent with combined results and cumulative criteria
-    onFilterChange(combinedUserIds, nextCombinedCriteria)
+    // Generate order and operation data for individual schemas
+    const orderAndOperations = generateOrderAndOperations(updatedFilters)
+
+    // Call parent with combined results, cumulative criteria, and order/operations
+    onFilterChange(combinedUserIds, nextCombinedCriteria, orderAndOperations)
   }
 
   const handleOperationSelect = operation => {
@@ -689,7 +767,8 @@ const AudienceByFilter = ({
       })
 
       setCombinedCriteria(nextCombinedCriteria)
-      onFilterChange(combinedUserIds, nextCombinedCriteria)
+      const orderAndOperations = generateOrderAndOperations(newFilters)
+      onFilterChange(combinedUserIds, nextCombinedCriteria, orderAndOperations)
       closeFilterDialog()
       return
     }
@@ -786,7 +865,8 @@ const AudienceByFilter = ({
       }
     })
     setCombinedCriteria(nextCombinedCriteria)
-    onFilterChange(combinedUserIds, nextCombinedCriteria)
+    const orderAndOperations = generateOrderAndOperations(updatedFilters)
+    onFilterChange(combinedUserIds, nextCombinedCriteria, orderAndOperations)
   }
 
   // Helper function to apply a single filter to users

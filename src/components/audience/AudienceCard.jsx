@@ -203,13 +203,21 @@ const AudienceCard = ({ audiences, onEditAudience, onViewAudience }) => {
                       <Tooltip
                         arrow
                         title={`Gender: ${
-                          Array.isArray(audience.gender) ? audience.gender.join(', ') : String(audience.gender)
+                          audience.gender.values
+                            ? audience.gender.values.join(', ')
+                            : Array.isArray(audience.gender)
+                              ? audience.gender.join(', ')
+                              : String(audience.gender)
                         }`}
                       >
                         <Chip
                           size='small'
                           label={`Gender: ${
-                            Array.isArray(audience.gender) ? audience.gender.join(', ') : String(audience.gender)
+                            audience.gender.values
+                              ? audience.gender.values.join(', ')
+                              : Array.isArray(audience.gender)
+                                ? audience.gender.join(', ')
+                                : String(audience.gender)
                           }`}
                           sx={{
                             maxWidth: 120,

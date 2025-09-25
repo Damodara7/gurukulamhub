@@ -89,9 +89,11 @@ const AudienceDetailsPopup = ({ open, audience, onClose }) => {
       const genderMatch =
         !audience.gender ||
         (profile.gender &&
-          (Array.isArray(audience.gender)
-            ? audience.gender.includes(profile.gender.toLowerCase())
-            : profile.gender.toLowerCase() === audience.gender.toLowerCase()))
+          (audience.gender.values
+            ? audience.gender.values.includes(profile.gender.toLowerCase())
+            : Array.isArray(audience.gender)
+              ? audience.gender.includes(profile.gender.toLowerCase())
+              : profile.gender.toLowerCase() === audience.gender.toLowerCase()))
 
       return ageMatch && locationMatch && genderMatch
     })
@@ -151,12 +153,17 @@ const AudienceDetailsPopup = ({ open, audience, onClose }) => {
               )
             }
 
-            if (audience.gender && Array.isArray(audience.gender) && audience.gender.length > 0) {
+            if (
+              audience.gender &&
+              ((audience.gender.values && Array.isArray(audience.gender.values) && audience.gender.values.length > 0) ||
+                (Array.isArray(audience.gender) && audience.gender.length > 0))
+            ) {
+              const genderValues = audience.gender.values || audience.gender
               filterChips.push(
                 <Chip
                   key='gender'
                   icon={<PersonIcon sx={{ fontSize: 16 }} />}
-                  label={`Gender: ${audience.gender.map(g => g.charAt(0).toUpperCase() + g.slice(1)).join(', ')}`}
+                  label={`Gender: ${genderValues.map(g => g.charAt(0).toUpperCase() + g.slice(1)).join(', ')}`}
                   variant='outlined'
                   size='small'
                   color='success'
@@ -281,8 +288,10 @@ const AudienceDetailsPopup = ({ open, audience, onClose }) => {
                               // Show gender only if Audience has gender filter
                               if (
                                 audience?.gender &&
-                                Array.isArray(audience.gender) &&
-                                audience.gender.length > 0 &&
+                                ((audience.gender.values &&
+                                  Array.isArray(audience.gender.values) &&
+                                  audience.gender.values.length > 0) ||
+                                  (Array.isArray(audience.gender) && audience.gender.length > 0)) &&
                                 user.profile?.gender
                               ) {
                                 chips.push({

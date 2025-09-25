@@ -273,16 +273,65 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
       return
     }
 
-    // Prepare submission data
+    // Prepare submission data with order and operation for individual schemas
     const submission = {
       _id: data?._id || null, // Include ID for updates
       audienceName: formData.audienceName.trim(),
       description: formData.description.trim(),
-      ...filterCriteria, // Include the current filter criteria (legacy)
-      // Removed filters field - not using filter schema
       createdBy: data?.createdBy || session?.user?.id || null,
       creatorEmail: data?.creatorEmail || session?.user?.email || null,
       membersCount: matchedUserIds.length
+    }
+
+    // Add individual schema filters with order and operation
+    if (filterCriteria.ageGroup) {
+      submission.ageGroup = {
+        ...filterCriteria.ageGroup,
+        order: formData.ageOrder || 1,
+        operation: formData.ageOperation || null
+      }
+    }
+
+    if (filterCriteria.location) {
+      submission.location = {
+        ...filterCriteria.location,
+        order: formData.locationOrder || 1,
+        operation: formData.locationOperation || null
+      }
+    }
+
+    if (filterCriteria.gender) {
+      console.log('🔍 filterCriteria.gender:', filterCriteria.gender)
+
+      // Check if gender is already an array or an object
+      let genderArray
+      if (Array.isArray(filterCriteria.gender)) {
+        // If it's already an array, check if it contains indexes or names
+        if (filterCriteria.gender.some(item => item === '0' || item === '1' || item === '2')) {
+          // Convert indexes to gender names
+          const genderMap = { 0: 'male', 1: 'female', 2: 'other' }
+          genderArray = filterCriteria.gender.map(index => genderMap[index]).filter(Boolean)
+        } else {
+          // Already contains gender names
+          genderArray = filterCriteria.gender
+        }
+      } else {
+        // Convert gender object to array format
+        genderArray = Object.entries(filterCriteria.gender)
+          .filter(([, isSelected]) => isSelected)
+          .map(([gender]) => gender)
+      }
+
+      console.log('🔍 genderArray:', genderArray)
+
+      // Create gender object with values array and metadata
+      submission.gender = {
+        values: genderArray,
+        order: formData.genderOrder || 1,
+        operation: formData.genderOperation || null
+      }
+
+      console.log('🔍 final gender object:', submission.gender)
     }
 
     console.log('📤 Submitting audience data:', submission)
@@ -299,15 +348,28 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
   }
   // console.log('form data after submission ', formData);
   // Add this to handle filter changes from GroupByFilter
-  const handleFilterChange = (filteredUserIds, criteria) => {
+  const handleFilterChange = (filteredUserIds, criteria, orderAndOperations) => {
     console.log('🔄 Filter change received:', {
       filteredUserIds: filteredUserIds.length,
-      criteria
+      criteria,
+      orderAndOperations
     })
 
     setFilterCriteria(criteria)
     setMatchedUserIds(filteredUserIds)
-    // Removed filter storage - not using filter schema
+
+    // Store order and operation data for individual schemas
+    if (orderAndOperations) {
+      setFormData(prev => ({
+        ...prev,
+        ageOrder: orderAndOperations.ageOrder,
+        ageOperation: orderAndOperations.ageOperation,
+        locationOrder: orderAndOperations.locationOrder,
+        locationOperation: orderAndOperations.locationOperation,
+        genderOrder: orderAndOperations.genderOrder,
+        genderOperation: orderAndOperations.genderOperation
+      }))
+    }
   }
 
   return (
@@ -370,7 +432,9 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
                 <AudienceByFilter
                   users={users}
                   key={data}
-                  onFilterChange={(userIds, criteria) => handleFilterChange(userIds, criteria)}
+                  onFilterChange={(userIds, criteria, orderAndOperations) =>
+                    handleFilterChange(userIds, criteria, orderAndOperations)
+                  }
                   initialCriteria={filterCriteria}
                 />
               </Grid>

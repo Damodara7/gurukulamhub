@@ -6,9 +6,39 @@ import Game from '../game/game.model.js'
 import { broadcastAudiencesList } from '../ws/audiences/publishers.js'
 import { broadcastAudienceDetails } from '../ws/audiences/[audienceId]/publishers.js'
 
-// Helper function to apply structured filters with operations
-export const applyStructuredFilters = (users, filters) => {
-  if (!filters || filters.length === 0) {
+// Helper function to apply individual schema filters with order and operations
+export const applyIndividualSchemaFilters = (users, audience) => {
+  // Collect all filters with their order and operation
+  const filters = []
+
+  if (audience.ageGroup && audience.ageGroup.min !== undefined) {
+    filters.push({
+      type: 'age',
+      value: audience.ageGroup,
+      order: audience.ageGroup.order || 1,
+      operation: audience.ageGroup.operation
+    })
+  }
+
+  if (audience.location && (audience.location.country || audience.location.region || audience.location.city)) {
+    filters.push({
+      type: 'location',
+      value: audience.location,
+      order: audience.location.order || 1,
+      operation: audience.location.operation
+    })
+  }
+
+  if (audience.gender && audience.gender.values && audience.gender.values.length > 0) {
+    filters.push({
+      type: 'gender',
+      value: audience.gender.values,
+      order: audience.gender.order || 1,
+      operation: audience.gender.operation
+    })
+  }
+
+  if (filters.length === 0) {
     return users
   }
 
@@ -24,7 +54,7 @@ export const applyStructuredFilters = (users, filters) => {
       // First filter - no operation needed
       resultUserIds = filteredUserIds
     } else {
-      // Apply operation with previous result
+      // Apply the operation from the current filter to combine with previous result
       if (filter.operation === 'AND') {
         // Intersection
         resultUserIds = resultUserIds.filter(id => filteredUserIds.includes(id))
@@ -62,10 +92,8 @@ const filterUsersBySingleFilter = (users, filter) => {
           )
 
         case 'gender':
-          // filter.value is an object like {male: true, female: false, other: false}
-          const selectedGenders = Object.entries(filter.value)
-            .filter(([, isOn]) => Boolean(isOn))
-            .map(([key]) => key)
+          // filter.value is now an array like ['male', 'female']
+          const selectedGenders = Array.isArray(filter.value) ? filter.value : [filter.value]
           return userGender && selectedGenders.includes(userGender.toLowerCase())
 
         default:
@@ -152,39 +180,8 @@ export const getFilteredUsers = async audienceId => {
     const users = await User.find({}).select('-password').populate('profile').lean()
     console.log('Total users found:', users.length)
 
-    // Apply structured filters if they exist
-    let filteredUsers = users
-    if (audience.filters && audience.filters.length > 0) {
-      filteredUsers = applyStructuredFilters(users, audience.filters)
-    } else {
-      // Fallback to legacy filtering for backward compatibility
-      filteredUsers = users.filter(user => {
-        const userAge = user.profile?.age
-        const userGender = user.profile?.gender
-        const userCountry = user.profile?.country
-        const userRegion = user.profile?.region
-        const userLocality = user.profile?.locality
-
-        const ageMatch =
-          !audience.ageGroup || (userAge && userAge >= audience.ageGroup.min && userAge <= audience.ageGroup.max)
-        const locationMatch =
-          !audience.location ||
-          ((!audience.location.country ||
-            (userCountry && userCountry.toLowerCase() === audience.location.country.toLowerCase())) &&
-            (!audience.location.region ||
-              (userRegion && userRegion.toLowerCase() === audience.location.region.toLowerCase())) &&
-            (!audience.location.city ||
-              (userLocality && userLocality.toLowerCase() === audience.location.city.toLowerCase())))
-        const genderMatch =
-          !audience.gender ||
-          (userGender &&
-            (Array.isArray(audience.gender)
-              ? audience.gender.includes(userGender.toLowerCase())
-              : userGender.toLowerCase() === audience.gender.toLowerCase()))
-
-        return ageMatch && locationMatch && genderMatch
-      })
-    }
+    // Apply individual schema filters with order and operations
+    const filteredUsers = applyIndividualSchemaFilters(users, audience)
 
     console.log('Final filtered users count:', filteredUsers.length)
     return {
@@ -269,12 +266,19 @@ export const addOne = async audienceData => {
     if (audienceData.gender) {
       const allowedGenders = ['male', 'female', 'other']
       let gendersArray
+
       if (Array.isArray(audienceData.gender)) {
         gendersArray = audienceData.gender
       } else if (typeof audienceData.gender === 'object' && audienceData.gender !== null) {
-        gendersArray = Object.entries(audienceData.gender)
-          .filter(([, isOn]) => Boolean(isOn))
-          .map(([key]) => key)
+        // Check if it's the new structure with values array
+        if (audienceData.gender.values && Array.isArray(audienceData.gender.values)) {
+          gendersArray = audienceData.gender.values
+        } else {
+          // Handle old structure with boolean values
+          gendersArray = Object.entries(audienceData.gender)
+            .filter(([, isOn]) => Boolean(isOn))
+            .map(([key]) => key)
+        }
       } else {
         gendersArray = [audienceData.gender]
       }
@@ -288,8 +292,13 @@ export const addOne = async audienceData => {
         }
       }
 
-      // Normalize to array for the model schema which expects [String]
-      audienceData.gender = gendersArray
+      // Keep the original structure if it has values, order, operation
+      if (typeof audienceData.gender === 'object' && audienceData.gender.values) {
+        // Already in correct format, no need to change
+      } else {
+        // Normalize to array for the model schema which expects [String]
+        audienceData.gender = gendersArray
+      }
     }
 
     // Create new audience instance
