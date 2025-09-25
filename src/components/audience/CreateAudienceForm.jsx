@@ -279,14 +279,14 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
       audienceName: formData.audienceName.trim(),
       description: formData.description.trim(),
       ...filterCriteria, // Include the current filter criteria (legacy)
-      filters: formData.filters || [], // Include structured filters
+      // Removed filters field - not using filter schema
       createdBy: data?.createdBy || session?.user?.id || null,
       creatorEmail: data?.creatorEmail || session?.user?.email || null,
       membersCount: matchedUserIds.length
     }
 
     console.log('📤 Submitting audience data:', submission)
-    console.log('🔍 Structured filters being sent:', submission.filters)
+    // Removed filters logging - not using filter schema
 
     try {
       await onSubmit(submission)
@@ -299,24 +299,15 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
   }
   // console.log('form data after submission ', formData);
   // Add this to handle filter changes from GroupByFilter
-  const handleFilterChange = (filteredUserIds, criteria, structuredFilters) => {
+  const handleFilterChange = (filteredUserIds, criteria) => {
     console.log('🔄 Filter change received:', {
       filteredUserIds: filteredUserIds.length,
-      criteria,
-      structuredFilters
+      criteria
     })
 
     setFilterCriteria(criteria)
     setMatchedUserIds(filteredUserIds)
-    // Store structured filters for backend
-    setFormData(prev => {
-      const updated = {
-        ...prev,
-        filters: structuredFilters || []
-      }
-      console.log('📝 Updated formData.filters:', updated.filters)
-      return updated
-    })
+    // Removed filter storage - not using filter schema
   }
 
   return (
@@ -379,9 +370,7 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
                 <AudienceByFilter
                   users={users}
                   key={data}
-                  onFilterChange={(userIds, criteria, structuredFilters) =>
-                    handleFilterChange(userIds, criteria, structuredFilters)
-                  }
+                  onFilterChange={(userIds, criteria) => handleFilterChange(userIds, criteria)}
                   initialCriteria={filterCriteria}
                 />
               </Grid>

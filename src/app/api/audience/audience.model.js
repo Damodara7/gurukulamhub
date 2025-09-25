@@ -11,27 +11,7 @@ const ageGroupSchema = new mongoose.Schema({
   max: { type: Number, min: 0, max: 120 }
 })
 
-// New filter schema to store operations and order
-const filterSchema = new mongoose.Schema({
-  type: {
-    type: String,
-    enum: ['age', 'location', 'gender'],
-    required: true
-  },
-  value: {
-    type: mongoose.Schema.Types.Mixed, // Can be ageGroup, location, or gender
-    required: true
-  },
-  operation: {
-    type: String,
-    enum: ['AND', 'OR'],
-    required: false // First filter doesn't need an operation
-  },
-  order: {
-    type: Number,
-    required: true
-  }
-})
+// Removed filterSchema - storing filters as simple objects
 
 export const audienceSchema = new mongoose.Schema(
   {
@@ -42,8 +22,7 @@ export const audienceSchema = new mongoose.Schema(
     description: {
       type: String
     },
-    // New structured filters array
-    filters: [filterSchema],
+
     // Keep legacy fields for backward compatibility (will be deprecated)
     location: locationSchema,
     gender: {

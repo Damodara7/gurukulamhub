@@ -425,8 +425,8 @@ const AudienceByFilter = ({
     setSelectedRegion('')
     setSelectedCity('')
 
-    // Call parent with combined results, cumulative criteria, and structured filters
-    onFilterChange(combinedUserIds, nextCombinedCriteria, updatedFilters)
+    // Call parent with combined results and cumulative criteria
+    onFilterChange(combinedUserIds, nextCombinedCriteria)
   }
 
   const handleOperationSelect = operation => {
@@ -689,7 +689,7 @@ const AudienceByFilter = ({
       })
 
       setCombinedCriteria(nextCombinedCriteria)
-      onFilterChange(combinedUserIds, nextCombinedCriteria, newFilters)
+      onFilterChange(combinedUserIds, nextCombinedCriteria)
       closeFilterDialog()
       return
     }
@@ -723,8 +723,7 @@ const AudienceByFilter = ({
       setCombinedCriteria(resetCriteria)
       onFilterChange(
         users.map(user => user._id),
-        resetCriteria,
-        [] // Empty structured filters
+        resetCriteria
       )
       return
     }
@@ -787,7 +786,7 @@ const AudienceByFilter = ({
       }
     })
     setCombinedCriteria(nextCombinedCriteria)
-    onFilterChange(combinedUserIds, nextCombinedCriteria, updatedFilters)
+    onFilterChange(combinedUserIds, nextCombinedCriteria)
   }
 
   // Helper function to apply a single filter to users

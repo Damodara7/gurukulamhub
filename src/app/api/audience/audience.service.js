@@ -42,11 +42,11 @@ export const applyStructuredFilters = (users, filters) => {
 const filterUsersBySingleFilter = (users, filter) => {
   return users
     .filter(user => {
-      const userAge = user.age || user.profile?.age
-      const userGender = user.gender || user.profile?.gender
-      const userCountry = user.country || user.profile?.country
-      const userRegion = user.region || user.profile?.region
-      const userLocality = user.locality || user.profile?.locality
+      const userAge = user.profile?.age
+      const userGender = user.profile?.gender
+      const userCountry = user.profile?.country
+      const userRegion = user.profile?.region
+      const userLocality = user.profile?.locality
 
       switch (filter.type) {
         case 'age':
@@ -57,13 +57,16 @@ const filterUsersBySingleFilter = (users, filter) => {
           const location = filter.value
           return (
             (!location.country || (userCountry && userCountry.toLowerCase() === location.country.toLowerCase())) &&
-            (!location.region || (userRegion && userRegion.toLowerCase() === location.region.toLowerCase())) &&
+            (!location.state || (userRegion && userRegion.toLowerCase() === location.state.toLowerCase())) &&
             (!location.city || (userLocality && userLocality.toLowerCase() === location.city.toLowerCase()))
           )
 
         case 'gender':
-          const genders = Array.isArray(filter.value) ? filter.value : [filter.value]
-          return userGender && genders.includes(userGender.toLowerCase())
+          // filter.value is an object like {male: true, female: false, other: false}
+          const selectedGenders = Object.entries(filter.value)
+            .filter(([, isOn]) => Boolean(isOn))
+            .map(([key]) => key)
+          return userGender && selectedGenders.includes(userGender.toLowerCase())
 
         default:
           return false
@@ -156,11 +159,11 @@ export const getFilteredUsers = async audienceId => {
     } else {
       // Fallback to legacy filtering for backward compatibility
       filteredUsers = users.filter(user => {
-        const userAge = user.age || user.profile?.age
-        const userGender = user.gender || user.profile?.gender
-        const userCountry = user.country || user.profile?.country
-        const userRegion = user.region || user.profile?.region
-        const userLocality = user.locality || user.profile?.locality
+        const userAge = user.profile?.age
+        const userGender = user.profile?.gender
+        const userCountry = user.profile?.country
+        const userRegion = user.profile?.region
+        const userLocality = user.profile?.locality
 
         const ageMatch =
           !audience.ageGroup || (userAge && userAge >= audience.ageGroup.min && userAge <= audience.ageGroup.max)
