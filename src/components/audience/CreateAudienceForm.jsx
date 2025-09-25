@@ -379,7 +379,9 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
                 <AudienceByFilter
                   users={users}
                   key={data}
-                  onFilterChange={(userIds, criteria) => handleFilterChange(userIds, criteria)}
+                  onFilterChange={(userIds, criteria, structuredFilters) =>
+                    handleFilterChange(userIds, criteria, structuredFilters)
+                  }
                   initialCriteria={filterCriteria}
                 />
               </Grid>
