@@ -113,56 +113,129 @@ const AudienceDetailsPage = ({ audienceId, audienceData, gamesData = [] }) => {
     }
   }
 
-  // Helper function to filter users based on audience criteria
+  // Helper function to filter users based on audience criteria with order and operations (INCREMENTAL FILTERING)
   const filterUsersByAudienceCriteria = (users, audience) => {
+    // Collect all filters with their order and operation
+    const filters = []
+
+    if (audience.ageGroup && audience.ageGroup.min !== undefined) {
+      filters.push({
+        type: 'age',
+        value: audience.ageGroup,
+        order: audience.ageGroup.order || 1,
+        operation: audience.ageGroup.operation
+      })
+    }
+
+    if (audience.location && (audience.location.country || audience.location.region || audience.location.city)) {
+      filters.push({
+        type: 'location',
+        value: audience.location,
+        order: audience.location.order || 1,
+        operation: audience.location.operation
+      })
+    }
+
+    if (audience.gender && audience.gender.values && audience.gender.values.length > 0) {
+      filters.push({
+        type: 'gender',
+        value: audience.gender.values,
+        order: audience.gender.order || 1,
+        operation: audience.gender.operation
+      })
+    }
+
+    if (filters.length === 0) {
+      return users
+    }
+
+    // Sort filters by order
+    const sortedFilters = [...filters].sort((a, b) => a.order - b.order)
+
+    console.log(
+      '🔍 Frontend INCREMENTAL FILTERING: Applying filters in order:',
+      sortedFilters.map(f => ({
+        type: f.type,
+        order: f.order,
+        operation: f.operation
+      }))
+    )
+
+    let currentUsers = users // Start with all users
+    console.log(`🔍 Frontend: Starting with ${currentUsers.length} users`)
+
+    sortedFilters.forEach((filter, index) => {
+      console.log(`🔍 Frontend: Step ${index + 1}: Applying ${filter.type} filter (order: ${filter.order})`)
+
+      // Apply current filter to current user set
+      const filteredUsers = applySingleFilterToUsers(currentUsers, filter)
+      console.log(
+        `🔍 Frontend: ${filter.type} filter matched ${filteredUsers.length} users from ${currentUsers.length} users`
+      )
+
+      if (index === 0) {
+        // First filter - no operation needed, just update current users
+        currentUsers = filteredUsers
+        console.log(`🔍 Frontend: First filter result: ${currentUsers.length} users`)
+      } else {
+        // Apply operation from PREVIOUS filter to combine with current result
+        const previousFilter = sortedFilters[index - 1]
+        const operation = previousFilter.operation
+
+        console.log(`🔍 Frontend: Applying operation "${operation}" between ${previousFilter.type} and ${filter.type}`)
+
+        if (operation === 'AND') {
+          // Intersection - users must match both filters
+          currentUsers = currentUsers.filter(user => filteredUsers.some(fu => fu._id === user._id))
+          console.log(`🔍 Frontend: AND operation result: ${currentUsers.length} users`)
+        } else if (operation === 'OR') {
+          // Union - users that match either filter
+          const combinedUserIds = [...new Set([...currentUsers.map(u => u._id), ...filteredUsers.map(u => u._id)])]
+          currentUsers = users.filter(user => combinedUserIds.includes(user._id))
+          console.log(`🔍 Frontend: OR operation result: ${currentUsers.length} users`)
+        } else {
+          // No operation specified, default to AND
+          currentUsers = currentUsers.filter(user => filteredUsers.some(fu => fu._id === user._id))
+          console.log(`🔍 Frontend: Default AND operation result: ${currentUsers.length} users`)
+        }
+      }
+    })
+
+    console.log(`🔍 Frontend INCREMENTAL FILTERING: Final result: ${currentUsers.length} users`)
+    return currentUsers
+  }
+
+  // Helper function to apply a single filter to users (returns user objects)
+  const applySingleFilterToUsers = (users, filter) => {
     return users.filter(user => {
-      // Handle both merged and nested profile data structures
       const userAge = user.age || user.profile?.age
       const userGender = user.gender || user.profile?.gender
       const userCountry = user.country || user.profile?.country
       const userRegion = user.region || user.profile?.region
       const userLocality = user.locality || user.profile?.locality
 
-      // Age filter
-      const ageMatch =
-        !audience.ageGroup || (userAge && userAge >= audience.ageGroup.min && userAge <= audience.ageGroup.max)
+      switch (filter.type) {
+        case 'age':
+          const ageGroup = filter.value
+          return userAge && userAge >= ageGroup.min && userAge <= ageGroup.max
 
-      // Location filter
-      const locationMatch =
-        !audience.location ||
-        ((!audience.location.country ||
-          (userCountry && userCountry.toLowerCase() === audience.location.country.toLowerCase())) &&
-          (!audience.location.region ||
-            (userRegion && userRegion.toLowerCase() === audience.location.region.toLowerCase())) &&
-          (!audience.location.city ||
-            (userLocality && userLocality.toLowerCase() === audience.location.city.toLowerCase())))
+        case 'location':
+          const location = filter.value
+          return (
+            (!location.country ||
+              (userCountry && userCountry.toLowerCase() === String(location.country).toLowerCase())) &&
+            (!location.region || (userRegion && userRegion.toLowerCase() === String(location.region).toLowerCase())) &&
+            (!location.city || (userLocality && userLocality.toLowerCase() === String(location.city).toLowerCase()))
+          )
 
-      // Gender filter
-      const genderMatch =
-        !audience.gender ||
-        (userGender &&
-          (Array.isArray(audience.gender)
-            ? audience.gender.includes(userGender.toLowerCase())
-            : userGender.toLowerCase() === audience.gender.toLowerCase()))
+        case 'gender':
+          // filter.value is an array like ['male', 'female']
+          const selectedGenders = Array.isArray(filter.value) ? filter.value : [filter.value]
+          return userGender && selectedGenders.includes(userGender.toLowerCase())
 
-      // Debug logging for first user
-      if (users.indexOf(user) === 0) {
-        console.log('Filtering user:', {
-          email: user.email,
-          userAge,
-          userGender,
-          userCountry,
-          userRegion,
-          userLocality,
-          profileData: user.profile,
-          ageMatch,
-          locationMatch,
-          genderMatch,
-          finalMatch: ageMatch && locationMatch && genderMatch
-        })
+        default:
+          return false
       }
-
-      return ageMatch && locationMatch && genderMatch
     })
   }
   // Helper function to get filter chips
@@ -195,7 +268,7 @@ const AudienceDetailsPage = ({ audienceId, audienceData, gamesData = [] }) => {
 
     // Gender filter
     if (audienceData?.gender && Array.isArray(audienceData.gender) && audienceData.gender.length > 0) {
-      const genderLabels = audienceData.gender.map(g => g.charAt(0).toUpperCase() + g.slice(1))
+      const genderLabels = audienceData.gender.map(g => String(g).charAt(0).toUpperCase() + String(g).slice(1))
       chips.push({
         icon: <PersonIcon sx={{ fontSize: 16 }} />,
         label: `Gender: ${genderLabels.join(', ')}`,
@@ -212,7 +285,12 @@ const AudienceDetailsPage = ({ audienceId, audienceData, gamesData = [] }) => {
     const chips = []
 
     // Show age only if audience has age filter
-    if (audienceData?.ageGroup?.min && audienceData?.ageGroup?.max && member.profile?.age) {
+    if (
+      audienceData?.ageGroup?.min &&
+      audienceData?.ageGroup?.max &&
+      member.profile?.age !== undefined &&
+      member.profile?.age !== null
+    ) {
       chips.push({
         label: `Age: ${member.profile.age}`,
         color: 'primary'
@@ -227,7 +305,9 @@ const AudienceDetailsPage = ({ audienceId, audienceData, gamesData = [] }) => {
       member.profile?.gender
     ) {
       chips.push({
-        label: `Gender: ${member.profile.gender.charAt(0).toUpperCase() + member.profile.gender.slice(1)}`,
+        label: `Gender: ${
+          String(member.profile.gender).charAt(0).toUpperCase() + String(member.profile.gender).slice(1)
+        }`,
         color: 'success'
       })
     }
@@ -407,11 +487,12 @@ const AudienceDetailsPage = ({ audienceId, audienceData, gamesData = [] }) => {
 
                       {/* Show user profile information */}
                       <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
-                        {(user.age || user.profile?.age) && (
+                        {((user.age !== undefined && user.age !== null) ||
+                          (user.profile?.age !== undefined && user.profile?.age !== null)) && (
                           <Chip
                             size='small'
                             icon={<CakeIcon sx={{ fontSize: 14 }} />}
-                            label={`Age: ${user.age || user.profile?.age}`}
+                            label={`Age: ${user.age !== undefined && user.age !== null ? user.age : user.profile?.age}`}
                             variant='outlined'
                             color='primary'
                             sx={{ fontSize: '0.75rem' }}

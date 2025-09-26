@@ -119,8 +119,12 @@ export async function getAll() {
   await connectMongo() // Connect to the MongoDB database
 
   try {
-    const users = await User.find({}).select('-password').sort({ createdAt: -1 }).populate('profile').lean()
-    return { status: 'success', result: users, message: 'Users fetched successfully' }
+    const users = await User.find({ isVerified: true })
+      .select('-password')
+      .sort({ createdAt: -1 })
+      .populate('profile')
+      .lean()
+    return { status: 'success', result: users, message: 'Verified users fetched successfully' }
   } catch (error) {
     console.error(`Error fetching users: ${error}`)
     return { status: 'error', result: null, message: error.message }

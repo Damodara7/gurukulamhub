@@ -6,7 +6,7 @@ import Game from '../game/game.model.js'
 import { broadcastAudiencesList } from '../ws/audiences/publishers.js'
 import { broadcastAudienceDetails } from '../ws/audiences/[audienceId]/publishers.js'
 
-// Helper function to apply individual schema filters with order and operations
+// Helper function to apply individual schema filters with order and operations (INCREMENTAL FILTERING)
 export const applyIndividualSchemaFilters = (users, audience) => {
   // Collect all filters with their order and operation
   const filters = []
@@ -45,62 +45,92 @@ export const applyIndividualSchemaFilters = (users, audience) => {
   // Sort filters by order
   const sortedFilters = [...filters].sort((a, b) => a.order - b.order)
 
-  let resultUserIds = []
+  console.log(
+    '🔍 INCREMENTAL FILTERING: Applying filters in order:',
+    sortedFilters.map(f => ({
+      type: f.type,
+      order: f.order,
+      operation: f.operation
+    }))
+  )
+
+  let currentUsers = users // Start with all users
+  console.log(`🔍 Starting with ${currentUsers.length} users`)
 
   sortedFilters.forEach((filter, index) => {
-    const filteredUserIds = filterUsersBySingleFilter(users, filter)
+    console.log(`🔍 Step ${index + 1}: Applying ${filter.type} filter (order: ${filter.order})`)
+
+    // Apply current filter to current user set
+    const filteredUsers = applySingleFilterToUsers(currentUsers, filter)
+    console.log(`🔍 ${filter.type} filter matched ${filteredUsers.length} users from ${currentUsers.length} users`)
 
     if (index === 0) {
-      // First filter - no operation needed
-      resultUserIds = filteredUserIds
+      // First filter - no operation needed, just update current users
+      currentUsers = filteredUsers
+      console.log(`🔍 First filter result: ${currentUsers.length} users`)
     } else {
-      // Apply the operation from the current filter to combine with previous result
-      if (filter.operation === 'AND') {
-        // Intersection
-        resultUserIds = resultUserIds.filter(id => filteredUserIds.includes(id))
-      } else if (filter.operation === 'OR') {
-        // Union
-        resultUserIds = [...new Set([...resultUserIds, ...filteredUserIds])]
+      // Apply operation from PREVIOUS filter to combine with current result
+      const previousFilter = sortedFilters[index - 1]
+      const operation = previousFilter.operation
+
+      console.log(`🔍 Applying operation "${operation}" between ${previousFilter.type} and ${filter.type}`)
+
+      if (operation === 'AND') {
+        // Intersection - users must match both filters
+        currentUsers = currentUsers.filter(user => filteredUsers.some(fu => fu._id === user._id))
+        console.log(`🔍 AND operation result: ${currentUsers.length} users`)
+      } else if (operation === 'OR') {
+        // Union - users that match either filter
+        // For OR, we need to apply current filter to ALL users, not just currentUsers
+        const currentFilterAppliedToAllUsers = applySingleFilterToUsers(users, filter)
+        const combinedUserIds = [
+          ...new Set([...currentUsers.map(u => u._id), ...currentFilterAppliedToAllUsers.map(u => u._id)])
+        ]
+        currentUsers = users.filter(user => combinedUserIds.includes(user._id))
+        console.log(`🔍 OR operation result: ${currentUsers.length} users`)
+      } else {
+        // No operation specified, default to AND
+        currentUsers = currentUsers.filter(user => filteredUsers.some(fu => fu._id === user._id))
+        console.log(`🔍 Default AND operation result: ${currentUsers.length} users`)
       }
     }
   })
 
-  return users.filter(user => resultUserIds.includes(user._id))
+  console.log(`🔍 INCREMENTAL FILTERING: Final result: ${currentUsers.length} users`)
+  return currentUsers
 }
 
-// Helper function to filter users by a single filter
-const filterUsersBySingleFilter = (users, filter) => {
-  return users
-    .filter(user => {
-      const userAge = user.profile?.age
-      const userGender = user.profile?.gender
-      const userCountry = user.profile?.country
-      const userRegion = user.profile?.region
-      const userLocality = user.profile?.locality
+// Helper function to filter users by a single filter (returns user objects)
+const applySingleFilterToUsers = (users, filter) => {
+  return users.filter(user => {
+    const userAge = user.profile?.age
+    const userGender = user.profile?.gender
+    const userCountry = user.profile?.country
+    const userRegion = user.profile?.region
+    const userLocality = user.profile?.locality
 
-      switch (filter.type) {
-        case 'age':
-          const ageGroup = filter.value
-          return userAge && userAge >= ageGroup.min && userAge <= ageGroup.max
+    switch (filter.type) {
+      case 'age':
+        const ageGroup = filter.value
+        return userAge && userAge >= ageGroup.min && userAge <= ageGroup.max
 
-        case 'location':
-          const location = filter.value
-          return (
-            (!location.country || (userCountry && userCountry.toLowerCase() === location.country.toLowerCase())) &&
-            (!location.state || (userRegion && userRegion.toLowerCase() === location.state.toLowerCase())) &&
-            (!location.city || (userLocality && userLocality.toLowerCase() === location.city.toLowerCase()))
-          )
+      case 'location':
+        const location = filter.value
+        return (
+          (!location.country || (userCountry && userCountry.toLowerCase() === location.country.toLowerCase())) &&
+          (!location.region || (userRegion && userRegion.toLowerCase() === location.region.toLowerCase())) &&
+          (!location.city || (userLocality && userLocality.toLowerCase() === location.city.toLowerCase()))
+        )
 
-        case 'gender':
-          // filter.value is now an array like ['male', 'female']
-          const selectedGenders = Array.isArray(filter.value) ? filter.value : [filter.value]
-          return userGender && selectedGenders.includes(userGender.toLowerCase())
+      case 'gender':
+        // filter.value is now an array like ['male', 'female']
+        const selectedGenders = Array.isArray(filter.value) ? filter.value : [filter.value]
+        return userGender && selectedGenders.includes(userGender.toLowerCase())
 
-        default:
-          return false
-      }
-    })
-    .map(user => user._id)
+      default:
+        return false
+    }
+  })
 }
 
 export const getOne = async (filter = {}) => {
@@ -176,9 +206,9 @@ export const getFilteredUsers = async audienceId => {
     const audience = audienceResult.result
     console.log('Audience data:', audience)
 
-    // Get all users
-    const users = await User.find({}).select('-password').populate('profile').lean()
-    console.log('Total users found:', users.length)
+    // Get all verified users only
+    const users = await User.find({ isVerified: true }).select('-password').populate('profile').lean()
+    console.log('Total verified users found:', users.length)
 
     // Apply individual schema filters with order and operations
     const filteredUsers = applyIndividualSchemaFilters(users, audience)
@@ -202,7 +232,7 @@ export const getFilteredUsers = async audienceId => {
 export const addOne = async audienceData => {
   await connectMongo()
   try {
-    const user = await User.findOne({ email: audienceData.creatorEmail })
+    const user = await User.findOne({ email: audienceData.creatorEmail, isVerified: true })
     audienceData.createdBy = user._id
     // Validate required fields
     console.log('📝 Creating audience with data:', audienceData)

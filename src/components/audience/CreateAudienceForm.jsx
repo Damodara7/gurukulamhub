@@ -106,38 +106,125 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
       }
     }
   }, [data, users])
-  // Helper function to filter users based on criteria
+  // Helper function to filter users based on criteria using incremental filtering logic
   const filterUsersByCriteria = (users, criteria) => {
-    return users
-      .filter(user => {
-        const profile = user.profile || {}
+    // Collect all filters with their order and operation
+    const filters = []
 
-        // Age filter
-        const ageMatch =
-          !criteria.ageGroup ||
-          (profile.age && profile.age >= criteria.ageGroup.min && profile.age <= criteria.ageGroup.max)
-
-        // Location filter
-        const locationMatch =
-          !criteria.location ||
-          ((!criteria.location.country ||
-            (profile.country && profile.country.toLowerCase() === criteria.location.country.toLowerCase())) &&
-            (!criteria.location.region ||
-              (profile.region && profile.region.toLowerCase() === criteria.location.region.toLowerCase())) &&
-            (!criteria.location.city ||
-              (profile.locality && profile.locality.toLowerCase() === criteria.location.city.toLowerCase())))
-
-        // Gender filter
-        const genderMatch =
-          !criteria.gender ||
-          (profile.gender &&
-            (Array.isArray(criteria.gender)
-              ? criteria.gender.includes(profile.gender.toLowerCase())
-              : profile.gender.toLowerCase() === criteria.gender.toLowerCase()))
-
-        return ageMatch && locationMatch && genderMatch
+    if (criteria.ageGroup && criteria.ageGroup.min !== undefined) {
+      filters.push({
+        type: 'age',
+        value: criteria.ageGroup,
+        order: criteria.ageGroup.order || 1,
+        operation: criteria.ageGroup.operation
       })
-      .map(user => user._id)
+    }
+
+    if (criteria.location && (criteria.location.country || criteria.location.region || criteria.location.city)) {
+      filters.push({
+        type: 'location',
+        value: criteria.location,
+        order: criteria.location.order || 1,
+        operation: criteria.location.operation
+      })
+    }
+
+    if (criteria.gender && criteria.gender.values && criteria.gender.values.length > 0) {
+      filters.push({
+        type: 'gender',
+        value: criteria.gender.values,
+        order: criteria.gender.order || 1,
+        operation: criteria.gender.operation
+      })
+    }
+
+    if (filters.length === 0) {
+      return users.map(user => user._id)
+    }
+
+    // Sort filters by order
+    const sortedFilters = [...filters].sort((a, b) => a.order - b.order)
+
+    console.log(
+      '🔍 Frontend INCREMENTAL FILTERING: Applying filters in order:',
+      sortedFilters.map(f => ({
+        type: f.type,
+        order: f.order,
+        operation: f.operation
+      }))
+    )
+
+    let currentUsers = users // Start with all users
+    console.log(`🔍 Frontend: Starting with ${currentUsers.length} users`)
+
+    sortedFilters.forEach((filter, index) => {
+      console.log(`🔍 Frontend: Step ${index + 1}: Applying ${filter.type} filter (order: ${filter.order})`)
+      const filteredUsers = applySingleFilterToUsers(currentUsers, filter)
+      console.log(
+        `🔍 Frontend: ${filter.type} filter matched ${filteredUsers.length} users from ${currentUsers.length} users`
+      )
+
+      if (index === 0) {
+        currentUsers = filteredUsers
+        console.log(`🔍 Frontend: First filter result: ${currentUsers.length} users`)
+      } else {
+        const previousFilter = sortedFilters[index - 1]
+        const operation = previousFilter.operation
+        console.log(`🔍 Frontend: Applying operation "${operation}" between ${previousFilter.type} and ${filter.type}`)
+
+        if (operation === 'AND') {
+          currentUsers = currentUsers.filter(user => filteredUsers.some(fu => fu._id === user._id))
+          console.log(`🔍 Frontend: AND operation result: ${currentUsers.length} users`)
+        } else if (operation === 'OR') {
+          // For OR, we need to apply current filter to ALL users, not just currentUsers
+          const currentFilterAppliedToAllUsers = applySingleFilterToUsers(users, filter)
+          const combinedUserIds = [
+            ...new Set([...currentUsers.map(u => u._id), ...currentFilterAppliedToAllUsers.map(u => u._id)])
+          ]
+          currentUsers = users.filter(user => combinedUserIds.includes(user._id))
+          console.log(`🔍 Frontend: OR operation result: ${currentUsers.length} users`)
+        } else {
+          currentUsers = currentUsers.filter(user => filteredUsers.some(fu => fu._id === user._id))
+          console.log(`🔍 Frontend: Default AND operation result: ${currentUsers.length} users`)
+        }
+      }
+    })
+
+    console.log(`🔍 Frontend INCREMENTAL FILTERING: Final result: ${currentUsers.length} users`)
+    return currentUsers.map(user => user._id)
+  }
+
+  // Helper function to apply a single filter to users (returns user objects)
+  const applySingleFilterToUsers = (users, filter) => {
+    return users.filter(user => {
+      const userAge = user.profile?.age
+      const userGender = user.profile?.gender
+      const userCountry = user.profile?.country
+      const userRegion = user.profile?.region
+      const userLocality = user.profile?.locality
+
+      switch (filter.type) {
+        case 'age':
+          return !filter.value || (userAge && userAge >= filter.value.min && userAge <= filter.value.max)
+
+        case 'location':
+          return (
+            !filter.value ||
+            ((!filter.value.country ||
+              (userCountry && userCountry.toLowerCase() === String(filter.value.country).toLowerCase())) &&
+              (!filter.value.region ||
+                (userRegion && userRegion.toLowerCase() === String(filter.value.region).toLowerCase())) &&
+              (!filter.value.city ||
+                (userLocality && userLocality.toLowerCase() === String(filter.value.city).toLowerCase())))
+          )
+
+        case 'gender':
+          return !filter.value || (userGender && filter.value.includes(userGender.toLowerCase()))
+
+        default:
+          return false
+      }
+    })
   }
 
   //fetching the users
@@ -315,8 +402,11 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
           // Already contains gender names
           genderArray = filterCriteria.gender
         }
+      } else if (filterCriteria.gender && filterCriteria.gender.values && Array.isArray(filterCriteria.gender.values)) {
+        // New format with values array
+        genderArray = filterCriteria.gender.values
       } else {
-        // Convert gender object to array format
+        // Convert gender object to array format (old format with boolean properties)
         genderArray = Object.entries(filterCriteria.gender)
           .filter(([, isSelected]) => isSelected)
           .map(([gender]) => gender)
