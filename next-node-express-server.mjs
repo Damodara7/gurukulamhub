@@ -12,24 +12,32 @@ const handle = app.getRequestHandler();
 //console.log("Connedct redis",ConnectRedis)
 //const RedisStore = new ConnectRedis(session);
 
-// Create Redis client
-const redisClient = redis.createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379'
-});
+// Create Redis client (only if REDIS_URL is available)
+let redisClient = null;
+let sessionStore = null;
 
-// Handle connection errors
-redisClient.on('error', (err) => {
-  console.error('Redis error:', err);
-});
+if (process.env.REDIS_URL && process.env.REDIS_URL !== 'redis://localhost:6379') {
+  redisClient = redis.createClient({
+    url: process.env.REDIS_URL
+  });
+
+  // Handle connection errors
+  redisClient.on('error', (err) => {
+    console.error('Redis error:', err);
+  });
+
+  sessionStore = new RedisStore({ client: redisClient });
+} else {
+  console.log('Redis not configured, using memory store for sessions');
+}
 
 app.prepare().then(() => {
   const server = express();
 
-  // Configure session middleware with Redis
+  // Configure session middleware with Redis or memory store
   server.use(
     session({
-      //store : RedisStore,
-      store:  new RedisStore({ client: redisClient }),
+      store: sessionStore, // Will be null if Redis not available, using memory store
       secret: process.env.NEXTAUTH_SECRET,
       resave: false,
       saveUninitialized: false,
@@ -41,8 +49,9 @@ app.prepare().then(() => {
     return handle(req, res);
   });
 
-  server.listen(3000, (err) => {
+  const port = process.env.PORT || 3000;
+  server.listen(port, (err) => {
     if (err) throw err;
-    console.log('> Ready on http://localhost:3000');
+    console.log(`> Ready on port ${port}`);
   });
 });

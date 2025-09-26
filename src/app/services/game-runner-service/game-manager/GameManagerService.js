@@ -210,7 +210,7 @@ const subscriber = new Redis({
   port: 6379,        // Your Redis server port
 });
 
-const socketServerUrl = "http://localhost:4000"; // Replace with your socket server URL
+const socketServerUrl = process.env.SOCKET_SERVER_URL || "http://localhost:4000"; // Use environment variable for socket server URL
 
 const socket = io(socketServerUrl,
   { query: { connectionId:"GameManagerService" } }

@@ -51,7 +51,7 @@ function GamePaymentForm({ amount, sponsorshipId, currency, gameId, rewardId }) 
           elements: elements,
           clientSecret: data.clientSecret,
           confirmParams: {
-            return_url: `http://localhost:3000/${locale}/sponsor/game-payment-success?amount=${amount}&sponsorshipId=${
+            return_url: `${process.env.NEXT_PUBLIC_APP_URL}/${locale}/sponsor/game-payment-success?amount=${amount}&sponsorshipId=${
               data.sponsorshipId || sponsorshipId
             }&paymentId=${data.paymentId}&gameId=${gameId}&rewardId=${rewardId}`
           },

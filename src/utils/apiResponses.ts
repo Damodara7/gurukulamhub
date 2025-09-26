@@ -7,7 +7,7 @@
 //rather than across numerous API route files.
 
 import { NextResponse } from 'next/server'
-import { HttpStatusCode } from '@/utils/HttpStatusCodes'
+import { HttpStatusCode } from '@/utils/HttpStatusCodes.js'
 import { NextApiRequest } from 'next'
 //import {ShowErrorConfirmationDialog} from '@/components/ShowErrorConfimationDialog'
 
@@ -20,8 +20,15 @@ export interface ResultInfo {
 }
 
 export function sendSuccessResponse(data: ResultInfo, httpStatusCode: number = HttpStatusCode.Ok) {
-  return  NextResponse.json( data, {
-    status: httpStatusCode})
+  return NextResponse.json(data, {
+    status: httpStatusCode,
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    }
+  })
 }
 
 export function createSuccessResponse(message: string, result: any={}, appStatusCode: string="", nextActionCode: string="") {
@@ -66,7 +73,10 @@ export function sendErrorResponse(errorInfo: ResultInfo, httpStatusCode: number 
     errorInfo, {
     status: httpStatusCode,
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     }
   })
 }

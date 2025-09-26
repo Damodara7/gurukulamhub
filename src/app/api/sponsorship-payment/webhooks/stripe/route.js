@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic'; // Ensure this is a dynamic route
 export const runtime = 'nodejs'; // Specify the runtime environment
 export const fetchCache = 'force-no-store'; // Disable caching
 
-const stripe = Stripe(process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY)
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY)
 
 export async function POST(request) {
   try {

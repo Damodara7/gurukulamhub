@@ -3,7 +3,7 @@ import SponsorshipPayment from './sponsorship-payment.model'
 import Sponsorship from '../sponsorship/sponsorship.model'
 import Stripe from 'stripe'
 
-const stripe = Stripe(process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY)
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY)
 
 export async function create({ data }) {
   try {

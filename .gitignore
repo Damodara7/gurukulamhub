@@ -87,3 +87,5 @@ amplifytools.xcconfig
 
 .env
 .env.*
+
+notes.*.txt

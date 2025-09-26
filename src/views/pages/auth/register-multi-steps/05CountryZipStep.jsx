@@ -94,7 +94,7 @@ const StepCountryZipInfo = ({ handleNext, handlePrev, stepIndex, totalSteps, act
     console.log('Selected selectedZipcode:', selectedZipcode?.Pincode)
     setLoadingPincodesOrPostOffices(true)
     try {
-      const response = await fetch(`http://localhost:3000/api/localities/${selectedZipcode}`)
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/localities/${selectedZipcode}`)
 
       const data = await response.json()
       console.log('pincode data...', data)

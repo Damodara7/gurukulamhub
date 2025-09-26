@@ -1,7 +1,7 @@
 let clientsByGameId = globalThis.__clientsByGameId || {}
 globalThis.__clientsByGameId = clientsByGameId
 
-export function SOCKET(client, request, server, context){
+export function UPGRADE(client, request, server, context){
     const {gameId} = context.params
     if(!clientsByGameId[gameId]) clientsByGameId[gameId] = new Set()
     clientsByGameId[gameId].add(client)
