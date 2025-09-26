@@ -69,6 +69,7 @@ const EmailStep = ({
   const [isReferralValid, setIsReferralValid] = useState(true) // Default to valid
   const [referrer, setReferrer] = useState(null)
   const [emailTouched, setEmailTouched] = useState(false)
+  const [testingOtp, setTestingOtp] = useState(null) // State to store testing OTP
 
   const searchParams = useSearchParams()
   const ref = searchParams.get('ref')
@@ -127,6 +128,11 @@ const EmailStep = ({
         setTimer(60)
         setCurrStatus('CONFIRM_SIGN_UP')
         setResendEnabled(false)
+        // Check if there's a testing OTP in the response
+        if (result?.result?.testingOtp) {
+          setTestingOtp(result.result.testingOtp)
+          console.log('Testing OTP received on resend:', result.result.testingOtp)
+        }
       } else {
         toast.error('Failed to send OTP. Please try again.')
       }
@@ -169,6 +175,11 @@ const EmailStep = ({
           setErrorMessage('')
           setNextPage('')
           setCurrStatus('CONFIRM_SIGN_UP')
+          // Check if there's a testing OTP in the response
+          if (result?.result?.testingOtp) {
+            setTestingOtp(result.result.testingOtp)
+            console.log('Testing OTP received:', result.result.testingOtp)
+          }
         }
       }
     } catch (error) {
@@ -497,6 +508,17 @@ const EmailStep = ({
                         </Button>{' '}
                       </Typography>
                     </div>
+
+                    {/* Testing OTP Display for Email Verification */}
+                    {testingOtp && (
+                      <div className='bg-blue-50 border border-blue-200 rounded p-3 mt-2'>
+                        <div className='text-center'>
+                          <Typography variant='body2'>
+                            <strong>Testing OTP:</strong> {testingOtp}
+                          </Typography>
+                        </div>
+                      </div>
+                    )}
                   </Form>
                 </div>
               </div>

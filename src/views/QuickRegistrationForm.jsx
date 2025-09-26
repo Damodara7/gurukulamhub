@@ -100,6 +100,7 @@ const QuickRegistrationForm = ({ mode, toggleAuthMode }) => {
   const [isPhoneOtpSent, setIsPhoneOtpSent] = useState(false)
   const [formSubmitted, setFormSubmitted] = useState(false)
   const [loading, setLoading] = useState(initialLoadingState)
+  const [testingOtp, setTestingOtp] = useState(null) // State to store testing OTP
 
   // Vars
   const darkImg = '/images/pages/auth-v2-mask-dark.png'
@@ -172,7 +173,9 @@ const QuickRegistrationForm = ({ mode, toggleAuthMode }) => {
       if (result?.success) {
         setIsPhoneOtpSent(true)
         setSuccessMsg('OTP sent successfully.')
+        setTestingOtp(result?.result?.testingOtp) // Store testing OTP from result
         console.log('OTP sent to: ', phone)
+        console.log('Testing OTP: ', result?.result?.testingOtp)
         setErrorMsg('')
       } else {
         setErrorMsg('Failed to send OTP. Please try again.')
@@ -194,6 +197,11 @@ const QuickRegistrationForm = ({ mode, toggleAuthMode }) => {
     const result = await RestApi.post(API_URLS.v0.USERS_SEND_EMAIL_OTP, { email, action: 'verifyEmail' })
     if (result) {
       console.log('resendOtp called. recieved result', result)
+      // Check if there's a testing OTP in the response
+      if (result?.result?.testingOtp) {
+        setTestingOtp(result.result.testingOtp)
+        console.log('Testing OTP received on resend:', result.result.testingOtp)
+      }
     }
     setLoading(prev => ({ ...prev, resendEmailOtp: false }))
   }
@@ -363,6 +371,17 @@ const QuickRegistrationForm = ({ mode, toggleAuthMode }) => {
             >
               {loading.verifyEmail ? 'Verifying...' : 'Verify Email'}
             </Button>
+
+            {/* Testing OTP Display for Email Verification */}
+            {testingOtp && (
+              <div className='bg-blue-50 border border-blue-200 rounded p-3 mt-2'>
+                <div className='text-center'>
+                  <Typography variant='body2'>
+                    <strong>Testing OTP:</strong> {testingOtp}
+                  </Typography>
+                </div>
+              </div>
+            )}
           </>
         )}
         {isPhoneOtpSent && (
@@ -388,6 +407,17 @@ const QuickRegistrationForm = ({ mode, toggleAuthMode }) => {
             >
               {loading.verifyPhone ? 'Verifying...' : 'Verify Mobile & Login'}
             </Button>
+
+            {/* Testing OTP Display for Phone Verification */}
+            {testingOtp && (
+              <div className='bg-blue-50 border border-blue-200 rounded p-3 mt-2'>
+                <div className='text-center'>
+                  <Typography variant='body2'>
+                    <strong>Testing OTP:</strong> {testingOtp}
+                  </Typography>
+                </div>
+              </div>
+            )}
           </>
         )}
 

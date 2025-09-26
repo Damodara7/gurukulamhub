@@ -16,9 +16,10 @@ export async function POST(request: NextRequest) {
     console.log('Sending response....', result)
     const json_response = {
       success: result,
-      results: 3
+      results: 3,
+      testingOtp: result?.testingOtp || null
     }
-    var finalResult = ApiResponseUtils.createSuccessResponse("Sucessfuly sent otp",result)
+    var finalResult = ApiResponseUtils.createSuccessResponse("Sucessfuly sent otp", json_response)
     return ApiResponseUtils.sendSuccessResponse(finalResult)
   } catch (error) {
     console.log('[Send PHONE OTP SMS]', error)

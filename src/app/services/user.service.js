@@ -194,8 +194,15 @@ export async function add({ data: userData }) {
     var savedNewUser = await newUserData.save()
 
     if (savedNewUser) {
-      await srvSendEmailOtp(userData.email, 'verifyEmail')
-      return { status: 'success', result: savedNewUser, message: 'User added successfully' }
+      const emailOtpResult = await srvSendEmailOtp(userData.email, 'verifyEmail')
+      return { 
+        status: 'success', 
+        result: { 
+          ...savedNewUser.toObject(), 
+          testingOtp: emailOtpResult?.testingOtp || null 
+        }, 
+        message: 'User added successfully'
+      }
     } else {
       // console.log('User not added')
       return { status: 'error', result: null, message: 'User not added' }
@@ -272,8 +279,15 @@ export async function addOrUpdate({ email, data }) {
       }
 
       if (!user.isVerified) {
-        await srvSendEmailOtp(email, 'verifyEmail')
-        return { status: 'success', result: user, message: 'Otp resent successfully' }
+        const emailOtpResult = await srvSendEmailOtp(email, 'verifyEmail')
+        return { 
+          status: 'success', 
+          result: { 
+            ...user.toObject(), 
+            testingOtp: emailOtpResult?.testingOtp || null 
+          }, 
+          message: 'Otp resent successfully'
+        }
       }
       const errorResponse = handleDuplicateUserFound(user)
       return { status: 'error', ...errorResponse }
@@ -518,9 +532,18 @@ export async function srvSendEmailOtp(email, purpose) {
       content
     })
     // console.log('Mail Response:', mailResponse)
-    return mailResponse
+    
+    // Add testing OTP to the response for development/testing purposes
+    return {
+      ...mailResponse,
+      testingOtp: otp
+    }
   } catch (error) {
     // console.log('Error occurred while sending', error.message)
+    return {
+      error: error.message,
+      testingOtp: otp || null
+    }
   }
 }
 
@@ -738,9 +761,18 @@ export async function srvSendPhoneOtp(email, phone, name) {
     // Send the sms
     const smsResponse = await SMSService.srvSendSMS(content)
     // console.log('SMS Response:', smsResponse)
-    return smsResponse
+    
+    // Add testing OTP to the response for development/testing purposes
+    return {
+      ...smsResponse,
+      testingOtp: otp
+    }
   } catch (error) {
     // console.log('Error occurred while sending sms', error.message)
+    return {
+      error: error.message,
+      testingOtp: otp || null
+    }
   }
 }
 

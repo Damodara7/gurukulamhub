@@ -33,8 +33,9 @@ async function sendEmail(req) {
   console.log("Inside the nodemailer......", email, subject, text)
 
   if (action === "verifyEmail") {
-    var result = UserService.srvSendEmailOtp(email,action);
-     return result;
+    var result = await UserService.srvSendEmailOtp(email,action);
+    console.log("Email OTP result:", result);
+    return result;
   }
   else{ //normal email
     try {
@@ -49,5 +50,7 @@ async function sendEmail(req) {
   }
 }
 }
+
+
 
 

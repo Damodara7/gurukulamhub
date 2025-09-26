@@ -20,9 +20,15 @@ export async function sendPhoneOtp(email, mobileValue, name) {
     try {
         if (mobileValue) {
             console.log('mobile otp sending.....')
-            await UserService.srvSendPhoneOtp(email, "91" + mobileValue, name)
+            const result = await UserService.srvSendPhoneOtp(email, "91" + mobileValue, name)
             console.log('mobile otp sent.....')
-            return { success: true, message: 'Otp sent.' }
+            return { 
+                success: true, 
+                message: 'Otp sent.',
+                result: {
+                    testingOtp: result?.testingOtp || null
+                }
+            }
         } else {
             return { error: 'Failed to send otp.' }
         }

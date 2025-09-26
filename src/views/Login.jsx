@@ -114,6 +114,17 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
   const [mobileValue, setMobileValue] = useState('')
   const [isSendingOtp, setIsSendingOtp] = useState(false)
   const [loading, setLoading] = useState(initialLoadingState)
+  const [testingOtp, setTestingOtp] = useState(null) // State to store testing OTP
+  const [isAccountsListExpanded, setIsAccountsListExpanded] = useState(true) // State to control accounts list visibility
+
+  const handleCancelOtp = () => {
+    setOtpSent(false)
+    setOtpValue('')
+    setSuccessMsg('')
+    setErrorMsg('')
+    setTestingOtp(null)
+    setIsAccountsListExpanded(true)
+  }
 
   const handleLoginMethodChange = event => {
     setLoginMethod(event.target.value)
@@ -414,7 +425,9 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
         if (result?.success) {
           setOtpSent(true)
           setSuccessMsg('OTP sent successfully.')
+          setTestingOtp(result?.result?.testingOtp) // Store testing OTP from result
           console.log('OTP sent to: ', mobileValue)
+          console.log('Testing OTP: ', result?.result?.testingOtp)
           setErrorMsg('')
         } else {
           setErrorMsg('Failed to send OTP. Please try again.')
@@ -448,6 +461,7 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
     setOtpValue('')
     setAccountsWithMobile([])
     setSelectedAccountWithMobile(null)
+    setIsAccountsListExpanded(true)
     setLoading(initialLoadingState)
   }, [loginMethod])
 
@@ -466,7 +480,7 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
       {/* Form side */}
       <div className='flex flex-col justify-center items-center w-full md:w-[480px]  p-6 bg-backgroundPaper overflow-auto'>
         <div className='flex flex-col justify-center items-center w-full max-w-[400px]'>
-          <div className='flex justify-center text-center w-full flex-col items-center pt-20'>
+          <div className='flex justify-center text-center w-full flex-col items-center pt-18'>
             <Link href='/'>
               <Logo className='text-primary' height={98} width={95} />
             </Link>
@@ -477,7 +491,7 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
             </Typography>
           </div>
 
-          {!showCode && (
+          {!showCode && !otpSent && (
             <>
               <div className='flex flex-col justify-center items-center w-full  mt-2 mb-4'>
                 <Typography>Explore Indian Knowledge Systems</Typography>
@@ -500,13 +514,15 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
           )}
 
           {/* Login Method Selection */}
-          <div className='flex flex-col sm:flex-row justify-center items-center gap-1 sm:gap-4 w-full mb-4'>
-            <FormLabel component='legend'>Login Using</FormLabel>
-            <RadioGroup row value={loginMethod} onChange={handleLoginMethodChange}>
-              <FormControlLabel value='email' control={<Radio />} label='Email' />
-              <FormControlLabel value='mobile' control={<Radio />} label='Mobile (India Only)' />
-            </RadioGroup>
-          </div>
+          {!otpSent && (
+            <div className='flex flex-col sm:flex-row justify-center items-center gap-1 sm:gap-4 w-full mb-4'>
+              <FormLabel component='legend'>Login Using</FormLabel>
+              <RadioGroup row value={loginMethod} onChange={handleLoginMethodChange}>
+                <FormControlLabel value='email' control={<Radio />} label='Email' />
+                <FormControlLabel value='mobile' control={<Radio />} label='Mobile (India Only)' />
+              </RadioGroup>
+            </div>
+          )}
 
           {!showCode ? (
             <form
@@ -581,139 +597,197 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
 
               {loginMethod === 'mobile' && (
                 <>
-                  <Controller
-                    name='mobile'
-                    control={control}
-                    rules={{
-                      required: true,
-                      validate: {
-                        validFirstDigit: v => /^[6-9]/.test(v) || 'Mobile number must start with 6, 7, 8, or 9',
-                        validLength: v => v.length === 10 || 'Mobile number must be 10 digits'
-                      }
-                    }}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        fullWidth
-                        autoFocus
-                        label='Mobile Number'
-                        type='tel'
-                        inputProps={{
-                          maxLength: 10, // Limits input to 10 characters
-                          pattern: '[6-9][0-9]{10}', // HTML5 pattern for exactly 10 digits
-                          inputMode: 'numeric' // Shows numeric keyboard on mobile devices
-                        }}
-                        onKeyDown={e => {
-                          // Prevent non-digit characters
-                          if (/\D/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Tab' && e.key !== 'Delete') {
-                            e.preventDefault()
-                          }
-                          // For first digit, only allow 6,7,8,9
-                          if (field.value.length === 0 && !['6', '7', '8', '9'].includes(e.key)) {
-                            e.preventDefault()
-                          }
-                          if (e.key === 'Enter') {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            findAccountsWithMobile(field.value)
-                          }
-                        }}
-                        onChange={e => {
-                          // Only allow numeric input
-                          const value = e.target.value.replace(/\D/g, '')
-                          // If first digit is invalid, don't update the field
-                          if (value.length > 0 && !['6', '7', '8', '9'].includes(value[0])) {
-                            return
-                          }
-                          field.onChange(value)
-                          setOtpSent(false)
-                          setOtpValue('')
-                          setErrorMsg('')
-                          setLoading(prev => ({ ...prev, accountsFetched: false }))
-                          setAccountsWithMobile([])
-                          setSelectedAccountWithMobile(null)
-                        }}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position='start'>
-                              <Typography variant='body1' color='textSecondary'>
-                                +91
+                  {!otpSent ? (
+                    <Controller
+                      name='mobile'
+                      control={control}
+                      rules={{
+                        required: true,
+                        validate: {
+                          validFirstDigit: v => /^[6-9]/.test(v) || 'Mobile number must start with 6, 7, 8, or 9',
+                          validLength: v => v.length === 10 || 'Mobile number must be 10 digits'
+                        }
+                      }}
+                      render={({ field }) => (
+                        <TextField
+                          {...field}
+                          fullWidth
+                          autoFocus
+                          label='Mobile Number'
+                          type='tel'
+                          inputProps={{
+                            maxLength: 10, // Limits input to 10 characters
+                            pattern: '[6-9][0-9]{10}', // HTML5 pattern for exactly 10 digits
+                            inputMode: 'numeric' // Shows numeric keyboard on mobile devices
+                          }}
+                          onKeyDown={e => {
+                            // Prevent non-digit characters
+                            if (/\D/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Tab' && e.key !== 'Delete') {
+                              e.preventDefault()
+                            }
+                            // For first digit, only allow 6,7,8,9
+                            if (field.value.length === 0 && !['6', '7', '8', '9'].includes(e.key)) {
+                              e.preventDefault()
+                            }
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              findAccountsWithMobile(field.value)
+                            }
+                          }}
+                          onChange={e => {
+                            // Only allow numeric input
+                            const value = e.target.value.replace(/\D/g, '')
+                            // If first digit is invalid, don't update the field
+                            if (value.length > 0 && !['6', '7', '8', '9'].includes(value[0])) {
+                              return
+                            }
+                            field.onChange(value)
+                            setOtpSent(false)
+                            setOtpValue('')
+                            setErrorMsg('')
+                            setLoading(prev => ({ ...prev, accountsFetched: false }))
+                            setAccountsWithMobile([])
+                            setSelectedAccountWithMobile(null)
+                          }}
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position='start'>
+                                <Typography variant='body1' color='textSecondary'>
+                                  +91
+                                </Typography>
+                              </InputAdornment>
+                            ),
+                            endAdornment: (
+                              <InputAdornment position='end'>
+                                <Button
+                                  onClick={e => {
+                                    e.stopPropagation()
+                                    findAccountsWithMobile(field.value)
+                                  }}
+                                  disabled={
+                                    !field.value ||
+                                    field.value.length !== 10 ||
+                                    !['6', '7', '8', '9'].includes(field.value[0]) ||
+                                    loading.findAccounts
+                                  }
+                                  color='primary'
+                                  type='button'
+                                  variant='contained'
+                                  size='small'
+                                >
+                                  {loading.findAccounts ? 'Finding...' : 'Find Account'}
+                                </Button>
+                              </InputAdornment>
+                            )
+                          }}
+                        />
+                      )}
+                    />
+                  ) : (
+                    /* Clean OTP State - Show selected account and phone as text */
+                    <div className='w-full mb-4'>
+                      <div className='bg-gray-50 border border-gray-200 rounded-lg p-4'>
+                        <div className='flex items-center justify-between'>
+                          <div className='flex items-center'>
+                            <Avatar className='mr-3'>{selectedAccountWithMobile?.firstname?.charAt(0)}</Avatar>
+                            <div>
+                              <Typography variant='body2' className='font-medium text-gray-900'>
+                                {selectedAccountWithMobile?.firstname} {selectedAccountWithMobile?.lastname}
                               </Typography>
-                            </InputAdornment>
-                          ),
-                          endAdornment: (
-                            <InputAdornment position='end'>
-                              <Button
-                                onClick={e => {
-                                  e.stopPropagation()
-                                  findAccountsWithMobile(field.value)
-                                }}
-                                disabled={
-                                  !field.value ||
-                                  field.value.length !== 10 ||
-                                  !['6', '7', '8', '9'].includes(field.value[0]) ||
-                                  loading.findAccounts
-                                }
-                                color='primary'
-                                type='button'
-                                variant='contained'
-                                size='small'
-                              >
-                                {loading.findAccounts ? 'Finding...' : 'Find Account'}
-                              </Button>
-                            </InputAdornment>
-                          )
-                        }}
-                      />
-                    )}
-                  />
-
-                  {accountsWithMobile.length > 0 ? (
-                    <>
-                      <Typography color='primary'>
-                        Please select one of the email address account associated with this phone number.
-                      </Typography>
-                      <div className='overflow-y-auto p-1 bg-[rgba(0,0,0,0.025)] rounded'>
-                        {accountsWithMobile.map(account => (
-                          <div
-                            key={account?.email}
-                            className={`flex items-center p-2 border rounded transition ${
-                              selectedAccountWithMobile === account
-                                ? 'bg-blue-200 shadow-md'
-                                : !otpSent && 'hover:bg-gray-200'
-                            }`}
-                            style={{ cursor: !otpSent ? 'pointer' : 'not-allowed' }}
-                            onClick={!otpSent ? () => setSelectedAccountWithMobile(account) : () => {}}
-                          >
-                            <Avatar>{account?.firstname?.charAt(0)}</Avatar>
-                            <div className='ml-3'>
-                              <Typography variant='caption' className='text-blue-800 font-medium'>
-                                {account?.email}
+                              <Typography variant='caption' className='text-gray-600'>
+                                {selectedAccountWithMobile?.email}
                               </Typography>
-                              <Typography variant='body2' className='text-gray-700'>
-                                {account?.firstname} {account?.lastname}
+                              <Typography variant='caption' className='text-gray-600 block'>
+                                +91 {mobileValue}
                               </Typography>
                             </div>
                           </div>
-                        ))}
+                          <Button
+                            variant='outlined'
+                            size='small'
+                            onClick={handleCancelOtp}
+                            startIcon={<i className='ri-arrow-left-line'></i>}
+                          >
+                            Back
+                          </Button>
+                        </div>
                       </div>
-                    </>
-                  ) : (
-                    loading.accountsFetched && (
-                      <div className='p-1 bg-[rgba(0,0,0,0.05)] rounded flex items-center justify-center gap-1'>
-                        <Typography>No account found.</Typography>
-                        <Typography
-                          component={Link}
-                          href={gamePin ? `/auth/register?gamePin=${gamePin}` : `/auth/register`}
-                          color='primary'
-                        >
-                          Register?
-                        </Typography>
-                      </div>
-                    )
+                    </div>
                   )}
 
-                  {!otpSent && selectedAccountWithMobile && (
+                  {!otpSent && accountsWithMobile.length > 0 && (
+                    <>
+                      {isAccountsListExpanded && (
+                        <Typography color='primary'>
+                          Please select one of the email address account associated with this phone number.
+                        </Typography>
+                      )}
+                      
+                      {isAccountsListExpanded ? (
+                        <div className='overflow-y-auto p-1 bg-[rgba(0,0,0,0.025)] rounded max-h-48'>
+                          {accountsWithMobile.map(account => (
+                            <div
+                              key={account?.email}
+                              className={`flex items-center p-2 border rounded transition ${
+                                selectedAccountWithMobile === account
+                                  ? 'bg-blue-200 shadow-md'
+                                  : 'hover:bg-gray-200'
+                              }`}
+                              style={{ cursor: 'pointer' }}
+                              onClick={() => {
+                                setSelectedAccountWithMobile(account)
+                                setIsAccountsListExpanded(false)
+                              }}
+                            >
+                              <Avatar>{account?.firstname?.charAt(0)}</Avatar>
+                              <div className='ml-3'>
+                                <Typography variant='caption' className='text-blue-800 font-medium'>
+                                  {account?.email}
+                                </Typography>
+                                <Typography variant='body2' className='text-gray-700'>
+                                  {account?.firstname} {account?.lastname}
+                                </Typography>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div 
+                          className='flex items-center p-2 border rounded bg-blue-50 cursor-pointer hover:bg-blue-100 transition'
+                          onClick={() => setIsAccountsListExpanded(true)}
+                        >
+                          <Avatar>{selectedAccountWithMobile?.firstname?.charAt(0)}</Avatar>
+                          <div className='ml-3 flex-1'>
+                            <Typography variant='caption' className='text-blue-800 font-medium'>
+                              {selectedAccountWithMobile?.email}
+                            </Typography>
+                            <Typography variant='body2' className='text-gray-700'>
+                              {selectedAccountWithMobile?.firstname} {selectedAccountWithMobile?.lastname}
+                            </Typography>
+                          </div>
+                          <div className='ml-2'>
+                            <i className='ri-arrow-down-s-line text-gray-500'></i>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {!otpSent && loading.accountsFetched && accountsWithMobile.length === 0 && (
+                    <div className='p-1 bg-[rgba(0,0,0,0.05)] rounded flex items-center justify-center gap-1'>
+                      <Typography>No account found.</Typography>
+                      <Typography
+                        component={Link}
+                        href={gamePin ? `/auth/register?gamePin=${gamePin}` : `/auth/register`}
+                        color='primary'
+                      >
+                        Register?
+                      </Typography>
+                    </div>
+                  )}
+
+                  {!otpSent && selectedAccountWithMobile && !isAccountsListExpanded && (
                     <Button
                       disabled={loading.sendOtp}
                       color='primary'
@@ -743,6 +817,17 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
                       >
                         Resend
                       </Button>
+                    </div>
+                  )}
+
+                  {/* Testing OTP Display for Mobile Login */}
+                  {otpSent && testingOtp && (
+                    <div className='bg-blue-50 border border-blue-200 rounded p-3 mt-2'>
+                      <div className='text-center'>
+                        <Typography variant='body2'>
+                          <strong>Testing OTP:</strong> {testingOtp}
+                        </Typography>
+                      </div>
                     </div>
                   )}
                 </>

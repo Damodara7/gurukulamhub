@@ -2,7 +2,7 @@
 /********** Standard imports.*********************/
 import React, { useEffect, useState } from 'react'
 import Grid from '@mui/material/Grid'
-import { TextField, Button, FormControl, RadioGroup, Radio, FormControlLabel, Link, Box } from '@mui/material'
+import { TextField, Button, FormControl, RadioGroup, Radio, FormControlLabel, Link, Box, Alert } from '@mui/material'
 import CenterBox from '@components/CenterBox'
 import Typography from '@mui/material/Typography'
 import * as RestApi from '@/utils/restApiUtil'
@@ -39,6 +39,7 @@ const PhoneDetailsStep = ({
   const [countryDialCode, setCountryDialCode] = useState(false)
   const [timer, setTimer] = useState(60) // Timer set to 40 seconds
   const [resendEnabled, setResendEnabled] = useState(false) // State to manage resend button
+  const [testingOtp, setTestingOtp] = useState(null) // State to store testing OTP
 
   const router = useRouter()
 
@@ -105,6 +106,11 @@ const PhoneDetailsStep = ({
       })
       if (result) {
         // toast.success('Updated Phone Details & OTP Sent Successfully.')
+        // Check if there's a testing OTP in the response
+        if (result?.result?.testingOtp) {
+          setTestingOtp(result.result.testingOtp)
+          console.log('Testing OTP received:', result.result.testingOtp)
+        }
       }
     } catch (error) {
       console.error(error)
@@ -307,6 +313,17 @@ const PhoneDetailsStep = ({
                         </Button>{' '}
                       </Typography>
                     </div>
+
+                    {/* Testing OTP Display for Phone Verification */}
+                    {testingOtp && (
+                      <div className='bg-blue-50 border border-blue-200 rounded p-3 mt-2'>
+                        <div className='text-center'>
+                          <Typography variant='body2'>
+                            <strong>Testing OTP:</strong> {testingOtp}
+                          </Typography>
+                        </div>
+                      </div>
+                    )}
                   </Form>
                 </div>
               </div>

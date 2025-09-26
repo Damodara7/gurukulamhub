@@ -48,6 +48,7 @@ const ForgotPasswordV2 = ({ mode }) => {
   const [selectedAccountWithMobile, setSelectedAccountWithMobile] = useState(null)
   const [loading, setLoading] = useState(initialLoadingState)
   const [resetPasswordLink, setResetPasswordLink] = useState(null)
+  const [testingOtp, setTestingOtp] = useState(null) // State to store testing OTP
 
   const emailSearchParam = searchParams.get('email')
   const mobileSearchParam = searchParams.get('mobile')
@@ -218,7 +219,9 @@ const ForgotPasswordV2 = ({ mode }) => {
         if (result?.success) {
           setOtpSent(true)
           setSuccessMessage('OTP sent successfully.')
+          setTestingOtp(result?.result?.testingOtp) // Store testing OTP from result
           console.log('OTP sent to: ', mobileValue)
+          console.log('Testing OTP: ', result?.result?.testingOtp)
           setErrorMessage('')
         } else {
           setErrorMessage('Failed to send OTP. Please try again.')
@@ -536,6 +539,17 @@ const ForgotPasswordV2 = ({ mode }) => {
                             : 'Verify & Send Reset Link'}
                       </Button>
                     </>
+                  )}
+
+                  {/* Testing OTP Display for Forgot Password Mobile Verification */}
+                  {otpSent && testingOtp && (
+                    <div className='bg-blue-50 border border-blue-200 rounded p-3 mt-2'>
+                      <div className='text-center'>
+                        <Typography variant='body2'>
+                          <strong>Testing OTP:</strong> {testingOtp}
+                        </Typography>
+                      </div>
+                    </div>
                   )}
 
                   {errorMessage && (
