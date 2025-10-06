@@ -371,22 +371,31 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
     }
 
     // Add individual schema filters with order and operation
+    // Handle ageGroup filter
     if (filterCriteria.ageGroup) {
       submission.ageGroup = {
         ...filterCriteria.ageGroup,
         order: formData.ageOrder || 1,
         operation: formData.ageOperation || null
       }
+    } else {
+      // Explicitly set to null when filter is removed
+      submission.ageGroup = null
     }
 
+    // Handle location filter
     if (filterCriteria.location) {
       submission.location = {
         ...filterCriteria.location,
         order: formData.locationOrder || 1,
         operation: formData.locationOperation || null
       }
+    } else {
+      // Explicitly set to null when filter is removed
+      submission.location = null
     }
 
+    // Handle gender filter
     if (filterCriteria.gender) {
       console.log('🔍 filterCriteria.gender:', filterCriteria.gender)
 
@@ -422,6 +431,9 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
       }
 
       console.log('🔍 final gender object:', submission.gender)
+    } else {
+      // Explicitly set to null when filter is removed
+      submission.gender = null
     }
 
     console.log('📤 Submitting audience data:', submission)
@@ -445,6 +457,7 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
       orderAndOperations
     })
 
+    // Update filter criteria - this handles both additions and removals
     setFilterCriteria(criteria)
     setMatchedUserIds(filteredUserIds)
 
@@ -458,6 +471,17 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
         locationOperation: orderAndOperations.locationOperation,
         genderOrder: orderAndOperations.genderOrder,
         genderOperation: orderAndOperations.genderOperation
+      }))
+    } else {
+      // If no orderAndOperations, clear all order/operation data
+      setFormData(prev => ({
+        ...prev,
+        ageOrder: null,
+        ageOperation: null,
+        locationOrder: null,
+        locationOperation: null,
+        genderOrder: null,
+        genderOperation: null
       }))
     }
   }

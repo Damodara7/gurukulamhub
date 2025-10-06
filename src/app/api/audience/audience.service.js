@@ -69,29 +69,30 @@ export const applyIndividualSchemaFilters = (users, audience) => {
       currentUsers = filteredUsers
       console.log(`🔍 First filter result: ${currentUsers.length} users`)
     } else {
-      // Apply operation from PREVIOUS filter to combine with current result
-      const previousFilter = sortedFilters[index - 1]
-      const operation = previousFilter.operation
+      // Apply operation from CURRENT filter to combine with previous result
+      const operation = filter.operation
 
-      console.log(`🔍 Applying operation "${operation}" between ${previousFilter.type} and ${filter.type}`)
+      console.log(`🔍 Applying operation "${operation}" to combine ${filter.type} with previous results`)
 
       if (operation === 'AND') {
-        // Intersection - users must match both filters
-        currentUsers = currentUsers.filter(user => filteredUsers.some(fu => fu._id === user._id))
-        console.log(`🔍 AND operation result: ${currentUsers.length} users`)
+        // OPTIMIZED: Intersection using pre-computed filter results
+        const filteredUserIds = new Set(filteredUsers.map(u => u._id))
+        currentUsers = currentUsers.filter(user => filteredUserIds.has(user._id))
+        console.log(`🔍 OPTIMIZED AND operation result: ${currentUsers.length} users`)
       } else if (operation === 'OR') {
-        // Union - users that match either filter
-        // For OR, we need to apply current filter to ALL users, not just currentUsers
+        // OPTIMIZED: Union using pre-computed filter results
+        // Apply current filter to ALL users only once, then use Set operations
         const currentFilterAppliedToAllUsers = applySingleFilterToUsers(users, filter)
-        const combinedUserIds = [
-          ...new Set([...currentUsers.map(u => u._id), ...currentFilterAppliedToAllUsers.map(u => u._id)])
-        ]
-        currentUsers = users.filter(user => combinedUserIds.includes(user._id))
-        console.log(`🔍 OR operation result: ${currentUsers.length} users`)
+        const currentUserIds = new Set(currentUsers.map(u => u._id))
+        const allFilterUserIds = new Set(currentFilterAppliedToAllUsers.map(u => u._id))
+        const combinedUserIds = new Set([...currentUserIds, ...allFilterUserIds])
+        currentUsers = users.filter(user => combinedUserIds.has(user._id))
+        console.log(`🔍 OPTIMIZED OR operation result: ${currentUsers.length} users`)
       } else {
         // No operation specified, default to AND
-        currentUsers = currentUsers.filter(user => filteredUsers.some(fu => fu._id === user._id))
-        console.log(`🔍 Default AND operation result: ${currentUsers.length} users`)
+        const filteredUserIds = new Set(filteredUsers.map(u => u._id))
+        currentUsers = currentUsers.filter(user => filteredUserIds.has(user._id))
+        console.log(`🔍 OPTIMIZED Default AND operation result: ${currentUsers.length} users`)
       }
     }
   })

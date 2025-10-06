@@ -12,11 +12,61 @@ const AllAudiencePage = () => {
   const router = useRouter()
   const [audiences, setAudiences] = useState([])
   const [loading, setLoading] = useState(true)
+  const [dynamicCounts, setDynamicCounts] = useState({}) // Store real-time counts for all audiences
+  const [loadingCounts, setLoadingCounts] = useState(false) // Single loading state for all counts
   const { data: session } = useSession()
   const [socket, setSocket] = useState(null)
   const [isConnected, setIsConnected] = useState(false)
 
   // Note: Individual handlers removed - WebSocket now updates entire state directly
+
+  // Note: Individual handlers removed - WebSocket now updates entire state directly
+
+  // Function to fetch dynamic counts for all audiences at once
+  const fetchAllDynamicCounts = async audiencesList => {
+    if (!audiencesList || audiencesList.length === 0) return
+
+    setLoadingCounts(true)
+    const counts = {}
+
+    try {
+      // Fetch all counts in parallel for better performance
+      const promises = audiencesList.map(async audience => {
+        try {
+          const result = await RestApi.get(`${API_URLS.v0.USERS_AUDIENCE}?id=${audience._id}&action=users`)
+          return {
+            audienceId: audience._id,
+            count: result?.status === 'success' ? result.result?.length || 0 : audience.membersCount || 0
+          }
+        } catch (error) {
+          console.error(`Error fetching count for audience ${audience._id}:`, error)
+          return {
+            audienceId: audience._id,
+            count: audience.membersCount || 0
+          }
+        }
+      })
+
+      const results = await Promise.all(promises)
+
+      // Convert results to counts object
+      results.forEach(({ audienceId, count }) => {
+        counts[audienceId] = count
+      })
+
+      setDynamicCounts(counts)
+    } catch (error) {
+      console.error('Error fetching dynamic counts:', error)
+      // Fallback to static counts
+      const fallbackCounts = {}
+      audiencesList.forEach(audience => {
+        fallbackCounts[audience._id] = audience.membersCount || 0
+      })
+      setDynamicCounts(fallbackCounts)
+    } finally {
+      setLoadingCounts(false)
+    }
+  }
 
   const fetchAudience = async () => {
     setLoading(true)
@@ -25,8 +75,12 @@ const AllAudiencePage = () => {
       console.log('Complete API response:', res)
 
       if (res?.status === 'success') {
-        setAudiences(res.result || [])
-        console.log('total audience data', res.result)
+        const audiencesData = res.result || []
+        setAudiences(audiencesData)
+        console.log('total audience data', audiencesData)
+
+        // Fetch dynamic counts for all audiences
+        fetchAllDynamicCounts(audiencesData)
       } else {
         console.error('Error fetching audience:', res)
         toast.error('Failed to load audience')
@@ -65,7 +119,11 @@ const AllAudiencePage = () => {
             console.log('[WS] AllAudiencePage received audiences list update:', msg.data)
 
             // Update audiences state directly (like games do) - no refresh feeling
-            setAudiences(msg.data || [])
+            const updatedAudiences = msg.data || []
+            setAudiences(updatedAudiences)
+
+            // Fetch dynamic counts for updated audiences
+            fetchAllDynamicCounts(updatedAudiences)
           }
         } catch (e) {
           console.error('[WS] AllAudiencePage error parsing audiences list message', e)
@@ -109,7 +167,13 @@ const AllAudiencePage = () => {
 
   return (
     <Box>
-      <AudienceCard audiences={audiences} onEditAudience={handleEditAudience} onViewAudience={handleViewAudience} />
+      <AudienceCard
+        audiences={audiences}
+        onEditAudience={handleEditAudience}
+        onViewAudience={handleViewAudience}
+        dynamicCounts={dynamicCounts}
+        loadingCounts={loadingCounts}
+      />
       <Box sx={{ position: 'relative' }}>
         <Button
           variant='contained'

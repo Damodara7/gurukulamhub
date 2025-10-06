@@ -4,22 +4,22 @@ const locationSchema = new mongoose.Schema({
   country: { type: String },
   region: { type: String },
   city: { type: String },
-  order: { type: Number },
+  order: { type: Number }, // Order of application (1, 2, 3...)
   operation: {
     type: String,
     enum: ['AND', 'OR'],
-    required: false // First filter doesn't need an operation
+    required: false // First filter (order=1) has null operation, subsequent filters specify how to combine with previous results
   }
 })
 
 const ageGroupSchema = new mongoose.Schema({
   min: { type: Number, min: 0, max: 120 },
   max: { type: Number, min: 0, max: 120 },
-  order: { type: Number },
+  order: { type: Number }, // Order of application (1, 2, 3...)
   operation: {
     type: String,
     enum: ['AND', 'OR'],
-    required: false // First filter doesn't need an operation
+    required: false // First filter (order=1) has null operation, subsequent filters specify how to combine with previous results
   }
 })
 
@@ -34,11 +34,11 @@ const genderSchema = new mongoose.Schema({
       message: 'Gender must be one or more of: male, female, other'
     }
   },
-  order: { type: Number },
+  order: { type: Number }, // Order of application (1, 2, 3...)
   operation: {
     type: String,
     enum: ['AND', 'OR'],
-    required: false // First filter doesn't need an operation
+    required: false // First filter (order=1) has null operation, subsequent filters specify how to combine with previous results
   }
 })
 

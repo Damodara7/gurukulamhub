@@ -19,7 +19,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'react-toastify'
 
-const AudienceCard = ({ audiences, onEditAudience, onViewAudience }) => {
+const AudienceCard = ({ audiences, onEditAudience, onViewAudience, dynamicCounts = {}, loadingCounts = false }) => {
   const { data: session } = useSession()
   const router = useRouter()
   const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false)
@@ -147,11 +147,15 @@ const AudienceCard = ({ audiences, onEditAudience, onViewAudience }) => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <PeopleIcon fontSize='small' color='action' />
                   <Typography variant='caption' color='text.secondary'>
-                    {audience?.membersCount === 0
-                      ? 'No Members'
-                      : audience?.membersCount > 1
-                        ? `${audience?.membersCount} members`
-                        : `${audience?.membersCount} member`}
+                    {loadingCounts
+                      ? 'Loading...'
+                      : (() => {
+                          const count =
+                            dynamicCounts[audience._id] !== undefined
+                              ? dynamicCounts[audience._id]
+                              : audience?.membersCount || 0
+                          return count === 0 ? 'No Members' : count > 1 ? `${count} members` : `${count} member`
+                        })()}
                   </Typography>
                 </Box>
 
@@ -183,76 +187,106 @@ const AudienceCard = ({ audiences, onEditAudience, onViewAudience }) => {
                       width: '100%'
                     }}
                   >
-                    {audience?.ageGroup && (
-                      <Tooltip arrow title={`Age: ${audience.ageGroup.min}-${audience.ageGroup.max}`}>
-                        <Chip
-                          size='small'
-                          label={`Age: ${audience.ageGroup.min}-${audience.ageGroup.max}`}
-                          sx={{
-                            maxWidth: 100,
-                            '& .MuiChip-label': {
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap'
-                            }
-                          }}
-                        />
-                      </Tooltip>
-                    )}
-                    {audience?.gender && (
-                      <Tooltip
-                        arrow
-                        title={`Gender: ${
-                          audience.gender.values
-                            ? audience.gender.values.join(', ')
-                            : Array.isArray(audience.gender)
-                              ? audience.gender.join(', ')
-                              : String(audience.gender)
-                        }`}
-                      >
-                        <Chip
-                          size='small'
-                          label={`Gender: ${
-                            audience.gender.values
-                              ? audience.gender.values.join(', ')
-                              : Array.isArray(audience.gender)
-                                ? audience.gender.join(', ')
-                                : String(audience.gender)
-                          }`}
-                          sx={{
-                            maxWidth: 120,
-                            '& .MuiChip-label': {
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap'
-                            }
-                          }}
-                        />
-                      </Tooltip>
-                    )}
                     {(() => {
-                      const parts = [
-                        audience?.location?.country,
-                        audience?.location?.region,
-                        audience?.location?.city
-                      ].filter(Boolean)
-                      const label = parts.length > 0 ? `Location: ${parts.join(', ')}` : null
-                      return label ? (
-                        <Tooltip arrow title={label}>
-                          <Chip
-                            size='small'
-                            label={label}
-                            sx={{
-                              maxWidth: 180,
-                              '& .MuiChip-label': {
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap'
-                              }
-                            }}
-                          />
-                        </Tooltip>
-                      ) : null
+                      // Create filter objects with their order for sorting
+                      const filters = []
+
+                      if (audience?.ageGroup) {
+                        filters.push({
+                          type: 'age',
+                          order: audience.ageGroup.order || 1,
+                          chip: (
+                            <Tooltip key='age' arrow title={`Age: ${audience.ageGroup.min}-${audience.ageGroup.max}`}>
+                              <Chip
+                                size='small'
+                                label={`Age: ${audience.ageGroup.min}-${audience.ageGroup.max}`}
+                                sx={{
+                                  maxWidth: 100,
+                                  '& .MuiChip-label': {
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap'
+                                  }
+                                }}
+                              />
+                            </Tooltip>
+                          )
+                        })
+                      }
+
+                      if (audience?.gender) {
+                        filters.push({
+                          type: 'gender',
+                          order: audience.gender.order || 1,
+                          chip: (
+                            <Tooltip
+                              key='gender'
+                              arrow
+                              title={`Gender: ${
+                                audience.gender.values
+                                  ? audience.gender.values.join(', ')
+                                  : Array.isArray(audience.gender)
+                                    ? audience.gender.join(', ')
+                                    : String(audience.gender)
+                              }`}
+                            >
+                              <Chip
+                                size='small'
+                                label={`Gender: ${
+                                  audience.gender.values
+                                    ? audience.gender.values.join(', ')
+                                    : Array.isArray(audience.gender)
+                                      ? audience.gender.join(', ')
+                                      : String(audience.gender)
+                                }`}
+                                sx={{
+                                  maxWidth: 120,
+                                  '& .MuiChip-label': {
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap'
+                                  }
+                                }}
+                              />
+                            </Tooltip>
+                          )
+                        })
+                      }
+
+                      if (audience?.location?.country || audience?.location?.region || audience?.location?.city) {
+                        const parts = [
+                          audience?.location?.country,
+                          audience?.location?.region,
+                          audience?.location?.city
+                        ].filter(Boolean)
+                        const label = parts.length > 0 ? `Location: ${parts.join(', ')}` : null
+
+                        if (label) {
+                          filters.push({
+                            type: 'location',
+                            order: audience.location.order || 1,
+                            chip: (
+                              <Tooltip key='location' arrow title={label}>
+                                <Chip
+                                  size='small'
+                                  label={label}
+                                  sx={{
+                                    maxWidth: 180,
+                                    '& .MuiChip-label': {
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      whiteSpace: 'nowrap'
+                                    }
+                                  }}
+                                />
+                              </Tooltip>
+                            )
+                          })
+                        }
+                      }
+
+                      // Sort filters by their order and return chips
+                      return filters.sort((a, b) => a.order - b.order).map(filter => filter.chip)
                     })()}
                     {!audience?.ageGroup &&
                       !audience?.gender &&
