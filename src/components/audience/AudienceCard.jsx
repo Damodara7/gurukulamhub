@@ -150,10 +150,7 @@ const AudienceCard = ({ audiences, onEditAudience, onViewAudience, dynamicCounts
                     {loadingCounts
                       ? 'Loading...'
                       : (() => {
-                          const count =
-                            dynamicCounts[audience._id] !== undefined
-                              ? dynamicCounts[audience._id]
-                              : audience?.membersCount || 0
+                          const count = dynamicCounts[audience._id] || 0
                           return count === 0 ? 'No Members' : count > 1 ? `${count} members` : `${count} member`
                         })()}
                   </Typography>

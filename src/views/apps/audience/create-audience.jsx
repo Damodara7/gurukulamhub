@@ -22,8 +22,7 @@ function CreateAudiencePage() {
         gender: values.gender,
         ageGroup: values.ageGroup,
         createdBy: session?.user?.id, // Use the found user ID
-        creatorEmail: session?.user?.email,
-        membersCount: values.membersCount
+        creatorEmail: session?.user?.email
       }
 
       console.log('payload data ', payload)

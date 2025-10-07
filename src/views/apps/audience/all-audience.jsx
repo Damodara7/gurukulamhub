@@ -36,13 +36,13 @@ const AllAudiencePage = () => {
           const result = await RestApi.get(`${API_URLS.v0.USERS_AUDIENCE}?id=${audience._id}&action=users`)
           return {
             audienceId: audience._id,
-            count: result?.status === 'success' ? result.result?.length || 0 : audience.membersCount || 0
+            count: result?.status === 'success' ? result.result?.length || 0 : 0
           }
         } catch (error) {
           console.error(`Error fetching count for audience ${audience._id}:`, error)
           return {
             audienceId: audience._id,
-            count: audience.membersCount || 0
+            count: 0
           }
         }
       })
@@ -60,7 +60,7 @@ const AllAudiencePage = () => {
       // Fallback to static counts
       const fallbackCounts = {}
       audiencesList.forEach(audience => {
-        fallbackCounts[audience._id] = audience.membersCount || 0
+        fallbackCounts[audience._id] = 0
       })
       setDynamicCounts(fallbackCounts)
     } finally {

@@ -267,13 +267,29 @@ const AudienceDetailsPage = ({ audienceId, audienceData, gamesData = [] }) => {
     }
 
     // Gender filter
-    if (audienceData?.gender && Array.isArray(audienceData.gender) && audienceData.gender.length > 0) {
-      const genderLabels = audienceData.gender.map(g => String(g).charAt(0).toUpperCase() + String(g).slice(1))
-      chips.push({
-        icon: <PersonIcon sx={{ fontSize: 16 }} />,
-        label: `Gender: ${genderLabels.join(', ')}`,
-        color: 'success'
-      })
+    if (audienceData?.gender) {
+      let genderValues = []
+
+      // Handle both old array format and new object format with values property
+      if (Array.isArray(audienceData.gender)) {
+        genderValues = audienceData.gender
+      } else if (audienceData.gender.values && Array.isArray(audienceData.gender.values)) {
+        genderValues = audienceData.gender.values
+      } else if (typeof audienceData.gender === 'string') {
+        genderValues = [audienceData.gender]
+      } else {
+        // Fallback: try to extract values from object
+        genderValues = Object.values(audienceData.gender).filter(v => typeof v === 'string')
+      }
+
+      if (genderValues.length > 0) {
+        const genderLabels = genderValues.map(g => String(g).charAt(0).toUpperCase() + String(g).slice(1))
+        chips.push({
+          icon: <PersonIcon sx={{ fontSize: 16 }} />,
+          label: `Gender: ${genderLabels.join(', ')}`,
+          color: 'success'
+        })
+      }
     }
 
     return chips
@@ -288,41 +304,54 @@ const AudienceDetailsPage = ({ audienceId, audienceData, gamesData = [] }) => {
     if (
       audienceData?.ageGroup?.min &&
       audienceData?.ageGroup?.max &&
-      member.profile?.age !== undefined &&
-      member.profile?.age !== null
+      ((member.age !== undefined && member.age !== null) ||
+        (member.profile?.age !== undefined && member.profile?.age !== null))
     ) {
       chips.push({
-        label: `Age: ${member.profile.age}`,
+        label: `Age: ${member.age !== undefined && member.age !== null ? member.age : member.profile?.age}`,
         color: 'primary'
       })
     }
 
     // Show gender only if audience has gender filter
-    if (
-      audienceData?.gender &&
-      Array.isArray(audienceData.gender) &&
-      audienceData.gender.length > 0 &&
-      member.profile?.gender
-    ) {
-      chips.push({
-        label: `Gender: ${
-          String(member.profile.gender).charAt(0).toUpperCase() + String(member.profile.gender).slice(1)
-        }`,
-        color: 'success'
-      })
+    if (audienceData?.gender && (member.gender || member.profile?.gender)) {
+      let genderValues = []
+
+      // Handle both old array format and new object format with values property
+      if (Array.isArray(audienceData.gender)) {
+        genderValues = audienceData.gender
+      } else if (audienceData.gender.values && Array.isArray(audienceData.gender.values)) {
+        genderValues = audienceData.gender.values
+      } else if (typeof audienceData.gender === 'string') {
+        genderValues = [audienceData.gender]
+      } else {
+        // Fallback: try to extract values from object
+        genderValues = Object.values(audienceData.gender).filter(v => typeof v === 'string')
+      }
+
+      if (genderValues.length > 0) {
+        const memberGender = member.gender || member.profile?.gender
+        chips.push({
+          label: `Gender: ${String(memberGender).charAt(0).toUpperCase() + String(memberGender).slice(1)}`,
+          color: 'secondary'
+        })
+      }
     }
 
     // Show location as single chip if audience has location filter
     if (audienceData?.location) {
       const locationParts = []
-      if (audienceData.location.city && member.profile?.locality) locationParts.push(member.profile.locality)
-      if (audienceData.location.region && member.profile?.region) locationParts.push(member.profile.region)
-      if (audienceData.location.country && member.profile?.country) locationParts.push(member.profile.country)
+      if (audienceData.location.city && (member.locality || member.profile?.locality))
+        locationParts.push(member.locality || member.profile.locality)
+      if (audienceData.location.region && (member.region || member.profile?.region))
+        locationParts.push(member.region || member.profile.region)
+      if (audienceData.location.country && (member.country || member.profile?.country))
+        locationParts.push(member.country || member.profile.country)
 
       if (locationParts.length > 0) {
         chips.push({
           label: `Location: ${locationParts.join(', ')}`,
-          color: 'secondary'
+          color: 'default'
         })
       }
     }
@@ -485,50 +514,27 @@ const AudienceDetailsPage = ({ audienceId, audienceData, gamesData = [] }) => {
                         {user.email}
                       </Typography>
 
-                      {/* Show user profile information */}
+                      {/* Show user profile information - only filters that exist in audience filters */}
                       <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
-                        {((user.age !== undefined && user.age !== null) ||
-                          (user.profile?.age !== undefined && user.profile?.age !== null)) && (
+                        {getMemberFilterChips(user).map((chip, chipIndex) => (
                           <Chip
+                            key={chipIndex}
                             size='small'
-                            icon={<CakeIcon sx={{ fontSize: 14 }} />}
-                            label={`Age: ${user.age !== undefined && user.age !== null ? user.age : user.profile?.age}`}
+                            icon={
+                              chip.label.startsWith('Age:') ? (
+                                <CakeIcon sx={{ fontSize: 14 }} />
+                              ) : chip.label.startsWith('Gender:') ? (
+                                <PersonIcon sx={{ fontSize: 14 }} />
+                              ) : chip.label.startsWith('Location:') ? (
+                                <LocationIcon sx={{ fontSize: 14 }} />
+                              ) : null
+                            }
+                            label={chip.label}
                             variant='outlined'
-                            color='primary'
+                            color={chip.color}
                             sx={{ fontSize: '0.75rem' }}
                           />
-                        )}
-                        {(user.gender || user.profile?.gender) && (
-                          <Chip
-                            size='small'
-                            icon={<PersonIcon sx={{ fontSize: 14 }} />}
-                            label={`Gender: ${user.gender || user.profile?.gender}`}
-                            variant='outlined'
-                            color='secondary'
-                            sx={{ fontSize: '0.75rem' }}
-                          />
-                        )}
-                        {(user.country ||
-                          user.profile?.country ||
-                          user.region ||
-                          user.profile?.region ||
-                          user.locality ||
-                          user.profile?.locality) && (
-                          <Chip
-                            size='small'
-                            icon={<LocationIcon sx={{ fontSize: 14 }} />}
-                            label={`Location: ${[
-                              user.country || user.profile?.country,
-                              user.region || user.profile?.region,
-                              user.locality || user.profile?.locality
-                            ]
-                              .filter(Boolean)
-                              .join(', ')}`}
-                            variant='outlined'
-                            color='default'
-                            sx={{ fontSize: '0.75rem' }}
-                          />
-                        )}
+                        ))}
                       </Box>
                     </Box>
                   </Box>

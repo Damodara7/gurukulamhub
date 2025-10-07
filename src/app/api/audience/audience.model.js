@@ -63,10 +63,6 @@ export const audienceSchema = new mongoose.Schema(
       ref: 'users',
       required: true
     },
-    membersCount: {
-      type: Number,
-      default: 0
-    },
     creatorEmail: {
       type: String,
       required: true

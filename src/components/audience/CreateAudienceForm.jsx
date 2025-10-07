@@ -168,9 +168,8 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
         currentUsers = filteredUsers
         console.log(`🔍 Frontend: First filter result: ${currentUsers.length} users`)
       } else {
-        const previousFilter = sortedFilters[index - 1]
-        const operation = previousFilter.operation
-        console.log(`🔍 Frontend: Applying operation "${operation}" between ${previousFilter.type} and ${filter.type}`)
+        const operation = filter.operation
+        console.log(`🔍 Frontend: Applying operation "${operation}" to combine ${filter.type} with previous results`)
 
         if (operation === 'AND') {
           currentUsers = currentUsers.filter(user => filteredUsers.some(fu => fu._id === user._id))
@@ -366,8 +365,7 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
       audienceName: formData.audienceName.trim(),
       description: formData.description.trim(),
       createdBy: data?.createdBy || session?.user?.id || null,
-      creatorEmail: data?.creatorEmail || session?.user?.email || null,
-      membersCount: matchedUserIds.length
+      creatorEmail: data?.creatorEmail || session?.user?.email || null
     }
 
     // Add individual schema filters with order and operation

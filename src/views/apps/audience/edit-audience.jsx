@@ -62,7 +62,6 @@ const EditAudiencePage = ({ audienceId = null }) => {
         ...values,
         updatedBy: session?.user?.id,
         updaterEmail: session?.user?.email,
-        membersCount: values.membersCount,
         // Ensure filter criteria is included
         ageGroup: values.ageGroup,
         location: values.location,

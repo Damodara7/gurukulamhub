@@ -171,8 +171,8 @@ const AudienceByFilter = ({
     if (!Array.isArray(users) || users.length === 0) return
 
     const filters = []
-    let userIds = users.map(user => user._id)
 
+    // Collect all filters first
     if (combinedCriteria.ageGroup) {
       const idsForAge = users
         .filter(u => {
@@ -188,7 +188,6 @@ const AudienceByFilter = ({
         order: combinedCriteria.ageGroup.order || 1,
         operation: combinedCriteria.ageGroup.operation
       })
-      userIds = userIds.filter(id => idsForAge.includes(id))
     }
 
     if (combinedCriteria.location) {
@@ -212,7 +211,6 @@ const AudienceByFilter = ({
         order: loc.order || filters.length + 1,
         operation: loc.operation
       })
-      userIds = userIds.filter(id => idsForLoc.includes(id))
     }
 
     if (combinedCriteria.gender) {
@@ -243,7 +241,74 @@ const AudienceByFilter = ({
         order: combinedCriteria.gender.order || filters.length + 1,
         operation: combinedCriteria.gender.operation
       })
-      userIds = userIds.filter(id => idsForGender.includes(id))
+    }
+
+    // Apply incremental filtering with proper order and operations
+    let userIds = []
+    if (filters.length > 0) {
+      // Sort filters by order
+      const sortedFilters = [...filters].sort((a, b) => a.order - b.order)
+
+      console.log(
+        '🔍 Edit Mode: Applying filters in order:',
+        sortedFilters.map(f => ({
+          type: f.type,
+          order: f.order,
+          operation: f.operation
+        }))
+      )
+
+      sortedFilters.forEach((filter, index) => {
+        if (index === 0) {
+          // First filter - no operation needed
+          userIds = filter.userIds
+          console.log(`🔍 Edit Mode: First filter (${filter.type}) result: ${userIds.length} users`)
+        } else {
+          // Apply operation from CURRENT filter to combine with previous result
+          const operation = filter.operation
+
+          console.log(`🔍 Edit Mode: Applying operation "${operation}" to combine ${filter.type} with previous results`)
+
+          if (operation === 'AND') {
+            // Intersection - users must match both filters
+            userIds = userIds.filter(id => filter.userIds.includes(id))
+            console.log(`🔍 Edit Mode: AND operation result: ${userIds.length} users`)
+          } else if (operation === 'OR') {
+            // For OR, we need to apply current filter to ALL users, not just current filtered set
+            const currentFilterAppliedToAllUsers = users
+              .filter(u => {
+                if (filter.type === 'age') {
+                  const age = u?.profile?.age
+                  return age != null && age >= filter.value.min && age <= filter.value.max
+                } else if (filter.type === 'location') {
+                  const p = u?.profile || {}
+                  const loc = filter.value
+                  return (
+                    (!loc.country || p.country?.toLowerCase() === loc.country?.toLowerCase()) &&
+                    (!loc.region || p.region?.toLowerCase() === loc.region?.toLowerCase()) &&
+                    (!loc.city || p.locality?.toLowerCase() === loc.city?.toLowerCase())
+                  )
+                } else if (filter.type === 'gender') {
+                  const gender = u?.profile?.gender?.toLowerCase()
+                  const genders = filter.value.values || []
+                  return Boolean(gender) && genders.includes(gender)
+                }
+                return false
+              })
+              .map(u => u._id)
+
+            const combinedUserIds = [...new Set([...userIds, ...currentFilterAppliedToAllUsers])]
+            userIds = combinedUserIds
+            console.log(`🔍 Edit Mode: OR operation result: ${userIds.length} users`)
+          } else {
+            // No operation specified, default to AND
+            userIds = userIds.filter(id => filter.userIds.includes(id))
+            console.log(`🔍 Edit Mode: Default AND operation result: ${userIds.length} users`)
+          }
+        }
+      })
+    } else {
+      userIds = users.map(user => user._id)
     }
 
     setSelectedFilters(filters)
@@ -312,11 +377,38 @@ const AudienceByFilter = ({
 
   const getCountryRegions = async countryCode => {
     try {
-      // This would need to be implemented based on your API structure
-      // For now, we'll use a placeholder
-      const result = await RestApi.get(`/api/countries/${countryCode}/regions`)
-      if (result?.status === 'success') {
-        return result.result || []
+      // these is the code for the country regions by using the api below i am doing the different approach
+      //     try{
+      //     // This would need to be implemented based on your API structure
+      //     // For now, we'll use a placeholder
+      //     const result = await RestApi.get(`/api/countries/${countryCode}/regions`)
+      //     if (result?.status === 'success') {
+      //       return result.result || []
+      //     }
+      //   } catch (error) {
+      //     console.error('Error fetching country regions:', error)
+      //   }
+      //   return []
+      // }
+
+      // Import the regions data dynamically to avoid circular dependencies
+      const { CountryRegionData } = await import('@/data/regions')
+
+      // Find the country in the data
+      const countryData = CountryRegionData.find(
+        country =>
+          country[1] === countryCode || // Match by country code
+          country[0].toLowerCase() === countryCode.toLowerCase() // Match by country name
+      )
+
+      if (countryData && countryData[2]) {
+        // Parse the regions string format: "Region1~Code1|Region2~Code2|..."
+        const regionsString = countryData[2]
+        const regions = regionsString.split('|').map(region => {
+          const [name] = region.split('~') // Get the region name before the ~
+          return name
+        })
+        return regions
       }
     } catch (error) {
       console.error('Error fetching country regions:', error)
@@ -712,6 +804,7 @@ const AudienceByFilter = ({
       if (filters.gender.other) selectedGenders.push('other')
 
       console.log('Selected genders:', selectedGenders)
+      console.log('🔍 DEBUG: selectedGenders array:', selectedGenders)
 
       if (selectedGenders.length > 0) {
         users.forEach(user => {
@@ -723,14 +816,20 @@ const AudienceByFilter = ({
 
         console.log('Gender filter matched users:', filteredUserIds.length)
 
-        newFilters.push({
+        const genderFilter = {
           type: 'gender',
           label: `Gender: ${selectedGenders
             .map(g => String(g).charAt(0).toUpperCase() + String(g).slice(1))
             .join(', ')}`,
           value: { values: selectedGenders },
           order: selectedFilters.length + 1
-        })
+        }
+
+        console.log('🔍 DEBUG: Creating gender filter:', genderFilter)
+        console.log('🔍 DEBUG: genderFilter.value:', genderFilter.value)
+        console.log('🔍 DEBUG: genderFilter.value.values:', genderFilter.value.values)
+
+        newFilters.push(genderFilter)
         // Send all selected genders (array) - match backend structure
         criteria.gender = {
           values: selectedGenders
@@ -753,22 +852,25 @@ const AudienceByFilter = ({
       console.log('Editing filter:', editingFilter)
       console.log('New filter values:', newFilters)
 
-      // Remove the old filter and add the new one
-      const updatedFilters = selectedFilters.filter((_, i) => i !== editingFilter.index)
-      const updatedSelectedFilters = [...updatedFilters, ...newFilters]
+      // Create updated filters with preserved order and operation
+      const updatedSelectedFilters = [...selectedFilters]
 
-      // Reorder all filters sequentially after editing
-      const reorderedSelectedFilters = updatedSelectedFilters.map((filter, idx) => ({
-        ...filter,
-        order: idx + 1,
-        operation: idx === 0 ? null : filter.operation // First filter gets null operation
-      }))
+      // Replace the edited filter with new values while preserving order and operation
+      const editedFilterIndex = editingFilter.index
+      const originalFilter = selectedFilters[editedFilterIndex]
+
+      // Update the filter with new values but preserve original order and operation
+      updatedSelectedFilters[editedFilterIndex] = {
+        ...newFilters[0], // Use the new filter values
+        order: originalFilter.order, // Preserve original order
+        operation: originalFilter.operation // Preserve original operation
+      }
 
       // Recalculate combined results by reapplying all filters to users in order
       let combinedUserIds = []
 
-      // Sort filters by their new order to maintain the correct sequence
-      const sortedFilters = [...reorderedSelectedFilters].sort((a, b) => (a.order || 0) - (b.order || 0))
+      // Sort filters by their order to maintain the correct sequence
+      const sortedFilters = [...updatedSelectedFilters].sort((a, b) => (a.order || 0) - (b.order || 0))
 
       sortedFilters.forEach((filter, idx) => {
         // Apply this single filter to get fresh matching user IDs
@@ -804,7 +906,7 @@ const AudienceByFilter = ({
 
       console.log('Final combined user IDs:', combinedUserIds.length)
 
-      setSelectedFilters(reorderedSelectedFilters)
+      setSelectedFilters(updatedSelectedFilters)
 
       // Update matched users
       const matched = users.filter(user => combinedUserIds.includes(user._id))
@@ -816,7 +918,7 @@ const AudienceByFilter = ({
         location: null,
         gender: null
       }
-      reorderedSelectedFilters.forEach(filter => {
+      updatedSelectedFilters.forEach(filter => {
         if (filter.type === 'age' && filter.value) {
           nextCombinedCriteria.ageGroup = { min: filter.value.min, max: filter.value.max }
         }
@@ -828,9 +930,27 @@ const AudienceByFilter = ({
           }
         }
         if (filter.type === 'gender' && filter.value) {
-          const selected = Object.entries(filter.value)
-            .filter(([, isOn]) => Boolean(isOn))
-            .map(([key]) => key)
+          console.log('🔍 DEBUG: Processing gender filter in edit mode:', filter.value)
+          console.log('🔍 DEBUG: filter.value type:', typeof filter.value)
+          console.log('🔍 DEBUG: filter.value.values:', filter.value.values)
+
+          // Handle both old format {male: true, female: false} and new format {values: ['male', 'female']}
+          let selected = []
+          if (filter.value.values && Array.isArray(filter.value.values)) {
+            // New format with values array
+            selected = filter.value.values
+            console.log('🔍 DEBUG: Using new format, selected:', selected)
+          } else {
+            // Old format with boolean properties
+            console.log('🔍 DEBUG: Using old format, Object.entries result:', Object.entries(filter.value))
+            selected = Object.entries(filter.value)
+              .filter(([, isOn]) => Boolean(isOn))
+              .map(([key]) => key)
+            console.log('🔍 DEBUG: Old format selected:', selected)
+          }
+
+          console.log('🔍 DEBUG: Final selected array:', selected)
+
           // Match backend structure with values property
           nextCombinedCriteria.gender =
             selected.length > 0
@@ -840,11 +960,13 @@ const AudienceByFilter = ({
                   operation: filter.operation || null
                 }
               : null
+
+          console.log('🔍 DEBUG: Final gender criteria:', nextCombinedCriteria.gender)
         }
       })
 
       setCombinedCriteria(nextCombinedCriteria)
-      const orderAndOperations = generateOrderAndOperations(reorderedSelectedFilters)
+      const orderAndOperations = generateOrderAndOperations(updatedSelectedFilters)
       onFilterChange(combinedUserIds, nextCombinedCriteria, orderAndOperations)
       closeFilterDialog()
       return
