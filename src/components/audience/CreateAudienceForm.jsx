@@ -1,6 +1,5 @@
 'use client'
 import React, { useEffect, useState, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import AudienceByFilter from './AudienceByFilter'
@@ -15,11 +14,7 @@ import {
   Snackbar,
   Alert,
   Stack,
-  Box,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem
+  Box
 } from '@mui/material'
 
 import UserMultiSelect from './UserMultiSelect'
@@ -80,7 +75,6 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
 
   useEffect(() => {
     if (data) {
-      console.log('edit mode data', data)
       setFormData({
         ...initialFormData,
         audienceName: data.audienceName || '',

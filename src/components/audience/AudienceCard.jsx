@@ -7,21 +7,17 @@ import {
   Delete as DeleteIcon,
   People as PeopleIcon,
   Person as PersonIcon,
-  CalendarToday as CalendarIcon,
-  Public as PublicIcon,
-  Lock as LockIcon
+  CalendarToday as CalendarIcon
 } from '@mui/icons-material'
 import AudienceFallBackCard from './AudienceFallBackCard'
 import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
 import { toast } from 'react-toastify'
 
 const AudienceCard = ({ audiences, onEditAudience, onViewAudience, dynamicCounts = {}, loadingCounts = false }) => {
   const { data: session } = useSession()
-  const router = useRouter()
   const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false)
   const [audienceToDelete, setAudienceToDelete] = useState(null)
   // WebSocket handling moved to parent component (AllAudiencePage)
@@ -35,12 +31,9 @@ const AudienceCard = ({ audiences, onEditAudience, onViewAudience, dynamicCounts
     if (!audienceToDelete) return
 
     try {
-      console.log('Attempting to delete audience:', audienceToDelete._id)
       const result = await RestApi.del(`${API_URLS.v0.USERS_AUDIENCE}?id=${audienceToDelete._id}`)
-      console.log('Delete audience API response:', result)
 
       if (result?.status === 'success') {
-        console.log('Audience deleted successfully')
         // WebSocket will handle real-time updates automatically
         // Close the confirmation dialog
         setConfirmationDialogOpen(false)

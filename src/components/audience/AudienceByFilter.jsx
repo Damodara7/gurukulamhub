@@ -69,9 +69,6 @@ const AudienceByFilter = ({
   const [editingFilter, setEditingFilter] = useState(null)
   const [isEditMode, setIsEditMode] = useState(false)
 
-  console.log('combinedCriteria', combinedCriteria)
-  console.log('initialCriteria', initialCriteria)
-
   const handleClick = event => {
     setAnchorEl(event.currentTarget)
   }
@@ -92,7 +89,6 @@ const AudienceByFilter = ({
 
   // Handle edit filter click
   const handleEditFilter = (filter, index) => {
-    console.log('handleEditFilter called with:', filter, index)
     setEditingFilter({ ...filter, index })
     setIsEditMode(true)
 
@@ -101,13 +97,11 @@ const AudienceByFilter = ({
 
     // Populate the filters state with existing values
     if (filter.type === 'age') {
-      console.log('Setting age filters:', filter.value)
       setFilters(prev => ({
         ...prev,
         age: { min: filter.value.min.toString(), max: filter.value.max.toString() }
       }))
     } else if (filter.type === 'location') {
-      console.log('Setting location filters:', filter.value)
       setFilters(prev => ({
         ...prev,
         location: {
@@ -134,8 +128,6 @@ const AudienceByFilter = ({
         })
       }
     } else if (filter.type === 'gender') {
-      console.log('Setting gender filters:', filter.value)
-
       // Convert gender filter value to the format expected by the filter dialog
       let genderFilter = { male: false, female: false, other: false }
 
