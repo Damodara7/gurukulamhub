@@ -17,6 +17,10 @@ const nextConfig = {
       }
     ]
   },
+  // The use of '*' as an allowed origin is generally not recommended for security reasons,
+  // especially in production, as it allows requests from any origin.
+  // If you intend to allow all origins for development or testing, it is technically valid,
+  // but you should avoid this in production environments.
   allowedDevOrigins: [
     'http://192.168.31.199:3000',
     'http://192.168.31.199',
@@ -30,6 +34,8 @@ const nextConfig = {
     'https://gurukulamhub.up.railway.app',
     'https://gurukulamhub.com',
     'https://willyard-larue-acquiescingly.ngrok-free.dev',
+    // '*' is allowed, but use with caution!
+    '*',
   ],
   reactStrictMode: false,
   experimental: {
