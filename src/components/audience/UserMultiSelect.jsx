@@ -16,7 +16,6 @@ import {
   Typography,
   Tooltip
 } from '@mui/material'
-import { Person as PersonIcon } from '@mui/icons-material'
 
 // Helper functions
 const getInitials = user => {
@@ -37,28 +36,76 @@ const getDisplayName = user => {
   return firstname || lastname || 'No name'
 }
 
-const getLocation = user => {
-  const profile = user?.profile || {}
-  const locationParts = []
+// Helper function to get user chips based on applied filters
+const getUserChips = (user, filterCriteria) => {
+  const chips = []
 
-  if (profile.locality) locationParts.push(profile.locality)
-  if (profile.region) locationParts.push(profile.region)
-  if (profile.country) locationParts.push(profile.country)
+  // Only show age if audience has age filter
+  if (filterCriteria?.ageGroup?.min && filterCriteria?.ageGroup?.max) {
+    const age = user?.profile?.age
+    if (age !== undefined && age !== null) {
+      chips.push({
+        label: `Age: ${age} years`,
+        size: 'small',
+        variant: 'outlined',
+        color: 'primary'
+      })
+    }
+  }
 
-  return locationParts.length > 0 ? locationParts.join(', ') : 'No location'
+  // Only show gender if audience has gender filter
+  if (filterCriteria?.gender) {
+    let genderValues = []
+
+    // Handle both old array format and new object format with values property
+    if (Array.isArray(filterCriteria.gender)) {
+      genderValues = filterCriteria.gender
+    } else if (filterCriteria.gender.values && Array.isArray(filterCriteria.gender.values)) {
+      genderValues = filterCriteria.gender.values
+    } else if (typeof filterCriteria.gender === 'string') {
+      genderValues = [filterCriteria.gender]
+    }
+
+    if (genderValues.length > 0) {
+      const gender = user?.profile?.gender
+      if (gender) {
+        chips.push({
+          label: `Gender: ${gender.charAt(0).toUpperCase() + gender.slice(1)}`,
+          size: 'small',
+          variant: 'outlined',
+          color: 'secondary'
+        })
+      }
+    }
+  }
+
+  // Only show location if audience has location filter
+  if (filterCriteria?.location) {
+    const locationParts = []
+    if (filterCriteria.location.city && user?.profile?.locality) {
+      locationParts.push(user.profile.locality)
+    }
+    if (filterCriteria.location.region && user?.profile?.region) {
+      locationParts.push(user.profile.region)
+    }
+    if (filterCriteria.location.country && user?.profile?.country) {
+      locationParts.push(user.profile.country)
+    }
+
+    if (locationParts.length > 0) {
+      chips.push({
+        label: `Location: ${locationParts.join(', ')}`,
+        size: 'small',
+        variant: 'outlined',
+        color: 'default'
+      })
+    }
+  }
+
+  return chips
 }
 
-const getGender = user => {
-  const gender = user?.profile?.gender
-  return gender ? gender.charAt(0).toUpperCase() + gender.slice(1) : 'No gender'
-}
-
-const getAge = user => {
-  const age = user?.profile?.age
-  return age ? `${age} years` : 'No age'
-}
-
-const UserMultiSelect = ({ users, matchedUserIds = [], hasFilters = false }) => {
+const UserMultiSelect = ({ users, matchedUserIds = [], hasFilters = false, filterCriteria = null }) => {
   const [open, setOpen] = useState(false)
   const [visibleUsers, setVisibleUsers] = useState([])
   const [overflowCount, setOverflowCount] = useState(0)
@@ -324,28 +371,41 @@ const UserMultiSelect = ({ users, matchedUserIds = [], hasFilters = false }) => 
               </Typography>
             </ListItem>
 
-            {matchedUsers.map(user => (
-              <ListItem key={user._id}>
-                <ListItemAvatar>
-                  <Avatar src={user?.image || user?.profile?.image}>{getInitials(user)}</Avatar>
-                </ListItemAvatar>
-                <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-                  <ListItemText primary={getDisplayName(user)} secondary={user.email} />
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      gap: 2,
-                      mt: 1,
-                      flexWrap: 'wrap'
-                    }}
-                  >
-                    <Chip label={getGender(user)} size='small' variant='outlined' sx={{ fontSize: '0.7rem' }} />
-                    <Chip label={getLocation(user)} size='small' variant='outlined' sx={{ fontSize: '0.7rem' }} />
-                    <Chip label={getAge(user)} size='small' variant='outlined' sx={{ fontSize: '0.7rem' }} />
+            {matchedUsers.map(user => {
+              const userChips = getUserChips(user, filterCriteria)
+              return (
+                <ListItem key={user._id}>
+                  <ListItemAvatar>
+                    <Avatar src={user?.image || user?.profile?.image}>{getInitials(user)}</Avatar>
+                  </ListItemAvatar>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                    <ListItemText primary={getDisplayName(user)} secondary={user.email} />
+                    {userChips.length > 0 && (
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          gap: 2,
+                          mt: 1,
+                          flexWrap: 'wrap'
+                        }}
+                      >
+                        {userChips.map((chip, index) => (
+                          <Chip
+                            key={index}
+                            title={chip.title}
+                            label={chip.label}
+                            size={chip.size}
+                            variant={chip.variant}
+                            color={chip.color}
+                            sx={{ fontSize: '0.7rem' }}
+                          />
+                        ))}
+                      </Box>
+                    )}
                   </Box>
-                </Box>
-              </ListItem>
-            ))}
+                </ListItem>
+              )
+            })}
           </List>
         </DialogContent>
       </Dialog>

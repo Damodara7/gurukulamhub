@@ -551,6 +551,7 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
                   users={users}
                   matchedUserIds={matchedUserIds}
                   hasFilters={!!(filterCriteria.ageGroup || filterCriteria.location || filterCriteria.gender)}
+                  filterCriteria={filterCriteria}
                 />
               </Grid>
               <Grid item xs={12} mt={4}>
