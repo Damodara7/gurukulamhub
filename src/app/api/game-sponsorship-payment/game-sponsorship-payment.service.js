@@ -3,7 +3,14 @@ import connectMongo from '@/utils/dbConnect-mongo'
 import Sponsorship from '@/app/api/sponsorship/sponsorship.model'
 import * as GameSponsorshipService from '../game-sponsorship/game-sponsorship.service'
 
-const stripe = Stripe(process.env.STRIPE_SECRET_KEY)
+// Lazy initialization to avoid build-time errors
+let stripe = null
+const getStripe = () => {
+  if (!stripe) {
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '')
+  }
+  return stripe
+}
 
 export async function createPaymentIntent(data) {
   try {
@@ -18,7 +25,7 @@ export async function createPaymentIntent(data) {
     }
 
     // Create payment intent
-    const paymentIntent = await stripe.paymentIntents.create({
+    const paymentIntent = await getStripe().paymentIntents.create({
       amount: sponsorshipAmount * 100, // Convert to cents
       currency: currency.toLowerCase(),
       description: `Game sponsorship for reward.`,

@@ -3,7 +3,14 @@ import SponsorshipPayment from './sponsorship-payment.model'
 import Sponsorship from '../sponsorship/sponsorship.model'
 import Stripe from 'stripe'
 
-const stripe = Stripe(process.env.STRIPE_SECRET_KEY)
+// Lazy initialization to avoid build-time errors
+let stripe = null
+const getStripe = () => {
+  if (!stripe) {
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '')
+  }
+  return stripe
+}
 
 export async function create({ data }) {
   try {
@@ -22,7 +29,7 @@ export async function create({ data }) {
     }
 
     // Use Stripe to process the payment
-    const paymentIntent = await stripe.paymentIntents.create({
+    const paymentIntent = await getStripe().paymentIntents.create({
       amount: sponsorship.sponsorshipAmount * 100 || data.sponsorshipAmount,
       currency: data.currency || 'inr',
       description: `Sponsorship to spread Indian Knowledge System.`,

@@ -12,7 +12,14 @@ export const dynamic = 'force-dynamic'; // Ensure this is a dynamic route
 export const runtime = 'nodejs'; // Specify the runtime environment
 export const fetchCache = 'force-no-store'; // Disable caching
 
-const stripe = Stripe(process.env.STRIPE_SECRET_KEY)
+// Lazy initialization to avoid build-time errors
+let stripe = null
+const getStripe = () => {
+  if (!stripe) {
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '')
+  }
+  return stripe
+}
 
 export async function POST(request) {
   try {
@@ -30,7 +37,7 @@ export async function POST(request) {
     let event
 
     try {
-      event = stripe.webhooks.constructEvent(rawBody, sig, endpointSecret)
+      event = getStripe().webhooks.constructEvent(rawBody, sig, endpointSecret)
     } catch (err) {
       console.error('Webhook error:', err.message)
       return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 })
