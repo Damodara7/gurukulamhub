@@ -1,5 +1,5 @@
-// export const API_BASE_URL = 'http://localhost:3000/api'
-export const API_BASE_URL = 'https://willyard-larue-acquiescingly.ngrok-free.dev/api'
+export const API_BASE_URL = 'http://localhost:3000/api'
+// export const API_BASE_URL = 'https://willyard-larue-acquiescingly.ngrok-free.dev/api'
 
 export const API_URLS = {
   v0: {
@@ -17,6 +17,7 @@ export const API_URLS = {
     ROLE: `${API_BASE_URL}/role`,
     USERS_AUDIENCE: `${API_BASE_URL}/audience`,
     GEO_ROLE: `${API_BASE_URL}/geo-role`,
+    ACCOUNT_TYPE: `${API_BASE_URL}/account-type`,
     USERS_SEND_EMAIL_OTP: `${API_BASE_URL}/email`,
     USERS_VERIFY_EMAIL_OTP: `${API_BASE_URL}/users/verifyemail`,
     USERS_SEND_PHONE_OTP: `${API_BASE_URL}/phone`,
@@ -61,6 +62,7 @@ export const API_URLS = {
     GEO_FEATURE: `${API_BASE_URL}/v1/geo-feature`,
     ROLE: `${API_BASE_URL}/v1/role`,
     GEO_ROLE: `${API_BASE_URL}/v1/geo-role`,
+    ACCOUNT_TYPE: `${API_BASE_URL}/v1/account-type`,
     USERS_SEND_EMAIL_OTP: `${API_BASE_URL}/v1/email`,
     USERS_VERIFY_EMAIL_OTP: `${API_BASE_URL}/v1/users/verifyemail`,
     USERS_SEND_PHONE_OTP: `${API_BASE_URL}/phone`,
