@@ -1,13 +1,24 @@
+'use client'
 import React from 'react'
+import { Box } from '@mui/material'
+import Hero from './sections/Hero'
+import ValueProposition from './sections/ValueProposition'
 import LandingPageQuizData from './LandingPageQuizData'
 import LandingPageGameData from './LandingPageGamedata'
-import { Stack , Box } from '@mui/material'
+import HowItWorks from './sections/HowItWorks'
+import SocialProof from './sections/SocialProof'
+import FinalCTA from './sections/FinalCTA'
 
-function LandingPage() {
+function LandingPage({ isAuthenticated = false }) {
   return (
     <Box>
-      <LandingPageQuizData />
-      <LandingPageGameData />
+      <Hero isAuthenticated={isAuthenticated} />
+      {!isAuthenticated && <ValueProposition />}
+      <LandingPageQuizData isAuthenticated={isAuthenticated} />
+      <LandingPageGameData isAuthenticated={isAuthenticated} />
+      {!isAuthenticated && <HowItWorks />}
+      {!isAuthenticated && <SocialProof />}
+      <FinalCTA isAuthenticated={isAuthenticated} />
     </Box>
   )
 }

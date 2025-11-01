@@ -14,7 +14,7 @@ function WelcomePage() {
       <Grid container spacing={6} sx={{ pt: '40px', pb: '70px' }}>
         {/* Add padding for top and bottom marquees */}
         <Grid item xs={12}>
-          <LandingPage />
+          <LandingPage isAuthenticated={false} />
         </Grid>
       </Grid>
     </Stack>

@@ -9,7 +9,6 @@ import {
   Container,
   Divider,
   Grid,
-  Paper,
   Stack,
   Typography,
   useTheme,
@@ -18,7 +17,8 @@ import {
   Tooltip,
   Button,
   Alert,
-  AlertTitle
+  AlertTitle,
+  alpha
 } from '@mui/material'
 
 import { format } from 'date-fns'
@@ -28,7 +28,6 @@ import Language from '@mui/icons-material/Language'
 import ShareGamePopup from '@components/public-games/all-games/ShareGamePopup'
 import {
   AccessTime,
-  ListAlt,
   LocationOn,
   NotInterested,
   People,
@@ -36,13 +35,13 @@ import {
   PlayCircle,
   SportsEsports,
   Star,
-  PeopleAlt,
   AttachMoney,
   CardGiftcard,
   ContentCopy,
   Share as ShareIcon,
   Group as GroupIcon,
-  Cake as CakeIcon
+  Cake as CakeIcon,
+  EmojiEvents
 } from '@mui/icons-material'
 import VideoAd from '@/views/apps/advertisements/VideoAd/VideoAd'
 import ImagePopup from '@/components/ImagePopup'
@@ -57,6 +56,7 @@ import Leaderboard from '../play-game/Leaderboard'
 import { useSession } from 'next-auth/react'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
+
 const ViewDetails = ({ game }) => {
   const theme = useTheme()
   const [copyTooltip, setCopyTooltip] = useState('Copy PIN')
@@ -98,37 +98,37 @@ const ViewDetails = ({ game }) => {
     setTimeout(() => setCopyTooltip('Copy PIN'), 2000)
   }
 
-  console.log('we are getting game data', game)
-
   // Early return after all hooks
   if (!game) {
     return (
-      <FallBackCard content='Games are not available' path='/public-games' btnText='Back To Public Games' />
+      <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 4 }}>
+        <FallBackCard content='Games are not available' path='/public-games' btnText='Back To Public Games' />
+      </Box>
     )
   }
-  console.log('game data', game)
 
   const getStatusChip = () => {
     const statusConfig = {
-      created: { color: 'default', label: 'Pending', icon: <AccessTime /> },
-      approved: { color: 'info', label: 'Approved', icon: <AccessTime /> },
-      lobby: { color: 'warning', label: 'Lobby', icon: <AccessTime /> },
-      live: { color: 'error', label: 'Live', icon: <PlayCircle /> },
-      completed: { color: 'success', label: 'Completed', icon: <SportsEsports /> },
-      cancelled: { color: 'error', label: 'Cancelled', icon: <CancelIcon /> }
+      created: { color: 'default', label: 'Pending', icon: <AccessTime fontSize="small" /> },
+      approved: { color: 'info', label: 'Approved', icon: <AccessTime fontSize="small" /> },
+      lobby: { color: 'warning', label: 'Lobby', icon: <People fontSize="small" /> },
+      live: { color: 'error', label: 'LIVE', icon: <PlayCircle fontSize="small" /> },
+      completed: { color: 'success', label: 'Completed', icon: <SportsEsports fontSize="small" /> },
+      cancelled: { color: 'error', label: 'Cancelled', icon: <CancelIcon fontSize="small" /> }
     }
 
-    const config = statusConfig[game.status] || statusConfig.default
+    const config = statusConfig[game.status] || statusConfig.created
     return (
       <Chip
         icon={config.icon}
         label={config.label}
-        color={config.color}
-        variant='outlined'
+        size="small"
         sx={{
-          fontWeight: 600,
-          borderWidth: 1.5,
-          px: 1,
+          bgcolor: alpha(theme.palette[config.color].main, 0.1),
+          color: theme.palette[config.color].main,
+          fontWeight: 700,
+          fontSize: '0.75rem',
+          border: `2px solid ${alpha(theme.palette[config.color].main, 0.3)}`,
           '& .MuiChip-icon': {
             color: theme.palette[config.color].main
           }
@@ -138,663 +138,733 @@ const ViewDetails = ({ game }) => {
   }
 
   return (
-    <Container maxWidth='lg' sx={{ py: 4 }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa', pb: 8 }}>
+      {/* Header Section */}
       <Box
         sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', md: 'row' },
-          gap: 3,
-          alignItems: 'flex-start'
+          bgcolor: 'white',
+          pt: { xs: 4, md: 6 },
+          pb: { xs: 4, md: 6 },
+          borderBottom: '1px solid #e8eaed'
         }}
       >
-        {/* Left Column - Main Details will reorder on small screens */}
-        <Box
-          sx={{
-            flex: { md: 2 }, // Takes 2/3 space on desktop
-            width: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 3,
-            order: { xs: 1, md: 1 }
-          }}
-        >
-          <Card sx={{ borderRadius: 2, order: 1, p: { xs: 2, md: 3 } }}>
-            <Stack spacing={{ xs: 2, md: 3 }}>
-              {/* Title and Status */}
-              <Box
-                sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: { xs: 1, md: 2 } }}
-              >
-                <Typography
-                  variant={'h4'}
-                  sx={{
-                    fontSize: { xs: 'medium', md: 'large' }
-                  }}
-                >
-                  {game.title}
-                </Typography>
-                <Stack direction='row' alignItems='center' spacing={{ xs: 2, md: 3 }}>
-                  {getStatusChip()}
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Typography variant='body2' color='text.primary'>
+        <Container maxWidth="lg">
+          <Stack spacing={3}>
+            {/* Title */}
+            <Typography
+              variant="h3"
+              fontWeight={800}
+              sx={{
+                fontSize: { xs: '1.75rem', md: '2.5rem' },
+                color: '#202124',
+                lineHeight: 1.3
+              }}
+            >
+              {game.title}
+            </Typography>
+
+            {/* Status & Actions */}
+            <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
+              {getStatusChip()}
+              
+              <Stack direction="row" spacing={2}>
+                {game.pin && (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      px: 2,
+                      py: 1,
+                      borderRadius: 2,
+                      bgcolor: '#f5f6f7',
+                      border: '1px solid #e8eaed'
+                    }}
+                  >
+                    <Typography variant="body2" fontWeight={600} sx={{ color: '#202124', fontSize: '0.875rem' }}>
                       PIN: {game.pin}
                     </Typography>
-                    <Tooltip placement='top' title={copyTooltip}>
-                      <IconButton onClick={handleCopyPin} size='small' sx={{ p: { xs: 1, md: 2 } }}>
-                        <ContentCopy fontSize='small' />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title='Share game'>
-                      <IconButton
-                        size='small'
-                        onClick={() => setSharePopupOpen(true)}
-                        sx={{
-                          p: { xs: 1, md: 2 },
-                          '&:hover': {
-                            bgcolor: 'action.hover'
-                          }
-                        }}
-                      >
-                        <ShareIcon fontSize='small' />
+                    <Tooltip title={copyTooltip}>
+                      <IconButton onClick={handleCopyPin} size="small" sx={{ p: 0.5 }}>
+                        <ContentCopy sx={{ fontSize: 16 }} />
                       </IconButton>
                     </Tooltip>
                   </Box>
-                </Stack>
-              </Box>
-
-              {isRestricted && (
-                <Alert severity='error' variant='outlined' sx={{ mb: 1 }}>
-                  <AlertTitle sx={{ fontWeight: 700 }}>
-                    {`Restricted to group${game?.groupId?.groupName ? `: ${game.groupId.groupName}` : ''}`}
-                  </AlertTitle>
-                  <Typography variant='body2' sx={{ mb: 0.75 }}>
-                    You are not allowed to register/join this game.
-                  </Typography>
-                  <Typography
-                    variant='h6'
-                    sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
-                  >
-                    <GroupIcon />
-                    Group Filters
-                  </Typography>
-
-                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                    {/* Age Filter */}
-                    {game.groupId?.ageGroup?.min != null && game.groupId?.ageGroup?.max != null && (
-                      <Chip
-                        icon={<CakeIcon sx={{ fontSize: 16 }} />}
-                        label={`Age: ${game.groupId.ageGroup.min}-${game.groupId.ageGroup.max}`}
-                        color='primary'
-                        variant='outlined'
-                        sx={{ mb: 1 }}
-                      />
-                    )}
-
-                    {/* Location Filter */}
-                    {game.groupId?.location &&
-                      (() => {
-                        const locationParts = []
-                        if (game.groupId.location.country) locationParts.push(game.groupId.location.country)
-                        if (game.groupId.location.region) locationParts.push(game.groupId.location.region)
-                        if (game.groupId.location.city) locationParts.push(game.groupId.location.city)
-
-                        return locationParts.length > 0 ? (
-                          <Chip
-                            icon={<LocationOn sx={{ fontSize: 16 }} />}
-                            label={`Location: ${locationParts.join(', ')}`}
-                            color='secondary'
-                            variant='outlined'
-                            sx={{ mb: 1 }}
-                          />
-                        ) : null
-                      })()}
-
-                    {/* Gender Filter */}
-                    {game.groupId?.gender &&
-                      Array.isArray(game.groupId.gender) &&
-                      game.groupId.gender.length > 0 && (
-                        <Chip
-                          icon={<Person sx={{ fontSize: 16 }} />}
-                          label={`Gender: ${game.groupId.gender
-                            .map(g => g.charAt(0).toUpperCase() + g.slice(1))
-                            .join(', ')}`}
-                          color='success'
-                          variant='outlined'
-                          sx={{ mb: 1 }}
-                        />
-                      )}
-
-                    {/* Show message if no filters */}
-                    {(!game.groupId?.ageGroup?.min || !game.groupId?.ageGroup?.max) &&
-                      !game.groupId?.location &&
-                      (!game.groupId?.gender || game.groupId.gender.length === 0) && (
-                        <Typography variant='body2' color='text.secondary' sx={{ fontStyle: 'italic' }}>
-                          No filters applied
-                        </Typography>
-                      )}
-                  </Box>
-                </Alert>
-              )}
-
-              <Stack>
-                {game.promotionalVideoUrl && (
-                  <Card sx={{ borderRadius: 2, overflow: 'hidden', mb: 3 }}>
-                    <Box sx={{ position: 'relative', pt: '56.25%' }}>
-                      <ReactPlayer
-                        url={game.promotionalVideoUrl}
-                        width='100%'
-                        height='100%'
-                        style={{ position: 'absolute', top: 0, left: 0 }}
-                        controls
-                        playing={false}
-                      />
-                    </Box>
-                  </Card>
                 )}
-              </Stack>
-            </Stack>
-            <ShareGamePopup open={sharePopupOpen} onClose={() => setSharePopupOpen(false)} game={game} />
-          </Card>
-
-          {/* Quiz Details */}
-          <Card sx={{ borderRadius: 2, p: 3, order: { md: 2 }, display: { xs: 'none', md: 'block' } }}>
-            <CardContent>
-              {/* Main Game Title Banner */} {/* Quiz Language */}
-              <Box
-                sx={{
-                  position: 'relative',
-                  textAlign: 'center',
-                  mt: -7,
-                  mb: 1,
-                  p: 2,
-                  borderRadius: 1
-                }}
-              >
-                <Typography variant='h4' fontWeight={700} color='primary.contrastText'>
-                  Game on the Quiz
-                </Typography>
-                <Box
+                
+                <Button
+                  variant="outlined"
+                  startIcon={<ShareIcon />}
+                  onClick={() => setSharePopupOpen(true)}
                   sx={{
-                    position: 'relative',
-                    width: '100%',
-                    mt: 1
+                    textTransform: 'none',
+                    fontWeight: 600
                   }}
                 >
-                  <Typography
-                    variant='h5'
-                    fontWeight={600}
-                    sx={{
-                      display: 'inline-block',
-                      textAlign: 'center',
-                      width: '100%'
-                    }}
-                  >
-                    {game?.quiz?.title || 'Quiz Title'}
-                  </Typography>
-                  <Chip
-                    label={game?.quiz?.language?.name || 'Not specified'}
-                    variant='outlined'
-                    color='info'
-                    icon={<Language />}
-                    sx={{
-                      position: 'absolute',
-                      right: 0,
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      fontWeight: 500,
-                      borderWidth: 2,
-                      '& .MuiChip-icon': {
-                        color: 'info.main'
-                      }
-                    }}
-                  />
-                </Box>
-              </Box>
-              <Stack spacing={3}>
-                {/* Quiz Details */}
-                <Typography variant='h6' fontWeight={600}>
-                  Details
-                </Typography>
-                <Typography>{game?.quiz?.details || 'No details provided'}</Typography>
+                  Share
+                </Button>
               </Stack>
-            </CardContent>
-            <Grid item xs={12}>
-              <ChevronToggleComponent
-                heading={'Course Links:'}
-                minimizedSubHeading={'Click the chevron to view course links'}
-              >
-                {game?.quiz?.courseLinks?.length > 0 ? (
-                  <Box className='flex flex-col gap-4'>
-                    {game?.quiz?.courseLinks?.map((link, index) => (
-                      <Box key={index} className='flex flex-col gap-1 items-start'>
-                        <Box className='flex flex-col gap-1 items-center'>
-                          <VideoAd url={link?.link || ''} showPause autoPlay={false} />
-                          <ImagePopup imageUrl={link?.link || ''} mediaType={link.mediaType} />
-                        </Box>
-                      </Box>
-                    ))}
-                  </Box>
-                ) : (
-                  <Typography color='error'>No course links exist.</Typography>
-                )}
-              </ChevronToggleComponent>
-            </Grid>
-            <Grid item xs={12}>
-              <ChevronToggleComponent
-                heading={'Documents:'}
-                minimizedSubHeading={'Click the chevron to view documents'}
-              >
-                {game?.quiz?.documents?.length > 0 ? (
-                  game?.quiz?.documents?.map((document, index) => (
-                    <Box key={index} display='flex' alignItems='center' gap={2} mb={1}>
-                      <Typography variant='body2'>{`Document ${index + 1}: ${document?.description}`}</Typography>
-                      <Link href={document?.document || ''} target='_blank' rel='noopener noreferrer'>
-                        <Typography color='primary'>View Document</Typography>
-                      </Link>
-                    </Box>
-                  ))
-                ) : (
-                  <Typography color='error'>No documents exist.</Typography>
-                )}
-              </ChevronToggleComponent>
-            </Grid>
-          </Card>
-        </Box>
+            </Stack>
 
-        {/* Right Column - Additional Info */}
-        <Box
-          sx={{
-            flex: { md: 1 },
-            width: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 3,
-            order: { xs: 2, md: 2 }
-          }}
-        >
-          <Card sx={{ position: { md: 'sticky' }, p: 3, top: 20, borderRadius: 2 }}>
-            <CardContent>
-              <Stack spacing={3}>
-                {/* Location */}
-                {game?.location && (
-                  <>
-                    <Typography variant='h6' fontWeight={600}>
-                      Location
-                    </Typography>
-                    <Stack spacing={1}>
-                      <Stack direction='row' alignItems='center' spacing={1}>
-                        <LocationOn color='primary' />
-                        <Typography variant='body1'>
-                          {[game?.location?.city, game?.location?.region, game?.location?.country]
-                            .filter(Boolean)
-                            .join(', ') || 'Not specified'}
-                        </Typography>
-                      </Stack>
-                    </Stack>
-                    <Divider />
-                  </>
-                )}
-                <Stack spacing={2}>
-                  {/* Start Time */}
-                  <Box display='flex' alignItems='center'>
-                    <Typography variant='subtitle2' color='text.secondary' sx={{ width: 130 }}>
-                      Start Time:
-                    </Typography>
-                    <Box display='flex' alignItems='flex-start' gap={1} sx={{ minWidth: 170 }}>
-                      <AccessTime color='primary' fontSize='small' />
-                      <Typography variant='body1' sx={{ fontSize: 'small' }}>
-                        {format(new Date(game?.startTime), 'MMM d, yyyy h:mm a')}
-                      </Typography>
-                    </Box>
-                  </Box>
-
-                  {/* Duration */}
-                  <Box display='flex' alignItems='flex-start'>
-                    <Typography variant='subtitle2' color='text.secondary' sx={{ width: 130 }}>
-                      Duration:
-                    </Typography>
-                    <Box display='flex' alignItems='flex-start' gap={1} sx={{ minWidth: 170 }}>
-                      <AccessTime color='primary' fontSize='small' />
-                      <Typography variant='body1' sx={{ fontSize: 'small' }}>
-                        {game?.forwardType === 'admin' && game?.status !== 'completed'
-                          ? 'Decides by Question Forwarding Admin'
-                          : `${Math.floor(game?.duration / 60)} minutes`}
-                      </Typography>
-                    </Box>
-                  </Box>
-
-                  {/* Registration */}
-                  <Box display='flex' alignItems='center'>
-                    <Typography variant='subtitle2' color='text.secondary' sx={{ width: 130 }}>
-                      Registration End Time:
-                    </Typography>
-                    <Box display='flex' alignItems='center' gap={1} sx={{ minWidth: 170 }}>
-                      {game?.requireRegistration ? (
-                        <Typography variant='body1' sx={{ fontSize: 'small' }}>
-                          {game?.requireRegistration && (
-                            <Box display='flex' alignItems='flex-start' gap={1} sx={{ minWidth: 170 }}>
-                              <AccessTime color='primary' fontSize='small' />
-                              <Typography variant='body1' sx={{ fontSize: 'small' }}>
-                                {format(new Date(game?.registrationEndTime), 'MMM d, yyyy h:mm a')}
-                              </Typography>
-                            </Box>
-                          )}
-                        </Typography>
-                      ) : (
-                        <>
-                          <NotInterested color='secondary' fontSize='small' /> {/* Icon for no end time */}
-                          <Typography variant='body1' sx={{ fontSize: 'small', color: 'text.secondary' }}>
-                            No registration required
-                          </Typography>
-                        </>
-                      )}
-                    </Box>
-                  </Box>
-
-                  {/* Max Players */}
-                  <Box display='flex' alignItems='center'>
-                    <Typography variant='subtitle2' color='text.secondary' sx={{ width: 130 }}>
-                      Registered Players:
-                    </Typography>
-                    <Box display='flex' alignItems='flex-start' gap={1} sx={{ minWidth: 170 }}>
-                      <People color='primary' />
-                      <Typography variant='body1' sx={{ fontSize: 'small' }}>
-                        {game?.registeredUsers?.length} / {game?.maxPlayers || 'Unlimited'}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Stack>
-                <Divider />
-
-                <Stack spacing={3}>
-                  {/* Description */}
-                  <Box>
-                    <Typography variant='h6' gutterBottom fontWeight={600}>
-                      Description
-                    </Typography>
-                    <Typography variant='body1' color='text.secondary'>
-                      {game?.description}
-                    </Typography>
-                  </Box>
-                  <Divider />
-                  {/* Creator Info */}
-                  <Box mt={3}>
-                    <Typography variant='h6' fontWeight={600}>
-                      Created By
-                    </Typography>
-                    <Stack direction='row' alignItems='center' spacing={1}>
-                      <Person color='primary' />
-                      <Typography variant='body1'>{game?.creatorEmail}</Typography>
-                    </Stack>
-                    <Typography variant='caption' color='text.secondary'>
-                      Created on {format(new Date(game?.createdAt), 'MMM d, yyyy')}
-                    </Typography>
-                  </Box>
-                </Stack>
-                <Divider />
-                {/* Rewards - New Detailed Card Layout */}
-                <Box mt={3}>
-                  <Box display='flex' alignItems='center' mb={2}>
-                    <Typography variant='h6' fontWeight={600} mr={1}>
-                      Rewards
-                    </Typography>
-                    <Star color='warning' fontSize='medium' />
-                  </Box>
-                  {game?.rewards?.length > 0 ? (
-                    <Stack spacing={2}>
-                      {game.rewards
-                        ?.sort((a, b) => a.position - b.position)
-                        ?.map(reward => (
-                          <Card
-                            key={reward.position}
-                            sx={{
-                              borderRadius: 2,
-                              boxShadow: 2,
-                              p: { xs: 2, md: 3 },
-                              bgcolor: 'background.paper',
-                              width: '100%'
-                            }}
-                          >
-                            <Box
-                              sx={{
-                                display: 'flex',
-                                flexDirection: { xs: 'column', sm: 'row' },
-                                alignItems: { xs: 'flex-start', sm: 'center' },
-                                gap: 2,
-                                width: '100%'
-                              }}
-                            >
-                              <Avatar
-                                sx={{
-                                  bgcolor: positionColors[reward.position],
-                                  width: 40,
-                                  height: 40,
-                                  fontSize: '1.1rem',
-                                  fontWeight: 'bold',
-                                  mr: { sm: 2 },
-                                  mb: { xs: 1, sm: 0 }
-                                }}
-                              >
-                                {getOrdinalSuffix(reward.position)}
-                              </Avatar>
-                              <Box sx={{ flex: 1, minWidth: 0 }}>
-                                <Typography variant='subtitle1' fontWeight={600}>
-                                  {reward.numberOfWinnersForThisPosition} Winner
-                                  {reward.numberOfWinnersForThisPosition !== 1 ? 's' : ''}
-                                </Typography>
-                                {reward.sponsors[0]?.rewardDetails?.rewardType === 'cash' ? (
-                                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>
-                                    <AttachMoney fontSize='small' color='success' />
-                                    <Typography variant='body2'>
-                                      Cash Prize: {(() => {
-                                        const totalValue = reward.sponsors.reduce(
-                                          (sum, sponsor) => sum + (sponsor.rewardDetails?.rewardValue || 0),
-                                          0
-                                        );
-                                        return totalValue;
-                                      })()}{' '}
-                                      {reward.sponsors[0]?.rewardDetails?.currency || 'INR'} (Total: {reward.rewardValuePerWinner} per winner)
-                                    </Typography>
-                                  </Box>
-                                ) : reward.sponsors[0]?.rewardDetails?.rewardType === 'physicalGift' ? (
-                                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>
-                                      <CardGiftcard fontSize='small' color='warning' />
-                                      <Typography variant='body2'>
-                                        Physical Gift: {reward.sponsors[0]?.rewardDetails?.nonCashReward}
-                                      </Typography>
-                                    </Box>
-                                    <Typography variant='body2' color='text.secondary' sx={{ ml: 3 }}>
-                                      Total Items: {(() => {
-                                        const totalItems = reward.sponsors.reduce(
-                                          (sum, sponsor) => sum + (sponsor.rewardDetails?.numberOfNonCashRewards || 0),
-                                          0
-                                        );
-                                        return totalItems;
-                                      })()} (Worth: {reward.sponsors[0]?.rewardDetails?.rewardValuePerItem ||
-                                        reward?.rewardValuePerWinner}{' '}
-                                      {reward.sponsors[0]?.rewardDetails?.currency || 'INR'} per item)
-                                    </Typography>
-                                  </Box>
-                                ) : (
-                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                    <Star fontSize='small' color='info' />
-                                    <Typography variant='body2'>Custom Reward</Typography>
-                                  </Box>
-                                )}
-                              </Box>
-                              {/* Toggle Sponsors */}
-                              {reward.sponsors?.length > 0 && (
-                                <IconButton
-                                  onClick={() =>
-                                    setExpandedReward(expandedReward === reward.position ? null : reward.position)
-                                  }
-                                  size='small'
-                                  sx={{ alignSelf: { xs: 'flex-end', sm: 'center' } }}
-                                  aria-label={expandedReward === reward.position ? 'Hide sponsors' : 'Show sponsors'}
-                                >
-                                  {expandedReward === reward.position ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                                </IconButton>
-                              )}
-                            </Box>
-                            {/* Sponsors Details (Collapsible) */}
-                            {expandedReward === reward.position && reward.sponsors?.length > 0 && (
-                              <Box mt={2} width='100%'>
-                                <Typography variant='subtitle2' fontWeight={500} mb={1}>
-                                  Sponsors
-                                </Typography>
-                                <RewardSponsorCard sponsors={reward.sponsors} />
-                              </Box>
-                            )}
-                          </Card>
-                        ))}
-                    </Stack>
-                  ) : (
-                    <Typography variant='body2' color='text.secondary'>
-                      No rewards
-                    </Typography>
-                  )}
-                </Box>
-                <Divider />
-              </Stack>
-              {/* Tags */}
-              {game?.tags?.length > 0 && (
-                <>
-                  <Typography mt={1} variant='h6' fontWeight={600}>
-                    Tags
-                  </Typography>
-                  <Box mt={1} display='flex' flexWrap='wrap' alignItems='center'>
-                    {game.tags.map(tag => (
-                      <Chip
-                        key={tag}
-                        label={tag}
-                        size='small'
-                        color='primary'
-                        variant='outlined'
-                        sx={{ marginRight: 1, marginBottom: 1, marginTop: 1 }}
-                      />
-                    ))}
-                  </Box>
-                </>
-              )}
-            </CardContent>
-          </Card>
-          <Card
-            sx={{
-              p: 3,
-              display: { md: 'none' },
-              borderRadius: 2
-            }}
-          >
-            <CardContent>
-              <Box
+            {/* Description */}
+            {game?.description && (
+              <Typography
+                variant="body1"
                 sx={{
-                  position: 'relative',
-                  textAlign: 'center',
-                  mt: -7,
-                  mb: 1,
-                  p: 2,
-                  borderRadius: 1
+                  fontSize: '1.05rem',
+                  color: '#5f6368',
+                  lineHeight: 1.7,
+                  maxWidth: '900px'
                 }}
               >
-                <Typography variant='h4' fontWeight={700} color='primary.contrastText'>
-                  Game on the Quiz
-                </Typography>
-                <Box sx={{ position: 'relative', width: '100%', mt: 1 }}>
-                  <Typography
-                    variant='h5'
-                    fontWeight={600}
+                {game.description}
+              </Typography>
+            )}
+
+            {/* Quick Info Bar */}
+            <Stack direction="row" spacing={4} flexWrap="wrap" sx={{ pt: 1 }}>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Box
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 1.5,
+                    bgcolor: '#e8f4fd',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <AccessTime sx={{ fontSize: 18, color: '#1976d2' }} />
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: '#5f6368', fontSize: '0.7rem' }}>
+                    STARTS
+                  </Typography>
+                  <Typography variant="body2" fontWeight={600} sx={{ color: '#202124', fontSize: '0.875rem' }}>
+                    {format(new Date(game.startTime), 'MMM d, h:mm a')}
+                  </Typography>
+                </Box>
+              </Stack>
+              
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Box
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 1.5,
+                    bgcolor: '#f3e5f5',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <People sx={{ fontSize: 18, color: '#7b1fa2' }} />
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: '#5f6368', fontSize: '0.7rem' }}>
+                    PLAYERS
+                  </Typography>
+                  <Typography variant="body2" fontWeight={600} sx={{ color: '#202124', fontSize: '0.875rem' }}>
+                    {game?.registeredUsers?.length || 0} / {game?.maxPlayers || '∞'}
+                  </Typography>
+                </Box>
+              </Stack>
+              
+              {game.location && (
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <Box
                     sx={{
-                      display: 'inline-block',
-                      textAlign: 'center',
-                      width: '100%'
+                      width: 32,
+                      height: 32,
+                      borderRadius: 1.5,
+                      bgcolor: '#fff3e0',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
                     }}
                   >
-                    {game?.quiz?.title || 'Quiz Title'}
-                  </Typography>
-                  <Chip
-                    label={game?.quiz?.language?.name || 'Not specified'}
-                    variant='outlined'
-                    color='info'
-                    icon={<Language />}
-                    sx={{
-                      position: 'absolute',
-                      right: 0,
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      fontWeight: 500,
-                      borderWidth: 2,
-                      '& .MuiChip-icon': {
-                        color: 'info.main'
-                      }
-                    }}
-                  />
-                </Box>
-              </Box>
-              <Stack spacing={3}>
-                {/* Quiz Details */}
-                <Typography variant='h6' fontWeight={600}>
-                  Details
-                </Typography>
-                <Typography>{game?.quiz?.details || 'No details provided'}</Typography>
-              </Stack>
-            </CardContent>
-            <Grid item xs={12}>
-              <ChevronToggleComponent
-                heading={'Course Links:'}
-                minimizedSubHeading={'Click the chevron to view course links'}
-              >
-                {game?.quiz?.courseLinks?.length > 0 ? (
-                  <Box className='flex flex-col gap-4'>
-                    {game?.quiz?.courseLinks?.map((link, index) => (
-                      <Box key={index} className='flex flex-col gap-1 items-start'>
-                        <Box className='flex flex-col gap-1 items-center'>
-                          <VideoAd url={link?.link || ''} showPause autoPlay={false} />
-                          <ImagePopup imageUrl={link?.link || ''} mediaType={link.mediaType} />
-                        </Box>
-                      </Box>
-                    ))}
+                    <LocationOn sx={{ fontSize: 18, color: '#f57c00' }} />
                   </Box>
-                ) : (
-                  <Typography color='error'>No course links exist.</Typography>
-                )}
-              </ChevronToggleComponent>
-            </Grid>
-            <Grid item xs={12}>
-              <ChevronToggleComponent
-                heading={'Documents:'}
-                minimizedSubHeading={'Click the chevron to view documents'}
-              >
-                {game?.quiz?.documents?.length > 0 ? (
-                  game?.quiz?.documents?.map((document, index) => (
-                    <Box key={index} display='flex' alignItems='center' gap={2} mb={1}>
-                      <Typography variant='body2'>{`Document ${index + 1}: ${document?.description}`}</Typography>
-                      <Link href={document?.document || ''} target='_blank' rel='noopener noreferrer'>
-                        <Typography color='primary'>View Document</Typography>
-                      </Link>
-                    </Box>
-                  ))
-                ) : (
-                  <Typography color='error'>No documents exist.</Typography>
-                )}
-              </ChevronToggleComponent>
-            </Grid>
-          </Card>
-        </Box>
+                  <Box>
+                    <Typography variant="caption" sx={{ color: '#5f6368', fontSize: '0.7rem' }}>
+                      LOCATION
+                    </Typography>
+                    <Typography variant="body2" fontWeight={600} sx={{ color: '#202124', fontSize: '0.875rem' }}>
+                      {game?.location?.city || game?.location?.region || game?.location?.country || 'Anywhere'}
+                    </Typography>
+                  </Box>
+                </Stack>
+              )}
+            </Stack>
+          </Stack>
+        </Container>
       </Box>
-      {game.status === 'completed' && (
-        <Card sx={{ mt: 3, p: { xs: 2, md: 3 }, borderRadius: 3, boxShadow: 2 }}>
-          <Typography textAlign='center' variant='h3' color='error' sx={{ fontWeight: 700 }}>
-            Game Ended!
-          </Typography>
 
-          {game && <Leaderboard width='100%' game={game} />}
-        </Card>
-      )}
-    </Container>
+      <Container maxWidth="lg" sx={{ mt: 4 }}>
+        {/* Group Restriction Alert */}
+        {isRestricted && (
+          <Alert
+            severity="warning"
+            variant="outlined"
+            sx={{
+              mb: 4,
+              borderRadius: 3,
+              '& .MuiAlert-message': { width: '100%' }
+            }}
+          >
+            <AlertTitle sx={{ fontWeight: 700, fontSize: '1rem', mb: 1 }}>
+              Restricted to Group {game?.groupId?.groupName && `- ${game.groupId.groupName}`}
+            </AlertTitle>
+            <Typography variant="body2" sx={{ mb: 2 }}>
+              You are not allowed to register or join this game.
+            </Typography>
+            
+            <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <GroupIcon fontSize="small" />
+              Group Requirements
+            </Typography>
+
+            <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
+              {game.groupId?.ageGroup?.min != null && game.groupId?.ageGroup?.max != null && (
+                <Chip
+                  icon={<CakeIcon sx={{ fontSize: 14 }} />}
+                  label={`Age: ${game.groupId.ageGroup.min}-${game.groupId.ageGroup.max}`}
+                  size="small"
+                  sx={{
+                    bgcolor: '#e8f4fd',
+                    color: '#0c5a9e',
+                    border: 'none',
+                    fontWeight: 600
+                  }}
+                />
+              )}
+              
+              {game.groupId?.location &&
+                (() => {
+                  const locationParts = []
+                  if (game.groupId.location.country) locationParts.push(game.groupId.location.country)
+                  if (game.groupId.location.region) locationParts.push(game.groupId.location.region)
+                  if (game.groupId.location.city) locationParts.push(game.groupId.location.city)
+                  
+                  return locationParts.length > 0 ? (
+                    <Chip
+                      icon={<LocationOn sx={{ fontSize: 14 }} />}
+                      label={locationParts.join(', ')}
+                      size="small"
+                      sx={{
+                        bgcolor: '#fff3e0',
+                        color: '#e65100',
+                        border: 'none',
+                        fontWeight: 600
+                      }}
+                    />
+                  ) : null
+                })()}
+              
+              {game.groupId?.gender && Array.isArray(game.groupId.gender) && game.groupId.gender.length > 0 && (
+                <Chip
+                  icon={<Person sx={{ fontSize: 14 }} />}
+                  label={game.groupId.gender.map(g => g.charAt(0).toUpperCase() + g.slice(1)).join(', ')}
+                  size="small"
+                  sx={{
+                    bgcolor: '#e6f7ed',
+                    color: '#0d7d3f',
+                    border: 'none',
+                    fontWeight: 600
+                  }}
+                />
+              )}
+            </Stack>
+          </Alert>
+        )}
+
+        <Grid container spacing={4}>
+          {/* Left Column */}
+          <Grid item xs={12} md={8}>
+            <Stack spacing={4}>
+              {/* Promotional Video */}
+              {game.promotionalVideoUrl && (
+                <Card
+                  sx={{
+                    borderRadius: 4,
+                    overflow: 'hidden',
+                    bgcolor: 'white',
+                    border: '1px solid #e8eaed',
+                    boxShadow: '0 2px 12px rgba(0,0,0,0.04)'
+                  }}
+                >
+                  <Box sx={{ position: 'relative', pt: '56.25%', bgcolor: '#000' }}>
+                    <ReactPlayer
+                      url={game.promotionalVideoUrl}
+                      width='100%'
+                      height='100%'
+                      style={{ position: 'absolute', top: 0, left: 0 }}
+                      controls
+                      playing={false}
+                    />
+                  </Box>
+                </Card>
+              )}
+
+              {/* Quiz Details Card */}
+              <Card
+                sx={{
+                  borderRadius: 4,
+                  bgcolor: 'white',
+                  border: '1px solid #e8eaed',
+                  boxShadow: '0 2px 12px rgba(0,0,0,0.04)'
+                }}
+              >
+                <CardContent sx={{ p: { xs: 3, md: 4 } }}>
+                  <Stack spacing={3}>
+                    {/* Quiz Header */}
+                    <Box>
+                      <Stack direction="row" justifyContent="space-between" alignItems="flex-start" flexWrap="wrap" gap={2}>
+                        <Box>
+                          <Typography variant="overline" sx={{ color: theme.palette.primary.main, fontWeight: 700, letterSpacing: 1.5, fontSize: '0.7rem' }}>
+                            QUIZ INFORMATION
+                          </Typography>
+                          <Typography variant="h5" fontWeight={700} sx={{ color: '#202124', mt: 0.5 }}>
+                            {game?.quiz?.title || 'Quiz Title'}
+                          </Typography>
+                        </Box>
+                        <Chip
+                          icon={<Language />}
+                          label={game?.quiz?.language?.name || 'Not specified'}
+                          sx={{
+                            bgcolor: '#e8f4fd',
+                            color: '#0c5a9e',
+                            fontWeight: 600,
+                            border: 'none',
+                            '& .MuiChip-icon': { color: '#0c5a9e' }
+                          }}
+                        />
+                      </Stack>
+                    </Box>
+
+                    <Divider sx={{ opacity: 0.3 }} />
+
+                    {/* Description */}
+                    <Box>
+                      <Typography variant="subtitle1" fontWeight={700} gutterBottom sx={{ color: '#202124' }}>
+                        Description
+                      </Typography>
+                      <Typography sx={{ color: '#5f6368', lineHeight: 1.7, fontSize: '0.95rem' }}>
+                        {game?.quiz?.details || 'No details provided'}
+                      </Typography>
+                    </Box>
+
+                    {/* Course Links */}
+                    {game?.quiz?.courseLinks?.length > 0 && (
+                      <>
+                        <Divider sx={{ opacity: 0.3 }} />
+                        <Box>
+                          <Typography variant="subtitle1" fontWeight={700} gutterBottom sx={{ color: '#202124' }}>
+                            Course Links
+                          </Typography>
+                          <Stack spacing={2}>
+                            {game.quiz.courseLinks.map((link, index) => (
+                              <Box key={index}>
+                                <VideoAd url={link?.link || ''} showPause autoPlay={false} />
+                                <ImagePopup imageUrl={link?.link || ''} mediaType={link.mediaType} />
+                              </Box>
+                            ))}
+                          </Stack>
+                        </Box>
+                      </>
+                    )}
+
+                    {/* Documents */}
+                    {game?.quiz?.documents?.length > 0 && (
+                      <>
+                        <Divider sx={{ opacity: 0.3 }} />
+                        <Box>
+                          <Typography variant="subtitle1" fontWeight={700} gutterBottom sx={{ color: '#202124' }}>
+                            Documents
+                          </Typography>
+                          <Stack spacing={1.5}>
+                            {game.quiz.documents.map((document, index) => (
+                              <Box 
+                                key={index} 
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  p: 2,
+                                  borderRadius: 2,
+                                  bgcolor: '#fafbfc',
+                                  border: '1px solid #e8eaed'
+                                }}
+                              >
+                                <Typography variant="body2" sx={{ color: '#202124', flex: 1 }}>
+                                  {`Document ${index + 1}: ${document.description}`}
+                                </Typography>
+                                <Button
+                                  component={Link}
+                                  href={document?.document || ''}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  variant="outlined"
+                                  size="small"
+                                  sx={{ textTransform: 'none', fontWeight: 600 }}
+                                >
+                                  View
+                                </Button>
+                              </Box>
+                            ))}
+                          </Stack>
+                        </Box>
+                      </>
+                    )}
+                  </Stack>
+                </CardContent>
+              </Card>
+            </Stack>
+          </Grid>
+
+          {/* Right Sidebar */}
+          <Grid item xs={12} md={4}>
+            <Stack spacing={3} sx={{ position: { md: 'sticky' }, top: 20 }}>
+              {/* Schedule Card */}
+              <Card
+                sx={{
+                  borderRadius: 4,
+                  bgcolor: 'white',
+                  border: '1px solid #e8eaed',
+                  boxShadow: '0 2px 12px rgba(0,0,0,0.04)'
+                }}
+              >
+                <CardContent sx={{ p: 3 }}>
+                  <Stack spacing={3}>
+                    <Typography variant="h6" fontWeight={700} sx={{ color: '#202124' }}>
+                      Schedule & Details
+                    </Typography>
+
+                    <Stack spacing={2.5}>
+                      {/* Start Time */}
+                      <Stack direction="row" alignItems="center" spacing={2}>
+                        <Box
+                          sx={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: 2,
+                            bgcolor: '#e8f4fd',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          <AccessTime sx={{ fontSize: 20, color: '#1976d2' }} />
+                        </Box>
+                        <Box>
+                          <Typography variant="caption" sx={{ color: '#5f6368', fontSize: '0.7rem' }}>
+                            Starts
+                          </Typography>
+                          <Typography variant="body2" fontWeight={600} sx={{ color: '#202124' }}>
+                            {format(new Date(game.startTime), 'MMM d, yyyy')}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: '#5f6368' }}>
+                            {format(new Date(game.startTime), 'h:mm a')}
+                          </Typography>
+                        </Box>
+                      </Stack>
+
+                      {/* Duration */}
+                      <Stack direction="row" alignItems="center" spacing={2}>
+                        <Box
+                          sx={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: 2,
+                            bgcolor: '#e6f7ed',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          <AccessTime sx={{ fontSize: 20, color: '#2e7d32' }} />
+                        </Box>
+                        <Box>
+                          <Typography variant="caption" sx={{ color: '#5f6368', fontSize: '0.7rem' }}>
+                            Duration
+                          </Typography>
+                          <Typography variant="body2" fontWeight={600} sx={{ color: '#202124' }}>
+                            {game?.forwardType === 'admin' && game?.status !== 'completed'
+                              ? 'Admin controlled'
+                              : `${Math.floor(game?.duration / 60)} minutes`}
+                          </Typography>
+                        </Box>
+                      </Stack>
+
+                      {/* Players */}
+                      <Stack direction="row" alignItems="center" spacing={2}>
+                        <Box
+                          sx={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: 2,
+                            bgcolor: '#f3e5f5',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          <People sx={{ fontSize: 20, color: '#7b1fa2' }} />
+                        </Box>
+                        <Box>
+                          <Typography variant="caption" sx={{ color: '#5f6368', fontSize: '0.7rem' }}>
+                            Registered
+                          </Typography>
+                          <Typography variant="body2" fontWeight={600} sx={{ color: '#202124' }}>
+                            {game?.registeredUsers?.length || 0} / {game?.maxPlayers || '∞'}
+                          </Typography>
+                        </Box>
+                      </Stack>
+
+                      {/* Registration Deadline */}
+                      {game?.requireRegistration && (
+                        <Stack direction="row" alignItems="center" spacing={2}>
+                          <Box
+                            sx={{
+                              width: 40,
+                              height: 40,
+                              borderRadius: 2,
+                              bgcolor: '#fff3e0',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            <AccessTime sx={{ fontSize: 20, color: '#f57c00' }} />
+                          </Box>
+                          <Box>
+                            <Typography variant="caption" sx={{ color: '#5f6368', fontSize: '0.7rem' }}>
+                              Registration Closes
+                            </Typography>
+                            <Typography variant="body2" fontWeight={600} sx={{ color: '#202124' }}>
+                              {format(new Date(game.registrationEndTime), 'MMM d, h:mm a')}
+                            </Typography>
+                          </Box>
+                        </Stack>
+                      )}
+                    </Stack>
+                  </Stack>
+                </CardContent>
+              </Card>
+
+              {/* Organizer Card */}
+              <Card
+                sx={{
+                  borderRadius: 4,
+                  bgcolor: 'white',
+                  border: '1px solid #e8eaed',
+                  boxShadow: '0 2px 12px rgba(0,0,0,0.04)'
+                }}
+              >
+                <CardContent sx={{ p: 3 }}>
+                  <Stack spacing={2}>
+                    <Typography variant="h6" fontWeight={700} sx={{ color: '#202124' }}>
+                      Organizer
+                    </Typography>
+                    
+                    <Stack direction="row" alignItems="center" spacing={2}>
+                      <Avatar
+                        sx={{
+                          width: 48,
+                          height: 48,
+                          bgcolor: theme.palette.primary.main,
+                          fontWeight: 700,
+                          fontSize: '1.25rem'
+                        }}
+                      >
+                        {game?.creatorEmail?.charAt(0).toUpperCase()}
+                      </Avatar>
+                      <Box>
+                        <Typography variant="body1" fontWeight={600} sx={{ color: '#202124' }}>
+                          {game?.creatorEmail}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: '#5f6368' }}>
+                          Created on {format(new Date(game?.createdAt), 'MMM d, yyyy')}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </Stack>
+                </CardContent>
+              </Card>
+
+              {/* Rewards Card */}
+              {game?.rewards?.length > 0 && (
+                <Card
+                  sx={{
+                    borderRadius: 4,
+                    bgcolor: 'white',
+                    border: '1px solid #e8eaed',
+                    boxShadow: '0 2px 12px rgba(0,0,0,0.04)'
+                  }}
+                >
+                  <CardContent sx={{ p: 3 }}>
+                    <Stack spacing={2}>
+                      <Typography variant="h6" fontWeight={700} sx={{ color: '#202124', display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <EmojiEvents sx={{ fontSize: 22, color: '#ffa000' }} /> Rewards
+                      </Typography>
+
+                      <Stack spacing={2}>
+                        {game.rewards
+                          .sort((a, b) => a.position - b.position)
+                          .map(reward => (
+                            <Box
+                              key={reward.position}
+                              sx={{
+                                p: 2,
+                                borderRadius: 2,
+                                bgcolor: '#fafbfc',
+                                border: '1px solid #e8eaed'
+                              }}
+                            >
+                              <Stack spacing={1.5}>
+                                <Stack direction="row" alignItems="center" spacing={1.5}>
+                                  <Avatar
+                                    sx={{
+                                      bgcolor: positionColors[reward.position],
+                                      width: 32,
+                                      height: 32,
+                                      fontSize: '0.85rem',
+                                      fontWeight: 700
+                                    }}
+                                  >
+                                    {getOrdinalSuffix(reward.position)}
+                                  </Avatar>
+                                  <Typography variant="subtitle2" fontWeight={600} sx={{ color: '#202124' }}>
+                                    {reward.numberOfWinnersForThisPosition} Winner{reward.numberOfWinnersForThisPosition !== 1 ? 's' : ''}
+                                  </Typography>
+                                </Stack>
+
+                                {reward.sponsors[0]?.rewardDetails?.rewardType === 'cash' ? (
+                                  <Stack direction="row" alignItems="center" spacing={0.5}>
+                                    <AttachMoney fontSize="small" sx={{ color: '#2e7d32' }} />
+                                    <Typography variant="body2" sx={{ color: '#5f6368' }}>
+                                      {reward.rewardValuePerWinner} {reward.sponsors[0]?.rewardDetails?.currency || 'INR'}
+                                    </Typography>
+                                  </Stack>
+                                ) : reward.sponsors[0]?.rewardDetails?.rewardType === 'physicalGift' ? (
+                                  <Stack direction="row" alignItems="center" spacing={0.5}>
+                                    <CardGiftcard fontSize="small" sx={{ color: '#f57c00' }} />
+                                    <Typography variant="body2" sx={{ color: '#5f6368' }}>
+                                      {reward.sponsors[0]?.rewardDetails?.nonCashReward}
+                                    </Typography>
+                                  </Stack>
+                                ) : (
+                                  <Typography variant="body2" sx={{ color: '#5f6368' }}>
+                                    Custom Reward
+                                  </Typography>
+                                )}
+
+                                {reward.sponsors?.length > 0 && (
+                                  <>
+                                    <Button
+                                      size="small"
+                                      endIcon={expandedReward === reward.position ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                                      onClick={() => setExpandedReward(expandedReward === reward.position ? null : reward.position)}
+                                      sx={{ justifyContent: 'flex-start', textTransform: 'none', fontWeight: 600 }}
+                                    >
+                                      {expandedReward === reward.position ? 'Hide' : 'View'} Sponsors
+                                    </Button>
+
+                                    {expandedReward === reward.position && (
+                                      <Box sx={{ pt: 1 }}>
+                                        <RewardSponsorCard sponsors={reward.sponsors} />
+                                      </Box>
+                                    )}
+                                  </>
+                                )}
+                              </Stack>
+                            </Box>
+                          ))}
+                      </Stack>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Tags */}
+              {game?.tags?.length > 0 && (
+                <Card
+                  sx={{
+                    borderRadius: 4,
+                    bgcolor: 'white',
+                    border: '1px solid #e8eaed',
+                    boxShadow: '0 2px 12px rgba(0,0,0,0.04)'
+                  }}
+                >
+                  <CardContent sx={{ p: 3 }}>
+                    <Typography variant="h6" fontWeight={700} gutterBottom sx={{ color: '#202124' }}>
+                      Tags
+                    </Typography>
+                    <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
+                      {game.tags.map(tag => (
+                        <Chip
+                          key={tag}
+                          label={tag}
+                          size="small"
+                          sx={{
+                            bgcolor: alpha(theme.palette.primary.main, 0.1),
+                            color: theme.palette.primary.main,
+                            fontWeight: 600,
+                            border: 'none'
+                          }}
+                        />
+                      ))}
+                    </Stack>
+                  </CardContent>
+                </Card>
+              )}
+            </Stack>
+          </Grid>
+        </Grid>
+
+        {/* Leaderboard - If Completed */}
+        {game.status === 'completed' && (
+          <Card
+            sx={{
+              mt: 6,
+              borderRadius: 4,
+              bgcolor: 'white',
+              border: '1px solid #e8eaed',
+              boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+              overflow: 'hidden'
+            }}
+          >
+            <Box
+              sx={{
+                bgcolor: alpha(theme.palette.success.main, 0.1),
+                borderBottom: `3px solid ${theme.palette.success.main}`,
+                p: 4,
+                textAlign: 'center'
+              }}
+            >
+              <Typography variant="h4" fontWeight={800} sx={{ color: '#202124', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
+                <Box component="span" sx={{ fontSize: '2.5rem' }}>🏁</Box>
+                Competition Ended
+              </Typography>
+              <Typography sx={{ mt: 1, color: '#5f6368' }}>
+                View the final standings below
+              </Typography>
+            </Box>
+            <Box sx={{ p: 4 }}>
+              <Leaderboard width="100%" game={game} />
+            </Box>
+          </Card>
+        )}
+      </Container>
+
+      <ShareGamePopup open={sharePopupOpen} onClose={() => setSharePopupOpen(false)} game={game} />
+    </Box>
   )
 }
 
 export default ViewDetails
+
 const positionColors = {
   1: '#ffd700', // Gold
   2: '#c0c0c0', // Silver

@@ -2,13 +2,14 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { Box, Grid } from '@mui/material'
+import { Box, Container, Typography, Stack, useTheme, alpha } from '@mui/material'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { useSearchParams, useRouter } from 'next/navigation'
 import ReusableTabsList from '@/components/public-games/ReusableTabsList'
 import ReusableFiltersList from '@components/public-games/ReusableFiltersList'
 import PublicGamesList from '@/components/public-games/all-games/PublicGamesList'
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
 
 export const PublicGamesPage = () => {
   const [games, setGames] = useState([])
@@ -84,11 +85,64 @@ export const PublicGamesPage = () => {
     }) : true
   })
 
+  const theme = useTheme()
+
   return (
-    <Box p={4} className='flex flex-col items-center gap-3'>
-      <ReusableTabsList tabsList={statuses} value={statusFilter} onChange={handleStatusChange} />
-      <ReusableFiltersList selectedLocations={selectedLocations}  setSelectedLocations={setSelectedLocations} selectedQuizzes={selectedQuizzes} setSelectedQuizzes = {setSelectedQuizzes}  />
-      <PublicGamesList games={filteredGames} loading={loading} error={error} />
+    <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa' }}>
+      {/* Header Section */}
+      <Box
+        sx={{
+          bgcolor: 'white',
+          pt: { xs: 4, md: 6 },
+          pb: { xs: 4, md: 6 },
+          borderBottom: '1px solid #e8eaed'
+        }}
+      >
+        <Container maxWidth="lg">
+          <Stack spacing={4}>
+            {/* Title Section */}
+            <Box sx={{ textAlign: 'center' }}>
+              <Stack direction="row" spacing={1.5} alignItems="center" justifyContent="center" sx={{ mb: 2 }}>
+                <EmojiEventsIcon sx={{ fontSize: 40, color: 'primary.main' }} />
+                <Typography
+                  variant="h3"
+                  fontWeight={800}
+                  sx={{
+                    fontSize: { xs: '2rem', md: '2.5rem' },
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    letterSpacing: '-0.01em'
+                  }}
+                >
+                  Exciting Competitions
+                </Typography>
+              </Stack>
+              <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1.05rem', lineHeight: 1.7, maxWidth: 600, mx: 'auto' }}>
+                Join exciting live games and win amazing rewards
+              </Typography>
+            </Box>
+
+            {/* Filters and Tabs */}
+            <Box>
+              <ReusableTabsList tabsList={statuses} value={statusFilter} onChange={handleStatusChange} />
+              <Box sx={{ mt: 3 }}>
+                <ReusableFiltersList 
+                  selectedLocations={selectedLocations} 
+                  setSelectedLocations={setSelectedLocations} 
+                  selectedQuizzes={selectedQuizzes} 
+                  setSelectedQuizzes={setSelectedQuizzes} 
+                />
+              </Box>
+            </Box>
+          </Stack>
+        </Container>
+      </Box>
+
+      {/* Games List */}
+      <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 } }}>
+        <PublicGamesList games={filteredGames} loading={loading} error={error} />
+      </Container>
     </Box>
   )
 }

@@ -42,20 +42,22 @@ const GameDetailsPage = () => {
 
   if (loading) {
     return (
-      <Box p={4} display='flex' justifyContent='center'>
-        <CircularProgress />
+      <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 4 }}>
+        <CircularProgress size={48} />
       </Box>
     )
   }
 
   if (error || !game) {
     return (
-      <FallBackCard
-        error={error}
-        path='/public-games'
-        content='You can go Back to Public Games'
-        btnText='Back To Public Games'
-      />
+      <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 4 }}>
+        <FallBackCard
+          error={error}
+          path='/public-games'
+          content='You can go Back to Public Games'
+          btnText='Back To Public Games'
+        />
+      </Box>
     )
   }
 

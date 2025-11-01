@@ -1,9 +1,9 @@
 'use client'
 import React, { useState, useEffect } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
-import { Box, Button, Card, Typography, Alert, Stack, Chip, Grid, CardContent, useTheme } from '@mui/material'
+import { Box, Button, Card, Typography, Alert, Stack, Chip, Grid, CardContent, useTheme, alpha, Container, Fade } from '@mui/material'
 import languageNotations from '@components/quizbuilder/05_Components/languageNotation.en.json'
-import Loading from '@/components/Loading' // Assume you have a loading component
+import Loading from '@/components/Loading'
 import QuizQuestion from '@/components/publicquiz/QuizQuestion'
 import QuizSummary from '@/components/publicquiz/QuizSummary'
 import QuizPosterScreen from '@/components/publicquiz/QuizPosterScreen'
@@ -12,6 +12,8 @@ import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { toast } from 'react-toastify'
 import './publicQuiz.css'
+import TranslateIcon from '@mui/icons-material/Translate'
+import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import {
   getAllMatchingFileUrlsFromS3WithUnknownExtension,
   getFileUrlFromS3WithUnknownExtension,
@@ -275,70 +277,187 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
   }
 
   return (
-    <Box>
-      <Box
-        sx={{
-          mx: 'auto',
-          p: 3,
-          width: { xs: '100%', sm: '100%' }
-        }}
-      >
-        <Box className='flex flex-row items-center justify-between w-full'>
-          {/* Title Box - spaced evenly with the timer */}
-          <Typography variant='h4' className='text-center flex-grow twelve'>
-            <div className='thirteen'>
-              <h1>{quiz.title}</h1>
-            </div>
-          </Typography>
+    <Box 
+      sx={{ 
+        minHeight: '100vh',
+        background: `radial-gradient(circle at 10% 20%, ${alpha(theme.palette.primary.main, 0.03)} 0%, transparent 50%),
+                     radial-gradient(circle at 90% 80%, ${alpha(theme.palette.secondary.main, 0.03)} 0%, transparent 50%),
+                     #fafbfc`
+      }}
+    >
+      <Container maxWidth="lg">
+        <Box sx={{ py: { xs: 3, md: 5 } }}>
+          {/* Elegant Header */}
+          <Box 
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', md: 'row' },
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              mb: { xs: 4, md: 5 },
+              gap: 2,
+              backdropFilter: 'blur(20px)',
+              bgcolor: alpha('#fff', 0.9),
+              p: { xs: 2.5, md: 3.5 },
+              borderRadius: 4,
+              border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.03)'
+            }}
+          >
+            {/* Title */}
+            <Typography
+              sx={{
+                fontSize: { xs: '1.5rem', md: '2.25rem' },
+                fontWeight: 700,
+                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                textAlign: { xs: 'center', md: 'left' },
+                flex: 1,
+                letterSpacing: '-0.01em'
+              }}
+            >
+              {quiz.title}
+            </Typography>
 
-          {/* Timer Box - aligned at the end */}
-          {isTimerActive && startQuiz && questions.length > 0 && (
-            <Box className='self-end'>
-              <Timer time={time} setTime={setTime} isActive={isTimerActive} />
-            </Box>
-          )}
-        </Box>
+            {/* Timer */}
+            {isTimerActive && startQuiz && questions.length > 0 && (
+              <Box>
+                <Timer time={time} setTime={setTime} isActive={isTimerActive} />
+              </Box>
+            )}
+          </Box>
 
-        {!selectedLanguage ? (
-          <Grid container spacing={4} sx={{ justifyContent: 'center' }}>
-            {/* <Typography variant='h6' color='#555' sx={{ textAlign: 'center', width: '100%', mb: 2 }}>
-              Select a language to start the quiz:
-            </Typography> */}
-            {quizLanguages.map(lang => (
-              <Grid item xs={6} sm={3} md={3} lg={3} xl={2} key={lang.code}>
-                <Card
-                  onClick={() => handleLanguageSelect(lang.code)} // Make the card clickable
-                  sx={{
-                    height: '150px', // Set a considerable height for the card
-                    cursor: 'pointer', // Indicate the card is clickable
-                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                    borderLeft: `8px solid ${theme.palette.primary.dark}`, // Left border with color
-                    backgroundColor: '#f0f4f8', // Start with transparent background
-                    color: theme.palette.primary.dark, // Initial text color
-                    transition:
-                      'background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease',
-                    display: 'flex', // Flex display for centering content
-                    flexDirection: 'column', // Align content vertically
-                    justifyContent: 'center', // Center vertically
-                    alignItems: 'center', // Center horizontally
-                    '&:hover': {
-                      boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
-                      backgroundColor: theme.palette.primary.dark, // Fill background with border color
-                      transform: 'translateY(-2px)', // Slight lift effect on hover
-                      color: 'white' // Change text color to white
-                    }
-                  }}
-                >
-                  {/* <CardContent> */}
-                  <h4 style={{ textAlign: 'center' }}>{lang.name}</h4>
-                  <h1 style={{ textAlign: 'center' }}>
-                    {languageNotations.find(item => item.name === lang.name)?.notation || ''}
-                  </h1>
-                  {/* </CardContent> */}
-                </Card>
+          {!selectedLanguage ? (
+            <Box>
+              {/* Language Selection Header */}
+              <Box sx={{ textAlign: 'center', mb: 6 }}>
+                <Stack direction="row" spacing={1} alignItems="center" justifyContent="center" sx={{ mb: 2 }}>
+                  <TranslateIcon sx={{ fontSize: 32, color: 'primary.main' }} />
+                  <Typography
+                    sx={{
+                      fontSize: { xs: '1.75rem', md: '2rem' },
+                      fontWeight: 700,
+                      color: 'text.primary'
+                    }}
+                  >
+                    Choose Language
+                  </Typography>
+                </Stack>
+                <Typography variant="body1" color="text.secondary" sx={{ fontSize: '0.95rem' }}>
+                  Select your preferred language to start
+                </Typography>
+              </Box>
+
+              {/* Language Cards Grid */}
+              <Grid container spacing={3} sx={{ justifyContent: 'center', maxWidth: 800, mx: 'auto' }}>
+                {quizLanguages.map((lang, index) => (
+                  <Grid item xs={6} sm={4} md={3} key={lang.code}>
+                    <Fade in timeout={200 + index * 60}>
+                      <Card
+                        onClick={() => handleLanguageSelect(lang.code)}
+                        sx={{
+                          height: 180,
+                          cursor: 'pointer',
+                          borderRadius: 4,
+                          backdropFilter: 'blur(10px)',
+                          bgcolor: alpha('#fff', 0.85),
+                          border: `2px solid ${alpha(theme.palette.divider, 0.1)}`,
+                          boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+                          transition: 'all 0.3s ease',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          position: 'relative',
+                          overflow: 'hidden',
+                          '&::before': {
+                            content: '""',
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                            opacity: 0,
+                            transition: 'opacity 0.3s ease',
+                            zIndex: 0
+                          },
+                          '&:hover': {
+                            transform: 'translateY(-6px)',
+                            boxShadow: `0 12px 28px ${alpha(theme.palette.primary.main, 0.15)}`,
+                            borderColor: 'transparent',
+                            '&::before': {
+                              opacity: 1
+                            },
+                            '& .lang-content': {
+                              color: 'white',
+                              transform: 'scale(1.05)'
+                            }
+                          }
+                        }}
+                      >
+                        <Stack 
+                          className="lang-content"
+                          spacing={1.5} 
+                          alignItems="center"
+                          sx={{ 
+                            position: 'relative', 
+                            zIndex: 1,
+                            transition: 'all 0.3s ease'
+                          }}
+                        >
+                          <Typography
+                            variant="h4"
+                            sx={{
+                              fontSize: '3rem',
+                              fontWeight: 700
+                            }}
+                          >
+                            {languageNotations.find(item => item.name === lang.name)?.notation || '🌐'}
+                          </Typography>
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              fontWeight: 600,
+                              fontSize: '1rem',
+                              textAlign: 'center'
+                            }}
+                          >
+                            {lang.name}
+                          </Typography>
+                        </Stack>
+
+                        {/* Primary Badge */}
+                        {lang.isPrimaryLanguage && (
+                          <Chip
+                            icon={<CheckCircleIcon sx={{ fontSize: 14 }} />}
+                            label="Primary"
+                            size="small"
+                            sx={{
+                              position: 'absolute',
+                              top: 10,
+                              right: 10,
+                              height: 24,
+                              fontSize: '0.7rem',
+                              fontWeight: 700,
+                              backdropFilter: 'blur(10px)',
+                              bgcolor: alpha(theme.palette.success.main, 0.15),
+                              color: 'success.dark',
+                              zIndex: 2,
+                              border: `1px solid ${alpha(theme.palette.success.main, 0.3)}`,
+                              '& .MuiChip-icon': {
+                                color: 'success.main'
+                              }
+                            }}
+                          />
+                        )}
+                      </Card>
+                    </Fade>
+                  </Grid>
+                ))}
               </Grid>
-            ))}
-          </Grid>
+            </Box>
         ) : startQuiz ? (
           questions.length > 0 ? (
             <QuizQuestion
@@ -371,6 +490,7 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
           />
         )}
       </Box>
+      </Container>
     </Box>
   )
 }

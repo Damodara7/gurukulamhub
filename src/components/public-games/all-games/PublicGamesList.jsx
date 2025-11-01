@@ -3,7 +3,7 @@
 
 import React, { useRef, useEffect, useState } from 'react'
 import GameCard from './GameCard'
-import { Box, Grid } from '@mui/material'
+import { Box, Grid, Typography } from '@mui/material'
 import { useSession } from 'next-auth/react'
 import { useSearchParams } from 'next/navigation'
 import Loading from '@/components/Loading'
@@ -148,11 +148,36 @@ const PublicGamesList = ({ games, loading, error, setGames }) => {
   return (
     <>
       {filteredGames.length === 0 ? (
-        <FallBackCard content='No games found.' path='/' btnText='Back To Home Page'/>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            py: 10,
+            px: 3
+          }}
+        >
+          <Box
+            sx={{
+              fontSize: '4rem',
+              mb: 2,
+              opacity: 0.7
+            }}
+          >
+            🏆
+          </Box>
+          <Typography variant="h5" fontWeight={700} gutterBottom sx={{ color: '#202124' }}>
+            No Games Found
+          </Typography>
+          <Typography variant="body1" color="text.secondary" textAlign="center" sx={{ maxWidth: 400, lineHeight: 1.7 }}>
+            No competitions match your current filters. Try adjusting your search criteria.
+          </Typography>
+        </Box>
       ) : (
-        <Grid container spacing={2}>
+        <Grid container spacing={4}>
           {filteredGames.map((game) => (
-            <Grid item key={game._id || game.id} xs={12} sm={6} md={4} lg={3}>
+            <Grid item key={game._id || game.id} xs={12} sm={6} md={4}>
               <GameCard game={game} currentUsergroupIdsIds={currentUserGroupIdIds} />
             </Grid>
           ))}

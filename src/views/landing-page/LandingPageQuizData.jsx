@@ -11,7 +11,8 @@ import {
   Container,
   useMediaQuery,
   Skeleton,
-  CircularProgress
+  CircularProgress,
+  Chip
 } from '@mui/material'
 import React, { useState, useEffect } from 'react'
 import * as RestApi from '@/utils/restApiUtil'
@@ -22,7 +23,7 @@ import LanguageIcon from '@mui/icons-material/Language'
 import LibraryBooksIcon from '@mui/icons-material/LibraryBooks'
 import { useSession } from 'next-auth/react'
 
-function LandingPageQuizData() {
+function LandingPageQuizData({ isAuthenticated = false }) {
   const [quizData, setQuizData] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -56,7 +57,7 @@ function LandingPageQuizData() {
   // HANDLE VIEW ALL QUIZZES
   const handleViewAll = async () => {
     setIsCheckingAuth(true)
-    if (status === 'authenticated') {
+    if (isAuthenticated || status === 'authenticated') {
       router.push('/publicquiz/view')
     } else {
       router.push(`/auth/login?redirectTo=publicquiz/view`)
@@ -71,8 +72,8 @@ function LandingPageQuizData() {
   if (error) return <Typography>Error: {error}</Typography>
 
   // Card dimensions styling constants
-  const cardWidth = 230
-  const cardHeight = 250
+  const cardWidth = 280
+  const cardHeight = 320
 
   // Skeleton loading components
   const renderHeaderSkeletons = () => (
@@ -123,44 +124,102 @@ function LandingPageQuizData() {
       sx={{
         width: '100%',
         position: 'relative',
-        backgroundColor: theme.palette.background.default
+        py: { xs: 8, md: 12 },
+        background: `linear-gradient(180deg, 
+          ${theme.palette.background.paper} 0%, 
+          ${theme.palette.primary.main}05 50%,
+          ${theme.palette.background.default} 100%)`
       }}
     >
       <Container
-        maxWidth={false}
+        maxWidth="xl"
         sx={{
           position: 'relative'
         }}
       >
         <Box
           sx={{
-            position: 'sticky',
-            top: 0,
-            zIndex: 2,
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            backgroundColor: theme.palette.background.default,
-            py: 0.5
+            mb: 4
           }}
         >
           {loading ? (
             renderHeaderSkeletons()
           ) : (
             <>
-              <Typography variant='h5' fontWeight={600} sx={{ py: 1 }}>
-                Popular Quizzes
-              </Typography>
+              <Stack spacing={0.5}>
+                <Typography
+                  variant="overline"
+                  sx={{
+                    color: theme.palette.primary.main,
+                    fontWeight: 800,
+                    fontSize: '0.9rem',
+                    letterSpacing: 3
+                  }}
+                >
+                  {isAuthenticated ? 'EXPLORE & LEARN' : 'TRENDING NOW'}
+                </Typography>
+                <Typography 
+                  variant='h3' 
+                  fontWeight={900}
+                  sx={{ 
+                    fontSize: { xs: '1.75rem', md: '2.25rem' },
+                    color: theme.palette.text.primary,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2
+                  }}
+                >
+                  <Box 
+                    component="span" 
+                    sx={{ 
+                      fontSize: '2.5rem',
+                      display: 'inline-block',
+                      animation: 'bounce 2s ease-in-out infinite',
+                      '@keyframes bounce': {
+                        '0%, 100%': { transform: 'translateY(0)' },
+                        '50%': { transform: 'translateY(-10px)' }
+                      }
+                    }}
+                  >
+                    🎯
+                  </Box>
+                  {isAuthenticated ? 'Recommended Quizzes' : 'Popular Quizzes'}
+                </Typography>
+              </Stack>
 
               {quizData.length > 0 && (
                 <Button
-                  variant='outlined'
-                  size='small'
+                  variant='contained'
+                  size='large'
+                  component='label'
                   onClick={handleViewAll}
+                  endIcon={isCheckingAuth || status === 'loading' ? null : <Box component="span">→</Box>}
                   sx={{
-                    fontWeight: 600,
-                    minWidth: 120, // Prevents button width collapse
-                    position: 'relative' // Helps with spinner positioning
+                    fontWeight: 700,
+                    px: 4,
+                    py: 2,
+                    borderRadius: 3,
+                    textTransform: 'none',
+                    fontSize: '1.05rem',
+                    minWidth: 180,
+                    bgcolor: theme.palette.primary.main,
+                    color: 'white',
+                    boxShadow: `0 6px 20px ${theme.palette.primary.main}40`,
+                    '&:hover': {
+                      bgcolor: theme.palette.primary.dark,
+                      transform: 'translateY(-3px)',
+                      boxShadow: `0 10px 30px ${theme.palette.primary.main}60`,
+                      '& .MuiButton-endIcon': {
+                        transform: 'translateX(5px)'
+                      }
+                    },
+                    '& .MuiButton-endIcon': {
+                      transition: 'transform 0.3s ease'
+                    },
+                    transition: 'all 0.3s ease'
                   }}
                   disabled={isCheckingAuth || status === 'loading'}
                 >
@@ -226,63 +285,186 @@ function LandingPageQuizData() {
                     width: cardWidth,
                     height: cardHeight,
                     display: 'flex',
-                    my: 2,
                     flexDirection: 'column',
-                    transition: 'transform 0.3s ease',
+                    borderRadius: 4,
+                    overflow: 'hidden',
+                    bgcolor: 'background.paper',
+                    boxShadow: `0 4px 20px ${theme.palette.primary.main}15`,
+                    border: '1px solid',
+                    borderColor: `${theme.palette.primary.main}20`,
+                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                    cursor: 'pointer',
+                    position: 'relative',
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: 4,
+                      background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                      transform: 'scaleX(0)',
+                      transformOrigin: 'left',
+                      transition: 'transform 0.4s ease'
+                    },
                     '&:hover': {
-                      transform: 'scale(1.03)',
-                      boxShadow: theme.shadows[6]
+                      transform: 'translateY(-12px) scale(1.02)',
+                      borderColor: theme.palette.primary.main,
+                      boxShadow: `0 25px 50px ${theme.palette.primary.main}30`,
+                      '&::before': {
+                        transform: 'scaleX(1)'
+                      },
+                      '& .quiz-image': {
+                        transform: 'scale(1.1)'
+                      }
                     }
                   }}
                 >
-                  <CardMedia
-                    component='img'
-                    height='100'
-                    image={quiz?.thumbnail || imagePlaceholder.src}
-                    alt={quiz.title}
-                    sx={{ objectFit: 'cover' }}
-                    onError={e => {
-                      e.target.src = imagePlaceholder.src
+                  <Box 
+                    sx={{ 
+                      position: 'relative',
+                      overflow: 'hidden',
+                      height: 140,
+                      bgcolor: `${theme.palette.primary.main}10`
                     }}
-                  />
+                  >
+                    <CardMedia
+                      component='img'
+                      className='quiz-image'
+                      image={quiz?.thumbnail || imagePlaceholder.src}
+                      alt={quiz.title}
+                      sx={{ 
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        transition: 'transform 0.4s ease'
+                      }}
+                      onError={e => {
+                        e.target.src = imagePlaceholder.src
+                      }}
+                    />
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.1) 100%)'
+                      }}
+                    />
+                    <Chip
+                      label="QUIZ"
+                      size="small"
+                      sx={{
+                        position: 'absolute',
+                        top: 12,
+                        right: 12,
+                        bgcolor: theme.palette.primary.main,
+                        color: 'white',
+                        fontWeight: 800,
+                        fontSize: '0.7rem',
+                        letterSpacing: 1,
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                      }}
+                    />
+                  </Box>
                   <CardContent
                     sx={{
                       flexGrow: 1,
                       display: 'flex',
-                      flexDirection: 'column'
+                      flexDirection: 'column',
+                      p: 3,
+                      gap: 2
                     }}
                   >
-                    <Typography gutterBottom variant='h6' fontWeight={600} noWrap>
+                    <Typography 
+                      variant='h6' 
+                      fontWeight={700}
+                      sx={{
+                        fontSize: '1.1rem',
+                        lineHeight: 1.3,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        minHeight: 50
+                      }}
+                    >
                       {quiz.title || 'No Title'}
                     </Typography>
 
                     <Typography
-                      variant='caption'
+                      variant='body2'
                       color='text.secondary'
                       sx={{
-                        height: 20,
                         display: '-webkit-box',
                         WebkitLineClamp: 2,
                         WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden'
+                        overflow: 'hidden',
+                        lineHeight: 1.6,
+                        fontSize: '0.875rem',
+                        minHeight: 42,
+                        mb: 'auto'
                       }}
                     >
                       {quiz.details || 'No details available'}
                     </Typography>
 
-                    <Box>
-                      <Stack spacing={0.25}>
-                        <Stack direction='row' alignItems='center' spacing={1}>
-                          <LanguageIcon fontSize='small' color='action' />
-                          <Typography variant='body2'>{quiz?.language?.name || 'No language'}</Typography>
-                        </Stack>
-
-                        <Stack direction='row' alignItems='center' spacing={1}>
-                          <LibraryBooksIcon fontSize='small' color='action' />
-                          <Typography variant='body2'>{quiz?.syllabus || 'No syllabus'}</Typography>
-                        </Stack>
+                    <Stack 
+                      spacing={1.5}
+                      sx={{
+                        pt: 2,
+                        borderTop: '1px solid',
+                        borderColor: 'divider'
+                      }}
+                    >
+                      <Stack direction='row' alignItems='center' spacing={1.5}>
+                        <Box
+                          sx={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: 2,
+                            bgcolor: `${theme.palette.primary.main}15`,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          <LanguageIcon sx={{ fontSize: 18, color: 'primary.main' }} />
+                        </Box>
+                        <Typography variant='body2' fontWeight={600}>
+                          {quiz?.language?.name || 'No language'}
+                        </Typography>
                       </Stack>
-                    </Box>
+
+                      <Stack direction='row' alignItems='center' spacing={1.5}>
+                        <Box
+                          sx={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: 2,
+                            bgcolor: `${theme.palette.secondary.main}15`,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          <LibraryBooksIcon sx={{ fontSize: 18, color: 'secondary.main' }} />
+                        </Box>
+                        <Typography 
+                          variant='body2' 
+                          fontWeight={600}
+                          sx={{
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          {quiz?.syllabus || 'No syllabus'}
+                        </Typography>
+                      </Stack>
+                    </Stack>
                   </CardContent>
                 </Card>
               </Box>

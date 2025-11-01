@@ -30,7 +30,7 @@ async function HomePage({ searchParams }) {
       <Grid container spacing={6} sx={{ pt: '60px', pb: '70px' }}>
         {/* Add padding for  top and bottom marquees */}
         <Grid item xs={12}>
-          <LandingPage />
+          <LandingPage isAuthenticated={true} />
         </Grid>
       </Grid>
     </Stack>
