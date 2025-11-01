@@ -331,10 +331,10 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
               <MenuItem href={`/${locale}/management/group/create`}>{dictionary['navigation'].create}</MenuItem>
             </SubMenu>
 
-            {/* <SubMenu label={dictionary['navigation'].manageAudiences} icon={<i className='ri-group-line' />}>
+            <SubMenu label={dictionary['navigation'].manageAudiences} icon={<i className='ri-group-line' />}>
               <MenuItem href={`/${locale}/management/audience`}>{dictionary['navigation'].all}</MenuItem>
               <MenuItem href={`/${locale}/management/audience/create`}>{dictionary['navigation'].create}</MenuItem>
-            </SubMenu> */}
+            </SubMenu>
 
             <SubMenu label={dictionary['navigation'].manageUsers} icon={<i className='ri-group-line' />}>
               <MenuItem href={`/${locale}/management/user/list`}>{dictionary['navigation'].list}</MenuItem>

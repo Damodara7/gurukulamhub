@@ -91,6 +91,10 @@ export async function getByEmail({ email }) {
       // Create new profile
       profile = new UserProfile(newProfileData)
       await profile.save()
+
+      // Update the User document with the profile reference
+      await User.updateOne({ email: email }, { $set: { profile: profile._id } })
+
       console.log('New profile created for:', email)
     }
 

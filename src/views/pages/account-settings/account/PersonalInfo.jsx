@@ -1,7 +1,7 @@
 import React from 'react'
 import { Button, Chip, Divider, FormControl, Grid, InputLabel, MenuItem, Select, TextField } from '@mui/material'
 import PhoneVerification from './PhoneVerification'
-
+import { motherTongueLanguagesData } from '@/data/userprofile/mothertonguelanguage'
 // react-icons Imports
 import { RiAddFill, RiCloseFill } from 'react-icons/ri'
 import { IoMdAttach } from 'react-icons/io'
@@ -20,47 +20,21 @@ const casteOptions = [
   'Other'
 ]
 
-const categoryOptions = ['General', 'OBC', 'SC', 'ST', 'EWS', 'Other']
-
-const motherTongueLanguagesData = [
-  'Arabic',
-  'Assamese',
-  'Awadhi',
-  'Bengali',
-  'Bhojpuri',
-  'Chinese',
-  'English',
-  'French',
-  'German',
-  'Gujarati',
-  'Hindi',
-  'Haryanvi',
-  'Kannada',
-  'Konkani',
-  'Magahi',
-  'Malayalam',
-  'Marathi',
-  'Nepali',
-  'Odia',
-  'Portuguese',
-  'Punjabi',
-  'Sanskrit',
-  'Sindhi',
-  'Tamil',
-  'Telugu',
-  'Urdu'
-]
+const categoryOptions = ['General', 'OBC', 'SC', 'ST', 'EWS', 'Minority Community', 'Other']
 
 const religionOptions = [
   { value: 'hindu', label: 'Hindu' },
   { value: 'christian', label: 'Christian' },
+  { value: 'muslim', label: 'Muslim' },
   { value: 'buddhist', label: 'Buddhist' },
-  { value: 'jewish', label: 'Jewish' },
   { value: 'sikh', label: 'Sikh' },
   { value: 'jain', label: 'Jain' },
-  { value: 'zoroastrian', label: 'Zoroastrian' },
-  { value: 'pagan', label: 'Pagan' },
-  { value: 'islam', label: 'Islam' },
+  { value: 'jewish', label: 'Jewish' },
+  { value: 'bahai', label: 'Bahai' },
+  { value: 'indigenous', label: 'Indigenous/Tribal' },
+  { value: 'spiritual_not_religious', label: 'Spiritual but not Religious' },
+  { value: 'agnostic', label: 'Agnostic' },
+  { value: 'atheist', label: 'Atheist' },
   { value: 'other', label: 'Other' }
 ]
 
