@@ -33,10 +33,10 @@ import {
 } from '@mui/material'
 import CenterBox from '@/components/CenterBox'
 import { useRouter } from 'next/navigation'
-import { Description } from '@mui/icons-material'
+import { Description, Quiz } from '@mui/icons-material'
 import GoBackButton from '@/components/GoBackButton'
 
-function CreateQuiz({isAdmin=false}) {
+function CreateQuiz({ isAdmin = false }) {
   const router = useRouter()
   const { data: session, status, update } = useSession()
   const { uuid, regenerateUUID, getUUID } = useUUID()
@@ -172,7 +172,6 @@ function CreateQuiz({isAdmin=false}) {
     thumbnail: false
   })
 
-
   // Validate form fields
   const validateForm = () => {
     const values = getValues()
@@ -183,7 +182,7 @@ function CreateQuiz({isAdmin=false}) {
       syllabus: !values.syllabus || values.syllabus.trim() === '',
       thumbnail: !values.thumbnail
     }
-    
+
     setFieldErrors(newErrors)
     return !Object.values(newErrors).some(error => error)
   }
@@ -191,11 +190,11 @@ function CreateQuiz({isAdmin=false}) {
   const handleFieldInteraction = (fieldName, forceError = false) => {
     setFieldErrors(prev => ({
       ...prev,
-      [fieldName]: forceError ? !getValues()[fieldName] || 
-        (Array.isArray(getValues()[fieldName]) && getValues()[fieldName].length === 0) : false
+      [fieldName]: forceError
+        ? !getValues()[fieldName] || (Array.isArray(getValues()[fieldName]) && getValues()[fieldName].length === 0)
+        : false
     }))
   }
-
 
   const onSubmit = async () => {
     setFormSubmitted(true)
@@ -228,31 +227,82 @@ function CreateQuiz({isAdmin=false}) {
   }
   return (
     <>
-      <Card>
-        <CardContent>
-          <Box className='flex flex-col gap-2 mb-6 mt-2 text-center'>
-            <Typography variant='h4'>Create Your Quiz</Typography>
-            <Typography variant='body1' color='text.secondary'>
-              Create a new quiz by providing following quiz details.
-            </Typography>
-          </Box>
-          <CreateQuizForm
-            quizId={getValues().id}
-            regenerateUUID={regenerateUUID}
-            user={session?.user}
-            control={control}
-            errors={errors}
-            formData={getValues()}
-            quiz={getValues()}
-            setValue={setValue}
-            fieldErrors={fieldErrors}
-            formSubmitted={formSubmitted}
-            onFieldInteraction={handleFieldInteraction}
-            loading={loading}
-            isAdmin={isAdmin}
-          />
-          {/* Form Actions */}
-          <Grid item xs={12} mt={5}>
+      <Box
+        sx={{
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          borderRadius: '24px',
+          p: { xs: 2, sm: 3, md: 4 },
+          boxShadow: '0 20px 60px rgba(102, 126, 234, 0.3)',
+          position: 'relative',
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background:
+              'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+            opacity: 0.4
+          }
+        }}
+      >
+        <Card
+          sx={{
+            background: 'rgba(255, 255, 255, 0.98)',
+            backdropFilter: 'blur(20px)',
+            borderRadius: '20px',
+            boxShadow: 'none',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            position: 'relative',
+            zIndex: 1
+          }}
+        >
+          <CardContent sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
+            <Box className='flex flex-col gap-1 mb-4 text-center'>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5 }}>
+                <Typography
+                  variant='h3'
+                  sx={{
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    fontWeight: 800,
+                    fontSize: { xs: '1.75rem', sm: '2.25rem', md: '2.75rem' },
+                    letterSpacing: '-1px'
+                  }}
+                >
+                  Create Your Quiz
+                </Typography>
+              </Box>
+              <Typography
+                variant='body2'
+                color='text.secondary'
+                sx={{ fontSize: '0.95rem', maxWidth: '600px', mx: 'auto' }}
+              >
+                Design an engaging quiz experience with beautiful customization options
+              </Typography>
+            </Box>
+            <CreateQuizForm
+              quizId={getValues().id}
+              regenerateUUID={regenerateUUID}
+              user={session?.user}
+              control={control}
+              errors={errors}
+              formData={getValues()}
+              quiz={getValues()}
+              setValue={setValue}
+              fieldErrors={fieldErrors}
+              formSubmitted={formSubmitted}
+              onFieldInteraction={handleFieldInteraction}
+              loading={loading}
+              isAdmin={isAdmin}
+            />
+            {/* Form Actions */}
+            
+            <Grid item xs={12} mt={5}>
             <Stack direction='row' spacing={2} justifyContent='center'>
               <Button variant='outlined' onClick={() => router.push(`/${isAdmin ? 'management/quizzes' : 'myquizzes'}/view`)}>
                 Cancel
@@ -270,8 +320,9 @@ function CreateQuiz({isAdmin=false}) {
               </Button>
             </Stack>
           </Grid>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </Box>
     </>
   )
 }

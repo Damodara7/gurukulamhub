@@ -14,10 +14,12 @@ import {
   ListItemIcon,
   ListItemText,
   TextField,
-  Checkbox
+  Checkbox,
+  Box
 } from '@mui/material'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
+import SearchIcon from '@mui/icons-material/Search'
 import {
   createColumnHelper,
   flexRender,
@@ -246,12 +248,55 @@ const AdminPublishedQuizzesTable = ({ data, refreshData }) => {
   })
 
   return (
-    <Card>
-      <CardContent className='flex justify-between gap-4 items-center'>
+    <Card
+      sx={{
+        borderRadius: '16px',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+        border: '2px solid #f5f5f5'
+      }}
+    >
+      <CardContent sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
         <DebouncedInput
           value={globalFilter ?? ''}
           onChange={value => setGlobalFilter(String(value))}
-          placeholder='Search Quiz'
+          placeholder='Search quizzes...'
+          InputProps={{
+            startAdornment: <SearchIcon sx={{ mr: 1, color: '#666', fontSize: '1.3rem' }} />
+          }}
+          sx={{
+            width: '60%',
+            minWidth: '400px',
+            '& .MuiOutlinedInput-root': {
+              borderRadius: '15px',
+              backgroundColor: 'white',
+              transition: 'all 0.3s ease',
+              '& fieldset': {
+                borderColor: '#d0d0d0',
+                borderWidth: '2px',
+                transition: 'all 0.3s ease'
+              },
+              '&:hover': {
+                '& fieldset': {
+                  borderColor: '#667eea',
+                  borderWidth: '2px'
+                }
+              },
+              '&.Mui-focused': {
+                boxShadow: '0 0 0 3px rgba(102, 126, 234, 0.1)',
+                '& fieldset': {
+                  borderColor: '#667eea !important',
+                  borderWidth: '2px'
+                }
+              }
+            },
+            '& .MuiInputBase-input': {
+              padding: '12px 20px 12px 8px',
+              fontSize: '0.95rem',
+              '&:focus': {
+                outline: 'none'
+              }
+            }
+          }}
         />
       </CardContent>
       <CardContent>
@@ -290,8 +335,36 @@ const AdminPublishedQuizzesTable = ({ data, refreshData }) => {
                   </td>
                 </tr>
               ) : (
-                table.getRowModel().rows.map(row => (
-                  <tr key={row.id} className={classnames({ selected: row.getIsSelected() })}>
+                table.getRowModel().rows.map((row, index) => (
+                  <tr
+                    key={row.id}
+                    className={classnames({ selected: row.getIsSelected() })}
+                    style={{
+                      background: row.getIsSelected()
+                        ? 'linear-gradient(135deg, rgba(33, 150, 243, 0.15) 0%, rgba(25, 118, 210, 0.15) 100%)'
+                        : index % 2 === 0
+                          ? 'linear-gradient(135deg, rgba(33, 150, 243, 0.03) 0%, rgba(25, 118, 210, 0.03) 100%)'
+                          : 'white',
+                      transition: 'all 0.3s ease',
+                      borderLeft: '3px solid transparent'
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.background =
+                        'linear-gradient(135deg, rgba(33, 150, 243, 0.12) 0%, rgba(25, 118, 210, 0.12) 100%)'
+                      e.currentTarget.style.borderLeft = '3px solid #2196f3'
+                      e.currentTarget.style.transform = 'translateX(4px)'
+                    }}
+                    onMouseLeave={e => {
+                      if (!row.getIsSelected()) {
+                        e.currentTarget.style.background =
+                          index % 2 === 0
+                            ? 'linear-gradient(135deg, rgba(33, 150, 243, 0.03) 0%, rgba(25, 118, 210, 0.03) 100%)'
+                            : 'white'
+                        e.currentTarget.style.borderLeft = '3px solid transparent'
+                        e.currentTarget.style.transform = 'translateX(0)'
+                      }
+                    }}
+                  >
                     {row.getVisibleCells().map(cell => (
                       <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
                     ))}

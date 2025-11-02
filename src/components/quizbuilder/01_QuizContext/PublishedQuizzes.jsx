@@ -5,7 +5,18 @@ import ImageListItemBar from '@mui/material/ImageListItemBar'
 import ListSubheader from '@mui/material/ListSubheader'
 import IconButton from '@mui/material/IconButton'
 import InfoIcon from '@mui/icons-material/Info'
-import { Button, Checkbox, FormControlLabel, Grid, Tooltip, Typography, useTheme } from '@mui/material'
+import {
+  Button,
+  Checkbox,
+  FormControlLabel,
+  Grid,
+  Tooltip,
+  Typography,
+  useTheme,
+  Box,
+  Stack,
+  Chip
+} from '@mui/material'
 import FileOpenIcon from '@mui/icons-material/FileOpen'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import DeleteIcon from '@mui/icons-material/Delete'
@@ -30,7 +41,7 @@ import { toast } from 'react-toastify'
 import Loading from '@/components/Loading'
 import { useRouter } from 'next/navigation'
 
-export default function PublishedQuizzes({isAdmin=false}) {
+export default function PublishedQuizzes({ isAdmin = false }) {
   const router = useRouter()
   const mdScreenMatches = useMediaQuery('(min-width:768px)') // Adjust breakpoint as needed
   const { data: session, status } = useSession()
@@ -43,19 +54,19 @@ export default function PublishedQuizzes({isAdmin=false}) {
   const [selectedQuizIds, setSelectedQuizIds] = useState([])
 
   const theme = useTheme()
-      const isXs = useMediaQuery(theme.breakpoints.only('xs'))
-      const isSm = useMediaQuery(theme.breakpoints.only('sm'))
-      const isMd = useMediaQuery(theme.breakpoints.only('md'))
-      const isLg = useMediaQuery(theme.breakpoints.only('lg'))
-    
-      // Calculate columns based on screen size
-      const getColumns = () => {
-        if (isXs) return 2 // Mobile phones
-        if (isSm) return 3 // Small tablets
-        if (isMd) return 4 // Tablets
-        if (isLg) return 5 // Laptops
-        return 6 // Large screens
-      }
+  const isXs = useMediaQuery(theme.breakpoints.only('xs'))
+  const isSm = useMediaQuery(theme.breakpoints.only('sm'))
+  const isMd = useMediaQuery(theme.breakpoints.only('md'))
+  const isLg = useMediaQuery(theme.breakpoints.only('lg'))
+
+  // Calculate columns based on screen size
+  const getColumns = () => {
+    if (isXs) return 2 // Mobile phones
+    if (isSm) return 3 // Small tablets
+    if (isMd) return 4 // Tablets
+    if (isLg) return 5 // Laptops
+    return 6 // Large screens
+  }
 
   function handlePrivacyTypeChange(privacyType) {
     setPrivacyType(privacyType)
@@ -255,18 +266,42 @@ export default function PublishedQuizzes({isAdmin=false}) {
                 ? publishedQuizzes.map(item => (
                     <ImageListItem
                       key={item.id}
-                      style={{
-                        minHeight: '248px',
-                        padding: '0',
-                        alignContent: 'center',
-                        alignItems: 'center',
-                        position: 'relative',
+                      sx={{
                         cursor: 'pointer',
-                        border: '1px solid gray'
+                        position: 'relative',
+                        borderRadius: '16px',
+                        overflow: 'hidden',
+                        backdropFilter: 'blur(20px)',
+                        bgcolor: 'rgba(255, 255, 255, 0.9)',
+                        border: '1px solid rgba(0, 0, 0, 0.06)',
+                        boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+                        transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+                        '&:hover': {
+                          transform: 'translateY(-8px)',
+                          boxShadow: '0 16px 48px rgba(33, 150, 243, 0.15)',
+                          '&::before': {
+                            opacity: 0.6
+                          }
+                        },
+                        '&::before': {
+                          content: '""',
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          borderRadius: '16px',
+                          padding: '1px',
+                          background: 'linear-gradient(135deg, #2196f3, #1976d2)',
+                          WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                          WebkitMaskComposite: 'xor',
+                          maskComposite: 'exclude',
+                          opacity: 0,
+                          transition: 'opacity 0.5s ease'
+                        }
                       }}
                       onClick={() => handleViewQuiz(item)}
                     >
-                      {/* Checkbox positioned in the top-left corner */}
                       <Checkbox
                         checked={selectedQuizIds.includes(item._id)}
                         onChange={e => {
@@ -275,100 +310,149 @@ export default function PublishedQuizzes({isAdmin=false}) {
                         onClick={e => e.stopPropagation()}
                         sx={{
                           position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          color: '#ffffff', // Change checkbox color for better contrast
-                          zIndex: 2 // Ensures the checkbox is visible over the image
-                        }}
-                      />
-                      <Image
-                        src={`${item.thumbnail || 'https://fakeimg.pl/250x250/?text=' + item.title}`}
-                        alt={item.title}
-                        sx={{ maxHeight: '300px', maxWidth: '300px' }}
-                        fit='fill'
-                      />
-
-                      <ImageListItemBar
-                        sx={{
-                          background: 'rgba(0, 0, 0, 0.7)', // Darker background for better visibility of text and icons
-                          display: 'flex',
-                          flexDirection: 'column', // Stack items vertically
-                          alignItems: 'stretch', // Align items to the left
-                          padding: 0,
-                          '& .MuiImageListItemBar-titleWrap': {
-                            marginBottom: '2px', // Space between title/details and the buttons
-                            padding: '1px 4px'
-                          },
-                          '& .MuiImageListItemBar-title': {
-                            fontSize: '14px', // Font size for title
-                            color: '#fff', // White title color
-                            marginBottom: '2px'
-                          },
-                          '& .MuiImageListItemBar-subtitle': {
-                            fontSize: '12px', // Font size for subtitle
-                            color: '#ccc', // Lighter color for subtitle/details
-                            marginTop: '0px'
+                          top: 8,
+                          left: 8,
+                          color: '#ffffff',
+                          bgcolor: 'rgba(0, 0, 0, 0.3)',
+                          borderRadius: '6px',
+                          zIndex: 3,
+                          '&:hover': {
+                            bgcolor: 'rgba(0, 0, 0, 0.5)'
                           }
                         }}
-                        title={
-                          <div
-                            style={{
-                              fontSize: '14px',
-                              color: '#fff',
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis'
-                            }}
-                          >
-                            {item.title}
-                          </div>
-                        }
-                        subtitle={
-                          <div
-                            style={{
-                              fontSize: '12px',
-                              color: '#ccc',
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis'
-                            }}
-                          >
-                            {item.details}
-                          </div>
-                        }
-                        actionIcon={
-                          <div
-                            style={{
-                              display: 'flex',
-                              justifyContent: 'space-around',
-                              alignItems: 'center',
-                              background: 'rgba(255, 255, 255, 0.1)', // Background for button container
-                              borderRadius: '4px',
-                              padding: '1px',
-                              alignSelf: 'stretch',
-                              width: '100%'
-                            }}
-                          >
-                              <IconButtonTooltip title='View'
-                                sx={{ color: 'white' }}
-                                aria-label={`view quiz ${item.title}`}
-                                onClick={e => {
-                                  e.stopPropagation()
-                                  handleViewQuiz(item)
-                                }}
-                              >
-                                <VisibilityOutlinedIcon />
-                              </IconButtonTooltip>
-                              <IconButtonTooltip title='Move to drafts'
-                                sx={{ color: 'white' }}
-                                aria-label={`move to drafts ${item.title}`}
-                                onClick={e => handleStartMoveToDraft(item, e)}
-                              >
-                                <UndoIcon />
-                              </IconButtonTooltip>
-                          </div>
-                        }
                       />
+
+                      <Box
+                        sx={{
+                          position: 'relative',
+                          height: '180px',
+                          overflow: 'hidden',
+                          bgcolor: 'rgba(33, 150, 243, 0.02)'
+                        }}
+                      >
+                        <img
+                          src={item.thumbnail || `https://fakeimg.pl/250x250/?text=${item.title}`}
+                          alt={item.title}
+                          style={{
+                            width: '100%',
+                            height: '180px',
+                            objectFit: 'cover',
+                            transition: 'transform 0.6s ease'
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.transform = 'scale(1.08)'
+                          }}
+                          onMouseLeave={e => {
+                            e.currentTarget.style.transform = 'scale(1)'
+                          }}
+                        />
+                        <Chip
+                          label='PUBLISHED'
+                          size='small'
+                          sx={{
+                            position: 'absolute',
+                            top: 12,
+                            right: 12,
+                            backdropFilter: 'blur(10px)',
+                            bgcolor: 'rgba(255, 255, 255, 0.95)',
+                            color: '#2196f3',
+                            fontWeight: 700,
+                            fontSize: '0.7rem',
+                            height: 26,
+                            letterSpacing: 1,
+                            border: '1px solid rgba(33, 150, 243, 0.2)',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+                          }}
+                        />
+                      </Box>
+
+                      <Box sx={{ p: 2.5 }}>
+                        <Typography
+                          variant='h6'
+                          sx={{
+                            fontWeight: 700,
+                            fontSize: '1.05rem',
+                            lineHeight: 1.35,
+                            color: '#1a1a1a',
+                            mb: 1,
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                            minHeight: 45
+                          }}
+                        >
+                          {item.title}
+                        </Typography>
+                        <Typography
+                          variant='body2'
+                          sx={{
+                            fontSize: '0.825rem',
+                            lineHeight: 1.6,
+                            color: '#666',
+                            mb: 2,
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                            minHeight: 42
+                          }}
+                        >
+                          {item.details}
+                        </Typography>
+
+                        <Stack direction='row' spacing={1} sx={{ mt: 'auto' }}>
+                          <Button
+                            size='small'
+                            variant='outlined'
+                            startIcon={<VisibilityOutlinedIcon fontSize='small' />}
+                            onClick={e => {
+                              e.stopPropagation()
+                              handleViewQuiz(item)
+                            }}
+                            sx={{
+                              flex: 1,
+                              borderRadius: '8px',
+                              py: 0.8,
+                              fontSize: '0.7rem',
+                              borderColor: '#667eea',
+                              color: '#667eea',
+                              fontWeight: 600,
+                              textTransform: 'none',
+                              minWidth: 0,
+                              '&:hover': {
+                                borderColor: '#667eea',
+                                bgcolor: 'rgba(102, 126, 234, 0.08)'
+                              }
+                            }}
+                          >
+                            View
+                          </Button>
+                          <Button
+                            size='small'
+                            variant='outlined'
+                            startIcon={<UndoIcon fontSize='small' />}
+                            onClick={e => handleStartMoveToDraft(item, e)}
+                            sx={{
+                              flex: 1,
+                              borderRadius: '8px',
+                              py: 0.8,
+                              fontSize: '0.7rem',
+                              borderColor: '#ff9800',
+                              color: '#ff9800',
+                              fontWeight: 600,
+                              textTransform: 'none',
+                              minWidth: 0,
+                              '&:hover': {
+                                borderColor: '#ff9800',
+                                bgcolor: 'rgba(255, 152, 0, 0.08)'
+                              }
+                            }}
+                          >
+                            Undo
+                          </Button>
+                        </Stack>
+                      </Box>
                     </ImageListItem>
                   ))
                 : 'No Published Quizzes'}

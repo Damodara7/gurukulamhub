@@ -254,7 +254,18 @@ const QuestionBuilderArea = forwardRef(
         </Box>
         <Box sx={{ flex: 3, height: '100%', minWidth: 0 }}>
           <Box
-            sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1, minHeight: 0, height: '100%' }}
+            sx={{ 
+              p: 3, 
+              border: '2px solid #d0d0d0', 
+              borderRadius: '12px', 
+              minHeight: 0, 
+              height: '100%',
+              backgroundColor: 'white',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                borderColor: '#667eea'
+              }
+            }}
           >
             {!hasClickedNew && (
               <QuestionTemplateArea

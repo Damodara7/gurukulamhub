@@ -14,7 +14,10 @@ import {
   Grid,
   Tooltip,
   Typography,
-  useTheme
+  useTheme,
+  Box,
+  Stack,
+  Chip
 } from '@mui/material'
 import useMediaQuery from '@mui/material/useMediaQuery'
 
@@ -468,18 +471,43 @@ export default function SavedQuizzes({ isAdmin = false }) {
                     return (
                       <ImageListItem
                         key={item.id}
-                        style={{
-                          minHeight: '248px',
-                          padding: '0',
-                          alignContent: 'center',
-                          alignItems: 'center',
-                          position: 'relative',
+                        sx={{
                           cursor: 'pointer',
-                          border: '1px solid gray'
+                          position: 'relative',
+                          borderRadius: '16px',
+                          overflow: 'hidden',
+                          backdropFilter: 'blur(20px)',
+                          bgcolor: 'rgba(255, 255, 255, 0.9)',
+                          border: '1px solid rgba(0, 0, 0, 0.06)',
+                          boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+                          transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+                          '&:hover': {
+                            transform: 'translateY(-8px)',
+                            boxShadow: '0 16px 48px rgba(76, 175, 80, 0.15)',
+                            '&::before': {
+                              opacity: 0.6
+                            }
+                          },
+                          '&::before': {
+                            content: '""',
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            borderRadius: '16px',
+                            padding: '1px',
+                            background: 'linear-gradient(135deg, #4caf50, #388e3c)',
+                            WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                            WebkitMaskComposite: 'xor',
+                            maskComposite: 'exclude',
+                            opacity: 0,
+                            transition: 'opacity 0.5s ease'
+                          }
                         }}
                         onClick={() => handleViewQuiz(item)}
                       >
-                        {/* Checkbox positioned in the top-left corner */}
+                        {/* Checkbox */}
                         <Checkbox
                           checked={selectedQuizIds.includes(item._id)}
                           onChange={e => {
@@ -488,166 +516,245 @@ export default function SavedQuizzes({ isAdmin = false }) {
                           onClick={e => e.stopPropagation()}
                           sx={{
                             position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            color: '#ffffff', // Change checkbox color for better contrast
-                            zIndex: 2 // Ensures the checkbox is visible over the image
-                          }}
-                        />
-                        <Image
-                          src={`${item.thumbnail || 'https://fakeimg.pl/250x250/?text=' + item.title}`}
-                          alt={item.title}
-                          //   sx={{ maxHeight: '300px', maxWidth: '300px' }}
-                          fit='fill'
-                        />
-
-                        <ImageListItemBar
-                          actionPosition='top'
-                          sx={{
-                            background: 'rgba(0, 0, 0, 0.7)', // Darker background for better visibility of text and icons
-                            display: 'flex',
-                            flexDirection: 'column', // Stack items vertically
-                            alignItems: 'stretch', // Align items to the left
-                            padding: 0,
-                            '& .MuiImageListItemBar-titleWrap': {
-                              marginBottom: '2px', // Space between title/details and the buttons
-                              padding: '1px 4px'
-                            },
-                            '& .MuiImageListItemBar-title': {
-                              fontSize: '14px', // Font size for title
-                              color: '#fff', // White title color
-                              marginBottom: '2px'
-                            },
-                            '& .MuiImageListItemBar-subtitle': {
-                              fontSize: '12px', // Font size for subtitle
-                              color: '#ccc', // Lighter color for subtitle/details
-                              marginTop: '0px'
+                            top: 8,
+                            left: 8,
+                            color: '#ffffff',
+                            bgcolor: 'rgba(0, 0, 0, 0.3)',
+                            borderRadius: '6px',
+                            zIndex: 3,
+                            '&:hover': {
+                              bgcolor: 'rgba(0, 0, 0, 0.5)'
                             }
                           }}
-                          title={
-                            <div
-                              style={{
-                                fontSize: '14px',
-                                color: '#fff',
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis'
-                              }}
-                            >
-                              {item.title}
-                            </div>
-                          }
-                          subtitle={
-                            <div
-                              style={{
-                                fontSize: '12px',
-                                color: '#ccc',
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis'
-                              }}
-                            >
-                              {item.details}
-                            </div>
-                          }
-                          actionIcon={
-                            <div
-                              style={{
-                                display: 'flex',
-                                justifyContent: 'space-around',
-                                alignItems: 'center',
-                                background: 'rgba(255, 255, 255, 0.1)', // Background for button container
-                                borderRadius: '4px',
-                                padding: '1px',
-                                alignSelf: 'stretch',
-                                width: '100%'
-                              }}
-                            >
-                              <IconButtonTooltip
-                                title='View'
-                                sx={{ color: '#fff' }} // White icon color
-                                aria-label={`view quiz ${item.title}`}
-                                onClick={e => {
-                                  e.stopPropagation()
-                                  handleViewQuiz(item)
-                                }}
-                              >
-                                <VisibilityOutlinedIcon />
-                              </IconButtonTooltip>
-                              <IconButtonTooltip
-                                title='Build'
-                                sx={{ color: '#fff' }} // White icon color
-                                aria-label={`build quiz ${item.title}`}
-                                onClick={e => {
-                                  e.stopPropagation()
-                                  handleBuildQuiz(item)
-                                }}
-                              >
-                                <BuildOutlinedIcon />
-                              </IconButtonTooltip>
-                              <IconButtonTooltip
-                                title='Translate'
-                                sx={{ color: '#fff' }} // White icon color
-                                aria-label={`translate quiz ${item.title}`}
-                                onClick={e => {
-                                  e.stopPropagation()
-                                  handleClickTranslate(item)
-                                }}
-                              >
-                                <TranslateIcon />
-                              </IconButtonTooltip>
-                              {!isAdmin && (
-                                <IconButtonTooltip
-                                  title='Send for approval'
-                                  sx={{ color: '#fff' }} // White icon color
-                                  aria-label='send for approval'
-                                  onClick={e => {
-                                    e.stopPropagation()
-                                    handleSendToApproval(item)
-                                  }}
-                                >
-                                  <SendIcon />
-                                </IconButtonTooltip>
-                              )}
-                              {/* {item.privacy === 'PRIVATE' && (
-                                <IconButtonTooltip
-                                  title='Publish'
-                                  sx={{ color: '#fff' }} // White icon color
-                                  aria-label='publish'
-                                  onClick={e => {
-                                    e.stopPropagation()
-                                    handlePublishPrivateQuiz(item)
-                                  }}
-                                >
-                                  <PublishIcon />
-                                </IconButtonTooltip>
-                              )} */}
-                              {isAdmin && (
-                                <IconButtonTooltip
-                                  title='Publish'
-                                  sx={{ color: '#fff' }} // White icon color
-                                  aria-label='publish'
-                                  onClick={e => {
-                                    e.stopPropagation()
-                                    handlePublish(item)
-                                  }}
-                                >
-                                  <PublishIcon />
-                                </IconButtonTooltip>
-                              )}
-                              <IconButtonTooltip
-                                title='Delete'
-                                sx={{ color: 'red' }} // Red icon color for delete button
-                                aria-label={`delete quiz ${item.owner}`}
-                                onClick={e => {
-                                  handleStartDeleteQuiz(item, e)
-                                }}
-                              >
-                                <DeleteIcon />
-                              </IconButtonTooltip>
-                            </div>
-                          }
                         />
+
+                        {/* Image Section */}
+                        <Box
+                          sx={{
+                            position: 'relative',
+                            height: '180px',
+                            overflow: 'hidden',
+                            bgcolor: 'rgba(76, 175, 80, 0.02)'
+                          }}
+                        >
+                          <img
+                            src={item.thumbnail || `https://fakeimg.pl/250x250/?text=${item.title}`}
+                            alt={item.title}
+                            style={{
+                              width: '100%',
+                              height: '180px',
+                              objectFit: 'cover',
+                              transition: 'transform 0.6s ease'
+                            }}
+                            onMouseEnter={e => {
+                              e.currentTarget.style.transform = 'scale(1.08)'
+                            }}
+                            onMouseLeave={e => {
+                              e.currentTarget.style.transform = 'scale(1)'
+                            }}
+                          />
+
+                          {/* Saved Badge */}
+                          <Chip
+                            label='SAVED'
+                            size='small'
+                            sx={{
+                              position: 'absolute',
+                              top: 12,
+                              right: 12,
+                              backdropFilter: 'blur(10px)',
+                              bgcolor: 'rgba(255, 255, 255, 0.95)',
+                              color: '#4caf50',
+                              fontWeight: 700,
+                              fontSize: '0.7rem',
+                              height: 26,
+                              letterSpacing: 1,
+                              border: '1px solid rgba(76, 175, 80, 0.2)',
+                              boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+                            }}
+                          />
+                        </Box>
+
+                        {/* Content Section */}
+                        <Box sx={{ p: 2.5 }}>
+                          <Typography
+                            variant='h6'
+                            sx={{
+                              fontWeight: 700,
+                              fontSize: '1.05rem',
+                              lineHeight: 1.35,
+                              color: '#1a1a1a',
+                              mb: 1,
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden',
+                              minHeight: 45
+                            }}
+                          >
+                            {item.title}
+                          </Typography>
+
+                          <Typography
+                            variant='body2'
+                            sx={{
+                              fontSize: '0.825rem',
+                              lineHeight: 1.6,
+                              color: '#666',
+                              mb: 2,
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden',
+                              minHeight: 42
+                            }}
+                          >
+                            {item.details}
+                          </Typography>
+
+                          {/* Action Buttons Row - Clear and Understandable */}
+                          <Stack direction='row' spacing={0.75} sx={{ mt: 'auto' }}>
+                            <Button
+                              size='small'
+                              variant='outlined'
+                              startIcon={<VisibilityOutlinedIcon fontSize='small' />}
+                              onClick={e => {
+                                e.stopPropagation()
+                                handleViewQuiz(item)
+                              }}
+                              sx={{
+                                flex: 1,
+                                borderRadius: '8px',
+                                py: 0.8,
+                                fontSize: '0.65rem',
+                                borderColor: '#667eea',
+                                color: '#667eea',
+                                fontWeight: 600,
+                                textTransform: 'none',
+                                minWidth: 0,
+                                '&:hover': {
+                                  borderColor: '#667eea',
+                                  bgcolor: 'rgba(102, 126, 234, 0.08)'
+                                }
+                              }}
+                            >
+                              View
+                            </Button>
+                            <Button
+                              size='small'
+                              variant='contained'
+                              startIcon={<BuildOutlinedIcon fontSize='small' />}
+                              onClick={e => {
+                                e.stopPropagation()
+                                handleBuildQuiz(item)
+                              }}
+                              sx={{
+                                flex: 1,
+                                borderRadius: '8px',
+                                py: 0.8,
+                                fontSize: '0.65rem',
+                                bgcolor: '#667eea !important',
+                                color: 'white !important',
+                                fontWeight: 600,
+                                textTransform: 'none',
+                                minWidth: 0,
+                                display: 'flex !important',
+                                visibility: 'visible !important',
+                                opacity: '1 !important',
+                                '&:hover': {
+                                  bgcolor: '#5563d1 !important'
+                                }
+                              }}
+                            >
+                              Build
+                            </Button>
+                            {!isAdmin && (
+                              <Button
+                                size='small'
+                                variant='contained'
+                                startIcon={<SendIcon fontSize='small' />}
+                                onClick={e => {
+                                  e.stopPropagation()
+                                  handleSendToApproval(item)
+                                }}
+                                sx={{
+                                  flex: 1,
+                                  borderRadius: '8px',
+                                  py: 0.8,
+                                  fontSize: '0.65rem',
+                                  bgcolor: '#4caf50 !important',
+                                  color: 'white !important',
+                                  fontWeight: 600,
+                                  textTransform: 'none',
+                                  minWidth: 0,
+                                  display: 'flex !important',
+                                  visibility: 'visible !important',
+                                  opacity: '1 !important',
+                                  '&:hover': {
+                                    bgcolor: '#388e3c !important'
+                                  }
+                                }}
+                              >
+                                Send
+                              </Button>
+                            )}
+                            {isAdmin && (
+                              <Button
+                                size='small'
+                                variant='contained'
+                                startIcon={<PublishIcon fontSize='small' />}
+                                onClick={e => {
+                                  e.stopPropagation()
+                                  handlePublish(item)
+                                }}
+                                sx={{
+                                  flex: 1,
+                                  borderRadius: '8px',
+                                  py: 0.8,
+                                  fontSize: '0.65rem',
+                                  bgcolor: '#2196f3 !important',
+                                  color: 'white !important',
+                                  fontWeight: 600,
+                                  textTransform: 'none',
+                                  minWidth: 0,
+                                  display: 'flex !important',
+                                  visibility: 'visible !important',
+                                  opacity: '1 !important',
+                                  '&:hover': {
+                                    bgcolor: '#1976d2 !important'
+                                  }
+                                }}
+                              >
+                                Publish
+                              </Button>
+                            )}
+                            <Button
+                              size='small'
+                              variant='outlined'
+                              startIcon={<DeleteIcon fontSize='small' />}
+                              onClick={e => {
+                                handleStartDeleteQuiz(item, e)
+                              }}
+                              sx={{
+                                flex: 1,
+                                borderRadius: '8px',
+                                py: 0.8,
+                                fontSize: '0.65rem',
+                                borderColor: '#f44336',
+                                color: '#f44336',
+                                fontWeight: 600,
+                                textTransform: 'none',
+                                minWidth: 0,
+                                '&:hover': {
+                                  borderColor: '#f44336',
+                                  bgcolor: 'rgba(244, 67, 54, 0.08)'
+                                }
+                              }}
+                            >
+                              Delete
+                            </Button>
+                          </Stack>
+                        </Box>
                       </ImageListItem>
                     )
                   })

@@ -93,34 +93,39 @@ export default function QuestionsVerticalMenu({
         sx={{
           m: 1,
           mb: 2,
-          py: 1,
-          px: 2,
-          minHeight: 40,
-          height: 44,
-          // maxWidth: 210,
+          py: 1.5,
+          px: 3,
+          minHeight: 48,
           alignSelf: 'stretch',
           width: '97%',
           cursor: 'pointer',
-          border: hasClickedNew ? '3px solid' : '1px solid',
-          borderColor: hasClickedNew ? 'primary.main' : 'primary.main',
-          borderRadius: 999,
-          background: hasClickedNew ? 'rgba(25, 118, 210, 0.08)' : 'background.paper',
-          color: 'primary.main',
-          boxShadow: 'none',
+          border: hasClickedNew ? '2px solid' : '2px solid',
+          borderColor: hasClickedNew ? '#667eea' : '#667eea',
+          borderRadius: '12px',
+          backgroundColor: hasClickedNew ? '#667eea' : 'white',
+          color: hasClickedNew ? 'white' : '#667eea',
+          boxShadow: hasClickedNew ? '0 4px 15px rgba(102, 126, 234, 0.3)' : '0 2px 8px rgba(102, 126, 234, 0.15)',
           display: 'flex',
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: 1,
-          fontWeight: 600,
-          fontSize: 15,
-          letterSpacing: 0.1,
-          transition: 'background 0.18s, border-color 0.18s',
+          gap: 1.5,
+          fontWeight: 700,
+          fontSize: '1rem',
+          transition: 'all 0.3s ease',
           outline: 'none',
           mx: 'auto',
           '&:hover': {
-            background: 'rgba(25, 118, 210, 0.10)',
-            borderColor: 'primary.main',
+            backgroundColor: '#667eea',
+            color: 'white',
+            transform: 'translateY(-2px)',
+            boxShadow: '0 6px 20px rgba(102, 126, 234, 0.4)',
+            '& .MuiSvgIcon-root': {
+              color: 'white'
+            },
+            '& .MuiTypography-root': {
+              color: 'white'
+            }
           },
         }}
         onClick={() => onClickNew()}
@@ -128,9 +133,9 @@ export default function QuestionsVerticalMenu({
         role="button"
         aria-label="Create New Question"
       >
-        <AddCircleOutlineIcon sx={{ fontSize: 24, color: 'primary.main', mr: 1 }} />
-        <Typography variant="subtitle2" fontWeight={600} color="primary.main" sx={{ fontSize: 15, lineHeight: 1 }}>
-          Create New
+        <AddCircleOutlineIcon sx={{ fontSize: 28, color: hasClickedNew ? 'white' : '#667eea', transition: 'color 0.3s ease' }} />
+        <Typography variant="subtitle2" fontWeight={700} sx={{ fontSize: '1rem', lineHeight: 1, color: 'inherit', transition: 'color 0.3s ease' }}>
+          + Create New
         </Typography>
       </Card>
       {/* Scrollable questions list */}
@@ -147,33 +152,37 @@ export default function QuestionsVerticalMenu({
                 mb: 2,
                 width: '97%',
                 cursor: 'pointer',
-                border: selectedQuestion?._id === question._id ? '3px solid' : '1px solid',
+                border: selectedQuestion?._id === question._id ? '2px solid' : '1px solid',
                 borderColor: hasErrors 
-                  ? 'error.main' 
+                  ? '#ef4444' 
                   : selectedQuestion?._id === question._id 
-                    ? 'primary.main' 
-                    : 'divider',
-                boxShadow: selectedQuestion?._id === question._id ? '0px 4px 20px rgba(0, 0, 0, 0.1)' : 'none',
-                transition: 'box-shadow 0.3s ease, border-color 0.3s ease',
-                transform: selectedQuestion?._id === question._id ? 'scale(1.02)' : 'none',
-                position: 'relative'
+                    ? '#667eea' 
+                    : '#d0d0d0',
+                borderRadius: '12px',
+                backgroundColor: hasErrors 
+                  ? 'rgba(239, 68, 68, 0.05)' 
+                  : selectedQuestion?._id === question._id 
+                    ? 'rgba(102, 126, 234, 0.05)' 
+                    : 'white',
+                boxShadow: selectedQuestion?._id === question._id 
+                  ? '0 4px 15px rgba(102, 126, 234, 0.25)' 
+                  : hasErrors 
+                    ? '0 2px 8px rgba(239, 68, 68, 0.15)' 
+                    : '0 1px 4px rgba(0, 0, 0, 0.08)',
+                transition: 'all 0.3s ease',
+                transform: selectedQuestion?._id === question._id ? 'translateX(4px)' : 'none',
+                position: 'relative',
+                '&:hover': {
+                  borderColor: hasErrors ? '#ef4444' : '#667eea',
+                  borderWidth: '2px',
+                  transform: 'translateX(4px)',
+                  boxShadow: hasErrors 
+                    ? '0 4px 15px rgba(239, 68, 68, 0.25)' 
+                    : '0 4px 15px rgba(102, 126, 234, 0.25)'
+                }
               }}
               onClick={() => onSelect(question)}
             >
-              {hasErrors && (
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    backgroundColor: 'error.light',
-                    opacity: 0.1,
-                    zIndex: 0
-                  }}
-                />
-              )}
               {renderDummyTemplate(
                 question,
                 `${index + 1}. ${question?.data?.question?.text || '* Question is not completed!'}`,

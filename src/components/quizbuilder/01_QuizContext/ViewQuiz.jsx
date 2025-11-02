@@ -34,11 +34,11 @@ import VerifiedOutlinedIcon from '@mui/icons-material/VerifiedOutlined'
 import NewReleasesOutlinedIcon from '@mui/icons-material/NewReleasesOutlined'
 import PublishOutlinedIcon from '@mui/icons-material/PublishOutlined'
 import PendingActionsOutlinedIcon from '@mui/icons-material/PendingActionsOutlined'
-import SaveIcon from '@mui/icons-material/Save';
+import SaveIcon from '@mui/icons-material/Save'
 import TabPanel from '@mui/lab/TabPanel'
 import SavedQuizzes from './SavedQuizzes'
 
-const ViewQuiz = ({ data, theme, onSelectQuiz, isAdmin=false }) => {
+const ViewQuiz = ({ data, theme, onSelectQuiz, isAdmin = false }) => {
   const { data: session, status } = useSession()
   const [privacyType, setPrivacyType] = useState('PUBLIC')
   const [invalidateQuizzes, setInvalidateQuizzes] = useState(false)
@@ -121,7 +121,43 @@ const ViewQuiz = ({ data, theme, onSelectQuiz, isAdmin=false }) => {
   }
 
   return (
-    <div style={{ position: 'relative' }}>
+    <Box sx={{ position: 'relative', p: 2 }}>
+      {/* Attractive Header */}
+      <Box
+        sx={{
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          borderRadius: '16px',
+          p: 3,
+          mb: 3,
+          boxShadow: '0 8px 32px rgba(102, 126, 234, 0.3)'
+        }}
+      >
+        <Typography
+          variant='h4'
+          sx={{
+            color: 'white',
+            fontWeight: 700,
+            textAlign: 'center',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 2
+          }}
+        >
+          📚 My Quiz Collection
+        </Typography>
+        <Typography
+          variant='body2'
+          sx={{
+            color: 'rgba(255, 255, 255, 0.9)',
+            textAlign: 'center',
+            mt: 1
+          }}
+        >
+          Manage and organize your quizzes across different stages
+        </Typography>
+      </Box>
+
       <TabContext value={activeTab}>
         <Grid container spacing={0}>
           <Grid item xs={12}>
@@ -142,42 +178,50 @@ const ViewQuiz = ({ data, theme, onSelectQuiz, isAdmin=false }) => {
                     </div>
                   }
                 />
-                {!isAdmin && <Tab
-                  value='saved'
-                  label={
-                    <div className='flex items-center gap-1.5'>
-                      <SaveIcon />
-                      Saved
-                    </div>
-                  }
-                />}
-                {!isAdmin && <Tab
-                  value='pending'
-                  label={
-                    <div className='flex items-center gap-1.5'>
-                      <PendingActionsOutlinedIcon />
-                      Pending
-                    </div>
-                  }
-                />}
-                {<Tab
-                  value='approved'
-                  label={
-                    <div className='flex items-center gap-1.5'>
-                      <VerifiedOutlinedIcon />
-                      {isAdmin ? `Saved & Approved` : 'Approved'}
-                    </div>
-                  }
-                />}
-                {!isAdmin && <Tab
-                  value='rejected'
-                  label={
-                    <div className='flex items-center gap-1.5'>
-                      <NewReleasesOutlinedIcon />
-                      Rejected
-                    </div>
-                  }
-                />}
+                {!isAdmin && (
+                  <Tab
+                    value='saved'
+                    label={
+                      <div className='flex items-center gap-1.5'>
+                        <SaveIcon />
+                        Saved
+                      </div>
+                    }
+                  />
+                )}
+                {!isAdmin && (
+                  <Tab
+                    value='pending'
+                    label={
+                      <div className='flex items-center gap-1.5'>
+                        <PendingActionsOutlinedIcon />
+                        Pending
+                      </div>
+                    }
+                  />
+                )}
+                {
+                  <Tab
+                    value='approved'
+                    label={
+                      <div className='flex items-center gap-1.5'>
+                        <VerifiedOutlinedIcon />
+                        {isAdmin ? `Saved & Approved` : 'Approved'}
+                      </div>
+                    }
+                  />
+                }
+                {!isAdmin && (
+                  <Tab
+                    value='rejected'
+                    label={
+                      <div className='flex items-center gap-1.5'>
+                        <NewReleasesOutlinedIcon />
+                        Rejected
+                      </div>
+                    }
+                  />
+                )}
                 <Tab
                   value='published'
                   label={
@@ -192,11 +236,13 @@ const ViewQuiz = ({ data, theme, onSelectQuiz, isAdmin=false }) => {
           </Grid>
 
           <Grid item xs={12}>
-            <TabPanel value={activeTab}>{tabPanelObject[activeTab]}</TabPanel>
+            <TabPanel value={activeTab} sx={{ p: 0, pt: 2 }}>
+              {tabPanelObject[activeTab]}
+            </TabPanel>
           </Grid>
         </Grid>
       </TabContext>
-    </div>
+    </Box>
   )
 }
 

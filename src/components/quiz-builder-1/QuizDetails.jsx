@@ -15,61 +15,74 @@ const QuizDetails = ({ quiz }) => {
   return (
     <MinimizableComponent
       panelName='Quiz Details'
-      containerStyles={{  }}
+      containerStyles={{}}
       buttonStyles={{ alignSelf: 'center' }}
       autoMinimizeAfter={5000}
     >
-      <Card elevation={3} sx={{ margin: 'auto' }}>
-        <CardContent>
+      <Card
+        elevation={0}
+        sx={{
+          margin: 'auto',
+          borderRadius: '12px',
+          border: '1px solid #d0d0d0',
+          backgroundColor: 'white',
+          transition: 'all 0.3s ease',
+          '&:hover': {
+            borderColor: '#667eea',
+            boxShadow: '0 4px 15px rgba(102, 126, 234, 0.1)'
+          }
+        }}
+      >
+        <CardContent sx={{ p: 3 }}>
           <Grid container spacing={3}>
             {/* Quiz Title */}
             <Grid item xs={12} md={6}>
-              <Box display='flex' alignItems='center'>
-                <Title sx={{ mr: 1, color: 'primary.main' }} />
-                <Typography variant='subtitle1' fontWeight='bold'>
+              <Box display='flex' alignItems='center' mb={1}>
+                <Title sx={{ mr: 1.5, color: '#667eea', fontSize: '1.5rem' }} />
+                <Typography variant='subtitle1' fontWeight={700} sx={{ color: '#667eea', fontSize: '0.95rem' }}>
                   Title:
                 </Typography>
               </Box>
-              <Typography variant='body1' color='text.secondary'>
+              <Typography variant='body1' color='text.secondary' sx={{ ml: 5, fontWeight: 500 }}>
                 {quiz.title || 'N/A'}
               </Typography>
             </Grid>
 
             {/* Quiz Details */}
             <Grid item xs={12} md={6}>
-              <Box display='flex' alignItems='center'>
-                <Info sx={{ mr: 1, color: 'primary.main' }} />
-                <Typography variant='subtitle1' fontWeight='bold'>
+              <Box display='flex' alignItems='center' mb={1}>
+                <Info sx={{ mr: 1.5, color: '#667eea', fontSize: '1.5rem' }} />
+                <Typography variant='subtitle1' fontWeight={700} sx={{ color: '#667eea', fontSize: '0.95rem' }}>
                   Details:
                 </Typography>
               </Box>
-              <Typography variant='body1' color='text.secondary'>
+              <Typography variant='body1' color='text.secondary' sx={{ ml: 5, fontWeight: 500 }}>
                 {quiz.details || 'N/A'}
               </Typography>
             </Grid>
 
             {/* Primary Language */}
             <Grid item xs={12} md={6}>
-              <Box display='flex' alignItems='center'>
-                <Translate sx={{ mr: 1, color: 'primary.main' }} />
-                <Typography variant='subtitle1' fontWeight='bold'>
+              <Box display='flex' alignItems='center' mb={1}>
+                <Translate sx={{ mr: 1.5, color: '#667eea', fontSize: '1.5rem' }} />
+                <Typography variant='subtitle1' fontWeight={700} sx={{ color: '#667eea', fontSize: '0.95rem' }}>
                   Primary Language:
                 </Typography>
               </Box>
-              <Typography variant='body1' color='text.secondary'>
+              <Typography variant='body1' color='text.secondary' sx={{ ml: 5, fontWeight: 500 }}>
                 {quiz.language?.name || 'N/A'}
               </Typography>
             </Grid>
 
             {/* Quiz ID */}
             <Grid item xs={12} md={6}>
-              <Box display='flex' alignItems='center'>
-                <Key sx={{ mr: 1, color: 'primary.main' }} />
-                <Typography variant='subtitle1' fontWeight='bold'>
+              <Box display='flex' alignItems='center' mb={1}>
+                <Key sx={{ mr: 1.5, color: '#667eea', fontSize: '1.5rem' }} />
+                <Typography variant='subtitle1' fontWeight={700} sx={{ color: '#667eea', fontSize: '0.95rem' }}>
                   Quiz ID:
                 </Typography>
               </Box>
-              <Typography variant='body1' color='text.secondary'>
+              <Typography variant='body1' color='text.secondary' sx={{ ml: 5, fontWeight: 500 }}>
                 {quiz.id || 'N/A'}
               </Typography>
             </Grid>

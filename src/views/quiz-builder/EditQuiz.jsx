@@ -31,13 +31,14 @@ import {
   CardContent,
   CardHeader,
   Stack,
-  Typography
+  Typography,
+  Grid
 } from '@mui/material'
 import CenterBox from '@/components/CenterBox'
 import { useRouter } from 'next/navigation'
 import GoBackButton from '@/components/GoBackButton'
 
-function EditQuiz({ quiz, isAdmin=false }) {
+function EditQuiz({ quiz, isAdmin = false }) {
   const router = useRouter()
   const { data: session, status, update } = useSession()
   const { uuid, regenerateUUID, getUUID } = useUUID()
@@ -268,40 +269,100 @@ function EditQuiz({ quiz, isAdmin=false }) {
   }
   return (
     <>
-      <GoBackButton />
-      <Card>
-        <CardContent>
-          <Box className='flex flex-col gap-2 mb-6 mt-2 text-center'>
-            <Typography variant='h4'>Edit Your Quiz</Typography>
-            <Typography variant='body1' color='text.secondary'>
-              Edit quiz details as per your requirements.
-            </Typography>
-          </Box>
-          <CreateQuizForm
-            regenerateUUID={regenerateUUID}
-            user={session?.user}
-            control={control}
-            errors={errors}
-            setValue={setValue}
-            formData={getValues()}
-            quiz={quiz}
-            quizId={getValues().id}
-            isAdmin={isAdmin}
-          />
-          <Stack className='w-full' flexDirection='row' alignItems='center' justifyContent='flex-end'>
-            <Button
-              component='label'
-              sx={{ color: 'white' }}
-              variant='contained'
-              color='primary'
-              disabled={loading}
-              onClick={handleSubmit(onSubmit)}
-            >
-              {loading ? 'Loading...' : 'Edit Quiz'}
-            </Button>
-          </Stack>
-        </CardContent>
-      </Card>
+      <Box
+        sx={{
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          borderRadius: '24px',
+          p: { xs: 2, sm: 3, md: 4 },
+          boxShadow: '0 20px 60px rgba(102, 126, 234, 0.3)',
+          position: 'relative',
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background:
+              'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+            opacity: 0.4
+          }
+        }}
+      >
+        <Card
+          sx={{
+            background: 'rgba(255, 255, 255, 0.98)',
+            backdropFilter: 'blur(20px)',
+            borderRadius: '20px',
+            boxShadow: 'none',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            position: 'relative',
+            zIndex: 1
+          }}
+        >
+          <CardContent sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
+            <Box className='flex flex-col gap-1 mb-4 text-center'>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5 }}>
+                <Typography
+                  variant='h3'
+                  sx={{
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    fontWeight: 800,
+                    fontSize: { xs: '1.75rem', sm: '2.25rem', md: '2.75rem' },
+                    letterSpacing: '-1px'
+                  }}
+                >
+                  Edit Your Quiz
+                </Typography>
+              </Box>
+              <Typography
+                variant='body2'
+                color='text.secondary'
+                sx={{ fontSize: '0.95rem', maxWidth: '600px', mx: 'auto' }}
+              >
+                Edit quiz details as per your requirements
+              </Typography>
+            </Box>
+            <CreateQuizForm
+              regenerateUUID={regenerateUUID}
+              user={session?.user}
+              control={control}
+              errors={errors}
+              setValue={setValue}
+              formData={getValues()}
+              quiz={quiz}
+              quizId={getValues().id}
+              isAdmin={isAdmin}
+            />
+            {/* Form Actions */}
+            <Grid item xs={12} mt={5}>
+              <Stack direction='row' spacing={2} justifyContent='center'>
+                <Button
+                  variant='outlined'
+                  onClick={() => router.push(`/${isAdmin ? 'management/quizzes' : 'myquizzes'}/view/${quiz._id}`)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  sx={{ mt: 2 }}
+                  variant='contained'
+                  style={{ color: 'white' }}
+                  color='primary'
+                  component='label'
+                  onClick={handleSubmit(onSubmit)}
+                  disabled={loading}
+                >
+                  {loading ? 'Updating...' : 'Update Quiz'}
+                </Button>
+              </Stack>
+            </Grid>
+          </CardContent>
+        </Card>
+      </Box>
     </>
   )
 }

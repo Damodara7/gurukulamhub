@@ -19,7 +19,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogContentText,
-  DialogActions
+  DialogActions,
+  InputAdornment
 } from '@mui/material'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS as ApiUrls } from '@/configs/apiConfig'
@@ -98,7 +99,34 @@ const DebouncedInput = ({ value: initialValue, onChange, debounce = 500, ...prop
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value])
 
-  return <TextField {...props} value={value} onChange={e => setValue(e.target.value)} size='small' />
+  return (
+    <TextField
+      {...props}
+      value={value}
+      onChange={e => setValue(e.target.value)}
+      size='small'
+      InputProps={{
+        startAdornment: (
+          <InputAdornment position='start'>
+            <i className='ri-search-line' style={{ fontSize: '1.25rem', color: '#667eea' }} />
+          </InputAdornment>
+        ),
+        style: {
+          borderRadius: '8px'
+        }
+      }}
+      sx={{
+        '& .MuiOutlinedInput-root': {
+          '&:hover fieldset': {
+            borderColor: '#667eea'
+          },
+          '&.Mui-focused fieldset': {
+            borderColor: '#764ba2'
+          }
+        }
+      }}
+    />
+  )
 }
 
 // Vars
@@ -143,27 +171,81 @@ const ImagePopup = ({ imageUrl, mediaType }) => {
       {mediaType === 'image' ? (
         <ImageComponent imageUrl={imageUrl} onClick={handleClickOpen} />
       ) : (
-        <div onClick={handleClickOpen}>
-          <a style={{ display: 'flex', alignItems: 'center' }} href='#'>
-            {' '}
-            <i className='ri-artboard-fill'></i>Open Video popup{' '}
-          </a>
-        </div>
+        <Button
+          onClick={handleClickOpen}
+          variant='outlined'
+          size='small'
+          startIcon={<i className='ri-play-circle-line' />}
+          sx={{
+            borderColor: '#667eea',
+            color: '#667eea',
+            textTransform: 'none',
+            borderRadius: '6px',
+            fontWeight: 500,
+            '&:hover': {
+              borderColor: '#764ba2',
+              background: 'linear-gradient(135deg, #667eea10 0%, #764ba210 100%)'
+            }
+          }}
+        >
+          View Video
+        </Button>
       )}
-      <Dialog open={open} onClose={handleClose}>
-        <DialogTitle>Media Preview</DialogTitle>
-        <DialogContent>
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        maxWidth='lg'
+        PaperProps={{
+          sx: {
+            borderRadius: '16px',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
+          }
+        }}
+      >
+        <DialogTitle
+          sx={{
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white',
+            fontWeight: 600,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '8px'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <i className={mediaType === 'video' ? 'ri-video-line' : 'ri-image-line'} style={{ fontSize: '24px' }} />
+            {mediaType === 'video' ? 'Video Preview' : 'Image Preview'}
+          </div>
+          <IconButton
+            onClick={handleClose}
+            sx={{
+              color: 'white',
+              '&:hover': {
+                background: 'rgba(255, 255, 255, 0.1)'
+              }
+            }}
+          >
+            <i className='ri-close-line' style={{ fontSize: '24px' }} />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ padding: '24px', background: '#f9fafb' }}>
           <DialogContentText>
             {mediaType === 'video' ? (
               <VideoAd url={imageUrl} width={'50vw'} height={'50vh'} showPause autoPlay={false}></VideoAd>
             ) : (
-              <img src={imageUrl} alt='Enlarged Image' style={{ width: '100%' }} />
+              <img
+                src={imageUrl}
+                alt='Enlarged Image'
+                style={{
+                  width: '100%',
+                  borderRadius: '12px',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+                }}
+              />
             )}
           </DialogContentText>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose}>Close</Button>
-        </DialogActions>
       </Dialog>
     </>
   )
@@ -181,23 +263,23 @@ const AdvListTable = () => {
   const [mode, setMode] = useState('add')
 
   const getData = useCallback(async () => {
-    setLoading(prev => ({ ...prev, fetchAds: true }));
-    const result = await RestApi.get(ApiUrls.v0.ADMIN_GET_ADVERTISEMENT);
+    setLoading(prev => ({ ...prev, fetchAds: true }))
+    const result = await RestApi.get(ApiUrls.v0.ADMIN_GET_ADVERTISEMENT)
 
     if (result?.status === 'success') {
-      console.log('Advts Fetched result', result);
-      setLoading(prev => ({ ...prev, fetchAds: false }));
-      console.log('Advts Fetched result', result.result);
-      setData(result.result);
+      console.log('Advts Fetched result', result)
+      setLoading(prev => ({ ...prev, fetchAds: false }))
+      console.log('Advts Fetched result', result.result)
+      setData(result.result)
     } else {
-      toast.error('Error Loading Advertisements:' + result.message);
-      setLoading(prev => ({ ...prev, fetchAds: false }));
+      toast.error('Error Loading Advertisements:' + result.message)
+      setLoading(prev => ({ ...prev, fetchAds: false }))
     }
-  }, []);
+  }, [])
 
   useEffect(() => {
-    getData();
-  }, [getData]);
+    getData()
+  }, [getData])
 
   const handleDelete = async (e, id) => {
     e.preventDefault()
@@ -228,6 +310,12 @@ const AdvListTable = () => {
               indeterminate: table.getIsSomeRowsSelected(),
               onChange: table.getToggleAllRowsSelectedHandler()
             }}
+            sx={{
+              color: '#667eea',
+              '&.Mui-checked': {
+                color: '#764ba2'
+              }
+            }}
           />
         ),
         cell: ({ row }) => (
@@ -238,20 +326,50 @@ const AdvListTable = () => {
               indeterminate: row.getIsSomeSelected(),
               onChange: row.getToggleSelectedHandler()
             }}
+            sx={{
+              color: '#667eea',
+              '&.Mui-checked': {
+                color: '#764ba2'
+              }
+            }}
           />
         )
       },
       columnHelper.accessor('userName', {
         header: 'User / Company',
         cell: ({ row }) => (
-          <div className='flex items-center gap-4'>
-            {/* {getAvatar({ avatar: row.original.avatar, userName: row.original.userName })} */}
-            <div className='flex flex-col'>
-              <Typography className='font-medium' color='text.primary'>
+          <div className='flex items-center gap-3' style={{ padding: '8px 0' }}>
+            <div
+              style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                fontSize: '18px',
+                fontWeight: 'bold',
+                flexShrink: 0
+              }}
+            >
+              {row.original.userName?.charAt(0)?.toUpperCase() || 'U'}
+            </div>
+            <div className='flex flex-col gap-1'>
+              <Typography className='font-semibold' style={{ fontSize: '15px', color: '#1a1a2e' }}>
                 {row.original.userName}
               </Typography>
-              <Typography variant='body2'>{row.original.company}</Typography>
-              <Typography variant='body2'>{row.original.email}</Typography>
+              <Typography variant='body2' style={{ fontSize: '13px', color: '#667eea', fontWeight: 500 }}>
+                {row.original.company}
+              </Typography>
+              <Typography
+                variant='body2'
+                style={{ fontSize: '12px', color: '#6b7280', display: 'flex', alignItems: 'center', gap: '4px' }}
+              >
+                <i className='ri-mail-line' style={{ fontSize: '14px' }} />
+                {row.original.email}
+              </Typography>
             </div>
           </div>
         )
@@ -262,79 +380,209 @@ const AdvListTable = () => {
       // }),
       columnHelper.accessor('startDate', {
         header: 'Start Date',
-        cell: ({ row }) => <Typography>{format(row.original.startDate, 'MM/dd/yyyy')}</Typography>
+        cell: ({ row }) => (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '6px 12px',
+              background: 'linear-gradient(135deg, #e0f2fe 0%, #ddd6fe 100%)',
+              borderRadius: '8px',
+              width: 'fit-content'
+            }}
+          >
+            <i className='ri-calendar-event-line' style={{ fontSize: '18px', color: '#667eea' }} />
+            <Typography style={{ fontSize: '14px', fontWeight: 500, color: '#1a1a2e' }}>
+              {format(row.original.startDate, 'MMM dd, yyyy')}
+            </Typography>
+          </div>
+        )
       }),
       columnHelper.accessor('endDate', {
-        header: 'end Date',
-        cell: ({ row }) => <Typography>{format(row.original.endDate, 'MM/dd/yyyy')}</Typography>
+        header: 'End Date',
+        cell: ({ row }) => (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '6px 12px',
+              background: 'linear-gradient(135deg, #fce7f3 0%, #e0e7ff 100%)',
+              borderRadius: '8px',
+              width: 'fit-content'
+            }}
+          >
+            <i className='ri-calendar-check-line' style={{ fontSize: '18px', color: '#764ba2' }} />
+            <Typography style={{ fontSize: '14px', fontWeight: 500, color: '#1a1a2e' }}>
+              {format(row.original.endDate, 'MMM dd, yyyy')}
+            </Typography>
+          </div>
+        )
       }),
       columnHelper.accessor('imageUrl', {
-        header: 'Image Url',
+        header: () => <div style={{ textAlign: 'center' }}>Media Preview</div>,
         cell: ({ row }) => (
-          <div className='flex flex-col items-center gap-2'>
-            {/* <Icon
-              className={userRoleObj[row.original.role].icon}
-              sx={{ color: `var(--mui-palette-${userRoleObj[row.original.imageUrl].color}-main)`, fontSize: '1.375rem' }}
-            /> */}
-            <Typography className='capitalize' color='text.primary'>
-              {row.original.imageUrl}
-            </Typography>
-
+          <div className='flex flex-col items-center gap-3' style={{ padding: '8px 0' }}>
             {row.original?.mediaType === 'video' ? (
-              <>
-                <VideoAd url={row.original?.imageUrl} showPause autoPlay={false}></VideoAd>
-                <ImagePopup imageUrl={row.original.imageUrl} mediaType={row.original.mediaType} />
-              </>
+              <div
+                className='media-preview-container'
+                style={{
+                  position: 'relative',
+                  borderRadius: '12px',
+                  overflow: 'hidden',
+                  border: '2px solid #e5e7eb',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                  width: '400px'
+                }}
+              >
+                <VideoAd
+                  url={row.original?.imageUrl}
+                  width='400px'
+                  height='120px'
+                  showPause={false}
+                  autoPlay={false}
+                ></VideoAd>
+              </div>
             ) : (
-              <ImagePopup imageUrl={row.original.imageUrl} mediaType={row.original.mediaType} />
+              <div
+                className='media-preview-container'
+                style={{
+                  position: 'relative',
+                  borderRadius: '12px',
+                  overflow: 'hidden',
+                  border: '2px solid #e5e7eb',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                }}
+              ></div>
             )}
+            <ImagePopup imageUrl={row.original.imageUrl} mediaType={row.original.mediaType} />
           </div>
         )
       }),
       columnHelper.accessor('status', {
         header: 'Status',
-        cell: ({ row }) => (
-          <div className='flex items-center gap-3'>
-            <Chip
-              variant='tonal'
-              className='capitalize'
-              label={row.original.status}
-              color={userStatusObj[row.original.status]}
-              size='small'
-            />
-          </div>
-        )
+        cell: ({ row }) => {
+          const statusConfig = {
+            active: {
+              color: '#10b981',
+              bg: '#d1fae5',
+              icon: 'ri-checkbox-circle-line',
+              label: 'Active'
+            },
+            pending: {
+              color: '#f59e0b',
+              bg: '#fef3c7',
+              icon: 'ri-time-line',
+              label: 'Pending'
+            },
+            inactive: {
+              color: '#6b7280',
+              bg: '#f3f4f6',
+              icon: 'ri-pause-circle-line',
+              label: 'Inactive'
+            }
+          }
+          const config = statusConfig[row.original.status] || statusConfig.inactive
+
+          return (
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 14px',
+                background: config.bg,
+                borderRadius: '20px',
+                border: `2px solid ${config.color}20`
+              }}
+            >
+              <i className={config.icon} style={{ fontSize: '16px', color: config.color }} />
+              <Typography
+                style={{
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  color: config.color,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px'
+                }}
+              >
+                {config.label}
+              </Typography>
+            </div>
+          )
+        }
       }),
       columnHelper.accessor('action', {
         header: 'Action',
         cell: ({ row }) => (
-          <div className='flex items-center'>
-            <IconButtonTooltip title='Delete'
-              onClick={e => {
-                console.log('advt to be deleted id ...', row.original._id)
-                setId(row.original._id)
-                handleDelete(e, row.original._id)
-              }}
-            >
-              <i className='ri-delete-bin-7-line text-[22px] text-textSecondary' />
-            </IconButtonTooltip>
-            <IconButtonTooltip title='Edit'
+          <div className='flex items-center gap-2'>
+            <IconButtonTooltip
+              title='Edit'
               onClick={e => {
                 setAdvtEditOrAddInitialData(row.original)
                 setMode('edit')
                 setAddAdvtOpen(!addAdvtOpen)
               }}
+              sx={{
+                background: 'linear-gradient(135deg, #e0f2fe 0%, #ddd6fe 100%)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  '& i': {
+                    color: 'white'
+                  }
+                },
+                width: '36px',
+                height: '36px',
+                borderRadius: '8px',
+                transition: 'all 0.3s ease'
+              }}
             >
-              <i className='ri-edit-box-line  text-[22px] text-textSecondary' />
+              <i className='ri-edit-box-line text-[20px]' style={{ color: '#667eea' }} />
+            </IconButtonTooltip>
+            <IconButtonTooltip
+              title='Delete'
+              onClick={e => {
+                console.log('advt to be deleted id ...', row.original._id)
+                setId(row.original._id)
+                handleDelete(e, row.original._id)
+              }}
+              sx={{
+                background: '#fee2e2',
+                '&:hover': {
+                  background: '#ef4444',
+                  '& i': {
+                    color: 'white'
+                  }
+                },
+                width: '36px',
+                height: '36px',
+                borderRadius: '8px',
+                transition: 'all 0.3s ease'
+              }}
+            >
+              <i className='ri-delete-bin-7-line text-[20px]' style={{ color: '#ef4444' }} />
             </IconButtonTooltip>
             <OptionMenu
-              iconClassName='text-[22px] text-textSecondary'
+              iconClassName='text-[22px]'
+              iconButtonProps={{
+                sx: {
+                  background: '#f3f4f6',
+                  '&:hover': {
+                    background: '#e5e7eb'
+                  },
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '8px',
+                  transition: 'all 0.3s ease'
+                }
+              }}
               options={[
                 {
                   text: 'Duplicate',
-                  icon: 'ri-edit-box-line text-[22px]',
+                  icon: 'ri-file-copy-line text-[20px]',
                   menuItemProps: {
-                    className: 'flex items-center gap-2 text-textSecondary',
+                    className: 'flex items-center gap-2',
                     onClick: () => {
                       setAdvtEditOrAddInitialData(row.original)
                       setMode('add')
@@ -344,9 +592,9 @@ const AdvListTable = () => {
                 },
                 {
                   text: 'Hard Delete',
-                  icon: 'ri-delete-bin-2-line text-[22px]',
+                  icon: 'ri-delete-bin-2-line text-[20px]',
                   menuItemProps: {
-                    className: 'flex items-center gap-2 text-textSecondary',
+                    className: 'flex items-center gap-2',
                     onClick: () => {}
                   }
                 }
@@ -391,33 +639,74 @@ const AdvListTable = () => {
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
 
-  if (loading.fetchAds){
-    return <Loading/>;
+  if (loading.fetchAds) {
+    return <Loading />
   }
 
   return (
     <>
-      <Card>
+      <Card
+        sx={{
+          borderRadius: '16px',
+          boxShadow: '0 8px 24px rgba(102, 126, 234, 0.12)',
+          overflow: 'hidden',
+          border: '1px solid #e5e7eb'
+        }}
+      >
         {/* <CardHeader title='Filters' /> */}
         {/* <TableFilters setData={setData} tableData={data} /> */}
-        <Divider />
+        <Divider
+          sx={{
+            borderColor: 'transparent',
+            background: 'linear-gradient(90deg, transparent 0%, #667eea30 50%, transparent 100%)',
+            height: '2px'
+          }}
+        />
         <div className='flex justify-between p-5 gap-4 flex-col items-start sm:flex-row sm:items-center'>
+          <Typography
+            variant='h4'
+            className='font-bold'
+            style={{
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
+            }}
+          >
+            Advertisement Management
+          </Typography>
           <div className='flex items-center gap-x-4 is-full gap-4 flex-col sm:is-auto sm:flex-row'>
             <DebouncedInput
               value={globalFilter ?? ''}
               onChange={value => setGlobalFilter(String(value))}
-              placeholder='Search Advt'
+              placeholder='Search advertisements...'
               className='is-full sm:is-auto'
             />
             <Button
               variant='contained'
-              style={{ color: 'white' }}
               component='label'
               onClick={() => {
                 setAddAdvtOpen(!addAdvtOpen)
                 setMode('add')
               }}
               className='is-full sm:is-auto'
+              startIcon={<i className='ri-add-circle-line' />}
+              sx={{
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                fontWeight: 600,
+                padding: '10px 24px',
+                borderRadius: '8px',
+                textTransform: 'none',
+                fontSize: '14px',
+                boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
+                  boxShadow: '0 6px 16px rgba(102, 126, 234, 0.4)',
+                  transform: 'translateY(-2px)'
+                },
+                transition: 'all 0.3s ease'
+              }}
             >
               Add New Advertisement
             </Button>
@@ -429,7 +718,7 @@ const AdvListTable = () => {
               {table.getHeaderGroups().map(headerGroup => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map(header => (
-                    <th key={header.id}>
+                    <th key={header.id} className='enhanced-table-header'>
                       {header.isPlaceholder ? null : (
                         <>
                           <div
@@ -455,8 +744,28 @@ const AdvListTable = () => {
             {table?.getFilteredRowModel()?.rows?.length === 0 ? (
               <tbody>
                 <tr>
-                  <td colSpan={table?.getVisibleFlatColumns().length} className='text-center'>
-                    No data available
+                  <td
+                    colSpan={table?.getVisibleFlatColumns().length}
+                    className='text-center'
+                    style={{ padding: '40px' }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '12px',
+                        color: '#6b7280'
+                      }}
+                    >
+                      <i className='ri-inbox-line' style={{ fontSize: '48px', color: '#667eea' }} />
+                      <Typography variant='h6' style={{ color: '#1a1a2e', fontWeight: 600 }}>
+                        No Advertisements Found
+                      </Typography>
+                      <Typography variant='body2' style={{ color: '#6b7280' }}>
+                        Create your first advertisement to get started
+                      </Typography>
+                    </div>
                   </td>
                 </tr>
               </tbody>
@@ -467,9 +776,11 @@ const AdvListTable = () => {
                   .rows.slice(0, table.getState().pagination.pageSize)
                   .map(row => {
                     return (
-                      <tr key={row.id} className={classnames({ selected: row.getIsSelected() })}>
+                      <tr key={row.id} className={classnames('enhanced-table-row', { selected: row.getIsSelected() })}>
                         {row.getVisibleCells().map(cell => (
-                          <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                          <td key={cell.id} className='enhanced-table-cell'>
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </td>
                         ))}
                       </tr>
                     )
@@ -492,6 +803,22 @@ const AdvListTable = () => {
             table.setPageIndex(page)
           }}
           onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
+          sx={{
+            borderTop: '2px solid #f3f4f6',
+            background: 'linear-gradient(180deg, #ffffff 0%, #f9fafb 100%)',
+            '& .MuiTablePagination-select': {
+              borderRadius: '6px',
+              '&:hover': {
+                background: '#667eea10'
+              }
+            },
+            '& .MuiTablePagination-actions button': {
+              color: '#667eea',
+              '&:hover': {
+                background: '#667eea10'
+              }
+            }
+          }}
         />
       </Card>
       {addAdvtOpen && (
@@ -503,7 +830,7 @@ const AdvListTable = () => {
             setAdvtEditOrAddInitialData(null)
           }}
           data={advtEditOrAddInitialData}
-          onRefresh={()=>getData()}
+          onRefresh={() => getData()}
         />
       )}
     </>

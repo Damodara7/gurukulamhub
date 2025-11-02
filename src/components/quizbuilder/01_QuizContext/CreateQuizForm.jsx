@@ -51,12 +51,12 @@ const CreateQuizForm = ({
   fieldErrors = {},
   formSubmitted = false,
   loading,
-  isAdmin=false,
+  isAdmin = false,
   onFieldInteraction = () => {}
 }) => {
   const [isGenericPopupOpen, setIsGenericPopupOpen] = useState(false)
   const fileInputRef = useRef(null)
-  
+
   const setTheFormValue = (name, val) => {
     setValue(name, val, { shouldValidate: true, shouldDirty: true })
   }
@@ -99,11 +99,9 @@ const CreateQuizForm = ({
     }
   }
 
- 
-
   return (
     <Box>
-      <Grid container spacing={4}>
+      <Grid container spacing={2.5}>
         {/* <Grid item xs={12}>
             <Box style={{border: '1px solid gray', borderRadius: '5px'}} className='pt-2'>
 
@@ -126,7 +124,7 @@ const CreateQuizForm = ({
             render={({ field }) => (
               <TextField
                 {...field}
-                label='Quiz Title'
+                label='📝 Quiz Title'
                 variant='outlined'
                 fullWidth
                 required
@@ -150,7 +148,7 @@ const CreateQuizForm = ({
         {/* Generic Context IDs */}
         <Grid item xs={12} md={6}>
           <TextField
-            label='Context IDs'
+            label='🎯 Context IDs'
             value={formData.contextIds.join(', ') || ''}
             onClick={() => handleOpenPopup()}
             fullWidth
@@ -173,14 +171,13 @@ const CreateQuizForm = ({
             </IconButtonTooltip>
             <DialogContent>
               <ContextTreeSearch
-              disabled= {loading}
+                disabled={loading}
                 setTheFormValue={(field, value) => {
-                  if(!loading)
-                    {
-                      setTheFormValue('contextIds', value)
-                  onFieldInteraction('contextIds', value.length === 0)
-                }
-              }}
+                  if (!loading) {
+                    setTheFormValue('contextIds', value)
+                    onFieldInteraction('contextIds', value.length === 0)
+                  }
+                }}
                 data={{ formData, genericContextIds: formData.contextIds }}
                 contextType='GENERIC'
               />
@@ -214,12 +211,12 @@ const CreateQuizForm = ({
             render={({ field }) => (
               <TextField
                 {...field}
-                label='Quiz Details'
+                label='📄 Quiz Details'
                 variant='outlined'
                 fullWidth
                 required
                 disabled={loading}
-                rows={4}
+                rows={3}
                 multiline
                 error={fieldErrors.details}
                 helperText={fieldErrors.details ? 'Quiz details are required' : ''}
@@ -244,7 +241,7 @@ const CreateQuizForm = ({
             render={({ field }) => (
               <TextField
                 {...field}
-                label='Quiz Syllabus'
+                label='📚 Quiz Syllabus'
                 variant='outlined'
                 fullWidth
                 required
