@@ -59,14 +59,31 @@ const GameGroupInfo = ({ game }) => {
   console.log('group details: ', group)
 
   return (
-    <Card sx={{ mb: 3 }}>
-      <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <GroupIcon color='primary' sx={{ mr: 1 }} />
-          <Typography variant='h6' fontWeight={600}>
-            Group Information
-          </Typography>
-        </Box>
+    <Card 
+      sx={{ 
+        mb: 3,
+        borderRadius: '16px',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+        background: 'rgba(255, 255, 255, 0.98)',
+        border: '2px solid',
+        borderColor: 'rgba(244, 67, 54, 0.2)'
+      }}
+    >
+      <CardContent sx={{ p: 3 }}>
+        <Typography 
+          variant='h6' 
+          sx={{ 
+            mb: 3,
+            fontWeight: 700,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            color: '#1a1a1a'
+          }}
+        >
+          <GroupIcon sx={{ color: '#f44336' }} />
+          Group Information
+        </Typography>
 
         <Grid container spacing={3}>
           {/* Group Details */}

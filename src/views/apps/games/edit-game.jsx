@@ -47,12 +47,12 @@ function EditGamePage({ gameData = null, gameId = null, isSuperUser = false }) {
     try {
       console.log('formData: ', values)
       setLoading(true)
-      
+
       // Handle different creation modes
       let payload = {
         ...values,
         updatedBy: session?.user?.id,
-        updaterEmail: session?.user?.email,
+        updaterEmail: session?.user?.email
       }
 
       if (creationMode === 'existing_sponsors') {
@@ -64,32 +64,33 @@ function EditGamePage({ gameData = null, gameId = null, isSuperUser = false }) {
           timezone: values.timezone,
           duration: Number(values.duration) * 60,
           maxPlayers: values.limitPlayers ? Number(values.maxPlayers) : 100000,
-          rewards: values?.rewards.map(reward => ({
-            ...(reward._id && { _id: reward._id }),
-            position: reward.position,
-            numberOfWinnersForThisPosition: reward.numberOfWinnersForThisPosition,
-            rewardValuePerWinner: reward.rewardValuePerWinner,
-            sponsors: reward.sponsors.map(sponsor => ({
-              ...(sponsor._id && { _id: sponsor._id }),
-              email: sponsor.email,
-              sponsorshipId: sponsor.sponsorshipId,
-              rewardDetails: {
-                rewardType: sponsor.rewardType,
-                allocated: sponsor.allocated,
-                currency: sponsor.currency,
-                ...(sponsor.rewardType === 'cash' && {
-                  rewardValue: sponsor.allocated
-                }),
-                ...(sponsor.rewardType === 'physicalGift' && {
-                  nonCashReward: sponsor.nonCashItem,
-                  numberOfNonCashRewards: sponsor.allocated,
-                  rewardValuePerItem: sponsor.rewardValuePerItem,
-                  rewardValue: sponsor.allocated * sponsor.rewardValuePerItem
-                })
-              }
-            })),
-            winners: reward.winners || []
-          })) || []
+          rewards:
+            values?.rewards.map(reward => ({
+              ...(reward._id && { _id: reward._id }),
+              position: reward.position,
+              numberOfWinnersForThisPosition: reward.numberOfWinnersForThisPosition,
+              rewardValuePerWinner: reward.rewardValuePerWinner,
+              sponsors: reward.sponsors.map(sponsor => ({
+                ...(sponsor._id && { _id: sponsor._id }),
+                email: sponsor.email,
+                sponsorshipId: sponsor.sponsorshipId,
+                rewardDetails: {
+                  rewardType: sponsor.rewardType,
+                  allocated: sponsor.allocated,
+                  currency: sponsor.currency,
+                  ...(sponsor.rewardType === 'cash' && {
+                    rewardValue: sponsor.allocated
+                  }),
+                  ...(sponsor.rewardType === 'physicalGift' && {
+                    nonCashReward: sponsor.nonCashItem,
+                    numberOfNonCashRewards: sponsor.allocated,
+                    rewardValuePerItem: sponsor.rewardValuePerItem,
+                    rewardValue: sponsor.allocated * sponsor.rewardValuePerItem
+                  })
+                }
+              })),
+              winners: reward.winners || []
+            })) || []
         }
       } else if (creationMode === 'request_sponsorship') {
         // New flow - requesting sponsorship
@@ -99,23 +100,25 @@ function EditGamePage({ gameData = null, gameId = null, isSuperUser = false }) {
           gameMode: values.gameMode,
           duration: values.gameMode === 'self-paced' ? Number(values.duration) * 60 : null,
           maxPlayers: values.limitPlayers ? Number(values.maxPlayers) : 100000,
-          rewards: values?.rewards?.map(reward => ({
-            ...(reward._id && { _id: reward._id }),
-            position: reward.position,
-            numberOfWinnersForThisPosition: reward.numberOfWinnersForThisPosition,
-            rewardValuePerWinner: reward.rewardValuePerWinner,
-            rewardType: reward.rewardType,
-            currency: reward.currency,
-            nonCashReward: reward.nonCashReward,
-            sponsors: reward.sponsors?.map(sponsor => ({
-              ...(sponsor._id && { _id: sponsor._id }),
-              email: sponsor.email,
-              sponsorshipId: sponsor.sponsorshipId,
-              allocated: sponsor.allocated,
-              rewardType: sponsor.rewardType,
-              currency: sponsor.currency
+          rewards:
+            values?.rewards?.map(reward => ({
+              ...(reward._id && { _id: reward._id }),
+              position: reward.position,
+              numberOfWinnersForThisPosition: reward.numberOfWinnersForThisPosition,
+              rewardValuePerWinner: reward.rewardValuePerWinner,
+              rewardType: reward.rewardType,
+              currency: reward.currency,
+              nonCashReward: reward.nonCashReward,
+              sponsors:
+                reward.sponsors?.map(sponsor => ({
+                  ...(sponsor._id && { _id: sponsor._id }),
+                  email: sponsor.email,
+                  sponsorshipId: sponsor.sponsorshipId,
+                  allocated: sponsor.allocated,
+                  rewardType: sponsor.rewardType,
+                  currency: sponsor.currency
+                })) || []
             })) || []
-          })) || []
         }
       }
 
@@ -175,7 +178,7 @@ function EditGamePage({ gameData = null, gameId = null, isSuperUser = false }) {
     }
   }
 
-  const handleModeSelect = (mode) => {
+  const handleModeSelect = mode => {
     setCreationMode(mode)
   }
 
@@ -252,46 +255,22 @@ function EditGamePage({ gameData = null, gameId = null, isSuperUser = false }) {
 
   // Show mode selector for new games only
   if (!gameId && !creationMode) {
-    return (
-      <div className='p-4'>
-        <GameCreationModeSelector onModeSelect={handleModeSelect} />
-      </div>
-    )
+    return <GameCreationModeSelector onModeSelect={handleModeSelect} />
   }
 
   return (
-    <div className='p-4'>
-      <div className='mb-6'>
-        <h1 className='text-2xl font-bold'>
-          {gameId ? 'Edit Game' : 
-           creationMode === 'existing_sponsors' ? 'Create & Schedule Game' : 
-           'Create Game & Request Sponsorship'}
-        </h1>
-        <p className='text-muted-foreground'>
-          {gameId ? 'Update the game details below' : 
-           creationMode === 'existing_sponsors' ? 'Fill in the details below to create and schedule your game' :
-           'Fill in the details below to create your game and request sponsorships'}
-        </p>
-      </div>
-
-      <LocalizationProvider dateAdapter={AdapterDayjs}>
-        {creationMode === 'request_sponsorship' ? (
-          <GameRequestSponsorshipForm 
-            onSubmit={handleSubmit} 
-            quizzes={quizzes} 
-            onCancel={handleCancel} 
-            data={updatedGameData} 
-          />
-        ) : (
-          <GameForm 
-            onSubmit={handleSubmit} 
-            quizzes={quizzes} 
-            onCancel={handleCancel} 
-            data={updatedGameData} 
-          />
-        )}
-      </LocalizationProvider>
-    </div>
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      {creationMode === 'request_sponsorship' ? (
+        <GameRequestSponsorshipForm
+          onSubmit={handleSubmit}
+          quizzes={quizzes}
+          onCancel={handleCancel}
+          data={updatedGameData}
+        />
+      ) : (
+        <GameForm onSubmit={handleSubmit} quizzes={quizzes} onCancel={handleCancel} data={updatedGameData} />
+      )}
+    </LocalizationProvider>
   )
 }
 

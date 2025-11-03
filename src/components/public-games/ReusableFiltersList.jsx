@@ -177,14 +177,39 @@ const ReusableFiltersList = ({
     <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 0.5 }}>
       <Box sx={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Stack direction='row' spacing={2} alignItems='center'>
-          <Typography>Filters : </Typography>
+          <Typography
+            sx={{
+              fontWeight: 700,
+              fontSize: '1rem'
+            }}
+          >
+            Filters:
+          </Typography>
           {(!isMobile || showFilters) && (
             <>
-              <Button variant='outlined' size='small' onClick={() => handleOpenDialog('quiz')}>
-                By quiz
+              <Button
+                variant='contained'
+                component='label'
+                size='small'
+                color='primary'
+                onClick={() => handleOpenDialog('quiz')}
+                sx={{
+                  color: 'white',
+                }}
+              >
+                📚 By Quiz
               </Button>
-              <Button variant='outlined' size='small' onClick={() => handleOpenDialog('location')}>
-                By Location
+              <Button
+                variant='contained'
+                component='label'
+                size='small'
+                color='primary'
+                onClick={() => handleOpenDialog('location')}
+                sx={{
+                  color: 'white',
+                }}
+              >
+                📍 By Location
               </Button>
             </>
           )}
@@ -226,9 +251,17 @@ const ReusableFiltersList = ({
                       onDelete={() => handleDeleteChip('quiz', quiz)}
                       deleteIcon={<CloseIcon />}
                       size='small'
+                      color='primary'
                       sx={{
-                        flexShrink: 0, // Prevent chips from shrinking
-                        whiteSpace: 'nowrap' // Keep text in one line
+                        flexShrink: 0,
+                        whiteSpace: 'nowrap',
+                        color: 'white',
+                        '& .MuiChip-deleteIcon': {
+                          color: 'rgba(255, 255, 255, 0.8)',
+                          '&:hover': {
+                            color: 'white'
+                          }
+                        }
                       }}
                     />
                   ))}
@@ -266,9 +299,17 @@ const ReusableFiltersList = ({
                       onDelete={() => handleDeleteChip('location', location)}
                       deleteIcon={<CloseIcon />}
                       size='small'
+                      color='primary'
                       sx={{
                         flexShrink: 0,
-                        whiteSpace: 'nowrap'
+                        whiteSpace: 'nowrap',
+                        color: 'white',
+                        '& .MuiChip-deleteIcon': {
+                          color: 'rgba(255, 255, 255, 0.8)',
+                          '&:hover': {
+                            color: 'white'
+                          }
+                        }
                       }}
                     />
                   ))}

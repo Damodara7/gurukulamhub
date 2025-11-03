@@ -92,7 +92,7 @@ const columnHelper = createColumnHelper()
 
 const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatus = 'all', filter }) => {
   const router = useRouter()
-  const {data: session} = useSession()
+  const { data: session } = useSession()
   const searchParams = useSearchParams()
   const [rowSelection, setRowSelection] = useState({})
 
@@ -124,7 +124,7 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
         id: sponsorshipId,
         nonCashSponsorshipStatus: 'completed'
       })
-      
+
       if (response.status === 'success') {
         // Refresh the page or update the data
         window.location.reload()
@@ -152,7 +152,7 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
         nonCashSponsorshipRejectionReason: rejectionReason,
         rejectorEmail: session?.user?.email
       })
-      
+
       if (response.status === 'success') {
         setRejectDialogOpen(false)
         setRejectionReason('')
@@ -236,12 +236,16 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
           }
         }),
         // (sponsorType === 'all' || sponsorType === 'game') && {
-          {
+        {
           id: 'games',
           ...columnHelper.accessor('games', {
             header: 'Sponsored Games',
             cell: ({ row }) => (
-              <Typography variant='body1'>{row.original?.games?.join(', ') || <span style={{fontSize: '0.85rem', fontStyle: 'italic'}}>Any game</span>}</Typography>
+              <Typography variant='body1'>
+                {row.original?.games?.join(', ') || (
+                  <span style={{ fontSize: '0.85rem', fontStyle: 'italic' }}>Any game</span>
+                )}
+              </Typography>
             )
           })
         },
@@ -252,12 +256,16 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
           ...columnHelper.accessor('quizzes', {
             header: 'Sponsored Quizzes',
             cell: ({ row }) => (
-              <Typography variant='body1'>{row.original?.quizzes?.map(q => q.title).join(', ') || <span style={{fontSize: '0.85rem', fontStyle: 'italic'}}>Any quiz</span>}</Typography>
+              <Typography variant='body1'>
+                {row.original?.quizzes?.map(q => q.title).join(', ') || (
+                  <span style={{ fontSize: '0.85rem', fontStyle: 'italic' }}>Any quiz</span>
+                )}
+              </Typography>
             )
           })
         },
         // (sponsorType === 'all' || sponsorType === 'area' || sponsorType === 'quiz') && {
-          {
+        {
           id: 'location',
           ...columnHelper.accessor('location', {
             header: 'Sponsored By Area',
@@ -272,7 +280,11 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
               if (row.original?.location?.city) {
                 area += `, ${row.original?.location?.city}`
               }
-              return <Typography variant='body1'>{area || <span style={{fontSize: '0.85rem', fontStyle: 'italic'}}>Any location</span>}</Typography>
+              return (
+                <Typography variant='body1'>
+                  {area || <span style={{ fontSize: '0.85rem', fontStyle: 'italic' }}>Any location</span>}
+                </Typography>
+              )
             }
           })
         },
@@ -302,21 +314,20 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
           ...columnHelper.accessor('rewardDetails', {
             header: 'Reward Details',
             cell: ({ row }) => {
-              const { rewardType, currency } = row.original;
+              const { rewardType, currency } = row.original
               if (rewardType === 'cash') {
                 const formattedAmount = new Intl.NumberFormat(undefined, {
                   style: 'currency',
                   currency: currency || 'INR'
-                }).format(row.original?.sponsorshipAmount || 0);
-                return <Typography variant='body1'>{formattedAmount}</Typography>;
+                }).format(row.original?.sponsorshipAmount || 0)
+                return <Typography variant='body1'>{formattedAmount}</Typography>
               } else {
                 // For physical gifts
-                const formatCurrency = (value) => (
+                const formatCurrency = value =>
                   new Intl.NumberFormat(undefined, {
                     style: 'currency',
                     currency: currency || 'INR'
                   }).format(value || 0)
-                );
                 return (
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                     <Typography variant='body1' noWrap>
@@ -329,7 +340,7 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
                       Total: {formatCurrency(row.original.rewardValue || 0)}
                     </Typography>
                   </Box>
-                );
+                )
               }
             }
           })
@@ -354,7 +365,11 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
               }).format(value || 0)
             const SponsoredDetailsTooltipContent = () => {
               if (!sponsored || sponsored.length === 0) {
-                return <Typography variant='caption' sx={{ color: 'white' }}>Not used in any game yet.</Typography>
+                return (
+                  <Typography variant='caption' sx={{ color: 'white' }}>
+                    Not used in any game yet.
+                  </Typography>
+                )
               }
               return (
                 <Box sx={{ display: 'flex', flexDirection: 'column', p: 1 }}>
@@ -369,7 +384,14 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
                           <Typography
                             variant='body2'
                             component='div'
-                            sx={{ fontWeight: 'bold', color: 'white', display: 'flex', alignItems: 'center', gap: 0.5, cursor: s.game?._id ? 'pointer' : 'default' }}
+                            sx={{
+                              fontWeight: 'bold',
+                              color: 'white',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 0.5,
+                              cursor: s.game?._id ? 'pointer' : 'default'
+                            }}
                             onClick={() => {
                               if (s.game?._id) {
                                 router.push(`/public-games/${s.game._id}`)
@@ -377,13 +399,18 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
                             }}
                           >
                             Game: {s.game?.title || 'N/A'}
-                            {s.game?._id && <i className='ri-external-link-line' style={{ fontSize: '1em', marginLeft: 4 }} />}
+                            {s.game?._id && (
+                              <i className='ri-external-link-line' style={{ fontSize: '1em', marginLeft: 4 }} />
+                            )}
                           </Typography>
                           <Typography variant='caption' component='div' sx={{ color: 'white', ml: 1 }}>
                             Quiz: {s.game?.quiz?.title || 'N/A'}
                           </Typography>
                           <Typography variant='caption' component='div' sx={{ color: 'white', ml: 1 }}>
-                            Used: {rewardType === 'cash' ? formatCurrency(usedAmount, currency) : `${usedAmount} ${usedAmount === 1 ? 'item' : 'items'}`}
+                            Used:{' '}
+                            {rewardType === 'cash'
+                              ? formatCurrency(usedAmount, currency)
+                              : `${usedAmount} ${usedAmount === 1 ? 'item' : 'items'}`}
                           </Typography>
                         </div>
                         {index < sponsored.length - 1 && (
@@ -432,35 +459,42 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
           ...columnHelper.accessor('sponsorshipStatus', {
             header: 'Status',
             cell: ({ row }) => {
-              const { rewardType, sponsorshipStatus, nonCashSponsorshipStatus, nonCashSponsorshipRejectionReason, rejectorEmail } = row.original
+              const {
+                rewardType,
+                sponsorshipStatus,
+                nonCashSponsorshipStatus,
+                nonCashSponsorshipRejectionReason,
+                rejectorEmail
+              } = row.original
               const status = rewardType === 'cash' ? sponsorshipStatus : nonCashSponsorshipStatus
-              const statusColor = {
-                created: 'default',
-                pending: 'warning',
-                failed: 'error',
-                completed: 'success',
-                expired: 'secondary',
-                rejected: 'error'
-              }[status] || 'default'
-              
+              const statusColor =
+                {
+                  created: 'default',
+                  pending: 'warning',
+                  failed: 'error',
+                  completed: 'success',
+                  expired: 'secondary',
+                  rejected: 'error'
+                }[status] || 'default'
+
               return (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                   <Chip size='small' color={statusColor} label={status} />
                   {status === 'rejected' && rewardType === 'physicalGift' && (
                     <>
                       {rejectorEmail && nonCashSponsorshipRejectionReason && (
-                        <Tooltip 
+                        <Tooltip
                           title={
                             <Box sx={{ p: 1 }}>
-                              <Typography variant="body2" sx={{ color: 'white', mb: 0.5 }}>
+                              <Typography variant='body2' sx={{ color: 'white', mb: 0.5 }}>
                                 <strong>Rejected by:</strong> {rejectorEmail}
                               </Typography>
-                              <Typography variant="body2" sx={{ color: 'white' }}>
+                              <Typography variant='body2' sx={{ color: 'white' }}>
                                 <strong>Reason:</strong> {nonCashSponsorshipRejectionReason}
                               </Typography>
                             </Box>
-                          } 
-                          placement="top"
+                          }
+                          placement='top'
                         >
                           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, cursor: 'pointer' }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -480,11 +514,11 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
                               >
                                 {rejectorEmail.charAt(0).toUpperCase()}
                               </Box>
-                              <Typography 
-                                variant='caption' 
-                                color='text.secondary' 
-                                sx={{ 
-                                  fontSize: '0.75rem', 
+                              <Typography
+                                variant='caption'
+                                color='text.secondary'
+                                sx={{
+                                  fontSize: '0.75rem',
                                   maxWidth: '150px',
                                   overflow: 'hidden',
                                   textOverflow: 'ellipsis',
@@ -494,10 +528,10 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
                                 {rejectorEmail}
                               </Typography>
                             </Box>
-                            <Typography 
-                              variant='caption' 
-                              color='error.main' 
-                              sx={{ 
+                            <Typography
+                              variant='caption'
+                              color='error.main'
+                              sx={{
                                 fontSize: '0.75rem',
                                 maxWidth: '150px',
                                 overflow: 'hidden',
@@ -525,35 +559,25 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
             if (rewardType === 'physicalGift' && nonCashSponsorshipStatus === 'pending') {
               return (
                 <Box sx={{ display: 'flex', gap: 1 }}>
-                  <Tooltip title="View Details">
-                    <Link
-                      href={`/management/sponsorships/${row.original._id}`}
-                      style={{ textDecoration: 'none' }}
-                    >
-                      <IconButton
-                        size="small"
-                        color="info"
-                      >
-                        <i className="ri-eye-line" />
+                  <Tooltip title='View Details'>
+                    <Link href={`/management/sponsorships/${row.original._id}`} style={{ textDecoration: 'none' }}>
+                      <IconButton size='small' color='info'>
+                        <i className='ri-eye-line' />
                       </IconButton>
                     </Link>
                   </Tooltip>
-                  <Tooltip title="Complete">
+                  <Tooltip title='Complete'>
                     <IconButton
-                      size="small"
-                      color="success"
+                      size='small'
+                      color='success'
                       onClick={() => handleCompleteSponsorship(row.original._id)}
                     >
-                      <i className="ri-check-line" />
+                      <i className='ri-check-line' />
                     </IconButton>
                   </Tooltip>
-                  <Tooltip title="Reject">
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => handleRejectSponsorship(row.original._id)}
-                    >
-                      <i className="ri-close-line" />
+                  <Tooltip title='Reject'>
+                    <IconButton size='small' color='error' onClick={() => handleRejectSponsorship(row.original._id)}>
+                      <i className='ri-close-line' />
                     </IconButton>
                   </Tooltip>
                 </Box>
@@ -562,16 +586,10 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
               // Show only view action for rejected sponsorships
               return (
                 <Box sx={{ display: 'flex', gap: 1 }}>
-                  <Tooltip title="View Details">
-                    <Link
-                      href={`/management/sponsorships/${row.original._id}`}
-                      style={{ textDecoration: 'none' }}
-                    >
-                      <IconButton
-                        size="small"
-                        color="info"
-                      >
-                        <i className="ri-eye-line" />
+                  <Tooltip title='View Details'>
+                    <Link href={`/management/sponsorships/${row.original._id}`} style={{ textDecoration: 'none' }}>
+                      <IconButton size='small' color='info'>
+                        <i className='ri-eye-line' />
                       </IconButton>
                     </Link>
                   </Tooltip>
@@ -615,13 +633,72 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
 
+  // Get count for each tab
+  const allCount = data.length
+  const awaitingCount = data.filter(
+    item => item.rewardType === 'physicalGift' && item.nonCashSponsorshipStatus === 'pending'
+  ).length
+  const rejectedCount = data.filter(
+    item => item.rewardType === 'physicalGift' && item.nonCashSponsorshipStatus === 'rejected'
+  ).length
+
   return (
     <>
-      <Box className='mb-2 flex justify-center'>
+      {/* White Header Card with Gradient Text */}
+      <Card
+        sx={{
+          borderRadius: { xs: '16px', sm: '20px', md: '24px' },
+          p: { xs: 3, sm: 4, md: 5 },
+          mb: 3,
+          backgroundColor: 'white',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+          border: '1px solid rgba(0, 0, 0, 0.06)',
+          textAlign: 'center',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center'
+        }}
+      >
+        {/* Gradient Title */}
+        <Typography
+          variant='h3'
+          sx={{
+            fontWeight: 800,
+            mb: 1.5,
+            fontSize: { xs: '1.75rem', sm: '2.25rem', md: '2.75rem' },
+            letterSpacing: '-0.5px',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 2
+          }}
+        >
+          <i className='ri-award-line' />
+          Sponsorships Management
+        </Typography>
+
+        {/* Description Text */}
+        <Typography
+          variant='body1'
+          sx={{
+            color: 'text.secondary',
+            fontSize: { xs: '0.875rem', sm: '1rem' },
+            mb: 4,
+            lineHeight: 1.6,
+            maxWidth: '700px',
+            textAlign: 'center'
+          }}
+        >
+          Manage and track all sponsorships across games, quizzes, and locations
+        </Typography>
+
+        {/* Enhanced Tabs with Icons and Counts */}
         <TabContext value={filter || sponsorType}>
           <CustomTabList
             onChange={(e, val) => {
-              //   revalidatePath('/sponsor/list', 'page')
               let url = `/management/sponsorships`
               if (val === 'awaiting' || val === 'rejected') {
                 url += `?filter=${val}`
@@ -634,71 +711,190 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
             pill='true'
             scrollButtons='auto'
             allowScrollButtonsMobile
+            sx={{
+              '& .MuiTabs-indicator': {
+                display: 'none'
+              },
+              '& .MuiTab-root': {
+                fontWeight: 600,
+                fontSize: { xs: '0.8125rem', sm: '0.875rem' },
+                textTransform: 'none',
+                minHeight: { xs: 42, sm: 46 },
+                px: { xs: 2.5, sm: 3 },
+                py: 1,
+                color: '#6b7280',
+                backgroundColor: '#f3f4f6',
+                borderRadius: '10px',
+                transition: 'all 0.2s ease',
+                mr: { xs: 1, sm: 1.5 },
+                mb: { xs: 1, sm: 0 },
+                '&:hover': {
+                  backgroundColor: '#e5e7eb',
+                  color: '#374151'
+                },
+                '&.Mui-selected': {
+                  color: 'white',
+                  backgroundColor: '#8b5cf6',
+                  fontWeight: 700,
+                  boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)'
+                }
+              }
+            }}
           >
             <Tab
               value='all'
               label={
-                <div className='flex items-center gap-1.5'>
-                  {/* <DraftsOutlinedIcon /> */}
-                  All
-                </div>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <i className='ri-list-check' style={{ fontSize: '1.125rem' }} />
+                  <Box component='span' sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                    All Sponsorships
+                  </Box>
+                  <Box component='span' sx={{ display: { xs: 'inline', sm: 'none' } }}>
+                    All
+                  </Box>
+                  {(filter || sponsorType) === 'all' && (
+                    <Chip
+                      label={allCount}
+                      size='small'
+                      sx={{
+                        ml: 1,
+                        height: 20,
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                        color: 'white'
+                      }}
+                    />
+                  )}
+                </Box>
               }
             />
-            {/* <Tab
-              value='game'
-              label={
-                <div className='flex items-center gap-1.5'>
-                  Games
-                </div>
-              }
-            />
-            <Tab
-              value='quiz'
-              label={
-                <div className='flex items-center gap-1.5'>
-                  Quizzes
-                </div>
-              }
-            />
-            <Tab
-              value='area'
-              label={
-                <div className='flex items-center gap-1.5'>
-                  Area
-                </div>
-              }
-            /> */}
             <Tab
               value='awaiting'
               label={
-                <div className='flex items-center gap-1.5'>
-                  {/* <PendingActionsOutlinedIcon /> */}
-                  Awaiting Admin Action
-                </div>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <i className='ri-time-line' style={{ fontSize: '1.125rem' }} />
+                  <Box component='span' sx={{ display: { xs: 'none', md: 'inline' } }}>
+                    Awaiting Action
+                  </Box>
+                  <Box component='span' sx={{ display: { xs: 'inline', md: 'none' } }}>
+                    Awaiting
+                  </Box>
+                  {filter === 'awaiting' && (
+                    <Chip
+                      label={awaitingCount}
+                      size='small'
+                      sx={{
+                        ml: 1,
+                        height: 20,
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                        color: 'white'
+                      }}
+                    />
+                  )}
+                </Box>
               }
             />
             <Tab
               value='rejected'
               label={
-                <div className='flex items-center gap-1.5'>
-                  {/* <CancelOutlinedIcon /> */}
-                  Rejected
-                </div>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <i className='ri-close-circle-line' style={{ fontSize: '1.125rem' }} />
+                  <span>Rejected</span>
+                  {filter === 'rejected' && (
+                    <Chip
+                      label={rejectedCount}
+                      size='small'
+                      sx={{
+                        ml: 1,
+                        height: 20,
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                        color: 'white'
+                      }}
+                    />
+                  )}
+                </Box>
               }
             />
           </CustomTabList>
         </TabContext>
-      </Box>
-      <Card>
-        <CardContent className='flex justify-between flex-col gap-4 items-start sm:flex-row sm:items-center'>
-          <Typography variant='h5'>All Sponsorships</Typography>
-          <div className='flex flex-col sm:flex-row justify-end gap-4'>
-            <FormControl size='small' sx={{ minWidth: 180 }}>
-              <InputLabel id='sponsorship-status-label'>Sponsorship Status</InputLabel>
+      </Card>
+      {/* Main Content Card */}
+      <Card
+        sx={{
+          borderRadius: { xs: '16px', sm: '20px' },
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+          overflow: 'hidden',
+          border: '1px solid rgba(0, 0, 0, 0.06)'
+        }}
+      >
+        <CardContent
+          sx={{
+            p: { xs: 2.5, sm: 3, md: 4 },
+            display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
+            gap: { xs: 3, sm: 4 },
+            alignItems: { xs: 'stretch', md: 'center' },
+            justifyContent: 'space-between'
+          }}
+        >
+          {/* Section Title with Count */}
+          <Box>
+            <Typography
+              variant='h5'
+              sx={{
+                fontWeight: 700,
+                fontSize: { xs: '1.25rem', sm: '1.5rem' },
+                mb: 0.5,
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text'
+              }}
+            >
+              {filter === 'awaiting'
+                ? 'Pending Approvals'
+                : filter === 'rejected'
+                  ? 'Rejected Sponsorships'
+                  : 'All Sponsorships'}
+            </Typography>
+            <Typography variant='body2' color='text.secondary' sx={{ fontSize: '0.875rem' }}>
+              {table.getFilteredRowModel().rows.length} total records
+            </Typography>
+          </Box>
+
+          {/* Filter Controls */}
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              gap: 2,
+              alignItems: 'stretch',
+              width: { xs: '100%', md: 'auto' }
+            }}
+          >
+            <FormControl
+              size='small'
+              sx={{
+                minWidth: { xs: '100%', sm: 200 },
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '12px',
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    boxShadow: '0 2px 8px rgba(102, 126, 234, 0.12)'
+                  }
+                }
+              }}
+            >
+              <InputLabel id='sponsorship-status-label'>Status Filter</InputLabel>
               <Select
                 labelId='sponsorship-status-label'
                 value={sponsorshipStatus}
-                label='Sponsorship Status'
+                label='Status Filter'
                 onChange={handleSponsorshipStatusChange}
               >
                 <MenuItem value='all'>All</MenuItem>
@@ -712,10 +908,30 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
             <DebouncedInput
               value={globalFilter ?? ''}
               onChange={value => setGlobalFilter(String(value))}
-              placeholder='Search User'
-              className='is-full sm:is-auto'
+              placeholder='Search sponsors...'
+              size='small'
+              sx={{
+                minWidth: { xs: '100%', sm: 350, md: 450 },
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '12px',
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    boxShadow: '0 2px 8px rgba(102, 126, 234, 0.12)'
+                  },
+                  '&.Mui-focused': {
+                    boxShadow: '0 4px 16px rgba(102, 126, 234, 0.2)'
+                  }
+                }
+              }}
+              InputProps={{
+                startAdornment: (
+                  <Box sx={{ mr: 1, display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
+                    <i className='ri-search-line' style={{ fontSize: '1.25rem' }} />
+                  </Box>
+                )
+              }}
             />
-          </div>
+          </Box>
         </CardContent>
         <Divider />
         <div className='overflow-x-auto'>
@@ -762,9 +978,26 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
                   .rows.slice(0, table.getState().pagination.pageSize)
                   .map(row => {
                     return (
-                      <tr key={row.id} className={classnames({ selected: row.getIsSelected() })}>
+                      <tr
+                        key={row.id}
+                        className={classnames({ selected: row.getIsSelected() })}
+                        style={{
+                          transition: 'all 0.3s ease',
+                          background: row.getIsSelected()
+                            ? 'linear-gradient(135deg, rgba(102, 126, 234, 0.08), rgba(118, 75, 162, 0.08))'
+                            : 'transparent'
+                        }}
+                      >
                         {row.getVisibleCells().map(cell => (
-                          <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                          <td
+                            key={cell.id}
+                            style={{
+                              padding: '16px 12px',
+                              borderBottom: '1px solid rgba(0, 0, 0, 0.05)'
+                            }}
+                          >
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </td>
                         ))}
                       </tr>
                     )
@@ -773,46 +1006,210 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
             )}
           </table>
         </div>
-        <TablePagination
-          rowsPerPageOptions={[10, 25, 50]}
-          component='div'
-          className='border-bs'
-          count={table.getFilteredRowModel().rows.length}
-          rowsPerPage={table.getState().pagination.pageSize}
-          page={table.getState().pagination.pageIndex}
-          SelectProps={{
-            inputProps: { 'aria-label': 'rows per page' }
+        <Box
+          sx={{
+            borderTop: '1px solid rgba(0, 0, 0, 0.06)',
+            backgroundColor: 'rgba(102, 126, 234, 0.02)'
           }}
-          onPageChange={(_, page) => {
-            table.setPageIndex(page)
-          }}
-          onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
-        />
+        >
+          <TablePagination
+            rowsPerPageOptions={[10, 25, 50, 100]}
+            component='div'
+            count={table.getFilteredRowModel().rows.length}
+            rowsPerPage={table.getState().pagination.pageSize}
+            page={table.getState().pagination.pageIndex}
+            SelectProps={{
+              inputProps: { 'aria-label': 'rows per page' }
+            }}
+            onPageChange={(_, page) => {
+              table.setPageIndex(page)
+            }}
+            onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
+            sx={{
+              '& .MuiTablePagination-toolbar': {
+                px: { xs: 2, sm: 3 },
+                py: 2,
+                minHeight: { xs: 64, sm: 72 }
+              },
+              '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
+                fontSize: '0.875rem',
+                color: 'text.secondary',
+                fontWeight: 500
+              },
+              '& .MuiIconButton-root': {
+                borderRadius: '8px',
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                  color: '#667eea'
+                }
+              }
+            }}
+          />
+        </Box>
       </Card>
 
-      {/* Rejection Dialog */}
-      <Dialog maxWidth={'sm'} fullWidth open={rejectDialogOpen} onClose={() => setRejectDialogOpen(false)}>
-        <DialogTitle>Reject Sponsorship</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
-            Please provide a reason for rejecting this sponsorship.
+      {/* Modern Rejection Dialog */}
+      <Dialog
+        maxWidth='sm'
+        fullWidth
+        open={rejectDialogOpen}
+        onClose={() => setRejectDialogOpen(false)}
+        PaperProps={{
+          sx: {
+            borderRadius: '20px',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.2)',
+            overflow: 'hidden'
+          }
+        }}
+      >
+        <DialogTitle
+          sx={{
+            background: 'linear-gradient(135deg, rgba(244, 67, 54, 0.1), rgba(211, 47, 47, 0.05))',
+            borderBottom: '1px solid rgba(244, 67, 54, 0.15)',
+            pb: 2.5,
+            pt: 3
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5 }}>
+            <Box
+              sx={{
+                width: 56,
+                height: 56,
+                borderRadius: '14px',
+                background: 'linear-gradient(135deg, #f44336, #d32f2f)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 6px 20px rgba(244, 67, 54, 0.35)',
+                transform: 'rotate(-3deg)'
+              }}
+            >
+              <i className='ri-close-circle-fill' style={{ fontSize: '32px', color: 'white' }} />
+            </Box>
+            <Box sx={{ flex: 1 }}>
+              <Typography variant='h5' sx={{ fontWeight: 800, mb: 0.5, color: 'text.primary' }}>
+                Reject Sponsorship
+              </Typography>
+              <Typography variant='caption' sx={{ color: 'error.main', fontWeight: 600, fontSize: '0.8125rem' }}>
+                ⚠️ This action cannot be undone
+              </Typography>
+            </Box>
+          </Box>
+        </DialogTitle>
+
+        <DialogContent sx={{ pt: 3.5, pb: 3, px: 3 }}>
+          <Typography
+            variant='body2'
+            sx={{
+              mb: 3,
+              color: 'text.secondary',
+              lineHeight: 1.7,
+              fontSize: '0.9375rem'
+            }}
+          >
+            Please provide a detailed reason for rejecting this sponsorship. The sponsor will be notified with your
+            explanation.
           </Typography>
           <TextField
             autoFocus
-            margin="dense"
-            label="Rejection Reason"
-            type="text"
+            label='Rejection Reason'
+            type='text'
             fullWidth
-            variant="outlined"
+            variant='outlined'
             value={rejectionReason}
-            onChange={(e) => setRejectionReason(e.target.value)}
+            onChange={e => setRejectionReason(e.target.value)}
             multiline
-            rows={4}
+            rows={5}
+            placeholder='Explain why this sponsorship is being rejected...'
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '14px',
+                backgroundColor: 'rgba(244, 67, 54, 0.02)',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  backgroundColor: 'rgba(244, 67, 54, 0.04)',
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'rgba(244, 67, 54, 0.3)'
+                  }
+                },
+                '&.Mui-focused': {
+                  backgroundColor: 'white',
+                  boxShadow: '0 0 0 4px rgba(244, 67, 54, 0.1)',
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#f44336',
+                    borderWidth: '2px'
+                  }
+                }
+              }
+            }}
           />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setRejectDialogOpen(false)}>Cancel</Button>
-          <Button onClick={confirmRejectSponsorship} color="error">Reject</Button>
+
+        <DialogActions
+          sx={{
+            px: 3,
+            py: 3,
+            borderTop: '1px solid rgba(0, 0, 0, 0.08)',
+            gap: 2,
+            background: 'linear-gradient(to top, rgba(0, 0, 0, 0.01), transparent)'
+          }}
+        >
+          <Button
+            onClick={() => {
+              setRejectDialogOpen(false)
+              setRejectionReason('')
+            }}
+            variant='outlined'
+            sx={{
+              borderRadius: '12px',
+              textTransform: 'none',
+              fontWeight: 600,
+              px: 4,
+              py: 1.25,
+              fontSize: '0.9375rem',
+              borderColor: 'rgba(0, 0, 0, 0.15)',
+              color: 'text.secondary',
+              '&:hover': {
+                borderColor: 'rgba(0, 0, 0, 0.3)',
+                backgroundColor: 'rgba(0, 0, 0, 0.03)',
+                transform: 'translateY(-1px)'
+              }
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={confirmRejectSponsorship}
+            variant='contained'
+            disabled={!rejectionReason.trim()}
+            sx={{
+              borderRadius: '12px',
+              textTransform: 'none',
+              fontWeight: 700,
+              px: 4,
+              py: 1.25,
+              fontSize: '0.9375rem',
+              background: 'linear-gradient(135deg, #f44336, #d32f2f)',
+              boxShadow: '0 4px 14px rgba(244, 67, 54, 0.4)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #d32f2f, #c62828)',
+                boxShadow: '0 6px 20px rgba(244, 67, 54, 0.5)',
+                transform: 'translateY(-2px)'
+              },
+              '&:active': {
+                transform: 'translateY(0px)'
+              },
+              '&.Mui-disabled': {
+                background: 'rgba(0, 0, 0, 0.12)',
+                color: 'rgba(0, 0, 0, 0.26)',
+                boxShadow: 'none'
+              }
+            }}
+          >
+            <i className='ri-close-circle-line' style={{ marginRight: '8px', fontSize: '1.125rem' }} />
+            Reject Sponsorship
+          </Button>
         </DialogActions>
       </Dialog>
     </>

@@ -8,8 +8,8 @@ import { useSession } from 'next-auth/react'
 import CreatorGamesList from '@/components/apps/games/all-games/CreatorGamesList'
 import { useSearchParams, useRouter } from 'next/navigation'
 import ReusableTabsList from '@/components/public-games/ReusableTabsList'
-import { Box, Button } from '@mui/material'
-import { Add as AddIcon } from '@mui/icons-material'
+import { Box, Button, Container, Stack, Typography, useTheme } from '@mui/material'
+import { Add as AddIcon, Games as GamesIcon } from '@mui/icons-material'
 import ReusablePopUpList from '@/components/public-games/ReusableFiltersList'
 
 const gamestatuses = [
@@ -33,6 +33,7 @@ const AllGamesPage = ({ creatorEmail = '', isSuperUser = false }) => {
   const gameStatusFilter = searchParams.get('status') || 'all'
   const [selectedQuizzes, setSelectedQuizzes] = useState([])
   const [selectedLocations, setSelectedLocations] = useState([])
+  const theme = useTheme()
 
   const fetchGames = async () => {
     setLoading(true)
@@ -84,7 +85,6 @@ const AllGamesPage = ({ creatorEmail = '', isSuperUser = false }) => {
     router.push(`?${params.toString()}`)
   }
 
-
   const selectedQuizzesIds = selectedQuizzes?.map(q => q._id) || []
 
   let filteredGames = games?.filter(game => {
@@ -111,19 +111,74 @@ const AllGamesPage = ({ creatorEmail = '', isSuperUser = false }) => {
       : true
   })
 
-
   return (
-    <>
-      <Box className='flex flex-col items-center gap-5'>
-        <ReusableTabsList tabsList={gamestatuses} value={gameStatusFilter} onChange={handleGameStatusChange} />
-        <ReusablePopUpList
-          selectedLocations={selectedLocations}
-          setSelectedLocations={setSelectedLocations}
-          selectedQuizzes={selectedQuizzes}
-          setSelectedQuizzes={setSelectedQuizzes}
-        />
-        <CreatorGamesList games={filteredGames} isSuperUser={isSuperUser} setGames={setGames} onRefresh={fetchGames} loading={loading} />
+    <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa' }}>
+      {/* Header Section */}
+      <Box
+        sx={{
+          bgcolor: 'white',
+          pt: { xs: 4, md: 6 },
+          pb: { xs: 4, md: 6 },
+          borderBottom: '1px solid #e8eaed'
+        }}
+      >
+        <Container maxWidth='lg'>
+          <Stack spacing={4}>
+            {/* Title Section */}
+            <Box sx={{ textAlign: 'center' }}>
+              <Stack direction='row' spacing={1.5} alignItems='center' justifyContent='center' sx={{ mb: 2 }}>
+                <GamesIcon sx={{ fontSize: 40, color: 'primary.main' }} />
+                <Typography
+                  variant='h3'
+                  fontWeight={800}
+                  sx={{
+                    fontSize: { xs: '2rem', md: '2.5rem' },
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    letterSpacing: '-0.01em'
+                  }}
+                >
+                  Game Management
+                </Typography>
+              </Stack>
+              <Typography
+                variant='body1'
+                color='text.secondary'
+                sx={{ fontSize: '1.05rem', lineHeight: 1.7, maxWidth: 600, mx: 'auto' }}
+              >
+                Create, manage, and monitor your games
+              </Typography>
+            </Box>
+
+            {/* Filters and Tabs */}
+            <Box>
+              <ReusableTabsList tabsList={gamestatuses} value={gameStatusFilter} onChange={handleGameStatusChange} />
+              <Box sx={{ mt: 3 }}>
+                <ReusablePopUpList
+                  selectedLocations={selectedLocations}
+                  setSelectedLocations={setSelectedLocations}
+                  selectedQuizzes={selectedQuizzes}
+                  setSelectedQuizzes={setSelectedQuizzes}
+                />
+              </Box>
+            </Box>
+          </Stack>
+        </Container>
       </Box>
+
+      {/* Games List */}
+      <Container maxWidth='lg' sx={{ py: { xs: 4, md: 6 } }}>
+        <CreatorGamesList
+          games={filteredGames}
+          isSuperUser={isSuperUser}
+          setGames={setGames}
+          onRefresh={fetchGames}
+          loading={loading}
+        />
+      </Container>
+
+      {/* Create New Button */}
       <Box sx={{ position: 'relative' }}>
         <Button
           variant='contained'
@@ -135,7 +190,7 @@ const AllGamesPage = ({ creatorEmail = '', isSuperUser = false }) => {
           Create New
         </Button>
       </Box>
-    </>
+    </Box>
   )
 }
 

@@ -105,7 +105,7 @@ const GameRequestSponsorshipForm = ({ onSubmit, quizzes, onCancel, data = null }
     audienceId: null,
     rewards: []
   }
-  
+
   const [formData, setFormData] = useState(initialFormData)
   const [availablePositions, setAvailablePositions] = useState(POSITION_OPTIONS)
   const [errors, setErrors] = useState({})
@@ -347,12 +347,13 @@ const GameRequestSponsorshipForm = ({ onSubmit, quizzes, onCancel, data = null }
 
     // Check if all rewards have sufficient sponsorships
     const needsSponsorship = formData.rewards.some(reward => {
-      const totalNeeded = reward.rewardType === 'cash' 
-        ? reward.rewardValuePerWinner * reward.numberOfWinnersForThisPosition
-        : reward.numberOfWinnersForThisPosition
-      
+      const totalNeeded =
+        reward.rewardType === 'cash'
+          ? reward.rewardValuePerWinner * reward.numberOfWinnersForThisPosition
+          : reward.numberOfWinnersForThisPosition
+
       const totalAllocated = reward.sponsors?.reduce((sum, sponsor) => sum + (sponsor.allocated || 0), 0) || 0
-      
+
       return totalAllocated < totalNeeded
     })
 
@@ -392,7 +393,7 @@ const GameRequestSponsorshipForm = ({ onSubmit, quizzes, onCancel, data = null }
       }
       reader.readAsDataURL(file)
     }
-    
+
     function validateThumbnailPoster(latestFormData) {
       setTouches(prev => ({ ...prev, thumbnailPoster: true }))
       validateField('thumbnailPoster', latestFormData)
@@ -475,144 +476,207 @@ const GameRequestSponsorshipForm = ({ onSubmit, quizzes, onCancel, data = null }
   }
 
   return (
-    <Grid container spacing={4}>
-      {/* Add Snackbar for error messages */}
-      <Snackbar
-        open={showErrorSnackbar}
-        autoHideDuration={6000}
-        onClose={() => setShowErrorSnackbar(false)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+    <Box
+      sx={{
+        background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.7) 0%, rgba(118, 75, 162, 0.7) 100%)',
+        borderRadius: '24px',
+        p: { xs: 2, sm: 3, md: 4 },
+        boxShadow: '0 20px 60px rgba(102, 126, 234, 0.25)',
+        position: 'relative',
+        overflow: 'hidden',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background:
+            'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+          opacity: 0.4
+        }
+      }}
+    >
+      <Card
         sx={{
-          '& .MuiSnackbar-root': {
-            top: { xs: 90, sm: 0 }
-          }
+          background: 'rgba(255, 255, 255, 0.98)',
+          backdropFilter: 'blur(20px)',
+          borderRadius: '20px',
+          boxShadow: 'none',
+          border: '1px solid rgba(255, 255, 255, 0.3)',
+          position: 'relative',
+          zIndex: 1
         }}
       >
-        <Alert
-          onClose={() => setShowErrorSnackbar(false)}
-          severity='error'
-          variant='filled'
-          sx={{
-            width: '100%',
-            animation: 'slideUp 0.5s ease-out',
-            '@keyframes slideUp': {
-              '0%': {
-                transform: 'translateY(100%)',
-                opacity: 0
-              },
-              '100%': {
-                transform: 'translateY(0)',
-                opacity: 1
-              }
-            }
-          }}
-        >
-          {errorMessage}
-        </Alert>
-      </Snackbar>
+        <CardContent sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
+          {/* Header Section */}
+          <Box className='flex flex-col gap-1 mb-6 text-center'>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5 }}>
+              <Typography
+                variant='h3'
+                sx={{
+                  background:
+                    'linear-gradient(135deg, rgba(102, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.9) 50%, rgba(240, 147, 251, 0.8) 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  fontWeight: 800,
+                  fontSize: { xs: '1.75rem', sm: '2.25rem', md: '2.75rem' },
+                  letterSpacing: '-1px'
+                }}
+              >
+                {data ? 'Edit Game & Request Sponsorship' : 'Create Game & Request Sponsorship'}
+              </Typography>
+            </Box>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+              sx={{ fontSize: '0.95rem', maxWidth: '600px', mx: 'auto' }}
+            >
+              {data
+                ? 'Update your game details and request sponsors to fund rewards'
+                : 'Design your game and connect with sponsors to make it rewarding'}
+            </Typography>
+          </Box>
 
-      {/* Basic Information */}
-      <Grid item xs={12} sm={6}>
-        <TextField
-          fullWidth
-          label='Game Title'
-          name='title'
-          value={formData.title}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          onFocus={() => setErrors(prev => ({ ...prev, title: '' }))}
-          error={!!errors.title && touches.title}
-          helperText={errors.title || 'Enter the title'}
-          required
-          inputRef={fieldRefs.title}
-        />
-      </Grid>
+          <Grid container spacing={4}>
+            {/* Add Snackbar for error messages */}
+            <Snackbar
+              open={showErrorSnackbar}
+              autoHideDuration={6000}
+              onClose={() => setShowErrorSnackbar(false)}
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+              sx={{
+                '& .MuiSnackbar-root': {
+                  top: { xs: 90, sm: 0 }
+                }
+              }}
+            >
+              <Alert
+                onClose={() => setShowErrorSnackbar(false)}
+                severity='error'
+                variant='filled'
+                sx={{
+                  width: '100%',
+                  animation: 'slideUp 0.5s ease-out',
+                  '@keyframes slideUp': {
+                    '0%': {
+                      transform: 'translateY(100%)',
+                      opacity: 0
+                    },
+                    '100%': {
+                      transform: 'translateY(0)',
+                      opacity: 1
+                    }
+                  }
+                }}
+              >
+                {errorMessage}
+              </Alert>
+            </Snackbar>
 
-      <Grid item xs={12} sm={6}>
-        <TextField
-          fullWidth
-          label='6-digit PIN'
-          name='pin'
-          value={formData.pin}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          onFocus={() => setErrors(prev => ({ ...prev, pin: '' }))}
-          error={!!errors.pin && touches.pin}
-          helperText={errors.pin || 'Enter a unique 6-digit PIN'}
-          required
-          inputProps={{ maxLength: 6, pattern: '\\d{6}' }}
-          inputRef={fieldRefs.pin}
-        />
-      </Grid>
+            {/* Basic Information */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label='Game Title'
+                name='title'
+                value={formData.title}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                onFocus={() => setErrors(prev => ({ ...prev, title: '' }))}
+                error={!!errors.title && touches.title}
+                helperText={errors.title || 'Enter the title'}
+                required
+                inputRef={fieldRefs.title}
+              />
+            </Grid>
 
-      <Grid item xs={12}>
-        <TextField
-          fullWidth
-          label='Description'
-          name='description'
-          value={formData.description}
-          onChange={handleChange}
-          multiline
-          rows={3}
-          inputRef={fieldRefs.description}
-        />
-      </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label='6-digit PIN'
+                name='pin'
+                value={formData.pin}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                onFocus={() => setErrors(prev => ({ ...prev, pin: '' }))}
+                error={!!errors.pin && touches.pin}
+                helperText={errors.pin || 'Enter a unique 6-digit PIN'}
+                required
+                inputProps={{ maxLength: 6, pattern: '\\d{6}' }}
+                inputRef={fieldRefs.pin}
+              />
+            </Grid>
 
-      {/* Quiz Selection */}
-      <Grid item xs={12}>
-        <FormControl fullWidth error={!!errors.quiz && touches.quiz}>
-          <InputLabel>Quiz</InputLabel>
-          <Select
-            name='quiz'
-            value={formData.quiz}
-            label='Quiz'
-            onChange={handleChange}
-            onBlur={handleBlur}
-            onFocus={() => setErrors(prev => ({ ...prev, quiz: '' }))}
-            required
-            ref={fieldRefs.quiz}
-          >
-            <MenuItem value=''>
-              <em>Select Quiz</em>
-            </MenuItem>
-            {quizzes.map(quiz => (
-              <MenuItem key={quiz._id} value={quiz._id}>
-                <Grid container alignItems='center' spacing={2} justifyContent='space-between'>
-                  <Grid item xs={8}>
-                    <Grid container alignItems='center' spacing={2}>
-                      <Grid item>
-                        <img
-                          src={quiz?.thumbnail || 'https://via.placeholder.com/150x150'}
-                          alt={quiz.title}
-                          style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }}
-                        />
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label='Description'
+                name='description'
+                value={formData.description}
+                onChange={handleChange}
+                multiline
+                rows={3}
+                inputRef={fieldRefs.description}
+              />
+            </Grid>
+
+            {/* Quiz Selection */}
+            <Grid item xs={12}>
+              <FormControl fullWidth error={!!errors.quiz && touches.quiz}>
+                <InputLabel>Quiz</InputLabel>
+                <Select
+                  name='quiz'
+                  value={formData.quiz}
+                  label='Quiz'
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  onFocus={() => setErrors(prev => ({ ...prev, quiz: '' }))}
+                  required
+                  ref={fieldRefs.quiz}
+                >
+                  <MenuItem value=''>
+                    <em>Select Quiz</em>
+                  </MenuItem>
+                  {quizzes.map(quiz => (
+                    <MenuItem key={quiz._id} value={quiz._id}>
+                      <Grid container alignItems='center' spacing={2} justifyContent='space-between'>
+                        <Grid item xs={8}>
+                          <Grid container alignItems='center' spacing={2}>
+                            <Grid item>
+                              <img
+                                src={quiz?.thumbnail || 'https://via.placeholder.com/150x150'}
+                                alt={quiz.title}
+                                style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }}
+                              />
+                            </Grid>
+                            <Grid item>
+                              <Typography variant='body2' noWrap={false}>
+                                <Box component='span' fontWeight='bold'>
+                                  {quiz.title}
+                                </Box>
+                                <Box component='span' sx={{ color: 'text.secondary', mx: 0.5 }}>
+                                  - by
+                                </Box>
+                                <Box component='span'>{quiz.createdBy}</Box>
+                              </Typography>
+                              <Typography variant='body2' color='textSecondary' noWrap>
+                                {quiz.details}
+                              </Typography>
+                            </Grid>
+                          </Grid>
+                        </Grid>
                       </Grid>
-                      <Grid item>
-                        <Typography variant='body2' noWrap={false}>
-                          <Box component='span' fontWeight='bold'>
-                            {quiz.title}
-                          </Box>
-                          <Box component='span' sx={{ color: 'text.secondary', mx: 0.5 }}>
-                            - by
-                          </Box>
-                          <Box component='span'>{quiz.createdBy}</Box>
-                        </Typography>
-                        <Typography variant='body2' color='textSecondary' noWrap>
-                          {quiz.details}
-                        </Typography>
-                      </Grid>
-                    </Grid>
-                  </Grid>
-                </Grid>
-              </MenuItem>
-            ))}
-          </Select>
-          <FormHelperText>{errors.quiz || 'Select a quiz'}</FormHelperText>
-        </FormControl>
-      </Grid>
+                    </MenuItem>
+                  ))}
+                </Select>
+                <FormHelperText>{errors.quiz || 'Select a quiz'}</FormHelperText>
+              </FormControl>
+            </Grid>
 
-      {/* Audience Selection */}
-      {/* <Grid item xs={12}>
+            {/* Audience Selection */}
+            {/* <Grid item xs={12}>
         <GroupAutocomplete
           value={formData.audienceId}
           onChange={audienceId => {
@@ -623,461 +687,469 @@ const GameRequestSponsorshipForm = ({ onSubmit, quizzes, onCancel, data = null }
         />
       </Grid> */}
 
-      {/* Game Mode Selection */}
-      <Grid item xs={12} sm={6}>
-        <FormControl fullWidth required error={!!errors.gameMode && touches.gameMode}>
-          <InputLabel id='game-mode-label'>Game Mode</InputLabel>
-          <Select
-            labelId='game-mode-label'
-            id='game-mode-select'
-            name='gameMode'
-            value={formData.gameMode}
-            label='Game Mode'
-            onChange={handleGameModeChange}
-            onBlur={handleBlur}
-            onFocus={() => setErrors(prev => ({ ...prev, gameMode: '' }))}
-            inputRef={fieldRefs.gameMode}
-          >
-            <MenuItem value='live'>Live</MenuItem>
-            <MenuItem value='self-paced'>Self-paced</MenuItem>
-          </Select>
-          <FormHelperText>
-            {formData.gameMode === 'live'
-              ? 'The game will be live for all players'
-              : 'The game will be like an assessment'}
-          </FormHelperText>
-        </FormControl>
-      </Grid>
+            {/* Game Mode Selection */}
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth required error={!!errors.gameMode && touches.gameMode}>
+                <InputLabel id='game-mode-label'>Game Mode</InputLabel>
+                <Select
+                  labelId='game-mode-label'
+                  id='game-mode-select'
+                  name='gameMode'
+                  value={formData.gameMode}
+                  label='Game Mode'
+                  onChange={handleGameModeChange}
+                  onBlur={handleBlur}
+                  onFocus={() => setErrors(prev => ({ ...prev, gameMode: '' }))}
+                  inputRef={fieldRefs.gameMode}
+                >
+                  <MenuItem value='live'>Live</MenuItem>
+                  <MenuItem value='self-paced'>Self-paced</MenuItem>
+                </Select>
+                <FormHelperText>
+                  {formData.gameMode === 'live'
+                    ? 'The game will be live for all players'
+                    : 'The game will be like an assessment'}
+                </FormHelperText>
+              </FormControl>
+            </Grid>
 
-      {/* Forward Type Selection - only if live */}
-      {formData.gameMode === 'live' && (
-        <Grid item xs={12} sm={6}>
-          <FormControl fullWidth required error={!!errors.forwardType && touches.forwardType}>
-            <InputLabel id='forward-type-label'>Forward Type</InputLabel>
-            <Select
-              labelId='forward-type-label'
-              id='forward-type-select'
-              name='forwardType'
-              value={formData.forwardType}
-              label='Forward Type'
-              onChange={handleChange}
-              onBlur={handleBlur}
-              onFocus={() => setErrors(prev => ({ ...prev, forwardType: '' }))}
-              inputRef={fieldRefs.forwardType}
-            >
-              <MenuItem value='auto'>Auto</MenuItem>
-              <MenuItem value='admin'>Admin</MenuItem>
-            </Select>
-            <FormHelperText>Select how the game will be forwarded</FormHelperText>
-          </FormControl>
-        </Grid>
-      )}
+            {/* Forward Type Selection - only if live */}
+            {formData.gameMode === 'live' && (
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth required error={!!errors.forwardType && touches.forwardType}>
+                  <InputLabel id='forward-type-label'>Forward Type</InputLabel>
+                  <Select
+                    labelId='forward-type-label'
+                    id='forward-type-select'
+                    name='forwardType'
+                    value={formData.forwardType}
+                    label='Forward Type'
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    onFocus={() => setErrors(prev => ({ ...prev, forwardType: '' }))}
+                    inputRef={fieldRefs.forwardType}
+                  >
+                    <MenuItem value='auto'>Auto</MenuItem>
+                    <MenuItem value='admin'>Admin</MenuItem>
+                  </Select>
+                  <FormHelperText>Select how the game will be forwarded</FormHelperText>
+                </FormControl>
+              </Grid>
+            )}
 
-      {/* Duration (only if self-paced) */}
-      {formData.gameMode === 'self-paced' && (
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label='Duration (minutes)'
-            name='duration'
-            type='number'
-            value={formData.duration}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            onFocus={() => setErrors(prev => ({ ...prev, duration: '' }))}
-            error={!!errors.duration && touches.duration}
-            helperText={errors.duration || 'Enter the duration in minutes'}
-            required
-            inputProps={{ min: 1 }}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position='end'>
-                  <AccessTimeIcon />
-                </InputAdornment>
-              )
-            }}
-            inputRef={fieldRefs.duration}
-          />
-        </Grid>
-      )}
-
-      {/* Limit Players */}
-      <Grid item xs={12} sm={6}>
-        <FormControlLabel
-          control={<Checkbox checked={formData.limitPlayers} onChange={handleChange} name='limitPlayers' />}
-          label='Limit Players'
-        />
-        {formData.limitPlayers && (
-          <TextField
-            fullWidth
-            label='Max Players'
-            name='maxPlayers'
-            type='number'
-            value={formData.maxPlayers}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            onFocus={() => setErrors(prev => ({ ...prev, maxPlayers: '' }))}
-            error={!!errors.maxPlayers && touches.maxPlayers}
-            helperText={errors.maxPlayers || 'Set a maximum number of players'}
-            inputProps={{ min: 1 }}
-            inputRef={fieldRefs.maxPlayers}
-          />
-        )}
-      </Grid>
-
-      {/* Media Section */}
-      <Grid item xs={12}>
-        <Box
-          sx={{
-            border: '1px dashed',
-            borderColor: 'divider',
-            borderRadius: 1,
-            p: 3,
-            mb: 2
-          }}
-        >
-          <Typography variant='subtitle1' gutterBottom sx={{ mb: 2 }}>
-            Media
-          </Typography>
-
-          <Grid container spacing={3}>
-            {/* Video Section */}
-            <Grid item xs={12} md={6}>
-              <Box sx={{ height: '100%' }}>
-                <Typography variant='subtitle2' gutterBottom>
-                  Promotional Video
-                </Typography>
+            {/* Duration (only if self-paced) */}
+            {formData.gameMode === 'self-paced' && (
+              <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label='Video URL'
-                  name='promotionalVideoUrl'
-                  value={formData.promotionalVideoUrl}
+                  label='Duration (minutes)'
+                  name='duration'
+                  type='number'
+                  value={formData.duration}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  onFocus={() => setErrors(prev => ({ ...prev, promotionalVideoUrl: '' }))}
-                  error={!!errors.promotionalVideoUrl && touches.promotionalVideoUrl}
-                  helperText={errors.promotionalVideoUrl || 'Enter a YouTube or video URL'}
-                  type='url'
-                  placeholder='https://youtube.com/watch?v=...'
-                  inputRef={fieldRefs.promotionalVideoUrl}
-                />
-                <Box
-                  sx={{
-                    mt: 2,
-                    borderRadius: 1,
-                    overflow: 'hidden',
-                    border: '1px solid',
-                    borderColor: 'divider',
-                    height: '200px',
-                    backgroundColor: '#f5f5f5',
-                    position: 'relative'
+                  onFocus={() => setErrors(prev => ({ ...prev, duration: '' }))}
+                  error={!!errors.duration && touches.duration}
+                  helperText={errors.duration || 'Enter the duration in minutes'}
+                  required
+                  inputProps={{ min: 1 }}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position='end'>
+                        <AccessTimeIcon />
+                      </InputAdornment>
+                    )
                   }}
-                >
-                  {formData.promotionalVideoUrl ? (
-                    <ReactPlayer
-                      url={formData.promotionalVideoUrl}
-                      width='100%'
-                      height='200px'
-                      controls
-                      style={{ backgroundColor: '#f5f5f5' }}
-                    />
-                  ) : (
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        height: '100%',
-                        textAlign: 'center',
-                        p: 2
-                      }}
-                    >
-                      <VideocamOffIcon sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
-                      <Typography variant='body2' color='text.secondary'>
-                        No video URL provided
+                  inputRef={fieldRefs.duration}
+                />
+              </Grid>
+            )}
+
+            {/* Limit Players */}
+            <Grid item xs={12} sm={6}>
+              <FormControlLabel
+                control={<Checkbox checked={formData.limitPlayers} onChange={handleChange} name='limitPlayers' />}
+                label='Limit Players'
+              />
+              {formData.limitPlayers && (
+                <TextField
+                  fullWidth
+                  label='Max Players'
+                  name='maxPlayers'
+                  type='number'
+                  value={formData.maxPlayers}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  onFocus={() => setErrors(prev => ({ ...prev, maxPlayers: '' }))}
+                  error={!!errors.maxPlayers && touches.maxPlayers}
+                  helperText={errors.maxPlayers || 'Set a maximum number of players'}
+                  inputProps={{ min: 1 }}
+                  inputRef={fieldRefs.maxPlayers}
+                />
+              )}
+            </Grid>
+
+            {/* Media Section */}
+            <Grid item xs={12}>
+              <Box
+                sx={{
+                  border: '1px dashed',
+                  borderColor: 'divider',
+                  borderRadius: 1,
+                  p: 3,
+                  mb: 2
+                }}
+              >
+                <Typography variant='subtitle1' gutterBottom sx={{ mb: 2 }}>
+                  Media
+                </Typography>
+
+                <Grid container spacing={3}>
+                  {/* Video Section */}
+                  <Grid item xs={12} md={6}>
+                    <Box sx={{ height: '100%' }}>
+                      <Typography variant='subtitle2' gutterBottom>
+                        Promotional Video
                       </Typography>
-                      <Typography variant='caption' color='text.disabled'>
-                        Add a YouTube or video URL above
-                      </Typography>
+                      <TextField
+                        fullWidth
+                        label='Video URL'
+                        name='promotionalVideoUrl'
+                        value={formData.promotionalVideoUrl}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        onFocus={() => setErrors(prev => ({ ...prev, promotionalVideoUrl: '' }))}
+                        error={!!errors.promotionalVideoUrl && touches.promotionalVideoUrl}
+                        helperText={errors.promotionalVideoUrl || 'Enter a YouTube or video URL'}
+                        type='url'
+                        placeholder='https://youtube.com/watch?v=...'
+                        inputRef={fieldRefs.promotionalVideoUrl}
+                      />
+                      <Box
+                        sx={{
+                          mt: 2,
+                          borderRadius: 1,
+                          overflow: 'hidden',
+                          border: '1px solid',
+                          borderColor: 'divider',
+                          height: '200px',
+                          backgroundColor: '#f5f5f5',
+                          position: 'relative'
+                        }}
+                      >
+                        {formData.promotionalVideoUrl ? (
+                          <ReactPlayer
+                            url={formData.promotionalVideoUrl}
+                            width='100%'
+                            height='200px'
+                            controls
+                            style={{ backgroundColor: '#f5f5f5' }}
+                          />
+                        ) : (
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              height: '100%',
+                              textAlign: 'center',
+                              p: 2
+                            }}
+                          >
+                            <VideocamOffIcon sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
+                            <Typography variant='body2' color='text.secondary'>
+                              No video URL provided
+                            </Typography>
+                            <Typography variant='caption' color='text.disabled'>
+                              Add a YouTube or video URL above
+                            </Typography>
+                          </Box>
+                        )}
+                      </Box>
                     </Box>
-                  )}
-                </Box>
+                  </Grid>
+
+                  {/* Image Upload Section */}
+                  <Grid item xs={12} md={6}>
+                    <Box sx={{ height: '100%' }}>
+                      <Typography variant='subtitle2' gutterBottom>
+                        Thumbnail Image
+                      </Typography>
+                      <input
+                        type='file'
+                        ref={fileInputRef}
+                        onChange={handleImageUpload}
+                        onBlur={handleBlur}
+                        accept='image/*'
+                        style={{ display: 'none' }}
+                      />
+                      {formData.thumbnailPoster ? (
+                        <Box
+                          sx={{
+                            position: 'relative',
+                            mb: 2,
+                            height: '200px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: '#f5f5f5'
+                          }}
+                        >
+                          <img
+                            src={formData.thumbnailPoster}
+                            alt='Game thumbnail'
+                            style={{
+                              width: '100%',
+                              height: '200px',
+                              objectFit: 'cover',
+                              borderRadius: 4,
+                              border: '1px solid #e0e0e0'
+                            }}
+                          />
+                          <Box
+                            sx={{
+                              position: 'absolute',
+                              top: 8,
+                              right: 8,
+                              display: 'flex',
+                              gap: 1,
+                              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                              borderRadius: 1,
+                              p: 0.5,
+                              boxShadow: 1,
+                              zIndex: 2,
+                              transform: 'translateY(-1px)'
+                            }}
+                          >
+                            <IconButton
+                              color='primary'
+                              size='small'
+                              onClick={triggerFileInput}
+                              sx={{ backgroundColor: 'rgba(0, 0, 0, 0.04)' }}
+                            >
+                              <EditIcon fontSize='small' />
+                            </IconButton>
+                            <IconButton
+                              color='error'
+                              size='small'
+                              onClick={() => {
+                                if (formData.thumbnailPoster.startsWith('blob:')) {
+                                  URL.revokeObjectURL(formData.thumbnailPoster)
+                                }
+                                let updatingFormData = { ...formData, thumbnailPoster: '' }
+                                setFormData(updatingFormData)
+                                setTouches(prev => ({ ...prev, thumbnailPoster: true }))
+                                validateField('thumbnailPoster', updatingFormData)
+                              }}
+                              sx={{ backgroundColor: 'rgba(0, 0, 0, 0.04)' }}
+                            >
+                              <DeleteIcon fontSize='small' />
+                            </IconButton>
+                          </Box>
+                        </Box>
+                      ) : (
+                        <Box
+                          onClick={triggerFileInput}
+                          sx={{
+                            height: '200px',
+                            border: '2px dashed',
+                            borderColor: !!errors.thumbnailPoster && touches.thumbnailPoster ? 'red' : 'divider',
+                            borderRadius: 1,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            backgroundColor: 'action.hover',
+                            '&:hover': {
+                              backgroundColor: 'action.selected'
+                            }
+                          }}
+                        >
+                          <Typography color='text.secondary'>Click to upload thumbnail image</Typography>
+                        </Box>
+                      )}
+                      <TextField
+                        fullWidth
+                        label='Or enter image URL'
+                        name='thumbnailPoster'
+                        value={formData.thumbnailPoster}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        onFocus={() => setErrors(prev => ({ ...prev, thumbnailPoster: '' }))}
+                        error={!!errors.thumbnailPoster && touches.thumbnailPoster}
+                        helperText={errors.thumbnailPoster}
+                        placeholder='https://example.com/image.jpg'
+                        type='url'
+                        sx={{ mt: 2 }}
+                        inputRef={fieldRefs.thumbnailPoster}
+                      />
+                    </Box>
+                  </Grid>
+                </Grid>
               </Box>
             </Grid>
 
-            {/* Image Upload Section */}
-            <Grid item xs={12} md={6}>
-              <Box sx={{ height: '100%' }}>
-                <Typography variant='subtitle2' gutterBottom>
-                  Thumbnail Image
-                </Typography>
-                <input
-                  type='file'
-                  ref={fileInputRef}
-                  onChange={handleImageUpload}
-                  onBlur={handleBlur}
-                  accept='image/*'
-                  style={{ display: 'none' }}
-                />
-                {formData.thumbnailPoster ? (
-                  <Box
-                    sx={{
-                      position: 'relative',
-                      mb: 2,
-                      height: '200px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: '#f5f5f5'
-                    }}
-                  >
-                    <img
-                      src={formData.thumbnailPoster}
-                      alt='Game thumbnail'
-                      style={{
-                        width: '100%',
-                        height: '200px',
-                        objectFit: 'cover',
-                        borderRadius: 4,
-                        border: '1px solid #e0e0e0'
-                      }}
-                    />
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        top: 8,
-                        right: 8,
-                        display: 'flex',
-                        gap: 1,
-                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                        borderRadius: 1,
-                        p: 0.5,
-                        boxShadow: 1,
-                        zIndex: 2,
-                        transform: 'translateY(-1px)'
-                      }}
-                    >
-                      <IconButton
-                        color='primary'
-                        size='small'
-                        onClick={triggerFileInput}
-                        sx={{ backgroundColor: 'rgba(0, 0, 0, 0.04)' }}
-                      >
-                        <EditIcon fontSize='small' />
-                      </IconButton>
-                      <IconButton
-                        color='error'
-                        size='small'
-                        onClick={() => {
-                          if (formData.thumbnailPoster.startsWith('blob:')) {
-                            URL.revokeObjectURL(formData.thumbnailPoster)
-                          }
-                          let updatingFormData = { ...formData, thumbnailPoster: '' }
-                          setFormData(updatingFormData)
-                          setTouches(prev => ({ ...prev, thumbnailPoster: true }))
-                          validateField('thumbnailPoster', updatingFormData)
-                        }}
-                        sx={{ backgroundColor: 'rgba(0, 0, 0, 0.04)' }}
-                      >
-                        <DeleteIcon fontSize='small' />
-                      </IconButton>
-                    </Box>
-                  </Box>
-                ) : (
-                  <Box
-                    onClick={triggerFileInput}
-                    sx={{
-                      height: '200px',
-                      border: '2px dashed',
-                      borderColor: !!errors.thumbnailPoster && touches.thumbnailPoster ? 'red' : 'divider',
-                      borderRadius: 1,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      backgroundColor: 'action.hover',
-                      '&:hover': {
-                        backgroundColor: 'action.selected'
-                      }
-                    }}
-                  >
-                    <Typography color='text.secondary'>Click to upload thumbnail image</Typography>
-                  </Box>
+            <Grid item xs={12}>
+              <Autocomplete
+                multiple
+                freeSolo
+                options={[]}
+                value={formData.tags}
+                onChange={(event, newValue) => {
+                  setFormData(prev => ({ ...prev, tags: newValue }))
+                }}
+                renderTags={(value, getTagProps) =>
+                  value.map((option, index) => (
+                    <Chip key={index} variant='outlined' label={option} {...getTagProps({ index })} />
+                  ))
+                }
+                renderInput={params => (
+                  <TextField {...params} label='Tags' placeholder='Add tags' inputRef={fieldRefs.tags} />
                 )}
-                <TextField
-                  fullWidth
-                  label='Or enter image URL'
-                  name='thumbnailPoster'
-                  value={formData.thumbnailPoster}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  onFocus={() => setErrors(prev => ({ ...prev, thumbnailPoster: '' }))}
-                  error={!!errors.thumbnailPoster && touches.thumbnailPoster}
-                  helperText={errors.thumbnailPoster}
-                  placeholder='https://example.com/image.jpg'
-                  type='url'
-                  sx={{ mt: 2 }}
-                  inputRef={fieldRefs.thumbnailPoster}
-                />
-              </Box>
+              />
+            </Grid>
+
+            {/* Rewards Section */}
+            <Grid item xs={12}>
+              <Divider sx={{ my: 2 }} />
+              <Stack direction='row' justifyContent='space-between' alignItems='center'>
+                <Typography variant='h5'>Rewards</Typography>
+                <Button
+                  variant='outlined'
+                  startIcon={<AddIcon />}
+                  onClick={handleAddReward}
+                  disabled={availablePositions.length === 0}
+                >
+                  Add Reward
+                </Button>
+              </Stack>
+
+              {formData?.rewards?.length === 0 ? (
+                <Typography variant='body2' color='text.secondary' sx={{ mt: 2 }}>
+                  No rewards added yet
+                </Typography>
+              ) : (
+                <Box sx={{ mt: 2 }}>
+                  {formData?.rewards
+                    ?.sort((a, b) => a.position - b.position)
+                    ?.map(reward => {
+                      const totalNeeded =
+                        reward.rewardType === 'cash'
+                          ? reward.rewardValuePerWinner * reward.numberOfWinnersForThisPosition
+                          : reward.numberOfWinnersForThisPosition
+
+                      const totalAllocated =
+                        reward.sponsors?.reduce((sum, sponsor) => sum + (sponsor.allocated || 0), 0) || 0
+                      const remainingNeed = totalNeeded - totalAllocated
+
+                      return (
+                        <Card key={reward?._id || reward?.id} variant='outlined' sx={{ mb: 2 }}>
+                          <CardContent>
+                            <Stack direction='row' justifyContent='space-between' alignItems='center' mb={2}>
+                              <Typography variant='h6'>Position {reward.position} Reward</Typography>
+                              <Stack direction='row'>
+                                <IconButton onClick={() => handleEditReward(reward)}>
+                                  <EditIcon />
+                                </IconButton>
+                                <IconButton onClick={() => handleRemoveReward(reward?._id || reward?.id)}>
+                                  <CloseIcon />
+                                </IconButton>
+                              </Stack>
+                            </Stack>
+
+                            <Stack spacing={1} mb={2}>
+                              <Typography variant='body1'>
+                                {reward.rewardType === 'cash' ? (
+                                  <>
+                                    Cash Reward: {reward.currency} {reward.rewardValuePerWinner} per winner
+                                    <Typography variant='body2' color='text.secondary'>
+                                      Total needed: {reward.currency} {totalNeeded.toFixed(2)} (
+                                      {reward.numberOfWinnersForThisPosition} winners)
+                                    </Typography>
+                                  </>
+                                ) : (
+                                  <>Physical Gift: {reward.nonCashReward}</>
+                                )}
+                              </Typography>
+                              <Typography variant='body1'>
+                                Number of Winners: {reward.numberOfWinnersForThisPosition}
+                              </Typography>
+                              <Typography variant='body2' color={remainingNeed > 0 ? 'error.main' : 'success.main'}>
+                                {remainingNeed > 0
+                                  ? `Still needs: ${
+                                      reward.rewardType === 'cash'
+                                        ? `${reward.currency} ${remainingNeed.toFixed(2)}`
+                                        : `${remainingNeed} items`
+                                    }`
+                                  : 'Fully sponsored!'}
+                              </Typography>
+                            </Stack>
+
+                            {reward?.sponsors?.length > 0 && (
+                              <>
+                                <Typography variant='subtitle1' gutterBottom>
+                                  Current Sponsors ({reward?.sponsors?.length})
+                                </Typography>
+                                <Grid container spacing={2}>
+                                  {reward.sponsors.map(sponsor => (
+                                    <Grid item xs={12} sm={6} key={sponsor?._id || sponsor?.id}>
+                                      <Paper variant='outlined' sx={{ p: 2 }}>
+                                        <Typography variant='body2'>{sponsor.email}</Typography>
+                                        <Typography variant='body2' color='text.secondary'>
+                                          {reward.rewardType === 'cash'
+                                            ? `Contributed: ${sponsor.currency} ${sponsor.allocated.toFixed(2)}`
+                                            : `Provided: ${sponsor.allocated} items`}
+                                        </Typography>
+                                      </Paper>
+                                    </Grid>
+                                  ))}
+                                </Grid>
+                              </>
+                            )}
+                          </CardContent>
+                        </Card>
+                      )
+                    })}
+                </Box>
+              )}
+
+              {/* Reward Dialog */}
+              <RewardRequestDialog
+                open={openRewardDialog}
+                key={openRewardDialog}
+                onClose={() => setOpenRewardDialog(false)}
+                reward={editingReward}
+                onSave={handleSaveReward}
+                availablePositions={availablePositions}
+                allPositions={POSITION_OPTIONS}
+                isEditing={!!editingReward}
+                formData={formData}
+                setFormData={setFormData}
+              />
+            </Grid>
+
+            {/* Form Actions */}
+            <Grid item xs={12} mt={4}>
+              <Stack direction='row' spacing={2} justifyContent='center'>
+                <Button variant='outlined' onClick={onCancel}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSubmit}
+                  component='label'
+                  variant='contained'
+                  color='primary'
+                  style={{ color: 'white' }}
+                >
+                  {data ? 'Update & Request Sponsorship' : 'Save Game & Request Sponsorship'}
+                </Button>
+              </Stack>
             </Grid>
           </Grid>
-        </Box>
-      </Grid>
-
-      <Grid item xs={12}>
-        <Autocomplete
-          multiple
-          freeSolo
-          options={[]}
-          value={formData.tags}
-          onChange={(event, newValue) => {
-            setFormData(prev => ({ ...prev, tags: newValue }))
-          }}
-          renderTags={(value, getTagProps) =>
-            value.map((option, index) => (
-              <Chip key={index} variant='outlined' label={option} {...getTagProps({ index })} />
-            ))
-          }
-          renderInput={params => (
-            <TextField {...params} label='Tags' placeholder='Add tags' inputRef={fieldRefs.tags} />
-          )}
-        />
-      </Grid>
-
-      {/* Rewards Section */}
-      <Grid item xs={12}>
-        <Divider sx={{ my: 2 }} />
-        <Stack direction='row' justifyContent='space-between' alignItems='center'>
-          <Typography variant='h5'>Rewards</Typography>
-          <Button
-            variant='outlined'
-            startIcon={<AddIcon />}
-            onClick={handleAddReward}
-            disabled={availablePositions.length === 0}
-          >
-            Add Reward
-          </Button>
-        </Stack>
-
-        {formData?.rewards?.length === 0 ? (
-          <Typography variant='body2' color='text.secondary' sx={{ mt: 2 }}>
-            No rewards added yet
-          </Typography>
-        ) : (
-          <Box sx={{ mt: 2 }}>
-            {formData?.rewards
-              ?.sort((a, b) => a.position - b.position)
-              ?.map(reward => {
-                const totalNeeded = reward.rewardType === 'cash' 
-                  ? reward.rewardValuePerWinner * reward.numberOfWinnersForThisPosition
-                  : reward.numberOfWinnersForThisPosition
-                
-                const totalAllocated = reward.sponsors?.reduce((sum, sponsor) => sum + (sponsor.allocated || 0), 0) || 0
-                const remainingNeed = totalNeeded - totalAllocated
-
-                return (
-                  <Card key={reward?._id || reward?.id} variant='outlined' sx={{ mb: 2 }}>
-                    <CardContent>
-                      <Stack direction='row' justifyContent='space-between' alignItems='center' mb={2}>
-                        <Typography variant='h6'>Position {reward.position} Reward</Typography>
-                        <Stack direction='row'>
-                          <IconButton onClick={() => handleEditReward(reward)}>
-                            <EditIcon />
-                          </IconButton>
-                          <IconButton onClick={() => handleRemoveReward(reward?._id || reward?.id)}>
-                            <CloseIcon />
-                          </IconButton>
-                        </Stack>
-                      </Stack>
-
-                      <Stack spacing={1} mb={2}>
-                        <Typography variant='body1'>
-                          {reward.rewardType === 'cash' ? (
-                            <>
-                              Cash Reward: {reward.currency} {reward.rewardValuePerWinner} per winner
-                              <Typography variant='body2' color='text.secondary'>
-                                Total needed: {reward.currency} {totalNeeded.toFixed(2)} (
-                                {reward.numberOfWinnersForThisPosition} winners)
-                              </Typography>
-                            </>
-                          ) : (
-                            <>Physical Gift: {reward.nonCashReward}</>
-                          )}
-                        </Typography>
-                        <Typography variant='body1'>
-                          Number of Winners: {reward.numberOfWinnersForThisPosition}
-                        </Typography>
-                        <Typography variant='body2' color={remainingNeed > 0 ? 'error.main' : 'success.main'}>
-                          {remainingNeed > 0 
-                            ? `Still needs: ${reward.rewardType === 'cash' ? `${reward.currency} ${remainingNeed.toFixed(2)}` : `${remainingNeed} items`}`
-                            : 'Fully sponsored!'
-                          }
-                        </Typography>
-                      </Stack>
-
-                      {reward?.sponsors?.length > 0 && (
-                        <>
-                          <Typography variant='subtitle1' gutterBottom>
-                            Current Sponsors ({reward?.sponsors?.length})
-                          </Typography>
-                          <Grid container spacing={2}>
-                            {reward.sponsors.map(sponsor => (
-                              <Grid item xs={12} sm={6} key={sponsor?._id || sponsor?.id}>
-                                <Paper variant='outlined' sx={{ p: 2 }}>
-                                  <Typography variant='body2'>{sponsor.email}</Typography>
-                                  <Typography variant='body2' color='text.secondary'>
-                                    {reward.rewardType === 'cash'
-                                      ? `Contributed: ${sponsor.currency} ${sponsor.allocated.toFixed(2)}`
-                                      : `Provided: ${sponsor.allocated} items`}
-                                  </Typography>
-                                </Paper>
-                              </Grid>
-                            ))}
-                          </Grid>
-                        </>
-                      )}
-                    </CardContent>
-                  </Card>
-                )
-              })}
-          </Box>
-        )}
-        
-        {/* Reward Dialog */}
-        <RewardRequestDialog
-          open={openRewardDialog}
-          key={openRewardDialog}
-          onClose={() => setOpenRewardDialog(false)}
-          reward={editingReward}
-          onSave={handleSaveReward}
-          availablePositions={availablePositions}
-          allPositions={POSITION_OPTIONS}
-          isEditing={!!editingReward}
-          formData={formData}
-          setFormData={setFormData}
-        />
-      </Grid>
-
-      {/* Form Actions */}
-      <Grid item xs={12} mt={4}>
-        <Stack direction='row' spacing={2} justifyContent='center'>
-          <Button variant='outlined' onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            component='label'
-            variant='contained'
-            color='primary'
-            style={{ color: 'white' }}
-          >
-            Save Game & Request Sponsorship
-          </Button>
-        </Stack>
-      </Grid>
-    </Grid>
+        </CardContent>
+      </Card>
+    </Box>
   )
 }
 

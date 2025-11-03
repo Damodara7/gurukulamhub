@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useRef, useState } from 'react'
-import { Box, Grid, Typography, Card, CardContent , Button } from '@mui/material'
+import { Box, Grid, Typography, Card, CardContent, Button } from '@mui/material'
 import { EmojiEvents, Videocam } from '@mui/icons-material'
 import ReactPlayer from 'react-player'
 import RewardsList from '@/components/apps/games/game-details/RewardsList'
@@ -63,9 +63,7 @@ export default function GameDetailsPage({ game: initialGame = null, gameId }) {
   }, [gameId])
 
   if (!game)
-    return (
-      <FallBackCard content='You can go back to All Games' path='/management/games' btnText='Back To All Games' />
-    )
+    return <FallBackCard content='You can go back to All Games' path='/management/games' btnText='Back To All Games' />
 
   // Show special page for games awaiting sponsorship
   if (game.status === 'awaiting_sponsorship') {
@@ -78,86 +76,144 @@ export default function GameDetailsPage({ game: initialGame = null, gameId }) {
   }
 
   return (
-    <Box sx={{ p: 3 }}>
-      {/* Game Header Section */}
-      <GameHeader game={game} />
+    <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa' }}>
+      {/* Gradient Header Banner */}
+      <Box
+        sx={{
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          pt: 4,
+          pb: 6,
+          mb: -4,
+          position: 'relative',
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background:
+              'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+            opacity: 0.4
+          }
+        }}
+      />
 
-      {/* Group Information Section */}
-      <GameGroupInfo game={game} />
+      <Box sx={{ px: { xs: 2, sm: 3, md: 4 }, pb: 4, position: 'relative', mt: -2 }}>
+        {/* Game Header Section */}
+        <GameHeader game={game} />
 
-      {/* Promotional Video Section */}
-      {game.promotionalVideoUrl && (
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
-            <Typography variant='h6' sx={{ mb: 2 }}>
-              <Videocam sx={{ mr: 1, verticalAlign: 'middle' }} />
-              Promotional Video
-            </Typography>
-            <Box
-              sx={{
-                position: 'relative',
-                pt: '40.25%', // 16:9 aspect ratio
-                borderRadius: 2,
-                overflow: 'hidden'
-              }}
-            >
-              <ReactPlayer
-                url={game.promotionalVideoUrl}
-                width='100%'
-                height='100%'
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0
+        {/* Group Information Section */}
+        <GameGroupInfo game={game} />
+
+        {/* Promotional Video Section */}
+        {game.promotionalVideoUrl && (
+          <Card
+            sx={{
+              mb: 3,
+              borderRadius: '16px',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+              overflow: 'hidden'
+            }}
+          >
+            <CardContent sx={{ p: 3 }}>
+              <Typography
+                variant='h6'
+                sx={{
+                  mb: 3,
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  color: '#1a1a1a'
                 }}
-                controls
-              />
-            </Box>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Game Information Grid */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        {/* Location Details */}
-        <GameLocationInfo game={game} />
-
-        {/* Game Statistics */}
-        <GameStatistics game={game} />
-      </Grid>
-
-      {/* Registration & Participation Section */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        {/* Registered Players */}
-        <RegisteredPlayersTable
-          registeredUsers={game?.registeredUsers}
-          participatedUsers={game?.participatedUsers}
-          game={game}
-        />
-
-        {/* Participated Players */}
-        <ParticipatedPlayersTable game={game} participatedUsers={game?.participatedUsers} />
-      </Grid>
-
-      {/* Leaderboard Section */}
-      <AdminLeaderboard game={game} />
-
-      {/* Rewards Section */}
-      {game.rewards.length > 0 && (
-        <Card>
-          <CardContent>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant='h6'>
-                <EmojiEvents sx={{ mr: 1, verticalAlign: 'middle' }} />
-                Rewards
+              >
+                <Videocam sx={{ color: '#667eea' }} />
+                Promotional Video
               </Typography>
-            </Box>
+              <Box
+                sx={{
+                  position: 'relative',
+                  pt: '56.25%', // 16:9 aspect ratio
+                  borderRadius: '12px',
+                  overflow: 'hidden',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+                }}
+              >
+                <ReactPlayer
+                  url={game.promotionalVideoUrl}
+                  width='100%'
+                  height='100%'
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0
+                  }}
+                  controls
+                />
+              </Box>
+            </CardContent>
+          </Card>
+        )}
 
-            {/* Rewards List */}
-            <RewardsList rewards={game?.rewards} />
-          </CardContent>
-        </Card>
-      )}
+        {/* Game Information Grid */}
+        <Grid container spacing={3} sx={{ mb: 3 }}>
+          {/* Location Details */}
+          <GameLocationInfo game={game} />
+
+          {/* Game Statistics */}
+          <GameStatistics game={game} />
+        </Grid>
+
+        {/* Registration & Participation Section */}
+        <Grid container spacing={3} sx={{ mb: 3 }}>
+          {/* Registered Players */}
+          <RegisteredPlayersTable
+            registeredUsers={game?.registeredUsers}
+            participatedUsers={game?.participatedUsers}
+            game={game}
+          />
+
+          {/* Participated Players */}
+          <ParticipatedPlayersTable game={game} participatedUsers={game?.participatedUsers} />
+        </Grid>
+
+        {/* Leaderboard Section */}
+        <AdminLeaderboard game={game} />
+
+        {/* Rewards Section */}
+        {game.rewards.length > 0 && (
+          <Card
+            sx={{
+              borderRadius: '16px',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+              overflow: 'hidden'
+            }}
+          >
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Typography
+                  variant='h5'
+                  sx={{
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    color: '#1a1a1a'
+                  }}
+                >
+                  <EmojiEvents sx={{ color: '#667eea' }} />
+                  Rewards
+                </Typography>
+              </Box>
+
+              {/* Rewards List */}
+              <RewardsList rewards={game?.rewards} />
+            </CardContent>
+          </Card>
+        )}
+      </Box>
     </Box>
   )
 }

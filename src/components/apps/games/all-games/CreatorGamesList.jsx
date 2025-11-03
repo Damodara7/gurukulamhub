@@ -1,10 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import {
-  Box,
-  Container,
-  Grid,
-  Typography,
-} from '@mui/material'
+import { Box, Container, Grid, Typography } from '@mui/material'
 import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
 import { useSession } from 'next-auth/react'
 import Loading from '@/components/Loading'
@@ -61,9 +56,9 @@ const CreatorGameList = ({ games = [], loading = false, onRefresh, setGames, isS
       }
     }
     return () => {
-        if (wsRef.current) {
-          wsRef.current.close()
-        }
+      if (wsRef.current) {
+        wsRef.current.close()
+      }
     }
   }, [])
 
@@ -124,26 +119,25 @@ const CreatorGameList = ({ games = [], loading = false, onRefresh, setGames, isS
 
   async function handleAdminForward(game) {
     console.log('Clicked Admin Forward game of id: ', game._id)
-    if (game?.forwardingAdmin && game?.forwardingAdmin?.email === session?.user?.email){
+    if (game?.forwardingAdmin && game?.forwardingAdmin?.email === session?.user?.email) {
       router.push(`/management/games/${game._id}/admin-forward`)
       return
     }
-      try {
-        const result = await RestApi.post(`${API_URLS.v0.USERS_GAME}/${game._id}/admin-forward`, {
-          user: { email: session?.user?.email }
-        })
-        if (result?.status === 'success') {
-          toast.success('Admin forwarding set successfully')
-          router.push(`/management/games/${game._id}/admin-forward`)
-        } else {
-          console.error('Error setting admin forarding:', error)
-          toast.error(result?.message || 'Failed to set admin forwarding')
-        }
-      } catch (error) {
-        console.error('Error setting admin forwarding', error)
-        toast.error('An error occurred while setting admin forwarding')
+    try {
+      const result = await RestApi.post(`${API_URLS.v0.USERS_GAME}/${game._id}/admin-forward`, {
+        user: { email: session?.user?.email }
+      })
+      if (result?.status === 'success') {
+        toast.success('Admin forwarding set successfully')
+        router.push(`/management/games/${game._id}/admin-forward`)
+      } else {
+        console.error('Error setting admin forarding:', error)
+        toast.error(result?.message || 'Failed to set admin forwarding')
       }
-    
+    } catch (error) {
+      console.error('Error setting admin forwarding', error)
+      toast.error('An error occurred while setting admin forwarding')
+    }
   }
 
   const handleDeleteConfirmation = game => {
@@ -161,32 +155,26 @@ const CreatorGameList = ({ games = [], loading = false, onRefresh, setGames, isS
 
   return (
     <>
-      <Container maxWidth='xl' sx={{ position: 'relative', pb: 10 }}>
-        {gamesToUse.length === 0 ? (
-          <FallBackCard
-            content='No games found.'
-            path='/'
-            btnText='Back To Home Page'
-          />
-        ) : (
-          <Grid container spacing={3}>
-            {gamesToUse.map(game => (
-              <Grid item key={game._id} xs={12} sm={6} md={4} lg={3}>
-                <CreatorGameCard
-                  game={game}
-                  isSuperUser={isSuperUser}
-                  onViewGame={handleViewGame}
-                  onEditGame={handleEditGame}
-                  onApproveGame={handleApproveGame}
-                  onDeleteGame={handleDeleteConfirmation}
-                  onLeaderboard={handleLeaderboard}
-                  onAdminForward={handleAdminForward}
-                />
-              </Grid>
-            ))}
-          </Grid>
-        )}
-      </Container>
+      {gamesToUse.length === 0 ? (
+        <FallBackCard content='No games found.' path='/' btnText='Back To Home Page' />
+      ) : (
+        <Grid container spacing={4}>
+          {gamesToUse.map(game => (
+            <Grid item key={game._id} xs={12} sm={6} md={4}>
+              <CreatorGameCard
+                game={game}
+                isSuperUser={isSuperUser}
+                onViewGame={handleViewGame}
+                onEditGame={handleEditGame}
+                onApproveGame={handleApproveGame}
+                onDeleteGame={handleDeleteConfirmation}
+                onLeaderboard={handleLeaderboard}
+                onAdminForward={handleAdminForward}
+              />
+            </Grid>
+          ))}
+        </Grid>
+      )}
       <ConfirmationDialog
         open={confirmationDialogOpen}
         setOpen={setConfirmationDialogOpen}

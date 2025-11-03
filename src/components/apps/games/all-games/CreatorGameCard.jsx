@@ -225,13 +225,14 @@ const CreatorGameCard = ({
             <IconButtonTooltip title='View Details' onClick={() => onViewGame(game._id)} color='info'>
               <VisibilityIcon />
             </IconButtonTooltip>
-            {((session?.user?.roles?.includes('ADMIN') && ['created', 'approved', 'cancelled', 'sponsored'].includes(game.status)) ||
+            {((session?.user?.roles?.includes('ADMIN') &&
+              ['created', 'approved', 'cancelled', 'sponsored'].includes(game.status)) ||
               (!game.createdBy?.roles?.includes('ADMIN') &&
                 game.creatorEmail === session?.user?.email &&
                 ['created', 'cancelled', 'sponsored'].includes(game.status))) && (
-              <IconButtonTooltip 
-                title={game.status === 'sponsored' ? 'Schedule Game' : 'Edit Game'} 
-                onClick={() => onEditGame(game._id)} 
+              <IconButtonTooltip
+                title={game.status === 'sponsored' ? 'Schedule Game' : 'Edit Game'}
+                onClick={() => onEditGame(game._id)}
                 color={game.status === 'sponsored' ? 'info' : 'warning'}
               >
                 <EditIcon />

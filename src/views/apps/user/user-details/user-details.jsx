@@ -67,31 +67,39 @@ function StatCard({ icon, label, value, tooltip }) {
   const isEmail = label.toLowerCase() === 'email'
   const isRoles = label.toLowerCase() === 'roles'
   return (
-    <Paper
-      variant='outlined'
+    <Card
       sx={{
-        p: { xs: 1.5, sm: 2 },
-        borderRadius: 1,
-        minWidth: { xs: '100%', sm: 120 },
+        p: { xs: 2, sm: 2.5, md: 3 },
+        borderRadius: { xs: '12px', sm: '16px' },
         textAlign: 'center',
-        bgcolor: 'background.default',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: 1,
-        boxShadow: 'none',
-        borderColor: 'divider',
-        width: '100%'
+        gap: 1.5,
+        height: '100%',
+        background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.03) 0%, rgba(118, 75, 162, 0.03) 100%)',
+        border: '1px solid rgba(102, 126, 234, 0.1)',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+        transition: 'all 0.3s ease',
+        '&:hover': {
+          transform: 'translateY(-4px)',
+          boxShadow: '0 8px 24px rgba(102, 126, 234, 0.15)',
+          borderColor: 'rgba(102, 126, 234, 0.3)'
+        }
       }}
     >
       <Box
         sx={{
-          mb: 1,
-          color: 'text.secondary',
-          fontSize: { xs: 24, sm: 28 },
+          width: { xs: 48, sm: 56 },
+          height: { xs: 48, sm: 56 },
+          borderRadius: '12px',
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center'
+          justifyContent: 'center',
+          color: 'white',
+          fontSize: { xs: 24, sm: 28 },
+          boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)'
         }}
       >
         {icon}
@@ -100,15 +108,18 @@ function StatCard({ icon, label, value, tooltip }) {
         <Tooltip title={value} arrow>
           <Typography
             variant='h6'
-            fontWeight={600}
-            color='text.primary'
+            fontWeight={700}
             sx={{
-              fontSize: { xs: 16, sm: 20 },
+              fontSize: { xs: 16, sm: 18, md: 20 },
               display: 'block',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
-              maxWidth: '100%'
+              maxWidth: '100%',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
             }}
           >
             {value}
@@ -118,29 +129,46 @@ function StatCard({ icon, label, value, tooltip }) {
         <Tooltip title={tooltip || value} arrow>
           <Typography
             variant='h6'
-            fontWeight={600}
-            color='text.primary'
+            fontWeight={700}
             sx={{
-              fontSize: { xs: 16, sm: 20 },
+              fontSize: { xs: 16, sm: 18, md: 20 },
               maxWidth: 120,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
-              display: 'block'
+              display: 'block',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
             }}
           >
             {value}
           </Typography>
         </Tooltip>
       ) : (
-        <Typography variant='h6' fontWeight={600} color='text.primary' sx={{ fontSize: { xs: 16, sm: 20 } }}>
+        <Typography
+          variant='h6'
+          fontWeight={700}
+          sx={{
+            fontSize: { xs: 16, sm: 18, md: 20 },
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text'
+          }}
+        >
           {value}
         </Typography>
       )}
-      <Typography variant='caption' color='text.secondary' sx={{ fontSize: { xs: 12, sm: 14 } }}>
+      <Typography
+        variant='caption'
+        color='text.secondary'
+        sx={{ fontSize: { xs: 11, sm: 12, md: 13 }, fontWeight: 600 }}
+      >
         {label}
       </Typography>
-    </Paper>
+    </Card>
   )
 }
 
@@ -152,12 +180,46 @@ function CopyableText({ value }) {
     setTimeout(() => setCopied(false), 1200)
   }
   return (
-    <Stack direction='row' alignItems='center' spacing={1}>
-      <Typography variant='body2' sx={{ wordBreak: 'break-all' }}>
+    <Stack
+      direction='row'
+      alignItems='center'
+      spacing={1}
+      sx={{
+        backgroundColor: 'rgba(102, 126, 234, 0.04)',
+        px: 1.5,
+        py: 0.75,
+        borderRadius: '8px',
+        border: '1px solid rgba(102, 126, 234, 0.1)',
+        transition: 'all 0.2s ease',
+        '&:hover': {
+          backgroundColor: 'rgba(102, 126, 234, 0.08)',
+          borderColor: 'rgba(102, 126, 234, 0.2)'
+        }
+      }}
+    >
+      <Typography
+        variant='body2'
+        sx={{
+          wordBreak: 'break-all',
+          fontFamily: 'monospace',
+          fontSize: '0.875rem',
+          color: 'text.primary',
+          fontWeight: 600
+        }}
+      >
         {value}
       </Typography>
       <Tooltip title={copied ? 'Copied!' : 'Copy'}>
-        <IconButton size='small' onClick={handleCopy}>
+        <IconButton
+          size='small'
+          onClick={handleCopy}
+          sx={{
+            '&:hover': {
+              backgroundColor: 'rgba(102, 126, 234, 0.1)',
+              color: '#667eea'
+            }
+          }}
+        >
           <ContentCopyIcon fontSize='small' />
         </IconButton>
       </Tooltip>
@@ -189,16 +251,60 @@ function StatusBadge({ active }) {
 
 function InfoCard({ icon, title, children, sx }) {
   return (
-    <Card variant='outlined' sx={{ borderRadius: 2, mb: 3, ...sx }}>
-      <CardContent>
-        <Stack direction='row' alignItems='center' spacing={1} mb={2}>
-          <Box color='primary.main'>{icon}</Box>
-          <Typography variant='subtitle1' fontWeight={700}>
+    <Card
+      sx={{
+        borderRadius: { xs: '12px', sm: '16px' },
+        mb: 3,
+        boxShadow: '0 2px 12px rgba(0, 0, 0, 0.06)',
+        border: '1px solid rgba(102, 126, 234, 0.1)',
+        overflow: 'hidden',
+        transition: 'all 0.3s ease',
+        '&:hover': {
+          boxShadow: '0 6px 24px rgba(102, 126, 234, 0.12)',
+          transform: 'translateY(-2px)'
+        },
+        ...sx
+      }}
+    >
+      <Box
+        sx={{
+          background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%)',
+          borderBottom: '1px solid rgba(102, 126, 234, 0.1)',
+          p: { xs: 2, sm: 2.5 }
+        }}
+      >
+        <Stack direction='row' alignItems='center' spacing={1.5}>
+          <Box
+            sx={{
+              width: 40,
+              height: 40,
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              boxShadow: '0 4px 12px rgba(102, 126, 234, 0.25)'
+            }}
+          >
+            {icon}
+          </Box>
+          <Typography
+            variant='h6'
+            sx={{
+              fontWeight: 700,
+              fontSize: { xs: '1rem', sm: '1.125rem' },
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
+            }}
+          >
             {title}
           </Typography>
         </Stack>
-        {children}
-      </CardContent>
+      </Box>
+      <CardContent sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>{children}</CardContent>
     </Card>
   )
 }
@@ -589,54 +695,120 @@ function UserDetailsPage({ data }) {
     { icon: <PhoneIcon fontSize='medium' />, label: 'Phone', value: user?.phone || '-' }
   ]
 
-  // Contact Card (no status chips)
+  // Contact Card (enhanced)
   const contactCard = (
-    <InfoCard icon={<Avatar src={avatarUrl} sx={{ width: 40, height: 40 }} />} title='Contact'>
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'flex-start', sm: 'center' }}>
-        <Box sx={{ position: 'relative', mr: 2 }}>
-          {/* <StatusBadge active={user?.isActive}>
-            <Avatar src={avatarUrl} alt={fullName} sx={{ width: 72, height: 72, fontSize: 28 }} />
-          </StatusBadge> */}
-        </Box>
-        <Box>
-          <Typography variant='h6' fontWeight={700}>
-            {fullName}
-          </Typography>
-          <Stack direction='row' spacing={1} alignItems='center' mt={1}>
-            <EmailIcon fontSize='small' color='action' />
-            <Tooltip title={profile?.email || user?.email} arrow>
-              <Typography
-                variant='body2'
+    <InfoCard icon={<EmailIcon />} title='Contact Information'>
+      <Stack spacing={2.5}>
+        <Box
+          sx={{
+            p: 2,
+            borderRadius: '12px',
+            background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.04), rgba(118, 75, 162, 0.04))',
+            border: '1px solid rgba(102, 126, 234, 0.1)'
+          }}
+        >
+          <Stack spacing={1.5}>
+            <Stack direction='row' spacing={1.5} alignItems='center'>
+              <Box
                 sx={{
-                  maxWidth: { sm: '100%', md: '350px' },
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap'
+                  width: 36,
+                  height: 36,
+                  borderRadius: '8px',
+                  background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white'
                 }}
               >
-                {profile?.email || user?.email}
-              </Typography>
-            </Tooltip>
-          </Stack>
-          <Stack direction='row' spacing={1} alignItems='center' mt={0.5}>
-            <PhoneIcon fontSize='small' color='action' />
-            <Typography variant='body2'>{profile?.phone || user?.phone || 'N/A'}</Typography>
+                <EmailIcon fontSize='small' />
+              </Box>
+              <Box flex={1}>
+                <Typography variant='caption' color='text.secondary' sx={{ fontSize: '0.75rem', fontWeight: 600 }}>
+                  Email Address
+                </Typography>
+                <Tooltip title={profile?.email || user?.email} arrow>
+                  <Typography
+                    variant='body2'
+                    sx={{
+                      maxWidth: '100%',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      fontWeight: 600,
+                      color: 'text.primary'
+                    }}
+                  >
+                    {profile?.email || user?.email}
+                  </Typography>
+                </Tooltip>
+              </Box>
+            </Stack>
+
+            {(profile?.phone || user?.phone) && <Divider />}
+
+            {(profile?.phone || user?.phone) && (
+              <Stack direction='row' spacing={1.5} alignItems='center'>
+                <Box
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: '8px',
+                    background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'white'
+                  }}
+                >
+                  <PhoneIcon fontSize='small' />
+                </Box>
+                <Box flex={1}>
+                  <Typography variant='caption' color='text.secondary' sx={{ fontSize: '0.75rem', fontWeight: 600 }}>
+                    Phone Number
+                  </Typography>
+                  <Typography variant='body2' sx={{ fontWeight: 600, color: 'text.primary' }}>
+                    {profile?.phone || user?.phone}
+                  </Typography>
+                </Box>
+              </Stack>
+            )}
           </Stack>
         </Box>
       </Stack>
     </InfoCard>
   )
 
-  // Status Card (only roles as chips)
+  // Status Card (enhanced roles)
   const statusCard = (
-    <InfoCard icon={<GroupIcon />} title='Roles'>
-      <Stack direction='row' spacing={1} flexWrap='wrap' mb={1}>
+    <InfoCard icon={<GroupIcon />} title='User Roles'>
+      <Stack direction='row' spacing={1.5} flexWrap='wrap'>
         {Array.isArray(user?.roles) &&
           user.roles.map((role, idx) => (
-            <Chip key={idx} label={role} color={role === 'ADMIN' ? 'error' : 'info'} size='small' sx={{ mb: 1 }} />
+            <Chip
+              key={idx}
+              label={role}
+              sx={{
+                background:
+                  role === 'ADMIN'
+                    ? 'linear-gradient(135deg, #ef4444, #dc2626)'
+                    : 'linear-gradient(135deg, #667eea, #764ba2)',
+                color: 'white',
+                fontWeight: 700,
+                fontSize: '0.8125rem',
+                px: 1,
+                boxShadow:
+                  role === 'ADMIN' ? '0 4px 12px rgba(239, 68, 68, 0.3)' : '0 4px 12px rgba(102, 126, 234, 0.3)',
+                border: 'none',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow:
+                    role === 'ADMIN' ? '0 6px 16px rgba(239, 68, 68, 0.4)' : '0 6px 16px rgba(102, 126, 234, 0.4)'
+                }
+              }}
+            />
           ))}
       </Stack>
-      {/* No status/social chips here */}
     </InfoCard>
   )
 
@@ -723,108 +895,299 @@ function UserDetailsPage({ data }) {
   const profileCard = <EnhancedProfileCard profile={profile} />
 
   return (
-    <Box maxWidth={1200} mx='auto' mt={{ xs: 2, md: 6 }} px={{ xs: 0.5, sm: 2 }}>
-      {/* Header Section */}
-      <Paper
-        variant='outlined'
+    <Box maxWidth={1400} mx='auto' mt={{ xs: 2, md: 4 }} px={{ xs: 1, sm: 2, md: 3 }}>
+      {/* Stunning Header Section with Gradient */}
+      <Box
         sx={{
-          borderRadius: 1,
-          mb: { xs: 3, md: 5 },
-          p: { xs: 1.5, sm: 2, md: 4 },
-          boxShadow: 'none',
-          borderColor: 'divider',
-          bgcolor: 'background.paper'
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          borderRadius: { xs: '12px', sm: '16px', md: '24px' },
+          p: { xs: 2, sm: 3, md: 5 },
+          mb: { xs: 2, sm: 3, md: 4 },
+          position: 'relative',
+          overflow: 'hidden',
+          boxShadow: '0 10px 40px rgba(102, 126, 234, 0.25)',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background:
+              'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+            opacity: 0.4
+          }
         }}
       >
-        <Grid container spacing={2} alignItems='center'>
-          <Grid item xs={12} sm={3} md={2} sx={{ display: 'flex', justifyContent: 'center', mb: { xs: 2, sm: 0 } }}>
-            <Avatar
-              src={avatarUrl}
-              alt={fullName}
-              sx={{
-                width: { xs: 64, sm: 80, md: 96 },
-                height: { xs: 64, sm: 80, md: 96 },
-                fontSize: { xs: 24, sm: 32, md: 36 },
-                borderRadius: 2,
-                border: '1px solid',
-                borderColor: 'divider',
-                bgcolor: 'background.default'
-              }}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={7}>
-            <Stack spacing={0.5}>
-              <Typography variant='h6' fontWeight={700} sx={{ fontSize: { xs: 18, sm: 22, md: 24 } }}>
-                {fullName}
-              </Typography>
-              <Typography color='text.secondary' sx={{ fontSize: { xs: 13, sm: 15, md: 16 } }}>
-                {profile?.email || user?.email}
-              </Typography>
-              <Stack direction='row' spacing={1} flexWrap='wrap' alignItems='center' mt={0.5}>
-                <Chip
-                  label={user?.isActive ? 'Active' : 'Inactive'}
-                  color={user?.isActive ? 'success' : 'error'}
-                  size='small'
-                  variant='outlined'
-                />
-                <Chip
-                  label={user?.isVerified ? 'Verified' : 'Unverified'}
-                  color={user?.isVerified ? 'success' : 'warning'}
-                  size='small'
-                  variant='outlined'
-                  icon={user?.isVerified ? <VerifiedUserIcon fontSize='small' /> : null}
-                />
-                {user?.roles?.includes('ADMIN') && (
-                  <Chip
-                    label='Admin'
-                    color='error'
-                    size='small'
-                    variant='outlined'
-                    icon={<AdminPanelSettingsIcon fontSize='small' />}
-                  />
-                )}
-                {!user?.roles?.includes('ADMIN') && user?.roles?.includes('SUPER_USER') && (
-                  <Chip
-                    label='Super User'
-                    color='warning'
-                    size='small'
-                    variant='outlined'
-                    icon={<AdminPanelSettingsIcon fontSize='small' />}
-                  />
-                )}
+        <Box sx={{ position: 'relative', zIndex: 1 }}>
+          <Grid container spacing={{ xs: 1, sm: 1.5, md: 3 }} alignItems='center'>
+            {/* Empty space on left */}
+            <Grid item xs={0} md={1.5} sx={{ display: { xs: 'none', md: 'block' } }}></Grid>
+
+            {/* User Info Section with Letter */}
+            <Grid item xs={7.5} sm={8} md={6}>
+              <Stack direction='row' spacing={{ xs: 1.25, sm: 2, md: 4 }} alignItems='center'>
+                {/* Letter Avatar */}
+                <Typography
+                  sx={{
+                    fontSize: { xs: 38, sm: 48, md: 70 },
+                    fontWeight: 800,
+                    color: 'white',
+                    letterSpacing: { xs: '4px', sm: '12px', md: '36px' },
+                    textShadow: '0 4px 16px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2)',
+                    transition: 'all 0.3s ease',
+                    lineHeight: 1,
+                    flexShrink: 0,
+                    '&:hover': {
+                      transform: 'scale(1.1)',
+                      textShadow: '0 6px 20px rgba(0, 0, 0, 0.4), 0 3px 12px rgba(0, 0, 0, 0.3)'
+                    }
+                  }}
+                >
+                  {fullName.charAt(0).toUpperCase()}
+                </Typography>
+
+                {/* User Details */}
+                <Stack spacing={{ xs: 0.35, sm: 0.75, md: 1 }} flex={1} sx={{ minWidth: 0 }}>
+                  <Typography
+                    variant='h4'
+                    sx={{
+                      fontWeight: 800,
+                      color: 'white',
+                      fontSize: { xs: '1rem', sm: '1.5rem', md: '2.25rem' },
+                      textShadow: '0 2px 10px rgba(0,0,0,0.2)',
+                      letterSpacing: '-0.5px',
+                      lineHeight: 1.2,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {fullName}
+                  </Typography>
+                  <Stack direction='row' spacing={{ xs: 0.5, sm: 1, md: 1 }} alignItems='center' sx={{ minWidth: 0 }}>
+                    <EmailIcon
+                      sx={{
+                        color: 'rgba(255, 255, 255, 0.9)',
+                        fontSize: { xs: '0.875rem', sm: '1rem', md: '1.25rem' },
+                        flexShrink: 0
+                      }}
+                    />
+                    <Typography
+                      sx={{
+                        color: 'rgba(255, 255, 255, 0.95)',
+                        fontSize: { xs: '0.625rem', sm: '0.75rem', md: '1rem' },
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      {profile?.email || user?.email}
+                    </Typography>
+                  </Stack>
+                  {(profile?.phone || user?.phone) && (
+                    <Stack direction='row' spacing={{ xs: 0.5, sm: 1, md: 1 }} alignItems='center' sx={{ minWidth: 0 }}>
+                      <PhoneIcon
+                        sx={{
+                          color: 'rgba(255, 255, 255, 0.9)',
+                          fontSize: { xs: '0.875rem', sm: '1rem', md: '1.25rem' },
+                          flexShrink: 0
+                        }}
+                      />
+                      <Typography
+                        sx={{
+                          color: 'rgba(255, 255, 255, 0.95)',
+                          fontSize: { xs: '0.625rem', sm: '0.75rem', md: '1rem' }
+                        }}
+                      >
+                        {profile?.phone || user?.phone}
+                      </Typography>
+                    </Stack>
+                  )}
+                  <Stack
+                    direction='row'
+                    spacing={{ xs: 0.5, sm: 1, md: 1.5 }}
+                    flexWrap='wrap'
+                    mt={{ xs: 0.5, sm: 1, md: 1.5 }}
+                  >
+                    <Chip
+                      label={user?.isActive ? 'Active' : 'Inactive'}
+                      sx={{
+                        backgroundColor: user?.isActive ? 'rgba(74, 222, 128, 0.2)' : 'rgba(248, 113, 113, 0.2)',
+                        color: 'white',
+                        fontWeight: 700,
+                        fontSize: { xs: '0.625rem', sm: '0.75rem', md: '0.875rem' },
+                        height: { xs: 22, sm: 26, md: 32 },
+                        border: '1px solid rgba(255, 255, 255, 0.3)',
+                        backdropFilter: 'blur(10px)',
+                        '& .MuiChip-label': {
+                          px: { xs: 0.75, sm: 1, md: 1.5 },
+                          py: 0
+                        }
+                      }}
+                    />
+                    <Chip
+                      label={user?.isVerified ? 'Verified' : 'Unverified'}
+                      icon={
+                        user?.isVerified ? (
+                          <VerifiedUserIcon
+                            sx={{
+                              color: 'white !important',
+                              fontSize: { xs: '0.875rem !important', sm: '1rem !important', md: '1.25rem !important' }
+                            }}
+                          />
+                        ) : undefined
+                      }
+                      sx={{
+                        backgroundColor: user?.isVerified ? 'rgba(74, 222, 128, 0.2)' : 'rgba(251, 191, 36, 0.2)',
+                        color: 'white',
+                        fontWeight: 700,
+                        fontSize: { xs: '0.625rem', sm: '0.75rem', md: '0.875rem' },
+                        height: { xs: 22, sm: 26, md: 32 },
+                        border: '1px solid rgba(255, 255, 255, 0.3)',
+                        backdropFilter: 'blur(10px)',
+                        '& .MuiChip-icon': {
+                          marginLeft: { xs: '4px', sm: '6px', md: '8px' },
+                          marginRight: { xs: '3px', sm: '3px', md: '4px' },
+                          color: 'white'
+                        },
+                        '& .MuiChip-label': {
+                          px: { xs: 0.75, sm: 1, md: 1.5 },
+                          py: 0
+                        }
+                      }}
+                    />
+                    {user?.roles?.includes('ADMIN') && (
+                      <Chip
+                        label='Admin'
+                        icon={
+                          <AdminPanelSettingsIcon
+                            sx={{
+                              color: 'white !important',
+                              fontSize: { xs: '0.875rem !important', sm: '1rem !important', md: '1.25rem !important' }
+                            }}
+                          />
+                        }
+                        sx={{
+                          backgroundColor: 'rgba(239, 68, 68, 0.25)',
+                          color: 'white',
+                          fontWeight: 700,
+                          fontSize: { xs: '0.625rem', sm: '0.75rem', md: '0.875rem' },
+                          height: { xs: 22, sm: 26, md: 32 },
+                          border: '1px solid rgba(255, 255, 255, 0.3)',
+                          backdropFilter: 'blur(10px)',
+                          '& .MuiChip-icon': {
+                            marginLeft: { xs: '4px', sm: '6px', md: '8px' },
+                            marginRight: { xs: '3px', sm: '3px', md: '4px' },
+                            color: 'white'
+                          },
+                          '& .MuiChip-label': {
+                            px: { xs: 0.75, sm: 1, md: 1.5 },
+                            py: 0
+                          }
+                        }}
+                      />
+                    )}
+                    {!user?.roles?.includes('ADMIN') && user?.roles?.includes('SUPER_USER') && (
+                      <Chip
+                        label='Super User'
+                        icon={
+                          <AdminPanelSettingsIcon
+                            sx={{
+                              color: 'white !important',
+                              fontSize: { xs: '0.875rem !important', sm: '1rem !important', md: '1.25rem !important' }
+                            }}
+                          />
+                        }
+                        sx={{
+                          backgroundColor: 'rgba(251, 191, 36, 0.25)',
+                          color: 'white',
+                          fontWeight: 700,
+                          fontSize: { xs: '0.625rem', sm: '0.75rem', md: '0.875rem' },
+                          height: { xs: 22, sm: 26, md: 32 },
+                          border: '1px solid rgba(255, 255, 255, 0.3)',
+                          backdropFilter: 'blur(10px)',
+                          '& .MuiChip-icon': {
+                            marginLeft: { xs: '4px', sm: '6px', md: '8px' },
+                            marginRight: { xs: '3px', sm: '3px', md: '4px' },
+                            color: 'white'
+                          },
+                          '& .MuiChip-label': {
+                            px: { xs: 0.75, sm: 1, md: 1.5 },
+                            py: 0
+                          }
+                        }}
+                      />
+                    )}
+                  </Stack>
+                </Stack>
               </Stack>
-            </Stack>
-          </Grid>
-          <Grid item xs={12} sm={3} md={3} sx={{ textAlign: { xs: 'left', sm: 'right' } }}>
-            {/* <Stack direction='row' spacing={1} my={2} justifyContent={{ xs: 'flex-start', sm: 'flex-end' }}>
-              <IconButton color='primary' aria-label='edit user' size='small'>
-                <EditIcon fontSize='small' />
-              </IconButton>
-              <IconButton color='error' aria-label='deactivate user' size='small'>
-                <BlockIcon fontSize='small' />
-              </IconButton>
-            </Stack> */}
-            <Box>
-              <Typography variant='subtitle2' color='text.secondary' sx={{ fontSize: { xs: 12, sm: 13 } }}>
-                Member ID
-              </Typography>
-              <Typography variant='body1' color='primary' sx={{ fontSize: { xs: 14, sm: 16 } }}>
-                {user?.memberId || '-'}
-              </Typography>
-            </Box>
-          </Grid>
-        </Grid>
-        {/* Stat Cards Row */}
-        <Box mt={{ xs: 2, sm: 3, md: 4 }}>
-          <Grid container spacing={2} justifyContent='center'>
-            {stats.map((stat, idx) => (
-              <Grid item xs={12} sm={6} md={2.4} key={idx} sx={{ display: 'flex' }}>
-                <StatCard {...stat} />
-              </Grid>
-            ))}
+            </Grid>
+
+            {/* Member ID Badge - Right Side */}
+            <Grid
+              item
+              xs={4.5}
+              sm={4}
+              md={3}
+              sx={{ display: 'flex', justifyContent: { xs: 'flex-end', md: 'flex-end' } }}
+            >
+              <Box
+                sx={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                  backdropFilter: 'blur(10px)',
+                  borderRadius: { xs: '10px', sm: '12px', md: '16px' },
+                  p: { xs: 1, sm: 1.5, md: 2.5 },
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  textAlign: 'center',
+                  minWidth: { xs: 'auto', sm: 120, md: 180 },
+                  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)'
+                }}
+              >
+                <Typography
+                  variant='caption'
+                  sx={{
+                    color: 'rgba(255, 255, 255, 0.8)',
+                    fontSize: { xs: '0.5rem', sm: '0.625rem', md: '0.75rem' },
+                    textTransform: 'uppercase',
+                    letterSpacing: { xs: '0.5px', sm: '0.5px', md: '1px' },
+                    fontWeight: 600,
+                    display: 'block',
+                    lineHeight: 1.2
+                  }}
+                >
+                  Member ID
+                </Typography>
+                <Typography
+                  variant='h6'
+                  sx={{
+                    color: 'white',
+                    fontWeight: 800,
+                    fontSize: { xs: '0.625rem', sm: '0.875rem', md: '1.25rem' },
+                    mt: { xs: 0.35, sm: 0.35, md: 0.5 },
+                    fontFamily: 'monospace',
+                    lineHeight: 1.2,
+                    wordBreak: 'break-all'
+                  }}
+                >
+                  {user?.memberId || '-'}
+                </Typography>
+              </Box>
+            </Grid>
           </Grid>
         </Box>
-      </Paper>
+      </Box>
+
+      {/* Stats Cards with Modern Design */}
+      <Box mb={4}>
+        <Grid container spacing={2}>
+          {stats.map((stat, idx) => (
+            <Grid item xs={12} sm={6} md={2.4} key={idx}>
+              <StatCard {...stat} />
+            </Grid>
+          ))}
+        </Grid>
+      </Box>
       {/* Info Cards Layout */}
       <Grid container spacing={{ xs: 2, md: 4 }}>
         <Grid item xs={12} md={6}>

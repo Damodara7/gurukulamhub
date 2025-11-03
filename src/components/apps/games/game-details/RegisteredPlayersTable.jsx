@@ -24,12 +24,29 @@ import {
 function RegisteredPlayersTable({registeredUsers, participatedUsers, game}) {
   return (
     <Grid item xs={12} lg={6}>
-          <Card style={{height: '100%'}}>
-            <CardContent>
-              <Typography variant='h6' sx={{ mb: 2 }}>
-                <HowToReg sx={{ mr: 1, verticalAlign: 'middle' }} />
-                Registered Players ({registeredUsers.length})
-              </Typography>
+      <Card 
+        sx={{
+          height: '100%',
+          borderRadius: '16px',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+          background: 'rgba(255, 255, 255, 0.98)'
+        }}
+      >
+        <CardContent sx={{ p: 3 }}>
+          <Typography 
+            variant='h6' 
+            sx={{ 
+              mb: 3,
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              color: '#1a1a1a'
+            }}
+          >
+            <HowToReg sx={{ color: '#667eea' }} />
+            Registered Players ({registeredUsers.length})
+          </Typography>
               <TableContainer component={Paper} sx={{ maxHeight: 300, overflow: 'auto' }}>
                 <Table stickyHeader size='small'>
                   <TableHead>
