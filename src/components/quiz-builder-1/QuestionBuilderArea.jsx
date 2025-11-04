@@ -1,5 +1,5 @@
 import { useEffect, forwardRef, useState, useImperativeHandle } from 'react'
-import { Box, Stack } from '@mui/material'
+import { Box, Stack, useTheme, alpha } from '@mui/material'
 import QuestionsVerticalMenu from './QuestionsVerticalMenu'
 import QuestionTemplateArea from './QuestionTemplateArea'
 import { API_URLS } from '@/configs/apiConfig'
@@ -12,6 +12,7 @@ import { toast } from 'react-toastify'
 const QuestionBuilderArea = forwardRef(
   ({ quiz, validationErrors = [], validateQuizQuestions, setQuestionsLength }, ref) => {
     const { data: session } = useSession()
+    const theme = useTheme()
     const [selectedQuestion, setSelectedQuestion] = useState(null)
     const [primaryQuestions, setPrimaryQuestions] = useState([])
     const [loading, setLoading] = useState({ primaryQuestions: false, createNew: false })
@@ -19,6 +20,7 @@ const QuestionBuilderArea = forwardRef(
     const [refetch, setRefetch] = useState({ primaryQuestions: false })
     const [initialValidationDone, setInitialValidationDone] = useState(false)
     const [initialQuestionsFetched, setInitialQuestionsFetched] = useState(false)
+    const [isMenuCollapsed, setIsMenuCollapsed] = useState(false)
 
     const { uuid, regenerateUUID, getUUID } = useUUID()
 
@@ -240,8 +242,25 @@ const QuestionBuilderArea = forwardRef(
     }))
 
     return (
-      <Stack spacing={2} sx={{ height: '100%', overflow: 'hidden', flexDirection: 'row', minHeight: 0 }}>
-        <Box sx={{ flex: 1, height: '100%', minWidth: 0, pr: 1 }}>
+      <Box sx={{ display: 'flex', gap: 3, height: '100%', overflow: 'hidden', minHeight: 0 }}>
+        {/* Left Sidebar - Questions List (Sticky) */}
+        <Box 
+          sx={{ 
+            width: isMenuCollapsed ? 72 : 340,
+            height: '100%', 
+            bgcolor: 'white',
+            borderRadius: 2,
+            border: '1px solid #e8eaed',
+            boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            position: 'sticky',
+            top: 0,
+            alignSelf: 'flex-start',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+          }}
+        >
           <QuestionsVerticalMenu
             questions={primaryQuestions}
             selectedQuestion={selectedQuestion}
@@ -250,20 +269,34 @@ const QuestionBuilderArea = forwardRef(
             hasClickedNew={hasClickedNew}
             loading={loading}
             validationErrors={validationErrors}
+            isCollapsed={isMenuCollapsed}
+            onToggleCollapse={setIsMenuCollapsed}
           />
         </Box>
-        <Box sx={{ flex: 3, height: '100%', minWidth: 0 }}>
+
+        {/* Right Main Area - Question Template (Scrollable) */}
+        <Box 
+          sx={{ 
+            flex: 1,
+            minWidth: 0,
+            height: 'auto',
+            maxHeight: '100%',
+            overflowY: 'auto',
+            overflowX: 'hidden'
+          }}
+        >
           <Box
             sx={{ 
               p: 3, 
-              border: '2px solid #d0d0d0', 
-              borderRadius: '12px', 
-              minHeight: 0, 
-              height: '100%',
-              backgroundColor: 'white',
+              border: '1px solid #e8eaed',
+              borderRadius: 2,
+              minHeight: '100%',
+              bgcolor: 'white',
+              boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
               transition: 'all 0.3s ease',
               '&:hover': {
-                borderColor: '#667eea'
+                borderColor: alpha(theme.palette.primary.main, 0.3),
+                boxShadow: `0 4px 20px ${alpha(theme.palette.primary.main, 0.08)}`
               }
             }}
           >
@@ -282,7 +315,7 @@ const QuestionBuilderArea = forwardRef(
             )}
           </Box>
         </Box>
-      </Stack>
+      </Box>
     )
   }
 )

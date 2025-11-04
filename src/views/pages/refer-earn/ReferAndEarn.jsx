@@ -4,11 +4,20 @@
 import Typography from '@mui/material/Typography'
 import Grid from '@mui/material/Grid'
 import Divider from '@mui/material/Divider'
-import InputLabel from '@mui/material/InputLabel'
 import TextField from '@mui/material/TextField'
 import Button from '@mui/material/Button'
 import OutlinedInput from '@mui/material/OutlinedInput'
 import InputAdornment from '@mui/material/InputAdornment'
+import {
+  Box,
+  Card,
+  CardContent,
+  Container,
+  Stack,
+  useTheme,
+  alpha,
+  Paper
+} from '@mui/material'
 
 // Third-party Imports
 import classnames from 'classnames'
@@ -18,7 +27,6 @@ import CustomAvatar from '@core/components/mui/Avatar'
 
 // Config Imports
 import themeConfig from '@configs/themeConfig'
-import { Alert, Card, CardContent, CardHeader } from '@mui/material'
 
 // Api utils
 import * as clientApi from '@/app/api/client/client.api'
@@ -44,29 +52,39 @@ import {
 import { useParams } from 'next/navigation'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
+import SendIcon from '@mui/icons-material/Send'
+import GroupAddIcon from '@mui/icons-material/GroupAdd'
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
+import ShareIcon from '@mui/icons-material/Share'
+import ContentCopyIcon from '@mui/icons-material/ContentCopy'
+import CardGiftcardIcon from '@mui/icons-material/CardGiftcard'
 
 // Vars
 const options = [
   {
-    icon: 'ri-send-plane-2-line',
-    title: 'Send Invitation 👍🏻',
-    subtitle: 'Send your referral link to your friend'
+    icon: <SendIcon sx={{ fontSize: 32 }} />,
+    title: 'Send Invitation',
+    subtitle: 'Share your unique referral link with friends',
+    color: 'primary'
   },
   {
-    icon: 'ri-clipboard-line',
-    title: 'Registration 😎',
-    subtitle: 'Let them register to our services'
+    icon: <GroupAddIcon sx={{ fontSize: 32 }} />,
+    title: 'Registration',
+    subtitle: 'They sign up and join the platform',
+    color: 'secondary'
   },
   {
-    icon: 'ri-gift-line',
-    title: 'Free Trial  🎉',
-    subtitle: 'Your friend will get 30 days free trial'
+    icon: <EmojiEventsIcon sx={{ fontSize: 32 }} />,
+    title: 'Learn & Win',
+    subtitle: 'Both of you earn rewards and learn together',
+    color: 'success'
   }
 ]
 
 const ReferAndEarn = () => {
   const { lang: locale } = useParams()
   const { data: session } = useSession()
+  const theme = useTheme()
   const [toEmail, setToEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [referralToken, setReferralToken] = useState(session?.user?.referralToken || '')
@@ -134,159 +152,383 @@ const ReferAndEarn = () => {
   }
 
   return (
-    <>
-      <Card maxwidth='md' scroll='body'>
-        <CardHeader
-          variant='h4'
-          className='flex gap-2 flex-col text-center pbs-10 pbe-6 pli-10 sm:pbs-16 sm:pbe-6 sm:pli-16'
-          title={
-            <>
-              Refer & Earn
-              <Typography component='span' className='flex flex-col text-center'>
-                Invite your friend to {themeConfig.templateName}, if they sign up, you and your friend will get 30 days
-                free trial
-              </Typography>
-            </>
-          }
-        />
-        <CardContent className='flex flex-col gap-6 pbs-0 pbe-10 pli-10 sm:pli-16 sm:pbe-16'>
-          <Grid container spacing={6} className='pbs-6'>
-            {options?.map((option, index) => (
-              <Grid item xs={12} md={4} key={index}>
-                <div className='flex items-center flex-col gap-4'>
-                  <CustomAvatar className='bs-[66px] is-[66px] sm:bs-[88px] sm:is-[88px]' color='primary' skin='light'>
-                    {typeof option.icon === 'string' ? (
-                      <i className={classnames('text-[32px] sm:text-[40px]', option.icon)} />
-                    ) : (
-                      option.icon
-                    )}
-                  </CustomAvatar>
-                  <div className='flex flex-col gap-2 text-center'>
-                    <Typography className='font-medium' color='text.primary'>
-                      {option.title}
-                    </Typography>
-                    <Typography>{option.subtitle}</Typography>
-                  </div>
-                </div>
-              </Grid>
-            ))}
-          </Grid>
-          <Divider className='mbs-6' />
-          <div className='flex flex-col gap-5'>
-            <Typography variant='h5'>Invite your friends</Typography>
-            <div className='inline-flex flex-col gap-2 flex-wrap items-start'>
-              <Typography component={InputLabel} htmlFor='refer-email' className='inline-flex whitespace-break-spaces'>
-                Enter your friend&#39;s email address and invite them to join {themeConfig.templateName} 😍
-              </Typography>
-              <div className='flex items-center is-full gap-4 flex-wrap sm:flex-nowrap'>
-                <TextField
-                  type='email'
-                  value={toEmail}
-                  onChange={handleEmailChange}
-                  fullWidth
-                  size='small'
-                  id='refer-email'
-                  placeholder='johnDoe@email.com'
-                />
-                <Button
-                  variant='contained'
-                  color='primary'
-                  component='label'
-                  style={{ color: 'white' }}
-                  className='is-full sm:is-auto'
-                  onClick={handleSendReferral}
-                  disabled={loading || !isEmailValid}
+    <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa', pb: 6 }}>
+      {/* Header Section */}
+      <Box
+        sx={{
+          bgcolor: 'white',
+          pt: { xs: 3, md: 4 },
+          pb: { xs: 3, md: 4 },
+          borderBottom: '1px solid #e8eaed',
+          mb: 4
+        }}
+      >
+        <Container maxWidth="lg">
+          <Stack spacing={2} alignItems="center" textAlign="center">
+            {/* Icon */}
+            <Box
+              sx={{
+                width: 64,
+                height: 64,
+                borderRadius: 2,
+                bgcolor: theme.palette.primary.main,
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`
+              }}
+            >
+              <CardGiftcardIcon sx={{ fontSize: 32 }} />
+            </Box>
+
+            {/* Title */}
+            <Typography
+              variant="h3"
+              fontWeight={800}
+              sx={{
+                fontSize: { xs: '1.75rem', md: '2.5rem' },
+                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent'
+              }}
+            >
+              Refer & Earn Rewards
+            </Typography>
+
+            {/* Subtitle */}
+            <Typography
+              variant="body1"
+              sx={{
+                fontSize: '1.05rem',
+                color: '#5f6368',
+                maxWidth: '700px',
+                lineHeight: 1.7
+              }}
+            >
+              Invite your friends to {themeConfig.templateName}. When they sign up, both of you will earn rewards and start your learning journey together!
+            </Typography>
+          </Stack>
+        </Container>
+      </Box>
+
+      {/* Main Content */}
+      <Container maxWidth="lg">
+        <Stack spacing={4}>
+          {/* How It Works */}
+          <Box>
+            <Typography variant="h5" fontWeight={700} gutterBottom sx={{ mb: 3, color: '#202124' }}>
+              How It Works
+            </Typography>
+            <Grid container spacing={3}>
+              {options?.map((option, index) => (
+                <Grid item xs={12} md={4} key={index}>
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      p: 3,
+                      height: '100%',
+                      borderRadius: 2,
+                      border: '1px solid #e8eaed',
+                      bgcolor: 'white',
+                      textAlign: 'center',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        borderColor: theme.palette[option.color].main,
+                        boxShadow: `0 4px 20px ${alpha(theme.palette[option.color].main, 0.1)}`,
+                        transform: 'translateY(-4px)'
+                      }
+                    }}
+                  >
+                    <Stack spacing={2} alignItems="center">
+                      <Box
+                        sx={{
+                          width: 72,
+                          height: 72,
+                          borderRadius: 2,
+                          bgcolor: alpha(theme.palette[option.color].main, 0.1),
+                          color: theme.palette[option.color].main,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        {option.icon}
+                      </Box>
+                      <Box>
+                        <Typography variant="h6" fontWeight={700} gutterBottom sx={{ color: '#202124' }}>
+                          {option.title}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+                          {option.subtitle}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </Paper>
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
+
+          {/* Invite by Email */}
+          <Card
+            sx={{
+              borderRadius: 2,
+              bgcolor: 'white',
+              border: '1px solid #e8eaed',
+              boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+              overflow: 'hidden'
+            }}
+          >
+            <Box
+              sx={{
+                p: 2,
+                bgcolor: alpha(theme.palette.primary.main, 0.05),
+                borderBottom: '2px solid',
+                borderColor: 'primary.main'
+              }}
+            >
+              <Stack direction="row" alignItems="center" spacing={1.5}>
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 1.5,
+                    bgcolor: 'primary.main',
+                    color: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
                 >
-                  {loading ? 'Sending...' : 'Send'}
-                </Button>
-              </div>
-            </div>
-          </div>
-          <div className='flex flex-col gap-5'>
-            <Typography variant='h5'>Share the referral link</Typography>
-            <div className='inline-flex flex-col gap-2 items-start'>
-              <Typography component={InputLabel} htmlFor='refer-social' className='inline-flex whitespace-break-spaces'>
-                You can also copy and send it or share it on your social media. 🚀
-              </Typography>
-              <div className='flex items-center justify-end sm:justify-initial is-full gap-4 flex-wrap sm:flex-nowrap'>
-                <OutlinedInput
-                  fullWidth
-                  size='small'
-                  value={referralLink}
-                  readOnly
-                  // disabled
-                  id='refer-social'
-                  className='pie-1'
-                  placeholder='http://referral.link'
-                  endAdornment={
-                    <InputAdornment position='end' className='text-primary'>
-                      <Button size='small' className='uppercase' onClick={copyLinkToClipboard}>
-                        Copy Link
+                  <SendIcon sx={{ fontSize: 22 }} />
+                </Box>
+                <Typography variant="h6" fontWeight={700}>
+                  Invite Your Friends
+                </Typography>
+              </Stack>
+            </Box>
+
+            <CardContent sx={{ p: 3 }}>
+              <Stack spacing={2}>
+                <Typography variant="body2" color="text.secondary">
+                  Enter your friend's email address and invite them to join {themeConfig.templateName}
+                </Typography>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                  <TextField
+                    type='email'
+                    value={toEmail}
+                    onChange={handleEmailChange}
+                    fullWidth
+                    placeholder='friend@email.com'
+                    id='refer-email'
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        bgcolor: 'white'
+                      }
+                    }}
+                  />
+                  <Button
+                    variant='contained'
+                    component='label'
+                    size='large'
+                    startIcon={<SendIcon />}
+                    onClick={handleSendReferral}
+                    disabled={loading || !isEmailValid}
+                    sx={{
+                      px: 4,
+                      color: 'white',
+                      textTransform: 'none',
+                      fontWeight: 600,
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {loading ? 'Sending...' : 'Send Invite'}
+                  </Button>
+                </Stack>
+              </Stack>
+            </CardContent>
+          </Card>
+
+          {/* Share Referral Link */}
+          <Card
+            sx={{
+              borderRadius: 2,
+              bgcolor: 'white',
+              border: '1px solid #e8eaed',
+              boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+              overflow: 'hidden'
+            }}
+          >
+            <Box
+              sx={{
+                p: 2,
+                bgcolor: alpha(theme.palette.secondary.main, 0.05),
+                borderBottom: '2px solid',
+                borderColor: 'secondary.main'
+              }}
+            >
+              <Stack direction="row" alignItems="center" spacing={1.5}>
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 1.5,
+                    bgcolor: 'secondary.main',
+                    color: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <ShareIcon sx={{ fontSize: 22 }} />
+                </Box>
+                <Typography variant="h6" fontWeight={700}>
+                  Share Your Referral Link
+                </Typography>
+              </Stack>
+            </Box>
+
+            <CardContent sx={{ p: 3 }}>
+              <Stack spacing={3}>
+                <Typography variant="body2" color="text.secondary">
+                  Copy your unique referral link or share it directly on social media
+                </Typography>
+
+                {/* Referral Link Display */}
+                <Box
+                  sx={{
+                    p: 2.5,
+                    borderRadius: 2,
+                    bgcolor: alpha(theme.palette.primary.main, 0.05),
+                    border: '1px dashed',
+                    borderColor: theme.palette.primary.main
+                  }}
+                >
+                  <Stack spacing={2}>
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <Box
+                        sx={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: '50%',
+                          bgcolor: 'success.main',
+                          animation: 'pulse 2s ease-in-out infinite',
+                          '@keyframes pulse': {
+                            '0%, 100%': { opacity: 1 },
+                            '50%': { opacity: 0.5 }
+                          }
+                        }}
+                      />
+                      <Typography variant="caption" fontWeight={700} sx={{ color: 'primary.main', textTransform: 'uppercase', letterSpacing: 1 }}>
+                        Your Unique Referral Link
+                      </Typography>
+                    </Stack>
+                    
+                    <Stack direction="row" spacing={1.5} alignItems="center">
+                      <Typography
+                        variant="body1"
+                        sx={{
+                          flex: 1,
+                          fontFamily: 'monospace',
+                          fontSize: '1rem',
+                          color: '#202124',
+                          wordBreak: 'break-all',
+                          bgcolor: 'white',
+                          p: 1.5,
+                          borderRadius: 1,
+                          border: '1px solid #e8eaed'
+                        }}
+                      >
+                        {referralLink}
+                      </Typography>
+
+                      <Button
+                        variant='contained'
+                        component='label'
+                        size='small'
+                        startIcon={<ContentCopyIcon />}
+                        onClick={copyLinkToClipboard}
+                        sx={{
+                          color: 'white',
+                          textTransform: 'none',
+                          fontWeight: 600,
+                          whiteSpace: 'nowrap',
+                          boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`,
+                          '&:hover': {
+                            boxShadow: `0 6px 20px ${alpha(theme.palette.primary.main, 0.4)}`
+                          }
+                        }}
+                      >
+                        Copy
                       </Button>
-                    </InputAdornment>
-                  }
-                />
-                <div className='flex items-center gap-1'>
-                  {/* Email Share */}
-                  <EmailShareButton
-                    url={referralLink}
-                    subject={`${themeConfig.templateName}: A Quiz App to Earn Rewards & Prizes`}
-                    body={`🌟 Discover ${themeConfig.templateName}!\n\n${themeConfig.templateName} is a Quiz application designed to earn Rewards & Prizes while learning & spreading Indian Knowledge Systems.\n\nSign up now: ${referralLink}`}
-                  >
-                    <EmailIcon size={32} round />
-                  </EmailShareButton>
+                    </Stack>
+                  </Stack>
+                </Box>
 
-                  {/* Facebook Share */}
-                  <FacebookShareButton
-                    url={referralLink}
-                    quote={`${themeConfig.templateName}: A Quiz App to Earn Rewards & Prizes\n\n${themeConfig.templateName} is designed to learn & spread Indian Knowledge Systems while having fun.`}
-                    hashtag={`#${themeConfig.templateName}`}
-                  >
-                    <FacebookIcon size={32} round />
-                  </FacebookShareButton>
+                <Divider />
 
-                  {/* WhatsApp Share */}
-                  <WhatsappShareButton
-                    url={referralLink} // Ensure the referral link is a complete, accessible URL
-                    title={`✨ ${themeConfig.templateName}: The Ultimate Quiz App ✨\n\n${themeConfig.templateName} is a Quiz application designed to earn Rewards & Prizes while learning & spreading Indian Knowledge Systems.\n\n🎯 Test your knowledge, challenge your friends, and enjoy the journey!\n\nSign up now to join the excitement:\n`}
-                    separator={'\n\n🔗 '}
-                  >
-                    <WhatsappIcon size={32} round />
-                  </WhatsappShareButton>
+                {/* Social Share Buttons */}
+                <Box>
+                  <Typography variant="subtitle2" fontWeight={600} gutterBottom sx={{ mb: 2 }}>
+                    Share on Social Media
+                  </Typography>
+                  <Stack direction='row' spacing={1.5} flexWrap='wrap' sx={{ gap: 1.5 }}>
+                    <EmailShareButton
+                      url={referralLink}
+                      subject={`${themeConfig.templateName}: Learn & Win with Quizzes`}
+                      body={`🌟 Discover ${themeConfig.templateName}!\n\n${themeConfig.templateName} is a Quiz application where you can earn Rewards & Prizes while learning & spreading Indian Knowledge Systems.\n\nJoin me and start learning: ${referralLink}`}
+                    >
+                      <EmailIcon size={40} round />
+                    </EmailShareButton>
 
-                  {/* Telegram Share */}
-                  <TelegramShareButton
-                    url={referralLink}
-                    title={`${themeConfig.templateName}: The Ultimate Quiz App for Fun, Learning, and Rewards!\n\n${themeConfig.templateName} is designed to promote Indian Knowledge Systems while earning Rewards & Prizes.\n\nJoin now: ${referralLink}`}
-                  >
-                    <TelegramIcon size={32} round />
-                  </TelegramShareButton>
+                    <FacebookShareButton
+                      url={referralLink}
+                      quote={`${themeConfig.templateName}: Learn & Win with Quizzes\n\n${themeConfig.templateName} is designed to learn & spread Indian Knowledge Systems while having fun.`}
+                      hashtag={`#${themeConfig.templateName}`}
+                    >
+                      <FacebookIcon size={40} round />
+                    </FacebookShareButton>
 
-                  {/* Twitter Share */}
-                  <TwitterShareButton
-                    url={referralLink}
-                    title={`Discover ${themeConfig.templateName} 🧠✨\n\nA Quiz App to Learn, Challenge, and Earn Rewards! 🎉\n\nSign up now and explore Indian Knowledge Systems: ${referralLink}`}
-                    hashtags={[themeConfig.templateName, 'QuizApp', 'Rewards']}
-                  >
-                    <TwitterIcon size={32} round />
-                  </TwitterShareButton>
+                    <WhatsappShareButton
+                      url={referralLink}
+                      title={`✨ ${themeConfig.templateName}: Learn & Win! ✨\n\n${themeConfig.templateName} is a Quiz application where you earn Rewards & Prizes while learning Indian Knowledge Systems.\n\n🎯 Test your knowledge, challenge friends, and win prizes!\n\nJoin me now:\n`}
+                      separator={'\n\n🔗 '}
+                    >
+                      <WhatsappIcon size={40} round />
+                    </WhatsappShareButton>
 
-                  {/* LinkedIn Share */}
-                  <LinkedinShareButton
-                    url={referralLink}
-                    title={`${themeConfig.templateName}: A Quiz App to Earn Rewards & Prizes`}
-                    summary={`${themeConfig.templateName} is designed to spread Indian Knowledge Systems while allowing you to test your knowledge, challenge friends, and earn exciting prizes.`}
-                    source={themeConfig.templateName}
-                  >
-                    <LinkedinIcon size={32} round />
-                  </LinkedinShareButton>
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </>
+                    <TelegramShareButton
+                      url={referralLink}
+                      title={`${themeConfig.templateName}: Learn & Win with Quizzes!\n\n${themeConfig.templateName} lets you earn Rewards & Prizes while learning Indian Knowledge Systems.\n\nJoin now: ${referralLink}`}
+                    >
+                      <TelegramIcon size={40} round />
+                    </TelegramShareButton>
+
+                    <TwitterShareButton
+                      url={referralLink}
+                      title={`Discover ${themeConfig.templateName} 🧠✨\n\nLearn, Challenge & Win Rewards! 🎉\n\nJoin me and explore Indian Knowledge Systems: ${referralLink}`}
+                      hashtags={[themeConfig.templateName, 'QuizApp', 'LearnAndWin']}
+                    >
+                      <TwitterIcon size={40} round />
+                    </TwitterShareButton>
+
+                    <LinkedinShareButton
+                      url={referralLink}
+                      title={`${themeConfig.templateName}: Learn & Win with Quizzes`}
+                      summary={`${themeConfig.templateName} is designed to spread Indian Knowledge Systems while allowing you to test your knowledge, challenge friends, and earn exciting prizes.`}
+                      source={themeConfig.templateName}
+                    >
+                      <LinkedinIcon size={40} round />
+                    </LinkedinShareButton>
+                  </Stack>
+                </Box>
+              </Stack>
+            </CardContent>
+          </Card>
+        </Stack>
+      </Container>
+    </Box>
   )
 }
 
