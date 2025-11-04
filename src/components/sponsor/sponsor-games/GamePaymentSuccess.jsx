@@ -188,9 +188,9 @@ function GamePaymentSuccess({ paymentId, sponsorship, amount, game, reward }) {
                 px: 4,
                 py: 1.5,
                 fontWeight: 600,
+                color: 'white',
                 '&:hover': { transform: 'translateY(-2px)' },
-                transition: 'transform 0.2s',
-                color: 'white'
+                transition: 'transform 0.2s'
               }}
             >
               Back to Games
