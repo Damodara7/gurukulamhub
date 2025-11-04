@@ -16,7 +16,12 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem
+  MenuItem,
+  useTheme,
+  alpha,
+  Divider,
+  Stack,
+  Chip
 } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import SaveIcon from '@mui/icons-material/Save'
@@ -24,6 +29,10 @@ import RemoveIcon from '@mui/icons-material/Remove'
 import DeleteIcon from '@mui/icons-material/Delete'
 import TextFieldsIcon from '@mui/icons-material/TextFields'
 import ImageIcon from '@mui/icons-material/Image'
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
+import TimerIcon from '@mui/icons-material/Timer'
+import QuestionMarkIcon from '@mui/icons-material/QuestionMark'
 
 import DeleteConfirmationDialog from '@/components/dialogs/DeleteConfirmationDialog'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
@@ -300,46 +309,95 @@ const MultipleChoiceQuestionTemplate = ({
    }
 
   const hasAtleastOneCorrectOption = options?.filter(op => op.correct).length >= 1 || false;
+  const theme = useTheme();
 
   return (
     <>
-      {/* <Card key={id}> */}
-      {/* <CardContent> */}
-      <Grid container spacing={2} alignItems='center'>
-        <Grid item xs={12} md={6}>
-          <TextField disabled label='Question Id' variant='outlined' fullWidth value={id} />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <TextField disabled label='Language' variant='outlined' fullWidth value={language} />
-        </Grid>
+      <Box sx={{ 
+        bgcolor: 'background.paper', 
+        borderRadius: 3, 
+        border: '1px solid',
+        borderColor: hasErrors ? alpha(theme.palette.error.main, 0.3) : 'divider',
+        boxShadow: hasErrors ? `0 0 0 3px ${alpha(theme.palette.error.main, 0.1)}` : '0 2px 8px rgba(0,0,0,0.05)',
+        p: { xs: 2, md: 3 },
+        transition: 'all 0.3s ease'
+      }}>
+        {/* Header Section */}
+        <Stack direction="row" spacing={2} sx={{ mb: 3, pb: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
+          <Box sx={{ 
+            width: 48, 
+            height: 48, 
+            borderRadius: 2, 
+            bgcolor: alpha(theme.palette.primary.main, 0.1),
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <QuestionMarkIcon sx={{ fontSize: 24, color: 'primary.main' }} />
+          </Box>
+          <Box sx={{ flex: 1 }}>
+            <Typography variant="h6" fontWeight={700} sx={{ color: '#202124' }}>
+              Multiple Choice Question
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              ID: {id} • Language: {language}
+            </Typography>
+          </Box>
+          {hasErrors && (
+            <Chip 
+              label="Has Errors" 
+              color="error" 
+              size="small" 
+              sx={{ height: 28, fontWeight: 600 }}
+            />
+          )}
+        </Stack>
 
-        {/* Question */}
-        <Grid item xs={12} sx={{ marginBottom: '4px' }}>
-          <Box sx={{ border: '1px dashed gray', borderRadius: '8px', p: 2 }}>
-            <Grid container spacing={2} alignItems='flex-start'>
-              {/* Media Type Toggle */}
-              <Grid item xs={12}>
+        <Grid container spacing={3}>
+          {/* Question Section */}
+          <Grid item xs={12}>
+            <Box sx={{ 
+              border: '2px solid',
+              borderColor: alpha(theme.palette.primary.main, 0.2),
+              borderRadius: 3, 
+              p: 2.5,
+              bgcolor: alpha(theme.palette.primary.main, 0.02),
+              '&:hover': {
+                borderColor: alpha(theme.palette.primary.main, 0.4),
+                boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.08)}`
+              },
+              transition: 'all 0.3s ease'
+            }}>
+              <Stack spacing={2.5}>
+                {/* Media Type Toggle */}
                 <FormControl fullWidth>
                   <InputLabel>Question Type</InputLabel>
                   <Select
                     label='Question Type'
                     value={question.mediaType}
                     onChange={e => toggleQuestionMediaType(e.target.value)}
+                    sx={{
+                      bgcolor: 'white',
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: alpha(theme.palette.primary.main, 0.3)
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: theme.palette.primary.main
+                      }
+                    }}
                   >
-                    <MenuItem value='text'>Text</MenuItem>
-                    <MenuItem value='image'>Image</MenuItem>
-                    <MenuItem value='text-image'>Text & Image</MenuItem>
-                    <MenuItem value='video'>Video</MenuItem>
-                    <MenuItem value='text-video'>Text & Video</MenuItem>
+                    <MenuItem value='text'>📝 Text Only</MenuItem>
+                    <MenuItem value='image'>🖼️ Image Only</MenuItem>
+                    <MenuItem value='text-image'>📝🖼️ Text & Image</MenuItem>
+                    <MenuItem value='video'>🎥 Video Only</MenuItem>
+                    <MenuItem value='text-video'>📝🎥 Text & Video</MenuItem>
                   </Select>
                 </FormControl>
-              </Grid>
 
-              {/* Question Text Input */}
-              {(question.mediaType === 'text' ||
-                question.mediaType === 'text-image' ||
-                question.mediaType === 'text-video') && (
-                <Grid item xs={12}>
+                {/* Question Text Input */}
+                {(question.mediaType === 'text' ||
+                  question.mediaType === 'text-image' ||
+                  question.mediaType === 'text-video') && (
                   <TextField
                     label='Question Text'
                     variant='outlined'
@@ -350,15 +408,20 @@ const MultipleChoiceQuestionTemplate = ({
                     error={hasErrors && !question.text.trim() && getErrorMessage('question.text')}
                     helperText={!question.text.trim() && <span>{getErrorMessage('question.text')}</span>}
                     onChange={e => handleQuestionChange('text', e.target.value)}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        bgcolor: 'white',
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: theme.palette.primary.main
+                        }
+                      }
+                    }}
                   />
-                </Grid>
-              )}
+                )}
 
-              {/* Image Input and Preview */}
-              {(question.mediaType === 'image' || question.mediaType === 'text-image') && (
-                <Grid item xs={12}>
-                  <Box display='flex' alignItems='center' gap={2} style={{ width: '100%' }}>
-                    {/* Image Input */}
+                {/* Image Input and Preview */}
+                {(question.mediaType === 'image' || question.mediaType === 'text-image') && (
+                  <Box display='flex' alignItems='center' gap={2}>
                     <TextField
                       type='file'
                       fullWidth
@@ -368,571 +431,783 @@ const MultipleChoiceQuestionTemplate = ({
                       error={hasErrors && !question.image && getErrorMessage('question.image')}
                       helperText={!question.image && getErrorMessage('question.image')}
                       onChange={e => handleQuestionMediaUpload(e.target.files[0], 'image')}
-                      inputProps={{
-                        accept: 'image/*' // Accept images only
-                      }}
-                      // InputProps={{
-                      //   inputComponent: () => (
-                      //     <input
-                      //       type='file'
-                      //       accept='image/*'
-                      //       onChange={e => handleQuestionMediaUpload(e.target.files[0], 'image')}
-                      //       style={{
-                      //         cursor: 'pointer',
-                      //         width: '100%',
-                      //         height: '100%',
-                      //         padding: '16px',
-                      //         border: 'none',
-                      //         backgroundColor: 'transparent'
-                      //       }}
-                      //     />
-                      //   )
-                      // }}
+                      inputProps={{ accept: 'image/*' }}
                       variant='outlined'
-                      style={{ flex: 1 }}
+                      sx={{
+                        flex: 1,
+                        '& .MuiOutlinedInput-root': {
+                          bgcolor: 'white',
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: theme.palette.primary.main
+                          }
+                        }
+                      }}
                     />
-
-                    {/* Image Preview */}
                     {question.image && (
                       <Box
                         component='img'
                         src={question.image}
                         alt='Uploaded Preview'
-                        style={{
-                          width: 60,
-                          height: 60,
+                        sx={{
+                          width: 80,
+                          height: 80,
                           objectFit: 'cover',
-                          borderRadius: '4px',
-                          border: '1px solid #ccc'
+                          borderRadius: 2,
+                          border: '2px solid',
+                          borderColor: 'divider',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
                         }}
                       />
                     )}
                   </Box>
-                </Grid>
-              )}
-
-              {/* Video URL Input */}
-              {(question.mediaType === 'video' || question.mediaType === 'text-video') && (
-                <Grid item xs={12}>
-                  <TextField
-                    label='Video URL'
-                    variant='outlined'
-                    fullWidth
-                    value={question.video}
-                    onChange={e => handleQuestionChange('video', e.target.value)}
-                    placeholder='Enter YouTube video URL'
-                    error={hasErrors && !question.video && getErrorMessage('question.video')}
-                    helperText={!question.video && getErrorMessage('question.video')}
-                  />
-                  {question.video && (
-                    <Box className='flex flex-col mt-2 gap-1 items-center'>
-                      <Box className='flex flex-col gap-1 items-center'>
-                        <VideoAd url={question.video || ''} showPause autoPlay={false} />
-                        <ImagePopup imageUrl={question.video || ''} mediaType={'video'} />
-                      </Box>
-                    </Box>
-                  )}
-                </Grid>
-              )}
-            </Grid>
-          </Box>
-        </Grid>
-
-        {/* Options */}
-        <>
-          <Grid item xs={12}>
-            <Typography mb={2} variant='h6'>
-              Options:
-            </Typography>
-            <DragDropContext onDragEnd={handleDragEnd}>
-              <Droppable droppableId='options'>
-                {provided => (
-                  <div
-                    style={{ display: 'flex', flexDirection: 'column', gap: '1rem', margin: '8px' }}
-                    {...provided.droppableProps}
-                    ref={provided.innerRef}
-                  >
-                    {options.map((option, index) => (
-                      <Draggable key={option.id} draggableId={option.id} index={index}>
-                        {provided =>
-                          mode === 'primary' ? (
-                            <div ref={provided.innerRef} {...provided.draggableProps}>
-                              <Box display='flex' alignItems='center' gap={2}>
-                                <Box {...provided.dragHandleProps} style={{ cursor: 'grab', marginRight: '8px' }}>
-                                  <DragIndicatorIcon />
-                                </Box>
-                                {/* <TextField
-                                  fullWidth
-                                  label={`Option ${index + 1}`}
-                                  value={option.text}
-                                  onChange={e => handleOptionChange(index, 'text', e.target.value)}
-                                  variant='outlined'
-                                  style={{ marginRight: '8px' }}
-                                /> */}
-                                {option.mediaType === 'image' ? (
-                                  <Box display='flex' alignItems='center' gap={2} style={{ width: '100%' }}>
-                                    <TextField
-                                      fullWidth
-                                      type='file'
-                                      inputProps={{
-                                        accept: 'image/*' // Accept images only
-                                      }}
-                                      onChange={e => handleOptionMediaUpload(index, e.target.files[0], 'image')}
-                                      label={`Option ${index + 1}`}
-                                      disabled={loading.save || loading.delete}
-                                      InputLabelProps={{ shrink: true }}
-                                      error={
-                                        hasErrors &&
-                                        !option.image &&
-                                        (getErrorMessage(`options.${option.id}.image`) ||
-                                          getErrorMessage(`options.${option.id}`))
-                                      }
-                                      helperText={
-                                        !option.image &&
-                                        (getErrorMessage(`options.${option.id}.image`) ||
-                                          getErrorMessage(`options.${option.id}`))
-                                      }
-                                      InputProps={{
-                                        endAdornment: (
-                                          <InputAdornment position='end'>
-                                            <IconButtonTooltip
-                                              title='Text'
-                                              disabled={loading.save || loading.delete}
-                                              onClick={() => toggleOptionMediaType(index, 'text')}
-                                              edge='end'
-                                            >
-                                              <TextFieldsIcon color='primary' />
-                                            </IconButtonTooltip>
-                                          </InputAdornment>
-                                        )
-                                        // inputComponent: () => (
-                                        //   <input
-                                        //     type='file'
-                                        //     accept='image/*'
-                                        //     onChange={e => handleMediaUpload(index, e.target.files[0], 'image')}
-                                        //     style={{
-                                        //       cursor: 'pointer',
-                                        //       width: '100%',
-                                        //       height: '100%',
-                                        //       padding: '16px',
-                                        //       border: 'none',
-                                        //       backgroundColor: 'transparent'
-                                        //     }}
-                                        //   />
-                                        // )
-                                      }}
-                                      variant='outlined'
-                                      style={{ flex: 1 }}
-                                    />
-                                    {/* Image Preview */}
-                                    {option.image && (
-                                      <Box
-                                        component='img'
-                                        src={option.image}
-                                        alt={`Option ${index + 1}`}
-                                        style={{
-                                          width: 60,
-                                          height: 60,
-                                          objectFit: 'cover',
-                                          borderRadius: '4px',
-                                          border: '1px solid #ccc'
-                                        }}
-                                      />
-                                    )}
-                                  </Box>
-                                ) : option.mediaType === 'text' ? (
-                                  <TextField
-                                    fullWidth
-                                    label={`Option ${index + 1}`}
-                                    disabled={loading.save || loading.delete}
-                                    value={option.text}
-                                    onChange={e => handleOptionChange(index, 'text', e.target.value)}
-                                    onBlur={e => handleOptionChange(index, 'text', e.target.value)}
-                                    variant='outlined'
-                                    style={{ flex: 1 }}
-                                    error={
-                                      hasErrors &&
-                                      !option.text.trim() &&
-                                      (getErrorMessage(`options.${option.id}.text`) ||
-                                        getErrorMessage(`options.${option.id}`))
-                                    }
-                                    helperText={
-                                      !option.text.trim() &&
-                                      (getErrorMessage(`options.${option.id}.text`) ||
-                                        getErrorMessage(`options.${option.id}`))
-                                    }
-                                    InputProps={{
-                                      endAdornment: (
-                                        <InputAdornment position='end'>
-                                          <IconButtonTooltip
-                                            title='Image'
-                                            disabled={loading.save || loading.delete}
-                                            onClick={() => toggleOptionMediaType(index, 'image')}
-                                            edge='end'
-                                          >
-                                            <ImageIcon color='primary' />
-                                          </IconButtonTooltip>
-                                        </InputAdornment>
-                                      )
-                                    }}
-                                  />
-                                ) : (
-                                  // Future media types such as video or audio
-                                  <TextField
-                                    fullWidth
-                                    disabled={loading.save || loading.delete}
-                                    label={`Option ${index + 1} (${option.mediaType})`}
-                                    InputProps={{
-                                      endAdornment: (
-                                        <InputAdornment position='end'>
-                                          <IconButtonTooltip
-                                            title='Text'
-                                            disabled={loading.save || loading.delete}
-                                            onClick={() => toggleOptionMediaType(index, 'text')}
-                                            edge='end'
-                                          >
-                                            <TextFieldsIcon color='primary' />
-                                          </IconButtonTooltip>
-                                        </InputAdornment>
-                                      )
-                                    }}
-                                    variant='outlined'
-                                    style={{ flex: 1 }}
-                                  />
-                                )}
-                                <FormControlLabel
-                                  control={
-                                    <Checkbox
-                                      disabled={loading.save || loading.delete}
-                                      checked={option.correct}
-                                      onChange={e => handleOptionChange(index, 'correct', e.target.checked)}
-                                    />
-                                  }
-                                  label={<Typography variant='body2'>Correct</Typography>}
-                                />
-                                {index > 1 && (
-                                  <IconButtonTooltip
-                                    title='Remove'
-                                    aria-label='remove option'
-                                    disabled={loading.save || loading.delete}
-                                    onClick={() => removeOption(index)}
-                                    style={{ marginLeft: '8px' }}
-                                  >
-                                    <RemoveIcon />
-                                  </IconButtonTooltip>
-                                )}
-                              </Box>
-                            </div>
-                          ) : (
-                            <div>
-                              <Box display='flex' alignItems='center' gap={2}>
-                                {/* <TextField
-                                  fullWidth
-                                  label={`Option ${index + 1}`}
-                                  value={option.text}
-                                  onChange={e => handleOptionChange(index, 'text', e.target.value)}
-                                  variant='outlined'
-                                  style={{ marginRight: '8px' }}
-                                /> */}
-                                {option.mediaType === 'image' ? (
-                                  <Box display='flex' alignItems='center' gap={2} style={{ width: '100%' }}>
-                                    <TextField
-                                      fullWidth
-                                      type='file'
-                                      inputProps={{
-                                        accept: 'image/*' // Accept images only
-                                      }}
-                                      onChange={e => handleOptionMediaUpload(index, e.target.files[0], 'image')}
-                                      label={`Option ${index + 1}`}
-                                      disabled={loading.save || loading.delete}
-                                      InputLabelProps={{ shrink: true }}
-                                      error={
-                                        hasErrors &&
-                                        !option.image &&
-                                        (getErrorMessage(`options.${option.id}.image`) ||
-                                          getErrorMessage(`options.${option.id}`))
-                                      }
-                                      helperText={
-                                        !option.image &&
-                                        (getErrorMessage(`options.${option.id}.image`) ||
-                                          getErrorMessage(`options.${option.id}`))
-                                      }
-                                      InputProps={{
-                                        endAdornment: (
-                                          <InputAdornment position='end'>
-                                            <IconButtonTooltip
-                                              title='Text'
-                                              onClick={() => toggleOptionMediaType(index, 'text')}
-                                              edge='end'
-                                            >
-                                              <TextFieldsIcon color='primary' />
-                                            </IconButtonTooltip>
-                                          </InputAdornment>
-                                        )
-                                        // inputComponent: () => (
-                                        //   <input
-                                        //     type='file'
-                                        //     accept='image/*'
-                                        //     onChange={e => handleMediaUpload(index, e.target.files[0], 'image')}
-                                        //     style={{
-                                        //       cursor: 'pointer',
-                                        //       width: '100%',
-                                        //       height: '100%',
-                                        //       padding: '16px',
-                                        //       border: 'none',
-                                        //       backgroundColor: 'transparent'
-                                        //     }}
-                                        //   />
-                                        // )
-                                      }}
-                                      variant='outlined'
-                                      style={{ flex: 1 }}
-                                    />
-                                    {/* Image Preview */}
-                                    {option.image && (
-                                      <Box
-                                        component='img'
-                                        src={option.image}
-                                        alt={`Option ${index + 1}`}
-                                        style={{
-                                          width: 60,
-                                          height: 60,
-                                          objectFit: 'cover',
-                                          borderRadius: '4px',
-                                          border: '1px solid #ccc'
-                                        }}
-                                      />
-                                    )}
-                                  </Box>
-                                ) : option.mediaType === 'text' ? (
-                                  <TextField
-                                    fullWidth
-                                    label={`Option ${index + 1}`}
-                                    value={option.text}
-                                    disabled={loading.save || loading.delete}
-                                    onChange={e => handleOptionChange(index, 'text', e.target.value)}
-                                    onBlur={e => handleOptionChange(index, 'text', e.target.value)}
-                                    variant='outlined'
-                                    error={
-                                      hasErrors &&
-                                      !option.text.trim() &&
-                                      (getErrorMessage(`options.${option.id}.text`) ||
-                                        getErrorMessage(`options.${option.id}`))
-                                    }
-                                    helperText={
-                                      !option.text.trim() &&
-                                      (getErrorMessage(`options.${option.id}.text`) ||
-                                        getErrorMessage(`options.${option.id}`))
-                                    }
-                                    style={{ flex: 1 }}
-                                    InputProps={{
-                                      endAdornment: (
-                                        <InputAdornment position='end'>
-                                          <IconButtonTooltip
-                                            title='Image'
-                                            onClick={() => toggleOptionMediaType(index, 'image')}
-                                            edge='end'
-                                          >
-                                            <ImageIcon color='primary' />
-                                          </IconButtonTooltip>
-                                        </InputAdornment>
-                                      )
-                                    }}
-                                  />
-                                ) : (
-                                  // Future media types such as video or audio
-                                  <TextField
-                                    fullWidth
-                                    label={`Option ${index + 1} (${option.mediaType})`}
-                                    disabled={loading.save || loading.delete}
-                                    InputProps={{
-                                      endAdornment: (
-                                        <InputAdornment position='end'>
-                                          <IconButtonTooltip
-                                            title='Text'
-                                            onClick={() => toggleOptionMediaType(index, 'text')}
-                                            edge='end'
-                                          >
-                                            <TextFieldsIcon color='primary' />
-                                          </IconButtonTooltip>
-                                        </InputAdornment>
-                                      )
-                                    }}
-                                    variant='outlined'
-                                    style={{ flex: 1 }}
-                                  />
-                                )}
-                                <FormControlLabel
-                                  control={
-                                    <Checkbox
-                                      disabled
-                                      checked={option.correct}
-                                      onChange={e => handleOptionChange(index, 'correct', e.target.checked)}
-                                    />
-                                  }
-                                  label={<Typography variant='body2'>Correct</Typography>}
-                                />
-                              </Box>
-                            </div>
-                          )
-                        }
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
-                  </div>
                 )}
-              </Droppable>
-            </DragDropContext>
-            {hasErrors && !hasAtleastOneCorrectOption && getErrorMessage('options') && (
-              <Typography className='text-center' variant='body1' color='error'>
-                {getErrorMessage('options')}
-              </Typography>
-            )}
-          </Grid>
-          {mode === 'primary' && (
-            <Grid item xs={12} className='flex justify-end'>
-              <Button
-                disabled={loading.save || loading.delete}
-                variant='text'
-                size='small'
-                color='primary'
-                startIcon={<AddIcon />}
-                onClick={addOption}
-              >
-                Add Option
-              </Button>
-            </Grid>
-          )}
-        </>
-      </Grid>
 
-      {/* Hint, Marks, Hint Marks, Skippable, Time in Seconds */}
-      <Grid container spacing={2} mt={2} alignItems='start'>
-        <Grid item xs={12} className='flex justify-start'>
-          <FormControlLabel
-            control={<Checkbox checked={addHint} onChange={ handleAddHintChange} />}
-            label='Add Hint'
-          />
-        </Grid>
-
-        {addHint && (
-          <Grid item xs={12} sx={{ marginBottom: '4px' }}>
-            <TextField
-              disabled={loading.save || loading.delete}
-              label='Hint'
-              variant='outlined'
-              fullWidth
-              value={hint}
-              onChange={handleHintChange}
-              error={addHint && hasErrors && !hint.trim() && getErrorMessage('hint')}
-              helperText={addHint && !hint.trim() && getErrorMessage('hint')}
-            />
+                {/* Video URL Input */}
+                {(question.mediaType === 'video' || question.mediaType === 'text-video') && (
+                  <>
+                    <TextField
+                      label='Video URL'
+                      variant='outlined'
+                      fullWidth
+                      value={question.video}
+                      onChange={e => handleQuestionChange('video', e.target.value)}
+                      placeholder='Enter YouTube video URL'
+                      error={hasErrors && !question.video && getErrorMessage('question.video')}
+                      helperText={!question.video && getErrorMessage('question.video')}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          bgcolor: 'white',
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: theme.palette.primary.main
+                          }
+                        }
+                      }}
+                    />
+                    {question.video && (
+                      <Box sx={{ mt: 2, p: 2, bgcolor: 'white', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
+                        <VideoAd url={question.video || ''} showPause autoPlay={false} />
+                        <Box sx={{ mt: 1, textAlign: 'center' }}>
+                          <ImagePopup imageUrl={question.video || ''} mediaType={'video'} />
+                        </Box>
+                      </Box>
+                    )}
+                  </>
+                )}
+              </Stack>
+            </Box>
           </Grid>
-        )}
-        {mode === 'primary' ? (
-          <>
-            <Grid item xs={6} md={addHint ? 4 : 6}>
-              <TextField
-                disabled={loading.save || loading.delete}
-                label='Marks'
-                type='number'
-                InputProps={{ inputProps: { min: 0.25 } }}
-                variant='outlined'
-                fullWidth
-                value={marks}
-                onChange={handleMarksChange}
-                error={hasErrors && !marks && getErrorMessage('marks')}
-                helperText={!marks && getErrorMessage('marks')}
-              />
-            </Grid>
-            {addHint && (
-              <Grid item xs={6} md={4}>
-                <TextField
-                  disabled={loading.save || loading.delete}
-                  label='Hint Marks'
-                  variant='outlined'
+
+          {/* Options Section */}
+          <Grid item xs={12}>
+            <Box sx={{ 
+              border: '2px solid',
+              borderColor: alpha(theme.palette.secondary.main, 0.2),
+              borderRadius: 3, 
+              p: 2.5,
+              bgcolor: alpha(theme.palette.secondary.main, 0.02)
+            }}>
+              <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 2.5 }}>
+                <Box sx={{ 
+                  width: 36, 
+                  height: 36, 
+                  borderRadius: 2, 
+                  bgcolor: alpha(theme.palette.secondary.main, 0.15),
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <TextFieldsIcon sx={{ fontSize: 20, color: 'secondary.main' }} />
+                </Box>
+                <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#202124' }}>
+                  Answer Options
+                </Typography>
+                <Chip 
+                  label={`${options.length} options`} 
+                  size="small"
+                  sx={{ 
+                    bgcolor: alpha(theme.palette.secondary.main, 0.1),
+                    color: 'secondary.main',
+                    fontWeight: 600
+                  }}
+                />
+              </Stack>
+
+              <DragDropContext onDragEnd={handleDragEnd}>
+                <Droppable droppableId='options'>
+                  {provided => (
+                    <Stack
+                      spacing={2}
+                      {...provided.droppableProps}
+                      ref={provided.innerRef}
+                    >
+                      {options.map((option, index) => (
+                        <Draggable key={option.id} draggableId={option.id} index={index}>
+                          {(provided, snapshot) =>
+                            mode === 'primary' ? (
+                              <Box 
+                                ref={provided.innerRef} 
+                                {...provided.draggableProps}
+                                sx={{
+                                  p: 2,
+                                  borderRadius: 2,
+                                  bgcolor: 'white',
+                                  border: '2px solid',
+                                  borderColor: option.correct 
+                                    ? alpha(theme.palette.success.main, 0.3)
+                                    : 'divider',
+                                  boxShadow: snapshot.isDragging 
+                                    ? '0 8px 24px rgba(0,0,0,0.15)'
+                                    : '0 2px 8px rgba(0,0,0,0.05)',
+                                  transition: 'all 0.2s ease',
+                                  '&:hover': {
+                                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                                    borderColor: option.correct
+                                      ? theme.palette.success.main
+                                      : theme.palette.primary.main
+                                  }
+                                }}
+                              >
+                                <Stack direction="row" alignItems="center" spacing={1.5}>
+                                  <Box 
+                                    {...provided.dragHandleProps} 
+                                    sx={{ 
+                                      cursor: 'grab',
+                                      color: 'text.secondary',
+                                      '&:active': { cursor: 'grabbing' }
+                                    }}
+                                  >
+                                    <DragIndicatorIcon />
+                                  </Box>
+                                  <Chip 
+                                    label={index + 1} 
+                                    size="small"
+                                    sx={{ 
+                                      minWidth: 32,
+                                      height: 24,
+                                      fontWeight: 700,
+                                      bgcolor: option.correct 
+                                        ? alpha(theme.palette.success.main, 0.15)
+                                        : alpha(theme.palette.grey[500], 0.1),
+                                      color: option.correct ? 'success.main' : 'text.secondary'
+                                    }}
+                                  />
+                                  <Box sx={{ flex: 1 }}>
+                                    {option.mediaType === 'image' ? (
+                                      <Stack direction="row" alignItems="center" spacing={1.5}>
+                                        <TextField
+                                          fullWidth
+                                          type='file'
+                                          inputProps={{ accept: 'image/*' }}
+                                          onChange={e => handleOptionMediaUpload(index, e.target.files[0], 'image')}
+                                          label={`Image for option ${index + 1}`}
+                                          disabled={loading.save || loading.delete}
+                                          InputLabelProps={{ shrink: true }}
+                                          error={
+                                            hasErrors &&
+                                            !option.image &&
+                                            (getErrorMessage(`options.${option.id}.image`) ||
+                                              getErrorMessage(`options.${option.id}`))
+                                          }
+                                          helperText={
+                                            !option.image &&
+                                            (getErrorMessage(`options.${option.id}.image`) ||
+                                              getErrorMessage(`options.${option.id}`))
+                                          }
+                                          InputProps={{
+                                            endAdornment: (
+                                              <InputAdornment position='end'>
+                                                <IconButtonTooltip
+                                                  title='Switch to Text'
+                                                  disabled={loading.save || loading.delete}
+                                                  onClick={() => toggleOptionMediaType(index, 'text')}
+                                                >
+                                                  <TextFieldsIcon color='primary' />
+                                                </IconButtonTooltip>
+                                              </InputAdornment>
+                                            )
+                                          }}
+                                          sx={{
+                                            '& .MuiOutlinedInput-root': {
+                                              bgcolor: alpha(theme.palette.background.paper, 0.5),
+                                              '&:hover .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: theme.palette.primary.main
+                                              }
+                                            }
+                                          }}
+                                        />
+                                        {option.image && (
+                                          <Box
+                                            component='img'
+                                            src={option.image}
+                                            alt={`Option ${index + 1}`}
+                                            sx={{
+                                              width: 60,
+                                              height: 60,
+                                              objectFit: 'cover',
+                                              borderRadius: 1.5,
+                                              border: '2px solid',
+                                              borderColor: 'divider',
+                                              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                            }}
+                                          />
+                                        )}
+                                      </Stack>
+                                    ) : option.mediaType === 'text' ? (
+                                      <TextField
+                                        fullWidth
+                                        label={`Option ${index + 1} text`}
+                                        disabled={loading.save || loading.delete}
+                                        value={option.text}
+                                        onChange={e => handleOptionChange(index, 'text', e.target.value)}
+                                        onBlur={e => handleOptionChange(index, 'text', e.target.value)}
+                                        error={
+                                          hasErrors &&
+                                          !option.text.trim() &&
+                                          (getErrorMessage(`options.${option.id}.text`) ||
+                                            getErrorMessage(`options.${option.id}`))
+                                        }
+                                        helperText={
+                                          !option.text.trim() &&
+                                          (getErrorMessage(`options.${option.id}.text`) ||
+                                            getErrorMessage(`options.${option.id}`))
+                                        }
+                                        InputProps={{
+                                          endAdornment: (
+                                            <InputAdornment position='end'>
+                                              <IconButtonTooltip
+                                                title='Switch to Image'
+                                                disabled={loading.save || loading.delete}
+                                                onClick={() => toggleOptionMediaType(index, 'image')}
+                                              >
+                                                <ImageIcon color='primary' />
+                                              </IconButtonTooltip>
+                                            </InputAdornment>
+                                          )
+                                        }}
+                                        sx={{
+                                          '& .MuiOutlinedInput-root': {
+                                            bgcolor: alpha(theme.palette.background.paper, 0.5),
+                                            '&:hover .MuiOutlinedInput-notchedOutline': {
+                                              borderColor: theme.palette.primary.main
+                                            }
+                                          }
+                                        }}
+                                      />
+                                    ) : (
+                                      <TextField
+                                        fullWidth
+                                        disabled={loading.save || loading.delete}
+                                        label={`Option ${index + 1} (${option.mediaType})`}
+                                        InputProps={{
+                                          endAdornment: (
+                                            <InputAdornment position='end'>
+                                              <IconButtonTooltip
+                                                title='Switch to Text'
+                                                disabled={loading.save || loading.delete}
+                                                onClick={() => toggleOptionMediaType(index, 'text')}
+                                              >
+                                                <TextFieldsIcon color='primary' />
+                                              </IconButtonTooltip>
+                                            </InputAdornment>
+                                          )
+                                        }}
+                                        sx={{
+                                          '& .MuiOutlinedInput-root': {
+                                            bgcolor: alpha(theme.palette.background.paper, 0.5)
+                                          }
+                                        }}
+                                      />
+                                    )}
+                                  </Box>
+                                  <Stack direction="row" alignItems="center" spacing={1}>
+                                    <FormControlLabel
+                                      control={
+                                        <Checkbox
+                                          disabled={loading.save || loading.delete}
+                                          checked={option.correct}
+                                          onChange={e => handleOptionChange(index, 'correct', e.target.checked)}
+                                          sx={{
+                                            color: alpha(theme.palette.success.main, 0.5),
+                                            '&.Mui-checked': { color: 'success.main' }
+                                          }}
+                                        />
+                                      }
+                                      label={
+                                        <Typography variant='body2' fontWeight={600} sx={{ color: option.correct ? 'success.main' : 'text.secondary' }}>
+                                          Correct
+                                        </Typography>
+                                      }
+                                    />
+                                    {index > 1 && (
+                                      <IconButton
+                                        size="small"
+                                        disabled={loading.save || loading.delete}
+                                        onClick={() => removeOption(index)}
+                                        sx={{
+                                          color: 'error.main',
+                                          '&:hover': { bgcolor: alpha(theme.palette.error.main, 0.1) }
+                                        }}
+                                      >
+                                        <RemoveIcon fontSize="small" />
+                                      </IconButton>
+                                    )}
+                                  </Stack>
+                                </Stack>
+                              </Box>
+                            ) : (
+                              <Box 
+                                ref={provided.innerRef} 
+                                {...provided.draggableProps}
+                                sx={{
+                                  p: 2,
+                                  borderRadius: 2,
+                                  bgcolor: 'white',
+                                  border: '2px solid',
+                                  borderColor: option.correct 
+                                    ? alpha(theme.palette.success.main, 0.3)
+                                    : 'divider',
+                                  boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                                  '&:hover': {
+                                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                                  }
+                                }}
+                              >
+                                <Stack direction="row" alignItems="center" spacing={1.5}>
+                                  <Chip 
+                                    label={index + 1} 
+                                    size="small"
+                                    sx={{ 
+                                      minWidth: 32,
+                                      height: 24,
+                                      fontWeight: 700,
+                                      bgcolor: option.correct 
+                                        ? alpha(theme.palette.success.main, 0.15)
+                                        : alpha(theme.palette.grey[500], 0.1),
+                                      color: option.correct ? 'success.main' : 'text.secondary'
+                                    }}
+                                  />
+                                  <Box sx={{ flex: 1 }}>
+                                    {option.mediaType === 'image' ? (
+                                      <Stack direction="row" alignItems="center" spacing={1.5}>
+                                        <TextField
+                                          fullWidth
+                                          type='file'
+                                          inputProps={{ accept: 'image/*' }}
+                                          onChange={e => handleOptionMediaUpload(index, e.target.files[0], 'image')}
+                                          label={`Image for option ${index + 1}`}
+                                          disabled={loading.save || loading.delete}
+                                          InputLabelProps={{ shrink: true }}
+                                          error={
+                                            hasErrors &&
+                                            !option.image &&
+                                            (getErrorMessage(`options.${option.id}.image`) ||
+                                              getErrorMessage(`options.${option.id}`))
+                                          }
+                                          helperText={
+                                            !option.image &&
+                                            (getErrorMessage(`options.${option.id}.image`) ||
+                                              getErrorMessage(`options.${option.id}`))
+                                          }
+                                          InputProps={{
+                                            endAdornment: (
+                                              <InputAdornment position='end'>
+                                                <IconButtonTooltip
+                                                  title='Switch to Text'
+                                                  onClick={() => toggleOptionMediaType(index, 'text')}
+                                                >
+                                                  <TextFieldsIcon color='primary' />
+                                                </IconButtonTooltip>
+                                              </InputAdornment>
+                                            )
+                                          }}
+                                          sx={{
+                                            '& .MuiOutlinedInput-root': {
+                                              bgcolor: alpha(theme.palette.background.paper, 0.5)
+                                            }
+                                          }}
+                                        />
+                                        {option.image && (
+                                          <Box
+                                            component='img'
+                                            src={option.image}
+                                            alt={`Option ${index + 1}`}
+                                            sx={{
+                                              width: 60,
+                                              height: 60,
+                                              objectFit: 'cover',
+                                              borderRadius: 1.5,
+                                              border: '2px solid',
+                                              borderColor: 'divider',
+                                              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                            }}
+                                          />
+                                        )}
+                                      </Stack>
+                                    ) : option.mediaType === 'text' ? (
+                                      <TextField
+                                        fullWidth
+                                        label={`Option ${index + 1} text`}
+                                        value={option.text}
+                                        disabled={loading.save || loading.delete}
+                                        onChange={e => handleOptionChange(index, 'text', e.target.value)}
+                                        onBlur={e => handleOptionChange(index, 'text', e.target.value)}
+                                        error={
+                                          hasErrors &&
+                                          !option.text.trim() &&
+                                          (getErrorMessage(`options.${option.id}.text`) ||
+                                            getErrorMessage(`options.${option.id}`))
+                                        }
+                                        helperText={
+                                          !option.text.trim() &&
+                                          (getErrorMessage(`options.${option.id}.text`) ||
+                                            getErrorMessage(`options.${option.id}`))
+                                        }
+                                        InputProps={{
+                                          endAdornment: (
+                                            <InputAdornment position='end'>
+                                              <IconButtonTooltip
+                                                title='Switch to Image'
+                                                onClick={() => toggleOptionMediaType(index, 'image')}
+                                              >
+                                                <ImageIcon color='primary' />
+                                              </IconButtonTooltip>
+                                            </InputAdornment>
+                                          )
+                                        }}
+                                        sx={{
+                                          '& .MuiOutlinedInput-root': {
+                                            bgcolor: alpha(theme.palette.background.paper, 0.5)
+                                          }
+                                        }}
+                                      />
+                                    ) : (
+                                      <TextField
+                                        fullWidth
+                                        label={`Option ${index + 1} (${option.mediaType})`}
+                                        disabled={loading.save || loading.delete}
+                                        InputProps={{
+                                          endAdornment: (
+                                            <InputAdornment position='end'>
+                                              <IconButtonTooltip
+                                                title='Switch to Text'
+                                                onClick={() => toggleOptionMediaType(index, 'text')}
+                                              >
+                                                <TextFieldsIcon color='primary' />
+                                              </IconButtonTooltip>
+                                            </InputAdornment>
+                                          )
+                                        }}
+                                        sx={{
+                                          '& .MuiOutlinedInput-root': {
+                                            bgcolor: alpha(theme.palette.background.paper, 0.5)
+                                          }
+                                        }}
+                                      />
+                                    )}
+                                  </Box>
+                                  <FormControlLabel
+                                    control={
+                                      <Checkbox
+                                        disabled
+                                        checked={option.correct}
+                                        sx={{
+                                          color: alpha(theme.palette.success.main, 0.5),
+                                          '&.Mui-checked': { color: 'success.main' }
+                                        }}
+                                      />
+                                    }
+                                    label={
+                                      <Typography variant='body2' fontWeight={600} sx={{ color: option.correct ? 'success.main' : 'text.secondary' }}>
+                                        Correct
+                                      </Typography>
+                                    }
+                                  />
+                                </Stack>
+                              </Box>
+                            )
+                          }
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                    </Stack>
+                  )}
+                </Droppable>
+              </DragDropContext>
+
+              {hasErrors && !hasAtleastOneCorrectOption && getErrorMessage('options') && (
+                <Box sx={{ 
+                  mt: 2, 
+                  p: 2, 
+                  borderRadius: 2, 
+                  bgcolor: alpha(theme.palette.error.main, 0.1),
+                  border: '1px solid',
+                  borderColor: alpha(theme.palette.error.main, 0.3)
+                }}>
+                  <Typography variant='body2' color='error' fontWeight={600} sx={{ textAlign: 'center' }}>
+                    {getErrorMessage('options')}
+                  </Typography>
+                </Box>
+              )}
+
+              {mode === 'primary' && (
+                <Button
                   fullWidth
-                  type='number'
-                  InputProps={{
-                    inputProps: {
-                      max: marks || 0,
-                      min: 0,
-                      step: 0.25
+                  disabled={loading.save || loading.delete}
+                  variant='outlined'
+                  color='secondary'
+                  startIcon={<AddIcon />}
+                  onClick={addOption}
+                  sx={{
+                    mt: 2,
+                    py: 1.5,
+                    borderRadius: 2,
+                    borderStyle: 'dashed',
+                    borderWidth: 2,
+                    fontWeight: 600,
+                    '&:hover': {
+                      borderStyle: 'solid',
+                      bgcolor: alpha(theme.palette.secondary.main, 0.05)
                     }
                   }}
-                  value={hintMarks}
-                  onChange={handleHintMarksChange}
-                  error={
-                    (addHint && hasErrors && !hintMarks && marks && getErrorMessage('hintMarks')) || // Only validate if marks exists
-                    (addHint && marks && hintMarks >= marks) // Only compare if marks exists
+                >
+                  Add Another Option
+                </Button>
+              )}
+            </Box>
+          </Grid>
+
+          {/* Configuration Section */}
+          <Grid item xs={12}>
+            <Box sx={{ 
+              border: '2px solid',
+              borderColor: alpha(theme.palette.info.main, 0.2),
+              borderRadius: 3, 
+              p: 2.5,
+              bgcolor: alpha(theme.palette.info.main, 0.02)
+            }}>
+              <Stack spacing={2.5}>
+                {/* Hint Toggle */}
+                <FormControlLabel
+                  control={
+                    <Checkbox 
+                      checked={addHint} 
+                      onChange={handleAddHintChange}
+                      sx={{
+                        '&.Mui-checked': { color: 'info.main' }
+                      }}
+                    />
                   }
-                  helperText={
-                    (addHint && !hintMarks && marks && getErrorMessage('hintMarks')) || // Only show error if marks exists
-                    (addHint && marks && hintMarks >= marks && 'Hint marks cannot exceed question marks')
+                  label={
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <HelpOutlineIcon sx={{ fontSize: 20, color: 'info.main' }} />
+                      <Typography variant='body2' fontWeight={600}>
+                        Add Hint for this question
+                      </Typography>
+                    </Stack>
                   }
                 />
-              </Grid>
-            )}
-            <Grid item xs={6} md={addHint ? 4 : 6}>
-              <TextField
-                disabled={loading.save || loading.delete}
-                label='Timer Seconds'
-                variant='outlined'
-                type='number'
-                InputProps={{ inputProps: { min: 10 } }}
-                fullWidth
-                value={timerSeconds}
-                onChange={handleTimerChange}
-                error={hasErrors && !timerSeconds && getErrorMessage('timerSeconds')}
-                helperText={!timerSeconds && getErrorMessage('timerSeconds')}
-              />
-            </Grid>
-            <Grid item xs={12} textAlign='center' mb={3}>
-              <FormControlLabel
-                disabled={loading.save || loading.delete}
-                control={<Switch value={skippable} onChange={e => setSkippable(e.target.checked)} />}
-                label='Skippable'
-              />
-            </Grid>
-          </>
-        ) : (
-          ''
-        )}
-      </Grid>
 
-      {/* Actions */}
-      <Grid container spacing={2} alignItems='center'>
-        <Grid item xs={6}>
-          <Button
-            startIcon={<SaveIcon />}
-            fullWidth
-            variant='outlined'
-            component='label'
-            color='primary'
-            // style={{ color: 'white' }}
-            aria-label='Save Quiz'
-            onClick={onSaveQuestion}
-            disabled={loading.save || loading.delete} // Disable when either save or delete is in progress
-          >
-            {loading.save ? 'Saving...' : 'Save Q'}
-          </Button>
+                {/* Hint Input */}
+                {addHint && (
+                  <TextField
+                    disabled={loading.save || loading.delete}
+                    label='Hint Text'
+                    variant='outlined'
+                    fullWidth
+                    multiline
+                    rows={2}
+                    value={hint}
+                    onChange={handleHintChange}
+                    error={addHint && hasErrors && !hint.trim() && getErrorMessage('hint')}
+                    helperText={addHint && !hint.trim() && getErrorMessage('hint')}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        bgcolor: 'white',
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: theme.palette.info.main
+                        }
+                      }
+                    }}
+                  />
+                )}
+
+                {mode === 'primary' && (
+                  <>
+                    <Divider sx={{ my: 1 }} />
+                    
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} sm={addHint ? 4 : 6}>
+                        <TextField
+                          disabled={loading.save || loading.delete}
+                          label='Marks'
+                          type='number'
+                          InputProps={{ 
+                            inputProps: { min: 0.25, step: 0.25 },
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <EmojiEventsIcon sx={{ fontSize: 20, color: 'success.main' }} />
+                              </InputAdornment>
+                            )
+                          }}
+                          fullWidth
+                          value={marks}
+                          onChange={handleMarksChange}
+                          error={hasErrors && !marks && getErrorMessage('marks')}
+                          helperText={!marks && getErrorMessage('marks')}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              bgcolor: 'white',
+                              '&:hover .MuiOutlinedInput-notchedOutline': {
+                                borderColor: theme.palette.success.main
+                              }
+                            }
+                          }}
+                        />
+                      </Grid>
+                      
+                      {addHint && (
+                        <Grid item xs={12} sm={4}>
+                          <TextField
+                            disabled={loading.save || loading.delete}
+                            label='Hint Deduction'
+                            type='number'
+                            InputProps={{
+                              inputProps: {
+                                max: marks || 0,
+                                min: 0,
+                                step: 0.25
+                              }
+                            }}
+                            fullWidth
+                            value={hintMarks}
+                            onChange={handleHintMarksChange}
+                            error={
+                              (addHint && hasErrors && !hintMarks && marks && getErrorMessage('hintMarks')) ||
+                              (addHint && marks && hintMarks >= marks)
+                            }
+                            helperText={
+                              (addHint && !hintMarks && marks && getErrorMessage('hintMarks')) ||
+                              (addHint && marks && hintMarks >= marks && 'Cannot exceed question marks')
+                            }
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                bgcolor: 'white',
+                                '&:hover .MuiOutlinedInput-notchedOutline': {
+                                  borderColor: theme.palette.warning.main
+                                }
+                              }
+                            }}
+                          />
+                        </Grid>
+                      )}
+                      
+                      <Grid item xs={12} sm={addHint ? 4 : 6}>
+                        <TextField
+                          disabled={loading.save || loading.delete}
+                          label='Time Limit (seconds)'
+                          type='number'
+                          InputProps={{ 
+                            inputProps: { min: 10 },
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <TimerIcon sx={{ fontSize: 20, color: 'error.main' }} />
+                              </InputAdornment>
+                            )
+                          }}
+                          fullWidth
+                          value={timerSeconds}
+                          onChange={handleTimerChange}
+                          error={hasErrors && !timerSeconds && getErrorMessage('timerSeconds')}
+                          helperText={!timerSeconds && getErrorMessage('timerSeconds')}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              bgcolor: 'white',
+                              '&:hover .MuiOutlinedInput-notchedOutline': {
+                                borderColor: theme.palette.error.main
+                              }
+                            }
+                          }}
+                        />
+                      </Grid>
+                    </Grid>
+
+                    <Divider sx={{ my: 1 }} />
+
+                    <FormControlLabel
+                      disabled={loading.save || loading.delete}
+                      control={
+                        <Switch 
+                          checked={skippable} 
+                          onChange={e => setSkippable(e.target.checked)}
+                          color='primary'
+                        />
+                      }
+                      label={
+                        <Typography variant='body2' fontWeight={600}>
+                          Allow players to skip this question
+                        </Typography>
+                      }
+                    />
+                  </>
+                )}
+              </Stack>
+            </Box>
+          </Grid>
+
+          {/* Action Buttons */}
+          <Grid item xs={12}>
+            <Stack direction="row" spacing={2} sx={{ pt: 2 }}>
+              <Button
+                fullWidth
+                variant='contained'
+                color='primary'
+                size='large'
+                component='label'
+                startIcon={loading.save ? null : <SaveIcon />}
+                onClick={onSaveQuestion}
+                disabled={loading.save || loading.delete}
+                sx={{
+                  py: 1.5,
+                  borderRadius: 2,
+                  color: 'white',
+                  fontWeight: 700,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  '&:hover': {
+                    boxShadow: '0 6px 16px rgba(0,0,0,0.15)',
+                    transform: 'translateY(-2px)'
+                  },
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                {loading.save ? 'Saving Question...' : 'Save Question'}
+              </Button>
+              
+              <Button
+                variant='outlined'
+                color='error'
+                size='large'
+                startIcon={loading.delete ? null : <DeleteIcon />}
+                onClick={handleDeleteClick}
+                disabled={loading.save || loading.delete}
+                sx={{
+                  py: 1.5,
+                  minWidth: 160,
+                  borderRadius: 2,
+                  fontWeight: 700,
+                  borderWidth: 2,
+                  '&:hover': {
+                    borderWidth: 2,
+                    bgcolor: alpha(theme.palette.error.main, 0.05)
+                  }
+                }}
+              >
+                {loading.delete ? 'Deleting...' : 'Delete'}
+              </Button>
+            </Stack>
+          </Grid>
         </Grid>
-        <Grid item xs={6}>
-          <Button
-            startIcon={<DeleteIcon />}
-            fullWidth
-            variant='outlined'
-            component='label'
-            color='error'
-            // style={{ color: 'white' }}
-            aria-label='delete option'
-            onClick={handleDeleteClick}
-            disabled={loading.save || loading.delete} // Disable when either save or delete is in progress
-          >
-            {loading.delete ? 'Deleting...' : 'Delete Q'}
-          </Button>
-        </Grid>
-      </Grid>
+      </Box>
+
       <DeleteConfirmationDialog
         open={openDeleteDialog}
         handleClose={handleCloseDialog}
@@ -940,8 +1215,6 @@ const MultipleChoiceQuestionTemplate = ({
         title='Delete Question?'
         description='Are you sure you want to delete this question? This action cannot be undone.'
       />
-      {/* </CardContent> */}
-      {/* </Card> */}
     </>
   )
 }

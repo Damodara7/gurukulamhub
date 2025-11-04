@@ -21,15 +21,27 @@
 import React, { useEffect, useState } from 'react'
 import { API_URLS } from '@/configs/apiConfig'
 import * as RestApi from '@/utils/restApiUtil'
-import { AlertTitle, Button, Chip, useMediaQuery, useTheme } from '@mui/material'
+import { 
+  AlertTitle, 
+  Button, 
+  Chip, 
+  useMediaQuery, 
+  useTheme, 
+  Container,
+  alpha,
+  CircularProgress
+} from '@mui/material'
 import { Alert, Stack, Grid, Card, Typography, CardContent, CardHeader, Divider, Box } from '@mui/material'
 import Loading from '@/components/Loading'
-import GoBackButton from '@/components/GoBackButton'
 import QuizDetails from '@/components/quiz-builder-1/QuizDetails'
 import { useRouter } from 'next/navigation'
 
 // Mui icons
 import EditIcon from '@mui/icons-material/Edit'
+import VisibilityIcon from '@mui/icons-material/Visibility'
+import LanguageIcon from '@mui/icons-material/Language'
+import QuestionMarkIcon from '@mui/icons-material/QuestionMark'
+import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 
 import {
   SingleChoiceTemplate,
@@ -151,139 +163,402 @@ function ViewQuiz({ quiz, isAdmin=false }) {
   console.log('Secondary questions:', secQuestions)
 
   return (
-    <>
-    <Stack gap={2}>
-      <GoBackButton />
-      {quiz.approvalState === 'draft' && (
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mb: 1 }}>
-          <Button
-            variant='outlined'
-            size='small'
-            color='primary'
-            startIcon={<EditIcon />}
-            onClick={handleEditQuizDetails} // Add your onClick function
-          >
-            Edit Details
-          </Button>
-          <Button
-            variant='outlined'
-            size='small'
-            color='primary'
-            startIcon={<EditIcon />}
-            onClick={handleEditQuizQuestions} // Add your onClick function
-          >
-            Edit Questions
-          </Button>
-        </Box>
-      )}
-      <QuizDetails quiz={quizData} />
-      <Grid container spacing={2}>
-        <Grid item xs={12} md={3}>
-          <Alert sx={{ mx: 'auto', mb: 2 }} icon={false} severity='info'>
-            Primary Lang({quiz?.language?.name}) Questions 👇
-          </Alert>
-          {/* Apply conditional scrolling here */}
-          <Box
-            sx={{
-              overflowY: isSmallScreen ? 'hidden' : 'auto',
-              overflowX: isSmallScreen ? 'auto' : 'hidden',
-              whiteSpace: isSmallScreen ? 'nowrap' : 'normal',
-              maxHeight: isMinimizedBool ? '81vh' : '70vh',
-              height: isSmallScreen ? '140px' : 'auto'
-            }}
-          >
-            {primaryQuestions?.map((question, index) => (
-              <Card
-                key={question._id}
-                sx={{
-                  m: 1,
-                  mb: isSmallScreen ? 0 : 2,
-                  mr: isSmallScreen ? 2 : 0,
-                  padding: '0px',
-                  display: 'inline-block',
-                  cursor: 'pointer',
-                  width: isSmallScreen ? '200px' : '96%',
-                  height: isSmallScreen ? '96%' : 'auto',
-                  border: selectedPrimaryQuestion?._id === question._id ? '3px solid' : '1px solid',
-                  borderColor: selectedPrimaryQuestion?._id === question._id ? 'primary.main' : 'divider', // Enhanced border when selected
-                  boxShadow: selectedPrimaryQuestion?._id === question._id ? '0px 4px 20px rgba(0, 0, 0, 0.1)' : 'none', // Shadow for depth when selected
-                  transition: 'box-shadow 0.3s ease, border-color 0.3s ease', // Smooth transition for the effect
-                  transform: selectedPrimaryQuestion?._id === question._id ? 'scale(1.02)' : 'none' // Slightly larger when selected
-                }}
-                onClick={() => setSelectedPrimaryQuestion(question)}
-              >
-                {renderDummyTemplate(
-                  question,
-                  `${index + 1}. ${question?.data?.question || '* Question is not completed!'}`,
-                  index + 1
-                )}
-              </Card>
-            ))}
-          </Box>
-        </Grid>
+    <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa', pb: 6 }}>
+      {/* Header Section */}
+      <Box
+        sx={{
+          bgcolor: 'white',
+          pt: { xs: 3, md: 4 },
+          pb: { xs: 3, md: 4 },
+          borderBottom: '1px solid #e8eaed',
+          mb: 4
+        }}
+      >
+        <Container maxWidth="xl">
+          <Stack spacing={2}>
+            {/* Back Button */}
+            <Button
+              startIcon={<ArrowBackIcon />}
+              onClick={() => router.back()}
+              sx={{
+                textTransform: 'none',
+                fontWeight: 600,
+                color: 'text.secondary',
+                alignSelf: 'flex-start',
+                px: 0,
+                '&:hover': {
+                  bgcolor: 'transparent',
+                  color: 'primary.main'
+                }
+              }}
+            >
+              Back
+            </Button>
+            
+            {/* Title */}
+            <Typography
+              variant="h4"
+              fontWeight={800}
+              sx={{
+                fontSize: { xs: '1.5rem', md: '2rem' },
+                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2
+              }}
+            >
+              <VisibilityIcon sx={{ fontSize: { xs: 28, md: 36 }, color: 'primary.main' }} />
+              View Quiz
+            </Typography>
 
-        {selectedPrimaryQuestion ? (
-          <Grid item xs={12} md={9}>
-            <Stack spacing={2}>
-              <Card>
-                <Chip
-                  color='primary'
-                  szie='small'
-                  style={{ color: 'white', float: 'right', margin: '4px 8px 4px 4px' }}
-                  label={`${selectedPrimaryQuestion?.language?.split('|')[1]}`}
-                />
-                {renderRealTemplate(selectedPrimaryQuestion)}
-              </Card>
-              <Alert sx={{ mx: 'auto', mb: 2, padding: '4px 8px' }} icon={false} severity='info'>
-                Secondary Language Questions 👇
-              </Alert>
-              {!secQuestionsLoading && (
-                <Box
+            {/* Description */}
+            <Typography variant="body1" sx={{ color: '#5f6368', maxWidth: '800px' }}>
+              Review your quiz details and questions. View primary and secondary language questions.
+            </Typography>
+
+            {/* Action Buttons */}
+            {quiz.approvalState === 'draft' && (
+              <Stack direction="row" spacing={2} flexWrap="wrap" sx={{ pt: 1 }}>
+                <Button
+                  variant='contained'
+                  size='medium'
+                  component='label'
+                  startIcon={<EditIcon />}
+                  onClick={handleEditQuizDetails}
                   sx={{
-                    maxHeight: isMinimizedBool ? '59vh' : '40vh',
-                    overflowY: 'auto',
-                    border: '1px solid',
-                    borderColor: 'divider',
-                    borderRadius: 1,
-                    padding: 1
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    color: 'white',
+                    boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`,
+                    '&:hover': {
+                      boxShadow: `0 6px 16px ${alpha(theme.palette.primary.main, 0.4)}`
+                    }
                   }}
                 >
-                  {secQuestions.length > 0 ? (
-                    secQuestions.map(secQuestion => (
-                      <Box key={secQuestion._id} sx={{ mb: 2 }}>
-                        <Card>
-                          <Chip
-                            color='primary'
-                            szie='small'
-                            style={{ color: 'white', float: 'right', margin: '4px 8px 4px 4px' }}
-                            label={`${secQuestion?.language?.split('|')[1]}`}
-                          />
-                          {renderRealTemplate(secQuestion)}
-                          {/* Show dummy UI for secondary questions */}
-                        </Card>
-                      </Box>
-                    ))
-                  ) : (
-                    <Typography variant='body2' color='error' sx={{ fontWeight: 500, textAlign: 'center' }}>
-                      No secondary language questions exist for this question.
-                    </Typography>
-                  )}
-                </Box>
-              )}
+                  Edit Details
+                </Button>
+                <Button
+                  variant='outlined'
+                  size='medium'
+                  startIcon={<EditIcon />}
+                  onClick={handleEditQuizQuestions}
+                  sx={{
+                    textTransform: 'none',
+                    fontWeight: 600
+                  }}
+                >
+                  Edit Questions
+                </Button>
+              </Stack>
+            )}
+          </Stack>
+        </Container>
+      </Box>
 
-              {secQuestionsLoading && <Loading />}
-            </Stack>
+      <Container maxWidth="xl">
+        <Stack spacing={4}>
+          {/* Quiz Details */}
+            <QuizDetails quiz={quizData} />
+
+          {/* Questions Section */}
+          <Grid container spacing={3}>
+            {/* Primary Questions Sidebar */}
+            <Grid item xs={12} md={3}>
+              <Box
+                sx={{
+                  position: { md: 'sticky' },
+                  top: 20
+                }}
+              >
+                <Card
+                  sx={{
+                    borderRadius: 2,
+                    bgcolor: 'white',
+                    border: '1px solid #e8eaed',
+                    boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+                    overflow: 'hidden'
+                  }}
+                >
+                  <Box
+                    sx={{
+                      p: 2,
+                      bgcolor: alpha(theme.palette.primary.main, 0.08),
+                      borderBottom: '2px solid',
+                      borderColor: 'primary.main'
+                    }}
+                  >
+                    <Stack direction="row" alignItems="center" spacing={1.5}>
+                      <Box
+                        sx={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: 1.5,
+                          bgcolor: 'primary.main',
+                          color: 'white',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        <QuestionMarkIcon sx={{ fontSize: 20 }} />
+                      </Box>
+                      <Stack>
+                        <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem', fontWeight: 600 }}>
+                          PRIMARY QUESTIONS
+                        </Typography>
+                        <Typography variant="body2" fontWeight={700} sx={{ color: 'text.primary' }}>
+                          {quiz?.language?.name}
+                        </Typography>
+                      </Stack>
+                    </Stack>
+                  </Box>
+
+                  <Box
+                    sx={{
+                      overflowY: isSmallScreen ? 'hidden' : 'auto',
+                      overflowX: isSmallScreen ? 'auto' : 'hidden',
+                      whiteSpace: isSmallScreen ? 'nowrap' : 'normal',
+                      maxHeight: { xs: '200px', md: '70vh' },
+                      p: 1.5
+                    }}
+                  >
+                    {primaryQuestions?.length > 0 ? (
+                      primaryQuestions.map((question, index) => (
+                        <Card
+                          key={question._id}
+                          sx={{
+                            mb: 1.5,
+                            display: 'inline-block',
+                            cursor: 'pointer',
+                            width: isSmallScreen ? '220px' : '100%',
+                            border: '2px solid',
+                            borderColor: selectedPrimaryQuestion?._id === question._id ? 'primary.main' : 'divider',
+                            borderRadius: 2,
+                            bgcolor: selectedPrimaryQuestion?._id === question._id 
+                              ? alpha(theme.palette.primary.main, 0.08)
+                              : 'background.paper',
+                            boxShadow: selectedPrimaryQuestion?._id === question._id 
+                              ? `0 4px 16px ${alpha(theme.palette.primary.main, 0.2)}`
+                              : '0 1px 4px rgba(0,0,0,0.05)',
+                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                            '&:hover': {
+                              borderColor: 'primary.main',
+                              boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.15)}`,
+                              transform: 'translateX(4px)'
+                            }
+                          }}
+                          onClick={() => setSelectedPrimaryQuestion(question)}
+                        >
+                          {renderDummyTemplate(
+                            question,
+                            `${index + 1}. ${question?.data?.question || '* Question is not completed!'}`,
+                            index + 1
+                          )}
+                        </Card>
+                      ))
+                    ) : (
+                      <Box sx={{ p: 3, textAlign: 'center' }}>
+                        <Typography variant="body2" color="text.secondary">
+                          No questions available
+                        </Typography>
+                      </Box>
+                    )}
+                  </Box>
+                </Card>
+              </Box>
+            </Grid>
+
+            {/* Main Content Area */}
+            <Grid item xs={12} md={9}>
+              {selectedPrimaryQuestion ? (
+                <Stack spacing={3}>
+                  {/* Selected Primary Question */}
+                  <Card
+                    sx={{
+                      borderRadius: 2,
+                      bgcolor: 'white',
+                      border: '1px solid #e8eaed',
+                      boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+                      overflow: 'hidden'
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        p: 2,
+                        bgcolor: alpha(theme.palette.primary.main, 0.05),
+                        borderBottom: '1px solid',
+                        borderColor: 'divider',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}
+                    >
+                      <Typography variant="subtitle1" fontWeight={700} sx={{ color: 'text.primary' }}>
+                        Primary Question
+                      </Typography>
+                      <Chip
+                        icon={<LanguageIcon sx={{ fontSize: 16 }} />}
+                        size='small'
+                        label={selectedPrimaryQuestion?.language?.split('|')[1]}
+                        sx={{
+                          bgcolor: 'primary.main',
+                          color: 'white',
+                          fontWeight: 700,
+                          fontSize: '0.75rem',
+                          '& .MuiChip-icon': { color: 'white' }
+                        }}
+                      />
+                    </Box>
+                    {renderRealTemplate(selectedPrimaryQuestion)}
+                  </Card>
+
+                  {/* Secondary Questions Section */}
+                  <Card
+                    sx={{
+                      borderRadius: 2,
+                      bgcolor: 'white',
+                      border: '1px solid #e8eaed',
+                      boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+                      overflow: 'hidden'
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        p: 2,
+                        bgcolor: alpha(theme.palette.secondary.main, 0.05),
+                        borderBottom: '2px solid',
+                        borderColor: 'secondary.main'
+                      }}
+                    >
+                      <Stack direction="row" alignItems="center" spacing={1.5}>
+                        <Box
+                          sx={{
+                            width: 4,
+                            height: 24,
+                            bgcolor: 'secondary.main',
+                            borderRadius: 2
+                          }}
+                        />
+                        <Typography variant="h6" fontWeight={700} sx={{ color: 'secondary.main' }}>
+                          Secondary Language Questions
+                        </Typography>
+                        {secQuestions.length > 0 && (
+                          <Chip
+                            label={`${secQuestions.length} question${secQuestions.length !== 1 ? 's' : ''}`}
+                            size="small"
+                            sx={{
+                              bgcolor: 'secondary.main',
+                              color: 'white',
+                              fontWeight: 600,
+                              fontSize: '0.7rem'
+                            }}
+                          />
+                        )}
+                      </Stack>
+                    </Box>
+
+                    <Box sx={{ p: 2 }}>
+                      {secQuestionsLoading ? (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 8 }}>
+                          <CircularProgress size={40} />
+                        </Box>
+                      ) : secQuestions.length > 0 ? (
+                        <Box
+                          sx={{
+                            maxHeight: '60vh',
+                            overflowY: 'auto',
+                            pr: 1
+                          }}
+                        >
+                          <Stack spacing={3}>
+                            {secQuestions.map((secQuestion, index) => (
+                              <Card
+                                key={secQuestion._id}
+                                sx={{
+                                  borderRadius: 2,
+                                  border: '1px solid',
+                                  borderColor: 'divider',
+                                  boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                                  overflow: 'hidden'
+                                }}
+                              >
+                                <Box
+                                  sx={{
+                                    p: 1.5,
+                                    bgcolor: alpha(theme.palette.secondary.main, 0.06),
+                                    borderBottom: '1px solid',
+                                    borderColor: 'divider',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center'
+                                  }}
+                                >
+                                  <Typography variant="caption" fontWeight={700} sx={{ color: 'text.secondary' }}>
+                                    Question {index + 1}
+                                  </Typography>
+                                  <Chip
+                                    icon={<LanguageIcon sx={{ fontSize: 14 }} />}
+                                    size='small'
+                                    label={secQuestion?.language?.split('|')[1]}
+                                    sx={{
+                                      bgcolor: 'secondary.main',
+                                      color: 'white',
+                                      fontWeight: 600,
+                                      fontSize: '0.7rem',
+                                      height: 22,
+                                      '& .MuiChip-icon': { color: 'white' }
+                                    }}
+                                  />
+                                </Box>
+                                {renderRealTemplate(secQuestion)}
+                              </Card>
+                            ))}
+                          </Stack>
+                        </Box>
+                      ) : (
+                        <Box sx={{ 
+                          p: 6, 
+                          textAlign: 'center',
+                          bgcolor: alpha(theme.palette.grey[100], 0.5),
+                          borderRadius: 2,
+                          border: '1px dashed',
+                          borderColor: 'divider'
+                        }}>
+                          <Typography variant='body1' color='text.secondary' sx={{ fontWeight: 500 }}>
+                            No secondary language questions exist for this question.
+                          </Typography>
+                        </Box>
+                      )}
+                    </Box>
+                  </Card>
+                </Stack>
+              ) : (
+                <Card
+                  sx={{
+                    borderRadius: 2,
+                    bgcolor: 'white',
+                    border: '1px solid #e8eaed',
+                    boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+                    p: 8,
+                    textAlign: 'center'
+                  }}
+                >
+                  <QuestionMarkIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+                  <Typography variant='h6' fontWeight={600} color='text.secondary' gutterBottom>
+                    Select a Question
+                  </Typography>
+                  <Typography variant='body2' color='text.secondary'>
+                    Choose a primary question from the left panel to view its details and secondary language versions.
+                  </Typography>
+                </Card>
+              )}
+            </Grid>
           </Grid>
-        ) : (
-          <Grid item xs={12} md={9}>
-            <Alert severity='info' variant='standard' style={{ padding: '4px 8px' }}>
-              Select a primary question to view secondary questions.
-            </Alert>
-          </Grid>
-        )}
-      </Grid>
-    </Stack>
-    </>
+        </Stack>
+      </Container>
+    </Box>
   )
 }
 
