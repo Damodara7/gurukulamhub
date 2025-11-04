@@ -19,8 +19,11 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem
+  MenuItem,
+  useTheme
 } from '@mui/material'
+import { alpha } from '@mui/material/styles'
+import { Group as GroupIcon, People as PeopleIcon } from '@mui/icons-material'
 
 import UserMultiSelect from './UserMultiSelect'
 import { useSession } from 'next-auth/react'
@@ -53,6 +56,7 @@ const validateForm = formData => {
 const formFieldOrder = ['groupName', 'description']
 
 const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
+  const theme = useTheme()
   const initialFormData = {
     groupName: '',
     description: '',
@@ -329,117 +333,234 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
 
   console.log('selected user in the creategroup form after the handleUserSelection ', selectedUsers)
   return (
-    <Box>
-      {/* {!isInline && ( */}
-      <Card sx={{ maxWidth: 'lg' }}>
-        <CardContent>
-          {/* Error Snackbar */}
-          <Snackbar
-            open={showErrorSnackbar}
-            autoHideDuration={6000}
-            onClose={() => setShowErrorSnackbar(false)}
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-          >
-            <Alert onClose={() => setShowErrorSnackbar(false)} severity='error' variant='filled' sx={{ width: '100%' }}>
-              {errorMessage}
-            </Alert>
-          </Snackbar>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        background: `radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 50%),
+                     radial-gradient(circle at 80% 80%, ${alpha(
+                       theme.palette.secondary.main,
+                       0.05
+                     )} 0%, transparent 50%),
+                     ${theme.palette.background.default}`
+      }}
+    >
+      {/* Elegant Header */}
+      <Box
+        sx={{
+          backdropFilter: 'blur(20px)',
+          bgcolor: alpha('#fff', 0.7),
+          borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+          pt: { xs: 4, md: 6 },
+          pb: { xs: 4, md: 6 }
+        }}
+      >
+        <Box sx={{ maxWidth: '1200px', margin: '0 auto', px: { xs: 2, sm: 3, md: 4 } }}>
+          <Box sx={{ textAlign: 'center' }}>
+            {/* Icon and Title */}
+            <Box
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 2,
+                mb: 2
+              }}
+            >
+              <Box
+                sx={{
+                  width: { xs: 48, sm: 56 },
+                  height: { xs: 48, sm: 56 },
+                  borderRadius: '12px',
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`
+                }}
+              >
+                <GroupIcon sx={{ fontSize: '28px', color: 'white' }} />
+              </Box>
+              <Typography
+                sx={{
+                  fontSize: { xs: '2rem', md: '2.5rem' },
+                  fontWeight: 700,
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  letterSpacing: '-0.02em'
+                }}
+              >
+                {data ? 'Edit Group' : 'Create Group'}
+              </Typography>
+            </Box>
+            <Typography
+              variant='body1'
+              color='text.secondary'
+              sx={{
+                fontSize: '1.05rem',
+                lineHeight: 1.8,
+                fontWeight: 400,
+                maxWidth: '600px',
+                mx: 'auto'
+              }}
+            >
+              {data
+                ? 'Update group details and manage members with smart filters'
+                : 'Create a new group and organize members with custom criteria'}
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
 
-          <form onSubmit={handleSubmit}>
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label='group Name'
-                  name='groupName'
-                  value={formData.groupName}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  error={!!errors.groupName && touches.groupName}
-                  helperText={errors.groupName}
-                  required
-                  inputRef={fieldRefs.groupName}
-                  inputProps={{
-                    maxLength: 50
-                  }}
-                />
-              </Grid>
+      {/* Main Content */}
+      <Box sx={{ maxWidth: '1200px', margin: '0 auto', px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 } }}>
+        <Card
+          sx={{
+            borderRadius: 2,
+            boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.08)}`,
+            border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+            overflow: 'hidden',
+            '&:hover': {
+              boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.12)}`
+            }
+          }}
+        >
+          <CardContent sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
+            {/* Error Snackbar */}
+            <Snackbar
+              open={showErrorSnackbar}
+              autoHideDuration={6000}
+              onClose={() => setShowErrorSnackbar(false)}
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+              sx={{
+                '& .MuiSnackbar-root': {
+                  top: { xs: 90, sm: 0 }
+                }
+              }}
+            >
+              <Alert
+                onClose={() => setShowErrorSnackbar(false)}
+                severity='error'
+                variant='filled'
+                sx={{
+                  width: '100%',
+                  animation: 'slideUp 0.5s ease-out',
+                  '@keyframes slideUp': {
+                    '0%': {
+                      transform: 'translateY(100%)',
+                      opacity: 0
+                    },
+                    '100%': {
+                      transform: 'translateY(0)',
+                      opacity: 1
+                    }
+                  }
+                }}
+              >
+                {errorMessage}
+              </Alert>
+            </Snackbar>
 
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label='Description (Optional)'
-                  name='description'
-                  value={formData.description}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  error={!!errors.description && touches.description}
-                  helperText={errors.description}
-                  multiline
-                  rows={3}
-                  inputRef={fieldRefs.description}
-                  inputProps={{
-                    maxLength: 500
-                  }}
-                />
-              </Grid>
-
-              <Grid item xs={12}>
-                <FormControl fullWidth>
-                  <InputLabel id='status-label'>Group Status</InputLabel>
-                  <Select
-                    labelId='status-label'
-                    name='status'
-                    value={formData.status}
+            <form onSubmit={handleSubmit}>
+              <Grid container spacing={3}>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label='Group Name'
+                    name='groupName'
+                    value={formData.groupName}
                     onChange={handleChange}
-                    label='Group Status'
-                  >
-                    <MenuItem value='public'>Public</MenuItem>
-                    <MenuItem value='private'>Private</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
+                    onBlur={handleBlur}
+                    error={!!errors.groupName && touches.groupName}
+                    helperText={errors.groupName}
+                    required
+                    inputRef={fieldRefs.groupName}
+                    inputProps={{
+                      maxLength: 50
+                    }}
+                  />
+                </Grid>
 
-              <Grid item xs={12}>
-                <GroupByFilter
-                  users={users}
-                  key={data}
-                  onFilterChange={(userIds, criteria) => handleFilterChange(userIds, criteria)}
-                  initialCriteria={filterCriteria}
-                />
-              </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label='Description (Optional)'
+                    name='description'
+                    value={formData.description}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    error={!!errors.description && touches.description}
+                    helperText={errors.description}
+                    multiline
+                    rows={3}
+                    inputRef={fieldRefs.description}
+                    inputProps={{
+                      maxLength: 500
+                    }}
+                  />
+                </Grid>
 
-              <Grid item xs={12}>
-                <Typography>group Members</Typography>
-                <UserMultiSelect
-                  users={users}
-                  selectedUsers={selectedUsers}
-                  onSelectChange={handleUserSelection}
-                  matchedUserIds={matchedUserIds}
-                  unmatchedUserIds={unmatchedUserIds}
-                />
+                <Grid item xs={12}>
+                  <FormControl fullWidth>
+                    <InputLabel id='status-label'>Group Status</InputLabel>
+                    <Select
+                      labelId='status-label'
+                      name='status'
+                      value={formData.status}
+                      onChange={handleChange}
+                      label='Group Status'
+                    >
+                      <MenuItem value='public'>Public</MenuItem>
+                      <MenuItem value='private'>Private</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+
+                <Grid item xs={12}>
+                  <GroupByFilter
+                    users={users}
+                    key={data}
+                    onFilterChange={(userIds, criteria) => handleFilterChange(userIds, criteria)}
+                    initialCriteria={filterCriteria}
+                  />
+                </Grid>
+
+                <Grid item xs={12}>
+                  <Typography variant='subtitle1' gutterBottom sx={{ fontWeight: 600 }}>
+                    <PeopleIcon
+                      sx={{ fontSize: 20, mr: 1, verticalAlign: 'middle', color: theme.palette.primary.main }}
+                    />
+                    Group Members
+                  </Typography>
+                  <UserMultiSelect
+                    users={users}
+                    selectedUsers={selectedUsers}
+                    onSelectChange={handleUserSelection}
+                    matchedUserIds={matchedUserIds}
+                    unmatchedUserIds={unmatchedUserIds}
+                  />
+                </Grid>
+                <Grid item xs={12} mt={4}>
+                  <Stack direction='row' spacing={2} justifyContent='center'>
+                    <Button variant='outlined' onClick={onCancel} disabled={isSubmitting}>
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleSubmit}
+                      component='label'
+                      variant='contained'
+                      color='primary'
+                      style={{ color: 'white' }}
+                      disabled={isSubmitting || selectedUsers.length === 0}
+                    >
+                      {isSubmitting ? 'Saving...' : data ? 'Update Group' : 'Create Group'}
+                    </Button>
+                  </Stack>
+                </Grid>
               </Grid>
-              <Grid item xs={12} mt={4}>
-                <Stack direction='row' spacing={2} justifyContent='center'>
-                  <Button variant='outlined' onClick={onCancel} disabled={isSubmitting}>
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={handleSubmit}
-                    component='label'
-                    variant='contained'
-                    color='primary'
-                    style={{ color: 'white' }}
-                    disabled={isSubmitting || selectedUsers.length === 0}
-                  >
-                    {isSubmitting ? 'Saving...' : 'Save group'}
-                  </Button>
-                </Stack>
-              </Grid>
-            </Grid>
-          </form>
-        </CardContent>
-      </Card>
+            </form>
+          </CardContent>
+        </Card>
+      </Box>
     </Box>
   )
 }

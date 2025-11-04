@@ -17,7 +17,9 @@ import {
   MenuItem,
   ListItemIcon,
   Stack,
-  ListItemText
+  ListItemText,
+  Divider,
+  InputAdornment
 } from '@mui/material'
 
 // MUI Icons
@@ -195,7 +197,11 @@ const VideosTable = () => {
     () => [
       columnHelper.accessor('name', {
         header: 'Title',
-        cell: ({ row }) => <Typography color='text.primary'>{row.original.name}</Typography>
+        cell: ({ row }) => (
+          <Typography color='text.primary' sx={{ fontWeight: 500, minWidth: '150px' }}>
+            {row.original.name}
+          </Typography>
+        )
       }),
       columnHelper.accessor('url', {
         header: 'Video',
@@ -204,7 +210,7 @@ const VideosTable = () => {
       columnHelper.accessor('createdAt', {
         header: 'Created Date',
         cell: ({ row }) => (
-          <Typography variant='body2'>
+          <Typography variant='body2' color='text.secondary' sx={{ minWidth: '140px' }}>
             {new Date(row.original.createdAt).toLocaleDateString('en-GB', {
               day: '2-digit',
               month: 'short',
@@ -221,13 +227,29 @@ const VideosTable = () => {
       }),
       columnHelper.accessor('createdBy', {
         header: 'Created By',
-        cell: ({ row }) => <Typography variant='body2'>{row.original.createdBy}</Typography>
+        cell: ({ row }) => (
+          <Typography variant='body2' color='text.secondary' sx={{ minWidth: '180px' }}>
+            {row.original.createdBy}
+          </Typography>
+        )
       }),
       columnHelper.accessor('action', {
         header: 'Actions',
         cell: ({ row }) => (
           <div className='flex items-center'>
-            <IconButtonTooltip title='Actions' onClick={e => handleMoreClick(e, row.original)}>
+            <IconButtonTooltip
+              title='Actions'
+              onClick={e => handleMoreClick(e, row.original)}
+              sx={{
+                transition: 'all 0.2s ease-in-out',
+                '&:hover': {
+                  backgroundColor: theme => theme.palette.primary.main + '10',
+                  '& i': {
+                    color: 'primary.main'
+                  }
+                }
+              }}
+            >
               <i className='ri-more-2-line text-[22px] text-textSecondary' />
             </IconButtonTooltip>
           </div>
@@ -301,21 +323,62 @@ const VideosTable = () => {
 
   return (
     <>
-      <Card>
-        <CardContent className='flex flex-col gap-4 sm:flex-row items-start sm:items-center justify-between'>
-          <DebouncedInput
-            value={globalFilter ?? ''}
-            onChange={value => setGlobalFilter(String(value))}
-            placeholder='Search Videos'
-            className='is-full sm:is-auto'
-          />
-          <OpenDialogOnElementClick
-            element={Button}
-            elementProps={buttonProps}
-            dialog={VideoDialog}
-            dialogProps={{ data: currentRow, open: open, onClose: handleCloseVideoDialog , onSuccess: refreshData }}
-          />
+      <Card
+        sx={{
+          background: '#ffffff',
+          boxShadow: theme => theme.shadows[3],
+          borderRadius: 3,
+          overflow: 'hidden',
+          border: theme => `1px solid ${theme.palette.divider}`,
+          transition: 'box-shadow 0.3s ease-in-out',
+          '&:hover': {
+            boxShadow: theme => theme.shadows[6]
+          }
+        }}
+      >
+        <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
+          <div className='flex justify-between items-center flex-col sm:flex-row gap-4'>
+            <DebouncedInput
+              value={globalFilter ?? ''}
+              onChange={value => setGlobalFilter(String(value))}
+              placeholder='Search Videos'
+              fullWidth
+              sx={{ maxWidth: { sm: '500px' } }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position='start'>
+                    <i
+                      className='ri-search-line'
+                      style={{ fontSize: '20px', color: 'var(--mui-palette-text-secondary)' }}
+                    />
+                  </InputAdornment>
+                )
+              }}
+            />
+            <Button
+              variant='contained'
+              component='label'
+              onClick={handleAddRow}
+              startIcon={<i className='ri-add-line' />}
+              sx={{
+                borderRadius: 2,
+                color: 'white',
+                fontWeight: 600
+              }}
+            >
+              Add New Video
+            </Button>
+          </div>
         </CardContent>
+
+        <Stack direction='row' justifyContent='space-between' alignItems='center' sx={{ px: { xs: 3, sm: 4 }, pb: 2 }}>
+          <Typography variant='body2' color='text.secondary' sx={{ fontWeight: 500 }}>
+            Total {data?.length || 0} video{data?.length !== 1 ? 's' : ''}
+          </Typography>
+        </Stack>
+
+        <Divider />
+
         <div className='overflow-x-auto'>
           <table className={tableStyles.table}>
             <thead>
@@ -349,7 +412,23 @@ const VideosTable = () => {
               <tbody>
                 <tr>
                   <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
-                    No data available
+                    <div
+                      style={{
+                        padding: '48px 16px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '12px'
+                      }}
+                    >
+                      <i className='ri-video-line' style={{ fontSize: '48px', opacity: 0.5 }} />
+                      <Typography variant='h6' color='text.secondary'>
+                        No videos found
+                      </Typography>
+                      <Typography variant='body2' color='text.disabled'>
+                        Start by adding your first video to the library
+                      </Typography>
+                    </div>
                   </td>
                 </tr>
               </tbody>
@@ -359,7 +438,26 @@ const VideosTable = () => {
                   .getRowModel()
                   .rows.slice(0, table.getState().pagination.pageSize)
                   .map(row => (
-                    <tr key={row.id} className={classnames({ selected: row.getIsSelected() })}>
+                    <tr
+                      key={row.id}
+                      className={classnames({ selected: row.getIsSelected() })}
+                      style={{
+                        transition: 'all 0.3s ease-in-out',
+                        cursor: 'pointer'
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.backgroundColor = 'rgba(139, 92, 246, 0.08)'
+                        e.currentTarget.style.transform = 'scale(1.01)'
+                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(139, 92, 246, 0.15)'
+                      }}
+                      onMouseLeave={e => {
+                        if (!row.getIsSelected()) {
+                          e.currentTarget.style.backgroundColor = 'transparent'
+                        }
+                        e.currentTarget.style.transform = 'scale(1)'
+                        e.currentTarget.style.boxShadow = 'none'
+                      }}
+                    >
                       {row.getVisibleCells().map(cell => (
                         <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
                       ))}
@@ -383,6 +481,15 @@ const VideosTable = () => {
             table.setPageIndex(page)
           }}
           onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
+          sx={{
+            '.MuiTablePagination-toolbar': {
+              px: { xs: 2, sm: 3 },
+              py: 2
+            },
+            '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
+              fontSize: { xs: '0.75rem', sm: '0.875rem' }
+            }
+          }}
         />
 
         {/* Menu for more options */}
@@ -392,11 +499,9 @@ const VideosTable = () => {
           handleAction={action => {
             if (action === 'delete') {
               handleDeleteConfirmation()
-            }
-            else if (action === 'edit') {
+            } else if (action === 'edit') {
               handleEditRow()
-            }
-            else if (action === 'play') {
+            } else if (action === 'play') {
               handlePlayRow()
             }
           }}
@@ -406,7 +511,9 @@ const VideosTable = () => {
       {/* Dialog for editing and adding Videos */}
       {open && <VideoDialog open={open} onClose={handleCloseVideoDialog} data={currentRow} onSuccess={refreshData} />}
 
-      {openPlayerDialog && <VideoPortionPlayerDialog open={openPlayerDialog} onClose={handleClosePlayerDialog} data={currentRow} />}
+      {openPlayerDialog && (
+        <VideoPortionPlayerDialog open={openPlayerDialog} onClose={handleClosePlayerDialog} data={currentRow} />
+      )}
 
       {/* Confirmation Dialog */}
       <ConfirmationDialog

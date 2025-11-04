@@ -1,5 +1,6 @@
 import React from 'react'
-import { Box, Card, CardContent, Typography, Button, Grid, Container } from '@mui/material'
+import { Box, Card, CardContent, Typography, Button, Grid, Container, useTheme } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import {
   Schedule as ScheduleIcon,
   RequestQuote as RequestIcon,
@@ -8,60 +9,87 @@ import {
 } from '@mui/icons-material'
 
 const GameCreationModeSelector = ({ onModeSelect }) => {
+  const theme = useTheme()
+
   return (
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        py: { xs: 4, sm: 6, md: 8 },
-        px: { xs: 2, sm: 3 },
-        position: 'relative',
-        overflow: 'hidden',
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background:
-            'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
-          opacity: 0.4
-        }
+        background: `radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 50%),
+                     radial-gradient(circle at 80% 80%, ${alpha(
+                       theme.palette.secondary.main,
+                       0.05
+                     )} 0%, transparent 50%),
+                     ${theme.palette.background.default}`
       }}
     >
-      <Container maxWidth='lg' sx={{ position: 'relative', zIndex: 1 }}>
-        {/* Header Section */}
-        <Box sx={{ textAlign: 'center', mb: 6 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, mb: 2 }}>
-            <GameIcon sx={{ fontSize: { xs: 40, sm: 50, md: 60 }, color: 'white' }} />
-            <Typography
-              variant='h2'
+      {/* Elegant Header */}
+      <Box
+        sx={{
+          backdropFilter: 'blur(20px)',
+          bgcolor: alpha('#fff', 0.7),
+          borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+          pt: { xs: 4, md: 6 },
+          pb: { xs: 4, md: 6 }
+        }}
+      >
+        <Container maxWidth='lg'>
+          <Box sx={{ textAlign: 'center' }}>
+            {/* Icon and Title */}
+            <Box
               sx={{
-                color: 'white',
-                fontWeight: 700,
-                fontSize: { xs: '2rem', sm: '2.75rem', md: '3.5rem' },
-                letterSpacing: '-1px',
-                textShadow: '0 2px 20px rgba(0,0,0,0.2)'
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 2,
+                mb: 2
               }}
             >
-              Create New Game
+              <Box
+                sx={{
+                  width: { xs: 48, sm: 56 },
+                  height: { xs: 48, sm: 56 },
+                  borderRadius: '12px',
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`
+                }}
+              >
+                <GameIcon sx={{ fontSize: 28, color: 'white' }} />
+              </Box>
+              <Typography
+                sx={{
+                  fontSize: { xs: '2rem', md: '2.5rem' },
+                  fontWeight: 700,
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  letterSpacing: '-0.02em'
+                }}
+              >
+                Create New Game
+              </Typography>
+            </Box>
+            <Typography
+              variant='body1'
+              color='text.secondary'
+              sx={{
+                fontSize: '1.05rem',
+                lineHeight: 1.8,
+                maxWidth: 600,
+                mx: 'auto',
+                fontWeight: 400
+              }}
+            >
+              Choose how you want to create your game
             </Typography>
           </Box>
-          <Typography
-            variant='h6'
-            sx={{
-              color: 'rgba(255, 255, 255, 0.95)',
-              maxWidth: '700px',
-              mx: 'auto',
-              fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' },
-              fontWeight: 400
-            }}
-          >
-            Choose how you want to create your game
-          </Typography>
-        </Box>
+        </Container>
+      </Box>
 
+      {/* Content Area */}
+      <Container maxWidth='lg' sx={{ py: { xs: 3, md: 4 } }}>
         {/* Cards Section */}
         <Grid container spacing={{ xs: 3, md: 4 }} sx={{ mb: 5 }}>
           {/* Option 1: Create & Schedule with existing sponsors */}
@@ -71,16 +99,15 @@ const GameCreationModeSelector = ({ onModeSelect }) => {
                 height: '100%',
                 cursor: 'pointer',
                 transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                borderRadius: '24px',
-                background: 'rgba(255, 255, 255, 0.98)',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+                borderRadius: 3,
+                background: '#ffffff',
+                border: theme => `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+                boxShadow: theme => theme.shadows[3],
                 position: 'relative',
                 overflow: 'hidden',
                 '&:hover': {
-                  transform: 'translateY(-8px) scale(1.02)',
-                  boxShadow: '0 20px 60px rgba(102, 126, 234, 0.4)',
+                  transform: 'translateY(-8px)',
+                  boxShadow: '0 12px 40px rgba(139, 92, 246, 0.2)',
                   '&::before': {
                     opacity: 1
                   }
@@ -91,8 +118,8 @@ const GameCreationModeSelector = ({ onModeSelect }) => {
                   top: 0,
                   left: 0,
                   right: 0,
-                  height: '6px',
-                  background: 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)',
+                  height: '4px',
+                  background: 'linear-gradient(90deg, #8b5cf6 0%, #c4b5fd 100%)',
                   opacity: 0,
                   transition: 'opacity 0.3s ease'
                 }
@@ -112,14 +139,18 @@ const GameCreationModeSelector = ({ onModeSelect }) => {
                   sx={{
                     width: 80,
                     height: 80,
-                    borderRadius: '20px',
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    borderRadius: '16px',
+                    background: 'linear-gradient(135deg, #8b5cf6 0%, #c4b5fd 100%)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     mx: 'auto',
                     mb: 3,
-                    boxShadow: '0 8px 24px rgba(102, 126, 234, 0.3)'
+                    boxShadow: '0 4px 14px rgba(139, 92, 246, 0.3)',
+                    transition: 'transform 0.3s ease-in-out',
+                    '&:hover': {
+                      transform: 'rotate(5deg)'
+                    }
                   }}
                 >
                   <ScheduleIcon sx={{ fontSize: 40, color: 'white' }} />
@@ -150,33 +181,14 @@ const GameCreationModeSelector = ({ onModeSelect }) => {
                 </Typography>
                 <Button
                   variant='contained'
+                  component='label'
                   fullWidth
                   sx={{
-                    py: 1.5,
-                    borderRadius: '12px',
-                    fontSize: '1rem',
+                    borderRadius: 2,
+                    color: 'white',
                     fontWeight: 600,
-                    textTransform: 'none',
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important',
-                    color: '#ffffff !important',
-                    boxShadow: '0 4px 14px rgba(102, 126, 234, 0.4)',
-                    opacity: '1 !important',
-                    visibility: 'visible !important',
-                    '& .MuiButton-label': {
-                      color: '#ffffff !important',
-                      opacity: '1 !important'
-                    },
-                    '& span': {
-                      color: '#ffffff !important',
-                      opacity: '1 !important'
-                    },
-                    '&:hover': {
-                      background: 'linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%) !important',
-                      boxShadow: '0 6px 20px rgba(102, 126, 234, 0.6)',
-                      transform: 'translateY(-2px)',
-                      color: '#ffffff !important'
-                    }
                   }}
+
                 >
                   Create with Existing Sponsors
                 </Button>
@@ -191,16 +203,15 @@ const GameCreationModeSelector = ({ onModeSelect }) => {
                 height: '100%',
                 cursor: 'pointer',
                 transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                borderRadius: '24px',
-                background: 'rgba(255, 255, 255, 0.98)',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+                borderRadius: 3,
+                background: '#ffffff',
+                border: theme => `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+                boxShadow: theme => theme.shadows[3],
                 position: 'relative',
                 overflow: 'hidden',
                 '&:hover': {
-                  transform: 'translateY(-8px) scale(1.02)',
-                  boxShadow: '0 20px 60px rgba(102, 126, 234, 0.3)',
+                  transform: 'translateY(-8px)',
+                  boxShadow: '0 12px 40px rgba(139, 92, 246, 0.2)',
                   '&::before': {
                     opacity: 1
                   }
@@ -211,8 +222,8 @@ const GameCreationModeSelector = ({ onModeSelect }) => {
                   top: 0,
                   left: 0,
                   right: 0,
-                  height: '6px',
-                  background: 'linear-gradient(90deg, rgba(102, 126, 234, 0.7) 0%, rgba(118, 75, 162, 0.7) 100%)',
+                  height: '4px',
+                  background: 'linear-gradient(90deg, #8b5cf6 0%, #c4b5fd 100%)',
                   opacity: 0,
                   transition: 'opacity 0.3s ease'
                 }
@@ -232,14 +243,18 @@ const GameCreationModeSelector = ({ onModeSelect }) => {
                   sx={{
                     width: 80,
                     height: 80,
-                    borderRadius: '20px',
-                    background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.7) 0%, rgba(118, 75, 162, 0.7) 100%)',
+                    borderRadius: '16px',
+                    background: 'linear-gradient(135deg, #a78bfa 0%, #ddd6fe 100%)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     mx: 'auto',
                     mb: 3,
-                    boxShadow: '0 8px 24px rgba(102, 126, 234, 0.25)'
+                    boxShadow: '0 4px 14px rgba(139, 92, 246, 0.25)',
+                    transition: 'transform 0.3s ease-in-out',
+                    '&:hover': {
+                      transform: 'rotate(5deg)'
+                    }
                   }}
                 >
                   <RequestIcon sx={{ fontSize: 40, color: 'white' }} />
@@ -270,33 +285,12 @@ const GameCreationModeSelector = ({ onModeSelect }) => {
                 </Typography>
                 <Button
                   variant='contained'
+                  component='label'
                   fullWidth
                   sx={{
-                    py: 1.5,
-                    borderRadius: '12px',
-                    fontSize: '1rem',
+                    borderRadius: 2,
+                    color: 'white',
                     fontWeight: 600,
-                    textTransform: 'none',
-                    background:
-                      'linear-gradient(135deg, rgba(102, 126, 234, 0.85) 0%, rgba(118, 75, 162, 0.85) 100%) !important',
-                    color: '#ffffff !important',
-                    boxShadow: '0 4px 14px rgba(102, 126, 234, 0.3)',
-                    opacity: '1 !important',
-                    visibility: 'visible !important',
-                    '& .MuiButton-label': {
-                      color: '#ffffff !important',
-                      opacity: '1 !important'
-                    },
-                    '& span': {
-                      color: '#ffffff !important',
-                      opacity: '1 !important'
-                    },
-                    '&:hover': {
-                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important',
-                      boxShadow: '0 6px 20px rgba(102, 126, 234, 0.5)',
-                      transform: 'translateY(-2px)',
-                      color: '#ffffff !important'
-                    }
                   }}
                 >
                   Request Sponsorship
@@ -309,11 +303,10 @@ const GameCreationModeSelector = ({ onModeSelect }) => {
         {/* Info Section */}
         <Card
           sx={{
-            borderRadius: '20px',
-            background: 'rgba(255, 255, 255, 0.15)',
-            backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            boxShadow: 'none',
+            borderRadius: 3,
+            background: '#ffffff',
+            border: theme => `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+            boxShadow: theme => theme.shadows[2],
             p: { xs: 3, sm: 4 }
           }}
         >
@@ -322,32 +315,38 @@ const GameCreationModeSelector = ({ onModeSelect }) => {
               <Box
                 sx={{
                   p: 3,
-                  borderRadius: '16px',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)'
+                  borderRadius: 2,
+                  background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(196, 181, 253, 0.05) 100%)',
+                  border: theme => `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+                  transition: 'all 0.3s ease-in-out',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(196, 181, 253, 0.08) 100%)',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 4px 12px rgba(139, 92, 246, 0.15)'
+                  }
                 }}
               >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
                   <Box
                     sx={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: '8px',
-                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      width: 40,
+                      height: 40,
+                      borderRadius: '10px',
+                      background: 'linear-gradient(135deg, #8b5cf6 0%, #c4b5fd 100%)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)'
+                      boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)'
                     }}
                   >
-                    <FavoriteIcon sx={{ fontSize: 18, color: 'white' }} />
+                    <ScheduleIcon sx={{ fontSize: 20, color: 'white' }} />
                   </Box>
                   <Typography
-                    variant='body1'
+                    variant='h6'
                     sx={{
-                      color: 'white',
-                      fontWeight: 600,
-                      fontSize: '1rem'
+                      color: 'text.primary',
+                      fontWeight: 700,
+                      fontSize: '1.1rem'
                     }}
                   >
                     Option 1: Existing Sponsors
@@ -356,8 +355,9 @@ const GameCreationModeSelector = ({ onModeSelect }) => {
                 <Typography
                   variant='body2'
                   sx={{
-                    color: 'rgba(255, 255, 255, 0.9)',
-                    lineHeight: 1.6
+                    color: 'text.secondary',
+                    lineHeight: 1.7,
+                    fontSize: '0.95rem'
                   }}
                 >
                   Best when you already have sponsors committed to your game. Schedule and launch immediately.
@@ -368,32 +368,38 @@ const GameCreationModeSelector = ({ onModeSelect }) => {
               <Box
                 sx={{
                   p: 3,
-                  borderRadius: '16px',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)'
+                  borderRadius: 2,
+                  background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(196, 181, 253, 0.05) 100%)',
+                  border: theme => `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+                  transition: 'all 0.3s ease-in-out',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(196, 181, 253, 0.08) 100%)',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 4px 12px rgba(139, 92, 246, 0.15)'
+                  }
                 }}
               >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
                   <Box
                     sx={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: '8px',
-                      background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.7) 0%, rgba(118, 75, 162, 0.7) 100%)',
+                      width: 40,
+                      height: 40,
+                      borderRadius: '10px',
+                      background: 'linear-gradient(135deg, #a78bfa 0%, #ddd6fe 100%)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      boxShadow: '0 4px 12px rgba(102, 126, 234, 0.25)'
+                      boxShadow: '0 4px 12px rgba(139, 92, 246, 0.25)'
                     }}
                   >
-                    <FavoriteIcon sx={{ fontSize: 18, color: 'white' }} />
+                    <RequestIcon sx={{ fontSize: 20, color: 'white' }} />
                   </Box>
                   <Typography
-                    variant='body1'
+                    variant='h6'
                     sx={{
-                      color: 'white',
-                      fontWeight: 600,
-                      fontSize: '1rem'
+                      color: 'text.primary',
+                      fontWeight: 700,
+                      fontSize: '1.1rem'
                     }}
                   >
                     Option 2: Request Sponsorship
@@ -402,8 +408,9 @@ const GameCreationModeSelector = ({ onModeSelect }) => {
                 <Typography
                   variant='body2'
                   sx={{
-                    color: 'rgba(255, 255, 255, 0.9)',
-                    lineHeight: 1.6
+                    color: 'text.secondary',
+                    lineHeight: 1.7,
+                    fontSize: '0.95rem'
                   }}
                 >
                   Best when you want to create the game first and find sponsors later. Perfect for planning ahead.

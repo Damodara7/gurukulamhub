@@ -1,13 +1,19 @@
 import React, { useState, useEffect } from 'react'
 import SortableTree, { addNodeUnderParent, removeNodeAtPath, changeNodeAtPath } from '@nosferatu500/react-sortable-tree'
 import '@nosferatu500/react-sortable-tree/style.css'
-import { Input, Button, IconButton, useTheme } from '@mui/material'
+import { Input, Button, IconButton, useTheme, TextField, InputAdornment, Box, Typography } from '@mui/material'
 import useUser from '@/utils/useUser' // Replace with your hook path
 import { AddCircle as AddCircleIcon, RemoveCircle as RemoveCircleIcon, Edit as EditIcon } from '@mui/icons-material'
 import SearchNavigator from './SearchNavigator'
 import IconButtonTooltip from '../IconButtonTooltip'
 
-const AdminContextTree = ({ data, onAddClick = () => {}, onEditClick = () => {}, onRemoveClick = () => {}, headingLabel='Contexts' }) => {
+const AdminContextTree = ({
+  data,
+  onAddClick = () => {},
+  onEditClick = () => {},
+  onRemoveClick = () => {},
+  headingLabel = 'Contexts'
+}) => {
   const title = 'Hay'
   const theme = useTheme()
   const { user, isLoading } = useUser()
@@ -144,7 +150,7 @@ const AdminContextTree = ({ data, onAddClick = () => {}, onEditClick = () => {},
 
       buttons: [
         <IconButtonTooltip
-        title={"Add node"}
+          title={'Add node'}
           key={path}
           // color='primary'
           onClick={() => {
@@ -167,7 +173,7 @@ const AdminContextTree = ({ data, onAddClick = () => {}, onEditClick = () => {},
           <AddCircleIcon /> {/* Add Child Icon */}
         </IconButtonTooltip>,
         <IconButtonTooltip
-        title={"Remove Node"}
+          title={'Remove Node'}
           key={path}
           // color='primary'
           disabled
@@ -187,7 +193,7 @@ const AdminContextTree = ({ data, onAddClick = () => {}, onEditClick = () => {},
           <RemoveCircleIcon /> {/* Remove Icon */}
         </IconButtonTooltip>,
         <IconButtonTooltip
-        title={"Edit Node"}
+          title={'Edit Node'}
           key={`${path}-edit`}
           // color='primary'
           onClick={() => {
@@ -361,29 +367,68 @@ const AdminContextTree = ({ data, onAddClick = () => {}, onEditClick = () => {},
 
   return (
     <div className='w-full'>
-      <h2 className='uppercase'>{headingLabel}</h2>
-      <form
-        onSubmit={event => {
-          event.preventDefault()
-        }}
-      >
-        <Input
-          fullWidth
-          id='find-box'
-          className='mb-2'
-          type='text'
-          placeholder='Search...'
-          style={{ fontSize: '1rem' }}
-          value={searchString}
-          onChange={event => setSearchString(event.target.value)}
-        />
-        <SearchNavigator
-          searchFoundCount={searchFoundCount}
-          searchFocusIndex={searchFocusIndex}
-          selectPrevMatch={selectPrevMatch}
-          selectNextMatch={selectNextMatch}
-        />
-      </form>
+      <Box sx={{ mb: 3 }}>
+        <Typography
+          variant='h5'
+          sx={{
+            fontWeight: 700,
+            mb: 3,
+            background: 'linear-gradient(135deg, #8b5cf6 0%, #c4b5fd 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px'
+          }}
+        >
+          {headingLabel}
+        </Typography>
+        <form
+          onSubmit={event => {
+            event.preventDefault()
+          }}
+        >
+          <TextField
+            fullWidth
+            id='find-box'
+            type='text'
+            placeholder='Search contexts by title, description, or tags...'
+            value={searchString}
+            onChange={event => setSearchString(event.target.value)}
+            size='small'
+            sx={{
+              mb: 2,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+                backgroundColor: '#ffffff',
+                transition: 'all 0.2s ease-in-out',
+                '&:hover': {
+                  boxShadow: '0 2px 8px rgba(139, 92, 246, 0.15)'
+                },
+                '&.Mui-focused': {
+                  boxShadow: '0 4px 12px rgba(139, 92, 246, 0.2)'
+                }
+              }
+            }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position='start'>
+                  <i
+                    className='ri-search-line'
+                    style={{ fontSize: '20px', color: 'var(--mui-palette-text-secondary)' }}
+                  />
+                </InputAdornment>
+              )
+            }}
+          />
+          <SearchNavigator
+            searchFoundCount={searchFoundCount}
+            searchFocusIndex={searchFocusIndex}
+            selectPrevMatch={selectPrevMatch}
+            selectNextMatch={selectNextMatch}
+          />
+        </form>
+      </Box>
 
       <div className='breadcrumbs'>
         {breadcrumbs.map((crumb, index) => (

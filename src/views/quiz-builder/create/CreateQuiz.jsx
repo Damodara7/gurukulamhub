@@ -29,14 +29,17 @@ import {
   CardHeader,
   Grid,
   Stack,
-  Typography
+  Typography,
+  useTheme
 } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import CenterBox from '@/components/CenterBox'
 import { useRouter } from 'next/navigation'
 import { Description, Quiz } from '@mui/icons-material'
 import GoBackButton from '@/components/GoBackButton'
 
 function CreateQuiz({ isAdmin = false }) {
+  const theme = useTheme()
   const router = useRouter()
   const { data: session, status, update } = useSession()
   const { uuid, regenerateUUID, getUUID } = useUUID()
@@ -229,10 +232,10 @@ function CreateQuiz({ isAdmin = false }) {
     <>
       <Box
         sx={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
           borderRadius: '24px',
           p: { xs: 2, sm: 3, md: 4 },
-          boxShadow: '0 20px 60px rgba(102, 126, 234, 0.3)',
+          boxShadow: `0 20px 60px ${alpha(theme.palette.primary.main, 0.3)}`,
           position: 'relative',
           overflow: 'hidden',
           '&::before': {
@@ -265,7 +268,7 @@ function CreateQuiz({ isAdmin = false }) {
                 <Typography
                   variant='h3'
                   sx={{
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                     backgroundClip: 'text',
@@ -301,25 +304,28 @@ function CreateQuiz({ isAdmin = false }) {
               isAdmin={isAdmin}
             />
             {/* Form Actions */}
-            
+
             <Grid item xs={12} mt={5}>
-            <Stack direction='row' spacing={2} justifyContent='center'>
-              <Button variant='outlined' onClick={() => router.push(`/${isAdmin ? 'management/quizzes' : 'myquizzes'}/view`)}>
-                Cancel
-              </Button>
-              <Button
-                sx={{ mt: 2 }}
-                variant='contained'
-                style={{ color: 'white' }}
-                color='primary'
-                component='label'
-                onClick={handleSubmit(onSubmit)}
-                disabled={loading}
-              >
-                {loading ? 'Creating...' : 'Create Quiz'}
-              </Button>
-            </Stack>
-          </Grid>
+              <Stack direction='row' spacing={2} justifyContent='center'>
+                <Button
+                  variant='outlined'
+                  onClick={() => router.push(`/${isAdmin ? 'management/quizzes' : 'myquizzes'}/view`)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  sx={{ mt: 2 }}
+                  variant='contained'
+                  style={{ color: 'white' }}
+                  color='primary'
+                  component='label'
+                  onClick={handleSubmit(onSubmit)}
+                  disabled={loading}
+                >
+                  {loading ? 'Creating...' : 'Create Quiz'}
+                </Button>
+              </Stack>
+            </Grid>
           </CardContent>
         </Card>
       </Box>

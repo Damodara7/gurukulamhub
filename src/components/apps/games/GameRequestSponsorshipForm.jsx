@@ -26,8 +26,10 @@ import {
   FormLabel,
   RadioGroup,
   Radio,
-  CircularProgress
+  CircularProgress,
+  useTheme
 } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import {
   Add as AddIcon,
   Remove as RemoveIcon,
@@ -88,6 +90,7 @@ const formFieldOrder = [
 
 // Main Game Request Sponsorship Form component
 const GameRequestSponsorshipForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
+  const theme = useTheme()
   // Initial form data
   const initialFormData = {
     title: '',
@@ -478,10 +481,10 @@ const GameRequestSponsorshipForm = ({ onSubmit, quizzes, onCancel, data = null }
   return (
     <Box
       sx={{
-        background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.7) 0%, rgba(118, 75, 162, 0.7) 100%)',
+        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
         borderRadius: '24px',
         p: { xs: 2, sm: 3, md: 4 },
-        boxShadow: '0 20px 60px rgba(102, 126, 234, 0.25)',
+        boxShadow: `0 20px 60px ${alpha(theme.palette.primary.main, 0.3)}`,
         position: 'relative',
         overflow: 'hidden',
         '&::before': {
@@ -515,8 +518,7 @@ const GameRequestSponsorshipForm = ({ onSubmit, quizzes, onCancel, data = null }
               <Typography
                 variant='h3'
                 sx={{
-                  background:
-                    'linear-gradient(135deg, rgba(102, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.9) 50%, rgba(240, 147, 251, 0.8) 100%)',
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',

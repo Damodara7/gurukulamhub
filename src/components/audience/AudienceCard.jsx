@@ -1,5 +1,19 @@
 import React, { useState, useEffect } from 'react'
-import { Card, CardContent, Typography, Stack, Chip, Grid, Box, Divider, Tooltip, Badge, Button } from '@mui/material'
+import {
+  Card,
+  CardContent,
+  Typography,
+  Stack,
+  Chip,
+  Grid,
+  Box,
+  Divider,
+  Tooltip,
+  Badge,
+  Button,
+  useTheme
+} from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import IconButtonTooltip from '../IconButtonTooltip'
 import {
   Visibility as VisibilityIcon,
@@ -7,7 +21,10 @@ import {
   Delete as DeleteIcon,
   People as PeopleIcon,
   Person as PersonIcon,
-  CalendarToday as CalendarIcon
+  CalendarToday as CalendarIcon,
+  FilterList as FilterIcon,
+  Cake as CakeIcon,
+  LocationOn as LocationIcon
 } from '@mui/icons-material'
 import AudienceFallBackCard from './AudienceFallBackCard'
 import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
@@ -17,6 +34,7 @@ import { useSession } from 'next-auth/react'
 import { toast } from 'react-toastify'
 
 const AudienceCard = ({ audiences, onEditAudience, onViewAudience, dynamicCounts = {}, loadingCounts = false }) => {
+  const theme = useTheme()
   const { data: session } = useSession()
   const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false)
   const [audienceToDelete, setAudienceToDelete] = useState(null)
@@ -53,68 +71,120 @@ const AudienceCard = ({ audiences, onEditAudience, onViewAudience, dynamicCounts
   }
 
   return (
-    <Grid container spacing={2}>
+    <Grid container spacing={3}>
       {audiences.map(audience => {
         // Capitalize first letter of audience name
         const audienceName = audience?.audienceName
           ? audience.audienceName.charAt(0).toUpperCase() + audience.audienceName.slice(1)
           : 'Untitled Audience'
 
+        const memberCount = dynamicCounts[audience._id] || 0
+
         return (
-          <Grid item xs={12} sm={6} md={4} lg={3} xl={3} key={audience?._id || audience?.audienceName}>
+          <Grid item xs={12} sm={6} md={4} lg={3} key={audience?._id || audience?.audienceName}>
             <Card
-              variant='outlined'
               sx={{
                 height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
-                transition: 'box-shadow 0.2s ease, transform 0.2s ease',
-                '&:hover': { boxShadow: 6, transform: 'translateY(-2px)' }
+                position: 'relative',
+                overflow: 'hidden',
+                borderRadius: 3,
+                background: '#ffffff',
+                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:hover': {
+                  transform: 'translateY(-8px)',
+                  boxShadow: `0 12px 40px ${alpha(theme.palette.primary.main, 0.15)}`,
+                  borderColor: alpha(theme.palette.primary.main, 0.3)
+                }
               }}
             >
-              <CardContent sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
-                {/* Audience Name and Status */}
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                  <Tooltip title={audienceName || 'no Audiencename is mentioned'} arrow>
-                    <Typography
-                      variant='h6'
+              <CardContent sx={{ p: 2.5, display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+                {/* Header - Audience Name with Member Count Badge */}
+                <Box sx={{ mb: 1.5 }}>
+                  <Stack direction='row' alignItems='flex-start' justifyContent='space-between' spacing={1}>
+                    <Tooltip title={audienceName} arrow>
+                      <Typography
+                        variant='h6'
+                        sx={{
+                          fontWeight: 700,
+                          fontSize: '1.1rem',
+                          color: 'text.primary',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          lineHeight: 1.3,
+                          flex: 1
+                        }}
+                      >
+                        {audienceName}
+                      </Typography>
+                    </Tooltip>
+                    <Chip
+                      icon={<PeopleIcon sx={{ fontSize: 16 }} />}
+                      label={loadingCounts ? '...' : memberCount}
+                      size='small'
                       sx={{
-                        fontWeight: 'bold',
-                        maxWidth: '150px',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        flex: 1,
-                        mr: 1
+                        height: 24,
+                        fontWeight: 600,
+                        fontSize: '0.75rem',
+                        background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)}, ${alpha(
+                          theme.palette.secondary.main,
+                          0.1
+                        )})`,
+                        color: theme.palette.primary.main,
+                        border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                        '& .MuiChip-icon': {
+                          color: theme.palette.primary.main
+                        }
                       }}
-                    >
-                      {audienceName || 'no Audiencename is mentioned'}
-                    </Typography>
-                  </Tooltip>
-
-                  {/* Status field removed */}
+                    />
+                  </Stack>
                 </Box>
 
-                {audience?.description ? (
-                  <Tooltip title={audience.description} arrow>
+                {/* Description - Fixed Height for 2 Lines with Ellipsis */}
+                <Box
+                  sx={{
+                    height: 42,
+                    mb: 0.5
+                  }}
+                >
+                  <Tooltip title={audience?.description || 'No description'} arrow>
                     <Typography
                       variant='body2'
                       color='text.secondary'
                       sx={{
-                        mb: 1.5,
-                        maxWidth: '250px',
-                        whiteSpace: 'nowrap',
+                        fontSize: '0.875rem',
+                        lineHeight: 1.5,
                         overflow: 'hidden',
-                        textOverflow: 'ellipsis'
+                        textOverflow: 'ellipsis',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        wordWrap: 'break-word',
+                        wordBreak: 'break-word'
                       }}
                     >
-                      {audience.description || 'No description available'}
+                      {audience?.description || 'No description provided'}
                     </Typography>
                   </Tooltip>
-                ) : null}
+                </Box>
 
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                  <PersonIcon fontSize='small' color='action' />
+                {/* Creator Info - Compact */}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.75,
+                    mb: 1.5,
+                    p: 1,
+                    borderRadius: 1.5,
+                    background: alpha(theme.palette.background.paper, 0.5)
+                  }}
+                >
+                  <PersonIcon sx={{ fontSize: 16, color: theme.palette.primary.main }} />
                   <Tooltip
                     title={`Created by: ${
                       audience?.creatorEmail || (audience?.createdBy ? String(audience.createdBy) : 'Unknown')
@@ -123,12 +193,13 @@ const AudienceCard = ({ audiences, onEditAudience, onViewAudience, dynamicCounts
                   >
                     <Typography
                       variant='caption'
-                      color='text.secondary'
                       sx={{
-                        width: '100%',
-                        whiteSpace: 'nowrap',
+                        fontSize: '0.75rem',
+                        color: 'text.secondary',
                         overflow: 'hidden',
-                        textOverflow: 'ellipsis'
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        flex: 1
                       }}
                     >
                       {audience?.creatorEmail ||
@@ -137,135 +208,96 @@ const AudienceCard = ({ audiences, onEditAudience, onViewAudience, dynamicCounts
                   </Tooltip>
                 </Box>
 
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <PeopleIcon fontSize='small' color='action' />
-                  <Typography variant='caption' color='text.secondary'>
-                    {loadingCounts
-                      ? 'Loading...'
-                      : (() => {
-                          const count = dynamicCounts[audience._id] || 0
-                          return count === 0 ? 'No Members' : count > 1 ? `${count} members` : `${count} member`
-                        })()}
-                  </Typography>
-                </Box>
-
-                <Divider sx={{ my: 1.5 }} />
-
-                <Box sx={{ mb: 1 }}>
-                  <Typography variant='caption' color='text.secondary' sx={{ fontWeight: 'medium' }}>
-                    Audience by:
-                  </Typography>
-                </Box>
-
-                <Box
-                  sx={{
-                    backgroundColor: 'rgba(0, 0, 0, 0.02)',
-                    p: 1,
-                    borderRadius: 1,
-                    maxHeight: 120,
-                    overflowY: 'auto'
-                  }}
-                >
-                  <Stack
-                    direction='row'
-                    spacing={1}
-                    useFlexGap
+                {/* Filters Section - Compact */}
+                <Box sx={{ mb: 1.5, flexGrow: 1 }}>
+                  <Stack direction='row' alignItems='center' spacing={0.5} sx={{ mb: 0.75 }}>
+                    <FilterIcon sx={{ fontSize: 14, color: theme.palette.primary.main }} />
+                    <Typography
+                      variant='caption'
+                      sx={{
+                        fontSize: '0.7rem',
+                        fontWeight: 600,
+                        color: theme.palette.primary.main,
+                        textTransform: 'uppercase'
+                      }}
+                    >
+                      Filters
+                    </Typography>
+                  </Stack>
+                  <Box
                     sx={{
-                      flexWrap: 'wrap',
-                      rowGap: 1,
-                      columnGap: 1,
-                      width: '100%'
+                      p: 1.5,
+                      borderRadius: 1,
+                      background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.03)}, ${alpha(
+                        theme.palette.secondary.main,
+                        0.03
+                      )})`,
+                      border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+                      minHeight: 78,
+                      maxHeight: 100,
+                      overflowY: 'auto'
                     }}
                   >
-                    {(() => {
-                      // Create filter objects with their order for sorting
-                      const filters = []
+                    <Stack
+                      direction='row'
+                      spacing={1}
+                      useFlexGap
+                      sx={{
+                        flexWrap: 'wrap',
+                        rowGap: 1,
+                        columnGap: 1,
+                        width: '100%'
+                      }}
+                    >
+                      {(() => {
+                        // Create filter objects with their order for sorting
+                        const filters = []
 
-                      if (audience?.ageGroup) {
-                        filters.push({
-                          type: 'age',
-                          order: audience.ageGroup.order || 1,
-                          chip: (
-                            <Tooltip key='age' arrow title={`Age: ${audience.ageGroup.min}-${audience.ageGroup.max}`}>
-                              <Chip
-                                size='small'
-                                label={`Age: ${audience.ageGroup.min}-${audience.ageGroup.max}`}
-                                sx={{
-                                  maxWidth: 100,
-                                  '& .MuiChip-label': {
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    whiteSpace: 'nowrap'
-                                  }
-                                }}
-                              />
-                            </Tooltip>
-                          )
-                        })
-                      }
-
-                      if (audience?.gender) {
-                        filters.push({
-                          type: 'gender',
-                          order: audience.gender.order || 1,
-                          chip: (
-                            <Tooltip
-                              key='gender'
-                              arrow
-                              title={`Gender: ${
-                                audience.gender.values
-                                  ? audience.gender.values.join(', ')
-                                  : Array.isArray(audience.gender)
-                                    ? audience.gender.join(', ')
-                                    : String(audience.gender)
-                              }`}
-                            >
-                              <Chip
-                                size='small'
-                                label={`Gender: ${
-                                  audience.gender.values
-                                    ? audience.gender.values.join(', ')
-                                    : Array.isArray(audience.gender)
-                                      ? audience.gender.join(', ')
-                                      : String(audience.gender)
-                                }`}
-                                sx={{
-                                  maxWidth: 120,
-                                  '& .MuiChip-label': {
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    whiteSpace: 'nowrap'
-                                  }
-                                }}
-                              />
-                            </Tooltip>
-                          )
-                        })
-                      }
-
-                      if (audience?.location?.country || audience?.location?.region || audience?.location?.city) {
-                        const parts = [
-                          audience?.location?.country,
-                          audience?.location?.region,
-                          audience?.location?.city
-                        ].filter(Boolean)
-                        const label = parts.length > 0 ? `Location: ${parts.join(', ')}` : null
-
-                        if (label) {
+                        if (audience?.ageGroup) {
                           filters.push({
-                            type: 'location',
-                            order: audience.location.order || 1,
+                            type: 'age',
+                            order: audience.ageGroup.order || 1,
                             chip: (
-                              <Tooltip key='location' arrow title={label}>
+                              <Tooltip
+                                key='age'
+                                arrow
+                                title={`Age Range: ${audience.ageGroup.min}-${audience.ageGroup.max} years`}
+                              >
                                 <Chip
                                   size='small'
-                                  label={label}
+                                  label={`Age: ${audience.ageGroup.min}-${audience.ageGroup.max}`}
+                                  icon={<CakeIcon sx={{ fontSize: 16 }} />}
                                   sx={{
-                                    maxWidth: 180,
+                                    height: 30,
+                                    fontSize: '0.8rem',
+                                    fontWeight: 600,
+                                    borderRadius: 1.5,
+                                    background: `linear-gradient(135deg, ${alpha(
+                                      theme.palette.grey[600],
+                                      0.2
+                                    )}, ${alpha(theme.palette.grey[600], 0.15)})`,
+                                    boxShadow: `0 1px 3px ${alpha(theme.palette.grey[400], 0.08)}`,
+                                    color: theme.palette.grey[900],
+                                    border: `1px solid ${alpha(theme.palette.grey[600], 0.2)}`,
+                                    transition: 'all 0.2s ease-in-out',
+                                    '&:hover': {
+                                      background: `linear-gradient(135deg, ${alpha(
+                                        theme.palette.grey[600],
+                                        0.28
+                                      )}, ${alpha(theme.palette.grey[600], 0.22)})`,
+                                      boxShadow: `0 2px 4px ${alpha(theme.palette.grey[600], 0.12)}`,
+                                      transform: 'translateY(-1px)'
+                                    },
+                                    '& .MuiChip-icon': {
+                                      fontSize: 16,
+                                      color: theme.palette.grey[600],
+                                      marginLeft: '8px',
+                                      marginRight: '-2px'
+                                    },
                                     '& .MuiChip-label': {
-                                      overflow: 'hidden',
-                                      textOverflow: 'ellipsis',
-                                      whiteSpace: 'nowrap'
+                                      color: theme.palette.grey[600],
+                                      paddingLeft: '10px',
+                                      paddingRight: '12px'
                                     }
                                   }}
                                 />
@@ -273,43 +305,227 @@ const AudienceCard = ({ audiences, onEditAudience, onViewAudience, dynamicCounts
                             )
                           })
                         }
-                      }
 
-                      // Sort filters by their order and return chips
-                      return filters.sort((a, b) => a.order - b.order).map(filter => filter.chip)
-                    })()}
-                    {!audience?.ageGroup &&
-                      !audience?.gender &&
-                      !audience?.location?.country &&
-                      !audience?.location?.region &&
-                      !audience?.location?.city && (
-                        <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                          <Typography variant='caption' color='text.secondary'>
-                            No filters applied
-                          </Typography>
-                        </Box>
-                      )}
-                  </Stack>
+                        if (audience?.gender) {
+                          const genderValues = audience.gender.values
+                            ? audience.gender.values
+                            : Array.isArray(audience.gender)
+                              ? audience.gender
+                              : [String(audience.gender)]
+                          const genderLabel = genderValues.join(', ')
+                          filters.push({
+                            type: 'gender',
+                            order: audience.gender.order || 1,
+                            chip: (
+                              <Tooltip key='gender' arrow title={`Gender: ${genderLabel}`}>
+                                <Chip
+                                  size='small'
+                                  label={genderLabel.length > 18 ? genderLabel.substring(0, 18) + '...' : genderLabel}
+                                  icon={<PersonIcon sx={{ fontSize: 16 }} />}
+                                  sx={{
+                                    height: 30,
+                                    fontSize: '0.8rem',
+                                    fontWeight: 600,
+                                    borderRadius: 1.5,
+                                    background: alpha(theme.palette.grey[400], 0.15),
+                                    boxShadow: `0 1px 3px ${alpha(theme.palette.grey[400], 0.08)}`,
+                                    color: theme.palette.grey[600],
+                                    border: `1px solid ${alpha(theme.palette.grey[400], 0.2)}`,
+                                    transition: 'all 0.2s ease-in-out',
+                                    '&:hover': {
+                                      background: alpha(theme.palette.grey[400], 0.22),
+                                      boxShadow: `0 2px 4px ${alpha(theme.palette.grey[400], 0.12)}`,
+                                      transform: 'translateY(-1px)'
+                                    },
+                                    '& .MuiChip-icon': {
+                                      fontSize: 16,
+                                      color: theme.palette.grey[600],
+                                      marginLeft: '8px',
+                                      marginRight: '-2px'
+                                    },
+                                    '& .MuiChip-label': {
+                                      color: theme.palette.grey[600],
+                                      paddingLeft: '10px',
+                                      paddingRight: '12px'
+                                    }
+                                  }}
+                                />
+                              </Tooltip>
+                            )
+                          })
+                        }
+
+                        if (audience?.location?.country || audience?.location?.region || audience?.location?.city) {
+                          const parts = [
+                            audience?.location?.country,
+                            audience?.location?.region,
+                            audience?.location?.city
+                          ].filter(Boolean)
+                          const locationLabel = parts.join(', ')
+
+                          if (locationLabel) {
+                            filters.push({
+                              type: 'location',
+                              order: audience.location.order || 1,
+                              chip: (
+                                <Tooltip key='location' arrow title={`Location: ${locationLabel}`}>
+                                  <Chip
+                                    size='small'
+                                    label={
+                                      locationLabel.length > 20 ? locationLabel.substring(0, 20) + '...' : locationLabel
+                                    }
+                                    icon={<LocationIcon sx={{ fontSize: 16 }} />}
+                                    sx={{
+                                      height: 30,
+                                      fontSize: '0.8rem',
+                                      fontWeight: 600,
+                                      borderRadius: 1.5,
+                                      background: alpha(theme.palette.grey[500], 0.12),
+                                      boxShadow: `0 1px 3px ${alpha(theme.palette.grey[500], 0.08)}`,
+                                      color: theme.palette.grey[700],
+                                      border: `1px solid ${alpha(theme.palette.grey[500], 0.25)}`,
+                                      transition: 'all 0.2s ease-in-out',
+                                      '&:hover': {
+                                        background: alpha(theme.palette.grey[500], 0.18),
+                                        boxShadow: `0 2px 4px ${alpha(theme.palette.grey[500], 0.12)}`,
+                                        transform: 'translateY(-1px)'
+                                      },
+                                      '& .MuiChip-icon': {
+                                        fontSize: 16,
+                                        color: theme.palette.grey[700],
+                                        marginLeft: '8px',
+                                        marginRight: '-2px'
+                                      },
+                                      '& .MuiChip-label': {
+                                        color: theme.palette.grey[700],
+                                        paddingLeft: '10px',
+                                        paddingRight: '12px'
+                                      }
+                                    }}
+                                  />
+                                </Tooltip>
+                              )
+                            })
+                          }
+                        }
+
+                        // Sort filters by their order and return chips
+                        return filters.sort((a, b) => a.order - b.order).map(filter => filter.chip)
+                      })()}
+                      {!audience?.ageGroup &&
+                        !audience?.gender &&
+                        !audience?.location?.country &&
+                        !audience?.location?.region &&
+                        !audience?.location?.city && (
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: 0.5,
+                              width: '100%',
+                              py: 1
+                            }}
+                          >
+                            <FilterIcon sx={{ fontSize: 14, color: 'text.disabled' }} />
+                            <Typography
+                              variant='caption'
+                              sx={{
+                                fontSize: '0.75rem',
+                                color: 'text.disabled',
+                                fontStyle: 'italic'
+                              }}
+                            >
+                              No filters applied
+                            </Typography>
+                          </Box>
+                        )}
+                    </Stack>
+                  </Box>
                 </Box>
-                <Box sx={{ mt: 'auto', pt: 2 }}>
-                  <Stack
-                    direction='row'
-                    spacing={1}
-                    gap={1}
-                    justifyContent='center'
-                    className='border border-gray-200 rounded-md p-1'
+
+                {/* Action Buttons - With Text Labels */}
+                <Divider sx={{ my: 1.5 }} />
+                <Stack direction='row' spacing={1} justifyContent='space-between'>
+                  <Button
+                    size='small'
+                    variant='outlined'
+                    onClick={() => onViewAudience(audience._id)}
+                    sx={{
+                      flex: 1,
+                      fontSize: '0.8125rem',
+                      py: 0.75,
+                      px: 1.5,
+                      borderRadius: 2,
+                      borderColor: alpha(theme.palette.info.main, 0.2),
+                      color: alpha(theme.palette.info.main, 0.6),
+                      fontWeight: 600,
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        borderColor: theme.palette.info.main,
+                        color: theme.palette.info.main,
+                        background: alpha(theme.palette.info.main, 0.08),
+                        transform: 'translateY(-2px)',
+                        boxShadow: `0 4px 12px ${alpha(theme.palette.info.main, 0.2)}`
+                      }
+                    }}
+                    startIcon={<VisibilityIcon sx={{ fontSize: 18 }} />}
                   >
-                    <IconButtonTooltip title='View Details' onClick={() => onViewAudience(audience._id)} color='info'>
-                      <VisibilityIcon />
-                    </IconButtonTooltip>
-                    <IconButtonTooltip title='Edit' onClick={() => onEditAudience(audience._id)} color='warning'>
-                      <EditIcon />
-                    </IconButtonTooltip>
-                    <IconButtonTooltip title='Delete' onClick={() => handleDeleteClick(audience)} color='error'>
-                      <DeleteIcon />
-                    </IconButtonTooltip>
-                  </Stack>
-                </Box>
+                    View
+                  </Button>
+                  <Button
+                    size='small'
+                    variant='outlined'
+                    onClick={() => onEditAudience(audience._id)}
+                    sx={{
+                      flex: 1,
+                      fontSize: '0.8125rem',
+                      py: 0.75,
+                      px: 1.5,
+                      borderRadius: 2,
+                      borderColor: alpha(theme.palette.warning.main, 0.2),
+                      color: alpha(theme.palette.warning.main, 0.6),
+                      fontWeight: 600,
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        borderColor: theme.palette.warning.main,
+                        color: theme.palette.warning.main,
+                        background: alpha(theme.palette.warning.main, 0.08),
+                        transform: 'translateY(-2px)',
+                        boxShadow: `0 4px 12px ${alpha(theme.palette.warning.main, 0.2)}`
+                      }
+                    }}
+                    startIcon={<EditIcon sx={{ fontSize: 18 }} />}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    size='small'
+                    variant='outlined'
+                    onClick={() => handleDeleteClick(audience)}
+                    sx={{
+                      flex: 1,
+                      fontSize: '0.8125rem',
+                      py: 0.75,
+                      px: 1.5,
+                      borderRadius: 2,
+                      borderColor: alpha(theme.palette.error.main, 0.2),
+                      color: alpha(theme.palette.error.main, 0.6),
+                      fontWeight: 600,
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        borderColor: theme.palette.error.main,
+                        color: theme.palette.error.main,
+                        background: alpha(theme.palette.error.main, 0.08),
+                        transform: 'translateY(-2px)',
+                        boxShadow: `0 4px 12px ${alpha(theme.palette.error.main, 0.2)}`
+                      }
+                    }}
+                    startIcon={<DeleteIcon sx={{ fontSize: 18 }} />}
+                  >
+                    Delete
+                  </Button>
+                </Stack>
               </CardContent>
             </Card>
           </Grid>

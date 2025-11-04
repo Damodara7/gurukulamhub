@@ -8,7 +8,7 @@ import { useSession } from 'next-auth/react'
 import CreatorGamesList from '@/components/apps/games/all-games/CreatorGamesList'
 import { useSearchParams, useRouter } from 'next/navigation'
 import ReusableTabsList from '@/components/public-games/ReusableTabsList'
-import { Box, Button, Container, Stack, Typography, useTheme } from '@mui/material'
+import { Box, Button, Container, Stack, Typography, useTheme, alpha } from '@mui/material'
 import { Add as AddIcon, Games as GamesIcon } from '@mui/icons-material'
 import ReusablePopUpList from '@/components/public-games/ReusableFiltersList'
 
@@ -112,47 +112,84 @@ const AllGamesPage = ({ creatorEmail = '', isSuperUser = false }) => {
   })
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa' }}>
-      {/* Header Section */}
+    <Box
+      sx={{
+        minHeight: '100vh',
+        background: `radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 50%),
+                     radial-gradient(circle at 80% 80%, ${alpha(
+                       theme.palette.secondary.main,
+                       0.05
+                     )} 0%, transparent 50%),
+                     ${theme.palette.background.default}`
+      }}
+    >
+      {/* Elegant Header */}
       <Box
         sx={{
-          bgcolor: 'white',
+          backdropFilter: 'blur(20px)',
+          bgcolor: alpha('#fff', 0.7),
+          borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
           pt: { xs: 4, md: 6 },
-          pb: { xs: 4, md: 6 },
-          borderBottom: '1px solid #e8eaed'
+          pb: { xs: 4, md: 6 }
         }}
       >
         <Container maxWidth='lg'>
-          <Stack spacing={4}>
-            {/* Title Section */}
+          <Stack spacing={3} alignItems='center'>
+            {/* Elegant Title */}
             <Box sx={{ textAlign: 'center' }}>
-              <Stack direction='row' spacing={1.5} alignItems='center' justifyContent='center' sx={{ mb: 2 }}>
-                <GamesIcon sx={{ fontSize: 40, color: 'primary.main' }} />
+              {/* Icon and Title */}
+              <Box
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 2,
+                  mb: 2
+                }}
+              >
+                <Box
+                  sx={{
+                    width: { xs: 48, sm: 56 },
+                    height: { xs: 48, sm: 56 },
+                    borderRadius: '12px',
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`
+                  }}
+                >
+                  <GamesIcon sx={{ fontSize: 28, color: 'white' }} />
+                </Box>
                 <Typography
-                  variant='h3'
-                  fontWeight={800}
                   sx={{
                     fontSize: { xs: '2rem', md: '2.5rem' },
+                    fontWeight: 700,
                     background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
-                    letterSpacing: '-0.01em'
+                    letterSpacing: '-0.02em'
                   }}
                 >
                   Game Management
                 </Typography>
-              </Stack>
+              </Box>
               <Typography
                 variant='body1'
                 color='text.secondary'
-                sx={{ fontSize: '1.05rem', lineHeight: 1.7, maxWidth: 600, mx: 'auto' }}
+                sx={{
+                  fontSize: '1.05rem',
+                  lineHeight: 1.8,
+                 width: '100%',
+                  mx: 'auto',
+                  fontWeight: 400
+                }}
               >
                 Create, manage, and monitor your games
               </Typography>
             </Box>
 
             {/* Filters and Tabs */}
-            <Box>
+            <Box sx={{ width: '100%' }}>
               <ReusableTabsList tabsList={gamestatuses} value={gameStatusFilter} onChange={handleGameStatusChange} />
               <Box sx={{ mt: 3 }}>
                 <ReusablePopUpList
@@ -168,7 +205,7 @@ const AllGamesPage = ({ creatorEmail = '', isSuperUser = false }) => {
       </Box>
 
       {/* Games List */}
-      <Container maxWidth='lg' sx={{ py: { xs: 4, md: 6 } }}>
+      <Container maxWidth='lg' sx={{ py: { xs: 3, md: 4 } }}>
         <CreatorGamesList
           games={filteredGames}
           isSuperUser={isSuperUser}

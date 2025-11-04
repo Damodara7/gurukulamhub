@@ -22,6 +22,8 @@ import Checkbox from '@mui/material/Checkbox'
 import IconButton from '@mui/material/IconButton'
 import { styled } from '@mui/material/styles'
 import TablePagination from '@mui/material/TablePagination'
+import Divider from '@mui/material/Divider'
+import InputAdornment from '@mui/material/InputAdornment'
 
 // Third-party Imports
 import classnames from 'classnames'
@@ -383,52 +385,151 @@ const GeoRolesTable = ({ tableData, refreshUsers }) => {
   }, [role, tableData])
 
   return (
-    <Card>
-      <CardContent className='flex justify-between flex-col gap-4 items-start sm:flex-row sm:items-center'>
-        <Button
-          variant='outlined'
-          color='secondary'
-          startIcon={<i className='ri-upload-2-line' />}
-          className='is-full sm:is-auto'
-        >
-          Export
-        </Button>
-        <div className='flex gap-4 flex-col !items-start is-full sm:flex-row sm:is-auto sm:items-center'>
-          <DebouncedInput
-            value={globalFilter ?? ''}
-            className='is-full sm:is-auto min-is-[220px]'
-            onChange={value => setGlobalFilter(String(value))}
-            placeholder='Search User'
-          />
-          <FormControl size='small' className='is-full sm:is-auto'>
-            <InputLabel id='roles-app-role-select-label'>Select Role</InputLabel>
-            <Select
-              value={role}
-              onChange={e => setRole(e.target.value)}
-              label='Select Role'
-              id='roles-app-role-select'
-              labelId='roles-app-role-select-label'
-              className='min-is-[150px]'
-            >
-              <MenuItem value=''>Select Role</MenuItem>
-              {rolesData?.map(role => {
-                return (
-                  <MenuItem key={role._id} value={role.name}>
-                    {role.name}
-                  </MenuItem>
+    <Card
+      sx={{
+        background: '#ffffff',
+        boxShadow: theme => theme.shadows[3],
+        borderRadius: 3,
+        overflow: 'hidden',
+        border: theme => `1px solid ${theme.palette.divider}`,
+        transition: 'box-shadow 0.3s ease-in-out',
+        '&:hover': {
+          boxShadow: theme => theme.shadows[6]
+        }
+      }}
+    >
+      <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
+        <div className='flex justify-between items-center flex-col sm:flex-row gap-4'>
+          <Button
+            variant='outlined'
+            color='secondary'
+            startIcon={<i className='ri-upload-2-line' />}
+            sx={{
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 600,
+              whiteSpace: 'nowrap'
+            }}
+          >
+            Export
+          </Button>
+          <div className='flex gap-3 flex-col sm:flex-row items-stretch sm:items-center w-full sm:w-auto'>
+            <DebouncedInput
+              value={globalFilter ?? ''}
+              onChange={value => setGlobalFilter(String(value))}
+              placeholder='Search Users'
+              size='small'
+              sx={{ minWidth: { sm: '350px' } }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position='start'>
+                    <i
+                      className='ri-search-line'
+                      style={{ fontSize: '20px', color: 'var(--mui-palette-text-secondary)' }}
+                    />
+                  </InputAdornment>
                 )
-              })}
-              {geoRolesData?.map(role => {
-                return (
-                  <MenuItem key={role._id} value={role.name}>
-                    {role.name}
-                  </MenuItem>
-                )
-              })}
-            </Select>
-          </FormControl>
+              }}
+            />
+            <FormControl size='small' sx={{ minWidth: { xs: '100%', sm: '220px' } }}>
+              <InputLabel id='roles-app-role-select-label'>Select Role</InputLabel>
+              <Select
+                value={role}
+                onChange={e => setRole(e.target.value)}
+                label='Select Role'
+                id='roles-app-role-select'
+                labelId='roles-app-role-select-label'
+              >
+                <MenuItem value=''>
+                  <em>All Roles</em>
+                </MenuItem>
+                {rolesData?.map(role => {
+                  return (
+                    <MenuItem key={role._id} value={role.name}>
+                      {role.name}
+                    </MenuItem>
+                  )
+                })}
+                {geoRolesData?.map(role => {
+                  return (
+                    <MenuItem key={role._id} value={role.name}>
+                      {role.name}
+                    </MenuItem>
+                  )
+                })}
+              </Select>
+            </FormControl>
+          </div>
         </div>
       </CardContent>
+
+      <Divider />
+
+      <div className='px-4 sm:px-6 py-3 sm:py-4'>
+        <div className='flex flex-col gap-2'>
+          <Typography variant='body2' color='text.secondary' sx={{ fontWeight: 500 }}>
+            {role ? (
+              <>
+                {role} : {table.getFilteredRowModel().rows.length} user
+                {table.getFilteredRowModel().rows.length > 1 ? 's' : ''}
+              </>
+            ) : globalFilter ? (
+              <>
+                Showing {table.getFilteredRowModel().rows.length} of {tableData?.length || 0} user
+                {table.getFilteredRowModel().rows.length > 1 ? 's' : ''}
+              </>
+            ) : (
+              <>
+                Total {tableData?.length || 0} user{tableData?.length !== 1 ? 's' : ''}
+              </>
+            )}
+          </Typography>
+          {/* Active Filters Display */}
+          {(role || globalFilter) && (
+            <div className='flex flex-wrap items-center gap-2'>
+              <Typography variant='caption' color='text.disabled' sx={{ fontWeight: 500 }}>
+                Active Filters:
+              </Typography>
+              {role && (
+                <Chip
+                  label={`Role: ${role} (${table.getFilteredRowModel().rows.length})`}
+                  size='small'
+                  onDelete={() => setRole('')}
+                  color='primary'
+                  variant='outlined'
+                  sx={{ height: '24px', fontSize: '0.75rem' }}
+                />
+              )}
+              {globalFilter && (
+                <Chip
+                  label={`Search: "${globalFilter}"`}
+                  size='small'
+                  onDelete={() => setGlobalFilter('')}
+                  color='info'
+                  variant='outlined'
+                  sx={{ height: '24px', fontSize: '0.75rem' }}
+                />
+              )}
+              <Button
+                size='small'
+                onClick={() => {
+                  setRole('')
+                  setGlobalFilter('')
+                }}
+                sx={{
+                  fontSize: '0.75rem',
+                  height: '24px',
+                  minWidth: 'auto',
+                  px: 1.5,
+                  textTransform: 'none'
+                }}
+              >
+                Clear All
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
       <div className='overflow-x-auto'>
         <table className={tableStyles.table}>
           <thead>
@@ -462,7 +563,23 @@ const GeoRolesTable = ({ tableData, refreshUsers }) => {
             <tbody>
               <tr>
                 <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
-                  No data available
+                  <div
+                    style={{
+                      padding: '48px 16px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '12px'
+                    }}
+                  >
+                    <i className='ri-user-search-line' style={{ fontSize: '48px', opacity: 0.5 }} />
+                    <Typography variant='h6' color='text.secondary'>
+                      No users found
+                    </Typography>
+                    <Typography variant='body2' color='text.disabled'>
+                      Try adjusting your search or filter criteria
+                    </Typography>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -473,7 +590,26 @@ const GeoRolesTable = ({ tableData, refreshUsers }) => {
                 .rows.slice(0, table.getState().pagination.pageSize)
                 .map(row => {
                   return (
-                    <tr key={row.id} className={classnames({ selected: row.getIsSelected() })}>
+                    <tr
+                      key={row.id}
+                      className={classnames({ selected: row.getIsSelected() })}
+                      style={{
+                        transition: 'all 0.3s ease-in-out',
+                        cursor: 'pointer'
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.backgroundColor = 'rgba(139, 92, 246, 0.08)'
+                        e.currentTarget.style.transform = 'scale(1.01)'
+                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(139, 92, 246, 0.15)'
+                      }}
+                      onMouseLeave={e => {
+                        if (!row.getIsSelected()) {
+                          e.currentTarget.style.backgroundColor = 'transparent'
+                        }
+                        e.currentTarget.style.transform = 'scale(1)'
+                        e.currentTarget.style.boxShadow = 'none'
+                      }}
+                    >
                       {row.getVisibleCells().map(cell => (
                         <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
                       ))}
@@ -498,6 +634,15 @@ const GeoRolesTable = ({ tableData, refreshUsers }) => {
           table.setPageIndex(page)
         }}
         onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
+        sx={{
+          '.MuiTablePagination-toolbar': {
+            px: { xs: 2, sm: 3 },
+            py: 2
+          },
+          '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
+            fontSize: { xs: '0.75rem', sm: '0.875rem' }
+          }
+        }}
       />
 
       <EditUserRoleDialog

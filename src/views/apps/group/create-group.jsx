@@ -58,16 +58,7 @@ function CreateGroupPage() {
     router.push('/management/group') // Redirect to groups list
   }
 
-  return (
-    <div className='p-4'>
-      <div className='mb-6'>
-        <h1 className='text-2xl font-bold'>Create New Group</h1>
-        <p className='text-muted-foreground'>Fill in the details below to create a new group</p>
-      </div>
-
-      <CreateGroupForm onSubmit={handleSubmit} onCancel={handleCancel} loading={loading} />
-    </div>
-  )
+  return <CreateGroupForm onSubmit={handleSubmit} onCancel={handleCancel} loading={loading} />
 }
 
 export default CreateGroupPage

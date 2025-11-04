@@ -21,9 +21,18 @@ import {
   DialogContent,
   DialogActions,
   IconButton,
-  Tooltip
+  Tooltip,
+  useTheme
 } from '@mui/material'
-import { ArrowDropDown as ArrowDropDownIcon, Close as CloseIcon, Edit as EditIcon } from '@mui/icons-material'
+import { alpha } from '@mui/material/styles'
+import {
+  ArrowDropDown as ArrowDropDownIcon,
+  Close as CloseIcon,
+  Edit as EditIcon,
+  Cake as CakeIcon,
+  LocationOn as LocationIcon,
+  Person as PersonIcon
+} from '@mui/icons-material'
 import * as RestApi from '@/utils/restApiUtil'
 import CountryRegionDropdown from '@/views/pages/auth/register-multi-steps/CountryRegionDropdown'
 
@@ -44,6 +53,7 @@ const AudienceByFilter = ({
     gender: null
   }
 }) => {
+  const theme = useTheme()
   const didInitFromPropsRef = useRef(false)
   const [anchorEl, setAnchorEl] = useState(null)
   const [groupBy, setGroupBy] = useState(null)
@@ -1181,6 +1191,41 @@ const AudienceByFilter = ({
                 .sort((a, b) => (a.order || 0) - (b.order || 0))
                 .map((filter, displayIndex) => {
                   const actualIndex = selectedFilters.findIndex(f => f === filter)
+
+                  // Determine color and icon based on filter type
+                  const getFilterStyle = () => {
+                    if (filter.type === 'age') {
+                      return {
+                        background: alpha(theme.palette.primary.main, 0.12),
+                        borderColor: alpha(theme.palette.primary.main, 0.2),
+                        textColor: theme.palette.primary.main,
+                        icon: <CakeIcon sx={{ fontSize: 16, color: theme.palette.primary.main, mr: 0.5 }} />
+                      }
+                    } else if (filter.type === 'gender') {
+                      return {
+                        background: alpha(theme.palette.grey[400], 0.15),
+                        borderColor: alpha(theme.palette.grey[400], 0.2),
+                        textColor: theme.palette.grey[600],
+                        icon: <PersonIcon sx={{ fontSize: 16, color: theme.palette.grey[600], mr: 0.5 }} />
+                      }
+                    } else if (filter.type === 'location') {
+                      return {
+                        background: alpha(theme.palette.grey[500], 0.12),
+                        borderColor: alpha(theme.palette.grey[500], 0.25),
+                        textColor: theme.palette.grey[700],
+                        icon: <LocationIcon sx={{ fontSize: 16, color: theme.palette.grey[700], mr: 0.5 }} />
+                      }
+                    }
+                    return {
+                      background: theme.palette.grey[200],
+                      borderColor: theme.palette.grey[400],
+                      textColor: theme.palette.grey[700],
+                      icon: null
+                    }
+                  }
+
+                  const filterStyle = getFilterStyle()
+
                   return (
                     <Chip
                       key={filter.type + '-' + filter.order}
@@ -1195,6 +1240,7 @@ const AudienceByFilter = ({
                             flex: 1
                           }}
                         >
+                          {filterStyle.icon}
                           <Typography
                             variant='body2'
                             sx={{
@@ -1202,20 +1248,24 @@ const AudienceByFilter = ({
                               minWidth: 0,
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap'
+                              whiteSpace: 'nowrap',
+                              color: filterStyle.textColor,
+                              fontWeight: 600
                             }}
                           >
                             {filter.label}
                           </Typography>
                           <Tooltip title='edit' arrow>
-                            <EditIcon sx={{ fontSize: 16, opacity: 0.7, flexShrink: 0, ml: 4 }} />
+                            <EditIcon
+                              sx={{ fontSize: 16, opacity: 0.9, flexShrink: 0, ml: 4, color: filterStyle.textColor }}
+                            />
                           </Tooltip>
                         </Box>
                       }
                       onDelete={() => handleDeleteFilter(actualIndex)}
                       deleteIcon={
                         <Tooltip title='remove' arrow>
-                          <CloseIcon />
+                          <CloseIcon sx={{ color: filterStyle.textColor }} />
                         </Tooltip>
                       }
                       onClick={() => handleEditFilter(filter, actualIndex)}
@@ -1225,14 +1275,23 @@ const AudienceByFilter = ({
                         overflow: 'hidden',
                         cursor: 'pointer',
                         height: 'auto',
+                        background: filterStyle.background,
+                        border: `1px solid ${filterStyle.borderColor}`,
+                        boxShadow: `0 1px 3px ${alpha(theme.palette.primary.main, 0.08)}`,
+                        '&:hover': {
+                          background: filterStyle.background,
+                          boxShadow: `0 1px 3px ${alpha(theme.palette.primary.main, 0.08)}`
+                        },
                         '& .MuiChip-deleteIcon': {
                           visibility: 'visible',
                           marginRight: '4px',
                           marginLeft: '0px',
-                          color: 'black',
+                          color: filterStyle.textColor,
+                          opacity: 0.9,
                           '&:hover': {
                             backgroundColor: 'transparent',
-                            color: 'black'
+                            color: filterStyle.textColor,
+                            opacity: 1
                           }
                         },
                         '& .MuiChip-label': {
@@ -1241,7 +1300,8 @@ const AudienceByFilter = ({
                           height: 'auto',
                           minHeight: '35px',
                           display: 'flex',
-                          alignItems: 'center'
+                          alignItems: 'center',
+                          color: filterStyle.textColor
                         }
                       }}
                     />

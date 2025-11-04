@@ -134,37 +134,69 @@ const RoleCards = () => {
 
   return (
     <>
-      <Grid container spacing={6}>
+      <Grid container spacing={{ xs: 3, sm: 4, md: 6 }}>
         {roles.map((item, index) => (
           <Grid item xs={12} sm={6} lg={4} key={index}>
-            <Card>
+            <Card
+              sx={{
+                background: '#ffffff',
+                borderRadius: 3,
+                boxShadow: theme => theme.shadows[3],
+                border: theme => `1px solid ${theme.palette.divider}`,
+                transition: 'all 0.3s ease-in-out',
+                '&:hover': {
+                  transform: 'translateY(-8px)',
+                  boxShadow: theme => theme.shadows[8]
+                }
+              }}
+            >
               <CardContent className='flex flex-col gap-4'>
-                {/* <div className='flex items-center justify-between'>
-                  <Typography className='flex-grow'>{`Total ${item?.totalUsers || 10} users`}</Typography>
-                  <AvatarGroup total={item.totalUsers}>
-                    {item?.avatars?.map((img, index) => (
-                      <Avatar key={index} alt={item.name} src={`/images/avatars/${img}`} />
-                    ))}
-                  </AvatarGroup>
-                </div> */}
-                <div className='flex justify-between items-center'>
-                  <div className='flex flex-col items-start gap-1'>
-                    <Typography variant='h5'>{item.name}</Typography>
+                <div className='flex justify-between items-start'>
+                  <div className='flex flex-col items-start gap-1 flex-grow'>
+                    <Typography
+                      variant='h5'
+                      sx={{
+                        fontWeight: 700,
+                        background: 'linear-gradient(135deg, #8b5cf6 0%, #c4b5fd 100%)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        backgroundClip: 'text'
+                      }}
+                    >
+                      {item.name}
+                    </Typography>
                     <OpenDialogOnElementClick
                       element={Typography}
-                      elementProps={typographyProps}
+                      elementProps={{
+                        ...typographyProps,
+                        sx: {
+                          fontSize: '0.875rem',
+                          fontWeight: 500,
+                          cursor: 'pointer',
+                          transition: 'color 0.2s',
+                          '&:hover': {
+                            color: 'primary.dark'
+                          }
+                        }
+                      }}
                       dialog={RoleDialog}
                       dialogProps={{ roleData: item, refreshRoles }}
                     />
                   </div>
-                  <div className='flex gap-1'>
-                    {/* <IconButtonTooltip title='' className='p-[7px]'>
-                      <i className='ri-file-copy-line text-secondary' />
-                    </IconButtonTooltip> */}
-                    <IconButtonTooltip title='Delete'  className='p-[7px]' onClick={() => handleDeleteConfirmation(item)}>
-                      <DeleteOutlineIcon />
-                    </IconButtonTooltip>
-                  </div>
+                  <IconButtonTooltip
+                    title='Delete'
+                    onClick={() => handleDeleteConfirmation(item)}
+                    sx={{
+                      transition: 'all 0.2s',
+                      '&:hover': {
+                        backgroundColor: 'error.light',
+                        color: 'error.main',
+                        transform: 'scale(1.1)'
+                      }
+                    }}
+                  >
+                    <DeleteOutlineIcon fontSize='small' />
+                  </IconButtonTooltip>
                 </div>
               </CardContent>
             </Card>
@@ -173,7 +205,22 @@ const RoleCards = () => {
         <Grid item xs={12} sm={6} lg={4}>
           <OpenDialogOnElementClick
             element={Card}
-            elementProps={CardProps}
+            elementProps={{
+              ...CardProps,
+              sx: {
+                background: '#ffffff',
+                borderRadius: 3,
+                boxShadow: theme => theme.shadows[3],
+                border: theme => `2px dashed ${theme.palette.primary.main}`,
+                transition: 'all 0.3s ease-in-out',
+                cursor: 'pointer',
+                '&:hover': {
+                  transform: 'translateY(-8px)',
+                  boxShadow: theme => theme.shadows[8],
+                  borderColor: 'primary.dark'
+                }
+              }
+            }}
             dialog={RoleDialog}
             dialogProps={{ refreshRoles }}
           />
@@ -184,7 +231,7 @@ const RoleCards = () => {
       <ConfirmationDialog
         open={confirmationDialogOpen}
         setOpen={setConfirmationDialogOpen}
-        type='delete-role' // Customize based on your context
+        type='delete-role'
         onConfirm={handleDelete}
       />
     </>

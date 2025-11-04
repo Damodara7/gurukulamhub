@@ -1,6 +1,18 @@
 'use client'
 import React from 'react'
-import { Box, Typography, Chip, Avatar, Card, CardContent, Divider, Paper, Button } from '@mui/material'
+import {
+  Box,
+  Typography,
+  Chip,
+  Avatar,
+  Card,
+  CardContent,
+  Divider,
+  Paper,
+  Button,
+  useTheme,
+  alpha
+} from '@mui/material'
 import {
   Group as GroupIcon,
   LocationOn as LocationIcon,
@@ -17,6 +29,7 @@ import JoinRequestScreen from '@/components/group/JoinRequestScreen'
 const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
   const router = useRouter()
   const { data: session } = useSession()
+  const theme = useTheme()
 
   // Check if current user is admin of this group
   const isAdmin = session?.user?.email === groupData?.creatorEmail
@@ -101,296 +114,647 @@ const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
   }
 
   return (
-    <Box sx={{ p: 4, maxWidth: '1200px', margin: '0 auto' }}>
-      {/* Group Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography
-          variant='h4'
-          component='h1'
-          sx={{
-            fontWeight: 600,
-            mb: 2,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            maxWidth: '100%'
-          }}
-        >
-          {groupData?.groupName || 'Group Details'}
-        </Typography>
-
-        {groupData?.description && (
-          <Typography
-            variant='body1'
-            color='text.secondary'
-            sx={{
-              mb: 3,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              maxWidth: '100%'
-            }}
-          >
-            {groupData.description}
-          </Typography>
-        )}
-      </Box>
-
-      {/* Filters Section */}
-      <Card sx={{ mb: 4 }}>
-        <CardContent>
-          <Typography variant='h6' sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <GroupIcon />
-            Group Filters
-          </Typography>
-
-          {filterChips.length > 0 ? (
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-              {filterChips.map((chip, index) => (
-                <Chip
-                  key={index}
-                  icon={chip.icon}
-                  label={chip.label}
-                  color={chip.color}
-                  variant='outlined'
-                  sx={{ mb: 1 }}
-                />
-              ))}
-            </Box>
-          ) : (
-            <Typography variant='body2' color='text.secondary' sx={{ fontStyle: 'italic' }}>
-              No filters applied
-            </Typography>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Group Members Section */}
-      <Card>
-        <CardContent>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-            <Typography variant='h6' sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
-              <GroupIcon />
-              Group Members
-            </Typography>
-            <Typography variant='body2' color='text.secondary'>
-              {groupData?.membersCount === 0
-                ? 'No Members'
-                : groupData?.membersCount > 1
-                  ? `${groupData?.membersCount} members`
-                  : `${groupData?.membersCount} member`}
-            </Typography>
-          </Box>
-
-          <Divider sx={{ mb: 3 }} />
-
-          {groupData?.members && groupData.members.length > 0 ? (
-            <Paper
+    <Box
+      sx={{
+        minHeight: '100vh',
+        background: `radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 50%),
+                     radial-gradient(circle at 80% 80%, ${alpha(
+                       theme.palette.secondary.main,
+                       0.05
+                     )} 0%, transparent 50%),
+                     ${theme.palette.background.default}`
+      }}
+    >
+      {/* Elegant Header */}
+      <Box
+        sx={{
+          backdropFilter: 'blur(20px)',
+          bgcolor: alpha('#fff', 0.7),
+          borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+          pt: { xs: 4, md: 6 },
+          pb: { xs: 4, md: 6 }
+        }}
+      >
+        <Box sx={{ maxWidth: '1200px', margin: '0 auto', px: { xs: 2, sm: 3, md: 4 } }}>
+          <Box sx={{ textAlign: 'center' }}>
+            {/* Icon and Title */}
+            <Box
               sx={{
-                maxHeight: '400px',
-                overflow: 'auto',
-                border: '1px solid',
-                borderColor: 'divider',
-                borderRadius: 1
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 2,
+                mb: 2
               }}
             >
-              <Box sx={{ p: 2 }}>
-                {groupData.members.map((member, index) => (
-                  <Box
-                    key={member._id || index}
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 2,
-                      py: 1.5,
-                      borderBottom: index < groupData.members.length - 1 ? '1px solid' : 'none',
-                      borderColor: 'divider'
-                    }}
-                  >
-                    <Avatar
+              <Box
+                sx={{
+                  width: { xs: 48, sm: 56 },
+                  height: { xs: 48, sm: 56 },
+                  borderRadius: '12px',
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`
+                }}
+              >
+                <GroupIcon sx={{ fontSize: '28px', color: 'white' }} />
+              </Box>
+              <Typography
+                sx={{
+                  fontSize: { xs: '2rem', md: '2.5rem' },
+                  fontWeight: 700,
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  width: '70%',
+                  letterSpacing: '-0.02em',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  maxWidth: '100%'
+                }}
+              >
+                {groupData?.groupName || 'Group Details'}
+              </Typography>
+            </Box>
+            {groupData?.description && (
+              <Typography
+                variant='body1'
+                color='text.secondary'
+                sx={{
+                  fontSize: '1.05rem',
+                  lineHeight: 1.8,
+                  width: '70%',
+                  mx: 'auto',
+                  fontWeight: 400,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  maxWidth: '100%'
+                }}
+              >
+                {groupData.description}
+              </Typography>
+            )}
+          </Box>
+        </Box>
+      </Box>
+
+      {/* Main Content */}
+      <Box sx={{ maxWidth: '1200px', margin: '0 auto', px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 } }}>
+        {/* Filters Section */}
+        <Card
+          sx={{
+            mb: 4,
+            borderRadius: 2,
+            boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.08)}`,
+            border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+            overflow: 'hidden',
+            '&:hover': {
+              boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.12)}`
+            }
+          }}
+        >
+          <CardContent sx={{ p: 3 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.5,
+                mb: 3,
+                pb: 2,
+                borderBottom: `2px solid ${alpha(theme.palette.primary.main, 0.1)}`
+              }}
+            >
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 36,
+                  height: 36,
+                  borderRadius: 1.5,
+                  background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)}, ${alpha(
+                    theme.palette.secondary.main,
+                    0.1
+                  )})`,
+                  color: 'primary.main'
+                }}
+              >
+                <i className='ri-filter-3-line' style={{ fontSize: '1.25rem' }} />
+              </Box>
+              <Typography
+                variant='h6'
+                sx={{
+                  fontWeight: 700,
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent'
+                }}
+              >
+                Group Filters
+              </Typography>
+            </Box>
+
+            {filterChips.length > 0 ? (
+              <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+                {filterChips.map((chip, index) => {
+                  // Determine background color based on chip color type
+                  const getBackgroundColor = () => {
+                    if (chip.color === 'primary') {
+                      return `linear-gradient(135deg, ${alpha(theme.palette.grey[300], 0.2)}, ${alpha(
+                        theme.palette.grey[400],
+                        0.15
+                      )})`
+                    } else if (chip.color === 'success') {
+                      return alpha(theme.palette.grey[400], 0.15)
+                    } else if (chip.color === 'secondary') {
+                      return alpha(theme.palette.grey[500], 0.12)
+                    }
+                    return alpha(theme.palette.grey[400], 0.15)
+                  }
+
+                  const getHoverBackground = () => {
+                    if (chip.color === 'primary') {
+                      return `linear-gradient(135deg, ${alpha(theme.palette.grey[300], 0.28)}, ${alpha(
+                        theme.palette.grey[400],
+                        0.22
+                      )})`
+                    } else if (chip.color === 'success') {
+                      return alpha(theme.palette.grey[400], 0.22)
+                    } else if (chip.color === 'secondary') {
+                      return alpha(theme.palette.grey[500], 0.18)
+                    }
+                    return alpha(theme.palette.grey[400], 0.22)
+                  }
+
+                  const getTextColor = () => {
+                    if (chip.color === 'primary') {
+                      return theme.palette.grey[700]
+                    } else if (chip.color === 'success') {
+                      return theme.palette.grey[600]
+                    } else if (chip.color === 'secondary') {
+                      return theme.palette.grey[700]
+                    }
+                    return theme.palette.grey[700]
+                  }
+
+                  const getBorderColor = () => {
+                    if (chip.color === 'primary') {
+                      return alpha(theme.palette.grey[500], 0.2)
+                    } else if (chip.color === 'success') {
+                      return alpha(theme.palette.grey[400], 0.2)
+                    } else if (chip.color === 'secondary') {
+                      return alpha(theme.palette.grey[500], 0.25)
+                    }
+                    return alpha(theme.palette.grey[500], 0.2)
+                  }
+
+                  return (
+                    <Chip
+                      key={index}
+                      icon={chip.icon}
+                      label={chip.label}
                       sx={{
-                        width: 48,
-                        height: 48,
-                        bgcolor: 'primary.main',
-                        fontSize: '1.2rem',
+                        height: 36,
+                        fontSize: '0.875rem',
                         fontWeight: 600,
-                        color: 'white'
+                        borderRadius: 1.5,
+                        background: getBackgroundColor(),
+                        boxShadow: `0 1px 3px ${alpha(
+                          chip.color === 'primary' ? theme.palette.primary.main : theme.palette.grey[500],
+                          0.08
+                        )}`,
+                        color: getTextColor(),
+                        border: `1px solid ${getBorderColor()}`,
+                        transition: 'all 0.2s ease-in-out',
+                        '&:hover': {
+                          background: getHoverBackground(),
+                          boxShadow: `0 2px 4px ${alpha(
+                            chip.color === 'primary' ? theme.palette.primary.main : theme.palette.grey[500],
+                            0.12
+                          )}`,
+                          transform: 'translateY(-1px)'
+                        },
+                        '& .MuiChip-icon': {
+                          fontSize: 18,
+                          color: getTextColor(),
+                          marginLeft: '8px',
+                          marginRight: '-2px'
+                        },
+                        '& .MuiChip-label': {
+                          color: getTextColor(),
+                          paddingLeft: '10px',
+                          paddingRight: '12px'
+                        }
+                      }}
+                    />
+                  )
+                })}
+              </Box>
+            ) : (
+              <Typography
+                variant='body2'
+                sx={{
+                  color: 'text.secondary',
+                  fontStyle: 'italic',
+                  textAlign: 'center',
+                  py: 2
+                }}
+              >
+                No filters applied
+              </Typography>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Group Members Section */}
+        <Card
+          sx={{
+            borderRadius: 2,
+            boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.08)}`,
+            border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+            overflow: 'hidden',
+            '&:hover': {
+              boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.12)}`
+            }
+          }}
+        >
+          <CardContent sx={{ p: 3 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                mb: 3,
+                pb: 2,
+                borderBottom: `2px solid ${alpha(theme.palette.primary.main, 0.1)}`
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 36,
+                    height: 36,
+                    borderRadius: 1.5,
+                    background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)}, ${alpha(
+                      theme.palette.secondary.main,
+                      0.1
+                    )})`,
+                    color: 'primary.main'
+                  }}
+                >
+                  <GroupIcon sx={{ fontSize: '1.25rem' }} />
+                </Box>
+                <Typography
+                  variant='h6'
+                  sx={{
+                    fontWeight: 700,
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent'
+                  }}
+                >
+                  Group Members
+                </Typography>
+              </Box>
+              <Chip
+                label={
+                  groupData?.membersCount === 0
+                    ? 'No Members'
+                    : groupData?.membersCount > 1
+                      ? `${groupData?.membersCount} members`
+                      : `${groupData?.membersCount} member`
+                }
+                size='small'
+                sx={{
+                  fontWeight: 600,
+                  background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)}, ${alpha(
+                    theme.palette.secondary.main,
+                    0.1
+                  )})`,
+                  color: 'primary.main',
+                  border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`
+                }}
+              />
+            </Box>
+
+            {groupData?.members && groupData.members.length > 0 ? (
+              <Paper
+                sx={{
+                  maxHeight: '400px',
+                  overflow: 'auto',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 1
+                }}
+              >
+                <Box sx={{ p: 2 }}>
+                  {groupData.members.map((member, index) => (
+                    <Box
+                      key={member._id || index}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 2,
+                        py: 1.5,
+                        px: 2,
+                        borderRadius: 1.5,
+                        borderBottom: index < groupData.members.length - 1 ? '1px solid' : 'none',
+                        borderColor: 'divider',
+                        transition: 'all 0.3s ease-in-out',
+                        cursor: 'pointer',
+                        '&:hover': {
+                          backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                          transform: 'scale(1.01)',
+                          boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.15)}`,
+                          borderColor: 'transparent'
+                        }
                       }}
                     >
-                      {member?.profile?.firstname?.[0] || member?.profile?.lastname?.[0] || 'U'}
-                    </Avatar>
+                      <Avatar
+                        sx={{
+                          width: 48,
+                          height: 48,
+                          background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                          fontSize: '1.2rem',
+                          fontWeight: 600,
+                          color: 'white',
+                          boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`
+                        }}
+                      >
+                        {member?.profile?.firstname?.[0] ||
+                          member?.profile?.lastname?.[0] ||
+                          member?.email?.[0]?.toUpperCase() ||
+                          'U'}
+                      </Avatar>
 
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography variant='subtitle1' sx={{ fontWeight: 600, mb: 0.5 }}>
-                        {member?.profile?.firstname && member?.profile?.lastname
-                          ? `${member?.profile?.firstname} ${member?.profile?.lastname}`
-                          : member?.profile?.firstname || member?.profile?.lastname}
-                      </Typography>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography variant='subtitle1' color='text.primary' sx={{ fontWeight: 600, mb: 0.5 }}>
+                          {member?.profile?.firstname && member?.profile?.lastname
+                            ? `${member?.profile?.firstname} ${member?.profile?.lastname}`
+                            : member?.profile?.firstname || member?.profile?.lastname || member?.email}
+                        </Typography>
 
-                      <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
-                        {member.email}
-                      </Typography>
+                        <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
+                          {member.email}
+                        </Typography>
 
-                      {/* Show only filter-related information based on group filters */}
-                      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
-                        {getMemberFilterChips(member).length > 0 ? (
-                          <>
-                            <Typography variant='body2' sx={{ fontWeight: 500, color: 'text.secondary' }}>
-                              Users Criteria:
+                        {/* Show only filter-related information based on group filters */}
+                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+                          {getMemberFilterChips(member).length > 0 ? (
+                            <>
+                              <Typography variant='body2' sx={{ fontWeight: 500, color: 'text.secondary' }}>
+                                Users Criteria:
+                              </Typography>
+                              {getMemberFilterChips(member).map((chip, chipIndex) => (
+                                <Chip
+                                  key={chipIndex}
+                                  size='small'
+                                  icon={
+                                    chip.label.startsWith('Age:') ? (
+                                      <CakeIcon sx={{ fontSize: 14 }} />
+                                    ) : chip.label.startsWith('Gender:') ? (
+                                      <PersonIcon sx={{ fontSize: 14 }} />
+                                    ) : chip.label.startsWith('Location:') ? (
+                                      <LocationIcon sx={{ fontSize: 14 }} />
+                                    ) : null
+                                  }
+                                  label={chip.label}
+                                  variant='outlined'
+                                  color={chip.color}
+                                  sx={{ fontSize: '0.75rem' }}
+                                />
+                              ))}
+                            </>
+                          ) : (
+                            <Typography variant='caption' color='text.secondary' sx={{ fontStyle: 'italic' }}>
+                              No criteria applied
                             </Typography>
-                            {getMemberFilterChips(member).map((chip, chipIndex) => (
-                              <Chip
-                                key={chipIndex}
-                                size='small'
-                                label={chip.label}
-                                variant='outlined'
-                                color={chip.color}
-                                sx={{ fontSize: '0.75rem' }}
-                              />
-                            ))}
-                          </>
-                        ) : (
-                          <Typography variant='caption' color='text.secondary' sx={{ fontStyle: 'italic' }}>
-                            No criteria applied
+                          )}
+                        </Box>
+                      </Box>
+                    </Box>
+                  ))}
+                </Box>
+              </Paper>
+            ) : (
+              <Box sx={{ textAlign: 'center', py: 4 }}>
+                <Typography variant='body1' color='text.secondary'>
+                  No members in this group
+                </Typography>
+              </Box>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Group Games Section */}
+        <Card
+          sx={{
+            mt: 4,
+            borderRadius: 2,
+            boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.08)}`,
+            border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+            overflow: 'hidden',
+            '&:hover': {
+              boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.12)}`
+            }
+          }}
+        >
+          <CardContent sx={{ p: 3 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                mb: 3,
+                pb: 2,
+                borderBottom: `2px solid ${alpha(theme.palette.primary.main, 0.1)}`
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 36,
+                    height: 36,
+                    borderRadius: 1.5,
+                    background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)}, ${alpha(
+                      theme.palette.secondary.main,
+                      0.1
+                    )})`,
+                    color: 'primary.main'
+                  }}
+                >
+                  <GameIcon sx={{ fontSize: '1.25rem' }} />
+                </Box>
+                <Typography
+                  variant='h6'
+                  sx={{
+                    fontWeight: 700,
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent'
+                  }}
+                >
+                  Group Games
+                </Typography>
+              </Box>
+              <Chip
+                label={
+                  gamesData.length === 0
+                    ? 'No Games'
+                    : gamesData.length > 1
+                      ? `${gamesData.length} games`
+                      : `${gamesData.length} game`
+                }
+                size='small'
+                sx={{
+                  fontWeight: 600,
+                  background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)}, ${alpha(
+                    theme.palette.secondary.main,
+                    0.1
+                  )})`,
+                  color: 'primary.main',
+                  border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`
+                }}
+              />
+            </Box>
+
+            {gamesData.length > 0 ? (
+              <Paper
+                sx={{
+                  maxHeight: '400px',
+                  overflow: 'auto',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 1
+                }}
+              >
+                <Box sx={{ p: 2 }}>
+                  {gamesData.map((game, index) => (
+                    <Box
+                      key={game._id || index}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 2,
+                        py: 1.5,
+                        px: 2,
+                        borderRadius: 1.5,
+                        borderBottom: index < gamesData.length - 1 ? '1px solid' : 'none',
+                        borderColor: 'divider',
+                        transition: 'all 0.3s ease-in-out',
+                        cursor: 'pointer',
+                        '&:hover': {
+                          backgroundColor: alpha(theme.palette.secondary.main, 0.08),
+                          transform: 'scale(1.01)',
+                          boxShadow: `0 2px 8px ${alpha(theme.palette.secondary.main, 0.15)}`,
+                          borderColor: 'transparent'
+                        }
+                      }}
+                    >
+                      <Avatar
+                        src={game.thumbnailPoster}
+                        sx={{
+                          width: 48,
+                          height: 48,
+                          background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                          fontSize: '1.2rem',
+                          fontWeight: 600,
+                          color: 'white',
+                          boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`
+                        }}
+                      >
+                        {game.title?.[0]?.toUpperCase() || 'G'}
+                      </Avatar>
+
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography variant='subtitle1' sx={{ fontWeight: 600, mb: 0.5 }}>
+                          {game.title || 'Untitled Game'}
+                        </Typography>
+
+                        {game.description && (
+                          <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
+                            {game.description}
                           </Typography>
                         )}
                       </Box>
+
+                      {/* External Link Button */}
+                      <Button
+                        size='small'
+                        variant='outlined'
+                        color='primary'
+                        onClick={() => router.push(`/management/games/${game._id}`)}
+                        sx={{
+                          minWidth: 'auto',
+                          p: 1,
+                          borderRadius: '50%',
+                          width: 40,
+                          height: 40
+                        }}
+                      >
+                        <OpenInNewIcon sx={{ fontSize: 20 }} />
+                      </Button>
                     </Box>
-                  </Box>
-                ))}
+                  ))}
+                </Box>
+              </Paper>
+            ) : (
+              <Box sx={{ textAlign: 'center', py: 4 }}>
+                <Typography variant='body1' color='text.secondary'>
+                  No games in this group
+                </Typography>
               </Box>
-            </Paper>
-          ) : (
-            <Box sx={{ textAlign: 'center', py: 4 }}>
-              <Typography variant='body1' color='text.secondary'>
-                No members in this group
-              </Typography>
-            </Box>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Group Games Section */}
-      <Card sx={{ mt: 4 }}>
-        <CardContent>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-            <Typography variant='h6' sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
-              <GameIcon />
-              Group Games
-            </Typography>
-            <Typography variant='body2' color='text.secondary'>
-              {gamesData.length === 0
-                ? 'No Games'
-                : gamesData.length > 1
-                  ? `${gamesData.length} games`
-                  : `${gamesData.length} game`}
-            </Typography>
-          </Box>
-
-          <Divider sx={{ mb: 3 }} />
-
-          {gamesData.length > 0 ? (
-            <Paper
-              sx={{
-                maxHeight: '400px',
-                overflow: 'auto',
-                border: '1px solid',
-                borderColor: 'divider',
-                borderRadius: 1
-              }}
-            >
-              <Box sx={{ p: 2 }}>
-                {gamesData.map((game, index) => (
-                  <Box
-                    key={game._id || index}
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 2,
-                      py: 1.5,
-                      borderBottom: index < gamesData.length - 1 ? '1px solid' : 'none',
-                      borderColor: 'divider'
-                    }}
-                  >
-                    <Avatar
-                      src={game.thumbnailPoster}
-                      sx={{
-                        width: 48,
-                        height: 48,
-                        bgcolor: 'primary.main',
-                        fontSize: '1.2rem',
-                        fontWeight: 600
-                      }}
-                    >
-                      {game.title?.[0]?.toUpperCase() || 'G'}
-                    </Avatar>
-
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography variant='subtitle1' sx={{ fontWeight: 600, mb: 0.5 }}>
-                        {game.title || 'Untitled Game'}
-                      </Typography>
-
-                      {game.description && (
-                        <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
-                          {game.description}
-                        </Typography>
-                      )}
-                    </Box>
-
-                    {/* External Link Button */}
-                    <Button
-                      size='small'
-                      variant='outlined'
-                      color='primary'
-                      onClick={() => router.push(`/management/games/${game._id}`)}
-                      sx={{
-                        minWidth: 'auto',
-                        p: 1,
-                        borderRadius: '50%',
-                        width: 40,
-                        height: 40
-                      }}
-                    >
-                      <OpenInNewIcon sx={{ fontSize: 20 }} />
-                    </Button>
-                  </Box>
-                ))}
-              </Box>
-            </Paper>
-          ) : (
-            <Box sx={{ textAlign: 'center', py: 4 }}>
-              <Typography variant='body1' color='text.secondary'>
-                No games in this group
-              </Typography>
-            </Box>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Join Requests Section - Only show for admins */}
-      {isAdmin && (
-        <Card sx={{ mt: 4 }}>
-          <CardContent>
-            <JoinRequestScreen group={groupData} removebutton={true} />
+            )}
           </CardContent>
         </Card>
-      )}
-      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-        <Button
-          variant='contained'
-          component='label'
-          onClick={() => router.push('/management/group')}
-          sx={{
-            mt: 2,
-            px: 4,
-            py: 2,
-            borderRadius: 2,
-            fontWeight: 600,
-            color: 'white'
-          }}
-        >
-          Back to Groups
-        </Button>
+
+        {/* Join Requests Section - Only show for admins */}
+        {isAdmin && (
+          <Card
+            sx={{
+              mt: 4,
+              borderRadius: 2,
+              boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.08)}`,
+              border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+              overflow: 'hidden'
+            }}
+          >
+            <CardContent sx={{ p: 3 }}>
+              <JoinRequestScreen group={groupData} removebutton={true} />
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Back Button */}
+        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+          <Button
+            variant='contained'
+            component='label'
+            onClick={() => router.push('/management/group')}
+            sx={{
+              mt: 2,
+              px: 4,
+              py: 2,
+              borderRadius: 2,
+              fontWeight: 600,
+              color: 'white'
+            }}
+          >
+            Back to Groups
+          </Button>
+        </Box>
       </Box>
     </Box>
   )

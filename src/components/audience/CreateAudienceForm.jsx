@@ -14,8 +14,11 @@ import {
   Snackbar,
   Alert,
   Stack,
-  Box
+  Box,
+  useTheme
 } from '@mui/material'
+import { alpha } from '@mui/material/styles'
+import { People as PeopleIcon, Groups as GroupsIcon } from '@mui/icons-material'
 
 import UserMultiSelect from './UserMultiSelect'
 import { useSession } from 'next-auth/react'
@@ -48,6 +51,7 @@ const validateForm = formData => {
 const formFieldOrder = ['audienceName', 'description']
 
 const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
+  const theme = useTheme()
   const initialFormData = {
     audienceName: '',
     description: ''
@@ -479,18 +483,100 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
   }
 
   return (
-    <Box>
-      {/* {!isInline && ( */}
-      <Card sx={{ maxWidth: 'lg' }}>
-        <CardContent>
+    <Box
+      sx={{
+        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+        borderRadius: '24px',
+        p: { xs: 2, sm: 3, md: 4 },
+        boxShadow: `0 20px 60px ${alpha(theme.palette.primary.main, 0.3)}`,
+        position: 'relative',
+        overflow: 'hidden',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background:
+            'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+          opacity: 0.4
+        }
+      }}
+    >
+      <Card
+        sx={{
+          background: 'rgba(255, 255, 255, 0.98)',
+          backdropFilter: 'blur(20px)',
+          borderRadius: '20px',
+          boxShadow: 'none',
+          border: '1px solid rgba(255, 255, 255, 0.3)',
+          position: 'relative',
+          zIndex: 1
+        }}
+      >
+        <CardContent sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
+          {/* Header Section */}
+          <Box className='flex flex-col gap-1 mb-6 text-center'>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5 }}>
+              <PeopleIcon sx={{ fontSize: { xs: 32, sm: 40, md: 48 }, color: theme.palette.primary.main }} />
+              <Typography
+                variant='h3'
+                sx={{
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  fontWeight: 800,
+                  fontSize: { xs: '1.75rem', sm: '2.25rem', md: '2.75rem' },
+                  letterSpacing: '-1px'
+                }}
+              >
+                {data ? 'Edit Audience' : 'Create Audience'}
+              </Typography>
+            </Box>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+              sx={{ fontSize: '0.95rem', maxWidth: '600px', mx: 'auto' }}
+            >
+              {data
+                ? 'Update audience details and filter criteria to refine your target group'
+                : 'Define your target audience with smart filters and custom criteria'}
+            </Typography>
+          </Box>
+
           {/* Error Snackbar */}
           <Snackbar
             open={showErrorSnackbar}
             autoHideDuration={6000}
             onClose={() => setShowErrorSnackbar(false)}
             anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            sx={{
+              '& .MuiSnackbar-root': {
+                top: { xs: 90, sm: 0 }
+              }
+            }}
           >
-            <Alert onClose={() => setShowErrorSnackbar(false)} severity='error' variant='filled' sx={{ width: '100%' }}>
+            <Alert
+              onClose={() => setShowErrorSnackbar(false)}
+              severity='error'
+              variant='filled'
+              sx={{
+                width: '100%',
+                animation: 'slideUp 0.5s ease-out',
+                '@keyframes slideUp': {
+                  '0%': {
+                    transform: 'translateY(100%)',
+                    opacity: 0
+                  },
+                  '100%': {
+                    transform: 'translateY(0)',
+                    opacity: 1
+                  }
+                }
+              }}
+            >
               {errorMessage}
             </Alert>
           </Snackbar>
@@ -546,7 +632,12 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
               </Grid>
 
               <Grid item xs={12}>
-                <Typography>Audience Members</Typography>
+                <Typography variant='subtitle1' gutterBottom sx={{ fontWeight: 600 }}>
+                  <GroupsIcon
+                    sx={{ fontSize: 20, mr: 1, verticalAlign: 'middle', color: theme.palette.primary.main }}
+                  />
+                  Audience Members
+                </Typography>
                 <UserMultiSelect
                   users={users}
                   matchedUserIds={matchedUserIds}
@@ -567,7 +658,7 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
                     style={{ color: 'white' }}
                     disabled={isSubmitting || matchedUserIds.length === 0}
                   >
-                    {isSubmitting ? 'Saving...' : 'Save Audience'}
+                    {isSubmitting ? 'Saving...' : data ? 'Update Audience' : 'Create Audience'}
                   </Button>
                 </Stack>
               </Grid>

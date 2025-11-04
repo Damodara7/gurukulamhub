@@ -49,7 +49,7 @@ const AddContent = ({ handleClose, onCreate }) => {
   return (
     <>
       <DialogContent className='overflow-visible pbs-0 pbe-6 pli-10 sm:pli-16'>
-        <IconButtonTooltip  title='Close' onClick={handleClose} className='absolute block-start-4 inline-end-4'>
+        <IconButtonTooltip title='Close' onClick={handleClose} className='absolute block-start-4 inline-end-4'>
           <i className='ri-close-line text-textSecondary' />
         </IconButtonTooltip>
         <TextField

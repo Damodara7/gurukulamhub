@@ -124,20 +124,12 @@ const EditAudiencePage = ({ audienceId = null }) => {
   console.log('i am fetting the updated data', updatedAudienceData)
 
   return (
-    <div className='p-4'>
-      <div className='mb-6'>
-        <h1 className='text-2xl font-bold'>{audienceId ? 'Edit Audience' : 'Create New Audience'}</h1>
-        <p className='text-muted-foreground'>
-          {audienceId ? 'Update the audience details below' : 'Fill in the details below to create a new audience'}
-        </p>
-      </div>
-      <CreateAudienceForm
-        key={updatedAudienceData}
-        onSubmit={handleSubmit}
-        onCancel={handleCancel}
-        data={updatedAudienceData}
-      />
-    </div>
+    <CreateAudienceForm
+      key={updatedAudienceData}
+      onSubmit={handleSubmit}
+      onCancel={handleCancel}
+      data={updatedAudienceData}
+    />
   )
 }
 

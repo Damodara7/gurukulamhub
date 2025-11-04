@@ -7,8 +7,11 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import GroupCard from '@/components/group/GroupCard'
 import { Add as AddIcon } from '@mui/icons-material'
-import { Box, Button, CircularProgress } from '@mui/material'
+import { Box, Button, CircularProgress, Container, Typography, useTheme } from '@mui/material'
+import { alpha } from '@mui/material/styles'
+
 const AllGroupPage = () => {
+  const theme = useTheme()
   const router = useRouter()
   const [groups, setGroups] = useState([])
   const [loading, setLoading] = useState(true)
@@ -88,8 +91,45 @@ const AllGroupPage = () => {
 
   if (loading) {
     return (
-      <Box display='flex' justifyContent='center' mt={4}>
-        <CircularProgress />
+      <Box
+        sx={{
+          minHeight: '100vh',
+          background: `radial-gradient(circle at 20% 20%, ${alpha(
+            theme.palette.primary.main,
+            0.05
+          )} 0%, transparent 50%),
+                       radial-gradient(circle at 80% 80%, ${alpha(
+                         theme.palette.secondary.main,
+                         0.05
+                       )} 0%, transparent 50%),
+                       ${theme.palette.background.default}`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+      >
+        <Box sx={{ textAlign: 'center' }}>
+          <CircularProgress
+            size={60}
+            thickness={4}
+            sx={{
+              color: theme.palette.primary.main,
+              mb: 2
+            }}
+          />
+          <Typography
+            variant='body1'
+            sx={{
+              background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              fontWeight: 600
+            }}
+          >
+            Loading groups...
+          </Typography>
+        </Box>
       </Box>
     )
   }
@@ -108,19 +148,107 @@ const AllGroupPage = () => {
   }
 
   return (
-    <Box>
-      <GroupCard groups={groups} onEditGroup={handleEditGroup} onViewGroup={handleViewGroup} />
-      <Box sx={{ position: 'relative' }}>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        background: `radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 50%),
+                     radial-gradient(circle at 80% 80%, ${alpha(
+                       theme.palette.secondary.main,
+                       0.05
+                     )} 0%, transparent 50%),
+                     ${theme.palette.background.default}`
+      }}
+    >
+      {/* Elegant Header */}
+      <Box
+        sx={{
+          backdropFilter: 'blur(20px)',
+          bgcolor: alpha('#fff', 0.7),
+          borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+          pt: { xs: 4, md: 6 },
+          pb: { xs: 4, md: 6 }
+        }}
+      >
+        <Container maxWidth='lg'>
+          <Box sx={{ textAlign: 'center' }}>
+            {/* Icon and Title */}
+            <Box
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 2,
+                mb: 2
+              }}
+            >
+              <Box
+                sx={{
+                  width: { xs: 48, sm: 56 },
+                  height: { xs: 48, sm: 56 },
+                  borderRadius: '12px',
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`
+                }}
+              >
+                <i className='ri-group-line' style={{ fontSize: '28px', color: 'white' }} />
+              </Box>
+              <Typography
+                sx={{
+                  fontSize: { xs: '2rem', md: '2.5rem' },
+                  fontWeight: 700,
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  letterSpacing: '-0.02em'
+                }}
+              >
+                Group Management
+              </Typography>
+            </Box>
+            <Typography
+              variant='body1'
+              color='text.secondary'
+              sx={{
+                fontSize: '1.05rem',
+                lineHeight: 1.8,
+                width: '100%',
+                mx: 'auto',
+                fontWeight: 400
+              }}
+            >
+              Create, manage, and organize user groups with smart filtering
+            </Typography>
+          </Box>
+        </Container>
+      </Box>
+
+      {/* Content Area */}
+      <Container maxWidth='lg' sx={{ py: { xs: 3, md: 4 } }}>
+        <GroupCard groups={groups} onEditGroup={handleEditGroup} onViewGroup={handleViewGroup} />
+
+        {/* Floating Action Button */}
         <Button
           variant='contained'
           component='label'
-          style={{ color: 'white', position: 'fixed', bottom: 20, right: 10, zIndex: 1001 }}
+          sx={{
+            color: 'white',
+            position: 'fixed',
+            fontsize: '1.2rem',
+            bottom: { xs: 16, sm: 24 },
+            right: { xs: 16, sm: 24 },
+            zIndex: 1001,
+            borderRadius: '12px',
+            px: 3,
+            py: 1.5
+          }}
           startIcon={<AddIcon />}
           onClick={handleCreateNewGroup}
         >
-          Create New
+          Create Group
         </Button>
-      </Box>
+      </Container>
     </Box>
   )
 }

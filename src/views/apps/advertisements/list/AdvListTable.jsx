@@ -9,7 +9,7 @@ import {
   Button,
   Typography,
   Card,
-  CardHeader,
+  CardContent,
   TablePagination,
   Divider,
   IconButton,
@@ -19,12 +19,13 @@ import {
   DialogTitle,
   DialogContent,
   DialogContentText,
-  DialogActions,
-  InputAdornment
+  InputAdornment,
+  Box,
+  Container
 } from '@mui/material'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS as ApiUrls } from '@/configs/apiConfig'
-import { styled } from '@mui/material/styles'
+import { styled, alpha, useTheme } from '@mui/material/styles'
 /********************************************/
 import { toast } from 'react-toastify'
 
@@ -108,22 +109,9 @@ const DebouncedInput = ({ value: initialValue, onChange, debounce = 500, ...prop
       InputProps={{
         startAdornment: (
           <InputAdornment position='start'>
-            <i className='ri-search-line' style={{ fontSize: '1.25rem', color: '#667eea' }} />
+            <i className='ri-search-line' style={{ fontSize: '20px', color: 'var(--mui-palette-text-secondary)' }} />
           </InputAdornment>
-        ),
-        style: {
-          borderRadius: '8px'
-        }
-      }}
-      sx={{
-        '& .MuiOutlinedInput-root': {
-          '&:hover fieldset': {
-            borderColor: '#667eea'
-          },
-          '&.Mui-focused fieldset': {
-            borderColor: '#764ba2'
-          }
-        }
+        )
       }}
     />
   )
@@ -161,6 +149,7 @@ const ImageComponent = ({ imageUrl, onClick }) => {
 }
 
 const ImagePopup = ({ imageUrl, mediaType }) => {
+  const theme = useTheme()
   const [open, setOpen] = useState(false)
 
   const handleClickOpen = () => setOpen(true)
@@ -177,14 +166,17 @@ const ImagePopup = ({ imageUrl, mediaType }) => {
           size='small'
           startIcon={<i className='ri-play-circle-line' />}
           sx={{
-            borderColor: '#667eea',
-            color: '#667eea',
+            borderColor: theme.palette.primary.main,
+            color: theme.palette.primary.main,
             textTransform: 'none',
             borderRadius: '6px',
             fontWeight: 500,
             '&:hover': {
-              borderColor: '#764ba2',
-              background: 'linear-gradient(135deg, #667eea10 0%, #764ba210 100%)'
+              borderColor: theme.palette.secondary.main,
+              background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(
+                theme.palette.secondary.main,
+                0.1
+              )} 100%)`
             }
           }}
         >
@@ -204,7 +196,7 @@ const ImagePopup = ({ imageUrl, mediaType }) => {
       >
         <DialogTitle
           sx={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
             color: 'white',
             fontWeight: 600,
             display: 'flex',
@@ -252,6 +244,8 @@ const ImagePopup = ({ imageUrl, mediaType }) => {
 }
 
 const AdvListTable = () => {
+  const theme = useTheme()
+
   // States
   const [addAdvtOpen, setAddAdvtOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
@@ -311,9 +305,9 @@ const AdvListTable = () => {
               onChange: table.getToggleAllRowsSelectedHandler()
             }}
             sx={{
-              color: '#667eea',
+              color: theme.palette.primary.main,
               '&.Mui-checked': {
-                color: '#764ba2'
+                color: theme.palette.secondary.main
               }
             }}
           />
@@ -327,9 +321,9 @@ const AdvListTable = () => {
               onChange: row.getToggleSelectedHandler()
             }}
             sx={{
-              color: '#667eea',
+              color: theme.palette.primary.main,
               '&.Mui-checked': {
-                color: '#764ba2'
+                color: theme.palette.secondary.main
               }
             }}
           />
@@ -344,7 +338,7 @@ const AdvListTable = () => {
                 width: '48px',
                 height: '48px',
                 borderRadius: '12px',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -360,7 +354,10 @@ const AdvListTable = () => {
               <Typography className='font-semibold' style={{ fontSize: '15px', color: '#1a1a2e' }}>
                 {row.original.userName}
               </Typography>
-              <Typography variant='body2' style={{ fontSize: '13px', color: '#667eea', fontWeight: 500 }}>
+              <Typography
+                variant='body2'
+                style={{ fontSize: '13px', color: theme.palette.primary.main, fontWeight: 500 }}
+              >
                 {row.original.company}
               </Typography>
               <Typography
@@ -387,12 +384,15 @@ const AdvListTable = () => {
               alignItems: 'center',
               gap: '8px',
               padding: '6px 12px',
-              background: 'linear-gradient(135deg, #e0f2fe 0%, #ddd6fe 100%)',
+              background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(
+                theme.palette.secondary.main,
+                0.1
+              )} 100%)`,
               borderRadius: '8px',
               width: 'fit-content'
             }}
           >
-            <i className='ri-calendar-event-line' style={{ fontSize: '18px', color: '#667eea' }} />
+            <i className='ri-calendar-event-line' style={{ fontSize: '18px', color: theme.palette.primary.main }} />
             <Typography style={{ fontSize: '14px', fontWeight: 500, color: '#1a1a2e' }}>
               {format(row.original.startDate, 'MMM dd, yyyy')}
             </Typography>
@@ -408,12 +408,15 @@ const AdvListTable = () => {
               alignItems: 'center',
               gap: '8px',
               padding: '6px 12px',
-              background: 'linear-gradient(135deg, #fce7f3 0%, #e0e7ff 100%)',
+              background: `linear-gradient(135deg, ${alpha(theme.palette.secondary.main, 0.1)} 0%, ${alpha(
+                theme.palette.primary.main,
+                0.1
+              )} 100%)`,
               borderRadius: '8px',
               width: 'fit-content'
             }}
           >
-            <i className='ri-calendar-check-line' style={{ fontSize: '18px', color: '#764ba2' }} />
+            <i className='ri-calendar-check-line' style={{ fontSize: '18px', color: theme.palette.secondary.main }} />
             <Typography style={{ fontSize: '14px', fontWeight: 500, color: '#1a1a2e' }}>
               {format(row.original.endDate, 'MMM dd, yyyy')}
             </Typography>
@@ -433,13 +436,13 @@ const AdvListTable = () => {
                   overflow: 'hidden',
                   border: '2px solid #e5e7eb',
                   boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                  width: '400px'
+                  width: '200px'
                 }}
               >
                 <VideoAd
                   url={row.original?.imageUrl}
-                  width='400px'
-                  height='120px'
+                  width='200px'
+                  height='80px'
                   showPause={false}
                   autoPlay={false}
                 ></VideoAd>
@@ -525,9 +528,12 @@ const AdvListTable = () => {
                 setAddAdvtOpen(!addAdvtOpen)
               }}
               sx={{
-                background: 'linear-gradient(135deg, #e0f2fe 0%, #ddd6fe 100%)',
+                background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(
+                  theme.palette.secondary.main,
+                  0.1
+                )} 100%)`,
                 '&:hover': {
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
                   '& i': {
                     color: 'white'
                   }
@@ -538,7 +544,7 @@ const AdvListTable = () => {
                 transition: 'all 0.3s ease'
               }}
             >
-              <i className='ri-edit-box-line text-[20px]' style={{ color: '#667eea' }} />
+              <i className='ri-edit-box-line text-[20px]' style={{ color: theme.palette.primary.main }} />
             </IconButtonTooltip>
             <IconButtonTooltip
               title='Delete'
@@ -644,196 +650,282 @@ const AdvListTable = () => {
   }
 
   return (
-    <>
-      <Card
+    <Box
+      sx={{
+        minHeight: '100vh',
+        background: `radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 50%),
+                     radial-gradient(circle at 80% 80%, ${alpha(
+                       theme.palette.secondary.main,
+                       0.05
+                     )} 0%, transparent 50%),
+                     ${theme.palette.background.default}`
+      }}
+    >
+      {/* Elegant Header */}
+      <Box
         sx={{
-          borderRadius: '16px',
-          boxShadow: '0 8px 24px rgba(102, 126, 234, 0.12)',
-          overflow: 'hidden',
-          border: '1px solid #e5e7eb'
+          backdropFilter: 'blur(20px)',
+          bgcolor: alpha('#fff', 0.7),
+          borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+          pt: { xs: 4, md: 6 },
+          pb: { xs: 4, md: 6 }
         }}
       >
-        {/* <CardHeader title='Filters' /> */}
-        {/* <TableFilters setData={setData} tableData={data} /> */}
-        <Divider
-          sx={{
-            borderColor: 'transparent',
-            background: 'linear-gradient(90deg, transparent 0%, #667eea30 50%, transparent 100%)',
-            height: '2px'
-          }}
-        />
-        <div className='flex justify-between p-5 gap-4 flex-col items-start sm:flex-row sm:items-center'>
-          <Typography
-            variant='h4'
-            className='font-bold'
-            style={{
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text'
-            }}
-          >
-            Advertisement Management
-          </Typography>
-          <div className='flex items-center gap-x-4 is-full gap-4 flex-col sm:is-auto sm:flex-row'>
-            <DebouncedInput
-              value={globalFilter ?? ''}
-              onChange={value => setGlobalFilter(String(value))}
-              placeholder='Search advertisements...'
-              className='is-full sm:is-auto'
-            />
-            <Button
-              variant='contained'
-              component='label'
-              onClick={() => {
-                setAddAdvtOpen(!addAdvtOpen)
-                setMode('add')
-              }}
-              className='is-full sm:is-auto'
-              startIcon={<i className='ri-add-circle-line' />}
+        <Container maxWidth='lg'>
+          <Box sx={{ textAlign: 'center' }}>
+            {/* Icon and Title */}
+            <Box
               sx={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                color: 'white',
-                fontWeight: 600,
-                padding: '10px 24px',
-                borderRadius: '8px',
-                textTransform: 'none',
-                fontSize: '14px',
-                boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
-                '&:hover': {
-                  background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
-                  boxShadow: '0 6px 16px rgba(102, 126, 234, 0.4)',
-                  transform: 'translateY(-2px)'
-                },
-                transition: 'all 0.3s ease'
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 2,
+                mb: 2
               }}
             >
-              Add New Advertisement
-            </Button>
-          </div>
-        </div>
-        <div className='overflow-x-auto'>
-          <table className={tableStyles.table}>
-            <thead>
-              {table.getHeaderGroups().map(headerGroup => (
-                <tr key={headerGroup.id}>
-                  {headerGroup.headers.map(header => (
-                    <th key={header.id} className='enhanced-table-header'>
-                      {header.isPlaceholder ? null : (
-                        <>
-                          <div
-                            className={classnames({
-                              'flex items-center': header.column.getIsSorted(),
-                              'cursor-pointer select-none': header.column.getCanSort()
-                            })}
-                            onClick={header.column.getToggleSortingHandler()}
-                          >
-                            {flexRender(header.column.columnDef.header, header.getContext())}
-                            {{
-                              asc: <i className='ri-arrow-up-s-line text-xl' />,
-                              desc: <i className='ri-arrow-down-s-line text-xl' />
-                            }[header.column.getIsSorted()] ?? null}
-                          </div>
-                        </>
-                      )}
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            {table?.getFilteredRowModel()?.rows?.length === 0 ? (
-              <tbody>
-                <tr>
-                  <td
-                    colSpan={table?.getVisibleFlatColumns().length}
-                    className='text-center'
-                    style={{ padding: '40px' }}
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: '12px',
-                        color: '#6b7280'
-                      }}
-                    >
-                      <i className='ri-inbox-line' style={{ fontSize: '48px', color: '#667eea' }} />
-                      <Typography variant='h6' style={{ color: '#1a1a2e', fontWeight: 600 }}>
-                        No Advertisements Found
-                      </Typography>
-                      <Typography variant='body2' style={{ color: '#6b7280' }}>
-                        Create your first advertisement to get started
-                      </Typography>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            ) : (
-              <tbody>
-                {table
-                  .getRowModel()
-                  .rows.slice(0, table.getState().pagination.pageSize)
-                  .map(row => {
-                    return (
-                      <tr key={row.id} className={classnames('enhanced-table-row', { selected: row.getIsSelected() })}>
-                        {row.getVisibleCells().map(cell => (
-                          <td key={cell.id} className='enhanced-table-cell'>
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </td>
-                        ))}
-                      </tr>
-                    )
-                  })}
-              </tbody>
-            )}
-          </table>
-        </div>
-        <TablePagination
-          rowsPerPageOptions={[10, 25, 50]}
-          component='div'
-          className='border-bs'
-          count={table.getFilteredRowModel().rows.length}
-          rowsPerPage={table.getState().pagination.pageSize}
-          page={table.getState().pagination.pageIndex}
-          SelectProps={{
-            inputProps: { 'aria-label': 'rows per page' }
-          }}
-          onPageChange={(_, page) => {
-            table.setPageIndex(page)
-          }}
-          onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
+              <Box
+                sx={{
+                  width: { xs: 48, sm: 56 },
+                  height: { xs: 48, sm: 56 },
+                  borderRadius: '12px',
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`
+                }}
+              >
+                <i className='ri-megaphone-line' style={{ fontSize: '28px', color: 'white' }} />
+              </Box>
+              <Typography
+                sx={{
+                  fontSize: { xs: '2rem', md: '2.5rem' },
+                  fontWeight: 700,
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  letterSpacing: '-0.02em'
+                }}
+              >
+                Advertisement Management
+              </Typography>
+            </Box>
+            <Typography
+              variant='body1'
+              color='text.secondary'
+              sx={{
+                fontSize: '1.05rem',
+                lineHeight: 1.8,
+                maxWidth: 600,
+                mx: 'auto',
+                fontWeight: 400
+              }}
+            >
+              Manage and monitor all advertisements across your platform
+            </Typography>
+          </Box>
+        </Container>
+      </Box>
+
+      {/* Content Area */}
+      <Container maxWidth='lg' sx={{ py: { xs: 3, md: 4 } }}>
+        <Card
           sx={{
-            borderTop: '2px solid #f3f4f6',
-            background: 'linear-gradient(180deg, #ffffff 0%, #f9fafb 100%)',
-            '& .MuiTablePagination-select': {
-              borderRadius: '6px',
-              '&:hover': {
-                background: '#667eea10'
-              }
-            },
-            '& .MuiTablePagination-actions button': {
-              color: '#667eea',
-              '&:hover': {
-                background: '#667eea10'
-              }
+            borderRadius: '16px',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.08)',
+            overflow: 'hidden',
+            border: '1px solid #e5e7eb',
+            background: '#ffffff',
+            transition: 'box-shadow 0.3s ease-in-out',
+            '&:hover': {
+              boxShadow: theme => theme.shadows[6]
             }
           }}
-        />
-      </Card>
-      {addAdvtOpen && (
-        <AddAdvDrawer
-          open={addAdvtOpen}
-          mode={mode}
-          handleClose={() => {
-            setAddAdvtOpen(!addAdvtOpen)
-            setAdvtEditOrAddInitialData(null)
-          }}
-          data={advtEditOrAddInitialData}
-          onRefresh={() => getData()}
-        />
-      )}
-    </>
+        >
+          <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
+            <div className='flex justify-between items-center flex-col sm:flex-row gap-4'>
+              <DebouncedInput
+                value={globalFilter ?? ''}
+                onChange={value => setGlobalFilter(String(value))}
+                placeholder='Search advertisements...'
+                fullWidth
+                sx={{ maxWidth: { sm: '400px' } }}
+              />
+              <Button
+                variant='contained'
+                component='label'
+                onClick={() => {
+                  setAddAdvtOpen(!addAdvtOpen)
+                  setMode('add')
+                }}
+                startIcon={<i className='ri-add-circle-line' />}
+                sx={{
+                  borderRadius: 2,
+                  color: 'white',
+                  fontWeight: 600,
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                Add New Advertisement
+              </Button>
+            </div>
+          </CardContent>
+
+          <Divider />
+
+          <div className='px-4 sm:px-6 py-3'>
+            <Typography variant='body2' color='text.secondary' sx={{ fontWeight: 500 }}>
+              Total {data?.length || 0} advertisement{data?.length !== 1 ? 's' : ''}
+            </Typography>
+          </div>
+          <div className='overflow-x-auto'>
+            <table className={tableStyles.table}>
+              <thead>
+                {table.getHeaderGroups().map(headerGroup => (
+                  <tr key={headerGroup.id}>
+                    {headerGroup.headers.map(header => (
+                      <th key={header.id} className='enhanced-table-header'>
+                        {header.isPlaceholder ? null : (
+                          <>
+                            <div
+                              className={classnames({
+                                'flex items-center': header.column.getIsSorted(),
+                                'cursor-pointer select-none': header.column.getCanSort()
+                              })}
+                              onClick={header.column.getToggleSortingHandler()}
+                            >
+                              {flexRender(header.column.columnDef.header, header.getContext())}
+                              {{
+                                asc: <i className='ri-arrow-up-s-line text-xl' />,
+                                desc: <i className='ri-arrow-down-s-line text-xl' />
+                              }[header.column.getIsSorted()] ?? null}
+                            </div>
+                          </>
+                        )}
+                      </th>
+                    ))}
+                  </tr>
+                ))}
+              </thead>
+              {table?.getFilteredRowModel()?.rows?.length === 0 ? (
+                <tbody>
+                  <tr>
+                    <td
+                      colSpan={table?.getVisibleFlatColumns().length}
+                      className='text-center'
+                      style={{ padding: '40px' }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: '12px',
+                          color: '#6b7280'
+                        }}
+                      >
+                        <i className='ri-inbox-line' style={{ fontSize: '48px', color: theme.palette.primary.main }} />
+                        <Typography variant='h6' style={{ color: '#1a1a2e', fontWeight: 600 }}>
+                          No Advertisements Found
+                        </Typography>
+                        <Typography variant='body2' style={{ color: '#6b7280' }}>
+                          Create your first advertisement to get started
+                        </Typography>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              ) : (
+                <tbody>
+                  {table
+                    .getRowModel()
+                    .rows.slice(0, table.getState().pagination.pageSize)
+                    .map(row => {
+                      return (
+                        <tr
+                          key={row.id}
+                          className={classnames('enhanced-table-row', { selected: row.getIsSelected() })}
+                          style={{
+                            transition: 'all 0.3s ease-in-out',
+                            cursor: 'pointer'
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.backgroundColor = 'rgba(139, 92, 246, 0.08)'
+                            e.currentTarget.style.transform = 'scale(1.01)'
+                            e.currentTarget.style.boxShadow = '0 2px 8px rgba(139, 92, 246, 0.15)'
+                          }}
+                          onMouseLeave={e => {
+                            if (!row.getIsSelected()) {
+                              e.currentTarget.style.backgroundColor = 'transparent'
+                            }
+                            e.currentTarget.style.transform = 'scale(1)'
+                            e.currentTarget.style.boxShadow = 'none'
+                          }}
+                        >
+                          {row.getVisibleCells().map(cell => (
+                            <td key={cell.id} className='enhanced-table-cell'>
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </td>
+                          ))}
+                        </tr>
+                      )
+                    })}
+                </tbody>
+              )}
+            </table>
+          </div>
+          <TablePagination
+            rowsPerPageOptions={[10, 25, 50]}
+            component='div'
+            className='border-bs'
+            count={table.getFilteredRowModel().rows.length}
+            rowsPerPage={table.getState().pagination.pageSize}
+            page={table.getState().pagination.pageIndex}
+            SelectProps={{
+              inputProps: { 'aria-label': 'rows per page' }
+            }}
+            onPageChange={(_, page) => {
+              table.setPageIndex(page)
+            }}
+            onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
+            sx={{
+              borderTop: '2px solid #f3f4f6',
+              background: 'linear-gradient(180deg, #ffffff 0%, #f9fafb 100%)',
+              '.MuiTablePagination-toolbar': {
+                px: { xs: 2, sm: 3 },
+                py: 2
+              },
+              '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
+                fontSize: { xs: '0.75rem', sm: '0.875rem' }
+              },
+              '& .MuiTablePagination-select': {
+                borderRadius: '6px',
+                '&:hover': {
+                  background: alpha(theme.palette.primary.main, 0.1)
+                }
+              },
+              '& .MuiTablePagination-actions button': {
+                color: theme.palette.primary.main,
+                '&:hover': {
+                  background: alpha(theme.palette.primary.main, 0.1)
+                }
+              }
+            }}
+          />
+        </Card>
+        {addAdvtOpen && (
+          <AddAdvDrawer
+            open={addAdvtOpen}
+            mode={mode}
+            handleClose={() => {
+              setAddAdvtOpen(!addAdvtOpen)
+              setAdvtEditOrAddInitialData(null)
+            }}
+            data={advtEditOrAddInitialData}
+            onRefresh={() => getData()}
+          />
+        )}
+      </Container>
+    </Box>
   )
 }
 

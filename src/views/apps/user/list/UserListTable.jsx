@@ -24,6 +24,7 @@ import { styled } from '@mui/material/styles'
 import TablePagination from '@mui/material/TablePagination'
 import DoneAllIcon from '@mui/icons-material/DoneAll'
 import CloseIcon from '@mui/icons-material/Close'
+import InputAdornment from '@mui/material/InputAdornment'
 
 // Third-party Imports
 import classnames from 'classnames'
@@ -102,7 +103,7 @@ const DebouncedInput = ({ value: initialValue, onChange, debounce = 500, ...prop
 const userRoleObj = {
   ADMIN: { icon: 'ri-vip-crown-line', color: 'error' },
   USER: { icon: 'ri-user-3-line', color: 'primary' },
-  "SUPER_USER": { icon: 'ri-shield-star-line', color: 'error' },
+  SUPER_USER: { icon: 'ri-shield-star-line', color: 'error' }
 }
 
 const userStatusObj = {
@@ -165,9 +166,9 @@ const RolesTable = ({ tableData, refreshUsers }) => {
           return (
             <div className='flex items-center gap-4'>
               {getAvatar({ avatar: row.original.image, fullName: fullname })}
-              <div className='flex flex-col'>
+              <div className='flex flex-col' style={{ minWidth: '150px' }}>
                 <Link
-                  href={getLocalizedUrl(`/apps/user/${encodeURIComponent(row.original.email)}`, locale)}
+                  href={getLocalizedUrl(`/management/user/${encodeURIComponent(row.original.email)}`, locale)}
                   style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}
                 >
                   <Typography
@@ -179,20 +180,30 @@ const RolesTable = ({ tableData, refreshUsers }) => {
                       textDecoration: 'none',
                       display: 'inline-flex',
                       alignItems: 'center',
-                      transition: 'color 0.2s',
+                      transition: 'all 0.2s ease-in-out',
                       '&:hover': {
-                        color: 'info.main',
+                        color: 'primary.main',
                         '& .external-link-icon': {
-                          color: 'info.main',
+                          color: 'primary.main',
+                          transform: 'translate(2px, -2px)'
                         }
                       }
                     }}
                   >
                     {fullname || ''}
-                    <i className='ri-external-link-line text-[16px] ml-1 external-link-icon' style={{ marginLeft: 4, color: 'var(--mui-palette-info-main)' }} />
+                    <i
+                      className='ri-external-link-line text-[16px] ml-1 external-link-icon'
+                      style={{
+                        marginLeft: 4,
+                        color: 'var(--mui-palette-primary-main)',
+                        transition: 'transform 0.2s ease-in-out'
+                      }}
+                    />
                   </Typography>
                 </Link>
-                <Typography variant='body2'>{row.original.nickname}</Typography>
+                <Typography variant='body2' color='text.secondary' sx={{ fontSize: '0.8125rem' }}>
+                  {row.original.nickname}
+                </Typography>
               </div>
             </div>
           )
@@ -202,7 +213,7 @@ const RolesTable = ({ tableData, refreshUsers }) => {
         header: 'Email',
         cell: ({ row }) => (
           <Link
-            href={getLocalizedUrl(`/apps/user/${encodeURIComponent(row.original.email)}`, locale)}
+            href={getLocalizedUrl(`/management/user/${encodeURIComponent(row.original.email)}`, locale)}
             style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}
           >
             <Typography
@@ -212,17 +223,27 @@ const RolesTable = ({ tableData, refreshUsers }) => {
                 textDecoration: 'none',
                 display: 'inline-flex',
                 alignItems: 'center',
-                transition: 'color 0.2s',
+                transition: 'all 0.2s ease-in-out',
+                fontSize: '0.875rem',
+                minWidth: '180px',
                 '&:hover': {
-                  color: 'info.main',
+                  color: 'primary.main',
                   '& .external-link-icon': {
-                    color: 'info.main',
+                    color: 'primary.main',
+                    transform: 'translate(2px, -2px)'
                   }
                 }
               }}
             >
               {row.original.email}
-              <i className='ri-external-link-line text-[16px] ml-1 external-link-icon' style={{ marginLeft: 4, color: 'var(--mui-palette-info-main)' }} />
+              <i
+                className='ri-external-link-line text-[16px] ml-1 external-link-icon'
+                style={{
+                  marginLeft: 4,
+                  color: 'var(--mui-palette-primary-main)',
+                  transition: 'transform 0.2s ease-in-out'
+                }}
+              />
             </Typography>
           </Link>
         )
@@ -230,22 +251,23 @@ const RolesTable = ({ tableData, refreshUsers }) => {
       columnHelper.accessor('roles', {
         header: 'Role',
         cell: ({ row }) => (
-          <div className='flex flex-wrap gap-2'>
+          <div className='flex flex-wrap gap-2' style={{ minWidth: '120px' }}>
             {row.original.roles.map((role, index) => (
-              <div key={index} className='flex items-center gap-2'>
-                <Icon
-                  className={userRoleObj[role]?.icon}
-                  sx={{ color: `var(--mui-palette-${userRoleObj[role]?.color}-main)`, fontSize: '1.375rem' }}
-                />
-                <Typography className='capitalize' color='text.primary'>
-                  {role}
-                </Typography>
-                {index < row.original.roles.length - 1 && (
-                  <Typography color='text.secondary' sx={{ mx: 0.5 }}>
-                    |
-                  </Typography>
-                )}
-              </div>
+              <Chip
+                key={index}
+                label={role}
+                size='small'
+                icon={<Icon className={userRoleObj[role]?.icon} sx={{ fontSize: '1.125rem !important' }} />}
+                color={userRoleObj[role]?.color || 'default'}
+                variant='tonal'
+                sx={{
+                  fontWeight: 500,
+                  textTransform: 'capitalize',
+                  '& .MuiChip-icon': {
+                    marginLeft: '8px'
+                  }
+                }}
+              />
             ))}
           </div>
         )
@@ -265,9 +287,16 @@ const RolesTable = ({ tableData, refreshUsers }) => {
             <Chip
               variant='tonal'
               className='capitalize'
-              label={row.original.isActive ? 'active' : 'inactive'}
+              label={row.original.isActive ? 'Active' : 'Inactive'}
               color={userStatusObj[row.original.isActive ? 'active' : 'inactive']}
               size='small'
+              sx={{
+                fontWeight: 600,
+                minWidth: '75px',
+                '& .MuiChip-label': {
+                  px: 2
+                }
+              }}
             />
           </div>
         )
@@ -276,19 +305,47 @@ const RolesTable = ({ tableData, refreshUsers }) => {
         header: 'Verified',
         cell: ({ row }) => (
           <div className='flex items-center text-center justify-center gap-3'>
-            {row.original.isVerified ? <DoneAllIcon color='success' /> : <CloseIcon color='error' />}
+            <Chip
+              size='small'
+              variant='tonal'
+              label={row.original.isVerified ? 'Verified' : 'Unverified'}
+              color={row.original.isVerified ? 'success' : 'error'}
+              icon={
+                row.original.isVerified ? (
+                  <DoneAllIcon sx={{ fontSize: '1rem !important' }} />
+                ) : (
+                  <CloseIcon sx={{ fontSize: '1rem !important' }} />
+                )
+              }
+              sx={{
+                fontWeight: 500,
+                minWidth: '95px',
+                '& .MuiChip-icon': {
+                  marginLeft: '8px'
+                }
+              }}
+            />
           </div>
         )
       }),
       columnHelper.accessor('action', {
         header: 'Actions',
         cell: ({ row }) => (
-          <div className='flex items-center'>
+          <div className='flex items-center gap-1'>
             <IconButtonTooltip
-              title='View'
-              href={getLocalizedUrl(`/apps/user/${encodeURIComponent(row.original.email)}`, locale)}
+              title='View Details'
+              href={getLocalizedUrl(`/management/user/${encodeURIComponent(row.original.email)}`, locale)}
               component={Link}
               size='small'
+              sx={{
+                transition: 'all 0.2s ease-in-out',
+                '&:hover': {
+                  backgroundColor: theme => theme.palette.primary.main + '10',
+                  '& i': {
+                    color: 'primary.main'
+                  }
+                }
+              }}
             >
               <i className='ri-eye-line text-[22px] text-textSecondary' />
             </IconButtonTooltip>
@@ -296,7 +353,7 @@ const RolesTable = ({ tableData, refreshUsers }) => {
               iconClassName='text-[22px] text-textSecondary'
               options={[
                 {
-                  text: 'Edit',
+                  text: 'Edit Role',
                   icon: 'ri-edit-box-line text-[22px]',
                   menuItemProps: {
                     className: 'flex items-center gap-2 text-textSecondary',
@@ -402,78 +459,214 @@ const RolesTable = ({ tableData, refreshUsers }) => {
   }, [role, status, emailStatus, tableData, setData])
 
   return (
-    <Card>
-      <CardContent className='flex justify-between flex-col gap-4 items-start sm:flex-row sm:items-center'>
-        <div className='flex flex-col sm:flex-row justify-end w-full gap-4'>
-          <FormControl size='small' className='is-full sm:is-auto'>
-            <InputLabel id='roles-app-role-select-label'>Select Role</InputLabel>
-            <Select
-              value={role}
-              onChange={e => setRole(e.target.value)}
-              label='Select Role'
-              id='roles-app-role-select'
-              labelId='roles-app-role-select-label'
-              className='min-is-[150px]'
-            >
-              <MenuItem value=''>Select Role</MenuItem>
-              {rolesData?.map(role => {
-                return (
-                  <MenuItem key={role._id} value={role.name}>
-                    {role.name}
-                  </MenuItem>
-                )
-              })}
-            </Select>
-          </FormControl>
-          <FormControl size='small' className='is-full sm:is-auto'>
-            <InputLabel id='roles-app-role-select-label'>Select Status</InputLabel>
-            <Select
-              value={status}
-              onChange={e => setStatus(e.target.value)}
-              label='Select Role'
-              id='roles-app-role-select'
-              labelId='roles-app-role-select-label'
-              className='min-is-[150px]'
-            >
-              <MenuItem value=''>Select Status</MenuItem>
-              {['inactive', 'active']?.map(currentStatus => {
-                return (
-                  <MenuItem className='capitalize' key={currentStatus} value={currentStatus}>
-                    {currentStatus}
-                  </MenuItem>
-                )
-              })}
-            </Select>
-          </FormControl>
-          <FormControl size='small' className='is-full sm:is-auto'>
-            <InputLabel id='email-verification-status-label'>Email Status</InputLabel>
-            <Select
-              value={emailStatus}
-              onChange={e => setEmailStatus(e.target.value)}
-              label='Email Status'
-              id='email-verification-status-select'
-              labelId='email-verification-status-label'
-              className='min-is-[150px]'
-            >
-              <MenuItem value=''>Select Email Status</MenuItem>
-              <MenuItem value='verified'>Verified</MenuItem>
-              <MenuItem value='notVerified'>Not Verified</MenuItem>
-            </Select>
-          </FormControl>
+    <Card
+      sx={{
+        background: '#ffffff',
+        boxShadow: theme => theme.shadows[3],
+        borderRadius: 3,
+        overflow: 'hidden',
+        border: theme => `1px solid ${theme.palette.divider}`,
+        transition: 'box-shadow 0.3s ease-in-out',
+        '&:hover': {
+          boxShadow: theme => theme.shadows[6]
+        }
+      }}
+    >
+      <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
+        <Grid container spacing={{ xs: 2, sm: 3 }} alignItems='center'>
+          {/* Filters Section */}
+          <Grid item xs={12} sm={6} md={3}>
+            <FormControl size='small' fullWidth>
+              <InputLabel id='roles-app-role-select-label'>Select Role</InputLabel>
+              <Select
+                value={role}
+                onChange={e => setRole(e.target.value)}
+                label='Select Role'
+                id='roles-app-role-select'
+                labelId='roles-app-role-select-label'
+              >
+                <MenuItem value=''>
+                  <em>All Roles</em>
+                </MenuItem>
+                {rolesData?.map(role => {
+                  return (
+                    <MenuItem key={role._id} value={role.name}>
+                      {role.name}
+                    </MenuItem>
+                  )
+                })}
+              </Select>
+            </FormControl>
+          </Grid>
 
-          <DebouncedInput
-            value={globalFilter ?? ''}
-            onChange={value => setGlobalFilter(String(value))}
-            placeholder='Search User'
-            className='is-full sm:is-auto'
-          />
-        </div>
+          <Grid item xs={12} sm={6} md={3}>
+            <FormControl size='small' fullWidth>
+              <InputLabel id='status-select-label'>Select Status</InputLabel>
+              <Select
+                value={status}
+                onChange={e => setStatus(e.target.value)}
+                label='Select Status'
+                id='status-select'
+                labelId='status-select-label'
+              >
+                <MenuItem value=''>
+                  <em>All Status</em>
+                </MenuItem>
+                {['inactive', 'active']?.map(currentStatus => {
+                  return (
+                    <MenuItem className='capitalize' key={currentStatus} value={currentStatus}>
+                      {currentStatus}
+                    </MenuItem>
+                  )
+                })}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={3}>
+            <FormControl size='small' fullWidth>
+              <InputLabel id='email-verification-status-label'>Email Status</InputLabel>
+              <Select
+                value={emailStatus}
+                onChange={e => setEmailStatus(e.target.value)}
+                label='Email Status'
+                id='email-verification-status-select'
+                labelId='email-verification-status-label'
+              >
+                <MenuItem value=''>
+                  <em>All Email Status</em>
+                </MenuItem>
+                <MenuItem value='verified'>Verified</MenuItem>
+                <MenuItem value='notVerified'>Not Verified</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={3}>
+            <DebouncedInput
+              value={globalFilter ?? ''}
+              onChange={value => setGlobalFilter(String(value))}
+              placeholder='Search User'
+              fullWidth
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position='start'>
+                    <i
+                      className='ri-search-line'
+                      style={{ fontSize: '20px', color: 'var(--mui-palette-text-secondary)' }}
+                    />
+                  </InputAdornment>
+                )
+              }}
+            />
+          </Grid>
+        </Grid>
       </CardContent>
+
       <Divider />
-      <div className='flex justify-end p-3 gap-4 flex-col items-start sm:flex-row sm:items-center'>
-        <Button variant='contained' onClick={() => setAddUserOpen(!addUserOpen)} className='is-full sm:is-auto'>
-          Add New User
-        </Button>
+
+      <div className='px-4 sm:px-6 py-3 sm:py-4'>
+        <div className='flex justify-between items-start sm:items-center flex-col sm:flex-row gap-3'>
+          <div className='flex flex-col gap-2'>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+              sx={{
+                fontWeight: 500
+              }}
+            >
+              {role || status || emailStatus || globalFilter ? (
+                <>
+                  Showing {table.getFilteredRowModel().rows.length} of {tableData?.length || 0} user
+                  {tableData?.length !== 1 ? 's' : ''}
+                </>
+              ) : (
+                <>
+                  Total {tableData?.length || 0} user{tableData?.length !== 1 ? 's' : ''}
+                </>
+              )}
+            </Typography>
+            {/* Active Filters Display */}
+            {(role || status || emailStatus || globalFilter) && (
+              <div className='flex flex-wrap items-center gap-2'>
+                <Typography variant='caption' color='text.disabled' sx={{ fontWeight: 500 }}>
+                  Active Filters:
+                </Typography>
+                {role && (
+                  <Chip
+                    label={`Role: ${role}`}
+                    size='small'
+                    onDelete={() => setRole('')}
+                    color='primary'
+                    variant='outlined'
+                    sx={{ height: '24px', fontSize: '0.75rem' }}
+                  />
+                )}
+                {status && (
+                  <Chip
+                    label={`Status: ${status}`}
+                    size='small'
+                    onDelete={() => setStatus('')}
+                    color='success'
+                    variant='outlined'
+                    sx={{ height: '24px', fontSize: '0.75rem', textTransform: 'capitalize' }}
+                  />
+                )}
+                {emailStatus && (
+                  <Chip
+                    label={`Email: ${emailStatus === 'verified' ? 'Verified' : 'Not Verified'}`}
+                    size='small'
+                    onDelete={() => setEmailStatus('')}
+                    color='warning'
+                    variant='outlined'
+                    sx={{ height: '24px', fontSize: '0.75rem' }}
+                  />
+                )}
+                {globalFilter && (
+                  <Chip
+                    label={`Search: "${globalFilter}"`}
+                    size='small'
+                    onDelete={() => setGlobalFilter('')}
+                    color='info'
+                    variant='outlined'
+                    sx={{ height: '24px', fontSize: '0.75rem' }}
+                  />
+                )}
+                <Button
+                  size='small'
+                  onClick={() => {
+                    setRole('')
+                    setStatus('')
+                    setEmailStatus('')
+                    setGlobalFilter('')
+                  }}
+                  sx={{
+                    fontSize: '0.75rem',
+                    height: '24px',
+                    minWidth: 'auto',
+                    px: 1.5,
+                    textTransform: 'none'
+                  }}
+                >
+                  Clear All
+                </Button>
+              </div>
+            )}
+          </div>
+          <Button
+            variant='contained'
+            component='label'
+            onClick={() => setAddUserOpen(!addUserOpen)}
+            startIcon={<i className='ri-add-line' />}
+            sx={{
+              borderRadius: 2,
+              color: 'white',
+              fontWeight: 600
+            }}
+          >
+            Add New User
+          </Button>
+        </div>
       </div>
       <div className='overflow-x-auto'>
         <table className={tableStyles.table}>
@@ -508,7 +701,23 @@ const RolesTable = ({ tableData, refreshUsers }) => {
             <tbody>
               <tr>
                 <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
-                  No data available
+                  <div
+                    style={{
+                      padding: '48px 16px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '12px'
+                    }}
+                  >
+                    <i className='ri-user-search-line' style={{ fontSize: '48px', opacity: 0.5 }} />
+                    <Typography variant='h6' color='text.secondary'>
+                      No users found
+                    </Typography>
+                    <Typography variant='body2' color='text.disabled'>
+                      Try adjusting your search or filter criteria
+                    </Typography>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -519,7 +728,26 @@ const RolesTable = ({ tableData, refreshUsers }) => {
                 .rows.slice(0, table.getState().pagination.pageSize)
                 .map(row => {
                   return (
-                    <tr key={row.id} className={classnames({ selected: row.getIsSelected() })}>
+                    <tr
+                      key={row.id}
+                      className={classnames({ selected: row.getIsSelected() })}
+                      style={{
+                        transition: 'all 0.3s ease-in-out',
+                        cursor: 'pointer'
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.backgroundColor = 'rgba(139, 92, 246, 0.08)'
+                        e.currentTarget.style.transform = 'scale(1.01)'
+                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(139, 92, 246, 0.15)'
+                      }}
+                      onMouseLeave={e => {
+                        if (!row.getIsSelected()) {
+                          e.currentTarget.style.backgroundColor = 'transparent'
+                        }
+                        e.currentTarget.style.transform = 'scale(1)'
+                        e.currentTarget.style.boxShadow = 'none'
+                      }}
+                    >
                       {row.getVisibleCells().map(cell => (
                         <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
                       ))}
@@ -544,6 +772,15 @@ const RolesTable = ({ tableData, refreshUsers }) => {
           table.setPageIndex(page)
         }}
         onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
+        sx={{
+          '.MuiTablePagination-toolbar': {
+            px: { xs: 2, sm: 3 },
+            py: 2
+          },
+          '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
+            fontSize: { xs: '0.75rem', sm: '0.875rem' }
+          }
+        }}
       />
 
       <EditUserRoleDialog

@@ -55,16 +55,7 @@ function CreateAudiencePage() {
     router.push('/management/audience') // Redirect to audiences list
   }
 
-  return (
-    <div className='p-4'>
-      <div className='mb-6'>
-        <h1 className='text-2xl font-bold'>Create New Audience</h1>
-        <p className='text-muted-foreground'>Fill in the details below to create a new audience</p>
-      </div>
-
-      <CreateAudienceForm onSubmit={handleSubmit} onCancel={handleCancel} loading={loading} />
-    </div>
-  )
+  return <CreateAudienceForm onSubmit={handleSubmit} onCancel={handleCancel} loading={loading} />
 }
 
 export default CreateAudiencePage

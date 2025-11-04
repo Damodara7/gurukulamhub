@@ -7,7 +7,8 @@ import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 
 // Material-UI Imports
-import { Box, Typography } from '@mui/material'
+import { Box, Typography, Container } from '@mui/material'
+import { alpha, useTheme } from '@mui/material/styles'
 
 // Component Imports
 import AdminContextTree from '@/components/admin-contexts/AdminContextTree'
@@ -17,6 +18,7 @@ import ConfirmationDialog from '@components/dialogs/confirmation-dialog'
 import { toast } from 'react-toastify'
 
 function Contexts({ contextType = 'GENERIC' }) {
+  const theme = useTheme()
   const [loading, setLoading] = useState({ contexts: false, refetchContexts: false })
   const [contexts, setContexts] = useState([])
   const [showForm, setShowForm] = useState(false)
@@ -130,46 +132,154 @@ function Contexts({ contextType = 'GENERIC' }) {
   }
 
   return (
-    <Box className='w-full' style={{ overflow: 'auto', padding: '16px' }}>
-      {loading.contexts ? (
-        <Typography variant='h6' align='center'>
-          Loading contexts...
-        </Typography>
-      ) : contexts.length === 0 ? (
-        <NoContexts contextType={contextType} onCreateRootContext={handleAddNode} />
-      ) : (
-        <Box className='w-full' style={{ overflow: 'auto' }}>
-          <AdminContextTree
-            onAddClick={handleAddChildNodeClick}
-            onRemoveClick={handleRemoveNodeClick}
-            onEditClick={handleEditNodeClick}
-            data={contexts}
-            headingLabel={`Contexts`}
-          />
+    <Box
+      sx={{
+        minHeight: '100vh',
+        background: `radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 50%),
+                     radial-gradient(circle at 80% 80%, ${alpha(
+                       theme.palette.secondary.main,
+                       0.05
+                     )} 0%, transparent 50%),
+                     ${theme.palette.background.default}`
+      }}
+    >
+      {/* Elegant Header */}
+      <Box
+        sx={{
+          backdropFilter: 'blur(20px)',
+          bgcolor: alpha('#fff', 0.7),
+          borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+          pt: { xs: 4, md: 6 },
+          pb: { xs: 4, md: 6 }
+        }}
+      >
+        <Container maxWidth='lg'>
+          <Box sx={{ textAlign: 'center' }}>
+            {/* Icon and Title */}
+            <Box
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 2,
+                mb: 2
+              }}
+            >
+              <Box
+                sx={{
+                  width: { xs: 48, sm: 56 },
+                  height: { xs: 48, sm: 56 },
+                  borderRadius: '12px',
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`
+                }}
+              >
+                <i className='ri-node-tree' style={{ fontSize: '28px', color: 'white' }} />
+              </Box>
+              <Typography
+                sx={{
+                  fontSize: { xs: '2rem', md: '2.5rem' },
+                  fontWeight: 700,
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  letterSpacing: '-0.02em'
+                }}
+              >
+                Context Management
+              </Typography>
+            </Box>
+            <Typography
+              variant='body1'
+              color='text.secondary'
+              sx={{
+                fontSize: '1.05rem',
+                lineHeight: 1.8,
+                width: '100%',
+                mx: 'auto',
+                fontWeight: 400
+              }}
+            >
+              Organize and manage hierarchical contexts for your content structure
+            </Typography>
+          </Box>
+        </Container>
+      </Box>
+
+      {/* Content Area */}
+      <Container maxWidth='lg' sx={{ py: { xs: 3, md: 4 } }}>
+        <Box
+          sx={{
+            background: '#ffffff',
+            borderRadius: 3,
+            p: { xs: 3, sm: 4 },
+            boxShadow: theme => theme.shadows[3],
+            border: theme => `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+            minHeight: '500px'
+          }}
+        >
+          {loading.contexts ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+              <Box sx={{ textAlign: 'center' }}>
+                <i
+                  className='ri-loader-4-line'
+                  style={{ fontSize: '48px', color: '#8b5cf6', animation: 'spin 1s linear infinite' }}
+                />
+                <Typography variant='h6' color='text.secondary' sx={{ mt: 2 }}>
+                  Loading contexts...
+                </Typography>
+              </Box>
+            </Box>
+          ) : contexts.length === 0 ? (
+            <NoContexts contextType={contextType} onCreateRootContext={handleAddNode} />
+          ) : (
+            <Box sx={{ overflow: 'auto' }}>
+              <AdminContextTree
+                onAddClick={handleAddChildNodeClick}
+                onRemoveClick={handleRemoveNodeClick}
+                onEditClick={handleEditNodeClick}
+                data={contexts}
+                headingLabel={`Contexts`}
+              />
+            </Box>
+          )}
         </Box>
-      )}
 
-      {/* Dialog for non-root context forms */}
-      {showForm && (
-        <ContextForm
-          showForm={showForm}
-          contextType={contextType}
-          isRoot={dataToForm?.isRoot || true}
-          initialData={dataToForm || {}}
-          parentContextId={dataToForm?.parentContextId || ''}
-          parentContextObjectId={dataToForm?.parentContextObjectId || ''}
-          onSubmit={dataToForm?.action === 'EDIT' ? handleEditNode : handleAddNode}
-          onCancel={() => setShowForm(false)}
+        {/* Dialog for non-root context forms */}
+        {showForm && (
+          <ContextForm
+            showForm={showForm}
+            contextType={contextType}
+            isRoot={dataToForm?.isRoot || true}
+            initialData={dataToForm || {}}
+            parentContextId={dataToForm?.parentContextId || ''}
+            parentContextObjectId={dataToForm?.parentContextObjectId || ''}
+            onSubmit={dataToForm?.action === 'EDIT' ? handleEditNode : handleAddNode}
+            onCancel={() => setShowForm(false)}
+          />
+        )}
+
+        {/* Confirmation Dialog */}
+        <ConfirmationDialog
+          open={confirmationDialogOpen}
+          setOpen={setConfirmationDialogOpen}
+          type='delete-context'
+          onConfirm={handleRemoveNode}
         />
-      )}
 
-      {/* Confirmation Dialog */}
-      <ConfirmationDialog
-        open={confirmationDialogOpen}
-        setOpen={setConfirmationDialogOpen}
-        type='delete-context' // Set the type based on your context
-        onConfirm={handleRemoveNode}
-      />
+        <style jsx global>{`
+          @keyframes spin {
+            from {
+              transform: rotate(0deg);
+            }
+            to {
+              transform: rotate(360deg);
+            }
+          }
+        `}</style>
+      </Container>
     </Box>
   )
 }

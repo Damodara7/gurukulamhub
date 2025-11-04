@@ -17,9 +17,11 @@ import VerifiedOutlinedIcon from '@mui/icons-material/VerifiedOutlined'
 import NewReleasesOutlinedIcon from '@mui/icons-material/NewReleasesOutlined'
 import PublishOutlinedIcon from '@mui/icons-material/PublishOutlined'
 import PendingActionsOutlinedIcon from '@mui/icons-material/PendingActionsOutlined'
-import { Grid, Tab, Box, Typography } from '@mui/material'
+import { Grid, Tab, Box, Typography, Container, useTheme } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 
 function QuizListPage() {
+  const theme = useTheme()
   const [activeTab, setActiveTab] = useState('pending')
 
   const tabPanelObject = {
@@ -34,101 +36,143 @@ function QuizListPage() {
   }
 
   return (
-    <Box sx={{ position: 'relative' }}>
-      {/* Attractive Header */}
+    <Box
+      sx={{
+        minHeight: '100vh',
+        background: `radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 50%),
+                     radial-gradient(circle at 80% 80%, ${alpha(
+                       theme.palette.secondary.main,
+                       0.05
+                     )} 0%, transparent 50%),
+                     ${theme.palette.background.default}`
+      }}
+    >
+      {/* Elegant Header */}
       <Box
         sx={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          borderRadius: '16px',
-          p: 3,
-          mb: 3,
-          boxShadow: '0 8px 32px rgba(102, 126, 234, 0.3)'
+          backdropFilter: 'blur(20px)',
+          bgcolor: alpha('#fff', 0.7),
+          borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+          pt: { xs: 4, md: 6 },
+          pb: { xs: 4, md: 6 }
         }}
       >
-        <Typography
-          variant='h4'
-          sx={{
-            color: 'white',
-            fontWeight: 700,
-            textAlign: 'center',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 2
-          }}
-        >
-          📚 Quiz Management Dashboard
-        </Typography>
-        <Typography
-          variant='body2'
-          sx={{
-            color: 'rgba(255, 255, 255, 0.9)',
-            textAlign: 'center',
-            mt: 1
-          }}
-        >
-          Manage, review, and publish quizzes across all stages
-        </Typography>
+        <Container maxWidth='lg'>
+          <Box sx={{ textAlign: 'center' }}>
+            {/* Icon and Title */}
+            <Box
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 2,
+                mb: 2
+              }}
+            >
+              <Box
+                sx={{
+                  width: { xs: 48, sm: 56 },
+                  height: { xs: 48, sm: 56 },
+                  borderRadius: '12px',
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`
+                }}
+              >
+                <i className='ri-questionnaire-line' style={{ fontSize: '28px', color: 'white' }} />
+              </Box>
+              <Typography
+                sx={{
+                  fontSize: { xs: '2rem', md: '2.5rem' },
+                  fontWeight: 700,
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  letterSpacing: '-0.02em'
+                }}
+              >
+                Quiz Management
+              </Typography>
+            </Box>
+            <Typography
+              variant='body1'
+              color='text.secondary'
+              sx={{
+                fontSize: '1.05rem',
+                lineHeight: 1.8,
+                width: '100%',
+                mx: 'auto',
+                fontWeight: 400
+              }}
+            >
+              Manage, review, and publish quizzes across all stages
+            </Typography>
+          </Box>
+        </Container>
       </Box>
 
-      <TabContext value={activeTab}>
-        <Grid container spacing={0}>
-          <Grid item xs={12}>
-            <div className='w-full flex justify-center'>
-              <CustomTabList
-                onChange={handleChangeTab}
-                variant='scrollable'
-                pill='true'
-                scrollButtons='auto'
-                allowScrollButtonsMobile
-              >
-                <Tab
-                  value='pending'
-                  label={
-                    <div className='flex items-center gap-1.5'>
-                      <PendingActionsOutlinedIcon />
-                      Pending
-                    </div>
-                  }
-                />
-                <Tab
-                  value='approved'
-                  label={
-                    <div className='flex items-center gap-1.5'>
-                      <VerifiedOutlinedIcon />
-                      Approved
-                    </div>
-                  }
-                />
-                <Tab
-                  value='rejected'
-                  label={
-                    <div className='flex items-center gap-1.5'>
-                      <NewReleasesOutlinedIcon />
-                      Rejected
-                    </div>
-                  }
-                />
-                <Tab
-                  value='published'
-                  label={
-                    <div className='flex items-center gap-1.5'>
-                      <PublishOutlinedIcon />
-                      Published
-                    </div>
-                  }
-                />
-              </CustomTabList>
-            </div>
-          </Grid>
+      {/* Content Area with Tabs */}
+      <Container maxWidth='lg' sx={{ py: { xs: 3, md: 4 } }}>
+        <TabContext value={activeTab}>
+          <Grid container spacing={0}>
+            <Grid item xs={12}>
+              <div className='w-full flex justify-center'>
+                <CustomTabList
+                  onChange={handleChangeTab}
+                  variant='scrollable'
+                  pill='true'
+                  scrollButtons='auto'
+                  allowScrollButtonsMobile
+                >
+                  <Tab
+                    value='pending'
+                    label={
+                      <div className='flex items-center gap-1.5'>
+                        <PendingActionsOutlinedIcon />
+                        Pending
+                      </div>
+                    }
+                  />
+                  <Tab
+                    value='approved'
+                    label={
+                      <div className='flex items-center gap-1.5'>
+                        <VerifiedOutlinedIcon />
+                        Approved
+                      </div>
+                    }
+                  />
+                  <Tab
+                    value='rejected'
+                    label={
+                      <div className='flex items-center gap-1.5'>
+                        <NewReleasesOutlinedIcon />
+                        Rejected
+                      </div>
+                    }
+                  />
+                  <Tab
+                    value='published'
+                    label={
+                      <div className='flex items-center gap-1.5'>
+                        <PublishOutlinedIcon />
+                        Published
+                      </div>
+                    }
+                  />
+                </CustomTabList>
+              </div>
+            </Grid>
 
-          <Grid item xs={12}>
-            <TabPanel value={activeTab} sx={{ p: 0, pt: 2 }}>
-              {tabPanelObject[activeTab]}
-            </TabPanel>
+            <Grid item xs={12}>
+              <TabPanel value={activeTab} sx={{ p: 0, pt: 2 }}>
+                {tabPanelObject[activeTab]}
+              </TabPanel>
+            </Grid>
           </Grid>
-        </Grid>
-      </TabContext>
+        </TabContext>
+      </Container>
     </Box>
   )
 }
