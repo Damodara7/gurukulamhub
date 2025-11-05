@@ -23,8 +23,10 @@ import {
   Tab,
   IconButton,
   Tooltip,
-  Badge
+  Badge,
+  useTheme
 } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import {
   CheckCircle as CheckCircleIcon,
   Cancel as CancelIcon,
@@ -51,6 +53,7 @@ const values = {
 }
 
 const JoinRequestScreen = ({ group, removebutton }) => {
+  const theme = useTheme()
   const router = useRouter()
   const { data: session } = useSession()
   const [requests, setRequests] = useState([])
@@ -307,26 +310,6 @@ const JoinRequestScreen = ({ group, removebutton }) => {
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column', bgcolor: '#f0f2f5' }}>
       {/* Header */}
       <Paper elevation={1} sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider', bgcolor: '#fff' }}>
-        {/* Centered Group Name */}
-        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <GroupIcon color='primary' />
-            <Typography
-              variant='h6'
-              component='h1'
-              sx={{
-                fontWeight: 600,
-                color: '#1f2937',
-                textAlign: 'center',
-                wordBreak: 'break-word',
-                maxWidth: '100%'
-              }}
-            >
-              {group.groupName}
-            </Typography>
-          </Box>
-        </Box>
-
         {/* Status Filter Tabs */}
         <Tabs
           value={activeTab}
@@ -456,35 +439,57 @@ const JoinRequestScreen = ({ group, removebutton }) => {
                   <ListItemAvatar>
                     <Avatar
                       sx={{
-                        bgcolor: '#3b82f6',
+                        background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                         width: 50,
                         height: 50,
                         fontSize: '1.2rem',
-                        fontWeight: 600
+                        fontWeight: 600,
+                        color: 'white',
+                        boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`
                       }}
                     >
-                      {request.userDetails?.profile?.firstname?.[0] || 'U'}
+                      {request.userDetails?.profile?.firstname && request.userDetails?.profile?.lastname
+                        ? `${request.userDetails.profile.firstname[0]} ${request.userDetails.profile.lastname[0]}`
+                        : request.userDetails?.profile?.firstname[0] ||
+                          request.userDetails?.profile?.lastname[0] ||
+                          'U'}
                     </Avatar>
                   </ListItemAvatar>
 
                   <ListItemText
                     primary={
                       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <Typography
-                          variant='subtitle1'
-                          sx={{
-                            fontWeight: 600,
-                            color: '#1f2937',
-                            width: '150px',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap'
-                          }}
+                        <Tooltip
+                          title={
+                            request.userDetails?.profile?.firstname && request.userDetails?.profile?.lastname
+                              ? `${request.userDetails.profile.firstname} ${request.userDetails.profile.lastname}`
+                              : request.userDetails?.profile?.firstname ||
+                                request.userDetails?.profile?.lastname ||
+                                'Unknown User'
+                          }
+                          arrow
                         >
-                          {request.userDetails?.profile?.firstname && request.userDetails?.profile?.lastname
-                            ? `${request.userDetails.profile.firstname} ${request.userDetails.profile.lastname}`
-                            : request.userDetails?.profile?.firstname || 'Unknown User'}
-                        </Typography>
+                          <Typography
+                            variant='subtitle1'
+                            sx={{
+                              fontWeight: 600,
+                              color: 'text.primary',
+                              width: '220px',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease-in-out',
+                              '&:hover': {
+                                color: 'primary.main'
+                              }
+                            }}
+                          >
+                            {request.userDetails?.profile?.firstname && request.userDetails?.profile?.lastname
+                              ? `${request.userDetails.profile.firstname} ${request.userDetails.profile.lastname}`
+                              : request.userDetails?.profile?.firstname || 'Unknown User'}
+                          </Typography>
+                        </Tooltip>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           {getStatusChip(request.status)}
                         </Box>
@@ -492,37 +497,46 @@ const JoinRequestScreen = ({ group, removebutton }) => {
                     }
                     secondary={
                       <Box>
-                        <Typography
-                          variant='body2'
-                          color='text.secondary'
-                          sx={{
-                            mb: 0.5,
-                            width: '200px',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap'
-                          }}
-                        >
-                          {request.userEmail}
-                        </Typography>
+                        <Tooltip title={request.userEmail} arrow>
+                          <Typography
+                            variant='body2'
+                            color='text.secondary'
+                            sx={{
+                              mb: 0.5,
+                              width: '220px',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease-in-out',
+                              '&:hover': {
+                                color: 'primary.main'
+                              }
+                            }}
+                          >
+                            {request.userEmail}
+                          </Typography>
+                        </Tooltip>
                         <Typography variant='caption' color='text.secondary'>
                           Requested on {new Date(request.createdAt).toLocaleDateString()}
                         </Typography>
                         {request.rejectedReason && (
-                          <Typography
-                            variant='caption'
-                            color='error'
-                            sx={{
-                              display: 'block',
-                              width: '250px',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                              mt: 0.5
-                            }}
-                          >
-                            Reason: {request.rejectedReason}
-                          </Typography>
+                          <Tooltip title={`Reason: ${request.rejectedReason}`} arrow>
+                            <Typography
+                              variant='caption'
+                              color='error'
+                              sx={{
+                                display: 'block',
+                                width: '250px',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                mt: 0.5
+                              }}
+                            >
+                              Reason: {request.rejectedReason}
+                            </Typography>
+                          </Tooltip>
                         )}
                       </Box>
                     }

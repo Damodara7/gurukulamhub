@@ -815,224 +815,254 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
   return (
     <Box
       sx={{
-        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-        borderRadius: '24px',
-        p: { xs: 2, sm: 3, md: 4 },
-        boxShadow: `0 20px 60px ${alpha(theme.palette.primary.main, 0.3)}`,
-        position: 'relative',
-        overflow: 'hidden',
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background:
-            'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
-          opacity: 0.4
-        }
+        minHeight: '100vh',
+        background: `radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 50%),
+                     radial-gradient(circle at 80% 80%, ${alpha(
+                       theme.palette.secondary.main,
+                       0.05
+                     )} 0%, transparent 50%),
+                     ${theme.palette.background.default}`
       }}
     >
-      <Card
+      {/* Elegant Header */}
+      <Box
         sx={{
-          background: 'rgba(255, 255, 255, 0.98)',
           backdropFilter: 'blur(20px)',
-          borderRadius: '20px',
-          boxShadow: 'none',
-          border: '1px solid rgba(255, 255, 255, 0.3)',
-          position: 'relative',
-          zIndex: 1
+          bgcolor: alpha('#fff', 0.7),
+          borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+          pt: { xs: 4, md: 6 },
+          pb: { xs: 4, md: 6 }
         }}
       >
-        <CardContent sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
-          {/* Header Section */}
-          <Box className='flex flex-col gap-1 mb-6 text-center'>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5 }}>
-              <Typography
-                variant='h3'
+        <Box sx={{ maxWidth: '1200px', margin: '0 auto', px: { xs: 2, sm: 3, md: 4 } }}>
+          <Box sx={{ textAlign: 'center' }}>
+            {/* Icon and Title */}
+            <Box
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 2,
+                mb: 2
+              }}
+            >
+              <Box
                 sx={{
+                  width: { xs: 48, sm: 56 },
+                  height: { xs: 48, sm: 56 },
+                  borderRadius: '12px',
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`
+                }}
+              >
+                <i className='ri-gamepad-line' style={{ fontSize: '28px', color: 'white' }} />
+              </Box>
+              <Typography
+                sx={{
+                  fontSize: { xs: '2rem', md: '2.5rem' },
+                  fontWeight: 700,
                   background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                  fontWeight: 800,
-                  fontSize: { xs: '1.75rem', sm: '2.25rem', md: '2.75rem' },
-                  letterSpacing: '-1px'
+                  letterSpacing: '-0.02em'
                 }}
               >
                 {data ? 'Edit Your Game' : 'Create & Schedule Game'}
               </Typography>
             </Box>
             <Typography
-              variant='body2'
+              variant='body1'
               color='text.secondary'
-              sx={{ fontSize: '0.95rem', maxWidth: '600px', mx: 'auto' }}
+              sx={{
+                fontSize: '1.05rem',
+                lineHeight: 1.8,
+                fontWeight: 400,
+                maxWidth: '600px',
+                mx: 'auto'
+              }}
             >
               {data
                 ? 'Update your game details and settings'
                 : 'Design an exciting game experience with rewards and scheduling'}
             </Typography>
           </Box>
+        </Box>
+      </Box>
 
-          <Grid container spacing={4}>
-            {/* Add Snackbar for error messages */}
-            <Snackbar
-              open={showErrorSnackbar}
-              autoHideDuration={6000}
-              onClose={() => setShowErrorSnackbar(false)}
-              anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-              sx={{
-                '& .MuiSnackbar-root': {
-                  top: { xs: 90, sm: 0 }
-                }
-              }}
-            >
-              <Alert
+      {/* Main Content */}
+      <Box sx={{ maxWidth: '1200px', margin: '0 auto', px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 } }}>
+        <Card
+          sx={{
+            borderRadius: 2,
+            boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.08)}`,
+            border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+            overflow: 'hidden',
+            '&:hover': {
+              boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.12)}`
+            }
+          }}
+        >
+          <CardContent sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
+            <Grid container spacing={4}>
+              {/* Add Snackbar for error messages */}
+              <Snackbar
+                open={showErrorSnackbar}
+                autoHideDuration={6000}
                 onClose={() => setShowErrorSnackbar(false)}
-                severity='error'
-                variant='filled'
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
                 sx={{
-                  width: '100%',
-                  animation: 'slideUp 0.5s ease-out',
-                  '@keyframes slideUp': {
-                    '0%': {
-                      transform: 'translateY(100%)',
-                      opacity: 0
-                    },
-                    '100%': {
-                      transform: 'translateY(0)',
-                      opacity: 1
-                    }
+                  '& .MuiSnackbar-root': {
+                    top: { xs: 90, sm: 0 }
                   }
                 }}
               >
-                {errorMessage}
-              </Alert>
-            </Snackbar>
+                <Alert
+                  onClose={() => setShowErrorSnackbar(false)}
+                  severity='error'
+                  variant='filled'
+                  sx={{
+                    width: '100%',
+                    animation: 'slideUp 0.5s ease-out',
+                    '@keyframes slideUp': {
+                      '0%': {
+                        transform: 'translateY(100%)',
+                        opacity: 0
+                      },
+                      '100%': {
+                        transform: 'translateY(0)',
+                        opacity: 1
+                      }
+                    }
+                  }}
+                >
+                  {errorMessage}
+                </Alert>
+              </Snackbar>
 
-            {/* Basic Information */}
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label='Game Title'
-                name='title'
-                value={formData.title}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                onFocus={() => setErrors(prev => ({ ...prev, title: '' }))}
-                error={!!errors.title && touches.title}
-                helperText={errors.title || 'Enter the title'}
-                required
-                inputRef={fieldRefs.title}
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label='6-digit PIN'
-                name='pin'
-                value={formData.pin}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                onFocus={() => setErrors(prev => ({ ...prev, pin: '' }))}
-                error={!!errors.pin && touches.pin}
-                helperText={errors.pin || 'Enter a unique 6-digit PIN'}
-                required
-                inputProps={{ maxLength: 6, pattern: '\\d{6}' }}
-                inputRef={fieldRefs.pin}
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label='Description'
-                name='description'
-                value={formData.description}
-                onChange={handleChange}
-                hypertext={'enter the description'}
-                multiline
-                rows={3}
-                inputRef={fieldRefs.description}
-              />
-            </Grid>
-
-            {/* Quiz Selection */}
-            <Grid item xs={12}>
-              <FormControl fullWidth error={!!errors.quiz && touches.quiz}>
-                <InputLabel>Quiz</InputLabel>
-                <Select
-                  name='quiz'
-                  value={formData.quiz}
-                  label='Quiz'
+              {/* Basic Information */}
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label='Game Title'
+                  name='title'
+                  value={formData.title}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  onFocus={() => setErrors(prev => ({ ...prev, quiz: '' }))}
+                  onFocus={() => setErrors(prev => ({ ...prev, title: '' }))}
+                  error={!!errors.title && touches.title}
+                  helperText={errors.title || 'Enter the title'}
                   required
-                  ref={fieldRefs.quiz}
-                >
-                  <MenuItem value=''>
-                    <em>Select Quiz</em>
-                  </MenuItem>
-                  {quizzes.map(quiz => (
-                    <MenuItem key={quiz._id} value={quiz._id}>
-                      <Grid container alignItems='center' spacing={2} justifyContent='space-between'>
-                        {/* Left side - Thumbnail and Quiz Info */}
-                        <Grid item xs={8}>
-                          <Grid container alignItems='center' spacing={2}>
-                            {/* Quiz Thumbnail */}
-                            <Grid item>
-                              <img
-                                src={quiz?.thumbnail || 'https://via.placeholder.com/150x150'}
-                                alt={quiz.title}
-                                style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }}
-                              />
-                            </Grid>
+                  inputRef={fieldRefs.title}
+                />
+              </Grid>
 
-                            {/* Title and Details */}
-                            <Grid item>
-                              <Typography variant='body2' noWrap={false}>
-                                <Box component='span' fontWeight='bold'>
-                                  {quiz.title}
-                                </Box>
-                                <Box component='span' sx={{ color: 'text.secondary', mx: 0.5 }}>
-                                  - by
-                                </Box>
-                                <Box component='span'>{quiz.createdBy}</Box>
-                              </Typography>
-                              <Typography variant='body2' color='textSecondary' noWrap>
-                                {quiz.details}
-                              </Typography>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label='6-digit PIN'
+                  name='pin'
+                  value={formData.pin}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  onFocus={() => setErrors(prev => ({ ...prev, pin: '' }))}
+                  error={!!errors.pin && touches.pin}
+                  helperText={errors.pin || 'Enter a unique 6-digit PIN'}
+                  required
+                  inputProps={{ maxLength: 6, pattern: '\\d{6}' }}
+                  inputRef={fieldRefs.pin}
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label='Description'
+                  name='description'
+                  value={formData.description}
+                  onChange={handleChange}
+                  hypertext={'enter the description'}
+                  multiline
+                  rows={3}
+                  inputRef={fieldRefs.description}
+                />
+              </Grid>
+
+              {/* Quiz Selection */}
+              <Grid item xs={12}>
+                <FormControl fullWidth error={!!errors.quiz && touches.quiz}>
+                  <InputLabel>Quiz</InputLabel>
+                  <Select
+                    name='quiz'
+                    value={formData.quiz}
+                    label='Quiz'
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    onFocus={() => setErrors(prev => ({ ...prev, quiz: '' }))}
+                    required
+                    ref={fieldRefs.quiz}
+                  >
+                    <MenuItem value=''>
+                      <em>Select Quiz</em>
+                    </MenuItem>
+                    {quizzes.map(quiz => (
+                      <MenuItem key={quiz._id} value={quiz._id}>
+                        <Grid container alignItems='center' spacing={2} justifyContent='space-between'>
+                          {/* Left side - Thumbnail and Quiz Info */}
+                          <Grid item xs={8}>
+                            <Grid container alignItems='center' spacing={2}>
+                              {/* Quiz Thumbnail */}
+                              <Grid item>
+                                <img
+                                  src={quiz?.thumbnail || 'https://via.placeholder.com/150x150'}
+                                  alt={quiz.title}
+                                  style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }}
+                                />
+                              </Grid>
+
+                              {/* Title and Details */}
+                              <Grid item>
+                                <Typography variant='body2' noWrap={false}>
+                                  <Box component='span' fontWeight='bold'>
+                                    {quiz.title}
+                                  </Box>
+                                  <Box component='span' sx={{ color: 'text.secondary', mx: 0.5 }}>
+                                    - by
+                                  </Box>
+                                  <Box component='span'>{quiz.createdBy}</Box>
+                                </Typography>
+                                <Typography variant='body2' color='textSecondary' noWrap>
+                                  {quiz.details}
+                                </Typography>
+                              </Grid>
                             </Grid>
                           </Grid>
                         </Grid>
-                      </Grid>
-                    </MenuItem>
-                  ))}
-                </Select>
-                <FormHelperText>{errors.quiz || 'Select a quiz'}</FormHelperText>
-              </FormControl>
-            </Grid>
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  <FormHelperText>{errors.quiz || 'Select a quiz'}</FormHelperText>
+                </FormControl>
+              </Grid>
 
-            {/* Group Selection */}
-            <Grid item xs={12}>
-              <GroupAutocomplete
-                value={formData.groupId}
-                onChange={groupId => {
-                  setFormData(prev => ({ ...prev, groupId }))
-                }}
-                label='Target Group (Optional)'
-                placeholder='Search for a group to restrict game access...'
-              />
-            </Grid>
-            <Grid item xs={12}>
-              {/* <Typography variant='subtitle1' gutterBottom>
+              {/* Group Selection */}
+              <Grid item xs={12}>
+                <GroupAutocomplete
+                  value={formData.groupId}
+                  onChange={groupId => {
+                    setFormData(prev => ({ ...prev, groupId }))
+                  }}
+                  label='Target Group (Optional)'
+                  placeholder='Search for a group to restrict game access...'
+                />
+              </Grid>
+              <Grid item xs={12}>
+                {/* <Typography variant='subtitle1' gutterBottom>
           Location of Game Creator (Admin)
         </Typography> */}
-              <Grid container spacing={2}>
-                {/* <Grid item xs={12} sm={4} md={4}>
+                <Grid container spacing={2}>
+                  {/* <Grid item xs={12} sm={4} md={4}>
             <CountryRegionDropdown
               defaultCountryCode=''
               selectedCountryObject={selectedAdminCountry}
@@ -1052,7 +1082,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
             />
           </Grid> */}
 
-                {/* Add a timezone display field (read-only) to show the detected timezone:
+                  {/* Add a timezone display field (read-only) to show the detected timezone:
           <Grid item xs={12} sm={4} md={4}>
             <TextField
               fullWidth
@@ -1069,715 +1099,722 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
             />
           </Grid> */}
 
-                <Grid item xs={12} sm={4} md={6}>
+                  <Grid item xs={12} sm={4} md={6}>
+                    <DateTimePicker
+                      disablePast
+                      minDateTime={dayjs().add(1, 'minute')}
+                      timeSteps={{ hours: 1, minutes: 1 }}
+                      sx={{ width: '100%' }}
+                      label='Start Time'
+                      value={formData.startTime ? dayjs(formData.startTime) : null}
+                      onChange={newValue => {
+                        // explicitly set to 'null' if cleared
+                        const newDate = newValue ? newValue.toDate() : null
+                        handleDateChange('startTime', newDate)
+                        validateField('startTime')
+                        if (formData.requireRegistration) {
+                          validateField('registrationEndTime')
+                        }
+                      }}
+                      onClose={() => validateField('startTime')}
+                      slotProps={{
+                        textField: {
+                          error: !!errors.startTime && touches.startTime,
+                          helperText: (touches.startTime && errors.startTime) || 'Select start time of the game',
+                          required: true,
+                          onBlur: () => {
+                            setTouches(prev => ({ ...prev, startTime: true }))
+                            validateField('startTime')
+                          },
+                          onFocus: () => {
+                            setTouches(prev => ({ ...prev, startTime: true }))
+                            setErrors(prev => ({ ...prev, startTime: undefined }))
+                          },
+                          InputLabelProps: {
+                            shrink: true
+                          },
+                          inputRef: fieldRefs.startTime
+                        }
+                      }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <FormControl fullWidth required error={!!errors.timezone && touches.timezone}>
+                      <Autocomplete
+                        id='timezone-autocomplete'
+                        options={gmttimezones}
+                        getOptionLabel={option => option.label}
+                        value={
+                          formData.timezone?.value
+                            ? gmttimezones.find(tz => tz.value === formData.timezone?.value)
+                            : null
+                        }
+                        onChange={(e, newValue) => {
+                          setFormData(prev => ({ ...prev, timezone: newValue || null }))
+                          setTouches(prev => ({ ...prev, timezone: true }))
+                          setErrors(prev => ({ ...prev, timezone: '' }))
+                        }}
+                        onBlur={() => {
+                          setTouches(prev => ({ ...prev, timezone: true }))
+                          validateField('timezone')
+                        }}
+                        renderInput={params => (
+                          <TextField
+                            {...params}
+                            label='Timezone'
+                            required
+                            error={!!errors.timezone && touches.timezone}
+                            helperText={errors.timezone || 'where we are conducting the game'}
+                            inputRef={fieldRefs.timezone}
+                          />
+                        )}
+                        isOptionEqualToValue={(option, value) => option === value}
+                        autoHighlight
+                        clearOnBlur
+                        clearOnEscape
+                        disableClearable={false}
+                      />
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12}>
+                    {localTimeDisplay && (
+                      <TextField
+                        fullWidth
+                        label='Local Time'
+                        value={localTimeDisplay}
+                        InputProps={{
+                          readOnly: true,
+                          startAdornment: (
+                            <InputAdornment position='start'>
+                              <AccessTimeIcon color='action' />
+                            </InputAdornment>
+                          )
+                        }}
+                        variant='outlined'
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            '& fieldset': {
+                              borderColor: 'rgba(0, 0, 0, 0.23)' // Match DateTimePicker border
+                            },
+                            '&:hover fieldset': {
+                              borderColor: 'rgba(0, 0, 0, 0.87)' // Hover state
+                            }
+                          }
+                        }}
+                      />
+                    )}
+                  </Grid>
+                </Grid>
+              </Grid>
+
+              {/* Timezone Autocomplete */}
+
+              {/* Game Mode Selection */}
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth required error={!!errors.gameMode && touches.gameMode}>
+                  <InputLabel id='game-mode-label'>Game Mode</InputLabel>
+                  <Select
+                    labelId='game-mode-label'
+                    id='game-mode-select'
+                    name='gameMode'
+                    value={formData.gameMode}
+                    label='Game Mode'
+                    onChange={handleGameModeChange}
+                    onBlur={handleBlur}
+                    onFocus={() => setErrors(prev => ({ ...prev, gameMode: '' }))}
+                    inputRef={fieldRefs.gameMode}
+                  >
+                    <MenuItem value='live'>Live</MenuItem>
+                    <MenuItem value='self-paced'>Self-paced</MenuItem>
+                  </Select>
+                  <FormHelperText>
+                    {formData.gameMode === 'live'
+                      ? 'The game will be live for all players'
+                      : 'The game will be like an assessment'}
+                  </FormHelperText>
+                </FormControl>
+              </Grid>
+
+              {/* Forward Type Selection - now as Select, only if live */}
+              {formData.gameMode === 'live' && (
+                <>
+                  <Grid item xs={12} sm={6}>
+                    <FormControl fullWidth required error={!!errors.forwardType && touches.forwardType}>
+                      <InputLabel id='forward-type-label'>Forward Type</InputLabel>
+                      <Select
+                        labelId='forward-type-label'
+                        id='forward-type-select'
+                        name='forwardType'
+                        value={formData.forwardType}
+                        label='Forward Type'
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        onFocus={() => setErrors(prev => ({ ...prev, forwardType: '' }))}
+                        inputRef={fieldRefs.forwardType}
+                      >
+                        <MenuItem value='auto'>Auto</MenuItem>
+                        <MenuItem value='admin'>Admin</MenuItem>
+                      </Select>
+                      <FormHelperText>Select how the game will be forwarded</FormHelperText>
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12} sm={6}></Grid>
+                </>
+              )}
+
+              {/* Duration (only if self-paced) */}
+              {formData.gameMode === 'self-paced' && (
+                <>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label='Duration (minutes)'
+                      name='duration'
+                      type='number'
+                      value={formData.duration}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      onFocus={() => setErrors(prev => ({ ...prev, duration: '' }))}
+                      error={!!errors.duration && touches.duration}
+                      helperText={errors.duration || 'Enter the duration in minutes'}
+                      required
+                      inputProps={{ min: 1 }}
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position='end'>
+                            <AccessTimeIcon />
+                          </InputAdornment>
+                        )
+                      }}
+                      inputRef={fieldRefs.duration}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}></Grid>
+                </>
+              )}
+
+              <Grid item xs={12} sm={6}></Grid>
+
+              {/* Registration */}
+              <Grid item xs={12} sm={6}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={formData.requireRegistration}
+                      onChange={handleChange}
+                      name='requireRegistration'
+                    />
+                  }
+                  label='Require Registration'
+                />
+                {formData.requireRegistration && (
                   <DateTimePicker
                     disablePast
-                    minDateTime={dayjs().add(1, 'minute')}
+                    minDateTime={dayjs().add(1, 'minute')} // ensure the future time
+                    maxDateTime={dayjs(formData.startTime).subtract(1, 'minute')} // must be before start time
                     timeSteps={{ hours: 1, minutes: 1 }}
                     sx={{ width: '100%' }}
-                    label='Start Time'
-                    value={formData.startTime ? dayjs(formData.startTime) : null}
+                    label='Registration End Time'
+                    value={formData.registrationEndTime ? dayjs(formData.registrationEndTime) : null}
                     onChange={newValue => {
-                      // explicitly set to 'null' if cleared
-                      const newDate = newValue ? newValue.toDate() : null
-                      handleDateChange('startTime', newDate)
-                      validateField('startTime')
-                      if (formData.requireRegistration) {
-                        validateField('registrationEndTime')
-                      }
+                      handleDateChange('registrationEndTime', newValue ? newValue.toDate() : null)
+                      validateField('registrationEndTime')
                     }}
-                    onClose={() => validateField('startTime')}
+                    onClose={() => validateField('registrationEndTime')}
                     slotProps={{
                       textField: {
-                        error: !!errors.startTime && touches.startTime,
-                        helperText: (touches.startTime && errors.startTime) || 'Select start time of the game',
+                        error: !!errors.registrationEndTime && touches.registrationEndTime,
+                        helperText:
+                          (touches.registrationEndTime && errors.registrationEndTime) ||
+                          'Select the registration end time',
                         required: true,
                         onBlur: () => {
-                          setTouches(prev => ({ ...prev, startTime: true }))
-                          validateField('startTime')
+                          setTouches(prev => ({ ...prev, registrationEndTime: true }))
+                          validateField('registrationEndTime')
                         },
                         onFocus: () => {
-                          setTouches(prev => ({ ...prev, startTime: true }))
-                          setErrors(prev => ({ ...prev, startTime: undefined }))
+                          setTouches(prev => ({ ...prev, registrationEndTime: true }))
+                          setErrors(prev => ({ ...prev, registrationEndTime: undefined }))
                         },
                         InputLabelProps: {
                           shrink: true
                         },
-                        inputRef: fieldRefs.startTime
+                        inputRef: fieldRefs.registrationEndTime
                       }
                     }}
                   />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth required error={!!errors.timezone && touches.timezone}>
-                    <Autocomplete
-                      id='timezone-autocomplete'
-                      options={gmttimezones}
-                      getOptionLabel={option => option.label}
-                      value={
-                        formData.timezone?.value ? gmttimezones.find(tz => tz.value === formData.timezone?.value) : null
-                      }
-                      onChange={(e, newValue) => {
-                        setFormData(prev => ({ ...prev, timezone: newValue || null }))
-                        setTouches(prev => ({ ...prev, timezone: true }))
-                        setErrors(prev => ({ ...prev, timezone: '' }))
-                      }}
-                      onBlur={() => {
-                        setTouches(prev => ({ ...prev, timezone: true }))
-                        validateField('timezone')
-                      }}
-                      renderInput={params => (
-                        <TextField
-                          {...params}
-                          label='Timezone'
-                          required
-                          error={!!errors.timezone && touches.timezone}
-                          helperText={errors.timezone || 'where we are conducting the game'}
-                          inputRef={fieldRefs.timezone}
-                        />
-                      )}
-                      isOptionEqualToValue={(option, value) => option === value}
-                      autoHighlight
-                      clearOnBlur
-                      clearOnEscape
-                      disableClearable={false}
-                    />
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12}>
-                  {localTimeDisplay && (
-                    <TextField
-                      fullWidth
-                      label='Local Time'
-                      value={localTimeDisplay}
-                      InputProps={{
-                        readOnly: true,
-                        startAdornment: (
-                          <InputAdornment position='start'>
-                            <AccessTimeIcon color='action' />
-                          </InputAdornment>
-                        )
-                      }}
-                      variant='outlined'
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          '& fieldset': {
-                            borderColor: 'rgba(0, 0, 0, 0.23)' // Match DateTimePicker border
-                          },
-                          '&:hover fieldset': {
-                            borderColor: 'rgba(0, 0, 0, 0.87)' // Hover state
-                          }
-                        }
-                      }}
-                    />
-                  )}
-                </Grid>
+                )}
               </Grid>
-            </Grid>
 
-            {/* Timezone Autocomplete */}
-
-            {/* Game Mode Selection */}
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth required error={!!errors.gameMode && touches.gameMode}>
-                <InputLabel id='game-mode-label'>Game Mode</InputLabel>
-                <Select
-                  labelId='game-mode-label'
-                  id='game-mode-select'
-                  name='gameMode'
-                  value={formData.gameMode}
-                  label='Game Mode'
-                  onChange={handleGameModeChange}
-                  onBlur={handleBlur}
-                  onFocus={() => setErrors(prev => ({ ...prev, gameMode: '' }))}
-                  inputRef={fieldRefs.gameMode}
-                >
-                  <MenuItem value='live'>Live</MenuItem>
-                  <MenuItem value='self-paced'>Self-paced</MenuItem>
-                </Select>
-                <FormHelperText>
-                  {formData.gameMode === 'live'
-                    ? 'The game will be live for all players'
-                    : 'The game will be like an assessment'}
-                </FormHelperText>
-              </FormControl>
-            </Grid>
-
-            {/* Forward Type Selection - now as Select, only if live */}
-            {formData.gameMode === 'live' && (
-              <>
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth required error={!!errors.forwardType && touches.forwardType}>
-                    <InputLabel id='forward-type-label'>Forward Type</InputLabel>
-                    <Select
-                      labelId='forward-type-label'
-                      id='forward-type-select'
-                      name='forwardType'
-                      value={formData.forwardType}
-                      label='Forward Type'
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      onFocus={() => setErrors(prev => ({ ...prev, forwardType: '' }))}
-                      inputRef={fieldRefs.forwardType}
-                    >
-                      <MenuItem value='auto'>Auto</MenuItem>
-                      <MenuItem value='admin'>Admin</MenuItem>
-                    </Select>
-                    <FormHelperText>Select how the game will be forwarded</FormHelperText>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} sm={6}></Grid>
-              </>
-            )}
-
-            {/* Duration (only if self-paced) */}
-            {formData.gameMode === 'self-paced' && (
-              <>
-                <Grid item xs={12} sm={6}>
+              {/* Limit Players */}
+              <Grid item xs={12} sm={6}>
+                <FormControlLabel
+                  control={<Checkbox checked={formData.limitPlayers} onChange={handleChange} name='limitPlayers' />}
+                  label='Limit Players'
+                />
+                {formData.limitPlayers && (
                   <TextField
                     fullWidth
-                    label='Duration (minutes)'
-                    name='duration'
+                    label='Max Players'
+                    name='maxPlayers'
                     type='number'
-                    value={formData.duration}
+                    value={formData.maxPlayers}
                     onChange={handleChange}
                     onBlur={handleBlur}
-                    onFocus={() => setErrors(prev => ({ ...prev, duration: '' }))}
-                    error={!!errors.duration && touches.duration}
-                    helperText={errors.duration || 'Enter the duration in minutes'}
-                    required
+                    onFocus={() => setErrors(prev => ({ ...prev, maxPlayers: '' }))}
+                    error={!!errors.maxPlayers && touches.maxPlayers}
+                    helperText={errors.maxPlayers || 'Set a maximum number of players'}
                     inputProps={{ min: 1 }}
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position='end'>
-                          <AccessTimeIcon />
-                        </InputAdornment>
-                      )
-                    }}
-                    inputRef={fieldRefs.duration}
+                    inputRef={fieldRefs.maxPlayers}
                   />
-                </Grid>
-                <Grid item xs={12} sm={6}></Grid>
-              </>
-            )}
-
-            <Grid item xs={12} sm={6}></Grid>
-
-            {/* Registration */}
-            <Grid item xs={12} sm={6}>
-              <FormControlLabel
-                control={
-                  <Checkbox checked={formData.requireRegistration} onChange={handleChange} name='requireRegistration' />
-                }
-                label='Require Registration'
-              />
-              {formData.requireRegistration && (
-                <DateTimePicker
-                  disablePast
-                  minDateTime={dayjs().add(1, 'minute')} // ensure the future time
-                  maxDateTime={dayjs(formData.startTime).subtract(1, 'minute')} // must be before start time
-                  timeSteps={{ hours: 1, minutes: 1 }}
-                  sx={{ width: '100%' }}
-                  label='Registration End Time'
-                  value={formData.registrationEndTime ? dayjs(formData.registrationEndTime) : null}
-                  onChange={newValue => {
-                    handleDateChange('registrationEndTime', newValue ? newValue.toDate() : null)
-                    validateField('registrationEndTime')
-                  }}
-                  onClose={() => validateField('registrationEndTime')}
-                  slotProps={{
-                    textField: {
-                      error: !!errors.registrationEndTime && touches.registrationEndTime,
-                      helperText:
-                        (touches.registrationEndTime && errors.registrationEndTime) ||
-                        'Select the registration end time',
-                      required: true,
-                      onBlur: () => {
-                        setTouches(prev => ({ ...prev, registrationEndTime: true }))
-                        validateField('registrationEndTime')
-                      },
-                      onFocus: () => {
-                        setTouches(prev => ({ ...prev, registrationEndTime: true }))
-                        setErrors(prev => ({ ...prev, registrationEndTime: undefined }))
-                      },
-                      InputLabelProps: {
-                        shrink: true
-                      },
-                      inputRef: fieldRefs.registrationEndTime
-                    }
-                  }}
-                />
-              )}
-            </Grid>
-
-            {/* Limit Players */}
-            <Grid item xs={12} sm={6}>
-              <FormControlLabel
-                control={<Checkbox checked={formData.limitPlayers} onChange={handleChange} name='limitPlayers' />}
-                label='Limit Players'
-              />
-              {formData.limitPlayers && (
-                <TextField
-                  fullWidth
-                  label='Max Players'
-                  name='maxPlayers'
-                  type='number'
-                  value={formData.maxPlayers}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  onFocus={() => setErrors(prev => ({ ...prev, maxPlayers: '' }))}
-                  error={!!errors.maxPlayers && touches.maxPlayers}
-                  helperText={errors.maxPlayers || 'Set a maximum number of players'}
-                  inputProps={{ min: 1 }}
-                  inputRef={fieldRefs.maxPlayers}
-                />
-              )}
-            </Grid>
-
-            {/* Location Section */}
-            <Grid item xs={12}>
-              <Typography variant='subtitle1' gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
-                Game Location (Optional - Accessible anywhere if not specified)
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6} md={4}>
-                  <CountryRegionDropdown
-                    defaultCountryCode=''
-                    selectedCountryObject={selectedCountryObject}
-                    setSelectedCountryObject={handleCountryChange}
-                  />
-                </Grid>
-
-                {selectedCountryObject?.country && (
-                  <Grid item xs={12} sm={6} md={4}>
-                    <FormControl fullWidth>
-                      <Autocomplete
-                        autoHighlight
-                        onChange={(e, newValue) => handleRegionChange(newValue)}
-                        id='autocomplete-region-select'
-                        options={selectedCountryObject?.regions || []}
-                        getOptionLabel={option => option || ''}
-                        renderInput={params => (
-                          <TextField
-                            {...params}
-                            key={params.id}
-                            label='Choose a region'
-                            placeholder='Select region'
-                            inputProps={{
-                              ...params.inputProps,
-                              autoComplete: 'region'
-                            }}
-                          />
-                        )}
-                        value={selectedRegion}
-                        noOptionsText='No regions available'
-                      />
-                    </FormControl>
-                  </Grid>
                 )}
+              </Grid>
 
-                {selectedRegion && (
+              {/* Location Section */}
+              <Grid item xs={12}>
+                <Typography variant='subtitle1' gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
+                  Game Location (Optional - Accessible anywhere if not specified)
+                </Typography>
+                <Grid container spacing={2}>
                   <Grid item xs={12} sm={6} md={4}>
-                    {loading.fetchCities ? (
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 1,
-                          p: 2,
-                          bgcolor: 'action.hover',
-                          borderRadius: 1
-                        }}
-                      >
-                        <CircularProgress size={20} />
-                        <Typography variant='body2' color='text.secondary'>
-                          Loading cities...
-                        </Typography>
-                      </Box>
-                    ) : (
+                    <CountryRegionDropdown
+                      defaultCountryCode=''
+                      selectedCountryObject={selectedCountryObject}
+                      setSelectedCountryObject={handleCountryChange}
+                    />
+                  </Grid>
+
+                  {selectedCountryObject?.country && (
+                    <Grid item xs={12} sm={6} md={4}>
                       <FormControl fullWidth>
                         <Autocomplete
                           autoHighlight
-                          onChange={(e, newValue) => handleCityChange(newValue)}
-                          id='autocomplete-city-select'
-                          options={cityOptions || []}
+                          onChange={(e, newValue) => handleRegionChange(newValue)}
+                          id='autocomplete-region-select'
+                          options={selectedCountryObject?.regions || []}
                           getOptionLabel={option => option || ''}
                           renderInput={params => (
                             <TextField
                               {...params}
                               key={params.id}
-                              label='Choose a City'
-                              placeholder='Select city'
+                              label='Choose a region'
+                              placeholder='Select region'
                               inputProps={{
                                 ...params.inputProps,
-                                autoComplete: 'city'
+                                autoComplete: 'region'
                               }}
                             />
                           )}
-                          value={selectedCity}
-                          noOptionsText='No cities available'
+                          value={selectedRegion}
+                          noOptionsText='No regions available'
                         />
                       </FormControl>
-                    )}
-                  </Grid>
-                )}
-              </Grid>
-            </Grid>
+                    </Grid>
+                  )}
 
-            {/* Media Section */}
-            <Grid item xs={12}>
-              <Box
-                sx={{
-                  border: '1px dashed',
-                  borderColor: 'divider',
-                  borderRadius: 1,
-                  p: 3,
-                  mb: 2
-                }}
-              >
-                <Typography variant='subtitle1' gutterBottom sx={{ mb: 2 }}>
-                  Media
-                </Typography>
-
-                <Grid container spacing={3}>
-                  {/* Video Section - Full width on xs, half on md+ */}
-                  <Grid item xs={12} md={6}>
-                    <Box sx={{ height: '100%' }}>
-                      <Typography variant='subtitle2' gutterBottom>
-                        Promotional Video
-                      </Typography>
-                      <TextField
-                        fullWidth
-                        label='Video URL'
-                        name='promotionalVideoUrl'
-                        value={formData.promotionalVideoUrl}
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        onFocus={() => setErrors(prev => ({ ...prev, promotionalVideoUrl: '' }))}
-                        error={!!errors.promotionalVideoUrl && touches.promotionalVideoUrl}
-                        helperText={errors.promotionalVideoUrl || 'Enter a YouTube or video URL'}
-                        type='url'
-                        placeholder='https://youtube.com/watch?v=...'
-                        inputRef={fieldRefs.promotionalVideoUrl}
-                      />
-                      <Box
-                        sx={{
-                          mt: 2,
-                          borderRadius: 1,
-                          overflow: 'hidden',
-                          border: '1px solid',
-                          borderColor: 'divider',
-                          height: '200px',
-                          backgroundColor: '#f5f5f5',
-                          position: 'relative'
-                        }}
-                      >
-                        {formData.promotionalVideoUrl ? (
-                          <ReactPlayer
-                            url={formData.promotionalVideoUrl}
-                            width='100%'
-                            height='200px'
-                            controls
-                            style={{ backgroundColor: '#f5f5f5' }}
-                          />
-                        ) : (
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              flexDirection: 'column',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              height: '100%',
-                              textAlign: 'center',
-                              p: 2
-                            }}
-                          >
-                            <VideocamOffIcon sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
-                            <Typography variant='body2' color='text.secondary'>
-                              No video URL provided
-                            </Typography>
-                            <Typography variant='caption' color='text.disabled'>
-                              Add a YouTube or video URL above
-                            </Typography>
-                          </Box>
-                        )}
-                      </Box>
-                    </Box>
-                  </Grid>
-
-                  {/* Image Upload Section - Full width on xs, half on md+ */}
-                  <Grid item xs={12} md={6}>
-                    <Box sx={{ height: '100%' }}>
-                      <Typography variant='subtitle2' gutterBottom>
-                        Thumbnail Image
-                      </Typography>
-                      <input
-                        type='file'
-                        ref={fileInputRef}
-                        onChange={handleImageUpload}
-                        onBlur={handleBlur}
-                        accept='image/*'
-                        style={{ display: 'none' }}
-                      />
-                      {formData.thumbnailPoster ? (
+                  {selectedRegion && (
+                    <Grid item xs={12} sm={6} md={4}>
+                      {loading.fetchCities ? (
                         <Box
                           sx={{
-                            position: 'relative',
-                            mb: 2,
-                            height: '200px',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center',
-                            backgroundColor: '#f5f5f5' // Light gray background for error state
+                            gap: 1,
+                            p: 2,
+                            bgcolor: 'action.hover',
+                            borderRadius: 1
                           }}
                         >
-                          <img
-                            src={formData.thumbnailPoster}
-                            alt='Game thumbnail'
-                            style={{
-                              width: '100%',
-                              height: '200px',
-                              objectFit: 'cover',
-                              borderRadius: 4,
-                              border: '1px solid #e0e0e0'
-                            }}
-                          />
-                          <Box
-                            sx={{
-                              position: 'absolute',
-                              top: 8,
-                              right: 8,
-                              display: 'flex',
-                              gap: 1,
-                              backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                              borderRadius: 1,
-                              p: 0.5,
-                              boxShadow: 1,
-                              zIndex: 2,
-                              transform: 'translateY(-1px)'
-                            }}
-                          >
-                            <IconButton
-                              color='primary'
-                              size='small'
-                              onClick={triggerFileInput}
-                              sx={{ backgroundColor: 'rgba(0, 0, 0, 0.04)' }}
-                            >
-                              <EditIcon fontSize='small' />
-                            </IconButton>
-                            <IconButton
-                              color='error'
-                              size='small'
-                              onClick={() => {
-                                if (formData.thumbnailPoster.startsWith('blob:')) {
-                                  URL.revokeObjectURL(formData.thumbnailPoster)
-                                }
-                                let updatingFormData = { ...formData, thumbnailPoster: '' }
-                                setFormData(updatingFormData)
-                                setTouches(prev => ({ ...prev, thumbnailPoster: true })) // Mark field as touched
-                                validateField('thumbnailPoster', updatingFormData)
-                              }}
-                              sx={{ backgroundColor: 'rgba(0, 0, 0, 0.04)' }}
-                            >
-                              <DeleteIcon fontSize='small' />
-                            </IconButton>
-                          </Box>
+                          <CircularProgress size={20} />
+                          <Typography variant='body2' color='text.secondary'>
+                            Loading cities...
+                          </Typography>
                         </Box>
                       ) : (
+                        <FormControl fullWidth>
+                          <Autocomplete
+                            autoHighlight
+                            onChange={(e, newValue) => handleCityChange(newValue)}
+                            id='autocomplete-city-select'
+                            options={cityOptions || []}
+                            getOptionLabel={option => option || ''}
+                            renderInput={params => (
+                              <TextField
+                                {...params}
+                                key={params.id}
+                                label='Choose a City'
+                                placeholder='Select city'
+                                inputProps={{
+                                  ...params.inputProps,
+                                  autoComplete: 'city'
+                                }}
+                              />
+                            )}
+                            value={selectedCity}
+                            noOptionsText='No cities available'
+                          />
+                        </FormControl>
+                      )}
+                    </Grid>
+                  )}
+                </Grid>
+              </Grid>
+
+              {/* Media Section */}
+              <Grid item xs={12}>
+                <Box
+                  sx={{
+                    border: '1px dashed',
+                    borderColor: 'divider',
+                    borderRadius: 1,
+                    p: 3,
+                    mb: 2
+                  }}
+                >
+                  <Typography variant='subtitle1' gutterBottom sx={{ mb: 2 }}>
+                    Media
+                  </Typography>
+
+                  <Grid container spacing={3}>
+                    {/* Video Section - Full width on xs, half on md+ */}
+                    <Grid item xs={12} md={6}>
+                      <Box sx={{ height: '100%' }}>
+                        <Typography variant='subtitle2' gutterBottom>
+                          Promotional Video
+                        </Typography>
+                        <TextField
+                          fullWidth
+                          label='Video URL'
+                          name='promotionalVideoUrl'
+                          value={formData.promotionalVideoUrl}
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          onFocus={() => setErrors(prev => ({ ...prev, promotionalVideoUrl: '' }))}
+                          error={!!errors.promotionalVideoUrl && touches.promotionalVideoUrl}
+                          helperText={errors.promotionalVideoUrl || 'Enter a YouTube or video URL'}
+                          type='url'
+                          placeholder='https://youtube.com/watch?v=...'
+                          inputRef={fieldRefs.promotionalVideoUrl}
+                        />
                         <Box
-                          onClick={triggerFileInput}
                           sx={{
-                            height: '200px',
-                            border: '2px dashed',
-                            borderColor: !!errors.thumbnailPoster && touches.thumbnailPoster ? 'red' : 'divider',
+                            mt: 2,
                             borderRadius: 1,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer',
-                            backgroundColor: 'action.hover',
-                            '&:hover': {
-                              backgroundColor: 'action.selected'
-                            }
+                            overflow: 'hidden',
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            height: '200px',
+                            backgroundColor: '#f5f5f5',
+                            position: 'relative'
                           }}
                         >
-                          <Typography color='text.secondary'>Click to upload thumbnail image</Typography>
+                          {formData.promotionalVideoUrl ? (
+                            <ReactPlayer
+                              url={formData.promotionalVideoUrl}
+                              width='100%'
+                              height='200px'
+                              controls
+                              style={{ backgroundColor: '#f5f5f5' }}
+                            />
+                          ) : (
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                height: '100%',
+                                textAlign: 'center',
+                                p: 2
+                              }}
+                            >
+                              <VideocamOffIcon sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
+                              <Typography variant='body2' color='text.secondary'>
+                                No video URL provided
+                              </Typography>
+                              <Typography variant='caption' color='text.disabled'>
+                                Add a YouTube or video URL above
+                              </Typography>
+                            </Box>
+                          )}
                         </Box>
-                      )}
-                      <TextField
-                        fullWidth
-                        label='Or enter image URL'
-                        name='thumbnailPoster'
-                        value={formData.thumbnailPoster}
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        onFocus={() => setErrors(prev => ({ ...prev, thumbnailPoster: '' }))}
-                        error={!!errors.thumbnailPoster && touches.thumbnailPoster}
-                        helperText={errors.thumbnailPoster}
-                        placeholder='https://example.com/image.jpg'
-                        type='url'
-                        sx={{ mt: 2 }}
-                        inputRef={fieldRefs.thumbnailPoster}
-                      />
-                    </Box>
+                      </Box>
+                    </Grid>
+
+                    {/* Image Upload Section - Full width on xs, half on md+ */}
+                    <Grid item xs={12} md={6}>
+                      <Box sx={{ height: '100%' }}>
+                        <Typography variant='subtitle2' gutterBottom>
+                          Thumbnail Image
+                        </Typography>
+                        <input
+                          type='file'
+                          ref={fileInputRef}
+                          onChange={handleImageUpload}
+                          onBlur={handleBlur}
+                          accept='image/*'
+                          style={{ display: 'none' }}
+                        />
+                        {formData.thumbnailPoster ? (
+                          <Box
+                            sx={{
+                              position: 'relative',
+                              mb: 2,
+                              height: '200px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              backgroundColor: '#f5f5f5' // Light gray background for error state
+                            }}
+                          >
+                            <img
+                              src={formData.thumbnailPoster}
+                              alt='Game thumbnail'
+                              style={{
+                                width: '100%',
+                                height: '200px',
+                                objectFit: 'cover',
+                                borderRadius: 4,
+                                border: '1px solid #e0e0e0'
+                              }}
+                            />
+                            <Box
+                              sx={{
+                                position: 'absolute',
+                                top: 8,
+                                right: 8,
+                                display: 'flex',
+                                gap: 1,
+                                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                borderRadius: 1,
+                                p: 0.5,
+                                boxShadow: 1,
+                                zIndex: 2,
+                                transform: 'translateY(-1px)'
+                              }}
+                            >
+                              <IconButton
+                                color='primary'
+                                size='small'
+                                onClick={triggerFileInput}
+                                sx={{ backgroundColor: 'rgba(0, 0, 0, 0.04)' }}
+                              >
+                                <EditIcon fontSize='small' />
+                              </IconButton>
+                              <IconButton
+                                color='error'
+                                size='small'
+                                onClick={() => {
+                                  if (formData.thumbnailPoster.startsWith('blob:')) {
+                                    URL.revokeObjectURL(formData.thumbnailPoster)
+                                  }
+                                  let updatingFormData = { ...formData, thumbnailPoster: '' }
+                                  setFormData(updatingFormData)
+                                  setTouches(prev => ({ ...prev, thumbnailPoster: true })) // Mark field as touched
+                                  validateField('thumbnailPoster', updatingFormData)
+                                }}
+                                sx={{ backgroundColor: 'rgba(0, 0, 0, 0.04)' }}
+                              >
+                                <DeleteIcon fontSize='small' />
+                              </IconButton>
+                            </Box>
+                          </Box>
+                        ) : (
+                          <Box
+                            onClick={triggerFileInput}
+                            sx={{
+                              height: '200px',
+                              border: '2px dashed',
+                              borderColor: !!errors.thumbnailPoster && touches.thumbnailPoster ? 'red' : 'divider',
+                              borderRadius: 1,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: 'pointer',
+                              backgroundColor: 'action.hover',
+                              '&:hover': {
+                                backgroundColor: 'action.selected'
+                              }
+                            }}
+                          >
+                            <Typography color='text.secondary'>Click to upload thumbnail image</Typography>
+                          </Box>
+                        )}
+                        <TextField
+                          fullWidth
+                          label='Or enter image URL'
+                          name='thumbnailPoster'
+                          value={formData.thumbnailPoster}
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          onFocus={() => setErrors(prev => ({ ...prev, thumbnailPoster: '' }))}
+                          error={!!errors.thumbnailPoster && touches.thumbnailPoster}
+                          helperText={errors.thumbnailPoster}
+                          placeholder='https://example.com/image.jpg'
+                          type='url'
+                          sx={{ mt: 2 }}
+                          inputRef={fieldRefs.thumbnailPoster}
+                        />
+                      </Box>
+                    </Grid>
                   </Grid>
-                </Grid>
-              </Box>
-            </Grid>
-
-            <Grid item xs={12}>
-              <Autocomplete
-                multiple
-                freeSolo
-                options={[]}
-                value={formData.tags}
-                onChange={(event, newValue) => {
-                  setFormData(prev => ({ ...prev, tags: newValue }))
-                }}
-                renderTags={(value, getTagProps) =>
-                  value.map((option, index) => (
-                    <Chip key={index} variant='outlined' label={option} {...getTagProps({ index })} />
-                  ))
-                }
-                renderInput={params => (
-                  <TextField {...params} label='Tags' placeholder='Add tags' inputRef={fieldRefs.tags} />
-                )}
-              />
-            </Grid>
-
-            {/* Rewards Section */}
-            <Grid item xs={12}>
-              <Divider sx={{ my: 2 }} />
-              <Stack direction='row' justifyContent='space-between' alignItems='center'>
-                <Typography variant='h5'>Rewards</Typography>
-                <Button
-                  variant='outlined'
-                  startIcon={<AddIcon />}
-                  onClick={handleAddReward}
-                  disabled={availablePositions.length === 0}
-                >
-                  Add Reward
-                </Button>
-              </Stack>
-
-              {formData?.rewards?.length === 0 ? (
-                <Typography variant='body2' color='text.secondary' sx={{ mt: 2 }}>
-                  No rewards added yet
-                </Typography>
-              ) : (
-                <Box sx={{ mt: 2 }}>
-                  {formData?.rewards
-                    ?.sort((a, b) => a.position - b.position)
-                    ?.map(reward => {
-                      // Calculate total cash reward if reward type is cash
-                      const totalCashReward =
-                        reward.rewardType === 'cash'
-                          ? reward.rewardValuePerWinner * reward.numberOfWinnersForThisPosition
-                          : 0
-
-                      return (
-                        <Card key={reward?._id || reward?.id} variant='outlined' sx={{ mb: 2 }}>
-                          <CardContent>
-                            <Stack direction='row' justifyContent='space-between' alignItems='center' mb={2}>
-                              <Typography variant='h6'>Position {reward.position} Reward</Typography>
-                              <Stack direction='row'>
-                                <IconButton onClick={() => handleEditReward(reward)}>
-                                  <EditIcon />
-                                </IconButton>
-                                <IconButton onClick={() => handleRemoveReward(reward?._id || reward?.id)}>
-                                  <CloseIcon />
-                                </IconButton>
-                              </Stack>
-                            </Stack>
-
-                            <Stack spacing={1} mb={2}>
-                              <Typography variant='body1'>
-                                {reward.rewardType === 'cash' ? (
-                                  <>
-                                    Cash Reward: {reward.currency} {reward.rewardValuePerWinner} per winner
-                                    <Typography variant='body2' color='text.secondary'>
-                                      Total: {reward.currency} {totalCashReward.toFixed(2)} (
-                                      {reward.numberOfWinnersForThisPosition} winners)
-                                    </Typography>
-                                  </>
-                                ) : (
-                                  <>Physical Gift: {reward.nonCashReward}</>
-                                )}
-                              </Typography>
-                              <Typography variant='body1'>
-                                Number of Winners: {reward.numberOfWinnersForThisPosition}
-                              </Typography>
-                            </Stack>
-
-                            <Typography variant='subtitle1' gutterBottom>
-                              Sponsor Contributions ({reward?.sponsors?.length})
-                            </Typography>
-
-                            {reward?.sponsors?.length > 0 && (
-                              <Grid container spacing={2}>
-                                {reward.sponsors.map(sponsor => (
-                                  <Grid item xs={12} sm={6} key={sponsor?._id || sponsor?.id}>
-                                    <Paper variant='outlined' sx={{ p: 2 }}>
-                                      <Typography variant='body2'>{sponsor.email}</Typography>
-                                      <Typography variant='body2' color='text.secondary'>
-                                        {reward.rewardType === 'cash'
-                                          ? `Contributed: ${sponsor.currency} ${(sponsor.allocated || 0).toFixed(2)}`
-                                          : `Provided: ${sponsor.allocated || 0} items`}
-                                      </Typography>
-                                      <Typography variant='caption' color='text.secondary'>
-                                        {reward.rewardType === 'cash'
-                                          ? `Remaining balance: ${sponsor.currency} ${(
-                                              sponsor.availableAmount || 0
-                                            ).toFixed(2)}`
-                                          : `Remaining stock: ${sponsor.availableItems || 0}`}
-                                      </Typography>
-                                    </Paper>
-                                  </Grid>
-                                ))}
-                              </Grid>
-                            )}
-                          </CardContent>
-                        </Card>
-                      )
-                    })}
                 </Box>
-              )}
-              {/* Reward Dialog */}
-              <RewardDialog
-                open={openRewardDialog}
-                key={openRewardDialog}
-                onClose={() => setOpenRewardDialog(false)}
-                reward={editingReward}
-                onSave={handleSaveReward}
-                availablePositions={availablePositions}
-                allPositions={POSITION_OPTIONS}
-                isEditing={!!editingReward}
-                formData={formData}
-                setFormData={setFormData}
-                gameData={data}
-              />
-            </Grid>
+              </Grid>
 
-            {/* Form Actions */}
-            <Grid item xs={12} mt={4}>
-              <Stack direction='row' spacing={2} justifyContent='center'>
-                <Button variant='outlined' onClick={onCancel}>
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleSubmit}
-                  component='label'
-                  variant='contained'
-                  color='primary'
-                  style={{ color: 'white' }}
-                >
-                  {data ? 'Update Game' : 'Save Game'}
-                </Button>
-              </Stack>
+              <Grid item xs={12}>
+                <Autocomplete
+                  multiple
+                  freeSolo
+                  options={[]}
+                  value={formData.tags}
+                  onChange={(event, newValue) => {
+                    setFormData(prev => ({ ...prev, tags: newValue }))
+                  }}
+                  renderTags={(value, getTagProps) =>
+                    value.map((option, index) => (
+                      <Chip key={index} variant='outlined' label={option} {...getTagProps({ index })} />
+                    ))
+                  }
+                  renderInput={params => (
+                    <TextField {...params} label='Tags' placeholder='Add tags' inputRef={fieldRefs.tags} />
+                  )}
+                />
+              </Grid>
+
+              {/* Rewards Section */}
+              <Grid item xs={12}>
+                <Divider sx={{ my: 2 }} />
+                <Stack direction='row' justifyContent='space-between' alignItems='center'>
+                  <Typography variant='h5'>Rewards</Typography>
+                  <Button
+                    variant='outlined'
+                    startIcon={<AddIcon />}
+                    onClick={handleAddReward}
+                    disabled={availablePositions.length === 0}
+                  >
+                    Add Reward
+                  </Button>
+                </Stack>
+
+                {formData?.rewards?.length === 0 ? (
+                  <Typography variant='body2' color='text.secondary' sx={{ mt: 2 }}>
+                    No rewards added yet
+                  </Typography>
+                ) : (
+                  <Box sx={{ mt: 2 }}>
+                    {formData?.rewards
+                      ?.sort((a, b) => a.position - b.position)
+                      ?.map(reward => {
+                        // Calculate total cash reward if reward type is cash
+                        const totalCashReward =
+                          reward.rewardType === 'cash'
+                            ? reward.rewardValuePerWinner * reward.numberOfWinnersForThisPosition
+                            : 0
+
+                        return (
+                          <Card key={reward?._id || reward?.id} variant='outlined' sx={{ mb: 2 }}>
+                            <CardContent>
+                              <Stack direction='row' justifyContent='space-between' alignItems='center' mb={2}>
+                                <Typography variant='h6'>Position {reward.position} Reward</Typography>
+                                <Stack direction='row'>
+                                  <IconButton onClick={() => handleEditReward(reward)}>
+                                    <EditIcon />
+                                  </IconButton>
+                                  <IconButton onClick={() => handleRemoveReward(reward?._id || reward?.id)}>
+                                    <CloseIcon />
+                                  </IconButton>
+                                </Stack>
+                              </Stack>
+
+                              <Stack spacing={1} mb={2}>
+                                <Typography variant='body1'>
+                                  {reward.rewardType === 'cash' ? (
+                                    <>
+                                      Cash Reward: {reward.currency} {reward.rewardValuePerWinner} per winner
+                                      <Typography variant='body2' color='text.secondary'>
+                                        Total: {reward.currency} {totalCashReward.toFixed(2)} (
+                                        {reward.numberOfWinnersForThisPosition} winners)
+                                      </Typography>
+                                    </>
+                                  ) : (
+                                    <>Physical Gift: {reward.nonCashReward}</>
+                                  )}
+                                </Typography>
+                                <Typography variant='body1'>
+                                  Number of Winners: {reward.numberOfWinnersForThisPosition}
+                                </Typography>
+                              </Stack>
+
+                              <Typography variant='subtitle1' gutterBottom>
+                                Sponsor Contributions ({reward?.sponsors?.length})
+                              </Typography>
+
+                              {reward?.sponsors?.length > 0 && (
+                                <Grid container spacing={2}>
+                                  {reward.sponsors.map(sponsor => (
+                                    <Grid item xs={12} sm={6} key={sponsor?._id || sponsor?.id}>
+                                      <Paper variant='outlined' sx={{ p: 2 }}>
+                                        <Typography variant='body2'>{sponsor.email}</Typography>
+                                        <Typography variant='body2' color='text.secondary'>
+                                          {reward.rewardType === 'cash'
+                                            ? `Contributed: ${sponsor.currency} ${(sponsor.allocated || 0).toFixed(2)}`
+                                            : `Provided: ${sponsor.allocated || 0} items`}
+                                        </Typography>
+                                        <Typography variant='caption' color='text.secondary'>
+                                          {reward.rewardType === 'cash'
+                                            ? `Remaining balance: ${sponsor.currency} ${(
+                                                sponsor.availableAmount || 0
+                                              ).toFixed(2)}`
+                                            : `Remaining stock: ${sponsor.availableItems || 0}`}
+                                        </Typography>
+                                      </Paper>
+                                    </Grid>
+                                  ))}
+                                </Grid>
+                              )}
+                            </CardContent>
+                          </Card>
+                        )
+                      })}
+                  </Box>
+                )}
+                {/* Reward Dialog */}
+                <RewardDialog
+                  open={openRewardDialog}
+                  key={openRewardDialog}
+                  onClose={() => setOpenRewardDialog(false)}
+                  reward={editingReward}
+                  onSave={handleSaveReward}
+                  availablePositions={availablePositions}
+                  allPositions={POSITION_OPTIONS}
+                  isEditing={!!editingReward}
+                  formData={formData}
+                  setFormData={setFormData}
+                  gameData={data}
+                />
+              </Grid>
+
+              {/* Form Actions */}
+              <Grid item xs={12} mt={4}>
+                <Stack direction='row' spacing={2} justifyContent='center'>
+                  <Button variant='outlined' onClick={onCancel}>
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleSubmit}
+                    component='label'
+                    variant='contained'
+                    color='primary'
+                    style={{ color: 'white' }}
+                  >
+                    {data ? 'Update Game' : 'Save Game'}
+                  </Button>
+                </Stack>
+              </Grid>
             </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </Box>
     </Box>
   )
 }

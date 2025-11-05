@@ -20,8 +20,12 @@ import {
   ListItemText,
   FormControl,
   InputLabel,
-  Select
+  Select,
+  Box,
+  Container,
+  useTheme
 } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 
 // MUI Icons
 import { DeleteOutline as DeleteOutlineIcon, Visibility as VisibilityIcon } from '@mui/icons-material'
@@ -103,6 +107,7 @@ const ActionsMenu = ({ anchorEl, handleClose, handleAction }) => (
 
 const LearningTable = () => {
   // States
+  const theme = useTheme()
   const { data: session } = useSession()
   const [open, setOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
@@ -208,11 +213,7 @@ const LearningTable = () => {
       }),
       columnHelper.accessor('completionPercent', {
         header: '% Completed',
-        cell: ({ row }) => (
-          <Typography variant='h6'>
-            {row.original?.completionPercent}%
-          </Typography>
-        )
+        cell: ({ row }) => <Typography variant='h6'>{row.original?.completionPercent}%</Typography>
       }),
       columnHelper.accessor('action', {
         header: 'Actions',
@@ -269,116 +270,208 @@ const LearningTable = () => {
   }
 
   return (
-    <>
-      <Card>
-        <CardContent className='flex flex-col gap-4 sm:flex-row items-start sm:items-center justify-between'>
-          <div className='flex items-center gap-2'>
-            <Typography variant='h5' color='primary'>Total Learning Points:</Typography>
-            <Typography variant='h5' color='primary'>
-              {data?.reduce((sum, eachLearning) => {
-                return sum + eachLearning?.learningPoints
-              }, 0)}
+    <Box
+      sx={{
+        minHeight: '100vh',
+        background: `radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 50%),
+                     radial-gradient(circle at 80% 80%, ${alpha(
+                       theme.palette.secondary.main,
+                       0.05
+                     )} 0%, transparent 50%),
+                     ${theme.palette.background.default}`
+      }}
+    >
+      {/* Elegant Header */}
+      <Box
+        sx={{
+          backdropFilter: 'blur(20px)',
+          bgcolor: alpha('#fff', 0.7),
+          borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+          pt: { xs: 4, md: 6 },
+          pb: { xs: 4, md: 6 }
+        }}
+      >
+        <Container maxWidth='lg'>
+          <Box sx={{ textAlign: 'center' }}>
+            {/* Icon and Title */}
+            <Box
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 2,
+                mb: 2
+              }}
+            >
+              <Box
+                sx={{
+                  width: { xs: 48, sm: 56 },
+                  height: { xs: 48, sm: 56 },
+                  borderRadius: '12px',
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`
+                }}
+              >
+                <i className='ri-book-read-line' style={{ fontSize: '28px', color: 'white' }} />
+              </Box>
+              <Typography
+                sx={{
+                  fontSize: { xs: '2rem', md: '2.5rem' },
+                  fontWeight: 700,
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  letterSpacing: '-0.02em'
+                }}
+              >
+                My Learning Journey
+              </Typography>
+            </Box>
+            <Typography
+              variant='body1'
+              color='text.secondary'
+              sx={{
+                fontSize: '1.05rem',
+                lineHeight: 1.8,
+                width: '100%',
+                mx: 'auto',
+                fontWeight: 400
+              }}
+            >
+              Track your progress and review your learning achievements
             </Typography>
-          </div>
-          <DebouncedInput
-            value={globalFilter ?? ''}
-            onChange={value => setGlobalFilter(String(value))}
-            placeholder='Search'
-            className='is-full sm:is-auto'
-          />
-          <FormControl size='small' sx={{ minWidth: 150 }}>
-            <InputLabel>Date Range</InputLabel>
-            <Select label='Date Range' value={dateRange} onChange={e => setDateRange(e.target.value)} displayEmpty>
-              <MenuItem value='all'>All</MenuItem>
-              <MenuItem value='today'>Today</MenuItem>
-              <MenuItem value='last7days'>Last 7 Days</MenuItem>
-              <MenuItem value='last30days'>Last 30 Days</MenuItem>
-            </Select>
-          </FormControl>
-        </CardContent>
-        <div className='overflow-x-auto'>
-          <table className={tableStyles.table}>
-            <thead>
-              {table.getHeaderGroups().map(headerGroup => (
-                <tr key={headerGroup.id}>
-                  {headerGroup.headers.map(header => (
-                    <th key={header.id} className='text-center'>
-                      {header.isPlaceholder ? null : (
-                        <>
-                          <div
-                            className={classnames({
-                              'flex items-center': header.column.getIsSorted(),
-                              'cursor-pointer select-none': header.column.getCanSort()
-                            })}
-                            onClick={header.column.getToggleSortingHandler()}
-                          >
-                            {flexRender(header.column.columnDef.header, header.getContext())}
-                            {{
-                              asc: <i className='ri-arrow-up-s-line text-xl' />,
-                              desc: <i className='ri-arrow-down-s-line text-xl' />
-                            }[header.column.getIsSorted()] ?? null}
-                          </div>
-                        </>
-                      )}
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            {table.getFilteredRowModel().rows.length === 0 ? (
-              <tbody>
-                <tr>
-                  <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
-                    No data available
-                  </td>
-                </tr>
-              </tbody>
-            ) : (
-              <tbody>
-                {table
-                  .getRowModel()
-                  .rows.slice(0, table.getState().pagination.pageSize)
-                  .map(row => (
-                    <tr key={row.id} className={classnames({ selected: row.getIsSelected() })}>
-                      {row.getVisibleCells().map(cell => (
-                        <td key={cell.id} className='text-center'>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
-                      ))}
-                    </tr>
-                  ))}
-              </tbody>
-            )}
-          </table>
-        </div>
-        <TablePagination
-          rowsPerPageOptions={[5, 7, 10]}
-          component='div'
-          className='border-bs'
-          count={table.getFilteredRowModel().rows.length}
-          rowsPerPage={table.getState().pagination.pageSize}
-          page={table.getState().pagination.pageIndex}
-          SelectProps={{
-            inputProps: { 'aria-label': 'rows per page' }
-          }}
-          onPageChange={(_, page) => {
-            table.setPageIndex(page)
-          }}
-          onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
-        />
+          </Box>
+        </Container>
+      </Box>
 
-        {/* Menu for more options */}
-        <ActionsMenu
-          anchorEl={anchorEl}
-          handleClose={handleClose}
-          handleAction={action => {
-            if (action === 'view') {
-              handleViewRow()
+      {/* Content Area */}
+      <Container maxWidth='lg' sx={{ py: { xs: 3, md: 4 } }}>
+        <Card
+          sx={{
+            borderRadius: 2,
+            boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.08)}`,
+            border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+            overflow: 'hidden',
+            '&:hover': {
+              boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.12)}`
             }
           }}
-        />
-      </Card>
+        >
+          <CardContent className='flex flex-col gap-4 sm:flex-row items-start sm:items-center justify-between'>
+            <div className='flex items-center gap-2'>
+              <Typography variant='h5' color='primary'>
+                Total Learning Points:
+              </Typography>
+              <Typography variant='h5' color='primary'>
+                {data?.reduce((sum, eachLearning) => {
+                  return sum + eachLearning?.learningPoints
+                }, 0)}
+              </Typography>
+            </div>
+            <DebouncedInput
+              value={globalFilter ?? ''}
+              onChange={value => setGlobalFilter(String(value))}
+              placeholder='Search videos...'
+              sx={{ minWidth: { xs: '100%', sm: 250 } }}
+            />
+            <FormControl size='small' sx={{ width: { xs: '100%', sm: 200 } }}>
+              <InputLabel>Date Range</InputLabel>
+              <Select label='Date Range' value={dateRange} onChange={e => setDateRange(e.target.value)} displayEmpty>
+                <MenuItem value='all'>All</MenuItem>
+                <MenuItem value='today'>Today</MenuItem>
+                <MenuItem value='last7days'>Last 7 Days</MenuItem>
+                <MenuItem value='last30days'>Last 30 Days</MenuItem>
+              </Select>
+            </FormControl>
+          </CardContent>
+          <div className='overflow-x-auto'>
+            <table className={tableStyles.table}>
+              <thead>
+                {table.getHeaderGroups().map(headerGroup => (
+                  <tr key={headerGroup.id}>
+                    {headerGroup.headers.map(header => (
+                      <th key={header.id} className='text-center'>
+                        {header.isPlaceholder ? null : (
+                          <>
+                            <div
+                              className={classnames({
+                                'flex items-center': header.column.getIsSorted(),
+                                'cursor-pointer select-none': header.column.getCanSort()
+                              })}
+                              onClick={header.column.getToggleSortingHandler()}
+                            >
+                              {flexRender(header.column.columnDef.header, header.getContext())}
+                              {{
+                                asc: <i className='ri-arrow-up-s-line text-xl' />,
+                                desc: <i className='ri-arrow-down-s-line text-xl' />
+                              }[header.column.getIsSorted()] ?? null}
+                            </div>
+                          </>
+                        )}
+                      </th>
+                    ))}
+                  </tr>
+                ))}
+              </thead>
+              {table.getFilteredRowModel().rows.length === 0 ? (
+                <tbody>
+                  <tr>
+                    <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
+                      No data available
+                    </td>
+                  </tr>
+                </tbody>
+              ) : (
+                <tbody>
+                  {table
+                    .getRowModel()
+                    .rows.slice(0, table.getState().pagination.pageSize)
+                    .map(row => (
+                      <tr key={row.id} className={classnames({ selected: row.getIsSelected() })}>
+                        {row.getVisibleCells().map(cell => (
+                          <td key={cell.id} className='text-center'>
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                </tbody>
+              )}
+            </table>
+          </div>
+          <TablePagination
+            rowsPerPageOptions={[5, 7, 10]}
+            component='div'
+            className='border-bs'
+            count={table.getFilteredRowModel().rows.length}
+            rowsPerPage={table.getState().pagination.pageSize}
+            page={table.getState().pagination.pageIndex}
+            SelectProps={{
+              inputProps: { 'aria-label': 'rows per page' }
+            }}
+            onPageChange={(_, page) => {
+              table.setPageIndex(page)
+            }}
+            onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
+          />
 
-      {open && <LearningVideoInfo data={viewRowData} open={open} onClose={handleCloseRow} />}
-    </>
+          {/* Menu for more options */}
+          <ActionsMenu
+            anchorEl={anchorEl}
+            handleClose={handleClose}
+            handleAction={action => {
+              if (action === 'view') {
+                handleViewRow()
+              }
+            }}
+          />
+        </Card>
+
+        {open && <LearningVideoInfo data={viewRowData} open={open} onClose={handleCloseRow} />}
+      </Container>
+    </Box>
   )
 }
 

@@ -46,10 +46,21 @@ const AddContent = ({ handleClose, onCreate }) => {
 
   const [errors, setErrors] = useState({})
 
+  const isYouTubeUrl = url => {
+    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/
+    return youtubeRegex.test(url)
+  }
+
   const validateField = (field, value) => {
     let error = ''
     if (field === 'name' && value.trim() === '') error = 'Name is required.'
-    if (field === 'url' && value.trim() === '') error = 'Video URL is required.'
+    if (field === 'url') {
+      if (value.trim() === '') {
+        error = 'Video URL is required.'
+      } else if (!isYouTubeUrl(value)) {
+        error = 'Above entered link is not supported please enter a valid YouTube video link.'
+      }
+    }
     if (field === 'description' && value.trim() === '') error = 'Description is required.'
     if (field === 'genericContextIds' && (!Array.isArray(value) || value.length === 0)) error = 'Context is required.'
     return error
@@ -132,15 +143,19 @@ const AddContent = ({ handleClose, onCreate }) => {
         fullWidth
         margin='dense'
       />
+
       {renderErrorMessage(errors?.name)}
       {/* URL */}
       <TextField
-        label='Video URL'
+        label='YouTube Video URL'
         value={formData.url}
         onChange={e => handleSetFormValue('url', e.target.value)}
         fullWidth
         margin='dense'
       />
+      <Typography variant='body2' color='text.secondary' sx={{ mb: 1, textAlign: 'left', width: '100%' }}>
+        Currently we are only able to support youtube links
+      </Typography>
       {renderErrorMessage(errors?.url)}
       {/* {formData.url && (
         <MediaPreviewPopup
@@ -236,7 +251,11 @@ const AddContent = ({ handleClose, onCreate }) => {
 
       {/* Generic Context Popup */}
       <Dialog fullWidth maxWidth='sm' open={isGenericPopupOpen} onClose={() => handleClosePopup('GENERIC')}>
-        <IconButtonTooltip title='Close' onClick={() => handleClosePopup('GENERIC')} className='absolute block-start-4 inline-end-4'>
+        <IconButtonTooltip
+          title='Close'
+          onClick={() => handleClosePopup('GENERIC')}
+          className='absolute block-start-4 inline-end-4'
+        >
           <i className='ri-close-line text-textSecondary' />
         </IconButtonTooltip>
         <DialogContent>
@@ -250,7 +269,11 @@ const AddContent = ({ handleClose, onCreate }) => {
 
       {/* Academic Context Popup */}
       <Dialog fullWidth maxWidth='sm' open={isAcademicPopupOpen} onClose={() => handleClosePopup('ACADEMIC')}>
-        <IconButtonTooltip title='Close' onClick={() => handleClosePopup('ACADEMIC')} className='absolute block-start-4 inline-end-4'>
+        <IconButtonTooltip
+          title='Close'
+          onClick={() => handleClosePopup('ACADEMIC')}
+          className='absolute block-start-4 inline-end-4'
+        >
           <i className='ri-close-line text-textSecondary' />
         </IconButtonTooltip>
         <DialogContent>
@@ -285,10 +308,21 @@ const EditContent = ({ handleClose, data, onUpdate }) => {
 
   const [errors, setErrors] = useState({})
 
+  const isYouTubeUrl = url => {
+    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/
+    return youtubeRegex.test(url)
+  }
+
   const validateField = (field, value) => {
     let error = ''
     if (field === 'name' && value.trim() === '') error = 'Name is required.'
-    if (field === 'url' && value.trim() === '') error = 'Video URL is required.'
+    if (field === 'url') {
+      if (value.trim() === '') {
+        error = 'Video URL is required.'
+      } else if (!isYouTubeUrl(value)) {
+        error = 'Only YouTube URLs are supported. Please enter a valid YouTube video link.'
+      }
+    }
     if (field === 'description' && value.trim() === '') error = 'Description is required.'
     if (field === 'genericContextIds' && (!Array.isArray(value) || value.length === 0)) error = 'Context is required.'
     return error
@@ -386,15 +420,20 @@ const EditContent = ({ handleClose, data, onUpdate }) => {
         fullWidth
         margin='dense'
       />
+
       {renderErrorMessage(errors?.name)}
       {/* URL */}
       <TextField
-        label='Video URL'
+        label='YouTube Video URL'
         value={formData.url}
         onChange={e => handleSetFormValue('url', e.target.value)}
         fullWidth
         margin='dense'
       />
+      <Typography variant='body2' color='text.secondary' sx={{ mb: 1, textAlign: 'left', width: '100%' }}>
+        {' '}
+        Currently we are only able to support youtube links{' '}
+      </Typography>
       {renderErrorMessage(errors?.url)}
       {/* {formData.url && (
         <MediaPreviewPopup
@@ -500,7 +539,11 @@ const EditContent = ({ handleClose, data, onUpdate }) => {
 
       {/* Generic Context Popup */}
       <Dialog fullWidth maxWidth='sm' open={isGenericPopupOpen} onClose={() => handleClosePopup('GENERIC')}>
-        <IconButtonTooltip title='Close' onClick={() => handleClosePopup('GENERIC')} className='absolute block-start-4 inline-end-4'>
+        <IconButtonTooltip
+          title='Close'
+          onClick={() => handleClosePopup('GENERIC')}
+          className='absolute block-start-4 inline-end-4'
+        >
           <i className='ri-close-line text-textSecondary' />
         </IconButtonTooltip>
         <DialogContent>
@@ -514,7 +557,11 @@ const EditContent = ({ handleClose, data, onUpdate }) => {
 
       {/* Academic Context Popup */}
       <Dialog fullWidth maxWidth='sm' open={isAcademicPopupOpen} onClose={() => handleClosePopup('ACADEMIC')}>
-        <IconButtonTooltip title='Close' onClick={() => handleClosePopup('ACADEMIC')} className='absolute block-start-4 inline-end-4'>
+        <IconButtonTooltip
+          title='Close'
+          onClick={() => handleClosePopup('ACADEMIC')}
+          className='absolute block-start-4 inline-end-4'
+        >
           <i className='ri-close-line text-textSecondary' />
         </IconButtonTooltip>
         <DialogContent>
@@ -580,11 +627,11 @@ const VideoDialog = ({ open, onClose, data, onSuccess }) => {
         variant='h4'
         className='flex flex-col gap-2 text-center pbs-10 pbe-6 pli-10 sm:pbs-16 sm:pbe-6 sm:pli-16'
       >
-        {data ? 'Edit Video' : 'Add New Video'}
+        {data ? 'Edit YouTube Video ' : 'Add New YouTube Video'}
         <Typography component='span' className='flex flex-col text-center'>
           {data
             ? 'Modify the video and update questions as needed.'
-            : 'Enhance your video by adding questions for better engagement.'}
+            : 'Enhance video by adding questions for better engagement.'}
         </Typography>
       </DialogTitle>
       {data ? (
