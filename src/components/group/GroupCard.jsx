@@ -587,7 +587,7 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup }) => {
                 </Box>
                 {/* Action Buttons - With Text Labels */}
                 <Divider sx={{ my: 1.5 }} />
-                <Stack direction='row' spacing={0.75} justifyContent='space-between' alignItems='center'>
+                <Stack direction='row' spacing={0.75} justifyContent='evenly-spaced' alignItems='center'>
                   <Button
                     size='small'
                     variant='outlined'
@@ -686,11 +686,11 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup }) => {
                           color='error'
                           sx={{
                             '& .MuiBadge-badge': {
-                              right: -3,
+                              right: 5,
                               top: -3,
                               fontSize: '0.65rem',
-                              minWidth: 16,
-                              height: 16,
+                              Width: '100px',
+                              Height: '100px',
                               padding: '0 4px'
                             }
                           }}
@@ -700,7 +700,8 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup }) => {
                             variant='outlined'
                             onClick={() => handleJoinRequestClick(group)}
                             sx={{
-                              minWidth: 'auto',
+                              maxWidth: '100px',
+                              maxHeight: '100px',
                               px: 1.25,
                               py: 0.75,
                               borderRadius: 2,

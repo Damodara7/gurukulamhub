@@ -16,8 +16,10 @@ import {
   TextField,
   InputAdornment,
   CircularProgress,
-  Tooltip
+  Tooltip,
+  useTheme
 } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import {
   Group as GroupIcon,
   Campaign as ChannelIcon,
@@ -34,6 +36,7 @@ import { useSession } from 'next-auth/react'
 import { toast } from 'react-toastify'
 
 const GroupChannellist = ({ groups = [], channels = [] }) => {
+  const theme = useTheme()
   const { data: session } = useSession()
   const [viewMode, setViewMode] = useState('groups')
   const [searchQuery, setSearchQuery] = useState('')
@@ -401,18 +404,25 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
         px: 2,
         py: 1.5,
         border: '1px solid',
-        borderColor: 'divider',
-        borderRadius: 1,
-        mb: 1,
-        backgroundColor: 'background.paper'
+        borderColor: alpha(theme.palette.divider, 0.5),
+        borderRadius: 2,
+        mb: 1.5,
+        backgroundColor: 'background.paper',
+        transition: 'all 0.3s ease-in-out',
+        cursor: 'pointer'
       }}
     >
       <ListItemAvatar>
         <Avatar
           sx={{
-            bgcolor: 'secondary.main',
+            background: `linear-gradient(135deg, ${theme.palette.secondary.main}, ${alpha(
+              theme.palette.secondary.main,
+              0.7
+            )})`,
             width: 50,
-            height: 50
+            height: 50,
+            color: 'white',
+            boxShadow: `0 2px 8px ${alpha(theme.palette.secondary.main, 0.3)}`
           }}
         >
           <GroupIcon />
@@ -485,18 +495,22 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
         px: 2,
         py: 1.5,
         border: '1px solid',
-        borderColor: 'divider',
-        borderRadius: 1,
-        mb: 1,
-        backgroundColor: 'background.paper'
+        borderColor: alpha(theme.palette.divider, 0.5),
+        borderRadius: 2,
+        mb: 1.5,
+        backgroundColor: 'background.paper',
+        transition: 'all 0.3s ease-in-out',
+        cursor: 'pointer'
       }}
     >
       <ListItemAvatar>
         <Avatar
           sx={{
-            bgcolor: 'primary.main',
+            background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
             width: 50,
-            height: 50
+            height: 50,
+            color: 'white',
+            boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`
           }}
         >
           <ChannelIcon />
@@ -566,35 +580,44 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
   const currentTitle = viewMode === 'groups' ? 'My Groups' : 'Channels'
 
   return (
-    <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Header with Toggle Buttons */}
       <Box
         sx={{
           position: 'sticky',
           top: 0,
           zIndex: 10,
-          borderBottom: '1px solid',
-          borderColor: 'divider',
-          p: 2,
+          borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+          p: 3,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: 5,
-          backgroundColor: 'background.paper'
+          gap: 3,
+          backgroundColor: alpha('#fff', 0.8),
+          backdropFilter: 'blur(10px)'
         }}
       >
-        <Box sx={{ display: 'flex', gap: 1 }}>
+        <Box sx={{ display: 'flex', gap: 1.5 }}>
           <Button
             variant={viewMode === 'groups' ? 'contained' : 'outlined'}
             component={viewMode === 'groups' ? 'label' : 'button'}
             size='medium'
             onClick={() => handleViewModeChange('groups')}
+            startIcon={<GroupIcon />}
             sx={{
               textTransform: 'none',
-              borderRadius: 1,
-              color: viewMode === 'groups' ? 'white' : 'black',
+              borderRadius: 2,
+              color: viewMode === 'groups' ? 'white' : 'text.primary',
               px: 3,
-              py: 1
+              py: 1.25,
+              fontWeight: 600,
+              minWidth: 150,
+              boxShadow: viewMode === 'groups' ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}` : 'none',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: `0 6px 16px ${alpha(theme.palette.primary.main, viewMode === 'groups' ? 0.4 : 0.1)}`
+              }
             }}
           >
             Groups ({groups.length})
@@ -604,12 +627,21 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
             component={viewMode === 'channels' ? 'label' : 'button'}
             size='medium'
             onClick={() => handleViewModeChange('channels')}
+            startIcon={<ChannelIcon />}
             sx={{
               textTransform: 'none',
-              borderRadius: 1,
-              color: viewMode === 'channels' ? 'white' : 'black',
+              borderRadius: 2,
+              color: viewMode === 'channels' ? 'white' : 'text.primary',
               px: 3,
-              py: 1
+              py: 1.25,
+              fontWeight: 600,
+              minWidth: 150,
+              boxShadow: viewMode === 'channels' ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}` : 'none',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: `0 6px 16px ${alpha(theme.palette.primary.main, viewMode === 'channels' ? 0.4 : 0.1)}`
+              }
             }}
           >
             Channels ({channels.length})
@@ -617,7 +649,17 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
         </Box>
 
         {/* Selected button text below */}
-        <Typography variant='h6' sx={{ color: 'text.primary', fontWeight: 500 }}>
+        <Typography
+          variant='h6'
+          sx={{
+            color: 'text.primary',
+            fontWeight: 600,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1
+          }}
+        >
+          {viewMode === 'groups' ? <GroupIcon /> : <ChannelIcon />}
           {currentTitle} ({currentData.length})
         </Typography>
 
@@ -627,12 +669,13 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
             placeholder='Search channels by name...'
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            size='small'
+            size='medium'
             sx={{
               width: '100%',
               maxWidth: 400,
               '& .MuiOutlinedInput-root': {
-                borderRadius: 2
+                borderRadius: 2,
+                height: 48,
               }
             }}
             InputProps={{
@@ -652,22 +695,46 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
           <Box
             sx={{
               textAlign: 'center',
-              py: 6,
+              py: 8,
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: 2,
+              gap: 3,
               height: '100%',
               justifyContent: 'center'
             }}
           >
-            <Avatar sx={{ bgcolor: 'grey.300', width: 80, height: 80 }}>
-              {viewMode === 'groups' ? <GroupIcon sx={{ fontSize: 40 }} /> : <ChannelIcon sx={{ fontSize: 40 }} />}
-            </Avatar>
-            <Typography variant='h6' color='text.secondary'>
+            <Box
+              sx={{
+                width: 120,
+                height: 120,
+                borderRadius: '50%',
+                background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.08)}, ${alpha(
+                  theme.palette.secondary.main,
+                  0.08
+                )})`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.08)}`
+              }}
+            >
+              {viewMode === 'groups' ? (
+                <GroupIcon sx={{ fontSize: 60, color: alpha(theme.palette.primary.main, 0.4) }} />
+              ) : (
+                <ChannelIcon sx={{ fontSize: 60, color: alpha(theme.palette.primary.main, 0.4) }} />
+              )}
+            </Box>
+            <Typography
+              variant='h6'
+              sx={{
+                fontWeight: 600,
+                color: 'text.primary'
+              }}
+            >
               {viewMode === 'groups' ? 'You are not a member of any groups yet' : 'No public channels available'}
             </Typography>
-            <Typography variant='body2' color='text.secondary'>
+            <Typography variant='body2' color='text.secondary' sx={{ fontSize: '0.95rem' }}>
               {viewMode === 'groups' ? 'Join groups to see them here' : 'Check back later for new public channels'}
             </Typography>
           </Box>

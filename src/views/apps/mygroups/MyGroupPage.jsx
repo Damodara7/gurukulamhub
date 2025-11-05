@@ -2,10 +2,12 @@
 import React, { useEffect, useState } from 'react'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
-import { Box, CircularProgress, Alert } from '@mui/material'
+import { Box, CircularProgress, Alert, Container, Typography, useTheme } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import { useSession } from 'next-auth/react'
 import GroupChannellist from '@/components/mygroups/GroupChannellist'
 export default function MyGroupsPage() {
+  const theme = useTheme()
   const [userGroups, setUserGroups] = useState([])
   const [channels, setChannels] = useState([])
   const [loading, setLoading] = useState(true)
@@ -119,23 +121,103 @@ export default function MyGroupsPage() {
 
   if (loading) {
     return (
-      <Box display='flex' justifyContent='center' alignItems='center' minHeight='200px'>
-        <CircularProgress />
+      <Box display='flex' justifyContent='center' alignItems='center' minHeight='100vh'>
+        <CircularProgress size={60} />
       </Box>
     )
   }
 
   if (error) {
     return (
-      <Box p={2}>
-        <Alert severity='error'>{error}</Alert>
+      <Box display='flex' justifyContent='center' alignItems='center' minHeight='100vh' p={2}>
+        <Alert severity='error' sx={{ maxWidth: 500 }}>
+          {error}
+        </Alert>
       </Box>
     )
   }
 
   return (
-    <Box sx={{ height: '100vh', overflow: 'hidden' }}>
-      <GroupChannellist groups={userGroups} channels={channels} />
+    <Box
+      sx={{
+        minHeight: '100vh',
+        background: `radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 50%),
+                     radial-gradient(circle at 80% 80%, ${alpha(
+                       theme.palette.secondary.main,
+                       0.05
+                     )} 0%, transparent 50%),
+                     ${theme.palette.background.default}`
+      }}
+    >
+      {/* Elegant Header */}
+      <Box
+        sx={{
+          backdropFilter: 'blur(20px)',
+          bgcolor: alpha('#fff', 0.7),
+          borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+          pt: { xs: 4, md: 6 },
+          pb: { xs: 4, md: 6 }
+        }}
+      >
+        <Container maxWidth='lg'>
+          <Box sx={{ textAlign: 'center' }}>
+            {/* Icon and Title */}
+            <Box
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 2,
+                mb: 2
+              }}
+            >
+              <Box
+                sx={{
+                  width: { xs: 48, sm: 56 },
+                  height: { xs: 48, sm: 56 },
+                  borderRadius: '12px',
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`
+                }}
+              >
+                <i className='ri-group-line' style={{ fontSize: '28px', color: 'white' }} />
+              </Box>
+              <Typography
+                sx={{
+                  fontSize: { xs: '2rem', md: '2.5rem' },
+                  fontWeight: 700,
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  letterSpacing: '-0.02em'
+                }}
+              >
+                My Groups & Channels
+              </Typography>
+            </Box>
+            <Typography
+              variant='body1'
+              color='text.secondary'
+              sx={{
+                fontSize: '1.05rem',
+                lineHeight: 1.8,
+                width: '100%',
+                mx: 'auto',
+                fontWeight: 400
+              }}
+            >
+              Connect with your communities and discover new channels to join
+            </Typography>
+          </Box>
+        </Container>
+      </Box>
+
+      {/* Content Area */}
+      <Box sx={{ height: 'calc(100vh - 240px)', overflow: 'hidden' }}>
+        <GroupChannellist groups={userGroups} channels={channels} />
+      </Box>
     </Box>
   )
 }

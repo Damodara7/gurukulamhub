@@ -264,52 +264,46 @@ const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
                   // Determine background color based on chip color type
                   const getBackgroundColor = () => {
                     if (chip.color === 'primary') {
-                      return `linear-gradient(135deg, ${alpha(theme.palette.grey[300], 0.2)}, ${alpha(
-                        theme.palette.grey[400],
-                        0.15
-                      )})`
+                      return alpha(theme.palette.primary.main, 0.12)
                     } else if (chip.color === 'success') {
-                      return alpha(theme.palette.grey[400], 0.15)
+                      return alpha(theme.palette.grey[300], 0.12)
                     } else if (chip.color === 'secondary') {
                       return alpha(theme.palette.grey[500], 0.12)
                     }
-                    return alpha(theme.palette.grey[400], 0.15)
+                    return alpha(theme.palette.primary.main, 0.12)
                   }
 
                   const getHoverBackground = () => {
                     if (chip.color === 'primary') {
-                      return `linear-gradient(135deg, ${alpha(theme.palette.grey[300], 0.28)}, ${alpha(
-                        theme.palette.grey[400],
-                        0.22
-                      )})`
+                      return alpha(theme.palette.primary.main, 0.18)
                     } else if (chip.color === 'success') {
-                      return alpha(theme.palette.grey[400], 0.22)
+                      return alpha(theme.palette.grey[300], 0.22)
                     } else if (chip.color === 'secondary') {
                       return alpha(theme.palette.grey[500], 0.18)
                     }
-                    return alpha(theme.palette.grey[400], 0.22)
+                    return alpha(theme.palette.primary.main, 0.18)
                   }
 
                   const getTextColor = () => {
                     if (chip.color === 'primary') {
-                      return theme.palette.grey[700]
+                      return theme.palette.primary.main
                     } else if (chip.color === 'success') {
                       return theme.palette.grey[600]
                     } else if (chip.color === 'secondary') {
                       return theme.palette.grey[700]
                     }
-                    return theme.palette.grey[700]
+                    return theme.palette.primary.main
                   }
 
                   const getBorderColor = () => {
                     if (chip.color === 'primary') {
-                      return alpha(theme.palette.grey[500], 0.2)
+                      return alpha(theme.palette.primary.main, 0.2)
                     } else if (chip.color === 'success') {
-                      return alpha(theme.palette.grey[400], 0.2)
+                      return alpha(theme.palette.grey[900], 0.2)
                     } else if (chip.color === 'secondary') {
-                      return alpha(theme.palette.grey[500], 0.25)
+                      return alpha(theme.palette.grey[800], 0.2)
                     }
-                    return alpha(theme.palette.grey[500], 0.2)
+                    return alpha(theme.palette.primary.main, 0.2)
                   }
 
                   return (
