@@ -116,7 +116,6 @@ const ActionsMenu = ({ anchorEl, handleClose, handleAction }) => (
 
 const LearningTable = () => {
   // States
-  const theme = useTheme()
   const { data: session } = useSession()
   const theme = useTheme()
   const [open, setOpen] = useState(false)
