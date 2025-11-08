@@ -315,7 +315,8 @@ const GameRequestSponsorshipForm = ({ onSubmit, quizzes, onCancel, data = null }
   // ********* Reward Related Functions - END ***********
 
   const handleSubmit = async e => {
-    e.preventDefault()
+    console.log('handleSubmit in GameRequestSponsorshipForm')
+    // e.preventDefault()
     const formErrors = validateForm(formData)
     setErrors(formErrors)
     const allFields = Object.keys(formData)

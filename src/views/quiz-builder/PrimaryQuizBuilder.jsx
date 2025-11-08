@@ -3,14 +3,27 @@
 import React, { useEffect, useRef, useState } from 'react'
 import QuizDetails from '@/components/quiz-builder-1/QuizDetails'
 import QuestionBuilderArea from '@/components/quiz-builder-1/QuestionBuilderArea'
-import { Box, Button, Snackbar, Alert, Typography } from '@mui/material'
+import {
+  Box,
+  Button,
+  Snackbar,
+  Alert,
+  Typography,
+  Container,
+  Stack,
+  useTheme,
+  alpha
+} from '@mui/material'
 import { API_URLS } from '@/configs/apiConfig'
 import * as RestApi from '@/utils/restApiUtil'
 import { validateQuizQuestions } from './validateQuizQuestions'
 import { useRouter } from 'next/navigation'
+import BuildOutlinedIcon from '@mui/icons-material/BuildOutlined'
+import SaveIcon from '@mui/icons-material/Save'
 
 function PrimaryQuizBuilder({ quiz, isAdmin = false }) {
   const router = useRouter()
+  const theme = useTheme()
   const builderAreaRef = useRef(null)
   const [errors, setErrors] = useState([])
   const [snackbar, setSnackbar] = useState({ open: false, message: '' })
@@ -130,65 +143,92 @@ function PrimaryQuizBuilder({ quiz, isAdmin = false }) {
   }, [builderAreaRef.current]) // Run when ref changes
 
   return (
-    <Box className='flex flex-col gap-3' sx={{ height: '89vh', minHeight: 0, p: 2 }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa', pb: 6 }}>
+      {/* Header Section */}
       <Box
         sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 2,
-          p: 2,
-          borderRadius: '12px',
-          backgroundColor: 'white',
-          border: '2px solid #d0d0d0',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
+          bgcolor: 'white',
+          pt: { xs: 3, md: 4 },
+          pb: { xs: 3, md: 4 },
+          borderBottom: '1px solid #e8eaed',
+          mb: 4
         }}
       >
-        <Typography
-          variant='h5'
-          sx={{
-            fontWeight: 700,
-            color: '#667eea',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1.5,
-            fontSize: '1.5rem'
-          }}
-        >
-          📝 Build Your Quiz Questions
-        </Typography>
-        <Button
-          onClick={handleSaveQuiz}
-          variant='contained'
-          disabled={questionsLength === 0 || errors.length > 0}
-          sx={{
-            borderRadius: '8px',
-            px: 4,
-            py: 1.5,
-            backgroundColor: '#667eea !important',
-            color: 'white !important',
-            fontWeight: 600,
-            fontSize: '1rem',
-            textTransform: 'none',
-            transition: 'all 0.3s ease',
-            '&:hover': {
-              backgroundColor: '#5563d1 !important',
-              color: 'white !important'
-            },
-            '&:disabled': {
-              backgroundColor: '#cccccc !important',
-              color: 'white !important'
-            }
-          }}
-        >
-          💾 Save Quiz
-        </Button>
+        <Container maxWidth="xl">
+          <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
+            {/* Title */}
+            <Stack spacing={1}>
+              <Stack direction="row" alignItems="center" spacing={1.5}>
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 1.5,
+                    bgcolor: theme.palette.primary.main,
+                    color: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <BuildOutlinedIcon sx={{ fontSize: 22 }} />
+                </Box>
+                <Typography
+                  variant="h4"
+                  fontWeight={800}
+                  sx={{
+                    fontSize: { xs: '1.5rem', md: '2rem' },
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent'
+                  }}
+                >
+                  Build Quiz Questions
+                </Typography>
+              </Stack>
+              <Typography variant="body1" sx={{ color: '#5f6368', fontSize: '0.95rem', ml: 7 }}>
+                Create and manage your quiz questions. Add questions and configure their settings.
+              </Typography>
+            </Stack>
+
+            {/* Save Button */}
+            <Button
+              onClick={handleSaveQuiz}
+              variant='contained'
+              component='label'
+              disabled={questionsLength === 0 || errors.length > 0}
+              startIcon={<SaveIcon />}
+              size='large'
+              sx={{
+                color: 'white'
+              }}
+            >
+              Save Quiz
+            </Button>
+          </Stack>
+        </Container>
       </Box>
 
+      {/* Main Content */}
+      <Container maxWidth="xl">
+        <Stack spacing={4}>
+          <QuizDetails quiz={quiz} />
+          <Box sx={{ minHeight: '600px', height: 'calc(100vh - 400px)' }}>
+            <QuestionBuilderArea
+              ref={builderAreaRef}
+              quiz={quiz}
+              setQuestionsLength={setQuestionsLength}
+              validateQuizQuestions={validateQuizQuestionsFunc}
+              validationErrors={errors}
+            />
+          </Box>
+        </Stack>
+      </Container>
+
+      {/* Snackbar */}
       <Snackbar
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        style={{ zIndex: 10000 }}
-        sx={{ top: { xs: 50, sm: 50 } }}
+        sx={{ top: { xs: 70, sm: 70 }, zIndex: 10000 }}
         open={snackbar.open}
         autoHideDuration={8000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
@@ -197,7 +237,7 @@ function PrimaryQuizBuilder({ quiz, isAdmin = false }) {
           onClose={() => setSnackbar({ ...snackbar, open: false })}
           severity={snackbar.severity}
           sx={{
-            borderRadius: '8px',
+            borderRadius: 2,
             fontWeight: 500,
             boxShadow: '0 4px 15px rgba(0, 0, 0, 0.15)'
           }}
@@ -205,17 +245,6 @@ function PrimaryQuizBuilder({ quiz, isAdmin = false }) {
           {snackbar.message}
         </Alert>
       </Snackbar>
-
-      <QuizDetails quiz={quiz} />
-      <Box sx={{ flex: 1, minHeight: 0 }}>
-        <QuestionBuilderArea
-          ref={builderAreaRef}
-          quiz={quiz}
-          setQuestionsLength={setQuestionsLength}
-          validateQuizQuestions={validateQuizQuestionsFunc}
-          validationErrors={errors}
-        />
-      </Box>
     </Box>
   )
 }

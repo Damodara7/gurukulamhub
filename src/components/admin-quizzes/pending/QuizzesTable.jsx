@@ -189,7 +189,28 @@ const AdminPendingQuizzesTable = ({ data, refreshData }) => {
         header: 'Quiz',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
-            <Image src={row.original.thumbnail} alt='thumbnail' width={50} height={50} />
+            <Box
+              sx={{
+                width: 50,
+                height: 50,
+                borderRadius: 1,
+                overflow: 'hidden',
+                bgcolor: 'grey.100',
+                flexShrink: 0
+              }}
+            >
+              <Image 
+                src={row.original.thumbnail || '/images/misc/image-placeholder.png'} 
+                alt='thumbnail' 
+                width={50} 
+                height={50}
+                unoptimized
+                style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+                onError={(e) => {
+                  e.target.src = '/images/misc/image-placeholder.png'
+                }}
+              />
+            </Box>
             <div className='flex flex-col'>
               <Typography variant='h6'>{row.original.title}</Typography>
               <Typography variant='body2' color='textSecondary'>

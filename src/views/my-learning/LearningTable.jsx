@@ -5,6 +5,7 @@ import { useEffect, useState, useMemo } from 'react'
 
 // MUI Imports
 import {
+  Box,
   Card,
   CardContent,
   TextField,
@@ -21,14 +22,22 @@ import {
   FormControl,
   InputLabel,
   Select,
-  Box,
   Container,
-  useTheme
+  useTheme,
+  alpha,
+  CircularProgress,
+  LinearProgress
 } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 
 // MUI Icons
-import { DeleteOutline as DeleteOutlineIcon, Visibility as VisibilityIcon } from '@mui/icons-material'
+import { 
+  DeleteOutline as DeleteOutlineIcon, 
+  Visibility as VisibilityIcon,
+  School as SchoolIcon,
+  EmojiEvents as TrophyIcon,
+  Search as SearchIcon
+} from '@mui/icons-material'
 
 // Third-party Imports
 import classnames from 'classnames'
@@ -109,12 +118,14 @@ const LearningTable = () => {
   // States
   const theme = useTheme()
   const { data: session } = useSession()
+  const theme = useTheme()
   const [open, setOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
   const [viewRowData, setViewRowData] = useState(null)
 
   const [data, setData] = useState([])
   const [globalFilter, setGlobalFilter] = useState('')
+  const [loading, setLoading] = useState(true)
 
   // Menu State
   const [anchorEl, setAnchorEl] = useState(null)
@@ -125,6 +136,7 @@ const LearningTable = () => {
 
   // Fetch the videos from API
   const getUserLearningData = async () => {
+    setLoading(true)
     console.log('Fetching user learing Data now...')
     const result = await getUserLearningsByEmail({ email: session?.user?.email })
     if (result?.status === 'success') {
@@ -134,6 +146,7 @@ const LearningTable = () => {
       console.log('Error:' + result?.message)
       console.log('Error Fetching user learing data:', result)
     }
+    setLoading(false)
   }
 
   useEffect(() => {
@@ -173,61 +186,106 @@ const LearningTable = () => {
     })
   }, [data, dateRange])
 
+  // Calculate total points
+  const totalPoints = data?.reduce((sum, eachLearning) => sum + eachLearning?.learningPoints, 0) || 0
+
   // Column Configuration
   const columns = useMemo(
     () => [
       columnHelper.accessor('video.name', {
         header: 'Video',
         cell: ({ row }) => (
-          <>
-            <Typography variant='h5'>{row.original?.video?.name}</Typography>
+          <Stack spacing={0.5} alignItems="flex-start">
+            <Typography variant='body1' fontWeight={600} sx={{ color: '#202124' }}>
+              {row.original?.video?.name}
+            </Typography>
             <MediaPreviewPopup url={row.original?.video?.url} mediaType='video' showPopup={true} />
-          </>
+          </Stack>
         )
       }),
       columnHelper.accessor('learningPoints', {
         header: 'Points Earned',
         cell: ({ row }) => (
-          <Typography variant='h5'>
-            {row.original?.learningPoints}/{row.original?.totalPoints}
-          </Typography>
+          <Chip
+            label={`${row.original?.learningPoints}/${row.original?.totalPoints}`}
+            size="small"
+            sx={{
+              bgcolor: alpha(theme.palette.success.main, 0.1),
+              color: 'success.main',
+              fontWeight: 700,
+              fontSize: '0.875rem',
+              height: 28
+            }}
+          />
         )
       }),
       columnHelper.accessor('earnedAt', {
         header: 'Date Earned',
         cell: ({ row }) => (
-          <Typography variant='body2'>
-            {new Date(row.original.earnedAt).toLocaleDateString('en-GB', {
-              day: '2-digit',
-              month: 'short',
-              year: '2-digit'
-            })}
-            ,{' '}
-            {new Date(row.original.earnedAt).toLocaleTimeString('en-US', {
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: true
-            })}
-          </Typography>
+          <Stack spacing={0}>
+            <Typography variant='body2' fontWeight={600} sx={{ color: '#202124' }}>
+              {new Date(row.original.earnedAt).toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+              })}
+            </Typography>
+            <Typography variant='caption' sx={{ color: '#5f6368' }}>
+              {new Date(row.original.earnedAt).toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+              })}
+            </Typography>
+          </Stack>
         )
       }),
       columnHelper.accessor('completionPercent', {
         header: '% Completed',
-        cell: ({ row }) => <Typography variant='h6'>{row.original?.completionPercent}%</Typography>
+        cell: ({ row }) => (
+          <Stack spacing={0.5} alignItems="center">
+            <Typography variant='body2' fontWeight={700} sx={{ color: '#202124' }}>
+              {row.original?.completionPercent}%
+            </Typography>
+            <LinearProgress
+              variant="determinate"
+              value={row.original?.completionPercent}
+              sx={{
+                width: 60,
+                height: 6,
+                borderRadius: 1,
+                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                '& .MuiLinearProgress-bar': {
+                  bgcolor: row.original?.completionPercent === 100 ? 'success.main' : 'primary.main',
+                  borderRadius: 1
+                }
+              }}
+            />
+          </Stack>
+        )
       }),
       columnHelper.accessor('action', {
         header: 'Actions',
         cell: ({ row }) => (
-          <div className='flex items-center'>
-            <IconButtonTooltip title='Actions' onClick={e => handleMoreClick(e, row.original)}>
-              <i className='ri-more-2-line text-[22px] text-textSecondary' />
+          <div className='flex items-center justify-center'>
+            <IconButtonTooltip 
+              title='View Details' 
+              onClick={e => handleMoreClick(e, row.original)}
+              sx={{
+                color: 'primary.main',
+                '&:hover': {
+                  bgcolor: alpha(theme.palette.primary.main, 0.1)
+                }
+              }}
+            >
+              <VisibilityIcon fontSize='small' />
             </IconButtonTooltip>
           </div>
         ),
         enableSorting: false
       })
     ],
-    [] // Ensure roles are passed as a dependency to update dynamically
+    [data, theme] // Ensure roles are passed as a dependency to update dynamically
   )
 
   const table = useReactTable({
@@ -270,192 +328,284 @@ const LearningTable = () => {
   }
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        background: `radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 50%),
-                     radial-gradient(circle at 80% 80%, ${alpha(
-                       theme.palette.secondary.main,
-                       0.05
-                     )} 0%, transparent 50%),
-                     ${theme.palette.background.default}`
-      }}
-    >
-      {/* Elegant Header */}
+    <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa', pb: 6 }}>
+      {/* Header Section */}
       <Box
         sx={{
-          backdropFilter: 'blur(20px)',
-          bgcolor: alpha('#fff', 0.7),
-          borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
-          pt: { xs: 4, md: 6 },
-          pb: { xs: 4, md: 6 }
+          bgcolor: 'white',
+          pt: { xs: 3, md: 4 },
+          pb: { xs: 3, md: 4 },
+          borderBottom: '1px solid #e8eaed',
+          mb: 4
         }}
       >
-        <Container maxWidth='lg'>
-          <Box sx={{ textAlign: 'center' }}>
-            {/* Icon and Title */}
-            <Box
+        <Container maxWidth="xl">
+          <Stack spacing={2}>
+            {/* Title */}
+            <Typography
+              variant="h4"
+              fontWeight={800}
               sx={{
-                display: 'inline-flex',
+                fontSize: { xs: '1.5rem', md: '2rem' },
+                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                display: 'flex',
                 alignItems: 'center',
-                gap: 2,
-                mb: 2
+                gap: 2
               }}
             >
+              <SchoolIcon sx={{ fontSize: { xs: 32, md: 40 }, color: 'primary.main' }} />
+              My Learning Journey
+            </Typography>
+            
+            <Typography variant="body1" sx={{ color: '#5f6368', maxWidth: '800px' }}>
+              Track your learning progress, earned points, and completed videos
+            </Typography>
+
+            {/* Stats Cards */}
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 2 }}>
               <Box
                 sx={{
-                  width: { xs: 48, sm: 56 },
-                  height: { xs: 48, sm: 56 },
-                  borderRadius: '12px',
-                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`
+                  flex: 1,
+                  p: 2.5,
+                  borderRadius: 2,
+                  bgcolor: alpha(theme.palette.success.main, 0.08),
+                  border: '1px solid',
+                  borderColor: alpha(theme.palette.success.main, 0.2)
                 }}
               >
-                <i className='ri-book-read-line' style={{ fontSize: '28px', color: 'white' }} />
+                <Stack direction="row" alignItems="center" spacing={2}>
+                  <Box
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 1.5,
+                      bgcolor: 'success.main',
+                      color: 'white',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <TrophyIcon sx={{ fontSize: 28 }} />
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" sx={{ color: '#5f6368', fontSize: '0.75rem', fontWeight: 600 }}>
+                      TOTAL POINTS EARNED
+                    </Typography>
+                    <Typography variant="h4" fontWeight={800} sx={{ color: 'success.main' }}>
+                      {totalPoints}
+                    </Typography>
+                  </Box>
+                </Stack>
               </Box>
-              <Typography
+
+              <Box
                 sx={{
-                  fontSize: { xs: '2rem', md: '2.5rem' },
-                  fontWeight: 700,
-                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  letterSpacing: '-0.02em'
+                  flex: 1,
+                  p: 2.5,
+                  borderRadius: 2,
+                  bgcolor: alpha(theme.palette.primary.main, 0.08),
+                  border: '1px solid',
+                  borderColor: alpha(theme.palette.primary.main, 0.2)
                 }}
               >
-                My Learning Journey
-              </Typography>
-            </Box>
-            <Typography
-              variant='body1'
-              color='text.secondary'
-              sx={{
-                fontSize: '1.05rem',
-                lineHeight: 1.8,
-                width: '100%',
-                mx: 'auto',
-                fontWeight: 400
-              }}
-            >
-              Track your progress and review your learning achievements
-            </Typography>
-          </Box>
+                <Stack direction="row" alignItems="center" spacing={2}>
+                  <Box
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 1.5,
+                      bgcolor: 'primary.main',
+                      color: 'white',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <SchoolIcon sx={{ fontSize: 28 }} />
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" sx={{ color: '#5f6368', fontSize: '0.75rem', fontWeight: 600 }}>
+                      VIDEOS COMPLETED
+                    </Typography>
+                    <Typography variant="h4" fontWeight={800} sx={{ color: 'primary.main' }}>
+                      {data.length}
+                    </Typography>
+                  </Box>
+                </Stack>
+              </Box>
+            </Stack>
+          </Stack>
         </Container>
       </Box>
 
-      {/* Content Area */}
-      <Container maxWidth='lg' sx={{ py: { xs: 3, md: 4 } }}>
+      {/* Main Content */}
+      <Container maxWidth="xl">
         <Card
           sx={{
             borderRadius: 2,
-            boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.08)}`,
-            border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
-            overflow: 'hidden',
-            '&:hover': {
-              boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.12)}`
-            }
+            bgcolor: 'white',
+            border: '1px solid #e8eaed',
+            boxShadow: '0 2px 12px rgba(0,0,0,0.04)'
           }}
         >
-          <CardContent className='flex flex-col gap-4 sm:flex-row items-start sm:items-center justify-between'>
-            <div className='flex items-center gap-2'>
-              <Typography variant='h5' color='primary'>
-                Total Learning Points:
-              </Typography>
-              <Typography variant='h5' color='primary'>
-                {data?.reduce((sum, eachLearning) => {
-                  return sum + eachLearning?.learningPoints
-                }, 0)}
-              </Typography>
-            </div>
-            <DebouncedInput
-              value={globalFilter ?? ''}
-              onChange={value => setGlobalFilter(String(value))}
-              placeholder='Search videos...'
-              sx={{ minWidth: { xs: '100%', sm: 250 } }}
-            />
-            <FormControl size='small' sx={{ width: { xs: '100%', sm: 200 } }}>
-              <InputLabel>Date Range</InputLabel>
-              <Select label='Date Range' value={dateRange} onChange={e => setDateRange(e.target.value)} displayEmpty>
-                <MenuItem value='all'>All</MenuItem>
-                <MenuItem value='today'>Today</MenuItem>
-                <MenuItem value='last7days'>Last 7 Days</MenuItem>
-                <MenuItem value='last30days'>Last 30 Days</MenuItem>
-              </Select>
-            </FormControl>
+          {/* Filters Section */}
+          <CardContent sx={{ borderBottom: '1px solid #e8eaed' }}>
+            <Stack 
+              direction={{ xs: 'column', sm: 'row' }} 
+              spacing={2} 
+              alignItems={{ xs: 'stretch', sm: 'center' }}
+              justifyContent="space-between"
+            >
+              <TextField
+                size="small"
+                value={globalFilter ?? ''}
+                onChange={e => setGlobalFilter(String(e.target.value))}
+                placeholder='Search videos...'
+                sx={{
+                  minWidth: { xs: '100%', sm: 300 },
+                  '& .MuiOutlinedInput-root': {
+                    bgcolor: alpha(theme.palette.grey[100], 0.5)
+                  }
+                }}
+                InputProps={{
+                  startAdornment: (
+                    <SearchIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} />
+                  )
+                }}
+              />
+              
+              <FormControl size='small' sx={{ minWidth: { xs: '100%', sm: 180 } }}>
+                <InputLabel>Date Range</InputLabel>
+                <Select 
+                  label='Date Range' 
+                  value={dateRange} 
+                  onChange={e => setDateRange(e.target.value)}
+                  sx={{
+                    bgcolor: alpha(theme.palette.grey[100], 0.5)
+                  }}
+                >
+                  <MenuItem value='all'>All Time</MenuItem>
+                  <MenuItem value='today'>Today</MenuItem>
+                  <MenuItem value='last7days'>Last 7 Days</MenuItem>
+                  <MenuItem value='last30days'>Last 30 Days</MenuItem>
+                </Select>
+              </FormControl>
+            </Stack>
           </CardContent>
-          <div className='overflow-x-auto'>
-            <table className={tableStyles.table}>
-              <thead>
-                {table.getHeaderGroups().map(headerGroup => (
-                  <tr key={headerGroup.id}>
-                    {headerGroup.headers.map(header => (
-                      <th key={header.id} className='text-center'>
-                        {header.isPlaceholder ? null : (
-                          <>
-                            <div
-                              className={classnames({
-                                'flex items-center': header.column.getIsSorted(),
-                                'cursor-pointer select-none': header.column.getCanSort()
-                              })}
-                              onClick={header.column.getToggleSortingHandler()}
-                            >
-                              {flexRender(header.column.columnDef.header, header.getContext())}
-                              {{
-                                asc: <i className='ri-arrow-up-s-line text-xl' />,
-                                desc: <i className='ri-arrow-down-s-line text-xl' />
-                              }[header.column.getIsSorted()] ?? null}
-                            </div>
-                          </>
-                        )}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead>
-              {table.getFilteredRowModel().rows.length === 0 ? (
-                <tbody>
-                  <tr>
-                    <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
-                      No data available
-                    </td>
-                  </tr>
-                </tbody>
-              ) : (
-                <tbody>
-                  {table
-                    .getRowModel()
-                    .rows.slice(0, table.getState().pagination.pageSize)
-                    .map(row => (
-                      <tr key={row.id} className={classnames({ selected: row.getIsSelected() })}>
-                        {row.getVisibleCells().map(cell => (
-                          <td key={cell.id} className='text-center'>
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </td>
+          {/* Loading State */}
+          {loading && (
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', py: 8 }}>
+              <Stack spacing={2} alignItems="center">
+                <CircularProgress size={48} />
+                <Typography variant="body1" color="text.secondary" fontWeight={500}>
+                  Loading your learning data...
+                </Typography>
+              </Stack>
+            </Box>
+          )}
+
+          {/* Table */}
+          {!loading && (
+            <>
+              <div className='overflow-x-auto'>
+                <table className={tableStyles.table}>
+                  <thead>
+                    {table.getHeaderGroups().map(headerGroup => (
+                      <tr key={headerGroup.id}>
+                        {headerGroup.headers.map(header => (
+                          <th key={header.id} className='text-center'>
+                            {header.isPlaceholder ? null : (
+                              <>
+                                <div
+                                  className={classnames({
+                                    'flex items-center justify-center': header.column.getIsSorted(),
+                                    'cursor-pointer select-none': header.column.getCanSort()
+                                  })}
+                                  onClick={header.column.getToggleSortingHandler()}
+                                >
+                                  {flexRender(header.column.columnDef.header, header.getContext())}
+                                  {{
+                                    asc: <i className='ri-arrow-up-s-line text-xl' />,
+                                    desc: <i className='ri-arrow-down-s-line text-xl' />
+                                  }[header.column.getIsSorted()] ?? null}
+                                </div>
+                              </>
+                            )}
+                          </th>
                         ))}
                       </tr>
                     ))}
-                </tbody>
+                  </thead>
+                  {table.getFilteredRowModel().rows.length === 0 ? (
+                    <tbody>
+                      <tr>
+                        <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
+                          <Box sx={{ py: 8 }}>
+                            <SchoolIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2, opacity: 0.5 }} />
+                            <Typography variant='h6' color='text.secondary' fontWeight={600} gutterBottom>
+                              No Learning Data Found
+                            </Typography>
+                            <Typography variant='body2' color='text.secondary'>
+                              {globalFilter || dateRange !== 'all'
+                                ? 'Try adjusting your filters to see more results'
+                                : 'Start watching videos to track your learning progress'}
+                            </Typography>
+                          </Box>
+                        </td>
+                      </tr>
+                    </tbody>
+                  ) : (
+                    <tbody>
+                      {table
+                        .getRowModel()
+                        .rows.slice(0, table.getState().pagination.pageSize)
+                        .map(row => (
+                          <tr 
+                            key={row.id} 
+                            className={classnames({ selected: row.getIsSelected() })}
+                            style={{
+                              transition: 'background-color 0.2s ease',
+                            }}
+                          >
+                            {row.getVisibleCells().map(cell => (
+                              <td key={cell.id} className='text-center'>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                            ))}
+                          </tr>
+                        ))}
+                    </tbody>
+                  )}
+                </table>
+              </div>
+
+              {/* Pagination */}
+              {table.getFilteredRowModel().rows.length > 0 && (
+                <TablePagination
+                  rowsPerPageOptions={[5, 7, 10, 25]}
+                  component='div'
+                  className='border-bs'
+                  count={table.getFilteredRowModel().rows.length}
+                  rowsPerPage={table.getState().pagination.pageSize}
+                  page={table.getState().pagination.pageIndex}
+                  SelectProps={{
+                    inputProps: { 'aria-label': 'rows per page' }
+                  }}
+                  onPageChange={(_, page) => {
+                    table.setPageIndex(page)
+                  }}
+                  onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
+                  sx={{
+                    borderTop: '1px solid #e8eaed',
+                    '.MuiTablePagination-toolbar': {
+                      py: 2
+                    }
+                  }}
+                />
               )}
-            </table>
-          </div>
-          <TablePagination
-            rowsPerPageOptions={[5, 7, 10]}
-            component='div'
-            className='border-bs'
-            count={table.getFilteredRowModel().rows.length}
-            rowsPerPage={table.getState().pagination.pageSize}
-            page={table.getState().pagination.pageIndex}
-            SelectProps={{
-              inputProps: { 'aria-label': 'rows per page' }
-            }}
-            onPageChange={(_, page) => {
-              table.setPageIndex(page)
-            }}
-            onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
-          />
+            </>
+          )}
 
           {/* Menu for more options */}
           <ActionsMenu
@@ -468,9 +618,9 @@ const LearningTable = () => {
             }}
           />
         </Card>
-
-        {open && <LearningVideoInfo data={viewRowData} open={open} onClose={handleCloseRow} />}
       </Container>
+
+      {open && <LearningVideoInfo data={viewRowData} open={open} onClose={handleCloseRow} />}
     </Box>
   )
 }
