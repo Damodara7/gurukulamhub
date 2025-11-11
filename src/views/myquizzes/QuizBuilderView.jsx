@@ -29,14 +29,14 @@ import TabPanel from '@mui/lab/TabPanel'
 import BuildOutlinedIcon from '@mui/icons-material/BuildOutlined'
 import PublicOutlinedIcon from '@mui/icons-material/PublicOutlined'
 import PublicOffOutlinedIcon from '@mui/icons-material/PublicOffOutlined'
-import DraftIcon from '@mui/icons-material/Draft'
+import DraftsOutlinedIcon from '@mui/icons-material/DraftsOutlined'
 import LanguageIcon from '@mui/icons-material/Language'
 import QuizIcon from '@mui/icons-material/Quiz'
 
 import TabContext from '@mui/lab/TabContext'
 import * as RestApi from '@/utils/restApiUtil'
 
-const QuizBuilderView = ({isAdmin=false}) => {
+const QuizBuilderView = ({ isAdmin = false }) => {
   const router = useRouter()
   const { data: session, status } = useSession()
   const [loading, setLoading] = useState(false)
@@ -93,11 +93,11 @@ const QuizBuilderView = ({isAdmin=false}) => {
             mb: 4
           }}
         >
-          <Container maxWidth="xl">
+          <Container maxWidth='xl'>
             <Stack spacing={2}>
               {/* Title */}
               <Typography
-                variant="h4"
+                variant='h4'
                 fontWeight={800}
                 sx={{
                   fontSize: { xs: '1.5rem', md: '2rem' },
@@ -109,18 +109,18 @@ const QuizBuilderView = ({isAdmin=false}) => {
                   gap: 2
                 }}
               >
-                <DraftIcon sx={{ fontSize: { xs: 28, md: 36 }, color: 'primary.main' }} />
+                <DraftsOutlinedIcon sx={{ fontSize: { xs: 28, md: 36 }, color: 'primary.main' }} />
                 Draft Quizzes
               </Typography>
-              
-              <Typography variant="body1" sx={{ color: '#5f6368', maxWidth: '800px' }}>
+
+              <Typography variant='body1' sx={{ color: '#5f6368', maxWidth: '800px' }}>
                 Manage and build your draft quizzes. Filter by privacy settings to organize your work.
               </Typography>
             </Stack>
           </Container>
         </Box>
 
-        <Container maxWidth="xl">
+        <Container maxWidth='xl'>
           {/* Tabs Section */}
           <Box
             sx={{
@@ -151,18 +151,22 @@ const QuizBuilderView = ({isAdmin=false}) => {
                 <Tab
                   value='PUBLIC'
                   label={
-                    <Stack direction="row" spacing={1} alignItems="center">
+                    <Stack direction='row' spacing={1} alignItems='center'>
                       <PublicOutlinedIcon sx={{ fontSize: 20 }} />
-                      <Typography variant="body1" fontWeight={600}>Public</Typography>
+                      <Typography variant='body1' fontWeight={600}>
+                        Public
+                      </Typography>
                     </Stack>
                   }
                 />
                 <Tab
                   value='PRIVATE'
                   label={
-                    <Stack direction="row" spacing={1} alignItems="center">
+                    <Stack direction='row' spacing={1} alignItems='center'>
                       <PublicOffOutlinedIcon sx={{ fontSize: 20 }} />
-                      <Typography variant="body1" fontWeight={600}>Private</Typography>
+                      <Typography variant='body1' fontWeight={600}>
+                        Private
+                      </Typography>
                     </Stack>
                   }
                 />
@@ -173,15 +177,17 @@ const QuizBuilderView = ({isAdmin=false}) => {
           {/* Content Area */}
           <TabPanel value={activeTab}>
             {loading ? (
-              <Box sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                minHeight: '400px' 
-              }}>
-                <Stack spacing={2} alignItems="center">
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minHeight: '400px'
+                }}
+              >
+                <Stack spacing={2} alignItems='center'>
                   <CircularProgress size={48} />
-                  <Typography variant="body1" color="text.secondary" fontWeight={500}>
+                  <Typography variant='body1' color='text.secondary' fontWeight={500}>
                     Loading quizzes...
                   </Typography>
                 </Stack>
@@ -189,10 +195,11 @@ const QuizBuilderView = ({isAdmin=false}) => {
             ) : myQuizzes.length > 0 ? (
               <Grid container spacing={3}>
                 {myQuizzes.map(item => {
-                  const thumbnail = item.thumbnail?.length > 0 
-                    ? item.thumbnail 
-                    : `https://fakeimg.pl/400x250/?text=${encodeURIComponent(item.title || 'Quiz')}`
-                  
+                  const thumbnail =
+                    item.thumbnail?.length > 0
+                      ? item.thumbnail
+                      : `https://fakeimg.pl/400x250/?text=${encodeURIComponent(item.title || 'Quiz')}`
+
                   return (
                     <Grid item xs={12} sm={6} md={4} lg={3} key={item._id || item.id}>
                       <Card
@@ -249,8 +256,8 @@ const QuizBuilderView = ({isAdmin=false}) => {
                           }}
                         >
                           <Box
-                            component="img"
-                            className="quiz-image"
+                            component='img'
+                            className='quiz-image'
                             src={thumbnail}
                             alt={item.title}
                             sx={{
@@ -259,8 +266,10 @@ const QuizBuilderView = ({isAdmin=false}) => {
                               objectFit: 'cover',
                               transition: 'transform 0.4s ease'
                             }}
-                            onError={(e) => {
-                              e.target.src = `https://fakeimg.pl/400x250/?text=${encodeURIComponent(item.title || 'Quiz')}`
+                            onError={e => {
+                              e.target.src = `https://fakeimg.pl/400x250/?text=${encodeURIComponent(
+                                item.title || 'Quiz'
+                              )}`
                             }}
                           />
                           <Box
@@ -273,19 +282,20 @@ const QuizBuilderView = ({isAdmin=false}) => {
                               background: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.3) 100%)'
                             }}
                           />
-                          
+
                           {/* Privacy Badge */}
                           <Chip
                             icon={item.privacy === 'PUBLIC' ? <PublicOutlinedIcon /> : <PublicOffOutlinedIcon />}
                             label={item.privacy || 'DRAFT'}
-                            size="small"
+                            size='small'
                             sx={{
                               position: 'absolute',
                               top: 12,
                               right: 12,
-                              bgcolor: item.privacy === 'PUBLIC' 
-                                ? alpha(theme.palette.success.main, 0.9)
-                                : alpha(theme.palette.warning.main, 0.9),
+                              bgcolor:
+                                item.privacy === 'PUBLIC'
+                                  ? alpha(theme.palette.success.main, 0.9)
+                                  : alpha(theme.palette.warning.main, 0.9),
                               color: 'white',
                               fontWeight: 700,
                               fontSize: '0.7rem',
@@ -298,7 +308,7 @@ const QuizBuilderView = ({isAdmin=false}) => {
 
                           {/* Build Button Overlay */}
                           <Box
-                            className="build-button"
+                            className='build-button'
                             sx={{
                               position: 'absolute',
                               bottom: 12,
@@ -308,10 +318,10 @@ const QuizBuilderView = ({isAdmin=false}) => {
                             }}
                           >
                             <Button
-                              variant="contained"
-                              size="small"
+                              variant='contained'
+                              size='small'
                               startIcon={<BuildOutlinedIcon />}
-                              component="label"
+                              component='label'
                               sx={{
                                 bgcolor: 'primary.main',
                                 color: 'white',
@@ -323,7 +333,7 @@ const QuizBuilderView = ({isAdmin=false}) => {
                                   boxShadow: `0 6px 16px ${alpha(theme.palette.primary.main, 0.5)}`
                                 }
                               }}
-                              onClick={(e) => {
+                              onClick={e => {
                                 e.stopPropagation()
                                 handleBuildQuiz(item)
                               }}
@@ -345,7 +355,7 @@ const QuizBuilderView = ({isAdmin=false}) => {
                         >
                           {/* Title */}
                           <Typography
-                            variant="h6"
+                            variant='h6'
                             fontWeight={700}
                             sx={{
                               fontSize: '1.1rem',
@@ -363,8 +373,8 @@ const QuizBuilderView = ({isAdmin=false}) => {
 
                           {/* Details */}
                           <Typography
-                            variant="body2"
-                            color="text.secondary"
+                            variant='body2'
+                            color='text.secondary'
                             sx={{
                               display: '-webkit-box',
                               WebkitLineClamp: 2,
@@ -380,9 +390,9 @@ const QuizBuilderView = ({isAdmin=false}) => {
                           </Typography>
 
                           {/* Footer Info */}
-                          <Stack 
-                            direction="row" 
-                            alignItems="center" 
+                          <Stack
+                            direction='row'
+                            alignItems='center'
                             spacing={1.5}
                             sx={{
                               pt: 1.5,
@@ -391,7 +401,7 @@ const QuizBuilderView = ({isAdmin=false}) => {
                             }}
                           >
                             {item.language && (
-                              <Stack direction="row" alignItems="center" spacing={0.75}>
+                              <Stack direction='row' alignItems='center' spacing={0.75}>
                                 <Box
                                   sx={{
                                     width: 28,
@@ -405,7 +415,7 @@ const QuizBuilderView = ({isAdmin=false}) => {
                                 >
                                   <LanguageIcon sx={{ fontSize: 16, color: 'primary.main' }} />
                                 </Box>
-                                <Typography variant="caption" fontWeight={600} sx={{ fontSize: '0.75rem' }}>
+                                <Typography variant='caption' fontWeight={600} sx={{ fontSize: '0.75rem' }}>
                                   {item.language?.name || 'Unknown'}
                                 </Typography>
                               </Stack>
@@ -440,11 +450,11 @@ const QuizBuilderView = ({isAdmin=false}) => {
                     opacity: 0.5
                   }}
                 />
-                <Typography variant="h6" color="text.secondary" fontWeight={600} gutterBottom>
+                <Typography variant='h6' color='text.secondary' fontWeight={600} gutterBottom>
                   No Draft Quizzes Found
                 </Typography>
-                <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ maxWidth: '400px' }}>
-                  {activeTab === 'PUBLIC' 
+                <Typography variant='body2' color='text.secondary' textAlign='center' sx={{ maxWidth: '400px' }}>
+                  {activeTab === 'PUBLIC'
                     ? "You don't have any public draft quizzes yet. Create one to get started!"
                     : "You don't have any private draft quizzes yet. Create one to get started!"}
                 </Typography>

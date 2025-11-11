@@ -41,6 +41,156 @@ const AudienceDetailsPopup = ({ open, audience, onClose }) => {
     }
   }, [open, audience])
 
+  const canonicalFilterHandlers = {
+    age: (user, criteria) => {
+      const age = user.profile?.age ?? user.age
+      if (typeof age !== 'number') return false
+      const { min, max } = criteria || {}
+      const meetsMin = min === undefined || age >= min
+      const meetsMax = max === undefined || age <= max
+      return meetsMin && meetsMax
+    },
+    location: (user, criteria) => {
+      const country = user.profile?.country ?? user.country
+      const region = user.profile?.region ?? user.region
+      const city = user.profile?.locality ?? user.locality
+
+      const countryOk =
+        !criteria?.country ||
+        (typeof country === 'string' && country.trim().toLowerCase() === criteria.country.toLowerCase())
+      const regionOk =
+        !criteria?.region ||
+        (typeof region === 'string' && region.trim().toLowerCase() === criteria.region.toLowerCase())
+      const cityOk =
+        !criteria?.city || (typeof city === 'string' && city.trim().toLowerCase() === criteria.city.toLowerCase())
+
+      return countryOk && regionOk && cityOk
+    },
+    gender: (user, criteria) => {
+      const gender = (user.profile?.gender ?? user.gender)?.toLowerCase()
+      if (!gender) return false
+      const values = Array.isArray(criteria?.values) ? criteria.values.map(value => value.toLowerCase()) : []
+      return values.includes(gender)
+    }
+  }
+
+  const dedupeUsersById = usersArray => {
+    const map = new Map()
+    usersArray.forEach(user => {
+      const id = user._id?.toString()
+      if (id && !map.has(id)) {
+        map.set(id, user)
+      }
+    })
+    return Array.from(map.values())
+  }
+
+  const extractCanonicalFilters = audienceLike => {
+    if (Array.isArray(audienceLike?.filters) && audienceLike.filters.length > 0) {
+      return audienceLike.filters.map((filter, index) => ({
+        type: filter.type,
+        criteria: filter.criteria || {},
+        operator: index === 0 ? null : filter.operator || null
+      }))
+    }
+
+    const legacyFilters = []
+
+    if (
+      audienceLike?.ageGroup &&
+      (audienceLike.ageGroup.min !== undefined || audienceLike.ageGroup.max !== undefined)
+    ) {
+      legacyFilters.push({
+        type: 'age',
+        criteria: {
+          min: audienceLike.ageGroup.min,
+          max: audienceLike.ageGroup.max
+        },
+        operator: audienceLike.ageGroup.operation || null
+      })
+    }
+
+    if (
+      audienceLike?.location &&
+      (audienceLike.location.country || audienceLike.location.region || audienceLike.location.city)
+    ) {
+      legacyFilters.push({
+        type: 'location',
+        criteria: {
+          country: audienceLike.location.country,
+          region: audienceLike.location.region,
+          city: audienceLike.location.city
+        },
+        operator: audienceLike.location.operation || null
+      })
+    }
+
+    if (audienceLike?.gender) {
+      const genderValues = Array.isArray(audienceLike.gender?.values)
+        ? audienceLike.gender.values
+        : Array.isArray(audienceLike.gender)
+          ? audienceLike.gender
+          : []
+
+      if (genderValues.length > 0) {
+        legacyFilters.push({
+          type: 'gender',
+          criteria: { values: genderValues },
+          operator: audienceLike.gender.operation || null
+        })
+      }
+    }
+
+    return legacyFilters.map((filter, index) => ({
+      ...filter,
+      operator: index === 0 ? null : filter.operator || null
+    }))
+  }
+
+  const applyCanonicalFilters = (usersPool, filters) => {
+    if (!filters.length) {
+      return usersPool
+    }
+
+    let currentUsers = []
+
+    filters.forEach((filter, index) => {
+      const handler = canonicalFilterHandlers[filter.type]
+      if (!handler) {
+        return
+      }
+
+      const matched = usersPool.filter(user => handler(user, filter.criteria))
+
+      if (index === 0) {
+        currentUsers = matched
+        return
+      }
+
+      const operation = (filter.operator || 'AND').toUpperCase()
+
+      if (operation === 'OR') {
+        currentUsers = dedupeUsersById([...currentUsers, ...matched])
+      } else {
+        const matchedIds = new Set(matched.map(user => user._id?.toString()))
+        currentUsers = currentUsers.filter(user => matchedIds.has(user._id?.toString()))
+      }
+    })
+
+    return dedupeUsersById(currentUsers)
+  }
+
+  const filterUsersByAudienceCriteria = (usersPool, audienceLike) => {
+    const verifiedUsers = usersPool.filter(user => user?.isVerified !== false)
+    const canonicalFilters = extractCanonicalFilters(audienceLike)
+
+    if (!canonicalFilters.length) {
+      return verifiedUsers
+    }
+
+    return applyCanonicalFilters(verifiedUsers, canonicalFilters)
+  }
+
   const fetchAudienceUsers = async () => {
     if (!audience) return
 
@@ -48,12 +198,27 @@ const AudienceDetailsPopup = ({ open, audience, onClose }) => {
     setError(null)
 
     try {
-      // Fetch all users and filter based on audience criteria
+      // First try dedicated endpoint that mirrors backend logic
+      try {
+        const targetId = audience._id || audience.id
+        if (targetId) {
+          const result = await RestApi.get(`${API_URLS.v0.USERS_AUDIENCE}?id=${targetId}&action=users`)
+          if (result?.status === 'success') {
+            const filteredUsers = Array.isArray(result.result) ? result.result : [result.result]
+            setUsers(filteredUsers)
+            return
+          }
+        }
+      } catch (apiError) {
+        console.warn('Audience members endpoint failed, falling back to client filtering:', apiError)
+      }
+
+      // Fall back to fetching all users and filtering locally
       const result = await RestApi.get(`${API_URLS.v0.USER}`)
       if (result?.status === 'success') {
         const allUsers = Array.isArray(result.result) ? result.result : [result.result]
-        const audienceUsers = filterUsersByAudienceCriteria(allUsers, audience)
-        setUsers(audienceUsers)
+        const filtered = filterUsersByAudienceCriteria(allUsers, audience)
+        setUsers(filtered)
       } else {
         setError('Failed to fetch audience members')
       }
@@ -63,40 +228,6 @@ const AudienceDetailsPopup = ({ open, audience, onClose }) => {
     } finally {
       setLoading(false)
     }
-  }
-
-  // Helper function to filter users based on audience criteria
-  const filterUsersByAudienceCriteria = (users, audience) => {
-    return users.filter(user => {
-      const profile = user.profile || {}
-
-      // Age filter
-      const ageMatch =
-        !audience.ageGroup ||
-        (profile.age && profile.age >= audience.ageGroup.min && profile.age <= audience.ageGroup.max)
-
-      // Location filter
-      const locationMatch =
-        !audience.location ||
-        ((!audience.location.country ||
-          (profile.country && profile.country.toLowerCase() === audience.location.country.toLowerCase())) &&
-          (!audience.location.region ||
-            (profile.region && profile.region.toLowerCase() === audience.location.region.toLowerCase())) &&
-          (!audience.location.city ||
-            (profile.locality && profile.locality.toLowerCase() === audience.location.city.toLowerCase())))
-
-      // Gender filter
-      const genderMatch =
-        !audience.gender ||
-        (profile.gender &&
-          (audience.gender.values
-            ? audience.gender.values.includes(profile.gender.toLowerCase())
-            : Array.isArray(audience.gender)
-              ? audience.gender.includes(profile.gender.toLowerCase())
-              : profile.gender.toLowerCase() === audience.gender.toLowerCase()))
-
-      return ageMatch && locationMatch && genderMatch
-    })
   }
 
   if (!audience) return null

@@ -6,132 +6,374 @@ import Game from '../game/game.model.js'
 import { broadcastAudiencesList } from '../ws/audiences/publishers.js'
 import { broadcastAudienceDetails } from '../ws/audiences/[audienceId]/publishers.js'
 
+const SUPPORTED_OPERATORS = new Set(['AND', 'OR'])
+
+const normalizeOperator = (operator, index) => {
+  if (index === 0) {
+    return undefined
+  }
+
+  if (!operator || typeof operator !== 'string') {
+    return 'AND'
+  }
+
+  const normalized = operator.trim().toUpperCase()
+  return SUPPORTED_OPERATORS.has(normalized) ? normalized : 'AND'
+}
+
+const sanitizeCriteriaForType = (type, criteria) => {
+  if (criteria === undefined || criteria === null) {
+    return undefined
+  }
+
+  switch (type) {
+    case 'age': {
+      const min = typeof criteria.min === 'number' ? criteria.min : undefined
+      const max = typeof criteria.max === 'number' ? criteria.max : undefined
+      if (min === undefined && max === undefined) {
+        return undefined
+      }
+      return { min, max }
+    }
+
+    case 'location': {
+      const sanitized = {}
+      if (typeof criteria.country === 'string' && criteria.country.trim()) {
+        sanitized.country = criteria.country.trim()
+      }
+      if (typeof criteria.region === 'string' && criteria.region.trim()) {
+        sanitized.region = criteria.region.trim()
+      }
+      if (typeof criteria.city === 'string' && criteria.city.trim()) {
+        sanitized.city = criteria.city.trim()
+      }
+      return Object.keys(sanitized).length > 0 ? sanitized : undefined
+    }
+
+    case 'gender': {
+      let rawValues = []
+      if (Array.isArray(criteria.values)) {
+        rawValues = criteria.values
+      } else if (Array.isArray(criteria)) {
+        rawValues = criteria
+      }
+
+      const values = rawValues
+        .map(value => (typeof value === 'string' ? value.trim().toLowerCase() : null))
+        .filter(Boolean)
+
+      return values.length > 0 ? { values } : undefined
+    }
+
+    default:
+      return criteria
+  }
+}
+
+const normalizeFiltersArray = filtersArray => {
+  if (!Array.isArray(filtersArray)) {
+    return []
+  }
+
+  return filtersArray
+    .map((filter, index) => {
+      if (!filter || !filter.type || filter.criteria === undefined) {
+        return null
+      }
+
+      const type = String(filter.type).trim().toLowerCase()
+      const sanitizedCriteria = sanitizeCriteriaForType(type, filter.criteria)
+
+      if (sanitizedCriteria === undefined) {
+        return null
+      }
+
+      const order = Number.isFinite(filter.order) ? filter.order : index
+      const operator = filter.operator ?? filter.operation
+
+      return {
+        type,
+        criteria: sanitizedCriteria,
+        operator,
+        order
+      }
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.order - b.order)
+    .map((filter, index) => ({
+      type: filter.type,
+      criteria: filter.criteria,
+      operator: normalizeOperator(filter.operator, index)
+    }))
+}
+
+const normalizeLegacyFilters = audienceLike => {
+  if (!audienceLike || typeof audienceLike !== 'object') {
+    return []
+  }
+
+  const legacyFilters = []
+
+  const { ageGroup, location, gender } = audienceLike
+
+  if (ageGroup && (ageGroup.min !== undefined || ageGroup.max !== undefined)) {
+    legacyFilters.push({
+      type: 'age',
+      criteria: {
+        min: ageGroup.min,
+        max: ageGroup.max
+      },
+      operator: ageGroup.operation,
+      order: ageGroup.order
+    })
+  }
+
+  if (location && (location.country || location.region || location.city)) {
+    legacyFilters.push({
+      type: 'location',
+      criteria: {
+        country: location.country,
+        region: location.region,
+        city: location.city
+      },
+      operator: location.operation,
+      order: location.order
+    })
+  }
+
+  if (gender) {
+    let rawGenderValues = []
+
+    if (Array.isArray(gender.values)) {
+      rawGenderValues = gender.values
+    } else if (Array.isArray(gender)) {
+      rawGenderValues = gender
+    } else if (typeof gender === 'object' && gender !== null) {
+      rawGenderValues = Object.entries(gender)
+        .filter(([, isEnabled]) => Boolean(isEnabled))
+        .map(([key]) => key)
+    }
+
+    const genderValues = rawGenderValues
+      .map(value => (typeof value === 'string' ? value.trim().toLowerCase() : null))
+      .filter(Boolean)
+
+    if (genderValues.length > 0) {
+      legacyFilters.push({
+        type: 'gender',
+        criteria: { values: genderValues },
+        operator: gender.operation,
+        order: gender.order
+      })
+    }
+  }
+
+  return normalizeFiltersArray(legacyFilters)
+}
+
+const buildCanonicalFilters = audienceLike => {
+  const filtersFromArray = normalizeFiltersArray(audienceLike?.filters)
+  if (filtersFromArray.length > 0) {
+    return filtersFromArray
+  }
+  return normalizeLegacyFilters(audienceLike)
+}
+
+const decorateLegacyFilterFields = audienceLike => {
+  if (!audienceLike || typeof audienceLike !== 'object') {
+    return audienceLike
+  }
+
+  const filters = Array.isArray(audienceLike.filters) ? audienceLike.filters : []
+
+  let ageGroup = null
+  let location = null
+  let gender = null
+
+  filters.forEach((filter, index) => {
+    const order = index + 1
+    const operation = index === 0 ? undefined : filter.operator
+
+    switch (filter.type) {
+      case 'age':
+        ageGroup = {
+          ...filter.criteria,
+          order,
+          operation
+        }
+        break
+      case 'location':
+        location = {
+          ...filter.criteria,
+          order,
+          operation
+        }
+        break
+      case 'gender':
+        gender = {
+          values: Array.isArray(filter.criteria?.values) ? filter.criteria.values : [],
+          order,
+          operation
+        }
+        break
+      default:
+        break
+    }
+  })
+
+  return {
+    ...audienceLike,
+    ageGroup,
+    location,
+    gender
+  }
+}
+
+const validateCanonicalFilters = filters => {
+  const errors = []
+
+  filters.forEach(filter => {
+    switch (filter.type) {
+      case 'age': {
+        const { min, max } = filter.criteria || {}
+        if (min === undefined || max === undefined) {
+          errors.push('Both minimum and maximum age are required when specifying age group')
+          break
+        }
+
+        if (min < 0 || max < 0) {
+          errors.push('Age values cannot be negative')
+        }
+
+        if (min > 120 || max > 120) {
+          errors.push('Age values cannot exceed 120 years')
+        }
+
+        if (min >= max) {
+          errors.push('Minimum age must be less than maximum age')
+        }
+
+        if (max - min < 1) {
+          errors.push('Age range must be at least 1 year')
+        }
+        break
+      }
+
+      case 'gender': {
+        const allowedGenders = ['male', 'female', 'other']
+        const values = (filter.criteria?.values || []).map(value =>
+          typeof value === 'string' ? value.toLowerCase() : value
+        )
+        const invalidGenders = values.filter(value => !allowedGenders.includes(value))
+        if (invalidGenders.length > 0) {
+          errors.push('Gender must be one or more of: male, female, other')
+        }
+        break
+      }
+
+      default:
+        break
+    }
+  })
+
+  return errors
+}
+
 // Helper function to apply individual schema filters with order and operations (INCREMENTAL FILTERING)
 export const applyIndividualSchemaFilters = (users, audience) => {
-  // Collect all filters with their order and operation
-  const filters = []
-
-  if (audience.ageGroup && audience.ageGroup.min !== undefined) {
-    filters.push({
-      type: 'age',
-      value: audience.ageGroup,
-      order: audience.ageGroup.order || 1,
-      operation: audience.ageGroup.operation
-    })
-  }
-
-  if (audience.location && (audience.location.country || audience.location.region || audience.location.city)) {
-    filters.push({
-      type: 'location',
-      value: audience.location,
-      order: audience.location.order || 1,
-      operation: audience.location.operation
-    })
-  }
-
-  if (audience.gender && audience.gender.values && audience.gender.values.length > 0) {
-    filters.push({
-      type: 'gender',
-      value: audience.gender.values,
-      order: audience.gender.order || 1,
-      operation: audience.gender.operation
-    })
-  }
+  const filters = buildCanonicalFilters(audience)
 
   if (filters.length === 0) {
     return users
   }
 
-  // Sort filters by order
-  const sortedFilters = [...filters].sort((a, b) => a.order - b.order)
-
-  console.log(
-    '🔍 INCREMENTAL FILTERING: Applying filters in order:',
-    sortedFilters.map(f => ({
-      type: f.type,
-      order: f.order,
-      operation: f.operation
-    }))
-  )
-
   let currentUsers = users // Start with all users
-  console.log(`🔍 Starting with ${currentUsers.length} users`)
 
-  sortedFilters.forEach((filter, index) => {
-    console.log(`🔍 Step ${index + 1}: Applying ${filter.type} filter (order: ${filter.order})`)
-
+  filters.forEach((filter, index) => {
     // Apply current filter to current user set
     const filteredUsers = applySingleFilterToUsers(currentUsers, filter)
-    console.log(`🔍 ${filter.type} filter matched ${filteredUsers.length} users from ${currentUsers.length} users`)
+
+    if (filteredUsers === null) {
+      return
+    }
 
     if (index === 0) {
       // First filter - no operation needed, just update current users
       currentUsers = filteredUsers
-      console.log(`🔍 First filter result: ${currentUsers.length} users`)
     } else {
       // Apply operation from CURRENT filter to combine with previous result
-      const operation = filter.operation
+      const operation = (filter.operator || 'AND').toUpperCase()
 
-      console.log(`🔍 Applying operation "${operation}" to combine ${filter.type} with previous results`)
-
-      if (operation === 'AND') {
-        // OPTIMIZED: Intersection using pre-computed filter results
-        const filteredUserIds = new Set(filteredUsers.map(u => u._id))
-        currentUsers = currentUsers.filter(user => filteredUserIds.has(user._id))
-        console.log(`🔍 OPTIMIZED AND operation result: ${currentUsers.length} users`)
-      } else if (operation === 'OR') {
-        // OPTIMIZED: Union using pre-computed filter results
-        // Apply current filter to ALL users only once, then use Set operations
+      if (operation === 'OR') {
         const currentFilterAppliedToAllUsers = applySingleFilterToUsers(users, filter)
-        const currentUserIds = new Set(currentUsers.map(u => u._id))
-        const allFilterUserIds = new Set(currentFilterAppliedToAllUsers.map(u => u._id))
+
+        if (currentFilterAppliedToAllUsers === null) {
+          return
+        }
+
+        const currentUserIds = new Set(currentUsers.map(user => user._id?.toString()))
+        const allFilterUserIds = new Set(currentFilterAppliedToAllUsers.map(user => user._id?.toString()))
         const combinedUserIds = new Set([...currentUserIds, ...allFilterUserIds])
-        currentUsers = users.filter(user => combinedUserIds.has(user._id))
-        console.log(`🔍 OPTIMIZED OR operation result: ${currentUsers.length} users`)
+        currentUsers = users.filter(user => combinedUserIds.has(user._id?.toString()))
       } else {
-        // No operation specified, default to AND
-        const filteredUserIds = new Set(filteredUsers.map(u => u._id))
-        currentUsers = currentUsers.filter(user => filteredUserIds.has(user._id))
-        console.log(`🔍 OPTIMIZED Default AND operation result: ${currentUsers.length} users`)
+        // Default to AND (intersection)
+        const filteredUserIds = new Set(filteredUsers.map(user => user._id?.toString()))
+        currentUsers = currentUsers.filter(user => filteredUserIds.has(user._id?.toString()))
       }
     }
   })
 
-  console.log(`🔍 INCREMENTAL FILTERING: Final result: ${currentUsers.length} users`)
   return currentUsers
 }
 
 // Helper function to filter users by a single filter (returns user objects)
-const applySingleFilterToUsers = (users, filter) => {
-  return users.filter(user => {
+const FILTER_HANDLERS = {
+  age: (user, criteria) => {
     const userAge = user.profile?.age
-    const userGender = user.profile?.gender
+    if (typeof userAge !== 'number') {
+      return false
+    }
+
+    const { min, max } = criteria
+    const meetsMin = min === undefined || userAge >= min
+    const meetsMax = max === undefined || userAge <= max
+    return meetsMin && meetsMax
+  },
+  location: (user, criteria) => {
     const userCountry = user.profile?.country
     const userRegion = user.profile?.region
     const userLocality = user.profile?.locality
 
-    switch (filter.type) {
-      case 'age':
-        const ageGroup = filter.value
-        return userAge && userAge >= ageGroup.min && userAge <= ageGroup.max
+    const matchesCountry =
+      !criteria.country ||
+      (typeof userCountry === 'string' && userCountry.trim().toLowerCase() === criteria.country.toLowerCase())
+    const matchesRegion =
+      !criteria.region ||
+      (typeof userRegion === 'string' && userRegion.trim().toLowerCase() === criteria.region.toLowerCase())
+    const matchesCity =
+      !criteria.city ||
+      (typeof userLocality === 'string' && userLocality.trim().toLowerCase() === criteria.city.toLowerCase())
 
-      case 'location':
-        const location = filter.value
-        return (
-          (!location.country || (userCountry && userCountry.toLowerCase() === location.country.toLowerCase())) &&
-          (!location.region || (userRegion && userRegion.toLowerCase() === location.region.toLowerCase())) &&
-          (!location.city || (userLocality && userLocality.toLowerCase() === location.city.toLowerCase()))
-        )
-
-      case 'gender':
-        // filter.value is now an array like ['male', 'female']
-        const selectedGenders = Array.isArray(filter.value) ? filter.value : [filter.value]
-        return userGender && selectedGenders.includes(userGender.toLowerCase())
-
-      default:
-        return false
+    return matchesCountry && matchesRegion && matchesCity
+  },
+  gender: (user, criteria) => {
+    const userGender = user.profile?.gender
+    if (typeof userGender !== 'string') {
+      return false
     }
-  })
+    const selectedGenders = Array.isArray(criteria.values) ? criteria.values : []
+    return selectedGenders.includes(userGender.trim().toLowerCase())
+  }
+}
+
+const applySingleFilterToUsers = (users, filter) => {
+  const handler = FILTER_HANDLERS[filter.type]
+
+  if (!handler) {
+    return null
+  }
+
+  return users.filter(user => handler(user, filter.criteria))
 }
 
 export const getOne = async (filter = {}) => {
@@ -146,7 +388,6 @@ export const getOne = async (filter = {}) => {
     }
 
     const audience = await Audience.findOne({ ...filter, isDeleted: false }).lean()
-    console.log('filter', filter)
 
     if (!audience) {
       return {
@@ -156,9 +397,11 @@ export const getOne = async (filter = {}) => {
       }
     }
 
+    const decoratedAudience = decorateLegacyFilterFields(audience)
+
     return {
       status: 'success',
-      result: audience,
+      result: decoratedAudience,
       message: 'Audience retrieved successfully'
     }
   } catch (error) {
@@ -176,10 +419,11 @@ export const getAll = async (filter = {}) => {
     const audiences = await Audience.find({ ...filter, isDeleted: false })
       .sort({ createdAt: -1 })
       .lean()
+    const decoratedAudiences = audiences.map(audience => decorateLegacyFilterFields(audience))
     return {
       status: 'success',
-      result: audiences,
-      message: `Found ${audiences.length} audiences`
+      result: decoratedAudiences,
+      message: `Found ${decoratedAudiences.length} audiences`
     }
   } catch (error) {
     return {
@@ -194,34 +438,27 @@ export const getAll = async (filter = {}) => {
 export const getFilteredUsers = async audienceId => {
   await connectMongo()
   try {
-    console.log('getFilteredUsers called with audienceId:', audienceId)
-
     // Get the audience
     const audienceResult = await getOne({ _id: audienceId })
-    console.log('Audience result:', audienceResult)
 
     if (audienceResult.status !== 'success') {
       return audienceResult
     }
 
     const audience = audienceResult.result
-    console.log('Audience data:', audience)
 
     // Get all verified users only
     const users = await User.find({ isVerified: true }).select('-password').populate('profile').lean()
-    console.log('Total verified users found:', users.length)
 
     // Apply individual schema filters with order and operations
     const filteredUsers = applyIndividualSchemaFilters(users, audience)
 
-    console.log('Final filtered users count:', filteredUsers.length)
     return {
       status: 'success',
       result: filteredUsers,
       message: `Found ${filteredUsers.length} users matching audience criteria`
     }
   } catch (error) {
-    console.error('Error in getFilteredUsers:', error)
     return {
       status: 'error',
       result: null,
@@ -236,8 +473,8 @@ export const addOne = async audienceData => {
     const user = await User.findOne({ email: audienceData.creatorEmail, isVerified: true })
     audienceData.createdBy = user._id
     // Validate required fields
-    console.log('📝 Creating audience with data:', audienceData)
-    console.log('🔍 Structured filters:', audienceData.filters)
+
+    const canonicalFilters = buildCanonicalFilters(audienceData)
     const requiredFields = ['audienceName', 'description', 'createdBy', 'creatorEmail']
     const missingFields = requiredFields.filter(field => !audienceData[field])
 
@@ -249,93 +486,22 @@ export const addOne = async audienceData => {
       }
     }
 
-    // Validate age group if provided
-    if (audienceData.ageGroup) {
-      const { min, max } = audienceData.ageGroup
-      if (min === undefined || max === undefined) {
-        return {
-          status: 'error',
-          result: null,
-          message: 'Both minimum and maximum age are required when specifying age group'
-        }
-      }
-
-      if (min < 0 || max < 0) {
-        return {
-          status: 'error',
-          result: null,
-          message: 'Age values cannot be negative'
-        }
-      }
-
-      if (min > 120 || max > 120) {
-        return {
-          status: 'error',
-          result: null,
-          message: 'Age values cannot exceed 120 years'
-        }
-      }
-
-      if (min >= max) {
-        return {
-          status: 'error',
-          result: null,
-          message: 'Minimum age must be less than maximum age'
-        }
-      }
-
-      if (max - min < 1) {
-        return {
-          status: 'error',
-          result: null,
-          message: 'Age range must be at least 1 year'
-        }
+    const filterValidationErrors = validateCanonicalFilters(canonicalFilters)
+    if (filterValidationErrors.length > 0) {
+      return {
+        status: 'error',
+        result: null,
+        message: `Validation failed: ${filterValidationErrors.join(', ')}`
       }
     }
 
-    // Validate gender if provided (supports single or multiple selections)
-    if (audienceData.gender) {
-      const allowedGenders = ['male', 'female', 'other']
-      let gendersArray
-
-      if (Array.isArray(audienceData.gender)) {
-        gendersArray = audienceData.gender
-      } else if (typeof audienceData.gender === 'object' && audienceData.gender !== null) {
-        // Check if it's the new structure with values array
-        if (audienceData.gender.values && Array.isArray(audienceData.gender.values)) {
-          gendersArray = audienceData.gender.values
-        } else {
-          // Handle old structure with boolean values
-          gendersArray = Object.entries(audienceData.gender)
-            .filter(([, isOn]) => Boolean(isOn))
-            .map(([key]) => key)
-        }
-      } else {
-        gendersArray = [audienceData.gender]
-      }
-
-      const invalidGenders = gendersArray.filter(gender => !allowedGenders.includes(gender))
-      if (invalidGenders.length > 0) {
-        return {
-          status: 'error',
-          result: null,
-          message: 'Gender must be one or more of: male, female, other'
-        }
-      }
-
-      // Keep the original structure if it has values, order, operation
-      if (typeof audienceData.gender === 'object' && audienceData.gender.values) {
-        // Already in correct format, no need to change
-      } else {
-        // Normalize to array for the model schema which expects [String]
-        audienceData.gender = gendersArray
-      }
-    }
+    audienceData.filters = canonicalFilters
+    audienceData.ageGroup = undefined
+    audienceData.gender = undefined
+    audienceData.location = undefined
 
     // Create new audience instance
-    console.log('🔍 About to create audience with data:', JSON.stringify(audienceData, null, 2))
     const newAudience = new Audience(audienceData)
-    console.log('🔍 Audience instance created:', JSON.stringify(newAudience.toObject(), null, 2))
 
     // Validate the audience
     const validationError = newAudience.validateSync()
@@ -349,7 +515,8 @@ export const addOne = async audienceData => {
     }
 
     const savedAudience = await newAudience.save()
-    console.log('💾 Saved audience:', JSON.stringify(savedAudience.toObject(), null, 2))
+
+    const responseAudience = decorateLegacyFilterFields(savedAudience.toObject())
 
     // Broadcast WebSocket event for audience creation
     try {
@@ -360,7 +527,7 @@ export const addOne = async audienceData => {
 
     return {
       status: 'success',
-      result: savedAudience.toObject(),
+      result: responseAudience,
       message: 'Audience created successfully'
     }
   } catch (error) {
@@ -404,12 +571,43 @@ export const updateOne = async (audienceId, updateData) => {
       }
     }
 
+    const filterKeys = ['filters', 'ageGroup', 'location', 'gender']
+    const filtersTouched = filterKeys.some(key => Object.prototype.hasOwnProperty.call(updateData, key))
+
+    const canonicalFilters = filtersTouched
+      ? buildCanonicalFilters({
+          filters: updateData.filters,
+          ageGroup: updateData.ageGroup,
+          location: updateData.location,
+          gender: updateData.gender
+        })
+      : buildCanonicalFilters(existingAudience.toObject())
+
+    const filterValidationErrors = validateCanonicalFilters(canonicalFilters)
+    if (filterValidationErrors.length > 0) {
+      return {
+        status: 'error',
+        result: null,
+        message: `Validation failed: ${filterValidationErrors.join(', ')}`
+      }
+    }
+
     // Apply updates to the existing audience document
     Object.keys(updateData).forEach(key => {
+      if (['filters', 'ageGroup', 'gender', 'location'].includes(key)) {
+        return
+      }
+
       if (updateData[key] !== undefined) {
         existingAudience[key] = updateData[key]
       }
     })
+
+    existingAudience.filters = canonicalFilters
+    existingAudience.markModified('filters')
+    existingAudience.ageGroup = undefined
+    existingAudience.gender = undefined
+    existingAudience.location = undefined
 
     // Validate the updated audience document
     const validationError = existingAudience.validateSync()
@@ -424,18 +622,19 @@ export const updateOne = async (audienceId, updateData) => {
 
     // Save the updated audience
     const updatedAudience = await existingAudience.save()
+    const responseAudience = decorateLegacyFilterFields(updatedAudience.toObject())
 
     // Broadcast WebSocket event for audience update
     try {
       broadcastAudiencesListUpdates()
-      broadcastAudienceDetails(audienceId, updatedAudience.toObject())
+      broadcastAudienceDetails(audienceId, responseAudience)
     } catch (wsError) {
       console.error('Error broadcasting audience updated event:', wsError)
     }
 
     return {
       status: 'success',
-      result: updatedAudience.toObject(),
+      result: responseAudience,
       message: 'Audience updated successfully'
     }
   } catch (error) {
