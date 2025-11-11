@@ -51,7 +51,8 @@ const AudienceByFilter = ({
     ageGroup: null,
     location: null,
     gender: null
-  }
+  },
+  initialCanonicalFilters = []
 }) => {
   const theme = useTheme()
   const didInitFromPropsRef = useRef(false)
@@ -78,6 +79,97 @@ const AudienceByFilter = ({
   const [combinedCriteria, setCombinedCriteria] = useState(initialCriteria)
   const [editingFilter, setEditingFilter] = useState(null)
   const [isEditMode, setIsEditMode] = useState(false)
+  const filterSequenceRef = useRef(0)
+
+  const canonicalFilterHandlers = {
+    age: (user, criteria) => {
+      const age = user.profile?.age
+      if (typeof age !== 'number') return false
+      const { min, max } = criteria || {}
+      const meetsMin = min === undefined || age >= min
+      const meetsMax = max === undefined || age <= max
+      return meetsMin && meetsMax
+    },
+    location: (user, criteria) => {
+      const userCountry = user.profile?.country
+      const userRegion = user.profile?.region
+      const userLocality = user.profile?.locality
+
+      const matchesCountry =
+        !criteria?.country ||
+        (typeof userCountry === 'string' && userCountry.trim().toLowerCase() === criteria.country.toLowerCase())
+      const matchesRegion =
+        !criteria?.region ||
+        (typeof userRegion === 'string' && userRegion.trim().toLowerCase() === criteria.region.toLowerCase())
+      const matchesCity =
+        !criteria?.city ||
+        (typeof userLocality === 'string' && userLocality.trim().toLowerCase() === criteria.city.toLowerCase())
+
+      return matchesCountry && matchesRegion && matchesCity
+    },
+    gender: (user, criteria) => {
+      const gender = user.profile?.gender
+      if (typeof gender !== 'string') return false
+      const selected = Array.isArray(criteria?.values) ? criteria.values : []
+      return selected.includes(gender.trim().toLowerCase())
+    }
+  }
+
+  const dedupeUsersById = userList => {
+    const map = new Map()
+    userList.forEach(user => {
+      const id = user._id?.toString()
+      if (id && !map.has(id)) {
+        map.set(id, user)
+      }
+    })
+    return Array.from(map.values())
+  }
+
+  const applyCanonicalFilters = (usersPool, filters = []) => {
+    if (!Array.isArray(filters) || filters.length === 0) {
+      return usersPool
+    }
+
+    const normalized = filters
+      .map((filter, index) => ({
+        type: filter.type,
+        criteria: filter.criteria || {},
+        operator: index === 0 ? null : filter.operator || null
+      }))
+      .filter(Boolean)
+
+    if (normalized.length === 0) {
+      return usersPool
+    }
+
+    let currentUsers = []
+
+    normalized.forEach((filter, index) => {
+      const handler = canonicalFilterHandlers[filter.type]
+      if (!handler) {
+        return
+      }
+
+      const matched = usersPool.filter(user => handler(user, filter.criteria))
+
+      if (index === 0) {
+        currentUsers = matched
+        return
+      }
+
+      const operation = (filter.operator || 'AND').toUpperCase()
+
+      if (operation === 'OR') {
+        currentUsers = dedupeUsersById([...currentUsers, ...matched])
+      } else {
+        const matchedIds = new Set(matched.map(user => user._id?.toString()))
+        currentUsers = currentUsers.filter(user => matchedIds.has(user._id?.toString()))
+      }
+    })
+
+    return dedupeUsersById(currentUsers)
+  }
 
   const handleClick = event => {
     setAnchorEl(event.currentTarget)
@@ -162,162 +254,150 @@ const AudienceByFilter = ({
     setShowFilterDialog(true)
   }
 
+  const normalizeCanonicalFilters = canonical =>
+    Array.isArray(canonical)
+      ? canonical.map((filter, index) => ({
+          type: filter.type,
+          criteria: filter.criteria || {},
+          operator: index === 0 ? null : filter.operator || null
+        }))
+      : []
+
   useEffect(() => {
-    setCombinedCriteria(initialCriteria)
-  }, [initialCriteria])
+    const canonicalSource = normalizeCanonicalFilters(initialCanonicalFilters)
+    if (canonicalSource.length > 0) {
+      setCombinedCriteria(buildCombinedCriteria(canonicalSource))
+    } else {
+      setCombinedCriteria(initialCriteria)
+    }
+  }, [initialCriteria, initialCanonicalFilters])
+
+  const buildCanonicalFromCriteria = criteria => {
+    const canonical = []
+
+    if (criteria?.ageGroup && (criteria.ageGroup.min !== undefined || criteria.ageGroup.max !== undefined)) {
+      canonical.push({
+        type: 'age',
+        criteria: {
+          min: criteria.ageGroup.min,
+          max: criteria.ageGroup.max
+        },
+        operator: criteria.ageGroup.operation || null
+      })
+    }
+
+    if (criteria?.location && (criteria.location.country || criteria.location.region || criteria.location.city)) {
+      canonical.push({
+        type: 'location',
+        criteria: {
+          country: criteria.location.country,
+          region: criteria.location.region,
+          city: criteria.location.city
+        },
+        operator: criteria.location.operation || null
+      })
+    }
+
+    if (criteria?.gender) {
+      const genderValues = Array.isArray(criteria.gender?.values)
+        ? criteria.gender.values
+        : Array.isArray(criteria.gender)
+          ? criteria.gender
+          : []
+
+      if (genderValues.length > 0) {
+        canonical.push({
+          type: 'gender',
+          criteria: { values: genderValues },
+          operator: criteria.gender.operation || null
+        })
+      }
+    }
+
+    return canonical
+  }
+
+  const hydrateFilterFromCanonical = (canonicalFilter, sequence) => {
+    const handler = canonicalFilterHandlers[canonicalFilter.type]
+    const matchedUserIds = handler
+      ? users.filter(user => handler(user, canonicalFilter.criteria)).map(user => user._id)
+      : users.map(user => user._id)
+
+    switch (canonicalFilter.type) {
+      case 'age': {
+        const min = canonicalFilter.criteria?.min ?? ''
+        const max = canonicalFilter.criteria?.max ?? ''
+        return {
+          type: 'age',
+          label: `Age: ${min}${max !== '' ? `-${max}` : '+'}`,
+          value: {
+            min,
+            max
+          },
+          userIds: matchedUserIds,
+          sequence,
+          operation: canonicalFilter.operator || null
+        }
+      }
+      case 'location': {
+        const country = canonicalFilter.criteria?.country || ''
+        const region = canonicalFilter.criteria?.region || ''
+        const city = canonicalFilter.criteria?.city || ''
+        const parts = [country, region, city].filter(Boolean)
+        return {
+          type: 'location',
+          label: `Location: ${parts.join(', ')}`,
+          value: {
+            country,
+            state: region,
+            city
+          },
+          userIds: matchedUserIds,
+          sequence,
+          operation: canonicalFilter.operator || null
+        }
+      }
+      case 'gender': {
+        const values = Array.isArray(canonicalFilter.criteria?.values) ? canonicalFilter.criteria.values : []
+        return {
+          type: 'gender',
+          label: `Gender: ${values.map(g => String(g).charAt(0).toUpperCase() + String(g).slice(1)).join(', ')}`,
+          value: { values },
+          userIds: matchedUserIds,
+          sequence,
+          operation: canonicalFilter.operator || null
+        }
+      }
+      default:
+        return null
+    }
+  }
 
   // Initialize with existing filters if in edit mode (once)
   useEffect(() => {
     if (didInitFromPropsRef.current) return
-    if (!combinedCriteria) return
     if (!Array.isArray(users) || users.length === 0) return
 
-    const filters = []
+    const canonicalFromProps = normalizeCanonicalFilters(initialCanonicalFilters)
+    const canonical = canonicalFromProps.length > 0 ? canonicalFromProps : buildCanonicalFromCriteria(combinedCriteria)
 
-    // Collect all filters first
-    if (combinedCriteria.ageGroup) {
-      const idsForAge = users
-        .filter(u => {
-          const age = u?.profile?.age
-          return age != null && age >= combinedCriteria.ageGroup.min && age <= combinedCriteria.ageGroup.max
-        })
-        .map(u => u._id)
-      filters.push({
-        type: 'age',
-        label: `Age: ${combinedCriteria.ageGroup.min}-${combinedCriteria.ageGroup.max}`,
-        value: combinedCriteria.ageGroup,
-        userIds: idsForAge,
-        order: combinedCriteria.ageGroup.order || 1,
-        operation: combinedCriteria.ageGroup.operation
-      })
+    if (!canonical || canonical.length === 0) {
+      setMatchedUsers(users)
+      didInitFromPropsRef.current = true
+      return
     }
 
-    if (combinedCriteria.location) {
-      const loc = combinedCriteria.location
-      const parts = [loc.country, loc.region, loc.city].filter(Boolean)
-      const idsForLoc = users
-        .filter(u => {
-          const p = u?.profile || {}
-          return (
-            (!loc.country || p.country?.toLowerCase() === loc.country?.toLowerCase()) &&
-            (!loc.region || p.region?.toLowerCase() === loc.region?.toLowerCase()) &&
-            (!loc.city || p.locality?.toLowerCase() === loc.city?.toLowerCase())
-          )
-        })
-        .map(u => u._id)
-      filters.push({
-        type: 'location',
-        label: `Location: ${parts.join(', ')}`,
-        value: loc,
-        userIds: idsForLoc,
-        order: loc.order || filters.length + 1,
-        operation: loc.operation
-      })
-    }
+    const hydratedFilters = canonical.map((filter, index) => hydrateFilterFromCanonical(filter, index)).filter(Boolean)
 
-    if (combinedCriteria.gender) {
-      // Handle both old array format and new object format with values property
-      let genders = []
-      if (Array.isArray(combinedCriteria.gender)) {
-        genders = combinedCriteria.gender
-      } else if (combinedCriteria.gender.values && Array.isArray(combinedCriteria.gender.values)) {
-        genders = combinedCriteria.gender.values
-      } else if (typeof combinedCriteria.gender === 'string') {
-        genders = [combinedCriteria.gender]
-      } else {
-        // Fallback: try to extract values from object
-        genders = Object.values(combinedCriteria.gender).filter(v => typeof v === 'string')
-      }
+    const matchedCanonicalUsers = applyCanonicalFilters(users, canonical)
 
-      const idsForGender = users
-        .filter(u => {
-          const gender = u?.profile?.gender?.toLowerCase()
-          return Boolean(gender) && genders.includes(gender)
-        })
-        .map(u => u._id)
-      filters.push({
-        type: 'gender',
-        label: `Gender: ${genders.map(g => String(g).charAt(0).toUpperCase() + String(g).slice(1)).join(', ')}`,
-        value: genders.reduce((acc, g) => ({ ...acc, [g]: true }), {}),
-        userIds: idsForGender,
-        order: combinedCriteria.gender.order || filters.length + 1,
-        operation: combinedCriteria.gender.operation
-      })
-    }
-
-    // Apply incremental filtering with proper order and operations
-    let userIds = []
-    if (filters.length > 0) {
-      // Sort filters by order
-      const sortedFilters = [...filters].sort((a, b) => a.order - b.order)
-
-      console.log(
-        '🔍 Edit Mode: Applying filters in order:',
-        sortedFilters.map(f => ({
-          type: f.type,
-          order: f.order,
-          operation: f.operation
-        }))
-      )
-
-      sortedFilters.forEach((filter, index) => {
-        if (index === 0) {
-          // First filter - no operation needed
-          userIds = filter.userIds
-          console.log(`🔍 Edit Mode: First filter (${filter.type}) result: ${userIds.length} users`)
-        } else {
-          // Apply operation from CURRENT filter to combine with previous result
-          const operation = filter.operation
-
-          console.log(`🔍 Edit Mode: Applying operation "${operation}" to combine ${filter.type} with previous results`)
-
-          if (operation === 'AND') {
-            // Intersection - users must match both filters
-            userIds = userIds.filter(id => filter.userIds.includes(id))
-            console.log(`🔍 Edit Mode: AND operation result: ${userIds.length} users`)
-          } else if (operation === 'OR') {
-            // For OR, we need to apply current filter to ALL users, not just current filtered set
-            const currentFilterAppliedToAllUsers = users
-              .filter(u => {
-                if (filter.type === 'age') {
-                  const age = u?.profile?.age
-                  return age != null && age >= filter.value.min && age <= filter.value.max
-                } else if (filter.type === 'location') {
-                  const p = u?.profile || {}
-                  const loc = filter.value
-                  return (
-                    (!loc.country || p.country?.toLowerCase() === loc.country?.toLowerCase()) &&
-                    (!loc.region || p.region?.toLowerCase() === loc.region?.toLowerCase()) &&
-                    (!loc.city || p.locality?.toLowerCase() === loc.city?.toLowerCase())
-                  )
-                } else if (filter.type === 'gender') {
-                  const gender = u?.profile?.gender?.toLowerCase()
-                  const genders = filter.value.values || []
-                  return Boolean(gender) && genders.includes(gender)
-                }
-                return false
-              })
-              .map(u => u._id)
-
-            const combinedUserIds = [...new Set([...userIds, ...currentFilterAppliedToAllUsers])]
-            userIds = combinedUserIds
-            console.log(`🔍 Edit Mode: OR operation result: ${userIds.length} users`)
-          } else {
-            // No operation specified, default to AND
-            userIds = userIds.filter(id => filter.userIds.includes(id))
-            console.log(`🔍 Edit Mode: Default AND operation result: ${userIds.length} users`)
-          }
-        }
-      })
-    } else {
-      userIds = users.map(user => user._id)
-    }
-
-    setSelectedFilters(filters)
-    setMatchedUsers(users.filter(u => userIds.includes(u._id)))
+    setSelectedFilters(hydratedFilters)
+    setMatchedUsers(matchedCanonicalUsers)
+    setCombinedCriteria(buildCombinedCriteria(canonical))
+    filterSequenceRef.current = canonical.length
 
     didInitFromPropsRef.current = true
-  }, [combinedCriteria, users])
+  }, [combinedCriteria, initialCanonicalFilters, users])
 
   const OperationDialog = ({ open, onClose, onOperationSelect }) => (
     <Dialog open={open} onClose={onClose} maxWidth='xs' fullWidth>
@@ -469,200 +549,192 @@ const AudienceByFilter = ({
     }))
   }
 
-  // Helper function to generate dynamic order and operation data
-  const generateOrderAndOperations = filters => {
-    const orderAndOps = {
-      ageOrder: null,
-      ageOperation: null,
-      locationOrder: null,
-      locationOperation: null,
-      genderOrder: null,
-      genderOperation: null
-    }
-
-    // Sort filters by their order to process them correctly
-    const sortedFilters = [...filters].sort((a, b) => a.order - b.order)
-
-    console.log(
-      '🔍 Generating order and operations for filters:',
-      sortedFilters.map(f => ({
-        type: f.type,
-        order: f.order,
-        operation: f.operation
-      }))
-    )
-
-    sortedFilters.forEach((filter, index) => {
-      if (filter.type === 'age') {
-        orderAndOps.ageOrder = filter.order
-        // Assign operation based on filter's actual order (order=1 gets null, others get their operation)
-        orderAndOps.ageOperation = filter.order === 1 ? null : filter.operation
-      } else if (filter.type === 'location') {
-        orderAndOps.locationOrder = filter.order
-        orderAndOps.locationOperation = filter.order === 1 ? null : filter.operation
-      } else if (filter.type === 'gender') {
-        orderAndOps.genderOrder = filter.order
-        orderAndOps.genderOperation = filter.order === 1 ? null : filter.operation
+  const normalizeFilters = filters =>
+    filters.map((filter, index) => {
+      const { order, ...rest } = filter
+      return {
+        ...rest,
+        sequence: filter.sequence ?? index,
+        operation: index === 0 ? null : filter.operation || null
       }
     })
 
-    console.log('🔍 Generated order and operations:', orderAndOps)
-    return orderAndOps
-  }
+  const toCanonicalCriteria = filter => {
+    switch (filter.type) {
+      case 'age':
+        return {
+          min: filter.value?.min ?? undefined,
+          max: filter.value?.max ?? undefined
+        }
+      case 'location':
+        return {
+          country: filter.value?.country || '',
+          region: filter.value?.state || filter.value?.region || '',
+          city: filter.value?.city || ''
+        }
+      case 'gender': {
+        let selected = []
 
-  const applyFilterWithOperation = (newFilters, filteredUserIds, criteria, operation) => {
-    let updatedFilters = []
-    let currentUsers = users // Start with all users for incremental filtering
+        if (Array.isArray(filter.value?.values)) {
+          selected = filter.value.values
+        } else if (Array.isArray(filter.value)) {
+          selected = filter.value
+        } else {
+          selected = Object.entries(filter.value || {})
+            .filter(([, isOn]) => Boolean(isOn))
+            .map(([key]) => key)
+        }
 
-    console.log('🔍 INCREMENTAL FILTERING: Starting with', currentUsers.length, 'users')
-
-    if (selectedFilters.length === 0) {
-      // First filter - assign order 1
-      updatedFilters = newFilters.map(f => ({
-        ...f,
-        userIds: filteredUserIds,
-        order: 1,
-        operation: operation || null // First filter gets the operation
-      }))
-      currentUsers = users.filter(user => filteredUserIds.includes(user._id))
-      console.log('🔍 First filter result:', currentUsers.length, 'users')
-    } else {
-      // Subsequent filters - assign next order based on sequence
-      const nextOrder = Math.max(...selectedFilters.map(f => f.order || 0)) + 1
-
-      updatedFilters = [
-        ...selectedFilters,
-        ...newFilters.map(f => ({
-          ...f,
-          userIds: filteredUserIds,
-          order: nextOrder,
-          operation: operation || null // Operation will be assigned based on position
-        }))
-      ]
-
-      // Assign operations correctly: operation gets assigned to the CURRENT filter
-      const sortedFilters = [...updatedFilters].sort((a, b) => a.order - b.order)
-
-      // Apply the operation to the CURRENT filter (the newly added one)
-      if (operation && sortedFilters.length > 1) {
-        // Find the current filter (the newly added filter)
-        const currentFilter = sortedFilters.find(f => f.order === nextOrder)
-        if (currentFilter) {
-          console.log(
-            '🔍 Assigning operation',
-            operation,
-            'to current filter:',
-            currentFilter.type,
-            'order:',
-            currentFilter.order
-          )
-          currentFilter.operation = operation
+        return {
+          values: selected
         }
       }
-
-      // Ensure the first filter always has null operation (no previous filter to combine with)
-      sortedFilters.forEach((filter, index) => {
-        if (index === 0) {
-          filter.operation = null
-        }
-      })
-
-      // Apply INCREMENTAL filtering based on order
-      console.log('🔍 INCREMENTAL FILTERING: Applying filters in order')
-      sortedFilters.forEach((filter, index) => {
-        console.log(`🔍 Step ${index + 1}: Applying ${filter.type} filter (order: ${filter.order})`)
-
-        if (index === 0) {
-          // First filter - no operation needed, just update current users
-          currentUsers = users.filter(user => filter.userIds.includes(user._id))
-          console.log(`🔍 First filter result: ${currentUsers.length} users`)
-        } else {
-          // Apply current filter to current user set
-          const currentFilteredUsers = applySingleFilterToUsers(currentUsers, filter)
-          console.log(
-            `🔍 ${filter.type} filter matched ${currentFilteredUsers.length} users from ${currentUsers.length} users`
-          )
-
-          // Apply operation from CURRENT filter to combine with previous result
-          const operation = filter.operation
-
-          console.log(`🔍 Applying operation "${operation}" to combine ${filter.type} with previous results`)
-
-          if (operation === 'AND') {
-            // OPTIMIZED: Intersection using pre-computed filter results
-            // Use the userIds already stored in the filter instead of re-computing
-            const currentFilterUserIds = new Set(filter.userIds)
-            currentUsers = currentUsers.filter(user => currentFilterUserIds.has(user._id))
-            console.log(`🔍 OPTIMIZED AND operation result: ${currentUsers.length} users`)
-          } else if (operation === 'OR') {
-            // OPTIMIZED: Union using pre-computed filter results
-            // Use the userIds already stored in the filter instead of re-computing
-            const currentFilterUserIds = new Set(filter.userIds)
-            const currentUserIds = new Set(currentUsers.map(u => u._id))
-            const combinedUserIds = new Set([...currentUserIds, ...currentFilterUserIds])
-            currentUsers = users.filter(user => combinedUserIds.has(user._id))
-            console.log(`🔍 OPTIMIZED OR operation result: ${currentUsers.length} users`)
-          } else {
-            // No operation specified, default to AND
-            const currentFilterUserIds = new Set(filter.userIds)
-            currentUsers = currentUsers.filter(user => currentFilterUserIds.has(user._id))
-            console.log(`🔍 OPTIMIZED Default AND operation result: ${currentUsers.length} users`)
-          }
-        }
-      })
+      default:
+        return filter.value || {}
     }
+  }
 
-    setSelectedFilters(updatedFilters)
-
-    // Derive a cumulative criteria object from all selected filters
-    const nextCombinedCriteria = {
+  const buildCombinedCriteria = canonicalFilters => {
+    const criteria = {
       ageGroup: null,
       location: null,
       gender: null
     }
 
-    updatedFilters.forEach(filter => {
-      if (filter.type === 'age' && filter.value) {
-        nextCombinedCriteria.ageGroup = { min: filter.value.min, max: filter.value.max }
-      }
-      if (filter.type === 'location' && filter.value) {
-        nextCombinedCriteria.location = {
-          country: filter.value.country || '',
-          region: filter.value.state || '',
-          city: filter.value.city || ''
+    canonicalFilters.forEach(filter => {
+      if (filter.type === 'age') {
+        criteria.ageGroup = {
+          ...filter.criteria,
+          operation: filter.operator || null
         }
       }
-      if (filter.type === 'gender' && filter.value) {
-        // Handle both old format {male: true, female: false} and new format {values: ['male'], order: 1, operation: null}
-        let selected = []
-        if (filter.value.values && Array.isArray(filter.value.values)) {
-          // New format with values array
-          selected = filter.value.values
-        } else {
-          // Old format with boolean properties
-          selected = Object.entries(filter.value)
-            .filter(([, isOn]) => Boolean(isOn))
-            .map(([key]) => key)
+
+      if (filter.type === 'location') {
+        criteria.location = {
+          country: filter.criteria?.country || '',
+          region: filter.criteria?.region || '',
+          city: filter.criteria?.city || '',
+          operation: filter.operator || null
         }
-        // Match backend structure with values property
-        nextCombinedCriteria.gender =
-          selected.length > 0
-            ? {
-                values: selected,
-                order: filter.order || 1,
-                operation: filter.operation || null
-              }
-            : null
+      }
+
+      if (filter.type === 'gender') {
+        const values = Array.isArray(filter.criteria?.values) ? filter.criteria.values : []
+        if (values.length > 0) {
+          criteria.gender = {
+            values,
+            operation: filter.operator || null
+          }
+        }
       }
     })
 
-    setCombinedCriteria(nextCombinedCriteria)
+    return criteria
+  }
 
-    // Update matched users with incremental result
-    setMatchedUsers(currentUsers)
-    console.log(`🔍 INCREMENTAL FILTERING: Final result: ${currentUsers.length} users`)
+  // Helper function to generate dynamic operation data per filter type
+  const generateOrderAndOperations = filters => {
+    const normalizedFilters = normalizeFilters(filters)
+    const operations = {
+      ageOperation: null,
+      locationOperation: null,
+      genderOperation: null
+    }
 
-    // Reset UI
+    normalizedFilters.forEach(filter => {
+      if (filter.type === 'age') {
+        operations.ageOperation = filter.operation || null
+      } else if (filter.type === 'location') {
+        operations.locationOperation = filter.operation || null
+      } else if (filter.type === 'gender') {
+        operations.genderOperation = filter.operation || null
+      }
+    })
+
+    return operations
+  }
+
+  const recalculateFiltersState = rawFilters => {
+    if (!Array.isArray(rawFilters) || rawFilters.length === 0) {
+      setSelectedFilters([])
+      setMatchedUsers(users)
+      filterSequenceRef.current = 0
+
+      const resetCriteria = {
+        ageGroup: null,
+        location: null,
+        gender: null
+      }
+
+      setCombinedCriteria(resetCriteria)
+      onFilterChange(
+        users.map(user => user._id),
+        resetCriteria,
+        {
+          ageOperation: null,
+          locationOperation: null,
+          genderOperation: null,
+          canonicalFilters: []
+        }
+      )
+
+      return
+    }
+
+    const normalizedFilters = normalizeFilters(rawFilters)
+    const sortedNormalized = [...normalizedFilters].sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0))
+    const canonicalFilters = []
+    sortedNormalized.forEach((filter, index) => {
+      canonicalFilters.push({
+        type: filter.type,
+        criteria: toCanonicalCriteria(filter),
+        operator: index === 0 ? null : filter.operation || null
+      })
+    })
+
+    const matchedUsersCanonical = applyCanonicalFilters(users, canonicalFilters)
+    const combinedUserIds = matchedUsersCanonical.map(user => user._id)
+    const operations = generateOrderAndOperations(sortedNormalized)
+    const nextCriteria = buildCombinedCriteria(canonicalFilters)
+
+    setSelectedFilters(sortedNormalized)
+    filterSequenceRef.current = sortedNormalized.length
+    setMatchedUsers(matchedUsersCanonical)
+    setCombinedCriteria(nextCriteria)
+    onFilterChange(combinedUserIds, nextCriteria, {
+      ...operations,
+      canonicalFilters
+    })
+  }
+
+  const applyFilterWithOperation = (newFilters, filteredUserIds, operation) => {
+    let updatedFilters = []
+
+    if (selectedFilters.length === 0) {
+      updatedFilters = newFilters.map(f => ({
+        ...f,
+        sequence: f.sequence ?? filterSequenceRef.current++,
+        userIds: filteredUserIds,
+        operation: null
+      }))
+    } else {
+      updatedFilters = [
+        ...selectedFilters,
+        ...newFilters.map(f => ({
+          ...f,
+          sequence: f.sequence ?? filterSequenceRef.current++,
+          userIds: filteredUserIds,
+          operation: operation || null
+        }))
+      ]
+    }
+
+    recalculateFiltersState(updatedFilters)
+
+    resetFilterForm()
+  }
+
+  const resetFilterForm = () => {
     setGroupBy(null)
     setFilters({
       age: { min: '', max: '' },
@@ -672,318 +744,199 @@ const AudienceByFilter = ({
     setSelectedCountryObject(null)
     setSelectedRegion('')
     setSelectedCity('')
-
-    // Generate order and operation data for individual schemas
-    const orderAndOperations = generateOrderAndOperations(updatedFilters)
-
-    // Call parent with combined results, cumulative criteria, and order/operations
-    onFilterChange(
-      currentUsers.map(u => u._id),
-      nextCombinedCriteria,
-      orderAndOperations
-    )
   }
 
   const handleOperationSelect = operation => {
     setShowOperationDialog(false)
     if (pendingFilterData) {
-      const { newFilters, filteredUserIds, criteria } = pendingFilterData
-      applyFilterWithOperation(newFilters, filteredUserIds, criteria, operation)
+      const { newFilters, filteredUserIds } = pendingFilterData
+      applyFilterWithOperation(newFilters, filteredUserIds, operation)
     }
   }
 
-  const applyFilters = () => {
-    console.log('applyFilters called, isEditMode:', isEditMode, 'editingFilter:', editingFilter)
-    console.log('Current filters state:', filters)
+  const buildFilterForGroup = () => {
+    if (groupBy === 'age') {
+      if (!filters.age.min && !filters.age.max) {
+        return null
+      }
 
-    const newFilters = []
-    let filteredUserIds = []
-    let criteria = {
-      ageGroup: null,
-      location: null,
-      gender: null
-    }
-
-    if (groupBy === 'age' && (filters.age.min || filters.age.max)) {
       const minAge = parseInt(filters.age.min) || 0
       const maxAge = parseInt(filters.age.max) || 100
 
-      console.log('Processing age filter:', { minAge, maxAge })
-
-      // Enhanced age validation
       if (minAge < 0 || maxAge < 0) {
         setAgeError('Age values cannot be negative')
-        return
+        return 'error'
       }
 
       if (minAge > 120 || maxAge > 120) {
         setAgeError('Age values cannot exceed 120 years')
-        return
+        return 'error'
       }
 
-      // Validate that min age is less than max age
       if (minAge >= maxAge) {
         setAgeError('Minimum age must be less than maximum age')
-        return // Don't proceed with filter application
+        return 'error'
       }
 
-      // Check if age range is reasonable
       if (maxAge - minAge < 1) {
         setAgeError('Age range must be at least 1 year')
-        return
+        return 'error'
       }
 
-      setAgeError(null) // Clear any previous error
+      setAgeError(null)
 
-      users.forEach(user => {
-        const userAge = user.profile?.age
-        const hasAge = userAge !== undefined && userAge !== null
-        const ageMatches = hasAge && userAge >= minAge && userAge <= maxAge
+      const filteredUserIds = users
+        .filter(user => {
+          const userAge = user.profile?.age
+          return typeof userAge === 'number' && userAge >= minAge && userAge <= maxAge
+        })
+        .map(user => user._id)
 
-        if (ageMatches) {
-          filteredUserIds.push(user._id)
-        }
-      })
+      const sequence = editingFilter?.sequence ?? filterSequenceRef.current++
 
-      console.log('Age filter matched users:', filteredUserIds.length)
-
-      newFilters.push({
-        type: 'age',
-        label: `Age: ${minAge}${maxAge !== 100 ? `-${maxAge}` : '+'}`,
-        value: { min: minAge, max: maxAge },
-        order: selectedFilters.length + 1
-      })
-
-      criteria.ageGroup = {
-        min: minAge,
-        max: maxAge
+      return {
+        filter: {
+          type: 'age',
+          label: `Age: ${minAge}${maxAge !== 100 ? `-${maxAge}` : '+'}`,
+          value: { min: minAge, max: maxAge },
+          sequence
+        },
+        canonical: {
+          type: 'age',
+          criteria: { min: minAge, max: maxAge },
+          operator: null
+        },
+        filteredUserIds
       }
     }
 
     if (groupBy === 'location') {
-      console.log('Processing location filter:', filters.location)
+      const filteredUserIds = users
+        .filter(user => {
+          const profile = user.profile || {}
+          const countryMatch =
+            !filters.location.country ||
+            (profile.country && profile.country.toLowerCase() === filters.location.country.toLowerCase())
+          const stateMatch =
+            !filters.location.state ||
+            (profile.region && profile.region.toLowerCase() === filters.location.state.toLowerCase())
+          const cityMatch =
+            !filters.location.city ||
+            (profile.locality && profile.locality.toLowerCase() === filters.location.city.toLowerCase())
 
-      users.forEach(user => {
-        const profile = user.profile || {}
-        const countryMatch =
-          !filters.location.country ||
-          (profile.country && profile.country.toLowerCase() === filters.location.country.toLowerCase())
-        const stateMatch =
-          !filters.location.state ||
-          (profile.region && profile.region.toLowerCase() === filters.location.state.toLowerCase())
-        const cityMatch =
-          !filters.location.city ||
-          (profile.locality && profile.locality.toLowerCase() === filters.location.city.toLowerCase())
+          return countryMatch && stateMatch && cityMatch
+        })
+        .map(user => user._id)
 
-        if (countryMatch && stateMatch && cityMatch) {
-          filteredUserIds.push(user._id)
-        }
-      })
-
-      console.log('Location filter matched users:', filteredUserIds.length)
-
-      // Always record the selected location filter as a chip, even if no users match
       const locationParts = [filters.location.country, filters.location.state, filters.location.city].filter(Boolean)
-      newFilters.push({
-        type: 'location',
-        label: `Location: ${locationParts.join(', ')}`,
-        value: { ...filters.location },
-        order: selectedFilters.length + 1
-      })
-      criteria.location = {
-        country: filters.location.country,
-        region: filters.location.state,
-        city: filters.location.city
+
+      const sequence = editingFilter?.sequence ?? filterSequenceRef.current++
+
+      return {
+        filter: {
+          type: 'location',
+          label: `Location: ${locationParts.join(', ')}`,
+          value: { ...filters.location },
+          sequence
+        },
+        canonical: {
+          type: 'location',
+          criteria: {
+            country: filters.location.country,
+            region: filters.location.state,
+            city: filters.location.city
+          },
+          operator: null
+        },
+        filteredUserIds
       }
     }
 
     if (groupBy === 'gender') {
-      console.log('Processing gender filter:', filters.gender)
-
       const selectedGenders = []
       if (filters.gender.male) selectedGenders.push('male')
       if (filters.gender.female) selectedGenders.push('female')
       if (filters.gender.other) selectedGenders.push('other')
 
-      console.log('Selected genders:', selectedGenders)
-      console.log('🔍 DEBUG: selectedGenders array:', selectedGenders)
+      if (selectedGenders.length === 0) {
+        return null
+      }
 
-      if (selectedGenders.length > 0) {
-        users.forEach(user => {
+      const filteredUserIds = users
+        .filter(user => {
           const userGender = user.profile?.gender?.toLowerCase()
-          if (userGender && selectedGenders.includes(userGender)) {
-            filteredUserIds.push(user._id)
-          }
+          return userGender && selectedGenders.includes(userGender)
         })
+        .map(user => user._id)
 
-        console.log('Gender filter matched users:', filteredUserIds.length)
+      const sequence = editingFilter?.sequence ?? filterSequenceRef.current++
 
-        const genderFilter = {
+      return {
+        filter: {
           type: 'gender',
           label: `Gender: ${selectedGenders
             .map(g => String(g).charAt(0).toUpperCase() + String(g).slice(1))
             .join(', ')}`,
           value: { values: selectedGenders },
-          order: selectedFilters.length + 1
-        }
-
-        console.log('🔍 DEBUG: Creating gender filter:', genderFilter)
-        console.log('🔍 DEBUG: genderFilter.value:', genderFilter.value)
-        console.log('🔍 DEBUG: genderFilter.value.values:', genderFilter.value.values)
-
-        newFilters.push(genderFilter)
-        // Send all selected genders (array) - match backend structure
-        criteria.gender = {
-          values: selectedGenders
-        }
+          sequence
+        },
+        canonical: {
+          type: 'gender',
+          criteria: { values: selectedGenders },
+          operator: null
+        },
+        filteredUserIds
       }
     }
 
-    if (newFilters.length === 0) {
-      console.log('No filters to apply, closing dialog')
-      closeFilterDialog() // Close dialog if no filters were applied
+    return null
+  }
+
+  const applyFilters = () => {
+    const filterResult = buildFilterForGroup()
+
+    if (filterResult === 'error') {
       return
     }
 
-    console.log('Final newFilters:', newFilters)
-    console.log('Final filteredUserIds:', filteredUserIds)
-    console.log('Final criteria:', criteria)
+    if (!filterResult) {
+      closeFilterDialog()
+      return
+    }
+
+    const { filter, canonical, filteredUserIds } = filterResult
+
+    const newFilters = [{ ...filter }]
+    const canonicalFilters = [{ ...canonical }]
 
     // Handle editing existing filter
     if (isEditMode && editingFilter) {
-      console.log('Editing filter:', editingFilter)
-      console.log('New filter values:', newFilters)
-
-      // Create updated filters with preserved order and operation
       const updatedSelectedFilters = [...selectedFilters]
-
-      // Replace the edited filter with new values while preserving order and operation
       const editedFilterIndex = editingFilter.index
-      const originalFilter = selectedFilters[editedFilterIndex]
+      const originalFilter = selectedFilters[editedFilterIndex] || {}
 
-      // Update the filter with new values but preserve original order and operation
       updatedSelectedFilters[editedFilterIndex] = {
-        ...newFilters[0], // Use the new filter values
-        order: originalFilter.order, // Preserve original order
-        operation: originalFilter.operation // Preserve original operation
+        ...newFilters[0],
+        operation: originalFilter.operation || null,
+        sequence: originalFilter.sequence,
+        userIds: filteredUserIds
       }
 
-      // Recalculate combined results by reapplying all filters to users in order
-      let combinedUserIds = []
-
-      // Sort filters by their order to maintain the correct sequence
-      const sortedFilters = [...updatedSelectedFilters].sort((a, b) => (a.order || 0) - (b.order || 0))
-
-      sortedFilters.forEach((filter, idx) => {
-        // Apply this single filter to get fresh matching user IDs
-        const filteredUsers = applySingleFilterToUsers(users, filter)
-        const filterUserIds = filteredUsers.map(user => user._id)
-
-        if (idx === 0) {
-          // First filter - no operation needed
-          combinedUserIds = filterUserIds
-        } else {
-          // Apply operation from CURRENT filter with previous result
-          const operation = filter.operation || 'AND'
-
-          if (operation === 'AND') {
-            // OPTIMIZED: Intersection using pre-computed filter results
-            const filterUserIdsSet = new Set(filterUserIds)
-            combinedUserIds = combinedUserIds.filter(id => filterUserIdsSet.has(id))
-          } else if (operation === 'OR') {
-            // OPTIMIZED: Union using pre-computed filter results
-            const filterUserIdsSet = new Set(filterUserIds)
-            const combinedUserIdsSet = new Set(combinedUserIds)
-            combinedUserIds = [...new Set([...combinedUserIdsSet, ...filterUserIdsSet])]
-          } else {
-            // No operation specified, default to AND
-            const filterUserIdsSet = new Set(filterUserIds)
-            combinedUserIds = combinedUserIds.filter(id => filterUserIdsSet.has(id))
-          }
-        }
-
-        // Update the filter with the calculated user IDs
-        filter.userIds = filterUserIds
-      })
-
-      console.log('Final combined user IDs:', combinedUserIds.length)
-
-      setSelectedFilters(updatedSelectedFilters)
-
-      // Update matched users
-      const matched = users.filter(user => combinedUserIds.includes(user._id))
-      setMatchedUsers(matched)
-
-      // Recompute cumulative criteria
-      const nextCombinedCriteria = {
-        ageGroup: null,
-        location: null,
-        gender: null
-      }
-      updatedSelectedFilters.forEach(filter => {
-        if (filter.type === 'age' && filter.value) {
-          nextCombinedCriteria.ageGroup = { min: filter.value.min, max: filter.value.max }
-        }
-        if (filter.type === 'location' && filter.value) {
-          nextCombinedCriteria.location = {
-            country: filter.value.country || '',
-            region: filter.value.state || '',
-            city: filter.value.city || ''
-          }
-        }
-        if (filter.type === 'gender' && filter.value) {
-          console.log('🔍 DEBUG: Processing gender filter in edit mode:', filter.value)
-          console.log('🔍 DEBUG: filter.value type:', typeof filter.value)
-          console.log('🔍 DEBUG: filter.value.values:', filter.value.values)
-
-          // Handle both old format {male: true, female: false} and new format {values: ['male', 'female']}
-          let selected = []
-          if (filter.value.values && Array.isArray(filter.value.values)) {
-            // New format with values array
-            selected = filter.value.values
-            console.log('🔍 DEBUG: Using new format, selected:', selected)
-          } else {
-            // Old format with boolean properties
-            console.log('🔍 DEBUG: Using old format, Object.entries result:', Object.entries(filter.value))
-            selected = Object.entries(filter.value)
-              .filter(([, isOn]) => Boolean(isOn))
-              .map(([key]) => key)
-            console.log('🔍 DEBUG: Old format selected:', selected)
-          }
-
-          console.log('🔍 DEBUG: Final selected array:', selected)
-
-          // Match backend structure with values property
-          nextCombinedCriteria.gender =
-            selected.length > 0
-              ? {
-                  values: selected,
-                  order: filter.order || 1,
-                  operation: filter.operation || null
-                }
-              : null
-
-          console.log('🔍 DEBUG: Final gender criteria:', nextCombinedCriteria.gender)
-        }
-      })
-
-      setCombinedCriteria(nextCombinedCriteria)
-      const orderAndOperations = generateOrderAndOperations(updatedSelectedFilters)
-      onFilterChange(combinedUserIds, nextCombinedCriteria, orderAndOperations)
+      recalculateFiltersState(updatedSelectedFilters)
       closeFilterDialog()
       return
     }
 
     // If we have existing filters, show operation dialog
     if (selectedFilters.length > 0) {
-      setPendingFilterData({ newFilters, filteredUserIds, criteria })
+      setPendingFilterData({ newFilters, filteredUserIds })
       setShowOperationDialog(true)
       closeFilterDialog() // Close the filter dialog before showing operation dialog
       return
     }
 
     // First filter - apply directly (no operation needed)
-    applyFilterWithOperation(newFilters, filteredUserIds, criteria, null)
+    applyFilterWithOperation(newFilters, filteredUserIds, null)
     closeFilterDialog() // Close the filter dialog after applying
   }
 
@@ -992,115 +945,7 @@ const AudienceByFilter = ({
     console.log('📋 Current filters:', selectedFilters)
 
     const updatedFilters = selectedFilters.filter((_, i) => i !== index)
-
-    // Reorder the remaining filters sequentially (1, 2, 3, etc.)
-    const reorderedFilters = updatedFilters.map((filter, idx) => ({
-      ...filter,
-      order: idx + 1,
-      operation: idx === 0 ? null : filter.operation // First filter gets null operation
-    }))
-
-    setSelectedFilters(reorderedFilters)
-
-    console.log('✅ Updated filters after deletion and reordering:', reorderedFilters)
-
-    if (reorderedFilters.length === 0) {
-      console.log('🔄 No filters left, showing all users')
-      setMatchedUsers(users)
-      const resetCriteria = { ageGroup: null, location: null, gender: null }
-      setCombinedCriteria(resetCriteria)
-      onFilterChange(
-        users.map(user => user._id),
-        resetCriteria
-      )
-      return
-    }
-
-    // Recalculate combined results by reapplying all remaining filters from scratch
-    let combinedUserIds = []
-
-    // Sort filters by their new order to maintain the correct sequence
-    const sortedFilters = [...reorderedFilters].sort((a, b) => (a.order || 0) - (b.order || 0))
-
-    sortedFilters.forEach((filter, idx) => {
-      // Apply this single filter to get fresh matching users
-      const filteredUsers = applySingleFilterToUsers(users, filter)
-      const filterUserIds = filteredUsers.map(user => user._id)
-
-      if (idx === 0) {
-        // First filter - no operation needed
-        combinedUserIds = filterUserIds
-      } else {
-        // Apply operation from CURRENT filter with previous result
-        const operation = filter.operation || 'AND'
-
-        if (operation === 'AND') {
-          // OPTIMIZED: Intersection using pre-computed filter results
-          const filterUserIdsSet = new Set(filterUserIds)
-          combinedUserIds = combinedUserIds.filter(id => filterUserIdsSet.has(id))
-        } else if (operation === 'OR') {
-          // OPTIMIZED: Union using pre-computed filter results
-          // Use the userIds already stored in the filter instead of re-computing
-          const filterUserIdsSet = new Set(filterUserIds)
-          const combinedUserIdsSet = new Set(combinedUserIds)
-          combinedUserIds = [...new Set([...combinedUserIdsSet, ...filterUserIdsSet])]
-        } else {
-          // No operation specified, default to AND
-          const filterUserIdsSet = new Set(filterUserIds)
-          combinedUserIds = combinedUserIds.filter(id => filterUserIdsSet.has(id))
-        }
-      }
-    })
-
-    const matched = users.filter(user => combinedUserIds.includes(user._id))
-    setMatchedUsers(matched)
-
-    console.log('🎯 Recalculated combined user IDs:', combinedUserIds.length)
-    console.log('👥 Matched users:', matched.length)
-
-    // Recompute cumulative criteria from remaining filters
-    const nextCombinedCriteria = {
-      ageGroup: null,
-      location: null,
-      gender: null
-    }
-    reorderedFilters.forEach(filter => {
-      if (filter.type === 'age' && filter.value) {
-        nextCombinedCriteria.ageGroup = { min: filter.value.min, max: filter.value.max }
-      }
-      if (filter.type === 'location' && filter.value) {
-        nextCombinedCriteria.location = {
-          country: filter.value.country || '',
-          region: filter.value.state || '',
-          city: filter.value.city || ''
-        }
-      }
-      if (filter.type === 'gender' && filter.value) {
-        // Handle both old format {male: true, female: false} and new format {values: ['male'], order: 1, operation: null}
-        let selected = []
-        if (filter.value.values && Array.isArray(filter.value.values)) {
-          // New format with values array
-          selected = filter.value.values
-        } else {
-          // Old format with boolean properties
-          selected = Object.entries(filter.value)
-            .filter(([, isOn]) => Boolean(isOn))
-            .map(([key]) => key)
-        }
-        // Match backend structure with values property
-        nextCombinedCriteria.gender =
-          selected.length > 0
-            ? {
-                values: selected,
-                order: filter.order || 1,
-                operation: filter.operation || null
-              }
-            : null
-      }
-    })
-    setCombinedCriteria(nextCombinedCriteria)
-    const orderAndOperations = generateOrderAndOperations(reorderedFilters)
-    onFilterChange(combinedUserIds, nextCombinedCriteria, orderAndOperations)
+    recalculateFiltersState(updatedFilters)
   }
 
   // Helper function to apply a single filter to users (returns user objects)
@@ -1126,7 +971,7 @@ const AudienceByFilter = ({
           )
 
         case 'gender':
-          // Handle both old format {male: true, female: false} and new format {values: ['male'], order: 1, operation: null}
+          // Handle both old format {male: true, female: false} and new format {values: ['male'], operation: null}
           let selectedGenders = []
           if (filter.value.values && Array.isArray(filter.value.values)) {
             // New format with values array
@@ -1187,126 +1032,124 @@ const AudienceByFilter = ({
                 flexWrap: 'wrap'
               }}
             >
-              {selectedFilters
-                .sort((a, b) => (a.order || 0) - (b.order || 0))
-                .map((filter, displayIndex) => {
-                  const actualIndex = selectedFilters.findIndex(f => f === filter)
+              {selectedFilters.map((filter, displayIndex) => {
+                const actualIndex = displayIndex
 
-                  // Determine color and icon based on filter type
-                  const getFilterStyle = () => {
-                    if (filter.type === 'age') {
-                      return {
-                        background: alpha(theme.palette.primary.main, 0.12),
-                        borderColor: alpha(theme.palette.primary.main, 0.2),
-                        textColor: theme.palette.primary.main,
-                        icon: <CakeIcon sx={{ fontSize: 16, color: theme.palette.primary.main, mr: 0.5 }} />
-                      }
-                    } else if (filter.type === 'gender') {
-                      return {
-                        background: alpha(theme.palette.grey[400], 0.15),
-                        borderColor: alpha(theme.palette.grey[400], 0.2),
-                        textColor: theme.palette.grey[600],
-                        icon: <PersonIcon sx={{ fontSize: 16, color: theme.palette.grey[600], mr: 0.5 }} />
-                      }
-                    } else if (filter.type === 'location') {
-                      return {
-                        background: alpha(theme.palette.grey[500], 0.12),
-                        borderColor: alpha(theme.palette.grey[500], 0.25),
-                        textColor: theme.palette.grey[700],
-                        icon: <LocationIcon sx={{ fontSize: 16, color: theme.palette.grey[700], mr: 0.5 }} />
-                      }
-                    }
+                // Determine color and icon based on filter type
+                const getFilterStyle = () => {
+                  if (filter.type === 'age') {
                     return {
-                      background: theme.palette.grey[200],
-                      borderColor: theme.palette.grey[400],
+                      background: alpha(theme.palette.primary.main, 0.12),
+                      borderColor: alpha(theme.palette.primary.main, 0.2),
+                      textColor: theme.palette.primary.main,
+                      icon: <CakeIcon sx={{ fontSize: 16, color: theme.palette.primary.main, mr: 0.5 }} />
+                    }
+                  } else if (filter.type === 'gender') {
+                    return {
+                      background: alpha(theme.palette.grey[400], 0.15),
+                      borderColor: alpha(theme.palette.grey[400], 0.2),
+                      textColor: theme.palette.grey[600],
+                      icon: <PersonIcon sx={{ fontSize: 16, color: theme.palette.grey[600], mr: 0.5 }} />
+                    }
+                  } else if (filter.type === 'location') {
+                    return {
+                      background: alpha(theme.palette.grey[500], 0.12),
+                      borderColor: alpha(theme.palette.grey[500], 0.25),
                       textColor: theme.palette.grey[700],
-                      icon: null
+                      icon: <LocationIcon sx={{ fontSize: 16, color: theme.palette.grey[700], mr: 0.5 }} />
                     }
                   }
+                  return {
+                    background: theme.palette.grey[200],
+                    borderColor: theme.palette.grey[400],
+                    textColor: theme.palette.grey[700],
+                    icon: null
+                  }
+                }
 
-                  const filterStyle = getFilterStyle()
+                const filterStyle = getFilterStyle()
 
-                  return (
-                    <Chip
-                      key={filter.type + '-' + filter.order}
-                      label={
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 0.5,
-                            mr: 1,
-                            minWidth: 0,
-                            flex: 1
-                          }}
-                        >
-                          {filterStyle.icon}
-                          <Typography
-                            variant='body2'
-                            sx={{
-                              flex: 1,
-                              minWidth: 0,
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                              color: filterStyle.textColor,
-                              fontWeight: 600
-                            }}
-                          >
-                            {filter.label}
-                          </Typography>
-                          <Tooltip title='edit' arrow>
-                            <EditIcon
-                              sx={{ fontSize: 16, opacity: 0.9, flexShrink: 0, ml: 4, color: filterStyle.textColor }}
-                            />
-                          </Tooltip>
-                        </Box>
-                      }
-                      onDelete={() => handleDeleteFilter(actualIndex)}
-                      deleteIcon={
-                        <Tooltip title='remove' arrow>
-                          <CloseIcon sx={{ color: filterStyle.textColor }} />
-                        </Tooltip>
-                      }
-                      onClick={() => handleEditFilter(filter, actualIndex)}
-                      sx={{
-                        maxWidth: 250,
-                        textOverflow: 'ellipsis',
-                        overflow: 'hidden',
-                        cursor: 'pointer',
-                        height: 'auto',
-                        background: filterStyle.background,
-                        border: `1px solid ${filterStyle.borderColor}`,
-                        boxShadow: `0 1px 3px ${alpha(theme.palette.primary.main, 0.08)}`,
-                        '&:hover': {
-                          background: filterStyle.background,
-                          boxShadow: `0 1px 3px ${alpha(theme.palette.primary.main, 0.08)}`
-                        },
-                        '& .MuiChip-deleteIcon': {
-                          visibility: 'visible',
-                          marginRight: '4px',
-                          marginLeft: '0px',
-                          color: filterStyle.textColor,
-                          opacity: 0.9,
-                          '&:hover': {
-                            backgroundColor: 'transparent',
-                            color: filterStyle.textColor,
-                            opacity: 1
-                          }
-                        },
-                        '& .MuiChip-label': {
-                          paddingRight: '0px',
-                          paddingLeft: '10px',
-                          height: 'auto',
-                          minHeight: '35px',
+                return (
+                  <Chip
+                    key={`${filter.type}-${displayIndex}`}
+                    label={
+                      <Box
+                        sx={{
                           display: 'flex',
                           alignItems: 'center',
-                          color: filterStyle.textColor
+                          gap: 0.5,
+                          mr: 1,
+                          minWidth: 0,
+                          flex: 1
+                        }}
+                      >
+                        {filterStyle.icon}
+                        <Typography
+                          variant='body2'
+                          sx={{
+                            flex: 1,
+                            minWidth: 0,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            color: filterStyle.textColor,
+                            fontWeight: 600
+                          }}
+                        >
+                          {filter.label}
+                        </Typography>
+                        <Tooltip title='edit' arrow>
+                          <EditIcon
+                            sx={{ fontSize: 16, opacity: 0.9, flexShrink: 0, ml: 4, color: filterStyle.textColor }}
+                          />
+                        </Tooltip>
+                      </Box>
+                    }
+                    onDelete={() => handleDeleteFilter(actualIndex)}
+                    deleteIcon={
+                      <Tooltip title='remove' arrow>
+                        <CloseIcon sx={{ color: filterStyle.textColor }} />
+                      </Tooltip>
+                    }
+                    onClick={() => handleEditFilter(filter, actualIndex)}
+                    sx={{
+                      maxWidth: 250,
+                      textOverflow: 'ellipsis',
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                      height: 'auto',
+                      background: filterStyle.background,
+                      border: `1px solid ${filterStyle.borderColor}`,
+                      boxShadow: `0 1px 3px ${alpha(theme.palette.primary.main, 0.08)}`,
+                      '&:hover': {
+                        background: filterStyle.background,
+                        boxShadow: `0 1px 3px ${alpha(theme.palette.primary.main, 0.08)}`
+                      },
+                      '& .MuiChip-deleteIcon': {
+                        visibility: 'visible',
+                        marginRight: '4px',
+                        marginLeft: '0px',
+                        color: filterStyle.textColor,
+                        opacity: 0.9,
+                        '&:hover': {
+                          backgroundColor: 'transparent',
+                          color: filterStyle.textColor,
+                          opacity: 1
                         }
-                      }}
-                    />
-                  )
-                })}
+                      },
+                      '& .MuiChip-label': {
+                        paddingRight: '0px',
+                        paddingLeft: '10px',
+                        height: 'auto',
+                        minHeight: '35px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        color: filterStyle.textColor
+                      }
+                    }}
+                  />
+                )
+              })}
             </Box>
           </Box>
         )}

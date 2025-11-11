@@ -1,48 +1,24 @@
 import mongoose from 'mongoose'
 
-const locationSchema = new mongoose.Schema({
-  country: { type: String },
-  region: { type: String },
-  city: { type: String },
-  order: { type: Number }, // Order of application (1, 2, 3...)
-  operation: {
-    type: String,
-    enum: ['AND', 'OR'],
-    required: false // First filter (order=1) has null operation, subsequent filters specify how to combine with previous results
-  }
-})
-
-const ageGroupSchema = new mongoose.Schema({
-  min: { type: Number, min: 0, max: 120 },
-  max: { type: Number, min: 0, max: 120 },
-  order: { type: Number }, // Order of application (1, 2, 3...)
-  operation: {
-    type: String,
-    enum: ['AND', 'OR'],
-    required: false // First filter (order=1) has null operation, subsequent filters specify how to combine with previous results
-  }
-})
-
-const genderSchema = new mongoose.Schema({
-  values: {
-    type: [String],
-    enum: ['male', 'female', 'other'],
-    validate: {
-      validator: function (v) {
-        return Array.isArray(v) && v.length > 0 && v.every(gender => ['male', 'female', 'other'].includes(gender))
-      },
-      message: 'Gender must be one or more of: male, female, other'
+const filterSchema = new mongoose.Schema(
+  {
+    type: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    criteria: {
+      type: mongoose.Schema.Types.Mixed,
+      required: true
+    },
+    operator: {
+      type: String,
+      enum: ['AND', 'OR'],
+      required: false
     }
   },
-  order: { type: Number }, // Order of application (1, 2, 3...)
-  operation: {
-    type: String,
-    enum: ['AND', 'OR'],
-    required: false // First filter (order=1) has null operation, subsequent filters specify how to combine with previous results
-  }
-})
-
-// Removed filterSchema - storing filters as simple objects
+  { _id: false }
+)
 
 export const audienceSchema = new mongoose.Schema(
   {
@@ -54,10 +30,10 @@ export const audienceSchema = new mongoose.Schema(
       type: String
     },
 
-    // Keep legacy fields for backward compatibility (will be deprecated)
-    location: locationSchema,
-    gender: genderSchema,
-    ageGroup: ageGroupSchema,
+    filters: {
+      type: [filterSchema],
+      default: []
+    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'users',

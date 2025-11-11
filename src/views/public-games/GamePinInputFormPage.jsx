@@ -508,9 +508,11 @@ const GamePinInputFormPage = () => {
                   fontWeight: 600,
                   textTransform: 'none',
                   color: 'white !important',
-                  boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)',
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important',
-                  backgroundImage: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important',
+                  boxShadow: '0 4px 12px rgba(102, 126, 234, 0.35)',
+                  background:
+                    'linear-gradient(135deg, rgba(102, 126, 234, 0.75) 0%, rgba(118, 75, 162, 0.75) 100%) !important',
+                  backgroundImage:
+                    'linear-gradient(135deg, rgba(102, 126, 234, 0.75) 0%, rgba(118, 75, 162, 0.75) 100%) !important',
                   transition: 'box-shadow 0.3s ease',
                   '&:hover': {
                     boxShadow: '0 6px 20px rgba(102, 126, 234, 0.5)',
@@ -523,8 +525,10 @@ const GamePinInputFormPage = () => {
                     backgroundImage: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important'
                   },
                   '&.Mui-disabled': {
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important',
-                    backgroundImage: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important',
+                    background:
+                      'linear-gradient(135deg, rgba(102, 126, 234, 0.55) 0%, rgba(118, 75, 162, 0.55) 100%) !important',
+                    backgroundImage:
+                      'linear-gradient(135deg, rgba(102, 126, 234, 0.55) 0%, rgba(118, 75, 162, 0.55) 100%) !important',
                     opacity: 0.6,
                     color: 'white !important'
                   }
