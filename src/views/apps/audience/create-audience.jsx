@@ -18,6 +18,7 @@ function CreateAudiencePage() {
       const payload = {
         audienceName: values.audienceName,
         description: values.description,
+        filters: Array.isArray(values.filters) ? values.filters : [],
         location: values.location,
         gender: values.gender,
         ageGroup: values.ageGroup,

@@ -386,8 +386,15 @@ const QuizIdInputForm = ({ mode = 'play' }) => {
               fullWidth
               placeholder='Enter Quiz ID'
               variant='outlined'
+              inputProps={{
+                maxLength: 24
+              }}
               value={quizId}
-              onChange={e => setQuizId(e.target.value)}
+              onChange={e => {
+                if (e.target.value.length <= 24) {
+                  setQuizId(e.target.value)
+                }
+              }}
               error={!!error}
               sx={{
                 '& .MuiInputBase-input': {
@@ -406,6 +413,7 @@ const QuizIdInputForm = ({ mode = 'play' }) => {
           <Button
             onClick={handleSubmit}
             variant='contained'
+            component='label'
             fullWidth
             disabled={loading || quizId.length !== 24}
             sx={{
@@ -413,20 +421,24 @@ const QuizIdInputForm = ({ mode = 'play' }) => {
               borderRadius: 2,
               fontSize: '1rem',
               fontWeight: 600,
-              textTransform: 'none',
               color: 'white !important',
-              boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important',
-              backgroundImage: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important',
+              textTransform: 'none',
+              boxShadow: '0 4px 12px rgba(102, 126, 234, 0.35)',
+              background:
+                'linear-gradient(135deg, rgba(102, 126, 234, 0.75) 0%, rgba(118, 75, 162, 0.75) 100%) !important',
+              backgroundImage:
+                'linear-gradient(135deg, rgba(102, 126, 234, 0.75) 0%, rgba(118, 75, 162, 0.75) 100%) !important',
               transition: 'box-shadow 0.3s ease',
               '&:hover': {
-                boxShadow: '0 6px 20px rgba(102, 126, 234, 0.5)',
+                boxShadow: '0 6px 20px rgba(25, 44, 132, 0.5)',
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important',
                 backgroundImage: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important'
               },
               '&.Mui-disabled': {
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important',
-                backgroundImage: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important',
+                background:
+                  'linear-gradient(135deg, rgba(102, 126, 234, 0.55) 0%, rgba(118, 75, 162, 0.55) 100%) !important',
+                backgroundImage:
+                  'linear-gradient(135deg, rgba(102, 126, 234, 0.55) 0%, rgba(118, 75, 162, 0.55) 100%) !important',
                 opacity: 0.6,
                 color: 'white !important'
               }
