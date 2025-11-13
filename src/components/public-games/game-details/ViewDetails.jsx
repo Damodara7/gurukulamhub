@@ -52,6 +52,7 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import FallBackCard from '@/components/apps/games/FallBackCard'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded'
 import Leaderboard from '../play-game/Leaderboard'
 import { useSession } from 'next-auth/react'
 import * as RestApi from '@/utils/restApiUtil'
@@ -150,6 +151,23 @@ const ViewDetails = ({ game }) => {
       >
         <Container maxWidth="lg">
           <Stack spacing={3}>
+            <Button
+              variant="outlined"
+              startIcon={<ArrowBackIosNewRoundedIcon fontSize="small" />}
+              onClick={() => router.push('/public-games')}
+              sx={{
+                alignSelf: 'flex-start',
+                textTransform: 'none',
+                fontWeight: 600,
+                color: theme.palette.primary.main,
+                gap: 0.5,
+                '&:hover': {
+                  backgroundColor: alpha(theme.palette.primary.main, 0.08)
+                }
+              }}
+            >
+              Back to Public Games
+            </Button>
             {/* Title */}
             <Typography
               variant="h3"

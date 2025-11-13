@@ -1,15 +1,36 @@
 // QuizSummary.js
 import React from 'react'
-import { Box, Typography, Button, Card, Grid, Divider, TextField } from '@mui/material'
+import {
+  Box,
+  Typography,
+  Button,
+  Grid,
+  Divider,
+  TextField,
+  Container,
+  Stack,
+  Paper,
+  Chip,
+  LinearProgress,
+  Avatar
+} from '@mui/material'
+import { alpha, useTheme } from '@mui/material/styles'
+import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded'
+import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined'
+import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded'
+import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded'
+import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
+import CancelRoundedIcon from '@mui/icons-material/CancelRounded'
+import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined'
+import WorkspacePremiumOutlinedIcon from '@mui/icons-material/WorkspacePremiumOutlined'
 import { useRouter } from 'next/navigation'
 import { formatTime, formatTimeWithUnits } from '../Timer'
 import VideoAd from '@/views/apps/advertisements/VideoAd/VideoAd'
-import ImagePopup from '../ImagePopup'
 
 const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time }) => {
   const router = useRouter()
-
-  console.log({ selectedAnswers })
+  const theme = useTheme()
+  const isDarkMode = theme.palette.mode === 'dark'
 
   // Correct answers count
   const correctAnswersCount = questions.reduce((total, question) => {
@@ -146,555 +167,775 @@ const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time
     return total + gainedMarks + hintMarks // Add safe values
   }, 0)
 
-  console.log('Total Marks:', totalMarks)
-
   // Optional: Calculate the total percentage based on total marks
   const totalPossibleMarks = questions.reduce((total, question) => total + +question.data.marks, 0)
   const scorePercentage = totalPossibleMarks > 0 ? Math.round((totalMarks / totalPossibleMarks) * 100) : 0
 
+  const passThreshold = 70
+  const isPassed = scorePercentage >= passThreshold
+  const statusCopy = isPassed ? 'Epic work! You nailed this quiz.' : 'Keep going — every attempt levels you up.'
+  const heroTextColor = isDarkMode ? alpha(theme.palette.common.white, 0.95) : alpha(theme.palette.text.primary, 0.96)
+  const accentGradient = `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`
+  const heroHighlights = [
+    {
+      label: 'Time Taken',
+      value: formatTimeWithUnits(time),
+      icon: <AccessTimeRoundedIcon fontSize='medium' />,
+      tone: theme.palette.info
+    },
+    {
+      label: 'Score',
+      value: `${totalMarks.toFixed(2)} / ${totalPossibleMarks.toFixed(2)}`,
+      icon: <EmojiEventsOutlinedIcon fontSize='medium' />,
+      tone: theme.palette.primary
+    },
+    {
+      label: 'Accuracy',
+      value: `${correctAnswersCount}/${questions.length}`,
+      icon: <WorkspacePremiumOutlinedIcon fontSize='medium' />,
+      tone: theme.palette.secondary
+    }
+  ]
+  const hintsUsedCount = Object.values(usedHints || {}).filter(Boolean).length
+  const avgSecondsPerQuestion = questions.length > 0 ? Math.round(time / questions.length) : 0
+  const detailMetrics = [
+    {
+      label: 'Total Marks',
+      value: `${totalMarks.toFixed(2)}`,
+      helper: `Out of ${totalPossibleMarks.toFixed(2)} pts`,
+      palette: theme.palette.primary
+    },
+    {
+      label: 'Hints Used',
+      value: `${hintsUsedCount}`,
+      helper: hintsUsedCount ? 'Hint penalties applied' : 'No hints consumed',
+      palette: theme.palette.info
+    },
+    {
+      label: 'Avg Time / Question',
+      value: formatTimeWithUnits(avgSecondsPerQuestion),
+      helper: `Across ${questions.length} questions`,
+      palette: theme.palette.secondary
+    },
+    {
+      label: 'Correct Answers',
+      value: `${correctAnswersCount}`,
+      helper: `${questions.length > 0 ? Math.round((correctAnswersCount / questions.length) * 100) : 0}% accuracy`,
+      palette: theme.palette.success
+    }
+  ]
+
   return (
-    <Box
-      sx={{
-        maxWidth: '700px',
-        mx: 'auto',
-        mt: 4,
-        p: 3,
-        backgroundColor: '#f8f9fa',
-        borderRadius: 2,
-        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)'
-      }}
-    >
-      <Typography variant='h4' gutterBottom sx={{ textAlign: 'center', fontWeight: 600, color: '#333' }}>
-        Quiz Summary
-      </Typography>
-
-      {/* Time Taken Display */}
-      <Typography
-        variant='h6'
-        sx={{
-          textAlign: 'center',
-          mx: 'auto',
-          background: 'linear-gradient(45deg, #FF4081 30%, #FFAB40 90%)', // Gradient background
-          padding: '10px', // Increased padding for a more spacious feel
-          borderRadius: 5,
-          color: '#fff',
-          fontWeight: 600,
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)', // Strong shadow for depth
-          textShadow: '1px 1px 3px rgba(0, 0, 0, 0.4)', // Text shadow for emphasis
-          my: 2,
-          transition: 'transform 0.3s ease', // Smooth scaling effect
-          '&:hover': {},
-          position: 'relative', // Positioning for before pseudo-element
-          overflow: 'hidden' // To ensure before pseudo-element doesn't overflow
-        }}
-      >
-        <span>⏳ {/* Optional emoji for fun */}</span>
-        Time Taken: {formatTimeWithUnits(time)} {/* Displaying formatted time */}
-      </Typography>
-
-      <Typography
-        variant='h6'
-        sx={{
-          textAlign: 'center',
-          backgroundColor: scorePercentage >= 70 ? '#e3f2fd' : '#ffebee',
-          padding: '10px',
-          borderRadius: 1,
-          color: scorePercentage >= 70 ? '#1e88e5' : '#e53935',
-          fontWeight: 500,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          gap: 2
-        }}
-      >
-        <span>
-          You answered {correctAnswersCount} out of {questions.length} correctly
-        </span>
-
-        {/* Vertical Divider */}
-        <Divider
-          orientation='vertical'
-          flexItem
+    <Container maxWidth='lg' sx={{ py: { xs: 4, md: 6 }, px: { xs: 2, sm: 3, md: 4 } }}>
+      <Stack spacing={{ xs: 3.5, md: 4 }}>
+        <Paper
+          elevation={0}
           sx={{
-            alignSelf: 'stretch', // Ensure the divider stretches to match content height
-            borderWidth: '1px',
-            borderColor: scorePercentage >= 70 ? '#1e88e5' : '#e53935' // Match the color of the text
-          }}
-        />
-
-        <span
-          sx={{
-            fontWeight: 700, // Bold for emphasis
-            color: '#333' // Color for total marks
+            borderRadius: { xs: 3, md: 4 },
+            px: { xs: 3, md: 4 },
+            py: { xs: 3.2, md: 4 },
+            backgroundColor: theme.palette.background.paper,
+            border: `1px solid ${alpha(theme.palette.primary.main, isDarkMode ? 0.25 : 0.15)}`,
+            boxShadow: isDarkMode ? '0 14px 28px rgba(9, 12, 28, 0.4)' : '0 18px 32px rgba(15, 23, 42, 0.08)'
           }}
         >
-          Marks: {totalMarks.toFixed(2)} {/* Show two decimal points for precision */}
-        </span>
-      </Typography>
-
-      <Box sx={{ mt: 4 }}>
-        {questions.map((question, index) => {
-          const selectedAnswer = selectedAnswers[question._id]
-          // Safely access correctAnswers, defaults to an empty array if options do not exist
-          const correctAnswers = question.data.options?.filter(option => option.correct) || []
-
-          let gainedMarks = 0
-          let incorrectSelected = []
-
-          if (question.templateId === 'single-choice') {
-            gainedMarks = selectedAnswer === correctAnswers[0]?.id ? +question.data.marks : 0
-          } else if (question.templateId === 'multiple-choice') {
-            const correctSelected = Array.isArray(selectedAnswer)
-              ? selectedAnswer.filter(id => correctAnswers.some(option => option.id === id))
-              : []
-            incorrectSelected = Array.isArray(selectedAnswer)
-              ? selectedAnswer.filter(id => !correctAnswers.some(option => option.id === id))
-              : []
-
-            // If any incorrect answers are selected, mark the answer as wrong
-            if (incorrectSelected.length > 0) {
-              gainedMarks = 0
-            } else {
-              gainedMarks = (correctSelected.length / correctAnswers.length) * +question.data.marks
-            }
-          } else if (question.templateId === 'true-or-false') {
-            gainedMarks = selectedAnswer === correctAnswers[0]?.id ? +question.data.marks : 0
-          } else if (question.templateId === 'fill-in-blank') {
-            // Handle the fill-in-blank logic
-            const correctBlanks = question.data.question.filter(part => part.type === 'blank') || [] // Assuming correct answers are stored in correctBlanks
-            selectedAnswer.forEach(blankAnswer => {
-              const correctBlank = correctBlanks.find(correct => correct.id === blankAnswer.id)
-              if (
-                correctBlank &&
-                blankAnswer.content.trim().toLowerCase() === correctBlank.content.trim().toLowerCase()
-              ) {
-                gainedMarks += +question.data.marks / correctBlanks.length // Assign marks based on the number of blanks
-              }
-            })
-          }
-
-          const hintUsed = usedHints[question._id]
-          const finalMarks = gainedMarks + (hintUsed ? question.data.hintMarks || 0 : 0) // hintMarks already negative
-          console.log('index: ', index, 'gainedMarks: ', gainedMarks, 'finalMarks: ', finalMarks)
-
-          const questionObj = question?.data?.question
-
-          return (
-            <Card
-              key={question._id}
-              sx={{
-                mb: 3,
-                p: 2,
-                backgroundColor: '#fff',
-                borderRadius: 2,
-                boxShadow: '0 1px 4px rgba(0,0,0,0.05)'
-              }}
-            >
-              <Box className='flex items-center gap-1' sx={{ float: 'right' }}>
+          <Stack spacing={{ xs: 2.8, md: 3.4 }}>
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={{ xs: 1.6, md: 2.2 }} justifyContent='space-between'>
+              <Stack spacing={0.8}>
+                <Typography variant='overline' sx={{ letterSpacing: '0.18em', fontWeight: 700 }}>
+                  Quiz Completed
+                </Typography>
+                <Typography variant='h4' sx={{ fontWeight: 800, letterSpacing: '-0.015em', color: heroTextColor }}>
+                  Quiz Summary
+                </Typography>
                 <Typography
-                  variant='body2'
+                  variant='body1'
                   sx={{
-                    fontWeight: 600,
-                    color:
-                      finalMarks > 0
-                        ? '#4caf50' // Success green for positive marks
-                        : finalMarks === 0
-                          ? '#f44336' // Default color for zero marks
-                          : '#f44336' // Error red for negative marks
+                    maxWidth: 540,
+                    color: isDarkMode ? alpha(theme.palette.common.white, 0.82) : alpha(theme.palette.text.primary, 0.75),
+                    lineHeight: 1.65
                   }}
                 >
-                  {finalMarks > 0
-                    ? `+${finalMarks.toFixed(2)} Marks`
-                    : finalMarks === 0
-                      ? 'No Marks'
-                      : `${finalMarks.toFixed(2)} Marks`}
+                  {statusCopy}
                 </Typography>
-                {hintUsed && <Typography variant='subtitle1'>{`(Hint used: ${question?.data?.hintMarks})`}</Typography>}
-              </Box>
+              </Stack>
 
-              {/* <Typography variant='subtitle1' sx={{ fontWeight: 600, color: '#333', mb: 1 }}>
-                {`${index + 1}. ${question.data.question}`}
-              </Typography> */}
-              <Typography variant='subtitle1' sx={{ fontWeight: 600, color: '#333', mb: 2 }}>
-                {index + 1}.{' '}
-                {(questionObj.mediaType === 'text' ||
-                  questionObj.mediaType === 'text-image' ||
-                  questionObj.mediaType === 'text-video') &&
-                  questionObj.text && <span>{questionObj.text}</span>}
-                {/* Video Only - Display Instructional Text */}
-                {questionObj.mediaType === 'video' && <span>Watch the video carefully and answer the question.</span>}
-                {(questionObj.mediaType === 'image' || questionObj.mediaType === 'text-image') && questionObj.image && (
+              <Chip
+                color={isPassed ? 'success' : 'warning'}
+                label={isPassed ? 'Passed' : 'Keep Practicing'}
+                sx={{
+                  alignSelf: { xs: 'flex-start', md: 'center' },
+                  fontWeight: 700,
+                  borderRadius: 999,
+                  px: 2.4,
+                  py: 0.9,
+                  fontSize: '0.8rem'
+                }}
+              />
+            </Stack>
+
+            <Grid container spacing={{ xs: 1.4, md: 2 }}>
+              {heroHighlights.map(highlight => (
+                <Grid item xs={12} sm={4} key={highlight.label}>
                   <Box
-                    component='img'
-                    src={questionObj.image}
-                    alt='Question'
                     sx={{
-                      width: '100%',
-                      maxHeight: '200px',
-                      objectFit: 'contain',
-                      borderRadius: '8px',
-                      border: '1px solid #ccc',
-                      mt: 2 // Adds spacing above the image
+                      borderRadius: 3,
+                      px: 2.2,
+                      py: 1.8,
+                      border: `1px solid ${alpha(highlight.tone.main, isDarkMode ? 0.32 : 0.18)}`,
+                      backgroundColor: alpha(highlight.tone.main, isDarkMode ? 0.16 : 0.08),
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1.4
                     }}
-                  />
-                )}
-                {(questionObj.mediaType === 'text-video' || questionObj.mediaType === 'video') && (
-                  <Box display='flex' flexDirection='column' alignItems='center'>
-                    {/* <span>{questionObj.text}</span> */}
-                    {questionObj.video && (
-                      <Box className='flex flex-col gap-1 items-center'>
-                        <Box className='flex flex-col gap-1 items-center'>
-                          <VideoAd url={questionObj.video || ''} height='100px' showPause autoPlay={false} />
-                          {/* <ImagePopup imageUrl={questionObj.video || ''} mediaType={'video'} /> */}
-                        </Box>
-                      </Box>
-                    )}
+                  >
+                    <Avatar
+                      variant='rounded'
+                      sx={{
+                        width: 42,
+                        height: 42,
+                        borderRadius: 14,
+                        backgroundColor: alpha(highlight.tone.main, 0.2),
+                        color: highlight.tone.dark
+                      }}
+                    >
+                      {highlight.icon}
+                    </Avatar>
+                    <Stack spacing={0.4}>
+                      <Typography
+                        variant='caption'
+                        sx={{
+                          fontWeight: 600,
+                          letterSpacing: '0.08em',
+                          color: isDarkMode ? alpha(theme.palette.common.white, 0.7) : alpha(theme.palette.text.primary, 0.6)
+                        }}
+                      >
+                        {highlight.label}
+                      </Typography>
+                      <Typography
+                        variant='subtitle1'
+                        sx={{ fontWeight: 700, color: isDarkMode ? alpha(theme.palette.common.white, 0.92) : heroTextColor }}
+                      >
+                        {highlight.value}
+                      </Typography>
+                    </Stack>
                   </Box>
-                )}
-              </Typography>
+                </Grid>
+              ))}
+            </Grid>
 
-              <Box sx={{ mt: 1 }}>
-                <Grid container spacing={2}>
-                  {
-                    question.templateId === 'fill-in-blank' ? (
-                      <Grid item xs={12}>
-                        {question.data.question?.map((part, index) => (
-                          <Box key={part.id} display='inline-flex' alignItems='center' sx={{ mr: 1, mb: 1 }}>
-                            {part.type === 'text' ? (
-                              <Typography variant='body1' component='span'>
-                                {part.content}
-                              </Typography>
-                            ) : (
+            <Box
+              sx={{
+                borderRadius: 3,
+                px: 2.6,
+                py: 2.4,
+                border: `1px solid ${alpha(theme.palette.primary.main, isDarkMode ? 0.32 : 0.15)}`,
+                backgroundColor: alpha(theme.palette.primary.main, isDarkMode ? 0.12 : 0.08)
+              }}
+            >
+              <Stack spacing={1.6}>
+                <Stack direction='row' justifyContent='space-between' alignItems='center'>
+                  <Typography variant='subtitle2' sx={{ textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>
+                    Overall score
+                  </Typography>
+                  <Typography variant='h5' sx={{ fontWeight: 800 }}>
+                    {scorePercentage}%
+                  </Typography>
+                </Stack>
+                <LinearProgress
+                  value={scorePercentage}
+                  variant='determinate'
+                  sx={{
+                    height: 10,
+                    borderRadius: 999,
+                    backgroundColor: alpha(theme.palette.primary.main, 0.2),
+                    '& .MuiLinearProgress-bar': {
+                      borderRadius: 999,
+                      backgroundColor: theme.palette.primary.main
+                    }
+                  }}
+                />
+                <Stack direction='row' spacing={3}>
+                  <Stack spacing={0.3}>
+                    <Typography variant='caption' sx={{ letterSpacing: '0.08em', color: alpha(heroTextColor, 0.7) }}>
+                      Marks Earned
+                    </Typography>
+                    <Typography variant='subtitle1' fontWeight={700}>
+                      {totalMarks.toFixed(2)} pts
+                    </Typography>
+                  </Stack>
+                  <Stack spacing={0.3}>
+                    <Typography variant='caption' sx={{ letterSpacing: '0.08em', color: alpha(heroTextColor, 0.7) }}>
+                      Total Time
+                    </Typography>
+                    <Typography variant='subtitle1' fontWeight={700}>
+                      {formatTimeWithUnits(time)}
+                    </Typography>
+                  </Stack>
+                </Stack>
+              </Stack>
+            </Box>
+
+            <Grid container spacing={{ xs: 1.2, md: 1.8 }}>
+              {detailMetrics.map(detail => (
+                <Grid item xs={12} sm={6} md={3} key={detail.label}>
+                  <Box
+                    sx={{
+                      borderRadius: 3,
+                      px: 2.2,
+                      py: 1.6,
+                      border: `1px solid ${alpha(detail.palette.main, isDarkMode ? 0.28 : 0.16)}`,
+                      backgroundColor: theme.palette.background.paper,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 0.5
+                    }}
+                  >
+                    <Typography
+                      variant='caption'
+                      sx={{ letterSpacing: '0.08em', textTransform: 'uppercase', color: alpha(heroTextColor, 0.65), fontWeight: 600 }}
+                    >
+                      {detail.label}
+                    </Typography>
+                    <Typography variant='h6' sx={{ fontWeight: 800, color: heroTextColor }}>
+                      {detail.value}
+                    </Typography>
+                    <Typography variant='body2' sx={{ color: alpha(heroTextColor, 0.7) }}>
+                      {detail.helper}
+                    </Typography>
+                  </Box>
+                </Grid>
+              ))}
+            </Grid>
+          </Stack>
+        </Paper>
+
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={{ xs: 1.2, sm: 1.6 }}
+          justifyContent='flex-end'
+          alignItems={{ xs: 'stretch', sm: 'center' }}
+        >
+          <Button
+            variant='contained'
+            color='primary'
+            component='label'
+            startIcon={<ReplayRoundedIcon />}
+            onClick={handleReplay}
+            sx={{
+              borderRadius: 999,
+              px: { xs: 3, sm: 4 },
+              py: { xs: 1.2, sm: 1.4 },
+              color: 'white',
+              textTransform: 'none',
+              fontWeight: 700,
+              fontSize: { xs: '0.95rem', sm: '1rem' }
+            }}
+          >
+            Replay Quiz
+          </Button>
+
+          <Button
+            variant='outlined'
+            color='primary'
+            startIcon={<ArrowBackIosNewRoundedIcon />}
+            onClick={() => router.push('/publicquiz/view')}
+            sx={{
+              borderRadius: 999,
+              px: { xs: 2.6, sm: 3.2 },
+              py: { xs: 1.1, sm: 1.25 },
+              textTransform: 'none',
+              fontWeight: 700,
+              fontSize: { xs: '0.9rem', sm: '0.95rem' }
+            }}
+          >
+            Back to Quizzes
+          </Button>
+        </Stack>
+
+        <Stack spacing={{ xs: 2.4, md: 3 }}>
+          {questions.map((question, index) => {
+            const rawSelectedAnswer = selectedAnswers[question._id]
+            const selectedAnswer =
+              question.templateId === 'multiple-choice' || question.templateId === 'fill-in-blank'
+                ? (Array.isArray(rawSelectedAnswer) ? rawSelectedAnswer : [])
+                : rawSelectedAnswer
+
+            const correctAnswers = question.data.options?.filter(option => option.correct) || []
+            let gainedMarks = 0
+            let incorrectSelected = []
+
+            if (question.templateId === 'single-choice') {
+              gainedMarks = selectedAnswer === correctAnswers[0]?.id ? +question.data.marks : 0
+            } else if (question.templateId === 'multiple-choice') {
+              const selectedAnswerIds = Array.isArray(selectedAnswer) ? selectedAnswer : []
+              const correctSelected = selectedAnswerIds.filter(id => correctAnswers.some(option => option.id === id))
+              incorrectSelected = selectedAnswerIds.filter(id => !correctAnswers.some(option => option.id === id))
+
+              if (incorrectSelected.length > 0) {
+                gainedMarks = 0
+              } else if (correctAnswers.length > 0) {
+                gainedMarks = (correctSelected.length / correctAnswers.length) * +question.data.marks
+              }
+            } else if (question.templateId === 'true-or-false') {
+              gainedMarks = selectedAnswer === correctAnswers[0]?.id ? +question.data.marks : 0
+            } else if (question.templateId === 'fill-in-blank') {
+              const correctBlanks = question.data.question.filter(part => part.type === 'blank') || []
+              const selectedBlankAnswers = Array.isArray(selectedAnswer) ? selectedAnswer : []
+
+              selectedBlankAnswers.forEach(blankAnswer => {
+                const correctBlank = correctBlanks.find(correct => correct.id === blankAnswer.id)
+                if (
+                  correctBlank &&
+                  blankAnswer.content?.trim().toLowerCase() === correctBlank.content?.trim().toLowerCase()
+                ) {
+                  gainedMarks += +question.data.marks / (correctBlanks.length || 1)
+                }
+              })
+            }
+
+            const hintUsed = usedHints[question._id]
+            const finalMarks = gainedMarks + (hintUsed ? question.data.hintMarks || 0 : 0)
+            const questionObj = question?.data?.question || {}
+
+            const maxMarks = Number(question.data?.marks) || 0
+            const attempted =
+              question.templateId === 'multiple-choice'
+                ? Array.isArray(selectedAnswer) && selectedAnswer.length > 0
+                : question.templateId === 'fill-in-blank'
+                  ? Array.isArray(selectedAnswer) && selectedAnswer.length > 0
+                  : Boolean(selectedAnswer)
+
+            let statusColor = 'default'
+            let statusLabel = 'Not attempted'
+            let StatusIcon = CancelRoundedIcon
+
+            if (!attempted) {
+              statusColor = 'default'
+              statusLabel = 'Not attempted'
+              StatusIcon = CancelRoundedIcon
+            } else if (finalMarks <= 0) {
+              statusColor = 'error'
+              statusLabel = 'Incorrect'
+              StatusIcon = CancelRoundedIcon
+            } else if (maxMarks > 0 && finalMarks < maxMarks) {
+              statusColor = 'warning'
+              statusLabel = 'Partially correct'
+              StatusIcon = CheckCircleRoundedIcon
+            } else {
+              statusColor = 'success'
+              statusLabel = 'Correct'
+              StatusIcon = CheckCircleRoundedIcon
+            }
+
+            const questionTitle =
+              (['text', 'text-image', 'text-video'].includes(questionObj.mediaType) && questionObj.text) ||
+              (questionObj.mediaType === 'video' ? 'Watch the video carefully and answer the question.' : '')
+            const isLastQuestion = index === questions.length - 1
+
+            return (
+              <Stack
+                key={question._id}
+                direction='row'
+                spacing={{ xs: 2, md: 2.6 }}
+                alignItems='stretch'
+              >
+                <Stack alignItems='center' sx={{ position: 'relative', pt: 1 }}>
+                  <Box
+                    sx={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 700,
+                      fontSize: '1rem',
+                      background: accentGradient,
+                      color: theme.palette.common.white,
+                      boxShadow: '0 12px 24px rgba(43, 89, 255, 0.25)'
+                    }}
+                  >
+                    {index + 1}
+                  </Box>
+                  {/* {!isLastQuestion && ( */}
+                    <Box
+                      sx={{
+                        width: 3,
+                        flex: 1,
+                        mt: 1,
+                        borderRadius: 999,
+                        background: `linear-gradient(180deg, ${alpha(theme.palette.primary.main, 0.4)}, transparent)`
+                      }}
+                    />
+                  {/* )} */}
+                </Stack>
+
+                <Paper
+                  elevation={0}
+                  sx={{
+                    flex: 1,
+                    borderRadius: 3,
+                    px: { xs: 2.4, md: 3 },
+                    py: { xs: 2.2, md: 2.6 },
+                    background: isDarkMode
+                      ? `linear-gradient(145deg, ${alpha(theme.palette.primary.dark, 0.2)}, ${alpha(
+                          theme.palette.background.paper,
+                          0.78
+                        )})`
+                      : `linear-gradient(145deg, ${alpha(theme.palette.primary.light, 0.12)}, ${alpha(
+                          theme.palette.background.paper,
+                          0.98
+                        )})`,
+                    border: `1px solid ${alpha(theme.palette.primary.main, isDarkMode ? 0.3 : 0.18)}`,
+                    boxShadow: isDarkMode ? '0 18px 32px rgba(15, 23, 42, 0.32)' : '0 12px 24px rgba(15, 23, 42, 0.08)'
+                  }}
+                >
+                <Stack spacing={{ xs: 1.8, md: 2.4 }}>
+                  <Stack
+                    direction={{ xs: 'column', md: 'row' }}
+                    spacing={{ xs: 1.4, md: 2 }}
+                    justifyContent='space-between'
+                    alignItems={{ xs: 'flex-start', md: 'center' }}
+                  >
+                    <Stack spacing={0.8} sx={{ minWidth: 0 }}>
+                      <Typography variant='overline' sx={{ letterSpacing: '0.18em', opacity: 0.6 }}>
+                        Question {index + 1}
+                      </Typography>
+                      <Typography variant='h6' sx={{ fontWeight: 700, letterSpacing: '-0.01em' }}>
+                        {questionTitle}
+                      </Typography>
+                      {questionObj.mediaType === 'text-image' && questionObj.text && (
+                        <Typography variant='body2' sx={{ color: alpha(theme.palette.text.primary, 0.76) }}>
+                          {questionObj.text}
+                        </Typography>
+                      )}
+                    </Stack>
+
+                    <Stack
+                      direction={{ xs: 'row', md: 'row' }}
+                      spacing={{ xs: 1, md: 1.4 }}
+                      alignItems='center'
+                      flexWrap='wrap'
+                    >
+                      <Chip
+                        color={statusColor}
+                        variant='filled'
+                        icon={<StatusIcon fontSize='small' />}
+                        label={statusLabel}
+                        sx={{
+                          fontWeight: 700,
+                          borderRadius: 999,
+                          px: 1.8,
+                          backgroundColor:
+                            statusColor === 'default'
+                              ? alpha(theme.palette.text.primary, isDarkMode ? 0.18 : 0.08)
+                              : undefined
+                        }}
+                      />
+                      {hintUsed && (
+                        <Chip
+                          color='info'
+                          variant='outlined'
+                          icon={<LightbulbOutlinedIcon sx={{ fontSize: '1rem' }} />}
+                          label={`Hint used (${question?.data?.hintMarks || 0})`}
+                          sx={{
+                            fontWeight: 600,
+                            borderRadius: 999
+                          }}
+                        />
+                      )}
+                      <Typography variant='body2' fontWeight={700}>
+                        {finalMarks > 0 ? '+' : ''}
+                        {finalMarks.toFixed(2)} / {maxMarks.toFixed(2)} pts
+                      </Typography>
+                    </Stack>
+                  </Stack>
+
+                  {(questionObj.mediaType === 'image' || questionObj.mediaType === 'text-image') && questionObj.image && (
+                    <Box
+                      component='img'
+                      src={questionObj.image}
+                      alt='Question'
+                      sx={{
+                        width: '100%',
+                        maxHeight: 260,
+                        objectFit: 'cover',
+                        borderRadius: 2,
+                        border: `1px solid ${alpha(theme.palette.primary.main, 0.15)}`
+                      }}
+                    />
+                  )}
+
+                  {(questionObj.mediaType === 'text-video' || questionObj.mediaType === 'video') && questionObj.video && (
+                    <Box display='flex' flexDirection='column' alignItems='center' gap={1}>
+                      {questionObj.text && (
+                        <Typography variant='body2' color={alpha(theme.palette.text.primary, 0.8)}>
+                          {questionObj.text}
+                        </Typography>
+                      )}
+                      <VideoAd url={questionObj.video || ''} height='180px' showPause autoPlay={false} />
+                    </Box>
+                  )}
+
+                  <Divider sx={{ borderColor: alpha(theme.palette.primary.main, 0.1) }} />
+
+                  <Box>
+                    <Grid container spacing={1.4}>
+                      {question.templateId === 'fill-in-blank' ? (
+                        <Grid item xs={12}>
+                          {question.data.question?.map(part => {
+                            if (part.type === 'text') {
+                              return (
+                                <Typography key={part.id} variant='body1' component='span' sx={{ mr: 1, color: 'inherit' }}>
+                                  {part.content}
+                                </Typography>
+                              )
+                            }
+
+                            const blanksAnswers = Array.isArray(selectedAnswer) ? selectedAnswer : []
+                            const userResponse = blanksAnswers.find(answer => answer.id === part.id)
+                            const isCorrect =
+                              userResponse?.content?.trim().toLowerCase() === part.content?.trim().toLowerCase()
+
+                            return (
                               <TextField
+                                key={part.id}
+                                value={userResponse?.content || ''}
                                 size='small'
                                 variant='outlined'
-                                readOnly
-                                value={selectedAnswer.find(answer => answer.id === part.id)?.content || ''}
-                                color={
-                                  selectedAnswer
-                                    .find(answer => answer.id === part.id)
-                                    ?.content.trim()
-                                    .toLowerCase() === part.content.trim().toLowerCase()
-                                    ? 'success'
-                                    : 'error'
-                                }
+                                InputProps={{ readOnly: true }}
                                 sx={{
-                                  minWidth: '100px', // Ensures the input has a minimum width
-                                  maxWidth: '300px', // Max width for larger inputs
-                                  marginBottom: '2px', // Space below the input field
+                                  mr: 1,
+                                  mb: 1,
+                                  minWidth: 120,
                                   '& .MuiOutlinedInput-root': {
-                                    pointerEvents: 'none', // Prevent interaction
-                                    border: '1px solid', // Custom border color
-                                    borderColor:
-                                      selectedAnswer
-                                        .find(answer => answer.id === part.id)
-                                        ?.content.trim()
-                                        .toLowerCase() === part.content.trim().toLowerCase()
-                                        ? 'green'
-                                        : 'red',
+                                    borderRadius: 2,
+                                    fontWeight: 600,
+                                    bgcolor: alpha(
+                                      isCorrect ? theme.palette.success.light : theme.palette.error.light,
+                                      0.18
+                                    ),
                                     '& fieldset': {
-                                      display: 'none' // Hides the default outline
-                                    },
-                                    '&:hover': {
-                                      borderColor:
-                                        selectedAnswer
-                                          .find(answer => answer.id === part.id)
-                                          ?.content.trim()
-                                          .toLowerCase() === part.content.trim().toLowerCase()
-                                          ? 'green'
-                                          : 'red'
-                                    },
-                                    '&.Mui-focused': {
-                                      borderColor:
-                                        selectedAnswer
-                                          .find(answer => answer.id === part.id)
-                                          ?.content.trim()
-                                          .toLowerCase() === part.content.trim().toLowerCase()
-                                          ? 'green'
-                                          : 'red'
+                                      borderColor: alpha(
+                                        isCorrect ? theme.palette.success.main : theme.palette.error.main,
+                                        0.6
+                                      )
                                     }
-                                  },
-                                  backgroundColor: '#f5f5f5', // Gives a subtle box background color
-                                  borderRadius: '4px' // Optional: Makes it look more like a box
+                                  }
                                 }}
-                                InputProps={{
-                                  disableUnderline: true, // Disables underline in case of variant='standard'
-                                  style: {
-                                    color:
-                                      selectedAnswer
-                                        .find(answer => answer.id === part.id)
-                                        ?.content.trim()
-                                        .toLowerCase() === part.content.trim().toLowerCase()
-                                        ? 'green'
-                                        : 'red'
+                                helperText={
+                                  isCorrect
+                                    ? 'Correct'
+                                    : userResponse
+                                      ? `Correct answer: ${part.content}`
+                                      : 'Not answered'
+                                }
+                                FormHelperTextProps={{
+                                  sx: {
+                                    mt: 0.3,
+                                    fontSize: '0.7rem',
+                                    fontWeight: 600,
+                                    color: alpha(
+                                      isCorrect ? theme.palette.success.main : theme.palette.error.main,
+                                      0.9
+                                    )
                                   }
                                 }}
                               />
-                            )}
-                          </Box>
-                        ))}
-                        .
-                      </Grid>
-                    ) : question.templateId === 'true-or-false' ? (
-                      question.data.options?.map(option => {
-                        const isUserAnswer = Array.isArray(selectedAnswer)
-                          ? selectedAnswer.includes(option.id)
-                          : selectedAnswer === option.id
-                        const isCorrectAnswer = option.correct
+                            )
+                          })}
+                        </Grid>
+                      ) : question.templateId === 'true-or-false'
+                        ? question.data.options?.map(option => {
+                            const isUserAnswer = Array.isArray(selectedAnswer)
+                              ? selectedAnswer.includes(option.id)
+                              : selectedAnswer === option.id
+                            const isCorrectAnswer = option.correct
+                            const isCorrectSelection = isUserAnswer && isCorrectAnswer
+                            const isWrongSelection = isUserAnswer && !isCorrectAnswer
 
-                        return (
-                          <Grid item xs={6} key={option.id}>
-                            <Box
-                              sx={{
-                                p: 2,
-                                borderRadius: 1,
-                                backgroundColor: isUserAnswer
-                                  ? isCorrectAnswer
-                                    ? '#4caf50' // Correctly answered
-                                    : '#f44336' // Incorrectly answered
-                                  : isCorrectAnswer
-                                    ? '#c8e6c9' // Correct answer, not selected
-                                    : '#e0e0e0', // Incorrect answer, not selected
-                                color: isUserAnswer ? 'white' : '#333',
-                                boxShadow: 2,
-                                display: 'flex', // Use flex to align items
-                                flexDirection: 'column', // Stack items vertically
-                                alignItems: 'center', // Center items horizontally
-                                textAlign: 'center', // Center text
-                                height: '100%', // Set height to fill the grid item
-                                flexGrow: 1 // Allow the box to grow and fill space
-                              }}
-                            >
-                              {/* Conditional rendering based on media type */}
-                              {option.mediaType === 'image' && option.image && (
+                            return (
+                              <Grid item xs={12} sm={6} key={option.id}>
                                 <Box
-                                  component='img'
-                                  src={option.image}
-                                  alt={option.text}
                                   sx={{
-                                    width: '100%',
-                                    height: 100,
-                                    objectFit: 'cover',
-                                    borderRadius: 1,
-                                    marginBottom: 1
+                                    p: { xs: 1.8, md: 2.2 },
+                                    borderRadius: 2,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    gap: 1,
+                                    textAlign: 'center',
+                                    height: '100%',
+                                    border: `1px solid ${
+                                      isCorrectSelection
+                                        ? alpha(theme.palette.success.main, 0.6)
+                                        : isWrongSelection
+                                          ? alpha(theme.palette.error.main, 0.6)
+                                          : alpha(theme.palette.primary.main, 0.12)
+                                    }`,
+                                    background: `linear-gradient(135deg, ${
+                                      isCorrectSelection
+                                        ? alpha(theme.palette.success.light, 0.3)
+                                        : isWrongSelection
+                                          ? alpha(theme.palette.error.light, 0.3)
+                                          : alpha(theme.palette.background.paper, 0.9)
+                                    }, ${alpha(theme.palette.background.paper, 0.95)})`,
+                                    color: isCorrectSelection
+                                      ? theme.palette.success.dark
+                                      : isWrongSelection
+                                        ? theme.palette.error.dark
+                                        : theme.palette.text.primary,
+                                    boxShadow: isUserAnswer ? '0 10px 24px rgba(15, 23, 42, 0.12)' : 'none'
                                   }}
-                                />
-                              )}
+                                >
+                                  {option.mediaType === 'image' && option.image && (
+                                    <Box
+                                      component='img'
+                                      src={option.image}
+                                      alt={option.text || ''}
+                                      sx={{
+                                        width: '100%',
+                                        maxHeight: 120,
+                                        objectFit: 'cover',
+                                        borderRadius: 1.5
+                                      }}
+                                    />
+                                  )}
+                                  {option.mediaType === 'video' && option.videoUrl && (
+                                    <video
+                                      src={option.videoUrl}
+                                      controls
+                                      style={{
+                                        width: '100%',
+                                        borderRadius: 8
+                                      }}
+                                    />
+                                  )}
+                                  {option.mediaType === 'audio' && option.audioUrl && (
+                                    <audio src={option.audioUrl} controls style={{ width: '100%' }} />
+                                  )}
 
-                              {option.mediaType === 'video' && option.videoUrl && (
-                                <video
-                                  src={option.videoUrl}
-                                  controls
-                                  style={{
-                                    width: '100%',
-                                    height: 'auto',
-                                    borderRadius: '4px',
-                                    marginBottom: '8px'
-                                  }}
-                                />
-                              )}
+                                  {option.mediaType === 'text' && option.text && (
+                                    <Typography variant='body1' fontWeight={600}>
+                                      {option.text}
+                                    </Typography>
+                                  )}
+                                </Box>
+                              </Grid>
+                            )
+                          })
+                        : question.data.options?.map(option => {
+                            const isUserAnswer = Array.isArray(selectedAnswer)
+                              ? selectedAnswer.includes(option.id)
+                              : selectedAnswer === option.id
+                            const isCorrectAnswer = option.correct
+                            const isMatch = isUserAnswer && isCorrectAnswer
+                            const isWrongPick = isUserAnswer && !isCorrectAnswer
 
-                              {option.mediaType === 'audio' && option.audioUrl && (
-                                <audio
-                                  src={option.audioUrl}
-                                  controls
-                                  style={{
-                                    width: '100%',
-                                    marginBottom: '8px'
-                                  }}
-                                />
-                              )}
-
-                              {/* Text Label */}
-                              {option.mediaType === 'text' && option.text && (
-                                <Typography variant='body1' sx={{ color: isUserAnswer ? 'white' : '#333' }}>
-                                  {option.text}
-                                </Typography>
-                              )}
-                            </Box>
-                          </Grid>
-                        )
-                      }) || null // Ensure to return null if options are undefined
-                    ) : (
-                      question.data.options?.map(option => {
-                        const isUserAnswer = Array.isArray(selectedAnswer)
-                          ? selectedAnswer.includes(option.id)
-                          : selectedAnswer === option.id
-                        const isCorrectAnswer = option.correct
-
-                        return (
-                          <Grid item xs={6} sm={3} key={option.id}>
-                            <Box
-                              sx={{
-                                p: 2,
-                                borderRadius: 1,
-                                backgroundColor: isUserAnswer
-                                  ? isCorrectAnswer
-                                    ? '#4caf50' // Correctly answered
-                                    : '#f44336' // Incorrectly answered
-                                  : isCorrectAnswer
-                                    ? '#c8e6c9' // Correct answer, not selected
-                                    : '#e0e0e0', // Incorrect answer, not selected
-                                color: isUserAnswer ? 'white' : '#333',
-                                boxShadow: 2,
-                                display: 'flex', // Use flex to align items
-                                flexDirection: 'column', // Stack items vertically
-                                alignItems: 'center', // Center items horizontally
-                                textAlign: 'center', // Center text
-                                height: '100%', // Set height to fill the grid item
-                                flexGrow: 1 // Allow the box to grow and fill space
-                              }}
-                            >
-                              {/* Conditional rendering based on media type */}
-                              {option.mediaType === 'image' && option.image && (
+                            return (
+                              <Grid item xs={12} sm={6} md={3} key={option.id}>
                                 <Box
-                                  component='img'
-                                  src={option.image}
-                                  alt={option.text}
                                   sx={{
-                                    width: '100%',
-                                    height: 100,
-                                    objectFit: 'cover',
-                                    borderRadius: 1,
-                                    marginBottom: 1
+                                    p: { xs: 1.6, md: 2 },
+                                    borderRadius: 2,
+                                    border: `1px solid ${
+                                      isMatch
+                                        ? alpha(theme.palette.success.main, 0.6)
+                                        : isWrongPick
+                                          ? alpha(theme.palette.error.main, 0.6)
+                                          : alpha(theme.palette.primary.main, 0.12)
+                                    }`,
+                                    background: isMatch
+                                      ? alpha(theme.palette.success.light, 0.32)
+                                      : isWrongPick
+                                        ? alpha(theme.palette.error.light, 0.3)
+                                        : alpha(theme.palette.background.paper, 0.92),
+                                    color: isMatch
+                                      ? theme.palette.success.dark
+                                      : isWrongPick
+                                        ? theme.palette.error.dark
+                                        : theme.palette.text.primary,
+                                    textAlign: 'center',
+                                    height: '100%',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: 1,
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    boxShadow: isUserAnswer ? '0 12px 30px rgba(15, 23, 42, 0.1)' : 'none'
                                   }}
-                                />
-                              )}
+                                >
+                                  {option.mediaType === 'image' && option.image && (
+                                    <Box
+                                      component='img'
+                                      src={option.image}
+                                      alt={option.text || ''}
+                                      sx={{ width: '100%', maxHeight: 120, objectFit: 'cover', borderRadius: 1.5 }}
+                                    />
+                                  )}
+                                  {option.mediaType === 'video' && option.videoUrl && (
+                                    <video
+                                      src={option.videoUrl}
+                                      controls
+                                      style={{ width: '100%', borderRadius: 8 }}
+                                    />
+                                  )}
+                                  {option.mediaType === 'audio' && option.audioUrl && (
+                                    <audio src={option.audioUrl} controls style={{ width: '100%' }} />
+                                  )}
+                                  {option.mediaType === 'text' && option.text && (
+                                    <Typography variant='body1' fontWeight={600}>
+                                      {option.text}
+                                    </Typography>
+                                  )}
+                                </Box>
+                              </Grid>
+                            )
+                          })}
+                    </Grid>
+                  </Box>
 
-                              {option.mediaType === 'video' && option.videoUrl && (
-                                <video
-                                  src={option.videoUrl}
-                                  controls
-                                  style={{
-                                    width: '100%',
-                                    height: 'auto',
-                                    borderRadius: '4px',
-                                    marginBottom: '8px'
-                                  }}
-                                />
-                              )}
+                  {question.templateId === 'true-or-false' &&
+                    attempted &&
+                    selectedAnswer !== correctAnswers[0]?.id && (
+                      <Typography variant='body2' color='error' sx={{ fontStyle: 'italic' }}>
+                        {`The correct answer is "${correctAnswers[0]?.text}".`}
+                      </Typography>
+                    )}
 
-                              {option.mediaType === 'audio' && option.audioUrl && (
-                                <audio
-                                  src={option.audioUrl}
-                                  controls
-                                  style={{
-                                    width: '100%',
-                                    marginBottom: '8px'
-                                  }}
-                                />
-                              )}
+                  {question.templateId === 'single-choice' &&
+                    attempted &&
+                    selectedAnswer !== correctAnswers[0]?.id && (
+                      <Typography variant='body2' color='error' sx={{ fontStyle: 'italic' }}>
+                        {`The correct answer is "${correctAnswers[0]?.text}".`}
+                      </Typography>
+                    )}
 
-                              {/* Text Label */}
-                              {option.mediaType === 'text' && option.text && (
-                                <Typography variant='body1' sx={{ color: isUserAnswer ? 'white' : '#333' }}>
-                                  {option.text}
-                                </Typography>
-                              )}
-                            </Box>
-                          </Grid>
-                        )
-                      }) || null
-                    ) // Ensure to return null if options are undefined
-                  }
-                </Grid>
-              </Box>
+                  {question.templateId === 'multiple-choice' && attempted && (
+                    <Typography variant='body2' color={incorrectSelected.length > 0 ? 'error' : 'info'} sx={{ fontStyle: 'italic' }}>
+                      {incorrectSelected.length > 0
+                        ? `Correct answers: ${correctAnswers.map(a => `"${a.text}"`).join(', ')}.`
+                        : `Great attempt! Correct answers: ${correctAnswers.map(a => `"${a.text}"`).join(', ')}.`}
+                    </Typography>
+                  )}
 
-              {!correctAnswers.some(answer => selectedAnswer === answer.id) &&
-                question.templateId === 'true-or-false' && (
-                  <Typography variant='body2' color='error' sx={{ mt: 1, fontStyle: 'italic' }}>
-                    {`Your answer is incorrect. The correct answer is "${correctAnswers[0]?.text}".`}
-                  </Typography>
-                )}
-              {!correctAnswers.some(answer => selectedAnswer === answer.id) &&
-                question.templateId === 'single-choice' && (
-                  <Typography variant='body2' color='error' sx={{ mt: 1, fontStyle: 'italic' }}>
-                    {`Your answer is incorrect. The correct answer is "${correctAnswers[0]?.text}".`}
-                  </Typography>
-                )}
-              {question.templateId === 'multiple-choice' && (
-                <Typography variant='body2' color='error' sx={{ mt: 1, fontStyle: 'italic' }}>
-                  {selectedAnswer &&
-                  selectedAnswer.length === correctAnswers.length &&
-                  selectedAnswer.every(answerId => correctAnswers.some(answer => answer.id === answerId)) &&
-                  incorrectSelected.length === 0
-                    ? null // All selected answers are correct, and no incorrect answers, show no message
-                    : incorrectSelected.length > 0
-                      ? `Your answer is incorrect. The correct answers are ${correctAnswers
-                          .map(a => `"${a.text}"`)
-                          .join(', ')}.` // Selected incorrect options, entire answer wrong
-                      : `Your answer is partially correct. The correct answers are ${correctAnswers
-                          .map(a => `"${a.text}"`)
-                          .join(', ')}.`}
-                </Typography>
-              )}
-              {question.templateId === 'fill-in-blank' && (
-                <Typography variant='body2' color='error' sx={{ mt: 1, fontStyle: 'italic' }}>
-                  {selectedAnswer &&
-                  selectedAnswer.every(blankAnswer => {
-                    const correctBlank = question.data.question
-                      .filter(part => part.type === 'blank')
-                      .find(correct => correct.id === blankAnswer.id)
-                    return (
-                      correctBlank &&
-                      blankAnswer.content.trim().toLowerCase() === correctBlank.content.trim().toLowerCase()
-                    )
-                  })
-                    ? null // All answers are correct, show no message
-                    : selectedAnswer.some(blankAnswer => {
-                          const correctBlank = question.data.question
-                            .filter(part => part.type === 'blank')
-                            .find(correct => correct.id === blankAnswer.id)
-                          return (
-                            correctBlank &&
-                            blankAnswer.content.trim().toLowerCase() === correctBlank.content.trim().toLowerCase()
-                          )
-                        })
-                      ? `Your answer is partially correct. The correct answers are: ${question.data.question
-                          .filter(part => part.type === 'blank')
-                          .map(blank => `"${blank.content}"`)
-                          .join(', ')}.` // Partial correctness
-                      : `Your answer is incorrect. The correct answers are: ${question.data.question
-                          .filter(part => part.type === 'blank')
-                          .map(blank => `"${blank.content}"`)
-                          .join(', ')}.`}{' '}
-                </Typography>
-              )}
-            </Card>
-          )
-        })}
-      </Box>
-
-      <Box sx={{ mt: 4, textAlign: 'center' }}>
-        <Button
-          variant='contained'
-          onClick={handleReplay}
-          color='primary'
-          component='label'
-          sx={{
-            mr: 2,
-            color: 'white',
-            fontWeight: 600,
-            '&:hover': {},
-            padding: '10px 20px'
-          }}
-        >
-          Replay Quiz
-        </Button>
-        <Button
-          variant='outlined'
-          onClick={() => router.push('/publicquiz/view')}
-          color='primary'
-          component='label'
-          sx={{
-            fontWeight: 600,
-            padding: '10px 20px'
-          }}
-        >
-          Back to All Quizzes
-        </Button>
-      </Box>
-    </Box>
+                  {question.templateId === 'fill-in-blank' && (
+                    <Typography variant='body2' color='info' sx={{ fontStyle: 'italic' }}>
+                      {`Correct answers: ${question.data.question
+                        .filter(part => part.type === 'blank')
+                        .map(blank => `"${blank.content}"`)
+                        .join(', ')}.`}
+                    </Typography>
+                  )}
+                </Stack>
+                </Paper>
+              </Stack>
+            )
+          })}
+        </Stack>
+      </Stack>
+    </Container>
   )
 }
 

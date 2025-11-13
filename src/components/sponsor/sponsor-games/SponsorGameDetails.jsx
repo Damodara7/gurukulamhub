@@ -115,7 +115,7 @@ const SponsorGameDetails = ({ gameId }) => {
             color: 'white'
           }}
         >
-          Back to Games
+          Back to Games awaiting sponsorship
         </Button>
             </CardContent>
           </Card>
@@ -148,7 +148,7 @@ const SponsorGameDetails = ({ gameId }) => {
                 fontWeight: 600
               }}
         >
-          Back to Games
+          Back to Games awaiting sponsorship
         </Button>
         
             {/* Title */}

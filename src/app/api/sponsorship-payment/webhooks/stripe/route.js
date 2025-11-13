@@ -16,7 +16,13 @@ export const fetchCache = 'force-no-store'; // Disable caching
 let stripe = null
 const getStripe = () => {
   if (!stripe) {
-    stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '')
+    const secretKey = process.env.STRIPE_SECRET_KEY || process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY
+
+    if (!secretKey) {
+      throw new Error('Stripe secret key is not configured. Please set STRIPE_SECRET_KEY in the environment.')
+    }
+
+    stripe = new Stripe(secretKey, { apiVersion: '2023-10-16' })
   }
   return stripe
 }

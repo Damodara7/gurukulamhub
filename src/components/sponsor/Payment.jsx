@@ -28,6 +28,34 @@ function Payment({ sponsorship }) {
 
   if (!sponsorship) return <Typography>Loading...</Typography>
 
+  const games = Array.isArray(sponsorship.games) ? sponsorship.games : []
+  const gameNames = games.map(game =>
+    typeof game === 'string' ? game : game?.title || game?.name || game?._id || 'Untitled Game'
+  )
+  const quizzes = Array.isArray(sponsorship.quizzes) ? sponsorship.quizzes : []
+  const quizNames = quizzes.map(quiz =>
+    typeof quiz === 'string' ? quiz : quiz?.title || quiz?.name || quiz?._id || 'Untitled Quiz'
+  )
+
+  const renderAreaSummary = (label = 'Selected area:') => {
+    const parts = [sponsorship.location?.country, sponsorship.location?.region, sponsorship.location?.city].filter(
+      Boolean
+    )
+
+    if (parts.length === 0) return null
+
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+        <Typography variant='body1' sx={{ fontWeight: 500 }}>
+          {label}
+        </Typography>
+        <Typography variant='body1' component='span'>
+          {parts.join(', ')}
+        </Typography>
+      </Box>
+    )
+  }
+
   return (
     <>
       {/* Instructions */}
@@ -67,63 +95,21 @@ function Payment({ sponsorship }) {
           <Typography variant='body1' gutterBottom>
             Sponsorship ID: {sponsorship._id}
           </Typography>
-          {sponsorship.games.length > 0 && (
+          {gameNames.length > 0 && (
             <Typography variant='body1' gutterBottom>
-              Games: {sponsorship.games.join(', ')}
+              Games: {gameNames.join(', ')}
             </Typography>
           )}
-          {sponsorship.quizzes.length > 0 && (
+          {quizNames.length > 0 && (
             <>
               <Typography variant='body1' gutterBottom>
-                Quizzes: {sponsorship.quizzes?.map(q => q.title).join(', ')}
+                Quizzes: {quizNames.join(', ')}
               </Typography>
-              {(() => {
-                let area = ``
-                if (sponsorship.location?.country) {
-                  area += `${sponsorship.location?.country}`
-                }
-                if (sponsorship.location?.region) {
-                  area += `, ${sponsorship.location?.region}`
-                }
-                if (sponsorship.location?.city) {
-                  area += `, ${sponsorship.location?.city}`
-                }
-                return (
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-                    <Typography variant='body1' sx={{ fontWeight: 500 }}>
-                      You sponsored for games in area:
-                    </Typography>
-                    <Typography variant='body1' component='span'>
-                      {area}
-                    </Typography>
-                  </Box>
-                )
-              })()}
+              {renderAreaSummary('You sponsored quizzes in area:')}
             </>
           )}
           {sponsorship.sponsorType === 'area' &&
-            (() => {
-              let area = ``
-              if (sponsorship.location?.country) {
-                area += `${sponsorship.location?.country}`
-              }
-              if (sponsorship.location?.region) {
-                area += `, ${sponsorship.location?.region}`
-              }
-              if (sponsorship.location?.city) {
-                area += `, ${sponsorship.location?.city}`
-              }
-              return (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-                  <Typography variant='body1' sx={{ fontWeight: 500 }}>
-                    Sponsoring for games in area:
-                  </Typography>
-                  <Typography variant='body1' component='span'>
-                    {area}
-                  </Typography>
-                </Box>
-              )
-            })()}
+            renderAreaSummary(quizNames.length > 0 ? 'Sponsoring quizzes in area:' : 'Sponsoring games in area:')}
 
           <Timer
             remainingTime={remainingTime}

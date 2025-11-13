@@ -47,10 +47,12 @@ import DeleteIcon from '@mui/icons-material/Delete'
 import EditIcon from '@mui/icons-material/Edit'
 import CropIcon from '@mui/icons-material/Crop'
 import VisibilityIcon from '@mui/icons-material/Visibility'
+import ContentCopyIcon from '@mui/icons-material/ContentCopy'
+import CheckIcon from '@mui/icons-material/Check'
 
 // MUI Imports
 import Grid from '@mui/material/Grid'
-import { styled } from '@mui/material/styles'
+import { styled, alpha } from '@mui/material/styles'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import TextField from '@mui/material/TextField'
@@ -215,6 +217,8 @@ const AccountDetails = () => {
   const [isFormValid, setIsFormValid] = useState(true)
   const [shouldRefetchData, setShouldRefetchData] = useState(false)
   const [profilePercentage, setProfilePercentage] = useState(0)
+  const [memberIdCopied, setMemberIdCopied] = useState(false)
+  const memberIdCopyTimerRef = useRef(null)
 
   // Validation and modal states
   const [isUrlsValid, setIsUrlsValid] = useState({ instagramUrl: true, linkedInUrl: true, facebookUrl: true })
@@ -579,6 +583,7 @@ const AccountDetails = () => {
       if (viewModalTimerRef.current) clearTimeout(viewModalTimerRef.current)
       if (viewEducationTimerRef.current) clearTimeout(viewEducationTimerRef.current)
       if (viewOrgTimerRef.current) clearTimeout(viewOrgTimerRef.current)
+      if (memberIdCopyTimerRef.current) clearTimeout(memberIdCopyTimerRef.current)
     }
   }, [])
 
@@ -1851,68 +1856,277 @@ const AccountDetails = () => {
     }
   }
 
+  const handleCopyMemberId = async () => {
+    const memberId = formData?.memberId
+    if (!memberId) return
+
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(memberId)
+      }
+      setMemberIdCopied(true)
+    } catch (error) {
+      console.error('Failed to copy member ID:', error)
+      setMemberIdCopied(false)
+    }
+
+    if (memberIdCopyTimerRef.current) {
+      clearTimeout(memberIdCopyTimerRef.current)
+    }
+
+    memberIdCopyTimerRef.current = setTimeout(() => {
+      setMemberIdCopied(false)
+      memberIdCopyTimerRef.current = null
+    }, 1500)
+  }
+
   return (
-    <Card>
-      <CardContent className='mbe-1'>
-        <div className='flex items-start sm:items-center justify-between gap-4'>
-          <div className='relative group'>
-            <img
-              height={100}
-              width={100}
-              className='rounded'
+    <Card
+      sx={{
+        borderRadius: 4,
+        border: `1px solid ${alpha(theme.palette.divider, 0.4)}`,
+        boxShadow: theme.palette.mode === 'dark' ? 'none' : '0 20px 45px rgba(15, 30, 67, 0.08)',
+        bgcolor: theme.palette.background.paper,
+        overflow: 'hidden'
+      }}
+    >
+      <CardContent
+        sx={{
+          position: 'relative',
+          background:
+            theme.palette.mode === 'dark'
+              ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.28)}, ${alpha(
+                  theme.palette.secondary.main,
+                  0.22
+                )})`
+              : `linear-gradient(125deg, ${alpha(theme.palette.primary.light, 0.18)}, ${alpha(
+                  theme.palette.secondary.light,
+                  0.12
+                )})`,
+          borderTopLeftRadius: 16,
+          borderTopRightRadius: 16,
+          pb: { xs: 4, md: 5 },
+          '&::after': {
+            content: '""',
+            position: 'absolute',
+            inset: 0,
+            borderRadius: 'inherit',
+            border: theme.palette.mode === 'dark'
+              ? `1px solid ${alpha(theme.palette.primary.light, 0.25)}`
+              : `1px solid ${alpha(theme.palette.common.white, 0.35)}`,
+            pointerEvents: 'none'
+          }
+        }}
+      >
+        <Stack
+          direction={{ xs: 'column', md: 'row' }}
+          spacing={{ xs: 4, md: 6 }}
+          justifyContent='space-between'
+          alignItems={{ xs: 'flex-start', md: 'center' }}
+          sx={{ position: 'relative', zIndex: 2 }}
+        >
+          <Box
+            sx={{
+              position: 'relative',
+              display: 'inline-flex',
+              '& .avatar-upload-action': {
+                position: 'absolute',
+                left: '50%',
+                bottom: -12,
+                transform: 'translateX(-50%)',
+                width: 54,
+                height: 54,
+                bgcolor: alpha(theme.palette.mode === 'dark' ? theme.palette.grey[900] : theme.palette.common.white, 0.9),
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: `0 12px 28px ${alpha(theme.palette.primary.main, 0.28)}`,
+                transition: 'all 0.3s ease',
+                opacity: 0
+              },
+              '&:hover .avatar-upload-action': {
+                opacity: 1,
+                bottom: -2
+              }
+            }}
+          >
+            <Box
+              component='img'
               src={imgSrc || session?.user?.image || '/images/avatars/1.png'}
               alt='Profile'
+              sx={{
+                width: { xs: 112, md: 132 },
+                height: { xs: 112, md: 132 },
+                borderRadius: 3,
+                objectFit: 'cover',
+                border: `2px solid ${alpha(theme.palette.common.white, 0.85)}`,
+                boxShadow: `0 18px 36px ${alpha(
+                  theme.palette.mode === 'dark' ? theme.palette.primary.dark : theme.palette.primary.main,
+                  0.25
+                )}`
+              }}
             />
             <IconButtonTooltip
               title='Upload'
               component='label'
               size='large'
               color='primary'
-              className='absolute bottom-2 left-1/2 transform -translate-x-1/2 w-[100px] p-0 flex items-center justify-center bg-white bg-opacity-75 rounded-none opacity-0 group-hover:opacity-100 transition-opacity'
+              className='avatar-upload-action'
               htmlFor='account-settings-upload-image'
             >
               <CloudUploadIcon />
-              <input
-                hidden
-                type='file'
-                // value={fileInput}
-                accept='.jpg, .png, .jpeg'
-                onChange={handleFileInputChange}
-                id='account-settings-upload-image'
-              />
+              <input hidden type='file' accept='.jpg, .png, .jpeg' onChange={handleFileInputChange} id='account-settings-upload-image' />
             </IconButtonTooltip>
-          </div>
+          </Box>
 
-          {/* My Member Id */}
-          <Stack direction='column' gap={'5px'} sx={{ alignSelf: 'flex-start', alignItems: 'center' }}>
-            <Typography sx={{ textAlign: 'center' }} variant='h6'>
-              My Member Id
-            </Typography>
-            <Box>
-              <Typography variant='h6' color={'primary'}>
-                {formData?.memberId}
+          <Stack spacing={3} sx={{ flex: 1, minWidth: 0 }}>
+            <Stack spacing={1.5}>
+              <Typography
+                variant='overline'
+                sx={{
+                  letterSpacing: 2,
+                  fontWeight: 700,
+                  color:
+                    theme.palette.mode === 'dark'
+                      ? alpha(theme.palette.common.white, 0.85)
+                      : alpha(theme.palette.primary.dark, 0.65)
+                }}
+              >
+                Account Overview
               </Typography>
-            </Box>
-          </Stack>
+              <Typography
+                variant='h4'
+                sx={{
+                  fontWeight: 800,
+                  fontSize: { xs: '1.9rem', md: '2.35rem' },
+                  color:
+                    theme.palette.mode === 'dark'
+                      ? theme.palette.common.white
+                      : theme.palette.primary.dark
+                }}
+              >
+                Manage Your Profile
+              </Typography>
+              <Typography
+                variant='body2'
+                sx={{
+                  color:
+                    theme.palette.mode === 'dark'
+                      ? alpha(theme.palette.common.white, 0.88)
+                      : alpha(theme.palette.primary.dark, 0.6),
+                  maxWidth: 520
+                }}
+              >
+                Keep your personal information, professional milestones, and supporting documents up to date to unlock
+                the full Gurukulam Hub experience.
+              </Typography>
+            </Stack>
 
-          {/* My Profile ( Percentage ) */}
-          <Stack direction='column' gap={'5px'} sx={{ alignSelf: 'flex-start', alignItems: 'center' }}>
-            <Typography sx={{ textAlign: 'center' }} variant='h6'>
-              My Profile
-            </Typography>
-            <Box>
-              <CircularProgressWithValueLabel
-                value={profilePercentage}
-                size={50}
-                thickness={5}
-                fontSize={14}
-                textcolor='text.secondary'
-              />
-            </Box>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2.5} flexWrap='wrap'>
+              <Box
+                sx={{
+                  flex: 1,
+                  minWidth: { xs: '100%', sm: 220 },
+                  p: 2,
+                  borderRadius: 2,
+                  border: `1px solid ${alpha(
+                    theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.primary.main,
+                    0.35
+                  )}`,
+                  bgcolor:
+                    theme.palette.mode === 'dark'
+                      ? alpha(theme.palette.common.white, 0.08)
+                      : alpha(theme.palette.common.white, 0.92),
+                  boxShadow:
+                    theme.palette.mode === 'dark'
+                      ? 'none'
+                      : `0 8px 24px ${alpha(theme.palette.primary.main, 0.15)}`
+                }}
+              >
+                <Typography
+                  variant='caption'
+                  sx={{ color: theme.palette.primary.main, fontWeight: 700, letterSpacing: 1.1 }}
+                >
+                  Member ID
+                </Typography>
+                <Stack direction='row' spacing={1.25} alignItems='center' sx={{ mt: 0.75 }}>
+                  <Typography variant='h6' sx={{ color: theme.palette.primary.main, fontWeight: 700 }}>
+                    {formData?.memberId || '—'}
+                  </Typography>
+                  {formData?.memberId && (
+                    <Tooltip title={memberIdCopied ? 'Copied!' : 'Copy member ID'} placement='top'>
+                      <IconButton
+                        onClick={handleCopyMemberId}
+                        sx={{
+                          bgcolor: alpha(
+                            memberIdCopied ? theme.palette.success.main : theme.palette.primary.main,
+                            0.12
+                          ),
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            bgcolor: alpha(
+                              memberIdCopied ? theme.palette.success.main : theme.palette.primary.main,
+                              0.2
+                            )
+                          }
+                        }}
+                      >
+                        <ContentCopyIcon />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                </Stack>
+              </Box>
+
+              <Box
+                sx={{
+                  flex: 1,
+                  minWidth: { xs: '100%', sm: 260 },
+                  p: 2,
+                  borderRadius: 2,
+                  border: `1px solid ${alpha(
+                    theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.secondary.main,
+                    0.35
+                  )}`,
+                  bgcolor:
+                    theme.palette.mode === 'dark'
+                      ? alpha(theme.palette.common.white, 0.08)
+                      : alpha(theme.palette.common.white, 0.92),
+                  boxShadow:
+                    theme.palette.mode === 'dark'
+                      ? 'none'
+                      : `0 8px 24px ${alpha(theme.palette.secondary.main, 0.12)}`
+                }}
+              >
+                <Typography
+                  variant='caption'
+                  sx={{ color: theme.palette.primary.main, fontWeight: 700, letterSpacing: 1.1 }}
+                >
+                  Profile Completion
+                </Typography>
+                <Stack direction='row' spacing={2} alignItems='center' sx={{ mt: 1 }}>
+                  <CircularProgressWithValueLabel
+                    value={profilePercentage}
+                    size={50}
+                    thickness={5}
+                    fontSize={14}
+                    textcolor='text.secondary'
+                  />
+                  <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                    {profilePercentage >= 80
+                      ? 'Great job! Your profile is nearly complete.'
+                      : 'Complete the remaining sections to boost your visibility.'}
+                  </Typography>
+                </Stack>
+              </Box>
+            </Stack>
           </Stack>
-        </div>
+        </Stack>
+
+        <Divider sx={{ mt: { xs: 3, md: 4 }, borderColor: alpha(theme.palette.common.white, 0.3) }} />
       </CardContent>
-      <CardContent>
+      <CardContent sx={{ pt: { xs: 4, md: 5 } }}>
         <form onSubmit={handleSubmit}>
           <Grid container spacing={5}>
             {/* Personal Information */}

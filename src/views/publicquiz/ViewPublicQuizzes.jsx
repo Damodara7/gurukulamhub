@@ -433,6 +433,7 @@ export default function ViewPublicQuizzes() {
                       {/* Play Button */}
                       <Button
                         variant="contained"
+                        component='label'
                         fullWidth
                         startIcon={<PlayArrowIcon />}
                         onClick={(e) => {
@@ -443,6 +444,7 @@ export default function ViewPublicQuizzes() {
                           py: 1.5,
                           fontWeight: 600,
                           fontSize: '0.95rem',
+                          color: 'white',
                           textTransform: 'none',
                           borderRadius: 2.5,
                           background: hoveredCard === quiz._id
