@@ -21,15 +21,30 @@ import {
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import * as clientApi from '@/app/api/client/client.api'
+import { ROLES_LOOKUP } from '@/configs/roles-lookup'
+import { toast } from 'react-toastify'
+
+const USER_ROLE = ROLES_LOOKUP.USER
 
 const EditUserRoleDialog = ({ open, setOpen, userData, refreshUsers, roles = [], geoRolesData = [] }) => {
-  const [roleNames, setRoleNames] = useState(userData?.roles || [])
+  // Helper function to ensure USER role is always included
+  const ensureUserRole = roles => {
+    const rolesArray = Array.isArray(roles) ? roles : []
+    if (!rolesArray.includes(USER_ROLE)) {
+      return [USER_ROLE, ...rolesArray]
+    }
+    return rolesArray
+  }
+
+  const [roleNames, setRoleNames] = useState(() => ensureUserRole(userData?.roles || []))
   const [geoRoleNames, setGeoRoleNames] = useState(userData?.geoRoles || [])
   const [isActive, setIsActive] = useState(userData?.isActive || false)
 
   const handleRoleChange = event => {
     const { value } = event.target
-    setRoleNames(typeof value === 'string' ? value.split(',') : value)
+    const newRoles = typeof value === 'string' ? value.split(',') : value
+    // Ensure USER role is always included
+    setRoleNames(ensureUserRole(newRoles))
   }
 
   const handleGeoRoleChange = event => {
@@ -42,7 +57,15 @@ const EditUserRoleDialog = ({ open, setOpen, userData, refreshUsers, roles = [],
   }
 
   const handleDeleteChip = chipToDelete => {
-    setRoleNames(prevRoles => prevRoles.filter(role => role !== chipToDelete))
+    // Prevent deletion of USER role
+    if (chipToDelete === USER_ROLE) {
+      return
+    }
+    setRoleNames(prevRoles => {
+      const filtered = prevRoles.filter(role => role !== chipToDelete)
+      // Ensure USER role is still present
+      return ensureUserRole(filtered)
+    })
   }
 
   const handleDeleteGeoChip = chipToDelete => {
@@ -52,9 +75,11 @@ const EditUserRoleDialog = ({ open, setOpen, userData, refreshUsers, roles = [],
   // Assuming this is in your component file
   const handleSubmit = async () => {
     try {
+      // Ensure USER role is included before submitting
+      const finalRoles = ensureUserRole(roleNames)
       const updatedUserData = {
         email: userData.email, // Ensure user ID is included
-        roles: roleNames, // The selected roles
+        roles: finalRoles, // The selected roles (always includes USER)
         isActive: isActive // The status toggle
       }
 
@@ -64,20 +89,23 @@ const EditUserRoleDialog = ({ open, setOpen, userData, refreshUsers, roles = [],
 
       if (result?.status === 'success') {
         console.log('User updated successfully:', result)
+        toast.success(result?.message || 'User roles updated successfully')
         await refreshUsers() // Call parent to refresh user list
+        setOpen(false) // Close the dialog/modal
       } else {
         console.log('Error updating user:', result)
+        toast.error(result?.message || 'Failed to update user roles')
       }
     } catch (error) {
       console.error('Error:', error)
-    } finally {
-      setOpen(false) // Close the dialog/modal
+      toast.error(error?.message || 'An unexpected error occurred while updating user roles')
     }
   }
 
   useEffect(() => {
     if (open && userData) {
-      setRoleNames(userData?.roles || [])
+      // Ensure USER role is always included when dialog opens
+      setRoleNames(ensureUserRole(userData?.roles || []))
       setGeoRoleNames(userData?.geoRoles || [])
       setIsActive(userData?.isActive || false)
     }
@@ -106,25 +134,43 @@ const EditUserRoleDialog = ({ open, setOpen, userData, refreshUsers, roles = [],
                 {selected.map(value => (
                   <Chip
                     key={value}
-                    clickable
+                    clickable={value !== USER_ROLE}
                     deleteIcon={
-                      <i
-                        className='ri-close-circle-fill'
-                        onMouseDown={event => event.stopPropagation()} // Prevent closing Select when clicking icon
-                      />
+                      value === USER_ROLE ? null : (
+                        <i
+                          className='ri-close-circle-fill'
+                          onMouseDown={event => event.stopPropagation()} // Prevent closing Select when clicking icon
+                        />
+                      )
                     }
                     size='small'
                     label={value} // Assuming value is the label; adjust if needed
-                    onDelete={() => handleDeleteChip(value)} // Call delete handler
+                    onDelete={value === USER_ROLE ? undefined : () => handleDeleteChip(value)} // Prevent deletion of USER role
+                    sx={{
+                      ...(value === USER_ROLE && {
+                        opacity: 0.7,
+                        cursor: 'not-allowed'
+                      })
+                    }}
                   />
                 ))}
               </div>
             )}
           >
             {roles.map(role => (
-              <MenuItem key={role._id} value={role.name}>
-                <Checkbox checked={roleNames.includes(role.name)} />
-                <ListItemText primary={role.name} />
+              <MenuItem
+                key={role._id}
+                value={role.name}
+                disabled={role.name === USER_ROLE} // Disable USER role checkbox (it's always selected)
+              >
+                <Checkbox
+                  checked={roleNames.includes(role.name)}
+                  disabled={role.name === USER_ROLE} // USER role is always checked and disabled
+                />
+                <ListItemText
+                  primary={role.name}
+                  secondary={role.name === USER_ROLE ? 'Required for all users' : undefined}
+                />
               </MenuItem>
             ))}
           </Select>

@@ -30,6 +30,9 @@ import 'react-phone-input-2/lib/style.css'
 import * as UserServerActions from '@/actions/user'
 import { toast } from 'react-toastify'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
+import { ROLES_LOOKUP } from '@/configs/roles-lookup'
+
+const USER_ROLE = ROLES_LOOKUP.USER
 
 // Vars
 const initialData = {
@@ -39,7 +42,7 @@ const initialData = {
   confirmEmail: '',
   country: '',
   phone: '',
-  roles: ['USER']
+  roles: [USER_ROLE]
 }
 
 const AddUserDrawer = ({ open, handleClose, refreshUsers }) => {
@@ -52,6 +55,23 @@ const AddUserDrawer = ({ open, handleClose, refreshUsers }) => {
   const [phoneInput, setPhoneInput] = useState('')
   const [phoneValid, setPhoneValid] = useState(false)
   const [countryDialCode, setCountryDialCode] = useState('')
+  
+  // Email validation states
+  const [emailError, setEmailError] = useState('')
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false)
+  const [emailExists, setEmailExists] = useState(false)
+  
+  // Form validation errors
+  const [formErrors, setFormErrors] = useState({})
+  
+  // Helper function to ensure USER role is always included
+  const ensureUserRole = roles => {
+    const rolesArray = Array.isArray(roles) ? roles : []
+    if (!rolesArray.includes(USER_ROLE)) {
+      return [USER_ROLE, ...rolesArray]
+    }
+    return rolesArray
+  }
 
   const getRolesData = async () => {
     console.log('Fetching Roles Data now...')
@@ -82,15 +102,147 @@ const AddUserDrawer = ({ open, handleClose, refreshUsers }) => {
     }))
   }, [phoneInput, countryDialCode])
 
-  const handleSubmit = async e => {
-    e.preventDefault()
+  // Email validation function
+  const validateEmailFormat = email => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return emailRegex.test(email)
+  }
+
+  // Check if email exists
+  const checkEmailExists = async email => {
+    if (!email || !validateEmailFormat(email)) {
+      setEmailError('')
+      setEmailExists(false)
+      setIsCheckingEmail(false)
+      return false
+    }
+
+    setIsCheckingEmail(true)
     try {
-      // const response = await UserServerActions.addNewUser(formData)
-      const response = await RestApi.post(`${API_URLS.v0.USER}`, { ...formData })
+      const result = await RestApi.get(`${API_URLS.v0.USER}/${encodeURIComponent(email)}`)
+      if (result?.status === 'success' && result?.result) {
+        setEmailError('This email is already registered')
+        setEmailExists(true)
+        setIsCheckingEmail(false)
+        return true
+      } else if (result?.status === 'error') {
+        // User not found - email is available
+        setEmailError('')
+        setEmailExists(false)
+        setIsCheckingEmail(false)
+        return false
+      } else {
+        // Unknown response - don't block
+        setEmailError('')
+        setEmailExists(false)
+        setIsCheckingEmail(false)
+        return false
+      }
+    } catch (error) {
+      // If error, assume email doesn't exist (don't block user)
+      // This handles network errors, 404s, etc.
+      setEmailError('')
+      setEmailExists(false)
+      setIsCheckingEmail(false)
+      return false
+    }
+  }
+
+  // Handle email change with debounce
+  useEffect(() => {
+    const email = formData.email.trim()
+
+    if (!email) {
+      setEmailError('')
+      setEmailExists(false)
+      return
+    }
+
+    // Validate email format
+    if (!validateEmailFormat(email)) {
+      setEmailError('Please enter a valid email address')
+      setEmailExists(true)
+      return
+    }
+
+    // Clear any existing error for format
+    setEmailError('')
+    setEmailExists(false)
+
+    // Debounce email existence check
+    const timer = setTimeout(() => {
+      checkEmailExists(email)
+    }, 500) // Wait 500ms after user stops typing
+
+    return () => {
+      clearTimeout(timer)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.email])
+
+  const validateForm = () => {
+    const errors = {}
+
+    if (!formData.firstname.trim()) {
+      errors.firstname = 'First name is required'
+    }
+
+    if (!formData.lastname.trim()) {
+      errors.lastname = 'Last name is required'
+    }
+
+    if (!formData.email.trim()) {
+      errors.email = 'Email is required'
+    } else if (!validateEmailFormat(formData.email)) {
+      errors.email = 'Please enter a valid email address'
+    } else if (emailExists || emailError) {
+      errors.email = emailError || 'This email is already registered'
+    }
+
+    if (!formData.confirmEmail.trim()) {
+      errors.confirmEmail = 'Please confirm your email'
+    } else if (formData.confirmEmail !== formData.email) {
+      errors.confirmEmail = 'Emails do not match'
+    }
+
+    if (!phoneInput || phoneInput.length <= countryDialCode.length) {
+      errors.phone = 'Mobile number is required'
+    } else if (!phoneValid && countryDialCode === '91') {
+      errors.phone = 'Please enter a valid 10-digit Indian mobile number'
+    } else if (!phoneValid) {
+      errors.phone = 'Please enter a valid mobile number'
+    }
+
+    setFormErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+
+  const handleSubmit = async () => {
+    // Ensure USER role is always included
+    const finalRoles = ensureUserRole(formData.roles)
+    
+    if (!validateForm()) {
+      return
+    }
+
+    // Double check email doesn't exist before submitting
+    if (emailExists || emailError) {
+      toast.error('Please use a different email address')
+      return
+    }
+
+    try {
+      const response = await RestApi.post(`${API_URLS.v0.USER}`, { 
+        ...formData, 
+        roles: finalRoles 
+      })
       if (response.status === 'success') {
         console.log('User added successfully:', response.result)
         toast.success(response.message || 'User added successfully.')
         setFormData(initialData)
+        setEmailError('')
+        setEmailExists(false)
+        setFormErrors({})
         handleClose()
         await refreshUsers()
       } else {
@@ -112,17 +264,30 @@ const AddUserDrawer = ({ open, handleClose, refreshUsers }) => {
       confirmEmail: '',
       country: '',
       phone: '',
-      roles: ['USER']
+      roles: [USER_ROLE]
     })
+    setEmailError('')
+    setEmailExists(false)
+    setFormErrors({})
   }
 
   const handleRoleChange = event => {
     const { value } = event.target
-    setFormData(prev => ({ ...prev, roles: typeof value === 'string' ? value.split(',') : value }))
+    const newRoles = typeof value === 'string' ? value.split(',') : value
+    // Ensure USER role is always included
+    setFormData(prev => ({ ...prev, roles: ensureUserRole(newRoles) }))
   }
 
   const handleDeleteChip = chipToDelete => {
-    setFormData(prev => ({ ...prev, roles: prev.roles.filter(role => role !== chipToDelete) }))
+    // Prevent deletion of USER role
+    if (chipToDelete === USER_ROLE) {
+      return
+    }
+    setFormData(prev => {
+      const filtered = prev.roles.filter(role => role !== chipToDelete)
+      // Ensure USER role is still present
+      return { ...prev, roles: ensureUserRole(filtered) }
+    })
   }
 
   // function getPhoneNumberWithoutCountryCode(value, country) {
@@ -133,12 +298,24 @@ const AddUserDrawer = ({ open, handleClose, refreshUsers }) => {
   //   setFormData(prev => ({ ...prev, phone: contactWithoutCountryCode }))
   // }
 
-  const validatePhone = (value, country) => {
+  const validatePhone = (value, dialCode) => {
+    if (!value || value.length <= dialCode.length) {
+      setPhoneValid(false)
+      return false
+    }
+
     const indianRegex = new RegExp('^[6-9][0-9]{9}$')
-    if (country == 91) {
+    if (dialCode === '91') {
+      // For Indian numbers, validate 10-digit format starting with 6-9
       let contactWithoutCountryCode = value.substring(2, value.length)
-      var result = indianRegex.test(contactWithoutCountryCode)
+      const result = indianRegex.test(contactWithoutCountryCode)
       setPhoneValid(result)
+      return result
+    } else {
+      // For other countries, just check if number exists (more than dial code)
+      const result = value.length > dialCode.length
+      setPhoneValid(result)
+      return result
     }
   }
 
@@ -147,6 +324,11 @@ const AddUserDrawer = ({ open, handleClose, refreshUsers }) => {
     setPhoneInput(value)
     // setCountryDialCode(country.dialCode)
     validatePhone(value, country.dialCode)
+
+    // Clear phone error when user starts typing
+    if (formErrors.phone) {
+      setFormErrors(prev => ({ ...prev, phone: '' }))
+    }
 
     // Check if the dial code or country code has changed
     console.log(country.dialCode, countryDialCode)
@@ -188,35 +370,70 @@ const AddUserDrawer = ({ open, handleClose, refreshUsers }) => {
           <TextField
             label='First Name'
             fullWidth
+            required
             placeholder='John'
             value={formData.firstname}
-            onChange={e => setFormData({ ...formData, firstname: e.target.value })}
+            onChange={e => {
+              setFormData({ ...formData, firstname: e.target.value })
+              if (formErrors.firstname) {
+                setFormErrors(prev => ({ ...prev, firstname: '' }))
+              }
+            }}
+            error={!!formErrors.firstname}
+            helperText={formErrors.firstname}
           />
           <TextField
             label='Last Name'
             fullWidth
+            required
             placeholder='Doe'
             value={formData.lastname}
-            onChange={e => setFormData({ ...formData, lastname: e.target.value })}
+            onChange={e => {
+              setFormData({ ...formData, lastname: e.target.value })
+              if (formErrors.lastname) {
+                setFormErrors(prev => ({ ...prev, lastname: '' }))
+              }
+            }}
+            error={!!formErrors.lastname}
+            helperText={formErrors.lastname}
           />
           <TextField
             label='Email'
             fullWidth
+            required
             type='email'
             placeholder='johndoe@gmail.com'
             value={formData.email}
-            onChange={e => setFormData({ ...formData, email: e.target.value })}
+            onChange={e => {
+              setFormData({ ...formData, email: e.target.value, confirmEmail: '' })
+              if (formErrors.email) {
+                setFormErrors(prev => ({ ...prev, email: '' }))
+              }
+            }}
+            error={!!formErrors.email || !!emailError || emailExists}
+            helperText={formErrors.email || emailError || (isCheckingEmail ? 'Checking email...' : '')}
+            InputProps={{
+              endAdornment: isCheckingEmail ? (
+                <Typography variant='caption' sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
+                  Checking...
+                </Typography>
+              ) : null
+            }}
           />
           <TextField
             label='Confirm Email'
             fullWidth
+            required
             type='email'
             placeholder='Confirm your email'
             value={formData.confirmEmail}
-            disabled={!formData.email.trim()}
+            disabled={!formData.email.trim() || !!emailError || emailExists || !validateEmailFormat(formData.email)}
             onPaste={e => e.preventDefault()}
             onChange={e => {
               setFormData({ ...formData, confirmEmail: e.target.value })
+              if (formErrors.confirmEmail) {
+                setFormErrors(prev => ({ ...prev, confirmEmail: '' }))
+              }
             }}
             color={
               // Check if confirmEmail is empty, or email and confirmEmail match or don't match
@@ -228,21 +445,14 @@ const AddUserDrawer = ({ open, handleClose, refreshUsers }) => {
             }
             // Check if email and confirm email match
             helperText={
-              formData.email.trim() && formData.confirmEmail.trim()
+              formErrors.confirmEmail ||
+              (formData.email.trim() && formData.confirmEmail.trim()
                 ? formData.confirmEmail === formData.email
                   ? 'Email matched'
                   : 'Email does not match'
-                : ''
+                : '')
             }
-            error={formData.email.trim() && formData.confirmEmail.trim() && formData.confirmEmail !== formData.email} // Display error if emails don't match
-            FormHelperTextProps={{
-              style: {
-                color:
-                  formData.email.trim() && formData.confirmEmail.trim() && formData.confirmEmail !== formData.email
-                    ? 'red'
-                    : 'green'
-              }
-            }}
+            error={!!formErrors.confirmEmail || (formData.email.trim() && formData.confirmEmail.trim() && formData.confirmEmail !== formData.email)} // Display error if emails don't match
           />
           <CountryRegionDropdown
             selectedCountryObject={selectedCountryObject}
@@ -252,17 +462,28 @@ const AddUserDrawer = ({ open, handleClose, refreshUsers }) => {
             selectedRegion={selectedRegion}
             setSelectedRegion={setSelectedRegion}
           />
-          <FormControl fullWidth>
-            <Typography>Phone No:</Typography>
+          <FormControl fullWidth error={!!formErrors.phone}>
+            <Typography sx={{ mb: 1, color: formErrors.phone ? 'error.main' : 'text.secondary' }}>
+              Phone No: <span style={{ color: 'red' }}>*</span>
+            </Typography>
             <PhoneInput
               countryCodeEditable={false}
               id='phone-input'
-              inputStyle={{ width: '100%', height: '3rem' }}
+              inputStyle={{
+                width: '100%',
+                height: '3rem',
+                borderColor: formErrors.phone ? '#d32f2f' : undefined
+              }}
               enableSearch={true}
               country={selectedCountryObject?.countryCode?.toLowerCase()}
               value={phoneInput}
               onChange={handlePhoneInputChange}
             />
+            {formErrors.phone && (
+              <Typography variant='caption' color='error' sx={{ mt: 0.5, display: 'block' }}>
+                {formErrors.phone}
+              </Typography>
+            )}
           </FormControl>
           <FormControl fullWidth margin='normal' style={{ minWidth: '270px' }}>
             <InputLabel id='roles-multi-select-label'>Select Roles</InputLabel>
@@ -278,25 +499,43 @@ const AddUserDrawer = ({ open, handleClose, refreshUsers }) => {
                   {selected.map(value => (
                     <Chip
                       key={value}
-                      clickable
+                      clickable={value !== USER_ROLE}
                       deleteIcon={
-                        <i
-                          className='ri-close-circle-fill'
-                          onMouseDown={event => event.stopPropagation()} // Prevent closing Select when clicking icon
-                        />
+                        value === USER_ROLE ? null : (
+                          <i
+                            className='ri-close-circle-fill'
+                            onMouseDown={event => event.stopPropagation()} // Prevent closing Select when clicking icon
+                          />
+                        )
                       }
                       size='small'
                       label={value} // Assuming value is the label; adjust if needed
-                      onDelete={() => handleDeleteChip(value)} // Call delete handler
+                      onDelete={value === USER_ROLE ? undefined : () => handleDeleteChip(value)} // Prevent deletion of USER role
+                      sx={{
+                        ...(value === USER_ROLE && {
+                          opacity: 0.7,
+                          cursor: 'not-allowed'
+                        })
+                      }}
                     />
                   ))}
                 </div>
               )}
             >
               {rolesData.map(role => (
-                <MenuItem key={role._id} value={role.name}>
-                  <Checkbox checked={formData.roles.includes(role.name)} />
-                  <ListItemText primary={role.name} />
+                <MenuItem
+                  key={role._id}
+                  value={role.name}
+                  disabled={role.name === USER_ROLE} // Disable USER role checkbox (it's always selected)
+                >
+                  <Checkbox
+                    checked={formData.roles.includes(role.name)}
+                    disabled={role.name === USER_ROLE} // USER role is always checked and disabled
+                  />
+                  <ListItemText
+                    primary={role.name}
+                    secondary={role.name === USER_ROLE ? 'Required for all users' : undefined}
+                  />
                 </MenuItem>
               ))}
             </Select>
@@ -304,9 +543,22 @@ const AddUserDrawer = ({ open, handleClose, refreshUsers }) => {
           <div className='flex items-center gap-4'>
             <Button
               variant='contained'
-              type='submit'
+              color='primary'
+              component='label'
+              sx={{ color: 'white' }}
+              onClick={handleSubmit}
               disabled={
-                !(formData.email.trim() && formData.confirmEmail.trim() && formData.confirmEmail === formData.email)
+                !formData.firstname.trim() ||
+                !formData.lastname.trim() ||
+                !formData.email.trim() ||
+                !formData.confirmEmail.trim() ||
+                formData.confirmEmail !== formData.email ||
+                !phoneInput ||
+                phoneInput.length <= countryDialCode.length ||
+                !phoneValid ||
+                !!emailError ||
+                emailExists ||
+                isCheckingEmail
               }
             >
               Submit

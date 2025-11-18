@@ -1,5 +1,7 @@
 import React from 'react'
 import { TextField, FormControl, InputLabel, Select, MenuItem, Typography, FormControlLabel, RadioGroup, Radio } from '@mui/material'
+import PhoneInput from 'react-phone-input-2'
+import 'react-phone-input-2/lib/style.css'
 
 const OrganizationFields = ({ formData, handleChange, errors }) => {
   return (
@@ -26,7 +28,7 @@ const OrganizationFields = ({ formData, handleChange, errors }) => {
         helperText={errors.website}
         required
       />
-      <FormControl fullWidth sx={{ mb: 3 }} error={!!errors.orgType}>
+      <FormControl fullWidth sx={{ mb: 3 }} error={!!errors.orgType} required>
         <InputLabel id='org-type-label'>Organization Type</InputLabel>
         <Select
           labelId='org-type-label'
@@ -55,7 +57,17 @@ const OrganizationFields = ({ formData, handleChange, errors }) => {
   )
 }
 
-export default function SponsorerInfo({sponsorerType,setSponsorerType, formData, handleChange, errors}) {
+export default function SponsorerInfo({
+  sponsorerType,
+  setSponsorerType,
+  formData,
+  handleChange,
+  errors,
+  phoneInput,
+  countryDialCode,
+  selectedCountryObject,
+  handlePhoneInputChange
+}) {
   return (
     <>
       <Typography variant='h6' gutterBottom sx={{ mt: 2 }}>
@@ -100,19 +112,30 @@ export default function SponsorerInfo({sponsorerType,setSponsorerType, formData,
         <OrganizationFields formData={formData} handleChange={handleChange} errors={errors} />
       )}
 
-      <TextField
-        fullWidth
-        sx={{ mb: 3 }}
-        label='Mobile Number'
-        name='mobileNumber'
-        type='number'
-        value={formData.mobileNumber}
-        onChange={handleChange}
-        error={!!errors.mobileNumber}
-        helperText={errors.mobileNumber || 'Enter 10-digit Indian mobile number'}
-        inputProps={{ maxLength: 10 }}
-        required
-      />
+      <FormControl fullWidth sx={{ mb: 3 }} error={!!errors.mobileNumber}>
+        <Typography variant='body2' sx={{ mb: 1, color: errors.mobileNumber ? 'error.main' : 'text.secondary' }}>
+          Mobile Number *
+        </Typography>
+        <PhoneInput
+          countryCodeEditable={false}
+          id='phone-input'
+          inputStyle={{
+            width: '100%',
+            height: '3.5rem',
+            fontSize: '1rem',
+            borderColor: errors.mobileNumber ? '#d32f2f' : undefined
+          }}
+          enableSearch={true}
+          country={selectedCountryObject?.countryCode?.toLowerCase() || 'in'}
+          value={phoneInput}
+          onChange={handlePhoneInputChange}
+        />
+        {errors.mobileNumber && (
+          <Typography color='error' variant='caption' sx={{ mt: 0.5, display: 'block' }}>
+            {errors.mobileNumber ? `${errors.mobileNumber}` : countryDialCode === '91' ? '(10-digit Indian mobile number)' : ''}
+          </Typography>
+        )}
+      </FormControl>
     </>
   )
 }

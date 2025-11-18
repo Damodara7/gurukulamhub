@@ -40,10 +40,10 @@ import { API_URLS } from '@/configs/apiConfig'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
-import { Box, Divider, Grid, Tab, Tooltip } from '@mui/material'
-import { revalidatePath } from 'next/cache'
+import { Box, Divider, Tab, Tooltip, Container, Stack, alpha, useTheme } from '@mui/material'
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney'
 import CardGiftcardIcon from '@mui/icons-material/CardGiftcard'
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
 
 const fuzzyFilter = (row, columnId, value, addMeta) => {
   // Rank the item
@@ -82,6 +82,7 @@ const columnHelper = createColumnHelper()
 
 const SponsorshipList = ({ tableData, sponsorType = 'all', filter }) => {
   const router = useRouter()
+  const theme = useTheme()
   const [rowSelection, setRowSelection] = useState({})
 
   const [data, setData] = useState(...[tableData])
@@ -448,97 +449,155 @@ const SponsorshipList = ({ tableData, sponsorType = 'all', filter }) => {
   })
 
   return (
-    <>
-      <Box className='mb-2 flex justify-center'>
-        <TabContext value={filter || sponsorType}>
-          <CustomTabList
-            onChange={(e, val) => {
-              //   revalidatePath('/sponsor/list', 'page')
-              let url = `/sponsor/list`
-              if (val === 'awaiting' || val === 'rejected') {
-                url += `?filter=${val}`
-              } else if (val !== 'all') {
-                url += `?sponsorType=${val}`
-              }
-              router.push(url)
-            }}
-            variant='scrollable'
-            pill='true'
-            scrollButtons='auto'
-            allowScrollButtonsMobile
-          >
-            <Tab
-              value='all'
-              label={
-                <div className='flex items-center gap-1.5'>
-                  {/* <DraftsOutlinedIcon /> */}
-                  All
-                </div>
-              }
-            />
-            {/* Commented out games, quizzes, and area tabs as requested
-            <Tab
-              value='game'
-              label={
-                <div className='flex items-center gap-1.5'>
-                  <DraftsOutlinedIcon />
-                  Games
-                </div>
-              }
-            />
-            <Tab
-              value='quiz'
-              label={
-                <div className='flex items-center gap-1.5'>
-                  <PendingActionsOutlinedIcon />
-                  Quizzes
-                </div>
-              }
-            />
-            <Tab
-              value='area'
-              label={
-                <div className='flex items-center gap-1.5'>
-                  <PendingActionsOutlinedIcon />
-                  Area
-                </div>
-              }
-            />
-            */}
-            <Tab
-              value='awaiting'
-              label={
-                <div className='flex items-center gap-1.5'>
-                  {/* <PendingActionsOutlinedIcon /> */}
-                  Awaiting Admin Response
-                </div>
-              }
-            />
-            <Tab
-              value='rejected'
-              label={
-                <div className='flex items-center gap-1.5'>
-                  {/* <CancelOutlinedIcon /> */}
-                  Rejected
-                </div>
-              }
-            />
-          </CustomTabList>
-        </TabContext>
+    <Box sx={{ minHeight: '100vh', bgcolor: theme.palette.background.default, pb: 8 }}>
+      {/* Hero Section */}
+      <Box
+        sx={{
+          bgcolor: theme.palette.mode === 'dark' ? theme.palette.background.paper : 'white',
+          pt: { xs: 4, md: 6 },
+          pb: { xs: 4, md: 6 },
+          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.5)}`
+        }}
+      >
+        <Container maxWidth='lg'>
+          <Stack spacing={4}>
+            {/* Title Section */}
+            <Box sx={{ textAlign: 'center' }}>
+              <Stack direction="row" spacing={1.5} alignItems="center" justifyContent="center" sx={{ mb: 2 }}>
+                <EmojiEventsIcon sx={{ fontSize: 40, color: 'primary.main' }} />
+                <Typography
+                  variant='h3'
+                  fontWeight={800}
+                  sx={{
+                    fontSize: { xs: '2rem', md: '2.5rem' },
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    letterSpacing: '-0.01em'
+                  }}
+                >
+                  Your Sponsorships
+                </Typography>
+              </Stack>
+              <Typography variant='body1' sx={{ color: 'text.secondary', fontSize: '1.05rem', lineHeight: 1.7, maxWidth: 600, mx: 'auto' }}>
+                View and track all the sponsorships you've created. Monitor their usage, status, and manage your sponsorship portfolio.
+              </Typography>
+            </Box>
+
+            {/* Tabs */}
+            <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+              <TabContext value={filter || sponsorType}>
+                <CustomTabList
+                  onChange={(e, val) => {
+                    let url = `/sponsor/list`
+                    if (val === 'awaiting' || val === 'rejected') {
+                      url += `?filter=${val}`
+                    } else if (val !== 'all') {
+                      url += `?sponsorType=${val}`
+                    }
+                    router.push(url)
+                  }}
+                  variant='scrollable'
+                  pill='true'
+                  scrollButtons='auto'
+                  allowScrollButtonsMobile
+                >
+                  <Tab
+                    value='all'
+                    label={
+                      <div className='flex items-center gap-1.5'>
+                        All
+                      </div>
+                    }
+                  />
+                  <Tab
+                    value='awaiting'
+                    label={
+                      <div className='flex items-center gap-1.5'>
+                        Awaiting Admin Response
+                      </div>
+                    }
+                  />
+                  <Tab
+                    value='rejected'
+                    label={
+                      <div className='flex items-center gap-1.5'>
+                        Rejected
+                      </div>
+                    }
+                  />
+                </CustomTabList>
+              </TabContext>
+            </Box>
+          </Stack>
+        </Container>
       </Box>
-      <Card>
-        <CardContent className='flex justify-between flex-col gap-4 items-start sm:flex-row sm:items-center'>
-          <Typography variant='h5'>Your Sponsorships</Typography>
-          <div className='flex flex-col sm:flex-row justify-end gap-4'>
-            <DebouncedInput
-              value={globalFilter ?? ''}
-              onChange={value => setGlobalFilter(String(value))}
-              placeholder='Search User'
-              className='is-full sm:is-auto'
-            />
-          </div>
-        </CardContent>
-        <Divider />
+
+      {/* Table Section */}
+      <Box sx={{ mt: 4, width: '100%' }}>
+        <Card
+          sx={{
+            borderRadius: 4,
+            border: `1px solid ${alpha(theme.palette.divider, 0.4)}`,
+            boxShadow: theme.palette.mode === 'dark' ? 'none' : '0 20px 45px rgba(15, 30, 67, 0.08)',
+            bgcolor: theme.palette.background.paper,
+            overflow: 'hidden',
+            mx: { xs: 2, md: 4 }
+          }}
+        >
+          <CardContent
+            sx={{
+              p: { xs: 3, md: 4 },
+              '&:last-child': { pb: { xs: 3, md: 4 } }
+            }}
+          >
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                justifyContent: 'space-between',
+                alignItems: { xs: 'flex-start', sm: 'center' },
+                gap: 3,
+                mb: 2
+              }}
+            >
+              <Typography
+                variant='h6'
+                sx={{
+                  fontWeight: 600,
+                  color: 'text.primary',
+                  fontSize: { xs: '1.1rem', md: '1.25rem' }
+                }}
+              >
+                Sponsorship Details
+              </Typography>
+              <Box sx={{ width: { xs: '100%', sm: 'auto' } }}>
+                <DebouncedInput
+                  value={globalFilter ?? ''}
+                  onChange={value => setGlobalFilter(String(value))}
+                  placeholder='Search sponsorships...'
+                  className='is-full sm:is-auto'
+                  sx={{
+                    width: { xs: '100%', sm: 300 },
+                    '& .MuiOutlinedInput-root': {
+                      bgcolor: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.05) : 'transparent',
+                      '& fieldset': {
+                        borderColor: alpha(theme.palette.divider, 0.5)
+                      },
+                      '&:hover fieldset': {
+                        borderColor: alpha(theme.palette.primary.main, 0.5)
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: theme.palette.primary.main
+                      }
+                    }
+                  }}
+                />
+              </Box>
+            </Box>
+          </CardContent>
+          <Divider sx={{ borderColor: alpha(theme.palette.divider, 0.5) }} />
         <div className='overflow-x-auto'>
           <table className={tableStyles.table}>
             <thead>
@@ -594,23 +653,30 @@ const SponsorshipList = ({ tableData, sponsorType = 'all', filter }) => {
             )}
           </table>
         </div>
-        <TablePagination
-          rowsPerPageOptions={[10, 25, 50]}
-          component='div'
-          className='border-bs'
-          count={table.getFilteredRowModel().rows.length}
-          rowsPerPage={table.getState().pagination.pageSize}
-          page={table.getState().pagination.pageIndex}
-          SelectProps={{
-            inputProps: { 'aria-label': 'rows per page' }
-          }}
-          onPageChange={(_, page) => {
-            table.setPageIndex(page)
-          }}
-          onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
-        />
-      </Card>
-    </>
+          <TablePagination
+            rowsPerPageOptions={[10, 25, 50]}
+            component='div'
+            className='border-bs'
+            count={table.getFilteredRowModel().rows.length}
+            rowsPerPage={table.getState().pagination.pageSize}
+            page={table.getState().pagination.pageIndex}
+            SelectProps={{
+              inputProps: { 'aria-label': 'rows per page' }
+            }}
+            onPageChange={(_, page) => {
+              table.setPageIndex(page)
+            }}
+            onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
+            sx={{
+              borderTop: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+              '& .MuiTablePagination-toolbar': {
+                px: { xs: 2, md: 3 }
+              }
+            }}
+          />
+        </Card>
+      </Box>
+    </Box>
   )
 }
 

@@ -77,7 +77,10 @@ const RewardDialog = ({
 
   // Calculate total allocated from all sponsors
   const calculateTotalAllocated = () => {
-    return currentReward.sponsors.reduce((sum, sponsor) => sum + (sponsor.allocated || 0), 0)
+    return currentReward?.sponsors?.reduce((sum, sponsor) => {
+      const allocated = parseFloat(sponsor.allocated) || 0
+      return sum + allocated
+    }, 0)
   }
 
   // Get physical gift options with aggregated availability
@@ -559,7 +562,48 @@ const RewardDialog = ({
   const getRemainingNeed = () => {
     const totalNeeded = calculateTotalRequired()
     const totalAllocated = calculateTotalAllocated()
-    return Math.max(0, totalNeeded - totalAllocated)
+    
+    if (currentReward.rewardType === 'cash') {
+      // For cash, use same tolerance as validation (0.01)
+      const difference = Math.abs(totalNeeded - totalAllocated)
+      return difference > 0.01 ? Math.max(0, totalNeeded - totalAllocated) : 0
+    } else {
+      // For physical gifts, exact match required
+      return Math.max(0, totalNeeded - totalAllocated)
+    }
+  }
+
+  // Check if save button should be disabled
+  const isSaveDisabled = () => {
+    // Check if reward value is set for cash rewards
+    if (currentReward.rewardType === 'cash' && (!currentReward.rewardValuePerWinner || Number(currentReward.rewardValuePerWinner) === 0)) {
+      return true
+    }
+    
+    // Check if physical gift is selected
+    if (currentReward.rewardType === 'physicalGift' && !currentReward.nonCashReward) {
+      return true
+    }
+    
+    // Check if remaining need is greater than 0
+    const remaining = getRemainingNeed()
+    if (remaining > 0) {
+      return true
+    }
+    
+    // Check if any sponsor has over-allocated
+    const hasOverAllocatedSponsors = currentReward.sponsors.some(sponsor => {
+      const sponsorLimit =
+        currentReward.rewardType === 'cash' ? sponsor.prevAvailableAmount : sponsor.prevAvailableItems
+      const allocated = parseFloat(sponsor.allocated) || 0
+      return allocated > (sponsorLimit || 0)
+    })
+    
+    if (hasOverAllocatedSponsors) {
+      return true
+    }
+    
+    return false
   }
 
   console.log('New Current Reward: ', currentReward)
@@ -801,7 +845,7 @@ const RewardDialog = ({
             startIcon={<AddIcon />}
             onClick={handleAddSponsor}
             fullWidth
-            disabled={getRemainingNeed() <= 0}
+            disabled={getRemainingNeed() <= 0 || (currentReward.rewardType === 'cash' && (!currentReward.rewardValuePerWinner || Number(currentReward.rewardValuePerWinner) === 0)) || (currentReward.rewardType === 'physicalGift' && !currentReward.nonCashReward)}
           >
             Add Sponsor
           </Button>
@@ -816,7 +860,7 @@ const RewardDialog = ({
             style={{ color: 'white' }}
             onClick={handleSave}
             variant='contained'
-            disabled={getRemainingNeed() > 0}
+            disabled={isSaveDisabled()}
           >
             Save
           </Button>

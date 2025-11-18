@@ -49,6 +49,8 @@ import CropIcon from '@mui/icons-material/Crop'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import CheckIcon from '@mui/icons-material/Check'
+import BadgeIcon from '@mui/icons-material/Badge'
+import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 
 // MUI Imports
 import Grid from '@mui/material/Grid'
@@ -1980,17 +1982,18 @@ const AccountDetails = () => {
             </IconButtonTooltip>
           </Box>
 
-          <Stack spacing={3} sx={{ flex: 1, minWidth: 0 }}>
-            <Stack spacing={1.5}>
+          <Stack spacing={4} sx={{ flex: 1, minWidth: 0 }}>
+            {/* Header Section */}
+            <Box>
               <Typography
                 variant='overline'
                 sx={{
-                  letterSpacing: 2,
+                  letterSpacing: 2.5,
                   fontWeight: 700,
-                  color:
-                    theme.palette.mode === 'dark'
-                      ? alpha(theme.palette.common.white, 0.85)
-                      : alpha(theme.palette.primary.dark, 0.65)
+                  color: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.7 : 0.6),
+                  fontSize: '0.7rem',
+                  mb: 1.5,
+                  display: 'block'
                 }}
               >
                 Account Overview
@@ -1999,11 +2002,11 @@ const AccountDetails = () => {
                 variant='h4'
                 sx={{
                   fontWeight: 800,
-                  fontSize: { xs: '1.9rem', md: '2.35rem' },
-                  color:
-                    theme.palette.mode === 'dark'
-                      ? theme.palette.common.white
-                      : theme.palette.primary.dark
+                  fontSize: { xs: '1.75rem', md: '2.15rem' },
+                  color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary,
+                  mb: 1.5,
+                  letterSpacing: '-0.02em',
+                  lineHeight: 1.2
                 }}
               >
                 Manage Your Profile
@@ -2011,116 +2014,224 @@ const AccountDetails = () => {
               <Typography
                 variant='body2'
                 sx={{
-                  color:
-                    theme.palette.mode === 'dark'
-                      ? alpha(theme.palette.common.white, 0.88)
-                      : alpha(theme.palette.primary.dark, 0.6),
-                  maxWidth: 520
+                  color: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.8) : 'text.secondary',
+                  maxWidth: 600,
+                  lineHeight: 1.6,
+                  fontSize: '0.95rem'
                 }}
               >
                 Keep your personal information, professional milestones, and supporting documents up to date to unlock
                 the full Gurukulam Hub experience.
               </Typography>
-            </Stack>
+            </Box>
 
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2.5} flexWrap='wrap'>
+            {/* Stats Grid */}
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
+                gap: 3,
+                mt: 1
+              }}
+            >
+              {/* Member ID */}
               <Box
                 sx={{
-                  flex: 1,
-                  minWidth: { xs: '100%', sm: 220 },
-                  p: 2,
-                  borderRadius: 2,
+                  p: 3,
+                  borderRadius: 2.5,
+                  bgcolor: alpha(
+                    theme.palette.primary.main,
+                    theme.palette.mode === 'dark' ? 0.12 : 0.05
+                  ),
                   border: `1px solid ${alpha(
-                    theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.primary.main,
-                    0.35
+                    theme.palette.primary.main,
+                    theme.palette.mode === 'dark' ? 0.2 : 0.15
                   )}`,
-                  bgcolor:
-                    theme.palette.mode === 'dark'
-                      ? alpha(theme.palette.common.white, 0.08)
-                      : alpha(theme.palette.common.white, 0.92),
-                  boxShadow:
-                    theme.palette.mode === 'dark'
-                      ? 'none'
-                      : `0 8px 24px ${alpha(theme.palette.primary.main, 0.15)}`
+                  transition: 'all 0.25s ease',
+                  '&:hover': {
+                    bgcolor: alpha(
+                      theme.palette.primary.main,
+                      theme.palette.mode === 'dark' ? 0.16 : 0.08
+                    ),
+                    borderColor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.3 : 0.25),
+                    transform: 'translateY(-2px)'
+                  }
                 }}
               >
-                <Typography
-                  variant='caption'
-                  sx={{ color: theme.palette.primary.main, fontWeight: 700, letterSpacing: 1.1 }}
-                >
-                  Member ID
-                </Typography>
-                <Stack direction='row' spacing={1.25} alignItems='center' sx={{ mt: 0.75 }}>
-                  <Typography variant='h6' sx={{ color: theme.palette.primary.main, fontWeight: 700 }}>
+                <Stack direction='row' spacing={1.5} alignItems='center' sx={{ mb: 2.5 }}>
+                  <Box
+                    sx={{
+                      p: 1.25,
+                      borderRadius: 2,
+                      bgcolor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.3 : 0.15),
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <BadgeIcon
+                      sx={{
+                        fontSize: 22,
+                        color: theme.palette.primary.main
+                      }}
+                    />
+                  </Box>
+                  <Typography
+                    variant='caption'
+                    sx={{
+                      color: theme.palette.primary.main,
+                      fontWeight: 700,
+                      letterSpacing: 1.2,
+                      textTransform: 'uppercase',
+                      fontSize: '0.7rem'
+                    }}
+                  >
+                    Member ID
+                  </Typography>
+                </Stack>
+                <Stack direction='row' spacing={1.5} alignItems='center' sx={{ flexWrap: 'wrap', gap: 1 }}>
+                  <Typography
+                    variant='h5'
+                    sx={{
+                      color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary,
+                      fontWeight: 800,
+                      letterSpacing: '-0.01em',
+                      wordBreak: 'break-word',
+                      flex: 1,
+                      minWidth: 0,
+                      fontSize: { xs: '1.4rem', sm: '1.6rem' }
+                    }}
+                  >
                     {formData?.memberId || '—'}
                   </Typography>
                   {formData?.memberId && (
-                    <Tooltip title={memberIdCopied ? 'Copied!' : 'Copy member ID'} placement='top'>
+                    <Tooltip title={memberIdCopied ? 'Copied!' : 'Copy member ID'} placement='top' arrow>
                       <IconButton
+                        size='small'
                         onClick={handleCopyMemberId}
                         sx={{
                           bgcolor: alpha(
                             memberIdCopied ? theme.palette.success.main : theme.palette.primary.main,
-                            0.12
+                            theme.palette.mode === 'dark' ? 0.3 : 0.15
                           ),
-                          transition: 'all 0.2s ease',
+                          color: memberIdCopied ? theme.palette.success.main : theme.palette.primary.main,
+                          width: 40,
+                          height: 40,
+                          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                           '&:hover': {
                             bgcolor: alpha(
                               memberIdCopied ? theme.palette.success.main : theme.palette.primary.main,
-                              0.2
-                            )
+                              theme.palette.mode === 'dark' ? 0.4 : 0.25
+                            ),
+                            transform: 'scale(1.1)'
                           }
                         }}
                       >
-                        <ContentCopyIcon />
+                        {memberIdCopied ? (
+                          <CheckIcon sx={{ fontSize: 20 }} />
+                        ) : (
+                          <ContentCopyIcon sx={{ fontSize: 20 }} />
+                        )}
                       </IconButton>
                     </Tooltip>
                   )}
                 </Stack>
               </Box>
 
+              {/* Profile Completion */}
               <Box
                 sx={{
-                  flex: 1,
-                  minWidth: { xs: '100%', sm: 260 },
-                  p: 2,
-                  borderRadius: 2,
+                  p: 3,
+                  borderRadius: 2.5,
+                  bgcolor: alpha(
+                    theme.palette.secondary.main,
+                    theme.palette.mode === 'dark' ? 0.12 : 0.05
+                  ),
                   border: `1px solid ${alpha(
-                    theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.secondary.main,
-                    0.35
+                    theme.palette.secondary.main,
+                    theme.palette.mode === 'dark' ? 0.2 : 0.15
                   )}`,
-                  bgcolor:
-                    theme.palette.mode === 'dark'
-                      ? alpha(theme.palette.common.white, 0.08)
-                      : alpha(theme.palette.common.white, 0.92),
-                  boxShadow:
-                    theme.palette.mode === 'dark'
-                      ? 'none'
-                      : `0 8px 24px ${alpha(theme.palette.secondary.main, 0.12)}`
+                  transition: 'all 0.25s ease',
+                  '&:hover': {
+                    bgcolor: alpha(
+                      theme.palette.secondary.main,
+                      theme.palette.mode === 'dark' ? 0.16 : 0.08
+                    ),
+                    borderColor: alpha(theme.palette.secondary.main, theme.palette.mode === 'dark' ? 0.3 : 0.25),
+                    transform: 'translateY(-2px)'
+                  }
                 }}
               >
-                <Typography
-                  variant='caption'
-                  sx={{ color: theme.palette.primary.main, fontWeight: 700, letterSpacing: 1.1 }}
-                >
-                  Profile Completion
-                </Typography>
-                <Stack direction='row' spacing={2} alignItems='center' sx={{ mt: 1 }}>
-                  <CircularProgressWithValueLabel
-                    value={profilePercentage}
-                    size={50}
-                    thickness={5}
-                    fontSize={14}
-                    textcolor='text.secondary'
-                  />
-                  <Typography variant='body2' sx={{ color: 'text.secondary' }}>
-                    {profilePercentage >= 80
-                      ? 'Great job! Your profile is nearly complete.'
-                      : 'Complete the remaining sections to boost your visibility.'}
+                <Stack direction='row' spacing={1.5} alignItems='center' sx={{ mb: 2.5 }}>
+                  <Box
+                    sx={{
+                      p: 1.25,
+                      borderRadius: 2,
+                      bgcolor: alpha(theme.palette.secondary.main, theme.palette.mode === 'dark' ? 0.3 : 0.15),
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <CheckCircleIcon
+                      sx={{
+                        fontSize: 22,
+                        color: theme.palette.secondary.main
+                      }}
+                    />
+                  </Box>
+                  <Typography
+                    variant='caption'
+                    sx={{
+                      color: theme.palette.secondary.main,
+                      fontWeight: 700,
+                      letterSpacing: 1.2,
+                      textTransform: 'uppercase',
+                      fontSize: '0.7rem'
+                    }}
+                  >
+                    Profile Completion
                   </Typography>
                 </Stack>
+                <Stack direction='row' spacing={2.5} alignItems='center' sx={{ flexWrap: { xs: 'wrap', sm: 'nowrap' } }}>
+                  <Box sx={{ position: 'relative', flexShrink: 0 }}>
+                    <CircularProgressWithValueLabel
+                      value={profilePercentage}
+                      size={72}
+                      thickness={4.5}
+                      fontSize={17}
+                      textcolor={theme.palette.mode === 'dark' ? 'text.primary' : 'text.secondary'}
+                    />
+                  </Box>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography
+                      variant='h6'
+                      sx={{
+                        color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary,
+                        fontWeight: 800,
+                        mb: 0.75,
+                        fontSize: { xs: '1.15rem', sm: '1.3rem' },
+                        letterSpacing: '-0.01em'
+                      }}
+                    >
+                      {profilePercentage}% Complete
+                    </Typography>
+                    <Typography
+                      variant='body2'
+                      sx={{
+                        color: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.75) : 'text.secondary',
+                        lineHeight: 1.6,
+                        fontSize: '0.875rem'
+                      }}
+                    >
+                      {profilePercentage >= 80
+                        ? 'Great job! Your profile is nearly complete.'
+                        : 'Complete the remaining sections to boost your visibility.'}
+                    </Typography>
+                  </Box>
+                </Stack>
               </Box>
-            </Stack>
+            </Box>
           </Stack>
         </Stack>
 

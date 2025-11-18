@@ -27,6 +27,11 @@ import LocationSelection from './LocationSelection'
 import RewardSection from './RewardSection'
 import SponsorerInfo from './SponsorerInfo'
 import { toast } from 'react-toastify'
+// Phone input imports
+import PhoneInput from 'react-phone-input-2'
+import 'react-phone-input-2/lib/style.css'
+// Country region data
+import { CountryRegionData } from '@/data/regions'
 import {
   ArrowBack,
   CheckCircleOutline,
@@ -73,7 +78,11 @@ const SponsorQuizzes = () => {
   const [selectedQuizzes, setSelectedQuizzes] = useState(['any-quiz'])
 
   // State for location
-  const [selectedCountryObject, setSelectedCountryObject] = useState(null)
+  const [selectedCountryObject, setSelectedCountryObject] = useState(() => {
+    // Default to India
+    const indiaData = CountryRegionData.find(data => data[1]?.toLowerCase() === 'in')
+    return indiaData ? { country: indiaData[0], countryCode: indiaData[1] } : null
+  })
   const [selectedRegion, setSelectedRegion] = useState('')
   const [city, setCity] = useState('')
   const [cityOptions, setCityOptions] = useState([])
@@ -82,6 +91,11 @@ const SponsorQuizzes = () => {
   const [sponsorerType, setSponsorerType] = useState('individual')
   const [rewardType, setRewardType] = useState(REWARD_TYPES.CASH)
   const [formData, setFormData] = useState({ ...initialFormData, email: session?.user?.email })
+  
+  // Phone input states
+  const [phoneInput, setPhoneInput] = useState('')
+  const [countryDialCode, setCountryDialCode] = useState('91') // Default to India +91
+  const [phoneValid, setPhoneValid] = useState(false)
 
   // Loading state
   const [loading, setLoading] = useState({
@@ -133,28 +147,115 @@ const SponsorQuizzes = () => {
     getQuizData()
   }, [])
 
+  // Update formData.phone when phoneInput or countryDialCode changes
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      mobileNumber: phoneInput.startsWith(countryDialCode) ? phoneInput.slice(countryDialCode.length) : phoneInput
+    }))
+  }, [phoneInput, countryDialCode])
+
+  // Update phone input country when selectedCountryObject changes from LocationSelection
+  useEffect(() => {
+    if (selectedCountryObject?.countryCode) {
+      // The PhoneInput will automatically update when the country prop changes
+      // We just need to ensure the dial code is in sync
+      // PhoneInput library handles the dial code automatically based on country code
+    }
+  }, [selectedCountryObject?.countryCode])
+
+  const validatePhone = (value, dialCode) => {
+    const indianRegex = new RegExp('^[6-9][0-9]{9}$')
+    if (dialCode === '91') {
+      let contactWithoutCountryCode = value.substring(2, value.length)
+      const result = indianRegex.test(contactWithoutCountryCode)
+      setPhoneValid(result)
+      return result
+    }
+    // For other countries, just check if it's not empty
+    const result = value.length > dialCode.length
+    setPhoneValid(result)
+    return result
+  }
+
+  const handlePhoneInputChange = (value, country) => {
+    // Update phone number
+    setPhoneInput(value)
+    validatePhone(value, country.dialCode)
+
+    // Check if the dial code or country code has changed
+    if (country.dialCode !== countryDialCode) {
+      // Update country dial code
+      setCountryDialCode(country.dialCode)
+
+      // Map country code to country name
+      const countryObj = CountryRegionData.find(
+        data => data[1]?.toLowerCase() === country.countryCode?.toLowerCase()
+      )
+
+      if (countryObj) {
+        setSelectedCountryObject({ country: countryObj[0], countryCode: countryObj[1] })
+      } else {
+        console.warn('Country not found in CountryRegionData:', country.countryCode)
+      }
+    }
+  }
+
   const validateMobileNumber = number => {
-    const regex = /^[6-9]\d{9}$/ // Indian mobile number validation
-    return regex.test(number)
+    // For Indian numbers, validate 10-digit format
+    if (countryDialCode === '91') {
+      const regex = /^[6-9]\d{9}$/
+      return regex.test(number)
+    }
+    // For other countries, just check if number exists
+    return number && number.length > 0
+  }
+
+  const validateEmail = email => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return emailRegex.test(email)
   }
 
   const validateForm = () => {
     const newErrors = {}
 
+    // Common fields - always validated
     if (!formData.fullname) {
       newErrors.fullname = 'Full name is required'
     }
 
-    if (sponsorerType === 'organization') {
-      if (!formData.orgName) newErrors.orgName = 'Organization name is required'
-      if (!formData.website) newErrors.website = 'Website is required'
-      if (!formData.orgType) newErrors.orgType = 'Organization type is required'
+    if (!formData.email) {
+      newErrors.email = 'Email is required'
+    } else if (!validateEmail(formData.email)) {
+      newErrors.email = 'Please enter a valid email address'
     }
 
-    if (!formData.mobileNumber) {
+    // Organization-specific fields - only validated when sponsorerType is 'organization'
+    if (sponsorerType === 'organization') {
+      if (!formData.orgName) {
+        newErrors.orgName = 'Organization name is required'
+      }
+      if (!formData.website) {
+        newErrors.website = 'Website is required'
+      }
+      if (!formData.orgType) {
+        newErrors.orgType = 'Organization type is required'
+      }
+    }
+    // Note: Individual type doesn't have additional required fields beyond common ones
+
+    if (!phoneInput || phoneInput.length <= countryDialCode.length) {
       newErrors.mobileNumber = 'Mobile number is required'
+    } else if (!phoneValid) {
+      newErrors.mobileNumber =
+        countryDialCode === '91'
+          ? 'Please enter a valid 10-digit Indian mobile number'
+          : 'Please enter a valid mobile number'
     } else if (!validateMobileNumber(formData.mobileNumber)) {
-      newErrors.mobileNumber = 'Please enter a valid 10-digit Indian mobile number'
+      newErrors.mobileNumber =
+        countryDialCode === '91'
+          ? 'Please enter a valid 10-digit Indian mobile number'
+          : 'Please enter a valid mobile number'
     }
 
     if (rewardType === REWARD_TYPES.CASH && !formData.sponsorshipAmount) {
@@ -254,6 +355,33 @@ const SponsorQuizzes = () => {
     setFormData(prev => ({ ...prev, [name]: value }))
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }))
+    }
+  }
+
+  const handleSponsorerTypeChange = newType => {
+    setSponsorerType(newType)
+    
+    // Clear errors for fields that are no longer relevant
+    if (newType === 'individual') {
+      // Clear organization-specific errors
+      setErrors(prev => {
+        const newErrors = { ...prev }
+        delete newErrors.orgName
+        delete newErrors.website
+        delete newErrors.orgType
+        return newErrors
+      })
+      // Optionally clear organization form data
+      setFormData(prev => ({
+        ...prev,
+        orgName: '',
+        website: '',
+        orgType: ''
+      }))
+    } else if (newType === 'organization') {
+      // Clear individual-specific errors (if any)
+      // Currently no individual-specific fields that need clearing
+      // But we ensure organization fields are validated
     }
   }
 
@@ -611,10 +739,14 @@ const SponsorQuizzes = () => {
 
                     <SponsorerInfo
                       sponsorerType={sponsorerType}
-                      setSponsorerType={setSponsorerType}
+                      setSponsorerType={handleSponsorerTypeChange}
                       formData={formData}
                       errors={errors}
                       handleChange={handleChange}
+                      phoneInput={phoneInput}
+                      countryDialCode={countryDialCode}
+                      selectedCountryObject={selectedCountryObject}
+                      handlePhoneInputChange={handlePhoneInputChange}
                     />
                   </Stack>
                 </CardContent>

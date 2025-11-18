@@ -19,8 +19,13 @@ import {
   Tooltip,
   Button,
   Alert,
-  AlertTitle
+  AlertTitle,
+  InputAdornment,
+  CircularProgress,
+  Box
 } from '@mui/material'
+import CheckCircleIcon from '@mui/icons-material/CheckCircle'
+import CancelIcon from '@mui/icons-material/Cancel'
 import ArrowForwardIosSharpIcon from '@mui/icons-material/ArrowForwardIosSharp'
 
 // API Utils
@@ -29,6 +34,7 @@ import { API_URLS } from '@/configs/apiConfig'
 import * as clientApi from '@/app/api/client/client.api'
 import { useSession } from 'next-auth/react'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
+import { toast } from 'react-toastify'
 
 // Styled Accordion Components
 const Accordion = styled(props => <MuiAccordion disableGutters elevation={0} square {...props} />)(({ theme }) => ({
@@ -77,6 +83,11 @@ const RoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
   const [expanded, setExpanded] = useState(false) // State for expanded panels
   const [showTooltip, setShowTooltip] = useState(false)
   const [isActive, setIsActive] = useState(roleData?.isActive || false)
+  const [existingRoles, setExistingRoles] = useState([]) // Store all existing roles
+  const [roleNameError, setRoleNameError] = useState('') // Error message for role name
+  const [isCheckingAvailability, setIsCheckingAvailability] = useState(false) // Loading state for availability check
+  const [availabilityStatus, setAvailabilityStatus] = useState(null) // 'available', 'unavailable', or null
+  const [availabilityChecked, setAvailabilityChecked] = useState(false) // Whether availability has been checked
 
   console.log('data', data)
 
@@ -105,9 +116,83 @@ const RoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
     }
   }
 
+  // Fetch all existing roles from API
+  const getAllRoles = async () => {
+    try {
+      const result = await RestApi.get(`${API_URLS.v0.ROLE}`)
+      if (result?.status === 'success') {
+        setExistingRoles(result?.result || [])
+      } else {
+        console.log('Error Fetching roles:', result)
+      }
+    } catch (error) {
+      console.log('Error:', error)
+    }
+  }
+
+  // Check if role name already exists
+  const checkRoleNameExists = (name) => {
+    if (!name || !name.trim()) {
+      return false
+    }
+    // Normalize the input name (remove spaces, hyphens, underscores, convert to uppercase)
+    // This matches how we normalize existing role names for comparison
+    const normalizedInput = name.toUpperCase().replace(/[\s\-_]+/g, '')
+    
+    // For create: check if any role with this name exists
+    if (!roleData) {
+      return existingRoles.some(role => {
+        if (!role.name) return false
+        // Normalize existing role name (remove spaces, hyphens, underscores, convert to uppercase)
+        const normalizedRoleName = role.name.toUpperCase().replace(/[\s\-_]+/g, '')
+        return normalizedRoleName === normalizedInput
+      })
+    }
+    
+    // For update: check if any role with this name exists AND it's not the current role
+    return existingRoles.some(role => {
+      if (!role.name || role._id === roleData._id) return false
+      // Normalize existing role name (remove spaces, hyphens, underscores, convert to uppercase)
+      const normalizedRoleName = role.name.toUpperCase().replace(/[\s\-_]+/g, '')
+      return normalizedRoleName === normalizedInput
+    })
+  }
+
+  // Handle check availability button click
+  const handleCheckAvailability = async () => {
+    if (!roleName || !roleName.trim()) {
+      setRoleNameError('Please enter a role name first')
+      return
+    }
+
+    setIsCheckingAvailability(true)
+    setAvailabilityStatus(null)
+    setRoleNameError('')
+
+    // Simulate a small delay for better UX (optional)
+    await new Promise(resolve => setTimeout(resolve, 300))
+
+    const exists = checkRoleNameExists(roleName)
+    
+    setIsCheckingAvailability(false)
+    setAvailabilityChecked(true)
+    
+    if (exists) {
+      setAvailabilityStatus('unavailable')
+      setRoleNameError('Role name already exists')
+    } else {
+      setAvailabilityStatus('available')
+      setRoleNameError('')
+    }
+  }
+
   useEffect(() => {
     if (open) {
       getFeatureData() // Fetch data when the dialog opens
+      getAllRoles() // Fetch all existing roles to check for duplicates
+      setRoleNameError('') // Reset error when dialog opens
+      setAvailabilityStatus(null) // Reset availability status
+      setAvailabilityChecked(false) // Reset availability checked flag
       if (roleData) {
         setRoleName(roleData.name)
         const selectedPermissions = roleData.features.flatMap(feature =>
@@ -125,9 +210,35 @@ const RoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
     setOpen(false)
     setSelectedCheckbox([])
     setExpanded(false)
+    setRoleNameError('') // Reset error when closing
+    setAvailabilityStatus(null) // Reset availability status
+    setAvailabilityChecked(false) // Reset availability checked flag
   }
 
   async function handleCreateRole() {
+    // Validate role name
+    if (!roleName || !roleName.trim()) {
+      setRoleNameError('Role name is required')
+      toast.error('Role name is required')
+      return
+    }
+
+    // Check if availability has been checked
+    if (!availabilityChecked) {
+      setRoleNameError('Please check role name availability first')
+      toast.error('Please check role name availability before creating')
+      return
+    }
+
+    // Check if role name is available
+    if (availabilityStatus === 'unavailable' || checkRoleNameExists(roleName)) {
+      setRoleNameError('Role name already exists')
+      toast.error('Role name already exists. Please choose a different name.')
+      return
+    }
+
+    const formattedName = roleName.toUpperCase().replace(/\s+/g, '-')
+
     try {
       // Build features array from the selected checkboxes
       const features = data
@@ -144,7 +255,7 @@ const RoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
         .filter(feature => feature.permissions.length > 0) // Remove features with no selected permissions
 
       const payload = {
-        name: roleName.toUpperCase().replace(/\s+/g, '-'),
+        name: formattedName,
         createdBy: session?.user?.email,
         features
       }
@@ -153,17 +264,48 @@ const RoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
       const result = await RestApi.post(`${API_URLS.v0.ROLE}`, { ...payload })
       if (result?.status === 'success') {
         console.log('Role Created Successfully:', result)
+        toast.success(result?.message || 'Role created successfully')
         await refreshRoles() // Refresh roles data after creating a role
         handleClose()
       } else {
         console.log('Error Creating Role:', result)
+        toast.error(result?.message || 'Failed to create role')
       }
     } catch (error) {
       console.log('Error:', error)
+      toast.error(error?.message || 'An unexpected error occurred while creating role')
     }
   }
 
   async function handleUpdateRole() {
+    // Validate role name
+    if (!roleName || !roleName.trim()) {
+      setRoleNameError('Role name is required')
+      toast.error('Role name is required')
+      return
+    }
+
+    // Check if availability has been checked (only if role name changed)
+    const currentFormattedName = roleName.toUpperCase().replace(/\s+/g, '_')
+    const originalFormattedName = roleData?.name?.toUpperCase().replace(/\s+/g, '_') || ''
+    
+    if (currentFormattedName !== originalFormattedName) {
+      if (!availabilityChecked) {
+        setRoleNameError('Please check role name availability first')
+        toast.error('Please check role name availability before updating')
+        return
+      }
+
+      // Check if role name is available
+      if (availabilityStatus === 'unavailable' || checkRoleNameExists(roleName)) {
+        setRoleNameError('Role name already exists')
+        toast.error('Role name already exists. Please choose a different name.')
+        return
+      }
+    }
+
+    const formattedName = roleName.toUpperCase().replace(/\s+/g, '_')
+
     try {
       // Build features array from the selected checkboxes
       const features = data
@@ -181,7 +323,7 @@ const RoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
 
       const payload = {
         ...roleData,
-        name: roleName.toUpperCase().replace(/\s+/g, '_'), // Make sure `roleName` is set with the updated role name
+        name: formattedName, // Make sure `roleName` is set with the updated role name
         updatedBy: session?.user?.email,
         isActive: isActive,
         features
@@ -191,13 +333,16 @@ const RoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
       const result = await RestApi.put(`${API_URLS.v0.ROLE}`, { ...payload })
       if (result?.status === 'success') {
         console.log('Role Updated Successfully:', result)
+        toast.success(result?.message || 'Role updated successfully')
         await refreshRoles() // Refresh roles data after updating a role
         handleClose()
       } else {
         console.log('Error Updating Role:', result)
+        toast.error(result?.message || 'Failed to update role')
       }
     } catch (error) {
       console.log('Error:', error)
+      toast.error(error?.message || 'An unexpected error occurred while updating role')
     }
   }
 
@@ -248,11 +393,11 @@ const RoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
           <IconButtonTooltip title='Close' onClick={handleClose} className='absolute block-start-4 inline-end-4'>
             <i className='ri-close-line text-textSecondary' />
           </IconButtonTooltip>
-          <Alert severity='warning' className='mbe-8'>
+          {roleData && <Alert severity='warning' className='mbe-8'>
             <AlertTitle>Warning!</AlertTitle>
             By editing the role name, you might break the system functionality. Please ensure you are absolutely certain
             before proceeding.
-          </Alert>
+          </Alert>}
           <Tooltip open={showTooltip} placement='top' title='Only super admin can edit the role names' arrow>
             <TextField
               label='Role Name'
@@ -260,9 +405,23 @@ const RoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
               fullWidth
               placeholder='Enter Role Name'
               value={roleName} // Use state value
+              error={!!roleNameError || availabilityStatus === 'unavailable'}
+              helperText={
+                roleNameError || 
+                (availabilityStatus === 'available' ? 'Role name is available' : 
+                 availabilityStatus === 'unavailable' ? 'Role name already exists' : '')
+              }
               onChange={e => {
                 const formattedName = e.target.value.toUpperCase().replace(/\s+/g, '_') // Convert to uppercase and replace spaces with hyphens
                 setRoleName(formattedName) // Update state with the formatted name
+                // Clear error and availability status when user starts typing
+                if (roleNameError) {
+                  setRoleNameError('')
+                }
+                if (availabilityStatus) {
+                  setAvailabilityStatus(null)
+                  setAvailabilityChecked(false)
+                }
               }}
               onClick={e => {
                 if (roleData) {
@@ -271,7 +430,28 @@ const RoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
                 }
               }}
               InputProps={{
-                readOnly: !!roleData // Make the TextField read-only if editing
+                readOnly: !!roleData, // Make the TextField read-only if editing
+                endAdornment: !roleData && (
+                  <InputAdornment position='end'>
+                    {isCheckingAvailability ? (
+                      <CircularProgress size={20} />
+                    ) : availabilityStatus === 'available' ? (
+                      <CheckCircleIcon color='success' sx={{ fontSize: 20 }} />
+                    ) : availabilityStatus === 'unavailable' ? (
+                      <CancelIcon color='error' sx={{ fontSize: 20 }} />
+                    ) : (
+                      <Button
+                        variant='outlined'
+                        size='small'
+                        onClick={handleCheckAvailability}
+                        disabled={!roleName || !roleName.trim() || isCheckingAvailability}
+                        sx={{ minWidth: 'auto', px: 1.5, py: 0.5 }}
+                      >
+                        Check
+                      </Button>
+                    )}
+                  </InputAdornment>
+                )
               }}
             />
           </Tooltip>
@@ -361,6 +541,20 @@ const RoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
             component='label'
             style={{ color: 'white' }}
             onClick={roleData ? handleUpdateRole : handleCreateRole}
+            disabled={
+              roleData
+                ? (() => {
+                    // For update: field is read-only, but if name could change, check availability
+                    // Since field is read-only, name can't change, so always enable
+                    // But if we allow editing in future, check if name changed and availability
+                    const currentFormattedName = roleName.toUpperCase().replace(/\s+/g, '_')
+                    const originalFormattedName = roleData?.name?.toUpperCase().replace(/\s+/g, '_') || ''
+                    const nameChanged = currentFormattedName !== originalFormattedName
+                    // If name changed (shouldn't happen with read-only, but just in case), check availability
+                    return nameChanged && (availabilityStatus !== 'available')
+                  })()
+                : availabilityStatus !== 'available' // For create, only enable if available
+            }
           >
             {roleData ? 'Edit' : 'Add'}
           </Button>
