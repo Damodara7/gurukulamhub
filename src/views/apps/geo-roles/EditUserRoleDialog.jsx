@@ -14,8 +14,10 @@ import {
   Switch,
   Button,
   Chip,
-  Typography
+  Typography,
+  Box
 } from '@mui/material'
+import { alpha, useTheme } from '@mui/material/styles'
 
 // Api utils
 import * as RestApi from '@/utils/restApiUtil'
@@ -25,8 +27,11 @@ import { toast } from 'react-toastify'
 import { ROLES_LOOKUP } from '@/configs/roles-lookup'
 
 const USER_ROLE = ROLES_LOOKUP.USER
+import IconButtonTooltip from '@/components/IconButtonTooltip'
 
 const EditUserRoleDialog = ({ open, setOpen, userData, refreshUsers, roles = [], geoRolesData = [] }) => {
+  const theme = useTheme()
+  const [roleNames, setRoleNames] = useState(userData?.roles || [])
   // Helper function to ensure USER role is always included
   const ensureUserRole = roles => {
     const rolesArray = Array.isArray(roles) ? roles : []
@@ -36,7 +41,6 @@ const EditUserRoleDialog = ({ open, setOpen, userData, refreshUsers, roles = [],
     return rolesArray
   }
 
-  const [roleNames, setRoleNames] = useState(() => ensureUserRole(userData?.roles || []))
   const [geoRoleNames, setGeoRoleNames] = useState(userData?.geoRoles || [])
   const [isActive, setIsActive] = useState(userData?.isActive || false)
 
@@ -111,121 +115,228 @@ const EditUserRoleDialog = ({ open, setOpen, userData, refreshUsers, roles = [],
   }, [open, userData])
 
   return (
-    <Dialog fullWidth maxWidth='md' scroll='body' open={open} onClose={() => setOpen(false)}>
-      <DialogTitle className='flex flex-col gap-2 text-center'>
-        Edit Roles
-        <Typography component='span' className='flex flex-col text-center'>
-          Edit roles & status
+    <Dialog
+      open={open}
+      onClose={() => setOpen(false)}
+      fullWidth
+      maxWidth='sm'
+      scroll='paper'
+      PaperProps={{
+        sx: {
+          borderRadius: { xs: 3, sm: 4 },
+          mx: { xs: 2.5, sm: 0 },
+          my: { xs: 4, sm: 6 },
+          maxHeight: { xs: '80dvh', sm: '86dvh' },
+          width: '100%',
+          backgroundColor: '#ffffff',
+          boxShadow: '0 18px 44px rgba(15,15,45,0.18)',
+          border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`
+        }
+      }}
+    >
+      <DialogTitle
+        sx={{
+          px: { xs: 3, sm: 4.5 },
+          py: { xs: 2.75, sm: 3.25 },
+          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
+          backgroundColor: '#ffffff'
+        }}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 2
+          }}
+        >
+          <Box sx={{ width: 40 }} />
+          <Typography
+            variant='h6'
+            sx={{
+              fontWeight: 600,
+              fontSize: { xs: '1.25rem', sm: '1.35rem' },
+              letterSpacing: '-0.01em',
+              color: theme.palette.text.primary,
+              textAlign: 'center',
+              flex: 1
+            }}
+          >
+            Edit Geo-User Roles
+          </Typography>
+          <IconButtonTooltip
+            title='Close'
+            onClick={() => setOpen(false)}
+            sx={{
+              color: theme.palette.text.secondary,
+              '&:hover i': { color: theme.palette.text.primary }
+            }}
+          >
+            <i className='ri-close-line text-xl' />
+          </IconButtonTooltip>
+        </Box>
+        <Typography
+          variant='body2'
+          sx={{
+            mt: 1.5,
+            color: theme.palette.text.secondary,
+            textAlign: 'center',
+            fontSize: { xs: '0.92rem', sm: '0.95rem' }
+          }}
+        >
+          Update role assignments and activation status for this user.
         </Typography>
       </DialogTitle>
-      <DialogContent>
-        <FormControl fullWidth margin='normal' style={{ minWidth: '270px' }}>
-          <InputLabel id='roles-multi-select-label'>Roles</InputLabel>
-          <Select
-            label='Roles'
-            labelId='roles-multi-select-label'
-            multiple
-            name='roles'
-            disabled
-            value={roleNames}
-            onChange={handleRoleChange}
-            renderValue={selected => (
-              <div className='flex flex-wrap gap-2'>
-                {selected.map(value => (
-                  <Chip
-                    key={value}
-                    clickable={false} // Roles are not editable in this dialog (focused on geoRoles)
-                    deleteIcon={
-                      value === USER_ROLE ? null : (
+      <DialogContent
+        sx={{
+          px: { xs: 3, sm: 4.5 },
+          py: { xs: 3, sm: 4 },
+          overflowY: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 3
+        }}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 1
+          }}
+        >
+          <Typography variant='subtitle2' sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
+            Geo-Role Access
+          </Typography>
+          <FormControl fullWidth>
+            <InputLabel id='roles-multi-select-label'>Roles</InputLabel>
+            <Select
+              label='Roles'
+              labelId='roles-multi-select-label'
+              multiple
+              name='roles'
+              value={roleNames}
+              onChange={handleRoleChange}
+              renderValue={selected => (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  {selected.map(value => (
+                    <Chip
+                      key={value}
+                      clickable
+                      deleteIcon={
                         <i
                           className='ri-close-circle-fill'
                           onMouseDown={event => event.stopPropagation()} // Prevent closing Select when clicking icon
                         />
-                      )
-                    }
-                    size='small'
-                    label={value} // Assuming value is the label; adjust if needed
-                    onDelete={value === USER_ROLE ? undefined : () => handleDeleteChip(value)} // Prevent deletion of USER role
-                    sx={{
-                      ...(value === USER_ROLE && {
-                        opacity: 0.7,
-                        cursor: 'not-allowed'
-                      }),
-                      cursor: 'default' // Make all role chips non-clickable since this dialog is for geoRoles
-                    }}
-                  />
-                ))}
-              </div>
-            )}
-          >
-            {roles.map(role => (
-              <MenuItem
-                key={role._id}
-                value={role.name}
-                disabled={role.name === USER_ROLE} // Disable USER role checkbox (it's always selected)
-              >
-                <Checkbox
-                  checked={roleNames.includes(role.name)}
-                  disabled={role.name === USER_ROLE} // USER role is always checked and disabled
-                />
-                <ListItemText
-                  primary={role.name}
-                  secondary={role.name === USER_ROLE ? 'Required for all users' : undefined}
-                />
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <FormControl fullWidth margin='normal' style={{ minWidth: '270px' }}>
-          <InputLabel id='geo-roles-multi-select-label'>Geographical Roles</InputLabel>
-          <Select
-            label='Geographical Roles'
-            labelId='geo-roles-multi-select-label'
-            multiple
-            name='geoRoles'
-            value={geoRoleNames}
-            onChange={handleGeoRoleChange}
-            renderValue={selected => (
-              <div className='flex flex-wrap gap-2'>
-                {selected.map(value => (
-                  <Chip
-                    key={value}
-                    clickable
-                    deleteIcon={
-                      <i
-                        className='ri-close-circle-fill'
-                        onMouseDown={event => event.stopPropagation()} // Prevent closing Select when clicking icon
-                      />
-                    }
-                    size='small'
-                    label={value} // Assuming value is the label; adjust if needed
-                    onDelete={() => handleDeleteGeoChip(value)} // Call delete handler
-                  />
-                ))}
-              </div>
-            )}
-          >
-            {geoRolesData.map(role => (
-              <MenuItem key={role._id} value={role.name}>
-                <Checkbox checked={geoRoleNames.includes(role.name)} />
-                <ListItemText primary={role.name} />
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <FormControl margin='normal'>
+                      }
+                      size='small'
+                      label={value}
+                      onDelete={() => handleDeleteChip(value)}
+                    />
+                  ))}
+                </Box>
+              )}
+            >
+              {roles.map(role => (
+                <MenuItem key={role._id} value={role.name}>
+                  <Checkbox checked={roleNames.includes(role.name)} />
+                  <ListItemText primary={role.name} />
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 1
+          }}
+        >
+          <Typography variant='subtitle2' sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
+            Geographical Roles
+          </Typography>
+          <FormControl fullWidth>
+            <InputLabel id='geo-roles-multi-select-label'>Geographical Roles</InputLabel>
+            <Select
+              label='Geographical Roles'
+              labelId='geo-roles-multi-select-label'
+              multiple
+              name='geoRoles'
+              value={geoRoleNames}
+              onChange={handleGeoRoleChange}
+              renderValue={selected => (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  {selected.map(value => (
+                    <Chip
+                      key={value}
+                      clickable
+                      deleteIcon={<i className='ri-close-circle-fill' onMouseDown={event => event.stopPropagation()} />}
+                      size='small'
+                      label={value}
+                      onDelete={() => handleDeleteGeoChip(value)}
+                    />
+                  ))}
+                </Box>
+              )}
+            >
+              {geoRolesData.map(role => (
+                <MenuItem key={role._id} value={role.name}>
+                  <Checkbox checked={geoRoleNames.includes(role.name)} />
+                  <ListItemText primary={role.name} />
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            p: 2,
+            borderRadius: 2,
+            border: `1px solid ${alpha(theme.palette.divider, 0.4)}`,
+            gap: 2
+          }}
+        >
+          <Box>
+            <Typography variant='subtitle2' sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
+              Account Status
+            </Typography>
+            <Typography variant='body2' sx={{ color: theme.palette.text.secondary }}>
+              Toggle to activate or suspend this account.
+            </Typography>
+          </Box>
           <FormControlLabel
             control={<Switch checked={isActive} onChange={handleStatusChange} name='statusSwitch' color='primary' />}
             label={isActive ? 'Active' : 'Inactive'}
           />
-        </FormControl>
+        </Box>
       </DialogContent>
-      <DialogActions className='gap-2 justify-center'>
-        <Button variant='contained' component='label' style={{ color: 'white' }} onClick={handleSubmit}>
-          Save
-        </Button>
-        <Button variant='outlined' tye='reset' color='secondary' onClick={() => setOpen(false)}>
+      <DialogActions
+        sx={{
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          justifyContent: { xs: 'center', sm: 'flex-end' },
+          alignItems: 'center',
+          px: { xs: 3, sm: 4.5 },
+          py: { xs: 2.5, sm: 3 },
+          mt: { xs: 2, sm: 0 },
+          gap: { xs: 1.5, sm: 2 },
+          backgroundColor: alpha(theme.palette.primary.main, 0.06),
+          borderTop: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
+          '& > .MuiButton-root': {
+            minWidth: 120,
+            justifyContent: 'center'
+          }
+        }}
+      >
+        <Button variant='outlined' color='secondary' onClick={() => setOpen(false)}>
           Cancel
+        </Button>
+        <Button variant='contained' component='label' style={{ color: 'white' }} onClick={handleSubmit}>
+          Update
         </Button>
       </DialogActions>
     </Dialog>

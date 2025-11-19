@@ -7,7 +7,7 @@ import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 
 // Material-UI Imports
-import { Box, Typography, Container } from '@mui/material'
+import { Box, Typography, Container, Stack } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 
 // Component Imports
@@ -134,20 +134,22 @@ function Contexts({ contextType = 'GENERIC' }) {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
-        background: `radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 50%),
-                     radial-gradient(circle at 80% 80%, ${alpha(
+        minHeight: '100dvh',
+        display: 'flex',
+        flexDirection: 'column',
+        background: `radial-gradient(circle at 18% 18%, ${alpha(theme.palette.primary.main, 0.06)} 0%, transparent 55%),
+                     radial-gradient(circle at 82% 82%, ${alpha(
                        theme.palette.secondary.main,
-                       0.05
-                     )} 0%, transparent 50%),
+                       0.06
+                     )} 0%, transparent 55%),
                      ${theme.palette.background.default}`
       }}
     >
       {/* Elegant Header */}
       <Box
         sx={{
-          backdropFilter: 'blur(20px)',
-          bgcolor: alpha('#fff', 0.7),
+          backdropFilter: 'blur(16px)',
+          bgcolor: alpha('#fff', 0.78),
           borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
           pt: { xs: 4, md: 6 },
           pb: { xs: 4, md: 6 }
@@ -155,49 +157,52 @@ function Contexts({ contextType = 'GENERIC' }) {
       >
         <Container maxWidth='lg'>
           <Box sx={{ textAlign: 'center' }}>
-            {/* Icon and Title */}
-            <Box
-              sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 2,
-                mb: 2
-              }}
+            <Stack
+              direction='row'
+              spacing={{ xs: 1.5, sm: 2 }}
+              justifyContent='center'
+              alignItems='center'
+              sx={{ mb: { xs: 1.75, sm: 2 } }}
             >
               <Box
                 sx={{
-                  width: { xs: 48, sm: 56 },
-                  height: { xs: 48, sm: 56 },
-                  borderRadius: '12px',
+                  width: { xs: 46, sm: 54 },
+                  height: { xs: 46, sm: 54 },
+                  borderRadius: '14px',
                   background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`
+                  boxShadow: `0 6px 18px ${alpha(theme.palette.primary.main, 0.28)}`
                 }}
               >
-                <i className='ri-node-tree' style={{ fontSize: '28px', color: 'white' }} />
+                <i
+                  className='ri-node-tree'
+                  style={{ fontSize: 'clamp(22px, 6vw, 28px)', color: '#fff', lineHeight: 1 }}
+                />
               </Box>
-              <Typography
-                sx={{
-                  fontSize: { xs: '2rem', md: '2.5rem' },
-                  fontWeight: 700,
-                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  letterSpacing: '-0.02em'
-                }}
-              >
-                Context Management
-              </Typography>
-            </Box>
+              <Stack spacing={0.5} alignItems='flex-start' sx={{ textAlign: 'left' }}>
+                <Typography
+                  sx={{
+                    fontSize:{xs:'1.5rem',sm:'1.75rem',md:'2.5rem'},
+                    fontWeight: 700,
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    letterSpacing: '-0.018em'
+                  }}
+                >
+                  Context Management
+                </Typography>
+              </Stack>
+            </Stack>
             <Typography
               variant='body1'
               color='text.secondary'
               sx={{
-                fontSize: '1.05rem',
+                fontSize: { xs: '0.95rem', sm: '1.05rem' },
                 lineHeight: 1.8,
-                width: '100%',
+                maxWidth: { xs: '100%', sm: '620px' },
                 mx: 'auto',
                 fontWeight: 400
               }}
@@ -209,33 +214,52 @@ function Contexts({ contextType = 'GENERIC' }) {
       </Box>
 
       {/* Content Area */}
-      <Container maxWidth='lg' sx={{ py: { xs: 3, md: 4 } }}>
+      <Container
+        maxWidth='lg'
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          width: '100%',
+          py: { xs: 3, md: 4 }
+        }}
+      >
         <Box
           sx={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
             background: '#ffffff',
             borderRadius: 3,
-            p: { xs: 3, sm: 4 },
-            boxShadow: theme => theme.shadows[3],
-            border: theme => `1px solid ${alpha(theme.palette.divider, 0.08)}`,
-            minHeight: '500px'
+            p: { xs: 2.5, sm: 3.5, md: 4 },
+            boxShadow: '0 12px 32px rgba(15, 15, 45, 0.06)',
+            border: `1px solid ${alpha(theme.palette.divider, 0.08)}`
           }}
         >
           {loading.contexts ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
-              <Box sx={{ textAlign: 'center' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1 }}>
+              <Stack spacing={2} alignItems='center'>
                 <i
                   className='ri-loader-4-line'
-                  style={{ fontSize: '48px', color: '#8b5cf6', animation: 'spin 1s linear infinite' }}
+                  style={{ fontSize: '48px', color: theme.palette.primary.main, animation: 'spin 1s linear infinite' }}
                 />
-                <Typography variant='h6' color='text.secondary' sx={{ mt: 2 }}>
+                <Typography variant='h6' color='text.secondary'>
                   Loading contexts...
                 </Typography>
-              </Box>
+              </Stack>
             </Box>
           ) : contexts.length === 0 ? (
             <NoContexts contextType={contextType} onCreateRootContext={handleAddNode} />
           ) : (
-            <Box sx={{ overflow: 'auto' }}>
+            <Box
+              sx={{
+                mt: { xs: 1.5, sm: 2 },
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden'
+              }}
+            >
               <AdminContextTree
                 onAddClick={handleAddChildNodeClick}
                 onRemoveClick={handleRemoveNodeClick}

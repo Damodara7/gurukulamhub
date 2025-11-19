@@ -24,6 +24,7 @@ import {
   Tooltip,
   useTheme
 } from '@mui/material'
+import IconButtonTooltip from '@/components/IconButtonTooltip'
 import { alpha } from '@mui/material/styles'
 import {
   ArrowDropDown as ArrowDropDownIcon,
@@ -1000,7 +1001,7 @@ const AudienceByFilter = ({
             onClick={handleClick}
             endIcon={<ArrowDropDownIcon />}
             sx={{
-              minWidth: 120,
+              width: { xs: '100%', sm: 'auto' },
               ...(selectedFilters.length > 0 && {
                 borderColor: 'primary.main',
                 color: 'primary.main',
@@ -1221,21 +1222,37 @@ const AudienceByFilter = ({
             pb: 2,
             borderBottom: '1px solid',
             borderColor: 'divider',
-            backgroundColor: 'background.paper'
+            backgroundColor: 'background.paper',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 2
           }}
         >
-          <Typography variant='h6' component='div' sx={{ fontWeight: 600 }}>
-            {isEditMode ? 'Edit ' : 'Filter by '}
-            {groupBy === 'age' && 'Age Range'}
-            {groupBy === 'location' && 'Location'}
-            {groupBy === 'gender' && 'Gender'}
-          </Typography>
-          <Typography variant='body2' color='text.secondary' sx={{ mt: 0.5 }}>
-            {isEditMode ? 'Update the ' : 'Select the '}
-            {groupBy === 'age' && 'age range to filter users'}
-            {groupBy === 'location' && 'country, region, and city to filter users'}
-            {groupBy === 'gender' && 'gender(s) to filter users'}
-          </Typography>
+          <Box sx={{ flex: 1 }}>
+            <Typography variant='h6' component='div' sx={{ fontWeight: 600 }}>
+              {isEditMode ? 'Edit ' : 'Filter by '}
+              {groupBy === 'age' && 'Age Range'}
+              {groupBy === 'location' && 'Location'}
+              {groupBy === 'gender' && 'Gender'}
+            </Typography>
+            <Typography variant='body2' color='text.secondary' sx={{ mt: 0.5 }}>
+              {isEditMode ? 'Update the ' : 'Select the '}
+              {groupBy === 'age' && 'age range to filter users'}
+              {groupBy === 'location' && 'country, region, and city to filter users'}
+              {groupBy === 'gender' && 'gender(s) to filter users'}
+            </Typography>
+          </Box>
+          <IconButtonTooltip
+            title='Close'
+            onClick={closeFilterDialog}
+            sx={{
+              color: theme => theme.palette.text.secondary,
+              '&:hover i': { color: theme => theme.palette.text.primary }
+            }}
+          >
+            <i className='ri-close-line text-xl' />
+          </IconButtonTooltip>
         </DialogTitle>
 
         <DialogContent sx={{ pt: 3, pb: 2 }}>
@@ -1514,18 +1531,8 @@ const AudienceByFilter = ({
               (groupBy === 'gender' && !Object.values(filters.gender).some(Boolean))
             }
           >
-            {isEditMode ? 'Update Filter' : 'Apply Filters'}
+            {isEditMode ? 'Update' : 'Submit'}
           </Button>
-          {/* <Button
-            onClick={handleSubmit}
-            component='label'
-            variant='contained'
-            color='primary'
-            style={{ color: 'white' }}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'Saving...' : 'Save Group'}
-          </Button> */}
         </DialogActions>
       </Dialog>
 

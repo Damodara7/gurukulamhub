@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
+import { Box } from '@mui/material'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { useRouter } from 'next/navigation'
@@ -181,9 +182,31 @@ function CreateGamePage({ isSuperUser = false }) {
 
   if (loading && quizzes.length === 0) {
     return (
-      <div className='flex items-center justify-center h-64'>
-        <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary'></div>
-      </div>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: { xs: '50vh', md: '64vh' },
+          width: '100%'
+        }}
+      >
+        <Box
+          sx={{
+            width: { xs: 40, sm: 48, md: 56 },
+            height: { xs: 40, sm: 48, md: 56 },
+            border: '3px solid',
+            borderColor: 'primary.main',
+            borderTopColor: 'transparent',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            '@keyframes spin': {
+              '0%': { transform: 'rotate(0deg)' },
+              '100%': { transform: 'rotate(360deg)' }
+            }
+          }}
+        />
+      </Box>
     )
   }
 
@@ -193,13 +216,13 @@ function CreateGamePage({ isSuperUser = false }) {
   }
 
   return (
-      <LocalizationProvider dateAdapter={AdapterDayjs}>
-        {creationMode === 'request_sponsorship' ? (
-          <GameRequestSponsorshipForm onSubmit={handleSubmit} quizzes={quizzes} onCancel={handleCancel} />
-        ) : (
-          <GameForm onSubmit={handleSubmit} quizzes={quizzes} onCancel={handleCancel} />
-        )}
-      </LocalizationProvider>
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      {creationMode === 'request_sponsorship' ? (
+        <GameRequestSponsorshipForm onSubmit={handleSubmit} quizzes={quizzes} onCancel={handleCancel} />
+      ) : (
+        <GameForm onSubmit={handleSubmit} quizzes={quizzes} onCancel={handleCancel} />
+      )}
+    </LocalizationProvider>
   )
 }
 

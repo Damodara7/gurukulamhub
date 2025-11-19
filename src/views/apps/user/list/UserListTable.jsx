@@ -1,12 +1,9 @@
 'use client'
-
 // React Imports
 import { useState, useMemo, useEffect } from 'react'
-
 // Next Imports
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-
 // MUI Imports
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
@@ -20,11 +17,14 @@ import Chip from '@mui/material/Chip'
 import Typography from '@mui/material/Typography'
 import Checkbox from '@mui/material/Checkbox'
 import IconButton from '@mui/material/IconButton'
-import { styled } from '@mui/material/styles'
+import Box from '@mui/material/Box'
+import Stack from '@mui/material/Stack'
 import TablePagination from '@mui/material/TablePagination'
 import DoneAllIcon from '@mui/icons-material/DoneAll'
 import CloseIcon from '@mui/icons-material/Close'
 import InputAdornment from '@mui/material/InputAdornment'
+import useMediaQuery from '@mui/material/useMediaQuery'
+import { styled, useTheme, alpha } from '@mui/material/styles'
 
 // Third-party Imports
 import classnames from 'classnames'
@@ -50,7 +50,6 @@ import EditUserRoleDialog from '../../roles/EditUserRoleDialog'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
 
 // Util Imports
-import { getInitials } from '@/utils/getInitials'
 import { getLocalizedUrl } from '@/utils/i18n'
 
 // Api utils
@@ -160,12 +159,18 @@ const RolesTable = ({ tableData, refreshUsers }) => {
         )
       },
       columnHelper.accessor('fullName', {
-        header: 'User',
+        header: 'Users',
         cell: ({ row }) => {
           const fullname = `${row.original.firstname || ''} ${row.original.lastname || ''}`
           return (
             <div className='flex items-center gap-4'>
-              {getAvatar({ avatar: row.original.image, fullName: fullname })}
+              {getAvatar({
+                avatar: row.original.image,
+                fullName: fullname,
+                firstname: row.original.firstname,
+                lastname: row.original.lastname,
+                email: row.original.email
+              })}
               <div className='flex flex-col' style={{ minWidth: '150px' }}>
                 <Link
                   href={getLocalizedUrl(`/management/user/${encodeURIComponent(row.original.email)}`, locale)}
@@ -198,6 +203,7 @@ const RolesTable = ({ tableData, refreshUsers }) => {
                         color: 'var(--mui-palette-primary-main)',
                         transition: 'transform 0.2s ease-in-out'
                       }}
+                      sx={{ fontWeight: 600, color: '#fff' }}
                     />
                   </Typography>
                 </Link>
@@ -401,23 +407,31 @@ const RolesTable = ({ tableData, refreshUsers }) => {
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
 
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+  const filteredRows = table.getPrePaginationRowModel().rows
+  const paginatedRows = table.getRowModel().rows
+
   const handleEdit = rowData => {
     setEditData(rowData)
     setOpenDialog(true)
   }
 
   const getAvatar = params => {
-    const { avatar, fullName } = params
+    const { avatar, fullName, firstname, lastname, email } = params
 
     if (avatar) {
       return <CustomAvatar src={avatar} skin='light' size={34} />
-    } else {
-      return (
-        <CustomAvatar skin='light' size={34}>
-          {getInitials(fullName)}
-        </CustomAvatar>
-      )
     }
+
+    const fallbackLetter =
+      firstname?.trim()?.[0] || lastname?.trim()?.[0] || fullName?.trim()?.[0] || email?.trim()?.[0] || '?'
+
+    return (
+      <CustomAvatar skin='light' size={34}>
+        {fallbackLetter.toUpperCase()}
+      </CustomAvatar>
+    )
   }
 
   // Fetch the roles from the API
@@ -460,6 +474,7 @@ const RolesTable = ({ tableData, refreshUsers }) => {
 
   return (
     <Card
+      id='user-table'
       sx={{
         background: '#ffffff',
         boxShadow: theme => theme.shadows[3],
@@ -473,315 +488,403 @@ const RolesTable = ({ tableData, refreshUsers }) => {
       }}
     >
       <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
-        <Grid container spacing={{ xs: 2, sm: 3 }} alignItems='center'>
-          {/* Filters Section */}
-          <Grid item xs={12} sm={6} md={3}>
-            <FormControl size='small' fullWidth>
-              <InputLabel id='roles-app-role-select-label'>Select Role</InputLabel>
-              <Select
-                value={role}
-                onChange={e => setRole(e.target.value)}
-                label='Select Role'
-                id='roles-app-role-select'
-                labelId='roles-app-role-select-label'
+        <Stack spacing={3}>
+          <Stack spacing={1.5} sx={{ width: '100%' }}>
+            <Stack
+              direction='row'
+              spacing={2}
+              alignItems='center'
+              justifyContent='space-between'
+              sx={{ flexWrap: 'wrap', rowGap: 1 }}
+            >
+              <Box>
+                <Typography variant='h6' sx={{ fontWeight: 700 }}>
+                  Directory Overview
+                </Typography>
+                <Typography variant='body2' color='text.secondary'>
+                  {filteredRows.length}/{tableData?.length || 0} users
+                </Typography>
+              </Box>
+              <Button
+                variant='contained'
+                component='label'
+                onClick={() => setAddUserOpen(!addUserOpen)}
+                startIcon={<i className='ri-add-line' />}
+                sx={{
+                  borderRadius: 2,
+                  color: 'white',
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  ml: 'auto'
+                }}
               >
-                <MenuItem value=''>
-                  <em>All Roles</em>
-                </MenuItem>
-                {rolesData?.map(role => {
-                  return (
+                Add User
+              </Button>
+            </Stack>
+          </Stack>
+
+          <Grid container spacing={{ xs: 2, sm: 3 }}>
+            <Grid item xs={12} sm={6} md={3}>
+              <FormControl size='small' fullWidth>
+                <InputLabel id='roles-app-role-select-label'>Select Role</InputLabel>
+                <Select
+                  value={role}
+                  onChange={e => setRole(e.target.value)}
+                  label='Select Role'
+                  id='roles-app-role-select'
+                  labelId='roles-app-role-select-label'
+                >
+                  <MenuItem value=''>
+                    <em>All Roles</em>
+                  </MenuItem>
+                  {rolesData?.map(role => (
                     <MenuItem key={role._id} value={role.name}>
                       {role.name}
                     </MenuItem>
-                  )
-                })}
-              </Select>
-            </FormControl>
-          </Grid>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
 
-          <Grid item xs={12} sm={6} md={3}>
-            <FormControl size='small' fullWidth>
-              <InputLabel id='status-select-label'>Select Status</InputLabel>
-              <Select
-                value={status}
-                onChange={e => setStatus(e.target.value)}
-                label='Select Status'
-                id='status-select'
-                labelId='status-select-label'
-              >
-                <MenuItem value=''>
-                  <em>All Status</em>
-                </MenuItem>
-                {['inactive', 'active']?.map(currentStatus => {
-                  return (
+            <Grid item xs={12} sm={6} md={3}>
+              <FormControl size='small' fullWidth>
+                <InputLabel id='status-select-label'>Select Status</InputLabel>
+                <Select
+                  value={status}
+                  onChange={e => setStatus(e.target.value)}
+                  label='Select Status'
+                  id='status-select'
+                  labelId='status-select-label'
+                >
+                  <MenuItem value=''>
+                    <em>All Status</em>
+                  </MenuItem>
+                  {['inactive', 'active']?.map(currentStatus => (
                     <MenuItem className='capitalize' key={currentStatus} value={currentStatus}>
                       {currentStatus}
                     </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={3}>
+              <FormControl size='small' fullWidth>
+                <InputLabel id='email-verification-status-label'>Email Status</InputLabel>
+                <Select
+                  value={emailStatus}
+                  onChange={e => setEmailStatus(e.target.value)}
+                  label='Email Status'
+                  id='email-verification-status-select'
+                  labelId='email-verification-status-label'
+                >
+                  <MenuItem value=''>
+                    <em>All Email Status</em>
+                  </MenuItem>
+                  <MenuItem value='verified'>Verified</MenuItem>
+                  <MenuItem value='notVerified'>Not Verified</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={3}>
+              <DebouncedInput
+                value={globalFilter ?? ''}
+                onChange={value => setGlobalFilter(String(value))}
+                placeholder='Search User'
+                fullWidth
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position='start'>
+                      <i
+                        className='ri-search-line'
+                        style={{ fontSize: '20px', color: 'var(--mui-palette-text-secondary)' }}
+                      />
+                    </InputAdornment>
                   )
-                })}
-              </Select>
-            </FormControl>
+                }}
+              />
+            </Grid>
           </Grid>
 
-          <Grid item xs={12} sm={6} md={3}>
-            <FormControl size='small' fullWidth>
-              <InputLabel id='email-verification-status-label'>Email Status</InputLabel>
-              <Select
-                value={emailStatus}
-                onChange={e => setEmailStatus(e.target.value)}
-                label='Email Status'
-                id='email-verification-status-select'
-                labelId='email-verification-status-label'
+          {(role || status || emailStatus || globalFilter) && (
+            <Stack direction='row' spacing={1} flexWrap='wrap' alignItems='center' sx={{ rowGap: 1, columnGap: 1 }}>
+              <Typography variant='caption' color='text.secondary' sx={{ fontWeight: 600 }}>
+                Active Filters:
+              </Typography>
+              {role && (
+                <Chip
+                  label={`Role: ${role}`}
+                  size='small'
+                  onDelete={() => setRole('')}
+                  color='primary'
+                  variant='outlined'
+                />
+              )}
+              {status && (
+                <Chip
+                  label={`Status: ${status}`}
+                  size='small'
+                  onDelete={() => setStatus('')}
+                  color='success'
+                  variant='outlined'
+                  sx={{ textTransform: 'capitalize' }}
+                />
+              )}
+              {emailStatus && (
+                <Chip
+                  label={`Email: ${emailStatus === 'verified' ? 'Verified' : 'Not Verified'}`}
+                  size='small'
+                  onDelete={() => setEmailStatus('')}
+                  color='warning'
+                  variant='outlined'
+                />
+              )}
+              {globalFilter && (
+                <Chip
+                  label={`Search: "${globalFilter}"`}
+                  size='small'
+                  onDelete={() => setGlobalFilter('')}
+                  color='info'
+                  variant='outlined'
+                />
+              )}
+              <Button
+                size='small'
+                onClick={() => {
+                  setRole('')
+                  setStatus('')
+                  setEmailStatus('')
+                  setGlobalFilter('')
+                }}
+                sx={{ textTransform: 'none' }}
               >
-                <MenuItem value=''>
-                  <em>All Email Status</em>
-                </MenuItem>
-                <MenuItem value='verified'>Verified</MenuItem>
-                <MenuItem value='notVerified'>Not Verified</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-
-          <Grid item xs={12} sm={6} md={3}>
-            <DebouncedInput
-              value={globalFilter ?? ''}
-              onChange={value => setGlobalFilter(String(value))}
-              placeholder='Search User'
-              fullWidth
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position='start'>
-                    <i
-                      className='ri-search-line'
-                      style={{ fontSize: '20px', color: 'var(--mui-palette-text-secondary)' }}
-                    />
-                  </InputAdornment>
-                )
-              }}
-            />
-          </Grid>
-        </Grid>
+                Clear All
+              </Button>
+            </Stack>
+          )}
+        </Stack>
       </CardContent>
 
       <Divider />
 
-      <div className='px-4 sm:px-6 py-3 sm:py-4'>
-        <div className='flex justify-between items-start sm:items-center flex-col sm:flex-row gap-3'>
-          <div className='flex flex-col gap-2'>
-            <Typography
-              variant='body2'
-              color='text.secondary'
-              sx={{
-                fontWeight: 500
-              }}
-            >
-              {role || status || emailStatus || globalFilter ? (
-                <>
-                  Showing {table.getFilteredRowModel().rows.length} of {tableData?.length || 0} user
-                  {tableData?.length !== 1 ? 's' : ''}
-                </>
-              ) : (
-                <>
-                  Total {tableData?.length || 0} user{tableData?.length !== 1 ? 's' : ''}
-                </>
-              )}
-            </Typography>
-            {/* Active Filters Display */}
-            {(role || status || emailStatus || globalFilter) && (
-              <div className='flex flex-wrap items-center gap-2'>
-                <Typography variant='caption' color='text.disabled' sx={{ fontWeight: 500 }}>
-                  Active Filters:
-                </Typography>
-                {role && (
-                  <Chip
-                    label={`Role: ${role}`}
-                    size='small'
-                    onDelete={() => setRole('')}
-                    color='primary'
-                    variant='outlined'
-                    sx={{ height: '24px', fontSize: '0.75rem' }}
-                  />
-                )}
-                {status && (
-                  <Chip
-                    label={`Status: ${status}`}
-                    size='small'
-                    onDelete={() => setStatus('')}
-                    color='success'
-                    variant='outlined'
-                    sx={{ height: '24px', fontSize: '0.75rem', textTransform: 'capitalize' }}
-                  />
-                )}
-                {emailStatus && (
-                  <Chip
-                    label={`Email: ${emailStatus === 'verified' ? 'Verified' : 'Not Verified'}`}
-                    size='small'
-                    onDelete={() => setEmailStatus('')}
-                    color='warning'
-                    variant='outlined'
-                    sx={{ height: '24px', fontSize: '0.75rem' }}
-                  />
-                )}
-                {globalFilter && (
-                  <Chip
-                    label={`Search: "${globalFilter}"`}
-                    size='small'
-                    onDelete={() => setGlobalFilter('')}
-                    color='info'
-                    variant='outlined'
-                    sx={{ height: '24px', fontSize: '0.75rem' }}
-                  />
-                )}
-                <Button
-                  size='small'
-                  onClick={() => {
-                    setRole('')
-                    setStatus('')
-                    setEmailStatus('')
-                    setGlobalFilter('')
-                  }}
-                  sx={{
-                    fontSize: '0.75rem',
-                    height: '24px',
-                    minWidth: 'auto',
-                    px: 1.5,
-                    textTransform: 'none'
-                  }}
-                >
-                  Clear All
-                </Button>
-              </div>
-            )}
-          </div>
-          <Button
-            variant='contained'
-            component='label'
-            onClick={() => setAddUserOpen(!addUserOpen)}
-            startIcon={<i className='ri-add-line' />}
+      <Box sx={{ px: { xs: 2, sm: 3 }, py: { xs: 2, sm: 3 } }}>
+        {filteredRows.length === 0 ? (
+          <Box
             sx={{
-              borderRadius: 2,
-              color: 'white',
-              fontWeight: 600
+              textAlign: 'center',
+              py: 6,
+              borderRadius: 3,
+              backgroundColor: alpha(theme.palette.primary.main, 0.02)
             }}
           >
-            Add New User
-          </Button>
-        </div>
-      </div>
-      <div className='overflow-x-auto'>
-        <table className={tableStyles.table}>
-          <thead>
-            {table.getHeaderGroups().map(headerGroup => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map(header => (
-                  <th key={header.id}>
-                    {header.isPlaceholder ? null : (
-                      <>
-                        <div
-                          className={classnames({
-                            'flex items-center': header.column.getIsSorted(),
-                            'cursor-pointer select-none': header.column.getCanSort()
-                          })}
-                          onClick={header.column.getToggleSortingHandler()}
-                        >
-                          {flexRender(header.column.columnDef.header, header.getContext())}
-                          {{
-                            asc: <i className='ri-arrow-up-s-line text-xl' />,
-                            desc: <i className='ri-arrow-down-s-line text-xl' />
-                          }[header.column.getIsSorted()] ?? null}
-                        </div>
-                      </>
-                    )}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          {table.getFilteredRowModel().rows.length === 0 ? (
-            <tbody>
-              <tr>
-                <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
-                  <div
-                    style={{
-                      padding: '48px 16px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: '12px'
-                    }}
-                  >
-                    <i className='ri-user-search-line' style={{ fontSize: '48px', opacity: 0.5 }} />
-                    <Typography variant='h6' color='text.secondary'>
-                      No users found
-                    </Typography>
-                    <Typography variant='body2' color='text.disabled'>
-                      Try adjusting your search or filter criteria
-                    </Typography>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          ) : (
-            <tbody>
-              {table
-                .getRowModel()
-                .rows.slice(0, table.getState().pagination.pageSize)
-                .map(row => {
-                  return (
-                    <tr
-                      key={row.id}
-                      className={classnames({ selected: row.getIsSelected() })}
-                      style={{
-                        transition: 'all 0.3s ease-in-out',
-                        cursor: 'pointer'
-                      }}
-                      onMouseEnter={e => {
-                        e.currentTarget.style.backgroundColor = 'rgba(139, 92, 246, 0.08)'
-                        e.currentTarget.style.transform = 'scale(1.01)'
-                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(139, 92, 246, 0.15)'
-                      }}
-                      onMouseLeave={e => {
-                        if (!row.getIsSelected()) {
-                          e.currentTarget.style.backgroundColor = 'transparent'
-                        }
-                        e.currentTarget.style.transform = 'scale(1)'
-                        e.currentTarget.style.boxShadow = 'none'
-                      }}
+            <i className='ri-user-search-line' style={{ fontSize: 48, opacity: 0.5 }} />
+            <Typography variant='h6' color='text.secondary'>
+              No users found
+            </Typography>
+            <Typography variant='body2' color='text.disabled'>
+              Try adjusting your search or filter criteria.
+            </Typography>
+          </Box>
+        ) : isMobile ? (
+          <Box
+            sx={{
+              maxHeight: '65vh',
+              overflowY: 'auto',
+              pr: 1,
+              '&::-webkit-scrollbar': { width: 6 },
+              '&::-webkit-scrollbar-thumb': { backgroundColor: alpha(theme.palette.primary.main, 0.3), borderRadius: 8 }
+            }}
+          >
+            <Stack spacing={2}>
+              {filteredRows.map(row => (
+                <Box
+                  key={row.id}
+                  sx={{
+                    borderRadius: 3,
+                    border: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
+                    boxShadow: '0 12px 30px rgba(15, 23, 42, 0.08)',
+                    p: 2,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 1.2,
+                    background: '#fff'
+                  }}
+                >
+                  <Stack direction='row' justifyContent='space-between' alignItems='flex-start'>
+                    <Box>
+                      <Typography variant='subtitle1' sx={{ fontWeight: 700 }}>
+                        {row.original.firstname} {row.original.lastname}
+                      </Typography>
+                      <Typography variant='body2' color='text.secondary'>
+                        {row.original.email}
+                      </Typography>
+                    </Box>
+                    <Chip
+                      label={row.original.isActive ? 'Active' : 'Inactive'}
+                      color={row.original.isActive ? 'success' : 'default'}
+                      size='small'
+                      sx={{ fontWeight: 600 }}
+                    />
+                  </Stack>
+                  <Stack direction='row' justifyContent='space-between' alignItems='center'>
+                    <Stack spacing={0.5}>
+                      <Typography variant='caption' color='text.secondary'>
+                        Roles
+                      </Typography>
+                      <Stack direction='row' spacing={0.75} flexWrap='wrap'>
+                        {row.original.roles.map((role, idx) => (
+                          <Chip key={idx} label={role} size='small' variant='outlined' />
+                        ))}
+                      </Stack>
+                    </Stack>
+                    <Chip
+                      label={row.original.isVerified ? 'Verified' : 'Not Verified'}
+                      color={row.original.isVerified ? 'success' : 'warning'}
+                      size='small'
+                      sx={{ fontWeight: 600 }}
+                    />
+                  </Stack>
+                  <Stack direction='row' spacing={1}>
+                    <Button
+                      variant='outlined'
+                      size='small'
+                      component={Link}
+                      href={getLocalizedUrl(`/management/user/${encodeURIComponent(row.original.email)}`, locale)}
+                      sx={{ textTransform: 'none', flex: 1 }}
                     >
-                      {row.getVisibleCells().map(cell => (
-                        <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
-                      ))}
-                    </tr>
-                  )
-                })}
-            </tbody>
-          )}
-        </table>
-      </div>
-      <TablePagination
-        rowsPerPageOptions={[10, 25, 50]}
-        component='div'
-        className='border-bs'
-        count={table.getFilteredRowModel().rows.length}
-        rowsPerPage={table.getState().pagination.pageSize}
-        page={table.getState().pagination.pageIndex}
-        SelectProps={{
-          inputProps: { 'aria-label': 'rows per page' }
-        }}
-        onPageChange={(_, page) => {
-          table.setPageIndex(page)
-        }}
-        onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
-        sx={{
-          '.MuiTablePagination-toolbar': {
-            px: { xs: 2, sm: 3 },
-            py: 2
-          },
-          '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
-            fontSize: { xs: '0.75rem', sm: '0.875rem' }
-          }
-        }}
-      />
+                      View
+                    </Button>
+                    <Button
+                      variant='contained'
+                      component='label'
+                      size='small'
+                      sx={{ textTransform: 'none', flex: 1, color: 'white' }}
+                      onClick={() => handleEdit(row.original)}
+                    >
+                      Edit Role
+                    </Button>
+                  </Stack>
+                </Box>
+              ))}
+            </Stack>
+          </Box>
+        ) : (
+          <div className='overflow-x-auto'>
+            <table className={tableStyles.table}>
+              <thead>
+                {table.getHeaderGroups().map(headerGroup => (
+                  <tr key={headerGroup.id}>
+                    {headerGroup.headers.map(header => (
+                      <th key={header.id}>
+                        {header.isPlaceholder ? null : (
+                          <>
+                            <div
+                              className={classnames({
+                                'flex items-center': header.column.getIsSorted(),
+                                'cursor-pointer select-none': header.column.getCanSort()
+                              })}
+                              onClick={header.column.getToggleSortingHandler()}
+                            >
+                              {flexRender(header.column.columnDef.header, header.getContext())}
+                              {{
+                                asc: <i className='ri-arrow-up-s-line text-xl' />,
+                                desc: <i className='ri-arrow-down-s-line text-xl' />
+                              }[header.column.getIsSorted()] ?? null}
+                            </div>
+                          </>
+                        )}
+                      </th>
+                    ))}
+                  </tr>
+                ))}
+              </thead>
+              {table.getFilteredRowModel().rows.length === 0 ? (
+                <tbody>
+                  <tr>
+                    <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
+                      <div
+                        style={{
+                          padding: '48px 16px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: '12px'
+                        }}
+                      >
+                        <i className='ri-user-search-line' style={{ fontSize: '48px', opacity: 0.5 }} />
+                        <Typography variant='h6' color='text.secondary'>
+                          No users found
+                        </Typography>
+                        <Typography variant='body2' color='text.disabled'>
+                          Try adjusting your search or filter criteria
+                        </Typography>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              ) : (
+                <tbody>
+                  {table
+                    .getRowModel()
+                    .rows.slice(0, table.getState().pagination.pageSize)
+                    .map(row => {
+                      return (
+                        <tr
+                          key={row.id}
+                          className={classnames({ selected: row.getIsSelected() })}
+                          style={{
+                            cursor: 'pointer'
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.backgroundColor = 'rgba(139, 92, 246, 0.08)'
+                            e.currentTarget.style.boxShadow = '0 2px 8px rgba(139, 92, 246, 0.15)'
+                          }}
+                          onMouseLeave={e => {
+                            if (!row.getIsSelected()) {
+                              e.currentTarget.style.backgroundColor = 'transparent'
+                            }
+                            e.currentTarget.style.boxShadow = 'none'
+                          }}
+                        >
+                          {row.getVisibleCells().map(cell => (
+                            <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                          ))}
+                        </tr>
+                      )
+                    })}
+                </tbody>
+              )}
+            </table>
+          </div>
+        )}
+      </Box>
+      {!isMobile && (
+        <TablePagination
+          rowsPerPageOptions={[10, 25, 50]}
+          component='div'
+          className='border-bs'
+          count={table.getFilteredRowModel().rows.length}
+          rowsPerPage={table.getState().pagination.pageSize}
+          page={table.getState().pagination.pageIndex}
+          SelectProps={{
+            inputProps: { 'aria-label': 'rows per page' }
+          }}
+          onPageChange={(_, page) => {
+            table.setPageIndex(page)
+          }}
+          onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
+          sx={{
+            '.MuiTablePagination-toolbar': {
+              px: { xs: 2, sm: 3 },
+              py: 2
+            },
+            '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
+              fontSize: { xs: '0.75rem', sm: '0.875rem' }
+            }
+          }}
+        />
+      )}
 
       <EditUserRoleDialog
         open={openDialog}

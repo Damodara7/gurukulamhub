@@ -1,41 +1,130 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Box, TextField, Button, Typography, Alert, Collapse, IconButton } from '@mui/material'
+import { Box, TextField, Button, Typography, Alert, Collapse, useMediaQuery } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
+import { keyframes } from '@mui/system'
 import { Close } from '@mui/icons-material'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
 
+const floatAnimation = keyframes`
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.35;
+  }
+  33% {
+    transform: translate(calc(-50% + 12px), calc(-50% + 18px)) scale(1.05);
+    opacity: 0.6;
+  }
+  66% {
+    transform: translate(calc(-50% - 10px), calc(-50% + 24px)) scale(0.92);
+    opacity: 0.8;
+  }
+`
+
+const twinkleAnimation = keyframes`
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.25;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.6);
+    opacity: 1;
+  }
+`
+
+const waveAnimation = keyframes`
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+`
+
+const SHAPE_TYPES = [
+  'square',
+  'triangle',
+  'hexagon',
+  'diamond',
+  'cylinder',
+  'cone',
+  'sphere',
+  'cube',
+  'pyramid',
+  'ring',
+  'star',
+  'octagon',
+  'pentagon'
+]
+
 const QuizIdInputForm = ({ mode = 'play' }) => {
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'lg'))
+
   const [quizId, setQuizId] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
-  // Function to validate MongoDB ObjectId
-  const isValidObjectId = id => {
-    return /^[0-9a-fA-F]{24}$/.test(id)
-  }
+  const shapes = useMemo(
+    () =>
+      Array.from({ length: 15 }, (_, index) => {
+        const size = 28 + (index % 4) * 12
+        return {
+          id: `shape-${index}`,
+          type: SHAPE_TYPES[index % SHAPE_TYPES.length],
+          size,
+          left: `${((index * 17) % 80) + 10}%`,
+          top: `${((index * 23) % 70) + 15}%`,
+          duration: 9 + (index % 5) * 1.8,
+          delay: index * 0.35,
+          opacity: 0.4 + (index % 3) * 0.15
+        }
+      }),
+    []
+  )
 
-  const fetchQuizData = async quizId => {
+  const stars = useMemo(
+    () =>
+      Array.from({ length: 24 }, (_, index) => ({
+        id: `sparkle-${index}`,
+        size: 3 + (index % 3) * 2,
+        left: `${((index * 29) % 94) + 3}%`,
+        top: `${((index * 37) % 92) + 4}%`,
+        duration: 1.4 + (index % 4) * 0.6,
+        delay: index * 0.22
+      })),
+    []
+  )
+
+  const activeShapes = shapes.slice(0, isMobile ? 6 : isTablet ? 10 : shapes.length)
+  const activeStars = stars.slice(0, isMobile ? 10 : isTablet ? 16 : stars.length)
+
+  const isValidObjectId = id => /^[0-9a-fA-F]{24}$/.test(id)
+
+  const fetchQuizData = async currentQuizId => {
     try {
-      const response = await RestApi.get(`${API_URLS.v0.USERS_QUIZ}/${quizId}`)
+      const response = await RestApi.get(`${API_URLS.v0.USERS_QUIZ}/${currentQuizId}`)
       return response
-    } catch (error) {
-      console.error('Error fetching quiz data:', error)
-      throw error
+    } catch (fetchError) {
+      console.error('Error fetching quiz data:', fetchError)
+      throw fetchError
     }
   }
 
-  const handleSubmit = async e => {
-    console.log('hello')
+  const handleSubmit = async event => {
+    event.preventDefault()
+    if (loading) return
+
     setError('')
     setLoading(true)
 
     try {
-      // Validate input
       if (!quizId.trim()) {
         throw new Error('Please enter a valid Quiz ID')
       }
@@ -44,7 +133,6 @@ const QuizIdInputForm = ({ mode = 'play' }) => {
         throw new Error('Invalid Quiz ID')
       }
 
-      // Then verify quiz exists
       const quizDataRes = await fetchQuizData(quizId)
       if (quizDataRes?.status !== 'success') {
         throw new Error('Invalid Quiz ID')
@@ -58,290 +146,340 @@ const QuizIdInputForm = ({ mode = 'play' }) => {
       setLoading(false)
     }
   }
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        position: 'relative',
-        overflow: 'hidden',
-        p: 3
-      }}
-    >
-      {/* Decorative Background Elements */}
-      <Box
-        sx={{
-          position: 'absolute',
-          top: '-10%',
-          right: '-10%',
-          width: '40%',
-          height: '40%',
-          borderRadius: '50%',
-          background: 'rgba(255, 255, 255, 0.1)',
-          filter: 'blur(60px)'
-        }}
-      />
-      <Box
-        sx={{
-          position: 'absolute',
-          bottom: '-10%',
-          left: '-10%',
-          width: '40%',
-          height: '40%',
-          borderRadius: '50%',
-          background: 'rgba(255, 255, 255, 0.1)',
-          filter: 'blur(60px)'
-        }}
-      />
 
-      {/* Floating Geometric Shapes */}
-      {[...Array(15)].map((_, i) => {
-        const shapes = [
-          'square',
-          'triangle',
-          'hexagon',
-          'diamond',
-          'cylinder',
-          'cone',
-          'sphere',
-          'cube',
-          'pyramid',
-          'ring',
-          'star',
-          'octagon',
-          'pentagon'
-        ]
-        const shape = shapes[i % shapes.length]
-        const size = 25 + (i % 4) * 15
-
+  const renderShapeContent = ({ type, size }) => {
+    switch (type) {
+      case 'square':
         return (
           <Box
-            key={`shape-${i}`}
+            component='span'
             sx={{
-              position: 'absolute',
-              width: `${size}px`,
-              height: `${size}px`,
-              left: `${5 + i * 7}%`,
-              top: `${-10 + (i % 5) * 25}%`,
-              animation: `floatShape${i} ${8 + i * 1.5}s ease-in-out infinite`,
-              animationDelay: `${i * 0.4}s`,
-              opacity: 0.7,
-              [`@keyframes floatShape${i}`]: {
-                '0%, 100%': {
-                  transform: `translate(0, 0) rotate(0deg) scale(1)`,
-                  opacity: 0.4
-                },
-                '25%': {
-                  transform: `translate(${15 + i * 4}px, ${25 + i * 8}px) rotate(90deg) scale(1.2)`,
-                  opacity: 0.7
-                },
-                '50%': {
-                  transform: `translate(${-8 + i * 2}px, ${50 + i * 4}px) rotate(180deg) scale(0.9)`,
-                  opacity: 0.9
-                },
-                '75%': {
-                  transform: `translate(${-25 + i * 4}px, ${25 + i * 8}px) rotate(270deg) scale(1.1)`,
-                  opacity: 0.6
-                }
-              },
-              ...(shape === 'square' && {
-                background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.4), rgba(240, 147, 251, 0.4))',
-                borderRadius: '6px',
-                border: '2px solid rgba(255, 255, 255, 0.4)',
-                boxShadow: '0 4px 15px rgba(102, 126, 234, 0.3)'
-              }),
-              ...(shape === 'triangle' && {
-                width: 0,
-                height: 0,
-                borderLeft: `${size / 2}px solid transparent`,
-                borderRight: `${size / 2}px solid transparent`,
-                borderBottom: `${size}px solid rgba(102, 126, 234, 0.4)`,
-                filter: 'drop-shadow(0 0 10px rgba(240, 147, 251, 0.6))'
-              }),
-              ...(shape === 'hexagon' && {
-                background: 'rgba(240, 147, 251, 0.4)',
-                clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
-                border: '2px solid rgba(255, 255, 255, 0.4)'
-              }),
-              ...(shape === 'diamond' && {
-                background: 'linear-gradient(45deg, rgba(102, 126, 234, 0.4), rgba(240, 147, 251, 0.4))',
-                transform: 'rotate(45deg)',
-                border: '2px solid rgba(255, 255, 255, 0.4)'
-              }),
-              ...(shape === 'cylinder' && {
-                background: `linear-gradient(90deg, 
-                  rgba(102, 126, 234, 0.2) 0%, 
-                  rgba(102, 126, 234, 0.6) 50%, 
-                  rgba(102, 126, 234, 0.2) 100%)`,
-                borderRadius: `${size / 2}px`,
-                border: '2px solid rgba(255, 255, 255, 0.3)',
-                boxShadow: 'inset -5px 0 10px rgba(0, 0, 0, 0.3), 0 0 20px rgba(102, 126, 234, 0.4)'
-              }),
-              ...(shape === 'cone' && {
-                width: 0,
-                height: 0,
-                borderLeft: `${size / 2}px solid transparent`,
-                borderRight: `${size / 2}px solid transparent`,
-                borderBottom: `${size}px solid transparent`,
-                borderBottomColor: 'rgba(240, 147, 251, 0.5)',
-                filter: 'drop-shadow(0 0 15px rgba(240, 147, 251, 0.7))',
-                background: `linear-gradient(to bottom, 
-                  rgba(240, 147, 251, 0.6) 0%, 
-                  rgba(240, 147, 251, 0.2) 100%)`
-              }),
-              ...(shape === 'sphere' && {
-                borderRadius: '50%',
-                background: `radial-gradient(circle at 30% 30%, 
-                  rgba(255, 255, 255, 0.8) 0%, 
-                  rgba(102, 126, 234, 0.6) 30%, 
-                  rgba(102, 126, 234, 0.3) 100%)`,
-                boxShadow: '0 8px 20px rgba(102, 126, 234, 0.5), inset -10px -10px 20px rgba(0, 0, 0, 0.3)'
-              }),
-              ...(shape === 'cube' && {
-                background: 'rgba(102, 126, 234, 0.5)',
-                border: '2px solid rgba(255, 255, 255, 0.4)',
-                position: 'relative',
-                transform: 'rotateX(30deg) rotateY(45deg)',
-                transformStyle: 'preserve-3d',
-                boxShadow: `
-                  ${size / 4}px ${size / 4}px 0 rgba(240, 147, 251, 0.4),
-                  ${size / 2}px ${size / 2}px 0 rgba(118, 75, 162, 0.3)
-                `
-              }),
-              ...(shape === 'pyramid' && {
-                width: 0,
-                height: 0,
-                borderLeft: `${size / 2}px solid transparent`,
-                borderRight: `${size / 2}px solid transparent`,
-                borderBottom: `${size}px solid rgba(102, 126, 234, 0.5)`,
-                filter: 'drop-shadow(5px 5px 10px rgba(240, 147, 251, 0.5))',
-                clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)'
-              }),
-              ...(shape === 'ring' && {
-                borderRadius: '50%',
-                border: `${size / 6}px solid rgba(240, 147, 251, 0.6)`,
-                background: 'transparent',
-                boxShadow: `
-                  0 0 20px rgba(240, 147, 251, 0.6),
-                  inset 0 0 20px rgba(102, 126, 234, 0.3)
-                `
-              }),
-              ...(shape === 'star' && {
-                clipPath:
-                  'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)',
-                background: 'linear-gradient(135deg, rgba(240, 147, 251, 0.6), rgba(102, 126, 234, 0.6))',
-                filter: 'drop-shadow(0 0 15px rgba(240, 147, 251, 0.8))'
-              }),
-              ...(shape === 'octagon' && {
-                clipPath: 'polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)',
-                background: 'rgba(102, 126, 234, 0.5)',
-                border: '2px solid rgba(255, 255, 255, 0.4)',
-                boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)'
-              }),
-              ...(shape === 'pentagon' && {
-                clipPath: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)',
-                background: 'linear-gradient(135deg, rgba(240, 147, 251, 0.5), rgba(102, 126, 234, 0.5))',
-                border: '2px solid rgba(255, 255, 255, 0.4)'
-              })
+              display: 'block',
+              width: '100%',
+              height: '100%',
+              borderRadius: '8px',
+              background: 'linear-gradient(135deg, rgba(102,126,234,0.45), rgba(240,147,251,0.45))',
+              border: '2px solid rgba(255,255,255,0.35)',
+              boxShadow: '0 4px 12px rgba(102, 126, 234, 0.35)'
             }}
           />
         )
-      })}
+      case 'triangle':
+        return (
+          <Box
+            component='span'
+            sx={{
+              display: 'block',
+              width: 0,
+              height: 0,
+              borderLeft: `${size / 2}px solid transparent`,
+              borderRight: `${size / 2}px solid transparent`,
+              borderBottom: `${size}px solid rgba(102, 126, 234, 0.45)`,
+              filter: 'drop-shadow(0 0 10px rgba(240, 147, 251, 0.55))'
+            }}
+          />
+        )
+      case 'hexagon':
+        return (
+          <Box
+            component='span'
+            sx={{
+              display: 'block',
+              width: '100%',
+              height: '100%',
+              clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
+              background: 'rgba(240, 147, 251, 0.35)',
+              border: '2px solid rgba(255, 255, 255, 0.35)'
+            }}
+          />
+        )
+      case 'diamond':
+        return (
+          <Box
+            component='span'
+            sx={{
+              display: 'block',
+              width: '100%',
+              height: '100%',
+              transform: 'rotate(45deg)',
+              borderRadius: '10%',
+              background: 'linear-gradient(135deg, rgba(102,126,234,0.45), rgba(240,147,251,0.45))',
+              border: '2px solid rgba(255,255,255,0.35)'
+            }}
+          />
+        )
+      case 'cylinder':
+        return (
+          <Box
+            component='span'
+            sx={{
+              display: 'block',
+              width: '100%',
+              height: '100%',
+              borderRadius: `${size / 2}px`,
+              background:
+                'linear-gradient(90deg, rgba(102,126,234,0.2), rgba(102,126,234,0.65), rgba(102,126,234,0.2))',
+              border: '2px solid rgba(255,255,255,0.25)',
+              boxShadow: 'inset -6px 0 10px rgba(0,0,0,0.25), 0 0 18px rgba(118,75,162,0.45)'
+            }}
+          />
+        )
+      case 'cone':
+        return (
+          <Box
+            component='span'
+            sx={{
+              display: 'block',
+              width: 0,
+              height: 0,
+              borderLeft: `${size / 2}px solid transparent`,
+              borderRight: `${size / 2}px solid transparent`,
+              borderBottom: `${size}px solid rgba(240, 147, 251, 0.5)`,
+              filter: 'drop-shadow(0 0 14px rgba(240, 147, 251, 0.6))'
+            }}
+          />
+        )
+      case 'sphere':
+        return (
+          <Box
+            component='span'
+            sx={{
+              display: 'block',
+              width: '100%',
+              height: '100%',
+              borderRadius: '50%',
+              background:
+                'radial-gradient(circle at 30% 30%, rgba(255,255,255,0.75), rgba(102,126,234,0.65), rgba(102,126,234,0.25))',
+              boxShadow: '0 8px 18px rgba(102,126,234,0.45), inset -10px -10px 18px rgba(0,0,0,0.25)'
+            }}
+          />
+        )
+      case 'cube':
+        return (
+          <Box
+            component='span'
+            sx={{
+              display: 'block',
+              width: '100%',
+              height: '100%',
+              borderRadius: '12%',
+              background: 'rgba(102,126,234,0.48)',
+              border: '2px solid rgba(255,255,255,0.35)',
+              boxShadow: `${size / 4}px ${size / 4}px 0 rgba(240,147,251,0.4), ${size / 2}px ${size / 2}px 0 rgba(
+                118,
+                75,
+                162,
+                0.3
+              )`
+            }}
+          />
+        )
+      case 'pyramid':
+        return (
+          <Box
+            component='span'
+            sx={{
+              display: 'block',
+              width: 0,
+              height: 0,
+              borderLeft: `${size / 2}px solid transparent`,
+              borderRight: `${size / 2}px solid transparent`,
+              borderBottom: `${size}px solid rgba(102, 126, 234, 0.45)`,
+              filter: 'drop-shadow(4px 6px 12px rgba(240,147,251,0.45))'
+            }}
+          />
+        )
+      case 'ring':
+        return (
+          <Box
+            component='span'
+            sx={{
+              display: 'block',
+              width: '100%',
+              height: '100%',
+              borderRadius: '50%',
+              border: `${Math.max(size * 0.18, 4)}px solid rgba(240,147,251,0.55)`,
+              background: 'transparent',
+              boxShadow: '0 0 18px rgba(240,147,251,0.55), inset 0 0 18px rgba(102,126,234,0.3)'
+            }}
+          />
+        )
+      case 'star':
+        return (
+          <Box
+            component='span'
+            sx={{
+              display: 'block',
+              width: '100%',
+              height: '100%',
+              clipPath:
+                'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)',
+              background: 'linear-gradient(135deg, rgba(240,147,251,0.6), rgba(102,126,234,0.6))',
+              filter: 'drop-shadow(0 0 16px rgba(240, 147, 251, 0.75))'
+            }}
+          />
+        )
+      case 'octagon':
+        return (
+          <Box
+            component='span'
+            sx={{
+              display: 'block',
+              width: '100%',
+              height: '100%',
+              clipPath: 'polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)',
+              background: 'rgba(102,126,234,0.5)',
+              border: '2px solid rgba(255,255,255,0.35)',
+              boxShadow: '0 4px 12px rgba(102,126,234,0.4)'
+            }}
+          />
+        )
+      case 'pentagon':
+        return (
+          <Box
+            component='span'
+            sx={{
+              display: 'block',
+              width: '100%',
+              height: '100%',
+              clipPath: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)',
+              background: 'linear-gradient(135deg, rgba(240,147,251,0.5), rgba(102,126,234,0.5))',
+              border: '2px solid rgba(255,255,255,0.35)'
+            }}
+          />
+        )
+      default:
+        return null
+    }
+  }
 
-      {/* Twinkling Stars/Sparkles */}
-      {[...Array(20)].map((_, i) => (
+  return (
+    <Box
+      component='section'
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: { xs: '100dvh', md: '100vh' },
+        position: 'relative',
+        overflow: 'hidden',
+        width: '100%',
+        px: { xs: 2, sm: 3 },
+        py: { xs: 6, sm: 8 },
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+      }}
+    >
+      <Box
+        aria-hidden
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          pointerEvents: 'none',
+          overflow: 'hidden'
+        }}
+      >
         <Box
-          key={`star-${i}`}
           sx={{
             position: 'absolute',
-            width: `${3 + (i % 3) * 2}px`,
-            height: `${3 + (i % 3) * 2}px`,
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-            background: 'white',
+            top: { xs: '-18%', sm: '-12%' },
+            right: { xs: '-30%', sm: '-18%' },
+            width: { xs: '55%', sm: '38%' },
+            aspectRatio: '1',
             borderRadius: '50%',
-            boxShadow: '0 0 10px rgba(255, 255, 255, 0.8)',
-            animation: `twinkle${i} ${1 + Math.random() * 2}s ease-in-out infinite`,
-            animationDelay: `${Math.random() * 3}s`,
-            [`@keyframes twinkle${i}`]: {
-              '0%, 100%': {
-                opacity: 0.2,
-                transform: 'scale(1)'
-              },
-              '50%': {
-                opacity: 1,
-                transform: 'scale(1.5)'
-              }
-            }
+            background: 'rgba(255, 255, 255, 0.12)',
+            filter: 'blur(60px)'
           }}
         />
-      ))}
-
-      {/* Animated Wave Lines */}
-      {[...Array(3)].map((_, i) => (
         <Box
-          key={`wave-${i}`}
           sx={{
             position: 'absolute',
-            width: '100%',
-            height: '3px',
-            left: 0,
-            top: `${20 + i * 30}%`,
-            background: `linear-gradient(90deg, transparent, rgba(255, 255, 255, ${0.3 - i * 0.1}), transparent)`,
-            animation: `wave${i} ${3 + i}s linear infinite`,
-            animationDelay: `${i * 0.5}s`,
-            [`@keyframes wave${i}`]: {
-              '0%': {
-                transform: 'translateX(-100%)'
-              },
-              '100%': {
-                transform: 'translateX(100%)'
-              }
-            }
+            bottom: { xs: '-22%', sm: '-15%' },
+            left: { xs: '-28%', sm: '-16%' },
+            width: { xs: '60%', sm: '40%' },
+            aspectRatio: '1',
+            borderRadius: '50%',
+            background: 'rgba(255, 255, 255, 0.1)',
+            filter: 'blur(65px)'
           }}
         />
-      ))}
 
-      {/* Main Content */}
-      <Box sx={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: '450px' }}>
-        {/* Logo Title */}
+        {activeShapes.map(shape => (
+          <Box
+            key={shape.id}
+            sx={{
+              position: 'absolute',
+              left: shape.left,
+              top: shape.top,
+              width: `${shape.size}px`,
+              height: `${shape.size}px`,
+              transform: 'translate(-50%, -50%)',
+              opacity: shape.opacity,
+              animation: `${floatAnimation} ${shape.duration}s ease-in-out infinite`,
+              animationDelay: `${shape.delay}s`,
+              willChange: 'transform, opacity'
+            }}
+          >
+            {renderShapeContent(shape)}
+          </Box>
+        ))}
+
+        {activeStars.map(star => (
+          <Box
+            key={star.id}
+            sx={{
+              position: 'absolute',
+              left: star.left,
+              top: star.top,
+              width: `${star.size}px`,
+              height: `${star.size}px`,
+              borderRadius: '50%',
+              background: 'rgba(255,255,255,0.95)',
+              boxShadow: '0 0 12px rgba(255, 255, 255, 0.75)',
+              transform: 'translate(-50%, -50%)',
+              animation: `${twinkleAnimation} ${star.duration}s ease-in-out infinite`,
+              animationDelay: `${star.delay}s`,
+              willChange: 'transform, opacity'
+            }}
+          />
+        ))}
+
+        {[20, 50, 78].map((position, index) => (
+          <Box
+            key={`wave-${index}`}
+            sx={{
+              position: 'absolute',
+              left: 0,
+              top: `${position}%`,
+              width: '100%',
+              height: '3px',
+              background: `linear-gradient(90deg, transparent, rgba(255,255,255,${0.3 - index * 0.08}), transparent)`,
+              animation: `${waveAnimation} ${5.5 + index * 1.4}s linear infinite`,
+              animationDelay: `${index * 0.6}s`,
+              opacity: 0.75 - index * 0.2
+            }}
+          />
+        ))}
+      </Box>
+
+      <Box
+        sx={{
+          position: 'relative',
+          zIndex: 1,
+          width: '100%',
+          maxWidth: { xs: 'min(100%, 420px)', md: '460px' },
+          mx: 'auto'
+        }}
+      >
         <Typography
           variant='h2'
           sx={{
             color: 'white',
             fontWeight: 700,
             textAlign: 'center',
-            mb: 1,
-            fontSize: { xs: '2rem', sm: '2.5rem' },
-            textShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            mb: { xs: 1, sm: 1.5 },
+            fontSize: { xs: 'clamp(1.8rem, 6vw, 2.3rem)', sm: 'clamp(2.2rem, 4vw, 2.6rem)' },
             letterSpacing: '0.02em',
-            animation: 'fadeInBounce 1s ease-out, subtleGlow 3s ease-in-out infinite',
-            '@keyframes fadeInBounce': {
-              '0%': {
-                opacity: 0,
-                transform: 'translateY(-20px)'
-              },
-              '50%': {
-                transform: 'translateY(5px)'
-              },
-              '100%': {
-                opacity: 1,
-                transform: 'translateY(0)'
-              }
-            },
-            '@keyframes subtleGlow': {
-              '0%, 100%': {
-                textShadow: '0 2px 4px rgba(0,0,0,0.1), 0 0 10px rgba(255, 255, 255, 0.3)'
-              },
-              '50%': {
-                textShadow:
-                  '0 2px 4px rgba(0,0,0,0.1), 0 0 20px rgba(255, 255, 255, 0.5), 0 0 30px rgba(240, 147, 251, 0.3)'
-              }
-            }
+            textShadow: '0 2px 4px rgba(0,0,0,0.15)'
           }}
         >
           GurukulamHub
@@ -351,33 +489,37 @@ const QuizIdInputForm = ({ mode = 'play' }) => {
           sx={{
             color: 'rgba(255, 255, 255, 0.95)',
             textAlign: 'center',
-            mb: 4,
-            fontSize: { xs: '0.95rem', sm: '1rem' }
+            mb: { xs: 3, sm: 4 },
+            fontSize: { xs: '1rem', sm: '1.05rem' }
           }}
         >
           Enter Quiz ID to Start
         </Typography>
 
-        {/* Form Card */}
         <Box
           component='form'
+          noValidate
+          onSubmit={handleSubmit}
           sx={{
-            backgroundColor: 'white',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: { xs: 2, sm: 3 },
+            backgroundColor: 'rgba(255,255,255,0.98)',
             borderRadius: 4,
             p: { xs: 3, sm: 4 },
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
-            backdropFilter: 'blur(10px)'
+            boxShadow: { xs: '0 16px 44px rgba(0, 0, 0, 0.25)', md: '0 22px 65px rgba(0, 0, 0, 0.3)' },
+            backdropFilter: 'blur(12px)'
           }}
         >
-          {/* Input Field */}
-          <Box sx={{ mb: 3 }}>
+          <Box>
             <Typography
               variant='body2'
               sx={{
                 fontWeight: 600,
                 color: 'text.primary',
                 mb: 1,
-                fontSize: '0.875rem'
+                fontSize: { xs: '0.87rem', sm: '0.9rem' },
+                letterSpacing: '0.02em'
               }}
             >
               Quiz ID
@@ -386,26 +528,42 @@ const QuizIdInputForm = ({ mode = 'play' }) => {
               fullWidth
               placeholder='Enter Quiz ID'
               variant='outlined'
-              inputProps={{
-                maxLength: 24
-              }}
               value={quizId}
-              onChange={e => {
-                if (e.target.value.length <= 24) {
-                  setQuizId(e.target.value)
+              inputProps={{
+                maxLength: 24,
+                inputMode: 'text',
+                autoCapitalize: 'none',
+                autoCorrect: 'off',
+                spellCheck: false
+              }}
+              onChange={event => {
+                const { value } = event.target
+                if (value.length <= 24) {
+                  setQuizId(value.trimStart())
                 }
               }}
               error={!!error}
+              helperText='Example: 6792294e5237090e08b0a0e8'
+              FormHelperTextProps={{
+                sx: {
+                  textAlign: 'center',
+                  fontWeight: 500
+                }
+              }}
               sx={{
+                backgroundColor: 'rgba(255,255,255,0.9)',
+                borderRadius: 2,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2
+                },
                 '& .MuiInputBase-input': {
                   textAlign: 'center',
-                  fontSize: '1rem',
-                  letterSpacing: '0.03em',
+                  fontSize: { xs: '1rem', sm: '1.05rem' },
+                  letterSpacing: '0.04em',
                   fontWeight: 500,
                   fontFamily: 'monospace'
                 }
               }}
-              helperText='Example: 6792294e5237090e08b0a0e8'
             />
           </Box>
 
@@ -417,38 +575,31 @@ const QuizIdInputForm = ({ mode = 'play' }) => {
             fullWidth
             disabled={loading || quizId.length !== 24}
             sx={{
-              py: 1.5,
+              py: { xs: 1.25, sm: 1.5 },
               borderRadius: 2,
-              fontSize: '1rem',
+              fontSize: { xs: '1rem', sm: '1.05rem' },
               fontWeight: 600,
               color: 'white !important',
               textTransform: 'none',
-              boxShadow: '0 4px 12px rgba(102, 126, 234, 0.35)',
-              background:
-                'linear-gradient(135deg, rgba(102, 126, 234, 0.75) 0%, rgba(118, 75, 162, 0.75) 100%) !important',
-              backgroundImage:
-                'linear-gradient(135deg, rgba(102, 126, 234, 0.75) 0%, rgba(118, 75, 162, 0.75) 100%) !important',
-              transition: 'box-shadow 0.3s ease',
+              background: 'linear-gradient(135deg, rgba(102,126,234,0.85), rgba(118,75,162,0.85)) !important',
+              boxShadow: '0 6px 18px rgba(102, 126, 234, 0.38)',
+              transition: 'transform 0.25s ease, box-shadow 0.25s ease',
               '&:hover': {
-                boxShadow: '0 6px 20px rgba(25, 44, 132, 0.5)',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important',
-                backgroundImage: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important'
+                transform: 'translateY(-2px)',
+                boxShadow: '0 10px 26px rgba(25, 44, 132, 0.45)',
+                background: 'linear-gradient(135deg, #667eea, #764ba2) !important'
               },
               '&.Mui-disabled': {
-                background:
-                  'linear-gradient(135deg, rgba(102, 126, 234, 0.55) 0%, rgba(118, 75, 162, 0.55) 100%) !important',
-                backgroundImage:
-                  'linear-gradient(135deg, rgba(102, 126, 234, 0.55) 0%, rgba(118, 75, 162, 0.55) 100%) !important',
-                opacity: 0.6,
-                color: 'white !important'
+                background: 'linear-gradient(135deg, rgba(102,126,234,0.55), rgba(118,75,162,0.55)) !important',
+                opacity: 0.7,
+                color: 'rgba(255,255,255,0.9) !important'
               }
             }}
           >
             {loading ? 'Loading...' : 'Enter Quiz'}
           </Button>
 
-          {/* Error Message */}
-          <Collapse in={!!error} sx={{ mt: 2 }}>
+          <Collapse in={!!error}>
             <Alert
               severity='error'
               action={
@@ -474,14 +625,14 @@ const QuizIdInputForm = ({ mode = 'play' }) => {
           </Collapse>
         </Box>
 
-        {/* Additional Info */}
-        <Box sx={{ textAlign: 'center', mt: 3 }}>
+        <Box sx={{ textAlign: 'center', mt: { xs: 3, sm: 3.5 } }}>
           <Typography
             variant='body2'
             sx={{
-              color: 'rgba(255, 255, 255, 0.85)',
-              fontSize: '0.813rem',
-              fontWeight: 500
+              color: 'rgba(255, 255, 255, 0.88)',
+              fontSize: { xs: '0.85rem', sm: '0.9rem' },
+              fontWeight: 500,
+              letterSpacing: '0.01em'
             }}
           >
             Need help? Contact your quiz administrator

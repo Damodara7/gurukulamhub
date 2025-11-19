@@ -21,11 +21,13 @@ import {
   DialogContentText,
   InputAdornment,
   Box,
-  Container
+  Container,
+  Stack
 } from '@mui/material'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS as ApiUrls } from '@/configs/apiConfig'
 import { styled, alpha, useTheme } from '@mui/material/styles'
+import useMediaQuery from '@mui/material/useMediaQuery'
 /********************************************/
 import { toast } from 'react-toastify'
 
@@ -56,6 +58,7 @@ import {
 import TableFilters from './TableFilters'
 import AddAdvDrawer from './AddAdvDrawer'
 import OptionMenu from '@core/components/option-menu'
+import ConfirmationDialog from '@components/dialogs/confirmation-dialog'
 // import CustomAvatar from '@core/components/mui/Avatar'
 
 // Util Imports
@@ -82,6 +85,31 @@ const fuzzyFilter = (row, columnId, value, addMeta) => {
 
   // Return if the item should be filtered in/out
   return itemRank.passed
+}
+
+// Custom global filter that searches by userName and company
+const globalNameFilter = (row, columnId, value, addMeta) => {
+  const userName = (row.original.userName || '').toString().toLowerCase()
+  const company = (row.original.company || '').toString().toLowerCase()
+  const searchValue = (value || '').toString().toLowerCase().trim()
+
+  // If no search value, show all rows
+  if (!searchValue) return true
+
+  // Use fuzzy matching on userName and company fields
+  const userNameRank = rankItem(userName, searchValue)
+  const companyRank = rankItem(company, searchValue)
+
+  // Pass if either userName or company matches
+  const passed = userNameRank.passed || companyRank.passed
+
+  if (addMeta) {
+    addMeta({
+      itemRank: passed ? userNameRank : companyRank
+    })
+  }
+
+  return passed
 }
 
 const DebouncedInput = ({ value: initialValue, onChange, debounce = 500, ...props }) => {
@@ -135,18 +163,49 @@ const userStatusObj = {
 // Column Definitions
 const columnHelper = createColumnHelper()
 
-const ImageComponent = ({ imageUrl, onClick }) => {
-  return (
-    <div>
-      <img
-        src={imageUrl}
-        style={{ objectFit: 'cover', cursor: 'pointer', maxWidth: '250px', maxHeight: '40px' }}
-        alt='Image'
-        onClick={onClick}
-      />
-    </div>
-  )
-}
+const ImageComponent = ({ imageUrl, onClick }) => (
+  <Box
+    onClick={onClick}
+    role='button'
+    tabIndex={0}
+    sx={{
+      width: '100%',
+      maxWidth: { xs: 180, sm: 220 },
+      borderRadius: 1.5,
+      overflow: 'hidden',
+      cursor: 'pointer',
+      border: theme => `1px solid ${alpha(theme.palette.divider, 0.4)}`,
+      transition: 'transform 0.25s ease, box-shadow 0.25s ease',
+      '&:hover': {
+        transform: 'translateY(-2px)',
+        boxShadow: theme => `0 6px 16px ${alpha(theme.palette.primary.main, 0.25)}`
+      },
+      '&:focus-visible': {
+        outline: theme => `2px solid ${alpha(theme.palette.primary.main, 0.55)}`,
+        outlineOffset: 2
+      }
+    }}
+    onKeyDown={event => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault()
+        onClick?.(event)
+      }
+    }}
+  >
+    <Box
+      component='img'
+      src={imageUrl}
+      alt='Advertisement'
+      sx={{
+        display: 'block',
+        width: '100%',
+        height: 'auto',
+        maxHeight: { xs: 80, sm: 100 },
+        objectFit: 'cover'
+      }}
+    />
+  </Box>
+)
 
 const ImagePopup = ({ imageUrl, mediaType }) => {
   const theme = useTheme()
@@ -171,6 +230,8 @@ const ImagePopup = ({ imageUrl, mediaType }) => {
             textTransform: 'none',
             borderRadius: '6px',
             fontWeight: 500,
+            width: { xs: '100%', sm: 'auto' },
+            justifyContent: 'center',
             '&:hover': {
               borderColor: theme.palette.secondary.main,
               background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(
@@ -221,17 +282,27 @@ const ImagePopup = ({ imageUrl, mediaType }) => {
             <i className='ri-close-line' style={{ fontSize: '24px' }} />
           </IconButton>
         </DialogTitle>
-        <DialogContent sx={{ padding: '24px', background: '#f9fafb' }}>
+        <DialogContent sx={{ padding: { xs: 2.5, sm: 3 }, background: '#f9fafb' }}>
           <DialogContentText>
             {mediaType === 'video' ? (
-              <VideoAd url={imageUrl} width={'50vw'} height={'50vh'} showPause autoPlay={false}></VideoAd>
+              <Box
+                sx={{
+                  width: '100%',
+                  maxWidth: { xs: '80vw', sm: '70vw', md: '600px' },
+                  mx: 'auto'
+                }}
+              >
+                <VideoAd url={imageUrl} width='100%' height='auto' showPause autoPlay={false} />
+              </Box>
             ) : (
-              <img
+              <Box
+                component='img'
                 src={imageUrl}
                 alt='Enlarged Image'
-                style={{
+                sx={{
                   width: '100%',
-                  borderRadius: '12px',
+                  maxWidth: { xs: '80vw', sm: '70vw', md: '60vw' },
+                  borderRadius: 1.5,
                   boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
                 }}
               />
@@ -245,6 +316,7 @@ const ImagePopup = ({ imageUrl, mediaType }) => {
 
 const AdvListTable = () => {
   const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
 
   // States
   const [addAdvtOpen, setAddAdvtOpen] = useState(false)
@@ -255,6 +327,8 @@ const AdvListTable = () => {
   const [advtEditOrAddInitialData, setAdvtEditOrAddInitialData] = useState(null)
   const [id, setId] = useState()
   const [mode, setMode] = useState('add')
+  const [currentAdvertisement, setCurrentAdvertisement] = useState(null)
+  const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false)
 
   const getData = useCallback(async () => {
     setLoading(prev => ({ ...prev, fetchAds: true }))
@@ -275,22 +349,29 @@ const AdvListTable = () => {
     getData()
   }, [getData])
 
-  const handleDelete = async (e, id) => {
-    e.preventDefault()
-
-    console.log('Deleting the advt.')
-    const result = await RestApi.del(ApiUrls.v0.ADMIN_DEL_ADVERTISEMENT + '?id=' + id)
-    setLoading(prev => ({ ...prev, deleteAds: true }))
-    if (result.status === 'success') {
-      console.log('Delete  result', result.result.result)
-      // toast.success('Advt deleted .')
-      setData(result.result.result)
-      setLoading(prev => ({ ...prev, deleteAds: false }))
-      // handleClose();
-    } else {
-      // toast.error('Error:' + result.message)
-      setLoading(prev => ({ ...prev, deleteAds: false }))
+  const handleDelete = async () => {
+    if (currentAdvertisement) {
+      try {
+        console.log('Deleting the advt.')
+        const result = await RestApi.del(ApiUrls.v0.ADMIN_DEL_ADVERTISEMENT + '?id=' + currentAdvertisement._id)
+        setLoading(prev => ({ ...prev, deleteAds: true }))
+        if (result.status === 'success') {
+          console.log('Delete  result', result.result.result)
+          toast.success(`Advertisement deleted: ${currentAdvertisement.userName || currentAdvertisement.company}`)
+          setData(result.result.result)
+          setLoading(prev => ({ ...prev, deleteAds: false }))
+        } else {
+          toast.error('Error deleting advertisement: ' + result.message)
+          setLoading(prev => ({ ...prev, deleteAds: false }))
+        }
+      } catch (error) {
+        console.error('An error occurred while deleting the advertisement:', error)
+        toast.error(`Error deleting advertisement: ${error?.message}`)
+        setLoading(prev => ({ ...prev, deleteAds: false }))
+        throw new Error(error)
+      }
     }
+    setConfirmationDialogOpen(false)
   }
 
   const columns = useMemo(
@@ -549,9 +630,9 @@ const AdvListTable = () => {
             <IconButtonTooltip
               title='Delete'
               onClick={e => {
-                console.log('advt to be deleted id ...', row.original._id)
-                setId(row.original._id)
-                handleDelete(e, row.original._id)
+                e.preventDefault()
+                setCurrentAdvertisement(row.original)
+                setConfirmationDialogOpen(true)
               }}
               sx={{
                 background: '#fee2e2',
@@ -619,7 +700,8 @@ const AdvListTable = () => {
     data: data,
     columns,
     filterFns: {
-      fuzzy: fuzzyFilter
+      fuzzy: fuzzyFilter,
+      globalNameFilter: globalNameFilter
     },
     state: {
       rowSelection,
@@ -631,9 +713,7 @@ const AdvListTable = () => {
       }
     },
     enableRowSelection: true,
-
-    // enableRowSelection: row => row.original.age > 18, // or enable row selection conditionally per row
-    globalFilterFn: fuzzyFilter,
+    globalFilterFn: globalNameFilter,
     onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
     onGlobalFilterChange: setGlobalFilter,
@@ -662,7 +742,7 @@ const AdvListTable = () => {
       }}
     >
       {/* Elegant Header */}
-      <Box
+      {/* <Box
         sx={{
           backdropFilter: 'blur(20px)',
           bgcolor: alpha('#fff', 0.7),
@@ -673,42 +753,43 @@ const AdvListTable = () => {
       >
         <Container maxWidth='lg'>
           <Box sx={{ textAlign: 'center' }}>
-            {/* Icon and Title */}
-            <Box
-              sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 2,
-                mb: 2
-              }}
+            <Stack
+              direction='row'
+              spacing={{ xs: 1.5, sm: 2 }}
+              justifyContent='center'
+              alignItems='center'
+              sx={{ mb: { xs: 1.75, sm: 2 } }}
             >
               <Box
                 sx={{
-                  width: { xs: 48, sm: 56 },
-                  height: { xs: 48, sm: 56 },
-                  borderRadius: '12px',
+                  width: { xs: 46, sm: 54 },
+                  height: { xs: 46, sm: 54 },
+                  borderRadius: '14px',
                   background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`
+                  boxShadow: `0 6px 18px ${alpha(theme.palette.primary.main, 0.28)}`
                 }}
               >
-                <i className='ri-megaphone-line' style={{ fontSize: '28px', color: 'white' }} />
+                <i
+                  className='ri-megaphone-line'
+                  style={{ fontSize: 'clamp(22px, 6vw, 28px)', color: '#fff', lineHeight: 1 }}
+                />
               </Box>
               <Typography
                 sx={{
-                  fontSize: { xs: '2rem', md: '2.5rem' },
+                  fontSize: { xs: 'clamp(1.7rem, 5.5vw, 2.3rem)', md: '2.5rem' },
                   fontWeight: 700,
                   background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
-                  letterSpacing: '-0.02em'
+                  letterSpacing: '-0.018em'
                 }}
               >
                 Advertisement Management
               </Typography>
-            </Box>
+            </Stack>
             <Typography
               variant='body1'
               color='text.secondary'
@@ -716,6 +797,72 @@ const AdvListTable = () => {
                 fontSize: '1.05rem',
                 lineHeight: 1.8,
                 maxWidth: 600,
+                mx: 'auto',
+                fontWeight: 400
+              }}
+            >
+              Manage and monitor all advertisements across your platform
+            </Typography>
+          </Box>
+        </Container>
+      </Box> */}
+      <Box
+        sx={{
+          backdropFilter: 'blur(16px)',
+          bgcolor: alpha('#fff', 0.78),
+          borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+          pt: { xs: 4, md: 6 },
+          pb: { xs: 4, md: 6 }
+        }}
+      >
+        <Container maxWidth='lg'>
+          <Box sx={{ textAlign: 'center' }}>
+            <Stack
+              direction='row'
+              spacing={{ xs: 1.5, sm: 2 }}
+              justifyContent='center'
+              alignItems='center'
+              sx={{ mb: { xs: 1.75, sm: 2 } }}
+            >
+              <Box
+                sx={{
+                  width: { xs: 46, sm: 54 },
+                  height: { xs: 46, sm: 54 },
+                  borderRadius: '14px',
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: `0 6px 18px ${alpha(theme.palette.primary.main, 0.28)}`
+                }}
+              >
+                <i
+                  className='ri-megaphone-line'
+                  style={{ fontSize: 'clamp(22px, 6vw, 28px)', color: '#fff', lineHeight: 1 }}
+                />
+              </Box>
+              <Stack spacing={0.5} alignItems='flex-start' sx={{ textAlign: 'left' }}>
+                <Typography
+                  sx={{
+                    fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.5rem' },
+                    fontWeight: 700,
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    letterSpacing: '-0.018em'
+                  }}
+                >
+                  Advertisement Management
+                </Typography>
+              </Stack>
+            </Stack>
+            <Typography
+              variant='body1'
+              color='text.secondary'
+              sx={{
+                fontSize: { xs: '0.95rem', sm: '1.05rem' },
+                lineHeight: 1.8,
+                maxWidth: { xs: '100%', sm: '620px' },
                 mx: 'auto',
                 fontWeight: 400
               }}
@@ -742,13 +889,26 @@ const AdvListTable = () => {
           }}
         >
           <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
-            <div className='flex justify-between items-center flex-col sm:flex-row gap-4'>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                alignItems: { xs: 'stretch', sm: 'center' },
+                gap: { xs: 2.5, sm: 3 },
+                justifyContent: 'space-between'
+              }}
+            >
               <DebouncedInput
                 value={globalFilter ?? ''}
                 onChange={value => setGlobalFilter(String(value))}
                 placeholder='Search advertisements...'
                 fullWidth
-                sx={{ maxWidth: { sm: '400px' } }}
+                sx={{
+                  maxWidth: { sm: 400 },
+                  '& .MuiInputBase-root': {
+                    borderRadius: 2
+                  }
+                }}
               />
               <Button
                 variant='contained'
@@ -762,155 +922,356 @@ const AdvListTable = () => {
                   borderRadius: 2,
                   color: 'white',
                   fontWeight: 600,
-                  whiteSpace: 'nowrap'
+                  whiteSpace: 'nowrap',
+                  alignSelf: { xs: 'stretch', sm: 'center' },
+                  px: { xs: 2.5, sm: 3.5 },
+                  py: { xs: 1.2, sm: 1.25 }
                 }}
               >
                 Add New Advertisement
               </Button>
-            </div>
+            </Box>
           </CardContent>
 
           <Divider />
 
-          <div className='px-4 sm:px-6 py-3'>
+          <Box sx={{ px: { xs: 2, sm: 3 }, py: { xs: 2, sm: 3 } }}>
             <Typography variant='body2' color='text.secondary' sx={{ fontWeight: 500 }}>
               Total {data?.length || 0} advertisement{data?.length !== 1 ? 's' : ''}
             </Typography>
-          </div>
-          <div className='overflow-x-auto'>
-            <table className={tableStyles.table}>
-              <thead>
-                {table.getHeaderGroups().map(headerGroup => (
-                  <tr key={headerGroup.id}>
-                    {headerGroup.headers.map(header => (
-                      <th key={header.id} className='enhanced-table-header'>
-                        {header.isPlaceholder ? null : (
-                          <>
-                            <div
-                              className={classnames({
-                                'flex items-center': header.column.getIsSorted(),
-                                'cursor-pointer select-none': header.column.getCanSort()
-                              })}
-                              onClick={header.column.getToggleSortingHandler()}
-                            >
-                              {flexRender(header.column.columnDef.header, header.getContext())}
-                              {{
-                                asc: <i className='ri-arrow-up-s-line text-xl' />,
-                                desc: <i className='ri-arrow-down-s-line text-xl' />
-                              }[header.column.getIsSorted()] ?? null}
-                            </div>
-                          </>
-                        )}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead>
-              {table?.getFilteredRowModel()?.rows?.length === 0 ? (
-                <tbody>
-                  <tr>
-                    <td
-                      colSpan={table?.getVisibleFlatColumns().length}
-                      className='text-center'
-                      style={{ padding: '40px' }}
-                    >
-                      <div
-                        style={{
+          </Box>
+          <Box sx={{ px: { xs: 2, sm: 3 }, py: { xs: 2, sm: 3 } }}>
+            {table.getFilteredRowModel().rows.length === 0 ? (
+              <Box
+                sx={{
+                  textAlign: 'center',
+                  py: 6,
+                  borderRadius: 3,
+                  backgroundColor: alpha(theme.palette.primary.main, 0.02)
+                }}
+              >
+                <i className='ri-inbox-line' style={{ fontSize: 48, opacity: 0.5 }} />
+                <Typography variant='h6' color='text.secondary' sx={{ mt: 2 }}>
+                  No advertisements found
+                </Typography>
+                <Typography variant='body2' color='text.disabled' sx={{ mt: 1 }}>
+                  Create your first advertisement to get started
+                </Typography>
+              </Box>
+            ) : isMobile ? (
+              <Box
+                sx={{
+                  maxHeight: '65vh',
+                  overflowY: 'auto',
+                  pr: 1,
+                  '&::-webkit-scrollbar': { width: 6 },
+                  '&::-webkit-scrollbar-thumb': {
+                    backgroundColor: alpha(theme.palette.primary.main, 0.3),
+                    borderRadius: 8
+                  }
+                }}
+              >
+                <Stack spacing={2}>
+                  {table.getFilteredRowModel().rows.map(row => {
+                    const advertisement = row.original
+                    const statusConfig = {
+                      active: {
+                        color: '#10b981',
+                        bg: '#d1fae5',
+                        icon: 'ri-checkbox-circle-line',
+                        label: 'Active'
+                      },
+                      pending: {
+                        color: '#f59e0b',
+                        bg: '#fef3c7',
+                        icon: 'ri-time-line',
+                        label: 'Pending'
+                      },
+                      inactive: {
+                        color: '#6b7280',
+                        bg: '#f3f4f6',
+                        icon: 'ri-pause-circle-line',
+                        label: 'Inactive'
+                      }
+                    }
+                    const config = statusConfig[advertisement.status] || statusConfig.inactive
+
+                    return (
+                      <Box
+                        key={row.id}
+                        sx={{
+                          borderRadius: 3,
+                          border: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
+                          boxShadow: '0 12px 30px rgba(15, 23, 42, 0.08)',
+                          p: 2,
                           display: 'flex',
                           flexDirection: 'column',
-                          alignItems: 'center',
-                          gap: '12px',
-                          color: '#6b7280'
+                          gap: 1.5,
+                          background: '#fff',
+                          transition: 'all 0.2s ease-in-out',
+                          '&:hover': {
+                            boxShadow: '0 16px 40px rgba(15, 23, 42, 0.12)',
+                            transform: 'translateY(-2px)'
+                          }
                         }}
                       >
-                        <i className='ri-inbox-line' style={{ fontSize: '48px', color: theme.palette.primary.main }} />
-                        <Typography variant='h6' style={{ color: '#1a1a2e', fontWeight: 600 }}>
-                          No Advertisements Found
-                        </Typography>
-                        <Typography variant='body2' style={{ color: '#6b7280' }}>
-                          Create your first advertisement to get started
-                        </Typography>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              ) : (
-                <tbody>
-                  {table
-                    .getRowModel()
-                    .rows.slice(0, table.getState().pagination.pageSize)
-                    .map(row => {
-                      return (
-                        <tr
-                          key={row.id}
-                          className={classnames('enhanced-table-row', { selected: row.getIsSelected() })}
-                          style={{
-                            transition: 'all 0.3s ease-in-out',
-                            cursor: 'pointer'
-                          }}
-                          onMouseEnter={e => {
-                            e.currentTarget.style.backgroundColor = 'rgba(139, 92, 246, 0.08)'
-                            e.currentTarget.style.transform = 'scale(1.01)'
-                            e.currentTarget.style.boxShadow = '0 2px 8px rgba(139, 92, 246, 0.15)'
-                          }}
-                          onMouseLeave={e => {
-                            if (!row.getIsSelected()) {
-                              e.currentTarget.style.backgroundColor = 'transparent'
-                            }
-                            e.currentTarget.style.transform = 'scale(1)'
-                            e.currentTarget.style.boxShadow = 'none'
-                          }}
-                        >
-                          {row.getVisibleCells().map(cell => (
-                            <td key={cell.id} className='enhanced-table-cell'>
-                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                            </td>
-                          ))}
-                        </tr>
-                      )
-                    })}
-                </tbody>
-              )}
-            </table>
-          </div>
-          <TablePagination
-            rowsPerPageOptions={[10, 25, 50]}
-            component='div'
-            className='border-bs'
-            count={table.getFilteredRowModel().rows.length}
-            rowsPerPage={table.getState().pagination.pageSize}
-            page={table.getState().pagination.pageIndex}
-            SelectProps={{
-              inputProps: { 'aria-label': 'rows per page' }
-            }}
-            onPageChange={(_, page) => {
-              table.setPageIndex(page)
-            }}
-            onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
-            sx={{
-              borderTop: '2px solid #f3f4f6',
-              background: 'linear-gradient(180deg, #ffffff 0%, #f9fafb 100%)',
-              '.MuiTablePagination-toolbar': {
-                px: { xs: 2, sm: 3 },
-                py: 2
-              },
-              '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
-                fontSize: { xs: '0.75rem', sm: '0.875rem' }
-              },
-              '& .MuiTablePagination-select': {
-                borderRadius: '6px',
-                '&:hover': {
-                  background: alpha(theme.palette.primary.main, 0.1)
+                        <Stack direction='row' spacing={2} alignItems='flex-start'>
+                          <Box
+                            sx={{
+                              width: 48,
+                              height: 48,
+                              borderRadius: '12px',
+                              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: 'white',
+                              fontSize: '18px',
+                              fontWeight: 'bold',
+                              flexShrink: 0
+                            }}
+                          >
+                            {advertisement.userName?.charAt(0)?.toUpperCase() || 'U'}
+                          </Box>
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Typography
+                              variant='subtitle1'
+                              sx={{
+                                fontWeight: 700,
+                                fontSize: '1rem',
+                                wordBreak: 'break-word',
+                                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                                WebkitBackgroundClip: 'text',
+                                WebkitTextFillColor: 'transparent',
+                                backgroundClip: 'text'
+                              }}
+                            >
+                              {advertisement.userName}
+                            </Typography>
+                            <Typography
+                              variant='body2'
+                              sx={{ color: theme.palette.primary.main, fontWeight: 500, mt: 0.5 }}
+                            >
+                              {advertisement.company}
+                            </Typography>
+                            <Typography
+                              variant='caption'
+                              sx={{ color: '#6b7280', display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}
+                            >
+                              <i className='ri-mail-line' style={{ fontSize: '14px' }} />
+                              {advertisement.email}
+                            </Typography>
+                          </Box>
+                          <Chip
+                            icon={<i className={config.icon} style={{ fontSize: '14px' }} />}
+                            label={config.label}
+                            sx={{
+                              backgroundColor: config.bg,
+                              color: config.color,
+                              border: `1px solid ${config.color}40`,
+                              fontWeight: 600,
+                              fontSize: '0.7rem',
+                              height: '24px',
+                              flexShrink: 0
+                            }}
+                            size='small'
+                          />
+                        </Stack>
+
+                        <Stack direction='row' spacing={1} sx={{ mt: 1 }}>
+                          <Box
+                            sx={{
+                              flex: 1,
+                              p: 1,
+                              borderRadius: 1.5,
+                              background: `linear-gradient(135deg, ${alpha(
+                                theme.palette.primary.main,
+                                0.1
+                              )} 0%, ${alpha(theme.palette.secondary.main, 0.1)} 100%)`,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1
+                            }}
+                          >
+                            <i
+                              className='ri-calendar-event-line'
+                              style={{ fontSize: '16px', color: theme.palette.primary.main }}
+                            />
+                            <Typography variant='caption' sx={{ fontWeight: 500 }}>
+                              {format(advertisement.startDate, 'MMM dd, yyyy')}
+                            </Typography>
+                          </Box>
+                          <Box
+                            sx={{
+                              flex: 1,
+                              p: 1,
+                              borderRadius: 1.5,
+                              background: `linear-gradient(135deg, ${alpha(
+                                theme.palette.secondary.main,
+                                0.1
+                              )} 0%, ${alpha(theme.palette.primary.main, 0.1)} 100%)`,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1
+                            }}
+                          >
+                            <i
+                              className='ri-calendar-check-line'
+                              style={{ fontSize: '16px', color: theme.palette.secondary.main }}
+                            />
+                            <Typography variant='caption' sx={{ fontWeight: 500 }}>
+                              {format(advertisement.endDate, 'MMM dd, yyyy')}
+                            </Typography>
+                          </Box>
+                        </Stack>
+
+                        <Box sx={{ mt: 1 }}>
+                          <ImagePopup imageUrl={advertisement.imageUrl} mediaType={advertisement.mediaType} />
+                        </Box>
+
+                        <Stack direction='row' spacing={1} sx={{ mt: 1 }}>
+                          <Button
+                            variant='outlined'
+                            color='primary'
+                            size='small'
+                            onClick={e => {
+                              setAdvtEditOrAddInitialData(advertisement)
+                              setMode('edit')
+                              setAddAdvtOpen(!addAdvtOpen)
+                            }}
+                            sx={{
+                              flex: 1,
+                              textTransform: 'none',
+                              fontWeight: 600
+                            }}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            variant='contained'
+                            component='label'
+                            size='small'
+                            onClick={e => {
+                              e.preventDefault()
+                              setCurrentAdvertisement(advertisement)
+                              setConfirmationDialogOpen(true)
+                            }}
+                            sx={{
+                              flex: 1,
+                              textTransform: 'none',
+                              fontWeight: 600,
+                              color: 'white'
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        </Stack>
+                      </Box>
+                    )
+                  })}
+                </Stack>
+              </Box>
+            ) : (
+              <div className='overflow-x-auto'>
+                <table className={tableStyles.table}>
+                  <thead>
+                    {table.getHeaderGroups().map(headerGroup => (
+                      <tr key={headerGroup.id}>
+                        {headerGroup.headers.map(header => (
+                          <th key={header.id} className='enhanced-table-header'>
+                            {header.isPlaceholder ? null : (
+                              <>
+                                <div
+                                  className={classnames({
+                                    'flex items-center': header.column.getIsSorted(),
+                                    'cursor-pointer select-none': header.column.getCanSort()
+                                  })}
+                                  onClick={header.column.getToggleSortingHandler()}
+                                >
+                                  {flexRender(header.column.columnDef.header, header.getContext())}
+                                  {{
+                                    asc: <i className='ri-arrow-up-s-line text-xl' />,
+                                    desc: <i className='ri-arrow-down-s-line text-xl' />
+                                  }[header.column.getIsSorted()] ?? null}
+                                </div>
+                              </>
+                            )}
+                          </th>
+                        ))}
+                      </tr>
+                    ))}
+                  </thead>
+                  <tbody>
+                    {table.getRowModel().rows.map(row => (
+                      <tr
+                        key={row.id}
+                        className={classnames('enhanced-table-row', { selected: row.getIsSelected() })}
+                        style={{
+                          cursor: 'pointer'
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.backgroundColor = 'rgba(139, 92, 246, 0.08)'
+                          e.currentTarget.style.boxShadow = '0 2px 8px rgba(139, 92, 246, 0.15)'
+                        }}
+                        onMouseLeave={e => {
+                          if (!row.getIsSelected()) {
+                            e.currentTarget.style.backgroundColor = 'transparent'
+                          }
+                          e.currentTarget.style.boxShadow = 'none'
+                        }}
+                      >
+                        {row.getVisibleCells().map(cell => (
+                          <td key={cell.id} className='enhanced-table-cell'>
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Box>
+          {!isMobile && table.getFilteredRowModel().rows.length > 0 && (
+            <TablePagination
+              rowsPerPageOptions={[10, 25, 50]}
+              component='div'
+              className='border-bs'
+              count={table.getFilteredRowModel().rows.length}
+              rowsPerPage={table.getState().pagination.pageSize}
+              page={table.getState().pagination.pageIndex}
+              SelectProps={{
+                inputProps: { 'aria-label': 'rows per page' }
+              }}
+              onPageChange={(_, page) => {
+                table.setPageIndex(page)
+              }}
+              onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
+              sx={{
+                borderTop: '2px solid #f3f4f6',
+                background: 'linear-gradient(180deg, #ffffff 0%, #f9fafb 100%)',
+                '.MuiTablePagination-toolbar': {
+                  px: { xs: 2, sm: 3 },
+                  py: 2
+                },
+                '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
+                  fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                },
+                '& .MuiTablePagination-select': {
+                  borderRadius: '6px',
+                  '&:hover': {
+                    background: alpha(theme.palette.primary.main, 0.1)
+                  }
+                },
+                '& .MuiTablePagination-actions button': {
+                  color: theme.palette.primary.main,
+                  '&:hover': {
+                    background: alpha(theme.palette.primary.main, 0.1)
+                  }
                 }
-              },
-              '& .MuiTablePagination-actions button': {
-                color: theme.palette.primary.main,
-                '&:hover': {
-                  background: alpha(theme.palette.primary.main, 0.1)
-                }
-              }
-            }}
-          />
+              }}
+            />
+          )}
         </Card>
         {addAdvtOpen && (
           <AddAdvDrawer
@@ -924,6 +1285,14 @@ const AdvListTable = () => {
             onRefresh={() => getData()}
           />
         )}
+
+        {/* Confirmation Dialog */}
+        <ConfirmationDialog
+          open={confirmationDialogOpen}
+          setOpen={setConfirmationDialogOpen}
+          type='delete-advertisement'
+          onConfirm={handleDelete}
+        />
       </Container>
     </Box>
   )

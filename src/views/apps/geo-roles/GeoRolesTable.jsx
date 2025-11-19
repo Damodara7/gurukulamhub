@@ -19,11 +19,13 @@ import InputLabel from '@mui/material/InputLabel'
 import Chip from '@mui/material/Chip'
 import Typography from '@mui/material/Typography'
 import Checkbox from '@mui/material/Checkbox'
-import IconButton from '@mui/material/IconButton'
-import { styled } from '@mui/material/styles'
 import TablePagination from '@mui/material/TablePagination'
 import Divider from '@mui/material/Divider'
 import InputAdornment from '@mui/material/InputAdornment'
+import Box from '@mui/material/Box'
+import Stack from '@mui/material/Stack'
+import useMediaQuery from '@mui/material/useMediaQuery'
+import { alpha, styled, useTheme } from '@mui/material/styles'
 
 // Third-party Imports
 import classnames from 'classnames'
@@ -47,7 +49,6 @@ import OptionMenu from '@core/components/option-menu'
 import EditUserRoleDialog from './EditUserRoleDialog'
 
 // Util Imports
-import { getInitials } from '@/utils/getInitials'
 import { getLocalizedUrl } from '@/utils/i18n'
 
 // Api utils
@@ -129,6 +130,8 @@ const GeoRolesTable = ({ tableData, refreshUsers }) => {
 
   // Hooks
   const { lang: locale } = useParams()
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
 
   const columns = useMemo(
     () => [
@@ -161,7 +164,13 @@ const GeoRolesTable = ({ tableData, refreshUsers }) => {
           const fullname = `${row.original.firstname || ''} ${row.original.lastname || ''}`
           return (
             <div className='flex items-center gap-4'>
-              {getAvatar({ avatar: row.original.image, fullName: fullname })}
+              {getAvatar({
+                avatar: row.original.image,
+                fullName: fullname,
+                firstname: row.original.firstname,
+                lastname: row.original.lastname,
+                email: row.original.email
+              })}
               <div className='flex flex-col'>
                 <Typography variant='body1' className='font-medium' color='text.primary'>
                   {fullname || ''}
@@ -313,23 +322,29 @@ const GeoRolesTable = ({ tableData, refreshUsers }) => {
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
 
+  const filteredRows = table.getFilteredRowModel().rows
+  const paginatedRows = table.getRowModel().rows
+
   const handleEdit = rowData => {
     setEditData(rowData)
     setOpenDialog(true)
   }
 
   const getAvatar = params => {
-    const { avatar, fullName } = params
+    const { avatar, fullName, firstname, lastname, email } = params
 
     if (avatar) {
       return <CustomAvatar src={avatar} skin='light' size={34} />
-    } else {
-      return (
-        <CustomAvatar skin='light' size={34}>
-          {getInitials(fullName)}
-        </CustomAvatar>
-      )
     }
+
+    const fallbackLetter =
+      firstname?.trim()?.[0] || lastname?.trim()?.[0] || fullName?.trim()?.[0] || email?.trim()?.[0] || '?'
+
+    return (
+      <CustomAvatar skin='light' size={34}>
+        {fallbackLetter.toUpperCase()}
+      </CustomAvatar>
+    )
   }
 
   useEffect(() => {
@@ -399,27 +414,36 @@ const GeoRolesTable = ({ tableData, refreshUsers }) => {
       }}
     >
       <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
-        <div className='flex justify-between items-center flex-col sm:flex-row gap-4'>
-          <Button
-            variant='outlined'
-            color='secondary'
-            startIcon={<i className='ri-upload-2-line' />}
-            sx={{
-              borderRadius: 2,
-              textTransform: 'none',
-              fontWeight: 600,
-              whiteSpace: 'nowrap'
-            }}
+        <Stack spacing={3}>
+          <Stack
+            direction={{ xs: 'row', md: 'row' }}
+            spacing={2}
+            alignItems='center'
+            justifyContent='space-between'
+            flexWrap='wrap'
+            rowGap={1.5}
           >
-            Export
-          </Button>
-          <div className='flex gap-3 flex-col sm:flex-row items-stretch sm:items-center w-full sm:w-auto'>
+            <Box sx={{ flexGrow: 1, minWidth: { xs: 200, md: 'auto' } }}>
+              <Typography variant='h6' sx={{ fontWeight: 700 }}>
+                Directory Overview
+              </Typography>
+              <Typography variant='body2' color='text.secondary'>
+                {filteredRows.length}/{tableData?.length || 0} administrators
+              </Typography>
+            </Box>
+          </Stack>
+
+          <Stack
+            direction={{ xs: 'column', md: 'row' }}
+            spacing={2}
+            alignItems={{ xs: 'stretch', md: 'center' }}
+            justifyContent='space-between'
+          >
             <DebouncedInput
               value={globalFilter ?? ''}
               onChange={value => setGlobalFilter(String(value))}
-              placeholder='Search Users'
-              size='small'
-              sx={{ minWidth: { sm: '350px' } }}
+              placeholder='Search administrators'
+              fullWidth
               InputProps={{
                 startAdornment: (
                   <InputAdornment position='start'>
@@ -431,7 +455,7 @@ const GeoRolesTable = ({ tableData, refreshUsers }) => {
                 )
               }}
             />
-            <FormControl size='small' sx={{ minWidth: { xs: '100%', sm: '220px' } }}>
+            <FormControl size='small' sx={{ minWidth: { xs: '100%', md: '220px' } }}>
               <InputLabel id='roles-app-role-select-label'>Select Role</InputLabel>
               <Select
                 value={role}
@@ -459,45 +483,20 @@ const GeoRolesTable = ({ tableData, refreshUsers }) => {
                 })}
               </Select>
             </FormControl>
-          </div>
-        </div>
-      </CardContent>
+          </Stack>
 
-      <Divider />
-
-      <div className='px-4 sm:px-6 py-3 sm:py-4'>
-        <div className='flex flex-col gap-2'>
-          <Typography variant='body2' color='text.secondary' sx={{ fontWeight: 500 }}>
-            {role ? (
-              <>
-                {role} : {table.getFilteredRowModel().rows.length} user
-                {table.getFilteredRowModel().rows.length > 1 ? 's' : ''}
-              </>
-            ) : globalFilter ? (
-              <>
-                Showing {table.getFilteredRowModel().rows.length} of {tableData?.length || 0} user
-                {table.getFilteredRowModel().rows.length > 1 ? 's' : ''}
-              </>
-            ) : (
-              <>
-                Total {tableData?.length || 0} user{tableData?.length !== 1 ? 's' : ''}
-              </>
-            )}
-          </Typography>
-          {/* Active Filters Display */}
           {(role || globalFilter) && (
-            <div className='flex flex-wrap items-center gap-2'>
-              <Typography variant='caption' color='text.disabled' sx={{ fontWeight: 500 }}>
+            <Stack direction='row' spacing={1} flexWrap='wrap' alignItems='center'>
+              <Typography variant='caption' color='text.secondary' sx={{ fontWeight: 600 }}>
                 Active Filters:
               </Typography>
               {role && (
                 <Chip
-                  label={`Role: ${role} (${table.getFilteredRowModel().rows.length})`}
+                  label={`Role: ${role} (${filteredRows.length})`}
                   size='small'
                   onDelete={() => setRole('')}
                   color='primary'
                   variant='outlined'
-                  sx={{ height: '24px', fontSize: '0.75rem' }}
                 />
               )}
               {globalFilter && (
@@ -507,7 +506,6 @@ const GeoRolesTable = ({ tableData, refreshUsers }) => {
                   onDelete={() => setGlobalFilter('')}
                   color='info'
                   variant='outlined'
-                  sx={{ height: '24px', fontSize: '0.75rem' }}
                 />
               )}
               <Button
@@ -516,134 +514,249 @@ const GeoRolesTable = ({ tableData, refreshUsers }) => {
                   setRole('')
                   setGlobalFilter('')
                 }}
-                sx={{
-                  fontSize: '0.75rem',
-                  height: '24px',
-                  minWidth: 'auto',
-                  px: 1.5,
-                  textTransform: 'none'
-                }}
+                sx={{ textTransform: 'none' }}
               >
                 Clear All
               </Button>
-            </div>
+            </Stack>
           )}
-        </div>
-      </div>
-      <div className='overflow-x-auto'>
-        <table className={tableStyles.table}>
-          <thead>
-            {table.getHeaderGroups().map(headerGroup => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map(header => (
-                  <th key={header.id}>
-                    {header.isPlaceholder ? null : (
-                      <>
-                        <div
-                          className={classnames({
-                            'flex items-center': header.column.getIsSorted(),
-                            'cursor-pointer select-none': header.column.getCanSort()
-                          })}
-                          onClick={header.column.getToggleSortingHandler()}
-                        >
-                          {flexRender(header.column.columnDef.header, header.getContext())}
-                          {{
-                            asc: <i className='ri-arrow-up-s-line text-xl' />,
-                            desc: <i className='ri-arrow-down-s-line text-xl' />
-                          }[header.column.getIsSorted()] ?? null}
-                        </div>
-                      </>
-                    )}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          {table.getFilteredRowModel().rows.length === 0 ? (
-            <tbody>
-              <tr>
-                <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
-                  <div
-                    style={{
-                      padding: '48px 16px',
+        </Stack>
+      </CardContent>
+
+      <Divider />
+
+      <Box sx={{ px: { xs: 2, sm: 3 }, py: { xs: 2, sm: 3 } }}>
+        {filteredRows.length === 0 ? (
+          <Box
+            sx={{
+              textAlign: 'center',
+              py: 6,
+              borderRadius: 3,
+              backgroundColor: alpha(theme.palette.primary.main, 0.02)
+            }}
+          >
+            <i className='ri-user-search-line' style={{ fontSize: 48, opacity: 0.5 }} />
+            <Typography variant='h6' color='text.secondary'>
+              No administrators found
+            </Typography>
+            <Typography variant='body2' color='text.disabled'>
+              Try adjusting your search or filter criteria.
+            </Typography>
+          </Box>
+        ) : isMobile ? (
+          <Box
+            sx={{
+              maxHeight: '65vh',
+              overflowY: 'auto',
+              pr: 1,
+              '&::-webkit-scrollbar': { width: 6 },
+              '&::-webkit-scrollbar-thumb': {
+                backgroundColor: alpha(theme.palette.primary.main, 0.3),
+                borderRadius: 8
+              }
+            }}
+          >
+            <Stack spacing={2}>
+              {paginatedRows.map(row => {
+                const fullname =
+                  `${row.original.firstname || ''} ${row.original.lastname || ''}`.trim() || row.original.email
+
+                return (
+                  <Box
+                    key={row.id}
+                    sx={{
+                      borderRadius: 3,
+                      border: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
+                      boxShadow: '0 12px 30px rgba(15, 23, 42, 0.08)',
+                      p: 2,
                       display: 'flex',
                       flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: '12px'
+                      gap: 1.5,
+                      background: '#fff'
                     }}
                   >
-                    <i className='ri-user-search-line' style={{ fontSize: '48px', opacity: 0.5 }} />
-                    <Typography variant='h6' color='text.secondary'>
-                      No users found
-                    </Typography>
-                    <Typography variant='body2' color='text.disabled'>
-                      Try adjusting your search or filter criteria
-                    </Typography>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          ) : (
-            <tbody>
-              {table
-                .getRowModel()
-                .rows.slice(0, table.getState().pagination.pageSize)
-                .map(row => {
-                  return (
-                    <tr
-                      key={row.id}
-                      className={classnames({ selected: row.getIsSelected() })}
-                      style={{
-                        transition: 'all 0.3s ease-in-out',
-                        cursor: 'pointer'
-                      }}
-                      onMouseEnter={e => {
-                        e.currentTarget.style.backgroundColor = 'rgba(139, 92, 246, 0.08)'
-                        e.currentTarget.style.transform = 'scale(1.01)'
-                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(139, 92, 246, 0.15)'
-                      }}
-                      onMouseLeave={e => {
-                        if (!row.getIsSelected()) {
-                          e.currentTarget.style.backgroundColor = 'transparent'
-                        }
-                        e.currentTarget.style.transform = 'scale(1)'
-                        e.currentTarget.style.boxShadow = 'none'
-                      }}
+                    <Stack
+                      direction={{ xs: 'column', sm: 'row' }}
+                      justifyContent='space-between'
+                      alignItems={{ xs: 'flex-start', sm: 'flex-start' }}
+                      spacing={{ xs: 1.5, sm: 0 }}
                     >
-                      {row.getVisibleCells().map(cell => (
-                        <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
-                      ))}
-                    </tr>
-                  )
-                })}
-            </tbody>
-          )}
-        </table>
-      </div>
-      <TablePagination
-        rowsPerPageOptions={[10, 25, 50]}
-        component='div'
-        className='border-bs'
-        count={table.getFilteredRowModel().rows.length}
-        rowsPerPage={table.getState().pagination.pageSize}
-        page={table.getState().pagination.pageIndex}
-        SelectProps={{
-          inputProps: { 'aria-label': 'rows per page' }
-        }}
-        onPageChange={(_, page) => {
-          table.setPageIndex(page)
-        }}
-        onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
-        sx={{
-          '.MuiTablePagination-toolbar': {
-            px: { xs: 2, sm: 3 },
-            py: 2
-          },
-          '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
-            fontSize: { xs: '0.75rem', sm: '0.875rem' }
-          }
-        }}
-      />
+                      <Stack direction='row' spacing={1.5} alignItems='center' width='100%'>
+                        {getAvatar({
+                          avatar: row.original.image,
+                          fullName: fullname,
+                          firstname: row.original.firstname,
+                          lastname: row.original.lastname,
+                          email: row.original.email
+                        })}
+                        <div>
+                          <Typography variant='subtitle1' sx={{ fontWeight: 700 }}>
+                            {fullname}
+                          </Typography>
+                          <Typography variant='body2' color='text.secondary' sx={{ wordBreak: 'break-word' }}>
+                            {row.original.email}
+                          </Typography>
+                        </div>
+                      </Stack>
+                      <Stack
+                        direction='row'
+                        spacing={1}
+                        alignItems='center'
+                        flexWrap='wrap'
+                        sx={{ alignSelf: { xs: 'flex-start', sm: 'center' }, mt: { xs: 1, sm: 0 } }}
+                      >
+                        <Chip
+                          label={row.original.isActive ? 'Active' : 'Inactive'}
+                          color={row.original.isActive ? 'success' : 'default'}
+                          size='small'
+                          sx={{ fontWeight: 600 }}
+                        />
+                        <Chip
+                          label={row.original.isVerified ? 'Verified' : 'Not Verified'}
+                          color={row.original.isVerified ? 'success' : 'warning'}
+                          size='small'
+                          sx={{ fontWeight: 600 }}
+                        />
+                        <Typography variant='body2' color='text.secondary'>
+                          {row.original.phone || 'No phone number added'}
+                        </Typography>
+                      </Stack>
+                    </Stack>
+
+                    <Stack spacing={0.5}>
+                      <Typography variant='caption' color='text.secondary'>
+                        Roles
+                      </Typography>
+                      <Stack direction='row' spacing={0.75} flexWrap='wrap'>
+                        {row.original.roles.map((roleValue, idx) => (
+                          <Chip key={idx} label={roleValue} size='small' variant='outlined' />
+                        ))}
+                      </Stack>
+                    </Stack>
+
+                    {row.original.geoRoles?.length ? (
+                      <Stack spacing={0.5}>
+                        <Typography variant='caption' color='text.secondary'>
+                          Geo-Roles
+                        </Typography>
+                        <Stack direction='row' spacing={0.75} flexWrap='wrap'>
+                          {row.original.geoRoles.map((roleValue, idx) => (
+                            <Chip key={idx} label={roleValue} size='small' variant='tonal' color='info' />
+                          ))}
+                        </Stack>
+                      </Stack>
+                    ) : null}
+
+                    <Stack direction='row' spacing={1} flexWrap='nowrap'>
+                      <Button
+                        variant='outlined'
+                        size='small'
+                        component={Link}
+                        href={getLocalizedUrl(`/management/user/${encodeURIComponent(row.original.email)}`, locale)}
+                        sx={{ textTransform: 'none', flex: 1 }}
+                      >
+                        View
+                      </Button>
+                      <Button
+                        variant='contained'
+                        component='label'
+                        size='small'
+                        sx={{ textTransform: 'none', flex: 1, color: 'white' }}
+                        onClick={() => handleEdit(row.original)}
+                      >
+                        Edit Role
+                      </Button>
+                    </Stack>
+                  </Box>
+                )
+              })}
+            </Stack>
+          </Box>
+        ) : (
+          <div className='overflow-x-auto'>
+            <table className={tableStyles.table}>
+              <thead>
+                {table.getHeaderGroups().map(headerGroup => (
+                  <tr key={headerGroup.id}>
+                    {headerGroup.headers.map(header => (
+                      <th key={header.id}>
+                        {header.isPlaceholder ? null : (
+                          <>
+                            <div
+                              className={classnames({
+                                'flex items-center': header.column.getIsSorted(),
+                                'cursor-pointer select-none': header.column.getCanSort()
+                              })}
+                              onClick={header.column.getToggleSortingHandler()}
+                            >
+                              {flexRender(header.column.columnDef.header, header.getContext())}
+                              {{
+                                asc: <i className='ri-arrow-up-s-line text-xl' />,
+                                desc: <i className='ri-arrow-down-s-line text-xl' />
+                              }[header.column.getIsSorted()] ?? null}
+                            </div>
+                          </>
+                        )}
+                      </th>
+                    ))}
+                  </tr>
+                ))}
+              </thead>
+              <tbody>
+                {paginatedRows.map(row => (
+                  <tr
+                    key={row.id}
+                    className={classnames({ selected: row.getIsSelected() })}
+                    style={{
+                      cursor: 'pointer'
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.backgroundColor = 'rgba(139, 92, 246, 0.08)'
+                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(139, 92, 246, 0.15)'
+                    }}
+                    onMouseLeave={e => {
+                      if (!row.getIsSelected()) {
+                        e.currentTarget.style.backgroundColor = 'transparent'
+                      }
+                      e.currentTarget.style.boxShadow = 'none'
+                    }}
+                  >
+                    {row.getVisibleCells().map(cell => (
+                      <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Box>
+      {!isMobile && filteredRows.length > 0 && (
+        <TablePagination
+          rowsPerPageOptions={[10, 25, 50]}
+          component='div'
+          className='border-bs'
+          count={filteredRows.length}
+          rowsPerPage={table.getState().pagination.pageSize}
+          page={table.getState().pagination.pageIndex}
+          SelectProps={{
+            inputProps: { 'aria-label': 'rows per page' }
+          }}
+          onPageChange={(_, page) => {
+            table.setPageIndex(page)
+          }}
+          onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
+          sx={{
+            '.MuiTablePagination-toolbar': {
+              px: { xs: 2, sm: 3 },
+              py: 2
+            },
+            '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
+              fontSize: { xs: '0.75rem', sm: '0.875rem' }
+            }
+          }}
+        />
+      )}
 
       <EditUserRoleDialog
         open={openDialog}

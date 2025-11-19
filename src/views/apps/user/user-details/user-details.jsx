@@ -32,6 +32,7 @@ import Collapse from '@mui/material/Collapse'
 import Container from '@mui/material/Container'
 import { useState } from 'react'
 import { alpha, useTheme } from '@mui/material/styles'
+import useMediaQuery from '@mui/material/useMediaQuery'
 import {
   WhatsappShareButton,
   WhatsappIcon,
@@ -66,6 +67,7 @@ import LinkIcon from '@mui/icons-material/Link'
 
 function StatCard({ icon, label, value, tooltip }) {
   const theme = useTheme()
+  const isXs = useMediaQuery(theme.breakpoints.down('sm'))
   // Special handling for email and roles: ellipsis + tooltip
   const isEmail = label.toLowerCase() === 'email'
   const isRoles = label.toLowerCase() === 'roles'
@@ -79,11 +81,11 @@ function StatCard({ icon, label, value, tooltip }) {
         flexDirection: 'column',
         alignItems: 'center',
         gap: 1.5,
-        height: '100%',
         background: '#ffffff',
         border: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
         transition: 'all 0.3s ease',
+        minHeight: isXs ? 'auto' : 180,
         '&:hover': {
           transform: 'translateY(-4px)',
           boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.12)}`,
@@ -110,10 +112,7 @@ function StatCard({ icon, label, value, tooltip }) {
             sx={{
               fontSize: { xs: 16, sm: 18, md: 20 },
               display: 'block',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              maxWidth: '100%',
+              overflowWrap: 'anywhere',
               background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
@@ -130,11 +129,8 @@ function StatCard({ icon, label, value, tooltip }) {
             fontWeight={700}
             sx={{
               fontSize: { xs: 16, sm: 18, md: 20 },
-              maxWidth: 120,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              display: 'block',
+              textAlign: 'center',
+              overflowWrap: 'anywhere',
               background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
@@ -383,6 +379,8 @@ function EnhancedProfileCard({ profile }) {
   const accountType = profile?.accountType
   const isIndividual = accountType === 'INDIVIDUAL'
   const isOrg = ['BUSINESS', 'ORGANIZATION', 'NGO'].includes(accountType)
+  const theme = useTheme()
+  const downSm = useMediaQuery(theme.breakpoints.down('sm'))
 
   // Basic Info
   const basicInfo = [accountType && { label: 'Account Type', value: accountType }].filter(Boolean)
@@ -455,15 +453,33 @@ function EnhancedProfileCard({ profile }) {
     profile?.openToWork ||
     profile?.hiring
 
-  const labelSx = { minWidth: 120, flexShrink: 0, color: 'text.secondary', fontWeight: 500, pr: 1 }
-  const valueSx = { flex: 1, display: 'flex', flexWrap: 'wrap', gap: 1, wordBreak: 'break-word', alignItems: 'center' }
+  const labelSx = {
+    minWidth: downSm ? 100 : 140,
+    flexShrink: 0,
+    color: 'text.secondary',
+    fontWeight: 500,
+    pr: downSm ? 0 : 1,
+    mb: downSm ? 0.5 : 0
+  }
+  const valueSx = {
+    flex: 1,
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: 1,
+    wordBreak: 'break-word',
+    alignItems: 'center'
+  }
 
   const renderRow = (label, value) => (
-    <Stack direction='row' alignItems='flex-start' sx={{ mb: 1 }}>
+    <Stack
+      direction={downSm ? 'column' : 'row'}
+      alignItems={downSm ? 'stretch' : 'flex-start'}
+      sx={{ mb: 1.5, gap: downSm ? 0.5 : 1 }}
+    >
       <Typography variant='body2' sx={labelSx}>
         {label}
       </Typography>
-      <Box sx={valueSx}>{value}</Box>
+      <Box sx={{ ...valueSx, width: '100%' }}>{value}</Box>
     </Stack>
   )
 
@@ -476,7 +492,13 @@ function EnhancedProfileCard({ profile }) {
             renderRow(
               'Account Type:',
               basicInfo.map((item, idx) => (
-                <Chip key={idx} label={item.value} color='info' size='small' sx={{ maxWidth: 220 }} />
+                <Chip
+                  key={idx}
+                  label={item.value}
+                  color='info'
+                  size='small'
+                  sx={{ maxWidth: { xs: '100%', sm: 220 } }}
+                />
               ))
             )}
           {/* Individual fields */}
@@ -489,7 +511,7 @@ function EnhancedProfileCard({ profile }) {
                   label={`${item.label}: ${item.value}`}
                   color='primary'
                   size='small'
-                  sx={{ maxWidth: 220, color: 'white' }}
+                  sx={{ maxWidth: { xs: '100%', sm: 220 }, color: 'white' }}
                 />
               ))
             )}
@@ -511,7 +533,7 @@ function EnhancedProfileCard({ profile }) {
                       icon={<LinkIcon fontSize='small' />}
                       color='primary'
                       size='small'
-                      sx={{ maxWidth: 220 }}
+                      sx={{ maxWidth: { xs: '100%', sm: 220 } }}
                     />
                   </a>
                 ) : (
@@ -520,7 +542,7 @@ function EnhancedProfileCard({ profile }) {
                     label={`${item.label}: ${item.value}`}
                     color='primary'
                     size='small'
-                    sx={{ maxWidth: 220 }}
+                    sx={{ maxWidth: { xs: '100%', sm: 220 } }}
                   />
                 )
               )
@@ -536,7 +558,7 @@ function EnhancedProfileCard({ profile }) {
                   label={`${item.label}: ${item.value}`}
                   color='secondary'
                   size='small'
-                  sx={{ maxWidth: 220 }}
+                  sx={{ maxWidth: { xs: '100%', sm: 220 } }}
                 />
               ))
             )}
@@ -557,7 +579,7 @@ function EnhancedProfileCard({ profile }) {
                   icon={<LanguageIcon fontSize='small' />}
                   color='primary'
                   size='small'
-                  sx={{ maxWidth: 220 }}
+                  sx={{ maxWidth: { xs: '100%', sm: 220 } }}
                 />
               ))
             )}
@@ -645,7 +667,7 @@ function EnhancedProfileCard({ profile }) {
                   label={`${item.label}: ${item.value}`}
                   color='default'
                   size='small'
-                  sx={{ maxWidth: 220 }}
+                  sx={{ maxWidth: { xs: '100%', sm: 220 } }}
                 />
               ))
             )}
@@ -669,8 +691,21 @@ function UserDetailsPage({ data }) {
       </Box>
     )
   const { profile, ...user } = data
-  const avatarUrl = profile?.image || '/images/avatars/1.png'
-  const fullName = `${profile?.firstname || ''} ${profile?.lastname || ''}`.trim() || 'User'
+  const fullName =
+    `${profile?.firstname || user?.firstname || ''} ${profile?.lastname || user?.lastname || ''}`.trim() || 'User'
+  const primaryEmail = profile?.email || user?.email || '-'
+  const getInitial = value => (typeof value === 'string' && value.trim().charAt(0)) || ''
+  const avatarInitial = (
+    getInitial(profile?.firstname) ||
+    getInitial(profile?.lastname) ||
+    getInitial(user?.firstname) ||
+    getInitial(user?.lastname) ||
+    getInitial(primaryEmail) ||
+    'U'
+  ).toUpperCase()
+  const emailLength = primaryEmail.length
+  const emailFontSize =
+    emailLength > 28 ? { xs: '0.82rem', sm: '0.9rem', md: '0.95rem' } : { xs: '0.95rem', sm: '1rem', md: '1.05rem' }
 
   // Stat cards
   const stats = [
@@ -988,7 +1023,11 @@ function UserDetailsPage({ data }) {
             <Grid container spacing={3} alignItems='center'>
               {/* User Avatar and Name */}
               <Grid item xs={12} md={6}>
-                <Stack direction='row' spacing={3} alignItems='center'>
+                <Stack
+                  direction={{ xs: 'column', sm: 'row' }}
+                  spacing={{ xs: 2.5, sm: 3 }}
+                  alignItems={{ xs: 'flex-start', sm: 'center' }}
+                >
                   {/* Stunning Avatar with Gradient Ring */}
                   <Box
                     sx={{
@@ -1031,23 +1070,31 @@ function UserDetailsPage({ data }) {
                           background: '#ffffff',
                           display: 'flex',
                           alignItems: 'center',
-                          justifyContent: 'center'
+                          justifyContent: 'center',
+                          overflow: 'hidden'
                         }}
                       >
-                        {/* Gradient Letter */}
-                        <Typography
-                          sx={{
-                            fontSize: { xs: 32, sm: 38, md: 46 },
-                            fontWeight: 800,
-                            background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                            backgroundClip: 'text',
-                            letterSpacing: '-0.02em'
-                          }}
-                        >
-                          {fullName.charAt(0).toUpperCase()}
-                        </Typography>
+                        {profile?.image ? (
+                          <Avatar
+                            src={profile.image}
+                            alt={fullName}
+                            sx={{ width: '100%', height: '100%', borderRadius: '50%' }}
+                          />
+                        ) : (
+                          <Typography
+                            sx={{
+                              fontSize: { xs: 32, sm: 38, md: 46 },
+                              fontWeight: 800,
+                              background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                              WebkitBackgroundClip: 'text',
+                              WebkitTextFillColor: 'transparent',
+                              backgroundClip: 'text',
+                              letterSpacing: '-0.02em'
+                            }}
+                          >
+                            {avatarInitial}
+                          </Typography>
+                        )}
                       </Box>
                     </Box>
                   </Box>
@@ -1070,8 +1117,13 @@ function UserDetailsPage({ data }) {
                       {fullName}
                     </Typography>
 
-                    <Stack spacing={0.75}>
-                      <Stack direction='row' spacing={1} alignItems='center' flexWrap='wrap'>
+                    <Stack spacing={1}>
+                      <Stack
+                        direction='row'
+                        spacing={1.25}
+                        alignItems='center'
+                        sx={{ width: '100%', flexWrap: 'nowrap' }}
+                      >
                         <Box
                           sx={{
                             width: 32,
@@ -1089,13 +1141,32 @@ function UserDetailsPage({ data }) {
                         >
                           <EmailIcon sx={{ fontSize: 18 }} />
                         </Box>
-                        <Typography variant='body1' color='text.secondary' sx={{ fontWeight: 500 }}>
-                          {profile?.email || user?.email}
-                        </Typography>
+                        <Tooltip title={primaryEmail} arrow>
+                          <Typography
+                            variant='body1'
+                            color='text.secondary'
+                            sx={{
+                              fontWeight: 600,
+                              fontSize: emailFontSize,
+                              flex: 1,
+                              minWidth: 0,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            {primaryEmail}
+                          </Typography>
+                        </Tooltip>
                       </Stack>
 
                       {(profile?.phone || user?.phone) && (
-                        <Stack direction='row' spacing={1} alignItems='center'>
+                        <Stack
+                          direction='row'
+                          spacing={1.25}
+                          alignItems='center'
+                          sx={{ width: '100%', flexWrap: 'nowrap' }}
+                        >
                           <Box
                             sx={{
                               width: 32,
@@ -1113,20 +1184,40 @@ function UserDetailsPage({ data }) {
                           >
                             <PhoneIcon sx={{ fontSize: 18 }} />
                           </Box>
-                          <Typography variant='body1' color='text.secondary' sx={{ fontWeight: 500 }}>
+                          <Typography
+                            variant='body1'
+                            color='text.secondary'
+                            sx={{
+                              fontWeight: 600,
+                              fontSize: { xs: '0.95rem', sm: '1rem' },
+                              flex: 1,
+                              minWidth: 0,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis'
+                            }}
+                          >
                             {profile?.phone || user?.phone}
                           </Typography>
                         </Stack>
                       )}
                     </Stack>
 
-                    <Stack direction='row' spacing={1} flexWrap='wrap' sx={{ mt: 1.5 }}>
+                    <Stack
+                      direction='row'
+                      flexWrap='wrap'
+                      sx={{
+                        mt: { xs: 1.5, sm: 2 },
+                        columnGap: 1,
+                        rowGap: 1
+                      }}
+                    >
                       <Chip
                         label={user?.isActive ? 'Active' : 'Inactive'}
                         color={user?.isActive ? 'success' : 'error'}
                         size='medium'
                         variant='filled'
                         sx={{
+                          flexShrink: 0,
                           fontWeight: 600,
                           color: 'white',
                           boxShadow: user?.isActive
@@ -1148,6 +1239,7 @@ function UserDetailsPage({ data }) {
                         size='medium'
                         variant='filled'
                         sx={{
+                          flexShrink: 0,
                           fontWeight: 600,
                           color: 'white',
                           boxShadow: user?.isVerified
@@ -1170,6 +1262,7 @@ function UserDetailsPage({ data }) {
                           size='medium'
                           variant='filled'
                           sx={{
+                            flexShrink: 0,
                             color: 'white',
                             fontWeight: 600,
                             boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)',
@@ -1189,6 +1282,7 @@ function UserDetailsPage({ data }) {
                           size='medium'
                           variant='filled'
                           sx={{
+                            flexShrink: 0,
                             color: 'white',
                             fontWeight: 600,
                             boxShadow: '0 4px 12px rgba(251, 191, 36, 0.3)',
@@ -1208,7 +1302,7 @@ function UserDetailsPage({ data }) {
               {/* Member ID and Join Date - Enhanced Cards */}
               <Grid item xs={12} md={6}>
                 <Grid container spacing={2}>
-                  <Grid item xs={6}>
+                  <Grid item xs={12} sm={6}>
                     <Box
                       sx={{
                         position: 'relative',
@@ -1282,7 +1376,7 @@ function UserDetailsPage({ data }) {
                       </Typography>
                     </Box>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid item xs={12} sm={6}>
                     <Box
                       sx={{
                         position: 'relative',
@@ -1365,13 +1459,21 @@ function UserDetailsPage({ data }) {
 
         {/* Stats Cards with Modern Design */}
         <Box mb={4}>
-          <Grid container spacing={2}>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: '1fr',
+                sm: 'repeat(2, minmax(0, 1fr))',
+                md: 'repeat(auto-fit, minmax(200px, 1fr))'
+              },
+              gap: { xs: 2, sm: 2.5 }
+            }}
+          >
             {stats.map((stat, idx) => (
-              <Grid item xs={12} sm={6} md={2.4} key={idx}>
-                <StatCard {...stat} />
-              </Grid>
+              <StatCard key={idx} {...stat} />
             ))}
-          </Grid>
+          </Box>
         </Box>
 
         {/* Info Cards Layout */}

@@ -24,7 +24,8 @@ import {
   IconButton,
   Tooltip,
   Badge,
-  useTheme
+  useTheme,
+  useMediaQuery
 } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import {
@@ -56,6 +57,7 @@ const JoinRequestScreen = ({ group, removebutton }) => {
   const theme = useTheme()
   const router = useRouter()
   const { data: session } = useSession()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const [requests, setRequests] = useState([])
   const [loading, setLoading] = useState(false)
   const [processing, setProcessing] = useState({})
@@ -273,7 +275,22 @@ const JoinRequestScreen = ({ group, removebutton }) => {
     const config = statusChipConfig[status]
     if (!config) return null
 
-    return <Chip icon={config.icon} label={config.label} color={config.color} size='small' variant='outlined' />
+    return (
+      <Chip
+        icon={config.icon}
+        label={config.label}
+        color={config.color}
+        size='small'
+        variant='outlined'
+        sx={{
+          height: { xs: 24, sm: 28 },
+          fontSize: { xs: '0.7rem', sm: '0.75rem' },
+          '& .MuiChip-icon': {
+            fontSize: { xs: '0.875rem', sm: '1rem' }
+          }
+        }}
+      />
+    )
   }
 
   // Filter requests based on active tab
@@ -307,31 +324,57 @@ const JoinRequestScreen = ({ group, removebutton }) => {
   if (!group) return null
 
   return (
-    <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column', bgcolor: '#f0f2f5' }}>
+    <Box
+      sx={{
+        height: { xs: 'auto', sm: '100vh' },
+        minHeight: { xs: '100vh', sm: 'auto' },
+        display: 'flex',
+        flexDirection: 'column',
+        bgcolor: '#f0f2f5'
+      }}
+    >
       {/* Header */}
-      <Paper elevation={1} sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider', bgcolor: '#fff' }}>
+      <Paper
+        elevation={1}
+        sx={{ p: { xs: 1, sm: 2 }, borderBottom: '1px solid', borderColor: 'divider', bgcolor: '#fff' }}
+      >
         {/* Status Filter Tabs */}
         <Tabs
           value={activeTab}
           onChange={(e, newValue) => setActiveTab(newValue)}
-          variant='fullWidth'
+          variant={isMobile ? 'scrollable' : 'fullWidth'}
+          scrollButtons='auto'
+          allowScrollButtonsMobile
           sx={{
             '& .MuiTab-root': {
               textTransform: 'none',
               fontWeight: 500,
-              minHeight: 48,
-              fontSize: removebutton ? '0.75rem' : '0.875rem'
+              minHeight: { xs: 40, sm: 48 },
+              fontSize: { xs: '0.7rem', sm: removebutton ? '0.75rem' : '0.875rem' },
+              px: { xs: 1.5, sm: 1 },
+              minWidth: { xs: 'auto', sm: 0 },
+              mr: { xs: 1, sm: 0 }
             }
           }}
         >
           <Tab
             value={values.all}
             label={
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <PersonIcon fontSize='small' />
-                <Typography sx={{ fontSize: removebutton ? '0.75rem' : '0.875rem' }}>All</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1 }, flexWrap: 'nowrap' }}>
+                <PersonIcon sx={{ fontSize: { xs: '0.875rem', sm: '1.25rem' } }} />
+                <Typography
+                  sx={{ fontSize: { xs: '0.7rem', sm: removebutton ? '0.75rem' : '0.875rem' }, whiteSpace: 'nowrap' }}
+                >
+                  All
+                </Typography>
                 {statusCounts.all > 0 && (
-                  <Typography sx={{ color: 'text.secondary', fontSize: removebutton ? '0.7rem' : '0.875rem' }}>
+                  <Typography
+                    sx={{
+                      color: 'text.secondary',
+                      fontSize: { xs: '0.65rem', sm: removebutton ? '0.7rem' : '0.875rem' },
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
                     ({statusCounts.all})
                   </Typography>
                 )}
@@ -341,11 +384,21 @@ const JoinRequestScreen = ({ group, removebutton }) => {
           <Tab
             value={values.pending}
             label={
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <AccessTimeIcon fontSize='small' />
-                <Typography sx={{ fontSize: removebutton ? '0.75rem' : '0.875rem' }}>Pending</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1 }, flexWrap: 'nowrap' }}>
+                <AccessTimeIcon sx={{ fontSize: { xs: '0.875rem', sm: '1.25rem' } }} />
+                <Typography
+                  sx={{ fontSize: { xs: '0.7rem', sm: removebutton ? '0.75rem' : '0.875rem' }, whiteSpace: 'nowrap' }}
+                >
+                  Pending
+                </Typography>
                 {statusCounts.pending > 0 && (
-                  <Typography sx={{ color: 'text.secondary', fontSize: removebutton ? '0.7rem' : '0.875rem' }}>
+                  <Typography
+                    sx={{
+                      color: 'text.secondary',
+                      fontSize: { xs: '0.65rem', sm: removebutton ? '0.7rem' : '0.875rem' },
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
                     ({statusCounts.pending})
                   </Typography>
                 )}
@@ -356,11 +409,21 @@ const JoinRequestScreen = ({ group, removebutton }) => {
           <Tab
             value={values.approved}
             label={
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <CheckCircleIcon fontSize='small' />
-                <Typography sx={{ fontSize: removebutton ? '0.75rem' : '0.875rem' }}>Approved</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1 }, flexWrap: 'nowrap' }}>
+                <CheckCircleIcon sx={{ fontSize: { xs: '0.875rem', sm: '1.25rem' } }} />
+                <Typography
+                  sx={{ fontSize: { xs: '0.7rem', sm: removebutton ? '0.75rem' : '0.875rem' }, whiteSpace: 'nowrap' }}
+                >
+                  Approved
+                </Typography>
                 {statusCounts.approved > 0 && (
-                  <Typography sx={{ color: 'text.secondary', fontSize: removebutton ? '0.7rem' : '0.875rem' }}>
+                  <Typography
+                    sx={{
+                      color: 'text.secondary',
+                      fontSize: { xs: '0.65rem', sm: removebutton ? '0.7rem' : '0.875rem' },
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
                     ({statusCounts.approved})
                   </Typography>
                 )}
@@ -370,11 +433,21 @@ const JoinRequestScreen = ({ group, removebutton }) => {
           <Tab
             value={values.rejected}
             label={
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <CancelIcon fontSize='small' />
-                <Typography sx={{ fontSize: removebutton ? '0.75rem' : '0.875rem' }}>Rejected</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1 }, flexWrap: 'nowrap' }}>
+                <CancelIcon sx={{ fontSize: { xs: '0.875rem', sm: '1.25rem' } }} />
+                <Typography
+                  sx={{ fontSize: { xs: '0.7rem', sm: removebutton ? '0.75rem' : '0.875rem' }, whiteSpace: 'nowrap' }}
+                >
+                  Rejected
+                </Typography>
                 {statusCounts.rejected > 0 && (
-                  <Typography sx={{ color: 'text.secondary', fontSize: removebutton ? '0.7rem' : '0.875rem' }}>
+                  <Typography
+                    sx={{
+                      color: 'text.secondary',
+                      fontSize: { xs: '0.65rem', sm: removebutton ? '0.7rem' : '0.875rem' },
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
                     ({statusCounts.rejected})
                   </Typography>
                 )}
@@ -387,30 +460,42 @@ const JoinRequestScreen = ({ group, removebutton }) => {
       {/* Content - WhatsApp Style List */}
       <Box sx={{ flex: 1, overflow: 'hidden', bgcolor: '#f0f2f5' }}>
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-            <CircularProgress size={60} />
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: { xs: '50vh', sm: '100%' },
+              minHeight: { xs: 300, sm: 'auto' }
+            }}
+          >
+            <CircularProgress size={{ xs: 40, sm: 60 }} />
           </Box>
         ) : filteredRequests.length === 0 ? (
-          <Box sx={{ textAlign: 'center', py: 8, px: 3 }}>
+          <Box sx={{ textAlign: 'center', py: { xs: 4, sm: 8 }, px: { xs: 2, sm: 3 } }}>
             <Box
               sx={{
-                width: 120,
-                height: 120,
+                width: { xs: 80, sm: 120 },
+                height: { xs: 80, sm: 120 },
                 borderRadius: '50%',
                 bgcolor: '#e5e7eb',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 mx: 'auto',
-                mb: 3
+                mb: { xs: 2, sm: 3 }
               }}
             >
-              <PersonIcon sx={{ fontSize: 60, color: '#9ca3af' }} />
+              <PersonIcon sx={{ fontSize: { xs: 40, sm: 60 }, color: '#9ca3af' }} />
             </Box>
-            <Typography variant='h6' color='text.secondary' sx={{ mb: 1, fontWeight: 500 }}>
+            <Typography
+              variant='h6'
+              color='text.secondary'
+              sx={{ mb: 1, fontWeight: 500, fontSize: { xs: '1rem', sm: '1.25rem' } }}
+            >
               No {activeTab === values.all ? '' : activeTab} requests
             </Typography>
-            <Typography variant='body2' color='text.secondary'>
+            <Typography variant='body2' color='text.secondary' sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
               {activeTab === values.pending
                 ? 'All join requests have been processed'
                 : activeTab === values.all
@@ -421,7 +506,13 @@ const JoinRequestScreen = ({ group, removebutton }) => {
             </Typography>
           </Box>
         ) : (
-          <Box sx={{ height: '100%', overflow: 'auto' }}>
+          <Box
+            sx={{
+              height: { xs: 'auto', sm: '100%' },
+              overflow: 'auto',
+              maxHeight: { xs: 'calc(100vh - 200px)', sm: 'none' }
+            }}
+          >
             <List sx={{ p: 0 }}>
               {filteredRequests.map((request, index) => (
                 <ListItem
@@ -429,158 +520,192 @@ const JoinRequestScreen = ({ group, removebutton }) => {
                   sx={{
                     bgcolor: '#fff',
                     borderBottom: '1px solid #e5e7eb',
-                    px: 2,
-                    py: 1.5,
+                    px: { xs: 1, sm: 2 },
+                    py: { xs: 1.5, sm: 2 },
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'flex-start',
+                    gap: { xs: 1.5, sm: 2 },
                     '&:hover': {
                       bgcolor: '#f9fafb'
                     }
                   }}
                 >
-                  <ListItemAvatar>
-                    <Avatar
-                      sx={{
-                        background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                        width: 50,
-                        height: 50,
-                        fontSize: '1.2rem',
-                        fontWeight: 600,
-                        color: 'white',
-                        boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`
-                      }}
+                  {/* Avatar on the left */}
+                  <Avatar
+                    sx={{
+                      background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                      width: { xs: 40, sm: 56 },
+                      height: { xs: 40, sm: 56 },
+                      fontSize: { xs: '0.95rem', sm: '1.3rem' },
+                      fontWeight: 600,
+                      color: 'white',
+                      boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`,
+                      flexShrink: 0
+                    }}
+                  >
+                    {request.userDetails?.profile?.firstname && request.userDetails?.profile?.lastname
+                      ? `${request.userDetails.profile.firstname[0]} ${request.userDetails.profile.lastname[0]}`
+                      : request.userDetails?.profile?.firstname[0] || request.userDetails?.profile?.lastname[0] || 'U'}
+                  </Avatar>
+
+                  {/* Name, Email, and Request Date - Middle Section */}
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Tooltip
+                      title={
+                        request.userDetails?.profile?.firstname && request.userDetails?.profile?.lastname
+                          ? `${request.userDetails.profile.firstname} ${request.userDetails.profile.lastname}`
+                          : request.userDetails?.profile?.firstname ||
+                            request.userDetails?.profile?.lastname ||
+                            'Unknown User'
+                      }
+                      arrow
                     >
-                      {request.userDetails?.profile?.firstname && request.userDetails?.profile?.lastname
-                        ? `${request.userDetails.profile.firstname[0]} ${request.userDetails.profile.lastname[0]}`
-                        : request.userDetails?.profile?.firstname[0] ||
-                          request.userDetails?.profile?.lastname[0] ||
-                          'U'}
-                    </Avatar>
-                  </ListItemAvatar>
-
-                  <ListItemText
-                    primary={
-                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <Tooltip
-                          title={
-                            request.userDetails?.profile?.firstname && request.userDetails?.profile?.lastname
-                              ? `${request.userDetails.profile.firstname} ${request.userDetails.profile.lastname}`
-                              : request.userDetails?.profile?.firstname ||
-                                request.userDetails?.profile?.lastname ||
-                                'Unknown User'
+                      <Typography
+                        variant='subtitle1'
+                        sx={{
+                          fontWeight: 600,
+                          color: 'text.primary',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease-in-out',
+                          fontSize: { xs: '0.9375rem', sm: '1rem' },
+                          mb: 0.5,
+                          '&:hover': {
+                            color: 'primary.main'
                           }
-                          arrow
-                        >
-                          <Typography
-                            variant='subtitle1'
-                            sx={{
-                              fontWeight: 600,
-                              color: 'text.primary',
-                              width: '220px',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s ease-in-out',
-                              '&:hover': {
-                                color: 'primary.main'
-                              }
-                            }}
-                          >
-                            {request.userDetails?.profile?.firstname && request.userDetails?.profile?.lastname
-                              ? `${request.userDetails.profile.firstname} ${request.userDetails.profile.lastname}`
-                              : request.userDetails?.profile?.firstname || 'Unknown User'}
-                          </Typography>
-                        </Tooltip>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          {getStatusChip(request.status)}
-                        </Box>
-                      </Box>
-                    }
-                    secondary={
-                      <Box>
-                        <Tooltip title={request.userEmail} arrow>
-                          <Typography
-                            variant='body2'
-                            color='text.secondary'
-                            sx={{
-                              mb: 0.5,
-                              width: '220px',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s ease-in-out',
-                              '&:hover': {
-                                color: 'primary.main'
-                              }
-                            }}
-                          >
-                            {request.userEmail}
-                          </Typography>
-                        </Tooltip>
-                        <Typography variant='caption' color='text.secondary'>
-                          Requested on {new Date(request.createdAt).toLocaleDateString()}
-                        </Typography>
-                        {request.rejectedReason && (
-                          <Tooltip title={`Reason: ${request.rejectedReason}`} arrow>
-                            <Typography
-                              variant='caption'
-                              color='error'
-                              sx={{
-                                display: 'block',
-                                width: '250px',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                mt: 0.5
-                              }}
-                            >
-                              Reason: {request.rejectedReason}
-                            </Typography>
-                          </Tooltip>
-                        )}
-                      </Box>
-                    }
-                  />
-
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 2 }}>
-                    <Tooltip title='View Details'>
-                      <IconButton
-                        size='small'
-                        onClick={() => openUserDetails(request.userDetails)}
-                        sx={{ color: '#6b7280' }}
+                        }}
                       >
-                        <VisibilityIcon fontSize='small' />
-                      </IconButton>
+                        {request.userDetails?.profile?.firstname && request.userDetails?.profile?.lastname
+                          ? `${request.userDetails.profile.firstname} ${request.userDetails.profile.lastname}`
+                          : request.userDetails?.profile?.firstname || 'Unknown User'}
+                      </Typography>
                     </Tooltip>
 
-                    {request.status === 'pending' && (
-                      <>
-                        <Tooltip title='Approve'>
-                          <IconButton
-                            size='small'
-                            onClick={() => handleApprove(request._id)}
-                            disabled={processing[request._id]}
-                            sx={{ color: '#10b981' }}
-                          >
-                            {processing[request._id] ? (
-                              <CircularProgress size={16} />
-                            ) : (
-                              <CheckCircleIcon fontSize='small' />
-                            )}
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title='Reject'>
-                          <IconButton
-                            size='small'
-                            onClick={() => openRejectDialog(request._id)}
-                            disabled={processing[request._id]}
-                            sx={{ color: '#ef4444' }}
-                          >
-                            <CancelIcon fontSize='small' />
-                          </IconButton>
-                        </Tooltip>
-                      </>
+                    <Tooltip title={request.userEmail} arrow>
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                        sx={{
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease-in-out',
+                          fontSize: { xs: '0.8125rem', sm: '0.875rem' },
+                          mb: 0.5,
+                          '&:hover': {
+                            color: 'primary.main'
+                          }
+                        }}
+                      >
+                        {request.userEmail}
+                      </Typography>
+                    </Tooltip>
+
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
+                      sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, display: 'block' }}
+                    >
+                      Requested on {new Date(request.createdAt).toLocaleDateString()}
+                    </Typography>
+
+                    {request.rejectedReason && (
+                      <Tooltip title={`Reason: ${request.rejectedReason}`} arrow>
+                        <Typography
+                          variant='caption'
+                          color='error'
+                          sx={{
+                            display: 'block',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            mt: 0.5,
+                            fontSize: { xs: '0.7rem', sm: '0.75rem' }
+                          }}
+                        >
+                          Reason: {request.rejectedReason}
+                        </Typography>
+                      </Tooltip>
                     )}
+                  </Box>
+
+                  {/* Status Chip and Action Buttons - Right Side */}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-end',
+                      gap: { xs: 1, sm: 1.5 },
+                      flexShrink: 0
+                    }}
+                  >
+                    {/* Status Chip on top right */}
+                    <Box>{getStatusChip(request.status)}</Box>
+
+                    {/* View Icon and Action Buttons below */}
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: { xs: 0.5, sm: 0.75 }
+                      }}
+                    >
+                      <Tooltip title='View Details'>
+                        <IconButton
+                          size='small'
+                          onClick={() => openUserDetails(request.userDetails)}
+                          sx={{
+                            color: '#6b7280',
+                            width: { xs: 36, sm: 40 },
+                            height: { xs: 36, sm: 40 }
+                          }}
+                        >
+                          <VisibilityIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />
+                        </IconButton>
+                      </Tooltip>
+
+                      {request.status === 'pending' && (
+                        <>
+                          <Tooltip title='Approve'>
+                            <IconButton
+                              size='small'
+                              onClick={() => handleApprove(request._id)}
+                              disabled={processing[request._id]}
+                              sx={{
+                                color: '#10b981',
+                                width: { xs: 36, sm: 40 },
+                                height: { xs: 36, sm: 40 }
+                              }}
+                            >
+                              {processing[request._id] ? (
+                                <CircularProgress size={{ xs: 14, sm: 16 }} />
+                              ) : (
+                                <CheckCircleIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />
+                              )}
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title='Reject'>
+                            <IconButton
+                              size='small'
+                              onClick={() => openRejectDialog(request._id)}
+                              disabled={processing[request._id]}
+                              sx={{
+                                color: '#ef4444',
+                                width: { xs: 36, sm: 40 },
+                                height: { xs: 36, sm: 40 }
+                              }}
+                            >
+                              <CancelIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />
+                            </IconButton>
+                          </Tooltip>
+                        </>
+                      )}
+                    </Box>
                   </Box>
                 </ListItem>
               ))}
@@ -591,18 +716,20 @@ const JoinRequestScreen = ({ group, removebutton }) => {
 
       {/* Bottom Back Button */}
       {!removebutton && (
-        <Box sx={{ p: 3, bgcolor: '#fff', borderTop: '1px solid #e5e7eb' }}>
+        <Box sx={{ p: { xs: 2, sm: 3 }, bgcolor: '#fff', borderTop: '1px solid #e5e7eb' }}>
           <Box sx={{ display: 'flex', justifyContent: 'center' }}>
             <Button
               variant='contained'
               component='label'
               onClick={() => router.push('/management/group')}
               sx={{
-                px: 4,
-                py: 1.5,
+                px: { xs: 3, sm: 4 },
+                py: { xs: 1, sm: 1.5 },
                 borderRadius: 2,
                 fontWeight: 600,
-                color: 'white'
+                fontSize: { xs: '0.875rem', sm: '1rem' },
+                color: 'white',
+                minWidth: { xs: 140, sm: 'auto' }
               }}
             >
               Back to Groups
@@ -624,14 +751,23 @@ const JoinRequestScreen = ({ group, removebutton }) => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1300
+            zIndex: 1300,
+            p: { xs: 2, sm: 0 }
           }}
         >
-          <Paper sx={{ p: 3, maxWidth: 500, width: '90%', maxHeight: '80vh', overflow: 'auto' }}>
-            <Typography variant='h6' sx={{ mb: 2 }}>
+          <Paper
+            sx={{
+              p: { xs: 2, sm: 3 },
+              maxWidth: 500,
+              width: '100%',
+              maxHeight: { xs: '90vh', sm: '80vh' },
+              overflow: 'auto'
+            }}
+          >
+            <Typography variant='h6' sx={{ mb: 2, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
               Reject Join Request
             </Typography>
-            <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
+            <Typography variant='body2' color='text.secondary' sx={{ mb: 2, fontSize: { xs: '0.875rem', sm: '1rem' } }}>
               Please provide a reason for rejecting this join request. This will help the user understand why their
               request was not approved.
             </Typography>
@@ -647,9 +783,29 @@ const JoinRequestScreen = ({ group, removebutton }) => {
               error={!rejectionReason.trim()}
               helperText={!rejectionReason.trim() ? 'Rejection reason is required' : ''}
               sx={{ mb: 3 }}
+              InputProps={{
+                sx: {
+                  fontSize: { xs: '0.875rem', sm: '1rem' }
+                }
+              }}
+              InputLabelProps={{
+                sx: {
+                  fontSize: { xs: '0.875rem', sm: '1rem' }
+                }
+              }}
             />
-            <Stack direction='row' spacing={2} justifyContent='flex-end'>
-              <Button onClick={closeRejectDialog} component='label' variant='outlined' color='primary'>
+            <Stack direction='row' spacing={2} justifyContent='flex-end' flexWrap='wrap' sx={{ gap: { xs: 1, sm: 2 } }}>
+              <Button
+                onClick={closeRejectDialog}
+                component='label'
+                variant='outlined'
+                color='primary'
+                sx={{
+                  fontSize: { xs: '0.875rem', sm: '1rem' },
+                  px: { xs: 2, sm: 3 },
+                  py: { xs: 0.75, sm: 1 }
+                }}
+              >
                 Cancel
               </Button>
               <Button
@@ -658,6 +814,11 @@ const JoinRequestScreen = ({ group, removebutton }) => {
                 color='error'
                 onClick={() => handleReject(selectedRequestId, rejectionReason)}
                 disabled={!rejectionReason.trim()}
+                sx={{
+                  fontSize: { xs: '0.875rem', sm: '1rem' },
+                  px: { xs: 2, sm: 3 },
+                  py: { xs: 0.75, sm: 1 }
+                }}
               >
                 Reject Request
               </Button>

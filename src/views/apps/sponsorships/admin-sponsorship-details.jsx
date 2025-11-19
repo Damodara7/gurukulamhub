@@ -2,17 +2,16 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { 
-  Card, 
-  CardContent, 
-  Typography, 
-  Box, 
-  Chip, 
-  Button, 
-  TextField, 
-  Dialog, 
-  DialogTitle, 
-  DialogContent, 
+import {
+  Card,
+  CardContent,
+  Typography,
+  Box,
+  Chip,
+  Button,
+  TextField,
+  Dialog,
+  DialogContent,
   DialogActions,
   Grid,
   Container,
@@ -36,8 +35,19 @@ import {
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { useSession } from 'next-auth/react'
+import { alpha, useTheme } from '@mui/material/styles'
+import useMediaQuery from '@mui/material/useMediaQuery'
 
-const SponsorshipDetailPage = ({id=null}) => {
+const statusColorMap = {
+  completed: 'success',
+  pending: 'warning',
+  rejected: 'error',
+  failed: 'error',
+  expired: 'secondary',
+  created: 'default'
+}
+
+const SponsorshipDetailPage = ({ id = null }) => {
   const router = useRouter()
   const theme = useTheme()
   const {data: session} = useSession()
@@ -69,7 +79,7 @@ const SponsorshipDetailPage = ({id=null}) => {
         id: id,
         nonCashSponsorshipStatus: 'completed'
       })
-      
+
       if (response.status === 'success') {
         router.push('/management/sponsorships?filter=awaiting')
       }
@@ -89,9 +99,9 @@ const SponsorshipDetailPage = ({id=null}) => {
         id: id,
         nonCashSponsorshipStatus: 'rejected',
         nonCashSponsorshipRejectionReason: rejectionReason,
-        rejectorEmail: session?.user?.email 
+        rejectorEmail: session?.user?.email
       })
-      
+
       if (response.status === 'success') {
         setRejectDialogOpen(false)
         router.push('/management/sponsorships?filter=awaiting')
@@ -153,10 +163,10 @@ const SponsorshipDetailPage = ({id=null}) => {
     )
   }
 
-  const formatCurrency = (value, currency = 'INR') => {
-    return new Intl.NumberFormat(undefined, {
+  const formatCurrency = (value, currency = 'INR') =>
+    new Intl.NumberFormat(undefined, {
       style: 'currency',
-      currency: currency
+      currency
     }).format(value || 0)
   }
 
@@ -952,13 +962,13 @@ const SponsorshipDetailPage = ({id=null}) => {
           </Typography>
           <TextField
             autoFocus
-            margin="dense"
-            label="Rejection Reason"
-            type="text"
+            margin='dense'
+            label='Rejection Reason'
+            type='text'
             fullWidth
-            variant="outlined"
+            variant='outlined'
             value={rejectionReason}
-            onChange={(e) => setRejectionReason(e.target.value)}
+            onChange={e => setRejectionReason(e.target.value)}
             multiline
             rows={4}
             sx={{
@@ -990,4 +1000,4 @@ const SponsorshipDetailPage = ({id=null}) => {
   )
 }
 
-export default SponsorshipDetailPage 
+export default SponsorshipDetailPage

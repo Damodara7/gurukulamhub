@@ -1,76 +1,55 @@
 // MUI Imports
-import Grid from '@mui/material/Grid'
-import Skeleton from '@mui/material/Skeleton'
-import Box from '@mui/material/Box'
+import { Grid, Skeleton, Box, Stack, Typography, Chip } from '@mui/material'
 
-// Component Imports
-import HorizontalWithSubtitle from '@components/card-statistics/HorizontalWithSubtitle'
+import { useTheme, alpha } from '@mui/material/styles'
 
 const UserListCards = ({ users, isLoading }) => {
-  // Calculate dynamic values
+  const theme = useTheme()
   const totalUsers = users.length
-
-  // Calculate dynamic values
   const activeUsers = users.filter(user => user.isActive).length
   const inactiveUsers = totalUsers - activeUsers
   const nonVerifiedUsers = users.filter(user => !user.isVerified).length
 
-  // Calculate percentages dynamically
-  const activePercentage = totalUsers ? ((activeUsers / totalUsers) * 100).toFixed(2) : 0
-  const inactivePercentage = totalUsers ? ((inactiveUsers / totalUsers) * 100).toFixed(2) : 0
-  const nonVerifiedPercentage = totalUsers ? ((nonVerifiedUsers / totalUsers) * 100).toFixed(2) : 0
-
-  const getChangeType = change => {
-    if (change > 0) return 'positive'
-    if (change < 0) return 'negative'
-    return 'zero'
-  }
-
-  // Dynamic data array
-  const data = [
+  const cardData = [
     {
       title: 'Total Users',
       value: totalUsers,
-      avatarIcon: 'ri-group-line',
-      avatarColor: 'primary',
-      change: getChangeType(activePercentage),
-      changeNumber: `${activePercentage}%`,
-      subTitle: 'All registered users'
+      icon: 'ri-group-line',
+      accent: theme.palette.primary.main,
+      subtitle: 'All registered users',
+      change: totalUsers ? `${((totalUsers / totalUsers) * 100).toFixed(1)}% Total ` : '0%'
     },
     {
       title: 'Active Users',
       value: activeUsers,
-      avatarIcon: 'ri-user-follow-line',
-      avatarColor: 'success',
-      change: getChangeType(activePercentage),
-      changeNumber: `${activePercentage}%`,
-      subTitle: 'Currently active users'
+      icon: 'ri-user-follow-line',
+      accent: theme.palette.success.main,
+      subtitle: 'Currently active',
+      change: totalUsers ? `${((activeUsers / totalUsers) * 100).toFixed(1)}% Active ` : '0%'
     },
     {
       title: 'Inactive Users',
       value: inactiveUsers,
-      avatarIcon: 'ri-user-unfollow-line',
-      avatarColor: 'error',
-      change: getChangeType(inactivePercentage),
-      changeNumber: `${inactivePercentage}%`,
-      subTitle: 'Not active recently'
+      icon: 'ri-user-unfollow-line',
+      accent: theme.palette.error.main,
+      subtitle: 'Not active recently',
+      change: totalUsers ? `${((inactiveUsers / totalUsers) * 100).toFixed(1)}% Inactive ` : '0%'
     },
     {
       title: 'Unverified Users',
       value: nonVerifiedUsers,
-      avatarIcon: 'ri-user-search-line',
-      avatarColor: 'warning',
-      change: getChangeType(nonVerifiedPercentage),
-      changeNumber: `${nonVerifiedPercentage}%`,
-      subTitle: 'Users pending email verification'
+      icon: 'ri-user-search-line',
+      accent: theme.palette.warning.main,
+      subtitle: 'Pending verification',
+      change: totalUsers ? `${((nonVerifiedUsers / totalUsers) * 100).toFixed(1)}%  Unverified` : '0%'
     }
   ]
 
   if (isLoading) {
     return (
-      <Grid container spacing={{ xs: 3, sm: 4, md: 6 }}>
+      <Grid container spacing={{ xs: 2, sm: 3, md: 4 }}>
         {[1, 2, 3, 4].map(item => (
-          <Grid key={item} item xs={12} sm={6} md={3}>
+          <Grid key={item} item xs={6} sm={6} md={3}>
             <Skeleton variant='rounded' height={120} />
           </Grid>
         ))}
@@ -79,52 +58,64 @@ const UserListCards = ({ users, isLoading }) => {
   }
 
   return (
-    <Grid container spacing={{ xs: 3, sm: 4, md: 6 }}>
-      {data.map((item, i) => (
-        <Grid key={i} item xs={12} sm={6} md={3}>
+    <Grid container spacing={{ xs: 2, sm: 3, md: 4 }}>
+      {cardData.map((card, index) => (
+        <Grid key={index} item xs={6} sm={6} md={3}>
           <Box
             sx={{
+              borderRadius: 3,
+              background: '#ffffff',
+              border: `1px solid ${alpha(card.accent, 0.12)}`,
+              boxShadow: '0 15px 35px rgba(15, 23, 42, 0.08)',
+              p: { xs: 1.75, md: 2 },
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              gap: 1,
+              minHeight: 130,
               height: '100%',
-              position: 'relative',
-              '& > div': {
-                height: '100%',
-                background: '#ffffff',
-                borderRadius: 3,
-                boxShadow: theme => theme.shadows[3],
-                border: theme => `1px solid ${theme.palette.divider}`,
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                overflow: 'hidden',
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: '4px',
-                  background: theme =>
-                    item.avatarColor === 'primary'
-                      ? theme.palette.primary.main
-                      : item.avatarColor === 'success'
-                        ? theme.palette.success.main
-                        : item.avatarColor === 'error'
-                          ? theme.palette.error.main
-                          : item.avatarColor === 'warning'
-                            ? theme.palette.warning.main
-                            : theme.palette.primary.main,
-                  opacity: 0,
-                  transition: 'opacity 0.3s ease-in-out'
-                },
-                '&:hover': {
-                  transform: 'translateY(-8px)',
-                  boxShadow: theme => theme.shadows[8],
-                  '&::before': {
-                    opacity: 1
-                  }
-                }
-              }
+              overflow: 'hidden'
             }}
           >
-            <HorizontalWithSubtitle {...item} />
+            <Stack direction='row' spacing={1.5} alignItems='center'>
+              <Box
+                sx={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 2,
+                  background: alpha(card.accent, 0.12),
+                  color: card.accent,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 20
+                }}
+              >
+                <i className={card.icon} />
+              </Box>
+              <Box>
+                <Typography variant='subtitle2' color='text.secondary' sx={{ letterSpacing: '0.03em' }}>
+                  {card.title}
+                </Typography>
+                <Typography variant='h5' sx={{ fontWeight: 700 }}>
+                  {card.value}
+                </Typography>
+              </Box>
+            </Stack>
+            <Typography variant='body2' color='text.secondary'>
+              {card.subtitle}
+            </Typography>
+            <Chip
+              label={card.change}
+              size='small'
+              sx={{
+                width: 'fit-content',
+                fontWeight: 600,
+                borderRadius: 2,
+                background: alpha(card.accent, 0.14),
+                color: card.accent
+              }}
+            />
           </Box>
         </Grid>
       ))}

@@ -25,6 +25,7 @@ import {
   InputAdornment
 } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
+import useMediaQuery from '@mui/material/useMediaQuery'
 
 // MUI Icons
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
@@ -48,7 +49,7 @@ import {
 
 // Component Imports
 import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
-import GeoFeatureDialog from '@/components/dialogs/geo-permission-dialog'
+import GeoFeatureDialog from '@/components/dialogs/geo-permission-dialog/Geo-Permission-Dailog'
 import OpenDialogOnElementClick from '@/components/dialogs/OpenDialogOnElementClick'
 
 // Style Imports
@@ -61,6 +62,7 @@ import * as clientApi from '../../../app/api/client/client.api'
 
 import { roleSliceActions } from '@/store/features/roleSlice'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
+import { toast } from 'react-toastify'
 // import { useAppDispatch } from '@/store/hooks'
 
 // Vars
@@ -82,6 +84,26 @@ const fuzzyFilter = (row, columnId, value, addMeta) => {
   })
 
   // Return if the item should be filtered in/out
+  return itemRank.passed
+}
+
+// Custom global filter that only searches by feature name
+const globalNameFilter = (row, columnId, value, addMeta) => {
+  const name = (row.original.name || '').toString().toLowerCase()
+  const searchValue = (value || '').toString().toLowerCase().trim()
+
+  // If no search value, show all rows
+  if (!searchValue) return true
+
+  // Use fuzzy matching on the name field only
+  const itemRank = rankItem(name, searchValue)
+
+  if (addMeta) {
+    addMeta({
+      itemRank
+    })
+  }
+
   return itemRank.passed
 }
 
@@ -125,6 +147,7 @@ const ActionsMenu = ({ anchorEl, handleClose, handleAction }) => (
 
 const GeoFeaturesTable = () => {
   const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
 
   // States
   // const dispatch = useAppDispatch()
@@ -207,6 +230,7 @@ const GeoFeaturesTable = () => {
         const result = await RestApi.del(`${API_URLS.v0.GEO_FEATURE}?id=${currentFeature._id}`)
         if (result?.status === 'success') {
           console.log(`Feature deleted: ${currentFeature.name}`)
+          toast.success(`Geo-Feature deleted: ${currentFeature.name}`)
           await refreshData() // Refresh data after deletion
         } else {
           console.log('Error deleting feature:', result?.message)
@@ -327,7 +351,7 @@ const GeoFeaturesTable = () => {
       columnHelper.accessor('action', {
         header: 'Actions',
         cell: ({ row }) => (
-          <div className='flex items-center'>
+          <div className='flex items-center gap-2'>
             <IconButtonTooltip
               title='Edit'
               onClick={() => handleEditFeature(row.original)}
@@ -344,6 +368,25 @@ const GeoFeaturesTable = () => {
             >
               <i className='ri-edit-box-line text-[22px] text-textSecondary' />
             </IconButtonTooltip>
+            <IconButtonTooltip
+              title='Delete'
+              onClick={() => {
+                setCurrentFeature(row.original)
+                setConfirmationDialogOpen(true)
+              }}
+              sx={{
+                transition: 'all 0.2s ease-in-out',
+                '&:hover': {
+                  backgroundColor: theme => theme.palette.error.main + '10',
+                  '& i': {
+                    color: 'error.main'
+                  },
+                  transform: 'scale(1.1)'
+                }
+              }}
+            >
+              <i className='ri-delete-bin-line text-[22px] text-textSecondary' />
+            </IconButtonTooltip>
           </div>
         ),
         enableSorting: false
@@ -356,7 +399,8 @@ const GeoFeaturesTable = () => {
     data: data,
     columns,
     filterFns: {
-      fuzzy: fuzzyFilter
+      fuzzy: fuzzyFilter,
+      globalNameFilter: globalNameFilter
     },
     state: {
       rowSelection,
@@ -368,7 +412,7 @@ const GeoFeaturesTable = () => {
       }
     },
     enableRowSelection: true,
-    globalFilterFn: fuzzyFilter,
+    globalFilterFn: globalNameFilter,
     onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
     onGlobalFilterChange: setGlobalFilter,
@@ -448,7 +492,7 @@ const GeoFeaturesTable = () => {
               </Box>
               <Typography
                 sx={{
-                  fontSize: { xs: '2rem', md: '2.5rem' },
+                  fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.5rem' },
                   fontWeight: 700,
                   background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                   WebkitBackgroundClip: 'text',
@@ -534,83 +578,268 @@ const GeoFeaturesTable = () => {
               Total {data?.length || 0} geo-feature{data?.length !== 1 ? 's' : ''}
             </Typography>
           </div>
-          <div className='overflow-x-auto'>
-            <table className={tableStyles.table}>
-              <thead>
-                {table.getHeaderGroups().map(headerGroup => (
-                  <tr key={headerGroup.id}>
-                    {headerGroup.headers.map(header => (
-                      <th key={header.id}>
-                        {header.isPlaceholder ? null : (
-                          <>
-                            <div
-                              className={classnames({
-                                'flex items-center': header.column.getIsSorted(),
-                                'cursor-pointer select-none': header.column.getCanSort()
+          <Box sx={{ px: { xs: 2, sm: 3 }, py: { xs: 2, sm: 3 } }}>
+            {table.getFilteredRowModel().rows.length === 0 ? (
+              <Box
+                sx={{
+                  textAlign: 'center',
+                  py: 6,
+                  borderRadius: 3,
+                  backgroundColor: alpha(theme.palette.primary.main, 0.02)
+                }}
+              >
+                <i className='ri-global-line' style={{ fontSize: 48, opacity: 0.5 }} />
+                <Typography variant='h6' color='text.secondary' sx={{ mt: 2 }}>
+                  No geo-features found
+                </Typography>
+                <Typography variant='body2' color='text.disabled' sx={{ mt: 1 }}>
+                  Add your first geo-feature to get started
+                </Typography>
+              </Box>
+            ) : isMobile ? (
+              <Box
+                sx={{
+                  maxHeight: '65vh',
+                  overflowY: 'auto',
+                  pr: 1,
+                  '&::-webkit-scrollbar': { width: 6 },
+                  '&::-webkit-scrollbar-thumb': {
+                    backgroundColor: alpha(theme.palette.primary.main, 0.3),
+                    borderRadius: 8
+                  }
+                }}
+              >
+                <Stack spacing={2}>
+                  {table.getFilteredRowModel().rows.map(row => {
+                    const feature = row.original
+                    const rolesForFeature = getRolesForFeature(feature._id)
+
+                    return (
+                      <Box
+                        key={row.id}
+                        sx={{
+                          borderRadius: 3,
+                          border: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
+                          boxShadow: '0 12px 30px rgba(15, 23, 42, 0.08)',
+                          p: 2,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 1.5,
+                          background: '#fff',
+                          transition: 'all 0.2s ease-in-out',
+                          '&:hover': {
+                            boxShadow: '0 16px 40px rgba(15, 23, 42, 0.12)',
+                            transform: 'translateY(-2px)'
+                          }
+                        }}
+                      >
+                        <Typography
+                          variant='subtitle1'
+                          sx={{
+                            fontWeight: 700,
+                            fontSize: '1rem',
+                            flex: 1,
+                            minWidth: 0,
+                            wordBreak: 'break-word',
+                            background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            backgroundClip: 'text'
+                          }}
+                        >
+                          {feature.name}
+                        </Typography>
+                        <Stack spacing={0.5}>
+                          <Typography variant='caption' color='text.secondary' sx={{ fontWeight: 600 }}>
+                            Permissions
+                          </Typography>
+                          <Stack direction='row' spacing={0.75} flexWrap='wrap'>
+                            {feature.permissions?.map((permission, index) => {
+                              const chipColors = ['primary', 'secondary', 'error', 'warning', 'info', 'success']
+                              const color = chipColors[index % chipColors.length]
+
+                              return (
+                                <Chip
+                                  key={index}
+                                  label={permission}
+                                  variant='tonal'
+                                  color={color}
+                                  size='small'
+                                  sx={{ fontSize: '0.7rem', height: '24px' }}
+                                  className='uppercase'
+                                />
+                              )
+                            })}
+                          </Stack>
+                        </Stack>
+
+                        {rolesForFeature.length > 0 && (
+                          <Stack spacing={0.5}>
+                            <Typography variant='caption' color='text.secondary' sx={{ fontWeight: 600 }}>
+                              Assigned To
+                            </Typography>
+                            <Stack direction='row' spacing={0.75} flexWrap='wrap'>
+                              {rolesForFeature.map((role, index) => {
+                                const chipColors = ['primary', 'secondary', 'error', 'warning', 'info', 'success']
+                                const color = chipColors[index % chipColors.length]
+
+                                return (
+                                  <Chip
+                                    key={index}
+                                    label={role}
+                                    size='small'
+                                    variant='tonal'
+                                    className='capitalize'
+                                    color={color}
+                                    sx={{ fontSize: '0.7rem', height: '24px' }}
+                                  />
+                                )
                               })}
-                              onClick={header.column.getToggleSortingHandler()}
-                            >
-                              {flexRender(header.column.columnDef.header, header.getContext())}
-                              {{
-                                asc: <i className='ri-arrow-up-s-line text-xl' />,
-                                desc: <i className='ri-arrow-down-s-line text-xl' />
-                              }[header.column.getIsSorted()] ?? null}
-                            </div>
-                          </>
+                            </Stack>
+                          </Stack>
                         )}
-                      </th>
+
+                        <Stack spacing={0.5} sx={{ mt: 1 }}>
+                          <Typography variant='caption' color='text.secondary'>
+                            Created:{' '}
+                            {new Date(feature.createdAt).toLocaleDateString('en-GB', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric'
+                            })}
+                            ,{' '}
+                            {new Date(feature.createdAt).toLocaleTimeString('en-US', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              hour12: true
+                            })}
+                          </Typography>
+                          <Typography variant='caption' color='text.secondary'>
+                            CreatedBy: {feature.createdBy || 'N/A'}
+                          </Typography>
+                        </Stack>
+                        <Stack direction='row' spacing={1} sx={{ mt: 1 }}>
+                          <Button
+                            variant='outlined'
+                            color='primary'
+                            size='small'
+                            onClick={() => handleEditFeature(feature)}
+                            sx={{
+                              flex: 1,
+                              textTransform: 'none',
+                              fontWeight: 600
+                            }}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            variant='contained'
+                            component='label'
+                            sx={{
+                              color: 'white',
+                              flex: 1,
+                              textTransform: 'none',
+                              fontWeight: 600
+                            }}
+                            size='small'
+                            onClick={() => {
+                              setCurrentFeature(feature)
+                              setConfirmationDialogOpen(true)
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        </Stack>
+                      </Box>
+                    )
+                  })}
+                </Stack>
+              </Box>
+            ) : (
+              <div className='overflow-x-auto'>
+                <table className={tableStyles.table}>
+                  <thead>
+                    {table.getHeaderGroups().map(headerGroup => (
+                      <tr key={headerGroup.id}>
+                        {headerGroup.headers.map(header => (
+                          <th key={header.id}>
+                            {header.isPlaceholder ? null : (
+                              <>
+                                <div
+                                  className={classnames({
+                                    'flex items-center': header.column.getIsSorted(),
+                                    'cursor-pointer select-none': header.column.getCanSort()
+                                  })}
+                                  onClick={header.column.getToggleSortingHandler()}
+                                >
+                                  {flexRender(header.column.columnDef.header, header.getContext())}
+                                  {{
+                                    asc: <i className='ri-arrow-up-s-line text-xl' />,
+                                    desc: <i className='ri-arrow-down-s-line text-xl' />
+                                  }[header.column.getIsSorted()] ?? null}
+                                </div>
+                              </>
+                            )}
+                          </th>
+                        ))}
+                      </tr>
                     ))}
-                  </tr>
-                ))}
-              </thead>
-              {table.getFilteredRowModel().rows.length === 0 ? (
-                <tbody>
-                  <tr>
-                    <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
-                      No data available
-                    </td>
-                  </tr>
-                </tbody>
-              ) : (
-                <tbody>
-                  {table
-                    .getRowModel()
-                    .rows.slice(0, table.getState().pagination.pageSize)
-                    .map(row => (
-                      <tr key={row.id} className={classnames({ selected: row.getIsSelected() })}>
+                  </thead>
+                  <tbody>
+                    {table.getRowModel().rows.map(row => (
+                      <tr
+                        key={row.id}
+                        className={classnames({ selected: row.getIsSelected() })}
+                        style={{
+                          cursor: 'pointer'
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.backgroundColor = 'rgba(139, 92, 246, 0.08)'
+                          e.currentTarget.style.boxShadow = '0 2px 8px rgba(139, 92, 246, 0.15)'
+                        }}
+                        onMouseLeave={e => {
+                          if (!row.getIsSelected()) {
+                            e.currentTarget.style.backgroundColor = 'transparent'
+                          }
+                          e.currentTarget.style.boxShadow = 'none'
+                        }}
+                      >
                         {row.getVisibleCells().map(cell => (
                           <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
                         ))}
                       </tr>
                     ))}
-                </tbody>
-              )}
-            </table>
-          </div>
-          <TablePagination
-            rowsPerPageOptions={[5, 7, 10]}
-            component='div'
-            className='border-bs'
-            count={table.getFilteredRowModel().rows.length}
-            rowsPerPage={table.getState().pagination.pageSize}
-            page={table.getState().pagination.pageIndex}
-            SelectProps={{
-              inputProps: { 'aria-label': 'rows per page' }
-            }}
-            onPageChange={(_, page) => {
-              table.setPageIndex(page)
-            }}
-            onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
-            sx={{
-              '.MuiTablePagination-toolbar': {
-                px: { xs: 2, sm: 3 },
-                py: 2
-              },
-              '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
-                fontSize: { xs: '0.75rem', sm: '0.875rem' }
-              }
-            }}
-          />
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Box>
+          {!isMobile && table.getFilteredRowModel().rows.length > 0 && (
+            <TablePagination
+              rowsPerPageOptions={[5, 7, 10]}
+              component='div'
+              className='border-bs'
+              count={table.getFilteredRowModel().rows.length}
+              rowsPerPage={table.getState().pagination.pageSize}
+              page={table.getState().pagination.pageIndex}
+              SelectProps={{
+                inputProps: { 'aria-label': 'rows per page' }
+              }}
+              onPageChange={(_, page) => {
+                table.setPageIndex(page)
+              }}
+              onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
+              sx={{
+                '.MuiTablePagination-toolbar': {
+                  px: { xs: 2, sm: 3 },
+                  py: 2
+                },
+                '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
+                  fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                }
+              }}
+            />
+          )}
         </Card>
 
         {/* Dialog for editing and adding features */}

@@ -27,12 +27,12 @@ async function page({ searchParams }) {
   }
 
   const res = await RestApi.get(url)
+  const tableData = Array.isArray(res?.result) ? res.result : []
 
-  console.log(res)
   return (
     <AdminSponsorshipList
       key={`${filter}-${sponsorType}-${sponsorshipStatus}`}
-      tableData={res.result}
+      tableData={tableData}
       sponsorType={sponsorType || 'all'}
       sponsorshipStatus={sponsorshipStatus || 'all'}
       filter={filter}

@@ -253,7 +253,7 @@ const AllAudiencePage = () => {
               </Box>
               <Typography
                 sx={{
-                  fontSize: { xs: '2rem', md: '2.5rem' },
+                  fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.5rem' },
                   fontWeight: 700,
                   background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                   WebkitBackgroundClip: 'text',
@@ -291,27 +291,38 @@ const AllAudiencePage = () => {
           loadingCounts={loadingCounts}
         />
 
-        {/* Floating Action Button */}
-        <Button
-          variant='contained'
-          component='label'
+        {/* Create Audience Button - Responsive: below cards on mobile, fixed on desktop */}
+        <Box
           sx={{
-            color: 'white',
-            position: 'fixed',
-            fontsize: '1.2rem',
-            bottom: { xs: 16, sm: 24 },
-            right: { xs: 16, sm: 24 },
-            zIndex: 1001,
-            borderRadius: '12px',
-            px: 3,
-            py: 1.5,
-            
+            display: { xs: 'flex', sm: 'block' },
+            justifyContent: 'center',
+            mt: { xs: 3, sm: 0 },
+            mb: { xs: 0, sm: 0 }
           }}
-          startIcon={<AddIcon />}
-          onClick={handleCreateNewAudience}
         >
-          Create Audience
-        </Button>
+          <Button
+            variant='contained'
+            component='label'
+            onClick={handleCreateNewAudience}
+            startIcon={<AddIcon />}
+            sx={{
+              color: 'white',
+              // Mobile: normal flow, below cards
+              position: { xs: 'static', sm: 'fixed' },
+              bottom: { xs: 'auto', sm: 24 },
+              right: { xs: 'auto', sm: 24 },
+              zIndex: { xs: 'auto', sm: 1001 },
+              // Responsive sizing
+              fontSize: { xs: '1rem', sm: '1.2rem' },
+              borderRadius: '12px',
+              px: { xs: 3, sm: 4 },
+              py: { xs: 1.25, sm: 1.5 },
+              minWidth: { xs: 200, sm: 220 }
+            }}
+          >
+            Create Audience
+          </Button>
+        </Box>
       </Container>
     </Box>
   )

@@ -5,19 +5,19 @@ import { useEffect, useState } from 'react'
 import Button from '@mui/material/Button'
 import Drawer from '@mui/material/Drawer'
 import FormControl from '@mui/material/FormControl'
-import IconButton from '@mui/material/IconButton'
 import InputLabel from '@mui/material/InputLabel'
 import MenuItem from '@mui/material/MenuItem'
 import Select from '@mui/material/Select'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
-import Divider from '@mui/material/Divider'
+import Box from '@mui/material/Box'
+import { Checkbox, Chip, ListItemText } from '@mui/material'
+import { alpha, useTheme } from '@mui/material/styles'
 
 // Api utils
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import * as clientApi from '@/app/api/client/client.api'
-import { Checkbox, Chip, ListItemText } from '@mui/material'
 import CountryRegionDropdown from '@/views/pages/auth/register-multi-steps/CountryRegionDropdown'
 
 // Country region data
@@ -46,6 +46,7 @@ const initialData = {
 }
 
 const AddUserDrawer = ({ open, handleClose, refreshUsers }) => {
+  const theme = useTheme()
   // States
   const [formData, setFormData] = useState(initialData)
   const [rolesData, setRolesData] = useState([])
@@ -356,7 +357,19 @@ const AddUserDrawer = ({ open, handleClose, refreshUsers }) => {
       variant='temporary'
       onClose={handleReset}
       ModalProps={{ keepMounted: true }}
-      sx={{ '& .MuiDrawer-paper': { width: { xs: 300, sm: 400 } } }}
+      sx={{
+        '& .MuiDrawer-paper': {
+          width: { xs: 'min(420px, 92vw)', sm: 440 },
+          maxWidth: 520,
+          mr: { xs: 2, sm: 0 },
+          borderTopLeftRadius: { xs: 24, sm: 28 },
+          borderBottomLeftRadius: { xs: 24, sm: 28 },
+          boxShadow: '0 18px 44px rgba(15,15,45,0.18)',
+          borderLeft: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+          display: 'flex',
+          flexDirection: 'column'
+        }
+      }}
     >
       <div className='flex items-center justify-between pli-5 plb-[15px]'>
         <Typography variant='h5'>Add New User</Typography>
@@ -366,7 +379,7 @@ const AddUserDrawer = ({ open, handleClose, refreshUsers }) => {
       </div>
       <Divider />
       <div className='p-5'>
-        <form onSubmit={handleSubmit} className='flex flex-col gap-5'>
+        <form  className='flex flex-col gap-5'>
           <TextField
             label='First Name'
             fullWidth

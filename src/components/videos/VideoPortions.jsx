@@ -23,7 +23,7 @@ const VideoPortions = ({ videoUrl, videoDuration, onSetRecommendedSegments, reco
   const [openDialog, setOpenDialog] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [currentClip, setCurrentClip] = useState({ id: null, startTime: 0, endTime: 10, description: '' })
-  const [playingClipId, setPlayingClipId] = useState(null); 
+  const [playingClipId, setPlayingClipId] = useState(null)
 
   const playerRef = useRef(null)
   const playerRefs = useRef({})
@@ -109,20 +109,20 @@ const VideoPortions = ({ videoUrl, videoDuration, onSetRecommendedSegments, reco
     }
   }
 
-  const formatTime = (timeInSeconds) => {
-    const pad = (num) => num.toString().padStart(2, '0'); // Helper to pad single-digit numbers
-  
-    const hours = Math.floor(timeInSeconds / 3600);
-    const remainingSeconds = timeInSeconds % 3600;
-    const minutes = Math.floor(remainingSeconds / 60);
-    const seconds = Math.floor(remainingSeconds % 60);
-  
+  const formatTime = timeInSeconds => {
+    const pad = num => num.toString().padStart(2, '0') // Helper to pad single-digit numbers
+
+    const hours = Math.floor(timeInSeconds / 3600)
+    const remainingSeconds = timeInSeconds % 3600
+    const minutes = Math.floor(remainingSeconds / 60)
+    const seconds = Math.floor(remainingSeconds % 60)
+
     if (hours > 0) {
-      return `${hours}:${pad(minutes)}:${pad(seconds)}`; // Format: H:MM:SS
+      return `${hours}:${pad(minutes)}:${pad(seconds)}` // Format: H:MM:SS
     } else {
-      return `${minutes}:${pad(seconds)}`; // Format: M:SS
+      return `${minutes}:${pad(seconds)}` // Format: M:SS
     }
-  };
+  }
 
   const renderMarkers = clip => {
     const duration = videoDuration
@@ -174,8 +174,8 @@ const VideoPortions = ({ videoUrl, videoDuration, onSetRecommendedSegments, reco
   }
 
   return (
-    <div className='mt-4'>
-      <Typography my={2} variant='h5'>
+    <div className='mt-2'>
+      <Typography mb={1.5} variant='h5'>
         Recommended Video Portions : <span style={{ fontWeight: '400', fontSize: '15px' }}>(Optional)</span>
       </Typography>
 
@@ -268,7 +268,8 @@ const VideoPortions = ({ videoUrl, videoDuration, onSetRecommendedSegments, reco
                       </Typography>
 
                       <div className='flex justify-between mt-2'>
-                        <IconButtonTooltip title='Edit'
+                        <IconButtonTooltip
+                          title='Edit'
                           color='primary'
                           onClick={() => handleOpenDialog({ id, startTime, endTime, description })}
                         >
@@ -288,7 +289,16 @@ const VideoPortions = ({ videoUrl, videoDuration, onSetRecommendedSegments, reco
 
       {/* Dialog for Adding/Editing Clips */}
       <Dialog open={openDialog} onClose={handleCloseDialog}>
-        <DialogTitle>{currentClip.id ? 'Edit Recommended Video Portion' : 'Add Recommended Video Portion'}</DialogTitle>
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+            <Typography variant='h6'>
+              {currentClip.id ? 'Edit Recommended Video Portion' : 'Add Recommended Video Portion'}
+            </Typography>
+            <IconButtonTooltip title='Close' onClick={handleCloseDialog}>
+              <i className='ri-close-line text-xl' />
+            </IconButtonTooltip>
+          </Box>
+        </DialogTitle>
         <DialogContent>
           <div className='mb-2'>
             <ReactPlayer ref={playerRef} url={videoUrl} controls width='100%' height='200px' />
@@ -347,16 +357,10 @@ const VideoPortions = ({ videoUrl, videoDuration, onSetRecommendedSegments, reco
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog} color='secondary'>
+          <Button variant='outlined' onClick={handleCloseDialog}>
             Cancel
           </Button>
-          <Button
-            onClick={handleSaveClip}
-            color='primary'
-            sx={{ color: 'white' }}
-            variant='contained'
-            component='label'
-          >
+          <Button onClick={handleSaveClip} variant='contained' component='label' style={{ color: 'white' }}>
             Save
           </Button>
         </DialogActions>

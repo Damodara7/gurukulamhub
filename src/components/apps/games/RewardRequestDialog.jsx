@@ -104,7 +104,7 @@ const RewardRequestDialog = ({
       ...prev,
       sponsors: reward && reward?.rewardType === currentReward?.rewardType ? currentReward?.sponsors : []
     }))
-    
+
     async function getSponsorships() {
       try {
         let searchParams = ['status=completed']
@@ -134,16 +134,12 @@ const RewardRequestDialog = ({
     }
 
     getSponsorships()
-  }, [
-    currentReward.rewardType,
-    formData?.quiz,
-    formData?.rewards
-  ])
+  }, [currentReward.rewardType, formData?.quiz, formData?.rewards])
 
   useEffect(() => {
     // Calculate total allocations for each sponsor across all rewards in the form
     const sponsorAllocations = new Map()
-    
+
     if (formData?.rewards) {
       formData.rewards.forEach(reward => {
         if (reward.sponsors) {
@@ -158,31 +154,31 @@ const RewardRequestDialog = ({
 
     // Filter available sponsors based on reward type and selected gift (for physical gifts)
     if (currentReward.rewardType === 'physicalGift') {
-      const filtered = displaySponsorships.filter(
-        s => {
-          const totalAllocated = sponsorAllocations.get(s._id) || 0
-          const availableAfterAllocation = s.availableItems - totalAllocated
-          
-          return s.rewardType === 'physicalGift' &&
-            s.nonCashItem === currentReward.nonCashReward &&
-            availableAfterAllocation > 0 &&
-            // Exclude sponsors already added to this specific reward
-            !currentReward.sponsors.some(addedSponsor => addedSponsor?.sponsorshipId === (s?._id || s?.id))
-        }
-      )
+      const filtered = displaySponsorships.filter(s => {
+        const totalAllocated = sponsorAllocations.get(s._id) || 0
+        const availableAfterAllocation = s.availableItems - totalAllocated
+
+        return (
+          s.rewardType === 'physicalGift' &&
+          s.nonCashItem === currentReward.nonCashReward &&
+          availableAfterAllocation > 0 &&
+          // Exclude sponsors already added to this specific reward
+          !currentReward.sponsors.some(addedSponsor => addedSponsor?.sponsorshipId === (s?._id || s?.id))
+        )
+      })
       setAvailableSponsors(filtered)
     } else {
-      const filtered = displaySponsorships.filter(
-        s => {
-          const totalAllocated = sponsorAllocations.get(s._id) || 0
-          const availableAfterAllocation = s.availableAmount - totalAllocated
-          
-          return s.rewardType === currentReward.rewardType &&
-            availableAfterAllocation > 0 &&
-            // Exclude sponsors already added to this specific reward
-            !currentReward.sponsors.some(addedSponsor => addedSponsor?.sponsorshipId === (s?._id || s?.id))
-        }
-      )
+      const filtered = displaySponsorships.filter(s => {
+        const totalAllocated = sponsorAllocations.get(s._id) || 0
+        const availableAfterAllocation = s.availableAmount - totalAllocated
+
+        return (
+          s.rewardType === currentReward.rewardType &&
+          availableAfterAllocation > 0 &&
+          // Exclude sponsors already added to this specific reward
+          !currentReward.sponsors.some(addedSponsor => addedSponsor?.sponsorshipId === (s?._id || s?.id))
+        )
+      })
       setAvailableSponsors(filtered)
     }
   }, [
@@ -288,26 +284,29 @@ const RewardRequestDialog = ({
       const sponsor = updatedReward.sponsors[sponsorIndex]
       const newAllocation = parseFloat(newValue) || 0
       const oldAllocation = sponsor.allocated || 0
-      
+
       // Validate against real-time available amount
       const realTimeAvailable = getRealTimeAvailableAmount(sponsor)
       if (newAllocation > realTimeAvailable) {
         return // Don't allow over-allocation
       }
-      
+
       // Update the sponsor's allocated amount
       updatedReward.sponsors[sponsorIndex] = {
         ...sponsor,
         allocated: newAllocation
       }
-      
+
       setCurrentReward(updatedReward)
     }
   }
 
   const validateReward = () => {
     // numberOfWinnersForThisPosition is always 1, so no need to validate it
-    if (currentReward.rewardType === 'cash' && (!currentReward.rewardValuePerWinner || Number(currentReward.rewardValuePerWinner) === 0)) {
+    if (
+      currentReward.rewardType === 'cash' &&
+      (!currentReward.rewardValuePerWinner || Number(currentReward.rewardValuePerWinner) === 0)
+    ) {
       setValidationError('Value per winner must be greater than 0 for cash rewards')
       return false
     }
@@ -329,13 +328,13 @@ const RewardRequestDialog = ({
 
   const handleSave = () => {
     if (!validateReward()) return
-    
+
     // Remove sponsors with allocated=0
     let rewardToSave = {
       ...currentReward,
       sponsors: currentReward.sponsors.filter(s => s.allocated > 0)
     }
-    
+
     console.log('rewardToSave: ', rewardToSave)
     onSave(rewardToSave, displaySponsorships)
     onClose()
@@ -349,14 +348,14 @@ const RewardRequestDialog = ({
   }
 
   // Calculate real-time available amount for a sponsor across all rewards
-  const getRealTimeAvailableAmount = (sponsor) => {
+  const getRealTimeAvailableAmount = sponsor => {
     if (!formData?.rewards) return sponsor.prevAvailableAmount || sponsor.availableAmount
 
     let totalAllocated = 0
-    
+
     // Get the sponsor ID to match against (could be _id or sponsorshipId)
     const sponsorId = sponsor._id || sponsor.sponsorshipId
-    
+
     // Calculate total allocation for this sponsor across all rewards
     formData.rewards.forEach(reward => {
       if (reward.sponsors) {
@@ -377,22 +376,76 @@ const RewardRequestDialog = ({
 
   return (
     <>
-      <Dialog open={open} onClose={onClose} fullWidth maxWidth='md'>
-        <DialogTitle>
-          {isEditing ? 'Edit Reward' : 'Create Reward'}
-          <IconButton onClick={onClose} sx={{ position: 'absolute', right: 8, top: 8 }}>
-            <CloseIcon />
+      <Dialog
+        open={open}
+        onClose={onClose}
+        fullWidth
+        maxWidth='md'
+        fullScreen={false}
+        PaperProps={{
+          sx: {
+            m: { xs: 1, sm: 2 },
+            maxHeight: { xs: '95vh', sm: '90vh' },
+            height: { xs: '95vh', sm: 'auto' },
+            width: { xs: '100%', sm: 'auto' }
+          }
+        }}
+      >
+        <DialogTitle
+          sx={{
+            pb: { xs: 1, sm: 2 },
+            pt: { xs: 2, sm: 2 },
+            px: { xs: 2, sm: 3 },
+            position: 'relative',
+            borderBottom: '1px solid',
+            borderColor: 'divider'
+          }}
+        >
+          <Typography
+            variant='h6'
+            sx={{
+              fontSize: { xs: '1.1rem', sm: '1.25rem' },
+              fontWeight: 600,
+              pr: 4
+            }}
+          >
+            {isEditing ? 'Edit Reward' : 'Create Reward'}
+          </Typography>
+          <IconButton
+            onClick={onClose}
+            sx={{
+              position: 'absolute',
+              right: { xs: 8, sm: 12 },
+              top: { xs: 12, sm: 16 }
+            }}
+            size='small'
+          >
+            <CloseIcon fontSize='small' />
           </IconButton>
         </DialogTitle>
 
-        <DialogContent dividers>
+        <DialogContent
+          dividers
+          sx={{
+            px: { xs: 2, sm: 3 },
+            py: { xs: 2, sm: 3 },
+            overflowY: 'auto',
+            '&::-webkit-scrollbar': {
+              width: '8px'
+            },
+            '&::-webkit-scrollbar-thumb': {
+              backgroundColor: 'rgba(0,0,0,0.2)',
+              borderRadius: '4px'
+            }
+          }}
+        >
           {validationError && (
             <Alert severity='error' sx={{ mb: 2 }}>
               {validationError}
             </Alert>
           )}
 
-          <Grid container spacing={3}>
+          <Grid container spacing={{ xs: 2, sm: 3 }}>
             {/* Reward Configuration Fields */}
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
@@ -448,20 +501,20 @@ const RewardRequestDialog = ({
 
             {currentReward.rewardType === 'cash' ? (
               <>
-                <Grid item xs={8}>
+                <Grid item xs={12} sm={8}>
                   <TextField
                     fullWidth
                     label='Value Per Winner'
                     value={currentReward.rewardValuePerWinner}
-                    onChange={e =>{
-                      if(e.target.value.trim() === ''){
+                    onChange={e => {
+                      if (e.target.value.trim() === '') {
                         setCurrentReward({
                           ...currentReward,
                           rewardValuePerWinner: 0
                         })
                         return
                       }
-                      if(isNaN(e.target.value)){
+                      if (isNaN(e.target.value)) {
                         return
                       }
                       setCurrentReward({
@@ -470,15 +523,17 @@ const RewardRequestDialog = ({
                       })
                     }}
                     inputProps={{ step: '1', min: 0 }}
+                    size='medium'
                   />
                 </Grid>
-                <Grid item xs={4}>
+                <Grid item xs={12} sm={4}>
                   <FormControl fullWidth>
                     <InputLabel>Currency</InputLabel>
                     <Select
                       label='Currency'
                       value={currentReward.currency}
                       onChange={e => setCurrentReward({ ...currentReward, currency: e.target.value })}
+                      size='medium'
                     >
                       {CURRENCY_OPTIONS.map(curr => (
                         <MenuItem key={curr} value={curr}>
@@ -524,83 +579,210 @@ const RewardRequestDialog = ({
           </Grid>
 
           <Grid item xs={12}>
-            <Alert icon={false} color='info' sx={{ p: 3, textAlign: 'center', mt: 2 }}>
+            <Alert
+              icon={false}
+              color='info'
+              sx={{
+                p: { xs: 2, sm: 3 },
+                textAlign: 'center',
+                mt: { xs: 1.5, sm: 2 },
+                fontSize: { xs: '0.875rem', sm: '1rem' }
+              }}
+            >
               {currentReward.rewardType === 'cash'
                 ? `Total required: ${currentReward.currency} ${calculateTotalRequired().toFixed(2)}`
                 : `Total items needed: ${calculateTotalRequired()}`}
             </Alert>
           </Grid>
 
-          <Divider sx={{ my: 3 }} />
+          <Divider sx={{ my: { xs: 2, sm: 3 } }} />
 
           {/* Sponsors Section */}
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <Typography variant='h6'>Current Sponsors</Typography>
-            <Tooltip
-              title={
-                currentReward.rewardType === 'cash'
-                  ? `Total required: ${currentReward.currency} ${calculateTotalRequired().toFixed(2)}`
-                  : `Total items needed: ${calculateTotalRequired()}`
-              }
-            >
-              <InfoIcon color='action' sx={{ ml: 1 }} />
-            </Tooltip>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: { xs: 'flex-start', sm: 'center' },
+              gap: { xs: 1.5, sm: 0 },
+              mb: 2
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant='h6' sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>
+                Current Sponsors
+              </Typography>
+              <Tooltip
+                title={
+                  currentReward.rewardType === 'cash'
+                    ? `Total required: ${currentReward.currency} ${calculateTotalRequired().toFixed(2)}`
+                    : `Total items needed: ${calculateTotalRequired()}`
+                }
+              >
+                <InfoIcon
+                  color='action'
+                  sx={{
+                    fontSize: { xs: '1rem', sm: '1.25rem' },
+                    cursor: 'help'
+                  }}
+                />
+              </Tooltip>
+            </Box>
             <Chip
-              sx={{ ml: 'auto' }}
+              sx={{
+                ml: { xs: 0, sm: 'auto' },
+                mt: { xs: 0.5, sm: 0 },
+                width: { xs: '100%', sm: 'auto' },
+                justifyContent: 'center'
+              }}
               color={getRemainingNeed() > 0 ? 'warning' : 'success'}
               variant='outlined'
               label={
-                <Typography variant='body2' color={getRemainingNeed() > 0 ? 'warning.main' : 'success.main'}>
-                  {getRemainingNeed() > 0 
-                    ? `Still needs: ${currentReward.rewardType === 'cash' ? `${currentReward.currency} ${getRemainingNeed().toFixed(2)}` : `${getRemainingNeed()} items`}`
-                    : 'Fully sponsored!'
-                  }
+                <Typography
+                  variant='body2'
+                  color={getRemainingNeed() > 0 ? 'warning.main' : 'success.main'}
+                  sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                >
+                  {getRemainingNeed() > 0
+                    ? `Still needs: ${
+                        currentReward.rewardType === 'cash'
+                          ? `${currentReward.currency} ${getRemainingNeed().toFixed(2)}`
+                          : `${getRemainingNeed()} items`
+                      }`
+                    : 'Fully sponsored!'}
                 </Typography>
               }
             />
           </Box>
 
           {currentReward.sponsors.length === 0 ? (
-            <Alert icon={false} color='info' sx={{ p: 3, textAlign: 'center', mb: 2 }}>
-              <Typography color='text.secondary' textAlign='center'>
+            <Alert
+              icon={false}
+              color='info'
+              sx={{
+                p: { xs: 2, sm: 3 },
+                textAlign: 'center',
+                mb: 2,
+                fontSize: { xs: '0.875rem', sm: '1rem' }
+              }}
+            >
+              <Typography color='text.secondary' textAlign='center' sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
                 No sponsors added yet. You can add existing sponsors or leave this empty to request new sponsorships.
               </Typography>
             </Alert>
           ) : (
             currentReward?.sponsors?.map(sponsor => (
-              <Paper key={sponsor?._id || sponsor?.id} sx={{ p: 2, mb: 2 }}>
-                <Stack direction='row' alignItems='center' spacing={2}>
-                  <Avatar sx={{ bgcolor: 'primary.main' }}>{sponsor.logo}</Avatar>
-                  <Box sx={{ flexGrow: 1 }}>
-                    <Typography>{`${sponsor.fullname} (${sponsor.email})`}</Typography>
-                    <Typography variant='body2' color='text.secondary'>
-                      {currentReward.rewardType === 'cash'
-                        ? `Available: ${sponsor.currency} ${getRealTimeAvailableAmount(sponsor)} (Original: ${sponsor.currency} ${sponsor.prevAvailableAmount})`
-                        : `Available Items: ${getRealTimeAvailableAmount(sponsor)} (Original: ${sponsor.prevAvailableItems})`}
-                    </Typography>
+              <Paper
+                key={sponsor?._id || sponsor?.id}
+                sx={{
+                  p: { xs: 1.5, sm: 2 },
+                  mb: { xs: 1.5, sm: 2 },
+                  borderRadius: 1
+                }}
+              >
+                <Stack
+                  direction={{ xs: 'column', sm: 'row' }}
+                  alignItems={{ xs: 'flex-start', sm: 'center' }}
+                  spacing={{ xs: 1.5, sm: 2 }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flex: 1, minWidth: 0, width: '100%' }}>
+                    <Avatar
+                      sx={{
+                        bgcolor: 'primary.main',
+                        width: { xs: 36, sm: 40 },
+                        height: { xs: 36, sm: 40 },
+                        flexShrink: 0
+                      }}
+                    >
+                      {sponsor.logo || sponsor.fullname?.[0]?.toUpperCase() || 'S'}
+                    </Avatar>
+                    <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                      <Typography
+                        sx={{
+                          fontSize: { xs: '0.875rem', sm: '1rem' },
+                          fontWeight: 500,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        {sponsor.fullname || 'Sponsor'}
+                      </Typography>
+                      <Typography
+                        variant='caption'
+                        sx={{
+                          color: 'text.secondary',
+                          fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          display: 'block'
+                        }}
+                      >
+                        {sponsor.email}
+                      </Typography>
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                        sx={{
+                          fontSize: { xs: '0.7rem', sm: '0.875rem' },
+                          mt: 0.5
+                        }}
+                      >
+                        {currentReward.rewardType === 'cash'
+                          ? `Available: ${sponsor.currency} ${getRealTimeAvailableAmount(sponsor)} (Original: ${
+                              sponsor.currency
+                            } ${sponsor.prevAvailableAmount})`
+                          : `Available Items: ${getRealTimeAvailableAmount(sponsor)} (Original: ${
+                              sponsor.prevAvailableItems
+                            })`}
+                      </Typography>
+                    </Box>
                   </Box>
-                  <TextField
-                    label={currentReward.rewardType === 'cash' ? 'Amount' : 'Items'}
-                    value={sponsor.allocated}
-                    onChange={e =>{
-                      if(e.target.value.trim() === ''){
-                        handleEditAllocation(sponsor?._id || sponsor?.id, 0)
-                        return
-                      }
-                      if(isNaN(e.target.value)){
-                        return
-                      }
-                      const realTimeAvailable = getRealTimeAvailableAmount(sponsor)
-                      if(e.target.value > realTimeAvailable){
-                        return
-                      }
-                      handleEditAllocation(sponsor?._id || sponsor?.id, e.target.value)
+                  <Stack
+                    direction={{ xs: 'row', sm: 'row' }}
+                    alignItems='center'
+                    spacing={1}
+                    sx={{
+                      width: { xs: '100%', sm: 'auto' },
+                      justifyContent: { xs: 'space-between', sm: 'flex-end' }
                     }}
-                    sx={{ width: 120 }}
-                  />
-                  <IconButton onClick={() => handleRemoveSponsor(sponsor?._id || sponsor?.id)}>
-                    <CloseIcon />
-                  </IconButton>
+                  >
+                    <TextField
+                      label={currentReward.rewardType === 'cash' ? 'Amount' : 'Items'}
+                      value={sponsor.allocated}
+                      onChange={e => {
+                        if (e.target.value.trim() === '') {
+                          handleEditAllocation(sponsor?._id || sponsor?.id, 0)
+                          return
+                        }
+                        if (isNaN(e.target.value)) {
+                          return
+                        }
+                        const realTimeAvailable = getRealTimeAvailableAmount(sponsor)
+                        if (e.target.value > realTimeAvailable) {
+                          return
+                        }
+                        handleEditAllocation(sponsor?._id || sponsor?.id, e.target.value)
+                      }}
+                      sx={{
+                        width: { xs: 'calc(100% - 48px)', sm: 120 },
+                        minWidth: { sm: 120 }
+                      }}
+                      size='small'
+                    />
+                    <IconButton
+                      onClick={() => handleRemoveSponsor(sponsor?._id || sponsor?.id)}
+                      size='small'
+                      sx={{
+                        '&:hover': {
+                          backgroundColor: 'error.light',
+                          color: 'error.main'
+                        }
+                      }}
+                    >
+                      <CloseIcon fontSize='small' />
+                    </IconButton>
+                  </Stack>
                 </Stack>
               </Paper>
             ))
@@ -612,21 +794,29 @@ const RewardRequestDialog = ({
             onClick={handleAddSponsor}
             fullWidth
             disabled={availableSponsors.length === 0}
+            sx={{
+              mt: { xs: 1, sm: 0 },
+              py: { xs: 1.5, sm: 1 }
+            }}
           >
             Add Existing Sponsor
           </Button>
         </DialogContent>
 
-        <DialogActions className='mt-3'>
+        <DialogActions
+          sx={{
+            px: { xs: 2, sm: 3 },
+            py: { xs: 1.5, sm: 2 },
+            borderTop: '1px solid',
+            borderColor: 'divider',
+            gap: { xs: 1, sm: 2 },
+            flexDirection: 'row'
+          }}
+        >
           <Button variant='outlined' onClick={onClose}>
             Cancel
           </Button>
-          <Button
-            component='label'
-            style={{ color: 'white' }}
-            onClick={handleSave}
-            variant='contained'
-          >
+          <Button component='label' style={{ color: 'white' }} onClick={handleSave} variant='contained'>
             Save
           </Button>
         </DialogActions>

@@ -15,8 +15,11 @@ import {
   DialogContent,
   DialogActions,
   Alert,
-  Box
+  Box,
+  Stack
 } from '@mui/material'
+import useMediaQuery from '@mui/material/useMediaQuery'
+import { useTheme, alpha } from '@mui/material/styles'
 import CenterBox from '@components/CenterBox'
 import Typography from '@mui/material/Typography'
 import * as RestApi from '@/utils/restApiUtil'
@@ -74,6 +77,8 @@ const initialData = {
 }
 
 const AddAdvDrawer = ({ open, handleClose, mode = 'add', data = null, onRefresh = {} }) => {
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   // States
   const [formData, setFormData] = useState(data || initialData)
   const [selectedCountry, setSelectedCountry] = useState(data?.country || '')
@@ -240,527 +245,642 @@ const AddAdvDrawer = ({ open, handleClose, mode = 'add', data = null, onRefresh 
   return (
     <Dialog
       open={open}
-      // anchor='right'
-      // variant='temporary'
       onClose={handleClose}
-      maxWidth='lg'
       fullWidth
-      // ModalProps={{ keepMounted: true }}
-      // sx={{ '& .MuiDrawer-paper': { width: { xs: 300, sm: 400 } } }}
+      fullScreen={isMobile}
+      maxWidth='lg'
+      PaperProps={{
+        sx: {
+          width: { xs: '100%', md: 'min(92vw, 880px)' },
+          maxHeight: { xs: '100dvh', md: '95vh' },
+          borderRadius: { xs: 0, sm: 3.5 },
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          background: '#ffffff'
+        }
+      }}
     >
-      <DialogTitle>
-        <div className='flex items-center justify-between'>
-          <Typography variant='h4'>{mode == 'add' ? 'Add' : 'Edit'} Advertisement</Typography>
-          <IconButtonTooltip title='Close' onClick={handleClose}>
-            <i className='ri-close-line' />
-          </IconButtonTooltip>
-        </div>
+      <DialogTitle
+        sx={{
+          px: { xs: 3, md: 4 },
+          py: { xs: 2.5, md: 3 },
+          backgroundColor: '#ffffff',
+          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+          color: theme.palette.text.primary,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 2
+        }}
+      >
+        <Stack spacing={0.5}>
+          <Typography
+            variant='h5'
+            sx={{
+              fontSize: { xs: '1.05rem', sm: '1.35rem' },
+              fontWeight: 700,
+              letterSpacing: '-0.015em',
+              color: theme.palette.text.primary
+            }}
+          >
+            {mode === 'add' ? 'Add New Advertisement' : 'Edit Advertisement'}
+          </Typography>
+        </Stack>
+        <IconButtonTooltip
+          title='Close'
+          onClick={handleClose}
+          sx={{
+            color: theme.palette.text.primary,
+            borderRadius: '10px',
+            backgroundColor: alpha(theme.palette.primary.main, 0.08),
+            '&:hover': {
+              backgroundColor: alpha(theme.palette.primary.main, 0.16)
+            }
+          }}
+        >
+          <Close fontSize='small' />
+        </IconButtonTooltip>
       </DialogTitle>
-      <DialogContent>
-        <Grid container spacing={4} className='pt-1'>
-          {/* Email */}
-          <Grid item xs={12} sm={6}>
-            <TextField
-              label='Email'
-              fullWidth
-              placeholder='pvr@gmail.com'
-              required
-              value={formData.email}
-              onChange={e => setFormData({ ...formData, email: e.target.value })}
-            />
-          </Grid>
-
-          {/* User Name */}
-          <Grid item xs={12} sm={6}>
-            <TextField
-              label='User name'
-              fullWidth
-              required
-              placeholder='pvr'
-              value={formData.userName}
-              onChange={e => setFormData({ ...formData, userName: e.target.value })}
-            />
-          </Grid>
-
-          {/* Company */}
-          <Grid item xs={12} sm={6}>
-            <TextField
-              label='Name/Company/Organization'
-              fullWidth
-              placeholder='Company PVT LTD'
-              value={formData.company}
-              onChange={e => setFormData({ ...formData, company: e.target.value })}
-            />
-          </Grid>
-
-          {/* Website Url */}
-          <Grid item xs={12} sm={6}>
-            <TextField
-              label='Website'
-              type='text'
-              fullWidth
-              placeholder='https://example.com'
-              value={formData.website}
-              onChange={e => setFormData({ ...formData, website: e.target.value })}
-            />
-          </Grid>
-
-          {/* Industry */}
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth>
-              <InputLabel id='industry'>Select Industry</InputLabel>
-              <Select
-                fullWidth
-                id='industry'
-                value={formData.industry}
-                onChange={e => setFormData({ ...formData, industry: e.target.value })}
-                label='Select Industry'
-                inputProps={{ placeholder: 'Select Industry' }}
-              >
-                <MenuItem value=''>Select Industry</MenuItem>
-                <MenuItem value='agriculture'>Agriculture</MenuItem>
-                <MenuItem value='education'>Education</MenuItem>
-                <MenuItem value='it-and-developnent'>IT & Development</MenuItem>
-                <MenuItem value='health-care'>Healthcare</MenuItem>
-                <MenuItem value='finance'>Finance</MenuItem>
-                <MenuItem value='retail'>Retail</MenuItem>
-                <MenuItem value='manufacturing'>Manufacturing</MenuItem>
-                <MenuItem value='services'>Services</MenuItem>
-                <MenuItem value='other'>Other</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-
-          {/* Other Industry */}
-          {formData.industry === 'other' && (
+      <DialogContent
+        sx={{
+          px: { xs: 3, md: 4 },
+          py: { xs: 3, md: 4 },
+          background: `linear-gradient(150deg, ${alpha(theme.palette.primary.light, 0.06)} 0%, ${alpha(
+            theme.palette.secondary.light,
+            0.04
+          )} 100%)`,
+          overflowY: 'auto'
+        }}
+      >
+        <Box
+          sx={{
+            borderRadius: 3,
+            backgroundColor: '#ffffff',
+            boxShadow: '0 16px 40px rgba(15,15,45,0.05)',
+            border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+            p: { xs: 2.5, md: 3.5 }
+          }}
+        >
+          <Grid container spacing={{ xs: 2, md: 3 }} className='pt-1'>
+            {/* Email */}
             <Grid item xs={12} sm={6}>
               <TextField
-                label='Specify Industry'
+                label='Email'
                 fullWidth
-                placeholder='Other'
-                value={formData.otherIndustry}
-                onChange={e => setFormData({ ...formData, otherIndustry: e.target.value })}
+                placeholder='pvr@gmail.com'
+                required
+                value={formData.email}
+                onChange={e => setFormData({ ...formData, email: e.target.value })}
               />
             </Grid>
-          )}
 
-          {/* Organization Type */}
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth>
-              <InputLabel id='organizationType'>Select Organization Type</InputLabel>
-              <Select
-                fullWidth
-                id='organizationType'
-                value={formData.organizationType}
-                onChange={e => setFormData({ ...formData, organizationType: e.target.value })}
-                label='Select Organization Type'
-                inputProps={{ placeholder: 'Select Organization Type' }}
-              >
-                <MenuItem value=''>Select Organization Type</MenuItem>
-                <MenuItem value='public-company'>Public Company</MenuItem>
-                <MenuItem value='self-employed'>Self-employed</MenuItem>
-                <MenuItem value='government-agency'>Government Agency</MenuItem>
-                <MenuItem value='non-profit'>Non-profit</MenuItem>
-                <MenuItem value='sole-proprietorship'>Sole proprietorship</MenuItem>
-                <MenuItem value='privately-held'>Privately held</MenuItem>
-                <MenuItem value='partnership'>Partnership</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-
-          {/* Contact */}
-          <Grid item xs={12} sm={6}>
-            <TextField
-              label='Contact'
-              type='number'
-              required
-              minLength={10}
-              fullWidth
-              placeholder='(397) 294-5153'
-              value={formData.contact}
-              onChange={e => setFormData({ ...formData, contact: e.target.value })}
-            />
-          </Grid>
-
-          {/* Description */}
-          <Grid item xs={12} sm={6}>
-            <TextField
-              label='Description'
-              type='text'
-              fullWidth
-              placeholder='About Add'
-              value={formData.description}
-              onChange={e => setFormData({ ...formData, description: e.target.value })}
-            />
-          </Grid>
-
-          {/* Image Url */}
-          <Grid item xs={12} sm={6}>
-            <TextField
-              label='Image Url'
-              type='text'
-              fullWidth
-              placeholder='http://example.com/image.png'
-              value={formData.imageUrl}
-              onChange={e => setFormData({ ...formData, imageUrl: e.target.value })}
-            />
-          </Grid>
-
-          {/* Action Url */}
-          <Grid item xs={12} sm={6}>
-            <TextField
-              label='Action Url'
-              type='text'
-              fullWidth
-              placeholder='https://example.com'
-              value={formData.actionUrl}
-              onChange={e => setFormData({ ...formData, actionUrl: e.target.value })}
-              helperText='This link will be opened when user clicks on this advertisement.'
-            />
-          </Grid>
-
-          {/* Start and End Date Picker */}
-          <Grid item xs={12} sm={6}>
-            <StartAndEndDatePicker
-              formData={formData}
-              setFormData={setFormData}
-              startDate={formData.startDate}
-              endDate={formData.endDate}
-            />
-          </Grid>
-
-          {/* Select Status */}
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth>
-              <InputLabel id='select-status'>Select Status</InputLabel>
-              <Select
-                fullWidth
-                id='select-status'
-                required
-                value={formData.status}
-                onChange={e => setFormData({ ...formData, status: e.target.value })}
-                label='Select Status'
-                labelId='status-select'
-                inputProps={{ placeholder: 'Select Status' }}
-              >
-                <MenuItem value='active'>Active</MenuItem>
-                <MenuItem value='inactive'>In Active</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-
-          {/* Select Media Type */}
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth>
-              <InputLabel id='select-mediaType'>Select Media Type</InputLabel>
-              <Select
-                fullWidth
-                id='select-mediaType'
-                required
-                value={formData.mediaType}
-                onChange={e => setFormData({ ...formData, mediaType: e.target.value })}
-                label='Select Media Type'
-                labelId='status-mediaType'
-                inputProps={{ placeholder: 'Select Media Type' }}
-              >
-                <MenuItem value='video'>Video</MenuItem>
-                <MenuItem value='image'>Image</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-
-          {/* Select Run Type */}
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth>
-              <InputLabel id='select-runtype'>Select Run Type</InputLabel>
-              <Select
-                required
-                fullWidth
-                id='select-runtype'
-                value={formData.runType}
-                onChange={e => setFormData({ ...formData, runType: e.target.value })}
-                label='Select Run Type'
-                labelId='status-runtype'
-                inputProps={{ placeholder: 'Select Run Type' }}
-              >
-                <MenuItem value='animate__shakeX'>Shake X</MenuItem>
-                <MenuItem value='flashing-ad'>Flashing</MenuItem>
-                <MenuItem value='animate__animated animate__bounce'>Bounce</MenuItem>
-                <MenuItem value='animate__animated animate__rubberBand'>Rubber Band</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-
-          {/* Select Advt Category */}
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth>
-              <InputLabel id='select-advtCategory'>Select Advt Category</InputLabel>
-              <Select
+            {/* User Name */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label='User name'
                 fullWidth
                 required
-                id='select-advtCategory'
-                value={formData.advtCategory}
-                onChange={e => setFormData({ ...formData, advtCategory: e.target.value })}
-                label='Select Advt Category'
-                labelId='status-category'
-                inputProps={{ placeholder: 'Select Advt Category' }}
-              >
-                <MenuItem value='top'>Top Rolling Banner</MenuItem>
-                <MenuItem value='bottom'>Bottom Banner</MenuItem>
-                <MenuItem value='login'>Login Screen</MenuItem>
-                <MenuItem value='landing'>Landing Page (My Progress)</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
+                placeholder='pvr'
+                value={formData.userName}
+                onChange={e => setFormData({ ...formData, userName: e.target.value })}
+              />
+            </Grid>
 
-          <Grid item xs={12}>
-            <Typography variant='body1' gutterBottom>
-              Logo
-            </Typography>
-            <input type='file' accept='image/*' ref={logoFileInputRef} hidden onChange={handleLogoImageUpload} />
+            {/* Company */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label='Name/Company/Organization'
+                fullWidth
+                placeholder='Company PVT LTD'
+                value={formData.company}
+                onChange={e => setFormData({ ...formData, company: e.target.value })}
+              />
+            </Grid>
 
-            <Box display='flex' alignItems='center' gap={2}>
-              {logoImage ? (
-                <Box
-                  display='flex'
-                  alignItems='center'
-                  gap={2}
-                  className='pr-2'
-                  style={{ background: 'rgba(240, 240, 240, 0.8)', borderRadius: '4px' }}
-                >
-                  <Box position='relative' width={150} height={100}>
-                    <img
-                      src={logoImage}
-                      alt='Uploaded'
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 4 }}
-                    />
-                  </Box>
-                  <Box>
-                    <Typography variant='body1' color='textSecondary'>
-                      {logoFileName}
-                    </Typography>
-                    <div className='text-right'>
-                      <IconButtonTooltip title='Open' color='primary' size='small' onClick={handleOpenLogoImage}>
-                        <Visibility color='primary' fontSize='small' />
-                      </IconButtonTooltip>
-                      <IconButtonTooltip title='Delete' size='small' onClick={handleDeleteLogoImage}>
-                        <Delete fontSize='small' color='error' />
-                      </IconButtonTooltip>
-                    </div>
-                  </Box>
-                </Box>
-              ) : (
-                <Button
-                  variant='outlined'
-                  // fullWidth
-                  onClick={() => logoFileInputRef.current.click()}
-                  startIcon={<Upload />}
-                  sx={{ width: 150, height: 100 }}
-                >
-                  Upload
-                </Button>
-              )}
-            </Box>
+            {/* Website Url */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label='Website'
+                type='text'
+                fullWidth
+                placeholder='https://example.com'
+                value={formData.website}
+                onChange={e => setFormData({ ...formData, website: e.target.value })}
+              />
+            </Grid>
 
-            <Dialog open={viewLogoImage} onClose={handleCloseLogoImage} maxWidth='sm' fullWidth>
-              <DialogTitle className='pb-2'>
-                <Box className='flex justify-between items-center'>
-                  <Typography variant='h5'>Preview Logo</Typography>
-                  <IconButtonTooltip title='Close' onClick={handleCloseLogoImage}>
-                    <Close />
-                  </IconButtonTooltip>
-                </Box>
-              </DialogTitle>
-              <DialogContent>
-                {logoImage && <img src={logoImage} alt='Preview' style={{ width: '100%' }} />}
-              </DialogContent>
-            </Dialog>
-          </Grid>
-
-          {/* Tagline */}
-          <Grid item xs={12}>
-            <TextField
-              label='Tagline'
-              type='text'
-              fullWidth
-              placeholder='Tagline'
-              value={formData.tagline}
-              onChange={e => setFormData({...formData, tagline: e.target.value })}
-            />
-          </Grid>
-
-          <Grid item xs={12}>
-            <Typography variant='h5' gutterBottom>
-              Restrict Advertisement by Geographical Area
-            </Typography>
-
-            <Typography variant='body1'>
-              Define the target group for advertisements based on their geographical location:
-            </Typography>
-
-            <ul>
-              <li>
-                <Typography variant='body2'>
-                  <strong>Country:</strong> Advertisements will be visible to users across the entire country.
-                </Typography>
-              </li>
-              <li>
-                <Typography variant='body2'>
-                  <strong>State:</strong> Advertisements will be shown only to users within the specified state.
-                </Typography>
-              </li>
-              <li>
-                <Typography variant='body2'>
-                  <strong>City:</strong> Advertisements will be targeted to users in the specified city.
-                </Typography>
-              </li>
-            </ul>
-          </Grid>
-
-          <Grid item xs={12} md={6}>
-            <CountryRegionDropdown
-              setSelectedCountry={setSelectedCountry}
-              selectedCountryObject={selectedCountryObject}
-              setSelectedCountryObject={setSelectedCountryObject}
-              onCountryChange={handleChangeCountry}
-            />
-          </Grid>
-
-          {selectedCountryObject?.country && (
-            <Grid item xs={12} md={6}>
+            {/* Industry */}
+            <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
-                <Autocomplete
-                  autoHighlight
-                  onChange={(e, newValue) => {
-                    setSelectedRegion(newValue)
-                    getCitiesData(newValue)
-                    setCity('')
-                  }}
-                  id='autocomplete-region-select'
-                  options={selectedCountryObject?.regions || []}
-                  getOptionLabel={option => option || ''}
-                  renderInput={params => (
-                    <TextField
-                      {...params}
-                      key={params.id}
-                      label='Choose a region'
-                      inputProps={{
-                        ...params.inputProps,
-                        autoComplete: 'region'
-                      }}
-                    />
-                  )}
-                  value={selectedRegion}
-                />
+                <InputLabel id='industry'>Select Industry</InputLabel>
+                <Select
+                  fullWidth
+                  id='industry'
+                  value={formData.industry}
+                  onChange={e => setFormData({ ...formData, industry: e.target.value })}
+                  label='Select Industry'
+                  inputProps={{ placeholder: 'Select Industry' }}
+                >
+                  <MenuItem value=''>Select Industry</MenuItem>
+                  <MenuItem value='agriculture'>Agriculture</MenuItem>
+                  <MenuItem value='education'>Education</MenuItem>
+                  <MenuItem value='it-and-developnent'>IT & Development</MenuItem>
+                  <MenuItem value='health-care'>Healthcare</MenuItem>
+                  <MenuItem value='finance'>Finance</MenuItem>
+                  <MenuItem value='retail'>Retail</MenuItem>
+                  <MenuItem value='manufacturing'>Manufacturing</MenuItem>
+                  <MenuItem value='services'>Services</MenuItem>
+                  <MenuItem value='other'>Other</MenuItem>
+                </Select>
               </FormControl>
             </Grid>
-          )}
 
-          {selectedRegion && (
+            {/* Other Industry */}
+            {formData.industry === 'other' && (
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label='Specify Industry'
+                  fullWidth
+                  placeholder='Other'
+                  value={formData.otherIndustry}
+                  onChange={e => setFormData({ ...formData, otherIndustry: e.target.value })}
+                />
+              </Grid>
+            )}
+
+            {/* Organization Type */}
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel id='organizationType'>Select Organization Type</InputLabel>
+                <Select
+                  fullWidth
+                  id='organizationType'
+                  value={formData.organizationType}
+                  onChange={e => setFormData({ ...formData, organizationType: e.target.value })}
+                  label='Select Organization Type'
+                  inputProps={{ placeholder: 'Select Organization Type' }}
+                >
+                  <MenuItem value=''>Select Organization Type</MenuItem>
+                  <MenuItem value='public-company'>Public Company</MenuItem>
+                  <MenuItem value='self-employed'>Self-employed</MenuItem>
+                  <MenuItem value='government-agency'>Government Agency</MenuItem>
+                  <MenuItem value='non-profit'>Non-profit</MenuItem>
+                  <MenuItem value='sole-proprietorship'>Sole proprietorship</MenuItem>
+                  <MenuItem value='privately-held'>Privately held</MenuItem>
+                  <MenuItem value='partnership'>Partnership</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
+            {/* Contact */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label='Contact'
+                type='number'
+                required
+                minLength={10}
+                fullWidth
+                placeholder='(397) 294-5153'
+                value={formData.contact}
+                onChange={e => setFormData({ ...formData, contact: e.target.value })}
+              />
+            </Grid>
+
+            {/* Description */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label='Description'
+                type='text'
+                fullWidth
+                placeholder='About Add'
+                value={formData.description}
+                onChange={e => setFormData({ ...formData, description: e.target.value })}
+              />
+            </Grid>
+
+            {/* Image Url */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label='Image Url'
+                type='text'
+                fullWidth
+                placeholder='http://example.com/image.png'
+                value={formData.imageUrl}
+                onChange={e => setFormData({ ...formData, imageUrl: e.target.value })}
+              />
+            </Grid>
+
+            {/* Action Url */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label='Action Url'
+                type='text'
+                fullWidth
+                placeholder='https://example.com'
+                value={formData.actionUrl}
+                onChange={e => setFormData({ ...formData, actionUrl: e.target.value })}
+                helperText='This link will be opened when user clicks on this advertisement.'
+              />
+            </Grid>
+
+            {/* Start and End Date Picker */}
+            <Grid item xs={12} sm={6}>
+              <StartAndEndDatePicker
+                formData={formData}
+                setFormData={setFormData}
+                startDate={formData.startDate}
+                endDate={formData.endDate}
+              />
+            </Grid>
+
+            {/* Select Status */}
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel id='select-status'>Select Status</InputLabel>
+                <Select
+                  fullWidth
+                  id='select-status'
+                  required
+                  value={formData.status}
+                  onChange={e => setFormData({ ...formData, status: e.target.value })}
+                  label='Select Status'
+                  labelId='status-select'
+                  inputProps={{ placeholder: 'Select Status' }}
+                >
+                  <MenuItem value='active'>Active</MenuItem>
+                  <MenuItem value='inactive'>In Active</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
+            {/* Select Media Type */}
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel id='select-mediaType'>Select Media Type</InputLabel>
+                <Select
+                  fullWidth
+                  id='select-mediaType'
+                  required
+                  value={formData.mediaType}
+                  onChange={e => setFormData({ ...formData, mediaType: e.target.value })}
+                  label='Select Media Type'
+                  labelId='status-mediaType'
+                  inputProps={{ placeholder: 'Select Media Type' }}
+                >
+                  <MenuItem value='video'>Video</MenuItem>
+                  <MenuItem value='image'>Image</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
+            {/* Select Run Type */}
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel id='select-runtype'>Select Run Type</InputLabel>
+                <Select
+                  required
+                  fullWidth
+                  id='select-runtype'
+                  value={formData.runType}
+                  onChange={e => setFormData({ ...formData, runType: e.target.value })}
+                  label='Select Run Type'
+                  labelId='status-runtype'
+                  inputProps={{ placeholder: 'Select Run Type' }}
+                >
+                  <MenuItem value='animate__shakeX'>Shake X</MenuItem>
+                  <MenuItem value='flashing-ad'>Flashing</MenuItem>
+                  <MenuItem value='animate__animated animate__bounce'>Bounce</MenuItem>
+                  <MenuItem value='animate__animated animate__rubberBand'>Rubber Band</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
+            {/* Select Advt Category */}
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel id='select-advtCategory'>Select Advt Category</InputLabel>
+                <Select
+                  fullWidth
+                  required
+                  id='select-advtCategory'
+                  value={formData.advtCategory}
+                  onChange={e => setFormData({ ...formData, advtCategory: e.target.value })}
+                  label='Select Advt Category'
+                  labelId='status-category'
+                  inputProps={{ placeholder: 'Select Advt Category' }}
+                >
+                  <MenuItem value='top'>Top Rolling Banner</MenuItem>
+                  <MenuItem value='bottom'>Bottom Banner</MenuItem>
+                  <MenuItem value='login'>Login Screen</MenuItem>
+                  <MenuItem value='landing'>Landing Page (My Progress)</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12}>
+              <Typography
+                variant='body1'
+                gutterBottom
+                sx={{ fontWeight: 600, color: theme.palette.text.primary, fontSize: { xs: '0.95rem', sm: '1rem' } }}
+              >
+                Logo
+              </Typography>
+              <input type='file' accept='image/*' ref={logoFileInputRef} hidden onChange={handleLogoImageUpload} />
+
+              <Stack
+                direction={{ xs: 'column', sm: 'row' }}
+                spacing={2}
+                alignItems={{ xs: 'stretch', sm: 'center' }}
+                sx={{ width: '100%' }}
+              >
+                {logoImage ? (
+                  <Stack
+                    direction={{ xs: 'column', sm: 'row' }}
+                    spacing={2}
+                    sx={{
+                      p: { xs: 1.5, sm: 2 },
+                      borderRadius: 2,
+                      backgroundColor: alpha(theme.palette.primary.main, 0.05),
+                      border: `1px dashed ${alpha(theme.palette.primary.main, 0.2)}`,
+                      alignItems: 'center',
+                      width: '100%',
+                      maxWidth: { sm: 'auto' }
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: { xs: '100%', sm: 160 },
+                        height: { xs: 140, sm: 110 },
+                        borderRadius: 2,
+                        overflow: 'hidden',
+                        border: `1px solid ${alpha(theme.palette.primary.main, 0.15)}`
+                      }}
+                    >
+                      <Box
+                        component='img'
+                        src={logoImage}
+                        alt='Uploaded'
+                        sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    </Box>
+                    <Stack
+                      direction='row'
+                      spacing={1}
+                      alignItems='center'
+                      justifyContent={{ xs: 'space-between', sm: 'flex-start' }}
+                      sx={{ width: '100%' }}
+                    >
+                      <Box sx={{ flexGrow: 1 }}>
+                        <Typography variant='body2' color='text.secondary' sx={{ wordBreak: 'break-all' }}>
+                          {logoFileName}
+                        </Typography>
+                      </Box>
+                      <Stack direction='row' spacing={1}>
+                        <IconButtonTooltip title='Open' color='primary' size='small' onClick={handleOpenLogoImage}>
+                          <Visibility color='primary' fontSize='small' />
+                        </IconButtonTooltip>
+                        <IconButtonTooltip title='Delete' size='small' onClick={handleDeleteLogoImage}>
+                          <Delete fontSize='small' color='error' />
+                        </IconButtonTooltip>
+                      </Stack>
+                    </Stack>
+                  </Stack>
+                ) : (
+                  <Button
+                    variant='outlined'
+                    fullWidth
+                    onClick={() => logoFileInputRef.current.click()}
+                    startIcon={<Upload />}
+                    sx={{
+                      maxWidth: { xs: '100%', sm: 200 },
+                      height: { xs: 110, sm: 120 },
+                      borderRadius: 2,
+                      borderStyle: 'dashed'
+                    }}
+                  >
+                    Upload
+                  </Button>
+                )}
+              </Stack>
+
+              <Dialog open={viewLogoImage} onClose={handleCloseLogoImage} maxWidth='sm' fullWidth>
+                <DialogTitle className='pb-2'>
+                  <Box className='flex justify-between items-center'>
+                    <Typography variant='h5'>Preview Logo</Typography>
+                    <IconButtonTooltip title='Close' onClick={handleCloseLogoImage}>
+                      <Close />
+                    </IconButtonTooltip>
+                  </Box>
+                </DialogTitle>
+                <DialogContent>
+                  {logoImage && <img src={logoImage} alt='Preview' style={{ width: '100%' }} />}
+                </DialogContent>
+              </Dialog>
+            </Grid>
+
+            {/* Tagline */}
+            <Grid item xs={12}>
+              <TextField
+                label='Tagline'
+                type='text'
+                fullWidth
+                placeholder='Tagline'
+                value={formData.tagline}
+                onChange={e => setFormData({ ...formData, tagline: e.target.value })}
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <Typography variant='h5' gutterBottom>
+                Restrict Advertisement by Geographical Area
+              </Typography>
+
+              <Typography variant='body1'>
+                Define the target group for advertisements based on their geographical location:
+              </Typography>
+
+              <ul>
+                <li>
+                  <Typography variant='body2'>
+                    <strong>Country:</strong> Advertisements will be visible to users across the entire country.
+                  </Typography>
+                </li>
+                <li>
+                  <Typography variant='body2'>
+                    <strong>State:</strong> Advertisements will be shown only to users within the specified state.
+                  </Typography>
+                </li>
+                <li>
+                  <Typography variant='body2'>
+                    <strong>City:</strong> Advertisements will be targeted to users in the specified city.
+                  </Typography>
+                </li>
+              </ul>
+            </Grid>
+
             <Grid item xs={12} md={6}>
-              {loading.fetchCities && <Loading />}
-              {!loading.fetchCities && (
+              <CountryRegionDropdown
+                setSelectedCountry={setSelectedCountry}
+                selectedCountryObject={selectedCountryObject}
+                setSelectedCountryObject={setSelectedCountryObject}
+                onCountryChange={handleChangeCountry}
+              />
+            </Grid>
+
+            {selectedCountryObject?.country && (
+              <Grid item xs={12} md={6}>
                 <FormControl fullWidth>
                   <Autocomplete
                     autoHighlight
                     onChange={(e, newValue) => {
-                      setCity(newValue)
+                      setSelectedRegion(newValue)
+                      getCitiesData(newValue)
+                      setCity('')
                     }}
-                    id='autocomplete-city-select'
-                    options={cityOptions}
+                    id='autocomplete-region-select'
+                    options={selectedCountryObject?.regions || []}
                     getOptionLabel={option => option || ''}
                     renderInput={params => (
                       <TextField
                         {...params}
                         key={params.id}
-                        label='Choose a City'
+                        label='Choose a region'
                         inputProps={{
                           ...params.inputProps,
-                          autoComplete: 'city'
+                          autoComplete: 'region'
                         }}
                       />
                     )}
-                    value={city}
+                    value={selectedRegion}
                   />
                 </FormControl>
-              )}
-            </Grid>
-          )}
+              </Grid>
+            )}
 
-          <Grid item xs={12}>
-            <Alert icon={false} color='info'>
-              <Typography className='w-full text-center' variant='h6'>
-                {city
-                  ? `Restricted to "${city.value}" city.`
-                  : selectedRegion
-                    ? `Restricted to "${selectedRegion}" Region.`
-                    : selectedCountryObject
-                      ? `Restricted to "${selectedCountryObject.country}" country.`
-                      : ''}
-              </Typography>
-            </Alert>
-          </Grid>
-
-          <Grid item xs={12}>
-            <Typography variant='h5' gutterBottom>
-              Select Quizzes for which Advertisement should run
-            </Typography>
-
-            <Typography variant='body1'>
-              Advertisements will be visible for all selected Quizzes within the geographical area mentioned above.
-            </Typography>
-          </Grid>
-
-          <Grid item xs={12}>
-            <MultiSelect
-              label='Select Quizzes'
-              placeholder='Select Quizzes'
-              selectedValues={formData?.bounds?.quizzes}
-              onChange={values => {
-                // Update the form data
-                setFormData({
-                  ...formData,
-                  bounds: {
-                    ...formData.bounds,
-                    quizzes: values
-                  }
-                })
-              }}
-              defaultAll={true} // Enable "All" behavior
-              options={quizzes.map(quiz => ({
-                value: quiz._id,
-                optionLabel: (
-                  <>
-                    <Grid container alignItems='center' spacing={2}>
-                      {/* Quiz Thumbnail on the Left */}
-                      <Grid item>
-                        <img
-                          src={quiz.thumbnail || 'https://via.placeholder.com/150'}
-                          alt={quiz.title}
-                          style={{ width: 50, height: 50, borderRadius: '50%' }}
+            {selectedRegion && (
+              <Grid item xs={12} md={6}>
+                {loading.fetchCities && <Loading />}
+                {!loading.fetchCities && (
+                  <FormControl fullWidth>
+                    <Autocomplete
+                      autoHighlight
+                      onChange={(e, newValue) => {
+                        setCity(newValue)
+                      }}
+                      id='autocomplete-city-select'
+                      options={cityOptions}
+                      getOptionLabel={option => option || ''}
+                      renderInput={params => (
+                        <TextField
+                          {...params}
+                          key={params.id}
+                          label='Choose a City'
+                          inputProps={{
+                            ...params.inputProps,
+                            autoComplete: 'city'
+                          }}
                         />
-                      </Grid>
+                      )}
+                      value={city}
+                    />
+                  </FormControl>
+                )}
+              </Grid>
+            )}
 
-                      {/* Title and ID on the Right, stacked */}
-                      <Grid item>
-                        <Typography variant='body1' fontWeight='bold'>
-                          {quiz.title}
-                        </Typography>
-                        <Typography variant='body2' color='textSecondary'>
-                          {quiz.details}
-                        </Typography>
+            <Grid item xs={12}>
+              <Alert icon={false} color='info'>
+                <Typography className='w-full text-center' variant='h6'>
+                  {city
+                    ? `Restricted to "${city.value}" city.`
+                    : selectedRegion
+                      ? `Restricted to "${selectedRegion}" Region.`
+                      : selectedCountryObject
+                        ? `Restricted to "${selectedCountryObject.country}" country.`
+                        : ''}
+                </Typography>
+              </Alert>
+            </Grid>
+
+            <Grid item xs={12}>
+              <Typography variant='h5' gutterBottom>
+                Select Quizzes for which Advertisement should run
+              </Typography>
+
+              <Typography variant='body1'>
+                Advertisements will be visible for all selected Quizzes within the geographical area mentioned above.
+              </Typography>
+            </Grid>
+
+            <Grid item xs={12}>
+              <MultiSelect
+                label='Select Quizzes'
+                placeholder='Select Quizzes'
+                selectedValues={formData?.bounds?.quizzes}
+                onChange={values => {
+                  // Update the form data
+                  setFormData({
+                    ...formData,
+                    bounds: {
+                      ...formData.bounds,
+                      quizzes: values
+                    }
+                  })
+                }}
+                defaultAll={true} // Enable "All" behavior
+                options={quizzes.map(quiz => ({
+                  value: quiz._id,
+                  optionLabel: (
+                    <>
+                      <Grid container alignItems='center' spacing={2}>
+                        {/* Quiz Thumbnail on the Left */}
+                        <Grid item>
+                          <img
+                            src={quiz.thumbnail || 'https://via.placeholder.com/150'}
+                            alt={quiz.title}
+                            style={{ width: 50, height: 50, borderRadius: '50%' }}
+                          />
+                        </Grid>
+
+                        {/* Title and ID on the Right, stacked */}
+                        <Grid item>
+                          <Typography variant='body1' fontWeight='bold'>
+                            {quiz.title}
+                          </Typography>
+                          <Typography variant='body2' color='textSecondary'>
+                            {quiz.details}
+                          </Typography>
+                        </Grid>
                       </Grid>
-                    </Grid>
-                  </>
-                ),
-                selectedLabel: quiz.title
-              }))}
-            />
+                    </>
+                  ),
+                  selectedLabel: quiz.title
+                }))}
+              />
+            </Grid>
           </Grid>
-        </Grid>
+        </Box>
       </DialogContent>
-      <DialogActions className='flex items-center justify-center gap-4'>
-        <Button variant='outlined' color='error' disabled={loading.submit} onClick={handleClose}>
+      <DialogActions
+        sx={{
+          px: { xs: 3, md: 4 },
+          py: { xs: 2, md: 2.5 },
+          backgroundColor: alpha(theme.palette.primary.main, 0.04),
+          display: 'flex',
+          flexWrap: 'wrap',
+          mt: { xs: 2, sm: 2 },
+          gap: { xs: 1.5, sm: 2 },
+          justifyContent: { xs: 'center', sm: 'flex-end' },
+          alignItems: 'center',
+          '& > .MuiButton-root': {
+            minWidth: 120,
+            justifyContent: 'center',
+            fontWeight: 600
+          }
+        }}
+      >
+        <Button variant='outlined' disabled={loading.submit} onClick={handleClose}>
           Cancel
         </Button>
         <Button
@@ -770,7 +890,7 @@ const AddAdvDrawer = ({ open, handleClose, mode = 'add', data = null, onRefresh 
           disabled={loading.submit}
           onClick={handleSubmit}
         >
-          Submit
+          {mode === 'add' ? 'Submit' : 'Update'}
         </Button>
       </DialogActions>
     </Dialog>

@@ -5,25 +5,246 @@ import {
   DialogContent,
   DialogTitle,
   DialogActions,
-  IconButton,
   FormControl,
   FormControlLabel,
   Switch,
   Button,
   TextField,
   Typography,
-  Box
+  Box,
+  Stack
 } from '@mui/material'
-import { useEffect, useRef, useState } from 'react'
-import * as RestApi from '@/utils/restApiUtil'
-import { API_URLS } from '@/configs/apiConfig'
+import { alpha, useTheme } from '@mui/material/styles'
+import { useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { addVideo, updateVideo } from '../../actions/videos'
 import ContextTreeSearch from '../quizbuilder/01_QuizContext/ContextTreeSearch'
 import VideoQuestions from './VideoQuestions'
-import MediaPreviewPopup from './MediaPreviewPopup'
 import VideoPortions from './VideoPortions'
 import IconButtonTooltip from '../IconButtonTooltip'
+
+const gradientBackground = (theme, strength = 0.08) =>
+  `linear-gradient(155deg, ${alpha(theme.palette.primary.light, strength)} 0%, ${alpha(
+    theme.palette.secondary.light,
+    strength - 0.02
+  )} 100%)`
+
+const VideoForm = ({
+  mode,
+  formData,
+  errors,
+  renderErrorMessage,
+  handleSetFormValue,
+  handleOpenPopup,
+  handleClosePopup,
+  onSetQuestions,
+  onSetRecommendedSegments,
+  videoDuration,
+  setVideoDuration,
+  isGenericPopupOpen,
+  isAcademicPopupOpen,
+  isQuestionFormOpen,
+  setIsQuestionFormOpen,
+  handleSubmit,
+  handleClose,
+  submitLabel
+}) => {
+  const theme = useTheme()
+  const cardStyles = {
+    borderRadius: 3,
+    backgroundColor: '#ffffff',
+    boxShadow: '0 14px 30px rgba(15,15,45,0.08)',
+    border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+    p: { xs: 2.25, sm: 3 },
+    width: '100%'
+  }
+
+  return (
+    <>
+      <DialogContent
+        sx={{
+          px: { xs: 3, sm: 4.5 },
+          py: { xs: 3, sm: 4 },
+          overflowY: 'auto',
+          background: gradientBackground(theme)
+        }}
+      >
+        <Stack spacing={3}>
+          <Stack spacing={2.25} sx={cardStyles}>
+            <Stack spacing={2}>
+              <Stack spacing={0.75}>
+                <TextField
+                  label='Video Name'
+                  value={formData.name}
+                  onChange={e => handleSetFormValue('name', e.target.value)}
+                  fullWidth
+                />
+                {renderErrorMessage(errors?.name)}
+              </Stack>
+              <Stack spacing={0.75}>
+                <TextField
+                  label='YouTube Video URL'
+                  value={formData.url}
+                  onChange={e => handleSetFormValue('url', e.target.value)}
+                  fullWidth
+                />
+                <Typography variant='body2' color='text.secondary'>
+                  Only YouTube links are supported for now.
+                </Typography>
+                {renderErrorMessage(errors?.url)}
+              </Stack>
+            </Stack>
+            <Stack spacing={0.75}>
+              <TextField
+                label='Description'
+                value={formData.description}
+                onChange={e => handleSetFormValue('description', e.target.value)}
+                fullWidth
+                multiline
+                minRows={3}
+              />
+              {renderErrorMessage(errors?.description)}
+            </Stack>
+            <Stack spacing={0.75}>
+              <TextField
+                label='Context IDs'
+                value={formData.genericContextIds.join(', ')}
+                onClick={() => handleOpenPopup('GENERIC')}
+                fullWidth
+                InputProps={{ readOnly: true }}
+                helperText='Tap to choose the contexts for this video.'
+              />
+              {renderErrorMessage(errors?.genericContextIds)}
+            </Stack>
+          </Stack>
+
+          {formData.url && (
+            <Stack spacing={2} sx={{ width: '100%', mb: -1 }}>
+              <Typography variant='subtitle1' sx={{ fontWeight: 700, px: { xs: 0.5, sm: 1 } }}>
+                Engagement Enhancers
+              </Typography>
+              <Stack spacing={2}>
+                <Stack spacing={1.5} sx={cardStyles}>
+                  <Typography variant='subtitle2' sx={{ fontWeight: 600 }}>
+                    Interactive Questions
+                  </Typography>
+                  <VideoQuestions
+                    questions={formData.questions.sort((a, b) => a.invocationTime - b.invocationTime)}
+                    onSetQuestions={onSetQuestions}
+                    setIsQuestionFormOpen={setIsQuestionFormOpen}
+                    isEdit={mode === 'edit'}
+                    videoUrl={formData.url}
+                    videoDuration={videoDuration}
+                    setVideoDuration={setVideoDuration}
+                  />
+                </Stack>
+                <Stack spacing={1.5} sx={cardStyles}>
+                  <Typography variant='subtitle2' sx={{ fontWeight: 600 }}>
+                    Recommended Segments
+                  </Typography>
+                  <VideoPortions
+                    videoUrl={formData.url}
+                    videoDuration={videoDuration}
+                    recommendedSegments={formData.recommendedSegments}
+                    onSetRecommendedSegments={onSetRecommendedSegments}
+                  />
+                </Stack>
+              </Stack>
+            </Stack>
+          )}
+
+          <Stack spacing={1.5} sx={cardStyles}>
+            <Typography variant='subtitle2' sx={{ fontWeight: 600 }}>
+              Availability
+            </Typography>
+            <Typography variant='body2' color='text.secondary'>
+              Toggle whether this video is visible to learners.
+            </Typography>
+            <FormControl>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={formData.isActive}
+                    onChange={e => handleSetFormValue('isActive', e.target.checked)}
+                    name='statusSwitch'
+                    color='primary'
+                  />
+                }
+                label={formData.isActive ? 'Active' : 'Inactive'}
+              />
+            </FormControl>
+          </Stack>
+        </Stack>
+      </DialogContent>
+
+      <DialogActions
+        sx={{
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          justifyContent: { xs: 'center', sm: 'flex-end' },
+          alignItems: 'center',
+          px: { xs: 3, sm: 4.5 },
+          py: { xs: 2.5, sm: 3 },
+          mt: { xs: 2, sm: 2 },
+          gap: { xs: 1.5, sm: 2 },
+          backgroundColor: alpha(theme.palette.primary.main, 0.06),
+          borderTop: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
+          '& > .MuiButton-root': {
+            minWidth: 120,
+            justifyContent: 'center'
+          }
+        }}
+      >
+        <Button onClick={handleClose} disabled={isQuestionFormOpen} variant='outlined'>
+          Cancel
+        </Button>
+        <Button
+          component='label'
+          variant='contained'
+          sx={{ color: 'white' }}
+          onClick={handleSubmit}
+          disabled={isQuestionFormOpen}
+        >
+          {submitLabel}
+        </Button>
+      </DialogActions>
+
+      <Dialog fullWidth maxWidth='sm' open={isGenericPopupOpen} onClose={() => handleClosePopup('GENERIC')}>
+        <IconButtonTooltip
+          title='Close'
+          onClick={() => handleClosePopup('GENERIC')}
+          className='absolute block-start-4 inline-end-4'
+        >
+          <i className='ri-close-line text-textSecondary' />
+        </IconButtonTooltip>
+        <DialogContent>
+          <ContextTreeSearch
+            setTheFormValue={(field, value) => handleSetFormValue(field, value)}
+            data={formData}
+            contextType='GENERIC'
+          />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog fullWidth maxWidth='sm' open={isAcademicPopupOpen} onClose={() => handleClosePopup('ACADEMIC')}>
+        <IconButtonTooltip
+          title='Close'
+          onClick={() => handleClosePopup('ACADEMIC')}
+          className='absolute block-start-4 inline-end-4'
+        >
+          <i className='ri-close-line text-textSecondary' />
+        </IconButtonTooltip>
+        <DialogContent>
+          <ContextTreeSearch
+            setTheFormValue={(field, value) => handleSetFormValue(field, value)}
+            data={formData}
+            contextType='ACADEMIC'
+          />
+        </DialogContent>
+      </Dialog>
+    </>
+  )
+}
 
 // AddContent Component
 const AddContent = ({ handleClose, onCreate }) => {
@@ -131,160 +352,26 @@ const AddContent = ({ handleClose, onCreate }) => {
   }
 
   return (
-    <DialogContent className='overflow-visible pbs-0 pbe-6 pli-10 sm:pli-16'>
-      <IconButtonTooltip title='Close' onClick={handleClose} className='absolute block-start-4 inline-end-4'>
-        <i className='ri-close-line text-textSecondary' />
-      </IconButtonTooltip>
-      {/* Name */}
-      <TextField
-        label='Name'
-        value={formData.name}
-        onChange={e => handleSetFormValue('name', e.target.value)}
-        fullWidth
-        margin='dense'
-      />
-
-      {renderErrorMessage(errors?.name)}
-      {/* URL */}
-      <TextField
-        label='YouTube Video URL'
-        value={formData.url}
-        onChange={e => handleSetFormValue('url', e.target.value)}
-        fullWidth
-        margin='dense'
-      />
-      <Typography variant='body2' color='text.secondary' sx={{ mb: 1, textAlign: 'left', width: '100%' }}>
-        Currently we are only able to support youtube links
-      </Typography>
-      {renderErrorMessage(errors?.url)}
-      {/* {formData.url && (
-        <MediaPreviewPopup
-          width='100%'
-          height='150px'
-          url={formData.url}
-          mediaType='video'
-          row={false}
-          controls={true}
-        />
-      )} */}
-      {/* Description */}
-      <TextField
-        label='Description'
-        value={formData.description}
-        onChange={e => handleSetFormValue('description', e.target.value)}
-        fullWidth
-        margin='dense'
-      />
-      {renderErrorMessage(errors?.description)}
-      {/* Generic Context IDs */}
-      <TextField
-        label='Generic Context IDs'
-        value={formData.genericContextIds.join(', ')}
-        onClick={() => handleOpenPopup('GENERIC')}
-        fullWidth
-        margin='dense'
-        InputProps={{ readOnly: true }}
-      />
-      {renderErrorMessage(errors?.genericContextIds)}
-      {/* Academic Context IDs */}
-      {/* <TextField
-        label='Academic Context IDs'
-        value={formData.academicContextIds.join(', ')}
-        onClick={() => handleOpenPopup('ACADEMIC')}
-        fullWidth
-        margin='dense'
-        InputProps={{ readOnly: true }}
-      /> */}
-
-      {/* Questions */}
-      {formData.url && (
-        <VideoQuestions
-          questions={formData.questions.sort((a, b) => a.invocationTime - b.invocationTime)}
-          onSetQuestions={onSetQuestions}
-          setIsQuestionFormOpen={setIsQuestionFormOpen}
-          isEdit={false}
-          videoUrl={formData.url}
-          videoDuration={videoDuration}
-          setVideoDuration={setVideoDuration}
-        />
-      )}
-
-      {/* Recommended Video Portions */}
-      {formData.url && (
-        <VideoPortions
-          videoUrl={formData.url}
-          videoDuration={videoDuration}
-          recommendedSegments={formData.recommendedSegments}
-          onSetRecommendedSegments={onSetRecommendedSegments}
-        />
-      )}
-
-      {/* Status */}
-      <FormControl margin='dense'>
-        <FormControlLabel
-          control={
-            <Switch
-              checked={formData.isActive}
-              onChange={e => handleSetFormValue('isActive', e.target.checked)}
-              name='statusSwitch'
-              color='primary'
-            />
-          }
-          label={formData.isActive ? 'Active' : 'Inactive'}
-        />
-      </FormControl>
-      {/* Actions */}
-      <DialogActions className='gap-2 justify-center'>
-        <Button onClick={handleClose} disabled={isQuestionFormOpen} variant='outlined' color='primary'>
-          Cancel
-        </Button>
-        <Button
-          component='label'
-          variant='contained'
-          style={{ color: 'white' }}
-          onClick={handleAddRow}
-          disabled={isQuestionFormOpen}
-        >
-          Add
-        </Button>
-      </DialogActions>
-
-      {/* Generic Context Popup */}
-      <Dialog fullWidth maxWidth='sm' open={isGenericPopupOpen} onClose={() => handleClosePopup('GENERIC')}>
-        <IconButtonTooltip
-          title='Close'
-          onClick={() => handleClosePopup('GENERIC')}
-          className='absolute block-start-4 inline-end-4'
-        >
-          <i className='ri-close-line text-textSecondary' />
-        </IconButtonTooltip>
-        <DialogContent>
-          <ContextTreeSearch
-            setTheFormValue={(field, value) => handleSetFormValue(field, value)}
-            data={formData}
-            contextType='GENERIC'
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* Academic Context Popup */}
-      <Dialog fullWidth maxWidth='sm' open={isAcademicPopupOpen} onClose={() => handleClosePopup('ACADEMIC')}>
-        <IconButtonTooltip
-          title='Close'
-          onClick={() => handleClosePopup('ACADEMIC')}
-          className='absolute block-start-4 inline-end-4'
-        >
-          <i className='ri-close-line text-textSecondary' />
-        </IconButtonTooltip>
-        <DialogContent>
-          <ContextTreeSearch
-            setTheFormValue={(field, value) => handleSetFormValue(field, value)}
-            data={formData}
-            contextType='ACADEMIC'
-          />
-        </DialogContent>
-      </Dialog>
-    </DialogContent>
+    <VideoForm
+      mode='add'
+      formData={formData}
+      errors={errors}
+      renderErrorMessage={renderErrorMessage}
+      handleSetFormValue={handleSetFormValue}
+      handleOpenPopup={handleOpenPopup}
+      handleClosePopup={handleClosePopup}
+      onSetQuestions={onSetQuestions}
+      onSetRecommendedSegments={onSetRecommendedSegments}
+      videoDuration={videoDuration}
+      setVideoDuration={setVideoDuration}
+      isGenericPopupOpen={isGenericPopupOpen}
+      isAcademicPopupOpen={isAcademicPopupOpen}
+      isQuestionFormOpen={isQuestionFormOpen}
+      setIsQuestionFormOpen={setIsQuestionFormOpen}
+      handleSubmit={handleAddRow}
+      handleClose={handleClose}
+      submitLabel='Submit'
+    />
   )
 }
 
@@ -408,177 +495,33 @@ const EditContent = ({ handleClose, data, onUpdate }) => {
   }
 
   return (
-    <DialogContent className='overflow-visible pbs-0 pbe-6 pli-10 sm:pli-16'>
-      <IconButtonTooltip title='Close' onClick={handleClose} className='absolute block-start-4 inline-end-4'>
-        <i className='ri-close-line text-textSecondary' />
-      </IconButtonTooltip>
-      {/* Name */}
-      <TextField
-        label='Name'
-        value={formData.name}
-        onChange={e => handleSetFormValue('name', e.target.value)}
-        fullWidth
-        margin='dense'
-      />
-
-      {renderErrorMessage(errors?.name)}
-      {/* URL */}
-      <TextField
-        label='YouTube Video URL'
-        value={formData.url}
-        onChange={e => handleSetFormValue('url', e.target.value)}
-        fullWidth
-        margin='dense'
-      />
-      <Typography variant='body2' color='text.secondary' sx={{ mb: 1, textAlign: 'left', width: '100%' }}>
-        {' '}
-        Currently we are only able to support youtube links{' '}
-      </Typography>
-      {renderErrorMessage(errors?.url)}
-      {/* {formData.url && (
-        <MediaPreviewPopup
-          width='100%'
-          height='150px'
-          url={formData.url}
-          mediaType='video'
-          row={false}
-          controls={true}
-        />
-      )} */}
-      {/* Description */}
-      <TextField
-        label='Description'
-        value={formData.description}
-        onChange={e => handleSetFormValue('description', e.target.value)}
-        fullWidth
-        margin='dense'
-      />
-      {renderErrorMessage(errors?.description)}
-      {/* Generic Context IDs */}
-      <TextField
-        label='Generic Context IDs'
-        value={formData.genericContextIds.join(', ')}
-        onClick={() => handleOpenPopup('GENERIC')}
-        fullWidth
-        margin='dense'
-        InputProps={{ readOnly: true }}
-      />
-      {renderErrorMessage(errors?.genericContextIds)}
-      {/* Academic Context IDs */}
-      {/* <TextField
-        label='Academic Context IDs'
-        value={formData.academicContextIds.join(', ')}
-        onClick={() => handleOpenPopup('ACADEMIC')}
-        fullWidth
-        margin='dense'
-        InputProps={{ readOnly: true }}
-      /> */}
-
-      {/* Questions */}
-      {formData.url && (
-        <div className='mt-3'>
-          <VideoQuestions
-            questions={formData.questions.sort((a, b) => a.invocationTime - b.invocationTime)}
-            onSetQuestions={onSetQuestions}
-            isEdit={true}
-            videoUrl={formData.url}
-            setIsQuestionFormOpen={setIsQuestionFormOpen}
-            videoDuration={videoDuration}
-            setVideoDuration={setVideoDuration}
-          />
-        </div>
-      )}
-
-      {/* Recommended Video Portions */}
-      {formData.url && (
-        <VideoPortions
-          videoUrl={formData.url}
-          videoDuration={videoDuration}
-          recommendedSegments={formData.recommendedSegments}
-          onSetRecommendedSegments={onSetRecommendedSegments}
-        />
-      )}
-
-      {/* Created By */}
-      {/* <TextField
-        label='Created By'
-        value={formData.createdBy}
-        InputProps={{ readOnly: true }}
-        fullWidth
-        margin='dense'
-      /> */}
-      {/* Status */}
-      <FormControl margin='dense'>
-        <FormControlLabel
-          control={
-            <Switch
-              checked={formData.isActive}
-              onChange={e => handleSetFormValue('isActive', e.target.checked)}
-              name='statusSwitch'
-              color='primary'
-            />
-          }
-          label={formData.isActive ? 'Active' : 'Inactive'}
-        />
-      </FormControl>
-      {/* Actions */}
-      <DialogActions className='gap-2 justify-center'>
-        <Button onClick={handleClose} disabled={isQuestionFormOpen} variant='outlined' color='primary'>
-          Cancel
-        </Button>
-        <Button
-          onClick={handleUpdateRow}
-          disabled={isQuestionFormOpen}
-          component='label'
-          variant='contained'
-          style={{ color: 'white' }}
-        >
-          Update
-        </Button>
-      </DialogActions>
-
-      {/* Generic Context Popup */}
-      <Dialog fullWidth maxWidth='sm' open={isGenericPopupOpen} onClose={() => handleClosePopup('GENERIC')}>
-        <IconButtonTooltip
-          title='Close'
-          onClick={() => handleClosePopup('GENERIC')}
-          className='absolute block-start-4 inline-end-4'
-        >
-          <i className='ri-close-line text-textSecondary' />
-        </IconButtonTooltip>
-        <DialogContent>
-          <ContextTreeSearch
-            setTheFormValue={(field, value) => handleSetFormValue(field, value)}
-            data={formData}
-            contextType='GENERIC'
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* Academic Context Popup */}
-      <Dialog fullWidth maxWidth='sm' open={isAcademicPopupOpen} onClose={() => handleClosePopup('ACADEMIC')}>
-        <IconButtonTooltip
-          title='Close'
-          onClick={() => handleClosePopup('ACADEMIC')}
-          className='absolute block-start-4 inline-end-4'
-        >
-          <i className='ri-close-line text-textSecondary' />
-        </IconButtonTooltip>
-        <DialogContent>
-          <ContextTreeSearch
-            setTheFormValue={(field, value) => handleSetFormValue(field, value)}
-            data={formData}
-            contextType='ACADEMIC'
-          />
-        </DialogContent>
-      </Dialog>
-    </DialogContent>
+    <VideoForm
+      mode='edit'
+      formData={formData}
+      errors={errors}
+      renderErrorMessage={renderErrorMessage}
+      handleSetFormValue={handleSetFormValue}
+      handleOpenPopup={handleOpenPopup}
+      handleClosePopup={handleClosePopup}
+      onSetQuestions={onSetQuestions}
+      onSetRecommendedSegments={onSetRecommendedSegments}
+      videoDuration={videoDuration}
+      setVideoDuration={setVideoDuration}
+      isGenericPopupOpen={isGenericPopupOpen}
+      isAcademicPopupOpen={isAcademicPopupOpen}
+      isQuestionFormOpen={isQuestionFormOpen}
+      setIsQuestionFormOpen={setIsQuestionFormOpen}
+      handleSubmit={handleUpdateRow}
+      handleClose={handleClose}
+      submitLabel='Update'
+    />
   )
 }
 
 // Main Video Dialog Component
 const VideoDialog = ({ open, onClose, data, onSuccess }) => {
   const { data: session } = useSession()
+  const theme = useTheme()
 
   const handleCreateNewRow = async newRow => {
     try {
@@ -622,17 +565,48 @@ const VideoDialog = ({ open, onClose, data, onSuccess }) => {
   }
 
   return (
-    <Dialog fullWidth maxWidth='lg' open={open} onClose={onClose}>
+    <Dialog
+      fullWidth
+      maxWidth='lg'
+      open={open}
+      onClose={onClose}
+      PaperProps={{
+        sx: {
+          borderRadius: { xs: 3, sm: 4 },
+          mx: { xs: 2, sm: 0 },
+          my: { xs: 3, sm: 5 },
+          border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+          boxShadow: '0 22px 60px rgba(15,15,45,0.2)'
+        }
+      }}
+    >
       <DialogTitle
-        variant='h4'
-        className='flex flex-col gap-2 text-center pbs-10 pbe-6 pli-10 sm:pbs-16 sm:pbe-6 sm:pli-16'
+        sx={{
+          px: { xs: 3, sm: 4 },
+          py: { xs: 2.5, sm: 3 },
+          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
+          backgroundColor: '#ffffff'
+        }}
       >
-        {data ? 'Edit YouTube Video ' : 'Add New YouTube Video'}
-        <Typography component='span' className='flex flex-col text-center'>
-          {data
-            ? 'Modify the video and update questions as needed.'
-            : 'Enhance video by adding questions for better engagement.'}
-        </Typography>
+        <Stack direction='row' alignItems='center' justifyContent='space-between' spacing={2}>
+          <Stack direction='row' alignItems='center' spacing={2}>
+            <Box>
+              <Typography variant='h6' sx={{ fontWeight: 700 }}>
+                {data ? 'Edit YouTube Video' : 'Add New YouTube Video'}
+              </Typography>
+            </Box>
+          </Stack>
+          <IconButtonTooltip
+            title='Close'
+            onClick={onClose}
+            sx={{
+              color: theme.palette.text.secondary,
+              '&:hover i': { color: theme.palette.text.primary }
+            }}
+          >
+            <i className='ri-close-line text-xl' />
+          </IconButtonTooltip>
+        </Stack>
       </DialogTitle>
       {data ? (
         <EditContent handleClose={onClose} data={data} onUpdate={handleUpdateRow} />

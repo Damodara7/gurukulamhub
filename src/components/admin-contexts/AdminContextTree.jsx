@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import SortableTree, { addNodeUnderParent, removeNodeAtPath, changeNodeAtPath } from '@nosferatu500/react-sortable-tree'
 import '@nosferatu500/react-sortable-tree/style.css'
-import { Input, Button, IconButton, useTheme, TextField, InputAdornment, Box, Typography } from '@mui/material'
+import { Input, Button, IconButton, useTheme, TextField, InputAdornment, Box, Typography, Stack } from '@mui/material'
 import useUser from '@/utils/useUser' // Replace with your hook path
 import { AddCircle as AddCircleIcon, RemoveCircle as RemoveCircleIcon, Edit as EditIcon } from '@mui/icons-material'
 import SearchNavigator from './SearchNavigator'
@@ -366,24 +366,28 @@ const AdminContextTree = ({
   if (loading) return <>Fetching Subjects Please Wait...</>
 
   return (
-    <div className='w-full'>
-      <Box sx={{ mb: 3 }}>
+    <Box sx={{ width: '100%' }}>
+      <Stack spacing={{ xs: 2, md: 3 }} sx={{ mb: { xs: 2.5, md: 3 } }}>
         <Typography
           variant='h5'
           sx={{
             fontWeight: 700,
-            mb: 3,
             background: 'linear-gradient(135deg, #8b5cf6 0%, #c4b5fd 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
             textTransform: 'uppercase',
-            letterSpacing: '0.5px'
+            letterSpacing: '0.45px',
+            fontSize: { xs: '1.1rem', md: '1.25rem' }
           }}
         >
           {headingLabel}
         </Typography>
-        <form
+        <Stack
+          component='form'
+          spacing={{ xs: 1.5, sm: 2 }}
+          direction={{ xs: 'column', sm: 'row' }}
+          alignItems={{ xs: 'stretch', sm: 'center' }}
           onSubmit={event => {
             event.preventDefault()
           }}
@@ -397,7 +401,6 @@ const AdminContextTree = ({
             onChange={event => setSearchString(event.target.value)}
             size='small'
             sx={{
-              mb: 2,
               '& .MuiOutlinedInput-root': {
                 borderRadius: 2,
                 backgroundColor: '#ffffff',
@@ -427,18 +430,48 @@ const AdminContextTree = ({
             selectPrevMatch={selectPrevMatch}
             selectNextMatch={selectNextMatch}
           />
-        </form>
-      </Box>
+        </Stack>
+      </Stack>
 
-      <div className='breadcrumbs'>
-        {breadcrumbs.map((crumb, index) => (
-          <span key={index} onClick={() => handleBreadcrumbClick(crumb.id)}>
-            {crumb.title} /
-          </span>
-        ))}
-      </div>
+      {breadcrumbs.length > 0 && (
+        <Stack
+          direction='row'
+          flexWrap='wrap'
+          spacing={1}
+          alignItems='center'
+          sx={{
+            mb: { xs: 2, md: 2.5 },
+            fontSize: { xs: '0.78rem', sm: '0.85rem' },
+            color: alpha(theme.palette.text.primary, 0.7)
+          }}
+        >
+          {breadcrumbs.map((crumb, index) => (
+            <Box
+              key={crumb.id}
+              component='button'
+              type='button'
+              onClick={() => handleBreadcrumbClick(crumb.id)}
+              sx={{
+                border: 'none',
+                background: 'transparent',
+                color: index === breadcrumbs.length - 1 ? theme.palette.primary.main : 'inherit',
+                fontWeight: index === breadcrumbs.length - 1 ? 600 : 500,
+                cursor: 'pointer',
+                px: 0,
+                py: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.5
+              }}
+            >
+              {crumb.title}
+              {index !== breadcrumbs.length - 1 && <span style={{ opacity: 0.6 }}>/</span>}
+            </Box>
+          ))}
+        </Stack>
+      )}
 
-      <div style={{ height: '75vh', width: '100%' }}>
+      <Box sx={{ height: { xs: '65vh', sm: '70vh', md: '74vh' }, width: '100%' }}>
         <SortableTree
           //nodeRenderer={CustomNodeRenderer}
           style={{
@@ -475,8 +508,8 @@ const AdminContextTree = ({
             setSearchFocusIndex(matches.length > 0 ? searchFocusIndex % matches.length : 0)
           }}
         />
-      </div>
-    </div>
+      </Box>
+    </Box>
   )
 }
 

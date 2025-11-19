@@ -55,7 +55,9 @@ const getStatusChip = status => {
       sx={{
         fontWeight: 500,
         borderWidth: 1.5,
-        borderStyle: 'solid'
+        borderStyle: 'solid',
+        fontSize: { xs: '0.7rem', sm: '0.75rem' },
+        height: { xs: 24, sm: 28 }
       }}
     />
   )
@@ -89,20 +91,49 @@ const CreatorGameCard = ({
     >
       <CardMedia
         component='img'
-        height='180'
         image={game?.thumbnailPoster || imagePlaceholder.src}
         alt={game.title}
-        sx={{ objectFit: 'cover' }}
+        sx={{
+          objectFit: 'cover',
+          height: { xs: 140, sm: 160, md: 180 },
+          width: '100%'
+        }}
         onError={e => {
           e.target.src = imagePlaceholder.src
         }}
       />
 
-      <CardContent sx={{ flexGrow: 1 }}>
-        <Box className='flex flex-col justify-between' style={{ height: '100%' }}>
+      <CardContent sx={{ flexGrow: 1, p: { xs: 1.5, sm: 2 } }}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            height: '100%'
+          }}
+        >
           <Box>
-            <Stack direction='row' justifyContent='space-between' alignItems='flex-start' mb={0}>
-              <Typography variant='h6' fontWeight={600}>
+            <Stack
+              direction='row'
+              justifyContent='space-between'
+              alignItems='flex-start'
+              spacing={1}
+              sx={{ mb: { xs: 1, sm: 1.5 } }}
+            >
+              <Typography
+                variant='h6'
+                fontWeight={600}
+                sx={{
+                  fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem' },
+                  flex: 1,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  lineHeight: 1.3
+                }}
+              >
                 {game.title}
               </Typography>
               {getStatusChip(game.status)}
@@ -111,12 +142,14 @@ const CreatorGameCard = ({
             <Typography
               variant='body2'
               color='text.secondary'
-              mb={2}
               sx={{
                 display: '-webkit-box',
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: 'vertical',
-                overflow: 'hidden'
+                overflow: 'hidden',
+                mb: { xs: 1.5, sm: 2 },
+                fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                lineHeight: 1.5
               }}
             >
               {game.description}
@@ -124,7 +157,7 @@ const CreatorGameCard = ({
 
             {/* Group Information */}
             {game?.groupId && (
-              <Box sx={{ mb: 2 }}>
+              <Box sx={{ mb: { xs: 1.5, sm: 2 } }}>
                 <Chip
                   label={`Restricted to group - "${game.groupId?.groupName || 'Private Group'}"`}
                   color='error'
@@ -132,8 +165,16 @@ const CreatorGameCard = ({
                   size='small'
                   sx={{
                     fontWeight: 700,
-                    fontSize: '0.8rem',
-                    textTransform: 'none'
+                    fontSize: { xs: '0.7rem', sm: '0.75rem', md: '0.8rem' },
+                    textTransform: 'none',
+                    height: { xs: 24, sm: 28 },
+                    '& .MuiChip-label': {
+                      px: { xs: 1, sm: 1.5 },
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      maxWidth: { xs: '200px', sm: 'none' }
+                    }
                   }}
                 />
               </Box>
@@ -143,20 +184,27 @@ const CreatorGameCard = ({
               <Alert
                 severity='warning'
                 icon={false}
-                style={{ textAlign: 'center' }}
                 variant='outlined'
                 sx={{
-                  my: 2,
-                  py: 0,
+                  my: { xs: 1.5, sm: 2 },
+                  py: { xs: 0.5, sm: 0 },
                   display: 'block',
+                  textAlign: 'center',
                   '& .MuiAlert-message': {
-                    padding: '4px 0',
-                    fontSize: '0.8rem'
+                    padding: { xs: '4px 0', sm: '4px 0' },
+                    fontSize: { xs: '0.75rem', sm: '0.8rem' }
                   }
                 }}
               >
-                <Box className='flex gap-2 items-center justify-center'>
-                  <HourglassBottomIcon fontSize='small' />
+                <Box
+                  sx={{
+                    display: 'flex',
+                    gap: { xs: 1, sm: 2 },
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <HourglassBottomIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />
                   <span>Waiting for admin approval</span>
                 </Box>
               </Alert>
@@ -165,50 +213,79 @@ const CreatorGameCard = ({
               <Alert
                 severity='success'
                 icon={false}
-                style={{ textAlign: 'center' }}
                 variant='outlined'
                 sx={{
-                  my: 2,
-                  py: 0,
+                  my: { xs: 1.5, sm: 2 },
+                  py: { xs: 0.5, sm: 0 },
                   display: 'block',
+                  textAlign: 'center',
                   '& .MuiAlert-message': {
-                    padding: '4px 0',
-                    fontSize: '0.8rem'
+                    padding: { xs: '4px 0', sm: '4px 0' },
+                    fontSize: { xs: '0.75rem', sm: '0.8rem' }
                   }
                 }}
               >
-                <Box className='flex gap-2 items-center justify-center'>
-                  <VerifiedIcon fontSize='small' />
+                <Box
+                  sx={{
+                    display: 'flex',
+                    gap: { xs: 1, sm: 2 },
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <VerifiedIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />
                   <span>Approved by admin!</span>
                 </Box>
               </Alert>
             )}
 
-            <Stack spacing={1} mb={3}>
+            <Stack spacing={{ xs: 0.75, sm: 1 }} sx={{ mb: { xs: 2, sm: 3 } }}>
               {game.startTime && (
-                <Stack direction='row' alignItems='center' spacing={1}>
-                  <EventIcon fontSize='small' color='action' />
-                  <Typography variant='body2'>{format(new Date(game.startTime), 'PPpp')}</Typography>
+                <Stack direction='row' alignItems='center' spacing={{ xs: 0.75, sm: 1 }}>
+                  <EventIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' }, color: 'action' }} />
+                  <Typography
+                    variant='body2'
+                    sx={{
+                      fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      flex: 1
+                    }}
+                  >
+                    {format(new Date(game.startTime), 'PPpp')}
+                  </Typography>
                 </Stack>
               )}
 
               {game.duration && !game?.forwardType === 'admin' && (
-                <Stack direction='row' alignItems='center' spacing={1}>
-                  <AccessTimeIcon fontSize='small' color='action' />
-                  <Typography variant='body2'>{Math.floor(game.duration / 60)} minutes</Typography>
+                <Stack direction='row' alignItems='center' spacing={{ xs: 0.75, sm: 1 }}>
+                  <AccessTimeIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' }, color: 'action' }} />
+                  <Typography variant='body2' sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
+                    {Math.floor(game.duration / 60)} minutes
+                  </Typography>
                 </Stack>
               )}
 
-              <Stack direction='row' alignItems='center' spacing={1}>
-                <PeopleIcon fontSize='small' color='action' />
-                <Typography variant='body2'>
+              <Stack direction='row' alignItems='center' spacing={{ xs: 0.75, sm: 1 }}>
+                <PeopleIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' }, color: 'action' }} />
+                <Typography variant='body2' sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
                   {game.participatedUsers?.length || 0} / {game.maxPlayers || '∞'} players
                 </Typography>
               </Stack>
 
-              <Stack direction='row' alignItems='center' spacing={1}>
-                <PersonIcon fontSize='small' color='action' />
-                <Typography variant='body2' noWrap>
+              <Stack direction='row' alignItems='center' spacing={{ xs: 0.75, sm: 1 }}>
+                <PersonIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' }, color: 'action' }} />
+                <Typography
+                  variant='body2'
+                  sx={{
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    flex: 1
+                  }}
+                >
                   {game.creatorEmail}
                 </Typography>
               </Stack>
@@ -217,10 +294,15 @@ const CreatorGameCard = ({
 
           <Stack
             direction='row'
-            spacing={1}
-            gap={1}
+            spacing={{ xs: 0.5, sm: 1 }}
+            gap={{ xs: 0.5, sm: 1 }}
             justifyContent='center'
-            className='border border-gray-200 rounded-md p-1'
+            sx={{
+              border: `1px solid ${theme.palette.divider}`,
+              borderRadius: 1,
+              p: { xs: 0.75, sm: 1 },
+              flexWrap: 'wrap'
+            }}
           >
             <IconButtonTooltip title='View Details' onClick={() => onViewGame(game._id)} color='info'>
               <VisibilityIcon />
