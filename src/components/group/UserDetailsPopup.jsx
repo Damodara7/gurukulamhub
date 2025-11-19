@@ -53,29 +53,58 @@ const UserDetailsPopup = ({ open, userDetails, onClose }) => {
   }
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth='md' fullWidth>
-      <DialogTitle>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth='md'
+      fullWidth
+      fullScreen={false}
+      PaperProps={{
+        sx: {
+          m: { xs: 2, sm: 3 },
+          maxHeight: { xs: '90vh', sm: '85vh' },
+          width: { xs: 'calc(100% - 32px)', sm: 'auto' }
+        }
+      }}
+    >
+      <DialogTitle sx={{ p: { xs: 2, sm: 3 }, pb: { xs: 1, sm: 2 } }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: { xs: 1.5, sm: 2 },
+            flexWrap: { xs: 'wrap', sm: 'nowrap' }
+          }}
+        >
           <Avatar
             sx={{
-              width: 60,
-              height: 60,
+              width: { xs: 48, sm: 60 },
+              height: { xs: 48, sm: 60 },
               bgcolor: 'primary.main',
-              fontSize: '1.5rem',
-              fontWeight: 600
+              fontSize: { xs: '1.25rem', sm: '1.5rem' },
+              fontWeight: 600,
+              flexShrink: 0
             }}
           >
             {profile?.firstname?.[0] || profile?.lastname?.[0] || email?.[0]?.toUpperCase() || 'U'}
           </Avatar>
-          <Box>
-            <Typography variant='h6' component='div'>
+          <Box sx={{ minWidth: 0, flex: 1 }}>
+            <Typography
+              variant='h6'
+              component='div'
+              sx={{ fontSize: { xs: '1rem', sm: '1.25rem' }, wordBreak: 'break-word' }}
+            >
               {getFullName()}
             </Typography>
-            <Typography variant='body2' color='text.secondary'>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+              sx={{ fontSize: { xs: '0.875rem', sm: '1rem' }, wordBreak: 'break-word' }}
+            >
               {email}
             </Typography>
             {memberId && (
-              <Typography variant='caption' color='text.secondary'>
+              <Typography variant='caption' color='text.secondary' sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>
                 Member ID: {memberId}
               </Typography>
             )}
@@ -83,43 +112,81 @@ const UserDetailsPopup = ({ open, userDetails, onClose }) => {
         </Box>
       </DialogTitle>
 
-      <DialogContent sx={{ maxHeight: '70vh', overflow: 'auto' }}>
-        <Grid container spacing={3}>
+      <DialogContent
+        sx={{ maxHeight: { xs: 'calc(90vh - 200px)', sm: '70vh' }, overflow: 'auto', p: { xs: 2, sm: 3 } }}
+      >
+        <Grid container spacing={{ xs: 2, sm: 3 }}>
           {/* Personal Information */}
           <Grid item xs={12} md={6}>
-            <Card variant='outlined'>
-              <CardContent>
-                <Typography variant='h6' gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <PersonIcon color='primary' />
+            <Card variant='outlined' sx={{ height: '100%' }}>
+              <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
+                <Typography
+                  variant='h6'
+                  gutterBottom
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    fontSize: { xs: '1rem', sm: '1.25rem' },
+                    mb: { xs: 1.5, sm: 2 }
+                  }}
+                >
+                  <PersonIcon sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }} color='primary' />
                   Personal Information
                 </Typography>
                 <List dense>
-                  <ListItem>
-                    <ListItemIcon>
-                      <PersonIcon fontSize='small' />
+                  <ListItem sx={{ px: { xs: 0, sm: 1 } }}>
+                    <ListItemIcon sx={{ minWidth: { xs: 36, sm: 40 } }}>
+                      <PersonIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />
                     </ListItemIcon>
-                    <ListItemText primary='Full Name' secondary={getFullName()} />
+                    <ListItemText
+                      primary='Full Name'
+                      secondary={getFullName()}
+                      primaryTypographyProps={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+                      secondaryTypographyProps={{
+                        fontSize: { xs: '0.8125rem', sm: '0.875rem' },
+                        wordBreak: 'break-word'
+                      }}
+                    />
                   </ListItem>
-                  <ListItem>
-                    <ListItemIcon>
-                      <EmailIcon fontSize='small' />
+                  <ListItem sx={{ px: { xs: 0, sm: 1 } }}>
+                    <ListItemIcon sx={{ minWidth: { xs: 36, sm: 40 } }}>
+                      <EmailIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />
                     </ListItemIcon>
-                    <ListItemText primary='Email' secondary={email} />
+                    <ListItemText
+                      primary='Email'
+                      secondary={email}
+                      primaryTypographyProps={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+                      secondaryTypographyProps={{
+                        fontSize: { xs: '0.8125rem', sm: '0.875rem' },
+                        wordBreak: 'break-word'
+                      }}
+                    />
                   </ListItem>
                   {profile?.phone && (
-                    <ListItem>
-                      <ListItemIcon>
-                        <PhoneIcon fontSize='small' />
+                    <ListItem sx={{ px: { xs: 0, sm: 1 } }}>
+                      <ListItemIcon sx={{ minWidth: { xs: 36, sm: 40 } }}>
+                        <PhoneIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />
                       </ListItemIcon>
-                      <ListItemText primary='Phone' secondary={profile.phone} />
+                      <ListItemText
+                        primary='Phone'
+                        secondary={profile.phone}
+                        primaryTypographyProps={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+                        secondaryTypographyProps={{ fontSize: { xs: '0.8125rem', sm: '0.875rem' } }}
+                      />
                     </ListItem>
                   )}
                   {memberId && (
-                    <ListItem>
-                      <ListItemIcon>
-                        <BadgeIcon fontSize='small' />
+                    <ListItem sx={{ px: { xs: 0, sm: 1 } }}>
+                      <ListItemIcon sx={{ minWidth: { xs: 36, sm: 40 } }}>
+                        <BadgeIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />
                       </ListItemIcon>
-                      <ListItemText primary='Member ID' secondary={memberId} />
+                      <ListItemText
+                        primary='Member ID'
+                        secondary={memberId}
+                        primaryTypographyProps={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+                        secondaryTypographyProps={{ fontSize: { xs: '0.8125rem', sm: '0.875rem' } }}
+                      />
                     </ListItem>
                   )}
                 </List>
@@ -129,37 +196,62 @@ const UserDetailsPopup = ({ open, userDetails, onClose }) => {
 
           {/* Demographics */}
           <Grid item xs={12} md={6}>
-            <Card variant='outlined'>
-              <CardContent>
-                <Typography variant='h6' gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <CakeIcon color='primary' />
+            <Card variant='outlined' sx={{ height: '100%' }}>
+              <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
+                <Typography
+                  variant='h6'
+                  gutterBottom
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    fontSize: { xs: '1rem', sm: '1.25rem' },
+                    mb: { xs: 1.5, sm: 2 }
+                  }}
+                >
+                  <CakeIcon sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }} color='primary' />
                   Demographics
                 </Typography>
                 <List dense>
                   {profile?.age && (
-                    <ListItem>
-                      <ListItemIcon>
-                        <CakeIcon fontSize='small' />
+                    <ListItem sx={{ px: { xs: 0, sm: 1 } }}>
+                      <ListItemIcon sx={{ minWidth: { xs: 36, sm: 40 } }}>
+                        <CakeIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />
                       </ListItemIcon>
-                      <ListItemText primary='Age' secondary={`${profile.age} years old`} />
+                      <ListItemText
+                        primary='Age'
+                        secondary={`${profile.age} years old`}
+                        primaryTypographyProps={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+                        secondaryTypographyProps={{ fontSize: { xs: '0.8125rem', sm: '0.875rem' } }}
+                      />
                     </ListItem>
                   )}
                   {profile?.gender && (
-                    <ListItem>
-                      <ListItemIcon>
-                        <GenderIcon fontSize='small' />
+                    <ListItem sx={{ px: { xs: 0, sm: 1 } }}>
+                      <ListItemIcon sx={{ minWidth: { xs: 36, sm: 40 } }}>
+                        <GenderIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />
                       </ListItemIcon>
                       <ListItemText
                         primary='Gender'
                         secondary={profile.gender.charAt(0).toUpperCase() + profile.gender.slice(1)}
+                        primaryTypographyProps={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+                        secondaryTypographyProps={{ fontSize: { xs: '0.8125rem', sm: '0.875rem' } }}
                       />
                     </ListItem>
                   )}
-                  <ListItem>
-                    <ListItemIcon>
-                      <LocationIcon fontSize='small' />
+                  <ListItem sx={{ px: { xs: 0, sm: 1 } }}>
+                    <ListItemIcon sx={{ minWidth: { xs: 36, sm: 40 } }}>
+                      <LocationIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />
                     </ListItemIcon>
-                    <ListItemText primary='Location' secondary={getLocationString()} />
+                    <ListItemText
+                      primary='Location'
+                      secondary={getLocationString()}
+                      primaryTypographyProps={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+                      secondaryTypographyProps={{
+                        fontSize: { xs: '0.8125rem', sm: '0.875rem' },
+                        wordBreak: 'break-word'
+                      }}
+                    />
                   </ListItem>
                 </List>
               </CardContent>
@@ -170,35 +262,67 @@ const UserDetailsPopup = ({ open, userDetails, onClose }) => {
           {profile && (
             <Grid item xs={12}>
               <Card variant='outlined'>
-                <CardContent>
-                  <Typography variant='h6' gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <CalendarIcon color='primary' />
+                <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
+                  <Typography
+                    variant='h6'
+                    gutterBottom
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      fontSize: { xs: '1rem', sm: '1.25rem' },
+                      mb: { xs: 1.5, sm: 2 }
+                    }}
+                  >
+                    <CalendarIcon sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }} color='primary' />
                     Additional Information
                   </Typography>
-                  <Grid container spacing={2}>
+                  <Grid container spacing={{ xs: 1.5, sm: 2 }}>
                     {profile.nickname && (
                       <Grid item xs={12} sm={6}>
-                        <Typography variant='body2' color='text.secondary'>
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                          sx={{ fontSize: { xs: '0.8125rem', sm: '0.875rem' }, wordBreak: 'break-word' }}
+                        >
                           <strong>Nickname:</strong> {profile.nickname}
                         </Typography>
                       </Grid>
                     )}
                     {profile.bio && (
                       <Grid item xs={12}>
-                        <Typography variant='body2' color='text.secondary'>
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                          sx={{ fontSize: { xs: '0.8125rem', sm: '0.875rem' }, wordBreak: 'break-word' }}
+                        >
                           <strong>Bio:</strong> {profile.bio}
                         </Typography>
                       </Grid>
                     )}
                     {profile.interests && profile.interests.length > 0 && (
                       <Grid item xs={12}>
-                        <Box sx={{ mt: 1 }}>
-                          <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
+                        <Box sx={{ mt: { xs: 0.5, sm: 1 } }}>
+                          <Typography
+                            variant='body2'
+                            color='text.secondary'
+                            sx={{ mb: 1, fontSize: { xs: '0.8125rem', sm: '0.875rem' } }}
+                          >
                             <strong>Interests:</strong>
                           </Typography>
-                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: { xs: 0.5, sm: 0.75 } }}>
                             {profile.interests.map((interest, index) => (
-                              <Chip key={index} label={interest} size='small' variant='outlined' color='primary' />
+                              <Chip
+                                key={index}
+                                label={interest}
+                                size='small'
+                                variant='outlined'
+                                color='primary'
+                                sx={{
+                                  fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                                  height: { xs: 24, sm: 28 }
+                                }}
+                              />
                             ))}
                           </Box>
                         </Box>
@@ -212,8 +336,18 @@ const UserDetailsPopup = ({ open, userDetails, onClose }) => {
         </Grid>
       </DialogContent>
 
-      <DialogActions>
-        <Button onClick={onClose} color='primary'>
+      <DialogActions sx={{ p: { xs: 2, sm: 3 }, pt: { xs: 1, sm: 2 } }}>
+        <Button
+          onClick={onClose}
+          color='primary'
+          variant='outlined'
+          sx={{
+            fontSize: { xs: '0.875rem', sm: '1rem' },
+            px: { xs: 3, sm: 4 },
+            py: { xs: 0.75, sm: 1 },
+            minWidth: { xs: 100, sm: 'auto' }
+          }}
+        >
           Close
         </Button>
       </DialogActions>

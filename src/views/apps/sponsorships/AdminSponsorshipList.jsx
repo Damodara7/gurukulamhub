@@ -44,7 +44,19 @@ import { API_URLS } from '@/configs/apiConfig'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
-import { Avatar, Box, Divider, FormControl, Grid, IconButton, InputLabel, MenuItem, Select, Tab } from '@mui/material'
+import {
+  Avatar,
+  Box,
+  Divider,
+  FormControl,
+  Grid,
+  IconButton,
+  InputLabel,
+  MenuItem,
+  Select,
+  Tab,
+  Stack
+} from '@mui/material'
 import { revalidatePath } from 'next/cache'
 import React from 'react'
 import { Tooltip } from '@mui/material'
@@ -56,6 +68,7 @@ import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
 import Button from '@mui/material/Button'
+import useMediaQuery from '@mui/material/useMediaQuery'
 
 const fuzzyFilter = (row, columnId, value, addMeta) => {
   // Rank the item
@@ -92,8 +105,32 @@ const DebouncedInput = ({ value: initialValue, onChange, debounce = 500, ...prop
 // Column Definitions
 const columnHelper = createColumnHelper()
 
+const statusColorMap = {
+  created: 'default',
+  pending: 'warning',
+  failed: 'error',
+  completed: 'success',
+  expired: 'secondary',
+  rejected: 'error'
+}
+
+const getSponsorshipStatusMeta = sponsorship => {
+  if (!sponsorship) {
+    return { status: 'unknown', color: 'default' }
+  }
+
+  const statusKey =
+    sponsorship.rewardType === 'cash' ? sponsorship.sponsorshipStatus : sponsorship.nonCashSponsorshipStatus
+
+  return {
+    status: statusKey || 'unknown',
+    color: statusColorMap[statusKey] || 'default'
+  }
+}
+
 const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatus = 'all', filter }) => {
   const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const router = useRouter()
   const { data: session } = useSession()
   const searchParams = useSearchParams()
@@ -168,6 +205,149 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
     }
   }
 
+  const renderActions = sponsorship => {
+    const { rewardType, nonCashSponsorshipStatus, _id } = sponsorship
+
+    if (rewardType === 'physicalGift' && nonCashSponsorshipStatus === 'pending') {
+      return (
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+          <Tooltip title='View Details'>
+            <Link href={`/management/sponsorships/${_id}`} style={{ textDecoration: 'none' }}>
+              <IconButton size='small' color='info'>
+                <i className='ri-eye-line' />
+              </IconButton>
+            </Link>
+          </Tooltip>
+          <Tooltip title='Complete'>
+            <IconButton size='small' color='success' onClick={() => handleCompleteSponsorship(_id)}>
+              <i className='ri-check-line' />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title='Reject'>
+            <IconButton size='small' color='error' onClick={() => handleRejectSponsorship(_id)}>
+              <i className='ri-close-line' />
+            </IconButton>
+          </Tooltip>
+        </Box>
+      )
+    }
+
+    if (rewardType === 'physicalGift' && nonCashSponsorshipStatus === 'rejected') {
+      return (
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Tooltip title='View Details'>
+            <Link href={`/management/sponsorships/${_id}`} style={{ textDecoration: 'none' }}>
+              <IconButton size='small' color='info'>
+                <i className='ri-eye-line' />
+              </IconButton>
+            </Link>
+          </Tooltip>
+        </Box>
+      )
+    }
+
+    return null
+  }
+
+  const renderMobileRowCard = row => {
+    const original = row.original
+    const firstname = original?.profile?.firstname || ''
+    const lastname = original?.profile?.lastname || ''
+    const fullname = `${firstname} ${lastname}`.trim() || original?.fullname || ''
+    const { status, color } = getSponsorshipStatusMeta(original)
+    const isCash = original.rewardType === 'cash'
+    const formatCurrency = value =>
+      new Intl.NumberFormat(undefined, {
+        style: 'currency',
+        currency: original.currency || 'INR'
+      }).format(value || 0)
+
+    const usedAmount = isCash
+      ? (original.sponsorshipAmount || 0) - (original.availableAmount || 0)
+      : (original.numberOfNonCashItems || 0) - (original.availableItems || 0)
+    const totalAmount = isCash ? original.sponsorshipAmount || 0 : original.numberOfNonCashItems || 0
+
+    const areaParts = [original?.location?.country, original?.location?.region, original?.location?.city].filter(
+      Boolean
+    )
+
+    return (
+      <Card
+        key={row.id}
+        sx={{
+          borderRadius: 3,
+          border: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
+          boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)'
+        }}
+      >
+        <CardContent sx={{ p: 2.5 }}>
+          <Stack spacing={2}>
+            <Stack direction='row' justifyContent='space-between' alignItems='flex-start' gap={2}>
+              <Box>
+                {fullname && (
+                  <Typography variant='subtitle1' sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+                    {fullname}
+                  </Typography>
+                )}
+                <Link
+                  href={getLocalizedUrl(`/management/user/${encodeURIComponent(original?.email)}`, locale)}
+                  style={{ textDecoration: 'none' }}
+                >
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                    sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
+                  >
+                    {original?.email}
+                    <Box
+                      component='i'
+                      className='ri-external-link-line'
+                      sx={{ fontSize: '16px', color: 'primary.main', lineHeight: 1 }}
+                    />
+                  </Typography>
+                </Link>
+              </Box>
+              <Chip size='small' color={color} label={status} sx={{ textTransform: 'capitalize' }} />
+            </Stack>
+
+            <Stack spacing={1}>
+              <Typography variant='body2' sx={{ fontWeight: 600 }}>
+                Reward Type:{' '}
+                <Box component='span' sx={{ textTransform: 'capitalize', fontWeight: 700 }}>
+                  {isCash ? 'Cash' : 'Physical Gift'}
+                </Box>
+              </Typography>
+              {isCash ? (
+                <Typography variant='body2' color='text.secondary'>
+                  Amount: {formatCurrency(original?.sponsorshipAmount || 0)} • Available:{' '}
+                  {formatCurrency(original?.availableAmount || 0)}
+                </Typography>
+              ) : (
+                <Typography variant='body2' color='text.secondary'>
+                  Items: {original?.nonCashItem || 'Gift'} ({original?.numberOfNonCashItems || 0}) • Available:{' '}
+                  {original?.availableItems || 0}
+                </Typography>
+              )}
+              <Typography variant='body2' color='text.secondary'>
+                Usage:{' '}
+                {isCash
+                  ? `${formatCurrency(usedAmount)} / ${formatCurrency(totalAmount)} used`
+                  : `${usedAmount} / ${totalAmount} items used`}
+              </Typography>
+              {areaParts.length > 0 && (
+                <Typography variant='body2' color='text.secondary'>
+                  Area: {areaParts.join(', ')}
+                </Typography>
+              )}
+            </Stack>
+
+            {renderActions(original)}
+          </Stack>
+        </CardContent>
+      </Card>
+    )
+  }
+
   const columns = useMemo(
     () =>
       [
@@ -228,9 +408,10 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
                     }}
                   >
                     {row.original?.email}
-                    <i
-                      className='ri-external-link-line text-[16px] ml-1 external-link-icon'
-                      style={{ marginLeft: 4, color: 'var(--mui-palette-info-main)' }}
+                    <Box
+                      component='i'
+                      className='ri-external-link-line external-link-icon'
+                      sx={{ fontSize: '16px', ml: 0.5, color: 'primary.main', transition: 'color 0.2s' }}
                     />
                   </Typography>
                 </Link>
@@ -462,27 +643,12 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
           ...columnHelper.accessor('sponsorshipStatus', {
             header: 'Status',
             cell: ({ row }) => {
-              const {
-                rewardType,
-                sponsorshipStatus,
-                nonCashSponsorshipStatus,
-                nonCashSponsorshipRejectionReason,
-                rejectorEmail
-              } = row.original
-              const status = rewardType === 'cash' ? sponsorshipStatus : nonCashSponsorshipStatus
-              const statusColor =
-                {
-                  created: 'default',
-                  pending: 'warning',
-                  failed: 'error',
-                  completed: 'success',
-                  expired: 'secondary',
-                  rejected: 'error'
-                }[status] || 'default'
+              const { status, color } = getSponsorshipStatusMeta(row.original)
+              const { rewardType, nonCashSponsorshipRejectionReason, rejectorEmail } = row.original
 
               return (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  <Chip size='small' color={statusColor} label={status} />
+                  <Chip size='small' color={color} label={status} />
                   {status === 'rejected' && rewardType === 'physicalGift' && (
                     <>
                       {rejectorEmail && nonCashSponsorshipRejectionReason && (
@@ -558,48 +724,7 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
           id: 'actions',
           header: 'Actions',
           cell: ({ row }) => {
-            const { rewardType, nonCashSponsorshipStatus } = row.original
-            if (rewardType === 'physicalGift' && nonCashSponsorshipStatus === 'pending') {
-              return (
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                  <Tooltip title='View Details'>
-                    <Link href={`/management/sponsorships/${row.original._id}`} style={{ textDecoration: 'none' }}>
-                      <IconButton size='small' color='info'>
-                        <i className='ri-eye-line' />
-                      </IconButton>
-                    </Link>
-                  </Tooltip>
-                  <Tooltip title='Complete'>
-                    <IconButton
-                      size='small'
-                      color='success'
-                      onClick={() => handleCompleteSponsorship(row.original._id)}
-                    >
-                      <i className='ri-check-line' />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title='Reject'>
-                    <IconButton size='small' color='error' onClick={() => handleRejectSponsorship(row.original._id)}>
-                      <i className='ri-close-line' />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              )
-            } else if (rewardType === 'physicalGift' && nonCashSponsorshipStatus === 'rejected') {
-              // Show only view action for rejected sponsorships
-              return (
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                  <Tooltip title='View Details'>
-                    <Link href={`/management/sponsorships/${row.original._id}`} style={{ textDecoration: 'none' }}>
-                      <IconButton size='small' color='info'>
-                        <i className='ri-eye-line' />
-                      </IconButton>
-                    </Link>
-                  </Tooltip>
-                </Box>
-              )
-            }
-            return null
+            return renderActions(row.original)
           }
         }
       ].filter(Boolean),
@@ -635,6 +760,9 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
     getFacetedUniqueValues: getFacetedUniqueValues(),
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
+
+  const filteredRows = table.getPrePaginationRowModel().rows
+  const paginatedRows = table.getRowModel().rows
 
   // Get count for each tab
   const allCount = data.length
@@ -694,7 +822,7 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
               </Box>
               <Typography
                 sx={{
-                  fontSize: { xs: '2rem', md: '2.5rem' },
+                  fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.5rem' },
                   fontWeight: 700,
                   background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                   WebkitBackgroundClip: 'text',
@@ -966,129 +1094,147 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
             </Box>
           </CardContent>
           <Divider />
-          <div className='overflow-x-auto'>
-            <table className={tableStyles.table}>
-              <thead>
-                {table.getHeaderGroups().map(headerGroup => (
-                  <tr key={headerGroup.id}>
-                    {headerGroup.headers.map(header => (
-                      <th key={header.id}>
-                        {header.isPlaceholder ? null : (
-                          <>
-                            <div
-                              className={classnames({
-                                'flex items-center': header.column.getIsSorted(),
-                                'cursor-pointer select-none': header.column.getCanSort()
-                              })}
-                              onClick={header.column.getToggleSortingHandler()}
-                            >
-                              {flexRender(header.column.columnDef.header, header.getContext())}
-                              {{
-                                asc: <i className='ri-arrow-up-s-line text-xl' />,
-                                desc: <i className='ri-arrow-down-s-line text-xl' />
-                              }[header.column.getIsSorted()] ?? null}
-                            </div>
-                          </>
-                        )}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead>
-              {table.getFilteredRowModel().rows.length === 0 ? (
-                <tbody>
-                  <tr>
-                    <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
-                      No data available
-                    </td>
-                  </tr>
-                </tbody>
-              ) : (
-                <tbody>
-                  {table
-                    .getRowModel()
-                    .rows.slice(0, table.getState().pagination.pageSize)
-                    .map(row => {
-                      return (
-                        <tr
-                          key={row.id}
-                          className={classnames({ selected: row.getIsSelected() })}
-                          style={{
-                            transition: 'all 0.3s ease-in-out',
-                            cursor: 'pointer'
-                          }}
-                          onMouseEnter={e => {
-                            e.currentTarget.style.backgroundColor = 'rgba(139, 92, 246, 0.08)'
-                            e.currentTarget.style.transform = 'scale(1.01)'
-                            e.currentTarget.style.boxShadow = '0 2px 8px rgba(139, 92, 246, 0.15)'
-                          }}
-                          onMouseLeave={e => {
-                            if (!row.getIsSelected()) {
-                              e.currentTarget.style.backgroundColor = 'transparent'
-                            }
-                            e.currentTarget.style.transform = 'scale(1)'
-                            e.currentTarget.style.boxShadow = 'none'
-                          }}
-                        >
-                          {row.getVisibleCells().map(cell => (
-                            <td
-                              key={cell.id}
-                              style={{
-                                padding: '16px 12px',
-                                borderBottom: '1px solid rgba(0, 0, 0, 0.05)'
-                              }}
-                            >
-                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                            </td>
-                          ))}
-                        </tr>
-                      )
-                    })}
-                </tbody>
-              )}
-            </table>
-          </div>
-          <Box
-            sx={{
-              borderTop: '1px solid rgba(0, 0, 0, 0.06)',
-              backgroundColor: 'rgba(102, 126, 234, 0.02)'
-            }}
-          >
-            <TablePagination
-              rowsPerPageOptions={[10, 25, 50, 100]}
-              component='div'
-              count={table.getFilteredRowModel().rows.length}
-              rowsPerPage={table.getState().pagination.pageSize}
-              page={table.getState().pagination.pageIndex}
-              SelectProps={{
-                inputProps: { 'aria-label': 'rows per page' }
-              }}
-              onPageChange={(_, page) => {
-                table.setPageIndex(page)
-              }}
-              onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
-              sx={{
-                '& .MuiTablePagination-toolbar': {
-                  px: { xs: 2, sm: 3 },
-                  py: 2,
-                  minHeight: { xs: 64, sm: 72 }
-                },
-                '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
-                  fontSize: '0.875rem',
+          <Box sx={{ px: { xs: 1, sm: 2 }, py: { xs: 2, sm: 2.5 } }}>
+            {filteredRows.length === 0 ? (
+              <Box
+                sx={{
+                  textAlign: 'center',
+                  py: 6,
+                  borderRadius: 3,
+                  backgroundColor: alpha(theme.palette.primary.main, 0.02),
                   color: 'text.secondary',
-                  fontWeight: 500
-                },
-                '& .MuiIconButton-root': {
-                  borderRadius: '8px',
-                  transition: 'all 0.2s ease',
-                  '&:hover': {
-                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                    color: '#667eea'
+                  fontWeight: 600
+                }}
+              >
+                No data available
+              </Box>
+            ) : isMobile ? (
+              <Box
+                sx={{
+                  maxHeight: { xs: '65vh', sm: '70vh' },
+                  overflowY: 'auto',
+                  pr: 1.5,
+                  '&::-webkit-scrollbar': {
+                    width: 6
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    backgroundColor: alpha(theme.palette.primary.main, 0.3),
+                    borderRadius: 8
                   }
-                }
-              }}
-            />
+                }}
+              >
+                <Stack spacing={2.5}>{filteredRows.map(row => renderMobileRowCard(row))}</Stack>
+              </Box>
+            ) : (
+              <div className='overflow-x-auto'>
+                <table className={tableStyles.table}>
+                  <thead>
+                    {table.getHeaderGroups().map(headerGroup => (
+                      <tr key={headerGroup.id}>
+                        {headerGroup.headers.map(header => (
+                          <th key={header.id}>
+                            {header.isPlaceholder ? null : (
+                              <>
+                                <div
+                                  className={classnames({
+                                    'flex items-center': header.column.getIsSorted(),
+                                    'cursor-pointer select-none': header.column.getCanSort()
+                                  })}
+                                  onClick={header.column.getToggleSortingHandler()}
+                                >
+                                  {flexRender(header.column.columnDef.header, header.getContext())}
+                                  {{
+                                    asc: <i className='ri-arrow-up-s-line text-xl' />,
+                                    desc: <i className='ri-arrow-down-s-line text-xl' />
+                                  }[header.column.getIsSorted()] ?? null}
+                                </div>
+                              </>
+                            )}
+                          </th>
+                        ))}
+                      </tr>
+                    ))}
+                  </thead>
+                  <tbody>
+                    {paginatedRows.map(row => (
+                      <tr
+                        key={row.id}
+                        className={classnames({ selected: row.getIsSelected() })}
+                        style={{
+                          cursor: 'pointer'
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.backgroundColor = 'rgba(139, 92, 246, 0.08)'
+                          e.currentTarget.style.boxShadow = '0 2px 8px rgba(139, 92, 246, 0.15)'
+                        }}
+                        onMouseLeave={e => {
+                          if (!row.getIsSelected()) {
+                            e.currentTarget.style.backgroundColor = 'transparent'
+                          }
+                          e.currentTarget.style.boxShadow = 'none'
+                        }}
+                      >
+                        {row.getVisibleCells().map(cell => (
+                          <td
+                            key={cell.id}
+                            style={{
+                              padding: '16px 12px',
+                              borderBottom: '1px solid rgba(0, 0, 0, 0.05)'
+                            }}
+                          >
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </Box>
+          {!isMobile && (
+            <Box
+              sx={{
+                borderTop: '1px solid rgba(0, 0, 0, 0.06)',
+                backgroundColor: 'rgba(102, 126, 234, 0.02)'
+              }}
+            >
+              <TablePagination
+                rowsPerPageOptions={[10, 25, 50, 100]}
+                component='div'
+                count={filteredRows.length}
+                rowsPerPage={table.getState().pagination.pageSize}
+                page={table.getState().pagination.pageIndex}
+                SelectProps={{
+                  inputProps: { 'aria-label': 'rows per page' }
+                }}
+                onPageChange={(_, page) => {
+                  table.setPageIndex(page)
+                }}
+                onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
+                sx={{
+                  '& .MuiTablePagination-toolbar': {
+                    px: { xs: 2, sm: 3 },
+                    py: 2,
+                    minHeight: { xs: 64, sm: 72 }
+                  },
+                  '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
+                    fontSize: '0.875rem',
+                    color: 'text.secondary',
+                    fontWeight: 500
+                  },
+                  '& .MuiIconButton-root': {
+                    borderRadius: '8px',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                      color: '#667eea'
+                    }
+                  }
+                }}
+              />
+            </Box>
+          )}
         </Card>
 
         {/* Modern Rejection Dialog */}

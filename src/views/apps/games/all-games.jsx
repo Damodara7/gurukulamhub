@@ -133,24 +133,26 @@ const AllGamesPage = ({ creatorEmail = '', isSuperUser = false }) => {
           pb: { xs: 4, md: 6 }
         }}
       >
-        <Container maxWidth='lg'>
-          <Stack spacing={3} alignItems='center'>
+        <Container maxWidth='lg' sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
+          <Stack spacing={{ xs: 2, sm: 3 }} alignItems='center'>
             {/* Elegant Title */}
-            <Box sx={{ textAlign: 'center' }}>
+            <Box sx={{ textAlign: 'center', width: '100%' }}>
               {/* Icon and Title */}
               <Box
                 sx={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 2,
-                  mb: 2
+                  gap: { xs: 1.5, sm: 2 },
+                  mb: { xs: 1.5, sm: 2 },
+                  flexWrap: 'wrap',
+                  justifyContent: 'center'
                 }}
               >
                 <Box
                   sx={{
-                    width: { xs: 48, sm: 56 },
-                    height: { xs: 48, sm: 56 },
-                    borderRadius: '12px',
+                    width: { xs: 40, sm: 48, md: 56 },
+                    height: { xs: 40, sm: 48, md: 56 },
+                    borderRadius: { xs: '10px', sm: '12px' },
                     background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                     display: 'flex',
                     alignItems: 'center',
@@ -158,16 +160,17 @@ const AllGamesPage = ({ creatorEmail = '', isSuperUser = false }) => {
                     boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`
                   }}
                 >
-                  <GamesIcon sx={{ fontSize: 28, color: 'white' }} />
+                  <GamesIcon sx={{ fontSize: { xs: 20, sm: 24, md: 28 }, color: 'white' }} />
                 </Box>
                 <Typography
                   sx={{
-                    fontSize: { xs: '2rem', md: '2.5rem' },
+                    fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem', lg: '2.5rem' },
                     fontWeight: 700,
                     background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
-                    letterSpacing: '-0.02em'
+                    letterSpacing: '-0.02em',
+                    lineHeight: 1.2
                   }}
                 >
                   Game Management
@@ -177,21 +180,22 @@ const AllGamesPage = ({ creatorEmail = '', isSuperUser = false }) => {
                 variant='body1'
                 color='text.secondary'
                 sx={{
-                  fontSize: '1.05rem',
-                  lineHeight: 1.8,
-                 width: '100%',
+                  fontSize: { xs: '0.875rem', sm: '0.95rem', md: '1.05rem' },
+                  lineHeight: { xs: 1.6, sm: 1.8 },
+                  width: '100%',
                   mx: 'auto',
-                  fontWeight: 400
+                  fontWeight: 400,
+                  px: { xs: 1, sm: 0 }
                 }}
               >
-                Create, manage, and monitor your games
+                create, manage and monitor your games
               </Typography>
             </Box>
 
             {/* Filters and Tabs */}
             <Box sx={{ width: '100%' }}>
               <ReusableTabsList tabsList={gamestatuses} value={gameStatusFilter} onChange={handleGameStatusChange} />
-              <Box sx={{ mt: 3 }}>
+              <Box sx={{ mt: { xs: 2, sm: 3 } }}>
                 <ReusablePopUpList
                   selectedLocations={selectedLocations}
                   setSelectedLocations={setSelectedLocations}
@@ -205,7 +209,7 @@ const AllGamesPage = ({ creatorEmail = '', isSuperUser = false }) => {
       </Box>
 
       {/* Games List */}
-      <Container maxWidth='lg' sx={{ py: { xs: 3, md: 4 } }}>
+      <Container maxWidth='lg' sx={{ py: { xs: 2, sm: 3, md: 4 }, px: { xs: 1, sm: 2, md: 3 } }}>
         <CreatorGamesList
           games={filteredGames}
           isSuperUser={isSuperUser}
@@ -215,13 +219,36 @@ const AllGamesPage = ({ creatorEmail = '', isSuperUser = false }) => {
         />
       </Container>
 
-      {/* Create New Button */}
-      <Box sx={{ position: 'relative' }}>
+      {/* Create New Button - Mobile: Below cards, Desktop: Fixed position */}
+      <Box
+        sx={{
+          position: { xs: 'relative', sm: 'fixed' },
+          display: { xs: 'flex', sm: 'block' },
+          justifyContent: { xs: 'center', sm: 'flex-start' },
+          width: { xs: '100%', sm: 'auto' },
+          mt: { xs: 3, sm: 0 },
+          mb: { xs: 3, sm: 0 }
+        }}
+      >
         <Button
           variant='contained'
           component='label'
-          style={{ color: 'white', position: 'fixed', bottom: 20, right: 10, zIndex: 1001 }}
-          startIcon={<AddIcon />}
+          sx={{
+            color: 'white',
+            position: { xs: 'relative', sm: 'fixed' },
+            bottom: { xs: 'auto', sm: 20 },
+            right: { xs: 'auto', sm: 20 },
+            zIndex: 1001,
+            fontSize: { xs: '0.875rem', sm: '1rem' },
+            px: { xs: 3, sm: 3 },
+            py: { xs: 1.25, sm: 1.5 },
+            boxShadow: 3,
+            width: { xs: 'auto', sm: 'auto' },
+            '&:hover': {
+              boxShadow: 6
+            }
+          }}
+          startIcon={<AddIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />}
           onClick={handleCreateNewGame}
         >
           Create New

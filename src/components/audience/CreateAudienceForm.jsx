@@ -20,8 +20,8 @@ import {
 import { alpha } from '@mui/material/styles'
 import { People as PeopleIcon, Groups as GroupsIcon } from '@mui/icons-material'
 
-import UserMultiSelect from './UserMultiSelect'
 import { useSession } from 'next-auth/react'
+import AudienceUserMultiSelect from './AudienceUserMultiSelect'
 const validateForm = formData => {
   const errors = {}
 
@@ -539,7 +539,7 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
               </Box>
               <Typography
                 sx={{
-                  fontSize: { xs: '2rem', md: '2.5rem' },
+                  fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.5rem' },
                   fontWeight: 700,
                   background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                   WebkitBackgroundClip: 'text',
@@ -676,7 +676,7 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
                     />
                     Audience Members
                   </Typography>
-                  <UserMultiSelect
+                  <AudienceUserMultiSelect
                     users={users}
                     matchedUserIds={matchedUserIds}
                     hasFilters={!!(filterCriteria.ageGroup || filterCriteria.location || filterCriteria.gender)}
@@ -696,7 +696,7 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
                       style={{ color: 'white' }}
                       disabled={isSubmitting || matchedUserIds.length === 0}
                     >
-                      {isSubmitting ? 'Saving...' : data ? 'Update Audience' : 'Create Audience'}
+                      {isSubmitting ? 'Saving...' : data ? 'Update' : 'Submit'}
                     </Button>
                   </Stack>
                 </Grid>

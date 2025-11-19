@@ -1,21 +1,93 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import * as RestApi from '@/utils/restApiUtil'
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { API_URLS } from '@/configs/apiConfig'
-import { Box, Typography, Card, CardContent, TextField, Button, Alert, CircularProgress } from '@mui/material'
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  TextField,
+  Button,
+  Alert,
+  CircularProgress,
+  Collapse,
+  useMediaQuery
+} from '@mui/material'
+import { useTheme } from '@mui/material/styles'
+import { keyframes } from '@mui/system'
 import { toast } from 'react-toastify'
 import SportsEsportsIcon from '@mui/icons-material/SportsEsports'
 import LockIcon from '@mui/icons-material/Lock'
 import EmailIcon from '@mui/icons-material/Email'
 
+const floatBubble = keyframes`
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.75);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.45;
+  }
+  48% {
+    transform: translate3d(var(--bubble-shift, 18px), -48vh, 0) scale(1);
+    opacity: 0.78;
+  }
+  100% {
+    transform: translate3d(calc(var(--bubble-shift, 18px) * 1.35), -108vh, 0) scale(0.6);
+    opacity: 0;
+  }
+`
+
+const iconBounce = keyframes`
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-16px);
+  }
+`
+
+const iconGlow = keyframes`
+  0%, 100% {
+    box-shadow: 0 14px 40px rgba(102, 126, 234, 0.55), 0 0 0 5px rgba(255, 255, 255, 0.28);
+    filter: brightness(1);
+  }
+  50% {
+    box-shadow: 0 20px 60px rgba(118, 75, 162, 0.75), 0 0 0 9px rgba(240, 147, 251, 0.45);
+    filter: brightness(1.18);
+  }
+`
+
+const ringPulse = keyframes`
+  0% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+`
+
+const highlightItems = [
+  { id: 'interactive', icon: '🎮', label: 'Interactive' },
+  { id: 'realtime', icon: '⚡', label: 'Real-time' },
+  { id: 'competitive', icon: '🏆', label: 'Competitive' }
+]
+
 const GamePinInputFormPage = () => {
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'lg'))
+
   const [gamePin, setGamePin] = useState('')
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
+  const [error, setError] = useState('')
   const { data: session } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -27,6 +99,26 @@ const GamePinInputFormPage = () => {
       setGamePin(urlGamePin)
     }
   }, [searchParams])
+
+  const bubbleConfigs = useMemo(
+    () =>
+      Array.from({ length: 18 }, (_, index) => ({
+        id: `bubble-${index}`,
+        size: 26 + (index % 4) * 14,
+        left: ((index * 17) % 86) + 7,
+        duration: 11 + (index % 5) * 2.3,
+        delay: index * 0.55,
+        shift: (index % 2 === 0 ? 1 : -1) * (20 + index * 1.6),
+        opacity: 0.34 + (index % 3) * 0.16
+      })),
+    []
+  )
+
+  const activeBubbles = useMemo(() => {
+    if (isMobile) return bubbleConfigs.slice(0, 8)
+    if (isTablet) return bubbleConfigs.slice(0, 12)
+    return bubbleConfigs
+  }, [bubbleConfigs, isMobile, isTablet])
 
   const validateGamePin = pin => {
     return /^\d{6}$/.test(pin)
@@ -42,15 +134,17 @@ const GamePinInputFormPage = () => {
     // Only allow numbers and limit to 6 characters
     if (/^\d*$/.test(value) && value.length <= 6) {
       setGamePin(value)
+      if (error) setError('')
     }
   }
 
   const handleEmailChange = e => {
     setEmail(e.target.value.toLowerCase().trim())
+    if (error) setError('')
   }
 
   const validateGame = async () => {
-    setError(null)
+    setError('')
     // Client-side validation
     if (!gamePin) {
       setError('Game PIN is required')
@@ -100,96 +194,92 @@ const GamePinInputFormPage = () => {
       }
     } catch (err) {
       console.error('Validation error:', err)
-      setError(err.message)
-      toast.error(err.message)
+      const message = err instanceof Error ? err.message : 'Something went wrong'
+      setError(message)
+      toast.error(message)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleSubmit = e => {
+  const handleSubmit = async e => {
     e?.preventDefault()
-    validateGame()
+    if (loading) return
+    await validateGame()
   }
 
   return (
     <Box
+      component='main'
       sx={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        minHeight: { xs: '100dvh', md: '100vh' },
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        p: 3,
         position: 'relative',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        width: '100%',
+        px: { xs: 2, sm: 3, md: 4 },
+        py: { xs: 6, sm: 7, md: 8 },
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        overflowX: 'hidden'
       }}
     >
-      {/* Decorative Background Elements */}
       <Box
+        aria-hidden
         sx={{
           position: 'absolute',
-          top: '-10%',
-          right: '-10%',
-          width: '40%',
-          height: '40%',
-          borderRadius: '50%',
-          background: 'rgba(255, 255, 255, 0.1)',
-          filter: 'blur(60px)'
+          inset: 0,
+          pointerEvents: 'none'
         }}
-      />
-      <Box
-        sx={{
-          position: 'absolute',
-          bottom: '-10%',
-          left: '-10%',
-          width: '40%',
-          height: '40%',
-          borderRadius: '50%',
-          background: 'rgba(255, 255, 255, 0.1)',
-          filter: 'blur(60px)'
-        }}
-      />
-
-      {/* Animated Bubbles - Spread across entire screen */}
-      {[...Array(15)].map((_, i) => (
+      >
         <Box
-          key={`bubble-${i}`}
           sx={{
             position: 'absolute',
-            width: `${20 + (i % 5) * 15}px`,
-            height: `${20 + (i % 5) * 15}px`,
+            top: { xs: '-18%', sm: '-14%', md: '-10%' },
+            right: { xs: '-32%', sm: '-20%', md: '-15%' },
+            width: { xs: '58%', sm: '42%', md: '36%' },
+            aspectRatio: '1',
             borderRadius: '50%',
-            background: `rgba(255, 255, 255, ${0.1 + (i % 3) * 0.05})`,
-            boxShadow: `inset 0 0 10px rgba(255, 255, 255, 0.3), 0 0 20px rgba(255, 255, 255, 0.1)`,
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            left: `${(i * 7) % 100}%`,
-            bottom: `-${50 + (i % 4) * 20}px`,
-            animation: `floatBubble${i} ${8 + (i % 5) * 2}s ease-in-out infinite`,
-            animationDelay: `${i * 0.8}s`,
-            [`@keyframes floatBubble${i}`]: {
-              '0%': {
-                transform: `translateY(0) translateX(0) scale(0.8)`,
-                opacity: 0
-              },
-              '10%': {
-                opacity: 0.6
-              },
-              '50%': {
-                transform: `translateY(-50vh) translateX(${(i % 2 === 0 ? 1 : -1) * (20 + i * 3)}px) scale(1)`,
-                opacity: 0.8
-              },
-              '90%': {
-                opacity: 0.4
-              },
-              '100%': {
-                transform: `translateY(-110vh) translateX(${(i % 2 === 0 ? 1 : -1) * (40 + i * 5)}px) scale(0.6)`,
-                opacity: 0
-              }
-            }
+            background: 'rgba(255, 255, 255, 0.12)',
+            filter: 'blur(62px)'
           }}
         />
-      ))}
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: { xs: '-20%', sm: '-16%', md: '-12%' },
+            left: { xs: '-30%', sm: '-18%', md: '-14%' },
+            width: { xs: '60%', sm: '44%', md: '38%' },
+            aspectRatio: '1',
+            borderRadius: '50%',
+            background: 'rgba(255, 255, 255, 0.1)',
+            filter: 'blur(68px)'
+          }}
+        />
+
+        {activeBubbles.map(bubble => (
+          <Box
+            key={bubble.id}
+            sx={{
+              position: 'absolute',
+              left: `${bubble.left}%`,
+              bottom: { xs: '-14%', md: '-18%' },
+              width: `${bubble.size}px`,
+              height: `${bubble.size}px`,
+              borderRadius: '50%',
+              opacity: bubble.opacity,
+              background: 'rgba(255,255,255,0.18)',
+              border: '1px solid rgba(255,255,255,0.25)',
+              boxShadow: '0 0 25px rgba(255, 255, 255, 0.18), inset 0 0 18px rgba(255, 255, 255, 0.35)',
+              animation: `${floatBubble} ${bubble.duration}s ease-in-out infinite`,
+              animationDelay: `${bubble.delay}s`,
+              '--bubble-shift': `${bubble.shift}px`,
+              mixBlendMode: 'screen'
+            }}
+          />
+        ))}
+      </Box>
 
       {/* Main Content Container */}
       <Box
@@ -200,189 +290,63 @@ const GamePinInputFormPage = () => {
         }}
       >
         {/* Header */}
-        <Box sx={{ textAlign: 'center', mb: 4 }}>
-          {/* Gaming Icon with Enhanced Animation */}
+        <Box sx={{ textAlign: 'center', mb: { xs: 3.5, sm: 4 } }}>
           <Box
             sx={{
+              position: 'relative',
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
-              width: 95,
-              height: 95,
+              width: { xs: 84, sm: 92 },
+              height: { xs: 84, sm: 92 },
               borderRadius: '50%',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
-              boxShadow: '0 10px 40px rgba(102, 126, 234, 0.5), 0 0 0 5px rgba(255, 255, 255, 0.3)',
-              backdropFilter: 'blur(10px)',
-              mb: 2,
-              position: 'relative',
-              animation:
-                'bounce 2s ease-in-out infinite, rotate360 8s linear infinite, scaleGlow 3s ease-in-out infinite',
-              '@keyframes bounce': {
-                '0%, 100%': {
-                  transform: 'translateY(0px)'
-                },
-                '50%': {
-                  transform: 'translateY(-20px)'
-                }
-              },
-              '@keyframes rotate360': {
-                '0%': {
-                  transform: 'rotate(0deg)'
-                },
-                '100%': {
-                  transform: 'rotate(360deg)'
-                }
-              },
-              '@keyframes scaleGlow': {
-                '0%, 100%': {
-                  boxShadow: '0 10px 40px rgba(102, 126, 234, 0.5), 0 0 0 5px rgba(255, 255, 255, 0.3)',
-                  filter: 'brightness(1)'
-                },
-                '50%': {
-                  boxShadow: '0 15px 60px rgba(118, 75, 162, 0.8), 0 0 0 8px rgba(240, 147, 251, 0.5)',
-                  filter: 'brightness(1.2)'
-                }
-              },
-              '&::before': {
-                content: '""',
-                position: 'absolute',
-                width: '120%',
-                height: '120%',
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
-                filter: 'blur(25px)',
-                opacity: 0.7,
-                zIndex: -1,
-                animation: 'breathe 3s ease-in-out infinite'
-              },
-              '@keyframes breathe': {
-                '0%, 100%': {
-                  transform: 'scale(0.9)',
-                  opacity: 0.5
-                },
-                '50%': {
-                  transform: 'scale(1.2)',
-                  opacity: 0.9
-                }
-              },
-              '&::after': {
-                content: '""',
-                position: 'absolute',
-                width: '100%',
-                height: '100%',
-                borderRadius: '50%',
-                border: '3px solid rgba(255, 255, 255, 0.3)',
-                animation: 'ripple 2s ease-out infinite'
-              },
-              '@keyframes ripple': {
-                '0%': {
-                  transform: 'scale(1)',
-                  opacity: 1
-                },
-                '100%': {
-                  transform: 'scale(1.5)',
-                  opacity: 0
-                }
-              }
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 45%, #f093fb 100%)',
+              animation: `${iconBounce} 5.5s ease-in-out infinite, ${iconGlow} 6.5s ease-in-out infinite`
             }}
           >
-            <SportsEsportsIcon
+            <Box
+              component='span'
               sx={{
-                fontSize: 48,
-                color: 'white',
-                filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.4))',
-                animation: 'iconShake 0.5s ease-in-out infinite alternate',
-                '@keyframes iconShake': {
-                  '0%': {
-                    transform: 'scale(1) rotate(0deg)'
-                  },
-                  '100%': {
-                    transform: 'scale(1.1) rotate(5deg)'
-                  }
-                }
+                position: 'absolute',
+                inset: '-14%',
+                borderRadius: '50%',
+                filter: 'blur(26px)',
+                background: 'linear-gradient(135deg, rgba(102,126,234,0.55), rgba(240,147,251,0.55))',
+                opacity: 0.8
               }}
             />
-          </Box>
-
-          {/* Decorative particles around icon */}
-          <Box
-            sx={{
-              position: 'absolute',
-              top: '20px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: '250px',
-              height: '120px',
-              pointerEvents: 'none'
-            }}
-          >
-            {[...Array(5)].map((_, i) => (
-              <Box
-                key={i}
-                sx={{
-                  position: 'absolute',
-                  width: i % 2 === 0 ? '10px' : '6px',
-                  height: i % 2 === 0 ? '10px' : '6px',
-                  borderRadius: '50%',
-                  background: i === 0 || i === 3 ? '#667eea' : i === 1 || i === 4 ? '#764ba2' : '#f093fb',
-                  left: `${20 + i * 15}%`,
-                  animation: `orbit${i} ${2 + i * 0.5}s ease-in-out infinite`,
-                  animationDelay: `${i * 0.3}s`,
-                  [`@keyframes orbit${i}`]: {
-                    '0%': {
-                      transform: `translate(0, 0) scale(0) rotate(0deg)`,
-                      opacity: 0
-                    },
-                    '25%': {
-                      opacity: 1
-                    },
-                    '50%': {
-                      transform: `translate(${(i - 2) * 30}px, -40px) scale(1.5) rotate(180deg)`,
-                      opacity: 1
-                    },
-                    '75%': {
-                      opacity: 0.5
-                    },
-                    '100%': {
-                      transform: `translate(${(i - 2) * -20}px, -10px) scale(0) rotate(360deg)`,
-                      opacity: 0
-                    }
-                  }
-                }}
-              />
-            ))}
+            <Box
+              component='span'
+              sx={{
+                position: 'absolute',
+                inset: 0,
+                borderRadius: '50%',
+                border: '3px solid rgba(255,255,255,0.35)',
+                animation: `${ringPulse} 2.6s ease-out infinite`
+              }}
+            />
+            <SportsEsportsIcon
+              sx={{
+                position: 'relative',
+                fontSize: { xs: 42, sm: 48 },
+                color: 'white',
+                filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.35))'
+              }}
+            />
           </Box>
 
           <Typography
             variant='h3'
             sx={{
+              mt: 2.5,
               color: 'white',
               fontWeight: 700,
-              mb: 1,
-              textShadow: '0 2px 4px rgba(0,0,0,0.1)',
-              fontSize: { xs: '2rem', sm: '2.5rem' },
-              animation: 'fadeInBounce 1s ease-out, subtleGlow 3s ease-in-out infinite',
-              '@keyframes fadeInBounce': {
-                '0%': {
-                  opacity: 0,
-                  transform: 'translateY(-20px)'
-                },
-                '50%': {
-                  transform: 'translateY(5px)'
-                },
-                '100%': {
-                  opacity: 1,
-                  transform: 'translateY(0)'
-                }
-              },
-              '@keyframes subtleGlow': {
-                '0%, 100%': {
-                  textShadow: '0 2px 4px rgba(0,0,0,0.1), 0 0 10px rgba(255, 255, 255, 0.3)'
-                },
-                '50%': {
-                  textShadow:
-                    '0 2px 4px rgba(0,0,0,0.1), 0 0 20px rgba(255, 255, 255, 0.5), 0 0 30px rgba(240, 147, 251, 0.3)'
-                }
+              letterSpacing: '0.015em',
+              textShadow: '0 2px 4px rgba(0,0,0,0.18)',
+              fontSize: {
+                xs: 'clamp(1.85rem, 6.6vw, 2.5rem)',
+                sm: 'clamp(2.2rem, 5vw, 2.8rem)',
+                md: 'clamp(2.5rem, 3.5vw, 3.1rem)'
               }
             }}
           >
@@ -391,9 +355,9 @@ const GamePinInputFormPage = () => {
           <Typography
             variant='body1'
             sx={{
-              color: 'rgba(255, 255, 255, 0.95)',
-              fontWeight: 400,
-              fontSize: { xs: '0.95rem', sm: '1rem' }
+              color: 'rgba(255,255,255,0.92)',
+              fontSize: { xs: '1rem', sm: '1.05rem' },
+              fontWeight: 500
             }}
           >
             Enter Game PIN and Email to Join
@@ -404,26 +368,29 @@ const GamePinInputFormPage = () => {
         <Card
           elevation={0}
           sx={{
-            width: '100%',
+            backgroundColor: 'rgba(255,255,255,0.98)',
             borderRadius: 4,
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
-            backdropFilter: 'blur(10px)',
-            background: 'white'
+            boxShadow: { xs: '0 16px 44px rgba(0,0,0,0.28)', md: '0 22px 60px rgba(0,0,0,0.32)' },
+            backdropFilter: 'blur(14px)'
           }}
         >
           <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
-            <form onSubmit={handleSubmit}>
-              {/* Game PIN Field */}
-              <Box mb={3}>
+            <Box
+              component='form'
+              noValidate
+              onSubmit={handleSubmit}
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: { xs: 2.5, sm: 3 }
+              }}
+            >
+              <Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                   <LockIcon sx={{ fontSize: 18, color: 'primary.main', mr: 1 }} />
                   <Typography
                     variant='body2'
-                    sx={{
-                      fontWeight: 600,
-                      color: 'text.primary',
-                      fontSize: '0.875rem'
-                    }}
+                    sx={{ fontWeight: 600, color: 'text.primary', fontSize: '0.9rem', letterSpacing: '0.02em' }}
                   >
                     Game PIN
                   </Typography>
@@ -433,8 +400,8 @@ const GamePinInputFormPage = () => {
                   variant='outlined'
                   value={gamePin}
                   onChange={handleGamePinChange}
-                  onFocus={() => setError(null)}
                   placeholder='Enter 6-digit PIN'
+                  onFocus={() => setError(null)}
                   required
                   inputProps={{
                     maxLength: 6,
@@ -442,22 +409,25 @@ const GamePinInputFormPage = () => {
                     inputMode: 'numeric'
                   }}
                   helperText='Example: 574515'
+                  FormHelperTextProps={{ sx: { textAlign: 'center', fontWeight: 500 } }}
+                  sx={{
+                    backgroundColor: 'rgba(255,255,255,0.96)',
+                    borderRadius: 2,
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2
+                    }
+                  }}
                 />
               </Box>
 
-              {/* Email Field */}
-              <Box mb={3}>
+              <Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                   <EmailIcon sx={{ fontSize: 18, color: 'primary.main', mr: 1 }} />
                   <Typography
                     variant='body2'
-                    sx={{
-                      fontWeight: 600,
-                      color: 'text.primary',
-                      fontSize: '0.875rem'
-                    }}
+                    sx={{ fontWeight: 600, color: 'text.primary', fontSize: '0.9rem', letterSpacing: '0.02em' }}
                   >
-                    Email Address
+                    Gmail Address
                   </Typography>
                 </Box>
                 <TextField
@@ -470,21 +440,29 @@ const GamePinInputFormPage = () => {
                   placeholder='your.email@gmail.com'
                   required
                   inputProps={{
-                    pattern: '[a-zA-Z0-9._%+-]+@gmail\\.com'
+                    pattern: '[a-zA-Z0-9._%+-]+@gmail\\.com',
+                    inputMode: 'email'
                   }}
                   helperText='Only Gmail addresses accepted'
+                  FormHelperTextProps={{ sx: { textAlign: 'center', fontWeight: 500 } }}
+                  sx={{
+                    backgroundColor: 'rgba(255,255,255,0.96)',
+                    borderRadius: 2,
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2
+                    }
+                  }}
                 />
               </Box>
 
-              {/* Error Message */}
-              {error && (
+              <Collapse in={!!error}>
                 <Alert
                   severity='error'
+                  onClose={() => setError('')}
                   sx={{
-                    mb: 2.5,
                     borderRadius: 2,
-                    fontSize: '0.85rem',
-                    py: 0.5,
+                    fontSize: '0.88rem',
+                    py: 1,
                     '& .MuiAlert-icon': {
                       fontSize: '1.25rem'
                     }
@@ -492,9 +470,8 @@ const GamePinInputFormPage = () => {
                 >
                   {error}
                 </Alert>
-              )}
+              </Collapse>
 
-              {/* Submit Button */}
               <Button
                 type='submit'
                 onClick={handleSubmit}
@@ -502,136 +479,105 @@ const GamePinInputFormPage = () => {
                 fullWidth
                 disabled={loading}
                 sx={{
-                  py: 1.25,
+                  py: { xs: 1.25, sm: 1.45 },
                   borderRadius: 2,
-                  fontSize: '0.9rem',
+                  fontSize: { xs: '1rem', sm: '1.05rem' },
                   fontWeight: 600,
                   textTransform: 'none',
                   color: 'white !important',
-                  boxShadow: '0 4px 12px rgba(102, 126, 234, 0.35)',
-                  background:
-                    'linear-gradient(135deg, rgba(102, 126, 234, 0.75) 0%, rgba(118, 75, 162, 0.75) 100%) !important',
-                  backgroundImage:
-                    'linear-gradient(135deg, rgba(102, 126, 234, 0.75) 0%, rgba(118, 75, 162, 0.75) 100%) !important',
-                  transition: 'box-shadow 0.3s ease',
+                  background: 'linear-gradient(135deg, rgba(102,126,234,0.85), rgba(118,75,162,0.85)) !important',
+                  boxShadow: '0 6px 18px rgba(102, 126, 234, 0.35)',
+                  transition: 'transform 0.25s ease, box-shadow 0.25s ease',
                   '&:hover': {
-                    boxShadow: '0 6px 20px rgba(102, 126, 234, 0.5)',
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important',
-                    backgroundImage: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important',
-                    color: 'white !important'
-                  },
-                  '&:active': {
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important',
-                    backgroundImage: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important'
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 10px 26px rgba(25, 44, 132, 0.45)',
+                    background: 'linear-gradient(135deg, #667eea, #764ba2) !important'
                   },
                   '&.Mui-disabled': {
-                    background:
-                      'linear-gradient(135deg, rgba(102, 126, 234, 0.55) 0%, rgba(118, 75, 162, 0.55) 100%) !important',
-                    backgroundImage:
-                      'linear-gradient(135deg, rgba(102, 126, 234, 0.55) 0%, rgba(118, 75, 162, 0.55) 100%) !important',
-                    opacity: 0.6,
-                    color: 'white !important'
+                    background: 'linear-gradient(135deg, rgba(102,126,234,0.55), rgba(118,75,162,0.55)) !important',
+                    opacity: 0.7,
+                    color: 'rgba(255,255,255,0.9) !important'
                   }
                 }}
               >
                 {loading ? (
-                  <>
-                    <CircularProgress size={20} sx={{ color: 'white', mr: 1.5 }} />
+                  <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1.5 }}>
+                    <CircularProgress size={20} sx={{ color: 'white' }} />
                     Verifying...
-                  </>
+                  </Box>
                 ) : (
                   'Join Game'
                 )}
               </Button>
-            </form>
+            </Box>
           </CardContent>
         </Card>
 
         {/* Features Section */}
         <Box
           sx={{
-            mt: 3,
-            display: 'flex',
-            justifyContent: 'space-around',
-            gap: 2,
-            flexWrap: 'wrap'
+            mt: { xs: 3.5, sm: 4 },
+            display: { xs: 'grid', sm: 'flex' },
+            gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', sm: 'unset' },
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: { xs: 2, sm: 3.5 }
           }}
         >
-          <Box sx={{ textAlign: 'center', flex: '1 1 120px' }}>
-            <Box
-              sx={{
-                width: 50,
-                height: 50,
-                borderRadius: '50%',
-                background: 'rgba(255, 255, 255, 0.2)',
-                backdropFilter: 'blur(10px)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto',
-                mb: 1
-              }}
-            >
-              <Typography sx={{ color: 'white', fontSize: '1.5rem', fontWeight: 'bold' }}>🎮</Typography>
-            </Box>
-            <Typography variant='caption' sx={{ color: 'rgba(255, 255, 255, 0.95)', fontWeight: 500 }}>
-              Interactive
-            </Typography>
-          </Box>
+          {highlightItems.map((item, index) => {
+            const placementStyles =
+              index === 0
+                ? { justifySelf: { xs: 'start', sm: 'center' }, gridColumn: { xs: '1', sm: 'auto' } }
+                : index === 1
+                  ? { justifySelf: { xs: 'end', sm: 'center' }, gridColumn: { xs: '2', sm: 'auto' } }
+                  : { justifySelf: { xs: 'center', sm: 'center' }, gridColumn: { xs: '1 / span 2', sm: 'auto' } }
 
-          <Box sx={{ textAlign: 'center', flex: '1 1 120px' }}>
-            <Box
-              sx={{
-                width: 50,
-                height: 50,
-                borderRadius: '50%',
-                background: 'rgba(255, 255, 255, 0.2)',
-                backdropFilter: 'blur(10px)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto',
-                mb: 1
-              }}
-            >
-              <Typography sx={{ color: 'white', fontSize: '1.5rem', fontWeight: 'bold' }}>⚡</Typography>
-            </Box>
-            <Typography variant='caption' sx={{ color: 'rgba(255, 255, 255, 0.95)', fontWeight: 500 }}>
-              Real-time
-            </Typography>
-          </Box>
-
-          <Box sx={{ textAlign: 'center', flex: '1 1 120px' }}>
-            <Box
-              sx={{
-                width: 50,
-                height: 50,
-                borderRadius: '50%',
-                background: 'rgba(255, 255, 255, 0.2)',
-                backdropFilter: 'blur(10px)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto',
-                mb: 1
-              }}
-            >
-              <Typography sx={{ color: 'white', fontSize: '1.5rem', fontWeight: 'bold' }}>🏆</Typography>
-            </Box>
-            <Typography variant='caption' sx={{ color: 'rgba(255, 255, 255, 0.95)', fontWeight: 500 }}>
-              Competitive
-            </Typography>
-          </Box>
+            return (
+              <Box
+                key={item.id}
+                sx={{
+                  display: 'flex',
+                  flexDirection: { xs: 'row', sm: 'column' },
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: { xs: 1, sm: 1.5 },
+                  px: { xs: 1.5, sm: 2 },
+                  py: { xs: 1.25, sm: 1.5 },
+                  borderRadius: 3,
+                  background: 'rgba(255, 255, 255, 0.16)',
+                  backdropFilter: 'blur(12px)',
+                  minWidth: { sm: 120 },
+                  ...placementStyles
+                }}
+              >
+                <Typography sx={{ fontSize: '1.6rem', lineHeight: 1 }}>{item.icon}</Typography>
+                <Typography
+                  variant='caption'
+                  sx={{ color: 'rgba(255,255,255,0.94)', fontWeight: 600, letterSpacing: '0.04em' }}
+                >
+                  {item.label}
+                </Typography>
+              </Box>
+            )
+          })}
         </Box>
 
         {/* Additional Info */}
-        <Box sx={{ textAlign: 'center', mt: 3, pt: 2, borderTop: '1px solid rgba(255, 255, 255, 0.2)' }}>
+        <Box
+          sx={{
+            textAlign: 'center',
+            mt: { xs: 3.5, sm: 4 },
+            pt: { xs: 2.5, sm: 3 },
+            borderTop: '1px solid rgba(255, 255, 255, 0.22)'
+          }}
+        >
           <Typography
             variant='body2'
             sx={{
-              color: 'rgba(255, 255, 255, 0.85)',
-              fontSize: '0.813rem',
-              fontWeight: 500
+              color: 'rgba(255,255,255,0.88)',
+              fontSize: { xs: '0.85rem', sm: '0.9rem' },
+              fontWeight: 500,
+              letterSpacing: '0.01em'
             }}
           >
             Need help? Contact your game administrator

@@ -24,6 +24,7 @@ import {
   Container
 } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
+import useMediaQuery from '@mui/material/useMediaQuery'
 
 // MUI Icons
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
@@ -46,7 +47,7 @@ import {
 
 // Component Imports
 import ConfirmationDialog from '@components/dialogs/confirmation-dialog'
-import AccountTypeDialog from '@components/dialogs/account-type-dialog'
+import AccountTypeDialog from '@/components/dialogs/account-type-dialog/Account-Type-Dailog'
 import OpenDialogOnElementClick from '@components/dialogs/OpenDialogOnElementClick'
 
 // Style Imports
@@ -57,6 +58,7 @@ import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 
 import IconButtonTooltip from '@/components/IconButtonTooltip'
+import { toast } from 'react-toastify'
 
 const fuzzyFilter = (row, columnId, value, addMeta) => {
   // Rank the item
@@ -68,6 +70,26 @@ const fuzzyFilter = (row, columnId, value, addMeta) => {
   })
 
   // Return if the item should be filtered in/out
+  return itemRank.passed
+}
+
+// Custom global filter that only searches by account type name
+const globalNameFilter = (row, columnId, value, addMeta) => {
+  const name = (row.original.name || '').toString().toLowerCase()
+  const searchValue = (value || '').toString().toLowerCase().trim()
+
+  // If no search value, show all rows
+  if (!searchValue) return true
+
+  // Use fuzzy matching on the name field only
+  const itemRank = rankItem(name, searchValue)
+
+  if (addMeta) {
+    addMeta({
+      itemRank
+    })
+  }
+
   return itemRank.passed
 }
 
@@ -105,6 +127,7 @@ const ActionsMenu = ({ anchorEl, handleClose, handleAction }) => (
 
 const AccountTypesTable = () => {
   const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
 
   // States
   const [open, setOpen] = useState(false)
@@ -163,12 +186,15 @@ const AccountTypesTable = () => {
         const result = await RestApi.del(`${API_URLS.v0.ACCOUNT_TYPE}?id=${currentAccountType._id}`)
         if (result?.status === 'success') {
           console.log(`Account Type deleted: ${currentAccountType.name}`)
+          toast.success(`Account Type deleted: ${currentAccountType.name}`)
           await refreshData()
         } else {
           console.log('Error deleting account type:', result?.message)
+          toast.error(`Error deleting account type: ${result?.message}`)
         }
       } catch (error) {
         console.error('An error occurred while deleting the account type:', error)
+        toast.error(`Error deleting account type: ${error?.message}`)
         throw new Error(error)
       } finally {
         handleClose()
@@ -249,9 +275,9 @@ const AccountTypesTable = () => {
       columnHelper.accessor('action', {
         header: 'Actions',
         cell: ({ row }) => (
-          <div className='flex items-center gap-1'>
+          <div className='flex items-center gap-2'>
             <IconButtonTooltip
-              title='Edit Account Type'
+              title='Edit'
               onClick={() => handleEditAccountType(row.original)}
               sx={{
                 transition: 'all 0.2s ease-in-out',
@@ -267,20 +293,23 @@ const AccountTypesTable = () => {
               <i className='ri-edit-box-line text-[22px] text-textSecondary' />
             </IconButtonTooltip>
             <IconButtonTooltip
-              title='More Options'
-              onClick={e => handleMoreClick(e, row.original)}
+              title='Delete'
+              onClick={() => {
+                setCurrentAccountType(row.original)
+                setConfirmationDialogOpen(true)
+              }}
               sx={{
                 transition: 'all 0.2s ease-in-out',
                 '&:hover': {
-                  backgroundColor: theme => theme.palette.primary.main + '10',
+                  backgroundColor: theme => theme.palette.error.main + '10',
                   '& i': {
-                    color: 'primary.main'
+                    color: 'error.main'
                   },
                   transform: 'scale(1.1)'
                 }
               }}
             >
-              <i className='ri-more-2-line text-[22px] text-textSecondary' />
+              <i className='ri-delete-bin-line text-[22px] text-textSecondary' />
             </IconButtonTooltip>
           </div>
         ),
@@ -294,7 +323,8 @@ const AccountTypesTable = () => {
     data: data,
     columns,
     filterFns: {
-      fuzzy: fuzzyFilter
+      fuzzy: fuzzyFilter,
+      globalNameFilter: globalNameFilter
     },
     state: {
       rowSelection,
@@ -306,7 +336,7 @@ const AccountTypesTable = () => {
       }
     },
     enableRowSelection: true,
-    globalFilterFn: fuzzyFilter,
+    globalFilterFn: globalNameFilter,
     onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
     onGlobalFilterChange: setGlobalFilter,
@@ -340,20 +370,22 @@ const AccountTypesTable = () => {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
-        background: `radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 50%),
-                     radial-gradient(circle at 80% 80%, ${alpha(
+        minHeight: '100dvh',
+        display: 'flex',
+        flexDirection: 'column',
+        background: `radial-gradient(circle at 18% 18%, ${alpha(theme.palette.primary.main, 0.06)} 0%, transparent 55%),
+                     radial-gradient(circle at 82% 82%, ${alpha(
                        theme.palette.secondary.main,
-                       0.05
-                     )} 0%, transparent 50%),
+                       0.06
+                     )} 0%, transparent 55%),
                      ${theme.palette.background.default}`
       }}
     >
       {/* Elegant Header */}
       <Box
         sx={{
-          backdropFilter: 'blur(20px)',
-          bgcolor: alpha('#fff', 0.7),
+          backdropFilter: 'blur(16px)',
+          bgcolor: alpha('#fff', 0.78),
           borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
           pt: { xs: 4, md: 6 },
           pb: { xs: 4, md: 6 }
@@ -361,49 +393,49 @@ const AccountTypesTable = () => {
       >
         <Container maxWidth='lg'>
           <Box sx={{ textAlign: 'center' }}>
-            {/* Icon and Title */}
-            <Box
-              sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 2,
-                mb: 2
-              }}
+            <Stack
+              direction='row'
+              spacing={{ xs: 1.5, sm: 2 }}
+              justifyContent='center'
+              alignItems='center'
+              sx={{ mb: { xs: 1.75, sm: 2 } }}
             >
               <Box
                 sx={{
-                  width: { xs: 48, sm: 56 },
-                  height: { xs: 48, sm: 56 },
-                  borderRadius: '12px',
+                  width: { xs: 46, sm: 54 },
+                  height: { xs: 46, sm: 54 },
+                  borderRadius: '14px',
                   background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`
+                  boxShadow: `0 6px 18px ${alpha(theme.palette.primary.main, 0.28)}`
                 }}
               >
-                <i className='ri-account-box-line' style={{ fontSize: '28px', color: 'white' }} />
+                <i className='ri-account-box-line' style={{ fontSize: 'clamp(22px, 6vw, 28px)', color: '#fff' }} />
               </Box>
-              <Typography
-                sx={{
-                  fontSize: { xs: '2rem', md: '2.5rem' },
-                  fontWeight: 700,
-                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  letterSpacing: '-0.02em'
-                }}
-              >
-                Account Types
-              </Typography>
-            </Box>
+              <Stack spacing={0.5} alignItems='flex-start' sx={{ textAlign: 'left' }}>
+                <Typography
+                  sx={{
+                    fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.5rem' },
+                    fontWeight: 700,
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    letterSpacing: '-0.018em'
+                  }}
+                >
+                  Account Types
+                </Typography>
+              </Stack>
+            </Stack>
             <Typography
               variant='body1'
               color='text.secondary'
               sx={{
-                fontSize: '1.05rem',
+                fontSize: { xs: '0.95rem', sm: '1.05rem' },
                 lineHeight: 1.8,
-                width: '100%',
+                maxWidth: { xs: '100%', sm: '640px' },
                 mx: 'auto',
                 fontWeight: 400
               }}
@@ -415,28 +447,47 @@ const AccountTypesTable = () => {
       </Box>
 
       {/* Content Area */}
-      <Container maxWidth='lg' sx={{ py: { xs: 3, md: 4 } }}>
+      <Container
+        maxWidth='lg'
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          width: '100%',
+          py: { xs: 3, md: 4 }
+        }}
+      >
         <Card
           sx={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
             background: '#ffffff',
-            boxShadow: theme => theme.shadows[3],
             borderRadius: 3,
-            overflow: 'hidden',
-            border: theme => `1px solid ${theme.palette.divider}`,
-            transition: 'box-shadow 0.3s ease-in-out',
-            '&:hover': {
-              boxShadow: theme => theme.shadows[6]
-            }
+            boxShadow: '0 12px 32px rgba(15, 15, 45, 0.06)',
+            border: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+            overflow: 'hidden'
           }}
         >
-          <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
-            <div className='flex justify-between items-center flex-col sm:flex-row gap-4'>
+          <CardContent sx={{ p: { xs: 2.75, sm: 3.5 } }}>
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={{ xs: 2.5, sm: 3 }}
+              alignItems={{ xs: 'stretch', sm: 'center' }}
+              justifyContent='space-between'
+            >
               <DebouncedInput
                 value={globalFilter ?? ''}
                 onChange={value => setGlobalFilter(String(value))}
-                placeholder='Search Account Types'
+                placeholder='Search account types'
                 fullWidth
-                sx={{ maxWidth: { sm: '500px' } }}
+                sx={{
+                  maxWidth: { sm: 420 },
+                  '& .MuiInputBase-root': {
+                    borderRadius: 2,
+                    backgroundColor: '#fff'
+                  }
+                }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position='start'>
@@ -456,97 +507,213 @@ const AccountTypesTable = () => {
                 sx={{
                   borderRadius: 2,
                   color: 'white',
-                  fontWeight: 600
+                  fontWeight: 600,
+                  whiteSpace: 'nowrap',
+                  alignSelf: { xs: 'stretch', sm: 'center' },
+                  px: { xs: 2.75, sm: 3.5 },
+                  py: { xs: 1.15, sm: 1.25 }
                 }}
               >
                 Add New Account Type
               </Button>
-            </div>
+            </Stack>
           </CardContent>
 
           <Divider />
 
-          <div className='px-4 sm:px-6 py-3'>
+          <Box sx={{ px: { xs: 3, sm: 4 }, py: { xs: 2, sm: 2.5 } }}>
             <Typography variant='body2' color='text.secondary' sx={{ fontWeight: 500 }}>
               Total {data?.length || 0} account type{data?.length !== 1 ? 's' : ''}
             </Typography>
-          </div>
-          <div className='overflow-x-auto'>
-            <table className={tableStyles.table}>
-              <thead>
-                {table.getHeaderGroups().map(headerGroup => (
-                  <tr key={headerGroup.id}>
-                    {headerGroup.headers.map(header => (
-                      <th key={header.id}>
-                        {header.isPlaceholder ? null : (
-                          <>
-                            <div
-                              className={classnames({
-                                'flex items-center': header.column.getIsSorted(),
-                                'cursor-pointer select-none': header.column.getCanSort()
-                              })}
-                              onClick={header.column.getToggleSortingHandler()}
-                            >
-                              {flexRender(header.column.columnDef.header, header.getContext())}
-                              {{
-                                asc: <i className='ri-arrow-up-s-line text-xl' />,
-                                desc: <i className='ri-arrow-down-s-line text-xl' />
-                              }[header.column.getIsSorted()] ?? null}
-                            </div>
-                          </>
-                        )}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead>
-              {table.getFilteredRowModel().rows.length === 0 ? (
-                <tbody>
-                  <tr>
-                    <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
-                      <div
-                        style={{
-                          padding: '48px 16px',
+          </Box>
+          <Box sx={{ px: { xs: 2, sm: 3 }, py: { xs: 2, sm: 3 } }}>
+            {table.getFilteredRowModel().rows.length === 0 ? (
+              <Box
+                sx={{
+                  textAlign: 'center',
+                  py: 6,
+                  borderRadius: 3,
+                  backgroundColor: alpha(theme.palette.primary.main, 0.02)
+                }}
+              >
+                <i className='ri-account-box-line' style={{ fontSize: 48, opacity: 0.5 }} />
+                <Typography variant='h6' color='text.secondary' sx={{ mt: 2 }}>
+                  No account types found
+                </Typography>
+                <Typography variant='body2' color='text.disabled' sx={{ mt: 1 }}>
+                  Add your first account type to get started
+                </Typography>
+              </Box>
+            ) : isMobile ? (
+              <Box
+                sx={{
+                  maxHeight: '65vh',
+                  overflowY: 'auto',
+                  pr: 1,
+                  '&::-webkit-scrollbar': { width: 6 },
+                  '&::-webkit-scrollbar-thumb': {
+                    backgroundColor: alpha(theme.palette.primary.main, 0.3),
+                    borderRadius: 8
+                  }
+                }}
+              >
+                <Stack spacing={2}>
+                  {table.getFilteredRowModel().rows.map(row => {
+                    const accountType = row.original
+                    const isActive = accountType.isActive ?? false
+
+                    return (
+                      <Box
+                        key={row.id}
+                        sx={{
+                          borderRadius: 3,
+                          border: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
+                          boxShadow: '0 12px 30px rgba(15, 23, 42, 0.08)',
+                          p: 2,
                           display: 'flex',
                           flexDirection: 'column',
-                          alignItems: 'center',
-                          gap: '12px'
+                          gap: 1.5,
+                          background: '#fff',
+                          transition: 'all 0.2s ease-in-out',
+                          '&:hover': {
+                            boxShadow: '0 16px 40px rgba(15, 23, 42, 0.12)',
+                            transform: 'translateY(-2px)'
+                          }
                         }}
                       >
-                        <i className='ri-account-box-line' style={{ fontSize: '48px', opacity: 0.5 }} />
-                        <Typography variant='h6' color='text.secondary'>
-                          No account types found
-                        </Typography>
-                        <Typography variant='body2' color='text.disabled'>
-                          Add your first account type to get started
-                        </Typography>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              ) : (
-                <tbody>
-                  {table
-                    .getRowModel()
-                    .rows.slice(0, table.getState().pagination.pageSize)
-                    .map(row => (
+                        <Stack direction='row' justifyContent='space-between' alignItems='flex-start' spacing={1.5}>
+                          <Typography
+                            variant='subtitle1'
+                            sx={{
+                              fontWeight: 700,
+                              fontSize: '1rem',
+                              flex: 1,
+                              minWidth: 0,
+                              wordBreak: 'break-word',
+                              background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                              WebkitBackgroundClip: 'text',
+                              WebkitTextFillColor: 'transparent',
+                              backgroundClip: 'text'
+                            }}
+                          >
+                            {accountType.name}
+                          </Typography>
+                          <Chip
+                            label={isActive ? 'Active' : 'Inactive'}
+                            color={isActive ? 'success' : 'default'}
+                            variant='tonal'
+                            size='small'
+                            sx={{ fontWeight: 600, flexShrink: 0 }}
+                          />
+                        </Stack>
+
+                        <Stack spacing={0.5} sx={{ mt: 1 }}>
+                          <Typography variant='caption' color='text.secondary'>
+                            Created:{' '}
+                            {new Date(accountType.createdAt).toLocaleDateString('en-GB', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric'
+                            })}
+                            ,{' '}
+                            {new Date(accountType.createdAt).toLocaleTimeString('en-US', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              hour12: true
+                            })}
+                          </Typography>
+                          <Typography variant='caption' color='text.secondary'>
+                            CreatedBy: {accountType.createdBy || 'N/A'}
+                          </Typography>
+                          {accountType.creatorEmail && (
+                            <Typography variant='caption' color='text.secondary'>
+                              Email: {accountType.creatorEmail}
+                            </Typography>
+                          )}
+                        </Stack>
+                        <Stack direction='row' spacing={1} sx={{ mt: 1 }}>
+                          <Button
+                            variant='outlined'
+                            color='primary'
+                            size='small'
+                            onClick={() => handleEditAccountType(accountType)}
+                            sx={{
+                              flex: 1,
+                              textTransform: 'none',
+                              fontWeight: 600
+                            }}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            variant='contained'
+                            component='label'
+                            sx={{
+                              color: 'white',
+                              flex: 1,
+                              textTransform: 'none',
+                              fontWeight: 600
+                            }}
+                            size='small'
+                            onClick={() => {
+                              setCurrentAccountType(accountType)
+                              setConfirmationDialogOpen(true)
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        </Stack>
+                      </Box>
+                    )
+                  })}
+                </Stack>
+              </Box>
+            ) : (
+              <div className='overflow-x-auto'>
+                <table className={tableStyles.table}>
+                  <thead>
+                    {table.getHeaderGroups().map(headerGroup => (
+                      <tr key={headerGroup.id}>
+                        {headerGroup.headers.map(header => (
+                          <th key={header.id}>
+                            {header.isPlaceholder ? null : (
+                              <>
+                                <div
+                                  className={classnames({
+                                    'flex items-center': header.column.getIsSorted(),
+                                    'cursor-pointer select-none': header.column.getCanSort()
+                                  })}
+                                  onClick={header.column.getToggleSortingHandler()}
+                                >
+                                  {flexRender(header.column.columnDef.header, header.getContext())}
+                                  {{
+                                    asc: <i className='ri-arrow-up-s-line text-xl' />,
+                                    desc: <i className='ri-arrow-down-s-line text-xl' />
+                                  }[header.column.getIsSorted()] ?? null}
+                                </div>
+                              </>
+                            )}
+                          </th>
+                        ))}
+                      </tr>
+                    ))}
+                  </thead>
+                  <tbody>
+                    {table.getRowModel().rows.map(row => (
                       <tr
                         key={row.id}
                         className={classnames({ selected: row.getIsSelected() })}
                         style={{
-                          transition: 'all 0.3s ease-in-out',
                           cursor: 'pointer'
                         }}
                         onMouseEnter={e => {
                           e.currentTarget.style.backgroundColor = 'rgba(139, 92, 246, 0.08)'
-                          e.currentTarget.style.transform = 'scale(1.01)'
                           e.currentTarget.style.boxShadow = '0 2px 8px rgba(139, 92, 246, 0.15)'
                         }}
                         onMouseLeave={e => {
                           if (!row.getIsSelected()) {
                             e.currentTarget.style.backgroundColor = 'transparent'
                           }
-                          e.currentTarget.style.transform = 'scale(1)'
                           e.currentTarget.style.boxShadow = 'none'
                         }}
                       >
@@ -555,45 +722,37 @@ const AccountTypesTable = () => {
                         ))}
                       </tr>
                     ))}
-                </tbody>
-              )}
-            </table>
-          </div>
-          <TablePagination
-            rowsPerPageOptions={[5, 7, 10]}
-            component='div'
-            className='border-bs'
-            count={table.getFilteredRowModel().rows.length}
-            rowsPerPage={table.getState().pagination.pageSize}
-            page={table.getState().pagination.pageIndex}
-            SelectProps={{
-              inputProps: { 'aria-label': 'rows per page' }
-            }}
-            onPageChange={(_, page) => {
-              table.setPageIndex(page)
-            }}
-            onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
-            sx={{
-              '.MuiTablePagination-toolbar': {
-                px: { xs: 2, sm: 3 },
-                py: 2
-              },
-              '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
-                fontSize: { xs: '0.75rem', sm: '0.875rem' }
-              }
-            }}
-          />
-
-          {/* Menu for more options */}
-          <ActionsMenu
-            anchorEl={anchorEl}
-            handleClose={handleClose}
-            handleAction={action => {
-              if (action === 'delete') {
-                handleDeleteConfirmation()
-              }
-            }}
-          />
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Box>
+          {!isMobile && table.getFilteredRowModel().rows.length > 0 && (
+            <TablePagination
+              rowsPerPageOptions={[5, 7, 10]}
+              component='div'
+              className='border-bs'
+              count={table.getFilteredRowModel().rows.length}
+              rowsPerPage={table.getState().pagination.pageSize}
+              page={table.getState().pagination.pageIndex}
+              SelectProps={{
+                inputProps: { 'aria-label': 'rows per page' }
+              }}
+              onPageChange={(_, page) => {
+                table.setPageIndex(page)
+              }}
+              onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
+              sx={{
+                '.MuiTablePagination-toolbar': {
+                  px: { xs: 2, sm: 3 },
+                  py: 2
+                },
+                '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
+                  fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                }
+              }}
+            />
+          )}
         </Card>
 
         {/* Dialog for editing and adding account types */}

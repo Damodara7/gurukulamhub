@@ -17,9 +17,8 @@ import UserListCards from './UserListCards'
 // API Utils
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
-import * as clientApi from '@/app/api/client/client.api'
 
-const UserList = ({ userData }) => {
+const UserList = () => {
   const theme = useTheme()
   const [users, setUsers] = useState([])
   const [isLoading, setIsLoading] = useState(true)
@@ -101,7 +100,7 @@ const UserList = ({ userData }) => {
               </Box>
               <Typography
                 sx={{
-                  fontSize: { xs: '2rem', md: '2.5rem' },
+                  fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.5rem' },
                   fontWeight: 700,
                   background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                   WebkitBackgroundClip: 'text',
@@ -118,7 +117,7 @@ const UserList = ({ userData }) => {
               sx={{
                 fontSize: '1.05rem',
                 lineHeight: 1.8,
-               width: '100%',
+                width: '100%',
                 mx: 'auto',
                 fontWeight: 400
               }}

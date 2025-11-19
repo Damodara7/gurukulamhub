@@ -196,7 +196,7 @@ const AllGroupPage = () => {
               </Box>
               <Typography
                 sx={{
-                  fontSize: { xs: '2rem', md: '2.5rem' },
+                  fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.5rem' },
                   fontWeight: 700,
                   background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                   WebkitBackgroundClip: 'text',
@@ -211,8 +211,8 @@ const AllGroupPage = () => {
               variant='body1'
               color='text.secondary'
               sx={{
-                fontSize: '1.05rem',
-                lineHeight: 1.8,
+                fontSize: { xs: '0.875rem', sm: '0.9375rem', md: '1.05rem' },
+                lineHeight: { xs: 1.5, sm: 1.6, md: 1.8 },
                 width: '100%',
                 mx: 'auto',
                 fontWeight: 400
@@ -228,26 +228,38 @@ const AllGroupPage = () => {
       <Container maxWidth='lg' sx={{ py: { xs: 3, md: 4 } }}>
         <GroupCard groups={groups} onEditGroup={handleEditGroup} onViewGroup={handleViewGroup} />
 
-        {/* Floating Action Button */}
-        <Button
-          variant='contained'
-          component='label'
+        {/* Create Group Button - Responsive: below cards on mobile, fixed on desktop */}
+        <Box
           sx={{
-            color: 'white',
-            position: 'fixed',
-            fontsize: '1.2rem',
-            bottom: { xs: 16, sm: 24 },
-            right: { xs: 16, sm: 24 },
-            zIndex: 1001,
-            borderRadius: '12px',
-            px: 3,
-            py: 1.5
+            display: { xs: 'flex', sm: 'block' },
+            justifyContent: 'center',
+            mt: { xs: 3, sm: 0 },
+            mb: { xs: 0, sm: 0 }
           }}
-          startIcon={<AddIcon />}
-          onClick={handleCreateNewGroup}
         >
-          Create Group
-        </Button>
+          <Button
+            variant='contained'
+            component='label'
+            onClick={handleCreateNewGroup}
+            startIcon={<AddIcon />}
+            sx={{
+              color: 'white',
+              // Mobile: normal flow, below cards
+              position: { xs: 'static', sm: 'fixed' },
+              bottom: { xs: 'auto', sm: 24 },
+              right: { xs: 'auto', sm: 24 },
+              zIndex: { xs: 'auto', sm: 1001 },
+              // Responsive sizing
+              fontSize: { xs: '1rem', sm: '1.2rem' },
+              borderRadius: '12px',
+              px: { xs: 3, sm: 4 },
+              py: { xs: 1.25, sm: 1.5 },
+              minWidth: { xs: 200, sm: 220 }
+            }}
+          >
+            Create Group
+          </Button>
+        </Box>
       </Container>
     </Box>
   )

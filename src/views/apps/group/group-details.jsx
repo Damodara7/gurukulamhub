@@ -162,16 +162,20 @@ const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
               </Box>
               <Typography
                 sx={{
-                  fontSize: { xs: '2rem', md: '2.5rem' },
+                  fontSize: { xs: '1.25rem', sm: '1.5rem', md: '2.5rem' },
                   fontWeight: 700,
                   background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
-                  width: '70%',
+                  width: { xs: '100%', sm: '70%' },
                   letterSpacing: '-0.02em',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  lineHeight: 1.3,
+                  wordBreak: 'break-word',
                   maxWidth: '100%'
                 }}
               >
@@ -183,9 +187,9 @@ const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
                 variant='body1'
                 color='text.secondary'
                 sx={{
-                  fontSize: '1.05rem',
-                  lineHeight: 1.8,
-                  width: '70%',
+                  fontSize: { xs: '0.875rem', sm: '0.9375rem', md: '1.05rem' },
+                  lineHeight: { xs: 1.5, sm: 1.6, md: 1.8 },
+                  width: { xs: '100%', sm: '70%' },
                   mx: 'auto',
                   fontWeight: 400,
                   overflow: 'hidden',
@@ -206,8 +210,8 @@ const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
         {/* Filters Section */}
         <Card
           sx={{
-            mb: 4,
-            borderRadius: 2,
+            mb: { xs: 3, sm: 4 },
+            borderRadius: { xs: 2, sm: 2 },
             boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.08)}`,
             border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
             overflow: 'hidden',
@@ -216,14 +220,14 @@ const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
             }
           }}
         >
-          <CardContent sx={{ p: 3 }}>
+          <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
             <Box
               sx={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 1.5,
-                mb: 3,
-                pb: 2,
+                gap: { xs: 1, sm: 1.5 },
+                mb: { xs: 2, sm: 3 },
+                pb: { xs: 1.5, sm: 2 },
                 borderBottom: `2px solid ${alpha(theme.palette.primary.main, 0.1)}`
               }}
             >
@@ -232,22 +236,26 @@ const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  width: 36,
-                  height: 36,
+                  width: { xs: 32, sm: 36 },
+                  height: { xs: 32, sm: 36 },
                   borderRadius: 1.5,
                   background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)}, ${alpha(
                     theme.palette.secondary.main,
                     0.1
                   )})`,
-                  color: 'primary.main'
+                  color: 'primary.main',
+                  '& i': {
+                    fontSize: { xs: '1rem', sm: '1.25rem' }
+                  }
                 }}
               >
-                <i className='ri-filter-3-line' style={{ fontSize: '1.25rem' }} />
+                <i className='ri-filter-3-line' />
               </Box>
               <Typography
                 variant='h6'
                 sx={{
                   fontWeight: 700,
+                  fontSize: { xs: '1rem', sm: '1.25rem' },
                   background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                   backgroundClip: 'text',
                   WebkitBackgroundClip: 'text',
@@ -259,7 +267,7 @@ const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
             </Box>
 
             {filterChips.length > 0 ? (
-              <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+              <Box sx={{ display: 'flex', gap: { xs: 1, sm: 1.5 }, flexWrap: 'wrap' }}>
                 {filterChips.map((chip, index) => {
                   // Determine background color based on chip color type
                   const getBackgroundColor = () => {
@@ -312,8 +320,8 @@ const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
                       icon={chip.icon}
                       label={chip.label}
                       sx={{
-                        height: 36,
-                        fontSize: '0.875rem',
+                        height: { xs: 30, sm: 36 },
+                        fontSize: { xs: '0.75rem', sm: '0.8125rem', md: '0.875rem' },
                         fontWeight: 600,
                         borderRadius: 1.5,
                         background: getBackgroundColor(),
@@ -333,15 +341,15 @@ const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
                           transform: 'translateY(-1px)'
                         },
                         '& .MuiChip-icon': {
-                          fontSize: 18,
+                          fontSize: { xs: 16, sm: 18 },
                           color: getTextColor(),
-                          marginLeft: '8px',
-                          marginRight: '-2px'
+                          marginLeft: { xs: '6px', sm: '8px' },
+                          marginRight: { xs: '-2px', sm: '-2px' }
                         },
                         '& .MuiChip-label': {
                           color: getTextColor(),
-                          paddingLeft: '10px',
-                          paddingRight: '12px'
+                          paddingLeft: { xs: '8px', sm: '10px' },
+                          paddingRight: { xs: '10px', sm: '12px' }
                         }
                       }}
                     />
@@ -355,7 +363,8 @@ const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
                   color: 'text.secondary',
                   fontStyle: 'italic',
                   textAlign: 'center',
-                  py: 2
+                  py: { xs: 1.5, sm: 2 },
+                  fontSize: { xs: '0.8125rem', sm: '0.875rem' }
                 }}
               >
                 No filters applied
@@ -367,7 +376,7 @@ const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
         {/* Group Members Section */}
         <Card
           sx={{
-            borderRadius: 2,
+            borderRadius: { xs: 2, sm: 2 },
             boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.08)}`,
             border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
             overflow: 'hidden',
@@ -376,25 +385,27 @@ const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
             }
           }}
         >
-          <CardContent sx={{ p: 3 }}>
+          <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
             <Box
               sx={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                mb: 3,
-                pb: 2,
+                flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                gap: { xs: 1, sm: 0 },
+                mb: { xs: 2, sm: 3 },
+                pb: { xs: 1.5, sm: 2 },
                 borderBottom: `2px solid ${alpha(theme.palette.primary.main, 0.1)}`
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5 } }}>
                 <Box
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    width: 36,
-                    height: 36,
+                    width: { xs: 32, sm: 36 },
+                    height: { xs: 32, sm: 36 },
                     borderRadius: 1.5,
                     background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)}, ${alpha(
                       theme.palette.secondary.main,
@@ -403,12 +414,13 @@ const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
                     color: 'primary.main'
                   }}
                 >
-                  <GroupIcon sx={{ fontSize: '1.25rem' }} />
+                  <GroupIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />
                 </Box>
                 <Typography
                   variant='h6'
                   sx={{
                     fontWeight: 700,
+                    fontSize: { xs: '1rem', sm: '1.25rem' },
                     background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                     backgroundClip: 'text',
                     WebkitBackgroundClip: 'text',
@@ -428,7 +440,9 @@ const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
                 }
                 size='small'
                 sx={{
+                  height: { xs: 24, sm: 28 },
                   fontWeight: 600,
+                  fontSize: { xs: '0.7rem', sm: '0.75rem' },
                   background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)}, ${alpha(
                     theme.palette.secondary.main,
                     0.1
@@ -442,23 +456,39 @@ const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
             {groupData?.members && groupData.members.length > 0 ? (
               <Paper
                 sx={{
-                  maxHeight: '400px',
+                  maxHeight: { xs: '300px', sm: '400px' },
                   overflow: 'auto',
                   border: '1px solid',
                   borderColor: 'divider',
-                  borderRadius: 1
+                  borderRadius: 1,
+                  // Custom scrollbar styling
+                  '&::-webkit-scrollbar': {
+                    width: '8px'
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    backgroundColor: alpha(theme.palette.divider, 0.1),
+                    borderRadius: '4px'
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    backgroundColor: alpha(theme.palette.primary.main, 0.4),
+                    borderRadius: '4px',
+                    '&:hover': {
+                      backgroundColor: alpha(theme.palette.primary.main, 0.6)
+                    }
+                  },
+                  scrollbarWidth: 'thin'
                 }}
               >
-                <Box sx={{ p: 2 }}>
+                <Box sx={{ p: { xs: 1.5, sm: 2 } }}>
                   {groupData.members.map((member, index) => (
                     <Box
                       key={member._id || index}
                       sx={{
                         display: 'flex',
-                        alignItems: 'center',
-                        gap: 2,
-                        py: 1.5,
-                        px: 2,
+                        alignItems: { xs: 'flex-start', sm: 'center' },
+                        gap: { xs: 1.5, sm: 2 },
+                        py: { xs: 1.25, sm: 1.5 },
+                        px: { xs: 1.5, sm: 2 },
                         borderRadius: 1.5,
                         borderBottom: index < groupData.members.length - 1 ? '1px solid' : 'none',
                         borderColor: 'divider',
@@ -466,21 +496,22 @@ const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
                         cursor: 'pointer',
                         '&:hover': {
                           backgroundColor: alpha(theme.palette.primary.main, 0.08),
-                          transform: 'scale(1.01)',
-                          boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.15)}`,
+                          transform: { xs: 'none', sm: 'scale(1.01)' },
+                          boxShadow: { xs: 'none', sm: `0 2px 8px ${alpha(theme.palette.primary.main, 0.15)}` },
                           borderColor: 'transparent'
                         }
                       }}
                     >
                       <Avatar
                         sx={{
-                          width: 48,
-                          height: 48,
+                          width: { xs: 40, sm: 48 },
+                          height: { xs: 40, sm: 48 },
                           background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                          fontSize: '1.2rem',
+                          fontSize: { xs: '1rem', sm: '1.2rem' },
                           fontWeight: 600,
                           color: 'white',
-                          boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`
+                          boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`,
+                          flexShrink: 0
                         }}
                       >
                         {member?.profile?.firstname?.[0] ||
@@ -490,21 +521,52 @@ const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
                       </Avatar>
 
                       <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography variant='subtitle1' color='text.primary' sx={{ fontWeight: 600, mb: 0.5 }}>
+                        <Typography
+                          variant='subtitle1'
+                          color='text.primary'
+                          sx={{
+                            fontWeight: 600,
+                            mb: { xs: 0.25, sm: 0.5 },
+                            fontSize: { xs: '0.875rem', sm: '0.9375rem', md: '1rem' },
+                            wordBreak: 'break-word'
+                          }}
+                        >
                           {member?.profile?.firstname && member?.profile?.lastname
                             ? `${member?.profile?.firstname} ${member?.profile?.lastname}`
                             : member?.profile?.firstname || member?.profile?.lastname || member?.email}
                         </Typography>
 
-                        <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                          sx={{
+                            mb: { xs: 0.75, sm: 1 },
+                            fontSize: { xs: '0.75rem', sm: '0.8125rem', md: '0.875rem' },
+                            wordBreak: 'break-word'
+                          }}
+                        >
                           {member.email}
                         </Typography>
 
                         {/* Show only filter-related information based on group filters */}
-                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            gap: { xs: 0.5, sm: 1 },
+                            flexWrap: 'wrap',
+                            alignItems: 'center'
+                          }}
+                        >
                           {getMemberFilterChips(member).length > 0 ? (
                             <>
-                              <Typography variant='body2' sx={{ fontWeight: 500, color: 'text.secondary' }}>
+                              <Typography
+                                variant='body2'
+                                sx={{
+                                  fontWeight: 500,
+                                  color: 'text.secondary',
+                                  fontSize: { xs: '0.75rem', sm: '0.8125rem', md: '0.875rem' }
+                                }}
+                              >
                                 Users Criteria:
                               </Typography>
                               {getMemberFilterChips(member).map((chip, chipIndex) => (
@@ -513,22 +575,32 @@ const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
                                   size='small'
                                   icon={
                                     chip.label.startsWith('Age:') ? (
-                                      <CakeIcon sx={{ fontSize: 14 }} />
+                                      <CakeIcon sx={{ fontSize: { xs: 12, sm: 14 } }} />
                                     ) : chip.label.startsWith('Gender:') ? (
-                                      <PersonIcon sx={{ fontSize: 14 }} />
+                                      <PersonIcon sx={{ fontSize: { xs: 12, sm: 14 } }} />
                                     ) : chip.label.startsWith('Location:') ? (
-                                      <LocationIcon sx={{ fontSize: 14 }} />
+                                      <LocationIcon sx={{ fontSize: { xs: 12, sm: 14 } }} />
                                     ) : null
                                   }
                                   label={chip.label}
                                   variant='outlined'
                                   color={chip.color}
-                                  sx={{ fontSize: '0.75rem' }}
+                                  sx={{
+                                    fontSize: { xs: '0.65rem', sm: '0.7rem', md: '0.75rem' },
+                                    height: { xs: 22, sm: 26 }
+                                  }}
                                 />
                               ))}
                             </>
                           ) : (
-                            <Typography variant='caption' color='text.secondary' sx={{ fontStyle: 'italic' }}>
+                            <Typography
+                              variant='caption'
+                              color='text.secondary'
+                              sx={{
+                                fontStyle: 'italic',
+                                fontSize: { xs: '0.7rem', sm: '0.75rem' }
+                              }}
+                            >
                               No criteria applied
                             </Typography>
                           )}
@@ -539,8 +611,8 @@ const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
                 </Box>
               </Paper>
             ) : (
-              <Box sx={{ textAlign: 'center', py: 4 }}>
-                <Typography variant='body1' color='text.secondary'>
+              <Box sx={{ textAlign: 'center', py: { xs: 3, sm: 4 } }}>
+                <Typography variant='body1' color='text.secondary' sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
                   No members in this group
                 </Typography>
               </Box>
@@ -551,8 +623,8 @@ const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
         {/* Group Games Section */}
         <Card
           sx={{
-            mt: 4,
-            borderRadius: 2,
+            mt: { xs: 3, sm: 4 },
+            borderRadius: { xs: 2, sm: 2 },
             boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.08)}`,
             border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
             overflow: 'hidden',
@@ -561,25 +633,27 @@ const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
             }
           }}
         >
-          <CardContent sx={{ p: 3 }}>
+          <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
             <Box
               sx={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                mb: 3,
-                pb: 2,
+                flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                gap: { xs: 1, sm: 0 },
+                mb: { xs: 2, sm: 3 },
+                pb: { xs: 1.5, sm: 2 },
                 borderBottom: `2px solid ${alpha(theme.palette.primary.main, 0.1)}`
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5 } }}>
                 <Box
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    width: 36,
-                    height: 36,
+                    width: { xs: 32, sm: 36 },
+                    height: { xs: 32, sm: 36 },
                     borderRadius: 1.5,
                     background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)}, ${alpha(
                       theme.palette.secondary.main,
@@ -588,12 +662,13 @@ const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
                     color: 'primary.main'
                   }}
                 >
-                  <GameIcon sx={{ fontSize: '1.25rem' }} />
+                  <GameIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />
                 </Box>
                 <Typography
                   variant='h6'
                   sx={{
                     fontWeight: 700,
+                    fontSize: { xs: '1rem', sm: '1.25rem' },
                     background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                     backgroundClip: 'text',
                     WebkitBackgroundClip: 'text',
@@ -613,7 +688,9 @@ const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
                 }
                 size='small'
                 sx={{
+                  height: { xs: 24, sm: 28 },
                   fontWeight: 600,
+                  fontSize: { xs: '0.7rem', sm: '0.75rem' },
                   background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)}, ${alpha(
                     theme.palette.secondary.main,
                     0.1
@@ -627,23 +704,39 @@ const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
             {gamesData.length > 0 ? (
               <Paper
                 sx={{
-                  maxHeight: '400px',
+                  maxHeight: { xs: '300px', sm: '400px' },
                   overflow: 'auto',
                   border: '1px solid',
                   borderColor: 'divider',
-                  borderRadius: 1
+                  borderRadius: 1,
+                  // Custom scrollbar styling
+                  '&::-webkit-scrollbar': {
+                    width: '8px'
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    backgroundColor: alpha(theme.palette.divider, 0.1),
+                    borderRadius: '4px'
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    backgroundColor: alpha(theme.palette.primary.main, 0.4),
+                    borderRadius: '4px',
+                    '&:hover': {
+                      backgroundColor: alpha(theme.palette.primary.main, 0.6)
+                    }
+                  },
+                  scrollbarWidth: 'thin'
                 }}
               >
-                <Box sx={{ p: 2 }}>
+                <Box sx={{ p: { xs: 1.5, sm: 2 } }}>
                   {gamesData.map((game, index) => (
                     <Box
                       key={game._id || index}
                       sx={{
                         display: 'flex',
-                        alignItems: 'center',
-                        gap: 2,
-                        py: 1.5,
-                        px: 2,
+                        alignItems: { xs: 'flex-start', sm: 'center' },
+                        gap: { xs: 1.5, sm: 2 },
+                        py: { xs: 1.25, sm: 1.5 },
+                        px: { xs: 1.5, sm: 2 },
                         borderRadius: 1.5,
                         borderBottom: index < gamesData.length - 1 ? '1px solid' : 'none',
                         borderColor: 'divider',
@@ -651,8 +744,8 @@ const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
                         cursor: 'pointer',
                         '&:hover': {
                           backgroundColor: alpha(theme.palette.secondary.main, 0.08),
-                          transform: 'scale(1.01)',
-                          boxShadow: `0 2px 8px ${alpha(theme.palette.secondary.main, 0.15)}`,
+                          transform: { xs: 'none', sm: 'scale(1.01)' },
+                          boxShadow: { xs: 'none', sm: `0 2px 8px ${alpha(theme.palette.secondary.main, 0.15)}` },
                           borderColor: 'transparent'
                         }
                       }}
@@ -660,25 +753,46 @@ const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
                       <Avatar
                         src={game.thumbnailPoster}
                         sx={{
-                          width: 48,
-                          height: 48,
+                          width: { xs: 40, sm: 48 },
+                          height: { xs: 40, sm: 48 },
                           background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                          fontSize: '1.2rem',
+                          fontSize: { xs: '1rem', sm: '1.2rem' },
                           fontWeight: 600,
                           color: 'white',
-                          boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`
+                          boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`,
+                          flexShrink: 0
                         }}
                       >
                         {game.title?.[0]?.toUpperCase() || 'G'}
                       </Avatar>
 
                       <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography variant='subtitle1' sx={{ fontWeight: 600, mb: 0.5 }}>
+                        <Typography
+                          variant='subtitle1'
+                          sx={{
+                            fontWeight: 600,
+                            mb: { xs: 0.25, sm: 0.5 },
+                            fontSize: { xs: '0.875rem', sm: '0.9375rem', md: '1rem' },
+                            wordBreak: 'break-word'
+                          }}
+                        >
                           {game.title || 'Untitled Game'}
                         </Typography>
 
                         {game.description && (
-                          <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
+                          <Typography
+                            variant='body2'
+                            color='text.secondary'
+                            sx={{
+                              mb: { xs: 0.75, sm: 1 },
+                              fontSize: { xs: '0.75rem', sm: '0.8125rem', md: '0.875rem' },
+                              wordBreak: 'break-word',
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden'
+                            }}
+                          >
                             {game.description}
                           </Typography>
                         )}
@@ -692,21 +806,22 @@ const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
                         onClick={() => router.push(`/management/games/${game._id}`)}
                         sx={{
                           minWidth: 'auto',
-                          p: 1,
+                          p: { xs: 0.75, sm: 1 },
                           borderRadius: '50%',
-                          width: 40,
-                          height: 40
+                          width: { xs: 36, sm: 40 },
+                          height: { xs: 36, sm: 40 },
+                          flexShrink: 0
                         }}
                       >
-                        <OpenInNewIcon sx={{ fontSize: 20 }} />
+                        <OpenInNewIcon sx={{ fontSize: { xs: 18, sm: 20 } }} />
                       </Button>
                     </Box>
                   ))}
                 </Box>
               </Paper>
             ) : (
-              <Box sx={{ textAlign: 'center', py: 4 }}>
-                <Typography variant='body1' color='text.secondary'>
+              <Box sx={{ textAlign: 'center', py: { xs: 3, sm: 4 } }}>
+                <Typography variant='body1' color='text.secondary' sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
                   No games in this group
                 </Typography>
               </Box>
@@ -718,32 +833,33 @@ const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
         {isAdmin && (
           <Card
             sx={{
-              mt: 4,
-              borderRadius: 2,
+              mt: { xs: 3, sm: 4 },
+              borderRadius: { xs: 2, sm: 2 },
               boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.08)}`,
               border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
               overflow: 'hidden'
             }}
           >
-            <CardContent sx={{ p: 3 }}>
+            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
               <JoinRequestScreen group={groupData} removebutton={true} />
             </CardContent>
           </Card>
         )}
 
         {/* Back Button */}
-        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: { xs: 3, sm: 4 } }}>
           <Button
             variant='contained'
             component='label'
             onClick={() => router.push('/management/group')}
             sx={{
-              mt: 2,
-              px: 4,
-              py: 2,
+              px: { xs: 3, sm: 4 },
+              py: { xs: 1.25, sm: 1.5, md: 2 },
               borderRadius: 2,
               fontWeight: 600,
-              color: 'white'
+              fontSize: { xs: '0.875rem', sm: '0.9375rem', md: '1rem' },
+              color: 'white',
+              minWidth: { xs: 180, sm: 200 }
             }}
           >
             Back to Groups

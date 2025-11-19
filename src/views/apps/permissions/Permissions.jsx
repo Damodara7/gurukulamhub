@@ -30,7 +30,7 @@ import {
 } from '@tanstack/react-table'
 
 // Component Imports
-import PermissionDialog from '@components/dialogs/permission-dialog'
+import PermissionDialog from '@/components/dialogs/permission-dialog/Permission-Dailog'
 import OpenDialogOnElementClick from '@components/dialogs/OpenDialogOnElementClick'
 
 // Style Imports

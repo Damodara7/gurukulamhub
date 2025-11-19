@@ -2,9 +2,8 @@
 // Component Imports
 import AdvList from '@/views/apps/advertisements/list/AdvList'
 /********** Standard imports.*********************/
-import React, { useEffect, useState, useRef } from 'react'
-import Grid from '@mui/material/Grid'
-import { TextField, Button, FormControl, RadioGroup, Radio, FormControlLabel, Link } from '@mui/material'
+import React, { useEffect, useState } from 'react'
+import { Box } from '@mui/material'
 import CenterBox from '@components/CenterBox'
 import Typography from '@mui/material/Typography'
 import * as RestApi from '@/utils/restApiUtil'
@@ -16,35 +15,60 @@ const AdvtListApp = () => {
   const [loading, setLoading] = useState(false)
   const [data, setData] = useState([])
 
-  // Vars
   useEffect(() => {
-    async function getData() {
-      // toast.success('Fetching the Advertisements now...')
-      setLoading(true)
-      const result = await RestApi.get(ApiUrls.v0.ADMIN_GET_ADVERTISEMENT);
-     // //const result = await fetch(ApiUrls.v0.ADMIN_GET_ADVERTISEMENT)
-      //console.log('Result is....', result)
+    const getData = async () => {
+      try {
+        setLoading(true)
+        const result = await RestApi.get(ApiUrls.v0.ADMIN_GET_ADVERTISEMENT)
 
-      if (result?.status === 'success') {
-        console.log('Advts Fetched result', result);
-        toast.success('Advts Fetched Successfully .');
-        setLoading(false);
-        setData(result.result);
-      } else {
-        toast.error('Error:' + result.message)
-        setLoading(false)
+        if (result?.status === 'success') {
+          toast.success('Advertisements fetched successfully.')
+          setData(result.result || [])
+        } else {
+          toast.error(`Error: ${result?.message || 'Unable to fetch advertisements'}`)
+          setData([])
+        }
+      } catch (error) {
+        console.error('Error while fetching advertisements', error)
+        toast.error('An unexpected error occurred while fetching advertisements')
         setData([])
+      } finally {
+        setLoading(false)
       }
     }
-    try{
+
     getData()
-    }catch(e){
-      console.log("Error while fetching advertisements",e)
-    }
   }, [])
 
-  if (loading) return <>Fetching Advertisements Please Wait...</>
-  return <AdvList tableData={data} />
+  if (loading) {
+    return (
+      <CenterBox
+        sx={{
+          minHeight: '100dvh',
+          px: { xs: 2, sm: 4 },
+          textAlign: 'center'
+        }}
+      >
+        <Typography variant='body1' sx={{ fontSize: { xs: '1rem', sm: '1.125rem' }, fontWeight: 500 }}>
+          Fetching advertisements. Please wait...
+        </Typography>
+      </CenterBox>
+    )
+  }
+
+  return (
+    <Box
+      component='section'
+      sx={{
+        minHeight: '100dvh',
+        backgroundColor: theme => theme.palette.background.default,
+        display: 'flex',
+        flexDirection: 'column'
+      }}
+    >
+      <AdvList tableData={data} />
+    </Box>
+  )
 }
 
 export default AdvtListApp

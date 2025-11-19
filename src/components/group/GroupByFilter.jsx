@@ -21,8 +21,11 @@ import {
   DialogContent,
   DialogActions,
   IconButton,
-  Tooltip
+  Tooltip,
+  useTheme
 } from '@mui/material'
+import { alpha } from '@mui/material/styles'
+import IconButtonTooltip from '@/components/IconButtonTooltip'
 import { ArrowDropDown as ArrowDropDownIcon, Close as CloseIcon, Edit as EditIcon } from '@mui/icons-material'
 import * as RestApi from '@/utils/restApiUtil'
 import CountryRegionDropdown from '@/views/pages/auth/register-multi-steps/CountryRegionDropdown'
@@ -44,6 +47,7 @@ const GroupByFilter = ({
     gender: null
   }
 }) => {
+  const theme = useTheme()
   const didInitFromPropsRef = useRef(false)
   const [anchorEl, setAnchorEl] = useState(null)
   const [groupBy, setGroupBy] = useState(null)
@@ -784,7 +788,7 @@ const GroupByFilter = ({
             onClick={handleClick}
             endIcon={<ArrowDropDownIcon />}
             sx={{
-              minWidth: 120,
+              width: { xs: '100%', sm: 'auto' },
               ...(selectedFilters.length > 0 && {
                 borderColor: 'primary.main',
                 color: 'primary.main',
@@ -952,21 +956,37 @@ const GroupByFilter = ({
             pb: 2,
             borderBottom: '1px solid',
             borderColor: 'divider',
-            backgroundColor: 'background.paper'
+            backgroundColor: 'background.paper',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 2
           }}
         >
-          <Typography variant='h6' component='div' sx={{ fontWeight: 600 }}>
-            {isEditMode ? 'Edit ' : 'Filter by '}
-            {groupBy === 'age' && 'Age Range'}
-            {groupBy === 'location' && 'Location'}
-            {groupBy === 'gender' && 'Gender'}
-          </Typography>
-          <Typography variant='body2' color='text.secondary' sx={{ mt: 0.5 }}>
-            {isEditMode ? 'Update the ' : 'Select the '}
-            {groupBy === 'age' && 'age range to filter users'}
-            {groupBy === 'location' && 'country, region, and city to filter users'}
-            {groupBy === 'gender' && 'gender(s) to filter users'}
-          </Typography>
+          <Box sx={{ flex: 1 }}>
+            <Typography variant='h6' component='div' sx={{ fontWeight: 600 }}>
+              {isEditMode ? 'Edit ' : 'Filter by '}
+              {groupBy === 'age' && 'Age Range'}
+              {groupBy === 'location' && 'Location'}
+              {groupBy === 'gender' && 'Gender'}
+            </Typography>
+            <Typography variant='body2' color='text.secondary' sx={{ mt: 0.5 }}>
+              {isEditMode ? 'Update the ' : 'Select the '}
+              {groupBy === 'age' && 'age range to filter users'}
+              {groupBy === 'location' && 'country, region, and city to filter users'}
+              {groupBy === 'gender' && 'gender(s) to filter users'}
+            </Typography>
+          </Box>
+          <IconButtonTooltip
+            title='Close'
+            onClick={closeFilterDialog}
+            sx={{
+              color: theme => theme.palette.text.secondary,
+              '&:hover i': { color: theme => theme.palette.text.primary }
+            }}
+          >
+            <i className='ri-close-line text-xl' />
+          </IconButtonTooltip>
         </DialogTitle>
 
         <DialogContent sx={{ pt: 3, pb: 2 }}>
@@ -1245,7 +1265,7 @@ const GroupByFilter = ({
               (groupBy === 'gender' && !Object.values(filters.gender).some(Boolean))
             }
           >
-            {isEditMode ? 'Update Filter' : 'Apply Filters'}
+            {isEditMode ? 'Update' : 'Submit'}
           </Button>
           {/* <Button
             onClick={handleSubmit}

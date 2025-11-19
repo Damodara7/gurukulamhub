@@ -302,7 +302,13 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
 
     // Use ternary operators instead of switch statement
     return status === 'pending' ? (
-      <Button variant='outlined' size='small' startIcon={<HourglassEmptyIcon />} color='warning'>
+      <Button
+        variant='outlined'
+        size='small'
+        startIcon={<HourglassEmptyIcon />}
+        color='warning'
+        sx={{ fontSize: { xs: '0.8rem', sm: '0.85rem' }, px: { xs: 1.5, sm: 2 } }}
+      >
         Pending
       </Button>
     ) : status === 'approved' ? (
@@ -312,7 +318,7 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
         color='success'
         variant='outlined'
         size='small'
-        sx={{ width: '100px' }}
+        sx={{ width: { xs: 'auto', sm: '110px' }, fontSize: { xs: '0.75rem', sm: '0.8rem' } }}
       />
     ) : status === 'rejected' ? (
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -322,7 +328,7 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
           color='error'
           variant='outlined'
           size='small'
-          sx={{ width: '100px' }}
+          sx={{ width: { xs: 'auto', sm: '110px' }, fontSize: { xs: '0.75rem', sm: '0.8rem' } }}
         />
         {requestDetail?.rejectedReason ? (
           <Tooltip title={`Reason: ${requestDetail.rejectedReason}`} arrow placement='top'>
@@ -334,7 +340,7 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
                 textAlign: 'center',
                 display: 'block',
                 mt: 0.5,
-                width: '100px',
+                width: { xs: 'min(160px, 60vw)', sm: '110px' },
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
@@ -357,6 +363,7 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
               mt: 0.5,
               fontStyle: 'italic',
               height: '20px',
+              width: { xs: 'min(160px, 60vw)', sm: '110px' },
               lineHeight: '20px'
             }}
           >
@@ -369,7 +376,12 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
         variant='contained'
         component='label'
         size='small'
-        sx={{ color: 'white', width: '140px' }}
+        sx={{
+          color: 'white',
+          width: { xs: '100%', sm: '140px' },
+          fontSize: { xs: '0.85rem', sm: '0.9rem' },
+          py: { xs: 1, sm: 1.25 }
+        }}
         onClick={() => handleSendRequest(channel._id)}
       >
         Send Request
@@ -401,37 +413,45 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
     <ListItem
       key={item._id}
       sx={{
-        px: 2,
-        py: 1.5,
+        px: { xs: 1.5, sm: 2 },
+        py: { xs: 1.25, sm: 1.5 },
         border: '1px solid',
         borderColor: alpha(theme.palette.divider, 0.5),
         borderRadius: 2,
-        mb: 1.5,
+        mb: { xs: 1.25, sm: 1.5 },
         backgroundColor: 'background.paper',
         transition: 'all 0.3s ease-in-out',
         cursor: 'pointer'
       }}
     >
-      <ListItemAvatar>
+      <ListItemAvatar sx={{ minWidth: { xs: 56, sm: 72 } }}>
         <Avatar
           sx={{
             background: `linear-gradient(135deg, ${theme.palette.secondary.main}, ${alpha(
               theme.palette.secondary.main,
-              0.7
+              0.72
             )})`,
-            width: 50,
-            height: 50,
+            width: { xs: 44, sm: 50 },
+            height: { xs: 44, sm: 50 },
             color: 'white',
             boxShadow: `0 2px 8px ${alpha(theme.palette.secondary.main, 0.3)}`
           }}
         >
-          <GroupIcon />
+          <GroupIcon fontSize='small' />
         </Avatar>
       </ListItemAvatar>
 
       <ListItemText
         primary={
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: { xs: 'flex-start', sm: 'center' },
+              justifyContent: 'space-between',
+              gap: { xs: 1, sm: 0 }
+            }}
+          >
             <Tooltip title={item.groupName || 'Untitled Group'} arrow>
               <Typography
                 variant='subtitle1'
@@ -440,8 +460,8 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
                   flex: 1,
-                  mr: 1,
-                  width: '120px'
+                  width: { xs: '100%', sm: '170px' },
+                  fontSize: { xs: '0.98rem', sm: '1rem' }
                 }}
               >
                 {item.groupName || 'Untitled Group'}
@@ -456,7 +476,11 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
               label={item?.status === 'public' ? 'Public' : 'Private'}
               color={item?.status === 'public' ? 'success' : 'warning'}
               variant='outlined'
-              sx={{ Width: 'auto' }}
+              sx={{
+                mt: { xs: 0.5, sm: 0 },
+                alignSelf: { xs: 'flex-start', sm: 'center' },
+                fontSize: { xs: '0.75rem', sm: '0.8rem' }
+              }}
             />
           </Box>
         }
@@ -468,18 +492,20 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
                   variant='body2'
                   color='text.secondary'
                   sx={{
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
                     mb: 0.5,
-                    width: '200px'
+                    fontSize: { xs: '0.85rem', sm: '0.9rem' }
                   }}
                 >
                   {item.description}
                 </Typography>
               </Tooltip>
             )}
-            <Typography variant='caption' color='text.secondary'>
+            <Typography variant='caption' color='text.secondary' sx={{ fontSize: { xs: '0.78rem', sm: '0.8rem' } }}>
               {item.membersCount || item.members?.length || 0} members
             </Typography>
           </Box>
@@ -492,34 +518,44 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
     <ListItem
       key={item._id}
       sx={{
-        px: 2,
-        py: 1.5,
+        px: { xs: 1.5, sm: 2 },
+        py: { xs: 1.25, sm: 1.5 },
         border: '1px solid',
         borderColor: alpha(theme.palette.divider, 0.5),
         borderRadius: 2,
-        mb: 1.5,
+        mb: { xs: 1.25, sm: 1.5 },
         backgroundColor: 'background.paper',
         transition: 'all 0.3s ease-in-out',
-        cursor: 'pointer'
+        cursor: 'pointer',
+        alignItems: { xs: 'flex-start', sm: 'center' },
+        gap: { xs: 1, sm: 0 }
       }}
     >
-      <ListItemAvatar>
+      <ListItemAvatar sx={{ minWidth: { xs: 56, sm: 72 } }}>
         <Avatar
           sx={{
             background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-            width: 50,
-            height: 50,
+            width: { xs: 44, sm: 50 },
+            height: { xs: 44, sm: 50 },
             color: 'white',
             boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`
           }}
         >
-          <ChannelIcon />
+          <ChannelIcon fontSize='small' />
         </Avatar>
       </ListItemAvatar>
 
       <ListItemText
         primary={
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: { xs: 'flex-start', sm: 'center' },
+              justifyContent: 'space-between',
+              gap: { xs: 1, sm: 0 }
+            }}
+          >
             <Tooltip title={item.groupName || 'Untitled Channel'} arrow>
               <Typography
                 variant='subtitle1'
@@ -528,8 +564,8 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
                   flex: 1,
-                  mr: 1,
-                  width: '120px'
+                  width: { xs: '100%', sm: '170px' },
+                  fontSize: { xs: '0.98rem', sm: '1rem' }
                 }}
               >
                 {item.groupName || 'Untitled Channel'}
@@ -542,37 +578,45 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
               label='Channel'
               color='primary'
               variant='outlined'
-              sx={{ Width: 'auto' }}
+              sx={{
+                mt: { xs: 0.5, sm: 0 },
+                alignSelf: { xs: 'flex-start', sm: 'center' },
+                fontSize: { xs: '0.75rem', sm: '0.8rem' }
+              }}
             />
           </Box>
         }
         secondary={
-          <Box>
+          <Box sx={{ pr: { xs: 0, sm: 2 } }}>
             {item.description && (
               <Tooltip title={item.description} arrow>
                 <Typography
                   variant='body2'
                   color='text.secondary'
                   sx={{
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
                     mb: 0.5,
-                    width: '200px'
+                    fontSize: { xs: '0.85rem', sm: '0.9rem' }
                   }}
                 >
                   {item.description}
                 </Typography>
               </Tooltip>
             )}
-            <Typography variant='caption' color='text.secondary'>
+            <Typography variant='caption' color='text.secondary' sx={{ fontSize: { xs: '0.78rem', sm: '0.8rem' } }}>
               {item.membersCount || item.members?.length || 0} members
             </Typography>
           </Box>
         }
       />
 
-      {getRequestButton(item)}
+      <Box sx={{ ml: { xs: 0, sm: 2 }, mt: { xs: 1.25, sm: 0 }, width: { xs: '100%', sm: 'auto' } }}>
+        {getRequestButton(item)}
+      </Box>
     </ListItem>
   )
 
@@ -588,16 +632,26 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
           top: 0,
           zIndex: 10,
           borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
-          p: 3,
+          px: { xs: 2, sm: 3 },
+          py: { xs: 2.5, md: 3 },
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: 3,
-          backgroundColor: alpha('#fff', 0.8),
+          gap: { xs: 2, sm: 2.5 },
+          backgroundColor: alpha('#fff', 0.82),
           backdropFilter: 'blur(10px)'
         }}
       >
-        <Box sx={{ display: 'flex', gap: 1.5 }}>
+        <Box
+          sx={{
+            width: '100%',
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: { xs: 1.25, sm: 1.75 }
+          }}
+        >
           <Button
             variant={viewMode === 'groups' ? 'contained' : 'outlined'}
             component={viewMode === 'groups' ? 'label' : 'button'}
@@ -608,10 +662,11 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
               textTransform: 'none',
               borderRadius: 2,
               color: viewMode === 'groups' ? 'white' : 'text.primary',
-              px: 3,
-              py: 1.25,
+              px: { xs: 2.8, sm: 3 },
+              py: { xs: 1.1, sm: 1.25 },
               fontWeight: 600,
-              minWidth: 150,
+              minWidth: { xs: '100%', sm: 150 },
+              fontSize: { xs: '0.95rem', sm: '1rem' },
               boxShadow: viewMode === 'groups' ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}` : 'none',
               transition: 'all 0.3s ease',
               '&:hover': {
@@ -632,10 +687,11 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
               textTransform: 'none',
               borderRadius: 2,
               color: viewMode === 'channels' ? 'white' : 'text.primary',
-              px: 3,
-              py: 1.25,
+              px: { xs: 2.8, sm: 3 },
+              py: { xs: 1.1, sm: 1.25 },
               fontWeight: 600,
-              minWidth: 150,
+              minWidth: { xs: '100%', sm: 150 },
+              fontSize: { xs: '0.95rem', sm: '1rem' },
               boxShadow: viewMode === 'channels' ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}` : 'none',
               transition: 'all 0.3s ease',
               '&:hover': {
@@ -656,11 +712,14 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
             fontWeight: 600,
             display: 'flex',
             alignItems: 'center',
-            gap: 1
+            gap: 1,
+            fontSize: { xs: '1.05rem', sm: '1.2rem' }
           }}
         >
-          {viewMode === 'groups' ? <GroupIcon /> : <ChannelIcon />}
-          {currentTitle} ({currentData.length})
+          {viewMode === 'groups' ? <GroupIcon fontSize='small' /> : <ChannelIcon fontSize='small' />}
+          <Typography component='span' sx={{ fontSize: 'inherit', fontWeight: 'inherit' }}>
+            {currentTitle} ({currentData.length})
+          </Typography>
         </Typography>
 
         {/* Search bar for channels */}
@@ -675,7 +734,8 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
               maxWidth: 400,
               '& .MuiOutlinedInput-root': {
                 borderRadius: 2,
-                height: 48,
+                height: { xs: 44, sm: 48 },
+                fontSize: { xs: '0.95rem', sm: '1rem' }
               }
             }}
             InputProps={{
@@ -743,7 +803,8 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
             sx={{
               height: '100%',
               overflow: 'auto',
-              p: 2,
+              px: { xs: 1.5, sm: 2 },
+              py: { xs: 2, sm: 2.5 },
               '&::-webkit-scrollbar': {
                 width: '8px'
               },

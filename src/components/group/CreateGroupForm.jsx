@@ -25,8 +25,8 @@ import {
 import { alpha } from '@mui/material/styles'
 import { Group as GroupIcon, People as PeopleIcon } from '@mui/icons-material'
 
-import UserMultiSelect from './UserMultiSelect'
 import { useSession } from 'next-auth/react'
+import GroupUserMultiSelect from './GroupUserMultiSelect'
 const validateForm = formData => {
   const errors = {}
 
@@ -381,7 +381,7 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
               </Box>
               <Typography
                 sx={{
-                  fontSize: { xs: '2rem', md: '2.5rem' },
+                  fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.5rem' },
                   fontWeight: 700,
                   background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                   WebkitBackgroundClip: 'text',
@@ -531,7 +531,7 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
                     />
                     Group Members
                   </Typography>
-                  <UserMultiSelect
+                  <GroupUserMultiSelect
                     users={users}
                     selectedUsers={selectedUsers}
                     onSelectChange={handleUserSelection}
@@ -552,7 +552,7 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
                       style={{ color: 'white' }}
                       disabled={isSubmitting || selectedUsers.length === 0}
                     >
-                      {isSubmitting ? 'Saving...' : data ? 'Update Group' : 'Create Group'}
+                      {isSubmitting ? 'Saving...' : data ? 'Update ' : 'Submit'}
                     </Button>
                   </Stack>
                 </Grid>

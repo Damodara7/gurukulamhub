@@ -147,7 +147,7 @@ const CreatorGameList = ({ games = [], loading = false, onRefresh, setGames, isS
 
   if (loading) {
     return (
-      <Box p={4} display='flex' justifyContent='center'>
+      <Box p={{ xs: 2, sm: 4 }} display='flex' justifyContent='center'>
         <Loading />
       </Box>
     )
@@ -158,22 +158,30 @@ const CreatorGameList = ({ games = [], loading = false, onRefresh, setGames, isS
       {gamesToUse.length === 0 ? (
         <FallBackCard content='No games found.' path='/' btnText='Back To Home Page' />
       ) : (
-        <Grid container spacing={4}>
-          {gamesToUse.map(game => (
-            <Grid item key={game._id} xs={12} sm={6} md={4}>
-              <CreatorGameCard
-                game={game}
-                isSuperUser={isSuperUser}
-                onViewGame={handleViewGame}
-                onEditGame={handleEditGame}
-                onApproveGame={handleApproveGame}
-                onDeleteGame={handleDeleteConfirmation}
-                onLeaderboard={handleLeaderboard}
-                onAdminForward={handleAdminForward}
-              />
-            </Grid>
-          ))}
-        </Grid>
+        <Box
+          sx={{
+            maxHeight: { xs: 'calc(100vh - 170px)', sm: 'none' },
+            overflowY: { xs: 'auto', sm: 'visible' },
+            overflowX: 'hidden'
+          }}
+        >
+          <Grid container spacing={{ xs: 2, sm: 3, md: 4 }}>
+            {gamesToUse.map(game => (
+              <Grid item key={game._id} xs={12} sm={6} md={4}>
+                <CreatorGameCard
+                  game={game}
+                  isSuperUser={isSuperUser}
+                  onViewGame={handleViewGame}
+                  onEditGame={handleEditGame}
+                  onApproveGame={handleApproveGame}
+                  onDeleteGame={handleDeleteConfirmation}
+                  onLeaderboard={handleLeaderboard}
+                  onAdminForward={handleAdminForward}
+                />
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
       )}
       <ConfirmationDialog
         open={confirmationDialogOpen}

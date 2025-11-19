@@ -139,6 +139,20 @@ const ConfirmationDialog = ({ open, setOpen, type, onConfirm }) => {
       error: 'Failed to move quiz to pending. Please try again.',
       status: 'Quiz Moved To Pending!'
     },
+    'delete-account-type': {
+      title: 'Are you sure you want to delete this account type?',
+      success: 'Account type has been deleted successfully.',
+      cancel: 'Account Type Deletion Cancelled!',
+      error: 'Failed to delete account type. Please try again.',
+      status: 'Account Type Deleted!'
+    },
+    'delete-advertisement': {
+      title: 'Are you sure you want to delete this advertisement?',
+      success: 'Advertisement has been deleted successfully.',
+      cancel: 'Advertisement Deletion Cancelled!',
+      error: 'Failed to delete advertisement. Please try again.',
+      status: 'Advertisement Deleted!'
+    },
     // Add other types as needed
     default: {
       title: 'Are you sure?',

@@ -7,14 +7,13 @@ import Grid from '@mui/material/Grid'
 import Typography from '@mui/material/Typography'
 import Avatar from '@mui/material/Avatar'
 import AvatarGroup from '@mui/material/AvatarGroup'
-import IconButton from '@mui/material/IconButton'
 import Button from '@mui/material/Button'
+import Stack from '@mui/material/Stack'
 
 // Component Imports
 import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
 import RoleDialog from '@/components/dialogs/role-dialog'
 import OpenDialogOnElementClick from '@/components/dialogs/OpenDialogOnElementClick'
-import Link from '@/components/Link'
 
 // MUI Icons
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
@@ -23,8 +22,6 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { useEffect, useState } from 'react'
-import { roleSliceActions } from '@/store/features/roleSlice'
-import * as clientApi from '@/app/api/client/client.api'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
 // import { useAppDispatch } from '@/store/hooks'
 
@@ -42,14 +39,6 @@ const RoleCards = () => {
   const [roles, setRoles] = useState([])
   const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false) // Manage confirmation dialog
   const [currentRole, setCurrentRole] = useState(null) // Track the role to delete
-  // Vars
-  const typographyProps = {
-    children: 'Edit Role',
-    component: Link,
-    color: 'primary',
-    onClick: e => e.preventDefault()
-  }
-
   const CardProps = {
     className: 'cursor-pointer bs-full',
     children: (
@@ -151,8 +140,8 @@ const RoleCards = () => {
               }}
             >
               <CardContent className='flex flex-col gap-4'>
-                <div className='flex justify-between items-start'>
-                  <div className='flex flex-col items-start gap-1 flex-grow'>
+                <div className='flex justify-between items-start gap-3'>
+                  <div className='flex flex-col items-start gap-1 flex-grow min-w-0'>
                     <Typography
                       variant='h5'
                       sx={{
@@ -160,43 +149,49 @@ const RoleCards = () => {
                         background: 'linear-gradient(135deg, #8b5cf6 0%, #c4b5fd 100%)',
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
-                        backgroundClip: 'text'
+                        backgroundClip: 'text',
+                        fontSize: { xs: '0.875rem', sm: '1rem', md: '1.25rem' },
+                        lineHeight: 1.3,
+                        wordBreak: 'break-word',
+                        width: '100%'
                       }}
                     >
                       {item.name}
                     </Typography>
+                  </div>
+                  <Stack direction='row' spacing={1} alignItems='center' sx={{ flexShrink: 0 }}>
                     <OpenDialogOnElementClick
-                      element={Typography}
+                      element={IconButtonTooltip}
                       elementProps={{
-                        ...typographyProps,
+                        title: 'Edit Role',
                         sx: {
-                          fontSize: '0.875rem',
-                          fontWeight: 500,
-                          cursor: 'pointer',
-                          transition: 'color 0.2s',
+                          transition: 'all 0.2s',
                           '&:hover': {
-                            color: 'primary.dark'
+                            backgroundColor: 'primary.light',
+                            color: 'primary.main',
+                            transform: 'scale(1.1)'
                           }
-                        }
+                        },
+                        children: <i className='ri-pencil-line' />
                       }}
                       dialog={RoleDialog}
                       dialogProps={{ roleData: item, refreshRoles }}
                     />
-                  </div>
-                  <IconButtonTooltip
-                    title='Delete'
-                    onClick={() => handleDeleteConfirmation(item)}
-                    sx={{
-                      transition: 'all 0.2s',
-                      '&:hover': {
-                        backgroundColor: 'error.light',
-                        color: 'error.main',
-                        transform: 'scale(1.1)'
-                      }
-                    }}
-                  >
-                    <DeleteOutlineIcon fontSize='small' />
-                  </IconButtonTooltip>
+                    <IconButtonTooltip
+                      title='Delete'
+                      onClick={() => handleDeleteConfirmation(item)}
+                      sx={{
+                        transition: 'all 0.2s',
+                        '&:hover': {
+                          backgroundColor: 'error.light',
+                          color: 'error.main',
+                          transform: 'scale(1.1)'
+                        }
+                      }}
+                    >
+                      <DeleteOutlineIcon fontSize='small' />
+                    </IconButtonTooltip>
+                  </Stack>
                 </div>
               </CardContent>
             </Card>

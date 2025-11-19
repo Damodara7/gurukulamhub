@@ -139,59 +139,82 @@ export default function MyGroupsPage() {
 
   return (
     <Box
+      component='main'
       sx={{
-        minHeight: '100vh',
-        background: `radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 50%),
-                     radial-gradient(circle at 80% 80%, ${alpha(
-                       theme.palette.secondary.main,
-                       0.05
-                     )} 0%, transparent 50%),
-                     ${theme.palette.background.default}`
+        minHeight: { xs: '100dvh', md: '100vh' },
+        display: 'flex',
+        flexDirection: 'column',
+        background: theme => `
+          radial-gradient(circle at 20% 18%, ${alpha(theme.palette.primary.main, 0.1)} 0%, transparent 55%),
+          radial-gradient(circle at 80% 80%, ${alpha(theme.palette.secondary.main, 0.1)} 0%, transparent 55%),
+          ${theme.palette.background.default}`
       }}
     >
       {/* Elegant Header */}
       <Box
         sx={{
-          backdropFilter: 'blur(20px)',
-          bgcolor: alpha('#fff', 0.7),
+          position: 'relative',
+          backdropFilter: 'blur(18px)',
+          bgcolor: alpha('#fff', 0.78),
           borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
-          pt: { xs: 4, md: 6 },
-          pb: { xs: 4, md: 6 }
+          px: { xs: 2.5, md: 4 },
+          pt: { xs: 4, sm: 5, md: 6 },
+          pb: { xs: 4, sm: 5, md: 6 }
         }}
       >
         <Container maxWidth='lg'>
-          <Box sx={{ textAlign: 'center' }}>
+          <Box
+            sx={{
+              textAlign: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: { xs: 2.5, md: 3 }
+            }}
+          >
             {/* Icon and Title */}
             <Box
               sx={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 2,
-                mb: 2
+                justifyContent: 'center',
+                gap: { xs: 1.75, sm: 2.25 },
+                flexWrap: 'wrap'
               }}
             >
               <Box
                 sx={{
-                  width: { xs: 48, sm: 56 },
-                  height: { xs: 48, sm: 56 },
-                  borderRadius: '12px',
+                  width: { xs: 48, sm: 56, md: 64 },
+                  height: { xs: 48, sm: 56, md: 64 },
+                  borderRadius: { xs: '14px', md: '16px' },
                   background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`
+                  boxShadow: `0 10px 30px ${alpha(theme.palette.primary.main, 0.28)}`
                 }}
               >
-                <i className='ri-group-line' style={{ fontSize: '28px', color: 'white' }} />
+                <i
+                  className='ri-group-line'
+                  style={{ fontSize: 'clamp(24px, 6vw, 30px)', color: 'white', lineHeight: 1 }}
+                />
               </Box>
               <Typography
+                component='h1'
                 sx={{
-                  fontSize: { xs: '2rem', md: '2.5rem' },
+                  fontSize: {
+                    xs: 'clamp(1.75rem, 6vw, 2.2rem)',
+                    sm: 'clamp(2.05rem, 4.2vw, 2.55rem)',
+                    md: 'clamp(2.4rem, 3vw, 2.95rem)',
+                    lg: 'clamp(2.7rem, 2.2vw, 3.3rem)'
+                  },
+                  lineHeight: { xs: 1.18, sm: 1.2, md: 1.25 },
                   fontWeight: 700,
                   background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
-                  letterSpacing: '-0.02em'
+                  letterSpacing: { xs: '-0.015em', md: '-0.02em' },
+                  textAlign: 'center'
                 }}
               >
                 My Groups & Channels
@@ -201,11 +224,15 @@ export default function MyGroupsPage() {
               variant='body1'
               color='text.secondary'
               sx={{
-                fontSize: '1.05rem',
-                lineHeight: 1.8,
-                width: '100%',
-                mx: 'auto',
-                fontWeight: 400
+                fontSize: {
+                  xs: 'clamp(0.9rem, 4.2vw, 1rem)',
+                  sm: 'clamp(0.98rem, 3vw, 1.08rem)',
+                  md: 'clamp(1.05rem, 2.3vw, 1.18rem)'
+                },
+                lineHeight: { xs: 1.65, sm: 1.78, md: 1.85 },
+                maxWidth: { xs: '100%', sm: '540px', md: '620px' },
+                fontWeight: 400,
+                px: { xs: 1, sm: 0 }
               }}
             >
               Connect with your communities and discover new channels to join
@@ -215,8 +242,35 @@ export default function MyGroupsPage() {
       </Box>
 
       {/* Content Area */}
-      <Box sx={{ height: 'calc(100vh - 240px)', overflow: 'hidden' }}>
-        <GroupChannellist groups={userGroups} channels={channels} />
+      <Box
+        sx={{
+          flex: 1,
+          display: 'flex',
+          justifyContent: 'center',
+          px: { xs: 2, sm: 3, md: 4 },
+          py: { xs: 3, md: 4 },
+          overflow: 'hidden'
+        }}
+      >
+        <Box
+          sx={{
+            width: '100%',
+            maxWidth: '1200px',
+            mx: 'auto',
+            bgcolor: alpha(theme.palette.background.paper, 0.85),
+            borderRadius: { xs: 2, md: 3 },
+            boxShadow: `0 12px 32px ${alpha(theme.palette.common.black, 0.08)}`,
+            border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+            backdropFilter: 'blur(12px)',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column'
+          }}
+        >
+          <Box sx={{ flex: 1, overflow: 'auto' }}>
+            <GroupChannellist groups={userGroups} channels={channels} />
+          </Box>
+        </Box>
       </Box>
     </Box>
   )

@@ -892,10 +892,12 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
       </Box>
 
       {/* Main Content */}
-      <Box sx={{ maxWidth: '1200px', margin: '0 auto', px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 } }}>
+      <Box
+        sx={{ maxWidth: '1200px', margin: '0 auto', px: { xs: 1, sm: 2, md: 3, lg: 4 }, py: { xs: 2, sm: 3, md: 4 } }}
+      >
         <Card
           sx={{
-            borderRadius: 2,
+            borderRadius: { xs: 1, sm: 2 },
             boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.08)}`,
             border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
             overflow: 'hidden',
@@ -904,8 +906,8 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
             }
           }}
         >
-          <CardContent sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
-            <Grid container spacing={4}>
+          <CardContent sx={{ p: { xs: 1.5, sm: 2.5, md: 3, lg: 4 } }}>
+            <Grid container spacing={{ xs: 2, sm: 3, md: 4 }}>
               {/* Add Snackbar for error messages */}
               <Snackbar
                 open={showErrorSnackbar}
@@ -1002,43 +1004,117 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                     onFocus={() => setErrors(prev => ({ ...prev, quiz: '' }))}
                     required
                     ref={fieldRefs.quiz}
+                    MenuProps={{
+                      PaperProps: {
+                        style: {
+                          maxHeight: '400px',
+                          width: 'calc(100% - 32px)',
+                          margin: '8px 16px'
+                        }
+                      },
+                      anchorOrigin: {
+                        vertical: 'bottom',
+                        horizontal: 'left'
+                      },
+                      transformOrigin: {
+                        vertical: 'top',
+                        horizontal: 'left'
+                      }
+                    }}
                   >
                     <MenuItem value=''>
                       <em>Select Quiz</em>
                     </MenuItem>
                     {quizzes.map(quiz => (
-                      <MenuItem key={quiz._id} value={quiz._id}>
-                        <Grid container alignItems='center' spacing={2} justifyContent='space-between'>
-                          {/* Left side - Thumbnail and Quiz Info */}
-                          <Grid item xs={8}>
-                            <Grid container alignItems='center' spacing={2}>
-                              {/* Quiz Thumbnail */}
-                              <Grid item>
-                                <img
-                                  src={quiz?.thumbnail || 'https://via.placeholder.com/150x150'}
-                                  alt={quiz.title}
-                                  style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }}
-                                />
-                              </Grid>
+                      <MenuItem
+                        key={quiz._id}
+                        value={quiz._id}
+                        sx={{
+                          py: 1.5,
+                          '&:hover': {
+                            backgroundColor: 'action.hover'
+                          }
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1.5,
+                            width: '100%',
+                            minWidth: 0
+                          }}
+                        >
+                          {/* Quiz Thumbnail */}
+                          <Box
+                            sx={{
+                              flexShrink: 0,
+                              width: { xs: 36, sm: 40 },
+                              height: { xs: 36, sm: 40 }
+                            }}
+                          >
+                            <img
+                              src={quiz?.thumbnail || 'https://via.placeholder.com/150x150'}
+                              alt={quiz.title}
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                borderRadius: '50%',
+                                objectFit: 'cover'
+                              }}
+                            />
+                          </Box>
 
-                              {/* Title and Details */}
-                              <Grid item>
-                                <Typography variant='body2' noWrap={false}>
-                                  <Box component='span' fontWeight='bold'>
-                                    {quiz.title}
-                                  </Box>
-                                  <Box component='span' sx={{ color: 'text.secondary', mx: 0.5 }}>
-                                    - by
-                                  </Box>
-                                  <Box component='span'>{quiz.createdBy}</Box>
-                                </Typography>
-                                <Typography variant='body2' color='textSecondary' noWrap>
-                                  {quiz.details}
-                                </Typography>
-                              </Grid>
-                            </Grid>
-                          </Grid>
-                        </Grid>
+                          {/* Title and Details */}
+                          <Box
+                            sx={{
+                              flex: 1,
+                              minWidth: 0,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: 0.5
+                            }}
+                          >
+                            <Typography
+                              variant='body2'
+                              sx={{
+                                fontWeight: 600,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                display: 'block'
+                              }}
+                            >
+                              {quiz.title}
+                            </Typography>
+                            <Typography
+                              variant='caption'
+                              sx={{
+                                color: 'text.secondary',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                display: 'block'
+                              }}
+                            >
+                              by {quiz.createdBy}
+                            </Typography>
+                            {quiz.details && (
+                              <Typography
+                                variant='caption'
+                                sx={{
+                                  color: 'text.secondary',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                  display: { xs: 'none', sm: 'block' }
+                                }}
+                              >
+                                {quiz.details}
+                              </Typography>
+                            )}
+                          </Box>
+                        </Box>
                       </MenuItem>
                     ))}
                   </Select>
@@ -1099,7 +1175,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
             />
           </Grid> */}
 
-                  <Grid item xs={12} sm={4} md={6}>
+                  <Grid item xs={12} sm={6} md={6}>
                     <DateTimePicker
                       disablePast
                       minDateTime={dayjs().add(1, 'minute')}
@@ -1133,12 +1209,13 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                           InputLabelProps: {
                             shrink: true
                           },
-                          inputRef: fieldRefs.startTime
+                          inputRef: fieldRefs.startTime,
+                          size: 'medium'
                         }
                       }}
                     />
                   </Grid>
-                  <Grid item xs={12} sm={6}>
+                  <Grid item xs={12} sm={6} md={6}>
                     <FormControl fullWidth required error={!!errors.timezone && touches.timezone}>
                       <Autocomplete
                         id='timezone-autocomplete'
@@ -1372,10 +1449,18 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
 
               {/* Location Section */}
               <Grid item xs={12}>
-                <Typography variant='subtitle1' gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
+                <Typography
+                  variant='subtitle1'
+                  gutterBottom
+                  sx={{
+                    fontWeight: 600,
+                    mb: { xs: 1.5, sm: 2 },
+                    fontSize: { xs: '0.95rem', sm: '1rem' }
+                  }}
+                >
                   Game Location (Optional - Accessible anywhere if not specified)
                 </Typography>
-                <Grid container spacing={2}>
+                <Grid container spacing={{ xs: 1.5, sm: 2 }}>
                   <Grid item xs={12} sm={6} md={4}>
                     <CountryRegionDropdown
                       defaultCountryCode=''
@@ -1467,19 +1552,27 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                     border: '1px dashed',
                     borderColor: 'divider',
                     borderRadius: 1,
-                    p: 3,
-                    mb: 2
+                    p: { xs: 2, sm: 3 },
+                    mb: { xs: 1.5, sm: 2 }
                   }}
                 >
-                  <Typography variant='subtitle1' gutterBottom sx={{ mb: 2 }}>
+                  <Typography
+                    variant='subtitle1'
+                    gutterBottom
+                    sx={{
+                      mb: { xs: 1.5, sm: 2 },
+                      fontSize: { xs: '0.95rem', sm: '1rem' },
+                      fontWeight: 600
+                    }}
+                  >
                     Media
                   </Typography>
 
-                  <Grid container spacing={3}>
+                  <Grid container spacing={{ xs: 2, sm: 3 }}>
                     {/* Video Section - Full width on xs, half on md+ */}
                     <Grid item xs={12} md={6}>
                       <Box sx={{ height: '100%' }}>
-                        <Typography variant='subtitle2' gutterBottom>
+                        <Typography variant='subtitle2' gutterBottom sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
                           Promotional Video
                         </Typography>
                         <TextField
@@ -1495,15 +1588,16 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                           type='url'
                           placeholder='https://youtube.com/watch?v=...'
                           inputRef={fieldRefs.promotionalVideoUrl}
+                          size='medium'
                         />
                         <Box
                           sx={{
-                            mt: 2,
+                            mt: { xs: 1.5, sm: 2 },
                             borderRadius: 1,
                             overflow: 'hidden',
                             border: '1px solid',
                             borderColor: 'divider',
-                            height: '200px',
+                            height: { xs: '180px', sm: '200px' },
                             backgroundColor: '#f5f5f5',
                             position: 'relative'
                           }}
@@ -1512,7 +1606,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                             <ReactPlayer
                               url={formData.promotionalVideoUrl}
                               width='100%'
-                              height='200px'
+                              height='100%'
                               controls
                               style={{ backgroundColor: '#f5f5f5' }}
                             />
@@ -1528,11 +1622,19 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                                 p: 2
                               }}
                             >
-                              <VideocamOffIcon sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
-                              <Typography variant='body2' color='text.secondary'>
+                              <VideocamOffIcon sx={{ fontSize: { xs: 32, sm: 40 }, color: 'text.disabled', mb: 1 }} />
+                              <Typography
+                                variant='body2'
+                                color='text.secondary'
+                                sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                              >
                                 No video URL provided
                               </Typography>
-                              <Typography variant='caption' color='text.disabled'>
+                              <Typography
+                                variant='caption'
+                                color='text.disabled'
+                                sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}
+                              >
                                 Add a YouTube or video URL above
                               </Typography>
                             </Box>
@@ -1544,7 +1646,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                     {/* Image Upload Section - Full width on xs, half on md+ */}
                     <Grid item xs={12} md={6}>
                       <Box sx={{ height: '100%' }}>
-                        <Typography variant='subtitle2' gutterBottom>
+                        <Typography variant='subtitle2' gutterBottom sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
                           Thumbnail Image
                         </Typography>
                         <input
@@ -1559,12 +1661,12 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                           <Box
                             sx={{
                               position: 'relative',
-                              mb: 2,
-                              height: '200px',
+                              mb: { xs: 1.5, sm: 2 },
+                              height: { xs: '180px', sm: '200px' },
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              backgroundColor: '#f5f5f5' // Light gray background for error state
+                              backgroundColor: '#f5f5f5'
                             }}
                           >
                             <img
@@ -1572,7 +1674,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                               alt='Game thumbnail'
                               style={{
                                 width: '100%',
-                                height: '200px',
+                                height: '100%',
                                 objectFit: 'cover',
                                 borderRadius: 4,
                                 border: '1px solid #e0e0e0'
@@ -1581,23 +1683,25 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                             <Box
                               sx={{
                                 position: 'absolute',
-                                top: 8,
-                                right: 8,
+                                top: { xs: 4, sm: 8 },
+                                right: { xs: 4, sm: 8 },
                                 display: 'flex',
-                                gap: 1,
+                                gap: 0.5,
                                 backgroundColor: 'rgba(255, 255, 255, 0.9)',
                                 borderRadius: 1,
                                 p: 0.5,
                                 boxShadow: 1,
-                                zIndex: 2,
-                                transform: 'translateY(-1px)'
+                                zIndex: 2
                               }}
                             >
                               <IconButton
                                 color='primary'
                                 size='small'
                                 onClick={triggerFileInput}
-                                sx={{ backgroundColor: 'rgba(0, 0, 0, 0.04)' }}
+                                sx={{
+                                  backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                                  '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.08)' }
+                                }}
                               >
                                 <EditIcon fontSize='small' />
                               </IconButton>
@@ -1610,10 +1714,13 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                                   }
                                   let updatingFormData = { ...formData, thumbnailPoster: '' }
                                   setFormData(updatingFormData)
-                                  setTouches(prev => ({ ...prev, thumbnailPoster: true })) // Mark field as touched
+                                  setTouches(prev => ({ ...prev, thumbnailPoster: true }))
                                   validateField('thumbnailPoster', updatingFormData)
                                 }}
-                                sx={{ backgroundColor: 'rgba(0, 0, 0, 0.04)' }}
+                                sx={{
+                                  backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                                  '&:hover': { backgroundColor: 'rgba(211, 47, 47, 0.1)' }
+                                }}
                               >
                                 <DeleteIcon fontSize='small' />
                               </IconButton>
@@ -1623,9 +1730,10 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                           <Box
                             onClick={triggerFileInput}
                             sx={{
-                              height: '200px',
+                              height: { xs: '180px', sm: '200px' },
                               border: '2px dashed',
-                              borderColor: !!errors.thumbnailPoster && touches.thumbnailPoster ? 'red' : 'divider',
+                              borderColor:
+                                !!errors.thumbnailPoster && touches.thumbnailPoster ? 'error.main' : 'divider',
                               borderRadius: 1,
                               display: 'flex',
                               alignItems: 'center',
@@ -1637,7 +1745,16 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                               }
                             }}
                           >
-                            <Typography color='text.secondary'>Click to upload thumbnail image</Typography>
+                            <Typography
+                              color='text.secondary'
+                              sx={{
+                                fontSize: { xs: '0.875rem', sm: '1rem' },
+                                textAlign: 'center',
+                                px: 2
+                              }}
+                            >
+                              Click to upload thumbnail image
+                            </Typography>
                           </Box>
                         )}
                         <TextField
@@ -1652,8 +1769,9 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                           helperText={errors.thumbnailPoster}
                           placeholder='https://example.com/image.jpg'
                           type='url'
-                          sx={{ mt: 2 }}
+                          sx={{ mt: { xs: 1.5, sm: 2 } }}
                           inputRef={fieldRefs.thumbnailPoster}
+                          size='medium'
                         />
                       </Box>
                     </Grid>
@@ -1683,14 +1801,28 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
 
               {/* Rewards Section */}
               <Grid item xs={12}>
-                <Divider sx={{ my: 2 }} />
-                <Stack direction='row' justifyContent='space-between' alignItems='center'>
-                  <Typography variant='h5'>Rewards</Typography>
+                <Divider sx={{ my: { xs: 1.5, sm: 2 } }} />
+                <Stack
+                  direction={{ xs: 'column', sm: 'row' }}
+                  justifyContent='space-between'
+                  alignItems={{ xs: 'stretch', sm: 'center' }}
+                  spacing={{ xs: 2, sm: 0 }}
+                >
+                  <Typography
+                    variant='h5'
+                    sx={{
+                      fontSize: { xs: '1.25rem', sm: '1.5rem' },
+                      fontWeight: 600
+                    }}
+                  >
+                    Rewards
+                  </Typography>
                   <Button
                     variant='outlined'
                     startIcon={<AddIcon />}
                     onClick={handleAddReward}
                     disabled={availablePositions.length === 0}
+                    sx={{ minWidth: { sm: '140px' } }}
                   >
                     Add Reward
                   </Button>
@@ -1712,16 +1844,36 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                             : 0
 
                         return (
-                          <Card key={reward?._id || reward?.id} variant='outlined' sx={{ mb: 2 }}>
-                            <CardContent>
-                              <Stack direction='row' justifyContent='space-between' alignItems='center' mb={2}>
-                                <Typography variant='h6'>Position {reward.position} Reward</Typography>
-                                <Stack direction='row'>
-                                  <IconButton onClick={() => handleEditReward(reward)}>
-                                    <EditIcon />
+                          <Card key={reward?._id || reward?.id} variant='outlined' sx={{ mb: { xs: 1.5, sm: 2 } }}>
+                            <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
+                              <Stack
+                                direction={{ xs: 'column', sm: 'row' }}
+                                justifyContent='space-between'
+                                alignItems={{ xs: 'flex-start', sm: 'center' }}
+                                spacing={{ xs: 1, sm: 0 }}
+                                mb={2}
+                              >
+                                <Typography variant='h6' sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>
+                                  Position {reward.position} Reward
+                                </Typography>
+                                <Stack direction='row' spacing={0.5}>
+                                  <IconButton
+                                    size='small'
+                                    onClick={() => handleEditReward(reward)}
+                                    sx={{
+                                      '&:hover': { backgroundColor: 'action.hover' }
+                                    }}
+                                  >
+                                    <EditIcon fontSize='small' />
                                   </IconButton>
-                                  <IconButton onClick={() => handleRemoveReward(reward?._id || reward?.id)}>
-                                    <CloseIcon />
+                                  <IconButton
+                                    size='small'
+                                    onClick={() => handleRemoveReward(reward?._id || reward?.id)}
+                                    sx={{
+                                      '&:hover': { backgroundColor: 'error.light', color: 'error.main' }
+                                    }}
+                                  >
+                                    <CloseIcon fontSize='small' />
                                   </IconButton>
                                 </Stack>
                               </Stack>
@@ -1750,17 +1902,40 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                               </Typography>
 
                               {reward?.sponsors?.length > 0 && (
-                                <Grid container spacing={2}>
+                                <Grid container spacing={{ xs: 1.5, sm: 2 }}>
                                   {reward.sponsors.map(sponsor => (
                                     <Grid item xs={12} sm={6} key={sponsor?._id || sponsor?.id}>
-                                      <Paper variant='outlined' sx={{ p: 2 }}>
-                                        <Typography variant='body2'>{sponsor.email}</Typography>
-                                        <Typography variant='body2' color='text.secondary'>
+                                      <Paper
+                                        variant='outlined'
+                                        sx={{
+                                          p: { xs: 1.5, sm: 2 },
+                                          borderRadius: 1
+                                        }}
+                                      >
+                                        <Typography
+                                          variant='body2'
+                                          sx={{
+                                            fontWeight: 500,
+                                            mb: 0.5,
+                                            wordBreak: 'break-word'
+                                          }}
+                                        >
+                                          {sponsor.email}
+                                        </Typography>
+                                        <Typography
+                                          variant='body2'
+                                          color='text.secondary'
+                                          sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                                        >
                                           {reward.rewardType === 'cash'
                                             ? `Contributed: ${sponsor.currency} ${(sponsor.allocated || 0).toFixed(2)}`
                                             : `Provided: ${sponsor.allocated || 0} items`}
                                         </Typography>
-                                        <Typography variant='caption' color='text.secondary'>
+                                        <Typography
+                                          variant='caption'
+                                          color='text.secondary'
+                                          sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}
+                                        >
                                           {reward.rewardType === 'cash'
                                             ? `Remaining balance: ${sponsor.currency} ${(
                                                 sponsor.availableAmount || 0
@@ -1795,8 +1970,8 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
               </Grid>
 
               {/* Form Actions */}
-              <Grid item xs={12} mt={4}>
-                <Stack direction='row' spacing={2} justifyContent='center'>
+              <Grid item xs={12} sx={{ mt: { xs: 2, sm: 3, md: 4 } }}>
+                <Stack direction='row' spacing={2} justifyContent='center' sx={{ width: '100%' }}>
                   <Button variant='outlined' onClick={onCancel}>
                     Cancel
                   </Button>
@@ -1805,9 +1980,11 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                     component='label'
                     variant='contained'
                     color='primary'
-                    style={{ color: 'white' }}
+                    sx={{
+                      color: 'white'
+                    }}
                   >
-                    {data ? 'Update Game' : 'Save Game'}
+                    {data ? 'Update ' : 'Submit'}
                   </Button>
                 </Stack>
               </Grid>

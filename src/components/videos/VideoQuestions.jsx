@@ -9,6 +9,7 @@ import {
   TextField,
   Typography,
   FormControlLabel,
+  Stack,
   Checkbox,
   Grid,
   Tooltip,
@@ -110,7 +111,7 @@ const InsertedVideoQuestions = forwardRef(
       } else if (field === 'marks') {
         const parsedTime = parseFloat(value)
         valueToBeSet = parsedTime
-      }else if(field === 'conceptStartTime'){
+      } else if (field === 'conceptStartTime') {
         const parsedTime = parseFloat(value)
         valueToBeSet = parsedTime
       }
@@ -179,15 +180,15 @@ const InsertedVideoQuestions = forwardRef(
             invocationTimeMsg = 'Invocation time should be less than video length.'
           }
           newErrors.invocationTime = invocationTimeMsg
-          if(currentQuestion.conceptStartTime && currentQuestion.conceptStartTime >= value){
+          if (currentQuestion.conceptStartTime && currentQuestion.conceptStartTime >= value) {
             newErrors.conceptStartTime = 'Concept start time should be less than invocation time.'
-          }else{
+          } else {
             newErrors.conceptStartTime = '' // Clear the error if concept start time is valid or not provided.
           }
           break
         case 'conceptStartTime':
           let conceptStartTimeMsg = ''
-          if ((!value && value !==0 ) || isNaN(value)) {
+          if ((!value && value !== 0) || isNaN(value)) {
             conceptStartTimeMsg = 'Concept start time should be a valid number.'
           } else if (value < 0) {
             conceptStartTimeMsg = 'Concept start time cannot be negative.'
@@ -353,7 +354,11 @@ const InsertedVideoQuestions = forwardRef(
               position: 'relative'
             }}
           >
-            <IconButtonTooltip title='Close' onClick={handleCancelQuestion} className='absolute block-start-4 inline-end-4'>
+            <IconButtonTooltip
+              title='Close'
+              onClick={handleCancelQuestion}
+              className='absolute block-start-4 inline-end-4'
+            >
               <i className='ri-close-line text-textSecondary' />
             </IconButtonTooltip>
             {/* Title indicating if editing */}
@@ -377,12 +382,18 @@ const InsertedVideoQuestions = forwardRef(
             />
 
             {currentQuestion.options.map((option, index) => (
-              <div key={index} style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+              <Stack
+                key={index}
+                direction={{ xs: 'column', sm: 'row' }}
+                spacing={1}
+                alignItems={{ xs: 'flex-start', sm: 'center' }}
+                sx={{ mb: 1 }}
+              >
                 <TextField
                   label={`Option ${index + 1}`}
                   value={option.text}
                   onChange={e => handleOptionChange(index, e.target.value)}
-                  style={{ flexGrow: 1, marginRight: '8px' }}
+                  fullWidth
                   margin='dense'
                   required
                   error={errors.options && !option.text.trim()}
@@ -397,6 +408,7 @@ const InsertedVideoQuestions = forwardRef(
                       />
                     }
                     label='Correct'
+                    sx={{ ml: { xs: 0, sm: 1 } }}
                   />
                 ) : (
                   <FormControlLabel
@@ -407,13 +419,19 @@ const InsertedVideoQuestions = forwardRef(
                       />
                     }
                     label='Correct'
+                    sx={{ ml: { xs: 0, sm: 1 } }}
                   />
                 )}
 
-                <IconButtonTooltip title='Remove' disabled={index === 0} onClick={() => handleRemoveOption(index)}>
+                <IconButtonTooltip
+                  title='Remove'
+                  disabled={index === 0}
+                  onClick={() => handleRemoveOption(index)}
+                  sx={{ alignSelf: { xs: 'flex-end', sm: 'center' } }}
+                >
                   <RemoveIcon />
                 </IconButtonTooltip>
-              </div>
+              </Stack>
             ))}
 
             {/* Display error below the options */}
@@ -428,7 +446,7 @@ const InsertedVideoQuestions = forwardRef(
             </Button>
 
             <Grid container spacing={2}>
-              <Grid item xs={3}>
+              <Grid item xs={12} sm={3}>
                 <TextField
                   label='Marks'
                   type='number'
@@ -441,7 +459,7 @@ const InsertedVideoQuestions = forwardRef(
                   helperText={errors.marks}
                 />
               </Grid>
-              <Grid item xs={9}>
+              <Grid item xs={12} sm={9}>
                 <TextField
                   label='Answer Explanation'
                   value={currentQuestion.explanation}
@@ -503,8 +521,7 @@ const InsertedVideoQuestions = forwardRef(
             />
 
             <TextField
-              label='Question Concept Start Time (seconds)'
-              // placeholder='If not specified'
+              label='Question Start Time (sec)'
               type='number'
               required
               value={currentQuestion.conceptStartTime}
@@ -513,7 +530,10 @@ const InsertedVideoQuestions = forwardRef(
               fullWidth
               error={!!errors.conceptStartTime}
               helperText={errors.conceptStartTime}
-              InputLabelProps={{ shrink: true }}
+              InputLabelProps={{
+                shrink: true,
+                sx: { whiteSpace: 'break-spaces', lineHeight: 1.2 }
+              }}
               inputProps={{
                 min: 0,
                 max: videoDuration - 2
@@ -595,14 +615,16 @@ const InsertedVideoQuestions = forwardRef(
                   </Typography>
                 </CardContent>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <IconButtonTooltip title='Edit'
+                  <IconButtonTooltip
+                    title='Edit'
                     onClick={() => handleEditQuestion(index)}
                     color='primary'
                     disabled={isQuestionFormOpen} // Disable the button if currentQuestion exists
                   >
                     <EditIcon />
                   </IconButtonTooltip>
-                  <IconButtonTooltip title='Remove'
+                  <IconButtonTooltip
+                    title='Remove'
                     onClick={() => handleRemoveQuestion(index)}
                     color='error'
                     disabled={isQuestionFormOpen} // Disable the button if currentQuestion exists
@@ -698,7 +720,7 @@ const EndVideoQuestions = forwardRef(
       } else if (field === 'marks') {
         const parsedTime = parseFloat(value)
         valueToBeSet = parsedTime
-      }else if(field === 'conceptStartTime'){
+      } else if (field === 'conceptStartTime') {
         const parsedTime = parseFloat(value)
         valueToBeSet = parsedTime
       }
@@ -756,15 +778,15 @@ const EndVideoQuestions = forwardRef(
             invocationTimeMsg = 'Invocation time should be less than video length.'
           }
           newErrors.invocationTime = invocationTimeMsg
-          if(currentQuestion.conceptStartTime && currentQuestion.conceptStartTime >= value){
+          if (currentQuestion.conceptStartTime && currentQuestion.conceptStartTime >= value) {
             newErrors.conceptStartTime = 'Concept start time should be less than invocation time.'
-          }else{
+          } else {
             newErrors.conceptStartTime = '' // Clear the error if concept start time is valid or not provided.
           }
           break
         case 'conceptStartTime':
           let conceptStartTimeMsg = ''
-          if ((!value && value !==0 ) || isNaN(value)) {
+          if ((!value && value !== 0) || isNaN(value)) {
             conceptStartTimeMsg = 'Concept start time should be a valid number.'
           } else if (value < 0) {
             conceptStartTimeMsg = 'Concept start time cannot be negative.'
@@ -928,7 +950,11 @@ const EndVideoQuestions = forwardRef(
               position: 'relative'
             }}
           >
-            <IconButtonTooltip title='Cancel' onClick={handleCancelQuestion} className='absolute block-start-4 inline-end-4'>
+            <IconButtonTooltip
+              title='Cancel'
+              onClick={handleCancelQuestion}
+              className='absolute block-start-4 inline-end-4'
+            >
               <i className='ri-close-line text-textSecondary' />
             </IconButtonTooltip>
             {/* Title indicating if editing */}
@@ -952,12 +978,18 @@ const EndVideoQuestions = forwardRef(
             />
 
             {currentQuestion.options.map((option, index) => (
-              <div key={index} style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+              <Stack
+                key={index}
+                direction={{ xs: 'column', sm: 'row' }}
+                spacing={1}
+                alignItems={{ xs: 'flex-start', sm: 'center' }}
+                sx={{ mb: 1 }}
+              >
                 <TextField
                   label={`Option ${index + 1}`}
                   value={option.text}
                   onChange={e => handleOptionChange(index, e.target.value)}
-                  style={{ flexGrow: 1, marginRight: '8px' }}
+                  fullWidth
                   margin='dense'
                   required
                   error={errors.options && !option.text.trim()}
@@ -972,6 +1004,7 @@ const EndVideoQuestions = forwardRef(
                       />
                     }
                     label='Correct'
+                    sx={{ ml: { xs: 0, sm: 1 } }}
                   />
                 ) : (
                   <FormControlLabel
@@ -982,13 +1015,19 @@ const EndVideoQuestions = forwardRef(
                       />
                     }
                     label='Correct'
+                    sx={{ ml: { xs: 0, sm: 1 } }}
                   />
                 )}
 
-                <IconButtonTooltip title='Remove' disabled={index === 0} onClick={() => handleRemoveOption(index)}>
+                <IconButtonTooltip
+                  title='Remove'
+                  disabled={index === 0}
+                  onClick={() => handleRemoveOption(index)}
+                  sx={{ alignSelf: { xs: 'flex-end', sm: 'center' } }}
+                >
                   <RemoveIcon />
                 </IconButtonTooltip>
-              </div>
+              </Stack>
             ))}
 
             {/* Display error below the options */}
@@ -1003,7 +1042,7 @@ const EndVideoQuestions = forwardRef(
             </Button>
 
             <Grid container spacing={2}>
-              <Grid item xs={3}>
+              <Grid item xs={12} sm={3}>
                 <TextField
                   label='Marks'
                   type='number'
@@ -1016,7 +1055,7 @@ const EndVideoQuestions = forwardRef(
                   helperText={errors.marks}
                 />
               </Grid>
-              <Grid item xs={9}>
+              <Grid item xs={12} sm={9}>
                 <TextField
                   label='Answer Explanation'
                   value={currentQuestion.explanation}
@@ -1061,8 +1100,7 @@ const EndVideoQuestions = forwardRef(
             />
 
             <TextField
-              label='Question Concept Start Time (seconds)'
-              // placeholder='If not specified'
+              label='Question Start Time (sec)'
               type='number'
               required
               value={currentQuestion.conceptStartTime}
@@ -1071,7 +1109,10 @@ const EndVideoQuestions = forwardRef(
               fullWidth
               error={!!errors.conceptStartTime}
               helperText={errors.conceptStartTime}
-              InputLabelProps={{ shrink: true }}
+              InputLabelProps={{
+                shrink: true,
+                sx: { whiteSpace: 'break-spaces', lineHeight: 1.2 }
+              }}
               inputProps={{
                 min: 0,
                 max: videoDuration - 2
@@ -1153,14 +1194,16 @@ const EndVideoQuestions = forwardRef(
                   </Typography>
                 </CardContent>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <IconButtonTooltip title='Edit'
+                  <IconButtonTooltip
+                    title='Edit'
                     onClick={() => handleEditQuestion(index)}
                     color='primary'
                     disabled={isQuestionFormOpen} // Disable the button if currentQuestion exists
                   >
                     <EditIcon />
                   </IconButtonTooltip>
-                  <IconButtonTooltip title='Remove'
+                  <IconButtonTooltip
+                    title='Remove'
                     onClick={() => handleRemoveQuestion(index)}
                     color='error'
                     disabled={isQuestionFormOpen} // Disable the button if currentQuestion exists

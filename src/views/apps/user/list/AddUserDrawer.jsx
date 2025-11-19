@@ -5,19 +5,19 @@ import { useEffect, useState } from 'react'
 import Button from '@mui/material/Button'
 import Drawer from '@mui/material/Drawer'
 import FormControl from '@mui/material/FormControl'
-import IconButton from '@mui/material/IconButton'
 import InputLabel from '@mui/material/InputLabel'
 import MenuItem from '@mui/material/MenuItem'
 import Select from '@mui/material/Select'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
-import Divider from '@mui/material/Divider'
+import Box from '@mui/material/Box'
+import { Checkbox, Chip, ListItemText } from '@mui/material'
+import { alpha, useTheme } from '@mui/material/styles'
 
 // Api utils
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import * as clientApi from '@/app/api/client/client.api'
-import { Checkbox, Chip, ListItemText } from '@mui/material'
 import CountryRegionDropdown from '@/views/pages/auth/register-multi-steps/CountryRegionDropdown'
 
 // Country region data
@@ -43,6 +43,7 @@ const initialData = {
 }
 
 const AddUserDrawer = ({ open, handleClose, refreshUsers }) => {
+  const theme = useTheme()
   // States
   const [formData, setFormData] = useState(initialData)
   const [rolesData, setRolesData] = useState([])
@@ -174,86 +175,146 @@ const AddUserDrawer = ({ open, handleClose, refreshUsers }) => {
       variant='temporary'
       onClose={handleReset}
       ModalProps={{ keepMounted: true }}
-      sx={{ '& .MuiDrawer-paper': { width: { xs: 300, sm: 400 } } }}
+      sx={{
+        '& .MuiDrawer-paper': {
+          width: { xs: 'min(420px, 92vw)', sm: 440 },
+          maxWidth: 520,
+          mr: { xs: 2, sm: 0 },
+          borderTopLeftRadius: { xs: 24, sm: 28 },
+          borderBottomLeftRadius: { xs: 24, sm: 28 },
+          boxShadow: '0 18px 44px rgba(15,15,45,0.18)',
+          borderLeft: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+          display: 'flex',
+          flexDirection: 'column'
+        }
+      }}
     >
-      <div className='flex items-center justify-between pli-5 plb-[15px]'>
-        <Typography variant='h5'>Add New User</Typography>
-        <IconButtonTooltip title='Close' onClick={handleReset}>
-          <i className='ri-close-line' />
-        </IconButtonTooltip>
-      </div>
-      <Divider />
-      <div className='p-5'>
-        <form onSubmit={handleSubmit} className='flex flex-col gap-5'>
-          <TextField
-            label='First Name'
-            fullWidth
-            placeholder='John'
-            value={formData.firstname}
-            onChange={e => setFormData({ ...formData, firstname: e.target.value })}
-          />
-          <TextField
-            label='Last Name'
-            fullWidth
-            placeholder='Doe'
-            value={formData.lastname}
-            onChange={e => setFormData({ ...formData, lastname: e.target.value })}
-          />
-          <TextField
-            label='Email'
-            fullWidth
-            type='email'
-            placeholder='johndoe@gmail.com'
-            value={formData.email}
-            onChange={e => setFormData({ ...formData, email: e.target.value })}
-          />
-          <TextField
-            label='Confirm Email'
-            fullWidth
-            type='email'
-            placeholder='Confirm your email'
-            value={formData.confirmEmail}
-            disabled={!formData.email.trim()}
-            onPaste={e => e.preventDefault()}
-            onChange={e => {
-              setFormData({ ...formData, confirmEmail: e.target.value })
-            }}
-            color={
-              // Check if confirmEmail is empty, or email and confirmEmail match or don't match
-              formData.confirmEmail.trim() === ''
-                ? '' // If confirmEmail is empty, set the color to 'info'
-                : formData.confirmEmail === formData.email
-                  ? 'success' // If both are non-empty and match, set the color to 'success'
-                  : 'error' // If both are non-empty but don't match, set the color to 'error'
-            }
-            // Check if email and confirm email match
-            helperText={
-              formData.email.trim() && formData.confirmEmail.trim()
-                ? formData.confirmEmail === formData.email
-                  ? 'Email matched'
-                  : 'Email does not match'
-                : ''
-            }
-            error={formData.email.trim() && formData.confirmEmail.trim() && formData.confirmEmail !== formData.email} // Display error if emails don't match
-            FormHelperTextProps={{
-              style: {
-                color:
-                  formData.email.trim() && formData.confirmEmail.trim() && formData.confirmEmail !== formData.email
-                    ? 'red'
-                    : 'green'
+      <Box
+        component='form'
+        onSubmit={handleSubmit}
+        sx={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}
+      >
+        <Box
+          sx={{
+            px: { xs: 3, sm: 4 },
+            py: { xs: 2.5, sm: 3 },
+            borderBottom: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: 2
+          }}
+        >
+          <Box sx={{ flex: 1 }}>
+            <Typography variant='h6' sx={{ fontWeight: 600 }}>
+              Add New User
+            </Typography>
+            <Typography variant='body2' sx={{ color: theme.palette.text.secondary, mt: 0.5 }}>
+              Provide account details and assign default roles.
+            </Typography>
+          </Box>
+          <IconButtonTooltip title='Close' onClick={handleReset}>
+            <i className='ri-close-line text-lg' />
+          </IconButtonTooltip>
+        </Box>
+        <Box
+          sx={{
+            px: { xs: 3, sm: 4 },
+            py: { xs: 3, sm: 4 },
+            flex: 1,
+            overflowY: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 3
+          }}
+        >
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+            <TextField
+              label='First Name'
+              fullWidth
+              placeholder='John'
+              value={formData.firstname}
+              onChange={e => setFormData({ ...formData, firstname: e.target.value })}
+            />
+            <TextField
+              label='Last Name'
+              fullWidth
+              placeholder='Doe'
+              value={formData.lastname}
+              onChange={e => setFormData({ ...formData, lastname: e.target.value })}
+            />
+          </Box>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <TextField
+              label='Email'
+              fullWidth
+              type='email'
+              placeholder='johndoe@gmail.com'
+              value={formData.email}
+              onChange={e => setFormData({ ...formData, email: e.target.value })}
+            />
+            <TextField
+              label='Confirm Email'
+              fullWidth
+              type='email'
+              placeholder='Confirm your email'
+              value={formData.confirmEmail}
+              disabled={!formData.email.trim()}
+              onPaste={e => e.preventDefault()}
+              onChange={e => {
+                setFormData({ ...formData, confirmEmail: e.target.value })
+              }}
+              color={
+                formData.confirmEmail.trim() === ''
+                  ? 'primary'
+                  : formData.confirmEmail === formData.email
+                    ? 'success'
+                    : 'error'
               }
+              helperText={
+                formData.email.trim() && formData.confirmEmail.trim()
+                  ? formData.confirmEmail === formData.email
+                    ? 'Email matched'
+                    : 'Email does not match'
+                  : ''
+              }
+              error={formData.email.trim() && formData.confirmEmail.trim() && formData.confirmEmail !== formData.email}
+              FormHelperTextProps={{
+                sx: {
+                  color:
+                    formData.email.trim() && formData.confirmEmail.trim() && formData.confirmEmail !== formData.email
+                      ? theme.palette.error.main
+                      : theme.palette.success.main
+                }
+              }}
+            />
+          </Box>
+          <Box
+            sx={{
+              p: 2,
+              borderRadius: 2,
+              border: `1px solid ${alpha(theme.palette.divider, 0.4)}`,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 2
             }}
-          />
-          <CountryRegionDropdown
-            selectedCountryObject={selectedCountryObject}
-            setSelectedCountryObject={setSelectedCountryObject}
-            selectedCountry={selectedCountry}
-            setSelectedCountry={setSelectedCountry}
-            selectedRegion={selectedRegion}
-            setSelectedRegion={setSelectedRegion}
-          />
+          >
+            <Typography variant='subtitle2' sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
+              Location Details
+            </Typography>
+            <CountryRegionDropdown
+              selectedCountryObject={selectedCountryObject}
+              setSelectedCountryObject={setSelectedCountryObject}
+              selectedCountry={selectedCountry}
+              setSelectedCountry={setSelectedCountry}
+              selectedRegion={selectedRegion}
+              setSelectedRegion={setSelectedRegion}
+            />
+          </Box>
           <FormControl fullWidth>
-            <Typography>Phone No:</Typography>
+            <Typography variant='subtitle2' sx={{ fontWeight: 600, color: theme.palette.text.primary, mb: 1 }}>
+              Phone Number
+            </Typography>
             <PhoneInput
               countryCodeEditable={false}
               id='phone-input'
@@ -264,59 +325,89 @@ const AddUserDrawer = ({ open, handleClose, refreshUsers }) => {
               onChange={handlePhoneInputChange}
             />
           </FormControl>
-          <FormControl fullWidth margin='normal' style={{ minWidth: '270px' }}>
-            <InputLabel id='roles-multi-select-label'>Select Roles</InputLabel>
-            <Select
-              label='Select Roles'
-              labelId='roles-multi-select-label'
-              multiple
-              name='roles'
-              value={formData.roles}
-              onChange={handleRoleChange}
-              renderValue={selected => (
-                <div className='flex flex-wrap gap-2'>
-                  {selected.map(value => (
-                    <Chip
-                      key={value}
-                      clickable
-                      deleteIcon={
-                        <i
-                          className='ri-close-circle-fill'
-                          onMouseDown={event => event.stopPropagation()} // Prevent closing Select when clicking icon
-                        />
-                      }
-                      size='small'
-                      label={value} // Assuming value is the label; adjust if needed
-                      onDelete={() => handleDeleteChip(value)} // Call delete handler
-                    />
-                  ))}
-                </div>
-              )}
-            >
-              {rolesData.map(role => (
-                <MenuItem key={role._id} value={role.name}>
-                  <Checkbox checked={formData.roles.includes(role.name)} />
-                  <ListItemText primary={role.name} />
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <div className='flex items-center gap-4'>
-            <Button
-              variant='contained'
-              type='submit'
-              disabled={
-                !(formData.email.trim() && formData.confirmEmail.trim() && formData.confirmEmail === formData.email)
-              }
-            >
-              Submit
-            </Button>
-            <Button variant='outlined' color='error' type='reset' onClick={() => handleReset()}>
-              Cancel
-            </Button>
-          </div>
-        </form>
-      </div>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 1.5,
+              p: 2,
+              borderRadius: 2,
+              border: `1px solid ${alpha(theme.palette.divider, 0.4)}`
+            }}
+          >
+            <Typography variant='subtitle2' sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
+              Assign Roles
+            </Typography>
+            <Typography variant='body2' sx={{ color: theme.palette.text.secondary }}>
+              Select the permissions profiles this user should inherit.
+            </Typography>
+            <FormControl fullWidth margin='normal'>
+              <InputLabel id='roles-multi-select-label'>Select Roles</InputLabel>
+              <Select
+                label='Select Roles'
+                labelId='roles-multi-select-label'
+                multiple
+                name='roles'
+                value={formData.roles}
+                onChange={handleRoleChange}
+                renderValue={selected => (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                    {selected.map(value => (
+                      <Chip
+                        key={value}
+                        clickable
+                        deleteIcon={
+                          <i
+                            className='ri-close-circle-fill'
+                            onMouseDown={event => event.stopPropagation()} // Prevent closing Select when clicking icon
+                          />
+                        }
+                        size='small'
+                        label={value}
+                        onDelete={() => handleDeleteChip(value)}
+                      />
+                    ))}
+                  </Box>
+                )}
+              >
+                {rolesData.map(role => (
+                  <MenuItem key={role._id} value={role.name}>
+                    <Checkbox checked={formData.roles.includes(role.name)} />
+                    <ListItemText primary={role.name} />
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+          <Box sx={{ flexGrow: 1 }} />
+        </Box>
+        <Box
+          sx={{
+            borderTop: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
+            backgroundColor: alpha(theme.palette.primary.main, 0.06),
+            px: { xs: 3, sm: 4 },
+            py: { xs: 2.5, sm: 3 },
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 2,
+            justifyContent: { xs: 'center', sm: 'flex-end' }
+          }}
+        >
+          <Button variant='outlined' color='secondary' onClick={handleReset}>
+            Cancel
+          </Button>
+          <Button
+            variant='contained'
+            type='submit'
+            disabled={
+              !(formData.email.trim() && formData.confirmEmail.trim() && formData.confirmEmail === formData.email)
+            }
+            sx={{ minWidth: 140, color: '#fff' }}
+          >
+            Submit
+          </Button>
+        </Box>
+      </Box>
     </Drawer>
   )
 }
