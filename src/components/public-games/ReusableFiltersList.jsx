@@ -106,8 +106,8 @@ const ReusableFiltersList = ({
   }
 
   const handleQuizSelect = quizId => {
-    const quizToAdd = quiz.find(q => q.id === quizId)
-    if (quizToAdd && !selectedQuizzes.some(q => q.id === quizId)) {
+    const quizToAdd = quiz.find(q => q.id === quizId || q._id === quizId)
+    if (quizToAdd && !selectedQuizzes.some(q => (q.id === quizId || q._id === quizId))) {
       setSelectedQuizzes([...selectedQuizzes, quizToAdd])
     }
     handleCloseDialog('quiz')
@@ -144,7 +144,11 @@ const ReusableFiltersList = ({
 
   const handleDeleteChip = (type, itemToDelete) => {
     if (type === 'quiz') {
-      setSelectedQuizzes(selectedQuizzes.filter(q => q.id !== itemToDelete.id))
+      const deleteId = itemToDelete.id || itemToDelete._id
+      setSelectedQuizzes(selectedQuizzes.filter(q => {
+        const quizId = q.id || q._id
+        return quizId !== deleteId
+      }))
     } else {
       setSelectedLocations(
         selectedLocations.filter(
@@ -174,13 +178,33 @@ const ReusableFiltersList = ({
   }
 
   return (
-    <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 0.5 }}>
-      <Box sx={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Stack direction='row' spacing={2} alignItems='center'>
+    <Box sx={{ 
+      width: '100%', 
+      display: 'flex', 
+      flexDirection: 'column', 
+      alignItems: 'flex-start', 
+      gap: { xs: 0.5, sm: 0.75 }
+    }}>
+      <Box sx={{ 
+        width: '100%', 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: { xs: 1, sm: 0 }
+      }}>
+        <Stack 
+          direction='row' 
+          spacing={{ xs: 1, sm: 2 }} 
+          alignItems='center'
+          flexWrap='wrap'
+          sx={{ flex: 1, minWidth: 0 }}
+        >
           <Typography
             sx={{
               fontWeight: 700,
-              fontSize: '1rem'
+              fontSize: { xs: '0.875rem', sm: '0.95rem', md: '1rem' },
+              color: 'text.primary'
             }}
           >
             Filters:
@@ -195,6 +219,10 @@ const ReusableFiltersList = ({
                 onClick={() => handleOpenDialog('quiz')}
                 sx={{
                   color: 'white',
+                  fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                  px: { xs: 1.5, sm: 2 },
+                  py: { xs: 0.5, sm: 0.75 },
+                  minWidth: 'auto'
                 }}
               >
                 📚 By Quiz
@@ -207,6 +235,10 @@ const ReusableFiltersList = ({
                 onClick={() => handleOpenDialog('location')}
                 sx={{
                   color: 'white',
+                  fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                  px: { xs: 1.5, sm: 2 },
+                  py: { xs: 0.5, sm: 0.75 },
+                  minWidth: 'auto'
                 }}
               >
                 📍 By Location
@@ -215,7 +247,14 @@ const ReusableFiltersList = ({
           )}
         </Stack>
         {isMobile && (
-          <IconButton onClick={toggleFilters} size='small'>
+          <IconButton 
+            onClick={toggleFilters} 
+            size='small'
+            sx={{ 
+              color: 'text.primary',
+              flexShrink: 0
+            }}
+          >
             {showFilters ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
           </IconButton>
         )}
@@ -232,39 +271,61 @@ const ReusableFiltersList = ({
                   gap: 0.5
                 }}
               >
-                <Typography variant='body2' sx={{ flexShrink: 0 }}>
+                <Typography 
+                  variant='body2' 
+                  sx={{ 
+                    flexShrink: 0,
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                    color: 'text.primary'
+                  }}
+                >
                   Quizzes:
                 </Typography>
                 <Box
                   sx={{
                     display: 'flex',
-                    gap: 1,
+                    gap: { xs: 0.75, sm: 1 },
                     overflowX: 'auto',
                     flexGrow: 1,
-                    py: 1
+                    py: { xs: 0.75, sm: 1 },
+                    '&::-webkit-scrollbar': {
+                      height: 4
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                      backgroundColor: theme.palette.mode === 'dark' 
+                        ? 'rgba(255,255,255,0.2)' 
+                        : 'rgba(0,0,0,0.2)',
+                      borderRadius: 2
+                    }
                   }}
                 >
-                  {selectedQuizzes.map(quiz => (
-                    <Chip
-                      key={quiz._id}
-                      label={quiz.title}
-                      onDelete={() => handleDeleteChip('quiz', quiz)}
-                      deleteIcon={<CloseIcon />}
-                      size='small'
-                      color='primary'
-                      sx={{
-                        flexShrink: 0,
-                        whiteSpace: 'nowrap',
-                        color: 'white',
-                        '& .MuiChip-deleteIcon': {
-                          color: 'rgba(255, 255, 255, 0.8)',
-                          '&:hover': {
-                            color: 'white'
+                  {selectedQuizzes.map(quiz => {
+                    const quizId = quiz._id || quiz.id
+                    return (
+                      <Chip
+                        key={quizId}
+                        label={quiz.title}
+                        onDelete={() => handleDeleteChip('quiz', quiz)}
+                        deleteIcon={<CloseIcon />}
+                        size='small'
+                        color='primary'
+                        sx={{
+                          flexShrink: 0,
+                          whiteSpace: 'nowrap',
+                          color: 'white',
+                          fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                          height: { xs: 24, sm: 28 },
+                          '& .MuiChip-deleteIcon': {
+                            color: 'rgba(255, 255, 255, 0.8)',
+                            fontSize: { xs: 16, sm: 18 },
+                            '&:hover': {
+                              color: 'white'
+                            }
                           }
-                        }
-                      }}
-                    />
-                  ))}
+                        }}
+                      />
+                    )
+                  })}
                 </Box>
               </Box>
             </Box>
@@ -280,16 +341,32 @@ const ReusableFiltersList = ({
                   gap: 1
                 }}
               >
-                <Typography variant='body2' sx={{ flexShrink: 0 }}>
+                <Typography 
+                  variant='body2' 
+                  sx={{ 
+                    flexShrink: 0,
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                    color: 'text.primary'
+                  }}
+                >
                   Locations:
                 </Typography>
                 <Box
                   sx={{
                     display: 'flex',
-                    gap: 1,
+                    gap: { xs: 0.75, sm: 1 },
                     overflowX: 'auto',
                     flexGrow: 1,
-                    py: 1
+                    py: { xs: 0.75, sm: 1 },
+                    '&::-webkit-scrollbar': {
+                      height: 4
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                      backgroundColor: theme.palette.mode === 'dark' 
+                        ? 'rgba(255,255,255,0.2)' 
+                        : 'rgba(0,0,0,0.2)',
+                      borderRadius: 2
+                    }
                   }}
                 >
                   {selectedLocations.map((location, index) => (
@@ -304,8 +381,16 @@ const ReusableFiltersList = ({
                         flexShrink: 0,
                         whiteSpace: 'nowrap',
                         color: 'white',
+                        fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                        height: { xs: 24, sm: 28 },
+                        maxWidth: { xs: 200, sm: 'none' },
+                        '& .MuiChip-label': {
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        },
                         '& .MuiChip-deleteIcon': {
                           color: 'rgba(255, 255, 255, 0.8)',
+                          fontSize: { xs: 16, sm: 18 },
                           '&:hover': {
                             color: 'white'
                           }
@@ -327,59 +412,110 @@ const ReusableFiltersList = ({
         maxWidth='sm'
         PaperProps={{
           sx: {
-            width: '400px',
+            width: { xs: '90%', sm: '400px' },
+            maxWidth: { xs: '90%', sm: '400px' },
             maxHeight: 'calc(100vh - 64px)',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            bgcolor: 'background.paper'
           }
         }}
       >
-        <DialogTitle>
+        <DialogTitle
+          sx={{
+            fontSize: { xs: '1rem', sm: '1.25rem' },
+            pb: { xs: 1, sm: 1.5 }
+          }}
+        >
           Select Quiz
           <IconButton
             aria-label='close'
             onClick={() => handleCloseDialog('quiz')}
             sx={{
               position: 'absolute',
-              right: 8,
-              top: 8,
-              color: theme => theme.palette.grey[500]
+              right: { xs: 4, sm: 8 },
+              top: { xs: 4, sm: 8 },
+              color: 'text.secondary',
+              '&:hover': {
+                color: 'text.primary'
+              }
             }}
           >
-            <CloseIcon />
+            <CloseIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />
           </IconButton>
         </DialogTitle>
-        <DialogContent dividers>
+        <DialogContent 
+          dividers
+          sx={{
+            px: { xs: 2, sm: 3 },
+            py: { xs: 2, sm: 2.5 }
+          }}
+        >
           {loading.fetchQuizzes ? (
-            <Typography>Loading...</Typography>
+            <Typography 
+              sx={{ 
+                textAlign: 'center',
+                py: 4,
+                color: 'text.secondary',
+                fontSize: { xs: '0.875rem', sm: '1rem' }
+              }}
+            >
+              Loading...
+            </Typography>
           ) : error ? (
-            <Typography color='error'>{error}</Typography>
+            <Typography 
+              color='error'
+              sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+            >
+              {error}
+            </Typography>
           ) : (
             <List
               sx={{
                 overflowY: 'auto',
-                maxHeight: '300px'
+                maxHeight: { xs: '250px', sm: '300px' },
+                '&::-webkit-scrollbar': {
+                  width: 6
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  backgroundColor: theme.palette.mode === 'dark' 
+                    ? 'rgba(255,255,255,0.2)' 
+                    : 'rgba(0,0,0,0.2)',
+                  borderRadius: 3
+                }
               }}
             >
-              {quiz.map(item => (
-                <ListItem key={item.id} disablePadding>
-                  <ListItemButton
-                    onClick={() => handleQuizSelect(item.id)}
-                    sx={{
-                      '&:hover': {
-                        backgroundColor: 'action.hover'
-                      }
-                    }}
-                  >
-                    <ListItemAvatar>{getAvatarContent(item)}</ListItemAvatar>
-                    <Stack direction='column' sx={{ ml: 2 }}>
-                      <Typography variant='body1'>{item.title}</Typography>
-                      <Typography variant='caption' color='text.secondary'>
-                        ID: {item.id}
-                      </Typography>
-                    </Stack>
-                  </ListItemButton>
-                </ListItem>
-              ))}
+              {quiz.map(item => {
+                const quizId = item.id || item._id
+                return (
+                  <ListItem key={quizId} disablePadding>
+                    <ListItemButton
+                      onClick={() => handleQuizSelect(quizId)}
+                      sx={{
+                        '&:hover': {
+                          backgroundColor: 'action.hover'
+                        }
+                      }}
+                    >
+                      <ListItemAvatar>{getAvatarContent(item)}</ListItemAvatar>
+                      <Stack direction='column' sx={{ ml: 2 }}>
+                        <Typography 
+                          variant='body1'
+                          sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+                        >
+                          {item.title}
+                        </Typography>
+                        <Typography 
+                          variant='caption' 
+                          color='text.secondary'
+                          sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}
+                        >
+                          ID: {quizId}
+                        </Typography>
+                      </Stack>
+                    </ListItemButton>
+                  </ListItem>
+                )
+              })}
             </List>
           )}
         </DialogContent>
@@ -393,29 +529,45 @@ const ReusableFiltersList = ({
         maxWidth='sm'
         PaperProps={{
           sx: {
-            width: '400px',
+            width: { xs: '90%', sm: '400px' },
+            maxWidth: { xs: '90%', sm: '400px' },
             maxHeight: 'calc(100vh - 64px)',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            bgcolor: 'background.paper'
           }
         }}
       >
-        <DialogTitle>
+        <DialogTitle
+          sx={{
+            fontSize: { xs: '1rem', sm: '1.25rem' },
+            pb: { xs: 1, sm: 1.5 }
+          }}
+        >
           Select Location
           <IconButton
             aria-label='close'
             onClick={() => handleCloseDialog('location')}
             sx={{
               position: 'absolute',
-              right: 8,
-              top: 8,
-              color: theme => theme.palette.grey[500]
+              right: { xs: 4, sm: 8 },
+              top: { xs: 4, sm: 8 },
+              color: 'text.secondary',
+              '&:hover': {
+                color: 'text.primary'
+              }
             }}
           >
-            <CloseIcon />
+            <CloseIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />
           </IconButton>
         </DialogTitle>
-        <DialogContent dividers>
-          <Grid container spacing={2} sx={{ pt: 2 }}>
+        <DialogContent 
+          dividers
+          sx={{
+            px: { xs: 2, sm: 3 },
+            py: { xs: 2, sm: 2.5 }
+          }}
+        >
+          <Grid container spacing={{ xs: 1.5, sm: 2 }} sx={{ pt: { xs: 1, sm: 2 } }}>
             <Grid item xs={12}>
               <CountryRegionDropdown
                 defaultCountryCode=''
@@ -457,7 +609,18 @@ const ReusableFiltersList = ({
 
             {selectedRegion && (
               <Grid item xs={12}>
-                {loading.fetchCities && <Typography>Loading cities...</Typography>}
+                {loading.fetchCities && (
+                  <Typography 
+                    sx={{ 
+                      textAlign: 'center',
+                      py: 2,
+                      color: 'text.secondary',
+                      fontSize: { xs: '0.875rem', sm: '1rem' }
+                    }}
+                  >
+                    Loading cities...
+                  </Typography>
+                )}
                 {!loading.fetchCities && (
                   <FormControl fullWidth>
                     <Autocomplete
@@ -477,6 +640,11 @@ const ReusableFiltersList = ({
                             ...params.inputProps,
                             autoComplete: 'city'
                           }}
+                          sx={{
+                            '& .MuiInputBase-input': {
+                              fontSize: { xs: '0.875rem', sm: '1rem' }
+                            }
+                          }}
                         />
                       )}
                       value={selectedCity}
@@ -492,6 +660,12 @@ const ReusableFiltersList = ({
                 fullWidth
                 onClick={handleLocationSelect}
                 disabled={!selectedCountryObject && !selectedRegion && !selectedCity}
+                sx={{
+                  py: { xs: 1, sm: 1.25 },
+                  fontSize: { xs: '0.875rem', sm: '1rem' },
+                  fontWeight: 600,
+                  textTransform: 'none'
+                }}
               >
                 Add Location
               </Button>

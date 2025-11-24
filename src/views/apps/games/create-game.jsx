@@ -25,7 +25,7 @@ function CreateGamePage({ isSuperUser = false }) {
       try {
         const result = await RestApi.get(`${API_URLS.v0.USERS_QUIZ}?approvalState=approved&privacyFilter=PUBLIC`)
         if (result?.status === 'success') {
-          setQuizzes(result.result)
+          setQuizzes(result?.result || [])
         } else {
           console.error('Error Fetching quizzes:', result)
           toast.error('Failed to load quizzes')

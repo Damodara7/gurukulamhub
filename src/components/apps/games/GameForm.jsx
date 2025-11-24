@@ -161,7 +161,7 @@ const formFieldOrder = [
 ]
 
 // Main Game Form component
-const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
+const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
   const theme = useTheme()
   // Initial form data
   const initialFormData = {
@@ -1006,7 +1006,7 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                     <MenuItem value=''>
                       <em>Select Quiz</em>
                     </MenuItem>
-                    {quizzes.map(quiz => (
+                    {quizzes?.map(quiz => (
                       <MenuItem key={quiz._id} value={quiz._id}>
                         <Grid container alignItems='center' spacing={2} justifyContent='space-between'>
                           {/* Left side - Thumbnail and Quiz Info */}

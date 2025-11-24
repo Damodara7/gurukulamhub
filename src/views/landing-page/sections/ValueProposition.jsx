@@ -72,7 +72,7 @@ function ValueProposition() {
           </Stack>
 
           {/* Features Grid */}
-          <Grid container spacing={4}>
+          <Grid container spacing={{ xs: 3, md: 4 }}>
             {features.map((feature, index) => (
               <Grid item xs={12} sm={6} md={3} key={index}>
                 <Paper
@@ -100,16 +100,29 @@ function ValueProposition() {
                     <Box
                       className="feature-icon"
                       sx={{
-                        fontSize: '4rem',
+                        fontSize: { xs: '3rem', md: '4rem' },
                         transition: 'transform 0.3s ease'
                       }}
                     >
                       {feature.icon}
                     </Box>
-                    <Typography variant="h6" fontWeight={700}>
+                    <Typography 
+                      variant="h6" 
+                      fontWeight={700}
+                      sx={{ fontSize: { xs: '1rem', md: '1.25rem' } }}
+                    >
                       {feature.title}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7 }}>
+                    <Typography 
+                      variant="body2" 
+                      color="text.secondary" 
+                      sx={{ 
+                        lineHeight: 1.7,
+                        fontSize: { xs: '0.8rem', md: '0.875rem' },
+                        textAlign: 'center',
+                        px: { xs: 1, md: 0 }
+                      }}
+                    >
                       {feature.description}
                     </Typography>
                   </Stack>
@@ -129,22 +142,39 @@ function ValueProposition() {
               textAlign: 'center'
             }}
           >
-            <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} justifyContent="center" alignItems="center">
+            <Stack 
+              direction={{ xs: 'column', md: 'row' }} 
+              spacing={{ xs: 2, md: 3 }} 
+              justifyContent="center" 
+              alignItems="center"
+            >
               <Stack direction="row" spacing={1} alignItems="center">
-                <CheckCircleIcon sx={{ color: 'success.main', fontSize: 28 }} />
-                <Typography variant="h6" fontWeight={600}>
+                <CheckCircleIcon sx={{ color: 'success.main', fontSize: { xs: 24, md: 28 } }} />
+                <Typography 
+                  variant="h6" 
+                  fontWeight={600}
+                  sx={{ fontSize: { xs: '0.9rem', md: '1.25rem' } }}
+                >
                   100% Free to Start
                 </Typography>
               </Stack>
               <Stack direction="row" spacing={1} alignItems="center">
-                <CheckCircleIcon sx={{ color: 'success.main', fontSize: 28 }} />
-                <Typography variant="h6" fontWeight={600}>
+                <CheckCircleIcon sx={{ color: 'success.main', fontSize: { xs: 24, md: 28 } }} />
+                <Typography 
+                  variant="h6" 
+                  fontWeight={600}
+                  sx={{ fontSize: { xs: '0.9rem', md: '1.25rem' } }}
+                >
                   No Credit Card Required
                 </Typography>
               </Stack>
               <Stack direction="row" spacing={1} alignItems="center">
-                <CheckCircleIcon sx={{ color: 'success.main', fontSize: 28 }} />
-                <Typography variant="h6" fontWeight={600}>
+                <CheckCircleIcon sx={{ color: 'success.main', fontSize: { xs: 24, md: 28 } }} />
+                <Typography 
+                  variant="h6" 
+                  fontWeight={600}
+                  sx={{ fontSize: { xs: '0.9rem', md: '1.25rem' } }}
+                >
                   Instant Access
                 </Typography>
               </Stack>

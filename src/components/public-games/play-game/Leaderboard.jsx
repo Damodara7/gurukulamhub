@@ -13,7 +13,9 @@ import {
   CircularProgress,
   Tooltip
 } from '@mui/material'
-import { EmojiEvents } from '@mui/icons-material'
+import { useTheme, alpha } from '@mui/material/styles'
+import { EmojiEvents, FiberManualRecord } from '@mui/icons-material'
+import { useSession } from 'next-auth/react'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -23,10 +25,17 @@ import dynamic from 'next/dynamic'
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false })
 
 export default function Leaderboard({ game, duringPlay = false, isAdmin = false }) {
+  const theme = useTheme()
+  const { data: session } = useSession()
   const [leaderboard, setLeaderboard] = useState([])
   const [loading, setLoading] = useState(false)
   const wsRef = useRef(null)
   const [highlightedRows, setHighlightedRows] = useState({})
+  
+  // Check if a player is the current user
+  const isCurrentUser = (player) => {
+    return player?.email === session?.user?.email || player?.user?.email === session?.user?.email
+  }
 
   console.log('data game on the leaderboard ', game)
   useEffect(() => {
@@ -170,29 +179,62 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
     return parts.length === 0 ? '0s' : parts.join(' ')
   }
 
-  // Helper to blend a hex color with white for a lighter shade
-  function blendWithWhite(hex, alpha = 0.8) {
+  // Helper to blend a hex color with background for a lighter/darker shade based on theme
+  function blendWithBackground(hex, blendAlpha = 0.8) {
     // hex: #RRGGBB
     const r = parseInt(hex.slice(1, 3), 16)
     const g = parseInt(hex.slice(3, 5), 16)
     const b = parseInt(hex.slice(5, 7), 16)
-    // blend with white
-    return `rgba(${Math.round(r * (1 - alpha) + 255 * alpha)}, ${Math.round(
-      g * (1 - alpha) + 255 * alpha
-    )}, ${Math.round(b * (1 - alpha) + 255 * alpha)}, 1)`
+    
+    // Get background color based on theme
+    const bgColor = theme.palette.mode === 'dark' 
+      ? theme.palette.background.paper 
+      : '#ffffff'
+    
+    // Parse background color
+    const bgR = theme.palette.mode === 'dark' ? 45 : 255 // Approximate dark paper or white
+    const bgG = theme.palette.mode === 'dark' ? 40 : 255
+    const bgB = theme.palette.mode === 'dark' ? 60 : 255
+    
+    // Blend with background
+    return `rgba(${Math.round(r * (1 - blendAlpha) + bgR * blendAlpha)}, ${Math.round(
+      g * (1 - blendAlpha) + bgG * blendAlpha
+    )}, ${Math.round(b * (1 - blendAlpha) + bgB * blendAlpha)}, 1)`
   }
 
   // Helper to check if a player moved up or down
   const getRowAnimation = (player, index) => {
+    const isUser = isCurrentUser(player)
+    
     // Highlight if recently moved
     if (highlightedRows[player._id] === 'up') {
-      return { backgroundColor: '#e0ffe0', transition: 'background-color 0.5s' }
+      return { 
+        backgroundColor: theme.palette.mode === 'dark' 
+          ? alpha(theme.palette.success.main, 0.2) 
+          : '#e0ffe0', 
+        transition: 'background-color 0.5s',
+        borderLeft: isUser ? `4px solid ${theme.palette.primary.main}` : 'none'
+      }
     }
     if (highlightedRows[player._id] === 'down') {
-      return { backgroundColor: '#ffe0e0', transition: 'background-color 0.5s' }
+      return { 
+        backgroundColor: theme.palette.mode === 'dark' 
+          ? alpha(theme.palette.error.main, 0.2) 
+          : '#ffe0e0', 
+        transition: 'background-color 0.5s',
+        borderLeft: isUser ? `4px solid ${theme.palette.primary.main}` : 'none'
+      }
     }
-    // Default: light color based on player email
-    return { backgroundColor: blendWithWhite(stringToColor(player.email), 0.8), transition: 'background-color 0.5s' }
+    // Default: color based on player email, blended with background
+    // Add special highlight for current user
+    return { 
+      backgroundColor: isUser 
+        ? alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.25 : 0.12)
+        : blendWithBackground(stringToColor(player.email), theme.palette.mode === 'dark' ? 0.15 : 0.8), 
+      transition: 'background-color 0.5s',
+      borderLeft: isUser ? `4px solid ${theme.palette.primary.main}` : 'none',
+      boxShadow: isUser ? `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}` : 'none'
+    }
   }
 
   if (loading) {
@@ -208,7 +250,7 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
   }
 
   return (
-    <Box sx={{ mx: 'auto', width: '100%', maxWidth: duringPlay || !isAdmin ? 'md' : 'md', my: 5 }}>
+    <Box sx={{ mx: 'auto', width: '100%', maxWidth: duringPlay || !isAdmin ? 'md' : 'md', my: 5, px: { xs: 2, md: 0 } }}>
       <Typography
         variant='h6'
         sx={{
@@ -216,31 +258,124 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
           fontWeight: 600,
           display: 'flex',
           alignItems: 'center',
-          gap: 1
+          gap: 1,
+          color: theme.palette.mode === 'dark' ? theme.palette.common.white : 'text.primary'
         }}
       >
         <EmojiEvents color='primary' /> Leaderboard
       </Typography>
 
-      <TableContainer component={Paper} elevation={3}>
-        <Table size={'medium'}>
+      <TableContainer
+        component={Paper}
+        elevation={0}
+        sx={{
+          bgcolor: 'transparent',
+          boxShadow: 'none',
+          borderRadius: 2,
+          overflow: 'hidden'
+        }}
+      >
+        <Table size={'medium'} sx={{ bgcolor: 'transparent' }}>
           <TableHead>
-            <TableRow>
-              <TableCell>Rank</TableCell>
-              <TableCell>Player</TableCell>
-              <TableCell align='right'>Score</TableCell>
-              <TableCell align='right'>Answer Time</TableCell>
+            <TableRow
+              sx={{
+                bgcolor: theme.palette.mode === 'dark' 
+                  ? alpha(theme.palette.background.paper, 0.5) 
+                  : alpha(theme.palette.primary.main, 0.05),
+                borderBottom: `2px solid ${alpha(theme.palette.divider, 0.5)}`
+              }}
+            >
+              <TableCell
+                sx={{
+                  fontWeight: 700,
+                  color: theme.palette.mode === 'dark' ? theme.palette.common.white : 'text.primary',
+                  fontSize: '0.875rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px'
+                }}
+              >
+                Rank
+              </TableCell>
+              <TableCell
+                sx={{
+                  fontWeight: 700,
+                  color: theme.palette.mode === 'dark' ? theme.palette.common.white : 'text.primary',
+                  fontSize: '0.875rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px'
+                }}
+              >
+                Player
+              </TableCell>
+              <TableCell
+                align='right'
+                sx={{
+                  fontWeight: 700,
+                  color: theme.palette.mode === 'dark' ? theme.palette.common.white : 'text.primary',
+                  fontSize: '0.875rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px'
+                }}
+              >
+                Score
+              </TableCell>
+              <TableCell
+                align='right'
+                sx={{
+                  fontWeight: 700,
+                  color: theme.palette.mode === 'dark' ? theme.palette.common.white : 'text.primary',
+                  fontSize: '0.875rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px'
+                }}
+              >
+                Answer Time
+              </TableCell>
               {game?.gameMode === 'live' && (
-                <TableCell align='right'>
+                <TableCell
+                  align='right'
+                  sx={{
+                    fontWeight: 700,
+                    color: theme.palette.mode === 'dark' ? theme.palette.common.white : 'text.primary',
+                    fontSize: '0.875rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px'
+                  }}
+                >
                   <Tooltip title='Fastest Finger First Points' placement='top'>
-                    FFF Points{' '}
-                    <span style={{ fontSize: '0.8em', color: '#888' }}>{`(out of ${
-                      1000 * game?.questionsCount
-                    })`}</span>
+                    <Box component='span' sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+                      FFF Points
+                      <Typography
+                        component='span'
+                        sx={{
+                          fontSize: '0.75rem',
+                          color: theme.palette.mode === 'dark' 
+                            ? alpha(theme.palette.common.white, 0.6) 
+                            : 'text.secondary',
+                          fontWeight: 400,
+                          textTransform: 'none'
+                        }}
+                      >
+                        {`(out of ${1000 * game?.questionsCount})`}
+                      </Typography>
+                    </Box>
                   </Tooltip>
                 </TableCell>
               )}
-              {game.gameMode === 'self-paced' && <TableCell align='right'>Completed At</TableCell>}
+              {game.gameMode === 'self-paced' && (
+                <TableCell
+                  align='right'
+                  sx={{
+                    fontWeight: 700,
+                    color: theme.palette.mode === 'dark' ? theme.palette.common.white : 'text.primary',
+                    fontSize: '0.875rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px'
+                  }}
+                >
+                  Completed At
+                </TableCell>
+              )}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -255,17 +390,118 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
                   transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                   style={getRowAnimation(player, index)}
                 >
-                  <TableCell>{index + 1}</TableCell>
-                  <TableCell>
-                    {player?.user?.profile?.firstname && player?.user?.profile?.lastname
-                      ? ` ${player?.user?.profile?.firstname} ${player?.user?.profile?.lastname}`
-                      : player?.user?.profile?.firstname || player?.user?.profile?.lastname || player?.email}
+                  <TableCell
+                    sx={{
+                      color: theme.palette.mode === 'dark' 
+                        ? alpha(theme.palette.common.white, 0.9) 
+                        : 'text.primary',
+                      fontWeight: index < 3 || isCurrentUser(player) ? 700 : 500,
+                      borderBottom: `1px solid ${alpha(theme.palette.divider, 0.3)}`
+                    }}
+                  >
+                    {index + 1}
                   </TableCell>
-                  <TableCell align='right'>{player.score.toFixed(2)}</TableCell>
-                  <TableCell align='right'>{formatTime(player.totalAnswerTime / 1000)}</TableCell>
-                  {game?.gameMode === 'live' && <TableCell align='right'>{player?.fffPoints?.toFixed(3)}</TableCell>}
+                  <TableCell
+                    sx={{
+                      color: theme.palette.mode === 'dark' 
+                        ? alpha(theme.palette.common.white, 0.9) 
+                        : 'text.primary',
+                      fontWeight: index < 3 || isCurrentUser(player) ? 700 : 500,
+                      borderBottom: `1px solid ${alpha(theme.palette.divider, 0.3)}`
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      {isCurrentUser(player) && (
+                        <FiberManualRecord
+                          sx={{
+                            fontSize: 8,
+                            color: theme.palette.primary.main,
+                            animation: 'pulse 2s ease-in-out infinite',
+                            '@keyframes pulse': {
+                              '0%, 100%': {
+                                opacity: 1,
+                                transform: 'scale(1)'
+                              },
+                              '50%': {
+                                opacity: 0.6,
+                                transform: 'scale(1.2)'
+                              }
+                            }
+                          }}
+                        />
+                      )}
+                      <Box component='span'>
+                        {player?.user?.profile?.firstname && player?.user?.profile?.lastname
+                          ? ` ${player?.user?.profile?.firstname} ${player?.user?.profile?.lastname}`
+                          : player?.user?.profile?.firstname || player?.user?.profile?.lastname || player?.email}
+                        {isCurrentUser(player) && (
+                          <Typography
+                            component='span'
+                            sx={{
+                              ml: 1,
+                              fontSize: '0.875rem',
+                              fontWeight: 600,
+                              color: theme.palette.primary.main,
+                              fontStyle: 'italic'
+                            }}
+                          >
+                            (You)
+                          </Typography>
+                        )}
+                      </Box>
+                    </Box>
+                  </TableCell>
+                  <TableCell
+                    align='right'
+                    sx={{
+                      color: theme.palette.mode === 'dark' 
+                        ? alpha(theme.palette.common.white, 0.9) 
+                        : 'text.primary',
+                      fontWeight: index < 3 || isCurrentUser(player) ? 700 : 500,
+                      borderBottom: `1px solid ${alpha(theme.palette.divider, 0.3)}`
+                    }}
+                  >
+                    {player.score.toFixed(2)}
+                  </TableCell>
+                  <TableCell
+                    align='right'
+                    sx={{
+                      color: theme.palette.mode === 'dark' 
+                        ? alpha(theme.palette.common.white, 0.9) 
+                        : 'text.primary',
+                      fontWeight: index < 3 || isCurrentUser(player) ? 700 : 500,
+                      borderBottom: `1px solid ${alpha(theme.palette.divider, 0.3)}`
+                    }}
+                  >
+                    {formatTime(player.totalAnswerTime / 1000)}
+                  </TableCell>
+                  {game?.gameMode === 'live' && (
+                    <TableCell
+                      align='right'
+                      sx={{
+                        color: theme.palette.mode === 'dark' 
+                          ? alpha(theme.palette.common.white, 0.9) 
+                          : 'text.primary',
+                        fontWeight: index < 3 || isCurrentUser(player) ? 700 : 500,
+                        borderBottom: `1px solid ${alpha(theme.palette.divider, 0.3)}`
+                      }}
+                    >
+                      {player?.fffPoints?.toFixed(3)}
+                    </TableCell>
+                  )}
                   {game?.gameMode === 'self-paced' && (
-                    <TableCell align='right'>{new Date(player?.finishedAt)?.toLocaleString()}</TableCell>
+                    <TableCell
+                      align='right'
+                      sx={{
+                        color: theme.palette.mode === 'dark' 
+                          ? alpha(theme.palette.common.white, 0.9) 
+                          : 'text.primary',
+                        fontWeight: index < 3 || isCurrentUser(player) ? 700 : 500,
+                        borderBottom: `1px solid ${alpha(theme.palette.divider, 0.3)}`
+                      }}
+                    >
+                      {new Date(player?.finishedAt)?.toLocaleString()}
+                    </TableCell>
                   )}
                 </motion.tr>
               ))}

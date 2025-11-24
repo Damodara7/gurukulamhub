@@ -46,6 +46,7 @@ import {
 import CustomAvatar from '@core/components/mui/Avatar'
 import OptionMenu from '@core/components/option-menu'
 import AddUserDrawer from './AddUserDrawer'
+import BulkUserImportDialog from './BulkUserImportDialog'
 import EditUserRoleDialog from '../../roles/EditUserRoleDialog'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
 
@@ -62,7 +63,7 @@ import tableStyles from '@core/styles/table.module.css'
 // import { useAppDispatch } from '@/store/hooks'
 import { roleSliceActions } from '@/store/features/roleSlice'
 import * as clientApi from '@/app/api/client/client.api'
-import { Divider, Grid } from '@mui/material'
+import { Divider, Grid, Box } from '@mui/material'
 
 // Styled Components
 const Icon = styled('i')({})
@@ -115,7 +116,7 @@ const userStatusObj = {
 // Column Definitions
 const columnHelper = createColumnHelper()
 
-const RolesTable = ({ tableData, refreshUsers }) => {
+const UsersTable = ({ tableData, refreshUsers }) => {
   // const dispatch = useAppDispatch()
   // States
   const [role, setRole] = useState('')
@@ -131,6 +132,7 @@ const RolesTable = ({ tableData, refreshUsers }) => {
   const [editData, setEditData] = useState(null)
   const [openDialog, setOpenDialog] = useState(false)
   const [addUserOpen, setAddUserOpen] = useState(false)
+  const [bulkImportOpen, setBulkImportOpen] = useState(false)
 
   // Hooks
   const { lang: locale } = useParams()
@@ -653,19 +655,34 @@ const RolesTable = ({ tableData, refreshUsers }) => {
               </div>
             )}
           </div>
-          <Button
-            variant='contained'
-            component='label'
-            onClick={() => setAddUserOpen(!addUserOpen)}
-            startIcon={<i className='ri-add-line' />}
-            sx={{
-              borderRadius: 2,
-              color: 'white',
-              fontWeight: 600
-            }}
-          >
-            Add New User
-          </Button>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button
+              variant='contained'
+              component='label'
+              size='large'
+              onClick={() => setBulkImportOpen(true)}
+              startIcon={<i className='ri-file-excel-2-line' />}
+              sx={{
+                color: 'white',
+                fontWeight: 600
+              }}
+            >
+              Bulk Import
+            </Button>
+            <Button
+              variant='contained'
+              component='label'
+              size='large'
+              onClick={() => setAddUserOpen(!addUserOpen)}
+              startIcon={<i className='ri-add-line' />}
+              sx={{
+                color: 'white',
+                fontWeight: 600
+              }}
+            >
+              Add New User
+            </Button>
+          </Box>
         </div>
       </div>
       <div className='overflow-x-auto'>
@@ -798,8 +815,14 @@ const RolesTable = ({ tableData, refreshUsers }) => {
           handleClose={() => setAddUserOpen(!addUserOpen)}
         />
       )}
+
+      <BulkUserImportDialog
+        open={bulkImportOpen}
+        handleClose={() => setBulkImportOpen(false)}
+        refreshUsers={refreshUsers}
+      />
     </Card>
   )
 }
 
-export default RolesTable
+export default UsersTable

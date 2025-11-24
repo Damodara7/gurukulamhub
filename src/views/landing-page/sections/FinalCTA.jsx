@@ -47,7 +47,7 @@ function FinalCTA({ isAuthenticated = false }) {
           {/* Icon */}
           <Box
             sx={{
-              fontSize: '5rem',
+              fontSize: { xs: '3rem', md: '5rem' },
               animation: 'bounce 2s ease-in-out infinite'
             }}
           >
@@ -93,13 +93,14 @@ function FinalCTA({ isAuthenticated = false }) {
             sx={{
               bgcolor: 'white',
               color: theme.palette.primary.main,
-              px: 6,
-              py: 2.5,
-              fontSize: '1.2rem',
+              px: { xs: 4, md: 6 },
+              py: { xs: 1.5, md: 2.5 },
+              fontSize: { xs: '1rem', md: '1.2rem' },
               fontWeight: 800,
               borderRadius: 3,
               textTransform: 'none',
               mt: 2,
+              width: { xs: '100%', sm: 'auto' },
               boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
               '&:hover': {
                 bgcolor: 'rgba(255,255,255,0.95)',
@@ -114,14 +115,37 @@ function FinalCTA({ isAuthenticated = false }) {
 
           {/* Trust Badges */}
           {!isAuthenticated && (
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3} sx={{ pt: 2 }}>
-              <Typography variant="body1" sx={{ opacity: 0.9 }}>
+            <Stack 
+              direction={{ xs: 'column', sm: 'row' }} 
+              spacing={{ xs: 1.5, sm: 3 }} 
+              sx={{ pt: 2 }}
+              alignItems="center"
+            >
+              <Typography 
+                variant="body1" 
+                sx={{ 
+                  opacity: 0.9,
+                  fontSize: { xs: '0.875rem', md: '1rem' }
+                }}
+              >
                 ✓ No credit card required
               </Typography>
-              <Typography variant="body1" sx={{ opacity: 0.9 }}>
+              <Typography 
+                variant="body1" 
+                sx={{ 
+                  opacity: 0.9,
+                  fontSize: { xs: '0.875rem', md: '1rem' }
+                }}
+              >
                 ✓ Free forever
               </Typography>
-              <Typography variant="body1" sx={{ opacity: 0.9 }}>
+              <Typography 
+                variant="body1" 
+                sx={{ 
+                  opacity: 0.9,
+                  fontSize: { xs: '0.875rem', md: '1rem' }
+                }}
+              >
                 ✓ Cancel anytime
               </Typography>
             </Stack>

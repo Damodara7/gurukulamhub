@@ -89,8 +89,8 @@ function HowItWorks() {
                   {/* Number Badge */}
                   <Box
                     sx={{
-                      width: 50,
-                      height: 50,
+                      width: { xs: 40, md: 50 },
+                      height: { xs: 40, md: 50 },
                       borderRadius: '50%',
                       bgcolor: theme.palette.primary.main,
                       color: 'white',
@@ -98,7 +98,7 @@ function HowItWorks() {
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontWeight: 800,
-                      fontSize: '1.5rem',
+                      fontSize: { xs: '1.25rem', md: '1.5rem' },
                       boxShadow: `0 4px 20px ${theme.palette.primary.main}40`
                     }}
                   >
@@ -109,7 +109,7 @@ function HowItWorks() {
                   <Box
                     className="step-emoji"
                     sx={{
-                      fontSize: '5rem',
+                      fontSize: { xs: '3.5rem', md: '5rem' },
                       transition: 'transform 0.3s ease'
                     }}
                   >
@@ -117,10 +117,22 @@ function HowItWorks() {
                   </Box>
 
                   {/* Content */}
-                  <Typography variant="h5" fontWeight={700}>
+                  <Typography 
+                    variant="h5" 
+                    fontWeight={700}
+                    sx={{ fontSize: { xs: '1.25rem', md: '1.5rem' } }}
+                  >
                     {step.title}
                   </Typography>
-                  <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.7 }}>
+                  <Typography 
+                    variant="body1" 
+                    color="text.secondary" 
+                    sx={{ 
+                      lineHeight: 1.7,
+                      fontSize: { xs: '0.875rem', md: '1rem' },
+                      px: { xs: 1, md: 0 }
+                    }}
+                  >
                     {step.description}
                   </Typography>
 

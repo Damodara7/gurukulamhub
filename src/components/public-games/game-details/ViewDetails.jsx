@@ -102,7 +102,14 @@ const ViewDetails = ({ game }) => {
   // Early return after all hooks
   if (!game) {
     return (
-      <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 4 }}>
+      <Box sx={{ 
+        minHeight: '100vh', 
+        bgcolor: 'background.default', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        p: { xs: 2, sm: 3, md: 4 }
+      }}>
         <FallBackCard content='Games are not available' path='/public-games' btnText='Back To Public Games' />
       </Box>
     )
@@ -139,21 +146,30 @@ const ViewDetails = ({ game }) => {
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa', pb: 8 }}>
+    <Box sx={{ 
+      minHeight: '100vh', 
+      bgcolor: 'background.default', 
+      pb: { xs: 4, sm: 6, md: 8 },
+      width: '100%',
+      overflowX: 'hidden'
+    }}>
       {/* Header Section */}
       <Box
         sx={{
-          bgcolor: 'white',
-          pt: { xs: 4, md: 6 },
-          pb: { xs: 4, md: 6 },
-          borderBottom: '1px solid #e8eaed'
+          bgcolor: 'background.paper',
+          pt: { xs: 3, sm: 4, md: 6 },
+          pb: { xs: 3, sm: 4, md: 6 },
+          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+          boxShadow: theme.palette.mode === 'dark' 
+            ? '0 2px 8px rgba(0,0,0,0.3)'
+            : '0 2px 8px rgba(0,0,0,0.05)'
         }}
       >
-        <Container maxWidth="lg">
-          <Stack spacing={3}>
+        <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 3, md: 4 } }}>
+          <Stack spacing={{ xs: 2, sm: 2.5, md: 3 }}>
             <Button
               variant="outlined"
-              startIcon={<ArrowBackIosNewRoundedIcon fontSize="small" />}
+              startIcon={<ArrowBackIosNewRoundedIcon sx={{ fontSize: { xs: 16, sm: 18 } }} />}
               onClick={() => router.push('/public-games')}
               sx={{
                 alignSelf: 'flex-start',
@@ -161,6 +177,9 @@ const ViewDetails = ({ game }) => {
                 fontWeight: 600,
                 color: theme.palette.primary.main,
                 gap: 0.5,
+                fontSize: { xs: '0.875rem', sm: '1rem' },
+                px: { xs: 1.5, sm: 2 },
+                py: { xs: 0.75, sm: 1 },
                 '&:hover': {
                   backgroundColor: alpha(theme.palette.primary.main, 0.08)
                 }
@@ -173,8 +192,8 @@ const ViewDetails = ({ game }) => {
               variant="h3"
               fontWeight={800}
               sx={{
-                fontSize: { xs: '1.75rem', md: '2.5rem' },
-                color: '#202124',
+                fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' },
+                color: 'text.primary',
                 lineHeight: 1.3
               }}
             >
@@ -182,29 +201,59 @@ const ViewDetails = ({ game }) => {
             </Typography>
 
             {/* Status & Actions */}
-            <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
+            <Stack 
+              direction={{ xs: 'column', sm: 'row' }} 
+              justifyContent="space-between" 
+              alignItems={{ xs: 'flex-start', sm: 'center' }} 
+              flexWrap="wrap" 
+              gap={{ xs: 1.5, sm: 2 }}
+            >
               {getStatusChip()}
               
-              <Stack direction="row" spacing={2}>
+              <Stack 
+                direction="row" 
+                spacing={{ xs: 1, sm: 2 }}
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
+                flexWrap="wrap"
+              >
                 {game.pin && (
                   <Box
                     sx={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 1,
-                      px: 2,
-                      py: 1,
+                      gap: { xs: 0.75, sm: 1 },
+                      px: { xs: 1.5, sm: 2 },
+                      py: { xs: 0.75, sm: 1 },
                       borderRadius: 2,
-                      bgcolor: '#f5f6f7',
-                      border: '1px solid #e8eaed'
+                      bgcolor: theme.palette.mode === 'dark' 
+                        ? alpha(theme.palette.common.white, 0.05)
+                        : alpha(theme.palette.common.black, 0.03),
+                      border: `1px solid ${alpha(theme.palette.divider, 0.1)}`
                     }}
                   >
-                    <Typography variant="body2" fontWeight={600} sx={{ color: '#202124', fontSize: '0.875rem' }}>
+                    <Typography 
+                      variant="body2" 
+                      fontWeight={600} 
+                      sx={{ 
+                        color: 'text.primary', 
+                        fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                      }}
+                    >
                       PIN: {game.pin}
                     </Typography>
                     <Tooltip title={copyTooltip}>
-                      <IconButton onClick={handleCopyPin} size="small" sx={{ p: 0.5 }}>
-                        <ContentCopy sx={{ fontSize: 16 }} />
+                      <IconButton 
+                        onClick={handleCopyPin} 
+                        size="small" 
+                        sx={{ 
+                          p: 0.5,
+                          color: 'text.secondary',
+                          '&:hover': {
+                            color: 'text.primary'
+                          }
+                        }}
+                      >
+                        <ContentCopy sx={{ fontSize: { xs: 14, sm: 16 } }} />
                       </IconButton>
                     </Tooltip>
                   </Box>
@@ -212,11 +261,14 @@ const ViewDetails = ({ game }) => {
                 
                 <Button
                   variant="outlined"
-                  startIcon={<ShareIcon />}
+                  startIcon={<ShareIcon sx={{ fontSize: { xs: 16, sm: 18 } }} />}
                   onClick={() => setSharePopupOpen(true)}
                   sx={{
                     textTransform: 'none',
-                    fontWeight: 600
+                    fontWeight: 600,
+                    fontSize: { xs: '0.875rem', sm: '1rem' },
+                    px: { xs: 1.5, sm: 2 },
+                    py: { xs: 0.75, sm: 1 }
                   }}
                 >
                   Share
@@ -229,8 +281,8 @@ const ViewDetails = ({ game }) => {
               <Typography
                 variant="body1"
                 sx={{
-                  fontSize: '1.05rem',
-                  color: '#5f6368',
+                  fontSize: { xs: '0.95rem', sm: '1rem', md: '1.05rem' },
+                  color: 'text.secondary',
                   lineHeight: 1.7,
                   maxWidth: '900px'
                 }}
@@ -240,75 +292,119 @@ const ViewDetails = ({ game }) => {
             )}
 
             {/* Quick Info Bar */}
-            <Stack direction="row" spacing={4} flexWrap="wrap" sx={{ pt: 1 }}>
-              <Stack direction="row" spacing={1} alignItems="center">
+            <Stack 
+              direction="row" 
+              spacing={{ xs: 2, sm: 3, md: 4 }} 
+              flexWrap="wrap" 
+              sx={{ pt: { xs: 0.5, sm: 1 } }}
+            >
+              <Stack direction="row" spacing={{ xs: 0.75, sm: 1 }} alignItems="center">
                 <Box
                   sx={{
-                    width: 32,
-                    height: 32,
+                    width: { xs: 28, sm: 32 },
+                    height: { xs: 28, sm: 32 },
                     borderRadius: 1.5,
-                    bgcolor: '#e8f4fd',
+                    bgcolor: alpha(theme.palette.info.main, theme.palette.mode === 'dark' ? 0.2 : 0.1),
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
                   }}
                 >
-                  <AccessTime sx={{ fontSize: 18, color: '#1976d2' }} />
+                  <AccessTime sx={{ fontSize: { xs: 16, sm: 18 }, color: 'info.main' }} />
                 </Box>
                 <Box>
-                  <Typography variant="caption" sx={{ color: '#5f6368', fontSize: '0.7rem' }}>
+                  <Typography 
+                    variant="caption" 
+                    sx={{ 
+                      color: 'text.secondary', 
+                      fontSize: { xs: '0.65rem', sm: '0.7rem' }
+                    }}
+                  >
                     STARTS
                   </Typography>
-                  <Typography variant="body2" fontWeight={600} sx={{ color: '#202124', fontSize: '0.875rem' }}>
+                  <Typography 
+                    variant="body2" 
+                    fontWeight={600} 
+                    sx={{ 
+                      color: 'text.primary', 
+                      fontSize: { xs: '0.8rem', sm: '0.875rem' }
+                    }}
+                  >
                     {format(new Date(game.startTime), 'MMM d, h:mm a')}
                   </Typography>
                 </Box>
               </Stack>
               
-              <Stack direction="row" spacing={1} alignItems="center">
+              <Stack direction="row" spacing={{ xs: 0.75, sm: 1 }} alignItems="center">
                 <Box
                   sx={{
-                    width: 32,
-                    height: 32,
+                    width: { xs: 28, sm: 32 },
+                    height: { xs: 28, sm: 32 },
                     borderRadius: 1.5,
-                    bgcolor: '#f3e5f5',
+                    bgcolor: alpha(theme.palette.secondary.main, theme.palette.mode === 'dark' ? 0.2 : 0.1),
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
                   }}
                 >
-                  <People sx={{ fontSize: 18, color: '#7b1fa2' }} />
+                  <People sx={{ fontSize: { xs: 16, sm: 18 }, color: 'secondary.main' }} />
                 </Box>
                 <Box>
-                  <Typography variant="caption" sx={{ color: '#5f6368', fontSize: '0.7rem' }}>
+                  <Typography 
+                    variant="caption" 
+                    sx={{ 
+                      color: 'text.secondary', 
+                      fontSize: { xs: '0.65rem', sm: '0.7rem' }
+                    }}
+                  >
                     PLAYERS
                   </Typography>
-                  <Typography variant="body2" fontWeight={600} sx={{ color: '#202124', fontSize: '0.875rem' }}>
+                  <Typography 
+                    variant="body2" 
+                    fontWeight={600} 
+                    sx={{ 
+                      color: 'text.primary', 
+                      fontSize: { xs: '0.8rem', sm: '0.875rem' }
+                    }}
+                  >
                     {game?.registeredUsers?.length || 0} / {game?.maxPlayers || '∞'}
                   </Typography>
                 </Box>
               </Stack>
               
               {game.location && (
-                <Stack direction="row" spacing={1} alignItems="center">
+                <Stack direction="row" spacing={{ xs: 0.75, sm: 1 }} alignItems="center">
                   <Box
                     sx={{
-                      width: 32,
-                      height: 32,
+                      width: { xs: 28, sm: 32 },
+                      height: { xs: 28, sm: 32 },
                       borderRadius: 1.5,
-                      bgcolor: '#fff3e0',
+                      bgcolor: alpha(theme.palette.warning.main, theme.palette.mode === 'dark' ? 0.2 : 0.1),
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center'
                     }}
                   >
-                    <LocationOn sx={{ fontSize: 18, color: '#f57c00' }} />
+                    <LocationOn sx={{ fontSize: { xs: 16, sm: 18 }, color: 'warning.main' }} />
                   </Box>
                   <Box>
-                    <Typography variant="caption" sx={{ color: '#5f6368', fontSize: '0.7rem' }}>
+                    <Typography 
+                      variant="caption" 
+                      sx={{ 
+                        color: 'text.secondary', 
+                        fontSize: { xs: '0.65rem', sm: '0.7rem' }
+                      }}
+                    >
                       LOCATION
                     </Typography>
-                    <Typography variant="body2" fontWeight={600} sx={{ color: '#202124', fontSize: '0.875rem' }}>
+                    <Typography 
+                      variant="body2" 
+                      fontWeight={600} 
+                      sx={{ 
+                        color: 'text.primary', 
+                        fontSize: { xs: '0.8rem', sm: '0.875rem' }
+                      }}
+                    >
                       {game?.location?.city || game?.location?.region || game?.location?.country || 'Anywhere'}
                     </Typography>
                   </Box>
@@ -319,41 +415,65 @@ const ViewDetails = ({ game }) => {
         </Container>
       </Box>
 
-      <Container maxWidth="lg" sx={{ mt: 4 }}>
+      <Container maxWidth="lg" sx={{ 
+        mt: { xs: 3, sm: 4 },
+        px: { xs: 2, sm: 3, md: 4 }
+      }}>
         {/* Group Restriction Alert */}
         {isRestricted && (
           <Alert
             severity="warning"
             variant="outlined"
             sx={{
-              mb: 4,
+              mb: { xs: 3, sm: 4 },
               borderRadius: 3,
               '& .MuiAlert-message': { width: '100%' }
             }}
           >
-            <AlertTitle sx={{ fontWeight: 700, fontSize: '1rem', mb: 1 }}>
+            <AlertTitle sx={{ 
+              fontWeight: 700, 
+              fontSize: { xs: '0.9rem', sm: '1rem' }, 
+              mb: 1 
+            }}>
               Restricted to Group {game?.groupId?.groupName && `- ${game.groupId.groupName}`}
             </AlertTitle>
-            <Typography variant="body2" sx={{ mb: 2 }}>
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                mb: 2,
+                fontSize: { xs: '0.875rem', sm: '1rem' }
+              }}
+            >
               You are not allowed to register or join this game.
             </Typography>
             
-            <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
-              <GroupIcon fontSize="small" />
+            <Typography 
+              variant="subtitle2" 
+              fontWeight={600} 
+              sx={{ 
+                mb: 1.5, 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 1,
+                fontSize: { xs: '0.875rem', sm: '1rem' }
+              }}
+            >
+              <GroupIcon sx={{ fontSize: { xs: 16, sm: 18 } }} />
               Group Requirements
             </Typography>
 
             <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
               {game.groupId?.ageGroup?.min != null && game.groupId?.ageGroup?.max != null && (
                 <Chip
-                  icon={<CakeIcon sx={{ fontSize: 14 }} />}
+                  icon={<CakeIcon sx={{ fontSize: { xs: 12, sm: 14 } }} />}
                   label={`Age: ${game.groupId.ageGroup.min}-${game.groupId.ageGroup.max}`}
                   size="small"
                   sx={{
-                    bgcolor: '#e8f4fd',
-                    color: '#0c5a9e',
+                    bgcolor: alpha(theme.palette.info.main, theme.palette.mode === 'dark' ? 0.2 : 0.1),
+                    color: 'info.main',
                     border: 'none',
-                    fontWeight: 600
+                    fontWeight: 600,
+                    fontSize: { xs: '0.7rem', sm: '0.75rem' }
                   }}
                 />
               )}
@@ -367,14 +487,15 @@ const ViewDetails = ({ game }) => {
                   
                   return locationParts.length > 0 ? (
                     <Chip
-                      icon={<LocationOn sx={{ fontSize: 14 }} />}
+                      icon={<LocationOn sx={{ fontSize: { xs: 12, sm: 14 } }} />}
                       label={locationParts.join(', ')}
                       size="small"
                       sx={{
-                        bgcolor: '#fff3e0',
-                        color: '#e65100',
+                        bgcolor: alpha(theme.palette.warning.main, theme.palette.mode === 'dark' ? 0.2 : 0.1),
+                        color: 'warning.main',
                         border: 'none',
-                        fontWeight: 600
+                        fontWeight: 600,
+                        fontSize: { xs: '0.7rem', sm: '0.75rem' }
                       }}
                     />
                   ) : null
@@ -382,14 +503,15 @@ const ViewDetails = ({ game }) => {
               
               {game.groupId?.gender && Array.isArray(game.groupId.gender) && game.groupId.gender.length > 0 && (
                 <Chip
-                  icon={<Person sx={{ fontSize: 14 }} />}
+                  icon={<Person sx={{ fontSize: { xs: 12, sm: 14 } }} />}
                   label={game.groupId.gender.map(g => g.charAt(0).toUpperCase() + g.slice(1)).join(', ')}
                   size="small"
                   sx={{
-                    bgcolor: '#e6f7ed',
-                    color: '#0d7d3f',
+                    bgcolor: alpha(theme.palette.success.main, theme.palette.mode === 'dark' ? 0.2 : 0.1),
+                    color: 'success.main',
                     border: 'none',
-                    fontWeight: 600
+                    fontWeight: 600,
+                    fontSize: { xs: '0.7rem', sm: '0.75rem' }
                   }}
                 />
               )}
@@ -397,19 +519,21 @@ const ViewDetails = ({ game }) => {
           </Alert>
         )}
 
-        <Grid container spacing={4}>
+        <Grid container spacing={{ xs: 2, sm: 3, md: 4 }}>
           {/* Left Column */}
           <Grid item xs={12} md={8}>
-            <Stack spacing={4}>
+            <Stack spacing={{ xs: 3, sm: 3.5, md: 4 }}>
               {/* Promotional Video */}
               {game.promotionalVideoUrl && (
                 <Card
                   sx={{
-                    borderRadius: 4,
+                    borderRadius: { xs: 2, sm: 3, md: 4 },
                     overflow: 'hidden',
-                    bgcolor: 'white',
-                    border: '1px solid #e8eaed',
-                    boxShadow: '0 2px 12px rgba(0,0,0,0.04)'
+                    bgcolor: 'background.paper',
+                    border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                    boxShadow: theme.palette.mode === 'dark'
+                      ? '0 2px 12px rgba(0,0,0,0.3)'
+                      : '0 2px 12px rgba(0,0,0,0.04)'
                   }}
                 >
                   <Box sx={{ position: 'relative', pt: '56.25%', bgcolor: '#000' }}>
@@ -428,47 +552,86 @@ const ViewDetails = ({ game }) => {
               {/* Quiz Details Card */}
               <Card
                 sx={{
-                  borderRadius: 4,
-                  bgcolor: 'white',
-                  border: '1px solid #e8eaed',
-                  boxShadow: '0 2px 12px rgba(0,0,0,0.04)'
+                  borderRadius: { xs: 2, sm: 3, md: 4 },
+                  bgcolor: 'background.paper',
+                  border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                  boxShadow: theme.palette.mode === 'dark'
+                    ? '0 2px 12px rgba(0,0,0,0.3)'
+                    : '0 2px 12px rgba(0,0,0,0.04)'
                 }}
               >
-                <CardContent sx={{ p: { xs: 3, md: 4 } }}>
-                  <Stack spacing={3}>
+                <CardContent sx={{ p: { xs: 2.5, sm: 3, md: 4 } }}>
+                  <Stack spacing={{ xs: 2.5, sm: 3 }}>
                     {/* Quiz Header */}
                     <Box>
-                      <Stack direction="row" justifyContent="space-between" alignItems="flex-start" flexWrap="wrap" gap={2}>
-                        <Box>
-                          <Typography variant="overline" sx={{ color: theme.palette.primary.main, fontWeight: 700, letterSpacing: 1.5, fontSize: '0.7rem' }}>
+                      <Stack 
+                        direction={{ xs: 'column', sm: 'row' }} 
+                        justifyContent="space-between" 
+                        alignItems={{ xs: 'flex-start', sm: 'flex-start' }} 
+                        flexWrap="wrap" 
+                        gap={2}
+                      >
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography 
+                            variant="overline" 
+                            sx={{ 
+                              color: theme.palette.primary.main, 
+                              fontWeight: 700, 
+                              letterSpacing: 1.5, 
+                              fontSize: { xs: '0.65rem', sm: '0.7rem' }
+                            }}
+                          >
                             QUIZ INFORMATION
                           </Typography>
-                          <Typography variant="h5" fontWeight={700} sx={{ color: '#202124', mt: 0.5 }}>
+                          <Typography 
+                            variant="h5" 
+                            fontWeight={700} 
+                            sx={{ 
+                              color: 'text.primary', 
+                              mt: 0.5,
+                              fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' }
+                            }}
+                          >
                             {game?.quiz?.title || 'Quiz Title'}
                           </Typography>
                         </Box>
                         <Chip
-                          icon={<Language />}
+                          icon={<Language sx={{ fontSize: { xs: 16, sm: 18 } }} />}
                           label={game?.quiz?.language?.name || 'Not specified'}
                           sx={{
-                            bgcolor: '#e8f4fd',
-                            color: '#0c5a9e',
+                            bgcolor: alpha(theme.palette.info.main, theme.palette.mode === 'dark' ? 0.2 : 0.1),
+                            color: 'info.main',
                             fontWeight: 600,
                             border: 'none',
-                            '& .MuiChip-icon': { color: '#0c5a9e' }
+                            fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                            '& .MuiChip-icon': { color: 'info.main' }
                           }}
                         />
                       </Stack>
                     </Box>
 
-                    <Divider sx={{ opacity: 0.3 }} />
+                    <Divider sx={{ opacity: theme.palette.mode === 'dark' ? 0.2 : 0.3 }} />
 
                     {/* Description */}
                     <Box>
-                      <Typography variant="subtitle1" fontWeight={700} gutterBottom sx={{ color: '#202124' }}>
+                      <Typography 
+                        variant="subtitle1" 
+                        fontWeight={700} 
+                        gutterBottom 
+                        sx={{ 
+                          color: 'text.primary',
+                          fontSize: { xs: '0.95rem', sm: '1rem' }
+                        }}
+                      >
                         Description
                       </Typography>
-                      <Typography sx={{ color: '#5f6368', lineHeight: 1.7, fontSize: '0.95rem' }}>
+                      <Typography 
+                        sx={{ 
+                          color: 'text.secondary', 
+                          lineHeight: 1.7, 
+                          fontSize: { xs: '0.875rem', sm: '0.95rem' }
+                        }}
+                      >
                         {game?.quiz?.details || 'No details provided'}
                       </Typography>
                     </Box>
@@ -476,12 +639,20 @@ const ViewDetails = ({ game }) => {
                     {/* Course Links */}
                     {game?.quiz?.courseLinks?.length > 0 && (
                       <>
-                        <Divider sx={{ opacity: 0.3 }} />
+                        <Divider sx={{ opacity: theme.palette.mode === 'dark' ? 0.2 : 0.3 }} />
                         <Box>
-                          <Typography variant="subtitle1" fontWeight={700} gutterBottom sx={{ color: '#202124' }}>
+                          <Typography 
+                            variant="subtitle1" 
+                            fontWeight={700} 
+                            gutterBottom 
+                            sx={{ 
+                              color: 'text.primary',
+                              fontSize: { xs: '0.95rem', sm: '1rem' }
+                            }}
+                          >
                             Course Links
                           </Typography>
-                          <Stack spacing={2}>
+                          <Stack spacing={{ xs: 1.5, sm: 2 }}>
                             {game.quiz.courseLinks.map((link, index) => (
                               <Box key={index}>
                                 <VideoAd url={link?.link || ''} showPause autoPlay={false} />
@@ -496,26 +667,45 @@ const ViewDetails = ({ game }) => {
                     {/* Documents */}
                     {game?.quiz?.documents?.length > 0 && (
                       <>
-                        <Divider sx={{ opacity: 0.3 }} />
+                        <Divider sx={{ opacity: theme.palette.mode === 'dark' ? 0.2 : 0.3 }} />
                         <Box>
-                          <Typography variant="subtitle1" fontWeight={700} gutterBottom sx={{ color: '#202124' }}>
+                          <Typography 
+                            variant="subtitle1" 
+                            fontWeight={700} 
+                            gutterBottom 
+                            sx={{ 
+                              color: 'text.primary',
+                              fontSize: { xs: '0.95rem', sm: '1rem' }
+                            }}
+                          >
                             Documents
                           </Typography>
-                          <Stack spacing={1.5}>
+                          <Stack spacing={{ xs: 1.25, sm: 1.5 }}>
                             {game.quiz.documents.map((document, index) => (
                               <Box 
                                 key={index} 
                                 sx={{
                                   display: 'flex',
-                                  alignItems: 'center',
+                                  flexDirection: { xs: 'column', sm: 'row' },
+                                  alignItems: { xs: 'flex-start', sm: 'center' },
                                   justifyContent: 'space-between',
-                                  p: 2,
+                                  p: { xs: 1.5, sm: 2 },
                                   borderRadius: 2,
-                                  bgcolor: '#fafbfc',
-                                  border: '1px solid #e8eaed'
+                                  bgcolor: theme.palette.mode === 'dark'
+                                    ? alpha(theme.palette.common.white, 0.05)
+                                    : alpha(theme.palette.common.black, 0.02),
+                                  border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                                  gap: { xs: 1, sm: 0 }
                                 }}
                               >
-                                <Typography variant="body2" sx={{ color: '#202124', flex: 1 }}>
+                                <Typography 
+                                  variant="body2" 
+                                  sx={{ 
+                                    color: 'text.primary', 
+                                    flex: 1,
+                                    fontSize: { xs: '0.875rem', sm: '1rem' }
+                                  }}
+                                >
                                   {`Document ${index + 1}: ${document.description}`}
                                 </Typography>
                                 <Button
@@ -525,7 +715,13 @@ const ViewDetails = ({ game }) => {
                                   rel="noopener noreferrer"
                                   variant="outlined"
                                   size="small"
-                                  sx={{ textTransform: 'none', fontWeight: 600 }}
+                                  sx={{ 
+                                    textTransform: 'none', 
+                                    fontWeight: 600,
+                                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                    px: { xs: 1.5, sm: 2 },
+                                    minWidth: { xs: '100%', sm: 'auto' }
+                                  }}
                                 >
                                   View
                                 </Button>
@@ -543,71 +739,114 @@ const ViewDetails = ({ game }) => {
 
           {/* Right Sidebar */}
           <Grid item xs={12} md={4}>
-            <Stack spacing={3} sx={{ position: { md: 'sticky' }, top: 20 }}>
+            <Stack spacing={{ xs: 2.5, sm: 3 }} sx={{ position: { md: 'sticky' }, top: 20 }}>
               {/* Schedule Card */}
               <Card
                 sx={{
-                  borderRadius: 4,
-                  bgcolor: 'white',
-                  border: '1px solid #e8eaed',
-                  boxShadow: '0 2px 12px rgba(0,0,0,0.04)'
+                  borderRadius: { xs: 2, sm: 3, md: 4 },
+                  bgcolor: 'background.paper',
+                  border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                  boxShadow: theme.palette.mode === 'dark'
+                    ? '0 2px 12px rgba(0,0,0,0.3)'
+                    : '0 2px 12px rgba(0,0,0,0.04)'
                 }}
               >
-                <CardContent sx={{ p: 3 }}>
-                  <Stack spacing={3}>
-                    <Typography variant="h6" fontWeight={700} sx={{ color: '#202124' }}>
+                <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
+                  <Stack spacing={{ xs: 2.5, sm: 3 }}>
+                    <Typography 
+                      variant="h6" 
+                      fontWeight={700} 
+                      sx={{ 
+                        color: 'text.primary',
+                        fontSize: { xs: '1.1rem', sm: '1.25rem' }
+                      }}
+                    >
                       Schedule & Details
                     </Typography>
 
-                    <Stack spacing={2.5}>
+                    <Stack spacing={{ xs: 2, sm: 2.5 }}>
                       {/* Start Time */}
-                      <Stack direction="row" alignItems="center" spacing={2}>
+                      <Stack direction="row" alignItems="center" spacing={{ xs: 1.5, sm: 2 }}>
                         <Box
                           sx={{
-                            width: 40,
-                            height: 40,
+                            width: { xs: 36, sm: 40 },
+                            height: { xs: 36, sm: 40 },
                             borderRadius: 2,
-                            bgcolor: '#e8f4fd',
+                            bgcolor: alpha(theme.palette.info.main, theme.palette.mode === 'dark' ? 0.2 : 0.1),
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center'
+                            justifyContent: 'center',
+                            flexShrink: 0
                           }}
                         >
-                          <AccessTime sx={{ fontSize: 20, color: '#1976d2' }} />
+                          <AccessTime sx={{ fontSize: { xs: 18, sm: 20 }, color: 'info.main' }} />
                         </Box>
-                        <Box>
-                          <Typography variant="caption" sx={{ color: '#5f6368', fontSize: '0.7rem' }}>
+                        <Box sx={{ minWidth: 0, flex: 1 }}>
+                          <Typography 
+                            variant="caption" 
+                            sx={{ 
+                              color: 'text.secondary', 
+                              fontSize: { xs: '0.65rem', sm: '0.7rem' }
+                            }}
+                          >
                             Starts
                           </Typography>
-                          <Typography variant="body2" fontWeight={600} sx={{ color: '#202124' }}>
+                          <Typography 
+                            variant="body2" 
+                            fontWeight={600} 
+                            sx={{ 
+                              color: 'text.primary',
+                              fontSize: { xs: '0.875rem', sm: '1rem' }
+                            }}
+                          >
                             {format(new Date(game.startTime), 'MMM d, yyyy')}
                           </Typography>
-                          <Typography variant="caption" sx={{ color: '#5f6368' }}>
+                          <Typography 
+                            variant="caption" 
+                            sx={{ 
+                              color: 'text.secondary',
+                              fontSize: { xs: '0.7rem', sm: '0.75rem' }
+                            }}
+                          >
                             {format(new Date(game.startTime), 'h:mm a')}
                           </Typography>
                         </Box>
                       </Stack>
 
                       {/* Duration */}
-                      <Stack direction="row" alignItems="center" spacing={2}>
+                      <Stack direction="row" alignItems="center" spacing={{ xs: 1.5, sm: 2 }}>
                         <Box
                           sx={{
-                            width: 40,
-                            height: 40,
+                            width: { xs: 36, sm: 40 },
+                            height: { xs: 36, sm: 40 },
                             borderRadius: 2,
-                            bgcolor: '#e6f7ed',
+                            bgcolor: alpha(theme.palette.success.main, theme.palette.mode === 'dark' ? 0.2 : 0.1),
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center'
+                            justifyContent: 'center',
+                            flexShrink: 0
                           }}
                         >
-                          <AccessTime sx={{ fontSize: 20, color: '#2e7d32' }} />
+                          <AccessTime sx={{ fontSize: { xs: 18, sm: 20 }, color: 'success.main' }} />
                         </Box>
-                        <Box>
-                          <Typography variant="caption" sx={{ color: '#5f6368', fontSize: '0.7rem' }}>
+                        <Box sx={{ minWidth: 0, flex: 1 }}>
+                          <Typography 
+                            variant="caption" 
+                            sx={{ 
+                              color: 'text.secondary', 
+                              fontSize: { xs: '0.65rem', sm: '0.7rem' }
+                            }}
+                          >
                             Duration
                           </Typography>
-                          <Typography variant="body2" fontWeight={600} sx={{ color: '#202124' }}>
+                          <Typography 
+                            variant="body2" 
+                            fontWeight={600} 
+                            sx={{ 
+                              color: 'text.primary',
+                              fontSize: { xs: '0.875rem', sm: '1rem' }
+                            }}
+                          >
                             {game?.forwardType === 'admin' && game?.status !== 'completed'
                               ? 'Admin controlled'
                               : `${Math.floor(game?.duration / 60)} minutes`}
@@ -616,25 +855,39 @@ const ViewDetails = ({ game }) => {
                       </Stack>
 
                       {/* Players */}
-                      <Stack direction="row" alignItems="center" spacing={2}>
+                      <Stack direction="row" alignItems="center" spacing={{ xs: 1.5, sm: 2 }}>
                         <Box
                           sx={{
-                            width: 40,
-                            height: 40,
+                            width: { xs: 36, sm: 40 },
+                            height: { xs: 36, sm: 40 },
                             borderRadius: 2,
-                            bgcolor: '#f3e5f5',
+                            bgcolor: alpha(theme.palette.secondary.main, theme.palette.mode === 'dark' ? 0.2 : 0.1),
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center'
+                            justifyContent: 'center',
+                            flexShrink: 0
                           }}
                         >
-                          <People sx={{ fontSize: 20, color: '#7b1fa2' }} />
+                          <People sx={{ fontSize: { xs: 18, sm: 20 }, color: 'secondary.main' }} />
                         </Box>
-                        <Box>
-                          <Typography variant="caption" sx={{ color: '#5f6368', fontSize: '0.7rem' }}>
+                        <Box sx={{ minWidth: 0, flex: 1 }}>
+                          <Typography 
+                            variant="caption" 
+                            sx={{ 
+                              color: 'text.secondary', 
+                              fontSize: { xs: '0.65rem', sm: '0.7rem' }
+                            }}
+                          >
                             Registered
                           </Typography>
-                          <Typography variant="body2" fontWeight={600} sx={{ color: '#202124' }}>
+                          <Typography 
+                            variant="body2" 
+                            fontWeight={600} 
+                            sx={{ 
+                              color: 'text.primary',
+                              fontSize: { xs: '0.875rem', sm: '1rem' }
+                            }}
+                          >
                             {game?.registeredUsers?.length || 0} / {game?.maxPlayers || '∞'}
                           </Typography>
                         </Box>
@@ -642,25 +895,39 @@ const ViewDetails = ({ game }) => {
 
                       {/* Registration Deadline */}
                       {game?.requireRegistration && (
-                        <Stack direction="row" alignItems="center" spacing={2}>
+                        <Stack direction="row" alignItems="center" spacing={{ xs: 1.5, sm: 2 }}>
                           <Box
                             sx={{
-                              width: 40,
-                              height: 40,
+                              width: { xs: 36, sm: 40 },
+                              height: { xs: 36, sm: 40 },
                               borderRadius: 2,
-                              bgcolor: '#fff3e0',
+                              bgcolor: alpha(theme.palette.warning.main, theme.palette.mode === 'dark' ? 0.2 : 0.1),
                               display: 'flex',
                               alignItems: 'center',
-                              justifyContent: 'center'
+                              justifyContent: 'center',
+                              flexShrink: 0
                             }}
                           >
-                            <AccessTime sx={{ fontSize: 20, color: '#f57c00' }} />
+                            <AccessTime sx={{ fontSize: { xs: 18, sm: 20 }, color: 'warning.main' }} />
                           </Box>
-                          <Box>
-                            <Typography variant="caption" sx={{ color: '#5f6368', fontSize: '0.7rem' }}>
+                          <Box sx={{ minWidth: 0, flex: 1 }}>
+                            <Typography 
+                              variant="caption" 
+                              sx={{ 
+                                color: 'text.secondary', 
+                                fontSize: { xs: '0.65rem', sm: '0.7rem' }
+                              }}
+                            >
                               Registration Closes
                             </Typography>
-                            <Typography variant="body2" fontWeight={600} sx={{ color: '#202124' }}>
+                            <Typography 
+                              variant="body2" 
+                              fontWeight={600} 
+                              sx={{ 
+                                color: 'text.primary',
+                                fontSize: { xs: '0.875rem', sm: '1rem' }
+                              }}
+                            >
                               {format(new Date(game.registrationEndTime), 'MMM d, h:mm a')}
                             </Typography>
                           </Box>
@@ -674,35 +941,59 @@ const ViewDetails = ({ game }) => {
               {/* Organizer Card */}
               <Card
                 sx={{
-                  borderRadius: 4,
-                  bgcolor: 'white',
-                  border: '1px solid #e8eaed',
-                  boxShadow: '0 2px 12px rgba(0,0,0,0.04)'
+                  borderRadius: { xs: 2, sm: 3, md: 4 },
+                  bgcolor: 'background.paper',
+                  border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                  boxShadow: theme.palette.mode === 'dark'
+                    ? '0 2px 12px rgba(0,0,0,0.3)'
+                    : '0 2px 12px rgba(0,0,0,0.04)'
                 }}
               >
-                <CardContent sx={{ p: 3 }}>
+                <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
                   <Stack spacing={2}>
-                    <Typography variant="h6" fontWeight={700} sx={{ color: '#202124' }}>
+                    <Typography 
+                      variant="h6" 
+                      fontWeight={700} 
+                      sx={{ 
+                        color: 'text.primary',
+                        fontSize: { xs: '1.1rem', sm: '1.25rem' }
+                      }}
+                    >
                       Organizer
                     </Typography>
                     
-                    <Stack direction="row" alignItems="center" spacing={2}>
+                    <Stack direction="row" alignItems="center" spacing={{ xs: 1.5, sm: 2 }}>
                       <Avatar
                         sx={{
-                          width: 48,
-                          height: 48,
+                          width: { xs: 44, sm: 48 },
+                          height: { xs: 44, sm: 48 },
                           bgcolor: theme.palette.primary.main,
                           fontWeight: 700,
-                          fontSize: '1.25rem'
+                          fontSize: { xs: '1.1rem', sm: '1.25rem' },
+                          flexShrink: 0
                         }}
                       >
                         {game?.creatorEmail?.charAt(0).toUpperCase()}
                       </Avatar>
-                      <Box>
-                        <Typography variant="body1" fontWeight={600} sx={{ color: '#202124' }}>
+                      <Box sx={{ minWidth: 0, flex: 1 }}>
+                        <Typography 
+                          variant="body1" 
+                          fontWeight={600} 
+                          sx={{ 
+                            color: 'text.primary',
+                            fontSize: { xs: '0.9rem', sm: '1rem' },
+                            wordBreak: 'break-word'
+                          }}
+                        >
                           {game?.creatorEmail}
                         </Typography>
-                        <Typography variant="caption" sx={{ color: '#5f6368' }}>
+                        <Typography 
+                          variant="caption" 
+                          sx={{ 
+                            color: 'text.secondary',
+                            fontSize: { xs: '0.7rem', sm: '0.75rem' }
+                          }}
+                        >
                           Created on {format(new Date(game?.createdAt), 'MMM d, yyyy')}
                         </Typography>
                       </Box>
@@ -715,65 +1006,105 @@ const ViewDetails = ({ game }) => {
               {game?.rewards?.length > 0 && (
                 <Card
                   sx={{
-                    borderRadius: 4,
-                    bgcolor: 'white',
-                    border: '1px solid #e8eaed',
-                    boxShadow: '0 2px 12px rgba(0,0,0,0.04)'
+                    borderRadius: { xs: 2, sm: 3, md: 4 },
+                    bgcolor: 'background.paper',
+                    border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                    boxShadow: theme.palette.mode === 'dark'
+                      ? '0 2px 12px rgba(0,0,0,0.3)'
+                      : '0 2px 12px rgba(0,0,0,0.04)'
                   }}
                 >
-                  <CardContent sx={{ p: 3 }}>
+                  <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
                     <Stack spacing={2}>
-                      <Typography variant="h6" fontWeight={700} sx={{ color: '#202124', display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <EmojiEvents sx={{ fontSize: 22, color: '#ffa000' }} /> Rewards
+                      <Typography 
+                        variant="h6" 
+                        fontWeight={700} 
+                        sx={{ 
+                          color: 'text.primary', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: 1,
+                          fontSize: { xs: '1.1rem', sm: '1.25rem' }
+                        }}
+                      >
+                        <EmojiEvents sx={{ fontSize: { xs: 20, sm: 22 }, color: 'warning.main' }} /> Rewards
                       </Typography>
 
-                      <Stack spacing={2}>
+                      <Stack spacing={{ xs: 1.5, sm: 2 }}>
                         {game.rewards
                           .sort((a, b) => a.position - b.position)
                           .map(reward => (
                             <Box
                               key={reward.position}
                               sx={{
-                                p: 2,
+                                p: { xs: 1.5, sm: 2 },
                                 borderRadius: 2,
-                                bgcolor: '#fafbfc',
-                                border: '1px solid #e8eaed'
+                                bgcolor: theme.palette.mode === 'dark'
+                                  ? alpha(theme.palette.common.white, 0.05)
+                                  : alpha(theme.palette.common.black, 0.02),
+                                border: `1px solid ${alpha(theme.palette.divider, 0.1)}`
                               }}
                             >
                               <Stack spacing={1.5}>
-                                <Stack direction="row" alignItems="center" spacing={1.5}>
+                                <Stack direction="row" alignItems="center" spacing={{ xs: 1, sm: 1.5 }}>
                                   <Avatar
                                     sx={{
                                       bgcolor: positionColors[reward.position],
-                                      width: 32,
-                                      height: 32,
-                                      fontSize: '0.85rem',
-                                      fontWeight: 700
+                                      width: { xs: 28, sm: 32 },
+                                      height: { xs: 28, sm: 32 },
+                                      fontSize: { xs: '0.75rem', sm: '0.85rem' },
+                                      fontWeight: 700,
+                                      flexShrink: 0
                                     }}
                                   >
                                     {getOrdinalSuffix(reward.position)}
                                   </Avatar>
-                                  <Typography variant="subtitle2" fontWeight={600} sx={{ color: '#202124' }}>
+                                  <Typography 
+                                    variant="subtitle2" 
+                                    fontWeight={600} 
+                                    sx={{ 
+                                      color: 'text.primary',
+                                      fontSize: { xs: '0.875rem', sm: '1rem' }
+                                    }}
+                                  >
                                     {reward.numberOfWinnersForThisPosition} Winner{reward.numberOfWinnersForThisPosition !== 1 ? 's' : ''}
                                   </Typography>
                                 </Stack>
 
                                 {reward.sponsors[0]?.rewardDetails?.rewardType === 'cash' ? (
                                   <Stack direction="row" alignItems="center" spacing={0.5}>
-                                    <AttachMoney fontSize="small" sx={{ color: '#2e7d32' }} />
-                                    <Typography variant="body2" sx={{ color: '#5f6368' }}>
+                                    <AttachMoney sx={{ fontSize: { xs: 16, sm: 18 }, color: 'success.main' }} />
+                                    <Typography 
+                                      variant="body2" 
+                                      sx={{ 
+                                        color: 'text.secondary',
+                                        fontSize: { xs: '0.875rem', sm: '1rem' }
+                                      }}
+                                    >
                                       {reward.rewardValuePerWinner} {reward.sponsors[0]?.rewardDetails?.currency || 'INR'}
                                     </Typography>
                                   </Stack>
                                 ) : reward.sponsors[0]?.rewardDetails?.rewardType === 'physicalGift' ? (
                                   <Stack direction="row" alignItems="center" spacing={0.5}>
-                                    <CardGiftcard fontSize="small" sx={{ color: '#f57c00' }} />
-                                    <Typography variant="body2" sx={{ color: '#5f6368' }}>
+                                    <CardGiftcard sx={{ fontSize: { xs: 16, sm: 18 }, color: 'warning.main' }} />
+                                    <Typography 
+                                      variant="body2" 
+                                      sx={{ 
+                                        color: 'text.secondary',
+                                        fontSize: { xs: '0.875rem', sm: '1rem' }
+                                      }}
+                                    >
                                       {reward.sponsors[0]?.rewardDetails?.nonCashReward}
                                     </Typography>
                                   </Stack>
                                 ) : (
-                                  <Typography variant="body2" sx={{ color: '#5f6368' }}>
+                                  <Typography 
+                                    variant="body2" 
+                                    sx={{ 
+                                      color: 'text.secondary',
+                                      fontSize: { xs: '0.875rem', sm: '1rem' }
+                                    }}
+                                  >
                                     Custom Reward
                                   </Typography>
                                 )}
@@ -784,7 +1115,13 @@ const ViewDetails = ({ game }) => {
                                       size="small"
                                       endIcon={expandedReward === reward.position ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                                       onClick={() => setExpandedReward(expandedReward === reward.position ? null : reward.position)}
-                                      sx={{ justifyContent: 'flex-start', textTransform: 'none', fontWeight: 600 }}
+                                      sx={{ 
+                                        justifyContent: 'flex-start', 
+                                        textTransform: 'none', 
+                                        fontWeight: 600,
+                                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                        px: { xs: 1, sm: 1.5 }
+                                      }}
                                     >
                                       {expandedReward === reward.position ? 'Hide' : 'View'} Sponsors
                                     </Button>
@@ -809,14 +1146,24 @@ const ViewDetails = ({ game }) => {
               {game?.tags?.length > 0 && (
                 <Card
                   sx={{
-                    borderRadius: 4,
-                    bgcolor: 'white',
-                    border: '1px solid #e8eaed',
-                    boxShadow: '0 2px 12px rgba(0,0,0,0.04)'
+                    borderRadius: { xs: 2, sm: 3, md: 4 },
+                    bgcolor: 'background.paper',
+                    border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                    boxShadow: theme.palette.mode === 'dark'
+                      ? '0 2px 12px rgba(0,0,0,0.3)'
+                      : '0 2px 12px rgba(0,0,0,0.04)'
                   }}
                 >
-                  <CardContent sx={{ p: 3 }}>
-                    <Typography variant="h6" fontWeight={700} gutterBottom sx={{ color: '#202124' }}>
+                  <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
+                    <Typography 
+                      variant="h6" 
+                      fontWeight={700} 
+                      gutterBottom 
+                      sx={{ 
+                        color: 'text.primary',
+                        fontSize: { xs: '1.1rem', sm: '1.25rem' }
+                      }}
+                    >
                       Tags
                     </Typography>
                     <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
@@ -826,10 +1173,11 @@ const ViewDetails = ({ game }) => {
                           label={tag}
                           size="small"
                           sx={{
-                            bgcolor: alpha(theme.palette.primary.main, 0.1),
+                            bgcolor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.2 : 0.1),
                             color: theme.palette.primary.main,
                             fontWeight: 600,
-                            border: 'none'
+                            border: 'none',
+                            fontSize: { xs: '0.7rem', sm: '0.75rem' }
                           }}
                         />
                       ))}
@@ -845,31 +1193,51 @@ const ViewDetails = ({ game }) => {
         {game.status === 'completed' && (
           <Card
             sx={{
-              mt: 6,
-              borderRadius: 4,
-              bgcolor: 'white',
-              border: '1px solid #e8eaed',
-              boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+              mt: { xs: 4, sm: 5, md: 6 },
+              borderRadius: { xs: 2, sm: 3, md: 4 },
+              bgcolor: 'background.paper',
+              border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+              boxShadow: theme.palette.mode === 'dark'
+                ? '0 2px 12px rgba(0,0,0,0.3)'
+                : '0 2px 12px rgba(0,0,0,0.04)',
               overflow: 'hidden'
             }}
           >
             <Box
               sx={{
-                bgcolor: alpha(theme.palette.success.main, 0.1),
+                bgcolor: alpha(theme.palette.success.main, theme.palette.mode === 'dark' ? 0.2 : 0.1),
                 borderBottom: `3px solid ${theme.palette.success.main}`,
-                p: 4,
+                p: { xs: 3, sm: 3.5, md: 4 },
                 textAlign: 'center'
               }}
             >
-              <Typography variant="h4" fontWeight={800} sx={{ color: '#202124', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
-                <Box component="span" sx={{ fontSize: '2.5rem' }}>🏁</Box>
+              <Typography 
+                variant="h4" 
+                fontWeight={800} 
+                sx={{ 
+                  color: 'text.primary', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  gap: { xs: 1, sm: 2 },
+                  fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' },
+                  flexWrap: 'wrap'
+                }}
+              >
+                <Box component="span" sx={{ fontSize: { xs: '2rem', sm: '2.25rem', md: '2.5rem' } }}>🏁</Box>
                 Competition Ended
               </Typography>
-              <Typography sx={{ mt: 1, color: '#5f6368' }}>
+              <Typography 
+                sx={{ 
+                  mt: 1, 
+                  color: 'text.secondary',
+                  fontSize: { xs: '0.875rem', sm: '1rem' }
+                }}
+              >
                 View the final standings below
               </Typography>
             </Box>
-            <Box sx={{ p: 4 }}>
+            <Box sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
               <Leaderboard width="100%" game={game} />
             </Box>
           </Card>

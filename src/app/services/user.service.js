@@ -7,6 +7,40 @@ import User from '../models/user.model'
 import UserProfile from '../api/profile/profile.model'
 import * as UserProfileService from '../api/profile/profile.service'
 import crypto from 'crypto'
+
+// Utility to generate password
+function generatePassword(email) {
+  // Hash the email using SHA-256 (or any secure hash)
+  const hash = crypto.createHash("sha256").update(email).digest("hex");
+
+  // Define character pools for password
+  const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const specials = "!@#$%^&*()_+{}|:<>?";
+  const lower = "abcdefghijklmnopqrstuvwxyz";
+  const digits = "0123456789";
+
+  // Select characters based on hash values
+  const upperChar = upper[parseInt(hash.substring(0, 2), 16) % upper.length];
+  const specialChar = specials[parseInt(hash.substring(2, 4), 16) % specials.length];
+  const lowerChar = lower[parseInt(hash.substring(4, 6), 16) % lower.length];
+  const digitChar = digits[parseInt(hash.substring(6, 8), 16) % digits.length];
+
+  // Create the password with a mix of characters
+  const remainingChars = hash
+    .substring(8, 16)
+    .split("")
+    .map((char, index) => {
+      const pool = index % 2 === 0 ? lower : digits;
+      return pool[parseInt(char, 16) % pool.length];
+    });
+
+  // Combine and shuffle
+  let password = [upperChar, specialChar, lowerChar, digitChar, ...remainingChars].slice(0, 8);
+  password = password.sort(() => Math.random() - 0.5).join("");
+
+  return password;
+}
+
 import { resetPasswordTemplate } from '@/utils/email-templates/resetPasswordTemplate'
 import { sendReferralLinkTemplate } from '@/utils/referralTemplate'
 import { sendCredentialsTemplate } from '@/utils/email-templates/sendCredentialsTemplate'
@@ -229,6 +263,125 @@ export async function addByAdmin({ data: userData }) {
   } catch (err) {
     // console.log('Error occurred while creating new user', err)
     return { status: 'error', result: null, message: err.message }
+  }
+}
+
+// Bulk import users
+export async function bulkAddByAdmin({ usersData }) {
+  await connectMongo()
+  const results = {
+    success: [],
+    failed: []
+  }
+
+  try {
+    // Process users in parallel batches for better performance
+    const batchSize = 10 // Process 10 users at a time to avoid overwhelming the DB
+    const batches = []
+    
+    for (let i = 0; i < usersData.length; i += batchSize) {
+      batches.push(usersData.slice(i, i + batchSize))
+    }
+
+    for (const batch of batches) {
+      const batchPromises = batch.map(async (userData) => {
+        try {
+          // Check if user already exists
+          const existingUser = await User.findOne({ email: userData.email }).select('-password').lean()
+          if (existingUser) {
+            return {
+              status: 'error',
+              email: userData.email,
+              message: 'User already exists'
+            }
+          }
+
+          // Generate password
+          const password = generatePassword(userData.email)
+          
+          // Hash password
+          const salt = await bcryptjs.genSalt(12)
+          const hashedPassword = await bcryptjs.hash(password, salt)
+
+          // Generate referral token and member ID
+          const referralToken = crypto.randomBytes(20).toString('hex')
+          const memberId = await generateUniqueMemberId()
+
+          // Create user data
+          const newUserData = new User({
+            email: userData.email,
+            ...userData,
+            password: hashedPassword,
+            memberId,
+            referralToken,
+            socialLogin: 'credentials'
+          })
+
+          // Create user profile
+          const userProfileResult = await UserProfileService.addByAdmin({ data: { ...userData } })
+          newUserData.profile = userProfileResult?.result?._id
+
+          // Save user
+          const savedNewUser = await newUserData.save()
+
+          if (savedNewUser) {
+            // Send credentials email (optional - can be done async)
+            // Don't await to speed up bulk import
+            srvSendCredentials(userData).catch(err => {
+              console.error(`Failed to send credentials email to ${userData.email}:`, err)
+            })
+
+            return {
+              status: 'success',
+              email: userData.email,
+              result: savedNewUser
+            }
+          } else {
+            return {
+              status: 'error',
+              email: userData.email,
+              message: 'User not added'
+            }
+          }
+        } catch (err) {
+          return {
+            status: 'error',
+            email: userData.email,
+            message: err.message || 'Unknown error occurred'
+          }
+        }
+      })
+
+      const batchResults = await Promise.all(batchPromises)
+      
+      // Categorize results
+      batchResults.forEach(result => {
+        if (result.status === 'success') {
+          results.success.push({
+            email: result.email,
+            user: result.result
+          })
+        } else {
+          results.failed.push({
+            email: result.email,
+            error: result.message
+          })
+        }
+      })
+    }
+
+    return {
+      status: 'success',
+      result: results,
+      message: `Bulk import completed: ${results.success.length} succeeded, ${results.failed.length} failed`
+    }
+  } catch (err) {
+    console.error('Error in bulk import:', err)
+    return {
+      status: 'error',
+      result: results,
+      message: err.message || 'Bulk import failed'
+    }
   }
 }
 
