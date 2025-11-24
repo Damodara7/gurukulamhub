@@ -113,8 +113,8 @@ const ReusableFiltersList = ({
   }
 
   const handleQuizSelect = quizId => {
-    const quizToAdd = quiz.find(q => q.id === quizId)
-    if (quizToAdd && !selectedQuizzes.some(q => q.id === quizId)) {
+    const quizToAdd = quiz.find(q => q.id === quizId || q._id === quizId)
+    if (quizToAdd && !selectedQuizzes.some(q => (q.id === quizId || q._id === quizId))) {
       setSelectedQuizzes([...selectedQuizzes, quizToAdd])
     }
     handleCloseDialog('quiz')
@@ -151,7 +151,11 @@ const ReusableFiltersList = ({
 
   const handleDeleteChip = (type, itemToDelete) => {
     if (type === 'quiz') {
-      setSelectedQuizzes(selectedQuizzes.filter(q => q.id !== itemToDelete.id))
+      const deleteId = itemToDelete.id || itemToDelete._id
+      setSelectedQuizzes(selectedQuizzes.filter(q => {
+        const quizId = q.id || q._id
+        return quizId !== deleteId
+      }))
     } else {
       setSelectedLocations(
         selectedLocations.filter(
@@ -294,6 +298,7 @@ const ReusableFiltersList = ({
                   sx={{
                     display: 'flex',
                     gap: { xs: 0.75, sm: 1 },
+                    gap: { xs: 0.75, sm: 1 },
                     overflowX: 'auto',
                     flexGrow: 1,
                     py: { xs: 0.5, sm: 1 },
@@ -363,6 +368,7 @@ const ReusableFiltersList = ({
                 <Box
                   sx={{
                     display: 'flex',
+                    gap: { xs: 0.75, sm: 1 },
                     gap: { xs: 0.75, sm: 1 },
                     overflowX: 'auto',
                     flexGrow: 1,
@@ -643,6 +649,11 @@ const ReusableFiltersList = ({
                           inputProps={{
                             ...params.inputProps,
                             autoComplete: 'city'
+                          }}
+                          sx={{
+                            '& .MuiInputBase-input': {
+                              fontSize: { xs: '0.875rem', sm: '1rem' }
+                            }
                           }}
                         />
                       )}

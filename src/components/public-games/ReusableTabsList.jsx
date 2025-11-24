@@ -1,8 +1,11 @@
 import CustomTabList from '@/@core/components/mui/TabList'
 import { TabContext } from '@mui/lab'
-import { Box, Grid, Tab, Tabs } from '@mui/material'
+import { Box, Grid, Tab, Tabs, useMediaQuery, useTheme } from '@mui/material'
 
 const ReusableTabsList = ({ tabsList = [], value, onChange }) => {
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+  
   return (
     <Grid container spacing={{ xs: 2, sm: 4, md: 6 }}>
       <Grid item xs={12}>

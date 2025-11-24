@@ -10,6 +10,7 @@ export const API_URLS = {
     USERS_MOBILE_LOGIN: `${API_BASE_URL}/users/mobile-login`,
     USERS_REFERRAL_INFO: `${API_BASE_URL}/users/referral-info`,
     USER: `${API_BASE_URL}/user`,
+    USER_BULK_IMPORT: `${API_BASE_URL}/user/bulk-import`,
     EVENT_USER: `${API_BASE_URL}/eventuser`,
     NETWORK: `${API_BASE_URL}/network`,
     FEATURE: `${API_BASE_URL}/feature`,

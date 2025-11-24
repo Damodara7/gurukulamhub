@@ -274,34 +274,62 @@ function Hero({ isAuthenticated = false }) {
 
               {/* Stats */}
               <Stack
-                direction="row"
-                spacing={4}
+                direction={{ xs: 'column', sm: 'row' }}
+                spacing={{ xs: 2, sm: 4 }}
                 sx={{
                   pt: 3,
-                  animation: 'slideInLeft 0.6s ease-out 0.4s backwards'
+                  animation: 'slideInLeft 0.6s ease-out 0.4s backwards',
+                  flexWrap: 'wrap'
                 }}
               >
-                <Box>
-                  <Typography variant="h4" fontWeight={800} color="primary">
+                <Box sx={{ minWidth: { xs: '100%', sm: 'auto' } }}>
+                  <Typography 
+                    variant="h4" 
+                    fontWeight={800} 
+                    color="primary"
+                    sx={{ fontSize: { xs: '1.75rem', sm: '2rem' } }}
+                  >
                     10K+
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography 
+                    variant="body2" 
+                    color="text.secondary"
+                    sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                  >
                     Active Players
                   </Typography>
                 </Box>
-                <Box>
-                  <Typography variant="h4" fontWeight={800} color="primary">
+                <Box sx={{ minWidth: { xs: '100%', sm: 'auto' } }}>
+                  <Typography 
+                    variant="h4" 
+                    fontWeight={800} 
+                    color="primary"
+                    sx={{ fontSize: { xs: '1.75rem', sm: '2rem' } }}
+                  >
                     500+
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography 
+                    variant="body2" 
+                    color="text.secondary"
+                    sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                  >
                     Live Games
                   </Typography>
                 </Box>
-                <Box>
-                  <Typography variant="h4" fontWeight={800} color="primary">
+                <Box sx={{ minWidth: { xs: '100%', sm: 'auto' } }}>
+                  <Typography 
+                    variant="h4" 
+                    fontWeight={800} 
+                    color="primary"
+                    sx={{ fontSize: { xs: '1.75rem', sm: '2rem' } }}
+                  >
                     ₹50L+
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography 
+                    variant="body2" 
+                    color="text.secondary"
+                    sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                  >
                     Prizes Won
                   </Typography>
                 </Box>
@@ -344,38 +372,51 @@ function Hero({ isAuthenticated = false }) {
                   }
                 }}
               >
-                <Typography variant="h1" sx={{ fontSize: '8rem' }}>
+                <Typography 
+                  variant="h1" 
+                  sx={{ 
+                    fontSize: { xs: '4rem', sm: '6rem', md: '8rem' },
+                    lineHeight: 1
+                  }}
+                >
                   🎓
                 </Typography>
               </Box>
 
               {/* Floating cards */}
               {[
-                { emoji: '🎯', top: '5%', right: '15%', delay: '0s', size: 80 },
-                { emoji: '🏆', top: '45%', right: '5%', delay: '2s', size: 90 },
-                { emoji: '⚡', bottom: '10%', right: '25%', delay: '4s', size: 70 },
-                { emoji: '💡', top: '20%', left: '5%', delay: '1s', size: 85 },
-                { emoji: '🎮', bottom: '25%', left: '15%', delay: '3s', size: 75 }
+                { emoji: '🎯', top: '5%', right: '15%', delay: '0s', size: { xs: 50, md: 80 } },
+                { emoji: '🏆', top: '45%', right: '5%', delay: '2s', size: { xs: 55, md: 90 } },
+                { emoji: '⚡', bottom: '10%', right: '25%', delay: '4s', size: { xs: 45, md: 70 } },
+                { emoji: '💡', top: '20%', left: '5%', delay: '1s', size: { xs: 52, md: 85 } },
+                { emoji: '🎮', bottom: '25%', left: '15%', delay: '3s', size: { xs: 48, md: 75 } }
               ].map((item, index) => (
                 <Box
                   key={index}
                   sx={{
                     position: 'absolute',
-                    ...item,
-                    width: item.size,
-                    height: item.size,
+                    top: item.top,
+                    right: item.right,
+                    bottom: item.bottom,
+                    left: item.left,
+                    width: { xs: item.size.xs, md: item.size.md },
+                    height: { xs: item.size.xs, md: item.size.md },
                     borderRadius: 3,
                     bgcolor: 'background.paper',
-                    boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
-                    display: 'flex',
+                    boxShadow: theme.palette.mode === 'dark' 
+                      ? '0 10px 30px rgba(0,0,0,0.3)' 
+                      : '0 10px 30px rgba(0,0,0,0.1)',
+                    display: { xs: 'none', md: 'flex' },
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '2rem',
+                    fontSize: { xs: '1.25rem', md: '2rem' },
                     animation: `float 6s ease-in-out infinite ${item.delay}`,
                     cursor: 'pointer',
                     '&:hover': {
                       transform: 'scale(1.1)',
-                      boxShadow: '0 15px 40px rgba(0,0,0,0.15)'
+                      boxShadow: theme.palette.mode === 'dark'
+                        ? '0 15px 40px rgba(0,0,0,0.4)'
+                        : '0 15px 40px rgba(0,0,0,0.15)'
                     },
                     transition: 'all 0.3s ease'
                   }}

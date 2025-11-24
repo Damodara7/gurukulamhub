@@ -80,9 +80,9 @@ function LandingPageGamedata({ isAuthenticated = false }) {
 
   if (error) return <Typography>Error: {error}</Typography>
 
-  // Card dimensions
-  const cardWidth = 280
-  const cardHeight = 340
+  // Card dimensions - responsive
+  const cardWidth = { xs: 260, sm: 280, md: 300 }
+  const cardHeight = { xs: 320, sm: 340, md: 360 }
 
   const renderHeaderSkeleton = () => (
     <Box
@@ -105,13 +105,21 @@ function LandingPageGamedata({ isAuthenticated = false }) {
         <Box
           key={`skeleton-${index}`}
           sx={{
-            flex: `0 0 ${cardWidth}px`,
+            flex: { xs: `0 0 ${cardWidth.xs}px`, sm: `0 0 ${cardWidth.sm}px`, md: `0 0 ${cardWidth.md}px` },
             scrollSnapAlign: 'start',
             height: '100%'
           }}
         >
-          <Card sx={{ width: cardWidth, height: cardHeight, my: 2 }}>
-            <Skeleton variant='rectangular' width={cardWidth} height={100} />
+          <Card sx={{ 
+            width: { xs: cardWidth.xs, sm: cardWidth.sm, md: cardWidth.md }, 
+            height: { xs: cardHeight.xs, sm: cardHeight.sm, md: cardHeight.md }, 
+            my: 2 
+          }}>
+            <Skeleton 
+              variant='rectangular' 
+              width="100%" 
+              height={{ xs: 100, md: 120 }} 
+            />
             <CardContent>
               <Skeleton variant='text' width='80%' height={24} />
               <Skeleton variant='text' width='60%' height={16} />
@@ -148,9 +156,11 @@ function LandingPageGamedata({ isAuthenticated = false }) {
         <Box
           sx={{
             display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
             justifyContent: 'space-between',
-            alignItems: 'center',
-            mb: 4
+            alignItems: { xs: 'flex-start', sm: 'center' },
+            gap: { xs: 2, sm: 0 },
+            mb: { xs: 3, md: 4 }
           }}
         >
           {loading ? (
@@ -205,15 +215,16 @@ function LandingPageGamedata({ isAuthenticated = false }) {
                   size='large'
                   component='label'
                   onClick={handleViewAll}
-                  endIcon={isCheckingAuth || status === 'loading' ? null : <Box component="span">→</Box>}
+                  endIcon=                  {isCheckingAuth || status === 'loading' ? null : <Box component="span">→</Box>}
                   sx={{
                     fontWeight: 700,
-                    px: 4,
-                    py: 2,
+                    px: { xs: 3, md: 4 },
+                    py: { xs: 1.5, md: 2 },
                     borderRadius: 3,
                     textTransform: 'none',
-                    fontSize: '1.05rem',
-                    minWidth: 180,
+                    fontSize: { xs: '0.9rem', md: '1.05rem' },
+                    minWidth: { xs: 160, md: 180 },
+                    width: { xs: '100%', sm: 'auto' },
                     bgcolor: theme.palette.secondary.main,
                     color: 'white',
                     boxShadow: `0 6px 20px ${theme.palette.secondary.main}40`,
@@ -238,7 +249,7 @@ function LandingPageGamedata({ isAuthenticated = false }) {
                         size={20}
                         thickness={4}
                         sx={{
-                          color: 'primary.main', // Force color
+                          color: 'white',
                           marginRight: '8px'
                         }}
                       />
@@ -285,22 +296,30 @@ function LandingPageGamedata({ isAuthenticated = false }) {
               <Box
                 key={game._id}
                 sx={{
-                  flex: `0 0 ${cardWidth}px`,
+                  flex: { 
+                    xs: `0 0 ${cardWidth.xs}px`, 
+                    sm: `0 0 ${cardWidth.sm}px`, 
+                    md: `0 0 ${cardWidth.md}px` 
+                  },
                   scrollSnapAlign: 'start'
                 }}
               >
                 <Card
                   sx={{
-                    width: cardWidth,
-                    height: cardHeight,
+                    width: { xs: cardWidth.xs, sm: cardWidth.sm, md: cardWidth.md },
+                    height: { xs: cardHeight.xs, sm: cardHeight.sm, md: cardHeight.md },
                     display: 'flex',
                     flexDirection: 'column',
                     borderRadius: 4,
                     overflow: 'hidden',
                     bgcolor: 'background.paper',
-                    boxShadow: `0 4px 20px ${theme.palette.secondary.main}15`,
+                    boxShadow: theme.palette.mode === 'dark'
+                      ? `0 4px 20px ${theme.palette.secondary.main}25`
+                      : `0 4px 20px ${theme.palette.secondary.main}15`,
                     border: '1px solid',
-                    borderColor: `${theme.palette.secondary.main}20`,
+                    borderColor: theme.palette.mode === 'dark'
+                      ? `${theme.palette.secondary.main}30`
+                      : `${theme.palette.secondary.main}20`,
                     transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                     cursor: 'pointer',
                     position: 'relative',
@@ -319,7 +338,9 @@ function LandingPageGamedata({ isAuthenticated = false }) {
                     '&:hover': {
                       transform: 'translateY(-12px) scale(1.02)',
                       borderColor: theme.palette.secondary.main,
-                      boxShadow: `0 25px 50px ${theme.palette.secondary.main}30`,
+                      boxShadow: theme.palette.mode === 'dark'
+                        ? `0 25px 50px ${theme.palette.secondary.main}40`
+                        : `0 25px 50px ${theme.palette.secondary.main}30`,
                       '&::before': {
                         transform: 'scaleX(1)'
                       },

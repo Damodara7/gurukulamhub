@@ -88,45 +88,74 @@ export const PublicGamesPage = () => {
   const theme = useTheme()
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa' }}>
+    <Box sx={{ 
+      minHeight: '100vh', 
+      bgcolor: 'background.default',
+      width: '100%',
+      overflowX: 'hidden'
+    }}>
       {/* Header Section */}
       <Box
         sx={{
-          bgcolor: 'white',
-          pt: { xs: 4, md: 6 },
-          pb: { xs: 4, md: 6 },
-          borderBottom: '1px solid #e8eaed'
+          bgcolor: 'background.paper',
+          pt: { xs: 3, sm: 4, md: 6 },
+          pb: { xs: 3, sm: 4, md: 6 },
+          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+          boxShadow: theme.palette.mode === 'dark' 
+            ? '0 2px 8px rgba(0,0,0,0.3)'
+            : '0 2px 8px rgba(0,0,0,0.05)'
         }}
       >
-        <Container maxWidth="lg">
-          <Stack spacing={4}>
+        <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 3, md: 4 } }}>
+          <Stack spacing={{ xs: 3, sm: 3.5, md: 4 }}>
             {/* Title Section */}
-            <Box sx={{ textAlign: 'center' }}>
-              <Stack direction="row" spacing={1.5} alignItems="center" justifyContent="center" sx={{ mb: 2 }}>
-                <EmojiEventsIcon sx={{ fontSize: 40, color: 'primary.main' }} />
+            <Box sx={{ textAlign: 'center', px: { xs: 1, sm: 0 } }}>
+              <Stack 
+                direction="row" 
+                spacing={{ xs: 1, sm: 1.5 }} 
+                alignItems="center" 
+                justifyContent="center" 
+                sx={{ mb: { xs: 1.5, sm: 2 } }}
+                flexWrap="wrap"
+              >
+                <EmojiEventsIcon sx={{ 
+                  fontSize: { xs: 32, sm: 36, md: 40 }, 
+                  color: 'primary.main' 
+                }} />
                 <Typography
                   variant="h3"
                   fontWeight={800}
                   sx={{
-                    fontSize: { xs: '2rem', md: '2.5rem' },
+                    fontSize: { xs: '1.75rem', sm: '2.25rem', md: '2.5rem' },
                     background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
-                    letterSpacing: '-0.01em'
+                    letterSpacing: '-0.01em',
+                    lineHeight: 1.2
                   }}
                 >
                   Exciting Competitions
                 </Typography>
               </Stack>
-              <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1.05rem', lineHeight: 1.7, maxWidth: 600, mx: 'auto' }}>
+              <Typography 
+                variant="body1" 
+                color="text.secondary" 
+                sx={{ 
+                  fontSize: { xs: '0.9rem', sm: '1rem', md: '1.05rem' }, 
+                  lineHeight: 1.7, 
+                  maxWidth: 600, 
+                  mx: 'auto',
+                  px: { xs: 1, sm: 0 }
+                }}
+              >
                 Join exciting live games and win amazing rewards
               </Typography>
             </Box>
 
             {/* Filters and Tabs */}
-            <Box>
+            <Box sx={{ width: '100%' }}>
               <ReusableTabsList tabsList={statuses} value={statusFilter} onChange={handleStatusChange} />
-              <Box sx={{ mt: 3 }}>
+              <Box sx={{ mt: { xs: 2, sm: 2.5, md: 3 } }}>
                 <ReusableFiltersList 
                   selectedLocations={selectedLocations} 
                   setSelectedLocations={setSelectedLocations} 
@@ -140,7 +169,10 @@ export const PublicGamesPage = () => {
       </Box>
 
       {/* Games List */}
-      <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 } }}>
+      <Container maxWidth="lg" sx={{ 
+        py: { xs: 3, sm: 4, md: 6 },
+        px: { xs: 2, sm: 3, md: 4 }
+      }}>
         <PublicGamesList games={filteredGames} loading={loading} error={error} />
       </Container>
     </Box>

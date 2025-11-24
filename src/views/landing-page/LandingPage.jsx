@@ -11,7 +11,13 @@ import FinalCTA from './sections/FinalCTA'
 
 function LandingPage({ isAuthenticated = false }) {
   return (
-    <Box>
+    <Box
+      sx={{
+        width: '100%',
+        overflowX: 'hidden',
+        bgcolor: 'background.default'
+      }}
+    >
       <Hero isAuthenticated={isAuthenticated} />
       {!isAuthenticated && <ValueProposition />}
       <LandingPageQuizData isAuthenticated={isAuthenticated} />

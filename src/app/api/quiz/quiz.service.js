@@ -494,7 +494,7 @@ export async function getDocuments(queryParams) {
     const allArtifacts = await ArtifactModel.find({ ...queryParams })
     if (allArtifacts.length === 0) {
       console.log(`No ${Artifact} found.`)
-      const finalResult = { status: 'success', result: {}, message: `No ${Artifact} Exists` }
+      const finalResult = { status: 'success', result: [], message: `No ${Artifact} Exists` }
       return finalResult
     } else {
       const finalResult = {

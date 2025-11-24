@@ -473,7 +473,7 @@ const QuizIdInputForm = ({ mode = 'play' }) => {
         <Typography
           variant='h2'
           sx={{
-            color: 'white',
+            color: theme.palette.common.white,
             fontWeight: 700,
             textAlign: 'center',
             mb: { xs: 1, sm: 1.5 },
@@ -487,7 +487,7 @@ const QuizIdInputForm = ({ mode = 'play' }) => {
         <Typography
           variant='body1'
           sx={{
-            color: 'rgba(255, 255, 255, 0.95)',
+            color: alpha(theme.palette.common.white, 0.95),
             textAlign: 'center',
             mb: { xs: 3, sm: 4 },
             fontSize: { xs: '1rem', sm: '1.05rem' }
@@ -562,6 +562,9 @@ const QuizIdInputForm = ({ mode = 'play' }) => {
                   letterSpacing: '0.04em',
                   fontWeight: 500,
                   fontFamily: 'monospace'
+                },
+                '& .MuiFormHelperText-root': {
+                  fontSize: { xs: '0.7rem', sm: '0.75rem' }
                 }
               }}
             />
@@ -575,6 +578,7 @@ const QuizIdInputForm = ({ mode = 'play' }) => {
             fullWidth
             disabled={loading || quizId.length !== 24}
             sx={{
+              py: { xs: 1.25, sm: 1.5 },
               py: { xs: 1.25, sm: 1.5 },
               borderRadius: 2,
               fontSize: { xs: '1rem', sm: '1.05rem' },

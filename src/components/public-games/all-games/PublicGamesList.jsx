@@ -3,7 +3,7 @@
 
 import React, { useRef, useEffect, useState } from 'react'
 import GameCard from './GameCard'
-import { Box, Grid, Typography } from '@mui/material'
+import { Box, Grid, Typography, useTheme } from '@mui/material'
 import { useSession } from 'next-auth/react'
 import { useSearchParams } from 'next/navigation'
 import Loading from '@/components/Loading'
@@ -15,6 +15,7 @@ const PublicGamesList = ({ games, loading, error, setGames }) => {
   const { data: session } = useSession()
   const statusFilter = searchParams.get('status') || 'all'
   const wsRef = useRef(null)
+  const theme = useTheme()
   // If setGames is not provided, use local state for demonstration
   const [localGames, setLocalGames] = useState(games)
   const gamesToUse = setGames ? games : localGames
@@ -131,7 +132,12 @@ const PublicGamesList = ({ games, loading, error, setGames }) => {
 
   if (loading) {
     return (
-      <Box p={4} display='flex' justifyContent='center'>
+      <Box 
+        p={{ xs: 2, sm: 3, md: 4 }} 
+        display='flex' 
+        justifyContent='center'
+        minHeight={200}
+      >
         <Loading />
       </Box>
     )
@@ -139,7 +145,7 @@ const PublicGamesList = ({ games, loading, error, setGames }) => {
 
   if (error) {
     return (
-      <Box p={4}>
+      <Box p={{ xs: 2, sm: 3, md: 4 }}>
         <FallBackCard error={error} content='Error: {error}' path='/' btnText='Back To Home Page'/>
       </Box>
     )
@@ -154,28 +160,47 @@ const PublicGamesList = ({ games, loading, error, setGames }) => {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            py: 10,
-            px: 3
+            py: { xs: 6, sm: 8, md: 10 },
+            px: { xs: 2, sm: 3 }
           }}
         >
           <Box
             sx={{
-              fontSize: '4rem',
-              mb: 2,
+              fontSize: { xs: '3rem', sm: '3.5rem', md: '4rem' },
+              mb: { xs: 1.5, sm: 2 },
               opacity: 0.7
             }}
           >
             🏆
           </Box>
-          <Typography variant="h5" fontWeight={700} gutterBottom sx={{ color: '#202124' }}>
+          <Typography 
+            variant="h5" 
+            fontWeight={700} 
+            gutterBottom 
+            sx={{ 
+              color: 'text.primary',
+              fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
+              textAlign: 'center'
+            }}
+          >
             No Games Found
           </Typography>
-          <Typography variant="body1" color="text.secondary" textAlign="center" sx={{ maxWidth: 400, lineHeight: 1.7 }}>
+          <Typography 
+            variant="body1" 
+            color="text.secondary" 
+            textAlign="center" 
+            sx={{ 
+              maxWidth: 400, 
+              lineHeight: 1.7,
+              fontSize: { xs: '0.875rem', sm: '1rem' },
+              px: { xs: 2, sm: 0 }
+            }}
+          >
             No competitions match your current filters. Try adjusting your search criteria.
           </Typography>
         </Box>
       ) : (
-        <Grid container spacing={4}>
+        <Grid container spacing={{ xs: 2, sm: 3, md: 4 }}>
           {filteredGames.map((game) => (
             <Grid item key={game._id || game.id} xs={12} sm={6} md={4}>
               <GameCard game={game} currentUsergroupIdsIds={currentUserGroupIdIds} />
