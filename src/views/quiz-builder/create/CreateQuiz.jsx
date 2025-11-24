@@ -281,7 +281,7 @@ function CreateQuiz({ isAdmin = false }) {
                 </Box>
                 <Typography
                   sx={{
-                    fontSize: { xs: '2rem', md: '2.5rem' },
+                    fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.5rem' },
                     fontWeight: 700,
                     background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                     WebkitBackgroundClip: 'text',

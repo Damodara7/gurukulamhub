@@ -17,13 +17,14 @@ import {
 } from '@mui/material'
 import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined'
 import AddIcon from '@mui/icons-material/Add'
+import CloseIcon from '@mui/icons-material/Close'
 import { RiCloseFill } from 'react-icons/ri'
 import { IoMdAttach, IoMdClose } from 'react-icons/io'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
 import useUUID from '@/app/hooks/useUUID'
 import { MuiFileInput } from 'mui-file-input'
 
-const QuizDocuments = ({ documents = [], setTheFormValue , loading }) => {
+const QuizDocuments = ({ documents = [], setTheFormValue, loading }) => {
   const [openDialog, setOpenDialog] = useState(false)
   const [currentDocument, setCurrentDocument] = useState({
     id: null,
@@ -32,7 +33,7 @@ const QuizDocuments = ({ documents = [], setTheFormValue , loading }) => {
   })
   const { getUUID } = useUUID()
 
-  const hasDocuments = documents.some(doc => doc.document);
+  const hasDocuments = documents.some(doc => doc.document)
 
   // Handle opening the add document dialog
   const handleOpenAddDialog = () => {
@@ -86,10 +87,10 @@ const QuizDocuments = ({ documents = [], setTheFormValue , loading }) => {
         width: '100%',
         height: '100%',
         p: 2,
-        opacity : loading ? 0.7 : 1
+        opacity: loading ? 0.7 : 1
       }}
     >
-      <Box display='flex' justifyContent='space-between' alignItems='center' mb={2} >
+      <Box display='flex' justifyContent='space-between' alignItems='center' mb={2}>
         <Typography variant='h6'>Related Documents</Typography>
 
         <IconButtonTooltip
@@ -109,7 +110,7 @@ const QuizDocuments = ({ documents = [], setTheFormValue , loading }) => {
           }}
         >
           <AddIcon />
-          <Typography color='primary' >Add Document</Typography>
+          <Typography color='primary'>Add Document</Typography>
         </IconButtonTooltip>
       </Box>
       <Box
@@ -180,8 +181,33 @@ const QuizDocuments = ({ documents = [], setTheFormValue , loading }) => {
       </Box>
 
       {/* Add Document Dialog */}
-      <Dialog open={openDialog} onClose={ !loading ? handleCloseDialog : undefined } maxWidth='sm' fullWidth>
-        <DialogTitle>Add New Document</DialogTitle>
+      <Dialog open={openDialog} onClose={!loading ? handleCloseDialog : undefined} maxWidth='sm' fullWidth>
+        <DialogTitle
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            pr: { xs: 1, sm: 2 },
+            fontSize: { xs: '1rem', sm: '1.25rem' },
+            fontWeight: 600
+          }}
+        >
+          Add New Document
+          <IconButton
+            onClick={!loading ? handleCloseDialog : undefined}
+            disabled={loading}
+            size='small'
+            sx={{
+              color: 'text.secondary',
+              '&:hover': {
+                backgroundColor: 'action.hover',
+                color: 'text.primary'
+              }
+            }}
+          >
+            <CloseIcon sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }} />
+          </IconButton>
+        </DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 2 }}>
             <TextField
@@ -215,13 +241,17 @@ const QuizDocuments = ({ documents = [], setTheFormValue , loading }) => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button variant='outlined' onClick={handleCloseDialog}>
+            Cancel
+          </Button>
           <Button
             onClick={handleSaveDocument}
             variant='contained'
+            component='label'
+            sx={{ color: 'white' }}
             disabled={!currentDocument.description || !currentDocument.document || loading}
           >
-            Save
+            Submit
           </Button>
         </DialogActions>
       </Dialog>

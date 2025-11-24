@@ -28,6 +28,7 @@ import {
   useTheme
 } from '@mui/material'
 import { alpha } from '@mui/material/styles'
+import useMediaQuery from '@mui/material/useMediaQuery'
 
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS as ApiUrls } from '@/configs/apiConfig'
@@ -53,6 +54,7 @@ import TabPanel from '@mui/lab/TabPanel'
 
 const ViewQuiz = ({ data, theme: themeFromProps, onSelectQuiz, isAdmin = false }) => {
   const theme = useTheme()
+  const isSmDown = useMediaQuery(theme.breakpoints.down('sm'))
   const { data: session, status } = useSession()
   const [privacyType, setPrivacyType] = useState('PUBLIC')
   const [invalidateQuizzes, setInvalidateQuizzes] = useState(false)
@@ -133,110 +135,202 @@ const ViewQuiz = ({ data, theme: themeFromProps, onSelectQuiz, isAdmin = false }
   const handleChangeTab = (event, newValue) => {
     setActiveTab(newValue)
   }
-
+  const mobileTabPanelMaxHeight = 'calc(100vh - 170px)'
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa', pb: 6 }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa', pb: { xs: 4, sm: 6 } }}>
       <TabContext value={activeTab}>
         {/* Header Section */}
         <Box
           sx={{
             bgcolor: 'white',
-            pt: { xs: 3, md: 4 },
-            pb: { xs: 3, md: 4 },
+            pt: { xs: 2, sm: 3, md: 4 },
+            pb: { xs: 2, sm: 3, md: 4 },
+            px: { xs: 1, sm: 0 },
             borderBottom: '1px solid #e8eaed',
-            mb: 4
+            mb: { xs: 2, sm: 3, md: 4 }
           }}
         >
-          <Container maxWidth="xl">
-            <Box sx={{ textAlign: 'center', mb: 3 }}>
+          <Container maxWidth='xl'>
+            <Box sx={{ textAlign: 'center', mb: { xs: 2, sm: 3 }, px: { xs: 1, sm: 0 } }}>
               {/* Title */}
               <Typography
-                variant="h4"
+                variant='h4'
                 fontWeight={800}
                 sx={{
-                  fontSize: { xs: '1.5rem', md: '2rem' },
+                  fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.5rem' },
                   background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
-                  mb: 1
+                  mb: { xs: 0.75, sm: 1 },
+                  px: { xs: 1, sm: 0 }
                 }}
               >
                 My Quiz Collection
               </Typography>
-              
-              <Typography variant="body1" sx={{ color: '#5f6368', maxWidth: '800px', mx: 'auto' }}>
+
+              <Typography
+                variant='body1'
+                sx={{
+                  color: '#5f6368',
+                  maxWidth: '800px',
+                  mx: 'auto',
+                  fontSize: { xs: '0.875rem', sm: '0.9375rem', md: '1rem' },
+                  px: { xs: 1, sm: 2, md: 0 },
+                  lineHeight: { xs: 1.5, sm: 1.6 }
+                }}
+              >
                 Manage and organize your quizzes across different stages
               </Typography>
             </Box>
 
             {/* Tabs in Header */}
-            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                width: '100%',
+                overflowX: 'auto',
+                '&::-webkit-scrollbar': {
+                  display: 'none'
+                },
+                scrollbarWidth: 'none',
+                px: { xs: 1, sm: 0 }
+              }}
+            >
               <CustomTabList
                 onChange={handleChangeTab}
                 variant='scrollable'
                 pill='true'
                 scrollButtons='auto'
                 allowScrollButtonsMobile
+                sx={{
+                  width: '100%',
+                  maxWidth: '100%',
+                  '& .MuiTabs-scrollButtons': {
+                    '&.Mui-disabled': {
+                      opacity: 0.3
+                    },
+                    fontSize: { xs: '1rem', sm: '1.25rem' }
+                  },
+                  '& .MuiTabs-flexContainer': {
+                    gap: { xs: 1, sm: 1.5, md: 3 },
+                    justifyContent: { xs: 'flex-start', sm: 'center' }
+                  }
+                }}
               >
                 <Tab
                   value='drafts'
                   label={
-                    <div className='flex items-center gap-1.5'>
-                      <DraftsOutlinedIcon />
-                      Drafts
+                    <div className='flex items-center' style={{ gap: '6px' }}>
+                      <DraftsOutlinedIcon sx={{ fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' } }} />
+                      <span style={{ fontSize: 'inherit' }}>Drafts</span>
                     </div>
                   }
+                  sx={{
+                    fontWeight: 600,
+                    fontSize: { xs: '0.75rem', sm: '0.8125rem', md: '0.875rem' },
+                    px: { xs: 1.5, sm: 2, md: 2.5 },
+                    py: { xs: 1, sm: 1.25 },
+                    minHeight: { xs: 36, sm: 40, md: 44 },
+                    textTransform: 'none',
+                    whiteSpace: 'nowrap'
+                  }}
                 />
                 {!isAdmin && (
                   <Tab
                     value='saved'
                     label={
-                      <div className='flex items-center gap-1.5'>
-                        <SaveIcon />
-                        Saved
+                      <div className='flex items-center' style={{ gap: '6px' }}>
+                        <SaveIcon sx={{ fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' } }} />
+                        <span style={{ fontSize: 'inherit' }}>Saved</span>
                       </div>
                     }
+                    sx={{
+                      fontWeight: 600,
+                      fontSize: { xs: '0.75rem', sm: '0.8125rem', md: '0.875rem' },
+                      px: { xs: 1.5, sm: 2, md: 2.5 },
+                      py: { xs: 1, sm: 1.25 },
+                      minHeight: { xs: 36, sm: 40, md: 44 },
+                      textTransform: 'none',
+                      whiteSpace: 'nowrap'
+                    }}
                   />
                 )}
                 {!isAdmin && (
                   <Tab
                     value='pending'
                     label={
-                      <div className='flex items-center gap-1.5'>
-                        <PendingActionsOutlinedIcon />
-                        Pending
+                      <div className='flex items-center' style={{ gap: '6px' }}>
+                        <PendingActionsOutlinedIcon sx={{ fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' } }} />
+                        <span style={{ fontSize: 'inherit' }}>Pending</span>
                       </div>
                     }
+                    sx={{
+                      fontWeight: 600,
+                      fontSize: { xs: '0.75rem', sm: '0.8125rem', md: '0.875rem' },
+                      px: { xs: 1.5, sm: 2, md: 2.5 },
+                      py: { xs: 1, sm: 1.25 },
+                      minHeight: { xs: 36, sm: 40, md: 44 },
+                      textTransform: 'none',
+                      whiteSpace: 'nowrap'
+                    }}
                   />
                 )}
                 <Tab
                   value='approved'
                   label={
-                    <div className='flex items-center gap-1.5'>
-                      <VerifiedOutlinedIcon />
-                      {isAdmin ? `Saved & Approved` : 'Approved'}
+                    <div className='flex items-center' style={{ gap: '6px' }}>
+                      <VerifiedOutlinedIcon sx={{ fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' } }} />
+                      <span style={{ fontSize: 'inherit' }}>{isAdmin ? `Saved & Approved` : 'Approved'}</span>
                     </div>
                   }
+                  sx={{
+                    fontWeight: 600,
+                    fontSize: { xs: '0.75rem', sm: '0.8125rem', md: '0.875rem' },
+                    px: { xs: 1.5, sm: 2, md: 2.5 },
+                    py: { xs: 1, sm: 1.25 },
+                    minHeight: { xs: 36, sm: 40, md: 44 },
+                    textTransform: 'none',
+                    whiteSpace: 'nowrap'
+                  }}
                 />
                 {!isAdmin && (
                   <Tab
                     value='rejected'
                     label={
-                      <div className='flex items-center gap-1.5'>
-                        <NewReleasesOutlinedIcon />
-                        Rejected
+                      <div className='flex items-center' style={{ gap: '6px' }}>
+                        <NewReleasesOutlinedIcon sx={{ fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' } }} />
+                        <span style={{ fontSize: 'inherit' }}>Rejected</span>
                       </div>
                     }
+                    sx={{
+                      fontWeight: 600,
+                      fontSize: { xs: '0.75rem', sm: '0.8125rem', md: '0.875rem' },
+                      px: { xs: 1.5, sm: 2, md: 2.5 },
+                      py: { xs: 1, sm: 1.25 },
+                      minHeight: { xs: 36, sm: 40, md: 44 },
+                      textTransform: 'none',
+                      whiteSpace: 'nowrap'
+                    }}
                   />
                 )}
                 <Tab
                   value='published'
                   label={
-                    <div className='flex items-center gap-1.5'>
-                      <PublishOutlinedIcon />
-                      Published
+                    <div className='flex items-center' style={{ gap: '6px' }}>
+                      <PublishOutlinedIcon sx={{ fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' } }} />
+                      <span style={{ fontSize: 'inherit' }}>Published</span>
                     </div>
                   }
+                  sx={{
+                    fontWeight: 600,
+                    fontSize: { xs: '0.75rem', sm: '0.8125rem', md: '0.875rem' },
+                    px: { xs: 1.5, sm: 2, md: 2.5 },
+                    py: { xs: 1, sm: 1.25 },
+                    minHeight: { xs: 36, sm: 40, md: 44 },
+                    textTransform: 'none',
+                    whiteSpace: 'nowrap'
+                  }}
                 />
               </CustomTabList>
             </Box>
@@ -244,8 +338,26 @@ const ViewQuiz = ({ data, theme: themeFromProps, onSelectQuiz, isAdmin = false }
         </Box>
 
         {/* Content Area */}
-        <Container maxWidth='xl'>
-          <TabPanel value={activeTab} sx={{ p: 0 }}>
+        <Container
+          maxWidth='xl'
+          sx={{
+            px: { xs: 1.5, sm: 2, md: 3 },
+            py: { xs: 2, sm: 3, md: 4 }
+          }}
+        >
+          <TabPanel
+            value={activeTab}
+            sx={{
+              p: 0,
+              mt: { xs: 1, sm: 2 },
+              '& > div': {
+                px: { xs: 0, sm: 0.5 }
+              },
+              maxHeight: isSmDown ? mobileTabPanelMaxHeight : 'none',
+              overflowY: isSmDown ? 'auto' : 'visible',
+              pr: { xs: 0, sm: 0.5 }
+            }}
+          >
             {tabPanelObject[activeTab]}
           </TabPanel>
         </Container>

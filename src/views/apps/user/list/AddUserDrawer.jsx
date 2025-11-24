@@ -2,17 +2,9 @@
 import { useEffect, useState } from 'react'
 
 // MUI Imports
-import Button from '@mui/material/Button'
-import Drawer from '@mui/material/Drawer'
-import FormControl from '@mui/material/FormControl'
-import InputLabel from '@mui/material/InputLabel'
-import MenuItem from '@mui/material/MenuItem'
-import Select from '@mui/material/Select'
-import TextField from '@mui/material/TextField'
-import Typography from '@mui/material/Typography'
-import Box from '@mui/material/Box'
-import { Checkbox, Chip, ListItemText } from '@mui/material'
-import { alpha, useTheme } from '@mui/material/styles'
+
+import { Button, Drawer, FormControl, InputLabel, MenuItem, Select, TextField, Typography, Checkbox, Chip, ListItemText , Divider } from '@mui/material'
+import { useTheme, alpha } from '@mui/material/styles'
 
 // Api utils
 import * as RestApi from '@/utils/restApiUtil'

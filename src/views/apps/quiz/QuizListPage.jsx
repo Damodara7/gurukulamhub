@@ -36,100 +36,206 @@ function QuizListPage() {
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa', pb: 6 }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa', pb: { xs: 3, sm: 4, md: 6 } }}>
       <TabContext value={activeTab}>
         {/* Header Section */}
         <Box
           sx={{
             bgcolor: 'white',
-            pt: { xs: 3, md: 4 },
-            pb: { xs: 3, md: 4 },
+            pt: { xs: 2, sm: 3, md: 4 },
+            pb: { xs: 2, sm: 3, md: 4 },
             borderBottom: '1px solid #e8eaed',
-            mb: 4
+            mb: { xs: 2, sm: 3, md: 4 }
           }}
         >
-          <Container maxWidth="xl">
-            <Box sx={{ textAlign: 'center', mb: 3 }}>
+          <Container maxWidth='xl' sx={{ px: { xs: 1.5, sm: 2, md: 3 } }}>
+            <Box sx={{ textAlign: 'center', mb: { xs: 2, sm: 2.5, md: 3 } }}>
               {/* Icon and Title */}
-              <Stack spacing={1}>
-                <Stack direction="row" alignItems="center" spacing={1.5} justifyContent="center">
+              <Stack spacing={{ xs: 0.75, sm: 1 }}>
+                <Stack
+                  direction='row'
+                  alignItems='center'
+                  spacing={{ xs: 1, sm: 1.5 }}
+                  justifyContent='center'
+                  sx={{ flexWrap: { xs: 'wrap', sm: 'nowrap' } }}
+                >
                   <Box
                     sx={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: 1.5,
+                      width: { xs: 36, sm: 40, md: 48 },
+                      height: { xs: 36, sm: 40, md: 48 },
+                      borderRadius: { xs: 1.25, sm: 1.5 },
                       bgcolor: theme.palette.primary.main,
                       color: 'white',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center'
+                      justifyContent: 'center',
+                      flexShrink: 0
                     }}
                   >
-                    <QuizIcon sx={{ fontSize: 22 }} />
+                    <QuizIcon sx={{ fontSize: { xs: 20, sm: 22, md: 26 } }} />
                   </Box>
                   <Typography
-                    variant="h4"
+                    variant='h4'
                     fontWeight={800}
                     sx={{
-                      fontSize: { xs: '1.5rem', md: '2rem' },
+                      fontSize: { xs: '1.25rem', sm: '1.5rem', md: '2rem', lg: '2.5rem' },
                       background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                       WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent'
+                      WebkitTextFillColor: 'transparent',
+                      lineHeight: 1.2,
+                      textAlign: { xs: 'center', sm: 'left' }
                     }}
                   >
                     Quiz Management
                   </Typography>
                 </Stack>
-                
-                <Typography variant="body1" sx={{ color: '#5f6368', mx: 'auto' }}>
+
+                <Typography
+                  variant='body1'
+                  sx={{
+                    color: '#5f6368',
+                    mx: 'auto',
+                    fontSize: { xs: '0.8125rem', sm: '0.875rem', md: '1rem' },
+                    px: { xs: 1, sm: 0 },
+                    maxWidth: { xs: '100%', sm: '600px', md: '700px' }
+                  }}
+                >
                   Manage, review, and publish quizzes across all stages
                 </Typography>
               </Stack>
             </Box>
 
             {/* Tabs in Header */}
-            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                width: '100%',
+                overflowX: 'auto',
+                '&::-webkit-scrollbar': {
+                  display: 'none'
+                },
+                scrollbarWidth: 'none'
+              }}
+            >
               <CustomTabList
                 onChange={handleChangeTab}
                 variant='scrollable'
                 pill='true'
                 scrollButtons='auto'
                 allowScrollButtonsMobile
+                sx={{
+                  width: '100%',
+                  maxWidth: '100%',
+                  '& .MuiTabs-scrollButtons': {
+                    '&.Mui-disabled': {
+                      opacity: 0.3
+                    }
+                  },
+                  '& .MuiTabs-flexContainer': {
+                    gap: { xs: 1, sm: 2, md: 3 },
+                    justifyContent: { xs: 'flex-start', sm: 'center' }
+                  }
+                }}
               >
                 <Tab
                   value='pending'
+                  sx={{
+                    minHeight: { xs: 36, sm: 38, md: 44 },
+                    px: { xs: 2, sm: 3, md: 4 },
+                    py: { xs: 0.75, sm: 1 },
+                    fontSize: { xs: '0.75rem', sm: '0.8125rem', md: '0.875rem' },
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    whiteSpace: 'nowrap'
+                  }}
                   label={
-                    <div className='flex items-center gap-1.5'>
-                      <PendingActionsOutlinedIcon />
-                      Pending
-                    </div>
+                    <Box
+                      component='div'
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: { xs: 0.75, sm: 1, md: 1.5 }
+                      }}
+                    >
+                      <PendingActionsOutlinedIcon sx={{ fontSize: { xs: 16, sm: 18, md: 20 } }} />
+                      <Box component='span'>Pending</Box>
+                    </Box>
                   }
                 />
                 <Tab
                   value='approved'
+                  sx={{
+                    minHeight: { xs: 36, sm: 38, md: 44 },
+                    px: { xs: 2, sm: 3, md: 4 },
+                    py: { xs: 0.75, sm: 1 },
+                    fontSize: { xs: '0.75rem', sm: '0.8125rem', md: '0.875rem' },
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    whiteSpace: 'nowrap'
+                  }}
                   label={
-                    <div className='flex items-center gap-1.5'>
-                      <VerifiedOutlinedIcon />
-                      Approved
-                    </div>
+                    <Box
+                      component='div'
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: { xs: 0.75, sm: 1, md: 1.5 }
+                      }}
+                    >
+                      <VerifiedOutlinedIcon sx={{ fontSize: { xs: 16, sm: 18, md: 20 } }} />
+                      <Box component='span'>Approved</Box>
+                    </Box>
                   }
                 />
                 <Tab
                   value='rejected'
+                  sx={{
+                    minHeight: { xs: 36, sm: 38, md: 44 },
+                    px: { xs: 2, sm: 3, md: 4 },
+                    py: { xs: 0.75, sm: 1 },
+                    fontSize: { xs: '0.75rem', sm: '0.8125rem', md: '0.875rem' },
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    whiteSpace: 'nowrap'
+                  }}
                   label={
-                    <div className='flex items-center gap-1.5'>
-                      <NewReleasesOutlinedIcon />
-                      Rejected
-                    </div>
+                    <Box
+                      component='div'
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: { xs: 0.75, sm: 1, md: 1.5 }
+                      }}
+                    >
+                      <NewReleasesOutlinedIcon sx={{ fontSize: { xs: 16, sm: 18, md: 20 } }} />
+                      <Box component='span'>Rejected</Box>
+                    </Box>
                   }
                 />
                 <Tab
                   value='published'
+                  sx={{
+                    minHeight: { xs: 36, sm: 38, md: 44 },
+                    px: { xs: 2, sm: 3, md: 4 },
+                    py: { xs: 0.75, sm: 1 },
+                    fontSize: { xs: '0.75rem', sm: '0.8125rem', md: '0.875rem' },
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    whiteSpace: 'nowrap'
+                  }}
                   label={
-                    <div className='flex items-center gap-1.5'>
-                      <PublishOutlinedIcon />
-                      Published
-                    </div>
+                    <Box
+                      component='div'
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: { xs: 0.75, sm: 1, md: 1.5 }
+                      }}
+                    >
+                      <PublishOutlinedIcon sx={{ fontSize: { xs: 16, sm: 18, md: 20 } }} />
+                      <Box component='span'>Published</Box>
+                    </Box>
                   }
                 />
               </CustomTabList>
@@ -138,8 +244,8 @@ function QuizListPage() {
         </Box>
 
         {/* Content Area */}
-        <Container maxWidth='xl'>
-          <TabPanel value={activeTab} sx={{ p: 0 }}>
+        <Container maxWidth='xl' sx={{ px: { xs: 1.5, sm: 2, md: 3 } }}>
+          <TabPanel value={activeTab} sx={{ p: 0, mt: { xs: 1, sm: 2 } }}>
             {tabPanelObject[activeTab]}
           </TabPanel>
         </Container>

@@ -17,9 +17,10 @@ import RemoveIcon from '@mui/icons-material/Remove'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
 import { IoMdAttach, IoMdClose } from 'react-icons/io'
 import { RiCloseFill } from 'react-icons/ri'
-import VideocamIcon from '@mui/icons-material/Videocam';
+import VideocamIcon from '@mui/icons-material/Videocam'
+import CloseIcon from '@mui/icons-material/Close'
 import YouTubeIcon from '@mui/icons-material/YouTube'
-const QuizCourseLinks = ({ courseLinks = [], setTheFormValue , loading }) => {
+const QuizCourseLinks = ({ courseLinks = [], setTheFormValue, loading }) => {
   const [open, setOpen] = useState(false)
   const [newLink, setNewLink] = useState('')
   const [error, setError] = useState('')
@@ -71,7 +72,7 @@ const QuizCourseLinks = ({ courseLinks = [], setTheFormValue , loading }) => {
   const handleSave = () => {
     setIsTouched(true)
     if (newLink.trim()) {
-      if(isValidVideoUrl(newLink)){
+      if (isValidVideoUrl(newLink)) {
         setTheFormValue('courseLinks', [
           ...courseLinks,
           {
@@ -81,13 +82,10 @@ const QuizCourseLinks = ({ courseLinks = [], setTheFormValue , loading }) => {
           }
         ])
         handleClose()
-      }
-      else
-      {
+      } else {
         setError('Please enter a valid video URL (YouTube, Vimeo, etc.)')
       }
-      }
-      
+    }
   }
 
   // Handle removing a link
@@ -119,7 +117,7 @@ const QuizCourseLinks = ({ courseLinks = [], setTheFormValue , loading }) => {
         <IconButtonTooltip
           title='Add Links'
           color='primary'
-          onClick={ !loading ? handleOpen :  undefined}
+          onClick={!loading ? handleOpen : undefined}
           disabled={loading}
           sx={{
             display: 'flex',
@@ -200,7 +198,32 @@ const QuizCourseLinks = ({ courseLinks = [], setTheFormValue , loading }) => {
       </Box>
       {/* Popup Dialog */}
       <Dialog open={open} onClose={!loading ? handleClose : undefined} maxWidth='sm' fullWidth>
-        <DialogTitle>Add New Course Link</DialogTitle>
+        <DialogTitle
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            pr: { xs: 1, sm: 2 },
+            fontSize: { xs: '1rem', sm: '1.25rem' },
+            fontWeight: 600
+          }}
+        >
+          Add New Course Link
+          <IconButton
+            onClick={!loading ? handleClose : undefined}
+            disabled={loading}
+            size='small'
+            sx={{
+              color: 'text.secondary',
+              '&:hover': {
+                backgroundColor: 'action.hover',
+                color: 'text.primary'
+              }
+            }}
+          >
+            <CloseIcon sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }} />
+          </IconButton>
+        </DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
@@ -219,9 +242,17 @@ const QuizCourseLinks = ({ courseLinks = [], setTheFormValue , loading }) => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose}>Cancel</Button>
-          <Button onClick={handleSave} variant='contained' disabled={!newLink.trim() || loading}>
-            Save
+          <Button variant='outlined' onClick={handleClose}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSave}
+            variant='contained'
+            component='label'
+            sx={{ color: 'white' }}
+            disabled={!newLink.trim() || loading}
+          >
+            Submit
           </Button>
         </DialogActions>
       </Dialog>

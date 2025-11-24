@@ -134,10 +134,7 @@ export default function QuizCardList({ isAdmin = false }) {
     console.log('Deleting quizzes:', selectedQuizIds)
 
     try {
-      const response = await RestApi.del(
-        `${API_URLS.v0.USERS_QUIZ}`,
-        { ids: selectedQuizIds }
-      )
+      const response = await RestApi.del(`${API_URLS.v0.USERS_QUIZ}`, { ids: selectedQuizIds })
 
       if (response.status === 'success') {
         console.log('Quizzes deleted successfully')
@@ -196,9 +193,9 @@ export default function QuizCardList({ isAdmin = false }) {
 
       {loading ? (
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
-          <Stack spacing={2} alignItems="center">
+          <Stack spacing={2} alignItems='center'>
             <CircularProgress size={48} />
-            <Typography variant="body1" color="text.secondary" fontWeight={500}>
+            <Typography variant='body1' color='text.secondary' fontWeight={500}>
               Loading quizzes...
             </Typography>
           </Stack>
@@ -206,10 +203,11 @@ export default function QuizCardList({ isAdmin = false }) {
       ) : myQuizzes.length > 0 ? (
         <Grid container spacing={3}>
           {myQuizzes.map(item => {
-            const thumbnail = item.thumbnail?.length > 0 
-              ? item.thumbnail 
-              : `https://fakeimg.pl/400x250/?text=${encodeURIComponent(item.title || 'Quiz')}`
-            
+            const thumbnail =
+              item.thumbnail?.length > 0
+                ? item.thumbnail
+                : `https://fakeimg.pl/400x250/?text=${encodeURIComponent(item.title || 'Quiz')}`
+
             return (
               <Grid item xs={12} sm={6} md={4} lg={3} key={item._id || item.id}>
                 <Card
@@ -280,8 +278,8 @@ export default function QuizCardList({ isAdmin = false }) {
                     }}
                   >
                     <Box
-                      component="img"
-                      className="quiz-image"
+                      component='img'
+                      className='quiz-image'
                       src={thumbnail}
                       alt={item.title}
                       sx={{
@@ -290,7 +288,7 @@ export default function QuizCardList({ isAdmin = false }) {
                         objectFit: 'cover',
                         transition: 'transform 0.4s ease'
                       }}
-                      onError={(e) => {
+                      onError={e => {
                         e.target.src = `https://fakeimg.pl/400x250/?text=${encodeURIComponent(item.title || 'Quiz')}`
                       }}
                     />
@@ -304,11 +302,11 @@ export default function QuizCardList({ isAdmin = false }) {
                         background: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.3) 100%)'
                       }}
                     />
-                    
+
                     {/* Draft Badge */}
                     <Chip
-                      label="DRAFT"
-                      size="small"
+                      label='DRAFT'
+                      size='small'
                       sx={{
                         position: 'absolute',
                         top: 12,
@@ -334,7 +332,7 @@ export default function QuizCardList({ isAdmin = false }) {
                   >
                     {/* Title */}
                     <Typography
-                      variant="h6"
+                      variant='h6'
                       fontWeight={700}
                       sx={{
                         fontSize: '1.1rem',
@@ -352,8 +350,8 @@ export default function QuizCardList({ isAdmin = false }) {
 
                     {/* Details */}
                     <Typography
-                      variant="body2"
-                      color="text.secondary"
+                      variant='body2'
+                      color='text.secondary'
                       sx={{
                         display: '-webkit-box',
                         WebkitLineClamp: 2,
@@ -369,9 +367,9 @@ export default function QuizCardList({ isAdmin = false }) {
                     </Typography>
 
                     {/* Footer Info */}
-                    <Stack 
-                      direction="row" 
-                      alignItems="center" 
+                    <Stack
+                      direction='row'
+                      alignItems='center'
                       spacing={1.5}
                       sx={{
                         pt: 1.5,
@@ -380,7 +378,7 @@ export default function QuizCardList({ isAdmin = false }) {
                       }}
                     >
                       {item.language && (
-                        <Stack direction="row" alignItems="center" spacing={0.75}>
+                        <Stack direction='row' alignItems='center' spacing={0.75}>
                           <Box
                             sx={{
                               width: 28,
@@ -394,7 +392,7 @@ export default function QuizCardList({ isAdmin = false }) {
                           >
                             <LanguageIcon sx={{ fontSize: 16, color: 'primary.main' }} />
                           </Box>
-                          <Typography variant="caption" fontWeight={600} sx={{ fontSize: '0.75rem' }}>
+                          <Typography variant='caption' fontWeight={600} sx={{ fontSize: '0.75rem' }}>
                             {item.language?.name || 'Unknown'}
                           </Typography>
                         </Stack>
@@ -402,7 +400,15 @@ export default function QuizCardList({ isAdmin = false }) {
                     </Stack>
 
                     {/* Action Buttons */}
-                    <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+                    <Stack
+                      direction='row'
+                      spacing={1}
+                      sx={{
+                        mt: 1,
+                        width: '100%',
+                        alignItems: 'center'
+                      }}
+                    >
                       <Button
                         size='small'
                         variant='outlined'
@@ -439,7 +445,7 @@ export default function QuizCardList({ isAdmin = false }) {
                       >
                         Build
                       </Button>
-                      <Tooltip title="Delete Quiz" arrow>
+                      <Tooltip title='Delete Quiz' arrow sx={{ width: 'auto' }}>
                         <Button
                           size='small'
                           variant='outlined'
@@ -449,7 +455,10 @@ export default function QuizCardList({ isAdmin = false }) {
                           }}
                           sx={{
                             minWidth: 'auto',
-                            px: 1.5
+                            px: 1.5,
+                            alignSelf: 'auto',
+                            width: 'auto',
+                            flex: 0
                           }}
                         >
                           <DeleteIcon fontSize='small' />
@@ -485,10 +494,10 @@ export default function QuizCardList({ isAdmin = false }) {
               opacity: 0.5
             }}
           />
-          <Typography variant="h6" color="text.secondary" fontWeight={600} gutterBottom>
+          <Typography variant='h6' color='text.secondary' fontWeight={600} gutterBottom>
             No Draft Quizzes Found
           </Typography>
-          <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ maxWidth: '400px' }}>
+          <Typography variant='body2' color='text.secondary' textAlign='center' sx={{ maxWidth: '400px' }}>
             You don't have any draft quizzes yet. Create one to get started!
           </Typography>
         </Box>

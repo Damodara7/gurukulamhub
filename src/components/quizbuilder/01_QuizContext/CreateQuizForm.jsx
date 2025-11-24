@@ -73,8 +73,6 @@ const CreateQuizForm = ({
     setIsGenericPopupOpen(false)
   }
 
-  
-
   // Image upload
   const handleImageUpload = async e => {
     const file = e.target.files[0]
@@ -415,7 +413,7 @@ const CreateQuizForm = ({
                               justifyContent: 'center',
                               cursor: loading ? 'not-allowed' : 'pointer',
                               backgroundColor: 'action.hover',
-                              opacity: loading ? 0.7 : 1, 
+                              opacity: loading ? 0.7 : 1,
                               '&:hover': {
                                 backgroundColor: 'action.selected'
                               }

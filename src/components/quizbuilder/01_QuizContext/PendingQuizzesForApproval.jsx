@@ -172,9 +172,9 @@ export default function PendingForApproval({}) {
 
       {loading ? (
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
-          <Stack spacing={2} alignItems="center">
+          <Stack spacing={2} alignItems='center'>
             <CircularProgress size={48} />
-            <Typography variant="body1" color="text.secondary" fontWeight={500}>
+            <Typography variant='body1' color='text.secondary' fontWeight={500}>
               Loading quizzes...
             </Typography>
           </Stack>
@@ -182,10 +182,11 @@ export default function PendingForApproval({}) {
       ) : pendingQuizzes.length > 0 ? (
         <Grid container spacing={3}>
           {pendingQuizzes.map(item => {
-            const thumbnail = item.thumbnail?.length > 0 
-              ? item.thumbnail 
-              : `https://fakeimg.pl/400x250/?text=${encodeURIComponent(item.title || 'Quiz')}`
-            
+            const thumbnail =
+              item.thumbnail?.length > 0
+                ? item.thumbnail
+                : `https://fakeimg.pl/400x250/?text=${encodeURIComponent(item.title || 'Quiz')}`
+
             return (
               <Grid item xs={12} sm={6} md={4} lg={3} key={item._id || item.id}>
                 <Card
@@ -256,8 +257,8 @@ export default function PendingForApproval({}) {
                     }}
                   >
                     <Box
-                      component="img"
-                      className="quiz-image"
+                      component='img'
+                      className='quiz-image'
                       src={thumbnail}
                       alt={item.title}
                       sx={{
@@ -266,7 +267,7 @@ export default function PendingForApproval({}) {
                         objectFit: 'cover',
                         transition: 'transform 0.4s ease'
                       }}
-                      onError={(e) => {
+                      onError={e => {
                         e.target.src = `https://fakeimg.pl/400x250/?text=${encodeURIComponent(item.title || 'Quiz')}`
                       }}
                     />
@@ -280,11 +281,11 @@ export default function PendingForApproval({}) {
                         background: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.3) 100%)'
                       }}
                     />
-                    
+
                     {/* Pending Badge */}
                     <Chip
-                      label="PENDING"
-                      size="small"
+                      label='PENDING'
+                      size='small'
                       sx={{
                         position: 'absolute',
                         top: 12,
@@ -310,7 +311,7 @@ export default function PendingForApproval({}) {
                   >
                     {/* Title */}
                     <Typography
-                      variant="h6"
+                      variant='h6'
                       fontWeight={700}
                       sx={{
                         fontSize: '1.1rem',
@@ -328,8 +329,8 @@ export default function PendingForApproval({}) {
 
                     {/* Details */}
                     <Typography
-                      variant="body2"
-                      color="text.secondary"
+                      variant='body2'
+                      color='text.secondary'
                       sx={{
                         display: '-webkit-box',
                         WebkitLineClamp: 2,
@@ -345,9 +346,9 @@ export default function PendingForApproval({}) {
                     </Typography>
 
                     {/* Footer Info */}
-                    <Stack 
-                      direction="row" 
-                      alignItems="center" 
+                    <Stack
+                      direction='row'
+                      alignItems='center'
                       spacing={1.5}
                       sx={{
                         pt: 1.5,
@@ -356,7 +357,7 @@ export default function PendingForApproval({}) {
                       }}
                     >
                       {item.language && (
-                        <Stack direction="row" alignItems="center" spacing={0.75}>
+                        <Stack direction='row' alignItems='center' spacing={0.75}>
                           <Box
                             sx={{
                               width: 28,
@@ -370,7 +371,7 @@ export default function PendingForApproval({}) {
                           >
                             <LanguageIcon sx={{ fontSize: 16, color: 'warning.main' }} />
                           </Box>
-                          <Typography variant="caption" fontWeight={600} sx={{ fontSize: '0.75rem' }}>
+                          <Typography variant='caption' fontWeight={600} sx={{ fontSize: '0.75rem' }}>
                             {item.language?.name || 'Unknown'}
                           </Typography>
                         </Stack>
@@ -378,7 +379,7 @@ export default function PendingForApproval({}) {
                     </Stack>
 
                     {/* Action Buttons */}
-                    <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+                    <Stack direction='row' spacing={1} sx={{ mt: 1 }}>
                       <Button
                         size='small'
                         variant='outlined'
@@ -396,7 +397,7 @@ export default function PendingForApproval({}) {
                       >
                         View
                       </Button>
-                      <Tooltip title="Move to Drafts" arrow>
+                      <Tooltip title='Move to Drafts' arrow>
                         <Button
                           size='small'
                           variant='outlined'
@@ -443,10 +444,10 @@ export default function PendingForApproval({}) {
               opacity: 0.5
             }}
           />
-          <Typography variant="h6" color="text.secondary" fontWeight={600} gutterBottom>
+          <Typography variant='h6' color='text.secondary' fontWeight={600} gutterBottom>
             No Pending Quizzes
           </Typography>
-          <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ maxWidth: '400px' }}>
+          <Typography variant='body2' color='text.secondary' textAlign='center' sx={{ maxWidth: '400px' }}>
             You don't have any quizzes pending approval at the moment.
           </Typography>
         </Box>

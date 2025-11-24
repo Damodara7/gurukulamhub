@@ -17,8 +17,7 @@ import {
   Container,
   Stack,
   CircularProgress,
-  alpha,
-  useTheme
+  DialogTitle
 } from '@mui/material'
 import { 
   AttachMoney, 
@@ -168,7 +167,7 @@ const SponsorshipDetailPage = ({ id = null }) => {
       style: 'currency',
       currency
     }).format(value || 0)
-  }
+  
 
   const status = sponsorship.rewardType === 'cash' ? sponsorship.sponsorshipStatus : sponsorship.nonCashSponsorshipStatus
   const statusColor = {

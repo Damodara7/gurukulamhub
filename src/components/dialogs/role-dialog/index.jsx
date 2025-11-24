@@ -23,8 +23,7 @@ import {
   Stack,
   AlertTitle,
   InputAdornment,
-  CircularProgress,
-  Box
+  CircularProgress
 } from '@mui/material'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import CancelIcon from '@mui/icons-material/Cancel'
