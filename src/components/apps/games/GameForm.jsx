@@ -828,8 +828,11 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
       <Box
         sx={{
           backdropFilter: 'blur(20px)',
-          bgcolor: alpha('#fff', 0.7),
-          borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+          bgcolor:
+            theme.palette.mode === 'dark'
+              ? alpha(theme.palette.background.paper, 0.8)
+              : alpha(theme.palette.background.paper, 0.7),
+          borderBottom: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
           pt: { xs: 4, md: 6 },
           pb: { xs: 4, md: 6 }
         }}
@@ -898,11 +901,18 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
         <Card
           sx={{
             borderRadius: { xs: 1, sm: 2 },
-            boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.08)}`,
-            border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+            background: theme.palette.background.paper,
+            boxShadow:
+              theme.palette.mode === 'dark'
+                ? `0 2px 8px ${alpha(theme.palette.common.black, 0.3)}`
+                : `0 2px 8px ${alpha(theme.palette.primary.main, 0.08)}`,
+            border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
             overflow: 'hidden',
             '&:hover': {
-              boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.12)}`
+              boxShadow:
+                theme.palette.mode === 'dark'
+                  ? `0 4px 16px ${alpha(theme.palette.primary.main, 0.25)}`
+                  : `0 4px 16px ${alpha(theme.palette.primary.main, 0.12)}`
             }
           }}
         >
@@ -1271,10 +1281,13 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                         sx={{
                           '& .MuiOutlinedInput-root': {
                             '& fieldset': {
-                              borderColor: 'rgba(0, 0, 0, 0.23)' // Match DateTimePicker border
+                              borderColor:
+                                theme.palette.mode === 'dark'
+                                  ? alpha(theme.palette.divider, 0.3)
+                                  : 'rgba(0, 0, 0, 0.23)'
                             },
                             '&:hover fieldset': {
-                              borderColor: 'rgba(0, 0, 0, 0.87)' // Hover state
+                              borderColor: theme.palette.mode === 'dark' ? theme.palette.divider : 'rgba(0, 0, 0, 0.87)'
                             }
                           }
                         }}
@@ -1598,7 +1611,8 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                             border: '1px solid',
                             borderColor: 'divider',
                             height: { xs: '180px', sm: '200px' },
-                            backgroundColor: '#f5f5f5',
+                            backgroundColor:
+                              theme.palette.mode === 'dark' ? alpha(theme.palette.common.black, 0.3) : '#f5f5f5',
                             position: 'relative'
                           }}
                         >
@@ -1608,7 +1622,10 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                               width='100%'
                               height='100%'
                               controls
-                              style={{ backgroundColor: '#f5f5f5' }}
+                              style={{
+                                backgroundColor:
+                                  theme.palette.mode === 'dark' ? alpha(theme.palette.common.black, 0.3) : '#f5f5f5'
+                              }}
                             />
                           ) : (
                             <Box
@@ -1666,7 +1683,8 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              backgroundColor: '#f5f5f5'
+                              backgroundColor:
+                                theme.palette.mode === 'dark' ? alpha(theme.palette.common.black, 0.3) : '#f5f5f5'
                             }}
                           >
                             <img
@@ -1677,7 +1695,10 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                                 height: '100%',
                                 objectFit: 'cover',
                                 borderRadius: 4,
-                                border: '1px solid #e0e0e0'
+                                border: `1px solid ${alpha(
+                                  theme.palette.divider,
+                                  theme.palette.mode === 'dark' ? 0.3 : 0.5
+                                )}`
                               }}
                             />
                             <Box
@@ -1687,7 +1708,10 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                                 right: { xs: 4, sm: 8 },
                                 display: 'flex',
                                 gap: 0.5,
-                                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                backgroundColor:
+                                  theme.palette.mode === 'dark'
+                                    ? alpha(theme.palette.background.paper, 0.9)
+                                    : 'rgba(255, 255, 255, 0.9)',
                                 borderRadius: 1,
                                 p: 0.5,
                                 boxShadow: 1,
@@ -1699,8 +1723,16 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                                 size='small'
                                 onClick={triggerFileInput}
                                 sx={{
-                                  backgroundColor: 'rgba(0, 0, 0, 0.04)',
-                                  '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.08)' }
+                                  backgroundColor:
+                                    theme.palette.mode === 'dark'
+                                      ? alpha(theme.palette.action.hover, 0.5)
+                                      : 'rgba(0, 0, 0, 0.04)',
+                                  '&:hover': {
+                                    backgroundColor:
+                                      theme.palette.mode === 'dark'
+                                        ? alpha(theme.palette.action.hover, 0.7)
+                                        : 'rgba(0, 0, 0, 0.08)'
+                                  }
                                 }}
                               >
                                 <EditIcon fontSize='small' />
@@ -1718,8 +1750,13 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
                                   validateField('thumbnailPoster', updatingFormData)
                                 }}
                                 sx={{
-                                  backgroundColor: 'rgba(0, 0, 0, 0.04)',
-                                  '&:hover': { backgroundColor: 'rgba(211, 47, 47, 0.1)' }
+                                  backgroundColor:
+                                    theme.palette.mode === 'dark'
+                                      ? alpha(theme.palette.action.hover, 0.5)
+                                      : 'rgba(0, 0, 0, 0.04)',
+                                  '&:hover': {
+                                    backgroundColor: alpha(theme.palette.error.main, 0.1)
+                                  }
                                 }}
                               >
                                 <DeleteIcon fontSize='small' />
@@ -1972,7 +2009,13 @@ const GameForm = ({ onSubmit, quizzes, onCancel, data = null }) => {
               {/* Form Actions */}
               <Grid item xs={12} sx={{ mt: { xs: 2, sm: 3, md: 4 } }}>
                 <Stack direction='row' spacing={2} justifyContent='center' sx={{ width: '100%' }}>
-                  <Button variant='outlined' onClick={onCancel}>
+                  <Button
+                    variant='outlined'
+                    onClick={onCancel}
+                    sx={{
+                      color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary
+                    }}
+                  >
                     Cancel
                   </Button>
                   <Button

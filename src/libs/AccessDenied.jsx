@@ -12,6 +12,7 @@ const AccessDenied = () => (
       <Button
         className='mt-2 px-6 py-2'
         variant='contained'
+        component='label'
         onClick={() => (window.location.href = '/')} // Redirects to homepage or login page
       >
         Go to Home

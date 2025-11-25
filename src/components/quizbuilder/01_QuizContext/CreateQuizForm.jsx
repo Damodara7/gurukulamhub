@@ -16,8 +16,10 @@ import {
   FormControl,
   InputLabel,
   MenuItem,
-  Select
+  Select,
+  useTheme
 } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import {
   Add as AddIcon,
   Remove as RemoveIcon,
@@ -54,6 +56,7 @@ const CreateQuizForm = ({
   isAdmin = false,
   onFieldInteraction = () => {}
 }) => {
+  const theme = useTheme()
   const [isGenericPopupOpen, setIsGenericPopupOpen] = useState(false)
   const fileInputRef = useRef(null)
 
@@ -344,7 +347,7 @@ const CreateQuizForm = ({
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              backgroundColor: '#f5f5f5' // Light gray background for error state
+                              backgroundColor: theme.palette.background.default
                             }}
                           >
                             <img
@@ -355,7 +358,7 @@ const CreateQuizForm = ({
                                 height: '200px',
                                 objectFit: 'cover',
                                 borderRadius: 4,
-                                border: '1px solid #e0e0e0',
+                                border: `1px solid ${theme.palette.divider}`,
                                 position: 'absolute'
                               }}
                             />
@@ -366,7 +369,10 @@ const CreateQuizForm = ({
                                 right: 8,
                                 display: 'flex',
                                 gap: 1,
-                                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                backgroundColor:
+                                  theme.palette.mode === 'dark'
+                                    ? alpha(theme.palette.background.paper, 0.9)
+                                    : 'rgba(255, 255, 255, 0.9)',
                                 borderRadius: 1,
                                 p: 0.5,
                                 boxShadow: 1,
@@ -378,7 +384,12 @@ const CreateQuizForm = ({
                                 color='primary'
                                 size='small'
                                 onClick={() => fileInputRef.current?.click()}
-                                sx={{ backgroundColor: 'rgba(0, 0, 0, 0.04)' }}
+                                sx={{
+                                  backgroundColor: alpha(
+                                    theme.palette.action.active,
+                                    theme.palette.mode === 'dark' ? 0.1 : 0.04
+                                  )
+                                }}
                                 disabled={loading}
                               >
                                 <EditIcon fontSize='small' />
@@ -393,7 +404,12 @@ const CreateQuizForm = ({
                                   setTheFormValue('thumbnail', '')
                                   onFieldInteraction('thumbnail', true)
                                 }}
-                                sx={{ backgroundColor: 'rgba(0, 0, 0, 0.04)' }}
+                                sx={{
+                                  backgroundColor: alpha(
+                                    theme.palette.action.active,
+                                    theme.palette.mode === 'dark' ? 0.1 : 0.04
+                                  )
+                                }}
                                 disabled={loading}
                               >
                                 <DeleteIcon fontSize='small' />
@@ -405,17 +421,18 @@ const CreateQuizForm = ({
                             onClick={!loading ? () => fileInputRef.current?.click() : undefined}
                             sx={{
                               height: '200px',
-                              border: '2px dashed #e0e0e0',
-                              borderColor: fieldErrors.thumbnail ? 'error.main' : 'divider',
+                              border: `2px dashed ${
+                                fieldErrors.thumbnail ? theme.palette.error.main : theme.palette.divider
+                              }`,
                               borderRadius: 1,
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
                               cursor: loading ? 'not-allowed' : 'pointer',
-                              backgroundColor: 'action.hover',
+                              backgroundColor: theme.palette.action.hover,
                               opacity: loading ? 0.7 : 1,
                               '&:hover': {
-                                backgroundColor: 'action.selected'
+                                backgroundColor: theme.palette.action.selected
                               }
                             }}
                           >

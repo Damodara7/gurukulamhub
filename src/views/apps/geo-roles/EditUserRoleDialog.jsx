@@ -128,8 +128,11 @@ const EditUserRoleDialog = ({ open, setOpen, userData, refreshUsers, roles = [],
           my: { xs: 4, sm: 6 },
           maxHeight: { xs: '80dvh', sm: '86dvh' },
           width: '100%',
-          backgroundColor: '#ffffff',
-          boxShadow: '0 18px 44px rgba(15,15,45,0.18)',
+          backgroundColor: theme.palette.background.paper,
+          boxShadow:
+            theme.palette.mode === 'dark'
+              ? `0 18px 44px ${alpha(theme.palette.common.black, 0.5)}`
+              : '0 18px 44px rgba(15,15,45,0.18)',
           border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`
         }
       }}
@@ -139,7 +142,7 @@ const EditUserRoleDialog = ({ open, setOpen, userData, refreshUsers, roles = [],
           px: { xs: 3, sm: 4.5 },
           py: { xs: 2.75, sm: 3.25 },
           borderBottom: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
-          backgroundColor: '#ffffff'
+          backgroundColor: theme.palette.background.paper
         }}
       >
         <Box
@@ -324,7 +327,7 @@ const EditUserRoleDialog = ({ open, setOpen, userData, refreshUsers, roles = [],
           py: { xs: 2.5, sm: 3 },
           mt: { xs: 2, sm: 0 },
           gap: { xs: 1.5, sm: 2 },
-          backgroundColor: alpha(theme.palette.primary.main, 0.06),
+          backgroundColor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.12 : 0.06),
           borderTop: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
           '& > .MuiButton-root': {
             minWidth: 120,
@@ -332,7 +335,16 @@ const EditUserRoleDialog = ({ open, setOpen, userData, refreshUsers, roles = [],
           }
         }}
       >
-        <Button variant='outlined' color='secondary' onClick={() => setOpen(false)}>
+        <Button variant='outlined' color='secondary' onClick={() => setOpen(false)}
+          sx={{
+            color: theme.palette.mode === 'dark' ? '#ffffff' : undefined,
+            borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.23)' : undefined,
+            '&:hover': {
+              borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : undefined,
+              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : undefined
+            }
+          }}
+        >
           Cancel
         </Button>
         <Button variant='contained' component='label' style={{ color: 'white' }} onClick={handleSubmit}>

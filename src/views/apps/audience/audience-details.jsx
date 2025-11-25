@@ -398,8 +398,11 @@ const AudienceDetailsPage = ({ audienceId, audienceData, gamesData = [] }) => {
       <Box
         sx={{
           backdropFilter: 'blur(20px)',
-          bgcolor: alpha('#fff', 0.7),
-          borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+          bgcolor:
+            theme.palette.mode === 'dark'
+              ? alpha(theme.palette.background.paper, 0.8)
+              : alpha(theme.palette.background.paper, 0.7),
+          borderBottom: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
           pt: { xs: 4, md: 6 },
           pb: { xs: 4, md: 6 }
         }}
@@ -409,10 +412,13 @@ const AudienceDetailsPage = ({ audienceId, audienceData, gamesData = [] }) => {
             {/* Icon and Title */}
             <Box
               sx={{
-                display: 'inline-flex',
+                display: 'flex',
                 alignItems: 'center',
+                justifyContent: 'center',
                 gap: 2,
-                mb: 2
+                mb: 2,
+                width: '100%',
+                flexWrap: { xs: 'wrap', sm: 'nowrap' }
               }}
             >
               <Box
@@ -424,7 +430,8 @@ const AudienceDetailsPage = ({ audienceId, audienceData, gamesData = [] }) => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`
+                  boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`,
+                  flexShrink: 0
                 }}
               >
                 <i className='ri-team-line' style={{ fontSize: '28px', color: 'white' }} />
@@ -436,17 +443,20 @@ const AudienceDetailsPage = ({ audienceId, audienceData, gamesData = [] }) => {
                   background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
-                  width: { xs: '100%', sm: '70%' },
+                  backgroundClip: 'text',
                   letterSpacing: '-0.02em',
+                  lineHeight: 1.3,
+                  textAlign: 'center',
+                  maxWidth: { xs: 'calc(100% - 80px)', sm: 'calc(100% - 100px)', md: '800px' },
+                  minWidth: 0,
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   display: '-webkit-box',
                   WebkitLineClamp: 2,
                   WebkitBoxOrient: 'vertical',
-                  lineHeight: 1.3,
-                  wordBreak: 'break-word',
-                  maxWidth: '100%'
+                  wordBreak: 'break-word'
                 }}
+                title={audienceData?.audienceName || 'Audience Details'}
               >
                 {audienceData?.audienceName || 'Audience Details'}
               </Typography>
@@ -481,11 +491,18 @@ const AudienceDetailsPage = ({ audienceId, audienceData, gamesData = [] }) => {
           sx={{
             mb: { xs: 3, sm: 4 },
             borderRadius: { xs: 2, sm: 2 },
-            boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.08)}`,
-            border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+            background: theme.palette.background.paper,
+            boxShadow:
+              theme.palette.mode === 'dark'
+                ? `0 2px 8px ${alpha(theme.palette.common.black, 0.3)}`
+                : `0 2px 8px ${alpha(theme.palette.primary.main, 0.08)}`,
+            border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
             overflow: 'hidden',
             '&:hover': {
-              boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.12)}`
+              boxShadow:
+                theme.palette.mode === 'dark'
+                  ? `0 4px 16px ${alpha(theme.palette.primary.main, 0.2)}`
+                  : `0 4px 16px ${alpha(theme.palette.primary.main, 0.12)}`
             }
           }}
         >
@@ -646,11 +663,18 @@ const AudienceDetailsPage = ({ audienceId, audienceData, gamesData = [] }) => {
         <Card
           sx={{
             borderRadius: { xs: 2, sm: 2 },
-            boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.08)}`,
-            border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+            background: theme.palette.background.paper,
+            boxShadow:
+              theme.palette.mode === 'dark'
+                ? `0 2px 8px ${alpha(theme.palette.common.black, 0.3)}`
+                : `0 2px 8px ${alpha(theme.palette.primary.main, 0.08)}`,
+            border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
             overflow: 'hidden',
             '&:hover': {
-              boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.12)}`
+              boxShadow:
+                theme.palette.mode === 'dark'
+                  ? `0 4px 16px ${alpha(theme.palette.primary.main, 0.2)}`
+                  : `0 4px 16px ${alpha(theme.palette.primary.main, 0.12)}`
             }
           }}
         >
@@ -753,6 +777,7 @@ const AudienceDetailsPage = ({ audienceId, audienceData, gamesData = [] }) => {
                   border: '1px solid',
                   borderColor: 'divider',
                   borderRadius: 1,
+                  background: theme.palette.background.paper,
                   // Custom scrollbar styling
                   '&::-webkit-scrollbar': {
                     width: '8px'
@@ -898,11 +923,18 @@ const AudienceDetailsPage = ({ audienceId, audienceData, gamesData = [] }) => {
           sx={{
             mt: { xs: 3, sm: 4 },
             borderRadius: { xs: 2, sm: 2 },
-            boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.08)}`,
-            border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+            background: theme.palette.background.paper,
+            boxShadow:
+              theme.palette.mode === 'dark'
+                ? `0 2px 8px ${alpha(theme.palette.common.black, 0.3)}`
+                : `0 2px 8px ${alpha(theme.palette.primary.main, 0.08)}`,
+            border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
             overflow: 'hidden',
             '&:hover': {
-              boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.12)}`
+              boxShadow:
+                theme.palette.mode === 'dark'
+                  ? `0 4px 16px ${alpha(theme.palette.primary.main, 0.2)}`
+                  : `0 4px 16px ${alpha(theme.palette.primary.main, 0.12)}`
             }
           }}
         >
@@ -982,6 +1014,7 @@ const AudienceDetailsPage = ({ audienceId, audienceData, gamesData = [] }) => {
                   border: '1px solid',
                   borderColor: 'divider',
                   borderRadius: 1,
+                  background: theme.palette.background.paper,
                   // Custom scrollbar styling
                   '&::-webkit-scrollbar': {
                     width: '8px'

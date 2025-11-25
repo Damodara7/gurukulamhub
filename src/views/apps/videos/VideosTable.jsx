@@ -19,8 +19,10 @@ import {
   Stack,
   ListItemText,
   Divider,
-  InputAdornment
+  InputAdornment,
+  Box
 } from '@mui/material'
+import { alpha, useTheme } from '@mui/material/styles'
 
 // MUI Icons
 import { DeleteOutline as DeleteOutlineIcon, Edit as EditIcon, PlayArrow as PlayArrowIcon } from '@mui/icons-material'
@@ -119,6 +121,7 @@ const ActionsMenu = ({ anchorEl, handleClose, handleAction }) => (
 const VideosTable = () => {
   // States
   // const dispatch = useAppDispatch()
+  const theme = useTheme()
   const [open, setOpen] = useState(false)
   const [openPlayerDialog, setOpenPlayerDialog] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
@@ -243,7 +246,7 @@ const VideosTable = () => {
               sx={{
                 transition: 'all 0.2s ease-in-out',
                 '&:hover': {
-                  backgroundColor: theme => theme.palette.primary.main + '10',
+                  backgroundColor: theme => alpha(theme.palette.primary.main, 0.1),
                   '& i': {
                     color: 'primary.main'
                   }
@@ -325,7 +328,7 @@ const VideosTable = () => {
     <>
       <Card
         sx={{
-          background: '#ffffff',
+          background: theme.palette.background.paper,
           boxShadow: theme => theme.shadows[3],
           borderRadius: 3,
           overflow: 'hidden',
@@ -442,19 +445,23 @@ const VideosTable = () => {
                       key={row.id}
                       className={classnames({ selected: row.getIsSelected() })}
                       style={{
-                        transition: 'all 0.3s ease-in-out',
                         cursor: 'pointer'
                       }}
                       onMouseEnter={e => {
-                        e.currentTarget.style.backgroundColor = 'rgba(139, 92, 246, 0.08)'
+                        e.currentTarget.style.backgroundColor = alpha(
+                          theme.palette.primary.main,
+                          theme.palette.mode === 'dark' ? 0.15 : 0.08
+                        )
                         e.currentTarget.style.transform = 'scale(1.01)'
-                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(139, 92, 246, 0.15)'
+                        e.currentTarget.style.boxShadow = `0 2px 8px ${alpha(
+                          theme.palette.primary.main,
+                          theme.palette.mode === 'dark' ? 0.25 : 0.15
+                        )}`
                       }}
                       onMouseLeave={e => {
                         if (!row.getIsSelected()) {
                           e.currentTarget.style.backgroundColor = 'transparent'
                         }
-                        e.currentTarget.style.transform = 'scale(1)'
                         e.currentTarget.style.boxShadow = 'none'
                       }}
                     >

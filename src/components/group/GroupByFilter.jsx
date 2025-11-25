@@ -225,7 +225,21 @@ const GroupByFilter = ({
   }, [combinedCriteria, users])
 
   const OperationDialog = ({ open, onClose, onOperationSelect }) => (
-    <Dialog open={open} onClose={onClose} maxWidth='xs' fullWidth>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth='xs'
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: 2,
+          boxShadow:
+            theme.palette.mode === 'dark'
+              ? `0 8px 32px ${alpha(theme.palette.common.black, 0.5)}`
+              : '0 8px 32px rgba(0,0,0,0.12)'
+        }
+      }}
+    >
       <DialogTitle sx={{ pb: 1 }}>Combine Filters</DialogTitle>
       <DialogContent sx={{ pt: 1 }}>
         <Typography variant='body2' sx={{ mb: 2 }}>
@@ -241,7 +255,14 @@ const GroupByFilter = ({
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button
+          onClick={onClose}
+          sx={{
+            color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary
+          }}
+        >
+          Cancel
+        </Button>
       </DialogActions>
     </Dialog>
   )
@@ -868,10 +889,10 @@ const GroupByFilter = ({
                       visibility: 'visible',
                       marginRight: '4px',
                       marginLeft: '0px',
-                      color: 'black',
+                      color: theme.palette.mode === 'dark' ? theme.palette.text.secondary : theme.palette.text.primary,
                       '&:hover': {
                         backgroundColor: 'transparent',
-                        color: 'black'
+                        color: theme.palette.mode === 'dark' ? theme.palette.text.primary : theme.palette.text.primary
                       }
                     },
                     '& .MuiChip-label': {
@@ -947,7 +968,10 @@ const GroupByFilter = ({
         PaperProps={{
           sx: {
             borderRadius: 2,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.12)'
+            boxShadow:
+              theme.palette.mode === 'dark'
+                ? `0 8px 32px ${alpha(theme.palette.common.black, 0.5)}`
+                : '0 8px 32px rgba(0,0,0,0.12)'
           }
         }}
       >
@@ -1125,7 +1149,10 @@ const GroupByFilter = ({
                           alignItems: 'center',
                           gap: 1,
                           p: 2,
-                          bgcolor: 'action.hover',
+                          bgcolor:
+                            theme.palette.mode === 'dark'
+                              ? alpha(theme.palette.action.hover, 0.5)
+                              : theme.palette.action.hover,
                           borderRadius: 2,
                           border: '1px dashed',
                           borderColor: 'divider'
@@ -1136,8 +1163,10 @@ const GroupByFilter = ({
                           style={{
                             width: '20px',
                             height: '20px',
-                            border: '2px solid #e3e3e3',
-                            borderTop: '2px solid #1976d2',
+                            border: `2px solid ${
+                              theme.palette.mode === 'dark' ? alpha(theme.palette.divider, 0.5) : '#e3e3e3'
+                            }`,
+                            borderTop: `2px solid ${theme.palette.primary.main}`,
                             borderRadius: '50%',
                             animation: 'spin 1s linear infinite'
                           }}
@@ -1211,7 +1240,11 @@ const GroupByFilter = ({
                           <Typography
                             variant='h6'
                             sx={{
-                              color: filters.gender[gender.key] ? 'white' : 'inherit'
+                              color: filters.gender[gender.key]
+                                ? theme.palette.mode === 'dark'
+                                  ? theme.palette.common.white
+                                  : theme.palette.common.white
+                                : 'inherit'
                             }}
                           >
                             {gender.icon}
@@ -1220,7 +1253,11 @@ const GroupByFilter = ({
                             variant='body1'
                             sx={{
                               fontWeight: 500,
-                              color: filters.gender[gender.key] ? 'white' : 'inherit'
+                              color: filters.gender[gender.key]
+                                ? theme.palette.mode === 'dark'
+                                  ? theme.palette.common.white
+                                  : theme.palette.common.white
+                                : 'inherit'
                             }}
                           >
                             {gender.label}
@@ -1250,7 +1287,13 @@ const GroupByFilter = ({
         </DialogContent>
 
         <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={closeFilterDialog} variant='outlined'>
+          <Button
+            onClick={closeFilterDialog}
+            variant='outlined'
+            sx={{
+              color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary
+            }}
+          >
             Cancel
           </Button>
           <Button

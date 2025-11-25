@@ -1,8 +1,10 @@
 import React from 'react'
-import { Grid, Card, CardContent, Typography, Box } from '@mui/material'
+import { Grid, Card, CardContent, Typography, Box, useTheme } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import { EmojiEvents } from '@mui/icons-material'
 
 function GameStatistics({ game }) {
+  const theme = useTheme()
   function formatDuration(seconds) {
     const hrs = Math.floor(seconds / 3600)
     const mins = Math.floor((seconds % 3600) / 60)
@@ -54,116 +56,231 @@ function GameStatistics({ game }) {
 
   return (
     <Grid item xs={12} md={6}>
-      <Card 
+      <Card
         sx={{
           height: '100%',
           borderRadius: '16px',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-          background: 'rgba(255, 255, 255, 0.98)'
+          boxShadow:
+            theme.palette.mode === 'dark'
+              ? `0 4px 20px ${alpha(theme.palette.common.black, 0.4)}`
+              : '0 4px 20px rgba(0, 0, 0, 0.08)',
+          background: theme.palette.background.paper
         }}
       >
-        <CardContent sx={{ p: 3 }}>
-          <Typography 
-            variant='h6' 
-            sx={{ 
-              mb: 3,
+        <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+          <Typography
+            variant='h6'
+            sx={{
+              mb: { xs: 2, sm: 3 },
               fontWeight: 700,
               display: 'flex',
               alignItems: 'center',
               gap: 1,
-              color: '#1a1a1a'
+              color: theme.palette.text.primary,
+              fontSize: { xs: '1rem', sm: '1.25rem' }
             }}
           >
-            <EmojiEvents sx={{ color: '#667eea' }} />
+            <EmojiEvents sx={{ fontSize: { xs: 20, sm: 24 }, color: theme.palette.primary.main }} />
             Game Statistics
           </Typography>
-          <Grid container spacing={3}>
+          <Grid container spacing={{ xs: 1.5, sm: 2, md: 3 }}>
             <Grid item xs={6}>
-              <Box 
-                sx={{ 
+              <Box
+                sx={{
                   textAlign: 'center',
-                  p: 2,
+                  p: { xs: 1.5, sm: 2 },
                   borderRadius: '12px',
-                  background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%)',
+                  background:
+                    theme.palette.mode === 'dark'
+                      ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.15)} 0%, ${alpha(
+                          theme.palette.secondary.main,
+                          0.15
+                        )} 100%)`
+                      : 'linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%)',
                   transition: 'all 0.3s ease',
                   '&:hover': {
-                    background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.12) 0%, rgba(118, 75, 162, 0.12) 100%)',
-                    transform: 'translateY(-2px)'
+                    background:
+                      theme.palette.mode === 'dark'
+                        ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.2)} 0%, ${alpha(
+                            theme.palette.secondary.main,
+                            0.2
+                          )} 100%)`
+                        : 'linear-gradient(135deg, rgba(102, 126, 234, 0.12) 0%, rgba(118, 75, 162, 0.12) 100%)',
+                    transform: { xs: 'none', sm: 'translateY(-2px)' }
                   }
                 }}
               >
-                <Typography variant='h3' sx={{ fontWeight: 800, color: '#667eea' }}>
+                <Typography
+                  variant='h3'
+                  sx={{
+                    fontWeight: 800,
+                    color: theme.palette.primary.main,
+                    fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' }
+                  }}
+                >
                   {game.registeredUsers.length}
                 </Typography>
-                <Typography variant='body2' sx={{ color: '#666', fontWeight: 600, mt: 0.5 }}>
+                <Typography
+                  variant='body2'
+                  sx={{
+                    color: theme.palette.text.secondary,
+                    fontWeight: 600,
+                    mt: 0.5,
+                    fontSize: { xs: '0.7rem', sm: '0.875rem' }
+                  }}
+                >
                   Registered Users
                 </Typography>
               </Box>
             </Grid>
             <Grid item xs={6}>
-              <Box 
-                sx={{ 
+              <Box
+                sx={{
                   textAlign: 'center',
-                  p: 2,
+                  p: { xs: 1.5, sm: 2 },
                   borderRadius: '12px',
-                  background: 'linear-gradient(135deg, rgba(76, 175, 80, 0.08) 0%, rgba(139, 195, 74, 0.08) 100%)',
+                  background:
+                    theme.palette.mode === 'dark'
+                      ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.15)} 0%, ${alpha(
+                          theme.palette.success.light,
+                          0.15
+                        )} 100%)`
+                      : 'linear-gradient(135deg, rgba(76, 175, 80, 0.08) 0%, rgba(139, 195, 74, 0.08) 100%)',
                   transition: 'all 0.3s ease',
                   '&:hover': {
-                    background: 'linear-gradient(135deg, rgba(76, 175, 80, 0.12) 0%, rgba(139, 195, 74, 0.12) 100%)',
-                    transform: 'translateY(-2px)'
+                    background:
+                      theme.palette.mode === 'dark'
+                        ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.2)} 0%, ${alpha(
+                            theme.palette.success.light,
+                            0.2
+                          )} 100%)`
+                        : 'linear-gradient(135deg, rgba(76, 175, 80, 0.12) 0%, rgba(139, 195, 74, 0.12) 100%)',
+                    transform: { xs: 'none', sm: 'translateY(-2px)' }
                   }
                 }}
               >
-                <Typography variant='h3' sx={{ fontWeight: 800, color: '#4caf50' }}>
+                <Typography
+                  variant='h3'
+                  sx={{
+                    fontWeight: 800,
+                    color: theme.palette.success.main,
+                    fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' }
+                  }}
+                >
                   {game.participatedUsers.length}
                 </Typography>
-                <Typography variant='body2' sx={{ color: '#666', fontWeight: 600, mt: 0.5 }}>
+                <Typography
+                  variant='body2'
+                  sx={{
+                    color: theme.palette.text.secondary,
+                    fontWeight: 600,
+                    mt: 0.5,
+                    fontSize: { xs: '0.7rem', sm: '0.875rem' }
+                  }}
+                >
                   Participants
                 </Typography>
               </Box>
             </Grid>
             <Grid item xs={6}>
-              <Box 
-                sx={{ 
+              <Box
+                sx={{
                   textAlign: 'center',
-                  p: 2,
+                  p: { xs: 1.5, sm: 2 },
                   borderRadius: '12px',
-                  background: 'linear-gradient(135deg, rgba(255, 152, 0, 0.08) 0%, rgba(251, 140, 0, 0.08) 100%)',
+                  background:
+                    theme.palette.mode === 'dark'
+                      ? `linear-gradient(135deg, ${alpha(theme.palette.warning.main, 0.15)} 0%, ${alpha(
+                          theme.palette.warning.dark,
+                          0.15
+                        )} 100%)`
+                      : 'linear-gradient(135deg, rgba(255, 152, 0, 0.08) 0%, rgba(251, 140, 0, 0.08) 100%)',
                   transition: 'all 0.3s ease',
                   '&:hover': {
-                    background: 'linear-gradient(135deg, rgba(255, 152, 0, 0.12) 0%, rgba(251, 140, 0, 0.12) 100%)',
-                    transform: 'translateY(-2px)'
+                    background:
+                      theme.palette.mode === 'dark'
+                        ? `linear-gradient(135deg, ${alpha(theme.palette.warning.main, 0.2)} 0%, ${alpha(
+                            theme.palette.warning.dark,
+                            0.2
+                          )} 100%)`
+                        : 'linear-gradient(135deg, rgba(255, 152, 0, 0.12) 0%, rgba(251, 140, 0, 0.12) 100%)',
+                    transform: { xs: 'none', sm: 'translateY(-2px)' }
                   }
                 }}
               >
-                <Typography variant='h3' sx={{ fontWeight: 800, color: '#ff9800', fontSize: game?.forwardType === 'admin' && game?.status !== 'completed' ? '1.2rem' : '2rem' }}>
+                <Typography
+                  variant='h3'
+                  sx={{
+                    fontWeight: 800,
+                    color: theme.palette.warning.main,
+                    fontSize:
+                      game?.forwardType === 'admin' && game?.status !== 'completed'
+                        ? { xs: '1rem', sm: '1.2rem' }
+                        : { xs: '1.5rem', sm: '2rem', md: '2.5rem' }
+                  }}
+                >
                   {game?.forwardType === 'admin' && game?.status !== 'completed'
                     ? 'Admin'
                     : formatDuration(game?.duration)}
                 </Typography>
-                <Typography variant='body2' sx={{ color: '#666', fontWeight: 600, mt: 0.5 }}>
+                <Typography
+                  variant='body2'
+                  sx={{
+                    color: theme.palette.text.secondary,
+                    fontWeight: 600,
+                    mt: 0.5,
+                    fontSize: { xs: '0.7rem', sm: '0.875rem' }
+                  }}
+                >
                   Duration
                 </Typography>
               </Box>
             </Grid>
             <Grid item xs={6}>
-              <Box 
-                sx={{ 
+              <Box
+                sx={{
                   textAlign: 'center',
-                  p: 2,
+                  p: { xs: 1.5, sm: 2 },
                   borderRadius: '12px',
-                  background: 'linear-gradient(135deg, rgba(239, 83, 80, 0.08) 0%, rgba(229, 57, 53, 0.08) 100%)',
+                  background:
+                    theme.palette.mode === 'dark'
+                      ? `linear-gradient(135deg, ${alpha(theme.palette.error.main, 0.15)} 0%, ${alpha(
+                          theme.palette.error.dark,
+                          0.15
+                        )} 100%)`
+                      : 'linear-gradient(135deg, rgba(239, 83, 80, 0.08) 0%, rgba(229, 57, 53, 0.08) 100%)',
                   transition: 'all 0.3s ease',
                   '&:hover': {
-                    background: 'linear-gradient(135deg, rgba(239, 83, 80, 0.12) 0%, rgba(229, 57, 53, 0.12) 100%)',
-                    transform: 'translateY(-2px)'
+                    background:
+                      theme.palette.mode === 'dark'
+                        ? `linear-gradient(135deg, ${alpha(theme.palette.error.main, 0.2)} 0%, ${alpha(
+                            theme.palette.error.dark,
+                            0.2
+                          )} 100%)`
+                        : 'linear-gradient(135deg, rgba(239, 83, 80, 0.12) 0%, rgba(229, 57, 53, 0.12) 100%)',
+                    transform: { xs: 'none', sm: 'translateY(-2px)' }
                   }
                 }}
               >
-                <Typography variant='h3' sx={{ fontWeight: 800, color: '#ef5350' }}>
+                <Typography
+                  variant='h3'
+                  sx={{
+                    fontWeight: 800,
+                    color: theme.palette.error.main,
+                    fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' }
+                  }}
+                >
                   {game.rewards.length}
                 </Typography>
-                <Typography variant='body2' sx={{ color: '#666', fontWeight: 600, mt: 0.5 }}>
+                <Typography
+                  variant='body2'
+                  sx={{
+                    color: theme.palette.text.secondary,
+                    fontWeight: 600,
+                    mt: 0.5,
+                    fontSize: { xs: '0.7rem', sm: '0.875rem' }
+                  }}
+                >
                   Reward Tiers
                 </Typography>
               </Box>

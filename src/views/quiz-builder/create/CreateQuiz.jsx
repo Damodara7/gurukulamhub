@@ -248,8 +248,11 @@ function CreateQuiz({ isAdmin = false }) {
         <Box
           sx={{
             backdropFilter: 'blur(20px)',
-            bgcolor: alpha('#fff', 0.7),
-            borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+            bgcolor:
+              theme.palette.mode === 'dark'
+                ? alpha(theme.palette.background.paper, 0.8)
+                : alpha(theme.palette.background.paper, 0.7),
+            borderBottom: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
             pt: { xs: 4, md: 6 },
             pb: { xs: 4, md: 6 }
           }}
@@ -314,11 +317,18 @@ function CreateQuiz({ isAdmin = false }) {
           <Card
             sx={{
               borderRadius: 2,
-              boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.08)}`,
-              border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+              background: theme.palette.background.paper,
+              boxShadow:
+                theme.palette.mode === 'dark'
+                  ? `0 2px 8px ${alpha(theme.palette.common.black, 0.3)}`
+                  : `0 2px 8px ${alpha(theme.palette.primary.main, 0.08)}`,
+              border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
               overflow: 'hidden',
               '&:hover': {
-                boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.12)}`
+                boxShadow:
+                  theme.palette.mode === 'dark'
+                    ? `0 4px 16px ${alpha(theme.palette.common.black, 0.4)}`
+                    : `0 4px 16px ${alpha(theme.palette.primary.main, 0.12)}`
               }
             }}
           >
@@ -344,6 +354,9 @@ function CreateQuiz({ isAdmin = false }) {
                   <Button
                     variant='outlined'
                     onClick={() => router.push(`/${isAdmin ? 'management/quizzes' : 'myquizzes'}/view`)}
+                    sx={{
+                      color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary
+                    }}
                   >
                     Cancel
                   </Button>

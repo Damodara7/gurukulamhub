@@ -402,7 +402,7 @@ const GeoRolesTable = ({ tableData, refreshUsers }) => {
   return (
     <Card
       sx={{
-        background: '#ffffff',
+        background: theme.palette.background.paper,
         boxShadow: theme => theme.shadows[3],
         borderRadius: 3,
         overflow: 'hidden',
@@ -567,12 +567,15 @@ const GeoRolesTable = ({ tableData, refreshUsers }) => {
                     sx={{
                       borderRadius: 3,
                       border: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
-                      boxShadow: '0 12px 30px rgba(15, 23, 42, 0.08)',
+                      boxShadow:
+                        theme.palette.mode === 'dark'
+                          ? `0 12px 30px ${alpha(theme.palette.common.black, 0.3)}`
+                          : '0 12px 30px rgba(15, 23, 42, 0.08)',
                       p: 2,
                       display: 'flex',
                       flexDirection: 'column',
                       gap: 1.5,
-                      background: '#fff'
+                      background: theme.palette.background.paper
                     }}
                   >
                     <Stack
@@ -711,8 +714,14 @@ const GeoRolesTable = ({ tableData, refreshUsers }) => {
                       cursor: 'pointer'
                     }}
                     onMouseEnter={e => {
-                      e.currentTarget.style.backgroundColor = 'rgba(139, 92, 246, 0.08)'
-                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(139, 92, 246, 0.15)'
+                      e.currentTarget.style.backgroundColor = alpha(
+                        theme.palette.primary.main,
+                        theme.palette.mode === 'dark' ? 0.15 : 0.08
+                      )
+                      e.currentTarget.style.boxShadow = `0 2px 8px ${alpha(
+                        theme.palette.primary.main,
+                        theme.palette.mode === 'dark' ? 0.25 : 0.15
+                      )}`
                     }}
                     onMouseLeave={e => {
                       if (!row.getIsSelected()) {

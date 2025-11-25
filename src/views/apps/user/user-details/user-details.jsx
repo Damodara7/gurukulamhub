@@ -74,22 +74,28 @@ function StatCard({ icon, label, value, tooltip }) {
   return (
     <Card
       sx={{
-        p: { xs: 2, sm: 2.5, md: 3 },
+        p: { xs: 1.5, sm: 2.5, md: 3 },
         borderRadius: { xs: '12px', sm: '16px' },
         textAlign: 'center',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: 1.5,
-        background: '#ffffff',
-        border: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+        gap: { xs: 1, sm: 1.5 },
+        background: theme.palette.background.paper,
+        border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
+        boxShadow:
+          theme.palette.mode === 'dark'
+            ? `0 2px 8px ${alpha(theme.palette.common.black, 0.4)}`
+            : '0 2px 8px rgba(0, 0, 0, 0.04)',
         transition: 'all 0.3s ease',
-        minHeight: isXs ? 'auto' : 180,
+        minHeight: isXs ? 'auto' : { sm: 160, md: 180 },
         '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.12)}`,
-          borderColor: alpha(theme.palette.primary.main, 0.2)
+          transform: { xs: 'none', sm: 'translateY(-4px)' },
+          boxShadow:
+            theme.palette.mode === 'dark'
+              ? `0 8px 24px ${alpha(theme.palette.primary.main, 0.2)}`
+              : `0 8px 24px ${alpha(theme.palette.primary.main, 0.12)}`,
+          borderColor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.3 : 0.2)
         }
       }}
     >
@@ -104,6 +110,13 @@ function StatCard({ icon, label, value, tooltip }) {
       >
         {icon}
       </Box>
+      <Typography
+        variant='caption'
+        color='text.secondary'
+        sx={{ fontSize: { xs: 11, sm: 12, md: 13 }, fontWeight: 600 }}
+      >
+        {label}
+      </Typography>
       {isEmail ? (
         <Tooltip title={value} arrow>
           <Typography
@@ -155,19 +168,13 @@ function StatCard({ icon, label, value, tooltip }) {
           {value}
         </Typography>
       )}
-      <Typography
-        variant='caption'
-        color='text.secondary'
-        sx={{ fontSize: { xs: 11, sm: 12, md: 13 }, fontWeight: 600 }}
-      >
-        {label}
-      </Typography>
     </Card>
   )
 }
 
 function CopyableText({ value }) {
   const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const [copied, setCopied] = useState(false)
   const handleCopy = () => {
     navigator.clipboard.writeText(value)
@@ -180,15 +187,23 @@ function CopyableText({ value }) {
       alignItems='center'
       spacing={1}
       sx={{
-        backgroundColor: alpha(theme.palette.primary.main, 0.04),
-        px: 1.5,
-        py: 0.75,
+        backgroundColor:
+          theme.palette.mode === 'dark'
+            ? alpha(theme.palette.primary.main, 0.1)
+            : alpha(theme.palette.primary.main, 0.04),
+        px: { xs: 1, sm: 1.5 },
+        py: { xs: 0.5, sm: 0.75 },
         borderRadius: '8px',
-        border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+        border: `1px solid ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.2 : 0.1)}`,
         transition: 'all 0.2s ease',
+        flex: 1,
+        minWidth: 0,
         '&:hover': {
-          backgroundColor: alpha(theme.palette.primary.main, 0.08),
-          borderColor: alpha(theme.palette.primary.main, 0.2)
+          backgroundColor:
+            theme.palette.mode === 'dark'
+              ? alpha(theme.palette.primary.main, 0.15)
+              : alpha(theme.palette.primary.main, 0.08),
+          borderColor: alpha(theme.palette.primary.main, 0.3)
         }
       }}
     >
@@ -197,25 +212,28 @@ function CopyableText({ value }) {
         sx={{
           wordBreak: 'break-all',
           fontFamily: 'monospace',
-          fontSize: '0.875rem',
+          fontSize: { xs: '0.75rem', sm: '0.875rem' },
           color: 'text.primary',
-          fontWeight: 600
+          fontWeight: 600,
+          flex: 1,
+          minWidth: 0
         }}
       >
         {value}
       </Typography>
       <Tooltip title={copied ? 'Copied!' : 'Copy'}>
         <IconButton
-          size='small'
+          size={isMobile ? 'small' : 'medium'}
           onClick={handleCopy}
           sx={{
+            flexShrink: 0,
             '&:hover': {
-              backgroundColor: alpha(theme.palette.primary.main, 0.1),
+              backgroundColor: alpha(theme.palette.primary.main, 0.15),
               color: theme.palette.primary.main
             }
           }}
         >
-          <ContentCopyIcon fontSize='small' />
+          <ContentCopyIcon fontSize={isMobile ? 'small' : 'medium'} />
         </IconButton>
       </Tooltip>
     </Stack>
@@ -223,6 +241,7 @@ function CopyableText({ value }) {
 }
 
 function StatusBadge({ active }) {
+  const theme = useTheme()
   return (
     <Badge
       overlap='circular'
@@ -234,7 +253,7 @@ function StatusBadge({ active }) {
           height: 16,
           minWidth: 16,
           borderRadius: 8,
-          border: '2px solid #fff',
+          border: `2px solid ${theme.palette.background.paper}`,
           boxShadow: 1
         }
       }}
@@ -246,37 +265,45 @@ function StatusBadge({ active }) {
 
 function InfoCard({ icon, title, children, sx }) {
   const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   return (
     <Card
       sx={{
         borderRadius: { xs: '12px', sm: '16px' },
-        mb: 3,
-        boxShadow: '0 2px 12px rgba(0, 0, 0, 0.06)',
-        border: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+        mb: { xs: 2, sm: 3 },
+        boxShadow:
+          theme.palette.mode === 'dark'
+            ? `0 2px 12px ${alpha(theme.palette.common.black, 0.4)}`
+            : '0 2px 12px rgba(0, 0, 0, 0.06)',
+        border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
         overflow: 'hidden',
-        background: '#ffffff',
+        background: theme.palette.background.paper,
         transition: 'all 0.3s ease',
         '&:hover': {
-          boxShadow: `0 6px 24px ${alpha(theme.palette.primary.main, 0.12)}`,
-          transform: 'translateY(-2px)'
+          boxShadow:
+            theme.palette.mode === 'dark'
+              ? `0 6px 24px ${alpha(theme.palette.primary.main, 0.2)}`
+              : `0 6px 24px ${alpha(theme.palette.primary.main, 0.12)}`,
+          transform: { xs: 'none', sm: 'translateY(-2px)' }
         },
         ...sx
       }}
     >
       <Box
         sx={{
-          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
-          p: { xs: 2, sm: 2.5 }
+          borderBottom: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
+          p: { xs: 1.5, sm: 2.5 }
         }}
       >
         <Stack direction='row' alignItems='center' spacing={1.5}>
           <Box
             sx={{
               color: theme.palette.primary.main,
-              fontSize: 28,
+              fontSize: { xs: 24, sm: 28 },
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              flexShrink: 0
             }}
           >
             {icon}
@@ -285,20 +312,23 @@ function InfoCard({ icon, title, children, sx }) {
             variant='h6'
             sx={{
               fontWeight: 700,
-              fontSize: { xs: '1rem', sm: '1.125rem' },
-              color: 'text.primary'
+              fontSize: { xs: '0.9375rem', sm: '1.125rem' },
+              color: 'text.primary',
+              wordBreak: 'break-word'
             }}
           >
             {title}
           </Typography>
         </Stack>
       </Box>
-      <CardContent sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>{children}</CardContent>
+      <CardContent sx={{ p: { xs: 1.5, sm: 2.5, md: 3 } }}>{children}</CardContent>
     </Card>
   )
 }
 
 function ReferralCard({ referralToken }) {
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const { lang: locale } = useParams() || { lang: 'en' }
   const [copied, setCopied] = useState(false)
   const referralLink = `${process.env.NEXT_PUBLIC_APP_URL}/${locale}/auth/register?ref=${referralToken}`
@@ -310,63 +340,77 @@ function ReferralCard({ referralToken }) {
   return (
     <InfoCard icon={<ShareIcon />} title='Referral & Rewards' sx={{ mb: 3 }}>
       <Stack spacing={2}>
-        <Typography variant='body2' color='text.secondary'>
+        <Typography variant='body2' color='text.secondary' sx={{ fontSize: { xs: '0.875rem', sm: '0.9375rem' } }}>
           Share your referral link and earn rewards when your friends join!
         </Typography>
         <OutlinedInput
           fullWidth
-          size='small'
+          size={isMobile ? 'small' : 'medium'}
           value={referralLink}
           readOnly
+          sx={{
+            '& .MuiOutlinedInput-input': {
+              fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+              color: 'text.primary'
+            },
+            backgroundColor:
+              theme.palette.mode === 'dark' ? alpha(theme.palette.background.default, 0.5) : 'transparent'
+          }}
           endAdornment={
             <InputAdornment position='end'>
               <Tooltip title={copied ? 'Copied!' : 'Copy link'}>
-                <IconButton onClick={handleCopy} size='small'>
-                  <ContentCopyIcon fontSize='small' />
+                <IconButton onClick={handleCopy} size={isMobile ? 'small' : 'medium'}>
+                  <ContentCopyIcon fontSize={isMobile ? 'small' : 'medium'} />
                 </IconButton>
               </Tooltip>
             </InputAdornment>
           }
         />
-        <Stack direction='row' spacing={1} flexWrap='wrap' alignItems='center'>
+        <Stack
+          direction='row'
+          spacing={1}
+          flexWrap='wrap'
+          alignItems='center'
+          justifyContent={{ xs: 'center', sm: 'flex-start' }}
+        >
           <WhatsappShareButton
             url={referralLink}
             title={`Join me on GurukulamHub! Sign up and earn rewards: ${referralLink}`}
             separator='\n'
           >
-            <WhatsappIcon size={32} round />
+            <WhatsappIcon size={isMobile ? 28 : 32} round />
           </WhatsappShareButton>
           <FacebookShareButton
             url={referralLink}
             quote={`Join me on GurukulamHub! Sign up and earn rewards: ${referralLink}`}
           >
-            <FacebookShareIcon size={32} round />
+            <FacebookShareIcon size={isMobile ? 28 : 32} round />
           </FacebookShareButton>
           <TelegramShareButton
             url={referralLink}
             title={`Join me on GurukulamHub! Sign up and earn rewards: ${referralLink}`}
           >
-            <TelegramIcon round />
+            <TelegramIcon size={isMobile ? 28 : 32} round />
           </TelegramShareButton>
           <TwitterShareButton
             url={referralLink}
             title={`Join me on GurukulamHub! Sign up and earn rewards: ${referralLink}`}
           >
-            <TwitterIcon size={32} round />
+            <TwitterIcon size={isMobile ? 28 : 32} round />
           </TwitterShareButton>
           <LinkedinShareButton
             url={referralLink}
             title='Join me on GurukulamHub!'
             summary={`Sign up and earn rewards: ${referralLink}`}
           >
-            <LinkedinIcon size={32} round />
+            <LinkedinIcon size={isMobile ? 28 : 32} round />
           </LinkedinShareButton>
           <EmailShareButton
             url={referralLink}
             subject='Join me on GurukulamHub!'
             body={`Sign up and earn rewards: ${referralLink}`}
           >
-            <EmailShareIcon size={32} round />
+            <EmailShareIcon size={isMobile ? 28 : 32} round />
           </EmailShareButton>
         </Stack>
       </Stack>
@@ -526,14 +570,23 @@ function EnhancedProfileCard({ profile }) {
                     href={item.value}
                     target='_blank'
                     rel='noopener noreferrer'
-                    style={{ textDecoration: 'none', wordBreak: 'break-all' }}
+                    style={{
+                      textDecoration: 'none',
+                      wordBreak: 'break-all',
+                      color: 'inherit'
+                    }}
                   >
                     <Chip
                       label={item.label}
                       icon={<LinkIcon fontSize='small' />}
                       color='primary'
                       size='small'
-                      sx={{ maxWidth: { xs: '100%', sm: 220 } }}
+                      sx={{
+                        maxWidth: { xs: '100%', sm: 220 },
+                        '&:hover': {
+                          opacity: 0.8
+                        }
+                      }}
                     />
                   </a>
                 ) : (
@@ -632,8 +685,19 @@ function EnhancedProfileCard({ profile }) {
                     <Typography variant='body2' sx={{ wordBreak: 'break-word' }}>
                       {org.organization} {org.organizationType && `(${org.organizationType})`}{' '}
                       {org.websiteUrl && (
-                        <a href={org.websiteUrl} target='_blank' rel='noopener noreferrer'>
-                          <LinkIcon fontSize='small' />
+                        <a
+                          href={org.websiteUrl}
+                          target='_blank'
+                          rel='noopener noreferrer'
+                          style={{
+                            color: 'inherit',
+                            textDecoration: 'none',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            marginLeft: '4px'
+                          }}
+                        >
+                          <LinkIcon fontSize='small' sx={{ color: theme.palette.primary.main }} />
                         </a>
                       )}
                     </Typography>
@@ -683,6 +747,7 @@ function EnhancedProfileCard({ profile }) {
 
 function UserDetailsPage({ data }) {
   const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
 
   if (!data)
     return (
@@ -731,27 +796,43 @@ function UserDetailsPage({ data }) {
       <Stack spacing={2.5}>
         <Box
           sx={{
-            p: 2,
+            p: { xs: 1.5, sm: 2 },
             borderRadius: '12px',
-            background: alpha(theme.palette.background.paper, 0.5),
-            border: `1px solid ${alpha(theme.palette.divider, 0.08)}`
+            background:
+              theme.palette.mode === 'dark'
+                ? alpha(theme.palette.background.default, 0.5)
+                : alpha(theme.palette.background.paper, 0.5),
+            border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`
           }}
         >
           <Stack spacing={1.5}>
-            <Stack direction='row' spacing={1.5} alignItems='center'>
+            <Stack
+              direction='row'
+              spacing={{ xs: 1, sm: 1.5 }}
+              alignItems='center'
+              sx={{ flexWrap: { xs: 'wrap', sm: 'nowrap' } }}
+            >
               <Box
                 sx={{
                   color: theme.palette.primary.main,
-                  fontSize: 24,
+                  fontSize: { xs: 20, sm: 24 },
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center'
+                  justifyContent: 'center',
+                  flexShrink: 0
                 }}
               >
-                <EmailIcon fontSize='medium' />
+                <EmailIcon fontSize={isMobile ? 'small' : 'medium'} />
               </Box>
-              <Box flex={1}>
-                <Typography variant='caption' color='text.secondary' sx={{ fontSize: '0.75rem', fontWeight: 600 }}>
+              <Box flex={1} sx={{ minWidth: 0 }}>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                  sx={{
+                    fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                    fontWeight: 600
+                  }}
+                >
                   Email Address
                 </Typography>
                 <Tooltip title={profile?.email || user?.email} arrow>
@@ -761,9 +842,11 @@ function UserDetailsPage({ data }) {
                       maxWidth: '100%',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
+                      whiteSpace: { xs: 'normal', sm: 'nowrap' },
+                      wordBreak: { xs: 'break-all', sm: 'normal' },
                       fontWeight: 600,
-                      color: 'text.primary'
+                      color: 'text.primary',
+                      fontSize: { xs: '0.875rem', sm: '0.9375rem' }
                     }}
                   >
                     {profile?.email || user?.email}
@@ -775,23 +858,44 @@ function UserDetailsPage({ data }) {
             {(profile?.phone || user?.phone) && <Divider />}
 
             {(profile?.phone || user?.phone) && (
-              <Stack direction='row' spacing={1.5} alignItems='center'>
+              <Stack
+                direction='row'
+                spacing={{ xs: 1, sm: 1.5 }}
+                alignItems='center'
+                sx={{ flexWrap: { xs: 'wrap', sm: 'nowrap' } }}
+              >
                 <Box
                   sx={{
                     color: theme.palette.primary.main,
-                    fontSize: 24,
+                    fontSize: { xs: 20, sm: 24 },
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center'
+                    justifyContent: 'center',
+                    flexShrink: 0
                   }}
                 >
-                  <PhoneIcon fontSize='medium' />
+                  <PhoneIcon fontSize={isMobile ? 'small' : 'medium'} />
                 </Box>
-                <Box flex={1}>
-                  <Typography variant='caption' color='text.secondary' sx={{ fontSize: '0.75rem', fontWeight: 600 }}>
+                <Box flex={1} sx={{ minWidth: 0 }}>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                    sx={{
+                      fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                      fontWeight: 600
+                    }}
+                  >
                     Phone Number
                   </Typography>
-                  <Typography variant='body2' sx={{ fontWeight: 600, color: 'text.primary' }}>
+                  <Typography
+                    variant='body2'
+                    sx={{
+                      fontWeight: 600,
+                      color: 'text.primary',
+                      fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+                      wordBreak: { xs: 'break-all', sm: 'normal' }
+                    }}
+                  >
                     {profile?.phone || user?.phone}
                   </Typography>
                 </Box>
@@ -806,12 +910,18 @@ function UserDetailsPage({ data }) {
   // Status Card (enhanced roles)
   const statusCard = (
     <InfoCard icon={<GroupIcon />} title='User Roles'>
-      <Stack direction='row' spacing={1.5} flexWrap='wrap'>
+      <Stack
+        direction='row'
+        spacing={{ xs: 1, sm: 1.5 }}
+        flexWrap='wrap'
+        justifyContent={{ xs: 'center', sm: 'flex-start' }}
+      >
         {Array.isArray(user?.roles) &&
           user.roles.map((role, idx) => (
             <Chip
               key={idx}
               label={role}
+              size={isMobile ? 'small' : 'medium'}
               sx={{
                 background:
                   role === 'ADMIN'
@@ -819,19 +929,25 @@ function UserDetailsPage({ data }) {
                     : `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                 color: 'white',
                 fontWeight: 700,
-                fontSize: '0.8125rem',
-                px: 1,
+                fontSize: { xs: '0.75rem', sm: '0.8125rem' },
+                px: { xs: 0.75, sm: 1 },
+                py: { xs: 0.25, sm: 0.5 },
                 boxShadow:
                   role === 'ADMIN'
-                    ? '0 4px 12px rgba(239, 68, 68, 0.3)'
-                    : `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`,
+                    ? theme.palette.mode === 'dark'
+                      ? '0 4px 12px rgba(239, 68, 68, 0.4)'
+                      : '0 4px 12px rgba(239, 68, 68, 0.3)'
+                    : `0 4px 12px ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.4 : 0.3)}`,
                 border: 'none',
+                transition: 'all 0.3s ease',
                 '&:hover': {
-                  transform: 'translateY(-2px)',
+                  transform: { xs: 'none', sm: 'translateY(-2px)' },
                   boxShadow:
                     role === 'ADMIN'
-                      ? '0 6px 16px rgba(239, 68, 68, 0.4)'
-                      : `0 6px 16px ${alpha(theme.palette.primary.main, 0.4)}`
+                      ? theme.palette.mode === 'dark'
+                        ? '0 6px 16px rgba(239, 68, 68, 0.5)'
+                        : '0 6px 16px rgba(239, 68, 68, 0.4)'
+                      : `0 6px 16px ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.5 : 0.4)}`
                 }
               }}
             />
@@ -844,43 +960,155 @@ function UserDetailsPage({ data }) {
   const metaCard = (
     <InfoCard icon={<AdminPanelSettingsIcon />} title='Meta'>
       <Stack spacing={1.5}>
-        <Stack direction='row' alignItems='center' spacing={1}>
-          <Typography variant='body2' color='text.secondary' fontWeight={500}>
+        <Stack
+          direction={isMobile ? 'column' : 'row'}
+          alignItems={isMobile ? 'flex-start' : 'center'}
+          spacing={1}
+          sx={{ gap: isMobile ? 0.5 : 1 }}
+        >
+          <Typography
+            variant='body2'
+            color='text.secondary'
+            fontWeight={500}
+            sx={{
+              minWidth: isMobile ? 'auto' : 120,
+              fontSize: { xs: '0.875rem', sm: '0.9375rem' }
+            }}
+          >
             Member ID:
           </Typography>
-          <CopyableText value={user?.memberId || 'N/A'} />
+          <Box sx={{ flex: 1, width: '100%', minWidth: 0 }}>
+            <CopyableText value={user?.memberId || 'N/A'} />
+          </Box>
         </Stack>
-        <Stack direction='row' alignItems='center' spacing={1}>
-          <Typography variant='body2' color='text.secondary' fontWeight={500}>
+        <Stack
+          direction={isMobile ? 'column' : 'row'}
+          alignItems={isMobile ? 'flex-start' : 'center'}
+          spacing={1}
+          sx={{ gap: isMobile ? 0.5 : 1 }}
+        >
+          <Typography
+            variant='body2'
+            color='text.secondary'
+            fontWeight={500}
+            sx={{
+              minWidth: isMobile ? 'auto' : 120,
+              fontSize: { xs: '0.875rem', sm: '0.9375rem' }
+            }}
+          >
             Referral Token:
           </Typography>
-          <CopyableText value={user?.referralToken || 'N/A'} />
+          <Box sx={{ flex: 1, width: '100%', minWidth: 0 }}>
+            <CopyableText value={user?.referralToken || 'N/A'} />
+          </Box>
         </Stack>
-        <Stack direction='row' alignItems='center' spacing={1}>
-          <Typography variant='body2' color='text.secondary' fontWeight={500}>
+        <Stack
+          direction={isMobile ? 'column' : 'row'}
+          alignItems={isMobile ? 'flex-start' : 'center'}
+          spacing={1}
+          sx={{ gap: isMobile ? 0.5 : 1 }}
+        >
+          <Typography
+            variant='body2'
+            color='text.secondary'
+            fontWeight={500}
+            sx={{
+              minWidth: isMobile ? 'auto' : 120,
+              fontSize: { xs: '0.875rem', sm: '0.9375rem' }
+            }}
+          >
             Referred By:
           </Typography>
-          <Typography variant='body2'>{user?.referredBy}</Typography>
+          <Typography
+            variant='body2'
+            sx={{
+              flex: 1,
+              fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+              wordBreak: 'break-word'
+            }}
+          >
+            {user?.referredBy || 'N/A'}
+          </Typography>
         </Stack>
-        <Stack direction='row' alignItems='center' spacing={1}>
-          <Typography variant='body2' color='text.secondary' fontWeight={500}>
+        <Stack
+          direction={isMobile ? 'column' : 'row'}
+          alignItems={isMobile ? 'flex-start' : 'center'}
+          spacing={1}
+          sx={{ gap: isMobile ? 0.5 : 1 }}
+        >
+          <Typography
+            variant='body2'
+            color='text.secondary'
+            fontWeight={500}
+            sx={{
+              minWidth: isMobile ? 'auto' : 120,
+              fontSize: { xs: '0.875rem', sm: '0.9375rem' }
+            }}
+          >
             Referral Source:
           </Typography>
-          <Typography variant='body2'>{user?.referralSource || 'N/A'}</Typography>
+          <Typography
+            variant='body2'
+            sx={{
+              flex: 1,
+              fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+              wordBreak: 'break-word'
+            }}
+          >
+            {user?.referralSource || 'N/A'}
+          </Typography>
         </Stack>
-        <Stack direction='row' alignItems='center' spacing={1}>
-          <Typography variant='body2' color='text.secondary' fontWeight={500}>
+        <Stack
+          direction={isMobile ? 'column' : 'row'}
+          alignItems={isMobile ? 'flex-start' : 'center'}
+          spacing={1}
+          sx={{ gap: isMobile ? 0.5 : 1 }}
+        >
+          <Typography
+            variant='body2'
+            color='text.secondary'
+            fontWeight={500}
+            sx={{
+              minWidth: isMobile ? 'auto' : 120,
+              fontSize: { xs: '0.875rem', sm: '0.9375rem' }
+            }}
+          >
             Created:
           </Typography>
-          <Typography variant='body2'>
+          <Typography
+            variant='body2'
+            sx={{
+              flex: 1,
+              fontSize: { xs: '0.875rem', sm: '0.9375rem' }
+            }}
+          >
             {user?.createdAt ? new Date(user?.createdAt).toLocaleString() : 'N/A'}
           </Typography>
         </Stack>
-        <Stack direction='row' alignItems='center' spacing={1}>
-          <Typography variant='body2' color='text.secondary' fontWeight={500}>
+        <Stack
+          direction={isMobile ? 'column' : 'row'}
+          alignItems={isMobile ? 'flex-start' : 'center'}
+          spacing={1}
+          sx={{ gap: isMobile ? 0.5 : 1 }}
+        >
+          <Typography
+            variant='body2'
+            color='text.secondary'
+            fontWeight={500}
+            sx={{
+              minWidth: isMobile ? 'auto' : 120,
+              fontSize: { xs: '0.875rem', sm: '0.9375rem' }
+            }}
+          >
             Updated:
           </Typography>
-          <Typography variant='body2'>
+          <Typography
+            variant='body2'
+            sx={{
+              flex: 1,
+              fontSize: { xs: '0.875rem', sm: '0.9375rem' }
+            }}
+          >
             {user?.updatedAt ? new Date(user?.updatedAt).toLocaleString() : 'N/A'}
           </Typography>
         </Stack>
@@ -905,14 +1133,26 @@ function UserDetailsPage({ data }) {
         <Stack spacing={1.5}>
           {addressFields.map((field, idx) =>
             field.value ? (
-              <Typography key={idx} variant='body2' color='text.secondary' fontWeight={500}>
-                {field.label}: <span style={{ color: '#222' }}>{field.value}</span>
+              <Typography
+                key={idx}
+                variant='body2'
+                color='text.secondary'
+                fontWeight={500}
+                sx={{
+                  fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+                  wordBreak: 'break-word'
+                }}
+              >
+                {field.label}:{' '}
+                <Box component='span' sx={{ color: 'text.primary', fontWeight: 600 }}>
+                  {field.value}
+                </Box>
               </Typography>
             ) : null
           )}
         </Stack>
       ) : (
-        <Typography variant='body2' color='text.secondary'>
+        <Typography variant='body2' color='text.secondary' sx={{ fontSize: { xs: '0.875rem', sm: '0.9375rem' } }}>
           No address info provided.
         </Typography>
       )}
@@ -934,99 +1174,39 @@ function UserDetailsPage({ data }) {
                      ${theme.palette.background.default}`
       }}
     >
-      {/* Elegant Header */}
-      {/* <Box
-        sx={{
-          backdropFilter: 'blur(20px)',
-          bgcolor: alpha('#fff', 0.7),
-          borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
-          pt: { xs: 4, md: 6 },
-          pb: { xs: 4, md: 6 }
-        }}
-      >
-        <Container maxWidth='lg'>
-          <Box sx={{ textAlign: 'center' }}>
-            <Box
-              sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 2,
-                mb: 2
-              }}
-            >
-              <Box
-                sx={{
-                  width: { xs: 48, sm: 56 },
-                  height: { xs: 48, sm: 56 },
-                  borderRadius: '12px',
-                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`
-                }}
-              >
-                <i className='ri-user-line' style={{ fontSize: '28px', color: 'white' }} />
-              </Box>
-              <Typography
-                sx={{
-                  fontSize: { xs: '2rem', md: '2.5rem' },
-                  fontWeight: 700,
-                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  letterSpacing: '-0.02em'
-                }}
-              >
-                User Details
-              </Typography>
-            </Box>
-            <Typography
-              variant='body1'
-              color='text.secondary'
-              sx={{
-                fontSize: '1.05rem',
-                lineHeight: 1.8,
-                maxWidth: 600,
-                mx: 'auto',
-                fontWeight: 400
-              }}
-            >
-              View comprehensive information about the user profile
-            </Typography>
-          </Box>
-        </Container>
-      </Box> */}
-
       {/* Content Area */}
-      <Container maxWidth='lg' sx={{ py: { xs: 3, md: 4 } }}>
+      <Container maxWidth='lg' sx={{ py: { xs: 2, sm: 3, md: 4 }, px: { xs: 2, sm: 3 } }}>
         {/* Modern User Profile Banner */}
         <Card
           sx={{
-            background: '#ffffff',
-            borderRadius: 3,
+            background: theme.palette.background.paper,
+            borderRadius: { xs: 2, sm: 3 },
             overflow: 'hidden',
-            mb: 4,
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+            mb: { xs: 3, sm: 4 },
+            boxShadow:
+              theme.palette.mode === 'dark'
+                ? `0 4px 20px ${alpha(theme.palette.common.black, 0.4)}`
+                : '0 4px 20px rgba(0, 0, 0, 0.08)',
             border: `1px solid ${alpha(theme.palette.divider, 0.08)}`
           }}
         >
           {/* Decorative Top Bar */}
           <Box
             sx={{
-              height: 6,
+              height: { xs: 4, sm: 6 },
               background: `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`
             }}
           />
 
-          <CardContent sx={{ p: { xs: 3, sm: 4, md: 5 } }}>
-            <Grid container spacing={3} alignItems='center'>
+          <CardContent sx={{ p: { xs: 2, sm: 3, md: 4, lg: 5 } }}>
+            <Grid container spacing={{ xs: 2, sm: 3 }} alignItems='center'>
               {/* User Avatar and Name */}
               <Grid item xs={12} md={6}>
                 <Stack
                   direction={{ xs: 'column', sm: 'row' }}
-                  spacing={{ xs: 2.5, sm: 3 }}
-                  alignItems={{ xs: 'flex-start', sm: 'center' }}
+                  spacing={{ xs: 2, sm: 2.5, md: 3 }}
+                  alignItems={{ xs: 'center', sm: 'center' }}
+                  sx={{ width: '100%' }}
                 >
                   {/* Stunning Avatar with Gradient Ring */}
                   <Box
@@ -1039,25 +1219,37 @@ function UserDetailsPage({ data }) {
                     <Box
                       sx={{
                         position: 'relative',
-                        width: { xs: 70, sm: 85, md: 100 },
-                        height: { xs: 70, sm: 85, md: 100 },
+                        width: { xs: 80, sm: 90, md: 100 },
+                        height: { xs: 80, sm: 90, md: 100 },
                         borderRadius: '50%',
                         background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-                        padding: '4px',
-                        boxShadow: `0 8px 32px ${alpha(theme.palette.primary.main, 0.3)}`,
+                        padding: { xs: '3px', sm: '4px' },
+                        boxShadow: `0 8px 32px ${alpha(
+                          theme.palette.primary.main,
+                          theme.palette.mode === 'dark' ? 0.4 : 0.3
+                        )}`,
                         transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                         animation: 'pulse 3s ease-in-out infinite',
                         '@keyframes pulse': {
                           '0%, 100%': {
-                            boxShadow: `0 8px 32px ${alpha(theme.palette.primary.main, 0.3)}`
+                            boxShadow: `0 8px 32px ${alpha(
+                              theme.palette.primary.main,
+                              theme.palette.mode === 'dark' ? 0.4 : 0.3
+                            )}`
                           },
                           '50%': {
-                            boxShadow: `0 12px 48px ${alpha(theme.palette.primary.main, 0.5)}`
+                            boxShadow: `0 12px 48px ${alpha(
+                              theme.palette.primary.main,
+                              theme.palette.mode === 'dark' ? 0.6 : 0.5
+                            )}`
                           }
                         },
                         '&:hover': {
-                          transform: 'rotate(5deg) scale(1.05)',
-                          boxShadow: `0 16px 56px ${alpha(theme.palette.primary.main, 0.4)}`
+                          transform: { xs: 'none', sm: 'rotate(5deg) scale(1.05)' },
+                          boxShadow: `0 16px 56px ${alpha(
+                            theme.palette.primary.main,
+                            theme.palette.mode === 'dark' ? 0.5 : 0.4
+                          )}`
                         }
                       }}
                     >
@@ -1067,7 +1259,7 @@ function UserDetailsPage({ data }) {
                           width: '100%',
                           height: '100%',
                           borderRadius: '50%',
-                          background: '#ffffff',
+                          background: theme.palette.background.paper,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -1100,18 +1292,24 @@ function UserDetailsPage({ data }) {
                   </Box>
 
                   {/* User Info with Enhanced Typography */}
-                  <Stack spacing={1.5} flex={1} sx={{ minWidth: 0 }}>
+                  <Stack
+                    spacing={{ xs: 1, sm: 1.5 }}
+                    flex={1}
+                    sx={{ minWidth: 0, width: '100%', alignItems: { xs: 'center', sm: 'flex-start' } }}
+                  >
                     <Typography
                       variant='h3'
                       sx={{
                         fontWeight: 700,
-                        fontSize: { xs: '1.75rem', sm: '2rem', md: '2.5rem' },
+                        fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem', lg: '2.5rem' },
                         background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
                         backgroundClip: 'text',
                         letterSpacing: '-0.02em',
-                        lineHeight: 1.2
+                        lineHeight: 1.2,
+                        textAlign: { xs: 'center', sm: 'left' },
+                        wordBreak: 'break-word'
                       }}
                     >
                       {fullName}
@@ -1120,14 +1318,15 @@ function UserDetailsPage({ data }) {
                     <Stack spacing={1}>
                       <Stack
                         direction='row'
-                        spacing={1.25}
+                        spacing={{ xs: 1, sm: 1.25 }}
                         alignItems='center'
-                        sx={{ width: '100%', flexWrap: 'nowrap' }}
+                        justifyContent={{ xs: 'center', sm: 'flex-start' }}
+                        sx={{ width: '100%', flexWrap: 'wrap' }}
                       >
                         <Box
                           sx={{
-                            width: 32,
-                            height: 32,
+                            width: { xs: 28, sm: 32 },
+                            height: { xs: 28, sm: 32 },
                             borderRadius: '8px',
                             background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)}, ${alpha(
                               theme.palette.secondary.main,
@@ -1136,10 +1335,11 @@ function UserDetailsPage({ data }) {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            color: theme.palette.primary.main
+                            color: theme.palette.primary.main,
+                            flexShrink: 0
                           }}
                         >
-                          <EmailIcon sx={{ fontSize: 18 }} />
+                          <EmailIcon sx={{ fontSize: { xs: 16, sm: 18 } }} />
                         </Box>
                         <Tooltip title={primaryEmail} arrow>
                           <Typography
@@ -1147,12 +1347,14 @@ function UserDetailsPage({ data }) {
                             color='text.secondary'
                             sx={{
                               fontWeight: 600,
-                              fontSize: emailFontSize,
+                              fontSize: { xs: '0.875rem', sm: emailFontSize.xs, md: emailFontSize.sm },
                               flex: 1,
                               minWidth: 0,
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap'
+                              whiteSpace: { xs: 'normal', sm: 'nowrap' },
+                              wordBreak: { xs: 'break-all', sm: 'normal' },
+                              textAlign: { xs: 'center', sm: 'left' }
                             }}
                           >
                             {primaryEmail}
@@ -1163,14 +1365,15 @@ function UserDetailsPage({ data }) {
                       {(profile?.phone || user?.phone) && (
                         <Stack
                           direction='row'
-                          spacing={1.25}
+                          spacing={{ xs: 1, sm: 1.25 }}
                           alignItems='center'
-                          sx={{ width: '100%', flexWrap: 'nowrap' }}
+                          justifyContent={{ xs: 'center', sm: 'flex-start' }}
+                          sx={{ width: '100%', flexWrap: 'wrap' }}
                         >
                           <Box
                             sx={{
-                              width: 32,
-                              height: 32,
+                              width: { xs: 28, sm: 32 },
+                              height: { xs: 28, sm: 32 },
                               borderRadius: '8px',
                               background: `linear-gradient(135deg, ${alpha(theme.palette.secondary.main, 0.1)}, ${alpha(
                                 theme.palette.primary.main,
@@ -1179,21 +1382,25 @@ function UserDetailsPage({ data }) {
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              color: theme.palette.secondary.main
+                              color: theme.palette.secondary.main,
+                              flexShrink: 0
                             }}
                           >
-                            <PhoneIcon sx={{ fontSize: 18 }} />
+                            <PhoneIcon sx={{ fontSize: { xs: 16, sm: 18 } }} />
                           </Box>
                           <Typography
                             variant='body1'
                             color='text.secondary'
                             sx={{
                               fontWeight: 600,
-                              fontSize: { xs: '0.95rem', sm: '1rem' },
+                              fontSize: { xs: '0.875rem', sm: '0.95rem', md: '1rem' },
                               flex: 1,
                               minWidth: 0,
                               overflow: 'hidden',
-                              textOverflow: 'ellipsis'
+                              textOverflow: 'ellipsis',
+                              whiteSpace: { xs: 'normal', sm: 'nowrap' },
+                              wordBreak: { xs: 'break-all', sm: 'normal' },
+                              textAlign: { xs: 'center', sm: 'left' }
                             }}
                           >
                             {profile?.phone || user?.phone}
@@ -1205,27 +1412,30 @@ function UserDetailsPage({ data }) {
                     <Stack
                       direction='row'
                       flexWrap='wrap'
+                      justifyContent={{ xs: 'center', sm: 'flex-start' }}
                       sx={{
                         mt: { xs: 1.5, sm: 2 },
-                        columnGap: 1,
-                        rowGap: 1
+                        columnGap: { xs: 0.75, sm: 1 },
+                        rowGap: { xs: 0.75, sm: 1 }
                       }}
                     >
                       <Chip
                         label={user?.isActive ? 'Active' : 'Inactive'}
                         color={user?.isActive ? 'success' : 'error'}
-                        size='medium'
+                        size={isMobile ? 'small' : 'medium'}
                         variant='filled'
                         sx={{
                           flexShrink: 0,
                           fontWeight: 600,
                           color: 'white',
+                          fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                          height: { xs: 28, sm: 32 },
                           boxShadow: user?.isActive
                             ? '0 4px 12px rgba(16, 185, 129, 0.3)'
                             : '0 4px 12px rgba(239, 68, 68, 0.3)',
                           transition: 'all 0.3s ease',
                           '&:hover': {
-                            transform: 'translateY(-2px)',
+                            transform: { xs: 'none', sm: 'translateY(-2px)' },
                             boxShadow: user?.isActive
                               ? '0 6px 16px rgba(16, 185, 129, 0.4)'
                               : '0 6px 16px rgba(239, 68, 68, 0.4)'
@@ -1234,20 +1444,22 @@ function UserDetailsPage({ data }) {
                       />
                       <Chip
                         label={user?.isVerified ? 'Verified' : 'Unverified'}
-                        icon={user?.isVerified ? <VerifiedUserIcon /> : undefined}
+                        icon={user?.isVerified ? <VerifiedUserIcon sx={{ fontSize: { xs: 16, sm: 20 } }} /> : undefined}
                         color={user?.isVerified ? 'success' : 'warning'}
-                        size='medium'
+                        size={isMobile ? 'small' : 'medium'}
                         variant='filled'
                         sx={{
                           flexShrink: 0,
                           fontWeight: 600,
                           color: 'white',
+                          fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                          height: { xs: 28, sm: 32 },
                           boxShadow: user?.isVerified
                             ? '0 4px 12px rgba(16, 185, 129, 0.3)'
                             : '0 4px 12px rgba(251, 191, 36, 0.3)',
                           transition: 'all 0.3s ease',
                           '&:hover': {
-                            transform: 'translateY(-2px)',
+                            transform: { xs: 'none', sm: 'translateY(-2px)' },
                             boxShadow: user?.isVerified
                               ? '0 6px 16px rgba(16, 185, 129, 0.4)'
                               : '0 6px 16px rgba(251, 191, 36, 0.4)'
@@ -1257,9 +1469,9 @@ function UserDetailsPage({ data }) {
                       {user?.roles?.includes('ADMIN') && (
                         <Chip
                           label='Admin'
-                          icon={<AdminPanelSettingsIcon />}
+                          icon={<AdminPanelSettingsIcon sx={{ fontSize: { xs: 16, sm: 20 } }} />}
                           color='error'
-                          size='medium'
+                          size={isMobile ? 'small' : 'medium'}
                           variant='filled'
                           sx={{
                             flexShrink: 0,
@@ -1301,15 +1513,18 @@ function UserDetailsPage({ data }) {
 
               {/* Member ID and Join Date - Enhanced Cards */}
               <Grid item xs={12} md={6}>
-                <Grid container spacing={2}>
+                <Grid container spacing={{ xs: 2, sm: 2 }}>
                   <Grid item xs={12} sm={6}>
                     <Box
                       sx={{
                         position: 'relative',
-                        background: '#ffffff',
-                        borderRadius: 3,
-                        p: 3,
-                        border: `2px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                        background: theme.palette.background.paper,
+                        borderRadius: { xs: 2, sm: 3 },
+                        p: { xs: 2, sm: 3 },
+                        border: `2px solid ${alpha(
+                          theme.palette.primary.main,
+                          theme.palette.mode === 'dark' ? 0.3 : 0.2
+                        )}`,
                         textAlign: 'center',
                         overflow: 'hidden',
                         transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -1323,35 +1538,41 @@ function UserDetailsPage({ data }) {
                           background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`
                         },
                         '&:hover': {
-                          transform: 'translateY(-8px) scale(1.02)',
-                          boxShadow: `0 12px 32px ${alpha(theme.palette.primary.main, 0.25)}`,
+                          transform: { xs: 'none', sm: 'translateY(-8px) scale(1.02)' },
+                          boxShadow: `0 12px 32px ${alpha(
+                            theme.palette.primary.main,
+                            theme.palette.mode === 'dark' ? 0.4 : 0.25
+                          )}`,
                           borderColor: theme.palette.primary.main
                         }
                       }}
                     >
                       <Box
                         sx={{
-                          width: 48,
-                          height: 48,
+                          width: { xs: 40, sm: 48 },
+                          height: { xs: 40, sm: 48 },
                           borderRadius: '12px',
                           background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           mx: 'auto',
-                          mb: 2,
-                          boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.3)}`
+                          mb: { xs: 1.5, sm: 2 },
+                          boxShadow: `0 4px 16px ${alpha(
+                            theme.palette.primary.main,
+                            theme.palette.mode === 'dark' ? 0.4 : 0.3
+                          )}`
                         }}
                       >
-                        <i className='ri-vip-crown-line' style={{ fontSize: 24, color: 'white' }} />
+                        <i className='ri-vip-crown-line' style={{ fontSize: isMobile ? 20 : 24, color: 'white' }} />
                       </Box>
                       <Typography
                         variant='caption'
                         sx={{
                           color: 'text.secondary',
-                          fontSize: '0.75rem',
+                          fontSize: { xs: '0.7rem', sm: '0.75rem' },
                           textTransform: 'uppercase',
-                          letterSpacing: '1.5px',
+                          letterSpacing: { xs: '1px', sm: '1.5px' },
                           fontWeight: 700,
                           display: 'block',
                           mb: 1
@@ -1367,9 +1588,10 @@ function UserDetailsPage({ data }) {
                           WebkitTextFillColor: 'transparent',
                           backgroundClip: 'text',
                           fontWeight: 800,
-                          fontSize: '1.25rem',
+                          fontSize: { xs: '1rem', sm: '1.25rem' },
                           fontFamily: 'monospace',
-                          letterSpacing: '0.5px'
+                          letterSpacing: '0.5px',
+                          wordBreak: 'break-all'
                         }}
                       >
                         {user?.memberId || '-'}
@@ -1380,10 +1602,13 @@ function UserDetailsPage({ data }) {
                     <Box
                       sx={{
                         position: 'relative',
-                        background: '#ffffff',
-                        borderRadius: 3,
-                        p: 3,
-                        border: `2px solid ${alpha(theme.palette.secondary.main, 0.2)}`,
+                        background: theme.palette.background.paper,
+                        borderRadius: { xs: 2, sm: 3 },
+                        p: { xs: 2, sm: 3 },
+                        border: `2px solid ${alpha(
+                          theme.palette.secondary.main,
+                          theme.palette.mode === 'dark' ? 0.3 : 0.2
+                        )}`,
                         textAlign: 'center',
                         overflow: 'hidden',
                         transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -1397,35 +1622,44 @@ function UserDetailsPage({ data }) {
                           background: `linear-gradient(90deg, ${theme.palette.secondary.main}, ${theme.palette.primary.main})`
                         },
                         '&:hover': {
-                          transform: 'translateY(-8px) scale(1.02)',
-                          boxShadow: `0 12px 32px ${alpha(theme.palette.secondary.main, 0.25)}`,
+                          transform: { xs: 'none', sm: 'translateY(-8px) scale(1.02)' },
+                          boxShadow: `0 12px 32px ${alpha(
+                            theme.palette.secondary.main,
+                            theme.palette.mode === 'dark' ? 0.4 : 0.25
+                          )}`,
                           borderColor: theme.palette.secondary.main
                         }
                       }}
                     >
                       <Box
                         sx={{
-                          width: 48,
-                          height: 48,
+                          width: { xs: 40, sm: 48 },
+                          height: { xs: 40, sm: 48 },
                           borderRadius: '12px',
                           background: `linear-gradient(135deg, ${theme.palette.secondary.main}, ${theme.palette.primary.main})`,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           mx: 'auto',
-                          mb: 2,
-                          boxShadow: `0 4px 16px ${alpha(theme.palette.secondary.main, 0.3)}`
+                          mb: { xs: 1.5, sm: 2 },
+                          boxShadow: `0 4px 16px ${alpha(
+                            theme.palette.secondary.main,
+                            theme.palette.mode === 'dark' ? 0.4 : 0.3
+                          )}`
                         }}
                       >
-                        <i className='ri-calendar-event-line' style={{ fontSize: 24, color: 'white' }} />
+                        <i
+                          className='ri-calendar-event-line'
+                          style={{ fontSize: isMobile ? 20 : 24, color: 'white' }}
+                        />
                       </Box>
                       <Typography
                         variant='caption'
                         sx={{
                           color: 'text.secondary',
-                          fontSize: '0.75rem',
+                          fontSize: { xs: '0.7rem', sm: '0.75rem' },
                           textTransform: 'uppercase',
-                          letterSpacing: '1.5px',
+                          letterSpacing: { xs: '1px', sm: '1.5px' },
                           fontWeight: 700,
                           display: 'block',
                           mb: 1
@@ -1441,7 +1675,7 @@ function UserDetailsPage({ data }) {
                           WebkitTextFillColor: 'transparent',
                           backgroundClip: 'text',
                           fontWeight: 800,
-                          fontSize: '1.25rem',
+                          fontSize: { xs: '1rem', sm: '1.25rem' },
                           letterSpacing: '0.5px'
                         }}
                       >
@@ -1458,7 +1692,7 @@ function UserDetailsPage({ data }) {
         </Card>
 
         {/* Stats Cards with Modern Design */}
-        <Box mb={4}>
+        <Box mb={{ xs: 3, sm: 4 }}>
           <Box
             sx={{
               display: 'grid',
@@ -1467,7 +1701,7 @@ function UserDetailsPage({ data }) {
                 sm: 'repeat(2, minmax(0, 1fr))',
                 md: 'repeat(auto-fit, minmax(200px, 1fr))'
               },
-              gap: { xs: 2, sm: 2.5 }
+              gap: { xs: 1.5, sm: 2.5 }
             }}
           >
             {stats.map((stat, idx) => (
@@ -1477,7 +1711,7 @@ function UserDetailsPage({ data }) {
         </Box>
 
         {/* Info Cards Layout */}
-        <Grid container spacing={{ xs: 2, md: 4 }}>
+        <Grid container spacing={{ xs: 2, sm: 3, md: 4 }}>
           <Grid item xs={12} md={6}>
             {contactCard}
             {statusCard}

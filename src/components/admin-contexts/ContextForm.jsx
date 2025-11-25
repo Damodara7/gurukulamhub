@@ -93,7 +93,7 @@ const ContextForm = ({
       PaperProps={{
         sx: {
           borderRadius: { xs: 3, sm: 3 },
-          background: '#ffffff',
+          bgcolor: 'background.paper',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
@@ -108,7 +108,7 @@ const ContextForm = ({
           px: { xs: 3, sm: 4 },
           py: { xs: 2.5, sm: 3 },
           borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-          backgroundColor: '#ffffff'
+          bgcolor: 'background.paper'
         }}
       >
         <Stack direction='row' spacing={2} alignItems='center' justifyContent='space-between'>
@@ -149,8 +149,9 @@ const ContextForm = ({
           spacing={2.5}
           sx={{
             borderRadius: 3,
-            backgroundColor: '#ffffff',
-            boxShadow: '0 12px 30px rgba(15,15,45,0.06)',
+            bgcolor: 'background.paper',
+            boxShadow: theme =>
+              `0 12px 30px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.3 : 0.06)}`,
             border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
             p: { xs: 2.5, sm: 3 }
           }}
@@ -217,7 +218,18 @@ const ContextForm = ({
           }
         }}
       >
-        <Button variant='outlined' onClick={onCancel}>
+        <Button
+          variant='outlined'
+          onClick={onCancel}
+          sx={{
+            color: theme.palette.mode === 'dark' ? '#ffffff' : undefined,
+            borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.23)' : undefined,
+            '&:hover': {
+              borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : undefined,
+              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : undefined
+            }
+          }}
+        >
           Cancel
         </Button>
         <Button variant='contained' color='primary' component='label' sx={{ color: 'white' }} onClick={handleSubmit}>

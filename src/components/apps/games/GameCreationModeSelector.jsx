@@ -27,8 +27,11 @@ const GameCreationModeSelector = ({ onModeSelect }) => {
       <Box
         sx={{
           backdropFilter: 'blur(20px)',
-          bgcolor: alpha('#fff', 0.7),
-          borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+          bgcolor:
+            theme.palette.mode === 'dark'
+              ? alpha(theme.palette.background.paper, 0.8)
+              : alpha(theme.palette.background.paper, 0.7),
+          borderBottom: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
           pt: { xs: 3, sm: 4, md: 6 },
           pb: { xs: 3, sm: 4, md: 6 }
         }}
@@ -102,14 +105,20 @@ const GameCreationModeSelector = ({ onModeSelect }) => {
                 cursor: 'pointer',
                 transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                 borderRadius: 3,
-                background: '#ffffff',
-                border: theme => `1px solid ${alpha(theme.palette.divider, 0.08)}`,
-                boxShadow: theme => theme.shadows[3],
+                background: theme.palette.background.paper,
+                border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
+                boxShadow:
+                  theme.palette.mode === 'dark'
+                    ? `0 2px 8px ${alpha(theme.palette.common.black, 0.3)}`
+                    : theme.shadows[3],
                 position: 'relative',
                 overflow: 'hidden',
                 '&:hover': {
                   transform: 'translateY(-8px)',
-                  boxShadow: '0 12px 40px rgba(139, 92, 246, 0.2)',
+                  boxShadow:
+                    theme.palette.mode === 'dark'
+                      ? `0 12px 40px ${alpha(theme.palette.primary.main, 0.3)}`
+                      : '0 12px 40px rgba(139, 92, 246, 0.2)',
                   '&::before': {
                     opacity: 1
                   }
@@ -121,7 +130,7 @@ const GameCreationModeSelector = ({ onModeSelect }) => {
                   left: 0,
                   right: 0,
                   height: '4px',
-                  background: 'linear-gradient(90deg, #8b5cf6 0%, #c4b5fd 100%)',
+                  background: `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
                   opacity: 0,
                   transition: 'opacity 0.3s ease'
                 }
@@ -163,7 +172,7 @@ const GameCreationModeSelector = ({ onModeSelect }) => {
                   sx={{
                     fontWeight: 700,
                     fontSize: { xs: '1.1rem', sm: '1.25rem', md: '1.4rem', lg: '1.5rem' },
-                    color: '#1a1a1a',
+                    color: theme.palette.text.primary,
                     mb: { xs: 1.5, md: 2 }
                   }}
                 >
@@ -208,14 +217,20 @@ const GameCreationModeSelector = ({ onModeSelect }) => {
                 cursor: 'pointer',
                 transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                 borderRadius: 3,
-                background: '#ffffff',
-                border: theme => `1px solid ${alpha(theme.palette.divider, 0.08)}`,
-                boxShadow: theme => theme.shadows[3],
+                background: theme.palette.background.paper,
+                border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
+                boxShadow:
+                  theme.palette.mode === 'dark'
+                    ? `0 2px 8px ${alpha(theme.palette.common.black, 0.3)}`
+                    : theme.shadows[3],
                 position: 'relative',
                 overflow: 'hidden',
                 '&:hover': {
                   transform: 'translateY(-8px)',
-                  boxShadow: '0 12px 40px rgba(139, 92, 246, 0.2)',
+                  boxShadow:
+                    theme.palette.mode === 'dark'
+                      ? `0 12px 40px ${alpha(theme.palette.primary.main, 0.3)}`
+                      : '0 12px 40px rgba(139, 92, 246, 0.2)',
                   '&::before': {
                     opacity: 1
                   }
@@ -227,7 +242,7 @@ const GameCreationModeSelector = ({ onModeSelect }) => {
                   left: 0,
                   right: 0,
                   height: '4px',
-                  background: 'linear-gradient(90deg, #8b5cf6 0%, #c4b5fd 100%)',
+                  background: `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
                   opacity: 0,
                   transition: 'opacity 0.3s ease'
                 }
@@ -269,7 +284,7 @@ const GameCreationModeSelector = ({ onModeSelect }) => {
                   sx={{
                     fontWeight: 700,
                     fontSize: { xs: '1.1rem', sm: '1.25rem', md: '1.4rem', lg: '1.5rem' },
-                    color: '#1a1a1a',
+                    color: theme.palette.text.primary,
                     mb: { xs: 1.5, md: 2 }
                   }}
                 >
@@ -311,9 +326,10 @@ const GameCreationModeSelector = ({ onModeSelect }) => {
         <Card
           sx={{
             borderRadius: 3,
-            background: '#ffffff',
-            border: theme => `1px solid ${alpha(theme.palette.divider, 0.08)}`,
-            boxShadow: theme => theme.shadows[2],
+            background: theme.palette.background.paper,
+            border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
+            boxShadow:
+              theme.palette.mode === 'dark' ? `0 2px 8px ${alpha(theme.palette.common.black, 0.3)}` : theme.shadows[2],
             p: { xs: 2, sm: 3, md: 4 }
           }}
         >
@@ -328,7 +344,7 @@ const GameCreationModeSelector = ({ onModeSelect }) => {
                   transition: 'all 0.3s ease-in-out',
                   '&:hover': {
                     background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(196, 181, 253, 0.08) 100%)',
-                    transform: 'translateY(-2px)',
+                    transform: { xs: 'none', sm: 'translateY(-2px)' },
                     boxShadow: '0 4px 12px rgba(139, 92, 246, 0.15)'
                   }
                 }}
@@ -381,7 +397,7 @@ const GameCreationModeSelector = ({ onModeSelect }) => {
                   transition: 'all 0.3s ease-in-out',
                   '&:hover': {
                     background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(196, 181, 253, 0.08) 100%)',
-                    transform: 'translateY(-2px)',
+                    transform: { xs: 'none', sm: 'translateY(-2px)' },
                     boxShadow: '0 4px 12px rgba(139, 92, 246, 0.15)'
                   }
                 }}

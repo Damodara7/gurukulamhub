@@ -257,7 +257,7 @@ const AddAdvDrawer = ({ open, handleClose, mode = 'add', data = null, onRefresh 
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
-          background: '#ffffff'
+          bgcolor: 'background.paper'
         }
       }}
     >
@@ -265,9 +265,9 @@ const AddAdvDrawer = ({ open, handleClose, mode = 'add', data = null, onRefresh 
         sx={{
           px: { xs: 3, md: 4 },
           py: { xs: 2.5, md: 3 },
-          backgroundColor: '#ffffff',
+          bgcolor: 'background.paper',
           borderBottom: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
-          color: theme.palette.text.primary,
+          color: 'text.primary',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -316,8 +316,9 @@ const AddAdvDrawer = ({ open, handleClose, mode = 'add', data = null, onRefresh 
         <Box
           sx={{
             borderRadius: 3,
-            backgroundColor: '#ffffff',
-            boxShadow: '0 16px 40px rgba(15,15,45,0.05)',
+            bgcolor: 'background.paper',
+            boxShadow: theme =>
+              `0 16px 40px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.3 : 0.05)}`,
             border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
             p: { xs: 2.5, md: 3.5 }
           }}
@@ -880,7 +881,19 @@ const AddAdvDrawer = ({ open, handleClose, mode = 'add', data = null, onRefresh 
           }
         }}
       >
-        <Button variant='outlined' disabled={loading.submit} onClick={handleClose}>
+        <Button
+          variant='outlined'
+          disabled={loading.submit}
+          onClick={handleClose}
+          sx={{
+            color: theme.palette.mode === 'dark' ? '#ffffff' : undefined,
+            borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.23)' : undefined,
+            '&:hover': {
+              borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : undefined,
+              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : undefined
+            }
+          }}
+        >
           Cancel
         </Button>
         <Button

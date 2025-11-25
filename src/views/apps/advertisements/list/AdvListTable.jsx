@@ -209,6 +209,8 @@ const ImageComponent = ({ imageUrl, onClick }) => (
 
 const ImagePopup = ({ imageUrl, mediaType }) => {
   const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+  const isTablet = useMediaQuery(theme.breakpoints.down('md'))
   const [open, setOpen] = useState(false)
 
   const handleClickOpen = () => setOpen(true)
@@ -247,11 +249,22 @@ const ImagePopup = ({ imageUrl, mediaType }) => {
       <Dialog
         open={open}
         onClose={handleClose}
-        maxWidth='lg'
+        maxWidth={isMobile ? 'sm' : isTablet ? 'md' : mediaType === 'video' ? false : 'xl'}
+        fullWidth={mediaType === 'video' && !isMobile && !isTablet}
         PaperProps={{
           sx: {
-            borderRadius: '16px',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
+            borderRadius: { xs: '12px', sm: '16px' },
+            boxShadow: theme =>
+              `0 20px 60px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.5 : 0.3)}`,
+            bgcolor: 'background.paper',
+            maxWidth:
+              mediaType === 'video'
+                ? { xs: '95vw', sm: '90vw', md: '95vw', lg: '95vw', xl: '95vw' }
+                : { xs: '95vw', sm: '90vw', md: '85vw', lg: '1200px' },
+            width: mediaType === 'video' && !isMobile && !isTablet ? '95vw' : 'auto',
+            maxHeight: { xs: '90vh', sm: '85vh', md: '90vh', lg: '95vh' },
+            height: mediaType === 'video' && !isMobile && !isTablet ? '95vh' : 'auto',
+            m: { xs: 1, sm: 2 }
           }
         }}
       >
@@ -263,15 +276,23 @@ const ImagePopup = ({ imageUrl, mediaType }) => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '8px'
+            gap: '8px',
+            px: { xs: 2, sm: 3, md: 4 },
+            py: { xs: 1.5, sm: 2 }
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <i className={mediaType === 'video' ? 'ri-video-line' : 'ri-image-line'} style={{ fontSize: '24px' }} />
-            {mediaType === 'video' ? 'Video Preview' : 'Image Preview'}
+            <i
+              className={mediaType === 'video' ? 'ri-video-line' : 'ri-image-line'}
+              style={{ fontSize: isMobile ? '20px' : '24px' }}
+            />
+            <Typography sx={{ fontSize: { xs: '0.95rem', sm: '1.1rem', md: '1.25rem' }, color: 'white' }}>
+              {mediaType === 'video' ? 'Video Preview' : 'Image Preview'}
+            </Typography>
           </div>
           <IconButton
             onClick={handleClose}
+            size={isMobile ? 'small' : 'medium'}
             sx={{
               color: 'white',
               '&:hover': {
@@ -279,20 +300,60 @@ const ImagePopup = ({ imageUrl, mediaType }) => {
               }
             }}
           >
-            <i className='ri-close-line' style={{ fontSize: '24px' }} />
+            <i className='ri-close-line' style={{ fontSize: isMobile ? '20px' : '24px' }} />
           </IconButton>
         </DialogTitle>
-        <DialogContent sx={{ padding: { xs: 2.5, sm: 3 }, background: '#f9fafb' }}>
-          <DialogContentText>
+        <DialogContent
+          sx={{
+            padding: mediaType === 'video' ? { xs: 2, sm: 2, md: 1, lg: 1 } : { xs: 2, sm: 3, md: 4, lg: 5 },
+            bgcolor: 'background.default',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight:
+              mediaType === 'video'
+                ? { xs: 'auto', sm: '300px', md: '300px', lg: '70vh' }
+                : { xs: 'auto', sm: '400px', md: '500px', lg: '600px' },
+            maxHeight: mediaType === 'video' ? { xs: '90vh', sm: '85vh', md: '90vh' } : 'none',
+            p: mediaType === 'video' ? { xs: 2, sm: 2, md: 0.5, lg: 0.5 } : undefined
+          }}
+        >
+          <DialogContentText
+            sx={{
+              m: 0,
+              width: '100%',
+              height: mediaType === 'video' ? { xs: 'auto', md: '100%', lg: '100%' } : 'auto',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}
+          >
             {mediaType === 'video' ? (
               <Box
                 sx={{
                   width: '100%',
-                  maxWidth: { xs: '80vw', sm: '70vw', md: '600px' },
-                  mx: 'auto'
+                  height: { xs: 'auto', md: '100%', lg: '100%' },
+                  maxHeight: { xs: '70vh', sm: '75vh', md: '85vh', lg: '85vh' },
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
                 }}
               >
-                <VideoAd url={imageUrl} width='100%' height='auto' showPause autoPlay={false} />
+                <Box
+                  sx={{
+                    width: '100%',
+                    height: '100%',
+                    maxHeight: 'inherit',
+                    '& iframe, & video': {
+                      width: '100% !important',
+                      height: { xs: 'auto', md: '100% !important', lg: '100% !important' },
+                      minHeight: { xs: '300px', sm: '400px', md: '500px', lg: '600px' },
+                      maxHeight: { xs: '70vh', sm: '75vh', md: '85vh', lg: '85vh' }
+                    }
+                  }}
+                >
+                  <VideoAd url={imageUrl} width='100%' height='100%' showPause autoPlay={false} />
+                </Box>
               </Box>
             ) : (
               <Box
@@ -301,9 +362,13 @@ const ImagePopup = ({ imageUrl, mediaType }) => {
                 alt='Enlarged Image'
                 sx={{
                   width: '100%',
-                  maxWidth: { xs: '80vw', sm: '70vw', md: '60vw' },
-                  borderRadius: 1.5,
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+                  maxWidth: { xs: '100%', sm: '100%', md: '900px', lg: '1100px' },
+                  height: 'auto',
+                  maxHeight: { xs: '70vh', sm: '75vh', md: '80vh' },
+                  objectFit: 'contain',
+                  borderRadius: { xs: 1, sm: 1.5, md: 2 },
+                  boxShadow: theme =>
+                    `0 4px 12px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.3 : 0.1)}`
                 }}
               />
             )}
@@ -432,18 +497,15 @@ const AdvListTable = () => {
               {row.original.userName?.charAt(0)?.toUpperCase() || 'U'}
             </div>
             <div className='flex flex-col gap-1'>
-              <Typography className='font-semibold' style={{ fontSize: '15px', color: '#1a1a2e' }}>
+              <Typography className='font-semibold' sx={{ fontSize: '15px', color: 'text.primary' }}>
                 {row.original.userName}
               </Typography>
-              <Typography
-                variant='body2'
-                style={{ fontSize: '13px', color: theme.palette.primary.main, fontWeight: 500 }}
-              >
+              <Typography variant='body2' sx={{ fontSize: '13px', color: 'primary.main', fontWeight: 500 }}>
                 {row.original.company}
               </Typography>
               <Typography
                 variant='body2'
-                style={{ fontSize: '12px', color: '#6b7280', display: 'flex', alignItems: 'center', gap: '4px' }}
+                sx={{ fontSize: '12px', color: 'text.secondary', display: 'flex', alignItems: 'center', gap: '4px' }}
               >
                 <i className='ri-mail-line' style={{ fontSize: '14px' }} />
                 {row.original.email}
@@ -474,7 +536,7 @@ const AdvListTable = () => {
             }}
           >
             <i className='ri-calendar-event-line' style={{ fontSize: '18px', color: theme.palette.primary.main }} />
-            <Typography style={{ fontSize: '14px', fontWeight: 500, color: '#1a1a2e' }}>
+            <Typography sx={{ fontSize: '14px', fontWeight: 500, color: 'text.primary' }}>
               {format(row.original.startDate, 'MMM dd, yyyy')}
             </Typography>
           </div>
@@ -498,7 +560,7 @@ const AdvListTable = () => {
             }}
           >
             <i className='ri-calendar-check-line' style={{ fontSize: '18px', color: theme.palette.secondary.main }} />
-            <Typography style={{ fontSize: '14px', fontWeight: 500, color: '#1a1a2e' }}>
+            <Typography sx={{ fontSize: '14px', fontWeight: 500, color: 'text.primary' }}>
               {format(row.original.endDate, 'MMM dd, yyyy')}
             </Typography>
           </div>
@@ -509,14 +571,15 @@ const AdvListTable = () => {
         cell: ({ row }) => (
           <div className='flex flex-col items-center gap-3' style={{ padding: '8px 0' }}>
             {row.original?.mediaType === 'video' ? (
-              <div
+              <Box
                 className='media-preview-container'
-                style={{
+                sx={{
                   position: 'relative',
                   borderRadius: '12px',
                   overflow: 'hidden',
-                  border: '2px solid #e5e7eb',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                  border: theme => `2px solid ${theme.palette.divider}`,
+                  boxShadow: theme =>
+                    `0 4px 6px -1px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.3 : 0.1)}`,
                   width: '200px'
                 }}
               >
@@ -527,18 +590,19 @@ const AdvListTable = () => {
                   showPause={false}
                   autoPlay={false}
                 ></VideoAd>
-              </div>
+              </Box>
             ) : (
-              <div
+              <Box
                 className='media-preview-container'
-                style={{
+                sx={{
                   position: 'relative',
                   borderRadius: '12px',
                   overflow: 'hidden',
-                  border: '2px solid #e5e7eb',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                  border: theme => `2px solid ${theme.palette.divider}`,
+                  boxShadow: theme =>
+                    `0 4px 6px -1px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.3 : 0.1)}`
                 }}
-              ></div>
+              />
             )}
             <ImagePopup imageUrl={row.original.imageUrl} mediaType={row.original.mediaType} />
           </div>
@@ -547,22 +611,23 @@ const AdvListTable = () => {
       columnHelper.accessor('status', {
         header: 'Status',
         cell: ({ row }) => {
+          const isDark = theme.palette.mode === 'dark'
           const statusConfig = {
             active: {
-              color: '#10b981',
-              bg: '#d1fae5',
+              color: isDark ? '#4ade80' : '#10b981',
+              bg: isDark ? alpha('#10b981', 0.2) : '#d1fae5',
               icon: 'ri-checkbox-circle-line',
               label: 'Active'
             },
             pending: {
-              color: '#f59e0b',
-              bg: '#fef3c7',
+              color: isDark ? '#fbbf24' : '#f59e0b',
+              bg: isDark ? alpha('#f59e0b', 0.2) : '#fef3c7',
               icon: 'ri-time-line',
               label: 'Pending'
             },
             inactive: {
-              color: '#6b7280',
-              bg: '#f3f4f6',
+              color: isDark ? '#9ca3af' : '#6b7280',
+              bg: isDark ? alpha('#6b7280', 0.2) : '#f3f4f6',
               icon: 'ri-pause-circle-line',
               label: 'Inactive'
             }
@@ -570,20 +635,20 @@ const AdvListTable = () => {
           const config = statusConfig[row.original.status] || statusConfig.inactive
 
           return (
-            <div
-              style={{
+            <Box
+              sx={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px',
                 padding: '6px 14px',
-                background: config.bg,
+                bgcolor: config.bg,
                 borderRadius: '20px',
-                border: `2px solid ${config.color}20`
+                border: `2px solid ${alpha(config.color, 0.3)}`
               }}
             >
               <i className={config.icon} style={{ fontSize: '16px', color: config.color }} />
               <Typography
-                style={{
+                sx={{
                   fontSize: '13px',
                   fontWeight: 600,
                   color: config.color,
@@ -593,7 +658,7 @@ const AdvListTable = () => {
               >
                 {config.label}
               </Typography>
-            </div>
+            </Box>
           )
         }
       }),
@@ -613,12 +678,6 @@ const AdvListTable = () => {
                   theme.palette.secondary.main,
                   0.1
                 )} 100%)`,
-                '&:hover': {
-                  background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-                  '& i': {
-                    color: 'white'
-                  }
-                },
                 width: '36px',
                 height: '36px',
                 borderRadius: '8px',
@@ -635,29 +694,23 @@ const AdvListTable = () => {
                 setConfirmationDialogOpen(true)
               }}
               sx={{
-                background: '#fee2e2',
-                '&:hover': {
-                  background: '#ef4444',
-                  '& i': {
-                    color: 'white'
-                  }
-                },
+                bgcolor: theme => alpha(theme.palette.error.main, theme.palette.mode === 'dark' ? 0.2 : 0.1),
                 width: '36px',
                 height: '36px',
                 borderRadius: '8px',
-                transition: 'all 0.3s ease'
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  bgcolor: theme => alpha(theme.palette.error.main, theme.palette.mode === 'dark' ? 0.3 : 0.15)
+                }
               }}
             >
-              <i className='ri-delete-bin-7-line text-[20px]' style={{ color: '#ef4444' }} />
+              <i className='ri-delete-bin-7-line text-[20px]' style={{ color: theme.palette.error.main }} />
             </IconButtonTooltip>
             <OptionMenu
               iconClassName='text-[22px]'
               iconButtonProps={{
                 sx: {
-                  background: '#f3f4f6',
-                  '&:hover': {
-                    background: '#e5e7eb'
-                  },
+                  bgcolor: theme => alpha(theme.palette.text.primary, theme.palette.mode === 'dark' ? 0.1 : 0.05),
                   width: '36px',
                   height: '36px',
                   borderRadius: '8px',
@@ -741,76 +794,11 @@ const AdvListTable = () => {
                      ${theme.palette.background.default}`
       }}
     >
-      {/* Elegant Header */}
-      {/* <Box
-        sx={{
-          backdropFilter: 'blur(20px)',
-          bgcolor: alpha('#fff', 0.7),
-          borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
-          pt: { xs: 4, md: 6 },
-          pb: { xs: 4, md: 6 }
-        }}
-      >
-        <Container maxWidth='lg'>
-          <Box sx={{ textAlign: 'center' }}>
-            <Stack
-              direction='row'
-              spacing={{ xs: 1.5, sm: 2 }}
-              justifyContent='center'
-              alignItems='center'
-              sx={{ mb: { xs: 1.75, sm: 2 } }}
-            >
-              <Box
-                sx={{
-                  width: { xs: 46, sm: 54 },
-                  height: { xs: 46, sm: 54 },
-                  borderRadius: '14px',
-                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: `0 6px 18px ${alpha(theme.palette.primary.main, 0.28)}`
-                }}
-              >
-                <i
-                  className='ri-megaphone-line'
-                  style={{ fontSize: 'clamp(22px, 6vw, 28px)', color: '#fff', lineHeight: 1 }}
-                />
-              </Box>
-              <Typography
-                sx={{
-                  fontSize: { xs: 'clamp(1.7rem, 5.5vw, 2.3rem)', md: '2.5rem' },
-                  fontWeight: 700,
-                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  letterSpacing: '-0.018em'
-                }}
-              >
-                Advertisement Management
-              </Typography>
-            </Stack>
-            <Typography
-              variant='body1'
-              color='text.secondary'
-              sx={{
-                fontSize: '1.05rem',
-                lineHeight: 1.8,
-                maxWidth: 600,
-                mx: 'auto',
-                fontWeight: 400
-              }}
-            >
-              Manage and monitor all advertisements across your platform
-            </Typography>
-          </Box>
-        </Container>
-      </Box> */}
       <Box
         sx={{
           backdropFilter: 'blur(16px)',
-          bgcolor: alpha('#fff', 0.78),
-          borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+          bgcolor: theme => alpha(theme.palette.background.paper, 0.78),
+          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
           pt: { xs: 4, md: 6 },
           pb: { xs: 4, md: 6 }
         }}
@@ -878,10 +866,11 @@ const AdvListTable = () => {
         <Card
           sx={{
             borderRadius: '16px',
-            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.08)',
+            boxShadow: theme =>
+              `0 8px 24px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.3 : 0.08)}`,
             overflow: 'hidden',
-            border: '1px solid #e5e7eb',
-            background: '#ffffff',
+            border: `1px solid ${theme.palette.divider}`,
+            bgcolor: 'background.paper',
             transition: 'box-shadow 0.3s ease-in-out',
             '&:hover': {
               boxShadow: theme => theme.shadows[6]
@@ -974,22 +963,23 @@ const AdvListTable = () => {
                 <Stack spacing={2}>
                   {table.getFilteredRowModel().rows.map(row => {
                     const advertisement = row.original
+                    const isDark = theme.palette.mode === 'dark'
                     const statusConfig = {
                       active: {
-                        color: '#10b981',
-                        bg: '#d1fae5',
+                        color: isDark ? '#4ade80' : '#10b981',
+                        bg: isDark ? alpha('#10b981', 0.2) : '#d1fae5',
                         icon: 'ri-checkbox-circle-line',
                         label: 'Active'
                       },
                       pending: {
-                        color: '#f59e0b',
-                        bg: '#fef3c7',
+                        color: isDark ? '#fbbf24' : '#f59e0b',
+                        bg: isDark ? alpha('#f59e0b', 0.2) : '#fef3c7',
                         icon: 'ri-time-line',
                         label: 'Pending'
                       },
                       inactive: {
-                        color: '#6b7280',
-                        bg: '#f3f4f6',
+                        color: isDark ? '#9ca3af' : '#6b7280',
+                        bg: isDark ? alpha('#6b7280', 0.2) : '#f3f4f6',
                         icon: 'ri-pause-circle-line',
                         label: 'Inactive'
                       }
@@ -1002,15 +992,23 @@ const AdvListTable = () => {
                         sx={{
                           borderRadius: 3,
                           border: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
-                          boxShadow: '0 12px 30px rgba(15, 23, 42, 0.08)',
+                          boxShadow: theme =>
+                            `0 12px 30px ${alpha(
+                              theme.palette.common.black,
+                              theme.palette.mode === 'dark' ? 0.3 : 0.08
+                            )}`,
                           p: 2,
                           display: 'flex',
                           flexDirection: 'column',
                           gap: 1.5,
-                          background: '#fff',
+                          bgcolor: 'background.paper',
                           transition: 'all 0.2s ease-in-out',
                           '&:hover': {
-                            boxShadow: '0 16px 40px rgba(15, 23, 42, 0.12)',
+                            boxShadow: theme =>
+                              `0 16px 40px ${alpha(
+                                theme.palette.common.black,
+                                theme.palette.mode === 'dark' ? 0.4 : 0.12
+                              )}`,
                             transform: 'translateY(-2px)'
                           }
                         }}
@@ -1056,7 +1054,7 @@ const AdvListTable = () => {
                             </Typography>
                             <Typography
                               variant='caption'
-                              sx={{ color: '#6b7280', display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}
+                              sx={{ color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}
                             >
                               <i className='ri-mail-line' style={{ fontSize: '14px' }} />
                               {advertisement.email}
@@ -1066,9 +1064,9 @@ const AdvListTable = () => {
                             icon={<i className={config.icon} style={{ fontSize: '14px' }} />}
                             label={config.label}
                             sx={{
-                              backgroundColor: config.bg,
+                              bgcolor: config.bg,
                               color: config.color,
-                              border: `1px solid ${config.color}40`,
+                              border: `1px solid ${alpha(config.color, 0.3)}`,
                               fontWeight: 600,
                               fontSize: '0.7rem',
                               height: '24px',
@@ -1178,7 +1176,18 @@ const AdvListTable = () => {
                     {table.getHeaderGroups().map(headerGroup => (
                       <tr key={headerGroup.id}>
                         {headerGroup.headers.map(header => (
-                          <th key={header.id} className='enhanced-table-header'>
+                          <th
+                            key={header.id}
+                            className='enhanced-table-header'
+                            style={{
+                              background:
+                                theme.palette.mode === 'dark'
+                                  ? alpha(theme.palette.background.paper, 0.8)
+                                  : alpha(theme.palette.background.paper, 0.5),
+                              color: theme.palette.text.primary,
+                              borderBottom: `2px solid ${theme.palette.divider}`
+                            }}
+                          >
                             {header.isPlaceholder ? null : (
                               <>
                                 <div
@@ -1207,17 +1216,35 @@ const AdvListTable = () => {
                         key={row.id}
                         className={classnames('enhanced-table-row', { selected: row.getIsSelected() })}
                         style={{
-                          cursor: 'pointer'
+                          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+                          ...(row.getIsSelected() && {
+                            background: `linear-gradient(90deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(
+                              theme.palette.secondary.main,
+                              0.1
+                            )} 100%)`,
+                            borderLeft: `4px solid ${theme.palette.primary.main}`
+                          })
                         }}
                         onMouseEnter={e => {
-                          e.currentTarget.style.backgroundColor = 'rgba(139, 92, 246, 0.08)'
-                          e.currentTarget.style.boxShadow = '0 2px 8px rgba(139, 92, 246, 0.15)'
+                          if (!row.getIsSelected()) {
+                            e.currentTarget.style.background = `linear-gradient(90deg, ${alpha(
+                              theme.palette.primary.main,
+                              theme.palette.mode === 'dark' ? 0.15 : 0.08
+                            )} 0%, ${alpha(
+                              theme.palette.secondary.main,
+                              theme.palette.mode === 'dark' ? 0.15 : 0.08
+                            )} 100%)`
+                            e.currentTarget.style.boxShadow = `0 4px 12px ${alpha(
+                              theme.palette.primary.main,
+                              theme.palette.mode === 'dark' ? 0.2 : 0.08
+                            )}`
+                          }
                         }}
                         onMouseLeave={e => {
                           if (!row.getIsSelected()) {
-                            e.currentTarget.style.backgroundColor = 'transparent'
+                            e.currentTarget.style.background = 'transparent'
+                            e.currentTarget.style.boxShadow = 'none'
                           }
-                          e.currentTarget.style.boxShadow = 'none'
                         }}
                       >
                         {row.getVisibleCells().map(cell => (
@@ -1248,8 +1275,8 @@ const AdvListTable = () => {
               }}
               onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
               sx={{
-                borderTop: '2px solid #f3f4f6',
-                background: 'linear-gradient(180deg, #ffffff 0%, #f9fafb 100%)',
+                borderTop: `2px solid ${theme.palette.divider}`,
+                bgcolor: 'background.paper',
                 '.MuiTablePagination-toolbar': {
                   px: { xs: 2, sm: 3 },
                   py: 2

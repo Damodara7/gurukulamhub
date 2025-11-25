@@ -220,8 +220,11 @@ const AllAudiencePage = () => {
       <Box
         sx={{
           backdropFilter: 'blur(20px)',
-          bgcolor: alpha('#fff', 0.7),
-          borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+          bgcolor:
+            theme.palette.mode === 'dark'
+              ? alpha(theme.palette.background.paper, 0.8)
+              : alpha(theme.palette.background.paper, 0.7),
+          borderBottom: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
           pt: { xs: 4, md: 6 },
           pb: { xs: 4, md: 6 }
         }}
@@ -246,7 +249,10 @@ const AllAudiencePage = () => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`
+                  boxShadow: `0 4px 14px ${alpha(
+                    theme.palette.primary.main,
+                    theme.palette.mode === 'dark' ? 0.4 : 0.3
+                  )}`
                 }}
               >
                 <i className='ri-team-line' style={{ fontSize: '28px', color: 'white' }} />

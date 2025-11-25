@@ -506,8 +506,11 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
       <Box
         sx={{
           backdropFilter: 'blur(20px)',
-          bgcolor: alpha('#fff', 0.7),
-          borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+          bgcolor:
+            theme.palette.mode === 'dark'
+              ? alpha(theme.palette.background.paper, 0.8)
+              : alpha(theme.palette.background.paper, 0.7),
+          borderBottom: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
           pt: { xs: 4, md: 6 },
           pb: { xs: 4, md: 6 }
         }}
@@ -574,11 +577,18 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
         <Card
           sx={{
             borderRadius: 2,
-            boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.08)}`,
-            border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+            background: theme.palette.background.paper,
+            boxShadow:
+              theme.palette.mode === 'dark'
+                ? `0 2px 8px ${alpha(theme.palette.common.black, 0.3)}`
+                : `0 2px 8px ${alpha(theme.palette.primary.main, 0.08)}`,
+            border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
             overflow: 'hidden',
             '&:hover': {
-              boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.12)}`
+              boxShadow:
+                theme.palette.mode === 'dark'
+                  ? `0 4px 16px ${alpha(theme.palette.primary.main, 0.2)}`
+                  : `0 4px 16px ${alpha(theme.palette.primary.main, 0.12)}`
             }
           }}
         >
@@ -685,7 +695,21 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
                 </Grid>
                 <Grid item xs={12} mt={4}>
                   <Stack direction='row' spacing={2} justifyContent='center'>
-                    <Button variant='outlined' onClick={onCancel} disabled={isSubmitting}>
+                    <Button
+                      variant='outlined'
+                      onClick={onCancel}
+                      disabled={isSubmitting}
+                      sx={{
+                        color: theme.palette.mode === 'dark' ? 'white' : 'inherit',
+                        borderColor: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.3) : 'inherit',
+                        '&:hover': {
+                          borderColor:
+                            theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.5) : 'inherit',
+                          backgroundColor:
+                            theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.1) : 'inherit'
+                        }
+                      }}
+                    >
                       Cancel
                     </Button>
                     <Button

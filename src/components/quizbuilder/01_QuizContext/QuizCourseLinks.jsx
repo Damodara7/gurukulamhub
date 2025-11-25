@@ -10,8 +10,10 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Tooltip
+  Tooltip,
+  useTheme
 } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import AddIcon from '@mui/icons-material/Add'
 import RemoveIcon from '@mui/icons-material/Remove'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
@@ -21,6 +23,7 @@ import VideocamIcon from '@mui/icons-material/Videocam'
 import CloseIcon from '@mui/icons-material/Close'
 import YouTubeIcon from '@mui/icons-material/YouTube'
 const QuizCourseLinks = ({ courseLinks = [], setTheFormValue, loading }) => {
+  const theme = useTheme()
   const [open, setOpen] = useState(false)
   const [newLink, setNewLink] = useState('')
   const [error, setError] = useState('')
@@ -103,12 +106,13 @@ const QuizCourseLinks = ({ courseLinks = [], setTheFormValue, loading }) => {
   return (
     <Box
       sx={{
-        border: '1px solid #ccc',
+        border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
         borderRadius: '5px',
         width: '100%',
         height: '100%',
         p: 2,
-        opacity: loading ? 0.7 : 1
+        opacity: loading ? 0.7 : 1,
+        backgroundColor: theme.palette.background.paper
       }}
     >
       <Box display='flex' justifyContent='space-between' alignItems='center' mb={2}>
@@ -242,7 +246,13 @@ const QuizCourseLinks = ({ courseLinks = [], setTheFormValue, loading }) => {
           />
         </DialogContent>
         <DialogActions>
-          <Button variant='outlined' onClick={handleClose}>
+          <Button
+            variant='outlined'
+            onClick={handleClose}
+            sx={{
+              color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary
+            }}
+          >
             Cancel
           </Button>
           <Button

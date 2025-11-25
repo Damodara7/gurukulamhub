@@ -237,7 +237,10 @@ const GroupUserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUse
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
-                    backgroundColor: 'grey.100',
+                    backgroundColor:
+                      theme.palette.mode === 'dark'
+                        ? alpha(theme.palette.action.hover, 0.5)
+                        : theme.palette.action.hover,
                     borderRadius: 1,
                     px: 1,
                     width: '100%',
@@ -267,7 +270,7 @@ const GroupUserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUse
                       sx={{
                         color: 'error.main',
                         '&:hover': {
-                          backgroundColor: 'rgba(255, 0, 0, 0.1)'
+                          backgroundColor: alpha(theme.palette.error.main, 0.1)
                         },
                         p: 0,
                         minWidth: 16,
@@ -300,8 +303,9 @@ const GroupUserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUse
                     width: 40,
                     height: 40,
                     mb: 0.5,
-                    backgroundColor: 'grey.300',
-                    color: 'grey.600'
+                    backgroundColor:
+                      theme.palette.mode === 'dark' ? alpha(theme.palette.divider, 0.3) : theme.palette.grey[300],
+                    color: theme.palette.mode === 'dark' ? theme.palette.text.secondary : theme.palette.grey[600]
                   }}
                 >
                   ...
@@ -310,7 +314,10 @@ const GroupUserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUse
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
-                    backgroundColor: 'grey.200',
+                    backgroundColor:
+                      theme.palette.mode === 'dark'
+                        ? alpha(theme.palette.action.selected, 0.3)
+                        : theme.palette.grey[200],
                     borderRadius: 1,
                     px: 1,
                     width: '100%',
@@ -322,7 +329,7 @@ const GroupUserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUse
                     variant='body2'
                     sx={{
                       fontSize: '0.75rem',
-                      color: 'grey.600',
+                      color: theme.palette.mode === 'dark' ? theme.palette.text.secondary : theme.palette.grey[600],
                       fontWeight: 500
                     }}
                   >
@@ -387,15 +394,22 @@ const GroupUserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUse
         onClick={() => setOpen(true)}
         sx={{
           border: 1,
+          borderColor: 'divider',
           borderRadius: 1,
           p: 2,
           cursor: 'pointer',
-
+          backgroundColor: theme.palette.background.paper,
           minHeight: 60,
           minWidth: 300,
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center'
+          justifyContent: 'center',
+          transition: 'all 0.2s ease-in-out',
+          '&:hover': {
+            backgroundColor:
+              theme.palette.mode === 'dark' ? alpha(theme.palette.action.hover, 0.5) : theme.palette.action.hover,
+            borderColor: theme.palette.primary.main
+          }
         }}
       >
         {selectedUsers.length > 0 ? (
@@ -414,7 +428,10 @@ const GroupUserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUse
         fullWidth
         BackdropProps={{
           sx: {
-            backgroundColor: 'rgba(0, 0, 0, 0.3)',
+            backgroundColor:
+              theme.palette.mode === 'dark'
+                ? alpha(theme.palette.common.black, 0.7)
+                : alpha(theme.palette.common.black, 0.3),
             backdropFilter: 'none',
             WebkitBackdropFilter: 'none'
           }
@@ -428,12 +445,15 @@ const GroupUserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUse
             maxWidth: { xs: 'calc(100% - 32px)', sm: '600px' },
             height: { xs: 'calc(100dvh - 32px)', sm: '90dvh' },
             maxHeight: { xs: 'calc(100dvh - 32px)', sm: '90dvh' },
-            border: theme => `1px solid ${theme.palette.divider}`,
+            border: theme => `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
             display: 'flex',
             flexDirection: 'column',
             overflow: 'hidden',
             position: 'relative',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)'
+            boxShadow:
+              theme.palette.mode === 'dark'
+                ? `0 8px 32px ${alpha(theme.palette.common.black, 0.5)}`
+                : '0 8px 32px rgba(0, 0, 0, 0.12)'
           }
         }}
       >
@@ -502,8 +522,12 @@ const GroupUserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUse
               sx={{
                 py: { xs: 1.5, sm: 1 },
                 px: { xs: 1.5, sm: 2 },
-                borderBottom: theme => `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-                backgroundColor: alpha(theme.palette.primary.main, 0.04)
+                borderBottom: theme =>
+                  `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.1)}`,
+                backgroundColor:
+                  theme.palette.mode === 'dark'
+                    ? alpha(theme.palette.primary.main, 0.08)
+                    : alpha(theme.palette.primary.main, 0.04)
               }}
             >
               <ListItemButton role={undefined} onClick={handleToggleAll} dense>

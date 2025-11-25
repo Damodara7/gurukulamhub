@@ -36,22 +36,22 @@ function QuizListPage() {
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa', pb: { xs: 3, sm: 4, md: 6 } }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: theme.palette.background.default, pb: { xs: 3, sm: 4, md: 6 } }}>
       <TabContext value={activeTab}>
         {/* Header Section */}
         <Box
           sx={{
-            bgcolor: 'white',
+            bgcolor: theme.palette.background.paper,
             pt: { xs: 2, sm: 3, md: 4 },
             pb: { xs: 2, sm: 3, md: 4 },
-            borderBottom: '1px solid #e8eaed',
+            borderBottom: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
             mb: { xs: 2, sm: 3, md: 4 }
           }}
         >
           <Container maxWidth='xl' sx={{ px: { xs: 1.5, sm: 2, md: 3 } }}>
             <Box sx={{ textAlign: 'center', mb: { xs: 2, sm: 2.5, md: 3 } }}>
               {/* Icon and Title */}
-              <Stack spacing={{ xs: 0.75, sm: 1 }}>
+              <Stack spacing={{ xs: 0.75, sm: 1 }} alignItems='center' sx={{ width: '100%' }}>
                 <Stack
                   direction='row'
                   alignItems='center'
@@ -83,7 +83,7 @@ function QuizListPage() {
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent',
                       lineHeight: 1.2,
-                      textAlign: { xs: 'center', sm: 'left' }
+                      textAlign: 'center'
                     }}
                   >
                     Quiz Management
@@ -93,11 +93,13 @@ function QuizListPage() {
                 <Typography
                   variant='body1'
                   sx={{
-                    color: '#5f6368',
-                    mx: 'auto',
+                    color: theme.palette.text.secondary,
                     fontSize: { xs: '0.8125rem', sm: '0.875rem', md: '1rem' },
-                    px: { xs: 1, sm: 0 },
-                    maxWidth: { xs: '100%', sm: '600px', md: '700px' }
+                    px: { xs: 1, sm: 2 },
+                    maxWidth: { xs: '100%', sm: '600px', md: '700px' },
+                    textAlign: 'center',
+                    width: '100%',
+                    display: 'block'
                   }}
                 >
                   Manage, review, and publish quizzes across all stages
@@ -110,12 +112,12 @@ function QuizListPage() {
               sx={{
                 display: 'flex',
                 justifyContent: 'center',
-                width: '100%',
-                overflowX: 'auto',
-                '&::-webkit-scrollbar': {
-                  display: 'none'
-                },
-                scrollbarWidth: 'none'
+                width: '100%'
+                //overflowX: 'auto',
+                // '&::-webkit-scrollbar': {
+                //   display: 'none'
+                // },
+                // scrollbarWidth: 'none'
               }}
             >
               <CustomTabList

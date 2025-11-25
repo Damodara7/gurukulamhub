@@ -5,12 +5,13 @@ import { useParams, useRouter } from 'next/navigation' // Using App Router
 import ViewDetails from '@/components/public-games/game-details/ViewDetails'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
-import { CircularProgress, Box } from '@mui/material'
+import { CircularProgress, Box, useTheme } from '@mui/material'
 import FallBackCard from '@/components/apps/games/FallBackCard'
 
 const GameDetailsPage = () => {
   const params = useParams()
   const router = useRouter()
+  const theme = useTheme()
   const [game, setGame] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -42,7 +43,16 @@ const GameDetailsPage = () => {
 
   if (loading) {
     return (
-      <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 4 }}>
+      <Box
+        sx={{
+          minHeight: '100vh',
+          bgcolor: theme.palette.background.default,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          p: 4
+        }}
+      >
         <CircularProgress size={48} />
       </Box>
     )
@@ -50,7 +60,16 @@ const GameDetailsPage = () => {
 
   if (error || !game) {
     return (
-      <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 4 }}>
+      <Box
+        sx={{
+          minHeight: '100vh',
+          bgcolor: theme.palette.background.default,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          p: 4
+        }}
+      >
         <FallBackCard
           error={error}
           path='/public-games'

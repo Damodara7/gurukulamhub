@@ -1,4 +1,4 @@
-import React from 'react';
+import React from 'react'
 import {
   Grid,
   Card,
@@ -13,118 +13,166 @@ import {
   Box,
   Avatar,
   Chip,
-  Paper
-} from '@mui/material';
-import {
-  People,
-  CheckCircle,
-  Cancel
-} from '@mui/icons-material';
+  Paper,
+  useTheme
+} from '@mui/material'
+import { alpha } from '@mui/material/styles'
+import { People, CheckCircle, Cancel } from '@mui/icons-material'
 
-function ParticipatedPlayersTable({participatedUsers, game}) {
+function ParticipatedPlayersTable({ participatedUsers, game }) {
+  const theme = useTheme()
   return (
     <Grid item xs={12} lg={6}>
-      <Card 
+      <Card
         sx={{
           height: '100%',
           borderRadius: '16px',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-          background: 'rgba(255, 255, 255, 0.98)'
+          boxShadow:
+            theme.palette.mode === 'dark'
+              ? `0 4px 20px ${alpha(theme.palette.common.black, 0.4)}`
+              : '0 4px 20px rgba(0, 0, 0, 0.08)',
+          background: theme.palette.background.paper
         }}
       >
-        <CardContent sx={{ p: 3 }}>
-          <Typography 
-            variant='h6' 
-            sx={{ 
-              mb: 3,
+        <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+          <Typography
+            variant='h6'
+            sx={{
+              mb: { xs: 2, sm: 3 },
               fontWeight: 700,
               display: 'flex',
               alignItems: 'center',
               gap: 1,
-              color: '#1a1a1a'
+              color: theme.palette.text.primary,
+              fontSize: { xs: '1rem', sm: '1.25rem' }
             }}
           >
-            <CheckCircle sx={{ color: '#4caf50' }} />
+            <CheckCircle sx={{ fontSize: { xs: 20, sm: 24 }, color: theme.palette.success.main }} />
             Participated Players ({participatedUsers.length})
           </Typography>
-              <TableContainer component={Paper} sx={{ maxHeight: 300, overflow: 'auto' }}>
-                <Table stickyHeader size='small'>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Player</TableCell>
-                      <TableCell align='right'>Joined At</TableCell>
-                      <TableCell align='right'>Status</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {participatedUsers.length > 0 ? (
-                      participatedUsers.map(user => (
-                        <TableRow key={user._id} hover>
-                          <TableCell>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                              <Avatar sx={{ width: 32, height: 32 }} alt={user.email}>
-                                {user.email[0].toUpperCase()}
-                              </Avatar>
-                              <Typography variant='body1'>{user.email}</Typography>
-                            </Box>
-                          </TableCell>
-                          <TableCell align='right'>
-                            <Typography variant='body2'>{new Date(user.joinedAt).toLocaleString()}</Typography>
-                          </TableCell>
-                          <TableCell align='right'>
-                            {user.completed ? (
-                              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                                <Chip
-                                  icon={<CheckCircle fontSize='small' />}
-                                  label='Completed'
-                                  color='success'
-                                  size='small'
-                                  variant='outlined'
-                                />
-                                <Typography variant='caption' color='text.secondary'>
-                                  {new Date(user.finishedAt).toLocaleString()}
-                                </Typography>
-                              </Box>
-                            ) : (
-                              <Chip
-                                icon={<Cancel fontSize='small' />}
-                                label='In Progress'
-                                color='warning'
-                                size='small'
-                                variant='outlined'
-                              />
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={3} align='center' sx={{ py: 4 }}>
-                          <Box
+          <TableContainer component={Paper} sx={{ maxHeight: { xs: 250, sm: 300 }, overflow: 'auto' }}>
+            <Table stickyHeader size='small'>
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, py: { xs: 1, sm: 1.5 } }}>
+                    Player
+                  </TableCell>
+                  <TableCell
+                    align='right'
+                    sx={{
+                      fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                      py: { xs: 1, sm: 1.5 },
+                      display: { xs: 'none', md: 'table-cell' }
+                    }}
+                  >
+                    Joined At
+                  </TableCell>
+                  <TableCell align='right' sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, py: { xs: 1, sm: 1.5 } }}>
+                    Status
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {participatedUsers.length > 0 ? (
+                  participatedUsers.map(user => (
+                    <TableRow key={user._id} hover>
+                      <TableCell sx={{ py: { xs: 1, sm: 1.5 } }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 } }}>
+                          <Avatar
                             sx={{
-                              display: 'flex',
-                              flexDirection: 'column',
-                              alignItems: 'center',
-                              gap: 1
+                              width: { xs: 28, sm: 32 },
+                              height: { xs: 28, sm: 32 },
+                              fontSize: { xs: '0.75rem', sm: '0.875rem' }
                             }}
+                            alt={user.email}
                           >
-                            <People fontSize='large' color='disabled' />
-                            <Typography variant='body1' color='text.secondary'>
-                              No participants yet
-                            </Typography>
-                            <Typography variant='caption' color='text.disabled'>
-                              Player activity will appear here once they join the game
+                            {user.email[0].toUpperCase()}
+                          </Avatar>
+                          <Typography
+                            variant='body1'
+                            sx={{
+                              fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              maxWidth: { xs: '150px', sm: 'none' }
+                            }}
+                            title={user.email}
+                          >
+                            {user.email}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell
+                        align='right'
+                        sx={{ py: { xs: 1, sm: 1.5 }, display: { xs: 'none', md: 'table-cell' } }}
+                      >
+                        <Typography variant='body2' sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
+                          {new Date(user.joinedAt).toLocaleString()}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align='right' sx={{ py: { xs: 1, sm: 1.5 } }}>
+                        {user.completed ? (
+                          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                            <Chip
+                              icon={<CheckCircle fontSize='small' />}
+                              label='Completed'
+                              color='success'
+                              size='small'
+                              variant='outlined'
+                            />
+                            <Typography variant='caption' color='text.secondary'>
+                              {new Date(user.finishedAt).toLocaleString()}
                             </Typography>
                           </Box>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </CardContent>
-          </Card>
-        </Grid>
+                        ) : (
+                          <Chip
+                            icon={<Cancel fontSize='small' />}
+                            label='In Progress'
+                            color='warning'
+                            size='small'
+                            variant='outlined'
+                          />
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={3} align='center' sx={{ py: { xs: 3, sm: 4 } }}>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: 1
+                        }}
+                      >
+                        <People sx={{ fontSize: { xs: 32, sm: 40 } }} color='disabled' />
+                        <Typography
+                          variant='body1'
+                          color='text.secondary'
+                          sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+                        >
+                          No participants yet
+                        </Typography>
+                        <Typography
+                          variant='caption'
+                          color='text.disabled'
+                          sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, textAlign: 'center', px: 2 }}
+                        >
+                          Player activity will appear here once they join the game
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </CardContent>
+      </Card>
+    </Grid>
   )
 }
 

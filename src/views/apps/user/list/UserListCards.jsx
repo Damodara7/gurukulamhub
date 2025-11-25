@@ -64,9 +64,12 @@ const UserListCards = ({ users, isLoading }) => {
           <Box
             sx={{
               borderRadius: 3,
-              background: '#ffffff',
+              background: theme.palette.background.paper,
               border: `1px solid ${alpha(card.accent, 0.12)}`,
-              boxShadow: '0 15px 35px rgba(15, 23, 42, 0.08)',
+              boxShadow:
+                theme.palette.mode === 'dark'
+                  ? `0 15px 35px ${alpha(theme.palette.common.black, 0.3)}`
+                  : '0 15px 35px rgba(15, 23, 42, 0.08)',
               p: { xs: 1.75, md: 2 },
               display: 'flex',
               flexDirection: 'column',
