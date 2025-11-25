@@ -49,7 +49,7 @@ const GroupDetailsPopup = ({ open, group, onClose }) => {
 
     try {
       // Fetch all users and filter by groupIds
-      const result = await RestApi.get(`${API_URLS.v0.USER}`)
+      const result = await RestApi.get(`${API_URLS.v0.USER}?isVerified=true`)
       if (result?.status === 'success') {
         const allUsers = Array.isArray(result.result) ? result.result : [result.result]
         const groupUsers = allUsers.filter(user => user.groupIds && user.groupIds.includes(group._id))

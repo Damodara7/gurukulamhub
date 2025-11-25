@@ -149,11 +149,11 @@ export async function addGroupToUser(userId, groupId) {
   }
 }
 
-export async function getAll() {
+export async function getAll({filters = {}}) {
   await connectMongo() // Connect to the MongoDB database
 
   try {
-    const users = await User.find({ isVerified: true })
+    const users = await User.find({ ...filters })
       .select('-password')
       .sort({ createdAt: -1 })
       .populate('profile')

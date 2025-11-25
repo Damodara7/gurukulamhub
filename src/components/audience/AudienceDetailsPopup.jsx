@@ -214,7 +214,7 @@ const AudienceDetailsPopup = ({ open, audience, onClose }) => {
       }
 
       // Fall back to fetching all users and filtering locally
-      const result = await RestApi.get(`${API_URLS.v0.USER}`)
+      const result = await RestApi.get(`${API_URLS.v0.USER}?isVerified=true`)
       if (result?.status === 'success') {
         const allUsers = Array.isArray(result.result) ? result.result : [result.result]
         const filtered = filterUsersByAudienceCriteria(allUsers, audience)
