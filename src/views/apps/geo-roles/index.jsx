@@ -64,7 +64,7 @@ const GeoRoles = ({}) => {
       <Box
         sx={{
           backdropFilter: 'blur(20px)',
-          bgcolor: alpha('#fff', 0.7),
+          bgcolor: alpha(theme.palette.background.paper, theme.palette.mode === 'dark' ? 0.8 : 0.7),
           borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
           pt: { xs: 4, md: 6 },
           pb: { xs: 4, md: 6 }
@@ -137,7 +137,7 @@ const GeoRoles = ({}) => {
           <Grid item xs={12}>
             <Box
               sx={{
-                background: '#ffffff',
+                background: theme.palette.background.paper,
                 borderRadius: 3,
                 p: { xs: 3, sm: 4 },
                 boxShadow: theme => theme.shadows[2],

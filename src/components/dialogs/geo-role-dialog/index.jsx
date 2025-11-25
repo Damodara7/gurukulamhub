@@ -666,7 +666,21 @@ const GeoRoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
           }}
         >
           <Stack direction='row' spacing={2} width='100%'>
-            <Button variant='outlined' type='reset' color='secondary' fullWidth onClick={handleClose}>
+            <Button
+              variant='outlined'
+              type='reset'
+              color='secondary'
+              fullWidth
+              onClick={handleClose}
+              sx={{
+                color: theme.palette.mode === 'dark' ? '#ffffff' : undefined,
+                borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.23)' : undefined,
+                '&:hover': {
+                  borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : undefined,
+                  backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : undefined
+                }
+              }}
+            >
               Cancel
             </Button>
             <Button

@@ -16,6 +16,7 @@ import {
   Box,
   InputAdornment
 } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import {
   Add as AddIcon,
   Remove as RemoveIcon,
@@ -558,7 +559,18 @@ const InsertedVideoQuestions = forwardRef(
             />
 
             <div className='flex justify-end items-center gap-2 mt-2'>
-              <Button variant='outlined' onClick={handleCancelQuestion}>
+              <Button
+                variant='outlined'
+                onClick={handleCancelQuestion}
+                sx={{
+                  color: theme.palette.mode === 'dark' ? '#ffffff' : undefined,
+                  borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.23)' : undefined,
+                  '&:hover': {
+                    borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : undefined,
+                    backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : undefined
+                  }
+                }}
+              >
                 Cancel
               </Button>
               <Button
@@ -657,6 +669,7 @@ const EndVideoQuestions = forwardRef(
     },
     ref
   ) => {
+    const theme = useTheme()
     const [errors, setErrors] = useState({}) // Validation errors state
 
     const initialQuestionState = {
@@ -1137,7 +1150,18 @@ const EndVideoQuestions = forwardRef(
             />
 
             <div className='flex justify-end items-center gap-2 mt-2'>
-              <Button variant='outlined' onClick={handleCancelQuestion}>
+              <Button
+                variant='outlined'
+                onClick={handleCancelQuestion}
+                sx={{
+                  color: theme.palette.mode === 'dark' ? '#ffffff' : undefined,
+                  borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.23)' : undefined,
+                  '&:hover': {
+                    borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : undefined,
+                    backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : undefined
+                  }
+                }}
+              >
                 Cancel
               </Button>
               <Button

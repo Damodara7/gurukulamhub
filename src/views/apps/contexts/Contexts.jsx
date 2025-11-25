@@ -149,8 +149,8 @@ function Contexts({ contextType = 'GENERIC' }) {
       <Box
         sx={{
           backdropFilter: 'blur(16px)',
-          bgcolor: alpha('#fff', 0.78),
-          borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+          bgcolor: alpha(theme.palette.background.paper, 0.78),
+          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
           pt: { xs: 4, md: 6 },
           pb: { xs: 4, md: 6 }
         }}
@@ -184,7 +184,7 @@ function Contexts({ contextType = 'GENERIC' }) {
               <Stack spacing={0.5} alignItems='flex-start' sx={{ textAlign: 'left' }}>
                 <Typography
                   sx={{
-                    fontSize:{xs:'1.5rem',sm:'1.75rem',md:'2.5rem'},
+                    fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.5rem' },
                     fontWeight: 700,
                     background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                     WebkitBackgroundClip: 'text',
@@ -229,10 +229,11 @@ function Contexts({ contextType = 'GENERIC' }) {
             flex: 1,
             display: 'flex',
             flexDirection: 'column',
-            background: '#ffffff',
+            bgcolor: 'background.paper',
             borderRadius: 3,
             p: { xs: 2.5, sm: 3.5, md: 4 },
-            boxShadow: '0 12px 32px rgba(15, 15, 45, 0.06)',
+            boxShadow: theme =>
+              `0 12px 32px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.3 : 0.06)}`,
             border: `1px solid ${alpha(theme.palette.divider, 0.08)}`
           }}
         >

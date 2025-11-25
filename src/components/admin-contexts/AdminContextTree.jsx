@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import SortableTree, { addNodeUnderParent, removeNodeAtPath, changeNodeAtPath } from '@nosferatu500/react-sortable-tree'
 import '@nosferatu500/react-sortable-tree/style.css'
 import { Input, Button, IconButton, useTheme, TextField, InputAdornment, Box, Typography, Stack } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import useUser from '@/utils/useUser' // Replace with your hook path
 import { AddCircle as AddCircleIcon, RemoveCircle as RemoveCircleIcon, Edit as EditIcon } from '@mui/icons-material'
 import SearchNavigator from './SearchNavigator'
@@ -134,10 +135,29 @@ const AdminContextTree = ({
 
     return {
       canDrag: false,
+      style: {
+        backgroundColor:
+          theme.palette.mode === 'dark'
+            ? alpha(theme.palette.primary.main, 0.15)
+            : alpha(theme.palette.primary.main, 0.08),
+        borderRadius: '8px',
+        padding: '8px 12px',
+        margin: '4px 0',
+        border: `1px solid ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.3 : 0.2)}`
+      },
       title: (
         <>
           <span
-            style={{ fontSize: '1.1rem', color: isMatched ? theme.palette.primary.main : 'inherit' }}
+            style={{
+              fontSize: '1.1rem',
+              color: isMatched
+                ? theme.palette.mode === 'dark'
+                  ? '#000000'
+                  : theme.palette.primary.main
+                : theme.palette.mode === 'dark'
+                  ? '#000000'
+                  : theme.palette.text.primary
+            }}
             value={node.title}
             readOnly
             width='100%'
@@ -152,7 +172,12 @@ const AdminContextTree = ({
         <IconButtonTooltip
           title={'Add node'}
           key={path}
-          // color='primary'
+          sx={{
+            color: theme.palette.mode === 'dark' ? '#000000' : theme.palette.primary.main,
+            '&:hover': {
+              backgroundColor: alpha(theme.palette.primary.main, 0.1)
+            }
+          }}
           onClick={() => {
             console.log('Clicked add node')
             onAddClick({ node: node })
@@ -170,13 +195,18 @@ const AdminContextTree = ({
             //   )
           }}
         >
-          <AddCircleIcon /> {/* Add Child Icon */}
+          <AddCircleIcon sx={{ color: theme.palette.mode === 'dark' ? '#000000' : 'inherit' }} /> {/* Add Child Icon */}
         </IconButtonTooltip>,
         <IconButtonTooltip
           title={'Remove Node'}
           key={path}
-          // color='primary'
           disabled
+          sx={{
+            color: theme.palette.mode === 'dark' ? '#000000' : theme.palette.text.disabled,
+            '&:hover': {
+              backgroundColor: alpha(theme.palette.primary.main, 0.1)
+            }
+          }}
           onClick={() => {
             console.log('Clicked remove node')
             //   setLoading(true)
@@ -190,18 +220,23 @@ const AdminContextTree = ({
             //   )
           }}
         >
-          <RemoveCircleIcon /> {/* Remove Icon */}
+          <RemoveCircleIcon sx={{ color: theme.palette.mode === 'dark' ? '#000000' : 'inherit' }} /> {/* Remove Icon */}
         </IconButtonTooltip>,
         <IconButtonTooltip
           title={'Edit Node'}
           key={`${path}-edit`}
-          // color='primary'
+          sx={{
+            color: theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.primary.main,
+            '&:hover': {
+              backgroundColor: alpha(theme.palette.primary.main, 0.1)
+            }
+          }}
           onClick={() => {
             console.log('Clicked edit node')
             onEditClick({ node: node })
           }}
         >
-          <EditIcon /> {/* Edit Icon */}
+          <EditIcon sx={{ color: theme.palette.mode === 'dark' ? '#000000' : 'inherit' }} /> {/* Edit Icon */}
         </IconButtonTooltip>
       ],
       onClick: () => {
@@ -372,7 +407,7 @@ const AdminContextTree = ({
           variant='h5'
           sx={{
             fontWeight: 700,
-            background: 'linear-gradient(135deg, #8b5cf6 0%, #c4b5fd 100%)',
+            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
@@ -403,13 +438,15 @@ const AdminContextTree = ({
             sx={{
               '& .MuiOutlinedInput-root': {
                 borderRadius: 2,
-                backgroundColor: '#ffffff',
+                bgcolor: 'background.paper',
                 transition: 'all 0.2s ease-in-out',
                 '&:hover': {
-                  boxShadow: '0 2px 8px rgba(139, 92, 246, 0.15)'
+                  boxShadow: theme =>
+                    `0 2px 8px ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.25 : 0.15)}`
                 },
                 '&.Mui-focused': {
-                  boxShadow: '0 4px 12px rgba(139, 92, 246, 0.2)'
+                  boxShadow: theme =>
+                    `0 4px 12px ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.3 : 0.2)}`
                 }
               }
             }}
@@ -473,11 +510,6 @@ const AdminContextTree = ({
 
       <Box sx={{ height: { xs: '65vh', sm: '70vh', md: '74vh' }, width: '100%' }}>
         <SortableTree
-          //nodeRenderer={CustomNodeRenderer}
-          style={{
-            // Inline style for immediate override
-            '.rst__rowContents': { minWidth: '50px !important' }
-          }}
           onNodeSelect={(node, path) => handleNodeSelect(node, path)}
           onClick={node => handleNodeClick(node)}
           treeData={treeData}

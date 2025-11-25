@@ -330,13 +330,18 @@ const JoinRequestScreen = ({ group, removebutton }) => {
         minHeight: { xs: '100vh', sm: 'auto' },
         display: 'flex',
         flexDirection: 'column',
-        bgcolor: '#f0f2f5'
+        bgcolor: theme.palette.mode === 'dark' ? theme.palette.background.default : '#f0f2f5'
       }}
     >
       {/* Header */}
       <Paper
         elevation={1}
-        sx={{ p: { xs: 1, sm: 2 }, borderBottom: '1px solid', borderColor: 'divider', bgcolor: '#fff' }}
+        sx={{
+          p: { xs: 1, sm: 2 },
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          bgcolor: theme.palette.background.paper
+        }}
       >
         {/* Status Filter Tabs */}
         <Tabs
@@ -458,7 +463,13 @@ const JoinRequestScreen = ({ group, removebutton }) => {
       </Paper>
 
       {/* Content - WhatsApp Style List */}
-      <Box sx={{ flex: 1, overflow: 'hidden', bgcolor: '#f0f2f5' }}>
+      <Box
+        sx={{
+          flex: 1,
+          overflow: 'hidden',
+          bgcolor: theme.palette.mode === 'dark' ? theme.palette.background.default : '#f0f2f5'
+        }}
+      >
         {loading ? (
           <Box
             sx={{
@@ -478,7 +489,7 @@ const JoinRequestScreen = ({ group, removebutton }) => {
                 width: { xs: 80, sm: 120 },
                 height: { xs: 80, sm: 120 },
                 borderRadius: '50%',
-                bgcolor: '#e5e7eb',
+                bgcolor: theme.palette.mode === 'dark' ? alpha(theme.palette.divider, 0.3) : '#e5e7eb',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -486,7 +497,12 @@ const JoinRequestScreen = ({ group, removebutton }) => {
                 mb: { xs: 2, sm: 3 }
               }}
             >
-              <PersonIcon sx={{ fontSize: { xs: 40, sm: 60 }, color: '#9ca3af' }} />
+              <PersonIcon
+                sx={{
+                  fontSize: { xs: 40, sm: 60 },
+                  color: theme.palette.mode === 'dark' ? theme.palette.text.secondary : '#9ca3af'
+                }}
+              />
             </Box>
             <Typography
               variant='h6'
@@ -518,8 +534,11 @@ const JoinRequestScreen = ({ group, removebutton }) => {
                 <ListItem
                   key={request._id}
                   sx={{
-                    bgcolor: '#fff',
-                    borderBottom: '1px solid #e5e7eb',
+                    bgcolor: theme.palette.background.paper,
+                    borderBottom: `1px solid ${alpha(
+                      theme.palette.divider,
+                      theme.palette.mode === 'dark' ? 0.12 : 0.08
+                    )}`,
                     px: { xs: 1, sm: 2 },
                     py: { xs: 1.5, sm: 2 },
                     display: 'flex',
@@ -527,7 +546,7 @@ const JoinRequestScreen = ({ group, removebutton }) => {
                     alignItems: 'flex-start',
                     gap: { xs: 1.5, sm: 2 },
                     '&:hover': {
-                      bgcolor: '#f9fafb'
+                      bgcolor: theme.palette.mode === 'dark' ? alpha(theme.palette.action.hover, 0.5) : '#f9fafb'
                     }
                   }}
                 >
@@ -660,7 +679,7 @@ const JoinRequestScreen = ({ group, removebutton }) => {
                           size='small'
                           onClick={() => openUserDetails(request.userDetails)}
                           sx={{
-                            color: '#6b7280',
+                            color: theme.palette.mode === 'dark' ? theme.palette.text.secondary : '#6b7280',
                             width: { xs: 36, sm: 40 },
                             height: { xs: 36, sm: 40 }
                           }}
@@ -677,7 +696,7 @@ const JoinRequestScreen = ({ group, removebutton }) => {
                               onClick={() => handleApprove(request._id)}
                               disabled={processing[request._id]}
                               sx={{
-                                color: '#10b981',
+                                color: theme.palette.success.main,
                                 width: { xs: 36, sm: 40 },
                                 height: { xs: 36, sm: 40 }
                               }}
@@ -695,7 +714,7 @@ const JoinRequestScreen = ({ group, removebutton }) => {
                               onClick={() => openRejectDialog(request._id)}
                               disabled={processing[request._id]}
                               sx={{
-                                color: '#ef4444',
+                                color: theme.palette.error.main,
                                 width: { xs: 36, sm: 40 },
                                 height: { xs: 36, sm: 40 }
                               }}
@@ -716,7 +735,13 @@ const JoinRequestScreen = ({ group, removebutton }) => {
 
       {/* Bottom Back Button */}
       {!removebutton && (
-        <Box sx={{ p: { xs: 2, sm: 3 }, bgcolor: '#fff', borderTop: '1px solid #e5e7eb' }}>
+        <Box
+          sx={{
+            p: { xs: 2, sm: 3 },
+            bgcolor: theme.palette.background.paper,
+            borderTop: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`
+          }}
+        >
           <Box sx={{ display: 'flex', justifyContent: 'center' }}>
             <Button
               variant='contained'
@@ -803,7 +828,8 @@ const JoinRequestScreen = ({ group, removebutton }) => {
                 sx={{
                   fontSize: { xs: '0.875rem', sm: '1rem' },
                   px: { xs: 2, sm: 3 },
-                  py: { xs: 0.75, sm: 1 }
+                  py: { xs: 0.75, sm: 1 },
+                  color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary
                 }}
               >
                 Cancel

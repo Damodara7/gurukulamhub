@@ -3,7 +3,20 @@ import { useEffect, useState } from 'react'
 
 // MUI Imports
 
-import { Button, Drawer, FormControl, InputLabel, MenuItem, Select, TextField, Typography, Checkbox, Chip, ListItemText , Divider } from '@mui/material'
+import {
+  Button,
+  Drawer,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  TextField,
+  Typography,
+  Checkbox,
+  Chip,
+  ListItemText,
+  Divider
+} from '@mui/material'
 import { useTheme, alpha } from '@mui/material/styles'
 
 // Api utils
@@ -48,15 +61,15 @@ const AddUserDrawer = ({ open, handleClose, refreshUsers }) => {
   const [phoneInput, setPhoneInput] = useState('')
   const [phoneValid, setPhoneValid] = useState(false)
   const [countryDialCode, setCountryDialCode] = useState('')
-  
+
   // Email validation states
   const [emailError, setEmailError] = useState('')
   const [isCheckingEmail, setIsCheckingEmail] = useState(false)
   const [emailExists, setEmailExists] = useState(false)
-  
+
   // Form validation errors
   const [formErrors, setFormErrors] = useState({})
-  
+
   // Helper function to ensure USER role is always included
   const ensureUserRole = roles => {
     const rolesArray = Array.isArray(roles) ? roles : []
@@ -213,7 +226,7 @@ const AddUserDrawer = ({ open, handleClose, refreshUsers }) => {
   const handleSubmit = async () => {
     // Ensure USER role is always included
     const finalRoles = ensureUserRole(formData.roles)
-    
+
     if (!validateForm()) {
       return
     }
@@ -225,9 +238,9 @@ const AddUserDrawer = ({ open, handleClose, refreshUsers }) => {
     }
 
     try {
-      const response = await RestApi.post(`${API_URLS.v0.USER}`, { 
-        ...formData, 
-        roles: finalRoles 
+      const response = await RestApi.post(`${API_URLS.v0.USER}`, {
+        ...formData,
+        roles: finalRoles
       })
       if (response.status === 'success') {
         console.log('User added successfully:', response.result)
@@ -356,7 +369,11 @@ const AddUserDrawer = ({ open, handleClose, refreshUsers }) => {
           mr: { xs: 2, sm: 0 },
           borderTopLeftRadius: { xs: 24, sm: 28 },
           borderBottomLeftRadius: { xs: 24, sm: 28 },
-          boxShadow: '0 18px 44px rgba(15,15,45,0.18)',
+          backgroundColor: theme.palette.background.paper,
+          boxShadow:
+            theme.palette.mode === 'dark'
+              ? `0 18px 44px ${alpha(theme.palette.common.black, 0.5)}`
+              : '0 18px 44px rgba(15,15,45,0.18)',
           borderLeft: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
           display: 'flex',
           flexDirection: 'column'
@@ -371,7 +388,7 @@ const AddUserDrawer = ({ open, handleClose, refreshUsers }) => {
       </div>
       <Divider />
       <div className='p-5'>
-        <form  className='flex flex-col gap-5'>
+        <form className='flex flex-col gap-5'>
           <TextField
             label='First Name'
             fullWidth
@@ -457,7 +474,10 @@ const AddUserDrawer = ({ open, handleClose, refreshUsers }) => {
                   : 'Email does not match'
                 : '')
             }
-            error={!!formErrors.confirmEmail || (formData.email.trim() && formData.confirmEmail.trim() && formData.confirmEmail !== formData.email)} // Display error if emails don't match
+            error={
+              !!formErrors.confirmEmail ||
+              (formData.email.trim() && formData.confirmEmail.trim() && formData.confirmEmail !== formData.email)
+            } // Display error if emails don't match
           />
           <CountryRegionDropdown
             selectedCountryObject={selectedCountryObject}
@@ -568,7 +588,20 @@ const AddUserDrawer = ({ open, handleClose, refreshUsers }) => {
             >
               Submit
             </Button>
-            <Button variant='outlined' color='error' type='reset' onClick={() => handleReset()}>
+            <Button
+              variant='outlined'
+              color='error'
+              type='reset'
+              onClick={() => handleReset()}
+              sx={{
+                color: theme.palette.mode === 'dark' ? '#ffffff' : undefined,
+                borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.23)' : undefined,
+                '&:hover': {
+                  borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : undefined,
+                  backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : undefined
+                }
+              }}
+            >
               Cancel
             </Button>
           </div>

@@ -196,9 +196,12 @@ export default function PendingForApproval({}) {
                     flexDirection: 'column',
                     borderRadius: 2,
                     overflow: 'hidden',
-                    bgcolor: 'white',
-                    border: '1px solid #e8eaed',
-                    boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+                    bgcolor: theme.palette.background.paper,
+                    border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
+                    boxShadow:
+                      theme.palette.mode === 'dark'
+                        ? `0 2px 12px ${alpha(theme.palette.common.black, 0.3)}`
+                        : '0 2px 12px rgba(0,0,0,0.04)',
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     cursor: 'pointer',
                     position: 'relative',
@@ -216,14 +219,17 @@ export default function PendingForApproval({}) {
                       zIndex: 1
                     },
                     '&:hover': {
-                      transform: 'translateY(-8px)',
+                      transform: { xs: 'none', sm: 'translateY(-8px)' },
                       borderColor: theme.palette.warning.main,
-                      boxShadow: `0 12px 40px ${alpha(theme.palette.warning.main, 0.15)}`,
+                      boxShadow:
+                        theme.palette.mode === 'dark'
+                          ? `0 12px 40px ${alpha(theme.palette.warning.main, 0.3)}`
+                          : `0 12px 40px ${alpha(theme.palette.warning.main, 0.15)}`,
                       '&::before': {
                         transform: 'scaleX(1)'
                       },
                       '& .quiz-image': {
-                        transform: 'scale(1.08)'
+                        transform: { xs: 'none', sm: 'scale(1.08)' }
                       }
                     }
                   }}
@@ -239,10 +245,13 @@ export default function PendingForApproval({}) {
                       top: 8,
                       left: 8,
                       zIndex: 2,
-                      bgcolor: 'rgba(255, 255, 255, 0.9)',
+                      bgcolor:
+                        theme.palette.mode === 'dark'
+                          ? alpha(theme.palette.background.paper, 0.9)
+                          : 'rgba(255, 255, 255, 0.9)',
                       borderRadius: 1,
                       '&:hover': {
-                        bgcolor: 'white'
+                        bgcolor: theme.palette.background.paper
                       }
                     }}
                   />
@@ -278,7 +287,10 @@ export default function PendingForApproval({}) {
                         left: 0,
                         right: 0,
                         bottom: 0,
-                        background: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.3) 100%)'
+                        background: `linear-gradient(180deg, transparent 0%, ${alpha(
+                          theme.palette.common.black,
+                          theme.palette.mode === 'dark' ? 0.5 : 0.3
+                        )} 100%)`
                       }}
                     />
 
@@ -294,7 +306,10 @@ export default function PendingForApproval({}) {
                         color: 'white',
                         fontWeight: 700,
                         fontSize: '0.7rem',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                        boxShadow: `0 2px 8px ${alpha(
+                          theme.palette.common.black,
+                          theme.palette.mode === 'dark' ? 0.4 : 0.2
+                        )}`
                       }}
                     />
                   </Box>
@@ -429,7 +444,7 @@ export default function PendingForApproval({}) {
             alignItems: 'center',
             justifyContent: 'center',
             minHeight: '400px',
-            bgcolor: 'white',
+            bgcolor: theme.palette.background.paper,
             borderRadius: 2,
             border: '1px dashed',
             borderColor: 'divider',

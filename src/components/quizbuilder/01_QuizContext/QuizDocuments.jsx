@@ -13,8 +13,10 @@ import {
   DialogContent,
   DialogActions,
   Chip,
-  Tooltip
+  Tooltip,
+  useTheme
 } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined'
 import AddIcon from '@mui/icons-material/Add'
 import CloseIcon from '@mui/icons-material/Close'
@@ -25,6 +27,7 @@ import useUUID from '@/app/hooks/useUUID'
 import { MuiFileInput } from 'mui-file-input'
 
 const QuizDocuments = ({ documents = [], setTheFormValue, loading }) => {
+  const theme = useTheme()
   const [openDialog, setOpenDialog] = useState(false)
   const [currentDocument, setCurrentDocument] = useState({
     id: null,
@@ -82,12 +85,13 @@ const QuizDocuments = ({ documents = [], setTheFormValue, loading }) => {
   return (
     <Box
       sx={{
-        border: '1px solid #ccc',
+        border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
         borderRadius: '5px',
         width: '100%',
         height: '100%',
         p: 2,
-        opacity: loading ? 0.7 : 1
+        opacity: loading ? 0.7 : 1,
+        backgroundColor: theme.palette.background.paper
       }}
     >
       <Box display='flex' justifyContent='space-between' alignItems='center' mb={2}>
@@ -241,7 +245,13 @@ const QuizDocuments = ({ documents = [], setTheFormValue, loading }) => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant='outlined' onClick={handleCloseDialog}>
+          <Button
+            variant='outlined'
+            onClick={handleCloseDialog}
+            sx={{
+              color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary
+            }}
+          >
             Cancel
           </Button>
           <Button

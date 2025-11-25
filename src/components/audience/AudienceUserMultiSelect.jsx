@@ -229,7 +229,10 @@ const AudienceUserMultiSelect = ({ users, matchedUserIds = [], hasFilters = fals
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
-                    backgroundColor: 'grey.100',
+                    backgroundColor:
+                      theme.palette.mode === 'dark'
+                        ? alpha(theme.palette.grey[800], 0.5)
+                        : alpha(theme.palette.grey[100], 1),
                     borderRadius: 1,
                     px: 1,
                     width: '100%',
@@ -276,8 +279,8 @@ const AudienceUserMultiSelect = ({ users, matchedUserIds = [], hasFilters = fals
                     width: 40,
                     height: 40,
                     mb: 0.5,
-                    backgroundColor: 'grey.300',
-                    color: 'grey.600',
+                    backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[700] : theme.palette.grey[300],
+                    color: theme.palette.mode === 'dark' ? theme.palette.grey[200] : theme.palette.grey[600],
                     fontSize: '1rem'
                   }}
                 >
@@ -287,7 +290,10 @@ const AudienceUserMultiSelect = ({ users, matchedUserIds = [], hasFilters = fals
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
-                    backgroundColor: 'grey.200',
+                    backgroundColor:
+                      theme.palette.mode === 'dark'
+                        ? alpha(theme.palette.grey[800], 0.5)
+                        : alpha(theme.palette.grey[200], 1),
                     borderRadius: 1,
                     px: 1,
                     width: '100%',
@@ -299,7 +305,7 @@ const AudienceUserMultiSelect = ({ users, matchedUserIds = [], hasFilters = fals
                     variant='body2'
                     sx={{
                       fontSize: '0.75rem',
-                      color: 'grey.600',
+                      color: theme.palette.mode === 'dark' ? theme.palette.grey[300] : theme.palette.grey[600],
                       fontWeight: 500
                     }}
                   >
@@ -372,10 +378,11 @@ const AudienceUserMultiSelect = ({ users, matchedUserIds = [], hasFilters = fals
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          backgroundColor: theme.palette.background.paper,
           transition: 'all 0.2s ease-in-out',
           '&:hover': {
             borderColor: 'primary.main',
-            backgroundColor: alpha(theme.palette.primary.main, 0.04)
+            backgroundColor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.1 : 0.04)
           }
         }}
       >

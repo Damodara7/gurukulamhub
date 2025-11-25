@@ -192,10 +192,7 @@ export default function SavedQuizzes({ isAdmin = false }) {
     console.log('Deleting quizzes:', selectedQuizIds)
 
     try {
-      const response = await RestApi.del(
-        `${API_URLS.v0.USERS_QUIZ}`,
-        { ids: selectedQuizIds }
-      )
+      const response = await RestApi.del(`${API_URLS.v0.USERS_QUIZ}`, { ids: selectedQuizIds })
 
       if (response.status === 'success') {
         console.log('Quizzes deleted successfully')
@@ -322,9 +319,9 @@ export default function SavedQuizzes({ isAdmin = false }) {
 
       {loading ? (
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
-          <Stack spacing={2} alignItems="center">
+          <Stack spacing={2} alignItems='center'>
             <CircularProgress size={48} />
-            <Typography variant="body1" color="text.secondary" fontWeight={500}>
+            <Typography variant='body1' color='text.secondary' fontWeight={500}>
               Loading quizzes...
             </Typography>
           </Stack>
@@ -332,10 +329,11 @@ export default function SavedQuizzes({ isAdmin = false }) {
       ) : myQuizzes.length > 0 ? (
         <Grid container spacing={3}>
           {myQuizzes.map(item => {
-            const thumbnail = item.thumbnail?.length > 0 
-              ? item.thumbnail 
-              : `https://fakeimg.pl/400x250/?text=${encodeURIComponent(item.title || 'Quiz')}`
-            
+            const thumbnail =
+              item.thumbnail?.length > 0
+                ? item.thumbnail
+                : `https://fakeimg.pl/400x250/?text=${encodeURIComponent(item.title || 'Quiz')}`
+
             return (
               <Grid item xs={12} sm={6} md={4} lg={3} key={item._id || item.id}>
                 <Card
@@ -345,9 +343,12 @@ export default function SavedQuizzes({ isAdmin = false }) {
                     flexDirection: 'column',
                     borderRadius: 2,
                     overflow: 'hidden',
-                    bgcolor: 'white',
-                    border: '1px solid #e8eaed',
-                    boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+                    bgcolor: theme.palette.background.paper,
+                    border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
+                    boxShadow:
+                      theme.palette.mode === 'dark'
+                        ? `0 2px 12px ${alpha(theme.palette.common.black, 0.3)}`
+                        : '0 2px 12px rgba(0,0,0,0.04)',
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     cursor: 'pointer',
                     position: 'relative',
@@ -365,14 +366,17 @@ export default function SavedQuizzes({ isAdmin = false }) {
                       zIndex: 1
                     },
                     '&:hover': {
-                      transform: 'translateY(-8px)',
+                      transform: { xs: 'none', sm: 'translateY(-8px)' },
                       borderColor: theme.palette.success.main,
-                      boxShadow: `0 12px 40px ${alpha(theme.palette.success.main, 0.15)}`,
+                      boxShadow:
+                        theme.palette.mode === 'dark'
+                          ? `0 12px 40px ${alpha(theme.palette.success.main, 0.3)}`
+                          : `0 12px 40px ${alpha(theme.palette.success.main, 0.15)}`,
                       '&::before': {
                         transform: 'scaleX(1)'
                       },
                       '& .quiz-image': {
-                        transform: 'scale(1.08)'
+                        transform: { xs: 'none', sm: 'scale(1.08)' }
                       }
                     }
                   }}
@@ -388,10 +392,13 @@ export default function SavedQuizzes({ isAdmin = false }) {
                       top: 8,
                       left: 8,
                       zIndex: 2,
-                      bgcolor: 'rgba(255, 255, 255, 0.9)',
+                      bgcolor:
+                        theme.palette.mode === 'dark'
+                          ? alpha(theme.palette.background.paper, 0.9)
+                          : 'rgba(255, 255, 255, 0.9)',
                       borderRadius: 1,
                       '&:hover': {
-                        bgcolor: 'white'
+                        bgcolor: theme.palette.background.paper
                       }
                     }}
                   />
@@ -406,8 +413,8 @@ export default function SavedQuizzes({ isAdmin = false }) {
                     }}
                   >
                     <Box
-                      component="img"
-                      className="quiz-image"
+                      component='img'
+                      className='quiz-image'
                       src={thumbnail}
                       alt={item.title}
                       sx={{
@@ -416,7 +423,7 @@ export default function SavedQuizzes({ isAdmin = false }) {
                         objectFit: 'cover',
                         transition: 'transform 0.4s ease'
                       }}
-                      onError={(e) => {
+                      onError={e => {
                         e.target.src = `https://fakeimg.pl/400x250/?text=${encodeURIComponent(item.title || 'Quiz')}`
                       }}
                     />
@@ -427,14 +434,17 @@ export default function SavedQuizzes({ isAdmin = false }) {
                         left: 0,
                         right: 0,
                         bottom: 0,
-                        background: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.3) 100%)'
+                        background: `linear-gradient(180deg, transparent 0%, ${alpha(
+                          theme.palette.common.black,
+                          theme.palette.mode === 'dark' ? 0.5 : 0.3
+                        )} 100%)`
                       }}
                     />
-                    
+
                     {/* Saved Badge */}
                     <Chip
-                      label="SAVED"
-                      size="small"
+                      label='SAVED'
+                      size='small'
                       sx={{
                         position: 'absolute',
                         top: 12,
@@ -443,7 +453,10 @@ export default function SavedQuizzes({ isAdmin = false }) {
                         color: 'white',
                         fontWeight: 700,
                         fontSize: '0.7rem',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                        boxShadow: `0 2px 8px ${alpha(
+                          theme.palette.common.black,
+                          theme.palette.mode === 'dark' ? 0.4 : 0.2
+                        )}`
                       }}
                     />
                   </Box>
@@ -460,7 +473,7 @@ export default function SavedQuizzes({ isAdmin = false }) {
                   >
                     {/* Title */}
                     <Typography
-                      variant="h6"
+                      variant='h6'
                       fontWeight={700}
                       sx={{
                         fontSize: '1.1rem',
@@ -478,8 +491,8 @@ export default function SavedQuizzes({ isAdmin = false }) {
 
                     {/* Details */}
                     <Typography
-                      variant="body2"
-                      color="text.secondary"
+                      variant='body2'
+                      color='text.secondary'
                       sx={{
                         display: '-webkit-box',
                         WebkitLineClamp: 2,
@@ -495,9 +508,9 @@ export default function SavedQuizzes({ isAdmin = false }) {
                     </Typography>
 
                     {/* Footer Info */}
-                    <Stack 
-                      direction="row" 
-                      alignItems="center" 
+                    <Stack
+                      direction='row'
+                      alignItems='center'
                       spacing={1.5}
                       sx={{
                         pt: 1.5,
@@ -506,7 +519,7 @@ export default function SavedQuizzes({ isAdmin = false }) {
                       }}
                     >
                       {item.language && (
-                        <Stack direction="row" alignItems="center" spacing={0.75}>
+                        <Stack direction='row' alignItems='center' spacing={0.75}>
                           <Box
                             sx={{
                               width: 28,
@@ -520,7 +533,7 @@ export default function SavedQuizzes({ isAdmin = false }) {
                           >
                             <LanguageIcon sx={{ fontSize: 16, color: 'success.main' }} />
                           </Box>
-                          <Typography variant="caption" fontWeight={600} sx={{ fontSize: '0.75rem' }}>
+                          <Typography variant='caption' fontWeight={600} sx={{ fontSize: '0.75rem' }}>
                             {item.language?.name || 'Unknown'}
                           </Typography>
                         </Stack>
@@ -528,7 +541,7 @@ export default function SavedQuizzes({ isAdmin = false }) {
                     </Stack>
 
                     {/* Action Buttons */}
-                    <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+                    <Stack direction='row' spacing={1} sx={{ mt: 1 }}>
                       <Button
                         size='small'
                         variant='outlined'
@@ -566,7 +579,7 @@ export default function SavedQuizzes({ isAdmin = false }) {
                         Build
                       </Button>
                       {!isAdmin && (
-                        <Tooltip title="Send for Approval" arrow>
+                        <Tooltip title='Send for Approval' arrow>
                           <Button
                             size='small'
                             variant='outlined'
@@ -585,7 +598,7 @@ export default function SavedQuizzes({ isAdmin = false }) {
                         </Tooltip>
                       )}
                       {isAdmin && (
-                        <Tooltip title="Publish Quiz" arrow>
+                        <Tooltip title='Publish Quiz' arrow>
                           <Button
                             size='small'
                             variant='outlined'
@@ -603,7 +616,7 @@ export default function SavedQuizzes({ isAdmin = false }) {
                           </Button>
                         </Tooltip>
                       )}
-                      <Tooltip title="Delete Quiz" arrow>
+                      <Tooltip title='Delete Quiz' arrow>
                         <Button
                           size='small'
                           variant='outlined'
@@ -634,7 +647,7 @@ export default function SavedQuizzes({ isAdmin = false }) {
             alignItems: 'center',
             justifyContent: 'center',
             minHeight: '400px',
-            bgcolor: 'white',
+            bgcolor: theme.palette.background.paper,
             borderRadius: 2,
             border: '1px dashed',
             borderColor: 'divider',
@@ -649,10 +662,10 @@ export default function SavedQuizzes({ isAdmin = false }) {
               opacity: 0.5
             }}
           />
-          <Typography variant="h6" color="text.secondary" fontWeight={600} gutterBottom>
+          <Typography variant='h6' color='text.secondary' fontWeight={600} gutterBottom>
             No Saved Quizzes Found
           </Typography>
-          <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ maxWidth: '400px' }}>
+          <Typography variant='body2' color='text.secondary' textAlign='center' sx={{ maxWidth: '400px' }}>
             You don't have any saved quizzes yet. Save a quiz to see it here!
           </Typography>
         </Box>

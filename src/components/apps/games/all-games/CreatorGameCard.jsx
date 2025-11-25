@@ -13,6 +13,7 @@ import {
   useTheme,
   Tooltip
 } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import { format } from 'date-fns'
 import {
   AccessTime as AccessTimeIcon,
@@ -82,10 +83,12 @@ const CreatorGameCard = ({
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
+        background: theme.palette.background.paper,
         transition: 'transform 0.2s',
         '&:hover': {
           transform: 'translateY(-4px)',
-          boxShadow: theme.shadows[6]
+          boxShadow:
+            theme.palette.mode === 'dark' ? `0 8px 24px ${alpha(theme.palette.common.black, 0.4)}` : theme.shadows[6]
         }
       }}
     >

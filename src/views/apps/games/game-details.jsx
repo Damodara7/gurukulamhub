@@ -1,7 +1,8 @@
 'use client'
 
 import React, { useEffect, useRef, useState } from 'react'
-import { Box, Grid, Typography, Card, CardContent, Button } from '@mui/material'
+import { Box, Grid, Typography, Card, CardContent, Button, useTheme } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import { EmojiEvents, Videocam } from '@mui/icons-material'
 import ReactPlayer from 'react-player'
 import RewardsList from '@/components/apps/games/game-details/RewardsList'
@@ -18,6 +19,7 @@ import { useRouter } from 'next/navigation'
 import FallBackCard from '@/components/apps/games/FallBackCard'
 
 export default function GameDetailsPage({ game: initialGame = null, gameId }) {
+  const theme = useTheme()
   const [game, setGame] = useState(initialGame)
   const wsRef = useRef(null)
   const router = useRouter()
@@ -76,14 +78,14 @@ export default function GameDetailsPage({ game: initialGame = null, gameId }) {
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa' }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: theme.palette.background.default }}>
       {/* Gradient Header Banner */}
       <Box
         sx={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          pt: 4,
-          pb: 6,
-          mb: -4,
+          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+          pt: { xs: 3, sm: 4 },
+          pb: { xs: 4, sm: 6 },
+          mb: { xs: -3, sm: -4 },
           position: 'relative',
           overflow: 'hidden',
           '&::before': {
@@ -100,7 +102,14 @@ export default function GameDetailsPage({ game: initialGame = null, gameId }) {
         }}
       />
 
-      <Box sx={{ px: { xs: 2, sm: 3, md: 4 }, pb: 4, position: 'relative', mt: -2 }}>
+      <Box
+        sx={{
+          px: { xs: 1, sm: 2, md: 3, lg: 4 },
+          pb: { xs: 2, sm: 3, md: 4 },
+          position: 'relative',
+          mt: { xs: -2, sm: -3 }
+        }}
+      >
         {/* Game Header Section */}
         <GameHeader game={game} />
 
@@ -113,32 +122,40 @@ export default function GameDetailsPage({ game: initialGame = null, gameId }) {
             sx={{
               mb: 3,
               borderRadius: '16px',
-              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+              boxShadow:
+                theme.palette.mode === 'dark'
+                  ? `0 4px 20px ${alpha(theme.palette.common.black, 0.4)}`
+                  : '0 4px 20px rgba(0, 0, 0, 0.08)',
+              background: theme.palette.background.paper,
               overflow: 'hidden'
             }}
           >
-            <CardContent sx={{ p: 3 }}>
+            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
               <Typography
                 variant='h6'
                 sx={{
-                  mb: 3,
+                  mb: { xs: 2, sm: 3 },
                   fontWeight: 700,
                   display: 'flex',
                   alignItems: 'center',
                   gap: 1,
-                  color: '#1a1a1a'
+                  color: theme.palette.text.primary,
+                  fontSize: { xs: '1rem', sm: '1.25rem' }
                 }}
               >
-                <Videocam sx={{ color: '#667eea' }} />
+                <Videocam sx={{ fontSize: { xs: 20, sm: 24 }, color: theme.palette.primary.main }} />
                 Promotional Video
               </Typography>
               <Box
                 sx={{
                   position: 'relative',
                   pt: '56.25%', // 16:9 aspect ratio
-                  borderRadius: '12px',
+                  borderRadius: { xs: '8px', sm: '12px' },
                   overflow: 'hidden',
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+                  boxShadow:
+                    theme.palette.mode === 'dark'
+                      ? `0 4px 12px ${alpha(theme.palette.common.black, 0.3)}`
+                      : '0 4px 12px rgba(0, 0, 0, 0.1)'
                 }}
               >
                 <ReactPlayer
@@ -158,7 +175,7 @@ export default function GameDetailsPage({ game: initialGame = null, gameId }) {
         )}
 
         {/* Game Information Grid */}
-        <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mb: { xs: 2, sm: 3 } }}>
           {/* Location Details */}
           <GameLocationInfo game={game} />
 
@@ -167,7 +184,7 @@ export default function GameDetailsPage({ game: initialGame = null, gameId }) {
         </Grid>
 
         {/* Registration & Participation Section */}
-        <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mb: { xs: 2, sm: 3 } }}>
           {/* Registered Players */}
           <RegisteredPlayersTable
             registeredUsers={game?.registeredUsers}
@@ -187,12 +204,18 @@ export default function GameDetailsPage({ game: initialGame = null, gameId }) {
           <Card
             sx={{
               borderRadius: '16px',
-              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+              boxShadow:
+                theme.palette.mode === 'dark'
+                  ? `0 4px 20px ${alpha(theme.palette.common.black, 0.4)}`
+                  : '0 4px 20px rgba(0, 0, 0, 0.08)',
+              background: theme.palette.background.paper,
               overflow: 'hidden'
             }}
           >
-            <CardContent sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+              <Box
+                sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: { xs: 2, sm: 3 } }}
+              >
                 <Typography
                   variant='h5'
                   sx={{
@@ -200,10 +223,11 @@ export default function GameDetailsPage({ game: initialGame = null, gameId }) {
                     display: 'flex',
                     alignItems: 'center',
                     gap: 1,
-                    color: '#1a1a1a'
+                    color: theme.palette.text.primary,
+                    fontSize: { xs: '1.1rem', sm: '1.5rem' }
                   }}
                 >
-                  <EmojiEvents sx={{ color: '#667eea' }} />
+                  <EmojiEvents sx={{ fontSize: { xs: 20, sm: 24 }, color: theme.palette.primary.main }} />
                   Rewards
                 </Typography>
               </Box>

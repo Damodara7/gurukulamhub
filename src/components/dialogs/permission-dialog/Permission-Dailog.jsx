@@ -158,7 +158,17 @@ const AddContent = ({ handleClose, onCreate }) => {
             }}
           >
             {permissionChips.map(chip => (
-              <Chip key={chip} label={chip} onDelete={() => handleRemoveChip(chip)} className='bg-gray-200' />
+              <Chip
+                key={chip}
+                label={chip}
+                onDelete={() => handleRemoveChip(chip)}
+                sx={{
+                  backgroundColor:
+                    theme.palette.mode === 'dark'
+                      ? alpha(theme.palette.primary.main, 0.2)
+                      : alpha(theme.palette.grey[300], 0.8)
+                }}
+              />
             ))}
           </Box>
         )}
@@ -173,7 +183,7 @@ const AddContent = ({ handleClose, onCreate }) => {
           py: { xs: 2.5, sm: 3 },
           mt: { xs: 2, sm: 2 },
           gap: { xs: 1.5, sm: 2 },
-          backgroundColor: alpha(theme.palette.primary.main, 0.06),
+          backgroundColor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.12 : 0.06),
           borderTop: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
           '& > .MuiButton-root': {
             minWidth: 120,
@@ -181,7 +191,18 @@ const AddContent = ({ handleClose, onCreate }) => {
           }
         }}
       >
-        <Button onClick={handleClose} variant='outlined'>
+        <Button
+          onClick={handleClose}
+          variant='outlined'
+          sx={{
+            color: theme.palette.mode === 'dark' ? '#ffffff' : undefined,
+            borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.23)' : undefined,
+            '&:hover': {
+              borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : undefined,
+              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : undefined
+            }
+          }}
+        >
           Cancel
         </Button>
         <Button
@@ -310,7 +331,17 @@ const EditContent = ({ handleClose, data, onUpdate }) => {
             }}
           >
             {permissionChips.map(chip => (
-              <Chip key={chip} label={chip} onDelete={() => handleRemoveChip(chip)} className='bg-gray-200' />
+              <Chip
+                key={chip}
+                label={chip}
+                onDelete={() => handleRemoveChip(chip)}
+                sx={{
+                  backgroundColor:
+                    theme.palette.mode === 'dark'
+                      ? alpha(theme.palette.primary.main, 0.2)
+                      : alpha(theme.palette.grey[300], 0.8)
+                }}
+              />
             ))}
           </Box>
         )}
@@ -331,7 +362,7 @@ const EditContent = ({ handleClose, data, onUpdate }) => {
           py: { xs: 2.5, sm: 3 },
           mt: { xs: 2, sm: 2 },
           gap: { xs: 1.5, sm: 2 },
-          backgroundColor: alpha(theme.palette.primary.main, 0.06),
+          backgroundColor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.12 : 0.06),
           borderTop: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
           '& > .MuiButton-root': {
             minWidth: 120,
@@ -339,7 +370,18 @@ const EditContent = ({ handleClose, data, onUpdate }) => {
           }
         }}
       >
-        <Button onClick={handleClose} variant='outlined'>
+        <Button
+          onClick={handleClose}
+          variant='outlined'
+          sx={{
+            color: theme.palette.mode === 'dark' ? '#ffffff' : undefined,
+            borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.23)' : undefined,
+            '&:hover': {
+              borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : undefined,
+              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : undefined
+            }
+          }}
+        >
           Cancel
         </Button>
         <Button variant='contained' component='label' style={{ color: 'white' }} onClick={handleUpdateFeature}>
@@ -426,8 +468,11 @@ const FeatureDialog = ({ open, setOpen, data, onSuccess }) => {
           my: { xs: 4, sm: 6 },
           maxHeight: { xs: '72dvh', sm: '82dvh' },
           width: '100%',
-          backgroundColor: '#ffffff',
-          boxShadow: '0 18px 44px rgba(15,15,45,0.18)',
+          backgroundColor: theme.palette.background.paper,
+          boxShadow:
+            theme.palette.mode === 'dark'
+              ? `0 18px 44px ${alpha(theme.palette.common.black, 0.5)}`
+              : '0 18px 44px rgba(15,15,45,0.18)',
           border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`
         }
       }}
@@ -437,7 +482,7 @@ const FeatureDialog = ({ open, setOpen, data, onSuccess }) => {
           px: { xs: 3, sm: 4.5 },
           py: { xs: 2.75, sm: 3.25 },
           borderBottom: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
-          backgroundColor: '#ffffff'
+          backgroundColor: theme.palette.background.paper
         }}
       >
         <Box

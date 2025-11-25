@@ -9,6 +9,7 @@ import Avatar from '@mui/material/Avatar'
 import AvatarGroup from '@mui/material/AvatarGroup'
 import Button from '@mui/material/Button'
 import Stack from '@mui/material/Stack'
+import { useTheme } from '@mui/material/styles'
 
 // Component Imports
 import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
@@ -36,6 +37,7 @@ import IconButtonTooltip from '@/components/IconButtonTooltip'
 
 const RoleCards = () => {
   // const dispatch = useAppDispatch()
+  const theme = useTheme()
   const [roles, setRoles] = useState([])
   const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false) // Manage confirmation dialog
   const [currentRole, setCurrentRole] = useState(null) // Track the role to delete
@@ -128,7 +130,7 @@ const RoleCards = () => {
           <Grid item xs={12} sm={6} lg={4} key={index}>
             <Card
               sx={{
-                background: '#ffffff',
+                background: theme.palette.background.paper,
                 borderRadius: 3,
                 boxShadow: theme => theme.shadows[3],
                 border: theme => `1px solid ${theme.palette.divider}`,
@@ -146,7 +148,7 @@ const RoleCards = () => {
                       variant='h5'
                       sx={{
                         fontWeight: 700,
-                        background: 'linear-gradient(135deg, #8b5cf6 0%, #c4b5fd 100%)',
+                        background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
                         backgroundClip: 'text',
@@ -203,7 +205,7 @@ const RoleCards = () => {
             elementProps={{
               ...CardProps,
               sx: {
-                background: '#ffffff',
+                background: theme.palette.background.paper,
                 borderRadius: 3,
                 boxShadow: theme => theme.shadows[3],
                 border: theme => `2px dashed ${theme.palette.primary.main}`,

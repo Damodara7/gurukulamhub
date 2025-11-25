@@ -377,7 +377,7 @@ const FeaturesTable = () => {
               sx={{
                 transition: 'all 0.2s ease-in-out',
                 '&:hover': {
-                  backgroundColor: theme => theme.palette.primary.main + '10',
+                  backgroundColor: theme => alpha(theme.palette.primary.main, 0.1),
                   '& i': {
                     color: 'primary.main'
                   },
@@ -396,7 +396,7 @@ const FeaturesTable = () => {
               sx={{
                 transition: 'all 0.2s ease-in-out',
                 '&:hover': {
-                  backgroundColor: theme => theme.palette.error.main + '10',
+                  backgroundColor: theme => alpha(theme.palette.error.main, 0.1),
                   '& i': {
                     color: 'error.main'
                   },
@@ -478,7 +478,7 @@ const FeaturesTable = () => {
       <Box
         sx={{
           backdropFilter: 'blur(20px)',
-          bgcolor: alpha('#fff', 0.7),
+          bgcolor: alpha(theme.palette.background.paper, theme.palette.mode === 'dark' ? 0.8 : 0.7),
           borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
           pt: { xs: 4, md: 6 },
           pb: { xs: 4, md: 6 }
@@ -543,7 +543,7 @@ const FeaturesTable = () => {
       <Container maxWidth='lg' sx={{ py: { xs: 3, md: 4 } }}>
         <Card
           sx={{
-            background: '#ffffff',
+            background: theme.palette.background.paper,
             boxShadow: theme => theme.shadows[3],
             borderRadius: 3,
             overflow: 'hidden',
@@ -640,15 +640,21 @@ const FeaturesTable = () => {
                         sx={{
                           borderRadius: 3,
                           border: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
-                          boxShadow: '0 12px 30px rgba(15, 23, 42, 0.08)',
+                          boxShadow:
+                            theme.palette.mode === 'dark'
+                              ? `0 12px 30px ${alpha(theme.palette.common.black, 0.3)}`
+                              : '0 12px 30px rgba(15, 23, 42, 0.08)',
                           p: 2,
                           display: 'flex',
                           flexDirection: 'column',
                           gap: 1.5,
-                          background: '#fff',
+                          background: theme.palette.background.paper,
                           transition: 'all 0.2s ease-in-out',
                           '&:hover': {
-                            boxShadow: '0 16px 40px rgba(15, 23, 42, 0.12)',
+                            boxShadow:
+                              theme.palette.mode === 'dark'
+                                ? `0 16px 40px ${alpha(theme.palette.common.black, 0.5)}`
+                                : '0 16px 40px rgba(15, 23, 42, 0.12)',
                             transform: 'translateY(-2px)'
                           }
                         }}
@@ -817,8 +823,14 @@ const FeaturesTable = () => {
                           cursor: 'pointer'
                         }}
                         onMouseEnter={e => {
-                          e.currentTarget.style.backgroundColor = 'rgba(139, 92, 246, 0.08)'
-                          e.currentTarget.style.boxShadow = '0 2px 8px rgba(139, 92, 246, 0.15)'
+                          e.currentTarget.style.backgroundColor = alpha(
+                            theme.palette.primary.main,
+                            theme.palette.mode === 'dark' ? 0.15 : 0.08
+                          )
+                          e.currentTarget.style.boxShadow = `0 2px 8px ${alpha(
+                            theme.palette.primary.main,
+                            theme.palette.mode === 'dark' ? 0.25 : 0.15
+                          )}`
                         }}
                         onMouseLeave={e => {
                           if (!row.getIsSelected()) {

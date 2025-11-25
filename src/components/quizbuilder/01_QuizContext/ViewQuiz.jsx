@@ -137,16 +137,16 @@ const ViewQuiz = ({ data, theme: themeFromProps, onSelectQuiz, isAdmin = false }
   }
   const mobileTabPanelMaxHeight = 'calc(100vh - 170px)'
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa', pb: { xs: 4, sm: 6 } }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: theme.palette.background.default, pb: { xs: 4, sm: 6 } }}>
       <TabContext value={activeTab}>
         {/* Header Section */}
         <Box
           sx={{
-            bgcolor: 'white',
+            bgcolor: theme.palette.background.paper,
             pt: { xs: 2, sm: 3, md: 4 },
             pb: { xs: 2, sm: 3, md: 4 },
             px: { xs: 1, sm: 0 },
-            borderBottom: '1px solid #e8eaed',
+            borderBottom: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
             mb: { xs: 2, sm: 3, md: 4 }
           }}
         >
@@ -171,7 +171,7 @@ const ViewQuiz = ({ data, theme: themeFromProps, onSelectQuiz, isAdmin = false }
               <Typography
                 variant='body1'
                 sx={{
-                  color: '#5f6368',
+                  color: theme.palette.text.secondary,
                   maxWidth: '800px',
                   mx: 'auto',
                   fontSize: { xs: '0.875rem', sm: '0.9375rem', md: '1rem' },
@@ -189,11 +189,11 @@ const ViewQuiz = ({ data, theme: themeFromProps, onSelectQuiz, isAdmin = false }
                 display: 'flex',
                 justifyContent: 'center',
                 width: '100%',
-                overflowX: 'auto',
-                '&::-webkit-scrollbar': {
-                  display: 'none'
-                },
-                scrollbarWidth: 'none',
+                // overflowX: 'auto',
+                // '&::-webkit-scrollbar': {
+                //   display: 'none'
+                // },
+                // scrollbarWidth: 'none',
                 px: { xs: 1, sm: 0 }
               }}
             >

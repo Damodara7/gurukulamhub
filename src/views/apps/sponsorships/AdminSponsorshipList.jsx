@@ -277,7 +277,11 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
         sx={{
           borderRadius: 3,
           border: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
-          boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)'
+          backgroundColor: theme.palette.background.paper,
+          boxShadow:
+            theme.palette.mode === 'dark'
+              ? `0 8px 24px ${alpha(theme.palette.common.black, 0.3)}`
+              : '0 8px 24px rgba(15, 23, 42, 0.08)'
         }}
       >
         <CardContent sx={{ p: 2.5 }}>
@@ -789,7 +793,7 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
       <Box
         sx={{
           backdropFilter: 'blur(20px)',
-          bgcolor: alpha('#fff', 0.7),
+          bgcolor: alpha(theme.palette.background.paper, theme.palette.mode === 'dark' ? 0.8 : 0.7),
           borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
           pt: { xs: 4, md: 6 },
           pb: { xs: 4, md: 6 }
@@ -876,15 +880,17 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
                       minHeight: { xs: 42, sm: 46 },
                       px: { xs: 2.5, sm: 3 },
                       py: 1,
-                      color: '#6b7280',
-                      backgroundColor: '#f3f4f6',
+                      color: theme.palette.mode === 'dark' ? theme.palette.text.secondary : '#6b7280',
+                      backgroundColor:
+                        theme.palette.mode === 'dark' ? alpha(theme.palette.background.paper, 0.5) : '#f3f4f6',
                       borderRadius: '10px',
                       transition: 'all 0.2s ease',
                       mr: { xs: 1, sm: 1.5 },
                       mb: { xs: 1, sm: 0 },
                       '&:hover': {
-                        backgroundColor: '#e5e7eb',
-                        color: '#374151'
+                        backgroundColor:
+                          theme.palette.mode === 'dark' ? alpha(theme.palette.background.paper, 0.7) : '#e5e7eb',
+                        color: theme.palette.mode === 'dark' ? theme.palette.text.primary : '#374151'
                       },
                       '&.Mui-selected': {
                         color: 'white',
@@ -987,9 +993,13 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
         <Card
           sx={{
             borderRadius: { xs: '16px', sm: '20px' },
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+            backgroundColor: theme.palette.background.paper,
+            boxShadow:
+              theme.palette.mode === 'dark'
+                ? `0 4px 20px ${alpha(theme.palette.common.black, 0.3)}`
+                : '0 4px 20px rgba(0, 0, 0, 0.08)',
             overflow: 'hidden',
-            border: '1px solid rgba(0, 0, 0, 0.06)'
+            border: `1px solid ${alpha(theme.palette.divider, 0.12)}`
           }}
         >
           <CardContent
@@ -1045,7 +1055,7 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
                     borderRadius: '12px',
                     transition: 'all 0.2s ease',
                     '&:hover': {
-                      boxShadow: '0 2px 8px rgba(102, 126, 234, 0.12)'
+                      boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.12)}`
                     }
                   }
                 }}
@@ -1076,10 +1086,10 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
                     borderRadius: '12px',
                     transition: 'all 0.2s ease',
                     '&:hover': {
-                      boxShadow: '0 2px 8px rgba(102, 126, 234, 0.12)'
+                      boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.12)}`
                     },
                     '&.Mui-focused': {
-                      boxShadow: '0 4px 16px rgba(102, 126, 234, 0.2)'
+                      boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.2)}`
                     }
                   }
                 }}
@@ -1164,8 +1174,14 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
                           cursor: 'pointer'
                         }}
                         onMouseEnter={e => {
-                          e.currentTarget.style.backgroundColor = 'rgba(139, 92, 246, 0.08)'
-                          e.currentTarget.style.boxShadow = '0 2px 8px rgba(139, 92, 246, 0.15)'
+                          e.currentTarget.style.backgroundColor = alpha(
+                            theme.palette.primary.main,
+                            theme.palette.mode === 'dark' ? 0.15 : 0.08
+                          )
+                          e.currentTarget.style.boxShadow = `0 2px 8px ${alpha(
+                            theme.palette.primary.main,
+                            theme.palette.mode === 'dark' ? 0.25 : 0.15
+                          )}`
                         }}
                         onMouseLeave={e => {
                           if (!row.getIsSelected()) {
@@ -1179,7 +1195,7 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
                             key={cell.id}
                             style={{
                               padding: '16px 12px',
-                              borderBottom: '1px solid rgba(0, 0, 0, 0.05)'
+                              borderBottom: `1px solid ${alpha(theme.palette.divider, 0.08)}`
                             }}
                           >
                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -1195,8 +1211,8 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
           {!isMobile && (
             <Box
               sx={{
-                borderTop: '1px solid rgba(0, 0, 0, 0.06)',
-                backgroundColor: 'rgba(102, 126, 234, 0.02)'
+                borderTop: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
+                backgroundColor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.08 : 0.02)
               }}
             >
               <TablePagination
@@ -1227,8 +1243,8 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
                     borderRadius: '8px',
                     transition: 'all 0.2s ease',
                     '&:hover': {
-                      backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                      color: '#667eea'
+                      backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                      color: theme.palette.primary.main
                     }
                   }
                 }}
@@ -1246,15 +1262,26 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
           PaperProps={{
             sx: {
               borderRadius: '20px',
-              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.2)',
+              backgroundColor: theme.palette.background.paper,
+              boxShadow:
+                theme.palette.mode === 'dark'
+                  ? `0 20px 60px ${alpha(theme.palette.common.black, 0.5)}`
+                  : '0 20px 60px rgba(0, 0, 0, 0.2)',
               overflow: 'hidden'
             }
           }}
         >
           <DialogTitle
             sx={{
-              background: 'linear-gradient(135deg, rgba(244, 67, 54, 0.1), rgba(211, 47, 47, 0.05))',
-              borderBottom: '1px solid rgba(244, 67, 54, 0.15)',
+              background:
+                theme.palette.mode === 'dark'
+                  ? `linear-gradient(135deg, ${alpha(theme.palette.error.main, 0.15)}, ${alpha(
+                      theme.palette.error.dark,
+                      0.08
+                    )})`
+                  : 'linear-gradient(135deg, rgba(244, 67, 54, 0.1), rgba(211, 47, 47, 0.05))',
+              borderBottom: `1px solid ${alpha(theme.palette.error.main, 0.15)}`,
+              backgroundColor: theme.palette.background.paper,
               pb: 2.5,
               pt: 3
             }}
@@ -1313,19 +1340,19 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
               sx={{
                 '& .MuiOutlinedInput-root': {
                   borderRadius: '14px',
-                  backgroundColor: 'rgba(244, 67, 54, 0.02)',
+                  backgroundColor: alpha(theme.palette.error.main, theme.palette.mode === 'dark' ? 0.08 : 0.02),
                   transition: 'all 0.3s ease',
                   '&:hover': {
-                    backgroundColor: 'rgba(244, 67, 54, 0.04)',
+                    backgroundColor: alpha(theme.palette.error.main, theme.palette.mode === 'dark' ? 0.12 : 0.04),
                     '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: 'rgba(244, 67, 54, 0.3)'
+                      borderColor: alpha(theme.palette.error.main, 0.3)
                     }
                   },
                   '&.Mui-focused': {
-                    backgroundColor: 'white',
-                    boxShadow: '0 0 0 4px rgba(244, 67, 54, 0.1)',
+                    backgroundColor: theme.palette.background.paper,
+                    boxShadow: `0 0 0 4px ${alpha(theme.palette.error.main, 0.1)}`,
                     '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#f44336',
+                      borderColor: theme.palette.error.main,
                       borderWidth: '2px'
                     }
                   }
@@ -1338,9 +1365,13 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
             sx={{
               px: 3,
               py: 3,
-              borderTop: '1px solid rgba(0, 0, 0, 0.08)',
+              borderTop: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
               gap: 2,
-              background: 'linear-gradient(to top, rgba(0, 0, 0, 0.01), transparent)'
+              backgroundColor: theme.palette.background.paper,
+              background:
+                theme.palette.mode === 'dark'
+                  ? `linear-gradient(to top, ${alpha(theme.palette.common.black, 0.05)}, transparent)`
+                  : 'linear-gradient(to top, rgba(0, 0, 0, 0.01), transparent)'
             }}
           >
             <Button
@@ -1356,11 +1387,11 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
                 px: 4,
                 py: 1.25,
                 fontSize: '0.9375rem',
-                borderColor: 'rgba(0, 0, 0, 0.15)',
-                color: 'text.secondary',
+                borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.15)',
+                color: theme.palette.mode === 'dark' ? '#ffffff' : undefined,
                 '&:hover': {
-                  borderColor: 'rgba(0, 0, 0, 0.3)',
-                  backgroundColor: 'rgba(0, 0, 0, 0.03)',
+                  borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)',
+                  backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.03)',
                   transform: 'translateY(-1px)'
                 }
               }}

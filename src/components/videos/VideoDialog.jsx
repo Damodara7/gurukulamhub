@@ -52,8 +52,11 @@ const VideoForm = ({
   const theme = useTheme()
   const cardStyles = {
     borderRadius: 3,
-    backgroundColor: '#ffffff',
-    boxShadow: '0 14px 30px rgba(15,15,45,0.08)',
+    backgroundColor: theme.palette.background.paper,
+    boxShadow:
+      theme.palette.mode === 'dark'
+        ? `0 14px 30px ${alpha(theme.palette.common.black, 0.3)}`
+        : '0 14px 30px rgba(15,15,45,0.08)',
     border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
     p: { xs: 2.25, sm: 3 },
     width: '100%'
@@ -187,7 +190,7 @@ const VideoForm = ({
           py: { xs: 2.5, sm: 3 },
           mt: { xs: 2, sm: 2 },
           gap: { xs: 1.5, sm: 2 },
-          backgroundColor: alpha(theme.palette.primary.main, 0.06),
+          backgroundColor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.12 : 0.06),
           borderTop: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
           '& > .MuiButton-root': {
             minWidth: 120,
@@ -195,7 +198,19 @@ const VideoForm = ({
           }
         }}
       >
-        <Button onClick={handleClose} disabled={isQuestionFormOpen} variant='outlined'>
+        <Button
+          onClick={handleClose}
+          disabled={isQuestionFormOpen}
+          variant='outlined'
+          sx={{
+            color: theme.palette.mode === 'dark' ? '#ffffff' : undefined,
+            borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.23)' : undefined,
+            '&:hover': {
+              borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : undefined,
+              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : undefined
+            }
+          }}
+        >
           Cancel
         </Button>
         <Button
@@ -576,7 +591,11 @@ const VideoDialog = ({ open, onClose, data, onSuccess }) => {
           mx: { xs: 2, sm: 0 },
           my: { xs: 3, sm: 5 },
           border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
-          boxShadow: '0 22px 60px rgba(15,15,45,0.2)'
+          backgroundColor: theme.palette.background.paper,
+          boxShadow:
+            theme.palette.mode === 'dark'
+              ? `0 22px 60px ${alpha(theme.palette.common.black, 0.5)}`
+              : '0 22px 60px rgba(15,15,45,0.2)'
         }
       }}
     >
@@ -585,7 +604,7 @@ const VideoDialog = ({ open, onClose, data, onSuccess }) => {
           px: { xs: 3, sm: 4 },
           py: { xs: 2.5, sm: 3 },
           borderBottom: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
-          backgroundColor: '#ffffff'
+          backgroundColor: theme.palette.background.paper
         }}
       >
         <Stack direction='row' alignItems='center' justifyContent='space-between' spacing={2}>

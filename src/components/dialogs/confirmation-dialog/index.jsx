@@ -10,11 +10,13 @@ import DialogActions from '@mui/material/DialogActions'
 import Typography from '@mui/material/Typography'
 import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
+import { useTheme } from '@mui/material/styles'
 
 // Third-party Imports
 import classnames from 'classnames'
 
 const ConfirmationDialog = ({ open, setOpen, type, onConfirm }) => {
+  const theme = useTheme()
   // States
   const [secondDialog, setSecondDialog] = useState(false)
   const [userInput, setUserInput] = useState(false)
@@ -171,7 +173,17 @@ const ConfirmationDialog = ({ open, setOpen, type, onConfirm }) => {
   return (
     <>
       {/* Main Confirmation Dialog */}
-      <Dialog fullWidth maxWidth='xs' open={open} onClose={() => setOpen(false)}>
+      <Dialog
+        fullWidth
+        maxWidth='xs'
+        open={open}
+        onClose={() => setOpen(false)}
+        PaperProps={{
+          sx: {
+            backgroundColor: theme.palette.background.paper
+          }
+        }}
+      >
         <DialogContent className='flex items-center flex-col text-center pbs-10 pbe-6 pli-10 sm:pbs-16 sm:pbe-6 sm:pli-16'>
           <i className='ri-error-warning-line text-[88px] mbe-6 text-warning' />
           <Wrapper
@@ -207,6 +219,14 @@ const ConfirmationDialog = ({ open, setOpen, type, onConfirm }) => {
             color='secondary'
             onClick={() => handleConfirmation(false)}
             disabled={loading}
+            sx={{
+              color: theme.palette.mode === 'dark' ? '#ffffff' : undefined,
+              borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.23)' : undefined,
+              '&:hover': {
+                borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : undefined,
+                backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : undefined
+              }
+            }}
           >
             Cancel
           </Button>
@@ -214,7 +234,15 @@ const ConfirmationDialog = ({ open, setOpen, type, onConfirm }) => {
       </Dialog>
 
       {/* Success/Failure Dialog */}
-      <Dialog open={secondDialog} onClose={handleSecondDialogClose}>
+      <Dialog
+        open={secondDialog}
+        onClose={handleSecondDialogClose}
+        PaperProps={{
+          sx: {
+            backgroundColor: theme.palette.background.paper
+          }
+        }}
+      >
         <DialogContent className='flex items-center flex-col text-center pbs-10 pbe-6 pli-10 sm:pbs-16 sm:pbe-6 sm:pli-16'>
           {loading ? (
             <CircularProgress size={88} className='mbe-8' />

@@ -12,8 +12,10 @@ import {
   Grid,
   Divider,
   Alert,
-  AlertTitle
+  AlertTitle,
+  useTheme
 } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import {
   Group as GroupIcon,
   People as PeopleIcon,
@@ -27,6 +29,7 @@ import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 
 const GameGroupInfo = ({ game }) => {
+  const theme = useTheme()
   //   const [groupDetails, setGroupDetails] = useState(null)
   const [loading, setLoading] = useState(false)
 
@@ -59,42 +62,69 @@ const GameGroupInfo = ({ game }) => {
   console.log('group details: ', group)
 
   return (
-    <Card 
-      sx={{ 
+    <Card
+      sx={{
         mb: 3,
         borderRadius: '16px',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-        background: 'rgba(255, 255, 255, 0.98)',
+        boxShadow:
+          theme.palette.mode === 'dark'
+            ? `0 4px 20px ${alpha(theme.palette.common.black, 0.4)}`
+            : '0 4px 20px rgba(0, 0, 0, 0.08)',
+        background: theme.palette.background.paper,
         border: '2px solid',
-        borderColor: 'rgba(244, 67, 54, 0.2)'
+        borderColor: theme.palette.mode === 'dark' ? alpha(theme.palette.error.main, 0.3) : 'rgba(244, 67, 54, 0.2)'
       }}
     >
-      <CardContent sx={{ p: 3 }}>
-        <Typography 
-          variant='h6' 
-          sx={{ 
-            mb: 3,
+      <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+        <Typography
+          variant='h6'
+          sx={{
+            mb: { xs: 2, sm: 3 },
             fontWeight: 700,
             display: 'flex',
             alignItems: 'center',
             gap: 1,
-            color: '#1a1a1a'
+            color: theme.palette.text.primary,
+            fontSize: { xs: '1rem', sm: '1.25rem' }
           }}
         >
-          <GroupIcon sx={{ color: '#f44336' }} />
+          <GroupIcon sx={{ fontSize: { xs: 20, sm: 24 }, color: theme.palette.error.main }} />
           Group Information
         </Typography>
 
-        <Grid container spacing={3}>
+        <Grid container spacing={{ xs: 2, sm: 3 }}>
           {/* Group Details */}
           <Grid item xs={12} md={6}>
             <Stack spacing={2}>
               <Box>
-                <Typography variant='subtitle1' fontWeight={600} color='primary'>
+                <Typography
+                  variant='subtitle1'
+                  fontWeight={600}
+                  color='primary'
+                  sx={{
+                    fontSize: { xs: '0.9rem', sm: '1rem' },
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                  }}
+                  title={group.groupName || 'Private Group'}
+                >
                   {group.groupName || 'Private Group'}
                 </Typography>
                 {group.description && (
-                  <Typography variant='body2' color='text.secondary' sx={{ mt: 0.5 }}>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                    sx={{
+                      mt: 0.5,
+                      fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                      display: '-webkit-box',
+                      WebkitLineClamp: { xs: 2, sm: 3 },
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}
+                  >
                     {group.description}
                   </Typography>
                 )}
@@ -121,7 +151,14 @@ const GameGroupInfo = ({ game }) => {
 
               {/* Group Filters */}
               <Box>
-                <Typography variant='subtitle2' fontWeight={600} sx={{ mb: 1 }}>
+                <Typography
+                  variant='subtitle2'
+                  fontWeight={600}
+                  sx={{
+                    mb: 1,
+                    fontSize: { xs: '0.85rem', sm: '0.875rem' }
+                  }}
+                >
                   Group Filters
                 </Typography>
                 {(() => {
@@ -194,36 +231,67 @@ const GameGroupInfo = ({ game }) => {
               </Typography>
 
               {loading ? (
-                <Typography variant='body2' color='text.secondary'>
+                <Typography variant='body2' color='text.secondary' sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
                   Loading group details...
                 </Typography>
               ) : group.membersCount > 0 ? (
-                <Box sx={{ maxHeight: 200, overflowY: 'auto' }}>
-                  <Stack spacing={1}>
+                <Box sx={{ maxHeight: { xs: 150, sm: 200 }, overflowY: 'auto' }}>
+                  <Stack spacing={{ xs: 0.75, sm: 1 }}>
                     {group.members?.map((member, index) => (
                       <Box
                         key={member._id || index}
                         sx={{
                           display: 'flex',
                           alignItems: 'center',
-                          p: 1,
+                          p: { xs: 0.75, sm: 1 },
                           borderRadius: 1,
                           bgcolor: 'background.paper',
                           border: '1px solid',
                           borderColor: 'divider'
                         }}
                       >
-                        <Avatar sx={{ width: 32, height: 32, mr: 1, fontSize: '0.875rem' }}>
+                        <Avatar
+                          sx={{
+                            width: { xs: 28, sm: 32 },
+                            height: { xs: 28, sm: 32 },
+                            mr: 1,
+                            fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                          }}
+                        >
                           {member.profile?.firstname?.[0] || member.email?.[0] || 'U'}
                         </Avatar>
                         <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography variant='body2' noWrap>
+                          <Typography
+                            variant='body2'
+                            sx={{
+                              fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap'
+                            }}
+                            title={
+                              member.profile?.firstname && member.profile?.lastname
+                                ? `${member.profile?.firstname} ${member.profile?.lastname}`
+                                : member.email
+                            }
+                          >
                             {member.profile?.firstname && member.profile?.lastname
                               ? `${member.profile?.firstname} ${member.profile?.lastname}`
                               : member.email}
                           </Typography>
                           {member.profile?.firstname && (
-                            <Typography variant='caption' color='text.secondary' noWrap>
+                            <Typography
+                              variant='caption'
+                              color='text.secondary'
+                              sx={{
+                                fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                display: 'block'
+                              }}
+                              title={member.email}
+                            >
                               {member.email}
                             </Typography>
                           )}
@@ -234,19 +302,21 @@ const GameGroupInfo = ({ game }) => {
                 </Box>
               ) : (
                 <Alert severity='info' variant='outlined' sx={{ py: 0.5 }}>
-                  <Typography variant='body2'>No members found in this group</Typography>
+                  <Typography variant='body2' sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
+                    No members found in this group
+                  </Typography>
                 </Alert>
               )}
             </Box>
           </Grid>
         </Grid>
 
-        <Divider sx={{ my: 2 }} />
+        <Divider sx={{ my: { xs: 1.5, sm: 2 } }} />
 
         {/* Access Note */}
         <Alert severity='error' variant='standard'>
-          <AlertTitle>Access Control</AlertTitle>
-          <Typography variant='body2'>
+          <AlertTitle sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>Access Control</AlertTitle>
+          <Typography variant='body2' sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
             This game is restricted to members of the "{group.groupName || 'Private Group'}" group only. Users must be
             part of this group to register and participate in the game.
           </Typography>

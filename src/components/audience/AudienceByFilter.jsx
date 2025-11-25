@@ -417,7 +417,17 @@ const AudienceByFilter = ({
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button
+          onClick={onClose}
+          sx={{
+            color: theme.palette.mode === 'dark' ? 'white' : 'inherit',
+            '&:hover': {
+              backgroundColor: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.1) : 'inherit'
+            }
+          }}
+        >
+          Cancel
+        </Button>
       </DialogActions>
     </Dialog>
   )
@@ -1516,7 +1526,18 @@ const AudienceByFilter = ({
         </DialogContent>
 
         <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={closeFilterDialog} variant='outlined'>
+          <Button
+            onClick={closeFilterDialog}
+            variant='outlined'
+            sx={{
+              color: theme.palette.mode === 'dark' ? 'white' : 'inherit',
+              borderColor: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.3) : 'inherit',
+              '&:hover': {
+                borderColor: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.5) : 'inherit',
+                backgroundColor: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.1) : 'inherit'
+              }
+            }}
+          >
             Cancel
           </Button>
           <Button

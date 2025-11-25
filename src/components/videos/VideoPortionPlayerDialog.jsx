@@ -1,8 +1,10 @@
 import React from 'react'
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography, Box } from '@mui/material'
+import { alpha, useTheme } from '@mui/material/styles'
 import VideoPortionPlayer from './VideoPortionPlayer'
 
 function VideoPortionPlayerDialog({ data, open, onClose }) {
+  const theme = useTheme()
   return (
     <Dialog
       fullWidth
@@ -12,7 +14,8 @@ function VideoPortionPlayerDialog({ data, open, onClose }) {
       PaperProps={{
         sx: {
           borderRadius: 3,
-          boxShadow: theme => theme.shadows[8]
+          boxShadow: theme => theme.shadows[8],
+          backgroundColor: theme.palette.background.paper
         }
       }}
     >
@@ -30,11 +33,11 @@ function VideoPortionPlayerDialog({ data, open, onClose }) {
               width: 48,
               height: 48,
               borderRadius: '12px',
-              background: 'linear-gradient(135deg, #8b5cf6 0%, #c4b5fd 100%)',
+              background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 4px 14px rgba(139, 92, 246, 0.3)'
+              boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`
             }}
           >
             <i className='ri-play-circle-line' style={{ fontSize: '24px', color: 'white' }} />
@@ -43,7 +46,7 @@ function VideoPortionPlayerDialog({ data, open, onClose }) {
             variant='h4'
             sx={{
               fontWeight: 700,
-              background: 'linear-gradient(135deg, #8b5cf6 0%, #c4b5fd 100%)',
+              background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text'

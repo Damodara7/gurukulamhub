@@ -13,12 +13,12 @@ const ReusableTabsList = ({ tabsList = [], value, onChange }) => {
           sx={{
             display: 'flex',
             justifyContent: 'center',
-            width: '100%',
-            overflowX: 'auto',
-            '&::-webkit-scrollbar': {
-              display: 'none'
-            },
-            scrollbarWidth: 'none'
+            width: '100%'
+            // overflowX: 'auto',
+            // '&::-webkit-scrollbar': {
+            //   display: 'none'
+            // },
+            // scrollbarWidth: 'none'
           }}
         >
           <TabContext value={value}>

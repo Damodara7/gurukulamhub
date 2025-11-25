@@ -247,7 +247,7 @@ const NotificationDropdown = ({ notifications }) => {
                   </ScrollWrapper>
                   <Divider />
                   <div className='p-4'>
-                    <Button fullWidth variant='contained'  size='small'>
+                    <Button fullWidth variant='contained' component='label'  size='small' sx={{color: 'white'}}>
                       View All Notifications
                     </Button>
                   </div>

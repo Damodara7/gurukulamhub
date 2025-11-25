@@ -16,10 +16,12 @@ import {
   Box,
   Tooltip
 } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import { Delete as DeleteIcon, Edit as EditIcon, Add as AddIcon, PushPin as PushPinIcon } from '@mui/icons-material'
 import IconButtonTooltip from '../IconButtonTooltip'
 
 const VideoPortions = ({ videoUrl, videoDuration, onSetRecommendedSegments, recommendedSegments }) => {
+  const theme = useTheme()
   const [openDialog, setOpenDialog] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [currentClip, setCurrentClip] = useState({ id: null, startTime: 0, endTime: 10, description: '' })
@@ -357,7 +359,18 @@ const VideoPortions = ({ videoUrl, videoDuration, onSetRecommendedSegments, reco
           )}
         </DialogContent>
         <DialogActions>
-          <Button variant='outlined' onClick={handleCloseDialog}>
+          <Button
+            variant='outlined'
+            onClick={handleCloseDialog}
+            sx={{
+              color: theme.palette.mode === 'dark' ? '#ffffff' : undefined,
+              borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.23)' : undefined,
+              '&:hover': {
+                borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : undefined,
+                backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : undefined
+              }
+            }}
+          >
             Cancel
           </Button>
           <Button onClick={handleSaveClip} variant='contained' component='label' style={{ color: 'white' }}>

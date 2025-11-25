@@ -222,12 +222,20 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup }) => {
                   position: 'relative',
                   overflow: 'hidden',
                   borderRadius: { xs: 2, sm: 3 },
-                  background: '#ffffff',
+                  background: theme.palette.background.paper,
                   transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                  border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
+                  boxShadow:
+                    theme.palette.mode === 'dark'
+                      ? `0 2px 8px ${alpha(theme.palette.common.black, 0.3)}`
+                      : `0 2px 8px ${alpha(theme.palette.primary.main, 0.08)}`,
                   '&:hover': {
                     transform: { xs: 'translateY(-4px)', sm: 'translateY(-8px)' },
-                    boxShadow: `0 12px 40px ${alpha(theme.palette.primary.main, 0.15)}`,
-                    borderColor: alpha(theme.palette.primary.main, 0.3)
+                    boxShadow:
+                      theme.palette.mode === 'dark'
+                        ? `0 12px 40px ${alpha(theme.palette.primary.main, 0.25)}`
+                        : `0 12px 40px ${alpha(theme.palette.primary.main, 0.15)}`,
+                    borderColor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.4 : 0.3)
                   }
                 }}
               >
@@ -444,30 +452,60 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup }) => {
                                       fontSize: { xs: '0.7rem', sm: '0.75rem', md: '0.8rem' },
                                       fontWeight: 600,
                                       borderRadius: 1.5,
-                                      background: `linear-gradient(135deg, ${alpha(
-                                        theme.palette.grey[600],
+                                      background:
+                                        theme.palette.mode === 'dark'
+                                          ? alpha(theme.palette.grey[300], 0.15)
+                                          : `linear-gradient(135deg, ${alpha(theme.palette.grey[600], 0.2)}, ${alpha(
+                                              theme.palette.grey[600],
+                                              0.15
+                                            )})`,
+                                      boxShadow: `0 1px 3px ${alpha(
+                                        theme.palette.mode === 'dark'
+                                          ? theme.palette.common.black
+                                          : theme.palette.grey[400],
+                                        0.08
+                                      )}`,
+                                      color:
+                                        theme.palette.mode === 'dark'
+                                          ? theme.palette.text.primary
+                                          : theme.palette.grey[900],
+                                      border: `1px solid ${alpha(
+                                        theme.palette.mode === 'dark'
+                                          ? theme.palette.grey[300]
+                                          : theme.palette.grey[600],
                                         0.2
-                                      )}, ${alpha(theme.palette.grey[600], 0.15)})`,
-                                      boxShadow: `0 1px 3px ${alpha(theme.palette.grey[400], 0.08)}`,
-                                      color: theme.palette.grey[900],
-                                      border: `1px solid ${alpha(theme.palette.grey[600], 0.2)}`,
+                                      )}`,
                                       transition: 'all 0.2s ease-in-out',
                                       '&:hover': {
-                                        background: `linear-gradient(135deg, ${alpha(
-                                          theme.palette.grey[600],
-                                          0.28
-                                        )}, ${alpha(theme.palette.grey[600], 0.22)})`,
-                                        boxShadow: `0 2px 4px ${alpha(theme.palette.grey[600], 0.12)}`,
+                                        background:
+                                          theme.palette.mode === 'dark'
+                                            ? alpha(theme.palette.grey[300], 0.22)
+                                            : `linear-gradient(135deg, ${alpha(theme.palette.grey[600], 0.28)}, ${alpha(
+                                                theme.palette.grey[600],
+                                                0.22
+                                              )})`,
+                                        boxShadow: `0 2px 4px ${alpha(
+                                          theme.palette.mode === 'dark'
+                                            ? theme.palette.grey[300]
+                                            : theme.palette.grey[600],
+                                          0.12
+                                        )}`,
                                         transform: 'translateY(-1px)'
                                       },
                                       '& .MuiChip-icon': {
                                         fontSize: 16,
-                                        color: theme.palette.grey[600],
+                                        color:
+                                          theme.palette.mode === 'dark'
+                                            ? theme.palette.text.secondary
+                                            : theme.palette.grey[600],
                                         marginLeft: '8px',
                                         marginRight: '-2px'
                                       },
                                       '& .MuiChip-label': {
-                                        color: theme.palette.grey[600],
+                                        color:
+                                          theme.palette.mode === 'dark'
+                                            ? theme.palette.text.secondary
+                                            : theme.palette.grey[600],
                                         paddingLeft: '10px',
                                         paddingRight: '12px'
                                       }
@@ -495,24 +533,54 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup }) => {
                                       fontSize: { xs: '0.7rem', sm: '0.75rem', md: '0.8rem' },
                                       fontWeight: 600,
                                       borderRadius: 1.5,
-                                      background: alpha(theme.palette.grey[400], 0.15),
-                                      boxShadow: `0 1px 3px ${alpha(theme.palette.grey[400], 0.08)}`,
-                                      color: theme.palette.grey[600],
-                                      border: `1px solid ${alpha(theme.palette.grey[400], 0.2)}`,
+                                      background:
+                                        theme.palette.mode === 'dark'
+                                          ? alpha(theme.palette.grey[300], 0.15)
+                                          : alpha(theme.palette.grey[400], 0.15),
+                                      boxShadow: `0 1px 3px ${alpha(
+                                        theme.palette.mode === 'dark'
+                                          ? theme.palette.common.black
+                                          : theme.palette.grey[400],
+                                        0.08
+                                      )}`,
+                                      color:
+                                        theme.palette.mode === 'dark'
+                                          ? theme.palette.text.secondary
+                                          : theme.palette.grey[600],
+                                      border: `1px solid ${alpha(
+                                        theme.palette.mode === 'dark'
+                                          ? theme.palette.grey[300]
+                                          : theme.palette.grey[400],
+                                        0.2
+                                      )}`,
                                       transition: 'all 0.2s ease-in-out',
                                       '&:hover': {
-                                        background: alpha(theme.palette.grey[400], 0.22),
-                                        boxShadow: `0 2px 4px ${alpha(theme.palette.grey[400], 0.12)}`,
+                                        background:
+                                          theme.palette.mode === 'dark'
+                                            ? alpha(theme.palette.grey[300], 0.22)
+                                            : alpha(theme.palette.grey[400], 0.22),
+                                        boxShadow: `0 2px 4px ${alpha(
+                                          theme.palette.mode === 'dark'
+                                            ? theme.palette.grey[300]
+                                            : theme.palette.grey[400],
+                                          0.12
+                                        )}`,
                                         transform: 'translateY(-1px)'
                                       },
                                       '& .MuiChip-icon': {
                                         fontSize: 16,
-                                        color: theme.palette.grey[600],
+                                        color:
+                                          theme.palette.mode === 'dark'
+                                            ? theme.palette.text.secondary
+                                            : theme.palette.grey[600],
                                         marginLeft: '8px',
                                         marginRight: '-2px'
                                       },
                                       '& .MuiChip-label': {
-                                        color: theme.palette.grey[600],
+                                        color:
+                                          theme.palette.mode === 'dark'
+                                            ? theme.palette.text.secondary
+                                            : theme.palette.grey[600],
                                         paddingLeft: '10px',
                                         paddingRight: '12px'
                                       }
@@ -550,24 +618,54 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup }) => {
                                         fontSize: { xs: '0.7rem', sm: '0.75rem', md: '0.8rem' },
                                         fontWeight: 600,
                                         borderRadius: 1.5,
-                                        background: alpha(theme.palette.grey[500], 0.12),
-                                        boxShadow: `0 1px 3px ${alpha(theme.palette.grey[500], 0.08)}`,
-                                        color: theme.palette.grey[700],
-                                        border: `1px solid ${alpha(theme.palette.grey[500], 0.25)}`,
+                                        background:
+                                          theme.palette.mode === 'dark'
+                                            ? alpha(theme.palette.grey[300], 0.12)
+                                            : alpha(theme.palette.grey[500], 0.12),
+                                        boxShadow: `0 1px 3px ${alpha(
+                                          theme.palette.mode === 'dark'
+                                            ? theme.palette.common.black
+                                            : theme.palette.grey[500],
+                                          0.08
+                                        )}`,
+                                        color:
+                                          theme.palette.mode === 'dark'
+                                            ? theme.palette.text.secondary
+                                            : theme.palette.grey[700],
+                                        border: `1px solid ${alpha(
+                                          theme.palette.mode === 'dark'
+                                            ? theme.palette.grey[300]
+                                            : theme.palette.grey[500],
+                                          0.25
+                                        )}`,
                                         transition: 'all 0.2s ease-in-out',
                                         '&:hover': {
-                                          background: alpha(theme.palette.grey[500], 0.18),
-                                          boxShadow: `0 2px 4px ${alpha(theme.palette.grey[500], 0.12)}`,
+                                          background:
+                                            theme.palette.mode === 'dark'
+                                              ? alpha(theme.palette.grey[300], 0.18)
+                                              : alpha(theme.palette.grey[500], 0.18),
+                                          boxShadow: `0 2px 4px ${alpha(
+                                            theme.palette.mode === 'dark'
+                                              ? theme.palette.grey[300]
+                                              : theme.palette.grey[500],
+                                            0.12
+                                          )}`,
                                           transform: 'translateY(-1px)'
                                         },
                                         '& .MuiChip-icon': {
                                           fontSize: 16,
-                                          color: theme.palette.grey[700],
+                                          color:
+                                            theme.palette.mode === 'dark'
+                                              ? theme.palette.text.secondary
+                                              : theme.palette.grey[700],
                                           marginLeft: '8px',
                                           marginRight: '-2px'
                                         },
                                         '& .MuiChip-label': {
-                                          color: theme.palette.grey[700],
+                                          color:
+                                            theme.palette.mode === 'dark'
+                                              ? theme.palette.text.secondary
+                                              : theme.palette.grey[700],
                                           paddingLeft: '10px',
                                           paddingRight: '12px'
                                         }
