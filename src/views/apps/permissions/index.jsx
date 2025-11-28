@@ -63,6 +63,7 @@ import * as clientApi from '../../../app/api/client/client.api'
 import { roleSliceActions } from '@/store/features/roleSlice'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
 import { toast } from 'react-toastify'
+import { useSession } from 'next-auth/react'
 // import { useAppDispatch } from '@/store/hooks'
 
 // Vars
@@ -148,6 +149,7 @@ const ActionsMenu = ({ anchorEl, handleClose, handleAction }) => (
 const FeaturesTable = () => {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+  const { data: session } = useSession()
 
   // States
   // const dispatch = useAppDispatch()
@@ -225,19 +227,22 @@ const FeaturesTable = () => {
   const handleDelete = async () => {
     if (currentFeature) {
       try {
-        // console.log('Deleting', cur)
-        // const result = await clientApi.deleteFeature(currentFeature._id) // Adjust the URL as needed
-        const result = await RestApi.del(`${API_URLS.v0.FEATURE}?id=${currentFeature._id}`)
+        // Pass email in request body for audit trail
+        const result = await RestApi.del(`${API_URLS.v0.FEATURE}?id=${currentFeature._id}`, {
+          email: session?.user?.email || null
+        })
         if (result?.status === 'success') {
           console.log(`Feature deleted: ${currentFeature.name}`)
           toast.success(`Feature deleted: ${currentFeature.name}`)
           await refreshData() // Refresh data after deletion
         } else {
           console.log('Error deleting feature:', result?.message)
+          toast.error(result?.message || 'Error deleting feature')
           // You might want to show a user-friendly error message here
         }
       } catch (error) {
         console.error('An error occurred while deleting the feature:', error)
+        toast.error('Error deleting feature')
         throw new Error(error) // handling in Confirmation dialog
         // Handle error (e.g., show a notification)
       } finally {

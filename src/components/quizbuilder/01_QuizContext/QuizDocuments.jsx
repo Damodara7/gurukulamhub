@@ -185,7 +185,7 @@ const QuizDocuments = ({ documents = [], setTheFormValue, loading }) => {
       </Box>
 
       {/* Add Document Dialog */}
-      <Dialog open={openDialog} onClose={!loading ? handleCloseDialog : undefined} maxWidth='sm' fullWidth>
+      <Dialog open={openDialog} onClose={!loading ? handleCloseDialog : undefined} maxWidth='md' fullWidth>
         <DialogTitle
           sx={{
             display: 'flex',

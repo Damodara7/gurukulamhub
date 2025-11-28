@@ -139,14 +139,14 @@ const RoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
   }
 
   // Check if role name already exists
-  const checkRoleNameExists = (name) => {
+  const checkRoleNameExists = name => {
     if (!name || !name.trim()) {
       return false
     }
     // Normalize the input name (remove spaces, hyphens, underscores, convert to uppercase)
     // This matches how we normalize existing role names for comparison
     const normalizedInput = name.toUpperCase().replace(/[\s\-_]+/g, '')
-    
+
     // For create: check if any role with this name exists
     if (!roleData) {
       return existingRoles.some(role => {
@@ -156,7 +156,7 @@ const RoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
         return normalizedRoleName === normalizedInput
       })
     }
-    
+
     // For update: check if any role with this name exists AND it's not the current role
     return existingRoles.some(role => {
       if (!role.name || role._id === roleData._id) return false
@@ -181,10 +181,10 @@ const RoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
     await new Promise(resolve => setTimeout(resolve, 300))
 
     const exists = checkRoleNameExists(roleName)
-    
+
     setIsCheckingAvailability(false)
     setAvailabilityChecked(true)
-    
+
     if (exists) {
       setAvailabilityStatus('unavailable')
       setRoleNameError('Role name already exists')
@@ -297,7 +297,7 @@ const RoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
     // Check if availability has been checked (only if role name changed)
     const currentFormattedName = roleName.toUpperCase().replace(/\s+/g, '_')
     const originalFormattedName = roleData?.name?.toUpperCase().replace(/\s+/g, '_') || ''
-    
+
     if (currentFormattedName !== originalFormattedName) {
       if (!availabilityChecked) {
         setRoleNameError('Please check role name availability first')
@@ -392,18 +392,38 @@ const RoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
   return (
     <Dialog
       fullWidth
-      maxWidth='md'
+      maxWidth='lg'
       open={open}
       onClose={handleClose}
       PaperProps={{
         sx: {
-          borderRadius: { xs: 3, sm: 4 },
-          mx: { xs: 2, sm: 2 },
-          my: { xs: 2, sm: 3 },
-          width: { xs: 'calc(100% - 32px)', sm: 'auto' },
-          maxWidth: { xs: 'calc(100% - 32px)', sm: '600px' },
-          height: { xs: 'calc(100dvh - 32px)', sm: '90dvh' },
-          maxHeight: { xs: 'calc(100dvh - 32px)', sm: '90dvh' },
+          borderRadius: { xs: 2, sm: 3, md: 4 },
+          mx: { xs: 1, sm: 2, md: 3 },
+          my: { xs: 1, sm: 2, md: 3 },
+          width: {
+            xs: 'calc(100% - 16px)',
+            sm: 'calc(100% - 32px)',
+            md: '90%',
+            lg: 'auto'
+          },
+          maxWidth: {
+            xs: 'calc(100% - 16px)',
+            sm: '600px',
+            md: '800px',
+            lg: '1200px'
+          },
+          height: {
+            xs: 'calc(100dvh - 16px)',
+            sm: 'calc(100dvh - 32px)',
+            md: '90dvh',
+            lg: '85dvh'
+          },
+          maxHeight: {
+            xs: 'calc(100dvh - 16px)',
+            sm: 'calc(100dvh - 32px)',
+            md: '90dvh',
+            lg: '85dvh'
+          },
           border: theme => `1px solid ${theme.palette.divider}`,
           display: 'flex',
           flexDirection: 'column',
@@ -414,8 +434,8 @@ const RoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
     >
       <DialogTitle
         sx={{
-          px: { xs: 3, sm: 5 },
-          py: { xs: 2.5, sm: 3 },
+          px: { xs: 2, sm: 3, md: 4, lg: 5 },
+          py: { xs: 2, sm: 2.5, md: 3 },
           borderBottom: theme => `1px solid ${alpha(theme.palette.divider, 0.3)}`,
           flexShrink: 0
         }}
@@ -455,8 +475,8 @@ const RoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
       >
         <DialogContent
           sx={{
-            px: { xs: 3, sm: 5 },
-            py: { xs: 3, sm: 4 },
+            px: { xs: 2, sm: 3, md: 4, lg: 5 },
+            py: { xs: 2, sm: 3, md: 4 },
             overflowY: 'auto',
             flex: 1,
             minHeight: 0,
@@ -475,7 +495,7 @@ const RoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
             }
           }}
         >
-          <Stack spacing={3}>
+          <Stack spacing={{ xs: 2, sm: 2.5, md: 3 }}>
             <Alert severity='warning'>
               <AlertTitle>Warning!</AlertTitle>
               By editing the role name, you might break the system functionality. Please ensure you are absolutely
@@ -504,7 +524,7 @@ const RoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
               />
             </Tooltip>
             <Box>
-              <Typography variant='h5' sx={{ mb: 2 }}>
+              <Typography variant='h5' sx={{ mb: { xs: 1.5, sm: 2 }, fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
                 Role Permissions
               </Typography>
               <FormControlLabel
@@ -615,9 +635,9 @@ const RoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
         </DialogContent>
         <DialogActions
           sx={{
-            px: { xs: 3, sm: 5 },
-            py: { xs: 2.5, sm: 3 },
-            pt: { xs: 2, sm: 2.5 },
+            px: { xs: 2, sm: 3, md: 4, lg: 5 },
+            py: { xs: 2, sm: 2.5, md: 3 },
+            pt: { xs: 1.5, sm: 2, md: 2.5 },
             borderTop: theme => `1px solid ${alpha(theme.palette.divider, 0.3)}`,
             flexShrink: 0,
             backgroundColor: theme => theme.palette.background.paper

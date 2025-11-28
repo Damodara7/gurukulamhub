@@ -162,8 +162,14 @@ const AudienceByFilter = ({
       const operation = (filter.operator || 'AND').toUpperCase()
 
       if (operation === 'OR') {
+        // UNION: Combine users from both filters
         currentUsers = dedupeUsersById([...currentUsers, ...matched])
+      } else if (operation === 'NOT') {
+        // EXCLUSION: Remove users that match this filter
+        const matchedIds = new Set(matched.map(user => user._id?.toString()))
+        currentUsers = currentUsers.filter(user => !matchedIds.has(user._id?.toString()))
       } else {
+        // AND (default): Keep only users in both sets (intersection)
         const matchedIds = new Set(matched.map(user => user._id?.toString()))
         currentUsers = currentUsers.filter(user => matchedIds.has(user._id?.toString()))
       }
@@ -401,19 +407,24 @@ const AudienceByFilter = ({
   }, [combinedCriteria, initialCanonicalFilters, users])
 
   const OperationDialog = ({ open, onClose, onOperationSelect }) => (
-    <Dialog open={open} onClose={onClose} maxWidth='xs' fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth='md' fullWidth>
       <DialogTitle sx={{ pb: 1 }}>Combine Filters</DialogTitle>
       <DialogContent sx={{ pt: 1 }}>
         <Typography variant='body2' sx={{ mb: 2 }}>
           How would you like to combine this filter with previous ones?
         </Typography>
-        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
-          <Button variant='outlined' onClick={() => onOperationSelect('AND')} sx={{ flex: 1 }}>
-            AND
-          </Button>
-          <Button variant='outlined' onClick={() => onOperationSelect('OR')} sx={{ flex: 1 }}>
-            OR
-          </Button>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+            <Button variant='outlined' onClick={() => onOperationSelect('AND')} sx={{ flex: 1 }}>
+              AND
+            </Button>
+            <Button variant='outlined' onClick={() => onOperationSelect('OR')} sx={{ flex: 1 }}>
+              OR
+            </Button>
+            <Button variant='outlined' color='error' onClick={() => onOperationSelect('NOT')} sx={{ flex: 1 }}>
+              NOT
+            </Button>
+          </Box>
         </Box>
       </DialogContent>
       <DialogActions>
@@ -1094,6 +1105,18 @@ const AudienceByFilter = ({
                           flex: 1
                         }}
                       >
+                        {filter.operation && displayIndex > 0 && (
+                          <Typography
+                            variant='caption'
+                            sx={{
+                              fontWeight: 700,
+                              mr: 0.5,
+                              color: filterStyle.textColor
+                            }}
+                          >
+                            {filter.operation}:
+                          </Typography>
+                        )}
                         {filterStyle.icon}
                         <Typography
                           variant='body2'

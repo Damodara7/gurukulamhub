@@ -23,7 +23,7 @@ import Chip from '@mui/material/Chip'
 import Divider from '@mui/material/Divider'
 
 // Excel parsing
-import * as XLSX from 'xlsx'
+// import * as XLSX from 'xlsx'
 
 // Api utils
 import * as RestApi from '@/utils/restApiUtil'

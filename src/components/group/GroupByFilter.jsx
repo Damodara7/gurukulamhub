@@ -228,7 +228,7 @@ const GroupByFilter = ({
     <Dialog
       open={open}
       onClose={onClose}
-      maxWidth='xs'
+      maxWidth='md'
       fullWidth
       PaperProps={{
         sx: {
@@ -245,13 +245,18 @@ const GroupByFilter = ({
         <Typography variant='body2' sx={{ mb: 2 }}>
           How would you like to combine this filter with previous ones?
         </Typography>
-        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
-          <Button variant='outlined' onClick={() => onOperationSelect('AND')} sx={{ flex: 1 }}>
-            AND
-          </Button>
-          <Button variant='outlined' onClick={() => onOperationSelect('OR')} sx={{ flex: 1 }}>
-            OR
-          </Button>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+            <Button variant='outlined' onClick={() => onOperationSelect('AND')} sx={{ flex: 1 }}>
+              AND
+            </Button>
+            <Button variant='outlined' onClick={() => onOperationSelect('OR')} sx={{ flex: 1 }}>
+              OR
+            </Button>
+            <Button variant='outlined' color='error' onClick={() => onOperationSelect('NOT')} sx={{ flex: 1 }}>
+              NOT
+            </Button>
+          </Box>
         </Box>
       </DialogContent>
       <DialogActions>
@@ -390,16 +395,32 @@ const GroupByFilter = ({
         }))
       ]
 
-      if (operation === 'AND') {
-        // Intersection of all filter results
-        combinedUserIds = updatedFilters.reduce((acc, filter) => {
-          if (acc.length === 0) return filter.userIds
-          return acc.filter(id => filter.userIds.includes(id))
-        }, [])
-      } else {
-        // OR - Union of all filter results
-        combinedUserIds = [...new Set(updatedFilters.flatMap(filter => filter.userIds))]
-      }
+      // Apply operations in sequence
+      combinedUserIds = updatedFilters.reduce((acc, filter, index) => {
+        const currentIds = Array.isArray(filter.userIds) ? filter.userIds : []
+
+        if (index === 0) {
+          // First filter - start with its user IDs
+          return currentIds
+        }
+
+        const operation = filter.operation || 'AND'
+
+        if (operation === 'AND') {
+          // Intersection: Keep only users in both sets
+          return acc.filter(id => currentIds.includes(id))
+        } else if (operation === 'OR') {
+          // Union: Combine users from both sets
+          return [...new Set([...acc, ...currentIds])]
+        } else if (operation === 'NOT') {
+          // Exclusion: Remove users that match this filter
+          const excludeIds = new Set(currentIds)
+          return acc.filter(id => !excludeIds.has(id))
+        }
+
+        // Default to AND if operation is unknown
+        return acc.filter(id => currentIds.includes(id))
+      }, [])
     }
 
     setSelectedFilters(updatedFilters)
@@ -610,9 +631,16 @@ const GroupByFilter = ({
       console.log('Editing filter:', editingFilter)
       console.log('New filter values:', newFilters)
 
-      // Remove the old filter and add the new one
+      // Remove the old filter and add the new one, preserving the operation
+      const originalFilter = selectedFilters[editingFilter.index] || {}
       const updatedFilters = selectedFilters.filter((_, i) => i !== editingFilter.index)
-      const updatedSelectedFilters = [...updatedFilters, ...newFilters]
+      const updatedSelectedFilters = [
+        ...updatedFilters,
+        ...newFilters.map(f => ({
+          ...f,
+          operation: originalFilter.operation || null // Preserve the operation
+        }))
+      ]
 
       // Recalculate combined results by reapplying all filters to users
       let combinedUserIds = []
@@ -666,16 +694,36 @@ const GroupByFilter = ({
           console.log('Gender filter matched users:', filterUserIds.length)
         }
 
-        // Combine with previous results using AND operation (default)
-        if (combinedUserIds.length === 0) {
-          combinedUserIds = filterUserIds
-        } else {
-          combinedUserIds = combinedUserIds.filter(id => filterUserIds.includes(id))
-        }
-
         // Update the filter with the calculated user IDs
         filter.userIds = filterUserIds
       })
+
+      // Apply operations in sequence
+      combinedUserIds = updatedSelectedFilters.reduce((acc, filter, index) => {
+        const currentIds = Array.isArray(filter.userIds) ? filter.userIds : []
+
+        if (index === 0) {
+          // First filter - start with its user IDs
+          return currentIds
+        }
+
+        const operation = filter.operation || 'AND'
+
+        if (operation === 'AND') {
+          // Intersection: Keep only users in both sets
+          return acc.filter(id => currentIds.includes(id))
+        } else if (operation === 'OR') {
+          // Union: Combine users from both sets
+          return [...new Set([...acc, ...currentIds])]
+        } else if (operation === 'NOT') {
+          // Exclusion: Remove users that match this filter
+          const excludeIds = new Set(currentIds)
+          return acc.filter(id => !excludeIds.has(id))
+        }
+
+        // Default to AND if operation is unknown
+        return acc.filter(id => currentIds.includes(id))
+      }, [])
 
       console.log('Final combined user IDs:', combinedUserIds.length)
 
@@ -759,9 +807,15 @@ const GroupByFilter = ({
         const operation = filter.operation || 'AND' // Default to AND if not specified
         if (operation === 'AND') {
           return acc.filter(id => currentIds.includes(id))
-        } else {
+        } else if (operation === 'OR') {
           return [...new Set([...acc, ...currentIds])]
+        } else if (operation === 'NOT') {
+          // Exclusion: Remove users that match this filter
+          const excludeIds = new Set(currentIds)
+          return acc.filter(id => !excludeIds.has(id))
         }
+        // Default to AND if operation is unknown
+        return acc.filter(id => currentIds.includes(id))
       }, [])
     }
 
@@ -841,71 +895,110 @@ const GroupByFilter = ({
                 flexWrap: 'wrap'
               }}
             >
-              {selectedFilters.map((filter, index) => (
-                <Chip
-                  key={index}
-                  label={
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 0.5,
-                        mr: 1,
-                        minWidth: 0,
-                        flex: 1
-                      }}
-                    >
-                      <Typography
-                        variant='body2'
+              {selectedFilters.map((filter, displayIndex) => {
+                const actualIndex = displayIndex
+
+                return (
+                  <Chip
+                    key={`${filter.type}-${displayIndex}`}
+                    label={
+                      <Box
                         sx={{
-                          flex: 1,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 0.5,
+                          mr: 1,
                           minWidth: 0,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap'
+                          flex: 1
                         }}
                       >
-                        {filter.label}
-                      </Typography>
-                      <Tooltip title='edit' arrow>
-                        <EditIcon sx={{ fontSize: 16, opacity: 0.7, flexShrink: 0, ml: 4 }} />
-                      </Tooltip>
-                    </Box>
-                  }
-                  onDelete={() => handleDeleteFilter(index)}
-                  deleteIcon={
-                    <Tooltip title='remove' arrow>
-                      <CloseIcon />
-                    </Tooltip>
-                  }
-                  onClick={() => handleEditFilter(filter, index)}
-                  sx={{
-                    maxWidth: 250,
-                    textOverflow: 'ellipsis',
-                    overflow: 'hidden',
-                    cursor: 'pointer',
-                    height: 'auto',
-                    '& .MuiChip-deleteIcon': {
-                      visibility: 'visible',
-                      marginRight: '4px',
-                      marginLeft: '0px',
-                      color: theme.palette.mode === 'dark' ? theme.palette.text.secondary : theme.palette.text.primary,
-                      '&:hover': {
-                        backgroundColor: 'transparent',
-                        color: theme.palette.mode === 'dark' ? theme.palette.text.primary : theme.palette.text.primary
-                      }
-                    },
-                    '& .MuiChip-label': {
-                      paddingRight: '0px',
-                      paddingLeft: '10px',
-                      height: 'auto',
-                      minHeight: '35px',
-                      display: 'flex',
-                      alignItems: 'center'
+                        {filter.operation && displayIndex > 0 && (
+                          <Typography
+                            variant='caption'
+                            sx={{
+                              fontWeight: 700,
+                              mr: 0.5,
+                              color:
+                                theme.palette.mode === 'dark'
+                                  ? theme.palette.text.secondary
+                                  : theme.palette.text.primary
+                            }}
+                          >
+                            {filter.operation}:
+                          </Typography>
+                        )}
+                        <Typography
+                          variant='body2'
+                          sx={{
+                            flex: 1,
+                            minWidth: 0,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            color:
+                              theme.palette.mode === 'dark' ? theme.palette.text.secondary : theme.palette.text.primary
+                          }}
+                        >
+                          {filter.label}
+                        </Typography>
+                        <Tooltip title='edit' arrow>
+                          <EditIcon
+                            sx={{
+                              fontSize: 16,
+                              opacity: 0.7,
+                              flexShrink: 0,
+                              ml: 4,
+                              color:
+                                theme.palette.mode === 'dark'
+                                  ? theme.palette.text.secondary
+                                  : theme.palette.text.primary
+                            }}
+                          />
+                        </Tooltip>
+                      </Box>
                     }
-                  }}
-                />
-              ))}
+                    onDelete={() => handleDeleteFilter(actualIndex)}
+                    deleteIcon={
+                      <Tooltip title='remove' arrow>
+                        <CloseIcon
+                          sx={{
+                            color:
+                              theme.palette.mode === 'dark' ? theme.palette.text.secondary : theme.palette.text.primary
+                          }}
+                        />
+                      </Tooltip>
+                    }
+                    onClick={() => handleEditFilter(filter, actualIndex)}
+                    sx={{
+                      maxWidth: 250,
+                      textOverflow: 'ellipsis',
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                      height: 'auto',
+                      '& .MuiChip-deleteIcon': {
+                        visibility: 'visible',
+                        marginRight: '4px',
+                        marginLeft: '0px',
+                        color:
+                          theme.palette.mode === 'dark' ? theme.palette.text.secondary : theme.palette.text.primary,
+                        '&:hover': {
+                          backgroundColor: 'transparent',
+                          color: theme.palette.mode === 'dark' ? theme.palette.text.primary : theme.palette.text.primary
+                        }
+                      },
+                      '& .MuiChip-label': {
+                        paddingRight: '0px',
+                        paddingLeft: '10px',
+                        height: 'auto',
+                        minHeight: '35px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        color: theme.palette.mode === 'dark' ? theme.palette.text.secondary : theme.palette.text.primary
+                      }
+                    }}
+                  />
+                )
+              })}
             </Box>
           </Box>
         )}

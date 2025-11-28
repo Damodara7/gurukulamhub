@@ -1,31 +1,43 @@
-import mongoose from 'mongoose';
+import mongoose from 'mongoose'
 
-const featureSchema = new mongoose.Schema({
+const featureSchema = new mongoose.Schema(
+  {
     name: {
-        type: String,
-        required: true,
+      type: String,
+      required: true
     },
     createdBy: {
-        type: String,
-        // type: mongoose.Schema.Types.ObjectId,
-        // ref: 'User',
-        required: true,
+      type: String,
+      // type: mongoose.Schema.Types.ObjectId,
+      // ref: 'User',
+      required: true
     },
     updatedBy: {
-        type: String,
-        // type: mongoose.Schema.Types.ObjectId,
-        // ref: 'User',
-        // required: true,
+      type: String
+      // type: mongoose.Schema.Types.ObjectId,
+      // ref: 'User',
+      // required: true,
     },
     permissions: {
-        type: [String],
-        required: true,
+      type: [String],
+      required: true
     },
     isActive: {
-        type: Boolean,
-        default: true,
+      type: Boolean,
+      default: true
     },
-}, { timestamps: true });
+    isDeleted: {
+      type: Boolean,
+      default: false
+    },
+    deletedAt: Date,
+    deletedBy: {
+      type: String
+    },
+    deleterEmail: String
+  },
+  { timestamps: true }
+)
 
-const Feature = mongoose.models.feature || mongoose.model('feature', featureSchema);
-export default Feature;
+const Feature = mongoose.models.feature || mongoose.model('feature', featureSchema)
+export default Feature

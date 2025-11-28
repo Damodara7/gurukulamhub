@@ -55,7 +55,8 @@ export async function POST(request) {
 export async function PUT(request) {
     try {
         const reqBody = await request.json();
-        const updatedRole = await RoleService.updateOne({ id: reqBody._id, data: reqBody });
+        const { _id: id, ...rest } = reqBody
+        const updatedRole = await RoleService.updateOne({ id, data: { ...rest } });
 
         if (updatedRole.status === 'success') {
             const successResponse = ApiResponseUtils.createSuccessResponse(
@@ -82,8 +83,14 @@ export async function DELETE(req) {
             const errorResponse = ApiResponseUtils.createErrorResponse('Expected id of Role');
             return ApiResponseUtils.sendErrorResponse(errorResponse, HttpStatusCode.Ok);
         }
-
-        const deletedRole = await RoleService.deleteOne({ id });
+        let email = null
+        try {
+            const reqBody = await req.json()
+            email = reqBody?.email || null
+        } catch (e) {
+            email = null
+        }
+        const deletedRole = await RoleService.deleteOne({ id, email });
 
         if (deletedRole.status === 'success') {
             const successResponse = ApiResponseUtils.createSuccessResponse(

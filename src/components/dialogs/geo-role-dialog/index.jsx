@@ -319,18 +319,38 @@ const GeoRoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
   return (
     <Dialog
       fullWidth
-      maxWidth='md'
+      maxWidth='lg'
       open={open}
       onClose={handleClose}
       PaperProps={{
         sx: {
-          borderRadius: { xs: 3, sm: 4 },
-          mx: { xs: 2, sm: 2 },
-          my: { xs: 2, sm: 3 },
-          width: { xs: 'calc(100% - 32px)', sm: 'auto' },
-          maxWidth: { xs: 'calc(100% - 32px)', sm: '600px' },
-          height: { xs: 'calc(100dvh - 32px)', sm: '90dvh' },
-          maxHeight: { xs: 'calc(100dvh - 32px)', sm: '90dvh' },
+          borderRadius: { xs: 2, sm: 3, md: 4 },
+          mx: { xs: 1, sm: 2, md: 3 },
+          my: { xs: 1, sm: 2, md: 3 },
+          width: {
+            xs: 'calc(100% - 16px)',
+            sm: 'calc(100% - 32px)',
+            md: '90%',
+            lg: 'auto'
+          },
+          maxWidth: {
+            xs: 'calc(100% - 16px)',
+            sm: '600px',
+            md: '800px',
+            lg: '1200px'
+          },
+          height: {
+            xs: 'calc(100dvh - 16px)',
+            sm: 'calc(100dvh - 32px)',
+            md: '90dvh',
+            lg: '85dvh'
+          },
+          maxHeight: {
+            xs: 'calc(100dvh - 16px)',
+            sm: 'calc(100dvh - 32px)',
+            md: '90dvh',
+            lg: '85dvh'
+          },
           border: theme => `1px solid ${theme.palette.divider}`,
           display: 'flex',
           flexDirection: 'column',
@@ -341,8 +361,8 @@ const GeoRoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
     >
       <DialogTitle
         sx={{
-          px: { xs: 3, sm: 5 },
-          py: { xs: 2.5, sm: 3 },
+          px: { xs: 2, sm: 3, md: 4, lg: 5 },
+          py: { xs: 2, sm: 2.5, md: 3 },
           borderBottom: theme => `1px solid ${alpha(theme.palette.divider, 0.3)}`,
           flexShrink: 0
         }}
@@ -361,7 +381,7 @@ const GeoRoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
               {roleData ? 'Edit Role' : 'Add Geographical Role'}
             </Typography>
             <Typography variant='body2' color='text.secondary'>
-              Set role name, permissions and activation status.
+              Set Geo-Role name, permissions and activation status based on geographical location.
             </Typography>
           </Stack>
           <IconButtonTooltip
@@ -382,8 +402,8 @@ const GeoRoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
       >
         <DialogContent
           sx={{
-            px: { xs: 3, sm: 5 },
-            py: { xs: 3, sm: 4 },
+            px: { xs: 2, sm: 3, md: 4, lg: 5 },
+            py: { xs: 2, sm: 3, md: 4 },
             overflowY: 'auto',
             flex: 1,
             minHeight: 0,
@@ -402,7 +422,7 @@ const GeoRoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
             }
           }}
         >
-          <Stack spacing={3}>
+          <Stack spacing={{ xs: 2, sm: 2.5, md: 3 }}>
             <Alert severity='warning'>
               <AlertTitle>Warning!</AlertTitle>
               By editing the role name, you might break the system functionality. Please ensure you are absolutely
@@ -433,7 +453,7 @@ const GeoRoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
           </Stack>
           <Grid container spacing={2} sx={{ mt: 2 }}>
             <Grid item xs={12}>
-              <Typography variant='h5' gutterBottom>
+              <Typography variant='h5' gutterBottom sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
                 Restrict Geographical Area Permissions
               </Typography>
 
@@ -546,7 +566,7 @@ const GeoRoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
           </Grid>
 
           <Box sx={{ mt: 3 }}>
-            <Typography variant='h5' sx={{ mb: 2 }}>
+            <Typography variant='h5' sx={{ mb: { xs: 1.5, sm: 2 }, fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
               Role Permissions
             </Typography>
             <FormControlLabel
@@ -657,9 +677,9 @@ const GeoRoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
         </DialogContent>
         <DialogActions
           sx={{
-            px: { xs: 3, sm: 5 },
-            py: { xs: 2.5, sm: 3 },
-            pt: { xs: 2, sm: 2.5 },
+            px: { xs: 2, sm: 3, md: 4, lg: 5 },
+            py: { xs: 2, sm: 2.5, md: 3 },
+            pt: { xs: 1.5, sm: 2, md: 2.5 },
             borderTop: theme => `1px solid ${alpha(theme.palette.divider, 0.3)}`,
             flexShrink: 0,
             backgroundColor: theme => theme.palette.background.paper

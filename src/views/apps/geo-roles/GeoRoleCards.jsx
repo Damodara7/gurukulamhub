@@ -22,7 +22,9 @@ import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { useEffect, useState } from 'react'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
+import { useSession } from 'next-auth/react'
 // import { useAppDispatch } from '@/store/hooks'
+import { toast } from 'react-toastify'
 
 // Vars
 // const cardData = [
@@ -34,6 +36,7 @@ import IconButtonTooltip from '@/components/IconButtonTooltip'
 // ]
 
 const GeoRoleCards = () => {
+  const { data: session } = useSession()
   // const dispatch = useAppDispatch()
   const theme = useTheme()
   const [roles, setRoles] = useState([])
@@ -105,16 +108,21 @@ const GeoRoleCards = () => {
       // console.log('Deleting role ' + curr)
       try {
         // const result = await clientApi.deleteRole(currentRole._id)
-        const result = await RestApi.del(`${API_URLS.v0.GEO_ROLE}?id=${currentRole._id}`)
+        const result = await RestApi.del(`${API_URLS.v0.GEO_ROLE}?id=${currentRole._id}`, {
+          email: session?.user?.email || null
+        })
         if (result?.status === 'success') {
           console.log(`Role deleted: ${currentRole.name}`)
+          toast.success(`Role deleted: ${currentRole.name}`)
           await refreshRoles() // Refresh data after deletion
           setCurrentRole(null)
         } else {
           console.log('Error deleting role:', result?.message)
+          toast.error(result?.message || 'Error deleting role')
         }
       } catch (error) {
         console.error('An error occurred while deleting the role:', error)
+        toast.error(error?.message || 'Error deleting role')
         throw new Error(error) // To handle it in Confirmation 2nd dialog
       } finally {
         setConfirmationDialogOpen(false) // Close the confirmation dialog

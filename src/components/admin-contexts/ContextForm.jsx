@@ -87,7 +87,7 @@ const ContextForm = ({
     <Dialog
       open={showForm}
       onClose={onCancel}
-      maxWidth='sm'
+      maxWidth='md'
       fullWidth
       scroll='paper'
       PaperProps={{
@@ -120,7 +120,7 @@ const ContextForm = ({
               letterSpacing: '-0.01em'
             }}
           >
-            {`${initialData?.action === 'EDIT' ? 'Update' : 'Create'} Context`}
+            {initialData?.action === 'EDIT' ? 'Update context' : 'Create context'}
           </Typography>
           <IconButtonTooltip
             title='Close'

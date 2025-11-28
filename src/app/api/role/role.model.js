@@ -1,26 +1,38 @@
-import mongoose from 'mongoose';
+import mongoose from 'mongoose'
 
-const roleSchema = new mongoose.Schema({
+const roleSchema = new mongoose.Schema(
+  {
     name: {
-        type: String,
-        required: true,
+      type: String,
+      required: true
     },
     createdBy: {
-        type: String,
-        required: true,
+      type: String,
+      required: true
     },
     updatedBy: {
-        type: String,
+      type: String
     },
     features: {
-        type: [Object],
-        required: true,
+      type: [Object],
+      required: true
     },
     isActive: {
-        type: Boolean,
-        default: true,
-    }
-}, { timestamps: true });
+      type: Boolean,
+      default: true
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false
+    },
+    deleatedAt: Date,
+    deletedBy: {
+      type: String
+    },
+    deleterEmail: String
+  },
+  { timestamps: true }
+)
 
-const Role = mongoose.models.role || mongoose.model('role', roleSchema);
-export default Role;
+const Role = mongoose.models.role || mongoose.model('role', roleSchema)
+export default Role

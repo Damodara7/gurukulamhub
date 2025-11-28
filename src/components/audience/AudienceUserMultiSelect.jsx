@@ -398,7 +398,7 @@ const AudienceUserMultiSelect = ({ users, matchedUserIds = [], hasFilters = fals
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
-        maxWidth='md'
+        maxWidth='lg'
         fullWidth
         BackdropProps={{
           sx: {
@@ -409,13 +409,37 @@ const AudienceUserMultiSelect = ({ users, matchedUserIds = [], hasFilters = fals
         }}
         PaperProps={{
           sx: {
-            borderRadius: { xs: 3, sm: 4 },
-            mx: { xs: 2, sm: 2 },
-            my: { xs: 2, sm: 3 },
-            width: { xs: 'calc(100% - 32px)', sm: 'auto' },
-            maxWidth: { xs: 'calc(100% - 32px)', sm: '600px' },
-            height: { xs: 'calc(100dvh - 32px)', sm: '90dvh' },
-            maxHeight: { xs: 'calc(100dvh - 32px)', sm: '90dvh' },
+            borderRadius: { xs: 2, sm: 3, md: 4 },
+            mx: { xs: 1, sm: 2, md: 3 },
+            my: { xs: 1, sm: 2, md: 3 },
+            width: {
+              xs: 'calc(100% - 16px)',
+              sm: 'calc(100% - 32px)',
+              md: '90%',
+              lg: '85%',
+              xl: '80%'
+            },
+            maxWidth: {
+              xs: 'calc(100% - 16px)',
+              sm: '600px',
+              md: '800px',
+              lg: '1200px',
+              xl: '1600px'
+            },
+            height: {
+              xs: 'calc(100dvh - 16px)',
+              sm: 'calc(100dvh - 32px)',
+              md: '90dvh',
+              lg: '85dvh',
+              xl: '80dvh'
+            },
+            maxHeight: {
+              xs: 'calc(100dvh - 16px)',
+              sm: 'calc(100dvh - 32px)',
+              md: '90dvh',
+              lg: '85dvh',
+              xl: '80dvh'
+            },
             border: theme => `1px solid ${theme.palette.divider}`,
             display: 'flex',
             flexDirection: 'column',
@@ -427,8 +451,8 @@ const AudienceUserMultiSelect = ({ users, matchedUserIds = [], hasFilters = fals
       >
         <DialogTitle
           sx={{
-            px: { xs: 3, sm: 5 },
-            py: { xs: 2.5, sm: 3 },
+            px: { xs: 2, sm: 3, md: 4, lg: 5, xl: 6 },
+            py: { xs: 2, sm: 2.5, md: 3 },
             borderBottom: theme => `1px solid ${alpha(theme.palette.divider, 0.3)}`,
             flexShrink: 0
           }}
@@ -463,8 +487,8 @@ const AudienceUserMultiSelect = ({ users, matchedUserIds = [], hasFilters = fals
         </DialogTitle>
         <DialogContent
           sx={{
-            px: { xs: 2, sm: 3 },
-            py: { xs: 2, sm: 3 },
+            px: { xs: 2, sm: 3, md: 4, lg: 5, xl: 6 },
+            py: { xs: 2, sm: 3, md: 4 },
             overflowY: 'auto',
             flex: 1,
             minHeight: 0,
@@ -493,8 +517,8 @@ const AudienceUserMultiSelect = ({ users, matchedUserIds = [], hasFilters = fals
                     sx={{
                       flexDirection: 'row',
                       alignItems: 'flex-start',
-                      py: { xs: 2, sm: 1.5 },
-                      px: { xs: 1.5, sm: 2 },
+                      py: { xs: 2, sm: 1.5, md: 2 },
+                      px: { xs: 1.5, sm: 2, md: 2.5, lg: 3 },
                       borderBottom: theme => `1px solid ${alpha(theme.palette.divider, 0.1)}`,
                       '&:last-child': {
                         borderBottom: 'none'
@@ -503,15 +527,15 @@ const AudienceUserMultiSelect = ({ users, matchedUserIds = [], hasFilters = fals
                   >
                     <ListItemAvatar
                       sx={{
-                        mr: { xs: 1.5, sm: 2 },
+                        mr: { xs: 1.5, sm: 2, md: 2.5 },
                         flexShrink: 0
                       }}
                     >
                       <Avatar
                         src={user?.image || user?.profile?.image}
                         sx={{
-                          width: { xs: 48, sm: 56 },
-                          height: { xs: 48, sm: 56 }
+                          width: { xs: 48, sm: 56, md: 64 },
+                          height: { xs: 48, sm: 56, md: 64 }
                         }}
                       >
                         {getInitials(user)}
@@ -524,7 +548,7 @@ const AudienceUserMultiSelect = ({ users, matchedUserIds = [], hasFilters = fals
                             variant='subtitle1'
                             sx={{
                               fontWeight: 600,
-                              fontSize: { xs: '0.9375rem', sm: '1rem' },
+                              fontSize: { xs: '0.9375rem', sm: '1rem', md: '1.0625rem' },
                               mb: 0.5
                             }}
                           >
@@ -536,7 +560,7 @@ const AudienceUserMultiSelect = ({ users, matchedUserIds = [], hasFilters = fals
                             variant='body2'
                             color='text.secondary'
                             sx={{
-                              fontSize: { xs: '0.8125rem', sm: '0.875rem' },
+                              fontSize: { xs: '0.8125rem', sm: '0.875rem', md: '0.9375rem' },
                               wordBreak: 'break-word'
                             }}
                           >

@@ -201,7 +201,7 @@ const QuizCourseLinks = ({ courseLinks = [], setTheFormValue, loading }) => {
         )}
       </Box>
       {/* Popup Dialog */}
-      <Dialog open={open} onClose={!loading ? handleClose : undefined} maxWidth='sm' fullWidth>
+      <Dialog open={open} onClose={!loading ? handleClose : undefined} maxWidth='md' fullWidth>
         <DialogTitle
           sx={{
             display: 'flex',

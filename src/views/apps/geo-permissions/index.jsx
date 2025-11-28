@@ -59,7 +59,7 @@ import tableStyles from '@core/styles/table.module.css'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import * as clientApi from '../../../app/api/client/client.api'
-
+import { useSession } from 'next-auth/react'
 import { roleSliceActions } from '@/store/features/roleSlice'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
 import { toast } from 'react-toastify'
@@ -147,6 +147,7 @@ const ActionsMenu = ({ anchorEl, handleClose, handleAction }) => (
 
 const GeoFeaturesTable = () => {
   const theme = useTheme()
+  const { data: session } = useSession()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
 
   // States
@@ -227,17 +228,21 @@ const GeoFeaturesTable = () => {
       try {
         // console.log('Deleting', cur)
         // const result = await clientApi.deleteFeature(currentFeature._id) // Adjust the URL as needed
-        const result = await RestApi.del(`${API_URLS.v0.GEO_FEATURE}?id=${currentFeature._id}`)
+        const result = await RestApi.del(`${API_URLS.v0.GEO_FEATURE}?id=${currentFeature._id}`, {
+          email: session?.user?.email || null
+        })
         if (result?.status === 'success') {
-          console.log(`Feature deleted: ${currentFeature.name}`)
+          console.log(`Geo-Feature deleted: ${currentFeature.name}`)
           toast.success(`Geo-Feature deleted: ${currentFeature.name}`)
           await refreshData() // Refresh data after deletion
         } else {
-          console.log('Error deleting feature:', result?.message)
+          console.log('Error deleting Geo-Feature:', result?.message)
+          toast.error(result?.message || 'Error deleting Geo-Feature')
           // You might want to show a user-friendly error message here
         }
       } catch (error) {
-        console.error('An error occurred while deleting the feature:', error)
+        console.error('An error occurred while deleting the Geo-Feature:', error)
+        toast.error('Error deleting Geo-Feature')
         throw new Error(error) // handling in Confirmation dialog
         // Handle error (e.g., show a notification)
       } finally {

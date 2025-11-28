@@ -263,7 +263,7 @@ const AccountTypeDialog = ({ open, setOpen, data, onSuccess }) => {
     <Dialog
       open={open}
       onClose={handleClose}
-      maxWidth='sm'
+      maxWidth='md'
       fullWidth
       scroll='paper'
       PaperProps={{
