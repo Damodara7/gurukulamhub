@@ -230,7 +230,7 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
         </MenuItem>
 
         <MenuSection label={dictionary['navigation'].mypages}>
-          {!userRoles?.includes(ROLES_LOOKUP.ADMIN) && (
+          {!userRoles?.includes(ROLES_LOOKUP.ADMIN) && !userRoles?.includes(ROLES_LOOKUP.SUPER_ADMIN) && (
             <SubMenu label={dictionary['navigation'].myquizzes} icon={<i className='ri-dashboard-line' />}>
               <MenuItem href={`/${locale}/myquizzes/view`}>{dictionary['navigation'].view}</MenuItem>
 
@@ -295,7 +295,7 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
         )} */}
         {/* </RBACMenuWrapper> */}
 
-        {!userRoles?.includes(ROLES_LOOKUP.ADMIN) && userRoles?.includes(ROLES_LOOKUP.SUPER_USER) && (
+        {!userRoles?.includes(ROLES_LOOKUP.ADMIN) && !userRoles?.includes(ROLES_LOOKUP.SUPER_ADMIN) && userRoles?.includes(ROLES_LOOKUP.SUPER_USER) && (
           <MenuSection label={dictionary['navigation'].superUserPages}>
             <SubMenu label={dictionary['navigation'].manageGames} icon={<i className='ri-gamepad-line' />}>
               <MenuItem href={`/${locale}/manage-games`}>{dictionary['navigation'].all}</MenuItem>
@@ -304,7 +304,7 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
           </MenuSection>
         )}
 
-        {userRoles?.includes(ROLES_LOOKUP.ADMIN) && (
+        {(userRoles?.includes(ROLES_LOOKUP.ADMIN) || userRoles?.includes(ROLES_LOOKUP.SUPER_ADMIN)) && (
           <MenuSection label={dictionary['navigation'].adminPages}>
             <MenuItem
               href={`/${locale}/management/advertisements/list`}

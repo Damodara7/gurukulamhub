@@ -14,7 +14,7 @@ import CircularProgress from '@mui/material/CircularProgress'
 // Third-party Imports
 import classnames from 'classnames'
 
-const ConfirmationDialog = ({ open, setOpen, type, onConfirm }) => {
+const ConfirmationDialog = ({ open, setOpen, type, onConfirm, affectedUserCount, roleName }) => {
   // States
   const [secondDialog, setSecondDialog] = useState(false)
   const [userInput, setUserInput] = useState(false)
@@ -84,6 +84,13 @@ const ConfirmationDialog = ({ open, setOpen, type, onConfirm }) => {
       status: 'Feature Deleted!'
     },
     'delete-role': {
+      title: 'Are you sure you want to delete this role?',
+      success: 'Role has been deleted successfully.',
+      cancel: 'Role Deletion Cancelled!',
+      error: 'Failed to delete role. Please try again.',
+      status: 'Role Deleted!'
+    },
+    'delete-role-with-users': {
       title: 'Are you sure you want to delete this role?',
       success: 'Role has been deleted successfully.',
       cancel: 'Role Deletion Cancelled!',
@@ -182,6 +189,12 @@ const ConfirmationDialog = ({ open, setOpen, type, onConfirm }) => {
             <Typography variant='h5'>{getMessage(type, 'title')}</Typography>
             {type === 'suspend-account' && (
               <Typography color='text.primary'>You won&#39;t be able to revert this action!</Typography>
+            )}
+            {(type === 'delete-role' || type === 'delete-role-with-users') && affectedUserCount > 0 && (
+              <Typography color='warning.main' sx={{ mt: 2, fontWeight: 600 }}>
+                ⚠️ Warning: This role is assigned to {affectedUserCount} user{affectedUserCount !== 1 ? 's' : ''}. 
+                {affectedUserCount > 0 && ' The role will be removed from all affected users.'}
+              </Typography>
             )}
           </Wrapper>
         </DialogContent>

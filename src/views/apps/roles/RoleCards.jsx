@@ -23,6 +23,9 @@ import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { useEffect, useState } from 'react'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
+import { useSession } from 'next-auth/react'
+import { isSuperAdmin } from '@/utils/permissionUtils'
+import { toast } from 'react-toastify'
 // import { useAppDispatch } from '@/store/hooks'
 
 // Vars
@@ -36,9 +39,13 @@ import IconButtonTooltip from '@/components/IconButtonTooltip'
 
 const RoleCards = () => {
   // const dispatch = useAppDispatch()
+  const { data: session } = useSession()
   const [roles, setRoles] = useState([])
   const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false) // Manage confirmation dialog
   const [currentRole, setCurrentRole] = useState(null) // Track the role to delete
+  
+  const userRoles = session?.user?.roles || []
+  const isUserSuperAdmin = isSuperAdmin(userRoles)
   const CardProps = {
     className: 'cursor-pointer bs-full',
     children: (
@@ -92,9 +99,25 @@ const RoleCards = () => {
     await getRolesData() // Call fetchRoles to refresh roles
   }
 
+  const [affectedUserCount, setAffectedUserCount] = useState(0)
+
   // Handle delete confirmation dialog
-  const handleDeleteConfirmation = role => {
+  const handleDeleteConfirmation = async role => {
     setCurrentRole(role)
+    
+    // Fetch user count for this role
+    try {
+      const countResult = await RestApi.get(`${API_URLS.v0.ROLE}?id=${role._id}&action=userCount`)
+      if (countResult?.status === 'success') {
+        setAffectedUserCount(countResult.result?.count || 0)
+      } else {
+        setAffectedUserCount(0)
+      }
+    } catch (error) {
+      console.error('Error fetching user count:', error)
+      setAffectedUserCount(0)
+    }
+    
     setConfirmationDialogOpen(true)
   }
 
@@ -107,13 +130,26 @@ const RoleCards = () => {
         const result = await RestApi.del(`${API_URLS.v0.ROLE}?id=${currentRole._id}`)
         if (result?.status === 'success') {
           console.log(`Role deleted: ${currentRole.name}`)
+          const affectedUsers = result?.result?.affectedUsers
+          const userCount = affectedUsers?.count || 0
+          
+          // Show success message with affected user count
+          if (userCount > 0) {
+            toast.success(`Role deleted successfully. Removed from ${userCount} user(s).`)
+          } else {
+            toast.success('Role deleted successfully.')
+          }
+          
           await refreshRoles() // Refresh data after deletion
           setCurrentRole(null)
+          setAffectedUserCount(0)
         } else {
           console.log('Error deleting role:', result?.message)
+          toast.error(result?.message || 'Failed to delete role')
         }
       } catch (error) {
         console.error('An error occurred while deleting the role:', error)
+        toast.error(error?.message || 'An unexpected error occurred')
         throw new Error(error) // To handle it in Confirmation 2nd dialog
       } finally {
         setConfirmationDialogOpen(false) // Close the confirmation dialog
@@ -177,20 +213,22 @@ const RoleCards = () => {
                       dialog={RoleDialog}
                       dialogProps={{ roleData: item, refreshRoles }}
                     />
-                    <IconButtonTooltip
-                      title='Delete'
-                      onClick={() => handleDeleteConfirmation(item)}
-                      sx={{
-                        transition: 'all 0.2s',
-                        '&:hover': {
-                          backgroundColor: 'error.light',
-                          color: 'error.main',
-                          transform: 'scale(1.1)'
-                        }
-                      }}
-                    >
-                      <DeleteOutlineIcon fontSize='small' />
-                    </IconButtonTooltip>
+                    {isUserSuperAdmin && (
+                      <IconButtonTooltip
+                        title='Delete (Super Admin Only)'
+                        onClick={() => handleDeleteConfirmation(item)}
+                        sx={{
+                          transition: 'all 0.2s',
+                          '&:hover': {
+                            backgroundColor: 'error.light',
+                            color: 'error.main',
+                            transform: 'scale(1.1)'
+                          }
+                        }}
+                      >
+                        <DeleteOutlineIcon fontSize='small' />
+                      </IconButtonTooltip>
+                    )}
                   </Stack>
                 </div>
               </CardContent>
@@ -226,8 +264,10 @@ const RoleCards = () => {
       <ConfirmationDialog
         open={confirmationDialogOpen}
         setOpen={setConfirmationDialogOpen}
-        type='delete-role'
+        type={affectedUserCount > 0 ? 'delete-role-with-users' : 'delete-role'}
         onConfirm={handleDelete}
+        affectedUserCount={affectedUserCount}
+        roleName={currentRole?.name}
       />
     </>
   )

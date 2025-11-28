@@ -1,4 +1,5 @@
 export const ROLES_LOOKUP = {
+    SUPER_ADMIN: 'SUPER_ADMIN',
     ADMIN: 'ADMIN',
     USER: 'USER',
     QUIZ_REVIEWER: 'QUIZ_REVIEWER',

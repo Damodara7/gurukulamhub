@@ -47,6 +47,7 @@ import { sendCredentialsTemplate } from '@/utils/email-templates/sendCredentials
 import * as PwdUtils from '@/utils/password'
 import * as AppCodes from '@/configs/appErrorCodes'
 import { referrerNotificationTemplate } from '@/utils/email-templates/referrerNotificationTemplate'
+import { roleRemovedNotificationTemplate } from '@/utils/email-templates/roleRemovedNotificationTemplate'
 import * as AlertsService from '../api/alerts/alerts.service'
 import * as UserAlertService from '../api/user-alerts/user-alerts.service'
 
@@ -863,6 +864,54 @@ export async function srvVerifyEmailOtp(email, otp) {
   } catch (error) {
     // console.log('Error while saving / verifying otp :', error?.message)
     return -1
+  }
+}
+
+/**
+ * Send notification email to users when their role is removed
+ * @param {Object} data - { userEmail, roleName, remainingRoles, locale }
+ */
+export async function srvSendRoleRemovedNotification({ userEmail, roleName, remainingRoles, locale = 'en' }) {
+  await connectMongo()
+  try {
+    // Get user and profile information
+    const user = await User.findOne({ email: userEmail }).populate('profile')
+    if (!user) {
+      return { status: 'error', message: 'User not found', result: null }
+    }
+
+    const userProfile = user.profile
+    const userName = userProfile 
+      ? `${userProfile.firstname || ''} ${userProfile.lastname || ''}`.trim() || null
+      : null
+
+    // Ensure USER role is always present
+    const finalRemainingRoles = remainingRoles && remainingRoles.length > 0
+      ? remainingRoles.includes('USER') ? remainingRoles : ['USER', ...remainingRoles]
+      : ['USER']
+
+    const siteLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/${locale}/auth/login`
+
+    // Construct email content using the role removal template
+    const messageTemplate = roleRemovedNotificationTemplate({
+      userName,
+      userEmail,
+      roleName,
+      remainingRoles: finalRemainingRoles,
+      siteLink
+    })
+
+    // Send the notification email
+    const mailResponse = await MailService.srvSendEmail({
+      email: userEmail,
+      subject: `Role Update: ${roleName} Removed from Your Account`,
+      content: messageTemplate
+    })
+
+    return { status: 'success', result: mailResponse, message: 'Role removal notification sent successfully!' }
+  } catch (error) {
+    console.error('Error occurred while sending role removal notification:', error)
+    return { status: 'error', message: error.message || 'An error occurred', result: null }
   }
 }
 

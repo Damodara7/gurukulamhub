@@ -1,14 +1,56 @@
 import * as RoleService from './role.service.js';
 import { HttpStatusCode } from '@/utils/HttpStatusCodes';
 import * as ApiResponseUtils from '@/utils/apiResponses';
+import { auth } from '@/libs/auth';
+import { ROLES_LOOKUP } from '@/configs/roles-lookup';
+import * as RestApi from '@/utils/restApiUtil';
+import { API_URLS } from '@/configs/apiConfig';
 
 const Artifact = 'Role';
+
+// Helper function to check if user is SUPER_ADMIN
+async function isSuperAdminUser() {
+    try {
+        const session = await auth();
+        if (!session?.user?.email) {
+            return false;
+        }
+        const userResult = await RestApi.get(`${API_URLS.v0.USER}/${session.user.email}`);
+        const userRoles = userResult?.result?.roles || [];
+        return userRoles.includes(ROLES_LOOKUP.SUPER_ADMIN);
+    } catch (error) {
+        console.error('Error checking SUPER_ADMIN:', error);
+        return false;
+    }
+}
 
 // **GET Request**
 export async function GET(req) {
     try {
         const { searchParams } = new URL(req.url);
         const id = searchParams.get('id');
+        const action = searchParams.get('action'); // 'userCount' to get user count for a role
+
+        // If action is 'userCount', return user count for the role
+        if (action === 'userCount' && id) {
+            const User = (await import('@/app/models/user.model.js')).default;
+            await (await import('@/utils/dbConnect-mongo')).default();
+            
+            const role = await RoleService.getById({ id });
+            if (role.status === 'error') {
+                const errorResponse = ApiResponseUtils.createErrorResponse(role.message);
+                return ApiResponseUtils.sendErrorResponse(errorResponse);
+            }
+
+            const roleName = role.result.name;
+            const userCount = await User.countDocuments({ roles: roleName });
+            
+            const successResponse = ApiResponseUtils.createSuccessResponse(
+                'User count retrieved successfully',
+                { count: userCount, roleName }
+            );
+            return ApiResponseUtils.sendSuccessResponse(successResponse);
+        }
 
         let artifact;
         if (id) {
@@ -55,6 +97,27 @@ export async function POST(request) {
 export async function PUT(request) {
     try {
         const reqBody = await request.json();
+        
+        // Check if role name is being changed - only SUPER_ADMIN can rename roles
+        if (reqBody._id) {
+            const existingRole = await RoleService.getById({ id: reqBody._id });
+            if (existingRole.status === 'success' && existingRole.result) {
+                const existingName = existingRole.result.name;
+                const newName = reqBody.name;
+                
+                // If name is being changed, check if user is SUPER_ADMIN
+                if (existingName && newName && existingName !== newName) {
+                    const isSuperAdmin = await isSuperAdminUser();
+                    if (!isSuperAdmin) {
+                        const errorResponse = ApiResponseUtils.createErrorResponse(
+                            'Only SUPER_ADMIN can rename roles'
+                        );
+                        return ApiResponseUtils.sendErrorResponse(errorResponse, HttpStatusCode.Forbidden);
+                    }
+                }
+            }
+        }
+        
         const updatedRole = await RoleService.updateOne({ id: reqBody._id, data: reqBody });
 
         if (updatedRole.status === 'success') {
@@ -75,6 +138,15 @@ export async function PUT(request) {
 // **DELETE Request**
 export async function DELETE(req) {
     try {
+        // Only SUPER_ADMIN can delete roles
+        const isSuperAdmin = await isSuperAdminUser();
+        if (!isSuperAdmin) {
+            const errorResponse = ApiResponseUtils.createErrorResponse(
+                'Only SUPER_ADMIN can delete roles'
+            );
+            return ApiResponseUtils.sendErrorResponse(errorResponse, HttpStatusCode.Forbidden);
+        }
+
         const { searchParams } = new URL(req.url);
         const id = searchParams.get('id');
 
@@ -83,11 +155,12 @@ export async function DELETE(req) {
             return ApiResponseUtils.sendErrorResponse(errorResponse, HttpStatusCode.Ok);
         }
 
+        // Perform the deletion (service handles all validation and user cleanup)
         const deletedRole = await RoleService.deleteOne({ id });
 
         if (deletedRole.status === 'success') {
             const successResponse = ApiResponseUtils.createSuccessResponse(
-                `${Artifact} deleted successfully`,
+                deletedRole.message,
                 deletedRole.result
             );
             return ApiResponseUtils.sendSuccessResponse(successResponse);

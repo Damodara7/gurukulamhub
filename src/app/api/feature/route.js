@@ -1,8 +1,28 @@
 import * as FeatureService from './feature.service.js';
 import { HttpStatusCode } from '@/utils/HttpStatusCodes';
 import * as ApiResponseUtils from '@/utils/apiResponses';
+import { auth } from '@/libs/auth';
+import { ROLES_LOOKUP } from '@/configs/roles-lookup';
+import * as RestApi from '@/utils/restApiUtil';
+import { API_URLS } from '@/configs/apiConfig';
 
 const Artifact = 'Feature';
+
+// Helper function to check if user is SUPER_ADMIN
+async function isSuperAdminUser() {
+    try {
+        const session = await auth();
+        if (!session?.user?.email) {
+            return false;
+        }
+        const userResult = await RestApi.get(`${API_URLS.v0.USER}/${session.user.email}`);
+        const userRoles = userResult?.result?.roles || [];
+        return userRoles.includes(ROLES_LOOKUP.SUPER_ADMIN);
+    } catch (error) {
+        console.error('Error checking SUPER_ADMIN:', error);
+        return false;
+    }
+}
 
 // **GET Request**
 export async function GET(req) {
@@ -55,7 +75,28 @@ export async function POST(request) {
 export async function PUT(request) {
     try {
         const reqBody = await request.json();
-        const { _id: id, ...rest } = reqBody
+        const { _id: id, ...rest } = reqBody;
+        
+        // Check if feature name is being changed - only SUPER_ADMIN can rename features
+        if (id && rest.name) {
+            const existingFeature = await FeatureService.getById({ id });
+            if (existingFeature.status === 'success' && existingFeature.result) {
+                const existingName = existingFeature.result.name;
+                const newName = rest.name;
+                
+                // If name is being changed, check if user is SUPER_ADMIN
+                if (existingName && newName && existingName !== newName) {
+                    const isSuperAdmin = await isSuperAdminUser();
+                    if (!isSuperAdmin) {
+                        const errorResponse = ApiResponseUtils.createErrorResponse(
+                            'Only SUPER_ADMIN can rename features'
+                        );
+                        return ApiResponseUtils.sendErrorResponse(errorResponse, HttpStatusCode.Forbidden);
+                    }
+                }
+            }
+        }
+        
         const updatedFeature = await FeatureService.updateOne({ id, data: { ...rest } });
 
         if (updatedFeature.status === 'success') {
@@ -76,6 +117,15 @@ export async function PUT(request) {
 // **DELETE Request**
 export async function DELETE(req) {
     try {
+        // Only SUPER_ADMIN can delete features
+        const isSuperAdmin = await isSuperAdminUser();
+        if (!isSuperAdmin) {
+            const errorResponse = ApiResponseUtils.createErrorResponse(
+                'Only SUPER_ADMIN can delete features'
+            );
+            return ApiResponseUtils.sendErrorResponse(errorResponse, HttpStatusCode.Forbidden);
+        }
+
         const { searchParams } = new URL(req.url);
         const id = searchParams.get('id');
 

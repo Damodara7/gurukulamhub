@@ -21,12 +21,8 @@ import {
   Alert,
   Box,
   Stack,
-  AlertTitle,
-  InputAdornment,
-  CircularProgress
+  AlertTitle
 } from '@mui/material'
-import CheckCircleIcon from '@mui/icons-material/CheckCircle'
-import CancelIcon from '@mui/icons-material/Cancel'
 import ArrowForwardIosSharpIcon from '@mui/icons-material/ArrowForwardIosSharp'
 
 // API Utils
@@ -35,6 +31,8 @@ import { API_URLS } from '@/configs/apiConfig'
 import { useSession } from 'next-auth/react'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
 import { toast } from 'react-toastify'
+import { ROLES_LOOKUP } from '@/configs/roles-lookup'
+import { isSuperAdmin } from '@/utils/permissionUtils'
 
 // Styled Accordion Components
 const Accordion = styled(props => <MuiAccordion disableGutters elevation={0} square {...props} />)(({ theme }) => ({
@@ -93,9 +91,9 @@ const RoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
   const [isActive, setIsActive] = useState(roleData?.isActive || false)
   const [existingRoles, setExistingRoles] = useState([]) // Store all existing roles
   const [roleNameError, setRoleNameError] = useState('') // Error message for role name
-  const [isCheckingAvailability, setIsCheckingAvailability] = useState(false) // Loading state for availability check
-  const [availabilityStatus, setAvailabilityStatus] = useState(null) // 'available', 'unavailable', or null
-  const [availabilityChecked, setAvailabilityChecked] = useState(false) // Whether availability has been checked
+
+  const userRoles = session?.user?.roles || []
+  const isUserSuperAdmin = isSuperAdmin(userRoles)
 
   console.log('data', data)
 
@@ -166,41 +164,11 @@ const RoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
     })
   }
 
-  // Handle check availability button click
-  const handleCheckAvailability = async () => {
-    if (!roleName || !roleName.trim()) {
-      setRoleNameError('Please enter a role name first')
-      return
-    }
-
-    setIsCheckingAvailability(true)
-    setAvailabilityStatus(null)
-    setRoleNameError('')
-
-    // Simulate a small delay for better UX (optional)
-    await new Promise(resolve => setTimeout(resolve, 300))
-
-    const exists = checkRoleNameExists(roleName)
-    
-    setIsCheckingAvailability(false)
-    setAvailabilityChecked(true)
-    
-    if (exists) {
-      setAvailabilityStatus('unavailable')
-      setRoleNameError('Role name already exists')
-    } else {
-      setAvailabilityStatus('available')
-      setRoleNameError('')
-    }
-  }
-
   useEffect(() => {
     if (open) {
       getFeatureData() // Fetch data when the dialog opens
       getAllRoles() // Fetch all existing roles to check for duplicates
       setRoleNameError('') // Reset error when dialog opens
-      setAvailabilityStatus(null) // Reset availability status
-      setAvailabilityChecked(false) // Reset availability checked flag
       if (roleData) {
         setRoleName(roleData.name)
         const selectedPermissions = roleData.features.flatMap(feature =>
@@ -219,8 +187,6 @@ const RoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
     setSelectedCheckbox([])
     setExpanded(false)
     setRoleNameError('') // Reset error when closing
-    setAvailabilityStatus(null) // Reset availability status
-    setAvailabilityChecked(false) // Reset availability checked flag
   }
 
   async function handleCreateRole() {
@@ -231,15 +197,8 @@ const RoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
       return
     }
 
-    // Check if availability has been checked
-    if (!availabilityChecked) {
-      setRoleNameError('Please check role name availability first')
-      toast.error('Please check role name availability before creating')
-      return
-    }
-
-    // Check if role name is available
-    if (availabilityStatus === 'unavailable' || checkRoleNameExists(roleName)) {
+    // Check if role name already exists
+    if (checkRoleNameExists(roleName)) {
       setRoleNameError('Role name already exists')
       toast.error('Role name already exists. Please choose a different name.')
       return
@@ -294,19 +253,13 @@ const RoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
       return
     }
 
-    // Check if availability has been checked (only if role name changed)
+    // Check if role name changed and if it already exists
     const currentFormattedName = roleName.toUpperCase().replace(/\s+/g, '_')
     const originalFormattedName = roleData?.name?.toUpperCase().replace(/\s+/g, '_') || ''
     
     if (currentFormattedName !== originalFormattedName) {
-      if (!availabilityChecked) {
-        setRoleNameError('Please check role name availability first')
-        toast.error('Please check role name availability before updating')
-        return
-      }
-
-      // Check if role name is available
-      if (availabilityStatus === 'unavailable' || checkRoleNameExists(roleName)) {
+      // Check if role name already exists
+      if (checkRoleNameExists(roleName)) {
         setRoleNameError('Role name already exists')
         toast.error('Role name already exists. Please choose a different name.')
         return
@@ -481,7 +434,7 @@ const RoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
               By editing the role name, you might break the system functionality. Please ensure you are absolutely
               certain before proceeding.
             </Alert>
-            <Tooltip open={showTooltip} placement='top' title='Only super admin can edit the role names' arrow>
+            <Tooltip open={showTooltip} placement='top' title='Only SUPER_ADMIN can edit the role names' arrow>
               <TextField
                 label='Role Name'
                 variant='outlined'
@@ -491,15 +444,18 @@ const RoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
                 onChange={e => {
                   const formattedName = e.target.value.toUpperCase().replace(/\s+/g, '_')
                   setRoleName(formattedName)
+                  setRoleNameError('') // Clear error when user types
                 }}
                 onClick={() => {
-                  if (roleData) {
+                  if (roleData && !isUserSuperAdmin) {
                     setShowTooltip(true)
                     setTimeout(() => setShowTooltip(false), 2000)
                   }
                 }}
+                error={!!roleNameError}
+                helperText={roleNameError}
                 InputProps={{
-                  readOnly: !!roleData
+                  readOnly: roleData && !isUserSuperAdmin // Only SUPER_ADMIN can edit role names
                 }}
               />
             </Tooltip>
