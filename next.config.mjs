@@ -41,7 +41,9 @@ const nextConfig = {
   experimental: {
     serverActions: {
       bodySizeLimit: '2mb'
-    }
+    },
+    // Enable instrumentation hook to run code once on server startup
+    instrumentationHook: true,
   },
   webpack: (config, { isServer }) => {
     if (isServer) {

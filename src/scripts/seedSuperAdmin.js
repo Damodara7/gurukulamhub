@@ -265,12 +265,35 @@ async function initializeSuperAdminRole(allFeatures) {
 
 /**
  * Initialize SUPER_ADMIN user
+ * Ensures only ONE user with SUPER_ADMIN role exists (the one with SUPER_ADMIN_EMAIL)
  */
 async function initializeSuperAdminUser() {
   console.log('👤 Initializing SUPER_ADMIN user...')
   
   try {
-    // Check if SUPER_ADMIN user already exists
+    // CRITICAL: Ensure only ONE SUPER_ADMIN user exists
+    // Find all users with SUPER_ADMIN role
+    const allSuperAdminUsers = await User.find({ roles: ROLES_LOOKUP.SUPER_ADMIN })
+    
+    if (allSuperAdminUsers.length > 1) {
+      console.log(`  ⚠️  WARNING: Found ${allSuperAdminUsers.length} users with SUPER_ADMIN role`)
+      console.log(`  🔧 Removing SUPER_ADMIN role from users that are not "${SUPER_ADMIN_EMAIL}"`)
+      
+      // Remove SUPER_ADMIN role from all users except the one with SUPER_ADMIN_EMAIL
+      for (const user of allSuperAdminUsers) {
+        if (user.email !== SUPER_ADMIN_EMAIL) {
+          user.roles = user.roles.filter(role => role !== ROLES_LOOKUP.SUPER_ADMIN)
+          // If user has no roles left, add USER role
+          if (user.roles.length === 0) {
+            user.roles = [ROLES_LOOKUP.USER]
+          }
+          await user.save()
+          console.log(`  ✓ Removed SUPER_ADMIN role from user: ${user.email}`)
+        }
+      }
+    }
+    
+    // Check if SUPER_ADMIN user with the specified email already exists
     const existingUser = await User.findOne({ email: SUPER_ADMIN_EMAIL })
     
     if (existingUser) {
@@ -285,6 +308,24 @@ async function initializeSuperAdminUser() {
         await existingUser.save()
         console.log('  ↻ Updated user with SUPER_ADMIN role')
       }
+      
+      // Ensure this is the ONLY user with SUPER_ADMIN role
+      const otherSuperAdmins = await User.find({ 
+        roles: ROLES_LOOKUP.SUPER_ADMIN,
+        email: { $ne: SUPER_ADMIN_EMAIL }
+      })
+      
+      if (otherSuperAdmins.length > 0) {
+        console.log(`  🔧 Removing SUPER_ADMIN role from ${otherSuperAdmins.length} other user(s)`)
+        for (const user of otherSuperAdmins) {
+          user.roles = user.roles.filter(role => role !== ROLES_LOOKUP.SUPER_ADMIN)
+          if (user.roles.length === 0) {
+            user.roles = [ROLES_LOOKUP.USER]
+          }
+          await user.save()
+        }
+      }
+      
       return existingUser
     } else {
       // Generate secure password
@@ -338,36 +379,120 @@ async function initializeSuperAdminUser() {
   }
 }
 
+// Global flag to prevent multiple simultaneous initializations
+let initializationInProgress = false
+let initializationPromise = null
+
+// Track if initialization has been completed to avoid re-running unnecessarily
+let initializationCompleted = false
+
+/**
+ * Quick check if SUPER_ADMIN already exists and is properly configured
+ */
+async function isSuperAdminAlreadyInitialized() {
+  try {
+    await connectMongo()
+    
+    // Check if SUPER_ADMIN user exists with the correct email
+    const superAdminUser = await User.findOne({ 
+      email: SUPER_ADMIN_EMAIL,
+      roles: ROLES_LOOKUP.SUPER_ADMIN 
+    })
+    
+    // Check if SUPER_ADMIN role exists
+    const superAdminRole = await Role.findOne({ name: ROLES_LOOKUP.SUPER_ADMIN })
+    
+    // If both exist and user has the role, we're good
+    if (superAdminUser && superAdminRole) {
+      // Double-check that no other users have SUPER_ADMIN role
+      const otherSuperAdmins = await User.countDocuments({ 
+        roles: ROLES_LOOKUP.SUPER_ADMIN,
+        email: { $ne: SUPER_ADMIN_EMAIL }
+      })
+      
+      // If everything is correct, skip initialization
+      if (otherSuperAdmins === 0) {
+        return true
+      }
+    }
+    
+    return false
+  } catch (error) {
+    // If check fails, proceed with initialization
+    console.warn('⚠️  Could not check if SUPER_ADMIN is initialized, proceeding with initialization:', error.message)
+    return false
+  }
+}
+
 /**
  * Main initialization function
+ * Idempotent - safe to call multiple times
+ * Ensures only ONE SUPER_ADMIN user exists
+ * Skips initialization if already properly set up
  */
 export async function initializeSuperAdmin() {
-  try {
-    console.log('🚀 Starting SUPER_ADMIN initialization...\n')
-    
-    // Connect to MongoDB
-    await connectMongo()
-    console.log('✓ Connected to MongoDB\n')
-    
-    // Step 1: Initialize all features
-    const allFeatures = await initializeFeatures()
-    
-    // Step 2: Initialize SUPER_ADMIN role
-    await initializeSuperAdminRole(allFeatures)
-    console.log('✅ SUPER_ADMIN role initialized\n')
-    
-    // Step 3: Initialize SUPER_ADMIN user
-    await initializeSuperAdminUser()
-    console.log('✅ SUPER_ADMIN user initialized\n')
-    
-    console.log('🎉 SUPER_ADMIN initialization completed successfully!')
-    console.log('   The SUPER_ADMIN role and user are now ready to use.\n')
-    
-    return { status: 'success', message: 'SUPER_ADMIN initialized successfully' }
-  } catch (error) {
-    console.error('\n❌ Error during SUPER_ADMIN initialization:', error)
-    throw error
+  // If initialization is already in progress, return the existing promise
+  if (initializationInProgress && initializationPromise) {
+    console.log('⏳ SUPER_ADMIN initialization already in progress, waiting...')
+    return initializationPromise
   }
+
+  // If initialization has already completed, skip
+  if (initializationCompleted) {
+    console.log('✓ SUPER_ADMIN already initialized, skipping...')
+    return { status: 'success', message: 'SUPER_ADMIN already initialized' }
+  }
+
+  // Check if SUPER_ADMIN_EMAIL is set
+  if (!SUPER_ADMIN_EMAIL) {
+    const errorMsg = 'SUPER_ADMIN_EMAIL environment variable is not set'
+    console.error(`❌ ${errorMsg}`)
+    return { status: 'error', message: errorMsg }
+  }
+
+  // Quick check: If SUPER_ADMIN is already properly initialized, skip
+  const alreadyInitialized = await isSuperAdminAlreadyInitialized()
+  if (alreadyInitialized) {
+    console.log('✓ SUPER_ADMIN is already properly initialized, skipping...')
+    initializationCompleted = true
+    return { status: 'success', message: 'SUPER_ADMIN already initialized' }
+  }
+
+  initializationInProgress = true
+  initializationPromise = (async () => {
+    try {
+      console.log('🚀 Starting SUPER_ADMIN initialization...\n')
+      
+      // Connect to MongoDB
+      await connectMongo()
+      console.log('✓ Connected to MongoDB\n')
+      
+      // Step 1: Initialize all features
+      const allFeatures = await initializeFeatures()
+      
+      // Step 2: Initialize SUPER_ADMIN role
+      await initializeSuperAdminRole(allFeatures)
+      console.log('✅ SUPER_ADMIN role initialized\n')
+      
+      // Step 3: Initialize SUPER_ADMIN user (ensures only one exists)
+      await initializeSuperAdminUser()
+      console.log('✅ SUPER_ADMIN user initialized\n')
+      
+      console.log('🎉 SUPER_ADMIN initialization completed successfully!')
+      console.log('   The SUPER_ADMIN role and user are now ready to use.\n')
+      
+      initializationCompleted = true
+      return { status: 'success', message: 'SUPER_ADMIN initialized successfully' }
+    } catch (error) {
+      console.error('\n❌ Error during SUPER_ADMIN initialization:', error)
+      throw error
+    } finally {
+      initializationInProgress = false
+      initializationPromise = null
+    }
+  })()
+
+  return initializationPromise
 }
 
 // If running directly (not imported), execute the initialization
