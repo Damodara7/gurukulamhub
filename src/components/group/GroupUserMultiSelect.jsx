@@ -367,26 +367,28 @@ const GroupUserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUse
     )
   }
 
-  // Categorize users based on matched/unmatched status
+  // Categorize users based on selection state (selected = matched, not selected = unmatched)
   const getFilteredUsers = () => {
-    const matched = users.filter(user => matchedUserIds.includes(user._id))
-    const unmatched = users.filter(user => unmatchedUserIds.includes(user._id))
-
-    // If no filters applied, consider all users as matched
-    if (matchedUserIds.length === 0 && unmatchedUserIds.length === 0) {
-      return {
-        matchedUsers: users,
-        unmatchedUsers: []
-      }
-    }
+    // Separate users based on selection state
+    const selected = users.filter(user => selectedUsers.includes(user._id))
+    const notSelected = users.filter(user => !selectedUsers.includes(user._id))
 
     return {
-      matchedUsers: matched,
-      unmatchedUsers: unmatched
+      matchedUsers: selected, // Selected users go to matched section
+      unmatchedUsers: notSelected // Not selected users go to unmatched section
     }
   }
 
   const { matchedUsers, unmatchedUsers } = getFilteredUsers()
+
+  // Helper to check if a user matches the filter criteria
+  const userMatchesFilter = user => {
+    // If no filters applied, all users match
+    if (matchedUserIds.length === 0 && unmatchedUserIds.length === 0) {
+      return true
+    }
+    return matchedUserIds.includes(user._id)
+  }
 
   return (
     <Box>
@@ -585,7 +587,7 @@ const GroupUserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUse
             </ListItem>
             <Divider />
 
-            {/* Always show matched users section */}
+            {/* Always show selected users section (matched users) */}
             <ListItem
               sx={{
                 py: { xs: 1, sm: 0.75, md: 1 },
@@ -600,7 +602,7 @@ const GroupUserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUse
                   fontWeight: 600
                 }}
               >
-                Matching Users ({matchedUsers.length})
+                Selected Users ({matchedUsers.length})
               </Typography>
             </ListItem>
 
@@ -612,12 +614,17 @@ const GroupUserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUse
                 <ListItem
                   key={user._id}
                   disablePadding
+                  onClick={() => handleToggle(user._id)}
                   sx={{
                     flexDirection: 'row',
                     alignItems: 'flex-start',
                     py: { xs: 2, sm: 1.5, md: 2 },
                     px: { xs: 1.5, sm: 2, md: 2.5, lg: 3 },
                     borderBottom: theme => `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                    cursor: 'pointer',
+                    '&:hover': {
+                      backgroundColor: alpha(theme.palette.action.hover, 0.5)
+                    },
                     '&:last-child': {
                       borderBottom: 'none'
                     }
@@ -673,6 +680,11 @@ const GroupUserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUse
                       <Checkbox
                         edge='end'
                         checked={isSelected}
+                        onChange={e => {
+                          e.stopPropagation()
+                          handleToggle(user._id)
+                        }}
+                        onClick={e => e.stopPropagation()}
                         tabIndex={-1}
                         disableRipple
                         inputProps={{ 'aria-labelledby': labelId }}
@@ -713,7 +725,7 @@ const GroupUserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUse
               )
             })}
 
-            {/* Show unmatched users section only if there are unmatched users */}
+            {/* Always show not selected users section (unmatched users) */}
             {unmatchedUsers.length > 0 && (
               <>
                 <Divider sx={{ my: { xs: 1, sm: 0.5 } }} />
@@ -731,7 +743,7 @@ const GroupUserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUse
                       fontWeight: 600
                     }}
                   >
-                    Unmatched Users ({unmatchedUsers.length})
+                    Not Selected Users ({unmatchedUsers.length})
                   </Typography>
                 </ListItem>
                 {unmatchedUsers.map(user => {
@@ -742,13 +754,18 @@ const GroupUserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUse
                     <ListItem
                       key={user._id}
                       disablePadding
+                      onClick={() => handleToggle(user._id)}
                       sx={{
                         flexDirection: 'row',
                         alignItems: 'flex-start',
                         py: { xs: 2, sm: 1.5, md: 2 },
                         px: { xs: 1.5, sm: 2, md: 2.5, lg: 3 },
                         borderBottom: theme => `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-                        opacity: 0.6,
+                        opacity: userMatchesFilter(user) ? 1 : 0.6,
+                        cursor: 'pointer',
+                        '&:hover': {
+                          backgroundColor: alpha(theme.palette.action.hover, 0.5)
+                        },
                         '&:last-child': {
                           borderBottom: 'none'
                         }
@@ -809,6 +826,11 @@ const GroupUserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUse
                           <Checkbox
                             edge='end'
                             checked={isSelected}
+                            onChange={e => {
+                              e.stopPropagation()
+                              handleToggle(user._id)
+                            }}
+                            onClick={e => e.stopPropagation()}
                             tabIndex={-1}
                             disableRipple
                             inputProps={{ 'aria-labelledby': labelId }}
@@ -856,5 +878,4 @@ const GroupUserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUse
     </Box>
   )
 }
-
 export default GroupUserMultiSelect
