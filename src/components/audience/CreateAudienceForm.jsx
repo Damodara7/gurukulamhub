@@ -254,7 +254,7 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
   const fetchUsers = async () => {
     setLoading(true)
     try {
-      const result = await RestApi.get(`${API_URLS.v0.USER}`)
+      const result = await RestApi.get(`${API_URLS.v0.USER}?isVerified=true`)
       if (result?.status === 'success') {
         const verifiedUsers = (result.result || []).filter(user => user?.isVerified)
         setUsers(verifiedUsers)

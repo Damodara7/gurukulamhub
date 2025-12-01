@@ -97,7 +97,7 @@ const AudienceDetailsPage = ({ audienceId, audienceData, gamesData = [] }) => {
 
       // Fallback to legacy approach
       console.log('Using legacy approach')
-      const result = await RestApi.get(`${API_URLS.v0.USER}`)
+      const result = await RestApi.get(`${API_URLS.v0.USER}?isVerified=true`)
       if (result?.status === 'success') {
         const allUsers = Array.isArray(result.result) ? result.result : [result.result]
         console.log('All users fetched:', allUsers.length)

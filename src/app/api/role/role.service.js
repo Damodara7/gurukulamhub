@@ -1,6 +1,9 @@
-import connectMongo from '@/utils/dbConnect-mongo'
-import Role from './role.model.js' // Import your Role model
-import { validateRoleCreateRequestDto, validateRoleUpdateRequestDto } from './role.validator.js' // Import your DTO schema
+import connectMongo from '@/utils/dbConnect-mongo';
+import Role from './role.model.js'; // Import your Role model
+import { validateRoleCreateRequestDto, validateRoleUpdateRequestDto } from './role.validator.js'; // Import your DTO schema
+import User from '@/app/models/user.model.js';
+import { ROLES_LOOKUP } from '@/configs/roles-lookup';
+import * as UserService from '@/app/services/user.service.js';
 // import * as ApiResponseUtils from '@/utils/apiResponses';
 
 // **Add Role**
@@ -90,29 +93,104 @@ export async function updateOne({ id, data }) {
 }
 
 // **Delete Role**
-export async function deleteOne({ id, email }) {
-  await connectMongo()
-  try {
-    const existingRole = await Role.findOne({ _id: id, isDeleted: false })
-    if (!existingRole) {
-      return { status: 'error', message: 'Role not found or already deleted', result: null }
-    }
-    existingRole.isDeleted = true
-    existingRole.deletedAt = new Date()
-    if (email) {
-      existingRole.deletedBy = email
-      existingRole.deleterEmail = email
-    }
+export async function deleteOne({ id }) {
+    await connectMongo();
+    try {
+        // First, get the role to check its name
+        const roleToDelete = await Role.findById(id);
+        if (!roleToDelete) {
+            return { status: 'error', message: 'Role not found', result: null };
+        }
 
-    const deletedRole = await existingRole.save()
-    if (!deletedRole) {
-      return { status: 'error', message: 'Role not found', result: null }
-    }
+        const roleName = roleToDelete.name;
 
-    console.log('Role deleted successfully!')
-    return { status: 'success', result: deletedRole, message: 'Role Deleted Successfully' }
-  } catch (err) {
-    console.error('Error deleting Role:', err)
-    return { status: 'error', message: err.message, result: null }
-  }
+        // Prevent deletion of critical/system roles
+        const criticalRoles = [
+            ROLES_LOOKUP.SUPER_ADMIN,
+            ROLES_LOOKUP.ADMIN,
+            ROLES_LOOKUP.USER
+        ];
+
+        if (criticalRoles.includes(roleName)) {
+            return {
+                status: 'error',
+                message: `Cannot delete critical role: ${roleName}. This role is required for system functionality.`,
+                result: null
+            };
+        }
+
+        // Check how many users have this role
+        const usersWithRole = await User.find({ roles: roleName });
+        const affectedUserCount = usersWithRole.length;
+
+        // Remove the role from all users who have it and send notifications
+        let usersUpdated = 0;
+        let emailsSent = 0;
+        let emailsFailed = 0;
+
+        if (affectedUserCount > 0) {
+            // Update users and collect their remaining roles for notifications
+            for (const user of usersWithRole) {
+                try {
+                    // Get remaining roles before removal
+                    const remainingRoles = user.roles.filter(r => r !== roleName);
+                    
+                    // Remove the role from this user
+                    await User.updateOne(
+                        { _id: user._id },
+                        { $pull: { roles: roleName } }
+                    );
+                    usersUpdated++;
+
+                    // Send notification email to the user
+                    try {
+                        const notificationResult = await UserService.srvSendRoleRemovedNotification({
+                            userEmail: user.email,
+                            roleName: roleName,
+                            remainingRoles: remainingRoles,
+                            locale: 'en' // You can make this dynamic based on user preference
+                        });
+                        
+                        if (notificationResult.status === 'success') {
+                            emailsSent++;
+                        } else {
+                            emailsFailed++;
+                            console.error(`Failed to send notification to ${user.email}:`, notificationResult.message);
+                        }
+                    } catch (emailError) {
+                        emailsFailed++;
+                        console.error(`Error sending notification email to ${user.email}:`, emailError);
+                    }
+                } catch (updateError) {
+                    console.error(`Error updating user ${user.email}:`, updateError);
+                }
+            }
+            
+            console.log(`Removed role ${roleName} from ${usersUpdated} users. Sent ${emailsSent} notifications, ${emailsFailed} failed.`);
+        }
+
+        // Now delete the role
+        const deletedRole = await Role.findByIdAndDelete(id);
+        if (!deletedRole) {
+            return { status: 'error', message: 'Role not found', result: null };
+        }
+
+        console.log('Role deleted successfully!');
+        return {
+            status: 'success',
+            result: {
+                deletedRole,
+                affectedUsers: {
+                    count: affectedUserCount,
+                    updated: usersUpdated,
+                    notificationsSent: emailsSent,
+                    notificationsFailed: emailsFailed
+                }
+            },
+            message: `Role deleted successfully. ${affectedUserCount > 0 ? `Removed from ${usersUpdated} user(s). ${emailsSent} notification(s) sent.` : 'No users were affected.'}`
+        };
+    } catch (err) {
+        console.error('Error deleting Role:', err);
+        return { status: 'error', message: err.message, result: null };
+    }
 }

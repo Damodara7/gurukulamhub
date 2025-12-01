@@ -64,6 +64,7 @@ import { roleSliceActions } from '@/store/features/roleSlice'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
 import { toast } from 'react-toastify'
 import { useSession } from 'next-auth/react'
+import { isSuperAdmin } from '@/utils/permissionUtils'
 // import { useAppDispatch } from '@/store/hooks'
 
 // Vars
@@ -129,14 +130,16 @@ const DebouncedInput = ({ value: initialValue, onChange, debounce = 500, ...prop
 // Column Definitions
 const columnHelper = createColumnHelper()
 
-const ActionsMenu = ({ anchorEl, handleClose, handleAction }) => (
+const ActionsMenu = ({ anchorEl, handleClose, handleAction, isUserSuperAdmin }) => (
   <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
-    <MenuItem dense onClick={() => handleAction('delete')}>
-      <ListItemIcon>
-        <DeleteOutlineIcon />
-      </ListItemIcon>
-      <ListItemText primary='Delete' />
-    </MenuItem>
+    {isUserSuperAdmin && (
+      <MenuItem dense onClick={() => handleAction('delete')}>
+        <ListItemIcon>
+          <DeleteOutlineIcon />
+        </ListItemIcon>
+        <ListItemText primary='Delete (Super Admin Only)' />
+      </MenuItem>
+    )}
     {/* <MenuItem dense onClick={() => handleAction('assign')}>
       <ListItemIcon>
         <AssignmentOutlinedIcon />
@@ -392,31 +395,33 @@ const FeaturesTable = () => {
             >
               <i className='ri-edit-box-line text-[22px] text-textSecondary' />
             </IconButtonTooltip>
-            <IconButtonTooltip
-              title='Delete'
-              onClick={() => {
-                setCurrentFeature(row.original)
-                setConfirmationDialogOpen(true)
-              }}
-              sx={{
-                transition: 'all 0.2s ease-in-out',
-                '&:hover': {
-                  backgroundColor: theme => alpha(theme.palette.error.main, 0.1),
-                  '& i': {
-                    color: 'error.main'
-                  },
-                  transform: 'scale(1.1)'
-                }
-              }}
-            >
-              <i className='ri-delete-bin-line text-[22px] text-textSecondary' />
-            </IconButtonTooltip>
+            {isUserSuperAdmin && (
+              <IconButtonTooltip
+                title='Delete (Super Admin Only)'
+                onClick={() => {
+                  setCurrentFeature(row.original)
+                  setConfirmationDialogOpen(true)
+                }}
+                sx={{
+                  transition: 'all 0.2s ease-in-out',
+                  '&:hover': {
+                    backgroundColor: theme => theme.palette.error.main + '10',
+                    '& i': {
+                      color: 'error.main'
+                    },
+                    transform: 'scale(1.1)'
+                  }
+                }}
+              >
+                <i className='ri-delete-bin-line text-[22px] text-textSecondary' />
+              </IconButtonTooltip>
+            )}
           </div>
         ),
         enableSorting: false
       })
     ],
-    [roles] // Ensure roles are passed as a dependency to update dynamically
+    [roles, isUserSuperAdmin] // Ensure roles and isUserSuperAdmin are passed as dependencies to update dynamically
   )
 
   const table = useReactTable({
@@ -766,23 +771,25 @@ const FeaturesTable = () => {
                           >
                             Edit
                           </Button>
-                          <Button
-                            variant='contained'
-                            component='label'
-                            sx={{
-                              color: 'white',
-                              flex: 1,
-                              textTransform: 'none',
-                              fontWeight: 600
-                            }}
-                            size='small'
-                            onClick={() => {
-                              setCurrentFeature(feature)
-                              setConfirmationDialogOpen(true)
-                            }}
-                          >
-                            Delete
-                          </Button>
+                          {isUserSuperAdmin && (
+                            <Button
+                              variant='contained'
+                              component='label'
+                              sx={{
+                                color: 'white',
+                                flex: 1,
+                                textTransform: 'none',
+                                fontWeight: 600
+                              }}
+                              size='small'
+                              onClick={() => {
+                                setCurrentFeature(feature)
+                                setConfirmationDialogOpen(true)
+                              }}
+                            >
+                              Delete
+                            </Button>
+                          )}
                         </Stack>
                       </Box>
                     )

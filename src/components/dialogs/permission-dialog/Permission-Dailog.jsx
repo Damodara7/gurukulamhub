@@ -19,6 +19,8 @@ import { Box, FormControl, FormControlLabel, Switch, Tooltip } from '@mui/materi
 import { alpha, useTheme } from '@mui/material/styles'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
 import { toast } from 'react-toastify'
+import { ROLES_LOOKUP } from '@/configs/roles-lookup'
+import { isSuperAdmin } from '@/utils/permissionUtils'
 
 // AddContent Component
 const AddContent = ({ handleClose, onCreate }) => {
@@ -223,11 +225,15 @@ const AddContent = ({ handleClose, onCreate }) => {
 // EditContent Component
 const EditContent = ({ handleClose, data, onUpdate }) => {
   const theme = useTheme()
+  const { data: session } = useSession()
   const [featureName, setFeatureName] = useState(data.name)
   const [permissions, setPermissions] = useState('')
   const [permissionChips, setPermissionChips] = useState(data.permissions || [])
   const [showTooltip, setShowTooltip] = useState(false)
   const [isActive, setIsActive] = useState(data?.isActive || false)
+  
+  const userRoles = session?.user?.roles || []
+  const isUserSuperAdmin = isSuperAdmin(userRoles)
 
   const handleStatusChange = event => {
     setIsActive(event.target.checked)
@@ -277,7 +283,7 @@ const EditContent = ({ handleClose, data, onUpdate }) => {
           By editing the feature name, you might break the system functionality. Please ensure you are absolutely
           certain before proceeding.
         </Alert>
-        <Tooltip open={showTooltip} placement='top' title='Only super admin can edit the feature names' arrow>
+        <Tooltip open={showTooltip} placement='top' title='Only SUPER_ADMIN can edit the feature names' arrow>
           <TextField
             sx={{ mt: 2 }}
             fullWidth
@@ -285,12 +291,18 @@ const EditContent = ({ handleClose, data, onUpdate }) => {
             variant='outlined'
             placeholder='Enter Feature Name'
             value={featureName}
+            onChange={e => {
+              const formattedName = e.target.value.toUpperCase().replace(/\s+/g, '_')
+              setFeatureName(formattedName)
+            }}
             onClick={() => {
-              setShowTooltip(true)
-              setTimeout(() => setShowTooltip(false), 2000)
+              if (!isUserSuperAdmin) {
+                setShowTooltip(true)
+                setTimeout(() => setShowTooltip(false), 2000)
+              }
             }}
             InputProps={{
-              readOnly: true
+              readOnly: !isUserSuperAdmin // Only SUPER_ADMIN can edit feature names
             }}
           />
         </Tooltip>

@@ -59,6 +59,7 @@ const BulkUserImportDialog = ({ open, handleClose, refreshUsers }) => {
   const [file, setFile] = useState(null)
   const [parsedData, setParsedData] = useState([])
   const [validationErrors, setValidationErrors] = useState([])
+  const [formatErrors, setFormatErrors] = useState([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [progress, setProgress] = useState(0)
   const [results, setResults] = useState(null)
@@ -69,6 +70,7 @@ const BulkUserImportDialog = ({ open, handleClose, refreshUsers }) => {
     setFile(null)
     setParsedData([])
     setValidationErrors([])
+    setFormatErrors([])
     setIsProcessing(false)
     setProgress(0)
     setResults(null)
@@ -83,10 +85,17 @@ const BulkUserImportDialog = ({ open, handleClose, refreshUsers }) => {
     const selectedFile = event.target.files[0]
     if (!selectedFile) return
 
+    // Reset previous errors
+    setFormatErrors([])
+    setValidationErrors([])
+    setParsedData([])
+
     // Check file extension
     const fileName = selectedFile.name.toLowerCase()
     if (!fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
-      toast.error('Please upload a valid Excel file (.xlsx or .xls)')
+      const errorMessage = 'Please upload a valid Excel file (.xlsx or .xls)'
+      toast.error(errorMessage)
+      setFormatErrors([{ message: errorMessage, type: 'File Extension' }])
       return
     }
 
@@ -107,7 +116,9 @@ const BulkUserImportDialog = ({ open, handleClose, refreshUsers }) => {
           const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 })
 
           if (jsonData.length < 2) {
-            toast.error('Excel file must have at least a header row and one data row')
+            const errorMessage = 'Excel file must have at least a header row and one data row'
+            toast.error(errorMessage)
+            setFormatErrors([{ message: errorMessage, type: 'File Structure' }])
             return
           }
 
@@ -130,9 +141,14 @@ const BulkUserImportDialog = ({ open, handleClose, refreshUsers }) => {
           const missingHeaders = requiredHeaders.filter(h => headerMap[h] === undefined)
           
           if (missingHeaders.length > 0) {
-            toast.error(`Missing required columns: ${missingHeaders.join(', ')}`)
+            const errorMessage = `Missing required columns: ${missingHeaders.join(', ')}`
+            toast.error(errorMessage)
+            setFormatErrors([{ message: errorMessage, type: 'Missing Columns' }])
             return
           }
+
+          // Clear format errors if we got this far
+          setFormatErrors([])
 
           // Parse data rows
           const parsedRows = []
@@ -177,13 +193,22 @@ const BulkUserImportDialog = ({ open, handleClose, refreshUsers }) => {
           }
         } catch (error) {
           console.error('Error parsing Excel file:', error)
-          toast.error('Error parsing Excel file. Please check the file format.')
+          const errorMessage = 'Error parsing Excel file. Please check the file format.'
+          toast.error(errorMessage)
+          setFormatErrors([{ message: errorMessage, type: 'Parse Error' }])
         }
+      }
+      reader.onerror = () => {
+        const errorMessage = 'Error reading file. Please try again.'
+        toast.error(errorMessage)
+        setFormatErrors([{ message: errorMessage, type: 'File Read Error' }])
       }
       reader.readAsArrayBuffer(file)
     } catch (error) {
       console.error('Error reading file:', error)
-      toast.error('Error reading file')
+      const errorMessage = 'Error reading file. Please check if the file is valid.'
+      toast.error(errorMessage)
+      setFormatErrors([{ message: errorMessage, type: 'File Read Error' }])
     }
   }
 
@@ -490,6 +515,27 @@ const BulkUserImportDialog = ({ open, handleClose, refreshUsers }) => {
             </Box>
           </Box>
 
+          {/* Format Errors */}
+          {formatErrors.length > 0 && (
+            <Alert severity='error'>
+              <Typography variant='subtitle2' sx={{ mb: 1 }}>
+                Excel Format Errors ({formatErrors.length})
+              </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                {formatErrors.map((error, index) => (
+                  <Box key={index} sx={{ display: 'flex', flexDirection: 'column' }}>
+                    <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                      {error.type}:
+                    </Typography>
+                    <Typography variant='body2' color='error.main'>
+                      {error.message}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+            </Alert>
+          )}
+
           {/* Validation Errors */}
           {validationErrors.length > 0 && (
             <Alert severity='error'>
@@ -612,7 +658,7 @@ const BulkUserImportDialog = ({ open, handleClose, refreshUsers }) => {
             size='large'
             style={{ color: 'white' }}
             onClick={handleImport}
-            disabled={isProcessing || parsedData.length === 0 || validationErrors.length > 0}
+            disabled={isProcessing || parsedData.length === 0 || validationErrors.length > 0 || formatErrors.length > 0}
             startIcon={<i className='ri-upload-cloud-line' />}
             >
             {isProcessing ? 'Importing...' : 'Import Users'}

@@ -39,6 +39,7 @@ function generatePassword(email) {
 export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const referralToken = searchParams.get('referralToken');
+    const isVerified = searchParams.get('isVerified') === 'true' ? true : false;
 
     try {
         let result;
@@ -55,13 +56,13 @@ export async function GET(request) {
             }
         } else {
             // Fetch all users if no referral token is provided
-            const usersResult = await UserService.getAll();
+            const usersResult = await UserService.getAll({ isVerified });
 
             if (usersResult.result && usersResult.result.length > 0) {
                 result = ApiResponseUtils.createSuccessResponse('Users fetched successfully', usersResult.result);
                 return ApiResponseUtils.sendSuccessResponse(result);
             } else {
-                result = ApiResponseUtils.createErrorResponse(userResult?.message || 'No users found.');
+                result = ApiResponseUtils.createErrorResponse(usersResult?.message || 'No users found.');
                 return ApiResponseUtils.sendErrorResponse(result);
             }
         }

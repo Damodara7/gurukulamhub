@@ -77,7 +77,7 @@ const ViewDetails = ({ game }) => {
           return
         }
         if (!session?.user?.email) return
-        const res = await RestApi.get(`${API_URLS.v0.USER}`)
+        const res = await RestApi.get(`${API_URLS.v0.USER}?isVerified=true`)
         if (res?.status === 'success' && res.result) {
           const users = Array.isArray(res.result) ? res.result : [res.result]
           const user = users.find(u => u.email === session.user.email)

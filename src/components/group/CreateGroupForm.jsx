@@ -163,7 +163,7 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
   const fetchUsers = async () => {
     setLoading(true)
     try {
-      const result = await RestApi.get(`${API_URLS.v0.USER}`)
+      const result = await RestApi.get(`${API_URLS.v0.USER}?isVerified=true`)
       if (result?.status === 'success') {
         setUsers(result.result || [])
         // In edit mode, preserve existing selection; otherwise preselect all
