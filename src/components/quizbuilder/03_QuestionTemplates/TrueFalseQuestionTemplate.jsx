@@ -49,7 +49,7 @@ const TrueFalseQuestionTemplate = ({
   deleteQuestion,
   primaryQuestion = null,
   validationErrors = [],
-  isAdmin=false
+  isAdmin = false
 }) => {
   const innerData = data?.data
   const [id, setId] = useState(questionUUID)
@@ -63,10 +63,10 @@ const TrueFalseQuestionTemplate = ({
     }
   )
 
-  const [addHint, setAddHint] = useState( innerData?.addHint || false)
+  const [addHint, setAddHint] = useState(innerData?.addHint || false)
   const [status, setStatus] = useState(innerData?.status || 'draft')
   const [hint, setHint] = useState(innerData?.hint || '')
-  const [hintMarks, setHintMarks] = useState(-1*innerData?.hintMarks || '')
+  const [hintMarks, setHintMarks] = useState(-1 * innerData?.hintMarks || '')
   const [marks, setMarks] = useState(innerData?.marks || '')
   const [timerSeconds, setTimerSeconds] = useState(innerData?.timerSeconds || '')
   const [skippable, setSkippable] = useState(innerData?.skippable || false) // default non-skippable
@@ -274,61 +274,75 @@ const TrueFalseQuestionTemplate = ({
 
   return (
     <>
-      <Box sx={{ 
-        bgcolor: 'background.paper', 
-        borderRadius: 3, 
-        border: '1px solid',
-        borderColor: hasErrors ? alpha(theme.palette.error.main, 0.3) : 'divider',
-        boxShadow: hasErrors ? `0 0 0 3px ${alpha(theme.palette.error.main, 0.1)}` : '0 2px 8px rgba(0,0,0,0.05)',
-        p: { xs: 2, md: 3 },
-        transition: 'all 0.3s ease'
-      }}>
+      <Box
+        sx={{
+          bgcolor: 'background.paper',
+          borderRadius: 3,
+          border: '1px solid',
+          borderColor: hasErrors
+            ? alpha(theme.palette.error.main, 0.3)
+            : alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08),
+          boxShadow: hasErrors
+            ? `0 0 0 3px ${alpha(theme.palette.error.main, 0.1)}`
+            : theme.palette.mode === 'dark'
+              ? '0 2px 8px rgba(0,0,0,0.3)'
+              : '0 2px 8px rgba(0,0,0,0.05)',
+          p: { xs: 2, md: 3 },
+          transition: 'all 0.3s ease'
+        }}
+      >
         {/* Header Section */}
-        <Stack direction="row" spacing={2} sx={{ mb: 3, pb: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
-          <Box sx={{ 
-            width: 48, 
-            height: 48, 
-            borderRadius: 2, 
-            bgcolor: alpha(theme.palette.primary.main, 0.1),
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
+        <Stack
+          direction='row'
+          spacing={2}
+          sx={{
+            mb: 3,
+            pb: 2,
+            borderBottom: '1px solid',
+            borderColor: alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)
+          }}
+        >
+          <Box
+            sx={{
+              width: 48,
+              height: 48,
+              borderRadius: 2,
+              bgcolor: alpha(theme.palette.primary.main, 0.1),
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
             <QuestionMarkIcon sx={{ fontSize: 24, color: 'primary.main' }} />
           </Box>
           <Box sx={{ flex: 1 }}>
-            <Typography variant="h6" fontWeight={700} sx={{ color: '#202124' }}>
+            <Typography variant='h6' fontWeight={700} sx={{ color: theme.palette.text.primary }}>
               True/False Question
             </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            <Typography variant='caption' sx={{ color: 'text.secondary' }}>
               ID: {id} • Language: {language}
             </Typography>
           </Box>
-          {hasErrors && (
-            <Chip 
-              label="Has Errors" 
-              color="error" 
-              size="small" 
-              sx={{ height: 28, fontWeight: 600 }}
-            />
-          )}
+          {hasErrors && <Chip label='Has Errors' color='error' size='small' sx={{ height: 28, fontWeight: 600 }} />}
         </Stack>
 
         <Grid container spacing={3}>
           {/* Question Section */}
           <Grid item xs={12}>
-            <Box sx={{ 
-              border: '2px solid',
-              borderColor: alpha(theme.palette.primary.main, 0.2),
-              borderRadius: 3, 
-              p: 2.5,
-              bgcolor: alpha(theme.palette.primary.main, 0.02),
-              '&:hover': {
-                borderColor: alpha(theme.palette.primary.main, 0.4),
-                boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.08)}`
-              },
-              transition: 'all 0.3s ease'
-            }}>
+            <Box
+              sx={{
+                border: '2px solid',
+                borderColor: alpha(theme.palette.primary.main, 0.2),
+                borderRadius: 3,
+                p: 2.5,
+                bgcolor: alpha(theme.palette.primary.main, 0.02),
+                '&:hover': {
+                  borderColor: alpha(theme.palette.primary.main, 0.4),
+                  boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.08)}`
+                },
+                transition: 'all 0.3s ease'
+              }}
+            >
               <Stack spacing={2.5}>
                 {/* Media Type Toggle */}
                 <FormControl fullWidth>
@@ -338,7 +352,7 @@ const TrueFalseQuestionTemplate = ({
                     value={question.mediaType}
                     onChange={e => toggleQuestionMediaType(e.target.value)}
                     sx={{
-                      bgcolor: 'white',
+                      bgcolor: theme.palette.background.paper,
                       '& .MuiOutlinedInput-notchedOutline': {
                         borderColor: alpha(theme.palette.primary.main, 0.3)
                       },
@@ -371,7 +385,7 @@ const TrueFalseQuestionTemplate = ({
                     onChange={e => handleQuestionChange('text', e.target.value)}
                     sx={{
                       '& .MuiOutlinedInput-root': {
-                        bgcolor: 'white',
+                        bgcolor: theme.palette.background.paper,
                         '&:hover .MuiOutlinedInput-notchedOutline': {
                           borderColor: theme.palette.primary.main
                         }
@@ -445,7 +459,16 @@ const TrueFalseQuestionTemplate = ({
                       }}
                     />
                     {question.video && (
-                      <Box sx={{ mt: 2, p: 2, bgcolor: 'white', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
+                      <Box
+                        sx={{
+                          mt: 2,
+                          p: 2,
+                          bgcolor: theme.palette.background.paper,
+                          borderRadius: 2,
+                          border: '1px solid',
+                          borderColor: alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)
+                        }}
+                      >
                         <VideoAd url={question.video || ''} showPause autoPlay={false} />
                         <Box sx={{ mt: 1, textAlign: 'center' }}>
                           <ImagePopup imageUrl={question.video || ''} mediaType={'video'} />
@@ -460,32 +483,36 @@ const TrueFalseQuestionTemplate = ({
 
           {/* Options Section */}
           <Grid item xs={12}>
-            <Box sx={{ 
-              border: '2px solid',
-              borderColor: alpha(theme.palette.secondary.main, 0.2),
-              borderRadius: 3, 
-              p: 2.5,
-              bgcolor: alpha(theme.palette.secondary.main, 0.02)
-            }}>
-              <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 2.5 }}>
-                <Box sx={{ 
-                  width: 36, 
-                  height: 36, 
-                  borderRadius: 2, 
-                  bgcolor: alpha(theme.palette.secondary.main, 0.15),
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
+            <Box
+              sx={{
+                border: '2px solid',
+                borderColor: alpha(theme.palette.secondary.main, 0.2),
+                borderRadius: 3,
+                p: 2.5,
+                bgcolor: alpha(theme.palette.secondary.main, 0.02)
+              }}
+            >
+              <Stack direction='row' alignItems='center' spacing={1.5} sx={{ mb: 2.5 }}>
+                <Box
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 2,
+                    bgcolor: alpha(theme.palette.secondary.main, 0.15),
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
                   <CheckCircleIcon sx={{ fontSize: 20, color: 'secondary.main' }} />
                 </Box>
-                <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#202124' }}>
+                <Typography variant='subtitle1' fontWeight={700} sx={{ color: theme.palette.text.primary }}>
                   True/False Options
                 </Typography>
-                <Chip 
-                  label="2 options" 
-                  size="small"
-                  sx={{ 
+                <Chip
+                  label='2 options'
+                  size='small'
+                  sx={{
                     bgcolor: alpha(theme.palette.secondary.main, 0.1),
                     color: 'secondary.main',
                     fontWeight: 600
@@ -495,36 +522,38 @@ const TrueFalseQuestionTemplate = ({
 
               <Stack spacing={2}>
                 {options.map((option, index) => (
-                  <Box 
+                  <Box
                     key={option.id}
                     sx={{
                       p: 2,
                       borderRadius: 2,
-                      bgcolor: 'white',
+                      bgcolor: theme.palette.background.paper,
                       border: '2px solid',
-                      borderColor: option.correct 
+                      borderColor: option.correct
                         ? alpha(theme.palette.success.main, 0.3)
-                        : 'divider',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                        : alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08),
+                      boxShadow:
+                        theme.palette.mode === 'dark' ? '0 2px 8px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.05)',
                       transition: 'all 0.2s ease',
                       '&:hover': {
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                        borderColor: option.correct
-                          ? theme.palette.success.main
-                          : theme.palette.primary.main
+                        boxShadow:
+                          theme.palette.mode === 'dark' ? '0 4px 12px rgba(0,0,0,0.4)' : '0 4px 12px rgba(0,0,0,0.1)',
+                        borderColor: option.correct ? theme.palette.success.main : theme.palette.primary.main
                       }
                     }}
                   >
-                    <Stack direction="row" alignItems="center" spacing={1.5}>
+                    <Stack direction='row' alignItems='center' spacing={1.5}>
                       {option.id === 'true' ? (
-                        <CheckCircleIcon sx={{ fontSize: 28, color: option.correct ? 'success.main' : 'text.secondary' }} />
+                        <CheckCircleIcon
+                          sx={{ fontSize: 28, color: option.correct ? 'success.main' : 'text.secondary' }}
+                        />
                       ) : (
                         <CancelIcon sx={{ fontSize: 28, color: option.correct ? 'success.main' : 'text.secondary' }} />
                       )}
-                      
+
                       <Box sx={{ flex: 1 }}>
                         {option.mediaType === 'image' ? (
-                          <Stack direction="row" alignItems="center" spacing={1.5}>
+                          <Stack direction='row' alignItems='center' spacing={1.5}>
                             <TextField
                               disabled={loading.save || loading.delete}
                               fullWidth
@@ -536,11 +565,13 @@ const TrueFalseQuestionTemplate = ({
                               error={
                                 hasErrors &&
                                 !option.image &&
-                                (getErrorMessage(`options.${option.id}.image`) || getErrorMessage(`options.${option.id}`))
+                                (getErrorMessage(`options.${option.id}.image`) ||
+                                  getErrorMessage(`options.${option.id}`))
                               }
                               helperText={
                                 !option.image &&
-                                (getErrorMessage(`options.${option.id}.image`) || getErrorMessage(`options.${option.id}`))
+                                (getErrorMessage(`options.${option.id}.image`) ||
+                                  getErrorMessage(`options.${option.id}`))
                               }
                               InputProps={{
                                 endAdornment: (
@@ -575,8 +606,14 @@ const TrueFalseQuestionTemplate = ({
                                   objectFit: 'cover',
                                   borderRadius: 1.5,
                                   border: '2px solid',
-                                  borderColor: 'divider',
-                                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                  borderColor: alpha(
+                                    theme.palette.divider,
+                                    theme.palette.mode === 'dark' ? 0.12 : 0.08
+                                  ),
+                                  boxShadow:
+                                    theme.palette.mode === 'dark'
+                                      ? '0 2px 8px rgba(0,0,0,0.4)'
+                                      : '0 2px 8px rgba(0,0,0,0.1)'
                                 }}
                               />
                             )}
@@ -660,7 +697,11 @@ const TrueFalseQuestionTemplate = ({
                           />
                         }
                         label={
-                          <Typography variant='body2' fontWeight={600} sx={{ color: option.correct ? 'success.main' : 'text.secondary' }}>
+                          <Typography
+                            variant='body2'
+                            fontWeight={600}
+                            sx={{ color: option.correct ? 'success.main' : 'text.secondary' }}
+                          >
                             Correct
                           </Typography>
                         }
@@ -670,14 +711,16 @@ const TrueFalseQuestionTemplate = ({
                 ))}
 
                 {hasErrors && !hasExactlyOneCorrectOption && getErrorMessage('options') && (
-                  <Box sx={{ 
-                    mt: 2, 
-                    p: 2, 
-                    borderRadius: 2, 
-                    bgcolor: alpha(theme.palette.error.main, 0.1),
-                    border: '1px solid',
-                    borderColor: alpha(theme.palette.error.main, 0.3)
-                  }}>
+                  <Box
+                    sx={{
+                      mt: 2,
+                      p: 2,
+                      borderRadius: 2,
+                      bgcolor: alpha(theme.palette.error.main, 0.1),
+                      border: '1px solid',
+                      borderColor: alpha(theme.palette.error.main, 0.3)
+                    }}
+                  >
                     <Typography variant='body2' color='error' fontWeight={600} sx={{ textAlign: 'center' }}>
                       {getErrorMessage('options')}
                     </Typography>
@@ -689,235 +732,233 @@ const TrueFalseQuestionTemplate = ({
 
           {/* Configuration Section */}
           <Grid item xs={12}>
-          <Box sx={{ 
-            border: '2px solid',
-            borderColor: alpha(theme.palette.info.main, 0.2),
-            borderRadius: 3, 
-            p: 2.5,
-            bgcolor: alpha(theme.palette.info.main, 0.02)
-          }}>
-            <Stack spacing={2.5}>
-              {/* Hint Toggle */}
-              <FormControlLabel
-                control={
-                  <Checkbox 
-                    checked={addHint} 
-                    onChange={handleAddHintChange}
+            <Box
+              sx={{
+                border: '2px solid',
+                borderColor: alpha(theme.palette.info.main, 0.2),
+                borderRadius: 3,
+                p: 2.5,
+                bgcolor: alpha(theme.palette.info.main, 0.02)
+              }}
+            >
+              <Stack spacing={2.5}>
+                {/* Hint Toggle */}
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={addHint}
+                      onChange={handleAddHintChange}
+                      sx={{
+                        '&.Mui-checked': { color: 'info.main' }
+                      }}
+                    />
+                  }
+                  label={
+                    <Stack direction='row' alignItems='center' spacing={1}>
+                      <HelpOutlineIcon sx={{ fontSize: 20, color: 'info.main' }} />
+                      <Typography variant='body2' fontWeight={600}>
+                        Add Hint for this question
+                      </Typography>
+                    </Stack>
+                  }
+                />
+
+                {/* Hint Input */}
+                {addHint && (
+                  <TextField
+                    disabled={loading.save || loading.delete}
+                    label='Hint Text'
+                    variant='outlined'
+                    fullWidth
+                    multiline
+                    rows={2}
+                    value={hint}
+                    onChange={handleHintChange}
+                    error={addHint && hasErrors && !hint.trim() && getErrorMessage('hint')}
+                    helperText={addHint && !hint.trim() && getErrorMessage('hint')}
                     sx={{
-                      '&.Mui-checked': { color: 'info.main' }
+                      '& .MuiOutlinedInput-root': {
+                        bgcolor: theme.palette.background.paper,
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: theme.palette.info.main
+                        }
+                      }
                     }}
                   />
-                }
-                label={
-                  <Stack direction="row" alignItems="center" spacing={1}>
-                    <HelpOutlineIcon sx={{ fontSize: 20, color: 'info.main' }} />
-                    <Typography variant='body2' fontWeight={600}>
-                      Add Hint for this question
-                    </Typography>
-                  </Stack>
-                }
-              />
+                )}
 
-              {/* Hint Input */}
-              {addHint && (
-                <TextField
-                  disabled={loading.save || loading.delete}
-                  label='Hint Text'
-                  variant='outlined'
-                  fullWidth
-                  multiline
-                  rows={2}
-                  value={hint}
-                  onChange={handleHintChange}
-                  error={addHint && hasErrors && !hint.trim() && getErrorMessage('hint')}
-                  helperText={addHint && !hint.trim() && getErrorMessage('hint')}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      bgcolor: 'white',
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: theme.palette.info.main
-                      }
-                    }
-                  }}
-                />
-              )}
+                {mode === 'primary' && (
+                  <>
+                    <Divider sx={{ my: 1 }} />
 
-              {mode === 'primary' && (
-                <>
-                  <Divider sx={{ my: 1 }} />
-                  
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} sm={addHint ? 4 : 6}>
-                      <TextField
-                        disabled={loading.save || loading.delete}
-                        label='Marks'
-                        type='number'
-                        InputProps={{ 
-                          inputProps: { min: 0.25, step: 0.25 },
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <EmojiEventsIcon sx={{ fontSize: 20, color: 'success.main' }} />
-                            </InputAdornment>
-                          )
-                        }}
-                        fullWidth
-                        value={marks}
-                        onChange={handleMarksChange}
-                        error={hasErrors && !marks && getErrorMessage('marks')}
-                        helperText={!marks && getErrorMessage('marks')}
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            bgcolor: 'white',
-                            '&:hover .MuiOutlinedInput-notchedOutline': {
-                              borderColor: theme.palette.success.main
-                            }
-                          }
-                        }}
-                      />
-                    </Grid>
-                    
-                    {addHint && (
-                      <Grid item xs={12} sm={4}>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} sm={addHint ? 4 : 6}>
                         <TextField
                           disabled={loading.save || loading.delete}
-                          label='Hint Deduction'
+                          label='Marks'
                           type='number'
                           InputProps={{
-                            inputProps: {
-                              max: marks || 0,
-                              min: 0,
-                              step: 0.25
-                            }
+                            inputProps: { min: 0.25, step: 0.25 },
+                            startAdornment: (
+                              <InputAdornment position='start'>
+                                <EmojiEventsIcon sx={{ fontSize: 20, color: 'success.main' }} />
+                              </InputAdornment>
+                            )
                           }}
                           fullWidth
-                          value={hintMarks}
-                          onChange={handleHintMarksChange}
-                          error={
-                            (addHint && hasErrors && !hintMarks && marks && getErrorMessage('hintMarks')) ||
-                            (addHint && marks && hintMarks >= marks)
-                          }
-                          helperText={
-                            (addHint && !hintMarks && marks && getErrorMessage('hintMarks')) ||
-                            (addHint && marks && hintMarks >= marks && 'Cannot exceed question marks')
-                          }
+                          value={marks}
+                          onChange={handleMarksChange}
+                          error={hasErrors && !marks && getErrorMessage('marks')}
+                          helperText={!marks && getErrorMessage('marks')}
                           sx={{
                             '& .MuiOutlinedInput-root': {
-                              bgcolor: 'white',
+                              bgcolor: theme.palette.background.paper,
                               '&:hover .MuiOutlinedInput-notchedOutline': {
-                                borderColor: theme.palette.warning.main
+                                borderColor: theme.palette.success.main
                               }
                             }
                           }}
                         />
                       </Grid>
-                    )}
-                    
-                    <Grid item xs={12} sm={addHint ? 4 : 6}>
-                      <TextField
-                        disabled={loading.save || loading.delete}
-                        label='Time Limit (seconds)'
-                        type='number'
-                        InputProps={{ 
-                          inputProps: { min: 10 },
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <TimerIcon sx={{ fontSize: 20, color: 'error.main' }} />
-                            </InputAdornment>
-                          )
-                        }}
-                        fullWidth
-                        value={timerSeconds}
-                        onChange={handleTimerChange}
-                        error={hasErrors && !timerSeconds && getErrorMessage('timerSeconds')}
-                        helperText={!timerSeconds && getErrorMessage('timerSeconds')}
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            bgcolor: 'white',
-                            '&:hover .MuiOutlinedInput-notchedOutline': {
-                              borderColor: theme.palette.error.main
+
+                      {addHint && (
+                        <Grid item xs={12} sm={4}>
+                          <TextField
+                            disabled={loading.save || loading.delete}
+                            label='Hint Deduction'
+                            type='number'
+                            InputProps={{
+                              inputProps: {
+                                max: marks || 0,
+                                min: 0,
+                                step: 0.25
+                              }
+                            }}
+                            fullWidth
+                            value={hintMarks}
+                            onChange={handleHintMarksChange}
+                            error={
+                              (addHint && hasErrors && !hintMarks && marks && getErrorMessage('hintMarks')) ||
+                              (addHint && marks && hintMarks >= marks)
                             }
-                          }
-                        }}
-                      />
+                            helperText={
+                              (addHint && !hintMarks && marks && getErrorMessage('hintMarks')) ||
+                              (addHint && marks && hintMarks >= marks && 'Cannot exceed question marks')
+                            }
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                bgcolor: theme.palette.background.paper,
+                                '&:hover .MuiOutlinedInput-notchedOutline': {
+                                  borderColor: theme.palette.warning.main
+                                }
+                              }
+                            }}
+                          />
+                        </Grid>
+                      )}
+
+                      <Grid item xs={12} sm={addHint ? 4 : 6}>
+                        <TextField
+                          disabled={loading.save || loading.delete}
+                          label='Time Limit (seconds)'
+                          type='number'
+                          InputProps={{
+                            inputProps: { min: 10 },
+                            startAdornment: (
+                              <InputAdornment position='start'>
+                                <TimerIcon sx={{ fontSize: 20, color: 'error.main' }} />
+                              </InputAdornment>
+                            )
+                          }}
+                          fullWidth
+                          value={timerSeconds}
+                          onChange={handleTimerChange}
+                          error={hasErrors && !timerSeconds && getErrorMessage('timerSeconds')}
+                          helperText={!timerSeconds && getErrorMessage('timerSeconds')}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              bgcolor: theme.palette.background.paper,
+                              '&:hover .MuiOutlinedInput-notchedOutline': {
+                                borderColor: theme.palette.error.main
+                              }
+                            }
+                          }}
+                        />
+                      </Grid>
                     </Grid>
-                  </Grid>
 
-                  <Divider sx={{ my: 1 }} />
+                    <Divider sx={{ my: 1 }} />
 
-                  <FormControlLabel
-                    disabled={loading.save || loading.delete}
-                    control={
-                      <Switch 
-                        checked={skippable} 
-                        onChange={e => setSkippable(e.target.checked)}
-                        color='primary'
-                      />
-                    }
-                    label={
-                      <Typography variant='body2' fontWeight={600}>
-                        Allow players to skip this question
-                      </Typography>
-                    }
-                  />
-                </>
-              )}
-            </Stack>
-          </Box>
-        </Grid>
+                    <FormControlLabel
+                      disabled={loading.save || loading.delete}
+                      control={
+                        <Switch checked={skippable} onChange={e => setSkippable(e.target.checked)} color='primary' />
+                      }
+                      label={
+                        <Typography variant='body2' fontWeight={600}>
+                          Allow players to skip this question
+                        </Typography>
+                      }
+                    />
+                  </>
+                )}
+              </Stack>
+            </Box>
+          </Grid>
 
-        {/* Action Buttons */}
-        <Grid item xs={12}>
-          <Stack direction="row" spacing={2} sx={{ pt: 2 }}>
-            <Button
-              fullWidth
-              variant='contained'
-              color='primary'
-              size='large'
-              component='label'
-              startIcon={loading.save ? null : <SaveIcon />}
-              onClick={onSaveQuestion}
-              disabled={loading.save || loading.delete}
-              sx={{
-                py: 1.5,
-                borderRadius: 2,
-                color: 'white',
-                fontWeight: 700,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                '&:hover': {
-                  boxShadow: '0 6px 16px rgba(0,0,0,0.15)',
-                  transform: 'translateY(-2px)'
-                },
-                transition: 'all 0.3s ease'
-              }}
-            >
-              {loading.save ? 'Saving Question...' : 'Save Question'}
-            </Button>
-            
-            <Button
-              variant='outlined'
-              color='error'
-              size='large'
-              startIcon={loading.delete ? null : <DeleteIcon />}
-              onClick={handleDeleteClick}
-              disabled={loading.save || loading.delete}
-              sx={{
-                py: 1.5,
-                minWidth: 160,
-                borderRadius: 2,
-                fontWeight: 700,
-                borderWidth: 2,
-                '&:hover': {
+          {/* Action Buttons */}
+          <Grid item xs={12}>
+            <Stack direction='row' spacing={2} sx={{ pt: 2 }}>
+              <Button
+                fullWidth
+                variant='contained'
+                color='primary'
+                size='large'
+                component='label'
+                startIcon={loading.save ? null : <SaveIcon />}
+                onClick={onSaveQuestion}
+                disabled={loading.save || loading.delete}
+                sx={{
+                  py: 1.5,
+                  borderRadius: 2,
+                  color: 'white',
+                  fontWeight: 700,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  '&:hover': {
+                    boxShadow: '0 6px 16px rgba(0,0,0,0.15)',
+                    transform: 'translateY(-2px)'
+                  },
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                {loading.save ? 'Saving Question...' : 'Save Question'}
+              </Button>
+
+              <Button
+                variant='outlined'
+                color='error'
+                size='large'
+                startIcon={loading.delete ? null : <DeleteIcon />}
+                onClick={handleDeleteClick}
+                disabled={loading.save || loading.delete}
+                sx={{
+                  py: 1.5,
+                  minWidth: 160,
+                  borderRadius: 2,
+                  fontWeight: 700,
                   borderWidth: 2,
-                  bgcolor: alpha(theme.palette.error.main, 0.05)
-                }
-              }}
-            >
-              {loading.delete ? 'Deleting...' : 'Delete'}
-            </Button>
-          </Stack>
+                  '&:hover': {
+                    borderWidth: 2,
+                    bgcolor: alpha(theme.palette.error.main, 0.05)
+                  }
+                }}
+              >
+                {loading.delete ? 'Deleting...' : 'Delete'}
+              </Button>
+            </Stack>
+          </Grid>
         </Grid>
-      </Grid>
-    </Box>
+      </Box>
 
       <DeleteConfirmationDialog
         open={openDeleteDialog}

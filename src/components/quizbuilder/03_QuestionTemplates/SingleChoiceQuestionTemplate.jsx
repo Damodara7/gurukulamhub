@@ -53,7 +53,7 @@ const SingleChoiceQuestionTemplate = ({
   saveQuestion,
   deleteQuestion,
   validationErrors = [],
-  isAdmin=false
+  isAdmin = false
 }) => {
   const innerData = data?.data
   const [id, setId] = useState(questionUUID)
@@ -67,7 +67,7 @@ const SingleChoiceQuestionTemplate = ({
     }
   )
 
-  const [addHint, setAddHint] = useState( innerData?.addHint || false)
+  const [addHint, setAddHint] = useState(innerData?.addHint || false)
   const [status, setStatus] = useState(innerData?.status || 'draft')
   const [hint, setHint] = useState(innerData?.hint || '')
   const [hintMarks, setHintMarks] = useState(-1 * innerData?.hintMarks || '')
@@ -308,77 +308,90 @@ const SingleChoiceQuestionTemplate = ({
     return ''
   }
 
-
-   const handleAddHintChange = e => {
-     const isChecked = e.target.checked
-     setAddHint(isChecked)
-     if (!isChecked) {
-       // When unchecking, reset to empty/zero
-       setHint('')
-       setHintMarks(0)
-     }
-   }
+  const handleAddHintChange = e => {
+    const isChecked = e.target.checked
+    setAddHint(isChecked)
+    if (!isChecked) {
+      // When unchecking, reset to empty/zero
+      setHint('')
+      setHintMarks(0)
+    }
+  }
 
   const hasExactlyOneCorrectOption = options?.filter(op => op.correct).length === 1 || false
   const theme = useTheme()
 
   return (
     <>
-      <Box sx={{ 
-        bgcolor: 'background.paper', 
-        borderRadius: 3, 
-        border: '1px solid',
-        borderColor: hasErrors ? alpha(theme.palette.error.main, 0.3) : 'divider',
-        boxShadow: hasErrors ? `0 0 0 3px ${alpha(theme.palette.error.main, 0.1)}` : '0 2px 8px rgba(0,0,0,0.05)',
-        p: { xs: 2, md: 3 },
-        transition: 'all 0.3s ease'
-      }}>
+      <Box
+        sx={{
+          bgcolor: 'background.paper',
+          borderRadius: 3,
+          border: '1px solid',
+          borderColor: hasErrors
+            ? alpha(theme.palette.error.main, 0.3)
+            : alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08),
+          boxShadow: hasErrors
+            ? `0 0 0 3px ${alpha(theme.palette.error.main, 0.1)}`
+            : theme.palette.mode === 'dark'
+              ? '0 2px 8px rgba(0,0,0,0.3)'
+              : '0 2px 8px rgba(0,0,0,0.05)',
+          p: { xs: 2, md: 3 },
+          transition: 'all 0.3s ease'
+        }}
+      >
         {/* Header Section */}
-        <Stack direction="row" spacing={2} sx={{ mb: 3, pb: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
-          <Box sx={{ 
-            width: 48, 
-            height: 48, 
-            borderRadius: 2, 
-            bgcolor: alpha(theme.palette.primary.main, 0.1),
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
+        <Stack
+          direction='row'
+          spacing={2}
+          sx={{
+            mb: 3,
+            pb: 2,
+            borderBottom: '1px solid',
+            borderColor: alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)
+          }}
+        >
+          <Box
+            sx={{
+              width: 48,
+              height: 48,
+              borderRadius: 2,
+              bgcolor: alpha(theme.palette.primary.main, 0.1),
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
             <QuestionMarkIcon sx={{ fontSize: 24, color: 'primary.main' }} />
           </Box>
           <Box sx={{ flex: 1 }}>
-            <Typography variant="h6" fontWeight={700} sx={{ color: '#202124' }}>
+            <Typography variant='h6' fontWeight={700} sx={{ color: theme.palette.text.primary }}>
               Single Choice Question
             </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            <Typography variant='caption' sx={{ color: 'text.secondary' }}>
               ID: {id} • Language: {language}
             </Typography>
           </Box>
-          {hasErrors && (
-            <Chip 
-              label="Has Errors" 
-              color="error" 
-              size="small" 
-              sx={{ height: 28, fontWeight: 600 }}
-            />
-          )}
+          {hasErrors && <Chip label='Has Errors' color='error' size='small' sx={{ height: 28, fontWeight: 600 }} />}
         </Stack>
 
         <Grid container spacing={3}>
           {/* Question Section */}
           <Grid item xs={12}>
-            <Box sx={{ 
-              border: '2px solid',
-              borderColor: alpha(theme.palette.primary.main, 0.2),
-              borderRadius: 3, 
-              p: 2.5,
-              bgcolor: alpha(theme.palette.primary.main, 0.02),
-              '&:hover': {
-                borderColor: alpha(theme.palette.primary.main, 0.4),
-                boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.08)}`
-              },
-              transition: 'all 0.3s ease'
-            }}>
+            <Box
+              sx={{
+                border: '2px solid',
+                borderColor: alpha(theme.palette.primary.main, 0.2),
+                borderRadius: 3,
+                p: 2.5,
+                bgcolor: alpha(theme.palette.primary.main, 0.02),
+                '&:hover': {
+                  borderColor: alpha(theme.palette.primary.main, 0.4),
+                  boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.08)}`
+                },
+                transition: 'all 0.3s ease'
+              }}
+            >
               <Stack spacing={2.5}>
                 {/* Media Type Toggle */}
                 <FormControl fullWidth>
@@ -388,7 +401,7 @@ const SingleChoiceQuestionTemplate = ({
                     value={question.mediaType}
                     onChange={e => toggleQuestionMediaType(e.target.value)}
                     sx={{
-                      bgcolor: 'white',
+                      bgcolor: theme.palette.background.paper,
                       '& .MuiOutlinedInput-notchedOutline': {
                         borderColor: alpha(theme.palette.primary.main, 0.3)
                       },
@@ -421,7 +434,7 @@ const SingleChoiceQuestionTemplate = ({
                     onChange={e => handleQuestionChange('text', e.target.value)}
                     sx={{
                       '& .MuiOutlinedInput-root': {
-                        bgcolor: 'white',
+                        bgcolor: theme.palette.background.paper,
                         '&:hover .MuiOutlinedInput-notchedOutline': {
                           borderColor: theme.palette.primary.main
                         }
@@ -465,8 +478,9 @@ const SingleChoiceQuestionTemplate = ({
                           objectFit: 'cover',
                           borderRadius: 2,
                           border: '2px solid',
-                          borderColor: 'divider',
-                          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                          borderColor: alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08),
+                          boxShadow:
+                            theme.palette.mode === 'dark' ? '0 2px 8px rgba(0,0,0,0.4)' : '0 2px 8px rgba(0,0,0,0.1)'
                         }}
                       />
                     )}
@@ -495,7 +509,16 @@ const SingleChoiceQuestionTemplate = ({
                       }}
                     />
                     {question.video && (
-                      <Box sx={{ mt: 2, p: 2, bgcolor: 'white', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
+                      <Box
+                        sx={{
+                          mt: 2,
+                          p: 2,
+                          bgcolor: theme.palette.background.paper,
+                          borderRadius: 2,
+                          border: '1px solid',
+                          borderColor: alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)
+                        }}
+                      >
                         <VideoAd url={question.video || ''} showPause autoPlay={false} />
                         <Box sx={{ mt: 1, textAlign: 'center' }}>
                           <ImagePopup imageUrl={question.video || ''} mediaType={'video'} />
@@ -510,32 +533,36 @@ const SingleChoiceQuestionTemplate = ({
 
           {/* Options Section */}
           <Grid item xs={12}>
-            <Box sx={{ 
-              border: '2px solid',
-              borderColor: alpha(theme.palette.secondary.main, 0.2),
-              borderRadius: 3, 
-              p: 2.5,
-              bgcolor: alpha(theme.palette.secondary.main, 0.02)
-            }}>
-              <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 2.5 }}>
-                <Box sx={{ 
-                  width: 36, 
-                  height: 36, 
-                  borderRadius: 2, 
-                  bgcolor: alpha(theme.palette.secondary.main, 0.15),
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
+            <Box
+              sx={{
+                border: '2px solid',
+                borderColor: alpha(theme.palette.secondary.main, 0.2),
+                borderRadius: 3,
+                p: 2.5,
+                bgcolor: alpha(theme.palette.secondary.main, 0.02)
+              }}
+            >
+              <Stack direction='row' alignItems='center' spacing={1.5} sx={{ mb: 2.5 }}>
+                <Box
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 2,
+                    bgcolor: alpha(theme.palette.secondary.main, 0.15),
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
                   <TextFieldsIcon sx={{ fontSize: 20, color: 'secondary.main' }} />
                 </Box>
-                <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#202124' }}>
+                <Typography variant='subtitle1' fontWeight={700} sx={{ color: theme.palette.text.primary }}>
                   Answer Options
                 </Typography>
-                <Chip 
-                  label={`${options.length} options`} 
-                  size="small"
-                  sx={{ 
+                <Chip
+                  label={`${options.length} options`}
+                  size='small'
+                  sx={{
                     bgcolor: alpha(theme.palette.secondary.main, 0.1),
                     color: 'secondary.main',
                     fontWeight: 600
@@ -546,42 +573,45 @@ const SingleChoiceQuestionTemplate = ({
               <DragDropContext onDragEnd={handleDragEnd}>
                 <Droppable droppableId='options'>
                   {provided => (
-                    <Stack
-                      spacing={2}
-                      {...provided.droppableProps}
-                      ref={provided.innerRef}
-                    >
+                    <Stack spacing={2} {...provided.droppableProps} ref={provided.innerRef}>
                       {options.map((option, index) => (
                         <Draggable key={option.id} draggableId={option.id} index={index}>
                           {(provided, snapshot) =>
                             mode === 'primary' ? (
-                              <Box 
-                                ref={provided.innerRef} 
+                              <Box
+                                ref={provided.innerRef}
                                 {...provided.draggableProps}
                                 sx={{
                                   p: 2,
                                   borderRadius: 2,
-                                  bgcolor: 'white',
+                                  bgcolor: theme.palette.background.paper,
                                   border: '2px solid',
-                                  borderColor: option.correct 
+                                  borderColor: option.correct
                                     ? alpha(theme.palette.success.main, 0.3)
-                                    : 'divider',
-                                  boxShadow: snapshot.isDragging 
-                                    ? '0 8px 24px rgba(0,0,0,0.15)'
-                                    : '0 2px 8px rgba(0,0,0,0.05)',
+                                    : alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08),
+                                  boxShadow: snapshot.isDragging
+                                    ? theme.palette.mode === 'dark'
+                                      ? '0 8px 24px rgba(0,0,0,0.5)'
+                                      : '0 8px 24px rgba(0,0,0,0.15)'
+                                    : theme.palette.mode === 'dark'
+                                      ? '0 2px 8px rgba(0,0,0,0.3)'
+                                      : '0 2px 8px rgba(0,0,0,0.05)',
                                   transition: 'all 0.2s ease',
                                   '&:hover': {
-                                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                                    boxShadow:
+                                      theme.palette.mode === 'dark'
+                                        ? '0 4px 12px rgba(0,0,0,0.4)'
+                                        : '0 4px 12px rgba(0,0,0,0.1)',
                                     borderColor: option.correct
                                       ? theme.palette.success.main
                                       : theme.palette.primary.main
                                   }
                                 }}
                               >
-                                <Stack direction="row" alignItems="center" spacing={1.5}>
-                                  <Box 
-                                    {...provided.dragHandleProps} 
-                                    sx={{ 
+                                <Stack direction='row' alignItems='center' spacing={1.5}>
+                                  <Box
+                                    {...provided.dragHandleProps}
+                                    sx={{
                                       cursor: 'grab',
                                       color: 'text.secondary',
                                       '&:active': { cursor: 'grabbing' }
@@ -589,14 +619,14 @@ const SingleChoiceQuestionTemplate = ({
                                   >
                                     <DragIndicatorIcon />
                                   </Box>
-                                  <Chip 
-                                    label={index + 1} 
-                                    size="small"
-                                    sx={{ 
+                                  <Chip
+                                    label={index + 1}
+                                    size='small'
+                                    sx={{
                                       minWidth: 32,
                                       height: 24,
                                       fontWeight: 700,
-                                      bgcolor: option.correct 
+                                      bgcolor: option.correct
                                         ? alpha(theme.palette.success.main, 0.15)
                                         : alpha(theme.palette.grey[500], 0.1),
                                       color: option.correct ? 'success.main' : 'text.secondary'
@@ -604,7 +634,7 @@ const SingleChoiceQuestionTemplate = ({
                                   />
                                   <Box sx={{ flex: 1 }}>
                                     {option.mediaType === 'image' ? (
-                                      <Stack direction="row" alignItems="center" spacing={1.5}>
+                                      <Stack direction='row' alignItems='center' spacing={1.5}>
                                         <TextField
                                           fullWidth
                                           type='file'
@@ -730,7 +760,7 @@ const SingleChoiceQuestionTemplate = ({
                                       />
                                     )}
                                   </Box>
-                                  <Stack direction="row" alignItems="center" spacing={1}>
+                                  <Stack direction='row' alignItems='center' spacing={1}>
                                     <FormControlLabel
                                       disabled={loading.save || loading.delete}
                                       control={
@@ -744,14 +774,18 @@ const SingleChoiceQuestionTemplate = ({
                                         />
                                       }
                                       label={
-                                        <Typography variant='body2' fontWeight={600} sx={{ color: option.correct ? 'success.main' : 'text.secondary' }}>
+                                        <Typography
+                                          variant='body2'
+                                          fontWeight={600}
+                                          sx={{ color: option.correct ? 'success.main' : 'text.secondary' }}
+                                        >
                                           Correct
                                         </Typography>
                                       }
                                     />
                                     {index > 1 && (
                                       <IconButton
-                                        size="small"
+                                        size='small'
                                         disabled={loading.save || loading.delete}
                                         onClick={() => removeOption(index)}
                                         sx={{
@@ -759,39 +793,45 @@ const SingleChoiceQuestionTemplate = ({
                                           '&:hover': { bgcolor: alpha(theme.palette.error.main, 0.1) }
                                         }}
                                       >
-                                        <RemoveIcon fontSize="small" />
+                                        <RemoveIcon fontSize='small' />
                                       </IconButton>
                                     )}
                                   </Stack>
                                 </Stack>
                               </Box>
                             ) : (
-                              <Box 
-                                ref={provided.innerRef} 
+                              <Box
+                                ref={provided.innerRef}
                                 {...provided.draggableProps}
                                 sx={{
                                   p: 2,
                                   borderRadius: 2,
-                                  bgcolor: 'white',
+                                  bgcolor: theme.palette.background.paper,
                                   border: '2px solid',
-                                  borderColor: option.correct 
+                                  borderColor: option.correct
                                     ? alpha(theme.palette.success.main, 0.3)
-                                    : 'divider',
-                                  boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                                    : alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08),
+                                  boxShadow:
+                                    theme.palette.mode === 'dark'
+                                      ? '0 2px 8px rgba(0,0,0,0.3)'
+                                      : '0 2px 8px rgba(0,0,0,0.05)',
                                   '&:hover': {
-                                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                                    boxShadow:
+                                      theme.palette.mode === 'dark'
+                                        ? '0 4px 12px rgba(0,0,0,0.4)'
+                                        : '0 4px 12px rgba(0,0,0,0.1)'
                                   }
                                 }}
                               >
-                                <Stack direction="row" alignItems="center" spacing={1.5}>
-                                  <Chip 
-                                    label={index + 1} 
-                                    size="small"
-                                    sx={{ 
+                                <Stack direction='row' alignItems='center' spacing={1.5}>
+                                  <Chip
+                                    label={index + 1}
+                                    size='small'
+                                    sx={{
                                       minWidth: 32,
                                       height: 24,
                                       fontWeight: 700,
-                                      bgcolor: option.correct 
+                                      bgcolor: option.correct
                                         ? alpha(theme.palette.success.main, 0.15)
                                         : alpha(theme.palette.grey[500], 0.1),
                                       color: option.correct ? 'success.main' : 'text.secondary'
@@ -799,7 +839,7 @@ const SingleChoiceQuestionTemplate = ({
                                   />
                                   <Box sx={{ flex: 1 }}>
                                     {option.mediaType === 'image' ? (
-                                      <Stack direction="row" alignItems="center" spacing={1.5}>
+                                      <Stack direction='row' alignItems='center' spacing={1.5}>
                                         <TextField
                                           fullWidth
                                           type='file'
@@ -929,7 +969,11 @@ const SingleChoiceQuestionTemplate = ({
                                       />
                                     }
                                     label={
-                                      <Typography variant='body2' fontWeight={600} sx={{ color: option.correct ? 'success.main' : 'text.secondary' }}>
+                                      <Typography
+                                        variant='body2'
+                                        fontWeight={600}
+                                        sx={{ color: option.correct ? 'success.main' : 'text.secondary' }}
+                                      >
                                         Correct
                                       </Typography>
                                     }
@@ -947,14 +991,16 @@ const SingleChoiceQuestionTemplate = ({
               </DragDropContext>
 
               {hasErrors && !hasExactlyOneCorrectOption && getErrorMessage('options') && (
-                <Box sx={{ 
-                  mt: 2, 
-                  p: 2, 
-                  borderRadius: 2, 
-                  bgcolor: alpha(theme.palette.error.main, 0.1),
-                  border: '1px solid',
-                  borderColor: alpha(theme.palette.error.main, 0.3)
-                }}>
+                <Box
+                  sx={{
+                    mt: 2,
+                    p: 2,
+                    borderRadius: 2,
+                    bgcolor: alpha(theme.palette.error.main, 0.1),
+                    border: '1px solid',
+                    borderColor: alpha(theme.palette.error.main, 0.3)
+                  }}
+                >
                   <Typography variant='body2' color='error' fontWeight={600} sx={{ textAlign: 'center' }}>
                     {getErrorMessage('options')}
                   </Typography>
@@ -990,19 +1036,21 @@ const SingleChoiceQuestionTemplate = ({
 
           {/* Configuration Section */}
           <Grid item xs={12}>
-            <Box sx={{ 
-              border: '2px solid',
-              borderColor: alpha(theme.palette.info.main, 0.2),
-              borderRadius: 3, 
-              p: 2.5,
-              bgcolor: alpha(theme.palette.info.main, 0.02)
-            }}>
+            <Box
+              sx={{
+                border: '2px solid',
+                borderColor: alpha(theme.palette.info.main, 0.2),
+                borderRadius: 3,
+                p: 2.5,
+                bgcolor: alpha(theme.palette.info.main, 0.02)
+              }}
+            >
               <Stack spacing={2.5}>
                 {/* Hint Toggle */}
                 <FormControlLabel
                   control={
-                    <Checkbox 
-                      checked={addHint} 
+                    <Checkbox
+                      checked={addHint}
                       onChange={handleAddHintChange}
                       sx={{
                         '&.Mui-checked': { color: 'info.main' }
@@ -1010,7 +1058,7 @@ const SingleChoiceQuestionTemplate = ({
                     />
                   }
                   label={
-                    <Stack direction="row" alignItems="center" spacing={1}>
+                    <Stack direction='row' alignItems='center' spacing={1}>
                       <HelpOutlineIcon sx={{ fontSize: 20, color: 'info.main' }} />
                       <Typography variant='body2' fontWeight={600}>
                         Add Hint for this question
@@ -1034,7 +1082,7 @@ const SingleChoiceQuestionTemplate = ({
                     helperText={addHint && !hint.trim() && getErrorMessage('hint')}
                     sx={{
                       '& .MuiOutlinedInput-root': {
-                        bgcolor: 'white',
+                        bgcolor: theme.palette.background.paper,
                         '&:hover .MuiOutlinedInput-notchedOutline': {
                           borderColor: theme.palette.info.main
                         }
@@ -1046,17 +1094,17 @@ const SingleChoiceQuestionTemplate = ({
                 {mode === 'primary' && (
                   <>
                     <Divider sx={{ my: 1 }} />
-                    
+
                     <Grid container spacing={2}>
                       <Grid item xs={12} sm={addHint ? 4 : 6}>
                         <TextField
                           disabled={loading.save || loading.delete}
                           label='Marks'
                           type='number'
-                          InputProps={{ 
+                          InputProps={{
                             inputProps: { min: 0.25, step: 0.25 },
                             startAdornment: (
-                              <InputAdornment position="start">
+                              <InputAdornment position='start'>
                                 <EmojiEventsIcon sx={{ fontSize: 20, color: 'success.main' }} />
                               </InputAdornment>
                             )
@@ -1068,7 +1116,7 @@ const SingleChoiceQuestionTemplate = ({
                           helperText={!marks && getErrorMessage('marks')}
                           sx={{
                             '& .MuiOutlinedInput-root': {
-                              bgcolor: 'white',
+                              bgcolor: theme.palette.background.paper,
                               '&:hover .MuiOutlinedInput-notchedOutline': {
                                 borderColor: theme.palette.success.main
                               }
@@ -1076,7 +1124,7 @@ const SingleChoiceQuestionTemplate = ({
                           }}
                         />
                       </Grid>
-                      
+
                       {addHint && (
                         <Grid item xs={12} sm={4}>
                           <TextField
@@ -1103,7 +1151,7 @@ const SingleChoiceQuestionTemplate = ({
                             }
                             sx={{
                               '& .MuiOutlinedInput-root': {
-                                bgcolor: 'white',
+                                bgcolor: theme.palette.background.paper,
                                 '&:hover .MuiOutlinedInput-notchedOutline': {
                                   borderColor: theme.palette.warning.main
                                 }
@@ -1112,16 +1160,16 @@ const SingleChoiceQuestionTemplate = ({
                           />
                         </Grid>
                       )}
-                      
+
                       <Grid item xs={12} sm={addHint ? 4 : 6}>
                         <TextField
                           disabled={loading.save || loading.delete}
                           label='Time Limit (seconds)'
                           type='number'
-                          InputProps={{ 
+                          InputProps={{
                             inputProps: { min: 10 },
                             startAdornment: (
-                              <InputAdornment position="start">
+                              <InputAdornment position='start'>
                                 <TimerIcon sx={{ fontSize: 20, color: 'error.main' }} />
                               </InputAdornment>
                             )
@@ -1133,7 +1181,7 @@ const SingleChoiceQuestionTemplate = ({
                           helperText={!timerSeconds && getErrorMessage('timerSeconds')}
                           sx={{
                             '& .MuiOutlinedInput-root': {
-                              bgcolor: 'white',
+                              bgcolor: theme.palette.background.paper,
                               '&:hover .MuiOutlinedInput-notchedOutline': {
                                 borderColor: theme.palette.error.main
                               }
@@ -1148,11 +1196,7 @@ const SingleChoiceQuestionTemplate = ({
                     <FormControlLabel
                       disabled={loading.save || loading.delete}
                       control={
-                        <Switch 
-                          checked={skippable} 
-                          onChange={e => setSkippable(e.target.checked)}
-                          color='primary'
-                        />
+                        <Switch checked={skippable} onChange={e => setSkippable(e.target.checked)} color='primary' />
                       }
                       label={
                         <Typography variant='body2' fontWeight={600}>
@@ -1168,7 +1212,7 @@ const SingleChoiceQuestionTemplate = ({
 
           {/* Action Buttons */}
           <Grid item xs={12}>
-            <Stack direction="row" spacing={2} sx={{ pt: 2 }}>
+            <Stack direction='row' spacing={2} sx={{ pt: 2 }}>
               <Button
                 fullWidth
                 variant='contained'
@@ -1193,7 +1237,7 @@ const SingleChoiceQuestionTemplate = ({
               >
                 {loading.save ? 'Saving Question...' : 'Save Question'}
               </Button>
-              
+
               <Button
                 variant='outlined'
                 color='error'

@@ -15,10 +15,13 @@ import {
   Paper,
   Tooltip,
   CircularProgress,
-  useTheme
+  useTheme,
+  useMediaQuery,
+  Stack,
+  Divider
 } from '@mui/material'
 import { alpha } from '@mui/material/styles'
-import { EmojiEvents, CheckCircle, Cancel, People } from '@mui/icons-material'
+import { EmojiEvents, CheckCircle, Cancel, People, Timer, Speed } from '@mui/icons-material'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -33,6 +36,7 @@ function AdminLeaderboard({
   maxheight = 300
 }) {
   const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
   const [leaderboard, setLeaderboard] = useState([])
   const [loading, setLoading] = useState(true)
   const wsRef = useRef(null)
@@ -242,6 +246,30 @@ function AdminLeaderboard({
     }
   }
 
+  // Get card style for mobile view (no colored backgrounds, only for highlights)
+  const getCardAnimation = (player, index) => {
+    if (highlightedRows[player._id] === 'up') {
+      return {
+        backgroundColor:
+          theme.palette.mode === 'dark'
+            ? alpha(theme.palette.success.main, 0.15)
+            : alpha(theme.palette.success.main, 0.1),
+        transition: 'background-color 0.5s'
+      }
+    }
+    if (highlightedRows[player._id] === 'down') {
+      return {
+        backgroundColor:
+          theme.palette.mode === 'dark' ? alpha(theme.palette.error.main, 0.15) : alpha(theme.palette.error.main, 0.1),
+        transition: 'background-color 0.5s'
+      }
+    }
+    return {
+      backgroundColor: theme.palette.background.paper,
+      transition: 'background-color 0.5s'
+    }
+  }
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
@@ -250,211 +278,68 @@ function AdminLeaderboard({
     )
   }
 
-  return (
-    <Card
+  // Mobile Card View
+  const renderMobileCards = () => (
+    <Box
       sx={{
-        mb: 3,
-        borderRadius: '16px',
-        boxShadow:
-          theme.palette.mode === 'dark'
-            ? `0 4px 20px ${alpha(theme.palette.common.black, 0.4)}`
-            : '0 4px 20px rgba(0, 0, 0, 0.08)',
-        background: theme.palette.background.paper
+        maxHeight: maxheight,
+        overflow: 'auto',
+        '&::-webkit-scrollbar': {
+          width: '8px'
+        },
+        '&::-webkit-scrollbar-track': {
+          bgcolor: alpha(theme.palette.divider, 0.1),
+          borderRadius: '10px'
+        },
+        '&::-webkit-scrollbar-thumb': {
+          bgcolor: alpha(theme.palette.primary.main, 0.3),
+          borderRadius: '10px',
+          '&:hover': {
+            bgcolor: alpha(theme.palette.primary.main, 0.5)
+          }
+        }
       }}
     >
-      <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-        <Typography
-          variant='h6'
-          sx={{
-            mb: description ? { xs: 1.5, sm: 2 } : { xs: 2, sm: 3 },
-            fontWeight: 700,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-            color: theme.palette.text.primary,
-            fontSize: { xs: '1rem', sm: '1.25rem' }
-          }}
-        >
-          {React.cloneElement(headerIcon, { sx: { fontSize: { xs: 20, sm: 24 }, color: theme.palette.primary.main } })}
-          {headerTitle}
-        </Typography>
-        {description && (
-          <Typography
-            variant='body2'
-            color='text.secondary'
-            sx={{ mb: { xs: 2, sm: 3 }, fontSize: { xs: '0.85rem', sm: '0.95rem' } }}
-          >
-            {description}
-          </Typography>
-        )}
-        <TableContainer component={Paper} sx={{ maxHeight: maxheight, overflow: 'auto' }}>
-          <Table stickyHeader size='small'>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, py: { xs: 1, sm: 1.5 } }}>Rank</TableCell>
-                <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, py: { xs: 1, sm: 1.5 } }}>
-                  Player
-                </TableCell>
-                <TableCell align='right' sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, py: { xs: 1, sm: 1.5 } }}>
-                  Score
-                </TableCell>
-                <TableCell
-                  align='right'
+      {leaderboard && leaderboard.length > 0 ? (
+        <Stack spacing={2}>
+          <AnimatePresence>
+            {leaderboard.slice(0, duringPlay ? 5 : leaderboard.length).map((user, index) => (
+              <motion.div
+                key={user._id}
+                layout
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+              >
+                <Card
                   sx={{
-                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                    py: { xs: 1, sm: 1.5 },
-                    display: { xs: 'none', lg: 'table-cell' }
+                    ...getCardAnimation(user, index),
+                    border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
+                    boxShadow:
+                      theme.palette.mode === 'dark' ? '0 2px 8px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.08)',
+                    borderRadius: 2
                   }}
                 >
-                  Answer Time
-                </TableCell>
-                {game.gameMode === 'live' && (
-                  <TableCell
-                    align='right'
-                    sx={{
-                      fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                      py: { xs: 1, sm: 1.5 },
-                      display: { xs: 'none', lg: 'table-cell' }
-                    }}
-                  >
-                    <Tooltip title='Fastest Finger First Points' placement='top'>
-                      FFF Points
-                    </Tooltip>
-                  </TableCell>
-                )}
-                {game.gameMode === 'self-paced' && (
-                  <TableCell
-                    align='right'
-                    sx={{
-                      fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                      py: { xs: 1, sm: 1.5 },
-                      display: { xs: 'none', lg: 'table-cell' }
-                    }}
-                  >
-                    Finished At
-                  </TableCell>
-                )}
-                <TableCell align='right' sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, py: { xs: 1, sm: 1.5 } }}>
-                  Status
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {leaderboard && leaderboard.length > 0 ? (
-                <AnimatePresence>
-                  {leaderboard.slice(0, duringPlay ? 5 : leaderboard.length).map((user, index) => (
-                    <motion.tr
-                      key={user._id}
-                      layout
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 20 }}
-                      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                      style={getRowAnimation(user, index)}
-                    >
-                      <TableCell sx={{ py: { xs: 1, sm: 1.5 } }}>
-                        <Typography
-                          variant='subtitle1'
-                          color='text.secondary'
-                          sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}
+                  <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                    <Stack spacing={2}>
+                      {/* Header with Rank and Status */}
+                      <Stack direction='row' justifyContent='space-between' alignItems='center'>
+                        <Box
+                          sx={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: '50%',
+                            bgcolor: alpha(theme.palette.primary.main, 0.1),
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
                         >
-                          #{index + 1}
-                        </Typography>
-                      </TableCell>
-                      <TableCell sx={{ py: { xs: 1, sm: 1.5 } }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 } }}>
-                          <Avatar
-                            sx={{
-                              width: { xs: 28, sm: 32 },
-                              height: { xs: 28, sm: 32 },
-                              fontSize: { xs: '0.75rem', sm: '0.875rem' }
-                            }}
-                            alt={
-                              user?.user?.profile?.firstname && user?.user?.profile?.lastname
-                                ? `${user?.user?.profile?.firstname} ${user?.user?.profile?.lastname} `
-                                : user?.user?.profile?.firstname || user?.user?.profile?.lastname || user?.email
-                            }
-                          >
-                            {user?.user?.profile?.firstname && user?.user?.profile?.lastname
-                              ? `${user?.user?.profile?.firstname[0].toUpperCase()} ${user?.user?.profile?.lastname[0].toUpperCase()} `
-                              : user?.user?.profile?.firstname[0].toUpperCase() ||
-                                user?.user?.profile?.lastname[0].toUpperCase() ||
-                                user.email[0].toUpperCase()}
-                          </Avatar>
-                          <Typography
-                            variant='body1'
-                            sx={{
-                              fontSize: { xs: '0.8rem', sm: '0.875rem' },
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                              maxWidth: { xs: '120px', sm: 'none' }
-                            }}
-                            title={
-                              user?.user?.profile?.firstname && user?.user?.profile?.lastname
-                                ? `${user?.user?.profile?.firstname} ${user?.user?.profile?.lastname} `
-                                : user?.user?.profile?.firstname || user?.user?.profile?.lastname || user?.email
-                            }
-                          >
-                            {user?.user?.profile?.firstname && user?.user?.profile?.lastname
-                              ? `${user?.user?.profile?.firstname} ${user?.user?.profile?.lastname} `
-                              : user?.user?.profile?.firstname || user?.user?.profile?.lastname || user?.email}
+                          <Typography variant='subtitle2' fontWeight={700} color='primary.main'>
+                            #{index + 1}
                           </Typography>
                         </Box>
-                      </TableCell>
-                      <TableCell align='right' sx={{ py: { xs: 1, sm: 1.5 } }}>
-                        <Typography
-                          variant='body1'
-                          fontWeight='medium'
-                          sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}
-                        >
-                          {user.score?.toFixed(2)}
-                        </Typography>
-                      </TableCell>
-                      <TableCell
-                        align='right'
-                        sx={{ py: { xs: 1, sm: 1.5 }, display: { xs: 'none', lg: 'table-cell' } }}
-                      >
-                        <Typography
-                          variant='body1'
-                          fontWeight='medium'
-                          sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}
-                        >
-                          {formatTime(
-                            (user.totalAnswerTime || user.answers?.reduce((sum, a) => sum + a.answerTime, 0) || 0) /
-                              1000
-                          )}
-                        </Typography>
-                      </TableCell>
-                      {game.gameMode === 'live' && (
-                        <TableCell
-                          align='right'
-                          sx={{ py: { xs: 1, sm: 1.5 }, display: { xs: 'none', lg: 'table-cell' } }}
-                        >
-                          <Typography
-                            variant='body1'
-                            fontWeight='medium'
-                            sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}
-                          >
-                            {user?.fffPoints?.toFixed(3)}
-                          </Typography>
-                        </TableCell>
-                      )}
-                      {game.gameMode === 'self-paced' && (
-                        <TableCell
-                          align='right'
-                          sx={{ py: { xs: 1, sm: 1.5 }, display: { xs: 'none', lg: 'table-cell' } }}
-                        >
-                          <Typography
-                            variant='body1'
-                            fontWeight='medium'
-                            sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}
-                          >
-                            {user.finishedAt ? new Date(user.finishedAt).toLocaleString() : '--'}
-                          </Typography>
-                        </TableCell>
-                      )}
-                      <TableCell align='right' sx={{ py: { xs: 1, sm: 1.5 } }}>
                         {user.completed ? (
                           <Chip
                             icon={<CheckCircle fontSize='small' />}
@@ -472,51 +357,369 @@ function AdminLeaderboard({
                             variant='outlined'
                           />
                         )}
-                      </TableCell>
-                    </motion.tr>
-                  ))}
-                </AnimatePresence>
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={6} align='center' sx={{ py: { xs: 3, sm: 4 } }}>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: 1
-                      }}
-                    >
-                      <People sx={{ fontSize: { xs: 32, sm: 40 } }} color='disabled' />
+                      </Stack>
+
+                      <Divider />
+
+                      {/* Player Info */}
+                      <Stack direction='row' alignItems='center' spacing={2}>
+                        <Avatar
+                          sx={{
+                            width: 48,
+                            height: 48,
+                            fontSize: '1rem',
+                            bgcolor:
+                              theme.palette.mode === 'dark'
+                                ? alpha(theme.palette.primary.main, 0.3)
+                                : alpha(theme.palette.primary.main, 0.1),
+                            color:
+                              theme.palette.mode === 'dark' ? theme.palette.primary.light : theme.palette.primary.main,
+                            fontWeight: 700,
+                            border: `2px solid ${alpha(theme.palette.primary.main, 0.2)}`
+                          }}
+                          alt={
+                            user?.user?.profile?.firstname && user?.user?.profile?.lastname
+                              ? `${user?.user?.profile?.firstname} ${user?.user?.profile?.lastname}`
+                              : user?.user?.profile?.firstname || user?.user?.profile?.lastname || user?.email
+                          }
+                        >
+                          {user?.user?.profile?.firstname && user?.user?.profile?.lastname
+                            ? `${user?.user?.profile?.firstname[0].toUpperCase()}${user?.user?.profile?.lastname[0].toUpperCase()}`
+                            : user?.user?.profile?.firstname?.[0]?.toUpperCase() ||
+                              user?.user?.profile?.lastname?.[0]?.toUpperCase() ||
+                              user?.email?.[0]?.toUpperCase()}
+                        </Avatar>
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography
+                            variant='subtitle1'
+                            fontWeight={600}
+                            sx={{
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            {user?.user?.profile?.firstname && user?.user?.profile?.lastname
+                              ? `${user?.user?.profile?.firstname} ${user?.user?.profile?.lastname}`
+                              : user?.user?.profile?.firstname || user?.user?.profile?.lastname || user?.email}
+                          </Typography>
+                          <Typography variant='caption' color='text.secondary'>
+                            {user?.email}
+                          </Typography>
+                        </Box>
+                      </Stack>
+
+                      <Divider />
+
+                      {/* Stats Grid */}
+                      <Stack spacing={1.5}>
+                        {/* Score */}
+                        <Stack direction='row' justifyContent='space-between' alignItems='center'>
+                          <Stack direction='row' spacing={1} alignItems='center'>
+                            <EmojiEvents sx={{ fontSize: 20, color: theme.palette.warning.main }} />
+                            <Typography variant='body2' color='text.secondary'>
+                              Score
+                            </Typography>
+                          </Stack>
+                          <Typography variant='subtitle1' fontWeight={600} color='primary.main'>
+                            {user.score?.toFixed(2)}
+                          </Typography>
+                        </Stack>
+
+                        {/* Answer Time */}
+                        <Stack direction='row' justifyContent='space-between' alignItems='center'>
+                          <Stack direction='row' spacing={1} alignItems='center'>
+                            <Timer sx={{ fontSize: 20, color: theme.palette.info.main }} />
+                            <Typography variant='body2' color='text.secondary'>
+                              Answer Time
+                            </Typography>
+                          </Stack>
+                          <Typography variant='body2' fontWeight={500}>
+                            {formatTime(
+                              (user.totalAnswerTime || user.answers?.reduce((sum, a) => sum + a.answerTime, 0) || 0) /
+                                1000
+                            )}
+                          </Typography>
+                        </Stack>
+
+                        {/* FFF Points (Live mode) */}
+                        {game.gameMode === 'live' && (
+                          <Stack direction='row' justifyContent='space-between' alignItems='center'>
+                            <Stack direction='row' spacing={1} alignItems='center'>
+                              <Speed sx={{ fontSize: 20, color: theme.palette.success.main }} />
+                              <Typography variant='body2' color='text.secondary'>
+                                FFF Points
+                              </Typography>
+                            </Stack>
+                            <Typography variant='body2' fontWeight={500}>
+                              {user?.fffPoints?.toFixed(3)}
+                            </Typography>
+                          </Stack>
+                        )}
+
+                        {/* Finished At (Self-paced mode) */}
+                        {game.gameMode === 'self-paced' && (
+                          <Stack direction='row' justifyContent='space-between' alignItems='center'>
+                            <Typography variant='body2' color='text.secondary'>
+                              Finished At
+                            </Typography>
+                            <Typography variant='body2' fontWeight={500}>
+                              {user.finishedAt ? new Date(user.finishedAt).toLocaleString() : '--'}
+                            </Typography>
+                          </Stack>
+                        )}
+                      </Stack>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </Stack>
+      ) : (
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 2,
+            py: 4
+          }}
+        >
+          <People sx={{ fontSize: 48 }} color='disabled' />
+          <Typography variant='body1' color='text.secondary' textAlign='center'>
+            {game?.status === 'cancelled'
+              ? 'Game was cancelled'
+              : game?.status === 'completed'
+                ? 'No players participated in this game'
+                : 'No players have participated yet'}
+          </Typography>
+          <Typography variant='body2' color='text.disabled' textAlign='center' sx={{ px: 2 }}>
+            {game?.status === 'cancelled'
+              ? 'This game has been cancelled and no results are available.'
+              : game?.status === 'completed'
+                ? 'The game has ended with no participants.'
+                : 'Player results will appear here once they start playing.'}
+          </Typography>
+        </Box>
+      )}
+    </Box>
+  )
+
+  // Desktop Table View
+  const renderDesktopTable = () => (
+    <TableContainer component={Paper} sx={{ maxHeight: maxheight, overflow: 'auto' }}>
+      <Table stickyHeader size='small'>
+        <TableHead>
+          <TableRow>
+            <TableCell sx={{ fontSize: '0.875rem', py: 1.5, fontWeight: 600 }}>Rank</TableCell>
+            <TableCell sx={{ fontSize: '0.875rem', py: 1.5, fontWeight: 600 }}>Player</TableCell>
+            <TableCell align='right' sx={{ fontSize: '0.875rem', py: 1.5, fontWeight: 600 }}>
+              Score
+            </TableCell>
+            <TableCell align='right' sx={{ fontSize: '0.875rem', py: 1.5, fontWeight: 600 }}>
+              Answer Time
+            </TableCell>
+            {game.gameMode === 'live' && (
+              <TableCell align='right' sx={{ fontSize: '0.875rem', py: 1.5, fontWeight: 600 }}>
+                <Tooltip title='Fastest Finger First Points' placement='top'>
+                  <span>FFF Points</span>
+                </Tooltip>
+              </TableCell>
+            )}
+            {game.gameMode === 'self-paced' && (
+              <TableCell align='right' sx={{ fontSize: '0.875rem', py: 1.5, fontWeight: 600 }}>
+                Finished At
+              </TableCell>
+            )}
+            <TableCell align='right' sx={{ fontSize: '0.875rem', py: 1.5, fontWeight: 600 }}>
+              Status
+            </TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {leaderboard && leaderboard.length > 0 ? (
+            <AnimatePresence>
+              {leaderboard.slice(0, duringPlay ? 5 : leaderboard.length).map((user, index) => (
+                <motion.tr
+                  key={user._id}
+                  layout
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  style={getRowAnimation(user, index)}
+                >
+                  <TableCell sx={{ py: 1.5 }}>
+                    <Typography variant='subtitle1' color='text.secondary' sx={{ fontSize: '0.875rem' }}>
+                      #{index + 1}
+                    </Typography>
+                  </TableCell>
+                  <TableCell sx={{ py: 1.5 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Avatar
+                        sx={{
+                          width: 32,
+                          height: 32,
+                          fontSize: '0.875rem',
+                          bgcolor:
+                            theme.palette.mode === 'dark'
+                              ? alpha(theme.palette.primary.main, 0.3)
+                              : alpha(theme.palette.primary.main, 0.1),
+                          color:
+                            theme.palette.mode === 'dark' ? theme.palette.primary.light : theme.palette.primary.main,
+                          fontWeight: 600,
+                          border: `2px solid ${alpha(theme.palette.primary.main, 0.2)}`
+                        }}
+                        alt={
+                          user?.user?.profile?.firstname && user?.user?.profile?.lastname
+                            ? `${user?.user?.profile?.firstname} ${user?.user?.profile?.lastname}`
+                            : user?.user?.profile?.firstname || user?.user?.profile?.lastname || user?.email
+                        }
+                      >
+                        {user?.user?.profile?.firstname && user?.user?.profile?.lastname
+                          ? `${user?.user?.profile?.firstname[0].toUpperCase()}${user?.user?.profile?.lastname[0].toUpperCase()}`
+                          : user?.user?.profile?.firstname?.[0]?.toUpperCase() ||
+                            user?.user?.profile?.lastname?.[0]?.toUpperCase() ||
+                            user?.email?.[0]?.toUpperCase()}
+                      </Avatar>
                       <Typography
                         variant='body1'
-                        color='text.secondary'
-                        sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+                        sx={{
+                          fontSize: '0.875rem',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }}
+                        title={
+                          user?.user?.profile?.firstname && user?.user?.profile?.lastname
+                            ? `${user?.user?.profile?.firstname} ${user?.user?.profile?.lastname}`
+                            : user?.user?.profile?.firstname || user?.user?.profile?.lastname || user?.email
+                        }
                       >
-                        {game?.status === 'cancelled'
-                          ? 'Game was cancelled'
-                          : game?.status === 'completed'
-                            ? 'No players participated in this game'
-                            : 'No players have participated yet'}
-                      </Typography>
-                      <Typography
-                        variant='body2'
-                        color='text.disabled'
-                        sx={{ fontSize: { xs: '0.7rem', sm: '0.875rem' }, textAlign: 'center', px: 2 }}
-                      >
-                        {game?.status === 'cancelled'
-                          ? 'This game has been cancelled and no results are available.'
-                          : game?.status === 'completed'
-                            ? 'The game has ended with no participants.'
-                            : 'Player results will appear here once they start playing.'}
+                        {user?.user?.profile?.firstname && user?.user?.profile?.lastname
+                          ? `${user?.user?.profile?.firstname} ${user?.user?.profile?.lastname}`
+                          : user?.user?.profile?.firstname || user?.user?.profile?.lastname || user?.email}
                       </Typography>
                     </Box>
                   </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                  <TableCell align='right' sx={{ py: 1.5 }}>
+                    <Typography variant='body1' fontWeight='medium' sx={{ fontSize: '0.875rem' }}>
+                      {user.score?.toFixed(2)}
+                    </Typography>
+                  </TableCell>
+                  <TableCell align='right' sx={{ py: 1.5 }}>
+                    <Typography variant='body1' fontWeight='medium' sx={{ fontSize: '0.875rem' }}>
+                      {formatTime(
+                        (user.totalAnswerTime || user.answers?.reduce((sum, a) => sum + a.answerTime, 0) || 0) / 1000
+                      )}
+                    </Typography>
+                  </TableCell>
+                  {game.gameMode === 'live' && (
+                    <TableCell align='right' sx={{ py: 1.5 }}>
+                      <Typography variant='body1' fontWeight='medium' sx={{ fontSize: '0.875rem' }}>
+                        {user?.fffPoints?.toFixed(3)}
+                      </Typography>
+                    </TableCell>
+                  )}
+                  {game.gameMode === 'self-paced' && (
+                    <TableCell align='right' sx={{ py: 1.5 }}>
+                      <Typography variant='body1' fontWeight='medium' sx={{ fontSize: '0.875rem' }}>
+                        {user.finishedAt ? new Date(user.finishedAt).toLocaleString() : '--'}
+                      </Typography>
+                    </TableCell>
+                  )}
+                  <TableCell align='right' sx={{ py: 1.5 }}>
+                    {user.completed ? (
+                      <Chip
+                        icon={<CheckCircle fontSize='small' />}
+                        label='Completed'
+                        color='success'
+                        size='small'
+                        variant='outlined'
+                      />
+                    ) : (
+                      <Chip
+                        icon={<Cancel fontSize='small' />}
+                        label='In Progress'
+                        color='warning'
+                        size='small'
+                        variant='outlined'
+                      />
+                    )}
+                  </TableCell>
+                </motion.tr>
+              ))}
+            </AnimatePresence>
+          ) : (
+            <TableRow>
+              <TableCell colSpan={6} align='center' sx={{ py: 4 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 1
+                  }}
+                >
+                  <People sx={{ fontSize: 40 }} color='disabled' />
+                  <Typography variant='body1' color='text.secondary'>
+                    {game?.status === 'cancelled'
+                      ? 'Game was cancelled'
+                      : game?.status === 'completed'
+                        ? 'No players participated in this game'
+                        : 'No players have participated yet'}
+                  </Typography>
+                  <Typography variant='body2' color='text.disabled' sx={{ textAlign: 'center', px: 2 }}>
+                    {game?.status === 'cancelled'
+                      ? 'This game has been cancelled and no results are available.'
+                      : game?.status === 'completed'
+                        ? 'The game has ended with no participants.'
+                        : 'Player results will appear here once they start playing.'}
+                  </Typography>
+                </Box>
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  )
+
+  return (
+    <Card
+      sx={{
+        mb: 3,
+        borderRadius: '16px',
+        boxShadow:
+          theme.palette.mode === 'dark'
+            ? `0 4px 20px ${alpha(theme.palette.common.black, 0.4)}`
+            : '0 4px 20px rgba(0, 0, 0, 0.08)',
+        background: theme.palette.background.paper
+      }}
+    >
+      <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+        <Typography
+          variant='h6'
+          sx={{
+            mb: description ? 2 : 3,
+            fontWeight: 700,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            color: theme.palette.text.primary,
+            fontSize: { xs: '1.1rem', sm: '1.25rem' }
+          }}
+        >
+          {React.cloneElement(headerIcon, { sx: { fontSize: 24, color: theme.palette.primary.main } })}
+          {headerTitle}
+        </Typography>
+        {description && (
+          <Typography variant='body2' color='text.secondary' sx={{ mb: 3 }}>
+            {description}
+          </Typography>
+        )}
+        {isMobile ? renderMobileCards() : renderDesktopTable()}
       </CardContent>
     </Card>
   )

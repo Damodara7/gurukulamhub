@@ -21,16 +21,7 @@
 import React, { useEffect, useState } from 'react'
 import { API_URLS } from '@/configs/apiConfig'
 import * as RestApi from '@/utils/restApiUtil'
-import { 
-  AlertTitle, 
-  Button, 
-  Chip, 
-  useMediaQuery, 
-  useTheme, 
-  Container,
-  alpha,
-  CircularProgress
-} from '@mui/material'
+import { AlertTitle, Button, Chip, useMediaQuery, useTheme, Container, alpha, CircularProgress } from '@mui/material'
 import { Alert, Stack, Grid, Card, Typography, CardContent, CardHeader, Divider, Box } from '@mui/material'
 import Loading from '@/components/Loading'
 import QuizDetails from '@/components/quiz-builder-1/QuizDetails'
@@ -54,7 +45,7 @@ import {
   DummyFillInTheBlanksTemplate
 } from '@/components/quizbuilder/Templates'
 
-function ViewQuiz({ quiz, isAdmin=false }) {
+function ViewQuiz({ quiz, isAdmin = false }) {
   const router = useRouter()
   const [isMinimizedBool, setIsMinimizedBool] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -163,18 +154,18 @@ function ViewQuiz({ quiz, isAdmin=false }) {
   console.log('Secondary questions:', secQuestions)
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa', pb: 6 }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: theme.palette.background.default, pb: 6 }}>
       {/* Header Section */}
       <Box
         sx={{
-          bgcolor: 'white',
+          bgcolor: theme.palette.background.paper,
           pt: { xs: 3, md: 4 },
           pb: { xs: 3, md: 4 },
-          borderBottom: '1px solid #e8eaed',
+          borderBottom: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
           mb: 4
         }}
       >
-        <Container maxWidth="xl">
+        <Container maxWidth='xl'>
           <Stack spacing={2}>
             {/* Back Button */}
             <Button
@@ -194,10 +185,10 @@ function ViewQuiz({ quiz, isAdmin=false }) {
             >
               Back
             </Button>
-            
+
             {/* Title */}
             <Typography
-              variant="h4"
+              variant='h4'
               fontWeight={800}
               sx={{
                 fontSize: { xs: '1.5rem', md: '2rem' },
@@ -214,13 +205,13 @@ function ViewQuiz({ quiz, isAdmin=false }) {
             </Typography>
 
             {/* Description */}
-            <Typography variant="body1" sx={{ color: '#5f6368', maxWidth: '800px' }}>
+            <Typography variant='body1' sx={{ color: theme.palette.text.secondary, maxWidth: '800px' }}>
               Review your quiz details and questions. View primary and secondary language questions.
             </Typography>
 
             {/* Action Buttons */}
             {quiz.approvalState === 'draft' && (
-              <Stack direction="row" spacing={2} flexWrap="wrap" sx={{ pt: 1 }}>
+              <Stack direction='row' spacing={2} flexWrap='wrap' sx={{ pt: 1 }}>
                 <Button
                   variant='contained'
                   size='medium'
@@ -257,10 +248,10 @@ function ViewQuiz({ quiz, isAdmin=false }) {
         </Container>
       </Box>
 
-      <Container maxWidth="xl">
+      <Container maxWidth='xl'>
         <Stack spacing={4}>
           {/* Quiz Details */}
-            <QuizDetails quiz={quizData} />
+          <QuizDetails quiz={quizData} />
 
           {/* Questions Section */}
           <Grid container spacing={3}>
@@ -275,9 +266,10 @@ function ViewQuiz({ quiz, isAdmin=false }) {
                 <Card
                   sx={{
                     borderRadius: 2,
-                    bgcolor: 'white',
-                    border: '1px solid #e8eaed',
-                    boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+                    bgcolor: theme.palette.background.paper,
+                    border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
+                    boxShadow:
+                      theme.palette.mode === 'dark' ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.04)',
                     overflow: 'hidden'
                   }}
                 >
@@ -289,7 +281,7 @@ function ViewQuiz({ quiz, isAdmin=false }) {
                       borderColor: 'primary.main'
                     }}
                   >
-                    <Stack direction="row" alignItems="center" spacing={1.5}>
+                    <Stack direction='row' alignItems='center' spacing={1.5}>
                       <Box
                         sx={{
                           width: 36,
@@ -305,10 +297,13 @@ function ViewQuiz({ quiz, isAdmin=false }) {
                         <QuestionMarkIcon sx={{ fontSize: 20 }} />
                       </Box>
                       <Stack>
-                        <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem', fontWeight: 600 }}>
+                        <Typography
+                          variant='caption'
+                          sx={{ color: 'text.secondary', fontSize: '0.7rem', fontWeight: 600 }}
+                        >
                           PRIMARY QUESTIONS
                         </Typography>
-                        <Typography variant="body2" fontWeight={700} sx={{ color: 'text.primary' }}>
+                        <Typography variant='body2' fontWeight={700} sx={{ color: 'text.primary' }}>
                           {quiz?.language?.name}
                         </Typography>
                       </Stack>
@@ -336,12 +331,16 @@ function ViewQuiz({ quiz, isAdmin=false }) {
                             border: '2px solid',
                             borderColor: selectedPrimaryQuestion?._id === question._id ? 'primary.main' : 'divider',
                             borderRadius: 2,
-                            bgcolor: selectedPrimaryQuestion?._id === question._id 
-                              ? alpha(theme.palette.primary.main, 0.08)
-                              : 'background.paper',
-                            boxShadow: selectedPrimaryQuestion?._id === question._id 
-                              ? `0 4px 16px ${alpha(theme.palette.primary.main, 0.2)}`
-                              : '0 1px 4px rgba(0,0,0,0.05)',
+                            bgcolor:
+                              selectedPrimaryQuestion?._id === question._id
+                                ? alpha(theme.palette.primary.main, 0.08)
+                                : theme.palette.background.paper,
+                            boxShadow:
+                              selectedPrimaryQuestion?._id === question._id
+                                ? `0 4px 16px ${alpha(theme.palette.primary.main, 0.2)}`
+                                : theme.palette.mode === 'dark'
+                                  ? '0 1px 4px rgba(0,0,0,0.3)'
+                                  : '0 1px 4px rgba(0,0,0,0.05)',
                             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                             '&:hover': {
                               borderColor: 'primary.main',
@@ -360,7 +359,7 @@ function ViewQuiz({ quiz, isAdmin=false }) {
                       ))
                     ) : (
                       <Box sx={{ p: 3, textAlign: 'center' }}>
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography variant='body2' color='text.secondary'>
                           No questions available
                         </Typography>
                       </Box>
@@ -378,9 +377,10 @@ function ViewQuiz({ quiz, isAdmin=false }) {
                   <Card
                     sx={{
                       borderRadius: 2,
-                      bgcolor: 'white',
-                      border: '1px solid #e8eaed',
-                      boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+                      bgcolor: theme.palette.background.paper,
+                      border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
+                      boxShadow:
+                        theme.palette.mode === 'dark' ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.04)',
                       overflow: 'hidden'
                     }}
                   >
@@ -395,7 +395,7 @@ function ViewQuiz({ quiz, isAdmin=false }) {
                         alignItems: 'center'
                       }}
                     >
-                      <Typography variant="subtitle1" fontWeight={700} sx={{ color: 'text.primary' }}>
+                      <Typography variant='subtitle1' fontWeight={700} sx={{ color: 'text.primary' }}>
                         Primary Question
                       </Typography>
                       <Chip
@@ -418,9 +418,10 @@ function ViewQuiz({ quiz, isAdmin=false }) {
                   <Card
                     sx={{
                       borderRadius: 2,
-                      bgcolor: 'white',
-                      border: '1px solid #e8eaed',
-                      boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+                      bgcolor: theme.palette.background.paper,
+                      border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
+                      boxShadow:
+                        theme.palette.mode === 'dark' ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.04)',
                       overflow: 'hidden'
                     }}
                   >
@@ -432,7 +433,7 @@ function ViewQuiz({ quiz, isAdmin=false }) {
                         borderColor: 'secondary.main'
                       }}
                     >
-                      <Stack direction="row" alignItems="center" spacing={1.5}>
+                      <Stack direction='row' alignItems='center' spacing={1.5}>
                         <Box
                           sx={{
                             width: 4,
@@ -441,13 +442,13 @@ function ViewQuiz({ quiz, isAdmin=false }) {
                             borderRadius: 2
                           }}
                         />
-                        <Typography variant="h6" fontWeight={700} sx={{ color: 'secondary.main' }}>
+                        <Typography variant='h6' fontWeight={700} sx={{ color: 'secondary.main' }}>
                           Secondary Language Questions
                         </Typography>
                         {secQuestions.length > 0 && (
                           <Chip
                             label={`${secQuestions.length} question${secQuestions.length !== 1 ? 's' : ''}`}
-                            size="small"
+                            size='small'
                             sx={{
                               bgcolor: 'secondary.main',
                               color: 'white',
@@ -480,7 +481,10 @@ function ViewQuiz({ quiz, isAdmin=false }) {
                                   borderRadius: 2,
                                   border: '1px solid',
                                   borderColor: 'divider',
-                                  boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                                  boxShadow:
+                                    theme.palette.mode === 'dark'
+                                      ? '0 2px 8px rgba(0,0,0,0.3)'
+                                      : '0 2px 8px rgba(0,0,0,0.06)',
                                   overflow: 'hidden'
                                 }}
                               >
@@ -495,7 +499,7 @@ function ViewQuiz({ quiz, isAdmin=false }) {
                                     alignItems: 'center'
                                   }}
                                 >
-                                  <Typography variant="caption" fontWeight={700} sx={{ color: 'text.secondary' }}>
+                                  <Typography variant='caption' fontWeight={700} sx={{ color: 'text.secondary' }}>
                                     Question {index + 1}
                                   </Typography>
                                   <Chip
@@ -518,14 +522,16 @@ function ViewQuiz({ quiz, isAdmin=false }) {
                           </Stack>
                         </Box>
                       ) : (
-                        <Box sx={{ 
-                          p: 6, 
-                          textAlign: 'center',
-                          bgcolor: alpha(theme.palette.grey[100], 0.5),
-                          borderRadius: 2,
-                          border: '1px dashed',
-                          borderColor: 'divider'
-                        }}>
+                        <Box
+                          sx={{
+                            p: 6,
+                            textAlign: 'center',
+                            bgcolor: alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.05 : 0.1),
+                            borderRadius: 2,
+                            border: '1px dashed',
+                            borderColor: 'divider'
+                          }}
+                        >
                           <Typography variant='body1' color='text.secondary' sx={{ fontWeight: 500 }}>
                             No secondary language questions exist for this question.
                           </Typography>
@@ -538,9 +544,10 @@ function ViewQuiz({ quiz, isAdmin=false }) {
                 <Card
                   sx={{
                     borderRadius: 2,
-                    bgcolor: 'white',
-                    border: '1px solid #e8eaed',
-                    boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+                    bgcolor: theme.palette.background.paper,
+                    border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
+                    boxShadow:
+                      theme.palette.mode === 'dark' ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.04)',
                     p: 8,
                     textAlign: 'center'
                   }}

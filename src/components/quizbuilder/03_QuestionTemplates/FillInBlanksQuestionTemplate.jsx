@@ -43,14 +43,14 @@ const FillInBlanksQuestionTemplate = ({
   saveQuestion,
   deleteQuestion,
   validationErrors = [],
-  isAdmin=false
+  isAdmin = false
 }) => {
   const innerData = data?.data
   const [id, setId] = useState(questionUUID)
   const [language, setLanguage] = useState(data?.language)
   const [status, setStatus] = useState(innerData?.status || 'draft')
   const [hint, setHint] = useState(innerData?.hint || '')
-  const [hintMarks, setHintMarks] = useState(-1*innerData?.hintMarks || '')
+  const [hintMarks, setHintMarks] = useState(-1 * innerData?.hintMarks || '')
   const [marks, setMarks] = useState(innerData?.marks || '')
   const [timerSeconds, setTimerSeconds] = useState(innerData?.timerSeconds || '')
   const [skippable, setSkippable] = useState(innerData?.skippable || false) // by default non-skippable
@@ -208,9 +208,9 @@ const FillInBlanksQuestionTemplate = ({
   const handlePartChange = (id, type, value) => {
     let filterValue = value
     if (type === 'blank') {
-      filterValue = filterInput(value , excludeBlankChars)
+      filterValue = filterInput(value, excludeBlankChars)
     } else if (type === 'text') {
-      filterValue = filterInput(value , excludesTextChars)
+      filterValue = filterInput(value, excludesTextChars)
     }
     // alphanumeric characters and spaces
     setQuestionParts(questionParts.map(part => (part.id === id ? { ...part, content: filterValue } : part)))
@@ -233,20 +233,16 @@ const FillInBlanksQuestionTemplate = ({
     }
     return ''
   }
-  
 
-   const handleAddHintChange = e => {
-     const isChecked = e.target.checked
-     setAddHint(isChecked)
-     if (!isChecked) {
-       // When unchecking, reset to empty/zero
-       setHint('')
-       setHintMarks(0)
-     }
-   }
-
-
-
+  const handleAddHintChange = e => {
+    const isChecked = e.target.checked
+    setAddHint(isChecked)
+    if (!isChecked) {
+      // When unchecking, reset to empty/zero
+      setHint('')
+      setHintMarks(0)
+    }
+  }
 
   const hasAtleastOneBlank = questionParts.filter(p => p.type === 'blank').length >= 1 || false
   const hasAtleastOneText = questionParts.filter(p => p.type === 'text').length >= 1 || false
@@ -256,96 +252,112 @@ const FillInBlanksQuestionTemplate = ({
 
   return (
     <>
-      <Box sx={{ 
-        bgcolor: 'background.paper', 
-        borderRadius: 3, 
-        border: '1px solid',
-        borderColor: hasErrors ? alpha(theme.palette.error.main, 0.3) : 'divider',
-        boxShadow: hasErrors ? `0 0 0 3px ${alpha(theme.palette.error.main, 0.1)}` : '0 2px 8px rgba(0,0,0,0.05)',
-        p: { xs: 2, md: 3 },
-        transition: 'all 0.3s ease'
-      }}>
+      <Box
+        sx={{
+          bgcolor: 'background.paper',
+          borderRadius: 3,
+          border: '1px solid',
+          borderColor: hasErrors
+            ? alpha(theme.palette.error.main, 0.3)
+            : alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08),
+          boxShadow: hasErrors
+            ? `0 0 0 3px ${alpha(theme.palette.error.main, 0.1)}`
+            : theme.palette.mode === 'dark'
+              ? '0 2px 8px rgba(0,0,0,0.3)'
+              : '0 2px 8px rgba(0,0,0,0.05)',
+          p: { xs: 2, md: 3 },
+          transition: 'all 0.3s ease'
+        }}
+      >
         {/* Header Section */}
-        <Stack direction="row" spacing={2} sx={{ mb: 3, pb: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
-          <Box sx={{ 
-            width: 48, 
-            height: 48, 
-            borderRadius: 2, 
-            bgcolor: alpha(theme.palette.primary.main, 0.1),
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
+        <Stack
+          direction='row'
+          spacing={2}
+          sx={{
+            mb: 3,
+            pb: 2,
+            borderBottom: '1px solid',
+            borderColor: alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)
+          }}
+        >
+          <Box
+            sx={{
+              width: 48,
+              height: 48,
+              borderRadius: 2,
+              bgcolor: alpha(theme.palette.primary.main, 0.1),
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
             <QuestionMarkIcon sx={{ fontSize: 24, color: 'primary.main' }} />
           </Box>
           <Box sx={{ flex: 1 }}>
-            <Typography variant="h6" fontWeight={700} sx={{ color: '#202124' }}>
+            <Typography variant='h6' fontWeight={700} sx={{ color: theme.palette.text.primary }}>
               Fill in the Blanks Question
             </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            <Typography variant='caption' sx={{ color: 'text.secondary' }}>
               ID: {id} • Language: {language}
             </Typography>
           </Box>
-          {hasErrors && (
-            <Chip 
-              label="Has Errors" 
-              color="error" 
-              size="small" 
-              sx={{ height: 28, fontWeight: 600 }}
-            />
-          )}
+          {hasErrors && <Chip label='Has Errors' color='error' size='small' sx={{ height: 28, fontWeight: 600 }} />}
         </Stack>
 
         <Grid container spacing={3}>
           {/* Question Builder Section */}
           <Grid item xs={12}>
-            <Box sx={{ 
-              border: '2px solid',
-              borderColor: alpha(theme.palette.primary.main, 0.2),
-              borderRadius: 3, 
-              p: 2.5,
-              bgcolor: alpha(theme.palette.primary.main, 0.02),
-              '&:hover': {
-                borderColor: alpha(theme.palette.primary.main, 0.4),
-                boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.08)}`
-              },
-              transition: 'all 0.3s ease'
-            }}>
+            <Box
+              sx={{
+                border: '2px solid',
+                borderColor: alpha(theme.palette.primary.main, 0.2),
+                borderRadius: 3,
+                p: 2.5,
+                bgcolor: alpha(theme.palette.primary.main, 0.02),
+                '&:hover': {
+                  borderColor: alpha(theme.palette.primary.main, 0.4),
+                  boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.08)}`
+                },
+                transition: 'all 0.3s ease'
+              }}
+            >
               <Stack spacing={2.5}>
                 {/* Section Header */}
-                <Stack direction="row" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={2}>
-                  <Stack direction="row" alignItems="center" spacing={1.5}>
-                    <Box sx={{ 
-                      width: 36, 
-                      height: 36, 
-                      borderRadius: 2, 
-                      bgcolor: alpha(theme.palette.primary.main, 0.15),
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}>
+                <Stack direction='row' alignItems='center' justifyContent='space-between' flexWrap='wrap' gap={2}>
+                  <Stack direction='row' alignItems='center' spacing={1.5}>
+                    <Box
+                      sx={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: 2,
+                        bgcolor: alpha(theme.palette.primary.main, 0.15),
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
                       <TextFieldsIcon sx={{ fontSize: 20, color: 'primary.main' }} />
                     </Box>
-                    <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#202124' }}>
+                    <Typography variant='subtitle1' fontWeight={700} sx={{ color: theme.palette.text.primary }}>
                       Build Your Question
                     </Typography>
                   </Stack>
-                  
-                  <Stack direction="row" spacing={1}>
-                    <Chip 
+
+                  <Stack direction='row' spacing={1}>
+                    <Chip
                       label={`${textCount} text${textCount !== 1 ? 's' : ''}`}
-                      size="small"
-                      sx={{ 
+                      size='small'
+                      sx={{
                         bgcolor: alpha(theme.palette.info.main, 0.1),
                         color: 'info.main',
                         fontWeight: 600,
                         border: `1px solid ${alpha(theme.palette.info.main, 0.3)}`
                       }}
                     />
-                    <Chip 
+                    <Chip
                       label={`${blankCount} blank${blankCount !== 1 ? 's' : ''}`}
-                      size="small"
-                      sx={{ 
+                      size='small'
+                      sx={{
                         bgcolor: alpha(theme.palette.warning.main, 0.1),
                         color: 'warning.main',
                         fontWeight: 600,
@@ -362,37 +374,39 @@ const FillInBlanksQuestionTemplate = ({
                       sx={{
                         p: 2,
                         borderRadius: 2,
-                        bgcolor: 'white',
+                        bgcolor: theme.palette.background.paper,
                         border: '2px solid',
-                        borderColor: part.type === 'blank' 
-                          ? alpha(theme.palette.warning.main, 0.3)
-                          : alpha(theme.palette.info.main, 0.3),
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                        borderColor:
+                          part.type === 'blank'
+                            ? alpha(theme.palette.warning.main, 0.3)
+                            : alpha(theme.palette.info.main, 0.3),
+                        boxShadow:
+                          theme.palette.mode === 'dark' ? '0 2px 8px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.05)',
                         transition: 'all 0.2s ease',
                         '&:hover': {
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                          borderColor: part.type === 'blank' 
-                            ? theme.palette.warning.main
-                            : theme.palette.info.main
+                          boxShadow:
+                            theme.palette.mode === 'dark' ? '0 4px 12px rgba(0,0,0,0.4)' : '0 4px 12px rgba(0,0,0,0.1)',
+                          borderColor: part.type === 'blank' ? theme.palette.warning.main : theme.palette.info.main
                         }
                       }}
                     >
-                      <Stack direction="row" alignItems="center" spacing={1.5}>
+                      <Stack direction='row' alignItems='center' spacing={1.5}>
                         {/* Part Type Indicator */}
-                        <Chip 
-                          label={index + 1} 
-                          size="small"
-                          sx={{ 
+                        <Chip
+                          label={index + 1}
+                          size='small'
+                          sx={{
                             minWidth: 32,
                             height: 24,
                             fontWeight: 700,
-                            bgcolor: part.type === 'blank' 
-                              ? alpha(theme.palette.warning.main, 0.15)
-                              : alpha(theme.palette.info.main, 0.15),
+                            bgcolor:
+                              part.type === 'blank'
+                                ? alpha(theme.palette.warning.main, 0.15)
+                                : alpha(theme.palette.info.main, 0.15),
                             color: part.type === 'blank' ? 'warning.main' : 'info.main'
                           }}
                         />
-                        
+
                         <Box sx={{ flex: 1 }}>
                           {part.type === 'text' ? (
                             <TextField
@@ -401,8 +415,12 @@ const FillInBlanksQuestionTemplate = ({
                               label={`Text Part ${index + 1}`}
                               placeholder='Enter text portion of the question'
                               value={part.content}
-                              error={hasErrors && !part.content.trim() && getErrorMessage(`question.${part.id}.content`)}
-                              helperText={!part.content.trim() && <span>{getErrorMessage(`question.${part.id}.content`)}</span>}
+                              error={
+                                hasErrors && !part.content.trim() && getErrorMessage(`question.${part.id}.content`)
+                              }
+                              helperText={
+                                !part.content.trim() && <span>{getErrorMessage(`question.${part.id}.content`)}</span>
+                              }
                               onChange={e => handlePartChange(part.id, part.type, e.target.value)}
                               multiline
                               rows={2}
@@ -422,8 +440,14 @@ const FillInBlanksQuestionTemplate = ({
                               label={`Blank ${questionParts.filter((p, i) => i <= index && p.type === 'blank').length}`}
                               placeholder='Enter the correct answer for this blank'
                               value={part.content}
-                              error={hasErrors && !part.content.trim() && getErrorMessage(`question.${part.id}.content`)}
-                              helperText={!part.content.trim() ? getErrorMessage(`question.${part.id}.content`) : 'Players will fill this blank'}
+                              error={
+                                hasErrors && !part.content.trim() && getErrorMessage(`question.${part.id}.content`)
+                              }
+                              helperText={
+                                !part.content.trim()
+                                  ? getErrorMessage(`question.${part.id}.content`)
+                                  : 'Players will fill this blank'
+                              }
                               onChange={e => handlePartChange(part.id, part.type, e.target.value)}
                               sx={{
                                 '& .MuiOutlinedInput-root': {
@@ -448,14 +472,14 @@ const FillInBlanksQuestionTemplate = ({
                         </Box>
 
                         <IconButton
-                          size="small"
+                          size='small'
                           onClick={() => handleRemovePart(part.id)}
                           sx={{
                             color: 'error.main',
                             '&:hover': { bgcolor: alpha(theme.palette.error.main, 0.1) }
                           }}
                         >
-                          <RemoveCircleIcon fontSize="small" />
+                          <RemoveCircleIcon fontSize='small' />
                         </IconButton>
                       </Stack>
                     </Box>
@@ -464,26 +488,30 @@ const FillInBlanksQuestionTemplate = ({
                   {hasErrors && (
                     <Stack spacing={1}>
                       {!hasAtleastOneBlank && getErrorMessage(`question.blank`) && (
-                        <Box sx={{ 
-                          p: 1.5, 
-                          borderRadius: 2, 
-                          bgcolor: alpha(theme.palette.error.main, 0.1),
-                          border: '1px solid',
-                          borderColor: alpha(theme.palette.error.main, 0.3)
-                        }}>
+                        <Box
+                          sx={{
+                            p: 1.5,
+                            borderRadius: 2,
+                            bgcolor: alpha(theme.palette.error.main, 0.1),
+                            border: '1px solid',
+                            borderColor: alpha(theme.palette.error.main, 0.3)
+                          }}
+                        >
                           <Typography variant='body2' color='error' fontWeight={600}>
                             {getErrorMessage(`question.blank`)}
                           </Typography>
                         </Box>
                       )}
                       {!hasAtleastOneText && getErrorMessage(`question.text`) && (
-                        <Box sx={{ 
-                          p: 1.5, 
-                          borderRadius: 2, 
-                          bgcolor: alpha(theme.palette.error.main, 0.1),
-                          border: '1px solid',
-                          borderColor: alpha(theme.palette.error.main, 0.3)
-                        }}>
+                        <Box
+                          sx={{
+                            p: 1.5,
+                            borderRadius: 2,
+                            bgcolor: alpha(theme.palette.error.main, 0.1),
+                            border: '1px solid',
+                            borderColor: alpha(theme.palette.error.main, 0.3)
+                          }}
+                        >
                           <Typography variant='body2' color='error' fontWeight={600}>
                             {getErrorMessage(`question.text`)}
                           </Typography>
@@ -494,8 +522,8 @@ const FillInBlanksQuestionTemplate = ({
 
                   {/* Add Part Buttons */}
                   <Divider />
-                  
-                  <Stack direction="row" spacing={2}>
+
+                  <Stack direction='row' spacing={2}>
                     <Button
                       fullWidth
                       variant='outlined'
@@ -520,7 +548,7 @@ const FillInBlanksQuestionTemplate = ({
                     >
                       Add Text Part
                     </Button>
-                    
+
                     <Button
                       fullWidth
                       variant='outlined'
@@ -549,19 +577,21 @@ const FillInBlanksQuestionTemplate = ({
 
           {/* Configuration Section */}
           <Grid item xs={12}>
-            <Box sx={{ 
-              border: '2px solid',
-              borderColor: alpha(theme.palette.info.main, 0.2),
-              borderRadius: 3, 
-              p: 2.5,
-              bgcolor: alpha(theme.palette.info.main, 0.02)
-            }}>
+            <Box
+              sx={{
+                border: '2px solid',
+                borderColor: alpha(theme.palette.info.main, 0.2),
+                borderRadius: 3,
+                p: 2.5,
+                bgcolor: alpha(theme.palette.info.main, 0.02)
+              }}
+            >
               <Stack spacing={2.5}>
                 {/* Hint Toggle */}
                 <FormControlLabel
                   control={
-                    <Checkbox 
-                      checked={addHint} 
+                    <Checkbox
+                      checked={addHint}
                       onChange={handleAddHintChange}
                       sx={{
                         '&.Mui-checked': { color: 'info.main' }
@@ -569,7 +599,7 @@ const FillInBlanksQuestionTemplate = ({
                     />
                   }
                   label={
-                    <Stack direction="row" alignItems="center" spacing={1}>
+                    <Stack direction='row' alignItems='center' spacing={1}>
                       <HelpOutlineIcon sx={{ fontSize: 20, color: 'info.main' }} />
                       <Typography variant='body2' fontWeight={600}>
                         Add Hint for this question
@@ -593,7 +623,7 @@ const FillInBlanksQuestionTemplate = ({
                     helperText={addHint && !hint.trim() && getErrorMessage('hint')}
                     sx={{
                       '& .MuiOutlinedInput-root': {
-                        bgcolor: 'white',
+                        bgcolor: theme.palette.background.paper,
                         '&:hover .MuiOutlinedInput-notchedOutline': {
                           borderColor: theme.palette.info.main
                         }
@@ -605,17 +635,17 @@ const FillInBlanksQuestionTemplate = ({
                 {mode === 'primary' && (
                   <>
                     <Divider sx={{ my: 1 }} />
-                    
+
                     <Grid container spacing={2}>
                       <Grid item xs={12} sm={addHint ? 4 : 6}>
                         <TextField
                           disabled={loading.save || loading.delete}
                           label='Marks'
                           type='number'
-                          InputProps={{ 
+                          InputProps={{
                             inputProps: { min: 0.25, step: 0.25 },
                             startAdornment: (
-                              <InputAdornment position="start">
+                              <InputAdornment position='start'>
                                 <EmojiEventsIcon sx={{ fontSize: 20, color: 'success.main' }} />
                               </InputAdornment>
                             )
@@ -627,7 +657,7 @@ const FillInBlanksQuestionTemplate = ({
                           helperText={!marks && getErrorMessage('marks')}
                           sx={{
                             '& .MuiOutlinedInput-root': {
-                              bgcolor: 'white',
+                              bgcolor: theme.palette.background.paper,
                               '&:hover .MuiOutlinedInput-notchedOutline': {
                                 borderColor: theme.palette.success.main
                               }
@@ -635,7 +665,7 @@ const FillInBlanksQuestionTemplate = ({
                           }}
                         />
                       </Grid>
-                      
+
                       {addHint && (
                         <Grid item xs={12} sm={4}>
                           <TextField
@@ -662,7 +692,7 @@ const FillInBlanksQuestionTemplate = ({
                             }
                             sx={{
                               '& .MuiOutlinedInput-root': {
-                                bgcolor: 'white',
+                                bgcolor: theme.palette.background.paper,
                                 '&:hover .MuiOutlinedInput-notchedOutline': {
                                   borderColor: theme.palette.warning.main
                                 }
@@ -671,16 +701,16 @@ const FillInBlanksQuestionTemplate = ({
                           />
                         </Grid>
                       )}
-                      
+
                       <Grid item xs={12} sm={addHint ? 4 : 6}>
                         <TextField
                           disabled={loading.save || loading.delete}
                           label='Time Limit (seconds)'
                           type='number'
-                          InputProps={{ 
+                          InputProps={{
                             inputProps: { min: 10 },
                             startAdornment: (
-                              <InputAdornment position="start">
+                              <InputAdornment position='start'>
                                 <TimerIcon sx={{ fontSize: 20, color: 'error.main' }} />
                               </InputAdornment>
                             )
@@ -692,7 +722,7 @@ const FillInBlanksQuestionTemplate = ({
                           helperText={!timerSeconds && getErrorMessage('timerSeconds')}
                           sx={{
                             '& .MuiOutlinedInput-root': {
-                              bgcolor: 'white',
+                              bgcolor: theme.palette.background.paper,
                               '&:hover .MuiOutlinedInput-notchedOutline': {
                                 borderColor: theme.palette.error.main
                               }
@@ -707,11 +737,7 @@ const FillInBlanksQuestionTemplate = ({
                     <FormControlLabel
                       disabled={loading.save || loading.delete}
                       control={
-                        <Switch 
-                          checked={skippable} 
-                          onChange={e => setSkippable(e.target.checked)}
-                          color='primary'
-                        />
+                        <Switch checked={skippable} onChange={e => setSkippable(e.target.checked)} color='primary' />
                       }
                       label={
                         <Typography variant='body2' fontWeight={600}>
@@ -727,7 +753,7 @@ const FillInBlanksQuestionTemplate = ({
 
           {/* Action Buttons */}
           <Grid item xs={12}>
-            <Stack direction="row" spacing={2} sx={{ pt: 2 }}>
+            <Stack direction='row' spacing={2} sx={{ pt: 2 }}>
               <Button
                 fullWidth
                 variant='contained'
@@ -742,7 +768,8 @@ const FillInBlanksQuestionTemplate = ({
                   borderRadius: 2,
                   color: 'white',
                   fontWeight: 700,
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  boxShadow:
+                    theme.palette.mode === 'dark' ? '0 4px 12px rgba(0,0,0,0.4)' : '0 4px 12px rgba(0,0,0,0.1)',
                   '&:hover': {
                     boxShadow: '0 6px 16px rgba(0,0,0,0.15)',
                     transform: 'translateY(-2px)'
@@ -752,7 +779,7 @@ const FillInBlanksQuestionTemplate = ({
               >
                 {loading.save ? 'Saving Question...' : 'Save Question'}
               </Button>
-              
+
               <Button
                 variant='outlined'
                 color='error'

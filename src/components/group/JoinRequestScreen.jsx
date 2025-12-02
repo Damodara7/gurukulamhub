@@ -326,8 +326,7 @@ const JoinRequestScreen = ({ group, removebutton }) => {
   return (
     <Box
       sx={{
-        height: { xs: 'auto', sm: '100vh' },
-        minHeight: { xs: '100vh', sm: 'auto' },
+        maxHeight: { xs: '100vh', sm: '100vh' },
         display: 'flex',
         flexDirection: 'column',
         bgcolor: theme.palette.mode === 'dark' ? theme.palette.background.default : '#f0f2f5'

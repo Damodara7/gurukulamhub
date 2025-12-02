@@ -88,9 +88,7 @@ const QuestionBuilderArea = forwardRef(
         if (isNew) {
           questionsToValidate = [...questionsToValidate, question].filter(q => q._id !== question._id)
         }
-        validateQuizQuestions(
-          questionsToValidate
-        )
+        validateQuizQuestions(questionsToValidate)
       } else {
         setQuestionsLength(0)
         validateQuizQuestions([])
@@ -244,14 +242,14 @@ const QuestionBuilderArea = forwardRef(
     return (
       <Box sx={{ display: 'flex', gap: 3, height: '100%', overflow: 'hidden', minHeight: 0 }}>
         {/* Left Sidebar - Questions List (Sticky) */}
-        <Box 
-          sx={{ 
+        <Box
+          sx={{
             width: isMenuCollapsed ? 72 : 340,
-            height: '100%', 
-            bgcolor: 'white',
+            height: '100%',
+            bgcolor: theme.palette.background.paper,
             borderRadius: 2,
-            border: '1px solid #e8eaed',
-            boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+            border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
+            boxShadow: theme.palette.mode === 'dark' ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.04)',
             overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
@@ -275,8 +273,8 @@ const QuestionBuilderArea = forwardRef(
         </Box>
 
         {/* Right Main Area - Question Template (Scrollable) */}
-        <Box 
-          sx={{ 
+        <Box
+          sx={{
             flex: 1,
             minWidth: 0,
             height: 'auto',
@@ -286,17 +284,20 @@ const QuestionBuilderArea = forwardRef(
           }}
         >
           <Box
-            sx={{ 
-              p: 3, 
-              border: '1px solid #e8eaed',
+            sx={{
+              p: 3,
+              border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
               borderRadius: 2,
               minHeight: '100%',
-              bgcolor: 'white',
-              boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+              bgcolor: theme.palette.background.paper,
+              boxShadow: theme.palette.mode === 'dark' ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.04)',
               transition: 'all 0.3s ease',
               '&:hover': {
                 borderColor: alpha(theme.palette.primary.main, 0.3),
-                boxShadow: `0 4px 20px ${alpha(theme.palette.primary.main, 0.08)}`
+                boxShadow:
+                  theme.palette.mode === 'dark'
+                    ? `0 4px 20px ${alpha(theme.palette.primary.main, 0.2)}`
+                    : `0 4px 20px ${alpha(theme.palette.primary.main, 0.08)}`
               }
             }}
           >

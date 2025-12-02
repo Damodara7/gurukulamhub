@@ -36,38 +36,46 @@ import SpaceBarIcon from '@mui/icons-material/SpaceBar'
 export const SingleChoiceTemplate = ({ question }) => {
   const questionObj = question?.data?.question
   const theme = useTheme()
-  
+
   return (
     <CardContent sx={{ p: 4, bgcolor: 'background.default' }}>
       <Stack spacing={4}>
         {/* Header */}
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          pb: 2.5,
-          borderBottom: '2px solid',
-          borderColor: 'primary.main'
-        }}>
-          <Typography variant="h6" fontWeight={700} sx={{ 
-            color: 'primary.main',
+        <Box
+          sx={{
             display: 'flex',
+            justifyContent: 'space-between',
             alignItems: 'center',
-            gap: 1.5
-          }}>
-            <Box sx={{ 
-              width: 4, 
-              height: 24, 
-              bgcolor: 'primary.main',
-              borderRadius: 2
-            }} />
+            pb: 2.5,
+            borderBottom: '2px solid',
+            borderColor: 'primary.main'
+          }}
+        >
+          <Typography
+            variant='h6'
+            fontWeight={700}
+            sx={{
+              color: 'primary.main',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5
+            }}
+          >
+            <Box
+              sx={{
+                width: 4,
+                height: 24,
+                bgcolor: 'primary.main',
+                borderRadius: 2
+              }}
+            />
             Single Choice Question
           </Typography>
           {questionObj?.mediaType && (
-            <Chip 
+            <Chip
               label={questionObj.mediaType.replace('-', ' + ')}
-              size="small"
-              sx={{ 
+              size='small'
+              sx={{
                 bgcolor: 'primary.main',
                 color: 'white',
                 fontWeight: 600,
@@ -78,21 +86,23 @@ export const SingleChoiceTemplate = ({ question }) => {
         </Box>
 
         {/* Question Content */}
-        <Box sx={{
-          p: 3,
-          borderRadius: 2,
-          bgcolor: 'background.paper',
-          border: '1px solid',
-          borderColor: 'divider',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
-        }}>
+        <Box
+          sx={{
+            p: 3,
+            borderRadius: 2,
+            bgcolor: 'background.paper',
+            border: '1px solid',
+            borderColor: 'divider',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+          }}
+        >
           {(questionObj?.mediaType === 'text' ||
             questionObj?.mediaType === 'text-image' ||
             questionObj?.mediaType === 'text-video') && (
-            <Typography 
-              variant='h5' 
+            <Typography
+              variant='h5'
               fontWeight={600}
-              sx={{ 
+              sx={{
                 color: questionObj?.text?.trim() ? 'text.primary' : 'error.main',
                 lineHeight: 1.7,
                 mb: questionObj?.image || questionObj?.video ? 3 : 0
@@ -101,13 +111,13 @@ export const SingleChoiceTemplate = ({ question }) => {
               {questionObj?.text?.trim() || '* Question is not completed'}
             </Typography>
           )}
-          
+
           {questionObj?.mediaType === 'video' && (
             <Typography variant='h5' fontWeight={600} sx={{ color: 'text.primary', mb: 3 }}>
               Watch the video carefully and answer the question.
             </Typography>
           )}
-          
+
           {(questionObj?.mediaType === 'image' || questionObj?.mediaType === 'text-image') && questionObj?.image && (
             <Box
               component='img'
@@ -126,23 +136,25 @@ export const SingleChoiceTemplate = ({ question }) => {
               }}
             />
           )}
-          
+
           {(questionObj?.mediaType === 'video' || questionObj?.mediaType === 'text-video') && questionObj.video && (
-            <Box sx={{ 
-              p: 2, 
-              bgcolor: 'grey.50', 
-              borderRadius: 2, 
-              border: '2px solid', 
-              borderColor: 'divider',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
-            }}>
+            <Box
+              sx={{
+                p: 2,
+                bgcolor: 'grey.50',
+                borderRadius: 2,
+                border: '2px solid',
+                borderColor: 'divider',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+              }}
+            >
               <VideoAd url={questionObj.video || ''} showPause autoPlay={false} />
               <Box sx={{ mt: 1.5, textAlign: 'center' }}>
                 <ImagePopup imageUrl={questionObj.video || ''} mediaType={'video'} />
               </Box>
             </Box>
           )}
-          
+
           {!questionObj && (
             <Typography variant='h5' color='error.main' fontWeight={600}>
               * Question is not completed!
@@ -152,7 +164,7 @@ export const SingleChoiceTemplate = ({ question }) => {
 
         {/* Options */}
         <Box>
-          <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2.5, color: 'text.primary' }}>
+          <Typography variant='subtitle1' fontWeight={600} sx={{ mb: 2.5, color: 'text.primary' }}>
             Answer Options
           </Typography>
           <RadioGroup>
@@ -172,7 +184,7 @@ export const SingleChoiceTemplate = ({ question }) => {
                         height: '100%',
                         minHeight: 140,
                         bgcolor: 'background.paper',
-                        boxShadow: option.correct 
+                        boxShadow: option.correct
                           ? `0 6px 20px ${alpha(theme.palette.success.main, 0.25)}`
                           : '0 3px 12px rgba(0,0,0,0.08)',
                         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -188,49 +200,53 @@ export const SingleChoiceTemplate = ({ question }) => {
                       }}
                     >
                       {/* Header with Label */}
-                      <Box sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        p: 1.5,
-                        bgcolor: option.correct 
-                          ? alpha(theme.palette.success.main, 0.12)
-                          : alpha(theme.palette.primary.main, 0.08),
-                        borderBottom: '1px solid',
-                        borderColor: 'divider'
-                      }}>
-                        <Stack direction="row" alignItems="center" spacing={1.5}>
-                          <Box sx={{
-                            width: 32,
-                            height: 32,
-                            borderRadius: 1,
-                            bgcolor: option.correct ? 'success.main' : 'primary.main',
-                            color: 'white',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontWeight: 700,
-                            fontSize: '1rem',
-                            boxShadow: option.correct
-                              ? `0 2px 8px ${alpha(theme.palette.success.main, 0.4)}`
-                              : `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`
-                          }}>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          p: 1.5,
+                          bgcolor: option.correct
+                            ? alpha(theme.palette.success.main, 0.12)
+                            : alpha(theme.palette.primary.main, 0.08),
+                          borderBottom: '1px solid',
+                          borderColor: 'divider'
+                        }}
+                      >
+                        <Stack direction='row' alignItems='center' spacing={1.5}>
+                          <Box
+                            sx={{
+                              width: 32,
+                              height: 32,
+                              borderRadius: 1,
+                              bgcolor: option.correct ? 'success.main' : 'primary.main',
+                              color: 'white',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontWeight: 700,
+                              fontSize: '1rem',
+                              boxShadow: option.correct
+                                ? `0 2px 8px ${alpha(theme.palette.success.main, 0.4)}`
+                                : `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`
+                            }}
+                          >
                             {optionLabels[index]}
                           </Box>
                           <Radio
                             disabled
                             checked={option.correct}
-                            size="small"
-                            sx={{ 
+                            size='small'
+                            sx={{
                               color: option.correct ? 'success.main' : 'action.disabled',
                               '&.Mui-checked': { color: 'success.main' }
                             }}
                           />
                         </Stack>
                         {option.correct && (
-                          <Chip 
-                            label="✓" 
-                            size="small"
+                          <Chip
+                            label='✓'
+                            size='small'
                             sx={{
                               bgcolor: 'success.main',
                               color: 'white',
@@ -244,7 +260,7 @@ export const SingleChoiceTemplate = ({ question }) => {
                           />
                         )}
                       </Box>
-                      
+
                       {/* Content */}
                       <Box sx={{ p: 2, flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {option.mediaType === 'image' && option.image ? (
@@ -262,11 +278,15 @@ export const SingleChoiceTemplate = ({ question }) => {
                             }}
                           />
                         ) : (
-                          <Typography variant='body1' fontWeight={500} sx={{ 
-                            color: 'text.primary',
-                            lineHeight: 1.6,
-                            textAlign: 'center'
-                          }}>
+                          <Typography
+                            variant='body1'
+                            fontWeight={500}
+                            sx={{
+                              color: 'text.primary',
+                              lineHeight: 1.6,
+                              textAlign: 'center'
+                            }}
+                          >
                             {option.text}
                           </Typography>
                         )}
@@ -286,38 +306,46 @@ export const SingleChoiceTemplate = ({ question }) => {
 export const MultipleChoiceTemplate = ({ question }) => {
   const questionObj = question?.data?.question
   const theme = useTheme()
-  
+
   return (
     <CardContent sx={{ p: 4, bgcolor: 'background.default' }}>
       <Stack spacing={4}>
         {/* Header */}
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          pb: 2.5,
-          borderBottom: '2px solid',
-          borderColor: 'secondary.main'
-        }}>
-          <Typography variant="h6" fontWeight={700} sx={{ 
-            color: 'secondary.main',
+        <Box
+          sx={{
             display: 'flex',
+            justifyContent: 'space-between',
             alignItems: 'center',
-            gap: 1.5
-          }}>
-            <Box sx={{ 
-              width: 4, 
-              height: 24, 
-              bgcolor: 'secondary.main',
-              borderRadius: 2
-            }} />
+            pb: 2.5,
+            borderBottom: '2px solid',
+            borderColor: 'secondary.main'
+          }}
+        >
+          <Typography
+            variant='h6'
+            fontWeight={700}
+            sx={{
+              color: 'secondary.main',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5
+            }}
+          >
+            <Box
+              sx={{
+                width: 4,
+                height: 24,
+                bgcolor: 'secondary.main',
+                borderRadius: 2
+              }}
+            />
             Multiple Choice Question
           </Typography>
           {questionObj?.mediaType && (
-            <Chip 
+            <Chip
               label={questionObj.mediaType.replace('-', ' + ')}
-              size="small"
-              sx={{ 
+              size='small'
+              sx={{
                 bgcolor: 'secondary.main',
                 color: 'white',
                 fontWeight: 600,
@@ -328,21 +356,23 @@ export const MultipleChoiceTemplate = ({ question }) => {
         </Box>
 
         {/* Question Content */}
-        <Box sx={{
-          p: 3,
-          borderRadius: 2,
-          bgcolor: 'background.paper',
-          border: '1px solid',
-          borderColor: 'divider',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
-        }}>
+        <Box
+          sx={{
+            p: 3,
+            borderRadius: 2,
+            bgcolor: 'background.paper',
+            border: '1px solid',
+            borderColor: 'divider',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+          }}
+        >
           {(questionObj?.mediaType === 'text' ||
             questionObj?.mediaType === 'text-image' ||
             questionObj?.mediaType === 'text-video') && (
-            <Typography 
-              variant='h5' 
+            <Typography
+              variant='h5'
               fontWeight={600}
-              sx={{ 
+              sx={{
                 color: questionObj?.text?.trim() ? 'text.primary' : 'error.main',
                 lineHeight: 1.7,
                 mb: questionObj?.image || questionObj?.video ? 3 : 0
@@ -351,13 +381,13 @@ export const MultipleChoiceTemplate = ({ question }) => {
               {questionObj?.text?.trim() || '* Question is not completed'}
             </Typography>
           )}
-          
+
           {questionObj?.mediaType === 'video' && (
             <Typography variant='h5' fontWeight={600} sx={{ color: 'text.primary', mb: 3 }}>
               Watch the video carefully and answer the question.
             </Typography>
           )}
-          
+
           {(questionObj?.mediaType === 'image' || questionObj?.mediaType === 'text-image') && questionObj?.image && (
             <Box
               component='img'
@@ -376,23 +406,25 @@ export const MultipleChoiceTemplate = ({ question }) => {
               }}
             />
           )}
-          
+
           {(questionObj?.mediaType === 'video' || questionObj?.mediaType === 'text-video') && questionObj.video && (
-            <Box sx={{ 
-              p: 2, 
-              bgcolor: 'grey.50', 
-              borderRadius: 2, 
-              border: '2px solid', 
-              borderColor: 'divider',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
-            }}>
+            <Box
+              sx={{
+                p: 2,
+                bgcolor: 'grey.50',
+                borderRadius: 2,
+                border: '2px solid',
+                borderColor: 'divider',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+              }}
+            >
               <VideoAd url={questionObj.video || ''} showPause autoPlay={false} />
               <Box sx={{ mt: 1.5, textAlign: 'center' }}>
                 <ImagePopup imageUrl={questionObj.video || ''} mediaType={'video'} />
               </Box>
             </Box>
           )}
-          
+
           {!questionObj && (
             <Typography variant='h5' color='error.main' fontWeight={600}>
               * Question is not completed!
@@ -402,7 +434,7 @@ export const MultipleChoiceTemplate = ({ question }) => {
 
         {/* Options */}
         <Box>
-          <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2.5, color: 'text.primary' }}>
+          <Typography variant='subtitle1' fontWeight={600} sx={{ mb: 2.5, color: 'text.primary' }}>
             Answer Options (Select all that apply)
           </Typography>
           <Grid container spacing={2.5}>
@@ -421,7 +453,7 @@ export const MultipleChoiceTemplate = ({ question }) => {
                       height: '100%',
                       minHeight: 140,
                       bgcolor: 'background.paper',
-                      boxShadow: option.correct 
+                      boxShadow: option.correct
                         ? `0 6px 20px ${alpha(theme.palette.success.main, 0.25)}`
                         : '0 3px 12px rgba(0,0,0,0.08)',
                       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -437,49 +469,53 @@ export const MultipleChoiceTemplate = ({ question }) => {
                     }}
                   >
                     {/* Header with Label */}
-                    <Box sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      p: 1.5,
-                      bgcolor: option.correct 
-                        ? alpha(theme.palette.success.main, 0.12)
-                        : alpha(theme.palette.secondary.main, 0.08),
-                      borderBottom: '1px solid',
-                      borderColor: 'divider'
-                    }}>
-                      <Stack direction="row" alignItems="center" spacing={1.5}>
-                        <Box sx={{
-                          width: 32,
-                          height: 32,
-                          borderRadius: 1,
-                          bgcolor: option.correct ? 'success.main' : 'secondary.main',
-                          color: 'white',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontWeight: 700,
-                          fontSize: '1rem',
-                          boxShadow: option.correct
-                            ? `0 2px 8px ${alpha(theme.palette.success.main, 0.4)}`
-                            : `0 2px 8px ${alpha(theme.palette.secondary.main, 0.3)}`
-                        }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        p: 1.5,
+                        bgcolor: option.correct
+                          ? alpha(theme.palette.success.main, 0.12)
+                          : alpha(theme.palette.secondary.main, 0.08),
+                        borderBottom: '1px solid',
+                        borderColor: 'divider'
+                      }}
+                    >
+                      <Stack direction='row' alignItems='center' spacing={1.5}>
+                        <Box
+                          sx={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: 1,
+                            bgcolor: option.correct ? 'success.main' : 'secondary.main',
+                            color: 'white',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontWeight: 700,
+                            fontSize: '1rem',
+                            boxShadow: option.correct
+                              ? `0 2px 8px ${alpha(theme.palette.success.main, 0.4)}`
+                              : `0 2px 8px ${alpha(theme.palette.secondary.main, 0.3)}`
+                          }}
+                        >
                           {optionLabels[index]}
                         </Box>
                         <Checkbox
                           disabled
                           checked={option.correct}
-                          size="small"
-                          sx={{ 
+                          size='small'
+                          sx={{
                             color: option.correct ? 'success.main' : 'action.disabled',
                             '&.Mui-checked': { color: 'success.main' }
                           }}
                         />
                       </Stack>
                       {option.correct && (
-                        <Chip 
-                          label="✓" 
-                          size="small"
+                        <Chip
+                          label='✓'
+                          size='small'
                           sx={{
                             bgcolor: 'success.main',
                             color: 'white',
@@ -493,7 +529,7 @@ export const MultipleChoiceTemplate = ({ question }) => {
                         />
                       )}
                     </Box>
-                    
+
                     {/* Content */}
                     <Box sx={{ p: 2, flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       {option.mediaType === 'image' && option.image ? (
@@ -511,11 +547,15 @@ export const MultipleChoiceTemplate = ({ question }) => {
                           }}
                         />
                       ) : (
-                        <Typography variant='body1' fontWeight={500} sx={{ 
-                          color: 'text.primary',
-                          lineHeight: 1.6,
-                          textAlign: 'center'
-                        }}>
+                        <Typography
+                          variant='body1'
+                          fontWeight={500}
+                          sx={{
+                            color: 'text.primary',
+                            lineHeight: 1.6,
+                            textAlign: 'center'
+                          }}
+                        >
                           {option.text}
                         </Typography>
                       )}
@@ -534,38 +574,46 @@ export const MultipleChoiceTemplate = ({ question }) => {
 export const TrueOrFalseTemplate = ({ question }) => {
   const questionObj = question?.data?.question
   const theme = useTheme()
-  
+
   return (
     <CardContent sx={{ p: 4, bgcolor: 'background.default' }}>
       <Stack spacing={4}>
         {/* Header */}
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          pb: 2.5,
-          borderBottom: '2px solid',
-          borderColor: 'info.main'
-        }}>
-          <Typography variant="h6" fontWeight={700} sx={{ 
-            color: 'info.main',
+        <Box
+          sx={{
             display: 'flex',
+            justifyContent: 'space-between',
             alignItems: 'center',
-            gap: 1.5
-          }}>
-            <Box sx={{ 
-              width: 4, 
-              height: 24, 
-              bgcolor: 'info.main',
-              borderRadius: 2
-            }} />
+            pb: 2.5,
+            borderBottom: '2px solid',
+            borderColor: 'info.main'
+          }}
+        >
+          <Typography
+            variant='h6'
+            fontWeight={700}
+            sx={{
+              color: 'info.main',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5
+            }}
+          >
+            <Box
+              sx={{
+                width: 4,
+                height: 24,
+                bgcolor: 'info.main',
+                borderRadius: 2
+              }}
+            />
             True / False Question
           </Typography>
           {questionObj?.mediaType && (
-            <Chip 
+            <Chip
               label={questionObj.mediaType.replace('-', ' + ')}
-              size="small"
-              sx={{ 
+              size='small'
+              sx={{
                 bgcolor: 'info.main',
                 color: 'white',
                 fontWeight: 600,
@@ -576,21 +624,23 @@ export const TrueOrFalseTemplate = ({ question }) => {
         </Box>
 
         {/* Question Content */}
-        <Box sx={{
-          p: 3,
-          borderRadius: 2,
-          bgcolor: 'background.paper',
-          border: '1px solid',
-          borderColor: 'divider',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
-        }}>
+        <Box
+          sx={{
+            p: 3,
+            borderRadius: 2,
+            bgcolor: 'background.paper',
+            border: '1px solid',
+            borderColor: 'divider',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+          }}
+        >
           {(questionObj?.mediaType === 'text' ||
             questionObj?.mediaType === 'text-image' ||
             questionObj?.mediaType === 'text-video') && (
-            <Typography 
-              variant='h5' 
+            <Typography
+              variant='h5'
               fontWeight={600}
-              sx={{ 
+              sx={{
                 color: questionObj?.text?.trim() ? 'text.primary' : 'error.main',
                 lineHeight: 1.7,
                 mb: questionObj?.image || questionObj?.video ? 3 : 0
@@ -599,13 +649,13 @@ export const TrueOrFalseTemplate = ({ question }) => {
               {questionObj?.text?.trim() || '* Question is not completed'}
             </Typography>
           )}
-          
+
           {questionObj?.mediaType === 'video' && (
             <Typography variant='h5' fontWeight={600} sx={{ color: 'text.primary', mb: 3 }}>
               Watch the video carefully and answer the question.
             </Typography>
           )}
-          
+
           {(questionObj?.mediaType === 'image' || questionObj?.mediaType === 'text-image') && questionObj?.image && (
             <Box
               component='img'
@@ -624,23 +674,25 @@ export const TrueOrFalseTemplate = ({ question }) => {
               }}
             />
           )}
-          
+
           {(questionObj?.mediaType === 'video' || questionObj?.mediaType === 'text-video') && questionObj?.video && (
-            <Box sx={{ 
-              p: 2, 
-              bgcolor: 'grey.50', 
-              borderRadius: 2, 
-              border: '2px solid', 
-              borderColor: 'divider',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
-            }}>
+            <Box
+              sx={{
+                p: 2,
+                bgcolor: 'grey.50',
+                borderRadius: 2,
+                border: '2px solid',
+                borderColor: 'divider',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+              }}
+            >
               <VideoAd url={questionObj.video || ''} showPause autoPlay={false} />
               <Box sx={{ mt: 1.5, textAlign: 'center' }}>
                 <ImagePopup imageUrl={questionObj.video || ''} mediaType={'video'} />
               </Box>
             </Box>
           )}
-          
+
           {!questionObj && (
             <Typography variant='h5' color='error.main' fontWeight={600}>
               * Question is not completed!
@@ -650,7 +702,7 @@ export const TrueOrFalseTemplate = ({ question }) => {
 
         {/* Options */}
         <Box>
-          <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2.5, color: 'text.primary' }}>
+          <Typography variant='subtitle1' fontWeight={600} sx={{ mb: 2.5, color: 'text.primary' }}>
             Answer Options
           </Typography>
           <RadioGroup>
@@ -667,7 +719,7 @@ export const TrueOrFalseTemplate = ({ question }) => {
                       borderRadius: 2,
                       p: 0,
                       bgcolor: 'background.paper',
-                      boxShadow: option.correct 
+                      boxShadow: option.correct
                         ? `0 6px 20px ${alpha(theme.palette.success.main, 0.25)}`
                         : '0 3px 12px rgba(0,0,0,0.08)',
                       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -683,33 +735,43 @@ export const TrueOrFalseTemplate = ({ question }) => {
                     }}
                   >
                     {/* Icon Section */}
-                    <Box sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      p: 3,
-                      bgcolor: option.correct 
-                        ? alpha(theme.palette.success.main, 0.12)
-                        : alpha(theme.palette.info.main, 0.08),
-                      borderRight: '1px solid',
-                      borderColor: 'divider',
-                      minWidth: 80
-                    }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        p: 3,
+                        bgcolor: option.correct
+                          ? alpha(theme.palette.success.main, 0.12)
+                          : alpha(theme.palette.info.main, 0.08),
+                        borderRight: '1px solid',
+                        borderColor: 'divider',
+                        minWidth: 80
+                      }}
+                    >
                       {option.id === 'true' ? (
-                        <CheckCircleIcon sx={{ 
-                          fontSize: 40, 
-                          color: option.correct ? 'success.main' : alpha(theme.palette.info.main, 0.6),
-                          filter: option.correct ? `drop-shadow(0 2px 6px ${alpha(theme.palette.success.main, 0.4)})` : 'none'
-                        }} />
+                        <CheckCircleIcon
+                          sx={{
+                            fontSize: 40,
+                            color: option.correct ? 'success.main' : alpha(theme.palette.info.main, 0.6),
+                            filter: option.correct
+                              ? `drop-shadow(0 2px 6px ${alpha(theme.palette.success.main, 0.4)})`
+                              : 'none'
+                          }}
+                        />
                       ) : (
-                        <CancelIcon sx={{ 
-                          fontSize: 40, 
-                          color: option.correct ? 'success.main' : alpha(theme.palette.info.main, 0.6),
-                          filter: option.correct ? `drop-shadow(0 2px 6px ${alpha(theme.palette.success.main, 0.4)})` : 'none'
-                        }} />
+                        <CancelIcon
+                          sx={{
+                            fontSize: 40,
+                            color: option.correct ? 'success.main' : alpha(theme.palette.info.main, 0.6),
+                            filter: option.correct
+                              ? `drop-shadow(0 2px 6px ${alpha(theme.palette.success.main, 0.4)})`
+                              : 'none'
+                          }}
+                        />
                       )}
                     </Box>
-                    
+
                     {/* Text Section */}
                     <Box sx={{ p: 2.5, flex: 1 }}>
                       <Stack spacing={1}>
@@ -717,9 +779,9 @@ export const TrueOrFalseTemplate = ({ question }) => {
                           {option.text}
                         </Typography>
                         {option.correct && (
-                          <Chip 
-                            label="✓ Correct Answer" 
-                            size="small"
+                          <Chip
+                            label='✓ Correct Answer'
+                            size='small'
                             sx={{
                               bgcolor: 'success.main',
                               color: 'white',
@@ -753,32 +815,40 @@ export const FillInTheBlanksTemplate = ({ question }) => {
     <CardContent sx={{ p: 4, bgcolor: 'background.default' }}>
       <Stack spacing={4}>
         {/* Header */}
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          pb: 2.5,
-          borderBottom: '2px solid',
-          borderColor: 'warning.main'
-        }}>
-          <Typography variant="h6" fontWeight={700} sx={{ 
-            color: 'warning.main',
+        <Box
+          sx={{
             display: 'flex',
+            justifyContent: 'space-between',
             alignItems: 'center',
-            gap: 1.5
-          }}>
-            <Box sx={{ 
-              width: 4, 
-              height: 24, 
-              bgcolor: 'warning.main',
-              borderRadius: 2
-            }} />
+            pb: 2.5,
+            borderBottom: '2px solid',
+            borderColor: 'warning.main'
+          }}
+        >
+          <Typography
+            variant='h6'
+            fontWeight={700}
+            sx={{
+              color: 'warning.main',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5
+            }}
+          >
+            <Box
+              sx={{
+                width: 4,
+                height: 24,
+                bgcolor: 'warning.main',
+                borderRadius: 2
+              }}
+            />
             Fill in the Blanks Question
           </Typography>
-          <Chip 
+          <Chip
             label={`${blankCount} Blank${blankCount !== 1 ? 's' : ''}`}
-            size="small"
-            sx={{ 
+            size='small'
+            sx={{
               bgcolor: 'warning.main',
               color: 'white',
               fontWeight: 600,
@@ -788,34 +858,38 @@ export const FillInTheBlanksTemplate = ({ question }) => {
         </Box>
 
         {/* Question Content */}
-        <Box sx={{
-          p: 3.5,
-          borderRadius: 2,
-          bgcolor: 'background.paper',
-          border: '1px solid',
-          borderColor: 'divider',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
-        }}>
+        <Box
+          sx={{
+            p: 3.5,
+            borderRadius: 2,
+            bgcolor: 'background.paper',
+            border: '1px solid',
+            borderColor: 'divider',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+          }}
+        >
           {questionObj?.length === 0 ? (
             <Typography variant='h5' color='error.main' fontWeight={600}>
               * Question is not completed
             </Typography>
           ) : (
-            <Box sx={{ 
-              display: 'flex', 
-              flexWrap: 'wrap', 
-              gap: 1.5, 
-              alignItems: 'center',
-              lineHeight: 2.5
-            }}>
+            <Box
+              sx={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 1.5,
+                alignItems: 'center',
+                lineHeight: 2.5
+              }}
+            >
               {questionObj?.map((part, index) => (
                 <Box key={part.id} sx={{ display: 'inline-flex', alignItems: 'center' }}>
                   {part.type === 'text' ? (
-                    <Typography 
-                      variant='h5' 
-                      component='span' 
+                    <Typography
+                      variant='h5'
+                      component='span'
                       fontWeight={500}
-                      sx={{ 
+                      sx={{
                         color: part.content.trim() ? 'text.primary' : 'error.main',
                         lineHeight: 1.8,
                         fontSize: '1.3rem'
@@ -831,35 +905,35 @@ export const FillInTheBlanksTemplate = ({ question }) => {
                         px: 2.5,
                         py: 1,
                         borderRadius: 1.5,
-                        bgcolor: part.content.trim() 
+                        bgcolor: part.content.trim()
                           ? alpha(theme.palette.warning.main, 0.1)
                           : alpha(theme.palette.error.main, 0.1),
                         border: '2px solid',
-                        borderColor: part.content.trim()
-                          ? 'warning.main'
-                          : 'error.main',
+                        borderColor: part.content.trim() ? 'warning.main' : 'error.main',
                         minWidth: 120,
                         boxShadow: part.content.trim()
                           ? `0 2px 8px ${alpha(theme.palette.warning.main, 0.2)}`
                           : `0 2px 8px ${alpha(theme.palette.error.main, 0.15)}`,
                         position: 'relative',
-                        '&::after': part.content.trim() ? {
-                          content: '""',
-                          position: 'absolute',
-                          bottom: -2,
-                          left: '50%',
-                          transform: 'translateX(-50%)',
-                          width: '70%',
-                          height: 2,
-                          bgcolor: 'warning.main',
-                          borderRadius: 1
-                        } : {}
+                        '&::after': part.content.trim()
+                          ? {
+                              content: '""',
+                              position: 'absolute',
+                              bottom: -2,
+                              left: '50%',
+                              transform: 'translateX(-50%)',
+                              width: '70%',
+                              height: 2,
+                              bgcolor: 'warning.main',
+                              borderRadius: 1
+                            }
+                          : {}
                       }}
                     >
-                      <Typography 
-                        variant='h6' 
+                      <Typography
+                        variant='h6'
                         fontWeight={700}
-                        sx={{ 
+                        sx={{
                           color: part.content.trim() ? 'warning.dark' : 'error.main',
                           fontSize: '1.1rem'
                         }}
@@ -875,20 +949,34 @@ export const FillInTheBlanksTemplate = ({ question }) => {
         </Box>
 
         {/* Info */}
-        <Box sx={{ 
-          p: 2.5, 
-          borderRadius: 2, 
-          bgcolor: alpha(theme.palette.info.main, 0.06),
-          border: '1px solid',
-          borderColor: alpha(theme.palette.info.main, 0.25),
-          boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
-        }}>
-          <Typography variant="body1" sx={{ color: 'info.dark', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Box component="span" sx={{ fontSize: '1.2rem' }}>💡</Box>
-            Players will need to fill in the <Box component="span" sx={{ 
-              fontWeight: 700, 
-              color: 'warning.main'
-            }}>highlighted blanks</Box> with correct answers.
+        <Box
+          sx={{
+            p: 2.5,
+            borderRadius: 2,
+            bgcolor: alpha(theme.palette.info.main, 0.06),
+            border: '1px solid',
+            borderColor: alpha(theme.palette.info.main, 0.25),
+            boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+          }}
+        >
+          <Typography
+            variant='body1'
+            sx={{ color: 'info.dark', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
+          >
+            <Box component='span' sx={{ fontSize: '1.2rem' }}>
+              💡
+            </Box>
+            Players will need to fill in the{' '}
+            <Box
+              component='span'
+              sx={{
+                fontWeight: 700,
+                color: 'warning.main'
+              }}
+            >
+              highlighted blanks
+            </Box>{' '}
+            with correct answers.
           </Typography>
         </Box>
       </Stack>
@@ -899,7 +987,7 @@ export const FillInTheBlanksTemplate = ({ question }) => {
 export const DummySingleChoiceTemplate = ({ question, title, questionNumber }) => {
   const questionObj = question?.data?.question
   const theme = useTheme()
-  
+
   return (
     <CardContent sx={{ p: 1.5 }} key={question._id}>
       <Stack spacing={1.5}>
@@ -912,11 +1000,14 @@ export const DummySingleChoiceTemplate = ({ question, title, questionNumber }) =
             sx={{
               textOverflow: 'ellipsis',
               overflow: 'hidden',
-              color: questionObj && (questionObj.text || questionObj.image || questionObj.video) ? '#202124' : 'error.main',
+              color:
+                questionObj && (questionObj.text || questionObj.image || questionObj.video)
+                  ? theme.palette.text.primary
+                  : 'error.main',
               pr: 5
             }}
           >
-            {questionNumber}. {' '}
+            {questionNumber}.{' '}
             {(questionObj?.mediaType === 'text' || questionObj?.mediaType === 'text-image') && questionObj?.text
               ? questionObj.text
               : questionObj?.mediaType === 'text-video' && questionObj?.text
@@ -954,10 +1045,10 @@ export const DummySingleChoiceTemplate = ({ question, title, questionNumber }) =
         </Box>
 
         {/* Type Badge */}
-        <Chip 
-          label="Single Choice" 
-          size="small"
-          sx={{ 
+        <Chip
+          label='Single Choice'
+          size='small'
+          sx={{
             width: 'fit-content',
             height: 20,
             fontSize: '0.65rem',
@@ -977,14 +1068,12 @@ export const DummySingleChoiceTemplate = ({ question, title, questionNumber }) =
                   alignItems: 'center',
                   gap: 0.75,
                   p: 0.75,
-                  bgcolor: option.text.trim() 
+                  bgcolor: option.text.trim()
                     ? alpha(theme.palette.primary.main, 0.08)
                     : alpha(theme.palette.error.main, 0.1),
                   borderRadius: 1.5,
                   border: '1px solid',
-                  borderColor: option.correct
-                    ? theme.palette.success.main
-                    : 'transparent',
+                  borderColor: option.correct ? theme.palette.success.main : 'transparent',
                   minHeight: 32
                 }}
               >
@@ -1030,7 +1119,7 @@ export const DummySingleChoiceTemplate = ({ question, title, questionNumber }) =
 export const DummyMultipleChoiceTemplate = ({ question, title, questionNumber }) => {
   const questionObj = question?.data?.question
   const theme = useTheme()
-  
+
   return (
     <CardContent sx={{ p: 1.5 }} key={question._id}>
       <Stack spacing={1.5}>
@@ -1043,11 +1132,14 @@ export const DummyMultipleChoiceTemplate = ({ question, title, questionNumber })
             sx={{
               textOverflow: 'ellipsis',
               overflow: 'hidden',
-              color: questionObj && (questionObj.text || questionObj.image || questionObj.video) ? '#202124' : 'error.main',
+              color:
+                questionObj && (questionObj.text || questionObj.image || questionObj.video)
+                  ? theme.palette.text.primary
+                  : 'error.main',
               pr: 5
             }}
           >
-            {questionNumber}. {' '}
+            {questionNumber}.{' '}
             {(questionObj?.mediaType === 'text' || questionObj?.mediaType === 'text-image') && questionObj?.text
               ? questionObj.text
               : questionObj?.mediaType === 'text-video' && questionObj?.text
@@ -1085,10 +1177,10 @@ export const DummyMultipleChoiceTemplate = ({ question, title, questionNumber })
         </Box>
 
         {/* Type Badge */}
-        <Chip 
-          label="Multiple Choice" 
-          size="small"
-          sx={{ 
+        <Chip
+          label='Multiple Choice'
+          size='small'
+          sx={{
             width: 'fit-content',
             height: 20,
             fontSize: '0.65rem',
@@ -1108,14 +1200,12 @@ export const DummyMultipleChoiceTemplate = ({ question, title, questionNumber })
                   alignItems: 'center',
                   gap: 0.75,
                   p: 0.75,
-                  bgcolor: option.text.trim() 
+                  bgcolor: option.text.trim()
                     ? alpha(theme.palette.secondary.main, 0.08)
                     : alpha(theme.palette.error.main, 0.1),
                   borderRadius: 1.5,
                   border: '1px solid',
-                  borderColor: option.correct
-                    ? theme.palette.success.main
-                    : 'transparent',
+                  borderColor: option.correct ? theme.palette.success.main : 'transparent',
                   minHeight: 32
                 }}
               >
@@ -1167,8 +1257,8 @@ export const DummyFillInTheBlanksTemplate = ({ question, title, questionNumber }
     <CardContent sx={{ p: 1.5 }} key={question._id}>
       <Stack spacing={1.5}>
         {/* Question Header with Number */}
-        <Stack direction="row" alignItems="flex-start" spacing={0.5}>
-          <Typography variant='subtitle1' fontWeight={700} sx={{ color: '#202124' }}>
+        <Stack direction='row' alignItems='flex-start' spacing={0.5}>
+          <Typography variant='subtitle1' fontWeight={700} sx={{ color: theme.palette.text.primary }}>
             {questionNumber}.
           </Typography>
           <Box sx={{ flex: 1, display: 'flex', flexWrap: 'wrap', gap: 0.5, alignItems: 'center' }}>
@@ -1184,7 +1274,7 @@ export const DummyFillInTheBlanksTemplate = ({ question, title, questionNumber }
                       variant='subtitle1'
                       component='span'
                       fontWeight={500}
-                      sx={{ color: part.content.trim() ? '#202124' : 'error.main' }}
+                      sx={{ color: part.content.trim() ? theme.palette.text.primary : 'error.main' }}
                     >
                       {part.content.trim() || '* Empty'}
                     </Typography>
@@ -1197,13 +1287,11 @@ export const DummyFillInTheBlanksTemplate = ({ question, title, questionNumber }
                         px: 1,
                         py: 0.25,
                         borderRadius: 1,
-                        bgcolor: part.content.trim() 
+                        bgcolor: part.content.trim()
                           ? alpha(theme.palette.warning.main, 0.15)
                           : alpha(theme.palette.error.main, 0.15),
                         border: '1px solid',
-                        borderColor: part.content.trim()
-                          ? theme.palette.warning.main
-                          : theme.palette.error.main,
+                        borderColor: part.content.trim() ? theme.palette.warning.main : theme.palette.error.main,
                         minWidth: 60
                       }}
                     >
@@ -1227,11 +1315,11 @@ export const DummyFillInTheBlanksTemplate = ({ question, title, questionNumber }
         </Stack>
 
         {/* Type Badge */}
-        <Stack direction="row" spacing={1}>
-          <Chip 
-            label="Fill in Blanks" 
-            size="small"
-            sx={{ 
+        <Stack direction='row' spacing={1}>
+          <Chip
+            label='Fill in Blanks'
+            size='small'
+            sx={{
               width: 'fit-content',
               height: 20,
               fontSize: '0.65rem',
@@ -1240,11 +1328,11 @@ export const DummyFillInTheBlanksTemplate = ({ question, title, questionNumber }
               color: 'warning.main'
             }}
           />
-          <Chip 
+          <Chip
             label={`${blankCount} blank${blankCount !== 1 ? 's' : ''}`}
-            size="small"
-            variant="outlined"
-            sx={{ 
+            size='small'
+            variant='outlined'
+            sx={{
               height: 20,
               fontSize: '0.6rem',
               fontWeight: 600
@@ -1261,7 +1349,7 @@ export const DummyTrueOrFalseTemplate = ({ question, title, questionNumber }) =>
   const theme = useTheme()
   const trueOption = question?.data?.options.find(op => op.id === 'true')
   const falseOption = question?.data?.options.find(op => op.id === 'false')
-  
+
   return (
     <CardContent sx={{ p: 1.5 }} key={question._id}>
       <Stack spacing={1.5}>
@@ -1274,11 +1362,14 @@ export const DummyTrueOrFalseTemplate = ({ question, title, questionNumber }) =>
             sx={{
               textOverflow: 'ellipsis',
               overflow: 'hidden',
-              color: questionObj && (questionObj.text || questionObj.image || questionObj.video) ? '#202124' : 'error.main',
+              color:
+                questionObj && (questionObj.text || questionObj.image || questionObj.video)
+                  ? theme.palette.text.primary
+                  : 'error.main',
               pr: 5
             }}
           >
-            {questionNumber}. {' '}
+            {questionNumber}.{' '}
             {(questionObj?.mediaType === 'text' || questionObj?.mediaType === 'text-image') && questionObj?.text
               ? questionObj.text
               : questionObj?.mediaType === 'text-video' && questionObj?.text
@@ -1316,10 +1407,10 @@ export const DummyTrueOrFalseTemplate = ({ question, title, questionNumber }) =>
         </Box>
 
         {/* Type Badge */}
-        <Chip 
-          label="True/False" 
-          size="small"
-          sx={{ 
+        <Chip
+          label='True/False'
+          size='small'
+          sx={{
             width: 'fit-content',
             height: 20,
             fontSize: '0.65rem',
@@ -1338,14 +1429,13 @@ export const DummyTrueOrFalseTemplate = ({ question, title, questionNumber }) =>
                 alignItems: 'center',
                 gap: 1,
                 p: 0.75,
-                bgcolor: (trueOption?.text || trueOption?.image)
-                  ? alpha(theme.palette.success.main, 0.1)
-                  : alpha(theme.palette.grey[500], 0.1),
+                bgcolor:
+                  trueOption?.text || trueOption?.image
+                    ? alpha(theme.palette.success.main, 0.1)
+                    : alpha(theme.palette.grey[500], 0.1),
                 borderRadius: 1.5,
                 border: '1px solid',
-                borderColor: trueOption?.correct 
-                  ? theme.palette.success.main
-                  : 'transparent',
+                borderColor: trueOption?.correct ? theme.palette.success.main : 'transparent',
                 minHeight: 32
               }}
             >
@@ -1354,21 +1444,20 @@ export const DummyTrueOrFalseTemplate = ({ question, title, questionNumber }) =>
                 {trueOption?.text || 'True'}
               </Typography>
             </Box>
-            
+
             <Box
               sx={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: 1,
                 p: 0.75,
-                bgcolor: (falseOption?.text || falseOption?.image)
-                  ? alpha(theme.palette.error.main, 0.1)
-                  : alpha(theme.palette.grey[500], 0.1),
+                bgcolor:
+                  falseOption?.text || falseOption?.image
+                    ? alpha(theme.palette.error.main, 0.1)
+                    : alpha(theme.palette.grey[500], 0.1),
                 borderRadius: 1.5,
                 border: '1px solid',
-                borderColor: falseOption?.correct
-                  ? theme.palette.success.main
-                  : 'transparent',
+                borderColor: falseOption?.correct ? theme.palette.success.main : 'transparent',
                 minHeight: 32
               }}
             >

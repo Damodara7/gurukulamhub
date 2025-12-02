@@ -243,7 +243,7 @@ const AdminRejectedQuizzesTable = ({ data, refreshData }) => {
                 height: { xs: 40, sm: 45, md: 50 },
                 borderRadius: 1,
                 overflow: 'hidden',
-                bgcolor: 'grey.100',
+                bgcolor: alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.08 : 0.1),
                 flexShrink: 0
               }}
             >
@@ -397,8 +397,9 @@ const AdminRejectedQuizzesTable = ({ data, refreshData }) => {
     <Card
       sx={{
         borderRadius: { xs: 2, sm: '16px' },
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-        border: '2px solid #f5f5f5'
+        boxShadow: theme.palette.mode === 'dark' ? '0 4px 20px rgba(0, 0, 0, 0.4)' : '0 4px 20px rgba(0, 0, 0, 0.08)',
+        border: `2px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
+        bgcolor: theme.palette.background.paper
       }}
     >
       <CardContent
@@ -414,30 +415,34 @@ const AdminRejectedQuizzesTable = ({ data, refreshData }) => {
           onChange={value => setGlobalFilter(String(value))}
           placeholder='Search quizzes...'
           InputProps={{
-            startAdornment: <SearchIcon sx={{ mr: 1, color: '#666', fontSize: { xs: '1.1rem', sm: '1.3rem' } }} />
+            startAdornment: (
+              <SearchIcon
+                sx={{ mr: 1, color: theme.palette.text.secondary, fontSize: { xs: '1.1rem', sm: '1.3rem' } }}
+              />
+            )
           }}
           sx={{
             width: { xs: '100%', sm: '70%', md: '60%' },
             minWidth: { xs: '100%', sm: '400px' },
             '& .MuiOutlinedInput-root': {
               borderRadius: { xs: '12px', sm: '15px' },
-              backgroundColor: 'white',
+              backgroundColor: theme.palette.background.default,
               transition: 'all 0.3s ease',
               '& fieldset': {
-                borderColor: '#d0d0d0',
+                borderColor: alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.2 : 0.3),
                 borderWidth: '2px',
                 transition: 'all 0.3s ease'
               },
               '&:hover': {
                 '& fieldset': {
-                  borderColor: '#667eea',
+                  borderColor: theme.palette.primary.main,
                   borderWidth: '2px'
                 }
               },
               '&.Mui-focused': {
-                boxShadow: '0 0 0 3px rgba(102, 126, 234, 0.1)',
+                boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.1)}`,
                 '& fieldset': {
-                  borderColor: '#667eea !important',
+                  borderColor: `${theme.palette.primary.main} !important`,
                   borderWidth: '2px'
                 }
               }
@@ -445,6 +450,7 @@ const AdminRejectedQuizzesTable = ({ data, refreshData }) => {
             '& .MuiInputBase-input': {
               padding: { xs: '10px 16px 10px 6px', sm: '12px 20px 12px 8px' },
               fontSize: { xs: '0.875rem', sm: '0.95rem' },
+              color: theme.palette.text.primary,
               '&:focus': {
                 outline: 'none'
               }
@@ -511,7 +517,7 @@ const AdminRejectedQuizzesTable = ({ data, refreshData }) => {
                       display: 'flex',
                       flexDirection: 'column',
                       gap: 1.2,
-                      background: '#fff',
+                      bgcolor: theme.palette.background.paper,
                       position: 'relative'
                     }}
                   >
@@ -523,7 +529,7 @@ const AdminRejectedQuizzesTable = ({ data, refreshData }) => {
                           height: 60,
                           borderRadius: 1.5,
                           overflow: 'hidden',
-                          bgcolor: 'grey.100',
+                          bgcolor: alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.08 : 0.1),
                           flexShrink: 0
                         }}
                       >
@@ -709,24 +715,38 @@ const AdminRejectedQuizzesTable = ({ data, refreshData }) => {
                         className={classnames({ selected: row.getIsSelected() })}
                         style={{
                           background: row.getIsSelected()
-                            ? 'linear-gradient(135deg, rgba(244, 67, 54, 0.15) 0%, rgba(211, 47, 47, 0.15) 100%)'
+                            ? `linear-gradient(135deg, ${alpha(theme.palette.error.main, 0.15)} 0%, ${alpha(
+                                theme.palette.error.dark,
+                                0.15
+                              )} 100%)`
                             : index % 2 === 0
-                              ? 'linear-gradient(135deg, rgba(244, 67, 54, 0.03) 0%, rgba(211, 47, 47, 0.03) 100%)'
-                              : 'white',
-
+                              ? `linear-gradient(135deg, ${alpha(theme.palette.error.main, 0.03)} 0%, ${alpha(
+                                  theme.palette.error.dark,
+                                  0.03
+                                )} 100%)`
+                              : theme.palette.mode === 'dark'
+                                ? theme.palette.background.default
+                                : theme.palette.background.paper,
                           borderLeft: '3px solid transparent'
                         }}
                         onMouseEnter={e => {
-                          e.currentTarget.style.background =
-                            'linear-gradient(135deg, rgba(244, 67, 54, 0.12) 0%, rgba(211, 47, 47, 0.12) 100%)'
-                          e.currentTarget.style.borderLeft = '3px solid #f44336'
+                          e.currentTarget.style.background = `linear-gradient(135deg, ${alpha(
+                            theme.palette.error.main,
+                            0.12
+                          )} 0%, ${alpha(theme.palette.error.dark, 0.12)} 100%)`
+                          e.currentTarget.style.borderLeft = `3px solid ${theme.palette.error.main}`
                         }}
                         onMouseLeave={e => {
                           if (!row.getIsSelected()) {
                             e.currentTarget.style.background =
                               index % 2 === 0
-                                ? 'linear-gradient(135deg, rgba(244, 67, 54, 0.03) 0%, rgba(211, 47, 47, 0.03) 100%)'
-                                : 'white'
+                                ? `linear-gradient(135deg, ${alpha(theme.palette.error.main, 0.03)} 0%, ${alpha(
+                                    theme.palette.error.dark,
+                                    0.03
+                                  )} 100%)`
+                                : theme.palette.mode === 'dark'
+                                  ? theme.palette.background.default
+                                  : theme.palette.background.paper
                             e.currentTarget.style.borderLeft = '3px solid transparent'
                           }
                         }}

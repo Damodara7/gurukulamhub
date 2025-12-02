@@ -3,17 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import QuizDetails from '@/components/quiz-builder-1/QuizDetails'
 import QuestionBuilderArea from '@/components/quiz-builder-1/QuestionBuilderArea'
-import {
-  Box,
-  Button,
-  Snackbar,
-  Alert,
-  Typography,
-  Container,
-  Stack,
-  useTheme,
-  alpha
-} from '@mui/material'
+import { Box, Button, Snackbar, Alert, Typography, Container, Stack, useTheme, alpha } from '@mui/material'
 import { API_URLS } from '@/configs/apiConfig'
 import * as RestApi from '@/utils/restApiUtil'
 import { validateQuizQuestions } from './validateQuizQuestions'
@@ -143,22 +133,22 @@ function PrimaryQuizBuilder({ quiz, isAdmin = false }) {
   }, [builderAreaRef.current]) // Run when ref changes
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa', pb: 6 }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: theme.palette.background.default, pb: 6 }}>
       {/* Header Section */}
       <Box
         sx={{
-          bgcolor: 'white',
+          bgcolor: theme.palette.background.paper,
           pt: { xs: 3, md: 4 },
           pb: { xs: 3, md: 4 },
-          borderBottom: '1px solid #e8eaed',
+          borderBottom: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
           mb: 4
         }}
       >
-        <Container maxWidth="xl">
-          <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
+        <Container maxWidth='xl'>
+          <Stack direction='row' justifyContent='space-between' alignItems='center' flexWrap='wrap' gap={2}>
             {/* Title */}
             <Stack spacing={1}>
-              <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Stack direction='row' alignItems='center' spacing={1.5}>
                 <Box
                   sx={{
                     width: 40,
@@ -174,7 +164,7 @@ function PrimaryQuizBuilder({ quiz, isAdmin = false }) {
                   <BuildOutlinedIcon sx={{ fontSize: 22 }} />
                 </Box>
                 <Typography
-                  variant="h4"
+                  variant='h4'
                   fontWeight={800}
                   sx={{
                     fontSize: { xs: '1.5rem', md: '2rem' },
@@ -186,7 +176,7 @@ function PrimaryQuizBuilder({ quiz, isAdmin = false }) {
                   Build Quiz Questions
                 </Typography>
               </Stack>
-              <Typography variant="body1" sx={{ color: '#5f6368', fontSize: '0.95rem', ml: 7 }}>
+              <Typography variant='body1' sx={{ color: theme.palette.text.secondary, fontSize: '0.95rem', ml: 7 }}>
                 Create and manage your quiz questions. Add questions and configure their settings.
               </Typography>
             </Stack>
@@ -210,7 +200,7 @@ function PrimaryQuizBuilder({ quiz, isAdmin = false }) {
       </Box>
 
       {/* Main Content */}
-      <Container maxWidth="xl">
+      <Container maxWidth='xl'>
         <Stack spacing={4}>
           <QuizDetails quiz={quiz} />
           <Box sx={{ minHeight: '600px', height: 'calc(100vh - 400px)' }}>

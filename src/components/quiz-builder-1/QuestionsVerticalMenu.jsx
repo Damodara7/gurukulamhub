@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
-import { 
-  Card, 
-  Box, 
-  Typography, 
-  Button, 
+import {
+  Card,
+  Box,
+  Typography,
+  Button,
   Alert,
   Tooltip,
   Badge,
@@ -40,45 +40,46 @@ export default function QuestionsVerticalMenu({
   onToggleCollapse
 }) {
   const theme = useTheme()
-  
-  const getQuestionErrors = (questionId) => {
+
+  const getQuestionErrors = questionId => {
     return validationErrors.filter(error => error.questionId === questionId)
   }
 
   const renderDummyTemplate = (question, title, questionNumber) => {
     const errors = getQuestionErrors(question._id)
     const hasErrors = errors.length > 0
-    
+
     return (
       <Box sx={{ position: 'relative' }}>
         {hasErrors && (
-          <IconButtonTooltip 
+          <IconButtonTooltip
             title={
               <Box>
                 {errors.map((err, i) => (
                   <div key={i} className='flex gap-2 items-start'>
-                    <span>{i+1}. </span>
-                    <span>{err.field} - {err.message}</span>
-                    </div>
+                    <span>{i + 1}. </span>
+                    <span>
+                      {err.field} - {err.message}
+                    </span>
+                  </div>
                 ))}
               </Box>
             }
-            
-            tooltipProps = {{placement:"right", arrow: true}}
-            sx={{ 
-              position: 'absolute', 
-              bottom: 8, 
+            tooltipProps={{ placement: 'right', arrow: true }}
+            sx={{
+              position: 'absolute',
+              bottom: 8,
               right: 8,
               color: 'error.main',
               zIndex: 1
             }}
-            size="small"
+            size='small'
           >
-              <ErrorOutlineIcon />
+            <ErrorOutlineIcon />
           </IconButtonTooltip>
         )}
-        
-        <Box sx={{ opacity: hasErrors ? 0.8 : 1, maxWidth: '250px', maxHeight: '250px', overflowY:'hidden' }}>
+
+        <Box sx={{ opacity: hasErrors ? 0.8 : 1, maxWidth: '250px', maxHeight: '250px', overflowY: 'hidden' }}>
           {(() => {
             switch (question.templateId) {
               case 'single-choice':
@@ -88,7 +89,9 @@ export default function QuestionsVerticalMenu({
               case 'true-or-false':
                 return <DummyTrueOrFalseTemplate question={question} title={title} questionNumber={questionNumber} />
               case 'fill-in-blank':
-                return <DummyFillInTheBlanksTemplate question={question} title={title} questionNumber={questionNumber} />
+                return (
+                  <DummyFillInTheBlanksTemplate question={question} title={title} questionNumber={questionNumber} />
+                )
               default:
                 return <Typography>No Template Found</Typography>
             }
@@ -113,7 +116,7 @@ export default function QuestionsVerticalMenu({
         }}
       >
         {!isCollapsed && (
-          <Stack direction="row" alignItems="center" spacing={1.5}>
+          <Stack direction='row' alignItems='center' spacing={1.5}>
             <Box
               sx={{
                 width: 36,
@@ -128,16 +131,16 @@ export default function QuestionsVerticalMenu({
             >
               <QuestionMarkIcon sx={{ fontSize: 20 }} />
             </Box>
-            <Typography variant="h6" fontWeight={700} sx={{ color: 'text.primary', whiteSpace: 'nowrap' }}>
+            <Typography variant='h6' fontWeight={700} sx={{ color: 'text.primary', whiteSpace: 'nowrap' }}>
               Questions
             </Typography>
           </Stack>
         )}
-        
+
         <Tooltip title={isCollapsed ? 'Expand' : 'Collapse'} arrow>
           <IconButton
             onClick={() => onToggleCollapse(!isCollapsed)}
-            size="small"
+            size='small'
             sx={{
               bgcolor: alpha(theme.palette.primary.main, 0.1),
               color: 'primary.main',
@@ -155,7 +158,12 @@ export default function QuestionsVerticalMenu({
       {!isCollapsed && (
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
           {/* Create New Button */}
-          <Box sx={{ p: 2, borderBottom: '1px solid #e8eaed' }}>
+          <Box
+            sx={{
+              p: 2,
+              borderBottom: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`
+            }}
+          >
             <Button
               variant={hasClickedNew ? 'contained' : 'outlined'}
               component='label'
@@ -170,20 +178,19 @@ export default function QuestionsVerticalMenu({
                 fontSize: '0.95rem',
                 border: '2px solid',
                 borderColor: theme.palette.primary.main,
-                bgcolor: hasClickedNew ? theme.palette.primary.main : 'white',
+                bgcolor: hasClickedNew ? theme.palette.primary.main : theme.palette.background.paper,
                 color: hasClickedNew ? 'white' : theme.palette.primary.main,
-                boxShadow: hasClickedNew 
-                  ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`
-                  : 'none',
+                boxShadow: hasClickedNew ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}` : 'none',
                 '&:hover': {
-                  borderWidth: '2px'
+                  borderWidth: '2px',
+                  bgcolor: hasClickedNew ? theme.palette.primary.dark : alpha(theme.palette.primary.main, 0.08)
                 }
               }}
             >
               Create New
             </Button>
           </Box>
-          
+
           {/* Scrollable questions list */}
           <Box sx={{ flex: 1, overflowY: 'auto', p: 2, minHeight: 0 }}>
             {loading.primaryQuestions && <Loading />}
@@ -198,58 +205,62 @@ export default function QuestionsVerticalMenu({
                 }}
               >
                 <QuestionMarkIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 1, opacity: 0.5 }} />
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant='body2' color='text.secondary'>
                   No questions yet
                 </Typography>
               </Box>
             )}
-            {!loading.primaryQuestions && questions?.map((question, index) => {
-              const errors = getQuestionErrors(question._id)
-              const hasErrors = errors.length > 0
-              return (
-                <Card
-                  key={question._id}
-                  sx={{
-                    mb: 2,
-                    cursor: 'pointer',
-                    border: '1px solid',
-                    borderColor: hasErrors 
-                      ? theme.palette.error.main
-                      : selectedQuestion?._id === question._id 
-                        ? theme.palette.primary.main
-                        : '#e8eaed',
-                    borderRadius: 2,
-                    bgcolor: hasErrors 
-                      ? alpha(theme.palette.error.main, 0.05)
-                      : selectedQuestion?._id === question._id 
-                        ? alpha(theme.palette.primary.main, 0.05)
-                        : 'white',
-                    boxShadow: selectedQuestion?._id === question._id 
-                      ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.15)}`
-                      : hasErrors 
-                        ? `0 2px 8px ${alpha(theme.palette.error.main, 0.15)}`
-                        : '0 2px 8px rgba(0, 0, 0, 0.04)',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    transform: selectedQuestion?._id === question._id ? 'translateX(4px)' : 'none',
-                    position: 'relative',
-                    '&:hover': {
-                      borderColor: hasErrors ? theme.palette.error.main : theme.palette.primary.main,
-                      transform: 'translateX(4px)',
-                      boxShadow: hasErrors 
-                        ? `0 4px 12px ${alpha(theme.palette.error.main, 0.2)}`
-                        : `0 4px 12px ${alpha(theme.palette.primary.main, 0.2)}`
-                    }
-                  }}
-                  onClick={() => onSelect(question)}
-                >
-                  {renderDummyTemplate(
-                    question,
-                    `${index + 1}. ${question?.data?.question?.text || '* Question is not completed!'}`,
-                    index + 1
-                  )}
-                </Card>
-              )
-            })}
+            {!loading.primaryQuestions &&
+              questions?.map((question, index) => {
+                const errors = getQuestionErrors(question._id)
+                const hasErrors = errors.length > 0
+                return (
+                  <Card
+                    key={question._id}
+                    sx={{
+                      mb: 2,
+                      cursor: 'pointer',
+                      border: '1px solid',
+                      borderColor: hasErrors
+                        ? theme.palette.error.main
+                        : selectedQuestion?._id === question._id
+                          ? theme.palette.primary.main
+                          : alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08),
+                      borderRadius: 2,
+                      bgcolor: hasErrors
+                        ? alpha(theme.palette.error.main, 0.05)
+                        : selectedQuestion?._id === question._id
+                          ? alpha(theme.palette.primary.main, 0.05)
+                          : theme.palette.background.paper,
+                      boxShadow:
+                        selectedQuestion?._id === question._id
+                          ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.15)}`
+                          : hasErrors
+                            ? `0 2px 8px ${alpha(theme.palette.error.main, 0.15)}`
+                            : theme.palette.mode === 'dark'
+                              ? '0 2px 8px rgba(0, 0, 0, 0.3)'
+                              : '0 2px 8px rgba(0, 0, 0, 0.04)',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      transform: selectedQuestion?._id === question._id ? 'translateX(4px)' : 'none',
+                      position: 'relative',
+                      '&:hover': {
+                        borderColor: hasErrors ? theme.palette.error.main : theme.palette.primary.main,
+                        transform: 'translateX(4px)',
+                        boxShadow: hasErrors
+                          ? `0 4px 12px ${alpha(theme.palette.error.main, 0.2)}`
+                          : `0 4px 12px ${alpha(theme.palette.primary.main, 0.2)}`
+                      }
+                    }}
+                    onClick={() => onSelect(question)}
+                  >
+                    {renderDummyTemplate(
+                      question,
+                      `${index + 1}. ${question?.data?.question?.text || '* Question is not completed!'}`,
+                      index + 1
+                    )}
+                  </Card>
+                )
+              })}
           </Box>
         </Box>
       )}
@@ -270,12 +281,12 @@ export default function QuestionsVerticalMenu({
         >
           {loading.primaryQuestions && (
             <Box sx={{ py: 4 }}>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant='caption' color='text.secondary'>
                 ...
               </Typography>
             </Box>
           )}
-          
+
           {!loading.primaryQuestions && questions?.length === 0 && (
             <Box
               sx={{
@@ -289,79 +300,79 @@ export default function QuestionsVerticalMenu({
                 justifyContent: 'center'
               }}
             >
-              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+              <Typography variant='caption' color='text.secondary' sx={{ fontSize: '0.7rem' }}>
                 0
               </Typography>
             </Box>
           )}
-          
-          {!loading.primaryQuestions && questions?.map((question, index) => {
-            const errors = getQuestionErrors(question._id)
-            const hasErrors = errors.length > 0
-            const isSelected = selectedQuestion?._id === question._id
-            
-            return (
-              <Tooltip 
-                key={question._id}
-                title={question?.data?.question?.text || 'Question ' + (index + 1)}
-                placement="right"
-                arrow
-              >
-                <Box
-                  onClick={() => onSelect(question)}
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 1.5,
-                    border: '2px solid',
-                    borderColor: hasErrors 
-                      ? theme.palette.error.main
-                      : isSelected 
-                        ? theme.palette.primary.main
-                        : alpha(theme.palette.primary.main, 0.3),
-                    bgcolor: hasErrors
-                      ? alpha(theme.palette.error.main, 0.1)
-                      : isSelected
-                        ? theme.palette.primary.main
-                        : 'white',
-                    color: isSelected ? 'white' : hasErrors ? theme.palette.error.main : theme.palette.primary.main,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    fontWeight: 700,
-                    fontSize: '0.95rem',
-                    boxShadow: isSelected 
-                      ? `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`
-                      : hasErrors
-                        ? `0 2px 8px ${alpha(theme.palette.error.main, 0.2)}`
-                        : 'none',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    '&:hover': {
-                      borderColor: hasErrors ? theme.palette.error.main : theme.palette.primary.main,
-                      bgcolor: hasErrors
-                        ? alpha(theme.palette.error.main, 0.15)
-                        : isSelected
-                          ? theme.palette.primary.dark
-                          : alpha(theme.palette.primary.main, 0.1),
-                      transform: 'scale(1.1)',
-                      boxShadow: hasErrors
-                        ? `0 4px 12px ${alpha(theme.palette.error.main, 0.3)}`
-                        : `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`
-                    }
-                  }}
+
+          {!loading.primaryQuestions &&
+            questions?.map((question, index) => {
+              const errors = getQuestionErrors(question._id)
+              const hasErrors = errors.length > 0
+              const isSelected = selectedQuestion?._id === question._id
+
+              return (
+                <Tooltip
+                  key={question._id}
+                  title={question?.data?.question?.text || 'Question ' + (index + 1)}
+                  placement='right'
+                  arrow
                 >
-                  {index + 1}
-                </Box>
-              </Tooltip>
-            )
-          })}
+                  <Box
+                    onClick={() => onSelect(question)}
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 1.5,
+                      border: '2px solid',
+                      borderColor: hasErrors
+                        ? theme.palette.error.main
+                        : isSelected
+                          ? theme.palette.primary.main
+                          : alpha(theme.palette.primary.main, 0.3),
+                      bgcolor: hasErrors
+                        ? alpha(theme.palette.error.main, 0.1)
+                        : isSelected
+                          ? theme.palette.primary.main
+                          : theme.palette.background.paper,
+                      color: isSelected ? 'white' : hasErrors ? theme.palette.error.main : theme.palette.primary.main,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      fontWeight: 700,
+                      fontSize: '0.95rem',
+                      boxShadow: isSelected
+                        ? `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`
+                        : hasErrors
+                          ? `0 2px 8px ${alpha(theme.palette.error.main, 0.2)}`
+                          : 'none',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      '&:hover': {
+                        borderColor: hasErrors ? theme.palette.error.main : theme.palette.primary.main,
+                        bgcolor: hasErrors
+                          ? alpha(theme.palette.error.main, 0.15)
+                          : isSelected
+                            ? theme.palette.primary.dark
+                            : alpha(theme.palette.primary.main, 0.1),
+                        transform: 'scale(1.1)',
+                        boxShadow: hasErrors
+                          ? `0 4px 12px ${alpha(theme.palette.error.main, 0.3)}`
+                          : `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`
+                      }
+                    }}
+                  >
+                    {index + 1}
+                  </Box>
+                </Tooltip>
+              )
+            })}
         </Box>
       )}
     </Box>
   )
 }
-
 
 // import React, { useState } from 'react'
 // import { Card, Box, Stack, Typography, Button, Alert } from '@mui/material'
