@@ -69,6 +69,7 @@ export async function POST(request) {
 export async function PUT(request) {
   try {
     const reqBody = await request.json()
+    console.log('Request body:', reqBody)
 
     // Extract profile email from request body
     const email = reqBody.email
@@ -79,6 +80,7 @@ export async function PUT(request) {
 
     // Update the profile using the dedicated service function
     const updateResult = await ArtifactService.updateProfileByEmail({ email, data: reqBody })
+    console.log('Update result:', updateResult)
 
     if (updateResult.status === 'success') {
       const successResponse = ApiResponseUtils.createSuccessResponse(updateResult.message, updateResult.result)
@@ -88,6 +90,7 @@ export async function PUT(request) {
       return ApiResponseUtils.sendErrorResponse(errorResponse)
     }
   } catch (error) {
+    console.error('Route error:', error)
     const errorResponse = ApiResponseUtils.createErrorResponse(error.message || 'Internal server error')
     return ApiResponseUtils.sendErrorResponse(errorResponse)
   }

@@ -15,7 +15,8 @@ import {
   Chip,
   Alert,
   alpha,
-  useTheme
+  useTheme,
+  useMediaQuery
 } from '@mui/material'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
@@ -72,6 +73,9 @@ const initialFormData = {
 const SponsorQuizzes = () => {
   const router = useRouter()
   const theme = useTheme()
+  const isDarkMode = theme.palette.mode === 'dark'
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'))
   const { data: session } = useSession()
 
   // State for quizzes selection
@@ -467,7 +471,7 @@ const SponsorQuizzes = () => {
         }}
       >
         <Container maxWidth='lg'>
-          <Stack spacing={3}>
+          <Stack spacing={{ xs: 2.5, sm: 3 }}>
             <Button
               variant='text'
               startIcon={<ArrowBack />}
@@ -478,6 +482,7 @@ const SponsorQuizzes = () => {
                 fontWeight: 600,
                 color: 'text.secondary',
                 px: 0,
+                fontSize: { xs: '0.95rem', sm: '1rem' },
                 '&:hover': {
                   bgcolor: 'transparent',
                   color: 'primary.main'
@@ -502,25 +507,33 @@ const SponsorQuizzes = () => {
               Sponsor Traditional Knowledge Quizzes
             </Typography>
 
-            <Stack direction='row' alignItems='center' spacing={1}>
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              alignItems={{ xs: 'flex-start', sm: 'center' }}
+              spacing={{ xs: 1.5, sm: 1 }}
+            >
               <Chip
-                icon={<EmojiEvents sx={{ fontSize: 18 }} />}
+                icon={<EmojiEvents sx={{ fontSize: { xs: 16, sm: 18 } }} />}
                 label='Quiz Sponsorship Program'
                 sx={{
                   fontWeight: 700,
-                  bgcolor: alpha(theme.palette.primary.main, 0.08),
+                  bgcolor: alpha(theme.palette.primary.main, isDarkMode ? 0.15 : 0.08),
                   color: theme.palette.primary.main,
-                  border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`
+                  border: `1px solid ${alpha(theme.palette.primary.main, isDarkMode ? 0.3 : 0.2)}`,
+                  fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                  height: { xs: 28, sm: 32 }
                 }}
               />
               <Chip
-                icon={<LocationOn sx={{ fontSize: 18 }} />}
+                icon={<LocationOn sx={{ fontSize: { xs: 16, sm: 18 } }} />}
                 label='Pan-India Outreach'
                 sx={{
                   fontWeight: 700,
-                  bgcolor: alpha(theme.palette.secondary.main, 0.08),
-                  color: theme.palette.secondary.main,
-                  border: `1px solid ${alpha(theme.palette.secondary.main, 0.2)}`
+                  bgcolor: alpha(theme.palette.secondary?.main || theme.palette.primary.main, isDarkMode ? 0.15 : 0.08),
+                  color: theme.palette.secondary?.main || theme.palette.primary.main,
+                  border: `1px solid ${alpha(theme.palette.secondary?.main || theme.palette.primary.main, isDarkMode ? 0.3 : 0.2)}`,
+                  fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                  height: { xs: 28, sm: 32 }
                 }}
               />
             </Stack>
@@ -528,10 +541,10 @@ const SponsorQuizzes = () => {
             <Typography
               variant='body1'
               sx={{
-                fontSize: '1.05rem',
+                fontSize: { xs: '0.95rem', sm: '1rem', md: '1.05rem' },
                 color: 'text.secondary',
                 lineHeight: 1.7,
-                maxWidth: '900px'
+                maxWidth: { xs: '100%', sm: '800px', md: '900px' }
               }}
             >
               Your sponsorship helps us preserve, celebrate, and share India&apos;s ancient knowledge systems
@@ -551,13 +564,18 @@ const SponsorQuizzes = () => {
                       height: '100%'
                     }}
                   >
-                    <CardContent sx={{ p: 3 }}>
-                      <Stack direction='row' spacing={2} alignItems='center' sx={{ mb: 2 }}>
+                    <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
+                      <Stack
+                        direction='row'
+                        spacing={{ xs: 1.5, sm: 2 }}
+                        alignItems='center'
+                        sx={{ mb: { xs: 1.5, sm: 2 } }}
+                      >
                         <Box
                           sx={{
-                            width: 44,
-                            height: 44,
-                            borderRadius: 2,
+                            width: { xs: 40, sm: 44 },
+                            height: { xs: 40, sm: 44 },
+                            borderRadius: { xs: 1.5, sm: 2 },
                             bgcolor:
                               theme.palette.mode === 'dark'
                                 ? alpha(theme.palette.primary.main, 0.18)
@@ -569,11 +587,25 @@ const SponsorQuizzes = () => {
                         >
                           {highlight.icon}
                         </Box>
-                        <Typography variant='subtitle1' fontWeight={700} sx={{ color: 'text.primary' }}>
+                        <Typography
+                          variant='subtitle1'
+                          fontWeight={700}
+                          sx={{
+                            color: 'text.primary',
+                            fontSize: { xs: '0.95rem', sm: '1rem' }
+                          }}
+                        >
                           {highlight.title}
                         </Typography>
                       </Stack>
-                      <Typography variant='body2' sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
+                      <Typography
+                        variant='body2'
+                        sx={{
+                          color: 'text.secondary',
+                          lineHeight: 1.6,
+                          fontSize: { xs: '0.88rem', sm: '0.9rem', md: '0.95rem' }
+                        }}
+                      >
                         {highlight.description}
                       </Typography>
                     </CardContent>
@@ -802,7 +834,7 @@ const SponsorQuizzes = () => {
                 </CardContent>
               </Card>
 
-              <Stack spacing={2}>
+              <Stack spacing={{ xs: 1.5, sm: 2 }}>
                 <Button
                   component='label'
                   variant='contained'
@@ -810,13 +842,16 @@ const SponsorQuizzes = () => {
                   size='large'
                   sx={{
                     color: 'white',
-                    py: 1.5,
+                    py: { xs: 1.25, sm: 1.5 },
                     fontWeight: 700,
                     textTransform: 'none',
-                    borderRadius: 2,
-                    fontSize: '1rem',
+                    borderRadius: { xs: 1.5, sm: 2 },
+                    fontSize: { xs: '0.95rem', sm: '1rem' },
+                    boxShadow: isDarkMode ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}` : undefined,
                     '&:hover': {
-                      boxShadow: theme.palette.mode === 'dark' ? 'none' : '0 8px 20px rgba(0,0,0,0.16)',
+                      boxShadow: isDarkMode
+                        ? `0 8px 20px ${alpha(theme.palette.primary.main, 0.4)}`
+                        : '0 8px 20px rgba(0,0,0,0.16)',
                       transform: 'translateY(-1px)'
                     }
                   }}
@@ -836,12 +871,16 @@ const SponsorQuizzes = () => {
                   icon={<CheckCircleOutline fontSize='inherit' />}
                   severity='success'
                   sx={{
-                    borderRadius: 3,
+                    borderRadius: { xs: 2, sm: 3 },
                     bgcolor:
                       theme.palette.mode === 'dark'
                         ? alpha(theme.palette.success.main, 0.18)
                         : alpha(theme.palette.success.main, 0.08),
-                    color: theme.palette.mode === 'dark' ? theme.palette.success.light : theme.palette.success.dark
+                    color: theme.palette.mode === 'dark' ? theme.palette.success.light : theme.palette.success.dark,
+                    fontSize: { xs: '0.9rem', sm: '1rem' },
+                    '& .MuiAlert-icon': {
+                      fontSize: { xs: '1.2rem', sm: '1.5rem' }
+                    }
                   }}
                 >
                   Sponsors are acknowledged across campaign promotions and receive periodic impact reports on their
@@ -853,52 +892,88 @@ const SponsorQuizzes = () => {
 
           <Card
             sx={{
-              borderRadius: 4,
-              border: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
-              boxShadow: theme.palette.mode === 'dark' ? 'none' : '0 2px 12px rgba(0,0,0,0.08)'
+              borderRadius: { xs: 3, md: 4 },
+              border: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.5)}`,
+              boxShadow: isDarkMode
+                ? `0 2px 12px ${alpha(theme.palette.common.black, 0.3)}`
+                : '0 2px 12px rgba(0,0,0,0.08)',
+              bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.6) : undefined
             }}
           >
-            <CardContent sx={{ p: { xs: 3, md: 4 } }}>
+            <CardContent sx={{ p: { xs: 2.5, sm: 3, md: 4 } }}>
               <Typography
                 variant='body2'
                 fontWeight={700}
-                sx={{ color: theme.palette.primary.main, letterSpacing: 1.5 }}
+                sx={{
+                  color: theme.palette.primary.main,
+                  letterSpacing: { xs: 1, sm: 1.5 },
+                  fontSize: { xs: '0.75rem', sm: '0.8rem', md: '0.875rem' }
+                }}
                 gutterBottom
               >
                 SPONSORSHIP SNAPSHOT
               </Typography>
 
-              <Stack spacing={2.5}>
+              <Stack spacing={{ xs: 2, sm: 2.5 }}>
                 <Box>
-                  <Typography variant='subtitle2' fontWeight={700} sx={{ color: 'text.primary' }} gutterBottom>
+                  <Typography
+                    variant='subtitle2'
+                    fontWeight={700}
+                    sx={{
+                      color: 'text.primary',
+                      fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' }
+                    }}
+                    gutterBottom
+                  >
                     Quiz Focus
                   </Typography>
-                  <Typography variant='body2' sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
+                  <Typography
+                    variant='body2'
+                    sx={{
+                      color: 'text.secondary',
+                      lineHeight: 1.6,
+                      fontSize: { xs: '0.88rem', sm: '0.9rem', md: '0.95rem' }
+                    }}
+                  >
                     {hasSpecificQuizzes && selectedQuizNames?.length
                       ? selectedQuizNames.join(', ')
                       : 'Supporting any quiz that aligns with our traditional knowledge initiative.'}
                   </Typography>
                 </Box>
 
-                <Divider />
+                <Divider sx={{ borderColor: alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.5) }} />
 
                 <Box>
-                  <Typography variant='subtitle2' fontWeight={700} sx={{ color: 'text.primary' }} gutterBottom>
+                  <Typography
+                    variant='subtitle2'
+                    fontWeight={700}
+                    sx={{
+                      color: 'text.primary',
+                      fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' }
+                    }}
+                    gutterBottom
+                  >
                     Location Preference
                   </Typography>
-                  <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                  <Typography
+                    variant='body2'
+                    sx={{
+                      color: 'text.secondary',
+                      fontSize: { xs: '0.88rem', sm: '0.9rem', md: '0.95rem' }
+                    }}
+                  >
                     {locationSummary}
                   </Typography>
                 </Box>
 
-                <Divider />
+                <Divider sx={{ borderColor: alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.5) }} />
 
-                <Stack direction='row' spacing={2} alignItems='flex-start'>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 1.5, sm: 2 }} alignItems='flex-start'>
                   <Box
                     sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 2,
+                      width: { xs: 44, sm: 48 },
+                      height: { xs: 44, sm: 48 },
+                      borderRadius: { xs: 1.5, sm: 2 },
                       bgcolor:
                         theme.palette.mode === 'dark'
                           ? alpha(theme.palette.primary.main, 0.2)
@@ -910,14 +985,35 @@ const SponsorQuizzes = () => {
                   >
                     {rewardSummary.icon}
                   </Box>
-                  <Box>
-                    <Typography variant='subtitle2' fontWeight={700} sx={{ color: 'text.primary' }}>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography
+                      variant='subtitle2'
+                      fontWeight={700}
+                      sx={{
+                        color: 'text.primary',
+                        fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' }
+                      }}
+                    >
                       {rewardSummary.title}
                     </Typography>
-                    <Typography variant='body1' fontWeight={600} sx={{ color: theme.palette.primary.main }}>
+                    <Typography
+                      variant='body1'
+                      fontWeight={600}
+                      sx={{
+                        color: theme.palette.primary.main,
+                        fontSize: { xs: '0.95rem', sm: '1rem', md: '1.05rem' }
+                      }}
+                    >
                       {rewardSummary.primaryText}
                     </Typography>
-                    <Typography variant='body2' sx={{ color: 'text.secondary', mt: 0.5 }}>
+                    <Typography
+                      variant='body2'
+                      sx={{
+                        color: 'text.secondary',
+                        mt: 0.5,
+                        fontSize: { xs: '0.88rem', sm: '0.9rem', md: '0.95rem' }
+                      }}
+                    >
                       {rewardSummary.secondaryText}
                     </Typography>
                   </Box>

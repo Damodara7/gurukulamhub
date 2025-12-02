@@ -125,11 +125,14 @@ export async function getById({ id }) {
 export const add = async ({ data }) => {
   await connectMongo()
   try {
+    console.log('Adding profile:', data)
     const { email, ...restData } = data
-    let existedUser = await User.findOne({ email: email })
-    if (!existedUser) {
-      return { status: 'error', result: null, message: 'User profile not found' }
-    }
+
+    // ⭐⭐ Because we need profile to be created before user is created (we have user.profile reference in user model)
+    // let existedUser = await User.findOne({ email: email })
+    // if (!existedUser) {
+    //   return { status: 'error', result: null, message: 'User not found' }
+    // }
 
     let profile = await UserProfile.findOne({ email })
 
@@ -149,6 +152,7 @@ export const add = async ({ data }) => {
       await profile.save()
     }
 
+    console.log('Profile added successfully:', profile)
     return { status: 'success', result: profile, message: 'User profile added successfully' }
   } catch (error) {
     console.error('add function -> Error registering user: ', error)
@@ -323,6 +327,8 @@ export const updateUserProfile = async (email, updateData) => {
 export const updateProfileByEmail = async ({ email, data }) => {
   await connectMongo()
   try {
+    console.log('Updating profile by email:', email)
+    console.log('Data:', data)
     let existedUser = await User.findOne({ email: email })
     if (!existedUser) {
       return { status: 'error', result: null, message: 'User not found' }

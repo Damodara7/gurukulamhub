@@ -43,7 +43,11 @@ export const fetchQuizData = async quizId => {
 
 export default function PlayPublicQuiz({ quizId, languageCode = null }) {
   const theme = useTheme()
-  const isCompactHeader = useMediaQuery(theme.breakpoints.down('sm'))
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'))
+  const isDesktop = useMediaQuery(theme.breakpoints.between('md', 'lg'))
+  const isCompactHeader = isMobile
+  const isDarkMode = theme.palette.mode === 'dark'
   const [quiz, setQuiz] = useState(null)
   const [selectedLanguage, setSelectedLanguage] = useState(languageCode)
   const [startQuiz, setStartQuiz] = useState(false)
@@ -221,7 +225,15 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
 
   if (loading) {
     return (
-      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#f8f9fa' }}>
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          bgcolor: isDarkMode ? theme.palette.background.default : '#f8f9fa'
+        }}
+      >
         <Loading />
       </Box>
     )
@@ -229,8 +241,26 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
 
   if (!quiz) {
     return (
-      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#f8f9fa' }}>
-        <Alert severity='error' sx={{ borderRadius: 3, boxShadow: '0 12px 32px rgba(15,23,42,0.12)' }}>
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          bgcolor: isDarkMode ? theme.palette.background.default : '#f8f9fa',
+          px: { xs: 2, sm: 3 }
+        }}
+      >
+        <Alert
+          severity='error'
+          sx={{
+            borderRadius: { xs: 2, sm: 3 },
+            boxShadow: isDarkMode
+              ? '0 12px 32px rgba(0,0,0,0.3)'
+              : '0 12px 32px rgba(15,23,42,0.12)',
+            maxWidth: { xs: '100%', sm: 400 }
+          }}
+        >
           Quiz not found
         </Alert>
       </Box>
@@ -318,8 +348,8 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
                 sx={{
                   position: 'relative',
                   borderRadius: { xs: 2.5, md: 3 },
-                  border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
-                  backgroundColor: theme.palette.common.white,
+                  border: `1px solid ${alpha(theme.palette.primary.main, isDarkMode ? 0.2 : 0.08)}`,
+                  backgroundColor: isDarkMode ? theme.palette.background.paper : theme.palette.common.white,
                   px: { xs: 3, md: 4 },
                   py: { xs: 3, md: 4.2 },
                   display: 'flex',
@@ -329,7 +359,9 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
                   cursor: 'pointer',
                   transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
                   overflow: 'hidden',
-                  boxShadow: '0 8px 18px rgba(15, 23, 42, 0.06)',
+                  boxShadow: isDarkMode
+                    ? '0 8px 18px rgba(0,0,0,0.2)'
+                    : '0 8px 18px rgba(15, 23, 42, 0.06)',
                   minHeight: { xs: 175, md: 200 },
                   color: theme.palette.text.primary,
                   '&::before': {
@@ -342,8 +374,10 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
                   },
                   '&:hover, &:focus-visible': {
                     transform: 'translateY(-6px)',
-                    borderColor: alpha(theme.palette.primary.main, 0.35),
-                    boxShadow: '0 18px 36px rgba(15, 23, 42, 0.12)',
+                    borderColor: alpha(theme.palette.primary.main, isDarkMode ? 0.5 : 0.35),
+                    boxShadow: isDarkMode
+                      ? '0 18px 36px rgba(0,0,0,0.3)'
+                      : '0 18px 36px rgba(15, 23, 42, 0.12)',
                     '&::before': {
                       opacity: 1
                     },
@@ -438,9 +472,11 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
           severity='warning'
           icon={false}
           sx={{
-            borderRadius: 2,
-            border: `1px solid ${alpha(theme.palette.warning.main, 0.2)}`,
-            bgcolor: alpha(theme.palette.warning.main, 0.06)
+            borderRadius: { xs: 2, sm: 2.5 },
+            border: `1px solid ${alpha(theme.palette.warning.main, isDarkMode ? 0.3 : 0.2)}`,
+            bgcolor: alpha(theme.palette.warning.main, isDarkMode ? 0.12 : 0.06),
+            maxWidth: { xs: '100%', sm: 600 },
+            mx: 'auto'
           }}
         >
           No questions exist for the selected language.
@@ -468,13 +504,19 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa', pb: { xs: 4, md: 6 } }}>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        bgcolor: isDarkMode ? theme.palette.background.default : '#f8f9fa',
+        pb: { xs: 4, md: 6 }
+      }}
+    >
       <Box
         sx={{
-          bgcolor: 'white',
+          bgcolor: isDarkMode ? theme.palette.background.paper : 'white',
           pt: { xs: 2, md: 4 },
           pb: { xs: 2.5, md: 4 },
-          borderBottom: '1px solid #e8eaed',
+          borderBottom: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.1 : 0.08)}`,
           mb: { xs: 2.5, md: 4 }
         }}
       >
@@ -558,8 +600,9 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
                       width: '100%',
                       py: 1.6,
                       color: alpha(theme.palette.text.primary, 0.68),
-                      borderRadius: 2,
-                      border: `1px dashed ${alpha(theme.palette.primary.main, 0.2)}`
+                      borderRadius: { xs: 2, sm: 2.5 },
+                      border: `1px dashed ${alpha(theme.palette.primary.main, isDarkMode ? 0.3 : 0.2)}`,
+                      bgcolor: isDarkMode ? alpha(theme.palette.background.default, 0.5) : 'transparent'
                     }}
                   >
                     <Typography variant='caption' fontWeight={700}>
@@ -704,7 +747,11 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
                       width: { xs: '100%', sm: 260, md: 280 },
                       maxWidth: { xs: '100%', md: 320 },
                       minHeight: { xs: 96, md: 120 },
-                      color: alpha(theme.palette.text.primary, 0.68)
+                      color: alpha(theme.palette.text.primary, 0.68),
+                      borderRadius: { xs: 2, sm: 2.5 },
+                      border: `1px dashed ${alpha(theme.palette.primary.main, isDarkMode ? 0.3 : 0.2)}`,
+                      bgcolor: isDarkMode ? alpha(theme.palette.background.default, 0.5) : 'transparent',
+                      px: { xs: 2, sm: 3 }
                     }}
                   >
                     <Typography variant='subtitle2' fontWeight={700}>

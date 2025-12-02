@@ -12,6 +12,7 @@ import TextField from '@mui/material/TextField'
 import InputAdornment from '@mui/material/InputAdornment'
 import IconButton from '@mui/material/IconButton'
 import Button from '@mui/material/Button'
+import { useTheme, alpha, useMediaQuery } from '@mui/material'
 import PasswordValidation from '../../auth/register-multi-steps/PasswordValidation'
 import { toast } from 'react-toastify'
 import * as RestApi from '@/utils/restApiUtil'
@@ -25,6 +26,9 @@ async function setPassword(email, password) {
 }
 
 const SetPasswordCard = ({ email, onSetPassword }) => {
+  const theme = useTheme()
+  const isDarkMode = theme.palette.mode === 'dark'
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [isPasswordValid, setIsPasswordValid] = useState(false)
@@ -107,18 +111,54 @@ const SetPasswordCard = ({ email, onSetPassword }) => {
             }
           />
         </Grid>
-        <Grid item xs={12} className='flex gap-4'>
+        <Grid
+          item
+          xs={12}
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: { xs: 1.5, sm: 2 }
+          }}
+        >
           <Button
             disabled={!isPasswordValid || !confirmPassword.trim() || newPassword.trim() !== confirmPassword.trim()}
             variant='contained'
             type='submit'
             onClick={handleSubmit}
-            style={{color: 'white'}}
+            fullWidth={isMobile}
+            sx={{
+              color: 'white',
+              py: { xs: 1.25, sm: 1.5 },
+              fontSize: { xs: '0.9rem', sm: '1rem' },
+              borderRadius: { xs: 1.5, sm: 2 },
+              boxShadow: isDarkMode ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}` : undefined,
+              '&:hover': {
+                boxShadow: isDarkMode ? `0 6px 16px ${alpha(theme.palette.primary.main, 0.4)}` : undefined
+              }
+            }}
             component='label'
           >
             Save Changes
           </Button>
-          <Button onClick={handleReset} variant='outlined' type='reset' color='secondary'>
+          <Button
+            onClick={handleReset}
+            variant='outlined'
+            type='reset'
+            color='secondary'
+            fullWidth={isMobile}
+            sx={{
+              py: { xs: 1.25, sm: 1.5 },
+              fontSize: { xs: '0.9rem', sm: '1rem' },
+              borderRadius: { xs: 1.5, sm: 2 },
+              ...(isDarkMode && {
+                borderColor: alpha(theme.palette.divider, 0.3),
+                '&:hover': {
+                  borderColor: alpha(theme.palette.secondary.main, 0.5),
+                  backgroundColor: alpha(theme.palette.secondary.main, 0.08)
+                }
+              })
+            }}
+          >
             Reset
           </Button>
         </Grid>

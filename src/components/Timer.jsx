@@ -48,6 +48,7 @@ const pulse = keyframes`
 
 const Timer = ({ isActive, time = 0, setTime = () => {}, totalSeconds = null, label = 'Timer', sx }) => {
   const theme = useTheme()
+  const isDarkMode = theme.palette.mode === 'dark'
   const hasTotal = typeof totalSeconds === 'number' && totalSeconds > 0
   const remaining = hasTotal ? Math.max(totalSeconds - time, 0) : null
   const progress = hasTotal ? Math.min(100, (time / totalSeconds) * 100) : null
@@ -72,12 +73,13 @@ const Timer = ({ isActive, time = 0, setTime = () => {}, totalSeconds = null, la
         px: { xs: 2.2, md: 2.8 },
         py: { xs: 1.9, md: 2.2 },
         borderRadius: { xs: 2.2, md: 2.6 },
-        border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`,
-        background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.14)}, ${alpha(
-          theme.palette.primary.dark,
-          0.08
-        )})`,
-        boxShadow: `0 24px 54px ${alpha(theme.palette.primary.main, 0.18)}`,
+        border: `1px solid ${alpha(theme.palette.primary.main, isDarkMode ? 0.25 : 0.12)}`,
+        background: isDarkMode
+          ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.2)}, ${alpha(theme.palette.primary.dark, 0.15)})`
+          : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.14)}, ${alpha(theme.palette.primary.dark, 0.08)})`,
+        boxShadow: isDarkMode
+          ? `0 24px 54px ${alpha(theme.palette.primary.main, 0.3)}`
+          : `0 24px 54px ${alpha(theme.palette.primary.main, 0.18)}`,
         backdropFilter: 'blur(20px)',
         color: theme.palette.text.primary,
         overflow: 'hidden',
@@ -86,7 +88,9 @@ const Timer = ({ isActive, time = 0, setTime = () => {}, totalSeconds = null, la
         transition: 'transform 0.25s ease, box-shadow 0.25s ease',
         '&:hover': {
           transform: 'translateY(-2px)',
-          boxShadow: `0 28px 60px ${alpha(theme.palette.primary.main, 0.22)}`
+          boxShadow: isDarkMode
+            ? `0 28px 60px ${alpha(theme.palette.primary.main, 0.35)}`
+            : `0 28px 60px ${alpha(theme.palette.primary.main, 0.22)}`
         },
         ...sx
       }}
@@ -95,7 +99,9 @@ const Timer = ({ isActive, time = 0, setTime = () => {}, totalSeconds = null, la
         sx={{
           position: 'absolute',
           inset: 0,
-          background: `linear-gradient(160deg, ${alpha(theme.palette.common.white, 0.24)}, transparent)`,
+          background: isDarkMode
+            ? `linear-gradient(160deg, ${alpha(theme.palette.common.white, 0.08)}, transparent)`
+            : `linear-gradient(160deg, ${alpha(theme.palette.common.white, 0.24)}, transparent)`,
           opacity: 0.7,
           pointerEvents: 'none'
         }}
@@ -107,18 +113,18 @@ const Timer = ({ isActive, time = 0, setTime = () => {}, totalSeconds = null, la
           width: { xs: 48, md: 54 },
           height: { xs: 48, md: 54 },
           borderRadius: '50%',
-          bgcolor: theme.palette.common.white,
+          bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.9) : theme.palette.common.white,
           color: theme.palette.primary.main,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: `0 18px 40px ${alpha(theme.palette.primary.main, 0.25)}`,
+          boxShadow: `0 18px 40px ${alpha(theme.palette.primary.main, isDarkMode ? 0.35 : 0.25)}`,
           '&::after': {
             content: '""',
             position: 'absolute',
             inset: -4,
             borderRadius: '50%',
-            border: `1.5px solid ${alpha(theme.palette.primary.main, 0.35)}`,
+            border: `1.5px solid ${alpha(theme.palette.primary.main, isDarkMode ? 0.45 : 0.35)}`,
             opacity: isActive ? 1 : 0.45,
             animation: isActive ? `${pulse} 2.6s ease-out infinite` : 'none'
           }

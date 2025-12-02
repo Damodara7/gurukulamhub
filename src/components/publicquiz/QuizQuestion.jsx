@@ -35,6 +35,7 @@ const QuizQuestion = ({
   handleNext
 }) => {
   const theme = useTheme()
+  const isDarkMode = theme.palette.mode === 'dark'
   const totalQuestions = questions.length
   const progress = totalQuestions > 0 ? Math.round(((currentQuestionIndex + 1) / totalQuestions) * 100) : 0
   const instruction =
@@ -50,11 +51,14 @@ const QuizQuestion = ({
         borderRadius: { xs: 3, md: 3.5 },
         px: { xs: 2.5, md: 3.5 },
         py: { xs: 3, md: 4 },
-        border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`,
-        background: `linear-gradient(160deg, ${alpha(theme.palette.primary.light, 0.12)}, ${alpha(
-          theme.palette.background.paper,
-          0.95
-        )})`
+        border: `1px solid ${alpha(theme.palette.primary.main, isDarkMode ? 0.25 : 0.12)}`,
+        background: isDarkMode
+          ? `linear-gradient(160deg, ${alpha(theme.palette.primary.dark, 0.2)}, ${alpha(theme.palette.background.paper, 0.95)})`
+          : `linear-gradient(160deg, ${alpha(theme.palette.primary.light, 0.12)}, ${alpha(
+              theme.palette.background.paper,
+              0.95
+            )})`,
+        boxShadow: isDarkMode ? '0 18px 32px rgba(0,0,0,0.3)' : '0 20px 44px rgba(15, 23, 42, 0.14)'
       }}
     >
       <Box
@@ -62,7 +66,7 @@ const QuizQuestion = ({
           position: 'absolute',
           inset: 0,
           pointerEvents: 'none',
-          background: `radial-gradient(circle at top right, ${alpha(theme.palette.primary.main, 0.18)}, transparent 55%)`
+          background: `radial-gradient(circle at top right, ${alpha(theme.palette.primary.main, isDarkMode ? 0.25 : 0.18)}, transparent 55%)`
         }}
       />
 
@@ -160,12 +164,23 @@ const QuizQuestion = ({
                 borderRadius: 20,
                 px: { xs: 2.6, sm: 3.2 },
                 py: { xs: 2.2, sm: 2.6 },
-                background: `linear-gradient(150deg, ${alpha(theme.palette.info.light, hintUsed ? 0.4 : 0.26)}, ${alpha(
-                  theme.palette.background.paper,
-                  0.96
-                )})`,
-                border: `1px solid ${alpha(theme.palette.info.main, hintUsed ? 0.48 : 0.3)}`,
-                boxShadow: hintUsed ? '0 24px 48px rgba(2, 136, 209, 0.3)' : '0 20px 44px rgba(2, 136, 209, 0.2)'
+                background: isDarkMode
+                  ? `linear-gradient(150deg, ${alpha(theme.palette.info.main, hintUsed ? 0.3 : 0.2)}, ${alpha(
+                      theme.palette.background.paper,
+                      0.96
+                    )})`
+                  : `linear-gradient(150deg, ${alpha(theme.palette.info.light, hintUsed ? 0.4 : 0.26)}, ${alpha(
+                      theme.palette.background.paper,
+                      0.96
+                    )})`,
+                border: `1px solid ${alpha(theme.palette.info.main, hintUsed ? (isDarkMode ? 0.5 : 0.48) : isDarkMode ? 0.4 : 0.3)}`,
+                boxShadow: hintUsed
+                  ? isDarkMode
+                    ? '0 24px 48px rgba(2, 136, 209, 0.4)'
+                    : '0 24px 48px rgba(2, 136, 209, 0.3)'
+                  : isDarkMode
+                    ? '0 20px 44px rgba(2, 136, 209, 0.3)'
+                    : '0 20px 44px rgba(2, 136, 209, 0.2)'
               }}
             >
               <Stack spacing={hintUsed ? 1.8 : 1.4}>

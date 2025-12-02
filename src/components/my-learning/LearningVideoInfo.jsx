@@ -13,7 +13,10 @@ import {
   Radio,
   Box,
   Grid,
-  DialogActions
+  DialogActions,
+  useTheme,
+  alpha,
+  useMediaQuery
 } from '@mui/material'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
 import { CheckCircle as CheckCircleIcon, Cancel as CancelIcon } from '@mui/icons-material'
@@ -27,10 +30,32 @@ const QuestionSummaryDialog = ({ open, question, answers, handleContinue }) => {
 
   console.log({ question, selectedOptions })
 
+  const theme = useTheme()
+  const isDarkMode = theme.palette.mode === 'dark'
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+
   return (
-    <Dialog open={open} fullWidth maxWidth='sm'>
-      <DialogContent>
-        <Typography variant='h6' gutterBottom>
+    <Dialog
+      open={open}
+      fullWidth
+      maxWidth='sm'
+      PaperProps={{
+        sx: {
+          bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.95) : 'white',
+          borderRadius: { xs: 2, sm: 3 }
+        }
+      }}
+    >
+      <DialogContent sx={{ p: { xs: 2.5, sm: 3 } }}>
+        <Typography
+          variant='h6'
+          gutterBottom
+          sx={{
+            fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' },
+            color: isDarkMode ? theme.palette.common.white : 'text.primary',
+            fontWeight: 700
+          }}
+        >
           {question.text}
         </Typography>
         <>
@@ -116,10 +141,21 @@ const QuestionSummaryDialog = ({ open, question, answers, handleContinue }) => {
           <Box display='flex' justifyContent='flex-end' mt={2}>
             <Button
               component='label'
-              sx={{ color: 'white' }}
               variant='contained'
               color='primary'
               onClick={handleContinue}
+              fullWidth={isMobile}
+              sx={{
+                color: 'white',
+                py: { xs: 1.25, sm: 1.5 },
+                px: { xs: 3, sm: 4 },
+                fontSize: { xs: '0.9rem', sm: '1rem' },
+                borderRadius: { xs: 1.5, sm: 2 },
+                boxShadow: isDarkMode ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}` : undefined,
+                '&:hover': {
+                  boxShadow: isDarkMode ? `0 6px 16px ${alpha(theme.palette.primary.main, 0.4)}` : undefined
+                }
+              }}
             >
               Continue
             </Button>
@@ -264,40 +300,108 @@ function LearningVideoInfo({ data, open, onClose }) {
     // setCurrentQuestionIndex(0)
   }
 
+  const theme = useTheme()
+  const isDarkMode = theme.palette.mode === 'dark'
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+
   return (
-    <Dialog open={open} maxWidth='lg' fullWidth onClose={onClose}>
+    <Dialog
+      open={open}
+      maxWidth='lg'
+      fullWidth
+      onClose={onClose}
+      PaperProps={{
+        sx: {
+          bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.95) : 'white',
+          borderRadius: { xs: 2, sm: 3 }
+        }
+      }}
+    >
       <DialogTitle
         variant='h4'
-        className='flex flex-col gap-2 text-center pbs-10 pbe-6 pli-10 sm:pbs-16 sm:pbe-6 sm:pli-16'
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+          textAlign: 'center',
+          pb: { xs: 2.5, sm: 3 },
+          pt: { xs: 3, sm: 4 },
+          px: { xs: 2, sm: 4 },
+          fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' },
+          color: isDarkMode ? theme.palette.common.white : 'text.primary'
+        }}
       >
         Video & Your Answers
-        <Typography component='span' className='flex flex-col text-center'>
+        <Typography
+          component='span'
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            textAlign: 'center',
+            fontSize: { xs: '0.9rem', sm: '1rem' },
+            color: 'text.secondary'
+          }}
+        >
           Review your answer for this video.
         </Typography>
       </DialogTitle>
-      <DialogContent className='overflow-visible pbs-0 pbe-6 pli-10 sm:pli-16'>
+      <DialogContent
+        sx={{
+          overflow: 'visible',
+          pb: { xs: 3, sm: 4 },
+          px: { xs: 2, sm: 4 },
+          pt: 0
+        }}
+      >
         <IconButtonTooltip title='Close' onClick={onClose} className='absolute block-start-4 inline-end-4'>
           <i className='ri-close-line text-textSecondary' />
         </IconButtonTooltip>
-        <ReactPlayer
-          ref={playerRef}
-          playsinline
-          width={'100%'}
-          height={'400px'}
-          url={data?.video?.url}
-          playing={isPlaying} // Ensure this is linked to the `isPlaying` state
-          loop={false}
-          controls={true}
-          muted={isMuted}
-          onError={e => console.error('Video error occurred:', e)}
-          onEnded={handleOnVideoEnd}
-          onProgress={handleOnProgress}
-          onDuration={handleOnDuration}
-        />
+        <Box
+          sx={{
+            borderRadius: { xs: 1.5, sm: 2 },
+            overflow: 'hidden',
+            bgcolor: isDarkMode ? alpha(theme.palette.common.black, 0.3) : alpha(theme.palette.common.black, 0.05),
+            mb: 2
+          }}
+        >
+          <ReactPlayer
+            ref={playerRef}
+            playsinline
+            width={'100%'}
+            height={isMobile ? '250px' : '400px'}
+            url={data?.video?.url}
+            playing={isPlaying} // Ensure this is linked to the `isPlaying` state
+            loop={false}
+            controls={true}
+            muted={isMuted}
+            onError={e => console.error('Video error occurred:', e)}
+            onEnded={handleOnVideoEnd}
+            onProgress={handleOnProgress}
+            onDuration={handleOnDuration}
+          />
+        </Box>
 
         {/* Answers summary */}
-        <div className='mt-2' style={{ maxHeight: '410px', overflowY: 'auto', padding: '4px', paddingRight: '8px' }}>
-          <Typography variant='h5' className='mb-3'>
+        <Box
+          sx={{
+            mt: 2,
+            maxHeight: { xs: '300px', sm: '410px' },
+            overflowY: 'auto',
+            p: { xs: 1, sm: 1.5 },
+            borderRadius: { xs: 1.5, sm: 2 },
+            bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.4) : alpha(theme.palette.grey[50], 0.5),
+            border: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.1)}`
+          }}
+        >
+          <Typography
+            variant='h5'
+            sx={{
+              mb: { xs: 2, sm: 3 },
+              fontSize: { xs: '1.1rem', sm: '1.25rem', md: '1.5rem' },
+              color: isDarkMode ? theme.palette.common.white : 'text.primary',
+              fontWeight: 700
+            }}
+          >
             Your Answers Summary:
           </Typography>
           {questions.map((question, index) => {
@@ -436,7 +540,7 @@ function LearningVideoInfo({ data, open, onClose }) {
               </div>
             )
           })}
-        </div>
+        </Box>
 
         {/* Show inserted questions while the video is playing */}
         {showQuestion && questionsToShow.length > 0 && (
@@ -448,8 +552,31 @@ function LearningVideoInfo({ data, open, onClose }) {
           />
         )}
       </DialogContent>
-      <DialogActions className='gap-2 justify-center'>
-        <Button component='label' variant='contained' style={{ color: 'white' }} onClick={onClose}>
+      <DialogActions
+        sx={{
+          gap: 2,
+          justifyContent: 'center',
+          pb: { xs: 2, sm: 3 },
+          px: { xs: 2, sm: 4 }
+        }}
+      >
+        <Button
+          component='label'
+          variant='contained'
+          onClick={onClose}
+          fullWidth={isMobile}
+          sx={{
+            color: 'white',
+            py: { xs: 1.25, sm: 1.5 },
+            px: { xs: 3, sm: 4 },
+            fontSize: { xs: '0.9rem', sm: '1rem' },
+            borderRadius: { xs: 1.5, sm: 2 },
+            boxShadow: isDarkMode ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}` : undefined,
+            '&:hover': {
+              boxShadow: isDarkMode ? `0 6px 16px ${alpha(theme.palette.primary.main, 0.4)}` : undefined
+            }
+          }}
+        >
           Close
         </Button>
       </DialogActions>

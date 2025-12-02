@@ -151,15 +151,17 @@ const ReferAndEarn = () => {
     }
   }
 
+  const isDarkMode = theme.palette.mode === 'dark'
+
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa', pb: 6 }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: isDarkMode ? theme.palette.background.default : '#f8f9fa', pb: 6 }}>
       {/* Header Section */}
       <Box
         sx={{
-          bgcolor: 'white',
+          bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : 'white',
           pt: { xs: 3, md: 4 },
           pb: { xs: 3, md: 4 },
-          borderBottom: '1px solid #e8eaed',
+          borderBottom: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.1)}`,
           mb: 4
         }}
       >
@@ -200,10 +202,11 @@ const ReferAndEarn = () => {
             <Typography
               variant="body1"
               sx={{
-                fontSize: '1.05rem',
-                color: '#5f6368',
+                fontSize: { xs: '0.95rem', sm: '1rem', md: '1.05rem' },
+                color: isDarkMode ? alpha(theme.palette.common.white, 0.8) : '#5f6368',
                 maxWidth: '700px',
-                lineHeight: 1.7
+                lineHeight: 1.7,
+                px: { xs: 2, sm: 0 }
               }}
             >
               Invite your friends to {themeConfig.templateName}. When they sign up, both of you will earn rewards and start your learning journey together!
@@ -217,7 +220,16 @@ const ReferAndEarn = () => {
         <Stack spacing={4}>
           {/* How It Works */}
           <Box>
-            <Typography variant="h5" fontWeight={700} gutterBottom sx={{ mb: 3, color: '#202124' }}>
+            <Typography
+              variant="h5"
+              fontWeight={700}
+              gutterBottom
+              sx={{
+                mb: { xs: 2.5, sm: 3 },
+                fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' },
+                color: isDarkMode ? theme.palette.common.white : '#202124'
+              }}
+            >
               How It Works
             </Typography>
             <Grid container spacing={3}>
@@ -226,16 +238,18 @@ const ReferAndEarn = () => {
                   <Paper
                     elevation={0}
                     sx={{
-                      p: 3,
+                      p: { xs: 2.5, sm: 3 },
                       height: '100%',
-                      borderRadius: 2,
-                      border: '1px solid #e8eaed',
-                      bgcolor: 'white',
+                      borderRadius: { xs: 1.5, sm: 2 },
+                      border: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.1)}`,
+                      bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.6) : 'white',
                       textAlign: 'center',
                       transition: 'all 0.3s ease',
                       '&:hover': {
                         borderColor: theme.palette[option.color].main,
-                        boxShadow: `0 4px 20px ${alpha(theme.palette[option.color].main, 0.1)}`,
+                        boxShadow: isDarkMode
+                          ? `0 4px 20px ${alpha(theme.palette[option.color].main, 0.2)}`
+                          : `0 4px 20px ${alpha(theme.palette[option.color].main, 0.1)}`,
                         transform: 'translateY(-4px)'
                       }
                     }}
@@ -256,10 +270,25 @@ const ReferAndEarn = () => {
                         {option.icon}
                       </Box>
                       <Box>
-                        <Typography variant="h6" fontWeight={700} gutterBottom sx={{ color: '#202124' }}>
+                        <Typography
+                          variant="h6"
+                          fontWeight={700}
+                          gutterBottom
+                          sx={{
+                            color: isDarkMode ? theme.palette.common.white : '#202124',
+                            fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' }
+                          }}
+                        >
                           {option.title}
                         </Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{
+                            lineHeight: 1.6,
+                            fontSize: { xs: '0.85rem', sm: '0.9rem', md: '0.95rem' }
+                          }}
+                        >
                           {option.subtitle}
                         </Typography>
                       </Box>
@@ -273,10 +302,12 @@ const ReferAndEarn = () => {
           {/* Invite by Email */}
           <Card
             sx={{
-              borderRadius: 2,
-              bgcolor: 'white',
-              border: '1px solid #e8eaed',
-              boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+              borderRadius: { xs: 1.5, sm: 2 },
+              bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.6) : 'white',
+              border: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.1)}`,
+              boxShadow: isDarkMode
+                ? `0 2px 12px ${alpha(theme.palette.common.black, 0.3)}`
+                : '0 2px 12px rgba(0,0,0,0.04)',
               overflow: 'hidden'
             }}
           >
@@ -309,9 +340,13 @@ const ReferAndEarn = () => {
               </Stack>
             </Box>
 
-            <CardContent sx={{ p: 3 }}>
+            <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
               <Stack spacing={2}>
-                <Typography variant="body2" color="text.secondary">
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ fontSize: { xs: '0.88rem', sm: '0.9rem', md: '0.95rem' } }}
+                >
                   Enter your friend's email address and invite them to join {themeConfig.templateName}
                 </Typography>
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
@@ -324,7 +359,7 @@ const ReferAndEarn = () => {
                     id='refer-email'
                     sx={{
                       '& .MuiOutlinedInput-root': {
-                        bgcolor: 'white'
+                        bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.4) : 'white'
                       }
                     }}
                   />
@@ -353,10 +388,12 @@ const ReferAndEarn = () => {
           {/* Share Referral Link */}
           <Card
             sx={{
-              borderRadius: 2,
-              bgcolor: 'white',
-              border: '1px solid #e8eaed',
-              boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+              borderRadius: { xs: 1.5, sm: 2 },
+              bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.6) : 'white',
+              border: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.1)}`,
+              boxShadow: isDarkMode
+                ? `0 2px 12px ${alpha(theme.palette.common.black, 0.3)}`
+                : '0 2px 12px rgba(0,0,0,0.04)',
               overflow: 'hidden'
             }}
           >
@@ -389,18 +426,24 @@ const ReferAndEarn = () => {
               </Stack>
             </Box>
 
-            <CardContent sx={{ p: 3 }}>
+            <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
               <Stack spacing={3}>
-                <Typography variant="body2" color="text.secondary">
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ fontSize: { xs: '0.88rem', sm: '0.9rem', md: '0.95rem' } }}
+                >
                   Copy your unique referral link or share it directly on social media
                 </Typography>
 
                 {/* Referral Link Display */}
                 <Box
                   sx={{
-                    p: 2.5,
-                    borderRadius: 2,
-                    bgcolor: alpha(theme.palette.primary.main, 0.05),
+                    p: { xs: 2, sm: 2.5 },
+                    borderRadius: { xs: 1.5, sm: 2 },
+                    bgcolor: isDarkMode
+                      ? alpha(theme.palette.primary.main, 0.15)
+                      : alpha(theme.palette.primary.main, 0.05),
                     border: '1px dashed',
                     borderColor: theme.palette.primary.main
                   }}
@@ -431,13 +474,13 @@ const ReferAndEarn = () => {
                         sx={{
                           flex: 1,
                           fontFamily: 'monospace',
-                          fontSize: '1rem',
-                          color: '#202124',
+                          fontSize: { xs: '0.85rem', sm: '0.9rem', md: '1rem' },
+                          color: isDarkMode ? theme.palette.common.white : '#202124',
                           wordBreak: 'break-all',
-                          bgcolor: 'white',
-                          p: 1.5,
-                          borderRadius: 1,
-                          border: '1px solid #e8eaed'
+                          bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.4) : 'white',
+                          p: { xs: 1.25, sm: 1.5 },
+                          borderRadius: { xs: 0.75, sm: 1 },
+                          border: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.1)}`
                         }}
                       >
                         {referralLink}
@@ -470,10 +513,24 @@ const ReferAndEarn = () => {
 
                 {/* Social Share Buttons */}
                 <Box>
-                  <Typography variant="subtitle2" fontWeight={600} gutterBottom sx={{ mb: 2 }}>
+                  <Typography
+                    variant="subtitle2"
+                    fontWeight={600}
+                    gutterBottom
+                    sx={{
+                      mb: 2,
+                      fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' },
+                      color: isDarkMode ? theme.palette.common.white : 'text.primary'
+                    }}
+                  >
                     Share on Social Media
                   </Typography>
-                  <Stack direction='row' spacing={1.5} flexWrap='wrap' sx={{ gap: 1.5 }}>
+                  <Stack
+                    direction='row'
+                    spacing={1.5}
+                    flexWrap='wrap'
+                    sx={{ gap: { xs: 1, sm: 1.5 }, justifyContent: { xs: 'center', sm: 'flex-start' } }}
+                  >
                     <EmailShareButton
                       url={referralLink}
                       subject={`${themeConfig.templateName}: Learn & Win with Quizzes`}

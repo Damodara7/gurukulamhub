@@ -17,7 +17,8 @@ import {
   Container,
   Divider,
   alpha,
-  useTheme
+  useTheme,
+  useMediaQuery
 } from '@mui/material'
 import {
   EmojiEvents,
@@ -38,6 +39,9 @@ import { toast } from 'react-toastify'
 const SponsorGameDetails = ({ gameId }) => {
   const router = useRouter()
   const theme = useTheme()
+  const isDarkMode = theme.palette.mode === 'dark'
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'))
   const [game, setGame] = useState(null)
   const [loading, setLoading] = useState(true)
 
@@ -90,7 +94,15 @@ const SponsorGameDetails = ({ gameId }) => {
 
   if (loading) {
     return (
-      <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Box
+        sx={{
+          minHeight: '100vh',
+          bgcolor: theme.palette.background.default,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+      >
         <CircularProgress size={48} />
       </Box>
     )
@@ -98,25 +110,52 @@ const SponsorGameDetails = ({ gameId }) => {
 
   if (!game) {
     return (
-      <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 4 }}>
+      <Box
+        sx={{
+          minHeight: '100vh',
+          bgcolor: theme.palette.background.default,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          p: { xs: 2, sm: 4 }
+        }}
+      >
         <Container maxWidth="sm">
-          <Card sx={{ borderRadius: 4, bgcolor: 'white', border: '1px solid #e8eaed', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
-            <CardContent sx={{ p: 4, textAlign: 'center' }}>
-              <Alert severity='error' sx={{ mb: 3 }}>
-          Game not found or failed to load.
-        </Alert>
-        <Button
-          variant='contained'
-          component='label'
-          startIcon={<ArrowBack />}
-          onClick={() => router.push('/sponsor/games')}
-          fullWidth
-          sx={{
-            color: 'white'
-          }}
-        >
-          Back to Games awaiting sponsorship
-        </Button>
+          <Card
+            sx={{
+              borderRadius: { xs: 3, md: 4 },
+              bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.6) : 'white',
+              border: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.1)}`,
+              boxShadow: isDarkMode
+                ? `0 2px 12px ${alpha(theme.palette.common.black, 0.3)}`
+                : '0 2px 12px rgba(0,0,0,0.04)'
+            }}
+          >
+            <CardContent sx={{ p: { xs: 3, sm: 4 }, textAlign: 'center' }}>
+              <Alert
+                severity='error'
+                sx={{
+                  mb: { xs: 2.5, sm: 3 },
+                  borderRadius: { xs: 2, sm: 3 }
+                }}
+              >
+                Game not found or failed to load.
+              </Alert>
+              <Button
+                variant='contained'
+                component='label'
+                startIcon={<ArrowBack />}
+                onClick={() => router.push('/sponsor/games')}
+                fullWidth
+                sx={{
+                  color: 'white',
+                  fontSize: { xs: '0.9rem', sm: '1rem' },
+                  py: { xs: 1.25, sm: 1.5 },
+                  borderRadius: { xs: 1.5, sm: 2 }
+                }}
+              >
+                Back to Games awaiting sponsorship
+              </Button>
             </CardContent>
           </Card>
         </Container>
@@ -125,14 +164,14 @@ const SponsorGameDetails = ({ gameId }) => {
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa', pb: 8 }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: theme.palette.background.default, pb: { xs: 6, md: 8 } }}>
       {/* Header Section */}
       <Box
         sx={{
-          bgcolor: 'white',
-          pt: { xs: 4, md: 5 },
-          pb: { xs: 4, md: 5 },
-          borderBottom: '1px solid #e8eaed'
+          bgcolor: isDarkMode ? theme.palette.background.paper : 'white',
+          pt: { xs: 3, sm: 4, md: 5 },
+          pb: { xs: 3, sm: 4, md: 5 },
+          borderBottom: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.15 : 0.1)}`
         }}
       >
         <Container maxWidth="lg">
@@ -142,11 +181,19 @@ const SponsorGameDetails = ({ gameId }) => {
           variant='outlined'
           startIcon={<ArrowBack />}
           onClick={() => router.push('/sponsor/games')}
-              sx={{
-                width: 'fit-content',
-                textTransform: 'none',
-                fontWeight: 600
-              }}
+          sx={{
+            width: 'fit-content',
+            textTransform: 'none',
+            fontWeight: 600,
+            fontSize: { xs: '0.9rem', sm: '1rem' },
+            ...(isDarkMode && {
+              borderColor: alpha(theme.palette.divider, 0.3),
+              '&:hover': {
+                borderColor: alpha(theme.palette.primary.main, 0.5),
+                backgroundColor: alpha(theme.palette.primary.main, 0.08)
+              }
+            })
+          }}
         >
           Back to Games awaiting sponsorship
         </Button>
@@ -156,41 +203,48 @@ const SponsorGameDetails = ({ gameId }) => {
               variant="h3"
               fontWeight={800}
               sx={{
-                fontSize: { xs: '1.75rem', md: '2.5rem' },
-                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.5rem' },
+                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary?.main || theme.palette.primary.light})`,
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
                 lineHeight: 1.3
               }}
             >
-          {game.title}
-        </Typography>
+              {game.title}
+            </Typography>
         
             {/* Status */}
-            <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
-          <Chip 
-            label='Awaiting Sponsorship' 
-            size='small'
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+              flexWrap="wrap"
+              gap={{ xs: 1.5, sm: 2 }}
+            >
+              <Chip
+                label='Awaiting Sponsorship'
+                size='small'
                 sx={{
-                  bgcolor: alpha(theme.palette.warning.main, 0.1),
+                  bgcolor: alpha(theme.palette.warning.main, isDarkMode ? 0.15 : 0.1),
                   color: theme.palette.warning.main,
                   fontWeight: 700,
-                  fontSize: '0.75rem',
-                  border: `2px solid ${alpha(theme.palette.warning.main, 0.3)}`
+                  fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                  border: `2px solid ${alpha(theme.palette.warning.main, isDarkMode ? 0.4 : 0.3)}`,
+                  height: { xs: 26, sm: 28 }
                 }}
               />
-        </Stack>
+            </Stack>
 
             {/* Description */}
             {game?.description && (
               <Typography
                 variant="body1"
                 sx={{
-                  fontSize: '1.05rem',
-                  color: '#5f6368',
+                  fontSize: { xs: '0.95rem', sm: '1rem', md: '1.05rem' },
+                  color: 'text.secondary',
                   lineHeight: 1.7,
-                  maxWidth: '900px'
+                  maxWidth: { xs: '100%', sm: '800px', md: '900px' }
                 }}
               >
                 {game.description}
@@ -198,74 +252,129 @@ const SponsorGameDetails = ({ gameId }) => {
             )}
 
             {/* Quick Info Bar */}
-            <Stack direction="row" spacing={4} flexWrap="wrap" sx={{ pt: 1 }}>
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={{ xs: 2, sm: 3, md: 4 }}
+              flexWrap="wrap"
+              sx={{ pt: 1 }}
+            >
               <Stack direction="row" spacing={1} alignItems="center">
                 <Box
                   sx={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 1.5,
-                    bgcolor: '#e8f4fd',
+                    width: { xs: 28, sm: 32 },
+                    height: { xs: 28, sm: 32 },
+                    borderRadius: { xs: 1.25, sm: 1.5 },
+                    bgcolor: isDarkMode
+                      ? alpha(theme.palette.info.main, 0.2)
+                      : alpha(theme.palette.info.main, 0.1),
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
                   }}
                 >
-                  <Schedule sx={{ fontSize: 18, color: '#1976d2' }} />
+                  <Schedule sx={{ fontSize: { xs: 16, sm: 18 }, color: theme.palette.info.main }} />
                 </Box>
                 <Box>
-                  <Typography variant="caption" sx={{ color: '#5f6368', fontSize: '0.7rem' }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: 'text.secondary',
+                      fontSize: { xs: '0.65rem', sm: '0.7rem' }
+                    }}
+                  >
                     MODE
                   </Typography>
-                  <Typography variant="body2" fontWeight={600} sx={{ color: '#202124', fontSize: '0.875rem' }}>
+                  <Typography
+                    variant="body2"
+                    fontWeight={600}
+                    sx={{
+                      color: 'text.primary',
+                      fontSize: { xs: '0.83rem', sm: '0.875rem' }
+                    }}
+                  >
                     {game.gameMode === 'live' ? 'Live Game' : 'Self-paced'}
                   </Typography>
                 </Box>
               </Stack>
-              
+
               <Stack direction="row" spacing={1} alignItems="center">
                 <Box
                   sx={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 1.5,
-                    bgcolor: '#f3e5f5',
+                    width: { xs: 28, sm: 32 },
+                    height: { xs: 28, sm: 32 },
+                    borderRadius: { xs: 1.25, sm: 1.5 },
+                    bgcolor: isDarkMode
+                      ? alpha(theme.palette.secondary?.main || theme.palette.primary.main, 0.2)
+                      : alpha(theme.palette.secondary?.main || theme.palette.primary.main, 0.1),
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
                   }}
                 >
-                  <People sx={{ fontSize: 18, color: '#7b1fa2' }} />
+                  <People
+                    sx={{
+                      fontSize: { xs: 16, sm: 18 },
+                      color: theme.palette.secondary?.main || theme.palette.primary.main
+                    }}
+                  />
                 </Box>
                 <Box>
-                  <Typography variant="caption" sx={{ color: '#5f6368', fontSize: '0.7rem' }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: 'text.secondary',
+                      fontSize: { xs: '0.65rem', sm: '0.7rem' }
+                    }}
+                  >
                     PLAYERS
                   </Typography>
-                  <Typography variant="body2" fontWeight={600} sx={{ color: '#202124', fontSize: '0.875rem' }}>
+                  <Typography
+                    variant="body2"
+                    fontWeight={600}
+                    sx={{
+                      color: 'text.primary',
+                      fontSize: { xs: '0.83rem', sm: '0.875rem' }
+                    }}
+                  >
                     Max {game.maxPlayers}
                   </Typography>
                 </Box>
               </Stack>
-              
+
               <Stack direction="row" spacing={1} alignItems="center">
                 <Box
                   sx={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 1.5,
-                    bgcolor: '#fff3e0',
+                    width: { xs: 28, sm: 32 },
+                    height: { xs: 28, sm: 32 },
+                    borderRadius: { xs: 1.25, sm: 1.5 },
+                    bgcolor: isDarkMode
+                      ? alpha(theme.palette.warning.main, 0.2)
+                      : alpha(theme.palette.warning.main, 0.1),
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
                   }}
                 >
-                  <EmojiEvents sx={{ fontSize: 18, color: '#f57c00' }} />
+                  <EmojiEvents sx={{ fontSize: { xs: 16, sm: 18 }, color: theme.palette.warning.main }} />
                 </Box>
                 <Box>
-                  <Typography variant="caption" sx={{ color: '#5f6368', fontSize: '0.7rem' }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: 'text.secondary',
+                      fontSize: { xs: '0.65rem', sm: '0.7rem' }
+                    }}
+                  >
                     REWARDS
                   </Typography>
-                  <Typography variant="body2" fontWeight={600} sx={{ color: '#202124', fontSize: '0.875rem' }}>
+                  <Typography
+                    variant="body2"
+                    fontWeight={600}
+                    sx={{
+                      color: 'text.primary',
+                      fontSize: { xs: '0.83rem', sm: '0.875rem' }
+                    }}
+                  >
                     {game.rewards?.length || 0} Available
                   </Typography>
                 </Box>
@@ -274,22 +383,37 @@ const SponsorGameDetails = ({ gameId }) => {
               <Stack direction="row" spacing={1} alignItems="center">
                 <Box
                   sx={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 1.5,
-                    bgcolor: '#e8f5e9',
+                    width: { xs: 28, sm: 32 },
+                    height: { xs: 28, sm: 32 },
+                    borderRadius: { xs: 1.25, sm: 1.5 },
+                    bgcolor: isDarkMode
+                      ? alpha(theme.palette.success.main, 0.2)
+                      : alpha(theme.palette.success.main, 0.1),
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
                   }}
                 >
-                  <Person sx={{ fontSize: 18, color: '#2e7d32' }} />
+                  <Person sx={{ fontSize: { xs: 16, sm: 18 }, color: theme.palette.success.main }} />
                 </Box>
                 <Box>
-                  <Typography variant="caption" sx={{ color: '#5f6368', fontSize: '0.7rem' }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: 'text.secondary',
+                      fontSize: { xs: '0.65rem', sm: '0.7rem' }
+                    }}
+                  >
                     ORGANIZER
                   </Typography>
-                  <Typography variant="body2" fontWeight={600} sx={{ color: '#202124', fontSize: '0.875rem' }}>
+                  <Typography
+                    variant="body2"
+                    fontWeight={600}
+                    sx={{
+                      color: 'text.primary',
+                      fontSize: { xs: '0.83rem', sm: '0.875rem' }
+                    }}
+                  >
                     {game.creatorEmail?.split('@')[0] || 'N/A'}
                   </Typography>
                 </Box>
@@ -308,48 +432,83 @@ const SponsorGameDetails = ({ gameId }) => {
               {game.quiz && (
                 <Card
                   sx={{
-                    borderRadius: 4,
-                    bgcolor: 'white',
-                    border: '1px solid #e8eaed',
-                    boxShadow: '0 2px 12px rgba(0,0,0,0.04)'
+                    borderRadius: { xs: 3, md: 4 },
+                    bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.6) : 'white',
+                    border: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.1)}`,
+                    boxShadow: isDarkMode
+                      ? `0 2px 12px ${alpha(theme.palette.common.black, 0.3)}`
+                      : '0 2px 12px rgba(0,0,0,0.04)'
                   }}
                 >
-                  <CardContent sx={{ p: { xs: 3, md: 4 } }}>
-                    <Stack spacing={3}>
+                  <CardContent sx={{ p: { xs: 2.5, sm: 3, md: 4 } }}>
+                    <Stack spacing={{ xs: 2.5, sm: 3 }}>
                       {/* Quiz Header */}
                       <Box>
-                        <Typography variant="overline" sx={{ color: theme.palette.primary.main, fontWeight: 700, letterSpacing: 1.5, fontSize: '0.7rem' }}>
+                        <Typography
+                          variant="overline"
+                          sx={{
+                            color: theme.palette.primary.main,
+                            fontWeight: 700,
+                            letterSpacing: { xs: 1, sm: 1.5 },
+                            fontSize: { xs: '0.65rem', sm: '0.7rem' }
+                          }}
+                        >
                           QUIZ INFORMATION
                         </Typography>
-                        <Typography variant="h5" fontWeight={700} sx={{ color: '#202124', mt: 0.5 }}>
+                        <Typography
+                          variant="h5"
+                          fontWeight={700}
+                          sx={{
+                            color: 'text.primary',
+                            mt: 0.5,
+                            fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' }
+                          }}
+                        >
                           {game.quiz.title || 'Quiz Title'}
                         </Typography>
                       </Box>
 
-                      <Divider sx={{ opacity: 0.3 }} />
+                      <Divider sx={{ borderColor: alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.3) }} />
 
                       {/* Quiz Details */}
                       {game.quiz.details && (
-                  <Box>
-                          <Typography variant="subtitle1" fontWeight={700} gutterBottom sx={{ color: '#202124' }}>
+                        <Box>
+                          <Typography
+                            variant="subtitle1"
+                            fontWeight={700}
+                            gutterBottom
+                            sx={{
+                              color: 'text.primary',
+                              fontSize: { xs: '0.95rem', sm: '1rem', md: '1.1rem' }
+                            }}
+                          >
                             Description
-                    </Typography>
-                          <Typography sx={{ color: '#5f6368', lineHeight: 1.7, fontSize: '0.95rem' }}>
+                          </Typography>
+                          <Typography
+                            sx={{
+                              color: 'text.secondary',
+                              lineHeight: 1.7,
+                              fontSize: { xs: '0.88rem', sm: '0.9rem', md: '0.95rem' }
+                            }}
+                          >
                             {game.quiz.details}
-                    </Typography>
-                  </Box>
-                )}
+                          </Typography>
+                        </Box>
+                      )}
 
                       {/* Language & Syllabus */}
-                      <Stack direction="row" spacing={2} flexWrap="wrap">
+                      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 1.5, sm: 2 }} flexWrap="wrap">
                         {game.quiz.language && (
                           <Chip
                             label={`Language: ${game.quiz.language.name || game.quiz.language}`}
                             sx={{
-                              bgcolor: '#e8f4fd',
-                              color: '#0c5a9e',
+                              bgcolor: isDarkMode
+                                ? alpha(theme.palette.info.main, 0.2)
+                                : alpha(theme.palette.info.main, 0.1),
+                              color: theme.palette.info.main,
                               fontWeight: 600,
-                              border: 'none'
+                              border: 'none',
+                              fontSize: { xs: '0.8rem', sm: '0.875rem' }
                             }}
                           />
                         )}
@@ -357,10 +516,13 @@ const SponsorGameDetails = ({ gameId }) => {
                           <Chip
                             label={`Syllabus: ${game.quiz.syllabus}`}
                             sx={{
-                              bgcolor: '#f3e5f5',
-                              color: '#7b1fa2',
+                              bgcolor: isDarkMode
+                                ? alpha(theme.palette.secondary?.main || theme.palette.primary.main, 0.2)
+                                : alpha(theme.palette.secondary?.main || theme.palette.primary.main, 0.1),
+                              color: theme.palette.secondary?.main || theme.palette.primary.main,
                               fontWeight: 600,
-                              border: 'none'
+                              border: 'none',
+                              fontSize: { xs: '0.8rem', sm: '0.875rem' }
                             }}
                           />
                         )}
@@ -374,11 +536,13 @@ const SponsorGameDetails = ({ gameId }) => {
               {game.promotionalVideoUrl && (
                 <Card
                   sx={{
-                    borderRadius: 4,
+                    borderRadius: { xs: 3, md: 4 },
                     overflow: 'hidden',
-                    bgcolor: 'white',
-                    border: '1px solid #e8eaed',
-                    boxShadow: '0 2px 12px rgba(0,0,0,0.04)'
+                    bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.6) : 'white',
+                    border: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.1)}`,
+                    boxShadow: isDarkMode
+                      ? `0 2px 12px ${alpha(theme.palette.common.black, 0.3)}`
+                      : '0 2px 12px rgba(0,0,0,0.04)'
                   }}
                 >
                   <Box sx={{ position: 'relative', pt: '56.25%', bgcolor: '#000' }}>
@@ -402,43 +566,81 @@ const SponsorGameDetails = ({ gameId }) => {
               {/* Sponsorship Summary Card */}
               <Card
                 sx={{
-                  borderRadius: 4,
-                  bgcolor: 'white',
-                  border: '1px solid #e8eaed',
-                  boxShadow: '0 2px 12px rgba(0,0,0,0.04)'
+                  borderRadius: { xs: 3, md: 4 },
+                  bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.6) : 'white',
+                  border: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.1)}`,
+                  boxShadow: isDarkMode
+                    ? `0 2px 12px ${alpha(theme.palette.common.black, 0.3)}`
+                    : '0 2px 12px rgba(0,0,0,0.04)'
                 }}
               >
-                <CardContent sx={{ p: 3 }}>
-                  <Typography variant="h6" fontWeight={700} gutterBottom sx={{ color: '#202124', mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <EmojiEvents sx={{ fontSize: 22, color: theme.palette.warning.main }} />
+                <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
+                  <Typography
+                    variant="h6"
+                    fontWeight={700}
+                    gutterBottom
+                    sx={{
+                      color: 'text.primary',
+                      mb: { xs: 2.5, sm: 3 },
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' }
+                    }}
+                  >
+                    <EmojiEvents sx={{ fontSize: { xs: 20, sm: 22 }, color: theme.palette.warning.main }} />
                     Sponsorship Overview
-              </Typography>
+                  </Typography>
               
               <Stack spacing={2}>
                     {/* Total Rewards Count */}
                     <Box
                       sx={{
-                        p: 2,
-                        borderRadius: 2,
-                        bgcolor: alpha(theme.palette.primary.main, 0.08),
-                        border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`
+                        p: { xs: 1.5, sm: 2 },
+                        borderRadius: { xs: 1.5, sm: 2 },
+                        bgcolor: alpha(theme.palette.primary.main, isDarkMode ? 0.15 : 0.08),
+                        border: `1px solid ${alpha(theme.palette.primary.main, isDarkMode ? 0.3 : 0.2)}`
                       }}
                     >
-                      <Typography variant="caption" sx={{ color: '#5f6368', fontSize: '0.7rem', fontWeight: 700 }}>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: 'text.secondary',
+                          fontSize: { xs: '0.65rem', sm: '0.7rem' },
+                          fontWeight: 700
+                        }}
+                      >
                         TOTAL REWARDS
                       </Typography>
-                      <Typography variant="h4" fontWeight={800} sx={{ color: theme.palette.primary.main, mt: 0.5 }}>
+                      <Typography
+                        variant="h4"
+                        fontWeight={800}
+                        sx={{
+                          color: theme.palette.primary.main,
+                          mt: 0.5,
+                          fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' }
+                        }}
+                      >
                         {game.rewards?.length || 0}
-                  </Typography>
-                </Box>
+                      </Typography>
+                    </Box>
                 
                     <Divider />
                     
                     {/* Rewards Status */}
                 <Box>
-                      <Typography variant="subtitle2" fontWeight={700} gutterBottom sx={{ color: '#202124', mb: 1.5 }}>
+                      <Typography
+                        variant="subtitle2"
+                        fontWeight={700}
+                        gutterBottom
+                        sx={{
+                          color: 'text.primary',
+                          mb: { xs: 1.25, sm: 1.5 },
+                          fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' }
+                        }}
+                      >
                         Reward Status
-                  </Typography>
+                      </Typography>
                       <Stack spacing={1.5}>
                         {game.rewards && game.rewards.length > 0 ? (
                           game.rewards.map(reward => {
@@ -454,41 +656,50 @@ const SponsorGameDetails = ({ gameId }) => {
                             const percentageSponsored = totalNeeded > 0 ? Math.round((totalAllocated / totalNeeded) * 100) : 0
 
                     return (
-                              <Box 
+                              <Box
                                 key={reward._id || reward.position}
                                 sx={{
-                                  p: 2,
-                                  borderRadius: 2,
-                                  bgcolor: isFullySponsored 
-                                    ? alpha(theme.palette.success.main, 0.08)
-                                    : alpha(theme.palette.warning.main, 0.05),
+                                  p: { xs: 1.5, sm: 2 },
+                                  borderRadius: { xs: 1.5, sm: 2 },
+                                  bgcolor: isFullySponsored
+                                    ? alpha(theme.palette.success.main, isDarkMode ? 0.15 : 0.08)
+                                    : alpha(theme.palette.warning.main, isDarkMode ? 0.12 : 0.05),
                                   border: '1px solid',
                                   borderColor: isFullySponsored
-                                    ? alpha(theme.palette.success.main, 0.2)
-                                    : alpha(theme.palette.warning.main, 0.2)
+                                    ? alpha(theme.palette.success.main, isDarkMode ? 0.3 : 0.2)
+                                    : alpha(theme.palette.warning.main, isDarkMode ? 0.3 : 0.2)
                                 }}
                               >
-                                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
-                        <Typography 
-                          variant='body2' 
-                                    sx={{ 
-                                      color: '#202124',
-                                      fontSize: '0.875rem',
+                                <Stack
+                                  direction="row"
+                                  justifyContent="space-between"
+                                  alignItems="center"
+                                  sx={{ mb: 1 }}
+                                >
+                                  <Typography
+                                    variant='body2'
+                                    sx={{
+                                      color: 'text.primary',
+                                      fontSize: { xs: '0.83rem', sm: '0.875rem' },
                                       fontWeight: 700
                                     }}
                                   >
                                     Position {reward.position}
                                   </Typography>
-                                  {isFullySponsored && <CheckCircle sx={{ fontSize: 18, color: theme.palette.success.main }} />}
+                                  {isFullySponsored && (
+                                    <CheckCircle sx={{ fontSize: { xs: 16, sm: 18 }, color: theme.palette.success.main }} />
+                                  )}
                                 </Stack>
-                                
+
                                 {/* Progress Bar */}
                                 <Box sx={{ mb: 1 }}>
                                   <Box
                                     sx={{
                                       width: '100%',
-                                      height: 6,
-                                      bgcolor: alpha(theme.palette.grey[300], 0.3),
+                                      height: { xs: 5, sm: 6 },
+                                      bgcolor: isDarkMode
+                                        ? alpha(theme.palette.grey[600], 0.3)
+                                        : alpha(theme.palette.grey[300], 0.3),
                                       borderRadius: 1,
                                       overflow: 'hidden'
                                     }}
@@ -504,20 +715,31 @@ const SponsorGameDetails = ({ gameId }) => {
                                   </Box>
                                 </Box>
 
-                                <Typography 
-                                  variant='caption' 
-                                  sx={{ color: '#5f6368', display: 'block', fontSize: '0.75rem' }}
+                                <Typography
+                                  variant='caption'
+                                  sx={{
+                                    color: 'text.secondary',
+                                    display: 'block',
+                                    fontSize: { xs: '0.73rem', sm: '0.75rem' }
+                                  }}
                                 >
-                                  {percentageSponsored}% funded • {remaining > 0 
+                                  {percentageSponsored}% funded •{' '}
+                                  {remaining > 0
                                     ? `${reward.rewardType === 'cash' ? `${reward.currency} ${remaining}` : `${remaining} items`} remaining`
-                            : 'Fully sponsored!'
-                          }
-                        </Typography>
-                      </Box>
+                                    : 'Fully sponsored!'}
+                                </Typography>
+                              </Box>
                     )
                           })
                         ) : (
-                          <Typography variant='body2' sx={{ color: '#5f6368', fontStyle: 'italic' }}>
+                          <Typography
+                            variant='body2'
+                            sx={{
+                              color: 'text.secondary',
+                              fontStyle: 'italic',
+                              fontSize: { xs: '0.88rem', sm: '0.9rem', md: '0.95rem' }
+                            }}
+                          >
                             No rewards available
                           </Typography>
                         )}
@@ -534,36 +756,59 @@ const SponsorGameDetails = ({ gameId }) => {
       {/* Rewards Section */}
       <Container maxWidth="lg" sx={{ mt: 6 }}>
         <Box sx={{ mb: 4 }}>
-          <Typography 
-            variant='h4' 
+          <Typography
+            variant='h4'
             fontWeight={800}
-            sx={{ 
-              color: '#202124',
-              fontSize: { xs: '1.75rem', md: '2rem' },
+            sx={{
+              color: 'text.primary',
+              fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
               mb: 1,
               display: 'flex',
               alignItems: 'center',
-              gap: 2
+              gap: { xs: 1.5, sm: 2 },
+              flexWrap: 'wrap'
             }}
           >
-            <EmojiEvents sx={{ fontSize: 32, color: theme.palette.warning.main }} />
+            <EmojiEvents sx={{ fontSize: { xs: 28, sm: 32 }, color: theme.palette.warning.main }} />
             Sponsorship Opportunities
           </Typography>
-          <Typography variant="body1" sx={{ color: '#5f6368', fontSize: '1rem', lineHeight: 1.6 }}>
+          <Typography
+            variant="body1"
+            sx={{
+              color: 'text.secondary',
+              fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' },
+              lineHeight: 1.6
+            }}
+          >
             Review the rewards below and choose one to sponsor
           </Typography>
         </Box>
 
           {game.rewards?.length === 0 ? (
-          <Card sx={{ borderRadius: 4, bgcolor: 'white', border: '1px solid #e8eaed', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
-            <CardContent sx={{ p: 4 }}>
-              <Alert severity='info' sx={{ borderRadius: 3 }}>
-              No rewards defined yet for this game.
-            </Alert>
-            </CardContent>
-          </Card>
+            <Card
+              sx={{
+                borderRadius: { xs: 3, md: 4 },
+                bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.6) : 'white',
+                border: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.1)}`,
+                boxShadow: isDarkMode
+                  ? `0 2px 12px ${alpha(theme.palette.common.black, 0.3)}`
+                  : '0 2px 12px rgba(0,0,0,0.04)'
+              }}
+            >
+              <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
+                <Alert
+                  severity='info'
+                  sx={{
+                    borderRadius: { xs: 2, sm: 3 },
+                    fontSize: { xs: '0.9rem', sm: '1rem' }
+                  }}
+                >
+                  No rewards defined yet for this game.
+                </Alert>
+              </CardContent>
+            </Card>
           ) : (
-            <Grid container spacing={3}>
+            <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
             {game.rewards
               .sort((a, b) => a.position - b.position)
               .map(reward => {
@@ -586,25 +831,29 @@ const SponsorGameDetails = ({ gameId }) => {
                 }
                 
                 return (
-                  <Grid item xs={12} md={6} key={reward._id || reward.position}>
-                    <Card 
-                      sx={{ 
+                  <Grid item xs={12} sm={6} md={6} key={reward._id || reward.position}>
+                    <Card
+                      sx={{
                         height: '100%',
                         display: 'flex',
                         flexDirection: 'column',
-                        borderRadius: 4,
-                        border: '1px solid #e8eaed',
-                        bgcolor: 'white',
-                        boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+                        borderRadius: { xs: 3, md: 4 },
+                        border: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.1)}`,
+                        bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.6) : 'white',
+                        boxShadow: isDarkMode
+                          ? `0 2px 12px ${alpha(theme.palette.common.black, 0.3)}`
+                          : '0 2px 12px rgba(0,0,0,0.04)',
                         transition: 'all 0.3s ease',
                         '&:hover': {
-                          boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
-                          transform: 'translateY(-6px)',
+                          boxShadow: isDarkMode
+                            ? `0 8px 24px ${alpha(theme.palette.common.black, 0.5)}`
+                            : '0 8px 24px rgba(0,0,0,0.1)',
+                          transform: { xs: 'translateY(-4px)', md: 'translateY(-6px)' },
                           borderColor: isFullySponsored ? theme.palette.success.main : theme.palette.primary.main
                         }
                       }}
                     >
-                      <CardContent sx={{ p: 3, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+                      <CardContent sx={{ p: { xs: 2.5, sm: 3 }, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
                         {/* Position Header */}
                         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
                           <Stack direction="row" alignItems="center" spacing={1.5}>
@@ -620,20 +869,28 @@ const SponsorGameDetails = ({ gameId }) => {
                             >
                               {reward.position}
                             </Avatar>
-                            <Typography variant='h6' fontWeight={700} sx={{ color: '#202124', fontSize: '1.1rem' }}>
+                            <Typography
+                              variant='h6'
+                              fontWeight={700}
+                              sx={{
+                                color: 'text.primary',
+                                fontSize: { xs: '1rem', sm: '1.05rem', md: '1.1rem' }
+                              }}
+                            >
                               {getOrdinalSuffix(reward.position)} Place
                             </Typography>
                           </Stack>
                           {isFullySponsored && (
                             <Chip
-                              icon={<CheckCircle sx={{ fontSize: 14 }} />}
+                              icon={<CheckCircle sx={{ fontSize: { xs: 12, sm: 14 } }} />}
                               label="Sponsored"
                               size="small"
                               sx={{
-                                bgcolor: alpha(theme.palette.success.main, 0.1),
+                                bgcolor: alpha(theme.palette.success.main, isDarkMode ? 0.15 : 0.1),
                                 color: theme.palette.success.main,
                                 fontWeight: 700,
-                                border: 'none'
+                                border: 'none',
+                                fontSize: { xs: '0.7rem', sm: '0.75rem' }
                               }}
                             />
                           )}
@@ -660,16 +917,35 @@ const SponsorGameDetails = ({ gameId }) => {
                             )}
                           </Box>
                           <Box sx={{ flex: 1 }}>
-                            <Typography variant="caption" sx={{ color: '#5f6368', fontSize: '0.7rem' }}>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: 'text.secondary',
+                                fontSize: { xs: '0.65rem', sm: '0.7rem' }
+                              }}
+                            >
                               {reward.rewardType === 'cash' ? 'CASH REWARD' : 'PHYSICAL GIFT'}
                             </Typography>
-                            <Typography variant="h6" fontWeight={700} sx={{ color: '#202124', lineHeight: 1.2 }}>
-                              {reward.rewardType === 'cash' 
+                            <Typography
+                              variant="h6"
+                              fontWeight={700}
+                              sx={{
+                                color: 'text.primary',
+                                lineHeight: 1.2,
+                                fontSize: { xs: '1rem', sm: '1.05rem', md: '1.1rem' }
+                              }}
+                            >
+                              {reward.rewardType === 'cash'
                                 ? `${reward.currency} ${reward.rewardValuePerWinner}`
-                                : reward.nonCashReward
-                              }
+                                : reward.nonCashReward}
                             </Typography>
-                            <Typography variant="caption" sx={{ color: '#5f6368' }}>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: 'text.secondary',
+                                fontSize: { xs: '0.73rem', sm: '0.75rem' }
+                              }}
+                            >
                               {reward.numberOfWinnersForThisPosition} winner{reward.numberOfWinnersForThisPosition !== 1 ? 's' : ''}
                             </Typography>
                           </Box>
@@ -678,24 +954,45 @@ const SponsorGameDetails = ({ gameId }) => {
                         <Divider sx={{ mb: 3 }} />
 
                         {/* Progress Section */}
-                        <Box sx={{ mb: 3 }}>
-                          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }}>
-                            <Typography variant="body2" fontWeight={700} sx={{ color: '#202124' }}>
+                        <Box sx={{ mb: { xs: 2.5, sm: 3 } }}>
+                          <Stack
+                            direction="row"
+                            justifyContent="space-between"
+                            alignItems="center"
+                            sx={{ mb: { xs: 1.25, sm: 1.5 } }}
+                          >
+                            <Typography
+                              variant="body2"
+                              fontWeight={700}
+                              sx={{
+                                color: 'text.primary',
+                                fontSize: { xs: '0.83rem', sm: '0.875rem' }
+                              }}
+                            >
                               Sponsorship Progress
                             </Typography>
-                            <Typography variant="h6" fontWeight={800} sx={{ color: theme.palette.primary.main }}>
+                            <Typography
+                              variant="h6"
+                              fontWeight={800}
+                              sx={{
+                                color: theme.palette.primary.main,
+                                fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' }
+                              }}
+                            >
                               {percentageSponsored}%
                             </Typography>
                           </Stack>
-                          
+
                           <Box
                             sx={{
                               width: '100%',
-                              height: 8,
-                              bgcolor: '#f0f1f3',
-                              borderRadius: 2,
+                              height: { xs: 7, sm: 8 },
+                              bgcolor: isDarkMode
+                                ? alpha(theme.palette.grey[600], 0.3)
+                                : alpha(theme.palette.grey[300], 0.5),
+                              borderRadius: { xs: 1.5, sm: 2 },
                               overflow: 'hidden',
-                              mb: 2
+                              mb: { xs: 1.5, sm: 2 }
                             }}
                           >
                             <Box
@@ -707,13 +1004,39 @@ const SponsorGameDetails = ({ gameId }) => {
                               }}
                             />
                           </Box>
-                          
-                          <Stack direction="row" justifyContent="space-between">
-                            <Typography variant="caption" sx={{ color: '#5f6368' }}>
-                              Sponsored: <strong>{reward.rewardType === 'cash' ? `${reward.currency} ${totalAllocated}` : `${totalAllocated} items`}</strong>
+
+                          <Stack
+                            direction={{ xs: 'column', sm: 'row' }}
+                            justifyContent="space-between"
+                            spacing={{ xs: 0.5, sm: 0 }}
+                          >
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: 'text.secondary',
+                                fontSize: { xs: '0.73rem', sm: '0.75rem' }
+                              }}
+                            >
+                              Sponsored:{' '}
+                              <strong>
+                                {reward.rewardType === 'cash'
+                                  ? `${reward.currency} ${totalAllocated}`
+                                  : `${totalAllocated} items`}
+                              </strong>
                             </Typography>
-                            <Typography variant="caption" sx={{ color: '#5f6368' }}>
-                              Total: <strong>{reward.rewardType === 'cash' ? `${reward.currency} ${totalNeeded}` : `${totalNeeded} items`}</strong>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: 'text.secondary',
+                                fontSize: { xs: '0.73rem', sm: '0.75rem' }
+                              }}
+                            >
+                              Total:{' '}
+                              <strong>
+                                {reward.rewardType === 'cash'
+                                  ? `${reward.currency} ${totalNeeded}`
+                                  : `${totalNeeded} items`}
+                              </strong>
                             </Typography>
                           </Stack>
                         </Box>
@@ -722,30 +1045,41 @@ const SponsorGameDetails = ({ gameId }) => {
 
                         {/* Current Sponsors */}
                         {reward.sponsors && reward.sponsors.length > 0 && (
-                          <Box sx={{ mb: 3 }}>
-                            <Typography variant='subtitle2' fontWeight={700} gutterBottom sx={{ color: '#202124', mb: 2 }}>
+                          <Box sx={{ mb: { xs: 2.5, sm: 3 } }}>
+                            <Typography
+                              variant='subtitle2'
+                              fontWeight={700}
+                              gutterBottom
+                              sx={{
+                                color: 'text.primary',
+                                mb: { xs: 1.5, sm: 2 },
+                                fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' }
+                              }}
+                            >
                               Current Sponsors ({reward.sponsors.length})
                             </Typography>
-                            
-                            <Stack spacing={1.5}>
+
+                            <Stack spacing={{ xs: 1.25, sm: 1.5 }}>
                               {reward.sponsors.map((sponsor, index) => (
-                                <Box 
+                                <Box
                                   key={index}
                                   sx={{
                                     display: 'flex',
                                     alignItems: 'center',
-                                    gap: 2,
-                                    p: 2,
-                                    borderRadius: 2,
-                                    bgcolor: '#fafbfc',
-                                    border: '1px solid #e8eaed'
+                                    gap: { xs: 1.5, sm: 2 },
+                                    p: { xs: 1.5, sm: 2 },
+                                    borderRadius: { xs: 1.5, sm: 2 },
+                                    bgcolor: isDarkMode
+                                      ? alpha(theme.palette.background.default, 0.4)
+                                      : alpha(theme.palette.grey[50], 0.8),
+                                    border: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.1)}`
                                   }}
                                 >
-                                  <Avatar 
-                                    sx={{ 
-                                      width: 36, 
-                                      height: 36, 
-                                      fontSize: '0.9rem',
+                                  <Avatar
+                                    sx={{
+                                      width: { xs: 32, sm: 36 },
+                                      height: { xs: 32, sm: 36 },
+                                      fontSize: { xs: '0.85rem', sm: '0.9rem' },
                                       fontWeight: 700,
                                       bgcolor: theme.palette.primary.main
                                     }}
@@ -753,22 +1087,31 @@ const SponsorGameDetails = ({ gameId }) => {
                                     {sponsor.email?.charAt(0)?.toUpperCase() || 'S'}
                                   </Avatar>
                                   <Box sx={{ flex: 1, minWidth: 0 }}>
-                                    <Typography 
-                                      variant='body2' 
-                                      fontWeight={600} 
-                                      sx={{ 
-                                        color: '#202124',
+                                    <Typography
+                                      variant='body2'
+                                      fontWeight={600}
+                                      sx={{
+                                        color: 'text.primary',
                                         overflow: 'hidden',
                                         textOverflow: 'ellipsis',
                                         whiteSpace: 'nowrap',
-                                        mb: 0.5
+                                        mb: 0.5,
+                                        fontSize: { xs: '0.83rem', sm: '0.875rem' }
                                       }}
                                     >
                                       {sponsor.email}
                                     </Typography>
-                                    <Typography variant="caption" sx={{ color: '#5f6368', fontWeight: 600 }}>
-                                      Contributed: {reward.rewardType === 'cash' 
-                                        ? `${sponsor.currency || sponsor.rewardDetails?.currency || reward.currency} ${sponsor.allocated || sponsor.rewardDetails?.allocated || 0}` 
+                                    <Typography
+                                      variant="caption"
+                                      sx={{
+                                        color: 'text.secondary',
+                                        fontWeight: 600,
+                                        fontSize: { xs: '0.73rem', sm: '0.75rem' }
+                                      }}
+                                    >
+                                      Contributed:{' '}
+                                      {reward.rewardType === 'cash'
+                                        ? `${sponsor.currency || sponsor.rewardDetails?.currency || reward.currency} ${sponsor.allocated || sponsor.rewardDetails?.allocated || 0}`
                                         : `${sponsor.allocated || sponsor.rewardDetails?.allocated || 0} items`}
                                     </Typography>
                                   </Box>
@@ -785,19 +1128,21 @@ const SponsorGameDetails = ({ gameId }) => {
                           fullWidth
                           onClick={() => handleSponsorReward(reward)}
                           disabled={isFullySponsored}
-                          sx={{ 
+                          sx={{
                             mt: 'auto',
-                            py: 1.5,
+                            py: { xs: 1.25, sm: 1.5 },
                             fontWeight: 700,
                             textTransform: 'none',
-                            fontSize: '0.95rem',
-                            borderRadius: 2,
+                            fontSize: { xs: '0.9rem', sm: '0.92rem', md: '0.95rem' },
+                            borderRadius: { xs: 1.5, sm: 2 },
                             bgcolor: isFullySponsored ? theme.palette.success.main : theme.palette.primary.main,
                             color: 'white',
                             boxShadow: 'none',
                             '&:hover': {
                               bgcolor: isFullySponsored ? theme.palette.success.dark : theme.palette.primary.dark,
-                              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                              boxShadow: isDarkMode
+                                ? `0 4px 12px ${alpha(isFullySponsored ? theme.palette.success.main : theme.palette.primary.main, 0.4)}`
+                                : '0 4px 12px rgba(0,0,0,0.15)',
                               transform: 'translateY(-2px)'
                             },
                             '&:disabled': {

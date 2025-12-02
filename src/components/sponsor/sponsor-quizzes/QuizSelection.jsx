@@ -7,12 +7,44 @@ import {
   Grid,
   Typography,
   Box,
-  FormHelperText
+  FormHelperText,
+  alpha,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 
 const QuizSelection = ({ quizzes, selectedQuizzes, setSelectedQuizzes, errors, setErrors }) => {
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
+  
   return (
-    <FormControl fullWidth sx={{ mb: 3 }} error={!!errors.selectedQuizzes}>
+    <FormControl
+      fullWidth
+      sx={{
+        mb: { xs: 2.5, sm: 3 },
+        '& .MuiOutlinedInput-root': {
+          backgroundColor: isDarkMode ? alpha(theme.palette.background.default, 0.6) : undefined,
+          '& fieldset': {
+            borderColor: isDarkMode ? alpha(theme.palette.divider, 0.3) : undefined
+          },
+          '&:hover fieldset': {
+            borderColor: isDarkMode ? alpha(theme.palette.primary.main, 0.5) : undefined
+          },
+          '&.Mui-focused fieldset': {
+            borderColor: isDarkMode ? theme.palette.primary.main : undefined
+          }
+        },
+        '& .MuiInputBase-input': {
+          color: isDarkMode ? theme.palette.text.primary : undefined,
+          fontSize: { xs: '0.9rem', sm: '1rem' }
+        },
+        '& .MuiInputLabel-root': {
+          color: isDarkMode ? alpha(theme.palette.text.secondary, 0.8) : undefined,
+          fontSize: { xs: '0.9rem', sm: '1rem' }
+        }
+      }}
+      error={!!errors.selectedQuizzes}
+    >
       <InputLabel>Select Quizzes</InputLabel>
       <Select
         name='quiz'
@@ -56,10 +88,17 @@ const QuizSelection = ({ quizzes, selectedQuizzes, setSelectedQuizzes, errors, s
               <Grid item xs={8}>
                 <Grid container alignItems='center' spacing={2}>
                   <Grid item>
-                    <img
+                    <Box
+                      component="img"
                       src={quiz?.thumbnail || 'https://via.placeholder.com/150x150'}
                       alt={quiz.title}
-                      style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }}
+                      sx={{
+                        width: { xs: 36, sm: 40 },
+                        height: { xs: 36, sm: 40 },
+                        borderRadius: '50%',
+                        objectFit: 'cover',
+                        border: `2px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.2)}`
+                      }}
                     />
                   </Grid>
                   <Grid item>
@@ -78,7 +117,14 @@ const QuizSelection = ({ quizzes, selectedQuizzes, setSelectedQuizzes, errors, s
           </MenuItem>
         ))}
       </Select>
-      <FormHelperText>{errors.selectedQuizzes || 'Select a quiz'}</FormHelperText>
+      <FormHelperText
+        sx={{
+          fontSize: { xs: '0.75rem', sm: '0.875rem' },
+          color: isDarkMode ? alpha(theme.palette.text.secondary, 0.8) : undefined
+        }}
+      >
+        {errors.selectedQuizzes || 'Select a quiz'}
+      </FormHelperText>
     </FormControl>
   );
 };

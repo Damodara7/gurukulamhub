@@ -20,7 +20,10 @@ import {
   ListItemText,
   Typography,
   Checkbox,
-  Tooltip
+  Tooltip,
+  useTheme,
+  alpha,
+  useMediaQuery
 } from '@mui/material'
 import ChatOutlinedIcon from '@mui/icons-material/ChatOutlined'
 import ScheduleIcon from '@mui/icons-material/Schedule'
@@ -45,7 +48,6 @@ import {
 import classnames from 'classnames'
 import UserBackgroundLetterAvatar from './UserBackgroundLetterAvatar'
 import debounce from 'lodash/debounce'
-import { useMediaQuery } from '@mui/material'
 import tableStyles from '@core/styles/table.module.css'
 import FilterChips from './FilterChips'
 import FilterPopup from './FilterPopup'
@@ -77,6 +79,8 @@ const ActionsMenu = ({ anchorEl, handleClose, handleAction }) => (
 )
 
 const NetworkTreeTable = ({ currentUserNode, handleChangeNode }) => {
+  const theme = useTheme()
+  const isDarkMode = theme.palette.mode === 'dark'
   const [rowSelection, setRowSelection] = useState({})
   const [globalFilter, setGlobalFilter] = useState('')
   const [anchorEl, setAnchorEl] = useState(null)
@@ -312,8 +316,35 @@ const NetworkTreeTable = ({ currentUserNode, handleChangeNode }) => {
     return (
       <>
         {selectedRowsData.length > 0 && (
-          <Box mt={2} mb={2} sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
-            <Button variant='outlined' size='small' color='primary' startIcon={<i className='ri-group-fill'></i>}>
+          <Box
+            mt={2}
+            mb={2}
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              gap: 1,
+              justifyContent: 'flex-end',
+              flexWrap: 'wrap'
+            }}
+          >
+            <Button
+              variant='outlined'
+              size='small'
+              color='primary'
+              startIcon={<i className='ri-group-fill'></i>}
+              fullWidth={isSmallScreen}
+              sx={{
+                fontSize: { xs: '0.85rem', sm: '0.9rem' },
+                ...(isDarkMode && {
+                  borderColor: alpha(theme.palette.divider, 0.3),
+                  color: theme.palette.common.white,
+                  '&:hover': {
+                    borderColor: alpha(theme.palette.primary.main, 0.5),
+                    backgroundColor: alpha(theme.palette.primary.main, 0.08)
+                  }
+                })
+              }}
+            >
               Create Group
             </Button>
             <Tooltip title='Schedule Meeting' arrow placement='top'>
@@ -338,17 +369,50 @@ const NetworkTreeTable = ({ currentUserNode, handleChangeNode }) => {
   }
 
   return (
-    <Card sx={{ boxShadow: 'unset' }}>
+    <Card
+      sx={{
+        boxShadow: 'unset',
+        bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.6) : 'transparent',
+        border: isDarkMode ? `1px solid ${alpha(theme.palette.divider, 0.3)}` : 'none',
+        borderRadius: { xs: 1.5, sm: 2 }
+      }}
+    >
       <CardHeader
-        style={{ padding: '15px 0px 4px' }}
-        title={`${currentUserNode?.name}'s Network`}
+        sx={{
+          padding: { xs: '12px 0px 4px', sm: '15px 0px 4px' }
+        }}
+        title={
+          <Typography
+            variant="h6"
+            sx={{
+              fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' },
+              color: isDarkMode ? theme.palette.common.white : 'text.primary',
+              fontWeight: 700
+            }}
+          >
+            {`${currentUserNode?.name}'s Network`}
+          </Typography>
+        }
         action={
           <Box sx={{ alignSelf: 'flex-end', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
             <Button
               onClick={() => setFiltersModalOpen(true)}
               variant='outlined'
               size='small'
-              startIcon={<FilterListIcon />} // Add the filter icon here
+              startIcon={<FilterListIcon />}
+              sx={{
+                fontSize: { xs: '0.85rem', sm: '0.9rem' },
+                py: { xs: 0.75, sm: 1 },
+                px: { xs: 1.5, sm: 2 },
+                ...(isDarkMode && {
+                  borderColor: alpha(theme.palette.divider, 0.3),
+                  color: theme.palette.common.white,
+                  '&:hover': {
+                    borderColor: alpha(theme.palette.primary.main, 0.5),
+                    backgroundColor: alpha(theme.palette.primary.main, 0.08)
+                  }
+                })
+              }}
             >
               Filter By
             </Button>
@@ -419,11 +483,16 @@ const NetworkTreeTable = ({ currentUserNode, handleChangeNode }) => {
             size='small'
             fullWidth
             onChange={e => handleGlobalFilterChange(e.target.value)}
-            className='mb-4'
+            sx={{
+              mb: 2,
+              '& .MuiOutlinedInput-root': {
+                bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.4) : 'white'
+              }
+            }}
             InputProps={{
               endAdornment: (
                 <InputAdornment position='end'>
-                  <SearchIcon />
+                  <SearchIcon sx={{ color: isDarkMode ? alpha(theme.palette.common.white, 0.7) : 'text.secondary' }} />
                 </InputAdornment>
               )
             }}

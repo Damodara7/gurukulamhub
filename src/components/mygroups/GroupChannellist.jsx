@@ -17,7 +17,8 @@ import {
   InputAdornment,
   CircularProgress,
   Tooltip,
-  useTheme
+  useTheme,
+  useMediaQuery
 } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import {
@@ -37,6 +38,10 @@ import { toast } from 'react-toastify'
 
 const GroupChannellist = ({ groups = [], channels = [] }) => {
   const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'))
+  const isDesktop = useMediaQuery(theme.breakpoints.between('md', 'lg'))
+  const isDarkMode = theme.palette.mode === 'dark'
   const { data: session } = useSession()
   const [viewMode, setViewMode] = useState('groups')
   const [searchQuery, setSearchQuery] = useState('')
@@ -294,7 +299,20 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
     // Return loading state if currently loading
     if (isLoading) {
       return (
-        <Button variant='outlined' size='small' disabled startIcon={<CircularProgress size={16} />}>
+        <Button
+          variant='outlined'
+          size='small'
+          disabled
+          startIcon={<CircularProgress size={16} />}
+          sx={{
+            width: { xs: '100%', sm: '140px', md: '150px' },
+            fontSize: { xs: '0.83rem', sm: '0.87rem', md: '0.9rem' },
+            borderRadius: { xs: 1.5, sm: 2 },
+            ...(isDarkMode && {
+              borderColor: alpha(theme.palette.divider, 0.3)
+            })
+          }}
+        >
           Sending...
         </Button>
       )
@@ -307,7 +325,19 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
         size='small'
         startIcon={<HourglassEmptyIcon />}
         color='warning'
-        sx={{ fontSize: { xs: '0.8rem', sm: '0.85rem' }, px: { xs: 1.5, sm: 2 } }}
+        sx={{
+          fontSize: { xs: '0.78rem', sm: '0.82rem', md: '0.85rem' },
+          px: { xs: 1.5, sm: 1.75, md: 2 },
+          width: { xs: '100%', sm: 'auto' },
+          borderRadius: { xs: 1.5, sm: 2 },
+          ...(isDarkMode && {
+            borderColor: alpha(theme.palette.warning.main, 0.5),
+            '&:hover': {
+              borderColor: theme.palette.warning.main,
+              backgroundColor: alpha(theme.palette.warning.main, 0.1)
+            }
+          })
+        }}
       >
         Pending
       </Button>
@@ -318,7 +348,13 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
         color='success'
         variant='outlined'
         size='small'
-        sx={{ width: { xs: 'auto', sm: '110px' }, fontSize: { xs: '0.75rem', sm: '0.8rem' } }}
+        sx={{
+          width: { xs: 'auto', sm: '110px', md: '120px' },
+          fontSize: { xs: '0.73rem', sm: '0.77rem', md: '0.8rem' },
+          ...(isDarkMode && {
+            borderColor: alpha(theme.palette.success.main, 0.5)
+          })
+        }}
       />
     ) : status === 'rejected' ? (
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -328,7 +364,13 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
           color='error'
           variant='outlined'
           size='small'
-          sx={{ width: { xs: 'auto', sm: '110px' }, fontSize: { xs: '0.75rem', sm: '0.8rem' } }}
+          sx={{
+            width: { xs: 'auto', sm: '110px', md: '120px' },
+            fontSize: { xs: '0.73rem', sm: '0.77rem', md: '0.8rem' },
+            ...(isDarkMode && {
+              borderColor: alpha(theme.palette.error.main, 0.5)
+            })
+          }}
         />
         {requestDetail?.rejectedReason ? (
           <Tooltip title={`Reason: ${requestDetail.rejectedReason}`} arrow placement='top'>
@@ -377,10 +419,23 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
         component='label'
         size='small'
         sx={{
-          color: 'white',
-          width: { xs: '100%', sm: '140px' },
-          fontSize: { xs: '0.85rem', sm: '0.9rem' },
-          py: { xs: 1, sm: 1.25 }
+          color: 'white !important',
+          width: { xs: '100%', sm: '140px', md: '150px' },
+          fontSize: { xs: '0.83rem', sm: '0.87rem', md: '0.9rem' },
+          py: { xs: 0.9, sm: 1.1, md: 1.25 },
+          borderRadius: { xs: 1.5, sm: 2 },
+          fontWeight: 600,
+          textTransform: 'none',
+          boxShadow: isDarkMode
+            ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`
+            : undefined,
+          transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+          '&:hover': {
+            transform: 'translateY(-1px)',
+            boxShadow: isDarkMode
+              ? `0 6px 16px ${alpha(theme.palette.primary.main, 0.4)}`
+              : undefined
+          }
         }}
         onClick={() => handleSendRequest(channel._id)}
       >
@@ -413,28 +468,42 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
     <ListItem
       key={item._id}
       sx={{
-        px: { xs: 1.5, sm: 2 },
-        py: { xs: 1.25, sm: 1.5 },
+        px: { xs: 1.5, sm: 2, md: 2.5 },
+        py: { xs: 1.25, sm: 1.5, md: 1.75 },
         border: '1px solid',
-        borderColor: alpha(theme.palette.divider, 0.5),
-        borderRadius: 2,
-        mb: { xs: 1.25, sm: 1.5 },
-        backgroundColor: 'background.paper',
+        borderColor: alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.5),
+        borderRadius: { xs: 1.5, sm: 2 },
+        mb: { xs: 1.25, sm: 1.5, md: 1.75 },
+        backgroundColor: isDarkMode
+          ? alpha(theme.palette.background.paper, 0.6)
+          : 'background.paper',
         transition: 'all 0.3s ease-in-out',
-        cursor: 'pointer'
+        cursor: 'pointer',
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          borderColor: alpha(theme.palette.primary.main, isDarkMode ? 0.4 : 0.3),
+          boxShadow: isDarkMode
+            ? `0 8px 24px ${alpha(theme.palette.common.black, 0.3)}`
+            : '0 8px 24px rgba(0,0,0,0.08)',
+          backgroundColor: isDarkMode
+            ? alpha(theme.palette.background.paper, 0.8)
+            : undefined
+        }
       }}
     >
-      <ListItemAvatar sx={{ minWidth: { xs: 56, sm: 72 } }}>
+      <ListItemAvatar sx={{ minWidth: { xs: 56, sm: 64, md: 72 } }}>
         <Avatar
           sx={{
-            background: `linear-gradient(135deg, ${theme.palette.secondary.main}, ${alpha(
-              theme.palette.secondary.main,
+            background: `linear-gradient(135deg, ${theme.palette.secondary?.main || theme.palette.primary.main}, ${alpha(
+              theme.palette.secondary?.main || theme.palette.primary.main,
               0.72
             )})`,
-            width: { xs: 44, sm: 50 },
-            height: { xs: 44, sm: 50 },
-            color: 'white',
-            boxShadow: `0 2px 8px ${alpha(theme.palette.secondary.main, 0.3)}`
+            width: { xs: 44, sm: 48, md: 50 },
+            height: { xs: 44, sm: 48, md: 50 },
+            color: theme.palette.common.white,
+            boxShadow: isDarkMode
+              ? `0 2px 8px ${alpha(theme.palette.secondary?.main || theme.palette.primary.main, 0.4)}`
+              : `0 2px 8px ${alpha(theme.palette.secondary?.main || theme.palette.primary.main, 0.3)}`
           }}
         >
           <GroupIcon fontSize='small' />
@@ -460,8 +529,8 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
                   flex: 1,
-                  width: { xs: '100%', sm: '170px' },
-                  fontSize: { xs: '0.98rem', sm: '1rem' }
+              width: { xs: '100%', sm: '170px', md: '200px' },
+              fontSize: { xs: '0.95rem', sm: '0.98rem', md: '1rem' }
                 }}
               >
                 {item.groupName || 'Untitled Group'}
@@ -471,7 +540,11 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
             <Chip
               size='small'
               icon={
-                item?.status === 'public' ? <PublicIcon sx={{ fontSize: 14 }} /> : <LockIcon sx={{ fontSize: 14 }} />
+                item?.status === 'public' ? (
+                  <PublicIcon sx={{ fontSize: { xs: 13, sm: 14 } }} />
+                ) : (
+                  <LockIcon sx={{ fontSize: { xs: 13, sm: 14 } }} />
+                )
               }
               label={item?.status === 'public' ? 'Public' : 'Private'}
               color={item?.status === 'public' ? 'success' : 'warning'}
@@ -479,7 +552,13 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
               sx={{
                 mt: { xs: 0.5, sm: 0 },
                 alignSelf: { xs: 'flex-start', sm: 'center' },
-                fontSize: { xs: '0.75rem', sm: '0.8rem' }
+                fontSize: { xs: '0.73rem', sm: '0.77rem', md: '0.8rem' },
+                ...(isDarkMode && {
+                  borderColor: alpha(
+                    item?.status === 'public' ? theme.palette.success.main : theme.palette.warning.main,
+                    0.5
+                  )
+                })
               }}
             />
           </Box>
@@ -498,14 +577,18 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     mb: 0.5,
-                    fontSize: { xs: '0.85rem', sm: '0.9rem' }
+                    fontSize: { xs: '0.83rem', sm: '0.87rem', md: '0.9rem' }
                   }}
                 >
                   {item.description}
                 </Typography>
               </Tooltip>
             )}
-            <Typography variant='caption' color='text.secondary' sx={{ fontSize: { xs: '0.78rem', sm: '0.8rem' } }}>
+            <Typography
+              variant='caption'
+              color='text.secondary'
+              sx={{ fontSize: { xs: '0.76rem', sm: '0.78rem', md: '0.8rem' } }}
+            >
               {item.membersCount || item.members?.length || 0} members
             </Typography>
           </Box>
@@ -518,27 +601,41 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
     <ListItem
       key={item._id}
       sx={{
-        px: { xs: 1.5, sm: 2 },
-        py: { xs: 1.25, sm: 1.5 },
+        px: { xs: 1.5, sm: 2, md: 2.5 },
+        py: { xs: 1.25, sm: 1.5, md: 1.75 },
         border: '1px solid',
-        borderColor: alpha(theme.palette.divider, 0.5),
-        borderRadius: 2,
-        mb: { xs: 1.25, sm: 1.5 },
-        backgroundColor: 'background.paper',
+        borderColor: alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.5),
+        borderRadius: { xs: 1.5, sm: 2 },
+        mb: { xs: 1.25, sm: 1.5, md: 1.75 },
+        backgroundColor: isDarkMode
+          ? alpha(theme.palette.background.paper, 0.6)
+          : 'background.paper',
         transition: 'all 0.3s ease-in-out',
         cursor: 'pointer',
         alignItems: { xs: 'flex-start', sm: 'center' },
-        gap: { xs: 1, sm: 0 }
+        gap: { xs: 1, sm: 0 },
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          borderColor: alpha(theme.palette.primary.main, isDarkMode ? 0.4 : 0.3),
+          boxShadow: isDarkMode
+            ? `0 8px 24px ${alpha(theme.palette.common.black, 0.3)}`
+            : '0 8px 24px rgba(0,0,0,0.08)',
+          backgroundColor: isDarkMode
+            ? alpha(theme.palette.background.paper, 0.8)
+            : undefined
+        }
       }}
     >
-      <ListItemAvatar sx={{ minWidth: { xs: 56, sm: 72 } }}>
+      <ListItemAvatar sx={{ minWidth: { xs: 56, sm: 64, md: 72 } }}>
         <Avatar
           sx={{
-            background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-            width: { xs: 44, sm: 50 },
-            height: { xs: 44, sm: 50 },
-            color: 'white',
-            boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`
+            background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary?.main || theme.palette.primary.light})`,
+            width: { xs: 44, sm: 48, md: 50 },
+            height: { xs: 44, sm: 48, md: 50 },
+            color: theme.palette.common.white,
+            boxShadow: isDarkMode
+              ? `0 2px 8px ${alpha(theme.palette.primary.main, 0.4)}`
+              : `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`
           }}
         >
           <ChannelIcon fontSize='small' />
@@ -564,8 +661,8 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
                   flex: 1,
-                  width: { xs: '100%', sm: '170px' },
-                  fontSize: { xs: '0.98rem', sm: '1rem' }
+              width: { xs: '100%', sm: '170px', md: '200px' },
+              fontSize: { xs: '0.95rem', sm: '0.98rem', md: '1rem' }
                 }}
               >
                 {item.groupName || 'Untitled Channel'}
@@ -574,14 +671,17 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
 
             <Chip
               size='small'
-              icon={<ChannelIcon sx={{ fontSize: 14 }} />}
+              icon={<ChannelIcon sx={{ fontSize: { xs: 13, sm: 14 } }} />}
               label='Channel'
               color='primary'
               variant='outlined'
               sx={{
                 mt: { xs: 0.5, sm: 0 },
                 alignSelf: { xs: 'flex-start', sm: 'center' },
-                fontSize: { xs: '0.75rem', sm: '0.8rem' }
+                fontSize: { xs: '0.73rem', sm: '0.77rem', md: '0.8rem' },
+                ...(isDarkMode && {
+                  borderColor: alpha(theme.palette.primary.main, 0.5)
+                })
               }}
             />
           </Box>
@@ -600,14 +700,18 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     mb: 0.5,
-                    fontSize: { xs: '0.85rem', sm: '0.9rem' }
+                    fontSize: { xs: '0.83rem', sm: '0.87rem', md: '0.9rem' }
                   }}
                 >
                   {item.description}
                 </Typography>
               </Tooltip>
             )}
-            <Typography variant='caption' color='text.secondary' sx={{ fontSize: { xs: '0.78rem', sm: '0.8rem' } }}>
+            <Typography
+              variant='caption'
+              color='text.secondary'
+              sx={{ fontSize: { xs: '0.76rem', sm: '0.78rem', md: '0.8rem' } }}
+            >
               {item.membersCount || item.members?.length || 0} members
             </Typography>
           </Box>
@@ -631,15 +735,20 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
           position: 'sticky',
           top: 0,
           zIndex: 10,
-          borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
-          px: { xs: 2, sm: 3 },
-          py: { xs: 2.5, md: 3 },
+          borderBottom: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.15 : 0.1)}`,
+          px: { xs: 1.5, sm: 2.5, md: 3 },
+          py: { xs: 2, sm: 2.5, md: 3 },
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: { xs: 2, sm: 2.5 },
-          backgroundColor: alpha('#fff', 0.82),
-          backdropFilter: 'blur(10px)'
+          gap: { xs: 1.75, sm: 2, md: 2.5 },
+          backgroundColor: isDarkMode
+            ? alpha(theme.palette.background.paper, 0.9)
+            : alpha('#fff', 0.82),
+          backdropFilter: 'blur(10px)',
+          boxShadow: isDarkMode
+            ? `0 4px 12px ${alpha(theme.palette.common.black, 0.2)}`
+            : '0 4px 12px rgba(0,0,0,0.05)'
         }}
       >
         <Box
@@ -660,18 +769,30 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
             startIcon={<GroupIcon />}
             sx={{
               textTransform: 'none',
-              borderRadius: 2,
+              borderRadius: { xs: 1.5, sm: 2 },
               color: viewMode === 'groups' ? 'white' : 'text.primary',
-              px: { xs: 2.8, sm: 3 },
-              py: { xs: 1.1, sm: 1.25 },
+              px: { xs: 2.5, sm: 2.8, md: 3 },
+              py: { xs: 1, sm: 1.1, md: 1.25 },
               fontWeight: 600,
-              minWidth: { xs: '100%', sm: 150 },
-              fontSize: { xs: '0.95rem', sm: '1rem' },
-              boxShadow: viewMode === 'groups' ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}` : 'none',
+              minWidth: { xs: '100%', sm: 140, md: 150 },
+              fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' },
+              boxShadow: viewMode === 'groups'
+                ? isDarkMode
+                  ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.4)}`
+                  : `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`
+                : 'none',
               transition: 'all 0.3s ease',
+              ...(isDarkMode &&
+                viewMode !== 'groups' && {
+                  borderColor: alpha(theme.palette.divider, 0.3),
+                  '&:hover': {
+                    borderColor: alpha(theme.palette.primary.main, 0.5),
+                    backgroundColor: alpha(theme.palette.primary.main, 0.08)
+                  }
+                }),
               '&:hover': {
                 transform: 'translateY(-2px)',
-                boxShadow: `0 6px 16px ${alpha(theme.palette.primary.main, viewMode === 'groups' ? 0.4 : 0.1)}`
+                boxShadow: `0 6px 16px ${alpha(theme.palette.primary.main, viewMode === 'groups' ? (isDarkMode ? 0.5 : 0.4) : 0.1)}`
               }
             }}
           >
@@ -685,18 +806,30 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
             startIcon={<ChannelIcon />}
             sx={{
               textTransform: 'none',
-              borderRadius: 2,
+              borderRadius: { xs: 1.5, sm: 2 },
               color: viewMode === 'channels' ? 'white' : 'text.primary',
-              px: { xs: 2.8, sm: 3 },
-              py: { xs: 1.1, sm: 1.25 },
+              px: { xs: 2.5, sm: 2.8, md: 3 },
+              py: { xs: 1, sm: 1.1, md: 1.25 },
               fontWeight: 600,
-              minWidth: { xs: '100%', sm: 150 },
-              fontSize: { xs: '0.95rem', sm: '1rem' },
-              boxShadow: viewMode === 'channels' ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}` : 'none',
+              minWidth: { xs: '100%', sm: 140, md: 150 },
+              fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' },
+              boxShadow: viewMode === 'channels'
+                ? isDarkMode
+                  ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.4)}`
+                  : `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`
+                : 'none',
               transition: 'all 0.3s ease',
+              ...(isDarkMode &&
+                viewMode !== 'channels' && {
+                  borderColor: alpha(theme.palette.divider, 0.3),
+                  '&:hover': {
+                    borderColor: alpha(theme.palette.primary.main, 0.5),
+                    backgroundColor: alpha(theme.palette.primary.main, 0.08)
+                  }
+                }),
               '&:hover': {
                 transform: 'translateY(-2px)',
-                boxShadow: `0 6px 16px ${alpha(theme.palette.primary.main, viewMode === 'channels' ? 0.4 : 0.1)}`
+                boxShadow: `0 6px 16px ${alpha(theme.palette.primary.main, viewMode === 'channels' ? (isDarkMode ? 0.5 : 0.4) : 0.1)}`
               }
             }}
           >
@@ -712,11 +845,17 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
             fontWeight: 600,
             display: 'flex',
             alignItems: 'center',
-            gap: 1,
-            fontSize: { xs: '1.05rem', sm: '1.2rem' }
+            gap: { xs: 0.75, sm: 1 },
+            fontSize: { xs: '1rem', sm: '1.1rem', md: '1.2rem' },
+            flexWrap: 'wrap',
+            justifyContent: 'center'
           }}
         >
-          {viewMode === 'groups' ? <GroupIcon fontSize='small' /> : <ChannelIcon fontSize='small' />}
+          {viewMode === 'groups' ? (
+            <GroupIcon sx={{ fontSize: { xs: '1.1rem', sm: '1.2rem', md: '1.3rem' } }} />
+          ) : (
+            <ChannelIcon sx={{ fontSize: { xs: '1.1rem', sm: '1.2rem', md: '1.3rem' } }} />
+          )}
           <Typography component='span' sx={{ fontSize: 'inherit', fontWeight: 'inherit' }}>
             {currentTitle} ({currentData.length})
           </Typography>
@@ -731,17 +870,34 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
             size='medium'
             sx={{
               width: '100%',
-              maxWidth: 400,
+              maxWidth: { xs: '100%', sm: 400, md: 450 },
               '& .MuiOutlinedInput-root': {
-                borderRadius: 2,
-                height: { xs: 44, sm: 48 },
-                fontSize: { xs: '0.95rem', sm: '1rem' }
+                borderRadius: { xs: 1.5, sm: 2 },
+                height: { xs: 42, sm: 46, md: 48 },
+                fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' },
+                backgroundColor: isDarkMode
+                  ? alpha(theme.palette.background.default, 0.6)
+                  : undefined,
+                ...(isDarkMode && {
+                  '& fieldset': {
+                    borderColor: alpha(theme.palette.divider, 0.3)
+                  },
+                  '&:hover fieldset': {
+                    borderColor: alpha(theme.palette.primary.main, 0.5)
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: theme.palette.primary.main
+                  }
+                })
+              },
+              '& .MuiInputBase-input': {
+                color: isDarkMode ? theme.palette.text.primary : undefined
               }
             }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position='start'>
-                  <SearchIcon color='action' />
+                  <SearchIcon color={isDarkMode ? 'action' : 'action'} />
                 </InputAdornment>
               )
             }}
@@ -755,46 +911,77 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
           <Box
             sx={{
               textAlign: 'center',
-              py: 8,
+              py: { xs: 6, sm: 7, md: 8 },
+              px: { xs: 2, sm: 3 },
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: 3,
+              gap: { xs: 2.5, sm: 2.75, md: 3 },
               height: '100%',
               justifyContent: 'center'
             }}
           >
             <Box
               sx={{
-                width: 120,
-                height: 120,
+                width: { xs: 100, sm: 110, md: 120 },
+                height: { xs: 100, sm: 110, md: 120 },
                 borderRadius: '50%',
-                background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.08)}, ${alpha(
-                  theme.palette.secondary.main,
-                  0.08
-                )})`,
+                background: isDarkMode
+                  ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.15)}, ${alpha(
+                      theme.palette.secondary?.main || theme.palette.primary.main,
+                      0.15
+                    )})`
+                  : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.08)}, ${alpha(
+                      theme.palette.secondary?.main || theme.palette.primary.main,
+                      0.08
+                    )})`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.08)}`
+                boxShadow: isDarkMode
+                  ? `0 4px 16px ${alpha(theme.palette.primary.main, 0.2)}`
+                  : `0 4px 16px ${alpha(theme.palette.primary.main, 0.08)}`,
+                border: isDarkMode ? `1px solid ${alpha(theme.palette.divider, 0.3)}` : 'none'
               }}
             >
               {viewMode === 'groups' ? (
-                <GroupIcon sx={{ fontSize: 60, color: alpha(theme.palette.primary.main, 0.4) }} />
+                <GroupIcon
+                  sx={{
+                    fontSize: { xs: 50, sm: 55, md: 60 },
+                    color: alpha(theme.palette.primary.main, isDarkMode ? 0.6 : 0.4)
+                  }}
+                />
               ) : (
-                <ChannelIcon sx={{ fontSize: 60, color: alpha(theme.palette.primary.main, 0.4) }} />
+                <ChannelIcon
+                  sx={{
+                    fontSize: { xs: 50, sm: 55, md: 60 },
+                    color: alpha(theme.palette.primary.main, isDarkMode ? 0.6 : 0.4)
+                  }}
+                />
               )}
             </Box>
             <Typography
               variant='h6'
               sx={{
                 fontWeight: 600,
-                color: 'text.primary'
+                color: 'text.primary',
+                fontSize: { xs: '1rem', sm: '1.1rem', md: '1.2rem' },
+                textAlign: 'center',
+                px: { xs: 2, sm: 3 }
               }}
             >
               {viewMode === 'groups' ? 'You are not a member of any groups yet' : 'No public channels available'}
             </Typography>
-            <Typography variant='body2' color='text.secondary' sx={{ fontSize: '0.95rem' }}>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+              sx={{
+                fontSize: { xs: '0.88rem', sm: '0.92rem', md: '0.95rem' },
+                textAlign: 'center',
+                px: { xs: 2, sm: 3 },
+                maxWidth: { xs: '100%', sm: 400, md: 500 }
+              }}
+            >
               {viewMode === 'groups' ? 'Join groups to see them here' : 'Check back later for new public channels'}
             </Typography>
           </Box>
@@ -809,14 +996,20 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
                 width: '8px'
               },
               '&::-webkit-scrollbar-track': {
-                background: '#f1f1f1',
+                background: isDarkMode
+                  ? alpha(theme.palette.background.default, 0.5)
+                  : '#f1f1f1',
                 borderRadius: '4px'
               },
               '&::-webkit-scrollbar-thumb': {
-                background: '#c1c1c1',
+                background: isDarkMode
+                  ? alpha(theme.palette.divider, 0.5)
+                  : '#c1c1c1',
                 borderRadius: '4px',
                 '&:hover': {
-                  background: '#a8a8a8'
+                  background: isDarkMode
+                    ? alpha(theme.palette.divider, 0.7)
+                    : '#a8a8a8'
                 }
               }
             }}

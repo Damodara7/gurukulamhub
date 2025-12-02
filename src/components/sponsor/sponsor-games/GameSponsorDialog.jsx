@@ -20,7 +20,8 @@ import {
   IconButton,
   useTheme,
   alpha,
-  Chip
+  Chip,
+  useMediaQuery
 } from '@mui/material'
 import { Close as CloseIcon, AttachMoney, CardGiftcard, Person, Business, EmojiEvents } from '@mui/icons-material'
 import { useSession } from 'next-auth/react'
@@ -53,15 +54,17 @@ const initialFormData = {
   rewardDescription: ''
 }
 
-const GameSponsorDialog = ({ 
-  open, 
-  onClose, 
-  game, 
-  reward, 
-  maxAmount 
+const GameSponsorDialog = ({
+  open,
+  onClose,
+  game,
+  reward,
+  maxAmount
 }) => {
   const router = useRouter()
   const theme = useTheme()
+  const isDarkMode = theme.palette.mode === 'dark'
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const { data: session } = useSession()
   
   // Calculate sponsorship details
@@ -227,41 +230,66 @@ const GameSponsorDialog = ({
   }
 
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose} 
-      maxWidth="md" 
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
       fullWidth
       PaperProps={{
         sx: {
-          borderRadius: 2,
-          boxShadow: '0 20px 60px rgba(0,0,0,0.2)'
+          borderRadius: { xs: 1.5, sm: 2 },
+          boxShadow: isDarkMode
+            ? `0 20px 60px ${alpha(theme.palette.common.black, 0.5)}`
+            : '0 20px 60px rgba(0,0,0,0.2)',
+          bgcolor: isDarkMode ? theme.palette.background.paper : 'white'
         }
       }}
     >
-      <DialogTitle 
-        sx={{ 
-          p: 4, 
-          pb: 3,
-          borderBottom: '1px solid #e8eaed'
+      <DialogTitle
+        sx={{
+          p: { xs: 2.5, sm: 3, md: 4 },
+          pb: { xs: 2, sm: 2.5, md: 3 },
+          borderBottom: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.1)}`
         }}
       >
-        <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          justifyContent="space-between"
+          alignItems={{ xs: 'flex-start', sm: 'flex-start' }}
+          spacing={{ xs: 1.5, sm: 0 }}
+        >
           <Box>
-            <Typography variant="h5" fontWeight={800} sx={{ color: '#202124', mb: 0.5 }}>
+            <Typography
+              variant="h5"
+              fontWeight={800}
+              sx={{
+                color: 'text.primary',
+                mb: 0.5,
+                fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' }
+              }}
+            >
               Sponsor Game Reward
             </Typography>
-            <Typography variant="body2" sx={{ color: '#5f6368' }}>
+            <Typography
+              variant="body2"
+              sx={{
+                color: 'text.secondary',
+                fontSize: { xs: '0.88rem', sm: '0.9rem', md: '0.95rem' }
+              }}
+            >
               Make a difference by sponsoring this reward
             </Typography>
           </Box>
-          <IconButton 
-            onClick={onClose} 
+          <IconButton
+            onClick={onClose}
             size="small"
             sx={{
-              bgcolor: '#f5f6f7',
-              '&:hover': { 
-                bgcolor: '#e8eaed',
+              bgcolor: isDarkMode ? alpha(theme.palette.background.default, 0.6) : alpha(theme.palette.grey[100], 0.8),
+              color: 'text.primary',
+              '&:hover': {
+                bgcolor: isDarkMode
+                  ? alpha(theme.palette.background.default, 0.8)
+                  : alpha(theme.palette.grey[200], 0.8),
                 transform: 'rotate(90deg)'
               },
               transition: 'all 0.3s ease'
@@ -272,15 +300,15 @@ const GameSponsorDialog = ({
         </Stack>
       </DialogTitle>
 
-      <DialogContent sx={{ p: 4 }}>
+      <DialogContent sx={{ p: { xs: 2.5, sm: 3, md: 4 } }}>
         {/* Reward Info Card */}
         <Box
           sx={{
-            mb: 4,
-            p: 3.5,
-            borderRadius: 2,
-            bgcolor: alpha(theme.palette.primary.main, 0.05),
-            border: `2px solid ${alpha(theme.palette.primary.main, 0.15)}`,
+            mb: { xs: 3, sm: 4 },
+            p: { xs: 2.5, sm: 3, md: 3.5 },
+            borderRadius: { xs: 1.5, sm: 2 },
+            bgcolor: alpha(theme.palette.primary.main, isDarkMode ? 0.12 : 0.05),
+            border: `2px solid ${alpha(theme.palette.primary.main, isDarkMode ? 0.25 : 0.15)}`,
             position: 'relative',
             overflow: 'hidden',
             '&::before': {
@@ -288,55 +316,90 @@ const GameSponsorDialog = ({
               position: 'absolute',
               top: 0,
               left: 0,
-              width: 6,
+              width: { xs: 4, sm: 6 },
               height: '100%',
-              background: `linear-gradient(180deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`
+              background: `linear-gradient(180deg, ${theme.palette.primary.main}, ${theme.palette.secondary?.main || theme.palette.primary.light})`
             }
           }}
         >
-          <Stack spacing={2.5}>
-            <Stack direction="row" alignItems="center" spacing={2}>
+          <Stack spacing={{ xs: 2, sm: 2.5 }}>
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              alignItems={{ xs: 'flex-start', sm: 'center' }}
+              spacing={{ xs: 1.5, sm: 2 }}
+            >
               <Box
                 sx={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 2,
-                  bgcolor: 'white',
+                  width: { xs: 40, sm: 44 },
+                  height: { xs: 40, sm: 44 },
+                  borderRadius: { xs: 1.5, sm: 2 },
+                  bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : 'white',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+                  boxShadow: isDarkMode
+                    ? `0 2px 8px ${alpha(theme.palette.common.black, 0.3)}`
+                    : '0 2px 8px rgba(0,0,0,0.08)'
                 }}
               >
                 {reward.rewardType === 'cash' ? (
-                  <AttachMoney sx={{ fontSize: 26, color: theme.palette.success.main }} />
+                  <AttachMoney sx={{ fontSize: { xs: 24, sm: 26 }, color: theme.palette.success.main }} />
                 ) : (
-                  <CardGiftcard sx={{ fontSize: 26, color: theme.palette.warning.main }} />
+                  <CardGiftcard sx={{ fontSize: { xs: 24, sm: 26 }, color: theme.palette.warning.main }} />
                 )}
               </Box>
               <Box>
-                <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#202124', mb: 0.5 }}>
+                <Typography
+                  variant="subtitle1"
+                  fontWeight={700}
+                  sx={{
+                    color: 'text.primary',
+                    mb: 0.5,
+                    fontSize: { xs: '0.95rem', sm: '1rem', md: '1.1rem' }
+                  }}
+                >
                   {game.title}
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#5f6368' }}>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: 'text.secondary',
+                    fontSize: { xs: '0.88rem', sm: '0.9rem', md: '0.95rem' }
+                  }}
+                >
                   Position {reward.position} • {reward.numberOfWinnersForThisPosition} winner{reward.numberOfWinnersForThisPosition > 1 ? 's' : ''}
                 </Typography>
               </Box>
             </Stack>
 
-            <Stack direction="row" spacing={1.5} flexWrap="wrap">
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={{ xs: 1, sm: 1.5 }}
+              flexWrap="wrap"
+            >
               <Chip
-                icon={reward.rewardType === 'cash' ? <AttachMoney sx={{ fontSize: 16 }} /> : <CardGiftcard sx={{ fontSize: 16 }} />}
-                label={reward.rewardType === 'cash' 
-                  ? `${reward.currency} ${reward.rewardValuePerWinner} per winner`
-                  : reward.nonCashReward
+                icon={
+                  reward.rewardType === 'cash' ? (
+                    <AttachMoney sx={{ fontSize: { xs: 14, sm: 16 } }} />
+                  ) : (
+                    <CardGiftcard sx={{ fontSize: { xs: 14, sm: 16 } }} />
+                  )
+                }
+                label={
+                  reward.rewardType === 'cash'
+                    ? `${reward.currency} ${reward.rewardValuePerWinner} per winner`
+                    : reward.nonCashReward
                 }
                 sx={{
-                  bgcolor: 'white',
+                  bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : 'white',
                   color: reward.rewardType === 'cash' ? theme.palette.success.main : theme.palette.warning.main,
                   fontWeight: 700,
                   border: `2px solid`,
-                  borderColor: reward.rewardType === 'cash' ? alpha(theme.palette.success.main, 0.3) : alpha(theme.palette.warning.main, 0.3),
+                  borderColor:
+                    reward.rewardType === 'cash'
+                      ? alpha(theme.palette.success.main, isDarkMode ? 0.4 : 0.3)
+                      : alpha(theme.palette.warning.main, isDarkMode ? 0.4 : 0.3),
+                  fontSize: { xs: '0.8rem', sm: '0.875rem' },
                   '& .MuiChip-icon': {
                     color: reward.rewardType === 'cash' ? theme.palette.success.main : theme.palette.warning.main
                   }
@@ -345,10 +408,11 @@ const GameSponsorDialog = ({
               <Chip
                 label={`Max: ${reward.rewardType === 'cash' ? `${reward.currency} ${requiredAmount}` : `${requiredAmount} items`}`}
                 sx={{
-                  bgcolor: 'white',
+                  bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : 'white',
                   color: theme.palette.primary.main,
                   fontWeight: 700,
-                  border: `2px solid ${alpha(theme.palette.primary.main, 0.3)}`
+                  border: `2px solid ${alpha(theme.palette.primary.main, isDarkMode ? 0.4 : 0.3)}`,
+                  fontSize: { xs: '0.8rem', sm: '0.875rem' }
                 }}
               />
             </Stack>
@@ -356,41 +420,68 @@ const GameSponsorDialog = ({
         </Box>
 
         {/* Personal Information Section */}
-        <Box sx={{ mb: 4 }}>
-          <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 3 }}>
+        <Box sx={{ mb: { xs: 3, sm: 4 } }}>
+          <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: { xs: 2.5, sm: 3 } }}>
             <Box
               sx={{
-                width: 36,
-                height: 36,
-                borderRadius: 2,
-                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                width: { xs: 32, sm: 36 },
+                height: { xs: 32, sm: 36 },
+                borderRadius: { xs: 1.5, sm: 2 },
+                bgcolor: alpha(theme.palette.primary.main, isDarkMode ? 0.2 : 0.1),
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
               }}
             >
-              <Person sx={{ fontSize: 20, color: theme.palette.primary.main }} />
+              <Person sx={{ fontSize: { xs: 18, sm: 20 }, color: theme.palette.primary.main }} />
             </Box>
-            <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#202124' }}>
+            <Typography
+              variant="subtitle1"
+              fontWeight={700}
+              sx={{
+                color: 'text.primary',
+                fontSize: { xs: '0.95rem', sm: '1rem', md: '1.1rem' }
+              }}
+            >
               Personal Information
             </Typography>
           </Stack>
 
-          <Grid container spacing={2.5}>
+          <Grid container spacing={{ xs: 2, sm: 2.5 }}>
             {/* Sponsor Type */}
             <Grid item xs={12}>
-              <FormControl fullWidth>
+              <FormControl
+                fullWidth
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: isDarkMode ? alpha(theme.palette.background.default, 0.6) : 'white',
+                    fontSize: { xs: '0.9rem', sm: '1rem' },
+                    ...(isDarkMode && {
+                      '& fieldset': {
+                        borderColor: alpha(theme.palette.divider, 0.3)
+                      },
+                      '&:hover fieldset': {
+                        borderColor: alpha(theme.palette.primary.main, 0.5)
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: theme.palette.primary.main
+                      }
+                    })
+                  },
+                  '& .MuiInputBase-input': {
+                    color: isDarkMode ? theme.palette.text.primary : undefined
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: isDarkMode ? alpha(theme.palette.text.secondary, 0.8) : undefined,
+                    fontSize: { xs: '0.9rem', sm: '1rem' }
+                  }
+                }}
+              >
                 <InputLabel>Sponsor Type *</InputLabel>
                 <Select
                   value={sponsorerType}
-                  onChange={(e) => setSponsorerType(e.target.value)}
+                  onChange={e => setSponsorerType(e.target.value)}
                   label="Sponsor Type *"
-                  sx={{
-                    bgcolor: 'white',
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: theme.palette.primary.main
-                    }
-                  }}
                 >
                   <MenuItem value="individual">
                     <Stack direction="row" alignItems="center" spacing={1.5}>
@@ -420,12 +511,30 @@ const GameSponsorDialog = ({
                 placeholder="Enter your full name"
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    bgcolor: 'white',
-                    '&:hover': {
-                      '& .MuiOutlinedInput-notchedOutline': {
+                    backgroundColor: isDarkMode ? alpha(theme.palette.background.default, 0.6) : 'white',
+                    fontSize: { xs: '0.9rem', sm: '1rem' },
+                    ...(isDarkMode && {
+                      '& fieldset': {
+                        borderColor: alpha(theme.palette.divider, 0.3)
+                      },
+                      '&:hover fieldset': {
+                        borderColor: alpha(theme.palette.primary.main, 0.5)
+                      },
+                      '&.Mui-focused fieldset': {
                         borderColor: theme.palette.primary.main
                       }
-                    }
+                    })
+                  },
+                  '& .MuiInputBase-input': {
+                    color: isDarkMode ? theme.palette.text.primary : undefined
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: isDarkMode ? alpha(theme.palette.text.secondary, 0.8) : undefined,
+                    fontSize: { xs: '0.9rem', sm: '1rem' }
+                  },
+                  '& .MuiFormHelperText-root': {
+                    color: isDarkMode ? alpha(theme.palette.text.secondary, 0.8) : undefined,
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' }
                   }
                 }}
               />
@@ -442,12 +551,26 @@ const GameSponsorDialog = ({
                 placeholder="your@email.com"
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    bgcolor: 'white',
-                    '&:hover': {
-                      '& .MuiOutlinedInput-notchedOutline': {
+                    backgroundColor: isDarkMode ? alpha(theme.palette.background.default, 0.6) : 'white',
+                    fontSize: { xs: '0.9rem', sm: '1rem' },
+                    ...(isDarkMode && {
+                      '& fieldset': {
+                        borderColor: alpha(theme.palette.divider, 0.3)
+                      },
+                      '&:hover fieldset': {
+                        borderColor: alpha(theme.palette.primary.main, 0.5)
+                      },
+                      '&.Mui-focused fieldset': {
                         borderColor: theme.palette.primary.main
                       }
-                    }
+                    })
+                  },
+                  '& .MuiInputBase-input': {
+                    color: isDarkMode ? theme.palette.text.primary : undefined
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: isDarkMode ? alpha(theme.palette.text.secondary, 0.8) : undefined,
+                    fontSize: { xs: '0.9rem', sm: '1rem' }
                   }
                 }}
               />
@@ -461,16 +584,34 @@ const GameSponsorDialog = ({
                 value={formData.mobileNumber}
                 onChange={handleChange}
                 error={!!errors.mobileNumber}
-                helperText={errors.mobileNumber || "10-digit Indian mobile"}
+                helperText={errors.mobileNumber || '10-digit Indian mobile'}
                 placeholder="98XXXXXXXX"
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    bgcolor: 'white',
-                    '&:hover': {
-                      '& .MuiOutlinedInput-notchedOutline': {
+                    backgroundColor: isDarkMode ? alpha(theme.palette.background.default, 0.6) : 'white',
+                    fontSize: { xs: '0.9rem', sm: '1rem' },
+                    ...(isDarkMode && {
+                      '& fieldset': {
+                        borderColor: alpha(theme.palette.divider, 0.3)
+                      },
+                      '&:hover fieldset': {
+                        borderColor: alpha(theme.palette.primary.main, 0.5)
+                      },
+                      '&.Mui-focused fieldset': {
                         borderColor: theme.palette.primary.main
                       }
-                    }
+                    })
+                  },
+                  '& .MuiInputBase-input': {
+                    color: isDarkMode ? theme.palette.text.primary : undefined
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: isDarkMode ? alpha(theme.palette.text.secondary, 0.8) : undefined,
+                    fontSize: { xs: '0.9rem', sm: '1rem' }
+                  },
+                  '& .MuiFormHelperText-root': {
+                    color: isDarkMode ? alpha(theme.palette.text.secondary, 0.8) : undefined,
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' }
                   }
                 }}
               />
@@ -480,27 +621,39 @@ const GameSponsorDialog = ({
 
         {/* Organization Fields */}
         {sponsorerType === 'organization' && (
-          <Box sx={{ mb: 4 }}>
-            <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 3 }}>
+          <Box sx={{ mb: { xs: 3, sm: 4 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: { xs: 2.5, sm: 3 } }}>
               <Box
                 sx={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 2,
-                  bgcolor: alpha(theme.palette.secondary.main, 0.1),
+                  width: { xs: 32, sm: 36 },
+                  height: { xs: 32, sm: 36 },
+                  borderRadius: { xs: 1.5, sm: 2 },
+                  bgcolor: alpha(theme.palette.secondary?.main || theme.palette.primary.main, isDarkMode ? 0.2 : 0.1),
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
                 }}
               >
-                <Business sx={{ fontSize: 20, color: theme.palette.secondary.main }} />
+                <Business
+                  sx={{
+                    fontSize: { xs: 18, sm: 20 },
+                    color: theme.palette.secondary?.main || theme.palette.primary.main
+                  }}
+                />
               </Box>
-              <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#202124' }}>
+              <Typography
+                variant="subtitle1"
+                fontWeight={700}
+                sx={{
+                  color: 'text.primary',
+                  fontSize: { xs: '0.95rem', sm: '1rem', md: '1.1rem' }
+                }}
+              >
                 Organization Details
               </Typography>
             </Stack>
 
-            <Grid container spacing={2.5}>
+            <Grid container spacing={{ xs: 2, sm: 2.5 }}>
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
@@ -513,12 +666,30 @@ const GameSponsorDialog = ({
                   placeholder="Enter organization name"
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      bgcolor: 'white',
-                      '&:hover': {
-                        '& .MuiOutlinedInput-notchedOutline': {
+                      backgroundColor: isDarkMode ? alpha(theme.palette.background.default, 0.6) : 'white',
+                      fontSize: { xs: '0.9rem', sm: '1rem' },
+                      ...(isDarkMode && {
+                        '& fieldset': {
+                          borderColor: alpha(theme.palette.divider, 0.3)
+                        },
+                        '&:hover fieldset': {
+                          borderColor: alpha(theme.palette.primary.main, 0.5)
+                        },
+                        '&.Mui-focused fieldset': {
                           borderColor: theme.palette.primary.main
                         }
-                      }
+                      })
+                    },
+                    '& .MuiInputBase-input': {
+                      color: isDarkMode ? theme.palette.text.primary : undefined
+                    },
+                    '& .MuiInputLabel-root': {
+                      color: isDarkMode ? alpha(theme.palette.text.secondary, 0.8) : undefined,
+                      fontSize: { xs: '0.9rem', sm: '1rem' }
+                    },
+                    '& .MuiFormHelperText-root': {
+                      color: isDarkMode ? alpha(theme.palette.text.secondary, 0.8) : undefined,
+                      fontSize: { xs: '0.75rem', sm: '0.875rem' }
                     }
                   }}
                 />
@@ -536,31 +707,70 @@ const GameSponsorDialog = ({
                   placeholder="https://example.com"
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      bgcolor: 'white',
-                      '&:hover': {
-                        '& .MuiOutlinedInput-notchedOutline': {
+                      backgroundColor: isDarkMode ? alpha(theme.palette.background.default, 0.6) : 'white',
+                      fontSize: { xs: '0.9rem', sm: '1rem' },
+                      ...(isDarkMode && {
+                        '& fieldset': {
+                          borderColor: alpha(theme.palette.divider, 0.3)
+                        },
+                        '&:hover fieldset': {
+                          borderColor: alpha(theme.palette.primary.main, 0.5)
+                        },
+                        '&.Mui-focused fieldset': {
                           borderColor: theme.palette.primary.main
                         }
-                      }
+                      })
+                    },
+                    '& .MuiInputBase-input': {
+                      color: isDarkMode ? theme.palette.text.primary : undefined
+                    },
+                    '& .MuiInputLabel-root': {
+                      color: isDarkMode ? alpha(theme.palette.text.secondary, 0.8) : undefined,
+                      fontSize: { xs: '0.9rem', sm: '1rem' }
+                    },
+                    '& .MuiFormHelperText-root': {
+                      color: isDarkMode ? alpha(theme.palette.text.secondary, 0.8) : undefined,
+                      fontSize: { xs: '0.75rem', sm: '0.875rem' }
                     }
                   }}
                 />
               </Grid>
 
               <Grid item xs={12} sm={6}>
-                <FormControl fullWidth error={!!errors.orgType}>
+                <FormControl
+                  fullWidth
+                  error={!!errors.orgType}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      backgroundColor: isDarkMode ? alpha(theme.palette.background.default, 0.6) : 'white',
+                      fontSize: { xs: '0.9rem', sm: '1rem' },
+                      ...(isDarkMode && {
+                        '& fieldset': {
+                          borderColor: alpha(theme.palette.divider, 0.3)
+                        },
+                        '&:hover fieldset': {
+                          borderColor: alpha(theme.palette.primary.main, 0.5)
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: theme.palette.primary.main
+                        }
+                      })
+                    },
+                    '& .MuiInputBase-input': {
+                      color: isDarkMode ? theme.palette.text.primary : undefined
+                    },
+                    '& .MuiInputLabel-root': {
+                      color: isDarkMode ? alpha(theme.palette.text.secondary, 0.8) : undefined,
+                      fontSize: { xs: '0.9rem', sm: '1rem' }
+                    }
+                  }}
+                >
                   <InputLabel>Organization Type *</InputLabel>
                   <Select
                     name="orgType"
                     value={formData.orgType}
                     onChange={handleChange}
                     label="Organization Type *"
-                    sx={{
-                      bgcolor: 'white',
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: theme.palette.primary.main
-                      }
-                    }}
                   >
                     <MenuItem value="corporate">Corporate</MenuItem>
                     <MenuItem value="ngo">NGO</MenuItem>
@@ -576,27 +786,33 @@ const GameSponsorDialog = ({
 
         {/* Sponsorship Details Section */}
         <Box>
-          <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 3 }}>
+          <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: { xs: 2.5, sm: 3 } }}>
             <Box
               sx={{
-                width: 36,
-                height: 36,
-                borderRadius: 2,
-                bgcolor: alpha(theme.palette.warning.main, 0.1),
+                width: { xs: 32, sm: 36 },
+                height: { xs: 32, sm: 36 },
+                borderRadius: { xs: 1.5, sm: 2 },
+                bgcolor: alpha(theme.palette.warning.main, isDarkMode ? 0.2 : 0.1),
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
               }}
             >
-              <EmojiEvents sx={{ fontSize: 20, color: theme.palette.warning.main }} />
+              <EmojiEvents sx={{ fontSize: { xs: 18, sm: 20 }, color: theme.palette.warning.main }} />
             </Box>
-            <Typography variant="subtitle1" fontWeight={700} sx={{ color: '#202124' }}>
+            <Typography
+              variant="subtitle1"
+              fontWeight={700}
+              sx={{
+                color: 'text.primary',
+                fontSize: { xs: '0.95rem', sm: '1rem', md: '1.1rem' }
+              }}
+            >
               Sponsorship Details
             </Typography>
           </Stack>
 
-          <Grid container spacing={2.5}>
-
+          <Grid container spacing={{ xs: 2, sm: 2.5 }}>
             {/* Cash Reward Fields */}
             {rewardType === REWARD_TYPES.CASH && (
               <Grid item xs={12}>
@@ -613,21 +829,47 @@ const GameSponsorDialog = ({
                   placeholder={`Enter amount (max: ${requiredAmount})`}
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      bgcolor: 'white',
-                      fontSize: '1.1rem',
+                      backgroundColor: isDarkMode ? alpha(theme.palette.background.default, 0.6) : 'white',
+                      fontSize: { xs: '1rem', sm: '1.05rem', md: '1.1rem' },
                       fontWeight: 600,
-                      '&:hover': {
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: theme.palette.success.main,
+                      ...(isDarkMode && {
+                        '& fieldset': {
+                          borderColor: alpha(theme.palette.divider, 0.3)
+                        },
+                        '&:hover fieldset': {
+                          borderColor: alpha(theme.palette.success.main, 0.5),
                           borderWidth: 2
-                        }
-                      },
-                      '&.Mui-focused': {
-                        '& .MuiOutlinedInput-notchedOutline': {
+                        },
+                        '&.Mui-focused fieldset': {
                           borderColor: theme.palette.success.main,
                           boxShadow: `0 0 0 3px ${alpha(theme.palette.success.main, 0.15)}`
                         }
-                      }
+                      }),
+                      ...(!isDarkMode && {
+                        '&:hover': {
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: theme.palette.success.main,
+                            borderWidth: 2
+                          }
+                        },
+                        '&.Mui-focused': {
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: theme.palette.success.main,
+                            boxShadow: `0 0 0 3px ${alpha(theme.palette.success.main, 0.15)}`
+                          }
+                        }
+                      })
+                    },
+                    '& .MuiInputBase-input': {
+                      color: isDarkMode ? theme.palette.text.primary : undefined
+                    },
+                    '& .MuiInputLabel-root': {
+                      color: isDarkMode ? alpha(theme.palette.text.secondary, 0.8) : undefined,
+                      fontSize: { xs: '0.9rem', sm: '1rem' }
+                    },
+                    '& .MuiFormHelperText-root': {
+                      color: isDarkMode ? alpha(theme.palette.text.secondary, 0.8) : undefined,
+                      fontSize: { xs: '0.75rem', sm: '0.875rem' }
                     }
                   }}
                 />
@@ -649,19 +891,46 @@ const GameSponsorDialog = ({
                     placeholder="E.g., Laptop, Tablet, Books"
                     sx={{
                       '& .MuiOutlinedInput-root': {
-                        bgcolor: 'white',
-                        '&:hover': {
-                          '& .MuiOutlinedInput-notchedOutline': {
-                            borderColor: theme.palette.warning.main,
+                        backgroundColor: isDarkMode ? alpha(theme.palette.background.default, 0.6) : 'white',
+                        fontSize: { xs: '0.9rem', sm: '1rem' },
+                        ...(isDarkMode && {
+                          '& fieldset': {
+                            borderColor: alpha(theme.palette.divider, 0.3)
+                          },
+                          '&:hover fieldset': {
+                            borderColor: alpha(theme.palette.warning.main, 0.5),
                             borderWidth: 2
-                          }
-                        },
-                        '&.Mui-focused': {
-                          '& .MuiOutlinedInput-notchedOutline': {
+                          },
+                          '&.Mui-focused fieldset': {
                             borderColor: theme.palette.warning.main,
                             boxShadow: `0 0 0 3px ${alpha(theme.palette.warning.main, 0.15)}`
                           }
-                        }
+                        }),
+                        ...(!isDarkMode && {
+                          '&:hover': {
+                            '& .MuiOutlinedInput-notchedOutline': {
+                              borderColor: theme.palette.warning.main,
+                              borderWidth: 2
+                            }
+                          },
+                          '&.Mui-focused': {
+                            '& .MuiOutlinedInput-notchedOutline': {
+                              borderColor: theme.palette.warning.main,
+                              boxShadow: `0 0 0 3px ${alpha(theme.palette.warning.main, 0.15)}`
+                            }
+                          }
+                        })
+                      },
+                      '& .MuiInputBase-input': {
+                        color: isDarkMode ? theme.palette.text.primary : undefined
+                      },
+                      '& .MuiInputLabel-root': {
+                        color: isDarkMode ? alpha(theme.palette.text.secondary, 0.8) : undefined,
+                        fontSize: { xs: '0.9rem', sm: '1rem' }
+                      },
+                      '& .MuiFormHelperText-root': {
+                        color: isDarkMode ? alpha(theme.palette.text.secondary, 0.8) : undefined,
+                        fontSize: { xs: '0.75rem', sm: '0.875rem' }
                       }
                     }}
                   />
@@ -681,12 +950,30 @@ const GameSponsorDialog = ({
                     placeholder="Number of items"
                     sx={{
                       '& .MuiOutlinedInput-root': {
-                        bgcolor: 'white',
-                        '&:hover': {
-                          '& .MuiOutlinedInput-notchedOutline': {
+                        backgroundColor: isDarkMode ? alpha(theme.palette.background.default, 0.6) : 'white',
+                        fontSize: { xs: '0.9rem', sm: '1rem' },
+                        ...(isDarkMode && {
+                          '& fieldset': {
+                            borderColor: alpha(theme.palette.divider, 0.3)
+                          },
+                          '&:hover fieldset': {
+                            borderColor: alpha(theme.palette.primary.main, 0.5)
+                          },
+                          '&.Mui-focused fieldset': {
                             borderColor: theme.palette.primary.main
                           }
-                        }
+                        })
+                      },
+                      '& .MuiInputBase-input': {
+                        color: isDarkMode ? theme.palette.text.primary : undefined
+                      },
+                      '& .MuiInputLabel-root': {
+                        color: isDarkMode ? alpha(theme.palette.text.secondary, 0.8) : undefined,
+                        fontSize: { xs: '0.9rem', sm: '1rem' }
+                      },
+                      '& .MuiFormHelperText-root': {
+                        color: isDarkMode ? alpha(theme.palette.text.secondary, 0.8) : undefined,
+                        fontSize: { xs: '0.75rem', sm: '0.875rem' }
                       }
                     }}
                   />
@@ -706,12 +993,30 @@ const GameSponsorDialog = ({
                     placeholder="Value in INR"
                     sx={{
                       '& .MuiOutlinedInput-root': {
-                        bgcolor: 'white',
-                        '&:hover': {
-                          '& .MuiOutlinedInput-notchedOutline': {
+                        backgroundColor: isDarkMode ? alpha(theme.palette.background.default, 0.6) : 'white',
+                        fontSize: { xs: '0.9rem', sm: '1rem' },
+                        ...(isDarkMode && {
+                          '& fieldset': {
+                            borderColor: alpha(theme.palette.divider, 0.3)
+                          },
+                          '&:hover fieldset': {
+                            borderColor: alpha(theme.palette.primary.main, 0.5)
+                          },
+                          '&.Mui-focused fieldset': {
                             borderColor: theme.palette.primary.main
                           }
-                        }
+                        })
+                      },
+                      '& .MuiInputBase-input': {
+                        color: isDarkMode ? theme.palette.text.primary : undefined
+                      },
+                      '& .MuiInputLabel-root': {
+                        color: isDarkMode ? alpha(theme.palette.text.secondary, 0.8) : undefined,
+                        fontSize: { xs: '0.9rem', sm: '1rem' }
+                      },
+                      '& .MuiFormHelperText-root': {
+                        color: isDarkMode ? alpha(theme.palette.text.secondary, 0.8) : undefined,
+                        fontSize: { xs: '0.75rem', sm: '0.875rem' }
                       }
                     }}
                   />
@@ -729,12 +1034,26 @@ const GameSponsorDialog = ({
                     placeholder="Additional details about the reward"
                     sx={{
                       '& .MuiOutlinedInput-root': {
-                        bgcolor: 'white',
-                        '&:hover': {
-                          '& .MuiOutlinedInput-notchedOutline': {
+                        backgroundColor: isDarkMode ? alpha(theme.palette.background.default, 0.6) : 'white',
+                        fontSize: { xs: '0.9rem', sm: '1rem' },
+                        ...(isDarkMode && {
+                          '& fieldset': {
+                            borderColor: alpha(theme.palette.divider, 0.3)
+                          },
+                          '&:hover fieldset': {
+                            borderColor: alpha(theme.palette.primary.main, 0.5)
+                          },
+                          '&.Mui-focused fieldset': {
                             borderColor: theme.palette.primary.main
                           }
-                        }
+                        })
+                      },
+                      '& .MuiInputBase-input': {
+                        color: isDarkMode ? theme.palette.text.primary : undefined
+                      },
+                      '& .MuiInputLabel-root': {
+                        color: isDarkMode ? alpha(theme.palette.text.secondary, 0.8) : undefined,
+                        fontSize: { xs: '0.9rem', sm: '1rem' }
                       }
                     }}
                   />
@@ -745,26 +1064,42 @@ const GameSponsorDialog = ({
         </Box>
       </DialogContent>
 
-      <DialogActions 
-        sx={{ 
-          p: 4, 
-          pt: 3,
-          bgcolor: '#fafbfc',
-          borderTop: '1px solid #e8eaed',
-          gap: 2
+      <DialogActions
+        sx={{
+          p: { xs: 2.5, sm: 3, md: 4 },
+          pt: { xs: 2, sm: 2.5, md: 3 },
+          bgcolor: isDarkMode
+            ? alpha(theme.palette.background.default, 0.6)
+            : alpha(theme.palette.grey[50], 0.8),
+          borderTop: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.1)}`,
+          gap: { xs: 1.5, sm: 2 },
+          flexDirection: { xs: 'column-reverse', sm: 'row' }
         }}
       >
-        <Button 
-          onClick={onClose} 
-          disabled={loading} 
+        <Button
+          onClick={onClose}
+          disabled={loading}
           variant='outlined'
+          fullWidth={isMobile}
           sx={{
             textTransform: 'none',
             fontWeight: 600,
-            px: 3,
+            px: { xs: 2, sm: 3 },
+            py: { xs: 1.1, sm: 1.25 },
+            fontSize: { xs: '0.9rem', sm: '1rem' },
+            borderRadius: { xs: 1.5, sm: 2 },
+            ...(isDarkMode && {
+              borderColor: alpha(theme.palette.divider, 0.3),
+              '&:hover': {
+                borderColor: alpha(theme.palette.primary.main, 0.5),
+                backgroundColor: alpha(theme.palette.primary.main, 0.08)
+              }
+            }),
             '&:hover': {
               transform: 'translateY(-1px)',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+              boxShadow: isDarkMode
+                ? `0 2px 8px ${alpha(theme.palette.common.black, 0.3)}`
+                : '0 2px 8px rgba(0,0,0,0.1)'
             },
             transition: 'all 0.2s ease'
           }}
@@ -776,15 +1111,21 @@ const GameSponsorDialog = ({
           variant="contained"
           disabled={loading}
           component='label'
-          sx={{ 
+          fullWidth={isMobile}
+          sx={{
             color: 'white',
             textTransform: 'none',
             fontWeight: 700,
-            px: 4,
-            py: 1.25,
+            px: { xs: 2, sm: 4 },
+            py: { xs: 1.1, sm: 1.25 },
+            fontSize: { xs: '0.9rem', sm: '1rem' },
+            borderRadius: { xs: 1.5, sm: 2 },
+            boxShadow: isDarkMode ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}` : undefined,
             '&:hover': {
               transform: 'translateY(-1px)',
-              boxShadow: `0 6px 20px ${alpha(theme.palette.primary.main, 0.4)}`
+              boxShadow: isDarkMode
+                ? `0 6px 20px ${alpha(theme.palette.primary.main, 0.4)}`
+                : `0 6px 20px ${alpha(theme.palette.primary.main, 0.4)}`
             },
             transition: 'all 0.2s ease'
           }}

@@ -2,7 +2,20 @@
 /********** Standard imports.*********************/
 import React, { useEffect, useState } from 'react'
 import Grid from '@mui/material/Grid'
-import { TextField, Button, FormControl, RadioGroup, Radio, FormControlLabel, Link, Box, Alert } from '@mui/material'
+import {
+  TextField,
+  Button,
+  FormControl,
+  RadioGroup,
+  Radio,
+  FormControlLabel,
+  Link,
+  Box,
+  Alert,
+  useTheme,
+  alpha,
+  useMediaQuery
+} from '@mui/material'
 import CenterBox from '@components/CenterBox'
 import Typography from '@mui/material/Typography'
 import * as RestApi from '@/utils/restApiUtil'
@@ -41,6 +54,9 @@ const PhoneDetailsStep = ({
   const [resendEnabled, setResendEnabled] = useState(false) // State to manage resend button
   const [testingOtp, setTestingOtp] = useState(null) // State to store testing OTP
 
+  const theme = useTheme()
+  const isDarkMode = theme.palette.mode === 'dark'
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const router = useRouter()
 
   const validatePhone = (value, countryDialCode) => {
@@ -194,31 +210,176 @@ const PhoneDetailsStep = ({
         <Typography variant='h5'>Step {stepIndex} of ({totalSteps}): Personal Information</Typography>
         <Typography>Enter Your Personal Information</Typography>
       </div> */}
-      <Grid container spacing={5}>
+      <Grid container spacing={{ xs: 2, sm: 3, md: 5 }}>
         <Grid item xs={12}>
-          <div style={{ margin: 'auto', display: 'flex', justifyContent: 'center' }}>
-            <Typography fontSize={30} fontStyle={'italic'} color={'#6066d0'}>
+          <Box sx={{ margin: 'auto', display: 'flex', justifyContent: 'center' }}>
+            <Typography
+              sx={{
+                fontSize: { xs: '1.5rem', sm: '1.875rem' },
+                fontStyle: 'italic',
+                color: 'primary.main'
+              }}
+            >
               @Phone
             </Typography>
-          </div>
+          </Box>
         </Grid>
 
         <Grid item xs={12}>
-          <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-            <Typography fontSize={16} color={'blueviolet'}>
-              {`“To receive updates on live games, quizzes, events, and more in the Gurukulhub app.”`}
+          <Box
+            sx={{
+              textAlign: 'center',
+              mb: { xs: 2, sm: 2.5 },
+              px: { xs: 2, sm: 0 }
+            }}
+          >
+            <Typography
+              sx={{
+                fontSize: { xs: '0.9375rem', sm: '1rem' },
+                color: 'primary.main'
+              }}
+            >
+              {`"To receive updates on live games, quizzes, events, and more in the Gurukulhub app."`}
             </Typography>
-          </div>
+          </Box>
         </Grid>
-        <Grid style={{ margin: 'auto' }} item xs={12} sm={6} md={6}>
-          <PhoneInput
-            countryCodeEditable={false}
-            inputStyle={{ width: '100%', height: '3rem' }}
-            enableSearch={true}
-            country='in'
-            value={phoneInput}
-            onChange={handlePhoneInputChange}
-          />
+        <Grid
+          sx={{
+            margin: 'auto',
+            width: '100%',
+            maxWidth: { xs: '100%', sm: 400, md: 500 }
+          }}
+          item
+          xs={12}
+          sm={6}
+          md={6}
+        >
+          <Box
+            sx={{
+              '& .react-tel-input': {
+                '& .flag-dropdown': {
+                  bgcolor: isDarkMode
+                    ? alpha(theme.palette.background.paper, 0.9)
+                    : theme.palette.background.paper,
+                  borderColor: isDarkMode
+                    ? alpha(theme.palette.divider, 0.3)
+                    : alpha(theme.palette.divider, 0.5),
+                  '&:hover': {
+                    bgcolor: isDarkMode
+                      ? alpha(theme.palette.background.paper, 1)
+                      : theme.palette.background.paper
+                  },
+                  '&.open': {
+                    bgcolor: isDarkMode
+                      ? alpha(theme.palette.background.paper, 0.95)
+                      : theme.palette.background.paper
+                  }
+                },
+                '& .selected-flag': {
+                  bgcolor: 'transparent',
+                  '&:hover': {
+                    bgcolor: isDarkMode
+                      ? alpha(theme.palette.action.hover, 0.1)
+                      : alpha(theme.palette.action.hover, 0.05)
+                  },
+                  '&:focus': {
+                    bgcolor: isDarkMode
+                      ? alpha(theme.palette.action.hover, 0.1)
+                      : alpha(theme.palette.action.hover, 0.05)
+                  }
+                },
+                '& .country-list': {
+                  bgcolor: isDarkMode
+                    ? alpha(theme.palette.background.paper, 0.95)
+                    : theme.palette.background.paper,
+                  border: `1px solid ${isDarkMode ? alpha(theme.palette.divider, 0.3) : alpha(theme.palette.divider, 0.5)}`,
+                  boxShadow: isDarkMode
+                    ? `0 4px 20px ${alpha(theme.palette.common.black, 0.5)}`
+                    : `0 4px 20px ${alpha(theme.palette.common.black, 0.1)}`,
+                  '& .country': {
+                    color: 'text.primary',
+                    '&:hover': {
+                      bgcolor: isDarkMode
+                        ? alpha(theme.palette.action.hover, 0.1)
+                        : alpha(theme.palette.action.hover, 0.05)
+                    },
+                    '&.highlight': {
+                      bgcolor: isDarkMode
+                        ? alpha(theme.palette.primary.main, 0.2)
+                        : alpha(theme.palette.primary.main, 0.1)
+                    }
+                  },
+                  '& .search-box': {
+                    bgcolor: isDarkMode
+                      ? alpha(theme.palette.background.paper, 0.8)
+                      : theme.palette.background.paper,
+                    borderColor: isDarkMode
+                      ? alpha(theme.palette.divider, 0.3)
+                      : alpha(theme.palette.divider, 0.5),
+                    color: 'text.primary'
+                  }
+                },
+                '& .form-control': {
+                  width: '100%',
+                  height: isMobile ? '2.5rem' : '3rem',
+                  bgcolor: isDarkMode
+                    ? alpha(theme.palette.background.paper, 0.8)
+                    : theme.palette.background.paper,
+                  borderColor: isDarkMode
+                    ? alpha(theme.palette.divider, 0.3)
+                    : alpha(theme.palette.divider, 0.5),
+                  color: 'text.primary',
+                  fontSize: { xs: '0.9375rem', sm: '1rem' },
+                  '&:focus': {
+                    borderColor: theme.palette.primary.main,
+                    bgcolor: isDarkMode
+                      ? alpha(theme.palette.background.paper, 0.9)
+                      : theme.palette.background.paper
+                  },
+                  '&:hover': {
+                    borderColor: isDarkMode
+                      ? alpha(theme.palette.primary.main, 0.5)
+                      : theme.palette.primary.main
+                  }
+                }
+              }
+            }}
+          >
+            <PhoneInput
+              countryCodeEditable={false}
+              inputStyle={{
+                width: '100%',
+                height: isMobile ? '2.5rem' : '3rem',
+                backgroundColor: isDarkMode
+                  ? alpha(theme.palette.background.paper, 0.8)
+                  : theme.palette.background.paper,
+                borderColor: isDarkMode
+                  ? alpha(theme.palette.divider, 0.3)
+                  : alpha(theme.palette.divider, 0.5),
+                color: theme.palette.text.primary,
+                fontSize: isMobile ? '0.9375rem' : '1rem'
+              }}
+              buttonStyle={{
+                backgroundColor: isDarkMode
+                  ? alpha(theme.palette.background.paper, 0.9)
+                  : theme.palette.background.paper,
+                borderColor: isDarkMode
+                  ? alpha(theme.palette.divider, 0.3)
+                  : alpha(theme.palette.divider, 0.5),
+                borderRight: 'none'
+              }}
+              dropdownStyle={{
+                backgroundColor: isDarkMode
+                  ? alpha(theme.palette.background.paper, 0.95)
+                  : theme.palette.background.paper,
+                border: `1px solid ${isDarkMode ? alpha(theme.palette.divider, 0.3) : alpha(theme.palette.divider, 0.5)}`
+              }}
+              enableSearch={true}
+              country='in'
+              value={phoneInput}
+              onChange={handlePhoneInputChange}
+            />
+          </Box>
         </Grid>
         {/* <Grid item xs={12} >
           <div style={{ display: "flex", gap: "4px", margin: "auto", justifyContent: "center" }}>
@@ -244,11 +405,27 @@ const PhoneDetailsStep = ({
                 component='button'
                 onClick={updatePhoneDetails}
                 disabled={!phoneValid || !isDirty}
-                //disabled={errors.firstName || errors.lastName || lastName.length < 1 || firstName.length < 1}
+                sx={{
+                  py: { xs: 1.25, sm: 1.5 },
+                  px: { xs: 3, sm: 4 },
+                  fontSize: { xs: '0.9375rem', sm: '1rem' },
+                  fontStyle: 'italic',
+                  letterSpacing: '1px',
+                  fontWeight: 600,
+                  boxShadow: isDarkMode
+                    ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.4)}`
+                    : `0 4px 8px ${alpha(theme.palette.primary.main, 0.3)}`,
+                  '&:hover': {
+                    boxShadow: isDarkMode
+                      ? `0 6px 16px ${alpha(theme.palette.primary.main, 0.5)}`
+                      : `0 6px 12px ${alpha(theme.palette.primary.main, 0.4)}`
+                  },
+                  '&:disabled': {
+                    boxShadow: 'none'
+                  }
+                }}
               >
-                <span style={{ color: '#ffff', fontStyle: 'italic', letterSpacing: '1px' }}>
-                  <b>GO!</b>
-                </span>
+                GO!
               </Button>
             </CenterBox>
           )}
@@ -265,15 +442,61 @@ const PhoneDetailsStep = ({
                 display: currStatus === 'PENDING_VERIFY_PHONE' || currStatus == 'PHONE_CODE_MISMATCH' ? 'block' : 'none'
               }}
             >
-              <div style={{ display: 'flex', gap: '4px', margin: 'auto', justifyContent: 'center' }}>
-                <div className='flex flex-col gap-3'>
-                  <div className='flex flex-col gap-1'>
-                    {/* <Typography variant='h4'>Two Step Verification 💬</Typography> */}
-                    <Typography>We have sent a verification code to your phone.</Typography>
-                  </div>
-                  <Form noValidate autoComplete='off' className='flex flex-col gap-5'>
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: { xs: 1, sm: 2 },
+                  margin: 'auto',
+                  justifyContent: 'center',
+                  px: { xs: 1, sm: 0 }
+                }}
+              >
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: { xs: 2, sm: 3 },
+                    width: '100%',
+                    maxWidth: { xs: '100%', sm: 400 }
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: { xs: 0.5, sm: 1 }
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        fontSize: { xs: '0.9375rem', sm: '1rem' },
+                        color: 'text.primary',
+                        textAlign: 'center'
+                      }}
+                    >
+                      We have sent a verification code to your phone.
+                    </Typography>
+                  </Box>
+                  <Form
+                    noValidate
+                    autoComplete='off'
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: { xs: 3, sm: 4 }
+                    }}
+                  >
                     <CenterBox>
-                      <Typography>Type in your 6 digit security code </Typography>
+                      <Typography
+                        sx={{
+                          fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+                          mb: { xs: 2, sm: 3 },
+                          color: 'text.secondary',
+                          textAlign: 'center'
+                        }}
+                      >
+                        Type in your 6 digit security code
+                      </Typography>
                     </CenterBox>
                     <CenterBox>
                       <OtpForm
@@ -285,7 +508,7 @@ const PhoneDetailsStep = ({
                     </CenterBox>
                     {loading.verifyOtp ? (
                       <CenterBox>
-                        <CircularProgress />{' '}
+                        <CircularProgress size={isMobile ? 24 : 32} />
                       </CenterBox>
                     ) : (
                       <Button
@@ -294,39 +517,102 @@ const PhoneDetailsStep = ({
                         variant='contained'
                         type='button'
                         component='label'
-                        style={{ color: 'white' }}
                         onClick={handleVerifyPhone}
+                        sx={{
+                          py: { xs: 1.25, sm: 1.5 },
+                          mt: { xs: 2, sm: 3 },
+                          fontSize: { xs: '0.9375rem', sm: '1rem' },
+                          fontWeight: 600,
+                          boxShadow: isDarkMode
+                            ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.4)}`
+                            : `0 4px 8px ${alpha(theme.palette.primary.main, 0.3)}`,
+                          '&:hover': {
+                            boxShadow: isDarkMode
+                              ? `0 6px 16px ${alpha(theme.palette.primary.main, 0.5)}`
+                              : `0 6px 12px ${alpha(theme.palette.primary.main, 0.4)}`
+                          },
+                          '&:disabled': {
+                            boxShadow: 'none'
+                          }
+                        }}
                       >
                         Verify My Phone
                       </Button>
                     )}
-                    <div className='flex justify-center flex-col items-center flex-wrap gap-2'>
-                      <Typography hidden={currStatus != 'PHONE_CODE_MISMATCH' || isDirty} color={'red'}>
-                        {' '}
-                        Invalid Code Entered.
-                      </Typography>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        flexWrap: 'wrap',
+                        gap: { xs: 1, sm: 2 }
+                      }}
+                    >
+                      {currStatus === 'PHONE_CODE_MISMATCH' && !isDirty && (
+                        <Typography
+                          sx={{
+                            fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+                            color: 'error.main'
+                          }}
+                        >
+                          Invalid Code Entered.
+                        </Typography>
+                      )}
 
-                      <Typography>
+                      <Typography
+                        sx={{
+                          fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+                          color: 'text.secondary',
+                          textAlign: 'center'
+                        }}
+                      >
                         Didn&#39;t get the code?{' '}
-                        <Button disabled={!resendEnabled} onClick={resendOtp}>
-                          {!loading.resendOtp ? `Resend OTP ${timer > 1 ? `(${timer}s)`: ''}` : 'Sending...'}
-                        </Button>{' '}
+                        <Button
+                          disabled={!resendEnabled || loading.resendOtp}
+                          onClick={resendOtp}
+                          size={isMobile ? 'small' : 'medium'}
+                          sx={{
+                            fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+                            minWidth: 'auto',
+                            textTransform: 'none'
+                          }}
+                        >
+                          {!loading.resendOtp ? `Resend OTP ${timer > 1 ? `(${timer}s)` : ''}` : 'Sending...'}
+                        </Button>
                       </Typography>
-                    </div>
+                    </Box>
 
                     {/* Testing OTP Display for Phone Verification */}
                     {testingOtp && (
-                      <div className='bg-blue-50 border border-blue-200 rounded p-3 mt-2'>
-                        <div className='text-center'>
-                          <Typography variant='body2'>
+                      <Box
+                        sx={{
+                          bgcolor: isDarkMode
+                            ? alpha(theme.palette.info.main, 0.15)
+                            : alpha(theme.palette.info.light, 0.2),
+                          border: `1px solid ${isDarkMode ? alpha(theme.palette.info.main, 0.3) : alpha(theme.palette.info.main, 0.4)}`,
+                          borderRadius: { xs: 1, sm: 1.5 },
+                          p: { xs: 2, sm: 3 },
+                          mt: { xs: 1, sm: 2 }
+                        }}
+                      >
+                        <Box sx={{ textAlign: 'center' }}>
+                          <Typography
+                            variant='body2'
+                            sx={{
+                              fontSize: { xs: '0.8125rem', sm: '0.875rem' },
+                              color: 'text.primary',
+                              fontWeight: 500
+                            }}
+                          >
                             <strong>Testing OTP:</strong> {testingOtp}
                           </Typography>
-                        </div>
-                      </div>
+                        </Box>
+                      </Box>
                     )}
                   </Form>
-                </div>
-              </div>
+                </Box>
+              </Box>
             </Box>
           </Grid>
         )}

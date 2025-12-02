@@ -4,7 +4,7 @@
 /********** Standard imports.*********************/
 import React, { useEffect, useState, useRef, useMemo } from 'react'
 import Grid from '@mui/material/Grid'
-import { TextField, Button, FormControl, RadioGroup, Radio, FormControlLabel, Link, Stack, Alert } from '@mui/material'
+import { TextField, Button, FormControl, RadioGroup, Radio, FormControlLabel, Link, Stack, Alert, useTheme, alpha } from '@mui/material'
 import CenterBox from '@components/CenterBox'
 import Typography from '@mui/material/Typography'
 import * as RestApi from '@/utils/restApiUtil'
@@ -47,6 +47,8 @@ const EmailStep = ({
 }) => {
   // States
 
+  const theme = useTheme()
+  const isDarkMode = theme.palette.mode === 'dark'
   const router = useRouter()
   const { lang } = useParams()
   const [timer, setTimer] = useState(60) // Timer set to 60 seconds
@@ -511,13 +513,30 @@ const EmailStep = ({
 
                     {/* Testing OTP Display for Email Verification */}
                     {testingOtp && (
-                      <div className='bg-blue-50 border border-blue-200 rounded p-3 mt-2'>
-                        <div className='text-center'>
-                          <Typography variant='body2'>
+                      <Box
+                        sx={{
+                          bgcolor: isDarkMode
+                            ? alpha(theme.palette.info.main, 0.15)
+                            : alpha(theme.palette.info.light, 0.2),
+                          border: `1px solid ${isDarkMode ? alpha(theme.palette.info.main, 0.3) : alpha(theme.palette.info.main, 0.4)}`,
+                          borderRadius: { xs: 1, sm: 1.5 },
+                          p: { xs: 2, sm: 3 },
+                          mt: { xs: 1, sm: 2 }
+                        }}
+                      >
+                        <Box sx={{ textAlign: 'center' }}>
+                          <Typography
+                            variant='body2'
+                            sx={{
+                              fontSize: { xs: '0.8125rem', sm: '0.875rem' },
+                              color: 'text.primary',
+                              fontWeight: 500
+                            }}
+                          >
                             <strong>Testing OTP:</strong> {testingOtp}
                           </Typography>
-                        </div>
-                      </div>
+                        </Box>
+                      </Box>
                     )}
                   </Form>
                 </div>

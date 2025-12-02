@@ -44,7 +44,7 @@ const NameInfoStep = ({ handleNext, dataFromEmailStep, email }) => {
       if (dataFromEmailStep.accountType === 'INDIVIDUAL' && nickName) {
         payload = { ...payload, nickname: nickName }
       }
-      const result = await RestApi.post(ApiUrls.v0.USERS_PROFILE, payload)
+      const result = await RestApi.put(ApiUrls.v0.USERS_PROFILE, payload)
       if (result?.status === 'success') {
         handleNext()
       } else {

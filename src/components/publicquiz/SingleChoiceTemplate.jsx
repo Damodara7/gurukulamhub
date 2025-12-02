@@ -18,6 +18,7 @@ import ImagePopup from '../ImagePopup'
 const SingleChoiceTemplate = ({ question, selectedAnswer, onAnswerSelect, readOnly = false }) => {
   const questionObj = question?.data?.question
   const theme = useTheme()
+  const isDarkMode = theme.palette.mode === 'dark'
 
   const handleOptionSelect = (questionId, optionId) => {
     if (!readOnly && onAnswerSelect) {
@@ -31,9 +32,9 @@ const SingleChoiceTemplate = ({ question, selectedAnswer, onAnswerSelect, readOn
       sx={{
         borderRadius: { xs: 3, md: 3.5 },
         overflow: 'hidden',
-        border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+        border: `1px solid ${alpha(theme.palette.primary.main, isDarkMode ? 0.25 : 0.08)}`,
         background: alpha(theme.palette.background.paper, 0.92),
-        boxShadow: '0 20px 44px rgba(15, 23, 42, 0.14)'
+        boxShadow: isDarkMode ? '0 20px 44px rgba(0,0,0,0.3)' : '0 20px 44px rgba(15, 23, 42, 0.14)'
       }}
     >
       <CardContent sx={{ p: { xs: 3, md: 4 } }}>
@@ -120,16 +121,21 @@ const SingleChoiceTemplate = ({ question, selectedAnswer, onAnswerSelect, readOn
                         flexGrow: 1,
                         borderRadius: { xs: 3, md: 3.8 },
                         p: { xs: 2, sm: 2.4, md: 3 },
-                        border: `1px solid ${alpha(theme.palette.primary.main, isSelected ? 0.3 : 0.14)}`,
+                        border: `1px solid ${alpha(theme.palette.primary.main, isSelected ? (isDarkMode ? 0.45 : 0.3) : isDarkMode ? 0.25 : 0.14)}`,
                         background: isSelected
-                          ? `linear-gradient(140deg, ${alpha(theme.palette.primary.main, 0.32)}, ${alpha(
+                          ? `linear-gradient(140deg, ${alpha(theme.palette.primary.main, isDarkMode ? 0.4 : 0.32)}, ${alpha(
                               theme.palette.secondary.main,
-                              0.25
+                              isDarkMode ? 0.3 : 0.25
                             )})`
-                          : `linear-gradient(150deg, ${alpha(theme.palette.primary.light, 0.18)}, ${alpha(
-                              theme.palette.common.white,
-                              0.95
-                            )})`,
+                          : isDarkMode
+                            ? `linear-gradient(150deg, ${alpha(theme.palette.primary.dark, 0.2)}, ${alpha(
+                                theme.palette.background.paper,
+                                0.95
+                              )})`
+                            : `linear-gradient(150deg, ${alpha(theme.palette.primary.light, 0.18)}, ${alpha(
+                                theme.palette.common.white,
+                                0.95
+                              )})`,
                         transition:
                           'transform 0.3s ease, border-color 0.24s ease, box-shadow 0.3s ease, background 0.3s ease',
                         cursor: readOnly ? 'default' : 'pointer',
@@ -138,8 +144,12 @@ const SingleChoiceTemplate = ({ question, selectedAnswer, onAnswerSelect, readOn
                         display: 'flex',
                         alignItems: 'stretch',
                         boxShadow: isSelected
-                          ? '0 32px 74px rgba(15, 23, 42, 0.28)'
-                          : '0 22px 48px rgba(15, 23, 42, 0.14)',
+                          ? isDarkMode
+                            ? '0 32px 74px rgba(0,0,0,0.4)'
+                            : '0 32px 74px rgba(15, 23, 42, 0.28)'
+                          : isDarkMode
+                            ? '0 22px 48px rgba(0,0,0,0.2)'
+                            : '0 22px 48px rgba(15, 23, 42, 0.14)',
                         '&:hover': {
                           transform: readOnly ? 'none' : 'translateY(-10px)',
                           boxShadow: readOnly

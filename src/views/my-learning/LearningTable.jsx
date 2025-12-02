@@ -194,7 +194,14 @@ const LearningTable = () => {
         header: 'Video',
         cell: ({ row }) => (
           <Stack spacing={0.5} alignItems="flex-start">
-            <Typography variant='body1' fontWeight={600} sx={{ color: '#202124' }}>
+            <Typography
+              variant='body1'
+              fontWeight={600}
+              sx={{
+                color: isDarkMode ? theme.palette.common.white : '#202124',
+                fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' }
+              }}
+            >
               {row.original?.video?.name}
             </Typography>
             <MediaPreviewPopup url={row.original?.video?.url} mediaType='video' showPopup={true} />
@@ -221,14 +228,27 @@ const LearningTable = () => {
         header: 'Date Earned',
         cell: ({ row }) => (
           <Stack spacing={0}>
-            <Typography variant='body2' fontWeight={600} sx={{ color: '#202124' }}>
+            <Typography
+              variant='body2'
+              fontWeight={600}
+              sx={{
+                color: isDarkMode ? theme.palette.common.white : '#202124',
+                fontSize: { xs: '0.85rem', sm: '0.9rem', md: '0.95rem' }
+              }}
+            >
               {new Date(row.original.earnedAt).toLocaleDateString('en-GB', {
                 day: '2-digit',
                 month: 'short',
                 year: 'numeric'
               })}
             </Typography>
-            <Typography variant='caption' sx={{ color: '#5f6368' }}>
+            <Typography
+              variant='caption'
+              sx={{
+                color: isDarkMode ? alpha(theme.palette.common.white, 0.7) : '#5f6368',
+                fontSize: { xs: '0.75rem', sm: '0.8rem' }
+              }}
+            >
               {new Date(row.original.earnedAt).toLocaleTimeString('en-US', {
                 hour: '2-digit',
                 minute: '2-digit',
@@ -242,7 +262,14 @@ const LearningTable = () => {
         header: '% Completed',
         cell: ({ row }) => (
           <Stack spacing={0.5} alignItems="center">
-            <Typography variant='body2' fontWeight={700} sx={{ color: '#202124' }}>
+            <Typography
+              variant='body2'
+              fontWeight={700}
+              sx={{
+                color: isDarkMode ? theme.palette.common.white : '#202124',
+                fontSize: { xs: '0.85rem', sm: '0.9rem', md: '0.95rem' }
+              }}
+            >
               {row.original?.completionPercent}%
             </Typography>
             <LinearProgress
@@ -325,15 +352,17 @@ const LearningTable = () => {
     setOpen(false) // Close the dialog
   }
 
+  const isDarkMode = theme.palette.mode === 'dark'
+
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa', pb: 6 }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: isDarkMode ? theme.palette.background.default : '#f8f9fa', pb: 6 }}>
       {/* Header Section */}
       <Box
         sx={{
-          bgcolor: 'white',
+          bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : 'white',
           pt: { xs: 3, md: 4 },
           pb: { xs: 3, md: 4 },
-          borderBottom: '1px solid #e8eaed',
+          borderBottom: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.1)}`,
           mb: 4
         }}
       >
@@ -357,22 +386,32 @@ const LearningTable = () => {
               My Learning Journey
             </Typography>
             
-            <Typography variant="body1" sx={{ color: '#5f6368', maxWidth: '800px' }}>
+            <Typography
+              variant="body1"
+              sx={{
+                color: isDarkMode ? alpha(theme.palette.common.white, 0.8) : '#5f6368',
+                maxWidth: '800px',
+                fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' },
+                px: { xs: 2, sm: 0 }
+              }}
+            >
               Track your learning progress, earned points, and completed videos
             </Typography>
 
             {/* Stats Cards */}
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 2 }}>
-              <Box
-                sx={{
-                  flex: 1,
-                  p: 2.5,
-                  borderRadius: 2,
-                  bgcolor: alpha(theme.palette.success.main, 0.08),
-                  border: '1px solid',
-                  borderColor: alpha(theme.palette.success.main, 0.2)
-                }}
-              >
+                  <Box
+                    sx={{
+                      flex: 1,
+                      p: { xs: 2, sm: 2.5 },
+                      borderRadius: { xs: 1.5, sm: 2 },
+                      bgcolor: isDarkMode
+                        ? alpha(theme.palette.success.main, 0.15)
+                        : alpha(theme.palette.success.main, 0.08),
+                      border: '1px solid',
+                      borderColor: alpha(theme.palette.success.main, isDarkMode ? 0.3 : 0.2)
+                    }}
+                  >
                 <Stack direction="row" alignItems="center" spacing={2}>
                   <Box
                     sx={{
@@ -389,7 +428,14 @@ const LearningTable = () => {
                     <TrophyIcon sx={{ fontSize: 28 }} />
                   </Box>
                   <Box>
-                    <Typography variant="caption" sx={{ color: '#5f6368', fontSize: '0.75rem', fontWeight: 600 }}>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: isDarkMode ? alpha(theme.palette.common.white, 0.7) : '#5f6368',
+                        fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                        fontWeight: 600
+                      }}
+                    >
                       TOTAL POINTS EARNED
                     </Typography>
                     <Typography variant="h4" fontWeight={800} sx={{ color: 'success.main' }}>
@@ -399,16 +445,18 @@ const LearningTable = () => {
                 </Stack>
               </Box>
 
-              <Box
-                sx={{
-                  flex: 1,
-                  p: 2.5,
-                  borderRadius: 2,
-                  bgcolor: alpha(theme.palette.primary.main, 0.08),
-                  border: '1px solid',
-                  borderColor: alpha(theme.palette.primary.main, 0.2)
-                }}
-              >
+                  <Box
+                    sx={{
+                      flex: 1,
+                      p: { xs: 2, sm: 2.5 },
+                      borderRadius: { xs: 1.5, sm: 2 },
+                      bgcolor: isDarkMode
+                        ? alpha(theme.palette.primary.main, 0.15)
+                        : alpha(theme.palette.primary.main, 0.08),
+                      border: '1px solid',
+                      borderColor: alpha(theme.palette.primary.main, isDarkMode ? 0.3 : 0.2)
+                    }}
+                  >
                 <Stack direction="row" alignItems="center" spacing={2}>
                   <Box
                     sx={{
@@ -425,7 +473,14 @@ const LearningTable = () => {
                     <SchoolIcon sx={{ fontSize: 28 }} />
                   </Box>
                   <Box>
-                    <Typography variant="caption" sx={{ color: '#5f6368', fontSize: '0.75rem', fontWeight: 600 }}>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: isDarkMode ? alpha(theme.palette.common.white, 0.7) : '#5f6368',
+                        fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                        fontWeight: 600
+                      }}
+                    >
                       VIDEOS COMPLETED
                     </Typography>
                     <Typography variant="h4" fontWeight={800} sx={{ color: 'primary.main' }}>
@@ -443,14 +498,16 @@ const LearningTable = () => {
       <Container maxWidth="xl">
         <Card
           sx={{
-            borderRadius: 2,
-            bgcolor: 'white',
-            border: '1px solid #e8eaed',
-            boxShadow: '0 2px 12px rgba(0,0,0,0.04)'
+            borderRadius: { xs: 1.5, sm: 2 },
+            bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.6) : 'white',
+            border: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.1)}`,
+            boxShadow: isDarkMode
+              ? `0 2px 12px ${alpha(theme.palette.common.black, 0.3)}`
+              : '0 2px 12px rgba(0,0,0,0.04)'
           }}
         >
           {/* Filters Section */}
-          <CardContent sx={{ borderBottom: '1px solid #e8eaed' }}>
+          <CardContent sx={{ borderBottom: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.1)}` }}>
             <Stack 
               direction={{ xs: 'column', sm: 'row' }} 
               spacing={2} 
@@ -465,7 +522,9 @@ const LearningTable = () => {
                 sx={{
                   minWidth: { xs: '100%', sm: 300 },
                   '& .MuiOutlinedInput-root': {
-                    bgcolor: alpha(theme.palette.grey[100], 0.5)
+                    bgcolor: isDarkMode
+                      ? alpha(theme.palette.background.paper, 0.4)
+                      : alpha(theme.palette.grey[100], 0.5)
                   }
                 }}
                 InputProps={{
@@ -482,7 +541,9 @@ const LearningTable = () => {
                   value={dateRange} 
                   onChange={e => setDateRange(e.target.value)}
                   sx={{
-                    bgcolor: alpha(theme.palette.grey[100], 0.5)
+                    bgcolor: isDarkMode
+                      ? alpha(theme.palette.background.paper, 0.4)
+                      : alpha(theme.palette.grey[100], 0.5)
                   }}
                 >
                   <MenuItem value='all'>All Time</MenuItem>
@@ -595,7 +656,7 @@ const LearningTable = () => {
                   }}
                   onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
                   sx={{
-                    borderTop: '1px solid #e8eaed',
+                    borderTop: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.1)}`,
                     '.MuiTablePagination-toolbar': {
                       py: 2
                     }

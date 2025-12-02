@@ -12,7 +12,10 @@ import {
   Typography,
   Box,
   Badge,
-  Tooltip
+  Tooltip,
+  useTheme,
+  alpha,
+  useMediaQuery
 } from '@mui/material'
 import React, { useState, useEffect, useMemo } from 'react'
 import EastIcon from '@mui/icons-material/East'
@@ -40,13 +43,15 @@ async function fetchUserProfileAndNetwork(email) {
   return profileAndNetwork
 }
 
-const StyledReferralPointsStack = ({ profileAndNetworkData }) => {
+const StyledReferralPointsStack = ({ profileAndNetworkData, isDarkMode, theme }) => {
   return (
     <Stack
       alignItems='center'
       sx={{
-        backgroundColor: 'background.paper',
-        borderRadius: 2,
+        backgroundColor: isDarkMode ? alpha(theme.palette.background.paper, 0.6) : 'background.paper',
+        borderRadius: { xs: 1.5, sm: 2 },
+        p: { xs: 1, sm: 1.5 },
+        border: isDarkMode ? `1px solid ${alpha(theme.palette.divider, 0.3)}` : 'none',
         animation: 'fadeIn 1s ease-in-out'
       }}
     >
@@ -55,9 +60,10 @@ const StyledReferralPointsStack = ({ profileAndNetworkData }) => {
         variant='caption'
         sx={{
           fontWeight: 500,
-          color: 'text.primary',
+          color: isDarkMode ? alpha(theme.palette.common.white, 0.8) : 'text.primary',
           letterSpacing: '0.05em',
-          textTransform: 'uppercase'
+          textTransform: 'uppercase',
+          fontSize: { xs: '0.7rem', sm: '0.75rem' }
         }}
       >
         My Referral Points
@@ -69,6 +75,7 @@ const StyledReferralPointsStack = ({ profileAndNetworkData }) => {
         color='primary'
         sx={{
           fontWeight: 700,
+          fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' },
           transform: 'scale(1)',
           transition: 'transform 0.3s ease, color 0.3s ease',
           '&:hover': {
@@ -84,6 +91,9 @@ const StyledReferralPointsStack = ({ profileAndNetworkData }) => {
 }
 
 function NetworkTreeNodes({ networkData }) {
+  const theme = useTheme()
+  const isDarkMode = theme.palette.mode === 'dark'
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const { data: session, status, update } = useSession()
   const [currentUserNodeEmail, setCurrentUserNodeEmail] = useState(session?.user?.email)
   const [profileAndNetworkData, setProfileAndNetworkData] = useState(null)
@@ -170,11 +180,31 @@ function NetworkTreeNodes({ networkData }) {
   const rootTree = transformToNode(networkData)
 
   return (
-    <Card>
+    <Card
+      sx={{
+        bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.6) : 'white',
+        border: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.1)}`,
+        borderRadius: { xs: 1.5, sm: 2 },
+        boxShadow: isDarkMode
+          ? `0 2px 12px ${alpha(theme.palette.common.black, 0.3)}`
+          : '0 2px 12px rgba(0,0,0,0.04)'
+      }}
+    >
       <CardHeader
-        title='My Network'
-        style={{ alignItems: 'flex-start' }}
-        action={<StyledReferralPointsStack profileAndNetworkData={profileAndNetworkData} />}
+        title={
+          <Typography
+            variant="h6"
+            sx={{
+              fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' },
+              color: isDarkMode ? theme.palette.common.white : 'text.primary',
+              fontWeight: 700
+            }}
+          >
+            My Network
+          </Typography>
+        }
+        sx={{ alignItems: 'flex-start' }}
+        action={<StyledReferralPointsStack profileAndNetworkData={profileAndNetworkData} isDarkMode={isDarkMode} theme={theme} />}
       />
       <CardContent>
         <Grid container spacing={4}>
@@ -245,13 +275,17 @@ function NetworkTreeNodes({ networkData }) {
           Your Network Tree
         </Typography>
         <Box
-          width='100%'
-          height='400px'
-          overflow='auto'
-          backgroundColor='rgba(0,4,0,0.05)'
-          border='1px solid gray'
-          borderRadius='5px'
-          padding='10px'
+          sx={{
+            width: '100%',
+            height: { xs: '300px', sm: '400px' },
+            overflow: 'auto',
+            backgroundColor: isDarkMode
+              ? alpha(theme.palette.background.paper, 0.4)
+              : 'rgba(0,4,0,0.05)',
+            border: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.2)}`,
+            borderRadius: { xs: 1, sm: 1.25 },
+            padding: { xs: 1.5, sm: 2 }
+          }}
         >
           <TreeComponent tree={rootTree} />
         </Box>

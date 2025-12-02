@@ -199,6 +199,7 @@ export async function add({ data: userData }) {
     // const userProfile = new UserProfile({ email: userData.email, ...userData, password: hashedPassword })
     // await userProfile.save()
     const userProfileResult = await UserProfileService.add({ data: { email: userData.email, ...userData } })
+    console.log('User profile result:', userProfileResult)
 
     newUserData.profile = userProfileResult?.result?._id
     var savedNewUser = await newUserData.save()
@@ -396,6 +397,7 @@ export async function addOrUpdate({ email, data }) {
       // await createdUser.save()
       // const createdUserProfile = await UserProfileService.addOrUpdate({ email, data })
       const createdUserResult = await add({ data: { email, ...data } })
+      console.log('Created user result:', createdUserResult)
       return createdUserResult
     } else {
       // Only update if there's any missing field

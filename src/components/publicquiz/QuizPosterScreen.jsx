@@ -67,6 +67,7 @@ const HeroStat = ({ icon, label, value, tone }) => (
 
 function QuizPosterScreen({ quizData, onClickStart, language = null, quizLanguages = [] }) {
   const theme = useTheme()
+  const isDarkMode = theme.palette.mode === 'dark'
   const {
     thumbnail,
     title,
@@ -86,10 +87,12 @@ function QuizPosterScreen({ quizData, onClickStart, language = null, quizLanguag
       key={key}
       sx={{
         width: '100%',
-        borderRadius: 3,
-        border: `1px solid ${alpha(theme.palette.divider, 0.16)}`,
+        borderRadius: { xs: 2.5, md: 3 },
+        border: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.2 : 0.16)}`,
         bgcolor: theme.palette.background.paper,
-        boxShadow: '0 18px 38px rgba(15, 23, 42, 0.08)',
+        boxShadow: isDarkMode
+          ? '0 18px 38px rgba(0,0,0,0.3)'
+          : '0 18px 38px rgba(15, 23, 42, 0.08)',
         overflow: 'hidden',
         ...sx
       }}

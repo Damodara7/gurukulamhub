@@ -22,7 +22,11 @@ import {
   Alert,
   IconButton,
   InputAdornment,
-  Paper
+  Paper,
+  useTheme,
+  alpha,
+  useMediaQuery,
+  Stack
 } from '@mui/material'
 import { TaskAltOutlined, WarningAmberOutlined, Info, ArrowBack, VisibilityOff, Visibility, WarningAmberOutlined as WarningAmberOutlinedIcon, TaskAltOutlined as TaskAltOutlinedIcon,   } from '@mui/icons-material'
 
@@ -89,6 +93,10 @@ const initialLoadingState = {
 
 const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
   // Hooks
+  const theme = useTheme()
+  const isDarkMode = theme.palette.mode === 'dark'
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+  const isTablet = useMediaQuery(theme.breakpoints.down('md'))
   const router = useRouter()
   const searchParams = useSearchParams()
   const { lang: locale } = useParams()
@@ -469,38 +477,142 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
   const watchedMobile = watch('mobile')
 
   return (
-    <div className='flex h-screen'>
+    <Box
+      sx={{
+        display: 'flex',
+        height: '100vh',
+        flexDirection: { xs: 'column', md: 'row' }
+      }}
+    >
       {/* Illustration side - hidden on mobile */}
-      <div className='hidden md:flex items-center justify-center flex-1 p-6 overflow-hidden'>
-        <div className='p-6'>
-          <img src={characterIllustration} alt='character-illustration' className='max-h-[500px] w-auto' />
-        </div>
-      </div>
+      <Box
+        sx={{
+          display: { xs: 'none', md: 'flex' },
+          alignItems: 'center',
+          justifyContent: 'center',
+          flex: 1,
+          p: { xs: 3, md: 6 },
+          overflow: 'hidden',
+          bgcolor: isDarkMode
+            ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.08)} 0%, ${alpha(theme.palette.primary.dark, 0.04)} 100%)`
+            : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.04)} 0%, ${alpha(theme.palette.primary.light, 0.02)} 100%)`
+        }}
+      >
+        <Box sx={{ p: { xs: 3, md: 6 } }}>
+          <Box
+            component='img'
+            src={characterIllustration}
+            alt='character-illustration'
+            sx={{
+              maxHeight: { xs: 300, md: 500 },
+              width: 'auto',
+              borderRadius: { xs: 2, md: 3 }
+            }}
+          />
+        </Box>
+      </Box>
 
       {/* Form side */}
-      <div className='flex flex-col justify-center items-center w-full md:w-[480px]  p-6 bg-backgroundPaper overflow-auto'>
-        <div className='flex flex-col justify-center items-center w-full max-w-[400px]'>
-          <div className='flex justify-center text-center w-full flex-col items-center pt-18'>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          width: '100%',
+          maxWidth: { xs: '100%', md: 480 },
+          p: { xs: 3, sm: 4, md: 6 },
+          bgcolor: 'background.paper',
+          overflow: 'auto'
+        }}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            width: '100%',
+            maxWidth: 400
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              textAlign: 'center',
+              width: '100%',
+              flexDirection: 'column',
+              alignItems: 'center',
+              pt: { xs: 4, sm: 6, md: 10 }
+            }}
+          >
             <Link href='/'>
-              <Logo className='text-primary' height={98} width={95} />
+              <Logo
+                className='text-primary'
+                height={isMobile ? 70 : isTablet ? 85 : 98}
+                width={isMobile ? 68 : isTablet ? 82 : 95}
+              />
             </Link>
-            <Typography variant='h4' className='font-semibold tracking-[0.15px] mt-0'>
+            <Typography
+              variant='h4'
+              sx={{
+                fontWeight: 600,
+                letterSpacing: 0.15,
+                mt: { xs: 2, sm: 3 },
+                fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
+                px: { xs: 2, sm: 0 },
+                color: 'text.primary'
+              }}
+            >
               {gamePin
                 ? `Login to ${themeConfig.templateName} to join the game!`
                 : `Welcome to ${themeConfig.templateName}!`}
             </Typography>
-          </div>
+          </Box>
 
           {!showCode && !otpSent && (
             <>
-              <div className='flex flex-col justify-center items-center w-full  mt-2 mb-4'>
-                <Typography>Explore Indian Knowledge Systems</Typography>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  width: '100%',
+                  mt: { xs: 2, sm: 3 },
+                  mb: { xs: 3, sm: 4 }
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: { xs: '0.9rem', sm: '1rem' },
+                    mb: 2,
+                    color: 'text.secondary'
+                  }}
+                >
+                  Explore Indian Knowledge Systems
+                </Typography>
                 <form action={onSocialLogin}>
                   <Button
                     color='secondary'
-                    className='self-center text-primary'
-                    startIcon={<img src='/images/logos/google.png' alt='Google' width={22} />}
-                    sx={{ '& .MuiButton-startIcon': { marginInlineEnd: 3 } }}
+                    sx={{
+                      alignSelf: 'center',
+                      color: 'primary.main',
+                      '& .MuiButton-startIcon': { marginInlineEnd: 3 },
+                      fontSize: { xs: '0.875rem', sm: '1rem' },
+                      px: { xs: 2, sm: 3 },
+                      py: { xs: 1, sm: 1.5 },
+                      boxShadow: isDarkMode
+                        ? `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`
+                        : `0 2px 4px ${alpha(theme.palette.primary.main, 0.2)}`,
+                      '&:hover': {
+                        boxShadow: isDarkMode
+                          ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.4)}`
+                          : `0 4px 8px ${alpha(theme.palette.primary.main, 0.3)}`
+                      }
+                    }}
+                    startIcon={<img src='/images/logos/google.png' alt='Google' width={isMobile ? 18 : 22} />}
                     type='submit'
                     value='google'
                     name='action'
@@ -508,28 +620,101 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
                     Sign in with Google
                   </Button>
                 </form>
-              </div>
-              <Divider className='gap-3 w-full mb-4'>or</Divider>
+              </Box>
+              <Divider
+                sx={{
+                  width: '100%',
+                  mb: { xs: 3, sm: 4 },
+                  fontSize: { xs: '0.875rem', sm: '1rem' },
+                  color: 'text.secondary',
+                  '&::before, &::after': {
+                    borderColor: isDarkMode
+                      ? alpha(theme.palette.divider, 0.12)
+                      : alpha(theme.palette.divider, 0.2)
+                  }
+                }}
+              >
+                or
+              </Divider>
             </>
           )}
 
           {/* Login Method Selection */}
           {!otpSent && (
-            <div className='flex flex-col sm:flex-row justify-center items-center gap-1 sm:gap-4 w-full mb-4'>
-              <FormLabel component='legend'>Login Using</FormLabel>
-              <RadioGroup row value={loginMethod} onChange={handleLoginMethodChange}>
-                <FormControlLabel value='email' control={<Radio />} label='Email' />
-                <FormControlLabel value='mobile' control={<Radio />} label='Mobile (India Only)' />
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                justifyContent: 'center',
+                alignItems: { xs: 'flex-start', sm: 'center' },
+                gap: { xs: 1, sm: 4 },
+                width: '100%',
+                mb: { xs: 3, sm: 4 }
+              }}
+            >
+              <FormLabel
+                component='legend'
+                sx={{
+                  fontSize: { xs: '0.875rem', sm: '1rem' },
+                  mb: { xs: 1, sm: 0 },
+                  color: 'text.primary'
+                }}
+              >
+                Login Using
+              </FormLabel>
+              <RadioGroup
+                row
+                value={loginMethod}
+                onChange={handleLoginMethodChange}
+                sx={{
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  gap: { xs: 0.5, sm: 1 }
+                }}
+              >
+                <FormControlLabel
+                  value='email'
+                  control={<Radio />}
+                  label='Email'
+                  sx={{
+                    fontSize: { xs: '0.875rem', sm: '1rem' },
+                    '& .MuiRadio-root': {
+                      color: isDarkMode ? theme.palette.grey[400] : theme.palette.grey[600]
+                    },
+                    '& .MuiRadio-root.Mui-checked': {
+                      color: theme.palette.primary.main
+                    }
+                  }}
+                />
+                <FormControlLabel
+                  value='mobile'
+                  control={<Radio />}
+                  label='Mobile (India Only)'
+                  sx={{
+                    fontSize: { xs: '0.875rem', sm: '1rem' },
+                    '& .MuiRadio-root': {
+                      color: isDarkMode ? theme.palette.grey[400] : theme.palette.grey[600]
+                    },
+                    '& .MuiRadio-root.Mui-checked': {
+                      color: theme.palette.primary.main
+                    }
+                  }}
+                />
               </RadioGroup>
-            </div>
+            </Box>
           )}
 
           {!showCode ? (
-            <form
+            <Box
+              component='form'
               noValidate
               autoComplete='off'
               onSubmit={handleSubmit(onSubmit)}
-              className='flex flex-col gap-3 w-full'
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: { xs: 2, sm: 3 },
+                width: '100%'
+              }}
             >
               {loginMethod === 'email' && (
                 <>
@@ -686,105 +871,312 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
                     />
                   ) : (
                     /* Clean OTP State - Show selected account and phone as text */
-                    <div className='w-full mb-4'>
-                      <div className='bg-gray-50 border border-gray-200 rounded-lg p-4'>
-                        <div className='flex items-center justify-between'>
-                          <div className='flex items-center'>
-                            <Avatar className='mr-3'>{selectedAccountWithMobile?.firstname?.charAt(0)}</Avatar>
-                            <div>
-                              <Typography variant='body2' className='font-medium text-gray-900'>
+                    <Box sx={{ width: '100%', mb: { xs: 3, sm: 4 } }}>
+                      <Paper
+                        elevation={0}
+                        sx={{
+                          bgcolor: isDarkMode
+                            ? alpha(theme.palette.background.paper, 0.8)
+                            : alpha(theme.palette.grey[50], 0.8),
+                          border: `1px solid ${isDarkMode ? alpha(theme.palette.divider, 0.12) : alpha(theme.palette.grey[200], 0.8)}`,
+                          borderRadius: { xs: 1.5, sm: 2 },
+                          p: { xs: 2, sm: 3 }
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            flexDirection: { xs: 'column', sm: 'row' },
+                            gap: { xs: 2, sm: 0 }
+                          }}
+                        >
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 2, sm: 3 } }}>
+                            <Avatar
+                              sx={{
+                                width: { xs: 40, sm: 48 },
+                                height: { xs: 40, sm: 48 },
+                                bgcolor: theme.palette.primary.main,
+                                fontSize: { xs: '1rem', sm: '1.25rem' }
+                              }}
+                            >
+                              {selectedAccountWithMobile?.firstname?.charAt(0)}
+                            </Avatar>
+                            <Box>
+                              <Typography
+                                variant='body2'
+                                sx={{
+                                  fontWeight: 600,
+                                  fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+                                  color: 'text.primary',
+                                  mb: 0.5
+                                }}
+                              >
                                 {selectedAccountWithMobile?.firstname} {selectedAccountWithMobile?.lastname}
                               </Typography>
-                              <Typography variant='caption' className='text-gray-600'>
+                              <Typography
+                                variant='caption'
+                                sx={{
+                                  display: 'block',
+                                  fontSize: { xs: '0.75rem', sm: '0.8125rem' },
+                                  color: 'text.secondary',
+                                  mb: 0.25
+                                }}
+                              >
                                 {selectedAccountWithMobile?.email}
                               </Typography>
-                              <Typography variant='caption' className='text-gray-600 block'>
+                              <Typography
+                                variant='caption'
+                                sx={{
+                                  display: 'block',
+                                  fontSize: { xs: '0.75rem', sm: '0.8125rem' },
+                                  color: 'text.secondary'
+                                }}
+                              >
                                 +91 {mobileValue}
                               </Typography>
-                            </div>
-                          </div>
+                            </Box>
+                          </Box>
                           <Button
                             variant='outlined'
-                            size='small'
+                            size={isMobile ? 'small' : 'medium'}
                             onClick={handleCancelOtp}
                             startIcon={<i className='ri-arrow-left-line'></i>}
+                            sx={{
+                              borderColor: isDarkMode
+                                ? alpha(theme.palette.primary.main, 0.5)
+                                : theme.palette.primary.main,
+                              color: isDarkMode ? theme.palette.primary.light : theme.palette.primary.main,
+                              '&:hover': {
+                                borderColor: theme.palette.primary.main,
+                                bgcolor: isDarkMode
+                                  ? alpha(theme.palette.primary.main, 0.1)
+                                  : alpha(theme.palette.primary.main, 0.05)
+                              }
+                            }}
                           >
                             Back
                           </Button>
-                        </div>
-                      </div>
-                    </div>
+                        </Box>
+                      </Paper>
+                    </Box>
                   )}
 
                   {!otpSent && accountsWithMobile.length > 0 && (
                     <>
                       {isAccountsListExpanded && (
-                        <Typography color='primary'>
+                        <Typography
+                          color='primary'
+                          sx={{
+                            fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+                            mb: { xs: 1.5, sm: 2 }
+                          }}
+                        >
                           Please select one of the email address account associated with this phone number.
                         </Typography>
                       )}
-                      
+
                       {isAccountsListExpanded ? (
-                        <div className='overflow-y-auto p-1 bg-[rgba(0,0,0,0.025)] rounded max-h-48'>
+                        <Box
+                          sx={{
+                            overflowY: 'auto',
+                            p: { xs: 0.5, sm: 1 },
+                            bgcolor: isDarkMode
+                              ? alpha(theme.palette.background.paper, 0.5)
+                              : alpha(theme.palette.common.black, 0.025),
+                            borderRadius: { xs: 1, sm: 1.5 },
+                            maxHeight: { xs: 180, sm: 192 },
+                            border: `1px solid ${isDarkMode ? alpha(theme.palette.divider, 0.12) : alpha(theme.palette.divider, 0.08)}`
+                          }}
+                        >
                           {accountsWithMobile.map(account => (
-                            <div
+                            <Paper
                               key={account?.email}
-                              className={`flex items-center p-2 border rounded transition ${
-                                selectedAccountWithMobile === account
-                                  ? 'bg-blue-200 shadow-md'
-                                  : 'hover:bg-gray-200'
-                              }`}
-                              style={{ cursor: 'pointer' }}
+                              elevation={0}
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                p: { xs: 1.5, sm: 2 },
+                                mb: { xs: 0.5, sm: 1 },
+                                border: `1px solid ${isDarkMode ? alpha(theme.palette.divider, 0.12) : alpha(theme.palette.divider, 0.08)}`,
+                                borderRadius: { xs: 1, sm: 1.5 },
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease-in-out',
+                                bgcolor:
+                                  selectedAccountWithMobile === account
+                                    ? isDarkMode
+                                      ? alpha(theme.palette.primary.main, 0.2)
+                                      : alpha(theme.palette.primary.main, 0.12)
+                                    : 'transparent',
+                                boxShadow:
+                                  selectedAccountWithMobile === account
+                                    ? isDarkMode
+                                      ? `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`
+                                      : `0 2px 6px ${alpha(theme.palette.primary.main, 0.15)}`
+                                    : 'none',
+                                '&:hover': {
+                                  bgcolor: isDarkMode
+                                    ? alpha(theme.palette.primary.main, 0.15)
+                                    : alpha(theme.palette.grey[200], 0.5)
+                                },
+                                '&:active': {
+                                  transform: 'scale(0.98)'
+                                }
+                              }}
                               onClick={() => {
                                 setSelectedAccountWithMobile(account)
                                 setIsAccountsListExpanded(false)
                               }}
                             >
-                              <Avatar>{account?.firstname?.charAt(0)}</Avatar>
-                              <div className='ml-3'>
-                                <Typography variant='caption' className='text-blue-800 font-medium'>
+                              <Avatar
+                                sx={{
+                                  width: { xs: 36, sm: 40 },
+                                  height: { xs: 36, sm: 40 },
+                                  bgcolor: theme.palette.primary.main,
+                                  fontSize: { xs: '0.875rem', sm: '1rem' }
+                                }}
+                              >
+                                {account?.firstname?.charAt(0)}
+                              </Avatar>
+                              <Box sx={{ ml: { xs: 2, sm: 3 }, flex: 1 }}>
+                                <Typography
+                                  variant='caption'
+                                  sx={{
+                                    display: 'block',
+                                    fontWeight: 600,
+                                    fontSize: { xs: '0.75rem', sm: '0.8125rem' },
+                                    color: 'primary.main',
+                                    mb: 0.25
+                                  }}
+                                >
                                   {account?.email}
                                 </Typography>
-                                <Typography variant='body2' className='text-gray-700'>
+                                <Typography
+                                  variant='body2'
+                                  sx={{
+                                    fontSize: { xs: '0.8125rem', sm: '0.875rem' },
+                                    color: 'text.secondary'
+                                  }}
+                                >
                                   {account?.firstname} {account?.lastname}
                                 </Typography>
-                              </div>
-                            </div>
+                              </Box>
+                            </Paper>
                           ))}
-                        </div>
+                        </Box>
                       ) : (
-                        <div 
-                          className='flex items-center p-2 border rounded bg-blue-50 cursor-pointer hover:bg-blue-100 transition'
+                        <Paper
+                          elevation={0}
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            p: { xs: 1.5, sm: 2 },
+                            border: `1px solid ${isDarkMode ? alpha(theme.palette.divider, 0.12) : alpha(theme.palette.divider, 0.08)}`,
+                            borderRadius: { xs: 1, sm: 1.5 },
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease-in-out',
+                            bgcolor: isDarkMode
+                              ? alpha(theme.palette.primary.main, 0.1)
+                              : alpha(theme.palette.primary.light, 0.15),
+                            '&:hover': {
+                              bgcolor: isDarkMode
+                                ? alpha(theme.palette.primary.main, 0.15)
+                                : alpha(theme.palette.primary.light, 0.25),
+                              transform: 'translateY(-1px)',
+                              boxShadow: isDarkMode
+                                ? `0 2px 8px ${alpha(theme.palette.primary.main, 0.2)}`
+                                : `0 2px 6px ${alpha(theme.palette.primary.main, 0.1)}`
+                            }
+                          }}
                           onClick={() => setIsAccountsListExpanded(true)}
                         >
-                          <Avatar>{selectedAccountWithMobile?.firstname?.charAt(0)}</Avatar>
-                          <div className='ml-3 flex-1'>
-                            <Typography variant='caption' className='text-blue-800 font-medium'>
+                          <Avatar
+                            sx={{
+                              width: { xs: 36, sm: 40 },
+                              height: { xs: 36, sm: 40 },
+                              bgcolor: theme.palette.primary.main,
+                              fontSize: { xs: '0.875rem', sm: '1rem' }
+                            }}
+                          >
+                            {selectedAccountWithMobile?.firstname?.charAt(0)}
+                          </Avatar>
+                          <Box sx={{ ml: { xs: 2, sm: 3 }, flex: 1 }}>
+                            <Typography
+                              variant='caption'
+                              sx={{
+                                display: 'block',
+                                fontWeight: 600,
+                                fontSize: { xs: '0.75rem', sm: '0.8125rem' },
+                                color: 'primary.main',
+                                mb: 0.25
+                              }}
+                            >
                               {selectedAccountWithMobile?.email}
                             </Typography>
-                            <Typography variant='body2' className='text-gray-700'>
+                            <Typography
+                              variant='body2'
+                              sx={{
+                                fontSize: { xs: '0.8125rem', sm: '0.875rem' },
+                                color: 'text.secondary'
+                              }}
+                            >
                               {selectedAccountWithMobile?.firstname} {selectedAccountWithMobile?.lastname}
                             </Typography>
-                          </div>
-                          <div className='ml-2'>
-                            <i className='ri-arrow-down-s-line text-gray-500'></i>
-                          </div>
-                        </div>
+                          </Box>
+                          <Box sx={{ ml: { xs: 1, sm: 2 } }}>
+                            <i
+                              className='ri-arrow-down-s-line'
+                              style={{
+                                fontSize: isMobile ? '1.25rem' : '1.5rem',
+                                color: theme.palette.text.secondary
+                              }}
+                            />
+                          </Box>
+                        </Paper>
                       )}
                     </>
                   )}
 
                   {!otpSent && loading.accountsFetched && accountsWithMobile.length === 0 && (
-                    <div className='p-1 bg-[rgba(0,0,0,0.05)] rounded flex items-center justify-center gap-1'>
-                      <Typography>No account found.</Typography>
+                    <Box
+                      sx={{
+                        p: { xs: 1, sm: 1.5 },
+                        bgcolor: isDarkMode
+                          ? alpha(theme.palette.error.main, 0.1)
+                          : alpha(theme.palette.common.black, 0.05),
+                        borderRadius: { xs: 1, sm: 1.5 },
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 1,
+                        flexWrap: 'wrap'
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+                          color: 'text.secondary'
+                        }}
+                      >
+                        No account found.
+                      </Typography>
                       <Typography
                         component={Link}
                         href={gamePin ? `/auth/register?gamePin=${gamePin}` : `/auth/register`}
-                        color='primary'
+                        sx={{
+                          color: 'primary.main',
+                          fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+                          fontWeight: 500,
+                          textDecoration: 'none',
+                          '&:hover': {
+                            textDecoration: 'underline'
+                          }
+                        }}
                       >
                         Register?
                       </Typography>
-                    </div>
+                    </Box>
                   )}
 
                   {!otpSent && selectedAccountWithMobile && !isAccountsListExpanded && (
@@ -795,15 +1187,39 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
                       type='button'
                       fullWidth
                       onClick={() => sendPhoneOtpToAccount(selectedAccountWithMobile.phone)}
+                      sx={{
+                        py: { xs: 1.25, sm: 1.5 },
+                        fontSize: { xs: '0.9375rem', sm: '1rem' },
+                        fontWeight: 600,
+                        boxShadow: isDarkMode
+                          ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.4)}`
+                          : `0 4px 8px ${alpha(theme.palette.primary.main, 0.3)}`,
+                        '&:hover': {
+                          boxShadow: isDarkMode
+                            ? `0 6px 16px ${alpha(theme.palette.primary.main, 0.5)}`
+                            : `0 6px 12px ${alpha(theme.palette.primary.main, 0.4)}`
+                        },
+                        '&:disabled': {
+                          boxShadow: 'none'
+                        }
+                      }}
                     >
                       {loading.sendOtp ? 'Sending...' : `Send OTP`}
                     </Button>
                   )}
 
                   {otpSent && (
-                    <div className='flex flex-col sm:flex-row justify-center items-center gap-2'>
+                    <Stack
+                      direction={{ xs: 'column', sm: 'row' }}
+                      spacing={2}
+                      sx={{
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        width: '100%'
+                      }}
+                    >
                       {loading.resendOtp ? (
-                        <CircularProgress />
+                        <CircularProgress size={isMobile ? 24 : 32} />
                       ) : (
                         <OtpForm otpValue={otpValue} setOtpValue={setOtpValue} setIsDirty={() => {}} />
                       )}
@@ -812,58 +1228,148 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
                         disabled={loading.resendOtp}
                         variant='text'
                         type='button'
-                        size='small'
+                        size={isMobile ? 'small' : 'medium'}
                         onClick={() => handleResendPhoneOtp(selectedAccountWithMobile.phone)}
+                        sx={{
+                          fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+                          minWidth: { xs: 'auto', sm: 100 }
+                        }}
                       >
                         Resend
                       </Button>
-                    </div>
+                    </Stack>
                   )}
 
                   {/* Testing OTP Display for Mobile Login */}
                   {otpSent && testingOtp && (
-                    <div className='bg-blue-50 border border-blue-200 rounded p-3 mt-2'>
-                      <div className='text-center'>
-                        <Typography variant='body2'>
+                    <Box
+                      sx={{
+                        bgcolor: isDarkMode
+                          ? alpha(theme.palette.info.main, 0.15)
+                          : alpha(theme.palette.info.light, 0.2),
+                        border: `1px solid ${isDarkMode ? alpha(theme.palette.info.main, 0.3) : alpha(theme.palette.info.main, 0.4)}`,
+                        borderRadius: { xs: 1, sm: 1.5 },
+                        p: { xs: 2, sm: 3 },
+                        mt: { xs: 2, sm: 3 }
+                      }}
+                    >
+                      <Box sx={{ textAlign: 'center' }}>
+                        <Typography
+                          variant='body2'
+                          sx={{
+                            fontSize: { xs: '0.8125rem', sm: '0.875rem' },
+                            color: 'text.primary',
+                            fontWeight: 500
+                          }}
+                        >
                           <strong>Testing OTP:</strong> {testingOtp}
                         </Typography>
-                      </div>
-                    </div>
+                      </Box>
+                    </Box>
                   )}
                 </>
               )}
 
               {errorMsg && (
-                <Alert severity='error' icon={<WarningAmberOutlinedIcon />} className='p-2'>
+                <Alert
+                  severity='error'
+                  icon={<WarningAmberOutlinedIcon />}
+                  sx={{
+                    p: { xs: 1.5, sm: 2 },
+                    fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+                    bgcolor: isDarkMode
+                      ? alpha(theme.palette.error.main, 0.15)
+                      : alpha(theme.palette.error.light, 0.1),
+                    color: 'error.main',
+                    border: `1px solid ${isDarkMode ? alpha(theme.palette.error.main, 0.3) : alpha(theme.palette.error.main, 0.2)}`,
+                    borderRadius: { xs: 1, sm: 1.5 },
+                    '& .MuiAlert-icon': {
+                      color: 'error.main'
+                    }
+                  }}
+                >
                   {errorMsg}
                 </Alert>
               )}
 
               {successMsg && (
-                <Alert severity='success' icon={<TaskAltOutlinedIcon />} className='p-2'>
+                <Alert
+                  severity='success'
+                  icon={<TaskAltOutlinedIcon />}
+                  sx={{
+                    p: { xs: 1.5, sm: 2 },
+                    fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+                    bgcolor: isDarkMode
+                      ? alpha(theme.palette.success.main, 0.15)
+                      : alpha(theme.palette.success.light, 0.1),
+                    color: 'success.main',
+                    border: `1px solid ${isDarkMode ? alpha(theme.palette.success.main, 0.3) : alpha(theme.palette.success.main, 0.2)}`,
+                    borderRadius: { xs: 1, sm: 1.5 },
+                    '& .MuiAlert-icon': {
+                      color: 'success.main'
+                    }
+                  }}
+                >
                   {successMsg}
                 </Alert>
               )}
 
               {((otpSent && loginMethod === 'mobile') || loginMethod === 'email') && (
                 <>
-                  <div className='flex justify-center'>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      width: '100%'
+                    }}
+                  >
                     <RecaptchaComponent
                       key={recaptchaKey}
                       recaptchaRef={recaptchaRef}
                       handleCaptchaChange={handleCaptchaChange}
                     />
-                  </div>
+                  </Box>
 
-                  <Button disabled={isSubmitting} fullWidth variant='contained' type='submit' className='mt-2'>
+                  <Button
+                    disabled={isSubmitting}
+                    fullWidth
+                    variant='contained'
+                    type='submit'
+                    sx={{
+                      mt: { xs: 2, sm: 3 },
+                      py: { xs: 1.25, sm: 1.5 },
+                      fontSize: { xs: '0.9375rem', sm: '1rem' },
+                      fontWeight: 600,
+                      boxShadow: isDarkMode
+                        ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.4)}`
+                        : `0 4px 8px ${alpha(theme.palette.primary.main, 0.3)}`,
+                      '&:hover': {
+                        boxShadow: isDarkMode
+                          ? `0 6px 16px ${alpha(theme.palette.primary.main, 0.5)}`
+                          : `0 6px 12px ${alpha(theme.palette.primary.main, 0.4)}`
+                      },
+                      '&:disabled': {
+                        boxShadow: 'none'
+                      }
+                    }}
+                  >
                     {loginMethod === 'mobile' ? 'Verify & Log In' : 'Log In'}
                   </Button>
                 </>
               )}
 
-              <div className='flex justify-between items-center flex-wrap gap-2 mt-2'>
+              <Stack
+                direction='row'
+                spacing={2}
+                sx={{
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: { xs: 1, sm: 2 },
+                  mt: { xs: 2, sm: 3 }
+                }}
+              >
                 <Typography
-                  color='primary'
                   component={Link}
                   href={
                     loginMethod === 'email' && watchedEmail
@@ -872,6 +1378,14 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
                         ? `/forgot-password?mobile=${watchedMobile}`
                         : '/forgot-password'
                   }
+                  sx={{
+                    color: 'primary.main',
+                    fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+                    textDecoration: 'none',
+                    '&:hover': {
+                      textDecoration: 'underline'
+                    }
+                  }}
                 >
                   Forgot password?
                 </Typography>
@@ -882,22 +1396,43 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
                       ? `/auth/register?${new URLSearchParams(allSearchParams).toString()}`
                       : '/auth/register'
                   }
-                  color='primary'
+                  sx={{
+                    color: 'primary.main',
+                    fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+                    textDecoration: 'none',
+                    '&:hover': {
+                      textDecoration: 'underline'
+                    }
+                  }}
                 >
                   Register?
                 </Typography>
-              </div>
-            </form>
+              </Stack>
+            </Box>
           ) : (
-            <form
+            <Box
+              component='form'
               noValidate
               autoComplete='off'
               onSubmit={handleSubmit(onSubmitWithCode)}
-              className='flex flex-col gap-4 w-full'
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: { xs: 3, sm: 4 },
+                width: '100%'
+              }}
             >
-              <div className='flex flex-col sm:flex-row justify-center items-center gap-2'>
+              <Stack
+                direction={{ xs: 'column', sm: 'row' }}
+                spacing={2}
+                sx={{
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  width: '100%'
+                }}
+              >
                 {loading.resendCode ? (
-                  <CircularProgress />
+                  <CircularProgress size={isMobile ? 24 : 32} />
                 ) : (
                   <OtpForm otpValue={code} setOtpValue={setCode} setIsDirty={() => {}} />
                 )}
@@ -906,21 +1441,57 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
                   disabled={loading.resendCode}
                   variant='text'
                   type='button'
-                  size='small'
+                  size={isMobile ? 'small' : 'medium'}
                   onClick={handleResendCode}
+                  sx={{
+                    fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+                    minWidth: { xs: 'auto', sm: 100 }
+                  }}
                 >
                   {loading.resendCode ? 'Sending...' : 'Resend'}
                 </Button>
-              </div>
+              </Stack>
 
               {errorMsg && (
-                <Alert severity='error' icon={<WarningAmberOutlinedIcon />} className='p-2'>
+                <Alert
+                  severity='error'
+                  icon={<WarningAmberOutlinedIcon />}
+                  sx={{
+                    p: { xs: 1.5, sm: 2 },
+                    fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+                    bgcolor: isDarkMode
+                      ? alpha(theme.palette.error.main, 0.15)
+                      : alpha(theme.palette.error.light, 0.1),
+                    color: 'error.main',
+                    border: `1px solid ${isDarkMode ? alpha(theme.palette.error.main, 0.3) : alpha(theme.palette.error.main, 0.2)}`,
+                    borderRadius: { xs: 1, sm: 1.5 },
+                    '& .MuiAlert-icon': {
+                      color: 'error.main'
+                    }
+                  }}
+                >
                   {errorMsg}
                 </Alert>
               )}
 
               {successMsg && (
-                <Alert severity='success' icon={<TaskAltOutlinedIcon />} className='p-2'>
+                <Alert
+                  severity='success'
+                  icon={<TaskAltOutlinedIcon />}
+                  sx={{
+                    p: { xs: 1.5, sm: 2 },
+                    fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+                    bgcolor: isDarkMode
+                      ? alpha(theme.palette.success.main, 0.15)
+                      : alpha(theme.palette.success.light, 0.1),
+                    color: 'success.main',
+                    border: `1px solid ${isDarkMode ? alpha(theme.palette.success.main, 0.3) : alpha(theme.palette.success.main, 0.2)}`,
+                    borderRadius: { xs: 1, sm: 1.5 },
+                    '& .MuiAlert-icon': {
+                      color: 'success.main'
+                    }
+                  }}
+                >
                   {successMsg}
                 </Alert>
               )}
@@ -930,26 +1501,109 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
                 fullWidth
                 variant='contained'
                 type='submit'
+                sx={{
+                  py: { xs: 1.25, sm: 1.5 },
+                  fontSize: { xs: '0.9375rem', sm: '1rem' },
+                  fontWeight: 600,
+                  boxShadow: isDarkMode
+                    ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.4)}`
+                    : `0 4px 8px ${alpha(theme.palette.primary.main, 0.3)}`,
+                  '&:hover': {
+                    boxShadow: isDarkMode
+                      ? `0 6px 16px ${alpha(theme.palette.primary.main, 0.5)}`
+                      : `0 6px 12px ${alpha(theme.palette.primary.main, 0.4)}`
+                  },
+                  '&:disabled': {
+                    boxShadow: 'none'
+                  }
+                }}
               >
-                {loading.confirmCode ? <CircularProgress color='inherit' size={24} /> : 'Confirm'}
+                {loading.confirmCode ? (
+                  <CircularProgress color='inherit' size={isMobile ? 20 : 24} />
+                ) : (
+                  'Confirm'
+                )}
               </Button>
-            </form>
+            </Box>
           )}
 
-          <div className='flex justify-between items-center flex-wrap gap-4 mt-8 w-full'>
-            <Link className='flex items-center gap-1 underline' href='/termsofservice'>
-              <InfoIcon color='primary' />
-              <Typography>Terms of Service</Typography>
-            </Link>
-            <Link className='flex items-center gap-1 underline' href='/privacypolicy'>
-              <InfoIcon color='primary' />
-              <Typography>Privacy Policy</Typography>
-            </Link>
-          </div>
-        </div>
-      </div>
+          <Stack
+            direction='row'
+            spacing={3}
+            sx={{
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: { xs: 2, sm: 4 },
+              mt: { xs: 6, sm: 8 },
+              width: '100%'
+            }}
+          >
+            <MuiLink
+              component={Link}
+              href='/termsofservice'
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                textDecoration: 'underline',
+                color: 'primary.main',
+                fontSize: { xs: '0.8125rem', sm: '0.875rem' },
+                '&:hover': {
+                  color: 'primary.dark'
+                }
+              }}
+            >
+              <InfoIcon
+                sx={{
+                  fontSize: { xs: '1rem', sm: '1.125rem' },
+                  color: 'primary.main'
+                }}
+              />
+              <Typography
+                sx={{
+                  fontSize: { xs: '0.8125rem', sm: '0.875rem' },
+                  color: 'primary.main'
+                }}
+              >
+                Terms of Service
+              </Typography>
+            </MuiLink>
+            <MuiLink
+              component={Link}
+              href='/privacypolicy'
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                textDecoration: 'underline',
+                color: 'primary.main',
+                fontSize: { xs: '0.8125rem', sm: '0.875rem' },
+                '&:hover': {
+                  color: 'primary.dark'
+                }
+              }}
+            >
+              <InfoIcon
+                sx={{
+                  fontSize: { xs: '1rem', sm: '1.125rem' },
+                  color: 'primary.main'
+                }}
+              />
+              <Typography
+                sx={{
+                  fontSize: { xs: '0.8125rem', sm: '0.875rem' },
+                  color: 'primary.main'
+                }}
+              >
+                Privacy Policy
+              </Typography>
+            </MuiLink>
+          </Stack>
+        </Box>
+      </Box>
       {isSubmitting && <LoadingDialog open={isSubmitting} />}
-    </div>
+    </Box>
     // this is the code by using the mui
     // <Box sx={{ display: 'flex', height: '100vh' }}>
     //   {/* Illustration side - hidden on mobile */}
