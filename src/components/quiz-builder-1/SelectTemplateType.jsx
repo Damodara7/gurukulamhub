@@ -1,16 +1,5 @@
 import React, { useState } from 'react'
-import { 
-  Box, 
-  Button, 
-  Typography, 
-  Grid, 
-  Card, 
-  CardActionArea, 
-  CardContent,
-  useTheme,
-  alpha,
-  Stack
-} from '@mui/material'
+import { Box, Button, Typography, Grid, Card, CardActionArea, CardContent, useTheme, alpha, Stack } from '@mui/material'
 import RadioButtonCheckedIcon from '@mui/icons-material/RadioButtonChecked'
 import CheckBoxIcon from '@mui/icons-material/CheckBox'
 import ShortTextIcon from '@mui/icons-material/ShortText'
@@ -72,15 +61,22 @@ function SelectTemplateType({ onCancel, onCreateQuestion }) {
             <Card
               variant='outlined'
               sx={{
-                border: '1px solid',
-                borderColor: selectedTemplate === type.key ? theme.palette.primary.main : '#e8eaed',
+                border: '2px solid',
+                borderColor:
+                  selectedTemplate === type.key
+                    ? theme.palette.primary.main
+                    : alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08),
                 borderRadius: 2,
-                bgcolor: selectedTemplate === type.key 
-                  ? alpha(theme.palette.primary.main, 0.08)
-                  : 'white',
-                boxShadow: selectedTemplate === type.key 
-                  ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.2)}`
-                  : '0 2px 8px rgba(0,0,0,0.04)',
+                bgcolor:
+                  selectedTemplate === type.key
+                    ? alpha(theme.palette.primary.main, 0.08)
+                    : theme.palette.background.paper,
+                boxShadow:
+                  selectedTemplate === type.key
+                    ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.2)}`
+                    : theme.palette.mode === 'dark'
+                      ? '0 2px 8px rgba(0,0,0,0.3)'
+                      : '0 2px 8px rgba(0,0,0,0.04)',
                 transition: 'all 0.3s ease',
                 cursor: 'pointer',
                 '&:hover': {

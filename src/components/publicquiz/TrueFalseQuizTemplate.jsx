@@ -27,16 +27,21 @@ const TrueFalseTemplate = ({ question, selectedAnswer, onAnswerSelect, readOnly 
     <Card
       elevation={0}
       sx={{
-        borderRadius: { xs: 3, md: 3.5 },
+        borderRadius: { xs: 2.5, sm: 3, md: 3.5 },
         overflow: 'hidden',
-        border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
-        background: alpha(theme.palette.background.paper, 0.92),
-        boxShadow: '0 20px 44px rgba(15, 23, 42, 0.14)'
+        border: `1px solid ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
+        background: theme.palette.background.paper,
+        boxShadow:
+          theme.palette.mode === 'dark' ? '0 20px 44px rgba(0, 0, 0, 0.4)' : '0 20px 44px rgba(15, 23, 42, 0.14)',
+        mx: { xs: 1, sm: 0 },
+        width: { xs: 'calc(100% - 16px)', sm: '100%' },
+        maxWidth: '100%',
+        boxSizing: 'border-box'
       }}
     >
-      <CardContent sx={{ p: { xs: 3, md: 4 } }}>
-        <Stack spacing={3}>
-          <Stack spacing={1.5} alignItems='center' textAlign='center'>
+      <CardContent sx={{ p: { xs: 2, sm: 2.5, md: 3, lg: 4 } }}>
+        <Stack spacing={{ xs: 2, sm: 2.5, md: 3 }}>
+          <Stack spacing={{ xs: 1, sm: 1.5 }} alignItems='center' textAlign='center'>
             {(questionObj?.mediaType === 'text' ||
               questionObj?.mediaType === 'text-image' ||
               questionObj?.mediaType === 'text-video') && (
@@ -44,14 +49,25 @@ const TrueFalseTemplate = ({ question, selectedAnswer, onAnswerSelect, readOnly 
                 variant='h5'
                 sx={{
                   fontWeight: 800,
-                  letterSpacing: '-0.015em'
+                  letterSpacing: '-0.015em',
+                  fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem', lg: '2rem' },
+                  px: { xs: 1, sm: 0 },
+                  lineHeight: { xs: 1.4, sm: 1.5 }
                 }}
               >
                 {questionObj?.text}
               </Typography>
             )}
             {questionObj?.mediaType === 'video' && (
-              <Typography variant='subtitle1' sx={{ color: alpha(theme.palette.text.primary, 0.75), fontWeight: 600 }}>
+              <Typography
+                variant='subtitle1'
+                sx={{
+                  color: alpha(theme.palette.text.primary, 0.75),
+                  fontWeight: 600,
+                  fontSize: { xs: '0.875rem', sm: '0.9375rem', md: '1rem' },
+                  px: { xs: 1, sm: 0 }
+                }}
+              >
                 Watch the video carefully and answer the question.
               </Typography>
             )}
@@ -67,8 +83,11 @@ const TrueFalseTemplate = ({ question, selectedAnswer, onAnswerSelect, readOnly 
                 maxHeight: { xs: 260, md: 320 },
                 objectFit: 'cover',
                 borderRadius: { xs: 2, md: 2.5 },
-                border: `1px solid ${alpha(theme.palette.primary.main, 0.15)}`,
-                boxShadow: '0 18px 40px rgba(15, 23, 42, 0.18)'
+                border: `1px solid ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.2 : 0.15)}`,
+                boxShadow:
+                  theme.palette.mode === 'dark'
+                    ? '0 18px 40px rgba(0, 0, 0, 0.5)'
+                    : '0 18px 40px rgba(15, 23, 42, 0.18)'
               }}
             />
           )}
@@ -80,140 +99,245 @@ const TrueFalseTemplate = ({ question, selectedAnswer, onAnswerSelect, readOnly 
             </Stack>
           )}
 
-        <RadioGroup
-          value={selectedAnswer || ''}
-          onChange={e => handleOptionSelect(question._id, e.target.value)}
-          sx={{ width: '100%' }}
-        >
-          <Grid
-            container
-            spacing={{ xs: 2.2, md: 3 }}
-            justifyContent='center'
-            sx={{ mx: 'auto', width: '100%' }}
+          <RadioGroup
+            value={selectedAnswer || ''}
+            onChange={e => handleOptionSelect(question._id, e.target.value)}
+            sx={{ width: '100%' }}
           >
-            {question?.data?.options?.map((option, index) => {
-              const isSelected = selectedAnswer === option.id
-              const optionLabel = String.fromCharCode(65 + index)
+            <Grid
+              container
+              spacing={{ xs: 2, sm: 2.5, md: 3 }}
+              justifyContent='center'
+              sx={{ mx: 'auto', width: '100%', overflow: 'hidden' }}
+            >
+              {question?.data?.options?.map((option, index) => {
+                const isSelected = selectedAnswer === option.id
+                const optionLabel = String.fromCharCode(65 + index)
 
-              return (
-                <Grid item xs={12} key={option.id}>
-                  <Box
-                    onClick={() => handleOptionSelect(question._id, option.id)}
+                return (
+                  <Grid
+                    item
+                    xs={12}
+                    key={option.id}
                     sx={{
-                      position: 'relative',
                       display: 'flex',
-                      gap: { xs: 1.6, md: 2.4 },
-                      alignItems: 'center',
-                      borderRadius: { xs: 3, md: 3.8 },
-                      p: { xs: 2.2, md: 3 },
-                      border: `1px solid ${alpha(theme.palette.primary.main, isSelected ? 0.32 : 0.14)}`,
-                      background: isSelected
-                        ? `linear-gradient(140deg, ${alpha(theme.palette.primary.main, 0.32)}, ${alpha(
-                            theme.palette.secondary.main,
-                            0.25
-                          )})`
-                        : `linear-gradient(150deg, ${alpha(theme.palette.primary.light, 0.16)}, ${alpha(
-                            theme.palette.common.white,
-                            0.94
-                          )})`,
-                      transition:
-                        'transform 0.3s ease, border-color 0.24s ease, box-shadow 0.3s ease, background 0.3s ease',
-                      cursor: readOnly ? 'default' : 'pointer',
-                      pointerEvents: readOnly ? 'none' : 'auto',
-                      minHeight: { xs: 94, md: 118 },
-                      boxShadow: isSelected
-                        ? '0 32px 74px rgba(15, 23, 42, 0.28)'
-                        : '0 22px 48px rgba(15, 23, 42, 0.14)',
-                      '&:hover': {
-                        transform: readOnly ? 'none' : 'translateY(-10px)',
-                        boxShadow: readOnly
-                          ? '0 22px 48px rgba(15, 23, 42, 0.14)'
-                          : '0 38px 86px rgba(15, 23, 42, 0.3)',
-                        borderColor: alpha(theme.palette.primary.main, 0.32),
-                        background: readOnly
-                          ? undefined
-                          : `linear-gradient(140deg, ${alpha(theme.palette.primary.main, 0.24)}, ${alpha(
-                              theme.palette.secondary.main,
-                              0.19
-                            )})`
-                      },
-                      '&::before': {
-                        content: '""',
-                        position: 'absolute',
-                        inset: 0,
-                        borderRadius: 'inherit',
-                        background: isSelected
-                          ? `linear-gradient(160deg, ${alpha(theme.palette.common.white, 0.2)}, transparent 55%)`
-                          : `radial-gradient(circle at top left, ${alpha(theme.palette.primary.light, 0.22)}, transparent 55%)`,
-                        pointerEvents: 'none',
-                        opacity: 0.9
-                      },
-                      '&::after': {
-                        content: '""',
-                        position: 'absolute',
-                        inset: 1,
-                        borderRadius: 'inherit',
-                        border: `1px solid ${alpha(theme.palette.common.white, isSelected ? 0.38 : 0.15)}`,
-                        pointerEvents: 'none',
-                        opacity: 0.5
-                      }
+                      mb: { xs: 0, sm: 0 },
+                      position: 'relative',
+                      zIndex: isSelected ? 3 : 1,
+                      overflow: 'visible',
+                      width: '100%',
+                      maxWidth: '100%',
+                      boxSizing: 'border-box'
                     }}
                   >
-                    <Radio
-                      disableRipple
-                      checked={isSelected}
-                      value={option.id}
+                    <Box
+                      onClick={() => handleOptionSelect(question._id, option.id)}
                       sx={{
-                        mr: 1.5,
-                        color: isSelected ? theme.palette.primary.main : alpha(theme.palette.primary.dark, 0.65),
-                        '&.Mui-checked': {
-                          color: theme.palette.primary.main
+                        position: 'relative',
+                        display: 'flex',
+                        gap: { xs: 1.5, sm: 2, md: 2.4 },
+                        alignItems: 'center',
+                        borderRadius: { xs: 2.5, sm: 3, md: 3.5, lg: 3.8 },
+                        p: { xs: 1.5, sm: 2, md: 2.5, lg: 3 },
+                        width: '100%',
+                        maxWidth: '100%',
+                        overflow: 'hidden',
+                        boxSizing: 'border-box',
+                        border: `1px solid ${alpha(
+                          theme.palette.primary.main,
+                          isSelected
+                            ? theme.palette.mode === 'dark'
+                              ? 0.4
+                              : 0.32
+                            : theme.palette.mode === 'dark'
+                              ? 0.2
+                              : 0.14
+                        )}`,
+                        background: isSelected
+                          ? `linear-gradient(140deg, ${alpha(
+                              theme.palette.primary.main,
+                              theme.palette.mode === 'dark' ? 0.4 : 0.32
+                            )}, ${alpha(theme.palette.secondary.main, theme.palette.mode === 'dark' ? 0.3 : 0.25)})`
+                          : theme.palette.mode === 'dark'
+                            ? `linear-gradient(150deg, ${alpha(theme.palette.primary.main, 0.1)}, ${alpha(
+                                theme.palette.background.default,
+                                0.8
+                              )})`
+                            : `linear-gradient(150deg, ${alpha(theme.palette.primary.light, 0.16)}, ${alpha(
+                                theme.palette.common.white,
+                                0.94
+                              )})`,
+                        transition:
+                          'transform 0.2s ease, border-color 0.24s ease, box-shadow 0.2s ease, background 0.3s ease, scale 0.2s ease',
+                        cursor: readOnly ? 'default' : 'pointer',
+                        pointerEvents: readOnly ? 'none' : 'auto',
+                        minHeight: { xs: 'auto', sm: 90, md: 110, lg: 118 },
+                        maxHeight: 'none',
+                        boxShadow: isSelected
+                          ? theme.palette.mode === 'dark'
+                            ? '0 20px 50px rgba(0, 0, 0, 0.6)'
+                            : '0 20px 50px rgba(15, 23, 42, 0.25)'
+                          : theme.palette.mode === 'dark'
+                            ? '0 12px 32px rgba(0, 0, 0, 0.4)'
+                            : '0 12px 32px rgba(15, 23, 42, 0.12)',
+                        transform: isSelected ? 'scale(1)' : 'scale(1)',
+                        width: '100%',
+                        transformOrigin: 'center',
+                        '&:hover': {
+                          transform: readOnly ? 'scale(1)' : 'scale(1)',
+                          boxShadow: readOnly
+                            ? theme.palette.mode === 'dark'
+                              ? '0 12px 32px rgba(0, 0, 0, 0.4)'
+                              : '0 12px 32px rgba(15, 23, 42, 0.12)'
+                            : isSelected
+                              ? theme.palette.mode === 'dark'
+                                ? '0 24px 60px rgba(0, 0, 0, 0.7)'
+                                : '0 24px 60px rgba(15, 23, 42, 0.32)'
+                              : theme.palette.mode === 'dark'
+                                ? '0 18px 48px rgba(0, 0, 0, 0.5)'
+                                : '0 18px 48px rgba(15, 23, 42, 0.22)',
+                          borderColor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.4 : 0.32),
+                          background: readOnly
+                            ? undefined
+                            : theme.palette.mode === 'dark'
+                              ? `linear-gradient(140deg, ${alpha(theme.palette.primary.main, 0.3)}, ${alpha(
+                                  theme.palette.secondary.main,
+                                  0.25
+                                )})`
+                              : `linear-gradient(140deg, ${alpha(theme.palette.primary.main, 0.24)}, ${alpha(
+                                  theme.palette.secondary.main,
+                                  0.19
+                                )})`
                         },
-                        '& .MuiSvgIcon-root': {
-                          fontSize: 26,
-                          filter: isSelected ? 'drop-shadow(0px 8px 18px rgba(15,23,42,0.28))' : 'none'
+                        '&::before': {
+                          content: '""',
+                          position: 'absolute',
+                          inset: 0,
+                          borderRadius: 'inherit',
+                          background: isSelected
+                            ? `linear-gradient(160deg, ${alpha(theme.palette.common.white, 0.2)}, transparent 55%)`
+                            : `radial-gradient(circle at top left, ${alpha(
+                                theme.palette.primary.light,
+                                0.22
+                              )}, transparent 55%)`,
+                          pointerEvents: 'none',
+                          opacity: 0.9
+                        },
+                        '&::after': {
+                          content: '""',
+                          position: 'absolute',
+                          inset: 1,
+                          borderRadius: 'inherit',
+                          border: `1px solid ${alpha(
+                            theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.common.white,
+                            isSelected
+                              ? theme.palette.mode === 'dark'
+                                ? 0.2
+                                : 0.38
+                              : theme.palette.mode === 'dark'
+                                ? 0.08
+                                : 0.15
+                          )}`,
+                          pointerEvents: 'none',
+                          opacity: 0.5
                         }
                       }}
-                    />
+                    >
+                      <Radio
+                        disableRipple
+                        checked={isSelected}
+                        value={option.id}
+                        sx={{
+                          mr: { xs: 1, sm: 1.25, md: 1.5 },
+                          color: isSelected
+                            ? theme.palette.primary.main
+                            : theme.palette.mode === 'dark'
+                              ? alpha(theme.palette.primary.light, 0.7)
+                              : alpha(theme.palette.primary.dark, 0.65),
+                          '&.Mui-checked': {
+                            color: theme.palette.primary.main
+                          },
+                          '& .MuiSvgIcon-root': {
+                            fontSize: { xs: 22, sm: 24, md: 26 },
+                            filter: isSelected ? 'drop-shadow(0px 8px 18px rgba(15,23,42,0.28))' : 'none'
+                          }
+                        }}
+                      />
 
                       <Stack
                         direction='row'
-                        spacing={{ xs: 1.4, md: 2 }}
+                        spacing={{ xs: 1, sm: 1.4, md: 2 }}
                         alignItems='center'
                         justifyContent='space-between'
-                        sx={{ flexGrow: 1, position: 'relative', zIndex: 1, flexWrap: 'wrap', minWidth: 0 }}
+                        sx={{
+                          flexGrow: 1,
+                          position: 'relative',
+                          zIndex: 1,
+                          flexWrap: 'wrap',
+                          minWidth: 0,
+                          overflow: 'hidden',
+                          width: '100%'
+                        }}
                       >
-                        <Stack direction='row' spacing={1.2} alignItems='center' sx={{ minWidth: 0 }}>
+                        <Stack
+                          direction='row'
+                          spacing={{ xs: 0.75, sm: 1.2 }}
+                          alignItems='center'
+                          sx={{ minWidth: 0, flex: 1, overflow: 'hidden' }}
+                        >
                           <Box
                             sx={{
-                              width: { xs: 40, md: 46 },
-                              height: { xs: 40, md: 46 },
-                              borderRadius: { xs: 3.2, md: 4 },
+                              width: { xs: 32, sm: 36, md: 40, lg: 46 },
+                              height: { xs: 32, sm: 36, md: 40, lg: 46 },
+                              borderRadius: { xs: 2.5, sm: 3, md: 3.5, lg: 4 },
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              fontWeight: 700,
-                              fontSize: { xs: '1rem', md: '1.1rem' },
+                              fontWeight: 400,
+                              fontSize: { xs: '0.875rem', sm: '0.9375rem', md: '1rem', lg: '1.1rem' },
+                              flexShrink: 0,
                               background: isSelected
-                                ? alpha(theme.palette.common.white, 0.34)
-                                : alpha(theme.palette.primary.main, 0.18),
-                              color: isSelected ? theme.palette.primary.dark : theme.palette.primary.main,
-                              boxShadow: isSelected ? '0 16px 36px rgba(15, 23, 42, 0.2)' : 'none'
+                                ? theme.palette.mode === 'dark'
+                                  ? alpha(theme.palette.primary.main, 0.4)
+                                  : alpha(theme.palette.common.white, 0.34)
+                                : alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.25 : 0.18),
+                              color: isSelected
+                                ? theme.palette.mode === 'dark'
+                                  ? theme.palette.primary.contrastText
+                                  : theme.palette.primary.dark
+                                : theme.palette.mode === 'dark'
+                                  ? theme.palette.primary.light
+                                  : theme.palette.primary.main,
+                              boxShadow: isSelected
+                                ? theme.palette.mode === 'dark'
+                                  ? '0 12px 24px rgba(0, 0, 0, 0.5)'
+                                  : '0 12px 24px rgba(15, 23, 42, 0.18)'
+                                : 'none'
                             }}
                           >
                             {optionLabel}
                           </Box>
 
-                          <Stack spacing={0.35} sx={{ minWidth: 0 }}>
+                          <Stack spacing={{ xs: 0.25, sm: 0.35 }} sx={{ minWidth: 0, flex: 1 }}>
                             {option.mediaType === 'text' && option.text && (
                               <Typography
                                 variant='body1'
-                                noWrap
                                 sx={{
-                                  fontWeight: 700,
-                                  color: isSelected ? alpha(theme.palette.common.white, 0.95) : theme.palette.text.primary,
-                                  lineHeight: 1.35,
-                                  fontSize: { xs: '0.95rem', sm: '1.02rem', md: '1.1rem' }
+                                  fontWeight: 400,
+                                  color: isSelected
+                                    ? theme.palette.mode === 'dark'
+                                      ? theme.palette.common.white
+                                      : alpha(theme.palette.common.white, 0.95)
+                                    : theme.palette.text.primary,
+                                  lineHeight: { xs: 1.4, sm: 1.5 },
+                                  fontSize: { xs: '0.875rem', sm: '0.9375rem', md: '1rem', lg: '1.1rem' },
+                                  wordBreak: 'break-word',
+                                  overflowWrap: 'break-word',
+                                  whiteSpace: 'normal',
+                                  display: '-webkit-box',
+                                  WebkitLineClamp: { xs: 3, sm: 4, md: 5 },
+                                  WebkitBoxOrient: 'vertical',
+                                  overflow: 'hidden'
                                 }}
                               >
                                 {option.text}
@@ -228,22 +352,38 @@ const TrueFalseTemplate = ({ question, selectedAnswer, onAnswerSelect, readOnly 
                             src={option.image}
                             alt={option.text}
                             sx={{
-                              width: { xs: 54, md: 68 },
-                              height: { xs: 54, md: 68 },
+                              width: { xs: 48, sm: 54, md: 60, lg: 68 },
+                              height: { xs: 48, sm: 54, md: 60, lg: 68 },
+                              maxWidth: { xs: 48, sm: 54, md: 60, lg: 68 },
+                              maxHeight: { xs: 48, sm: 54, md: 60, lg: 68 },
                               objectFit: 'cover',
-                              borderRadius: 2.5,
-                              border: `1px solid ${alpha(theme.palette.common.white, isSelected ? 0.3 : 0.12)}`,
-                              boxShadow: '0 14px 32px rgba(15, 23, 42, 0.18)'
+                              borderRadius: { xs: 2, sm: 2.25, md: 2.5 },
+                              border: `1px solid ${alpha(
+                                theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.common.white,
+                                isSelected
+                                  ? theme.palette.mode === 'dark'
+                                    ? 0.15
+                                    : 0.3
+                                  : theme.palette.mode === 'dark'
+                                    ? 0.08
+                                    : 0.12
+                              )}`,
+                              boxShadow:
+                                theme.palette.mode === 'dark'
+                                  ? '0 12px 24px rgba(0, 0, 0, 0.5)'
+                                  : '0 12px 24px rgba(15, 23, 42, 0.18)',
+                              flexShrink: 0,
+                              display: 'block'
                             }}
                           />
                         )}
                       </Stack>
-
-                  </Box>
-                </Grid>
-              )})}
-          </Grid>
-        </RadioGroup>
+                    </Box>
+                  </Grid>
+                )
+              })}
+            </Grid>
+          </RadioGroup>
         </Stack>
       </CardContent>
     </Card>

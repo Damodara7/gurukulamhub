@@ -183,9 +183,9 @@ const AdminViewQuiz = ({ quizId }) => {
   if (loading.quizzes) {
     return (
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
-        <Stack spacing={2} alignItems="center">
+        <Stack spacing={2} alignItems='center'>
           <CircularProgress size={48} />
-          <Typography variant="body1" color="text.secondary" fontWeight={500}>
+          <Typography variant='body1' color='text.secondary' fontWeight={500}>
             Loading quiz...
           </Typography>
         </Stack>
@@ -205,10 +205,10 @@ const AdminViewQuiz = ({ quizId }) => {
 
   const getStatusConfig = () => {
     const configs = {
-      pending: { color: 'warning', icon: <PendingIcon fontSize="small" />, label: 'PENDING' },
-      approved: { color: 'success', icon: <CheckCircleIcon fontSize="small" />, label: 'APPROVED' },
-      rejected: { color: 'error', icon: <CancelIcon fontSize="small" />, label: 'REJECTED' },
-      published: { color: 'info', icon: <CheckCircleIcon fontSize="small" />, label: 'PUBLISHED' }
+      pending: { color: 'warning', icon: <PendingIcon fontSize='small' />, label: 'PENDING' },
+      approved: { color: 'success', icon: <CheckCircleIcon fontSize='small' />, label: 'APPROVED' },
+      rejected: { color: 'error', icon: <CancelIcon fontSize='small' />, label: 'REJECTED' },
+      published: { color: 'info', icon: <CheckCircleIcon fontSize='small' />, label: 'PUBLISHED' }
     }
     return configs[quizData.approvalState] || configs.pending
   }
@@ -216,18 +216,18 @@ const AdminViewQuiz = ({ quizId }) => {
   const statusConfig = getStatusConfig()
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa', pb: 6 }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: theme.palette.background.default, pb: 6 }}>
       {/* Header Section */}
       <Box
         sx={{
-          bgcolor: 'white',
+          bgcolor: theme.palette.background.paper,
           pt: { xs: 3, md: 4 },
           pb: { xs: 3, md: 4 },
-          borderBottom: '1px solid #e8eaed',
+          borderBottom: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
           mb: 4
         }}
       >
-        <Container maxWidth="xl">
+        <Container maxWidth='xl'>
           <Stack spacing={3}>
             {/* Back Button */}
             <Button
@@ -249,8 +249,8 @@ const AdminViewQuiz = ({ quizId }) => {
             </Button>
 
             {/* Title Section */}
-            <Stack direction="row" alignItems="center" spacing={2} flexWrap="wrap">
-              <Stack direction="row" alignItems="center" spacing={1.5} sx={{ flex: 1 }}>
+            <Stack direction='row' alignItems='center' spacing={2} flexWrap='wrap'>
+              <Stack direction='row' alignItems='center' spacing={1.5} sx={{ flex: 1 }}>
                 <Box
                   sx={{
                     width: 40,
@@ -266,7 +266,7 @@ const AdminViewQuiz = ({ quizId }) => {
                   <VisibilityIcon sx={{ fontSize: 22 }} />
                 </Box>
                 <Typography
-                  variant="h4"
+                  variant='h4'
                   fontWeight={800}
                   sx={{
                     fontSize: { xs: '1.5rem', md: '2rem' },
@@ -296,7 +296,7 @@ const AdminViewQuiz = ({ quizId }) => {
             </Stack>
 
             {/* Description */}
-            <Typography variant="body1" sx={{ color: '#5f6368' }}>
+            <Typography variant='body1' sx={{ color: theme.palette.text.secondary }}>
               Review quiz details, questions, and manage approval status
             </Typography>
           </Stack>
@@ -304,15 +304,15 @@ const AdminViewQuiz = ({ quizId }) => {
       </Box>
 
       {/* Main Content */}
-      <Container maxWidth="xl">
+      <Container maxWidth='xl'>
         <Stack spacing={4}>
           {/* Quiz Details Card */}
           <Card
             sx={{
               borderRadius: 2,
-              bgcolor: 'white',
-              border: '1px solid #e8eaed',
-              boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+              bgcolor: theme.palette.background.paper,
+              border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
+              boxShadow: theme.palette.mode === 'dark' ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.04)',
               overflow: 'hidden'
             }}
           >
@@ -327,7 +327,7 @@ const AdminViewQuiz = ({ quizId }) => {
                 alignItems: 'center'
               }}
             >
-              <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Stack direction='row' alignItems='center' spacing={1.5}>
                 <Box
                   sx={{
                     width: 40,
@@ -342,14 +342,14 @@ const AdminViewQuiz = ({ quizId }) => {
                 >
                   <InfoIcon sx={{ fontSize: 22 }} />
                 </Box>
-                <Typography variant="h6" fontWeight={700}>
+                <Typography variant='h6' fontWeight={700}>
                   Quiz Information
                 </Typography>
               </Stack>
 
               <IconButton
                 onClick={() => setIsQuizInfoExpanded(!isQuizInfoExpanded)}
-                size="small"
+                size='small'
                 sx={{
                   gap: 0.5,
                   px: 1.5,
@@ -364,167 +364,179 @@ const AdminViewQuiz = ({ quizId }) => {
                   }
                 }}
               >
-                <Typography variant="caption" fontWeight={600} sx={{ textTransform: 'none', fontSize: '0.75rem' }}>
+                <Typography variant='caption' fontWeight={600} sx={{ textTransform: 'none', fontSize: '0.75rem' }}>
                   {isQuizInfoExpanded ? 'Hide' : 'Show'}
                 </Typography>
-                {isQuizInfoExpanded ? <ExpandLessIcon sx={{ fontSize: 18 }} /> : <ExpandMoreIcon sx={{ fontSize: 18 }} />}
+                {isQuizInfoExpanded ? (
+                  <ExpandLessIcon sx={{ fontSize: 18 }} />
+                ) : (
+                  <ExpandMoreIcon sx={{ fontSize: 18 }} />
+                )}
               </IconButton>
             </Box>
 
             <Collapse in={isQuizInfoExpanded} timeout={300}>
               <CardContent sx={{ p: 3 }}>
-              <Grid container spacing={3}>
-                {/* Thumbnail */}
-                <Grid item xs={12} md={4}>
-                  <Box
-                    sx={{
-                      width: '100%',
-                      maxWidth: 300,
-                      height: 200,
-                      mx: 'auto',
-                      borderRadius: 2,
-                      overflow: 'hidden',
-                      bgcolor: 'grey.100',
-                      border: '1px solid #e8eaed',
-                      position: 'relative'
-                    }}
-                  >
-                    <Image
-                      src={thumbnail || '/images/misc/image-placeholder.png'}
-                      alt={title}
-                      fill
-                      unoptimized
-                      style={{ objectFit: 'cover' }}
-                      onError={(e) => {
-                        e.target.src = '/images/misc/image-placeholder.png'
+                <Grid container spacing={3}>
+                  {/* Thumbnail */}
+                  <Grid item xs={12} md={4}>
+                    <Box
+                      sx={{
+                        width: '100%',
+                        maxWidth: 300,
+                        height: 200,
+                        mx: 'auto',
+                        borderRadius: 2,
+                        overflow: 'hidden',
+                        bgcolor: alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.08 : 0.1),
+                        border: `1px solid ${alpha(
+                          theme.palette.divider,
+                          theme.palette.mode === 'dark' ? 0.12 : 0.08
+                        )}`,
+                        position: 'relative'
                       }}
-                    />
-                  </Box>
-                </Grid>
-
-                {/* Details */}
-                <Grid item xs={12} md={8}>
-                  <Stack spacing={2}>
-                    <Box>
-                      <Typography variant="h5" fontWeight={700} gutterBottom>
-                        {title}
-                      </Typography>
-                      <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.7 }}>
-                        {details}
-                      </Typography>
+                    >
+                      <Image
+                        src={thumbnail || '/images/misc/image-placeholder.png'}
+                        alt={title}
+                        fill
+                        unoptimized
+                        style={{ objectFit: 'cover' }}
+                        onError={e => {
+                          e.target.src = '/images/misc/image-placeholder.png'
+                        }}
+                      />
                     </Box>
+                  </Grid>
 
-                    <Divider />
+                  {/* Details */}
+                  <Grid item xs={12} md={8}>
+                    <Stack spacing={2}>
+                      <Box>
+                        <Typography variant='h5' fontWeight={700} gutterBottom>
+                          {title}
+                        </Typography>
+                        <Typography variant='body1' color='text.secondary' sx={{ lineHeight: 1.7 }}>
+                          {details}
+                        </Typography>
+                      </Box>
 
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} sm={6}>
-                        <Stack direction="row" spacing={1} alignItems="center">
-                          <PersonIcon sx={{ fontSize: 20, color: 'primary.main' }} />
-                          <Typography variant="body2">
-                            <strong>Owner:</strong> {owner}
-                          </Typography>
-                        </Stack>
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <Stack direction="row" spacing={1} alignItems="center">
-                          <BookIcon sx={{ fontSize: 20, color: 'secondary.main' }} />
-                          <Typography variant="body2">
-                            <strong>Syllabus:</strong> {syllabus}
-                          </Typography>
-                        </Stack>
-                      </Grid>
-                      {contextIds && (
-                        <Grid item xs={12}>
-                          <Typography variant="body2">
-                            <strong>Context IDs:</strong> {contextIds}
-                          </Typography>
+                      <Divider />
+
+                      <Grid container spacing={2}>
+                        <Grid item xs={12} sm={6}>
+                          <Stack direction='row' spacing={1} alignItems='center'>
+                            <PersonIcon sx={{ fontSize: 20, color: 'primary.main' }} />
+                            <Typography variant='body2'>
+                              <strong>Owner:</strong> {owner}
+                            </Typography>
+                          </Stack>
                         </Grid>
-                      )}
-                    </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <Stack direction='row' spacing={1} alignItems='center'>
+                            <BookIcon sx={{ fontSize: 20, color: 'secondary.main' }} />
+                            <Typography variant='body2'>
+                              <strong>Syllabus:</strong> {syllabus}
+                            </Typography>
+                          </Stack>
+                        </Grid>
+                        {contextIds && (
+                          <Grid item xs={12}>
+                            <Typography variant='body2'>
+                              <strong>Context IDs:</strong> {contextIds}
+                            </Typography>
+                          </Grid>
+                        )}
+                      </Grid>
 
-                    {/* Tags */}
-                    {tags?.length > 0 && (
-                      <Box>
-                        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-                          <LabelIcon sx={{ fontSize: 20, color: 'info.main' }} />
-                          <Typography variant="subtitle2" fontWeight={600}>
-                            Tags:
-                          </Typography>
-                        </Stack>
-                        <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ gap: 1 }}>
-                          {tags.map((tag, index) => (
-                            <Chip
-                              key={index}
-                              label={tag}
-                              size='small'
-                              sx={{
-                                bgcolor: alpha(theme.palette.primary.main, 0.1),
-                                color: theme.palette.primary.main,
-                                fontWeight: 600
-                              }}
-                            />
-                          ))}
-                        </Stack>
-                      </Box>
-                    )}
-
-                    {/* Course Links */}
-                    {courseLinks?.length > 0 && (
-                      <Box>
-                        <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-                          Course Links:
-                        </Typography>
-                        <Stack spacing={2}>
-                          {courseLinks.map((link, index) => (
-                            <Box key={index}>
-                              <VideoAd url={link?.link || ''} showPause autoPlay={false} />
-                              <ImagePopup imageUrl={link?.link || ''} mediaType={link.mediaType} />
-                            </Box>
-                          ))}
-                        </Stack>
-                      </Box>
-                    )}
-
-                    {/* Documents */}
-                    {documents?.length > 0 && (
-                      <Box>
-                        <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-                          Documents:
-                        </Typography>
-                        <Stack spacing={1}>
-                          {documents.map((document, index) => (
-                            <Box
-                              key={index}
-                              sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                p: 1.5,
-                                borderRadius: 1,
-                                bgcolor: '#fafbfc',
-                                border: '1px solid #e8eaed'
-                              }}
-                            >
-                              <Typography variant='body2'>{`Document ${index + 1}: ${document.description}`}</Typography>
-                              <Button
-                                component={Link}
-                                href={document?.document || ''}
-                                target='_blank'
-                                rel='noopener noreferrer'
-                                variant='outlined'
+                      {/* Tags */}
+                      {tags?.length > 0 && (
+                        <Box>
+                          <Stack direction='row' spacing={1} alignItems='center' sx={{ mb: 1 }}>
+                            <LabelIcon sx={{ fontSize: 20, color: 'info.main' }} />
+                            <Typography variant='subtitle2' fontWeight={600}>
+                              Tags:
+                            </Typography>
+                          </Stack>
+                          <Stack direction='row' spacing={1} flexWrap='wrap' sx={{ gap: 1 }}>
+                            {tags.map((tag, index) => (
+                              <Chip
+                                key={index}
+                                label={tag}
                                 size='small'
-                                sx={{ textTransform: 'none', fontWeight: 600 }}
+                                sx={{
+                                  bgcolor: alpha(theme.palette.primary.main, 0.1),
+                                  color: theme.palette.primary.main,
+                                  fontWeight: 600
+                                }}
+                              />
+                            ))}
+                          </Stack>
+                        </Box>
+                      )}
+
+                      {/* Course Links */}
+                      {courseLinks?.length > 0 && (
+                        <Box>
+                          <Typography variant='subtitle2' fontWeight={600} gutterBottom>
+                            Course Links:
+                          </Typography>
+                          <Stack spacing={2}>
+                            {courseLinks.map((link, index) => (
+                              <Box key={index}>
+                                <VideoAd url={link?.link || ''} showPause autoPlay={false} />
+                                <ImagePopup imageUrl={link?.link || ''} mediaType={link.mediaType} />
+                              </Box>
+                            ))}
+                          </Stack>
+                        </Box>
+                      )}
+
+                      {/* Documents */}
+                      {documents?.length > 0 && (
+                        <Box>
+                          <Typography variant='subtitle2' fontWeight={600} gutterBottom>
+                            Documents:
+                          </Typography>
+                          <Stack spacing={1}>
+                            {documents.map((document, index) => (
+                              <Box
+                                key={index}
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  p: 1.5,
+                                  borderRadius: 1,
+                                  bgcolor: alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.05 : 0.03),
+                                  border: `1px solid ${alpha(
+                                    theme.palette.divider,
+                                    theme.palette.mode === 'dark' ? 0.12 : 0.08
+                                  )}`
+                                }}
                               >
-                                View
-                              </Button>
-                            </Box>
-                          ))}
-                        </Stack>
-                      </Box>
-                    )}
-                  </Stack>
+                                <Typography variant='body2'>{`Document ${index + 1}: ${
+                                  document.description
+                                }`}</Typography>
+                                <Button
+                                  component={Link}
+                                  href={document?.document || ''}
+                                  target='_blank'
+                                  rel='noopener noreferrer'
+                                  variant='outlined'
+                                  size='small'
+                                  sx={{ textTransform: 'none', fontWeight: 600 }}
+                                >
+                                  View
+                                </Button>
+                              </Box>
+                            ))}
+                          </Stack>
+                        </Box>
+                      )}
+                    </Stack>
+                  </Grid>
                 </Grid>
-              </Grid>
               </CardContent>
             </Collapse>
           </Card>
@@ -536,9 +548,10 @@ const AdminViewQuiz = ({ quizId }) => {
               <Card
                 sx={{
                   borderRadius: 2,
-                  bgcolor: 'white',
-                  border: '1px solid #e8eaed',
-                  boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+                  bgcolor: theme.palette.background.paper,
+                  border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
+                  boxShadow:
+                    theme.palette.mode === 'dark' ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.04)',
                   position: { md: 'sticky' },
                   top: 20
                 }}
@@ -551,7 +564,7 @@ const AdminViewQuiz = ({ quizId }) => {
                     borderColor: 'primary.main'
                   }}
                 >
-                  <Stack direction="row" alignItems="center" spacing={1.5}>
+                  <Stack direction='row' alignItems='center' spacing={1.5}>
                     <Box
                       sx={{
                         width: 36,
@@ -567,10 +580,10 @@ const AdminViewQuiz = ({ quizId }) => {
                       <QuestionMarkIcon sx={{ fontSize: 20 }} />
                     </Box>
                     <Stack>
-                      <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+                      <Typography variant='caption' sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
                         PRIMARY QUESTIONS
                       </Typography>
-                      <Typography variant="body2" fontWeight={600}>
+                      <Typography variant='body2' fontWeight={600}>
                         {quizData.language?.name || 'N/A'}
                       </Typography>
                     </Stack>
@@ -599,12 +612,16 @@ const AdminViewQuiz = ({ quizId }) => {
                           cursor: 'pointer',
                           border: '2px solid',
                           borderColor: selectedPrimaryQuestionId === question._id ? 'primary.main' : 'divider',
-                          bgcolor: selectedPrimaryQuestionId === question._id
-                            ? alpha(theme.palette.primary.main, 0.05)
-                            : 'white',
-                          boxShadow: selectedPrimaryQuestionId === question._id
-                            ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.15)}`
-                            : '0 2px 8px rgba(0,0,0,0.04)',
+                          bgcolor:
+                            selectedPrimaryQuestionId === question._id
+                              ? alpha(theme.palette.primary.main, 0.05)
+                              : theme.palette.background.paper,
+                          boxShadow:
+                            selectedPrimaryQuestionId === question._id
+                              ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.15)}`
+                              : theme.palette.mode === 'dark'
+                                ? '0 2px 8px rgba(0,0,0,0.3)'
+                                : '0 2px 8px rgba(0,0,0,0.04)',
                           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                           '&:hover': {
                             borderColor: 'primary.main',
@@ -631,7 +648,7 @@ const AdminViewQuiz = ({ quizId }) => {
                     ))
                   ) : (
                     <Box sx={{ p: 3, textAlign: 'center' }}>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography variant='body2' color='text.secondary'>
                         No questions available
                       </Typography>
                     </Box>
@@ -648,9 +665,10 @@ const AdminViewQuiz = ({ quizId }) => {
                   <Card
                     sx={{
                       borderRadius: 2,
-                      bgcolor: 'white',
-                      border: '1px solid #e8eaed',
-                      boxShadow: '0 2px 12px rgba(0,0,0,0.04)'
+                      bgcolor: theme.palette.background.paper,
+                      border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
+                      boxShadow:
+                        theme.palette.mode === 'dark' ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.04)'
                     }}
                   >
                     <Box
@@ -661,8 +679,8 @@ const AdminViewQuiz = ({ quizId }) => {
                         borderColor: 'divider'
                       }}
                     >
-                      <Stack direction="row" justifyContent="space-between" alignItems="center">
-                        <Typography variant="subtitle1" fontWeight={600}>
+                      <Stack direction='row' justifyContent='space-between' alignItems='center'>
+                        <Typography variant='subtitle1' fontWeight={600}>
                           Primary Question
                         </Typography>
                         {primaryQuestions.map(question => {
@@ -718,9 +736,10 @@ const AdminViewQuiz = ({ quizId }) => {
                 <Card
                   sx={{
                     borderRadius: 2,
-                    bgcolor: 'white',
-                    border: '1px solid #e8eaed',
-                    boxShadow: '0 2px 12px rgba(0,0,0,0.04)'
+                    bgcolor: theme.palette.background.paper,
+                    border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
+                    boxShadow:
+                      theme.palette.mode === 'dark' ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.04)'
                   }}
                 >
                   <Box
@@ -731,7 +750,7 @@ const AdminViewQuiz = ({ quizId }) => {
                       borderColor: 'secondary.main'
                     }}
                   >
-                    <Stack direction="row" alignItems="center" spacing={1.5}>
+                    <Stack direction='row' alignItems='center' spacing={1.5}>
                       <Box
                         sx={{
                           width: 4,
@@ -740,12 +759,12 @@ const AdminViewQuiz = ({ quizId }) => {
                           borderRadius: 1
                         }}
                       />
-                      <Typography variant="h6" fontWeight={700}>
+                      <Typography variant='h6' fontWeight={700}>
                         Secondary Language Questions
                       </Typography>
                       <Chip
                         label={`${secondaryQuestions.length} Questions`}
-                        size="small"
+                        size='small'
                         sx={{
                           bgcolor: alpha(theme.palette.secondary.main, 0.1),
                           color: 'secondary.main',
@@ -771,7 +790,10 @@ const AdminViewQuiz = ({ quizId }) => {
                               borderRadius: 2,
                               border: '1px solid',
                               borderColor: 'divider',
-                              boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+                              boxShadow:
+                                theme.palette.mode === 'dark'
+                                  ? '0 2px 8px rgba(0,0,0,0.3)'
+                                  : '0 2px 8px rgba(0,0,0,0.06)'
                             }}
                           >
                             <Box
@@ -782,8 +804,8 @@ const AdminViewQuiz = ({ quizId }) => {
                                 borderColor: 'divider'
                               }}
                             >
-                              <Stack direction="row" justifyContent="space-between" alignItems="center">
-                                <Typography variant="subtitle2" fontWeight={600}>
+                              <Stack direction='row' justifyContent='space-between' alignItems='center'>
+                                <Typography variant='subtitle2' fontWeight={600}>
                                   Question {index + 1}
                                 </Typography>
                                 <Chip
@@ -822,17 +844,17 @@ const AdminViewQuiz = ({ quizId }) => {
                         sx={{
                           p: 6,
                           textAlign: 'center',
-                          bgcolor: alpha(theme.palette.grey[100], 0.5),
+                          bgcolor: alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.05 : 0.1),
                           borderRadius: 2,
                           border: '1px dashed',
                           borderColor: 'divider'
                         }}
                       >
                         <QuestionMarkIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2, opacity: 0.5 }} />
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography variant='body2' color='text.secondary'>
                           No secondary questions available
                         </Typography>
-                        <Typography variant="caption" color="text.secondary">
+                        <Typography variant='caption' color='text.secondary'>
                           Select a primary question to view its translations
                         </Typography>
                       </Box>
@@ -847,9 +869,9 @@ const AdminViewQuiz = ({ quizId }) => {
           <Card
             sx={{
               borderRadius: 2,
-              bgcolor: 'white',
-              border: '1px solid #e8eaed',
-              boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+              bgcolor: theme.palette.background.paper,
+              border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
+              boxShadow: theme.palette.mode === 'dark' ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.04)',
               overflow: 'hidden'
             }}
           >
@@ -861,7 +883,7 @@ const AdminViewQuiz = ({ quizId }) => {
                 borderColor: 'divider'
               }}
             >
-              <Typography variant="h6" fontWeight={700}>
+              <Typography variant='h6' fontWeight={700}>
                 Quiz Actions
               </Typography>
             </Box>

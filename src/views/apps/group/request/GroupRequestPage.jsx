@@ -117,8 +117,8 @@ const GroupRequestPage = () => {
       <Box
         sx={{
           backdropFilter: 'blur(20px)',
-          bgcolor: alpha('#fff', 0.7),
-          borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
+          bgcolor: alpha(theme.palette.background.paper, 0.8),
+          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
           pt: { xs: 4, md: 6 },
           pb: { xs: 4, md: 6 }
         }}

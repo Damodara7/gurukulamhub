@@ -60,10 +60,10 @@ const QuizDetails = ({ quiz }) => {
   return (
     <Box
       sx={{
-        bgcolor: 'white',
+        bgcolor: theme.palette.background.paper,
         borderRadius: 2,
-        border: '1px solid #e8eaed',
-        boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+        border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
+        boxShadow: theme.palette.mode === 'dark' ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.04)',
         overflow: 'hidden'
       }}
     >
@@ -79,7 +79,7 @@ const QuizDetails = ({ quiz }) => {
           borderColor: 'primary.main'
         }}
       >
-        <Stack direction="row" alignItems="center" spacing={1.5}>
+        <Stack direction='row' alignItems='center' spacing={1.5}>
           <Box
             sx={{
               width: 40,
@@ -94,14 +94,14 @@ const QuizDetails = ({ quiz }) => {
           >
             <QuizIcon sx={{ fontSize: 22 }} />
           </Box>
-          <Typography variant="h6" fontWeight={700} sx={{ color: 'text.primary' }}>
+          <Typography variant='h6' fontWeight={700} sx={{ color: 'text.primary' }}>
             Quiz Information
           </Typography>
         </Stack>
-        
+
         <IconButton
           onClick={() => setIsExpanded(!isExpanded)}
-          size="small"
+          size='small'
           sx={{
             gap: 0.5,
             px: 1.5,
@@ -116,7 +116,7 @@ const QuizDetails = ({ quiz }) => {
             }
           }}
         >
-          <Typography variant="caption" fontWeight={600} sx={{ textTransform: 'none', fontSize: '0.75rem' }}>
+          <Typography variant='caption' fontWeight={600} sx={{ textTransform: 'none', fontSize: '0.75rem' }}>
             {isExpanded ? 'Hide' : 'Show'}
           </Typography>
           {isExpanded ? <ExpandLessIcon sx={{ fontSize: 18 }} /> : <ExpandMoreIcon sx={{ fontSize: 18 }} />}
@@ -136,7 +136,8 @@ const QuizDetails = ({ quiz }) => {
                     gap: 1.5,
                     p: 1.5,
                     borderRadius: 1.5,
-                    border: '1px solid #e8eaed',
+                    border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
+                    bgcolor: theme.palette.background.paper,
                     transition: 'all 0.2s ease',
                     '&:hover': {
                       borderColor: alpha(item.iconBg, 0.4),
@@ -164,7 +165,7 @@ const QuizDetails = ({ quiz }) => {
                   {/* Content */}
                   <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Typography
-                      variant="caption"
+                      variant='caption'
                       sx={{
                         color: 'text.secondary',
                         fontSize: '0.7rem',
@@ -176,9 +177,9 @@ const QuizDetails = ({ quiz }) => {
                       {item.label}
                     </Typography>
                     <Typography
-                      variant="body2"
+                      variant='body2'
                       sx={{
-                        color: '#202124',
+                        color: theme.palette.text.primary,
                         fontSize: '0.875rem',
                         fontWeight: 500,
                         overflow: 'hidden',

@@ -85,13 +85,9 @@ const QuizDocuments = ({ documents = [], setTheFormValue, loading }) => {
   return (
     <Box
       sx={{
-        border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
-        borderRadius: '5px',
         width: '100%',
         height: '100%',
-        p: 2,
-        opacity: loading ? 0.7 : 1,
-        backgroundColor: theme.palette.background.paper
+        opacity: loading ? 0.7 : 1
       }}
     >
       <Box display='flex' justifyContent='space-between' alignItems='center' mb={2}>

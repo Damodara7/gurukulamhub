@@ -16,7 +16,9 @@ import {
   Select,
   InputLabel,
   Grid,
-  Box
+  Box,
+  useTheme,
+  alpha
 } from '@mui/material'
 import useUser from '@/utils/useUser' // Replace with your hook path
 import * as RestApi from '@/utils/restApiUtil'
@@ -24,6 +26,7 @@ import { API_URLS as ApiUrls } from '@/configs/apiConfig'
 import { toast } from 'react-toastify'
 
 const ContextTreeSearch = ({ setTheFormValue, data = {}, contextType = 'GENERIC' }) => {
+  const theme = useTheme()
   console.log({ contextIds: data?.contextIds })
 
   const initialSelectedNodes = contextType === 'GENERIC' ? data?.genericContextIds : data?.academicContextIds || []
@@ -134,19 +137,28 @@ const ContextTreeSearch = ({ setTheFormValue, data = {}, contextType = 'GENERIC'
   const generateNodeProps = ({ node, path }) => ({
     canDrag: false,
     title: (
-      <>
-        <span style={{ fontSize: '1.1rem' }} value={node.title} readOnly width='100%'>
-          <input
-            type='checkbox'
-            className='mr-2'
-            checked={selectedNodes.includes(node.id)}
-            onChange={() => handleNodeChecked(node)}
-          />
-          {node.title}
-        </span>
-      </>
+      <Box
+        component='span'
+        sx={{
+          fontSize: '1.1rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+          color: theme.palette.text.primary
+        }}
+      >
+        <input
+          type='checkbox'
+          style={{
+            cursor: 'pointer',
+            accentColor: theme.palette.primary.main
+          }}
+          checked={selectedNodes.includes(node.id)}
+          onChange={() => handleNodeChecked(node)}
+        />
+        {node.title}
+      </Box>
     ),
-
 
     onClick: () => {
       //handleNodeClick(node);
@@ -316,53 +328,125 @@ const ContextTreeSearch = ({ setTheFormValue, data = {}, contextType = 'GENERIC'
   console.log('Selected nodes', selectedNodes)
   console.log('initialSelectedNodes', initialSelectedNodes)
 
-  if (loading) return <>Fetching Subjects Please Wait...</>
+  if (loading)
+    return <Typography sx={{ p: 2, color: theme.palette.text.secondary }}>Fetching Subjects Please Wait...</Typography>
 
   return (
-    <div className='w-full'>
-      <h2 className='uppercase'> Context</h2>
+    <Box sx={{ width: '100%' }}>
+      <Typography
+        variant='h6'
+        sx={{ textTransform: 'uppercase', mb: 2, color: theme.palette.text.primary, fontWeight: 700 }}
+      >
+        Context
+      </Typography>
       <form
         onSubmit={event => {
           event.preventDefault()
         }}
       >
-        <Input
+        <TextField
           fullWidth
           id='find-box'
           type='text'
           placeholder='Search...'
-          style={{ fontSize: '1rem' }}
+          size='small'
           value={searchString}
           onChange={event => setSearchString(event.target.value)}
+          sx={{
+            mb: 1.5,
+            '& .MuiInputBase-root': {
+              bgcolor: theme.palette.background.default,
+              color: theme.palette.text.primary
+            }
+          }}
         />
 
-        <div className='flex gap-2 items-center justify-end'>
-          <button type='button' disabled={!searchFoundCount} onClick={selectPrevMatch}>
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', justifyContent: 'flex-end', mb: 2 }}>
+          <Button
+            type='button'
+            disabled={!searchFoundCount}
+            onClick={selectPrevMatch}
+            size='small'
+            variant='outlined'
+            sx={{ minWidth: 36, px: 1 }}
+          >
             &lt;
-          </button>
+          </Button>
 
-          <span>
-            &nbsp;
-            {searchFoundCount > 0 ? searchFocusIndex + 1 : 0}
-            &nbsp;/&nbsp;
-            {searchFoundCount || 0}
-          </span>
+          <Typography variant='body2' sx={{ color: theme.palette.text.primary }}>
+            {searchFoundCount > 0 ? searchFocusIndex + 1 : 0} / {searchFoundCount || 0}
+          </Typography>
 
-          <button type='submit' disabled={!searchFoundCount} onClick={selectNextMatch}>
+          <Button
+            type='submit'
+            disabled={!searchFoundCount}
+            onClick={selectNextMatch}
+            size='small'
+            variant='outlined'
+            sx={{ minWidth: 36, px: 1 }}
+          >
             &gt;
-          </button>
-        </div>
+          </Button>
+        </Box>
       </form>
 
-      <div className='breadcrumbs'>
+      <Box
+        sx={{
+          mb: 2,
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 0.5,
+          color: theme.palette.text.secondary
+        }}
+      >
         {breadcrumbs.map((crumb, index) => (
-          <span key={index} onClick={() => handleBreadcrumbClick(crumb.id)}>
-            {crumb.title} /
-          </span>
+          <Typography
+            key={index}
+            onClick={() => handleBreadcrumbClick(crumb.id)}
+            sx={{
+              cursor: 'pointer',
+              color: theme.palette.primary.main,
+              '&:hover': {
+                textDecoration: 'underline'
+              }
+            }}
+          >
+            {crumb.title} {index < breadcrumbs.length - 1 ? '/' : ''}
+          </Typography>
         ))}
-      </div>
+      </Box>
 
-      <div style={{ height: 300, width: '100%' }}>
+      <Box
+        sx={{
+          height: 300,
+          width: '100%',
+          bgcolor: theme.palette.background.default,
+          borderRadius: 1,
+          border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
+          p: 1,
+          '& .rst__tree': {
+            bgcolor: 'transparent !important'
+          },
+          '& .rst__node': {
+            bgcolor: `${theme.palette.background.paper} !important`
+          },
+          '& .rst__nodeContent': {
+            bgcolor: `${theme.palette.background.paper} !important`,
+            color: `${theme.palette.text.primary} !important`,
+            border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.2 : 0.15)} !important`
+          },
+          '& .rst__rowContents': {
+            bgcolor: `${theme.palette.background.paper} !important`,
+            color: `${theme.palette.text.primary} !important`,
+            borderRadius: '4px !important',
+            minWidth: '50px !important'
+          },
+          '& .rst__lineHalfHorizontalRight::before, & .rst__lineFullVertical::after, & .rst__lineHalfVerticalTop::after, & .rst__lineHalfVerticalBottom::after':
+            {
+              bgcolor: `${alpha(theme.palette.divider, 0.3)} !important`
+            }
+        }}
+      >
         <SortableTree
           //nodeRenderer={CustomNodeRenderer}
           style={{
@@ -399,8 +483,8 @@ const ContextTreeSearch = ({ setTheFormValue, data = {}, contextType = 'GENERIC'
             setSearchFocusIndex(matches.length > 0 ? searchFocusIndex % matches.length : 0)
           }}
         />
-      </div>
-    </div>
+      </Box>
+    </Box>
   )
 }
 

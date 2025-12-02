@@ -31,7 +31,7 @@ import {
 } from '@mui/icons-material'
 import ReactPlayer from 'react-player'
 import { format, formatDistanceToNow } from 'date-fns'
-import ShareGamePopup from '@components/public-games/all-games/ShareGamePopup';
+import ShareGamePopup from '@components/public-games/all-games/ShareGamePopup'
 const blink = keyframes`
   0% { opacity: 1; }
   50% { opacity: 0.5; }
@@ -164,7 +164,12 @@ const GamePlayInfoScreen = ({ game, setShouldStartGame }) => {
                 {game.title}
               </Typography>
             </Stack>
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'flex-start', sm: 'center' }} flexWrap='wrap'>
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={2}
+              alignItems={{ xs: 'flex-start', sm: 'center' }}
+              flexWrap='wrap'
+            >
               {getStatusChip()}
               <Chip
                 icon={<EmojiEvents sx={{ fontSize: 18 }} />}
@@ -183,7 +188,7 @@ const GamePlayInfoScreen = ({ game, setShouldStartGame }) => {
                   <Tooltip title={copyTooltip} placement='top' arrow>
                     <IconButton
                       size='small'
-                      onClick={(e) => {
+                      onClick={e => {
                         e.stopPropagation()
                         handleCopyPin()
                       }}
@@ -287,7 +292,10 @@ const GamePlayInfoScreen = ({ game, setShouldStartGame }) => {
               sx={{
                 px: { xs: 2, md: 2.5 },
                 py: { xs: 0.75, md: 1 },
-                bgcolor: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.15) : alpha(theme.palette.common.white, 0.9),
+                bgcolor:
+                  theme.palette.mode === 'dark'
+                    ? alpha(theme.palette.common.white, 0.15)
+                    : alpha(theme.palette.common.white, 0.9),
                 borderRadius: 2,
                 width: { xs: '120px', sm: '160px' },
                 minWidth: { xs: '120px', sm: '160px' },
@@ -316,7 +324,6 @@ const GamePlayInfoScreen = ({ game, setShouldStartGame }) => {
       </Container>
 
       <Container maxWidth='lg'>
-
         <Grid container spacing={4}>
           {/* Left Column - Game Media */}
           <Grid item xs={12} md={8} sx={{ order: { xs: 2, md: 1 } }}>
@@ -330,24 +337,66 @@ const GamePlayInfoScreen = ({ game, setShouldStartGame }) => {
               }}
             >
               {game.promotionalVideoUrl ? (
-                <Box sx={{ position: 'relative', pt: '56.25%', bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.100' }}>
-                  <ReactPlayer
-                    url={game.promotionalVideoUrl}
-                    width='100%'
-                    height='100%'
-                    style={{ position: 'absolute', top: 0, left: 0 }}
-                    controls
-                    onReady={() => setIsVideoReady(true)}
-                    playing={false}
-                  />
+                <Box
+                  sx={{
+                    position: 'relative',
+                    width: '100%',
+                    pt: '56.25%', // 16:9 aspect ratio
+                    bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.100',
+                    overflow: 'hidden',
+                    borderRadius: 1
+                  }}
+                >
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%'
+                    }}
+                  >
+                    <ReactPlayer
+                      url={game.promotionalVideoUrl}
+                      width='100%'
+                      height='100%'
+                      controls
+                      onReady={() => setIsVideoReady(true)}
+                      playing={false}
+                      config={{
+                        youtube: {
+                          playerVars: {
+                            modestbranding: 1,
+                            rel: 0,
+                            showinfo: 0
+                          }
+                        },
+                        file: {
+                          attributes: {
+                            controlsList: 'nodownload'
+                          }
+                        }
+                      }}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0
+                      }}
+                    />
+                  </Box>
                 </Box>
               ) : (
                 <CardMedia
                   component='img'
-                  height='400'
                   image={game.thumbnailPoster}
                   alt={game.title}
-                  sx={{ objectFit: 'cover' }}
+                  sx={{
+                    width: '100%',
+                    height: { xs: 'auto', md: 400 },
+                    maxHeight: { xs: '300px', md: '400px' },
+                    objectFit: 'cover',
+                    display: 'block'
+                  }}
                 />
               )}
             </Card>
@@ -384,8 +433,15 @@ const GamePlayInfoScreen = ({ game, setShouldStartGame }) => {
                       'All players must be ready when the game begins.',
                       'Questions will appear one after another with limited time to answer.',
                       'Answer quickly and accurately to score maximum points.',
-                      <Box key='pin' component='li' sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-                        <Typography variant='body2' sx={{ fontSize: '0.9rem', lineHeight: 1.7, color: 'text.primary', flex: 1, minWidth: 200 }}>
+                      <Box
+                        key='pin'
+                        component='li'
+                        sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}
+                      >
+                        <Typography
+                          variant='body2'
+                          sx={{ fontSize: '0.9rem', lineHeight: 1.7, color: 'text.primary', flex: 1, minWidth: 200 }}
+                        >
                           The game PIN is <strong>{game.pin}</strong> - share it with friends to join.
                         </Typography>
                         <Tooltip placement='top' title={copyTooltip} arrow>
@@ -504,7 +560,14 @@ const GamePlayInfoScreen = ({ game, setShouldStartGame }) => {
                         </IconButton>
                       </Tooltip>
                     </Box>
-                    <Stack direction='row' justifyContent='space-between' alignItems='center' spacing={1} flexWrap='wrap' gap={1}>
+                    <Stack
+                      direction='row'
+                      justifyContent='space-between'
+                      alignItems='center'
+                      spacing={1}
+                      flexWrap='wrap'
+                      gap={1}
+                    >
                       {getStatusChip()}
                     </Stack>
                   </Box>
@@ -520,7 +583,18 @@ const GamePlayInfoScreen = ({ game, setShouldStartGame }) => {
                       border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`
                     }}
                   >
-                    <Typography variant='caption' sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, fontSize: '0.7rem', mb: 1, display: 'block' }}>
+                    <Typography
+                      variant='caption'
+                      sx={{
+                        color: 'text.secondary',
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        letterSpacing: 0.5,
+                        fontSize: '0.7rem',
+                        mb: 1,
+                        display: 'block'
+                      }}
+                    >
                       Game Duration
                     </Typography>
                     <Stack direction='row' alignItems='center' spacing={1.5}>
@@ -545,7 +619,18 @@ const GamePlayInfoScreen = ({ game, setShouldStartGame }) => {
                       border: `1px solid ${alpha(theme.palette.secondary.main, 0.2)}`
                     }}
                   >
-                    <Typography variant='caption' sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, fontSize: '0.7rem', mb: 1, display: 'block' }}>
+                    <Typography
+                      variant='caption'
+                      sx={{
+                        color: 'text.secondary',
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        letterSpacing: 0.5,
+                        fontSize: '0.7rem',
+                        mb: 1,
+                        display: 'block'
+                      }}
+                    >
                       Players
                     </Typography>
                     <Stack direction='row' alignItems='center' spacing={1.5}>
@@ -571,14 +656,26 @@ const GamePlayInfoScreen = ({ game, setShouldStartGame }) => {
                         border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`
                       }}
                     >
-                      <Typography variant='caption' sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, fontSize: '0.7rem', mb: 1, display: 'block' }}>
+                      <Typography
+                        variant='caption'
+                        sx={{
+                          color: 'text.secondary',
+                          fontWeight: 600,
+                          textTransform: 'uppercase',
+                          letterSpacing: 0.5,
+                          fontSize: '0.7rem',
+                          mb: 1,
+                          display: 'block'
+                        }}
+                      >
                         Location
                       </Typography>
                       <Stack direction='row' alignItems='center' spacing={1.5}>
                         <LocationOn sx={{ color: 'info.main', fontSize: 20 }} />
                         <Typography variant='body1' sx={{ fontWeight: 500, color: 'text.primary' }}>
-                          {[game.location.city, game.location.region, game.location.country].filter(Boolean).join(', ') ||
-                            'Not Specified'}
+                          {[game.location.city, game.location.region, game.location.country]
+                            .filter(Boolean)
+                            .join(', ') || 'Not Specified'}
                         </Typography>
                       </Stack>
                     </Box>
@@ -593,7 +690,18 @@ const GamePlayInfoScreen = ({ game, setShouldStartGame }) => {
                       border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`
                     }}
                   >
-                    <Typography variant='caption' sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, fontSize: '0.7rem', mb: 1, display: 'block' }}>
+                    <Typography
+                      variant='caption'
+                      sx={{
+                        color: 'text.secondary',
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        letterSpacing: 0.5,
+                        fontSize: '0.7rem',
+                        mb: 1,
+                        display: 'block'
+                      }}
+                    >
                       Created By
                     </Typography>
                     <Stack direction='row' alignItems='center' spacing={1.5}>

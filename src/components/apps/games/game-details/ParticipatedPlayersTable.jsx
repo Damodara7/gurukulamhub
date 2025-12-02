@@ -14,13 +14,15 @@ import {
   Avatar,
   Chip,
   Paper,
-  useTheme
+  useTheme,
+  useMediaQuery
 } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { People, CheckCircle, Cancel } from '@mui/icons-material'
 
 function ParticipatedPlayersTable({ participatedUsers, game }) {
   const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
   return (
     <Grid item xs={12} lg={6}>
       <Card
@@ -50,11 +52,34 @@ function ParticipatedPlayersTable({ participatedUsers, game }) {
             <CheckCircle sx={{ fontSize: { xs: 20, sm: 24 }, color: theme.palette.success.main }} />
             Participated Players ({participatedUsers.length})
           </Typography>
-          <TableContainer component={Paper} sx={{ maxHeight: { xs: 250, sm: 300 }, overflow: 'auto' }}>
+          <TableContainer
+            component={Paper}
+            sx={{
+              maxHeight: { xs: 250, sm: 300 },
+              overflow: 'auto',
+              '&::-webkit-scrollbar': {
+                width: '8px',
+                height: '8px'
+              },
+              '&::-webkit-scrollbar-track': {
+                bgcolor: alpha(theme.palette.divider, 0.1),
+                borderRadius: '10px'
+              },
+              '&::-webkit-scrollbar-thumb': {
+                bgcolor: alpha(theme.palette.primary.main, 0.3),
+                borderRadius: '10px',
+                '&:hover': {
+                  bgcolor: alpha(theme.palette.primary.main, 0.5)
+                }
+              }
+            }}
+          >
             <Table stickyHeader size='small'>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, py: { xs: 1, sm: 1.5 } }}>
+                  <TableCell
+                    sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, py: { xs: 1, sm: 1.5 }, fontWeight: 600 }}
+                  >
                     Player
                   </TableCell>
                   <TableCell
@@ -62,12 +87,16 @@ function ParticipatedPlayersTable({ participatedUsers, game }) {
                     sx={{
                       fontSize: { xs: '0.75rem', sm: '0.875rem' },
                       py: { xs: 1, sm: 1.5 },
+                      fontWeight: 600,
                       display: { xs: 'none', md: 'table-cell' }
                     }}
                   >
                     Joined At
                   </TableCell>
-                  <TableCell align='right' sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, py: { xs: 1, sm: 1.5 } }}>
+                  <TableCell
+                    align='right'
+                    sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, py: { xs: 1, sm: 1.5 }, fontWeight: 600 }}
+                  >
                     Status
                   </TableCell>
                 </TableRow>
@@ -80,9 +109,19 @@ function ParticipatedPlayersTable({ participatedUsers, game }) {
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 } }}>
                           <Avatar
                             sx={{
-                              width: { xs: 28, sm: 32 },
-                              height: { xs: 28, sm: 32 },
-                              fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                              width: { xs: 32, sm: 32 },
+                              height: { xs: 32, sm: 32 },
+                              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                              bgcolor:
+                                theme.palette.mode === 'dark'
+                                  ? alpha(theme.palette.primary.main, 0.3)
+                                  : alpha(theme.palette.primary.main, 0.1),
+                              color:
+                                theme.palette.mode === 'dark'
+                                  ? theme.palette.primary.light
+                                  : theme.palette.primary.main,
+                              fontWeight: 600,
+                              border: `2px solid ${alpha(theme.palette.primary.main, 0.2)}`
                             }}
                             alt={user.email}
                           >
@@ -95,7 +134,7 @@ function ParticipatedPlayersTable({ participatedUsers, game }) {
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
                               whiteSpace: 'nowrap',
-                              maxWidth: { xs: '150px', sm: 'none' }
+                              maxWidth: { xs: '120px', sm: 'none' }
                             }}
                             title={user.email}
                           >
@@ -121,9 +160,11 @@ function ParticipatedPlayersTable({ participatedUsers, game }) {
                               size='small'
                               variant='outlined'
                             />
-                            <Typography variant='caption' color='text.secondary'>
-                              {new Date(user.finishedAt).toLocaleString()}
-                            </Typography>
+                            {!isMobile && (
+                              <Typography variant='caption' color='text.secondary' sx={{ mt: 0.5 }}>
+                                {new Date(user.finishedAt).toLocaleString()}
+                              </Typography>
+                            )}
                           </Box>
                         ) : (
                           <Chip

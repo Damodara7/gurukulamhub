@@ -17,7 +17,8 @@ import {
   InputLabel,
   MenuItem,
   Select,
-  useTheme
+  useTheme,
+  Tooltip
 } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import {
@@ -162,15 +163,40 @@ const CreateQuizForm = ({
             onBlur={() => onFieldInteraction('contextIds', true)}
           />
           {/* Generic Context Popup */}
-          <Dialog fullWidth maxWidth='sm' open={isGenericPopupOpen} onClose={() => handleClosePopup()}>
-            <IconButtonTooltip
-              title='Close'
-              onClick={() => handleClosePopup()}
-              className='absolute block-start-4 inline-end-4'
-            >
-              <i className='ri-close-line text-textSecondary' />
-            </IconButtonTooltip>
-            <DialogContent>
+          <Dialog
+            fullWidth
+            maxWidth='sm'
+            open={isGenericPopupOpen}
+            onClose={() => handleClosePopup()}
+            PaperProps={{
+              sx: {
+                bgcolor: theme.palette.background.paper,
+                backgroundImage: 'none'
+              }
+            }}
+          >
+            <Box sx={{ position: 'relative' }}>
+              <Tooltip title='Close' arrow placement='bottom'>
+                <IconButton
+                  onClick={() => handleClosePopup()}
+                  sx={{
+                    position: 'absolute',
+                    right: 8,
+                    top: 8,
+                    zIndex: 1,
+                    color: theme.palette.text.secondary,
+                    bgcolor: 'transparent',
+                    '&:hover': {
+                      bgcolor: 'transparent',
+                      color: theme.palette.text.primary
+                    }
+                  }}
+                >
+                  <CloseIcon />
+                </IconButton>
+              </Tooltip>
+            </Box>
+            <DialogContent sx={{ bgcolor: theme.palette.background.paper, pt: 6 }}>
               <ContextTreeSearch
                 disabled={loading}
                 setTheFormValue={(field, value) => {
@@ -483,7 +509,14 @@ const CreateQuizForm = ({
                   <Typography gutterBottom variant='subtitle2'>
                     Upload Related Documents and Course Links
                   </Typography>
-                  <Box sx={{ flexGrow: 1 }}>
+                  <Box
+                    sx={{
+                      flexGrow: 1,
+                      border: `1px solid ${theme.palette.divider}`,
+                      borderRadius: 1.5,
+                      p: 2
+                    }}
+                  >
                     <QuizDocuments
                       documents={formData?.documents}
                       setTheFormValue={setTheFormValue}
@@ -491,7 +524,15 @@ const CreateQuizForm = ({
                     />
                   </Box>
 
-                  <Box sx={{ flexGrow: 1, mt: 2 }}>
+                  <Box
+                    sx={{
+                      flexGrow: 1,
+                      mt: 2,
+                      border: `1px solid ${theme.palette.divider}`,
+                      borderRadius: 1.5,
+                      p: 2
+                    }}
+                  >
                     <QuizCourseLinks
                       courseLinks={formData?.courseLinks}
                       setTheFormValue={setTheFormValue}
