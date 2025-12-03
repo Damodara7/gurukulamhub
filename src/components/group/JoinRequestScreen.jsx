@@ -285,8 +285,15 @@ const JoinRequestScreen = ({ group, removebutton }) => {
         sx={{
           height: { xs: 24, sm: 28 },
           fontSize: { xs: '0.7rem', sm: '0.75rem' },
+          px: { xs: 0.75, sm: 1 },
           '& .MuiChip-icon': {
-            fontSize: { xs: '0.875rem', sm: '1rem' }
+            fontSize: { xs: '0.85rem', sm: '1rem' },
+            marginLeft: { xs: '6px', sm: '8px' },
+            marginRight: { xs: '2px', sm: '4px' }
+          },
+          '& .MuiChip-label': {
+            px: { xs: 0.75, sm: 1.25 },
+            py: { xs: 0.25, sm: 0.5 }
           }
         }}
       />
@@ -326,10 +333,11 @@ const JoinRequestScreen = ({ group, removebutton }) => {
   return (
     <Box
       sx={{
-        maxHeight: { xs: '100vh', sm: '100vh' },
+        height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        bgcolor: theme.palette.mode === 'dark' ? theme.palette.background.default : '#f0f2f5'
+        bgcolor: theme.palette.mode === 'dark' ? theme.palette.background.default : '#f0f2f5',
+        overflow: 'hidden'
       }}
     >
       {/* Header */}
@@ -523,9 +531,26 @@ const JoinRequestScreen = ({ group, removebutton }) => {
         ) : (
           <Box
             sx={{
-              height: { xs: 'auto', sm: '100%' },
-              overflow: 'auto',
-              maxHeight: { xs: 'calc(100vh - 200px)', sm: 'none' }
+              maxHeight: {
+                xs: removebutton ? 'calc(100vh - 180px)' : 'calc(100vh - 260px)',
+                sm: removebutton ? 'calc(100vh - 200px)' : 'calc(100vh - 280px)'
+              },
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              '&::-webkit-scrollbar': {
+                width: '8px'
+              },
+              '&::-webkit-scrollbar-track': {
+                background: theme.palette.mode === 'dark' ? alpha(theme.palette.background.default, 0.5) : '#f1f1f1',
+                borderRadius: '4px'
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: theme.palette.mode === 'dark' ? alpha(theme.palette.divider, 0.5) : '#c1c1c1',
+                borderRadius: '4px',
+                '&:hover': {
+                  background: theme.palette.mode === 'dark' ? alpha(theme.palette.divider, 0.7) : '#a8a8a8'
+                }
+              }
             }}
           >
             <List sx={{ p: 0 }}>
@@ -538,12 +563,13 @@ const JoinRequestScreen = ({ group, removebutton }) => {
                       theme.palette.divider,
                       theme.palette.mode === 'dark' ? 0.12 : 0.08
                     )}`,
-                    px: { xs: 1, sm: 2 },
-                    py: { xs: 1.5, sm: 2 },
+                    px: { xs: 1.5, sm: 2 },
+                    py: { xs: 1.25, sm: 2 },
                     display: 'flex',
                     flexDirection: 'row',
-                    alignItems: 'flex-start',
-                    gap: { xs: 1.5, sm: 2 },
+                    alignItems: 'center',
+                    gap: { xs: 0.75, sm: 1.5 },
+                    justifyContent: 'space-between',
                     '&:hover': {
                       bgcolor: theme.palette.mode === 'dark' ? alpha(theme.palette.action.hover, 0.5) : '#f9fafb'
                     }
@@ -553,9 +579,9 @@ const JoinRequestScreen = ({ group, removebutton }) => {
                   <Avatar
                     sx={{
                       background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                      width: { xs: 40, sm: 56 },
-                      height: { xs: 40, sm: 56 },
-                      fontSize: { xs: '0.95rem', sm: '1.3rem' },
+                      width: { xs: 44, sm: 56 },
+                      height: { xs: 44, sm: 56 },
+                      fontSize: { xs: '1rem', sm: '1.3rem' },
                       fontWeight: 600,
                       color: 'white',
                       boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`,
@@ -563,12 +589,14 @@ const JoinRequestScreen = ({ group, removebutton }) => {
                     }}
                   >
                     {request.userDetails?.profile?.firstname && request.userDetails?.profile?.lastname
-                      ? `${request.userDetails.profile.firstname[0]} ${request.userDetails.profile.lastname[0]}`
-                      : request.userDetails?.profile?.firstname[0] || request.userDetails?.profile?.lastname[0] || 'U'}
+                      ? `${request.userDetails.profile.firstname[0]}${request.userDetails.profile.lastname[0]}`
+                      : request.userDetails?.profile?.firstname?.[0] ||
+                        request.userDetails?.profile?.lastname?.[0] ||
+                        'U'}
                   </Avatar>
 
                   {/* Name, Email, and Request Date - Middle Section */}
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Box sx={{ flex: 1, minWidth: 0, mr: { xs: 0.5, sm: 1 } }}>
                     <Tooltip
                       title={
                         request.userDetails?.profile?.firstname && request.userDetails?.profile?.lastname
@@ -589,8 +617,9 @@ const JoinRequestScreen = ({ group, removebutton }) => {
                           whiteSpace: 'nowrap',
                           cursor: 'pointer',
                           transition: 'all 0.2s ease-in-out',
-                          fontSize: { xs: '0.9375rem', sm: '1rem' },
-                          mb: 0.5,
+                          fontSize: { xs: '0.875rem', sm: '1rem' },
+                          mb: { xs: 0.25, sm: 0.5 },
+                          lineHeight: 1.3,
                           '&:hover': {
                             color: 'primary.main'
                           }
@@ -612,8 +641,9 @@ const JoinRequestScreen = ({ group, removebutton }) => {
                           whiteSpace: 'nowrap',
                           cursor: 'pointer',
                           transition: 'all 0.2s ease-in-out',
-                          fontSize: { xs: '0.8125rem', sm: '0.875rem' },
-                          mb: 0.5,
+                          fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                          mb: { xs: 0.25, sm: 0.5 },
+                          lineHeight: 1.3,
                           '&:hover': {
                             color: 'primary.main'
                           }
@@ -626,7 +656,7 @@ const JoinRequestScreen = ({ group, removebutton }) => {
                     <Typography
                       variant='caption'
                       color='text.secondary'
-                      sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, display: 'block' }}
+                      sx={{ fontSize: { xs: '0.65rem', sm: '0.75rem' }, display: 'block', lineHeight: 1.3 }}
                     >
                       Requested on {new Date(request.createdAt).toLocaleDateString()}
                     </Typography>
@@ -641,8 +671,9 @@ const JoinRequestScreen = ({ group, removebutton }) => {
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
-                            mt: 0.5,
-                            fontSize: { xs: '0.7rem', sm: '0.75rem' }
+                            mt: { xs: 0.25, sm: 0.5 },
+                            fontSize: { xs: '0.65rem', sm: '0.75rem' },
+                            lineHeight: 1.3
                           }}
                         >
                           Reason: {request.rejectedReason}
@@ -657,18 +688,19 @@ const JoinRequestScreen = ({ group, removebutton }) => {
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'flex-end',
-                      gap: { xs: 1, sm: 1.5 },
-                      flexShrink: 0
+                      gap: { xs: 0.75, sm: 1 },
+                      flexShrink: 0,
+                      minWidth: { xs: 110, sm: 130 }
                     }}
                   >
                     {/* Status Chip on top right */}
                     <Box>{getStatusChip(request.status)}</Box>
 
-                    {/* View Icon and Action Buttons below */}
+                    {/* View Icon and Action Buttons - Horizontal layout */}
                     <Box
                       sx={{
                         display: 'flex',
-                        flexDirection: 'column',
+                        flexDirection: 'row',
                         alignItems: 'center',
                         gap: { xs: 0.5, sm: 0.75 }
                       }}
@@ -679,11 +711,12 @@ const JoinRequestScreen = ({ group, removebutton }) => {
                           onClick={() => openUserDetails(request.userDetails)}
                           sx={{
                             color: theme.palette.mode === 'dark' ? theme.palette.text.secondary : '#6b7280',
-                            width: { xs: 36, sm: 40 },
-                            height: { xs: 36, sm: 40 }
+                            width: { xs: 32, sm: 36 },
+                            height: { xs: 32, sm: 36 },
+                            padding: { xs: 0.5, sm: 1 }
                           }}
                         >
-                          <VisibilityIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />
+                          <VisibilityIcon sx={{ fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
                         </IconButton>
                       </Tooltip>
 
@@ -696,14 +729,15 @@ const JoinRequestScreen = ({ group, removebutton }) => {
                               disabled={processing[request._id]}
                               sx={{
                                 color: theme.palette.success.main,
-                                width: { xs: 36, sm: 40 },
-                                height: { xs: 36, sm: 40 }
+                                width: { xs: 32, sm: 36 },
+                                height: { xs: 32, sm: 36 },
+                                padding: { xs: 0.5, sm: 1 }
                               }}
                             >
                               {processing[request._id] ? (
                                 <CircularProgress size={{ xs: 14, sm: 16 }} />
                               ) : (
-                                <CheckCircleIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />
+                                <CheckCircleIcon sx={{ fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
                               )}
                             </IconButton>
                           </Tooltip>
@@ -714,11 +748,12 @@ const JoinRequestScreen = ({ group, removebutton }) => {
                               disabled={processing[request._id]}
                               sx={{
                                 color: theme.palette.error.main,
-                                width: { xs: 36, sm: 40 },
-                                height: { xs: 36, sm: 40 }
+                                width: { xs: 32, sm: 36 },
+                                height: { xs: 32, sm: 36 },
+                                padding: { xs: 0.5, sm: 1 }
                               }}
                             >
-                              <CancelIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />
+                              <CancelIcon sx={{ fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
                             </IconButton>
                           </Tooltip>
                         </>
@@ -736,8 +771,8 @@ const JoinRequestScreen = ({ group, removebutton }) => {
       {!removebutton && (
         <Box
           sx={{
-            p: { xs: 2, sm: 3 },
-            bgcolor: theme.palette.background.paper,
+            p: { xs: 2, sm: 2.5 },
+            bgcolor: 'transparent',
             borderTop: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`
           }}
         >
