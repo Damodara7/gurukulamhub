@@ -6,7 +6,7 @@ import Game from '../game/game.model.js'
 import { broadcastAudiencesList } from '../ws/audiences/publishers.js'
 import { broadcastAudienceDetails } from '../ws/audiences/[audienceId]/publishers.js'
 
-const SUPPORTED_OPERATORS = new Set(['AND', 'OR'])
+const SUPPORTED_OPERATORS = new Set(['AND', 'OR', 'NOT'])
 
 const normalizeOperator = (operator, index) => {
   if (index === 0) {

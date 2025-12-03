@@ -13,7 +13,7 @@ const filterSchema = new mongoose.Schema(
     },
     operator: {
       type: String,
-      enum: ['AND', 'OR'],
+      enum: ['AND', 'OR', 'NOT'],
       required: false
     }
   },
