@@ -96,75 +96,66 @@ export const addOne = async groupData => {
       }
     }
 
-    // Validate age group if provided
-    if (groupData.ageGroup) {
-      const { min, max } = groupData.ageGroup
-      if (min === undefined || max === undefined) {
-        return {
-          status: 'error',
-          result: null,
-          message: 'Both minimum and maximum age are required when specifying age group'
+    // Validate filters if provided
+    if (groupData.filters && Array.isArray(groupData.filters)) {
+      for (const filter of groupData.filters) {
+        // Validate required fields
+        if (!filter.type || !filter.criteria) {
+          return {
+            status: 'error',
+            result: null,
+            message: 'Each filter must have a type and criteria'
+          }
+        }
+
+        // Validate operator if provided
+        if (filter.operator && !['AND', 'OR', 'NOT'].includes(filter.operator)) {
+          return {
+            status: 'error',
+            result: null,
+            message: 'Filter operator must be AND, OR, or NOT'
+          }
+        }
+
+        // Validate specific filter types
+        if (filter.type === 'age') {
+          const { min, max } = filter.criteria
+          if (min === undefined || max === undefined) {
+            return {
+              status: 'error',
+              result: null,
+              message: 'Age filter must have min and max values'
+            }
+          }
+          if (min < 0 || max < 0 || min > 120 || max > 120) {
+            return {
+              status: 'error',
+              result: null,
+              message: 'Age values must be between 0 and 120'
+            }
+          }
+          if (min >= max) {
+            return {
+              status: 'error',
+              result: null,
+              message: 'Minimum age must be less than maximum age'
+            }
+          }
+        }
+
+        if (filter.type === 'gender') {
+          const allowedGenders = ['male', 'female', 'other']
+          const genders = Array.isArray(filter.criteria) ? filter.criteria : [filter.criteria]
+          const invalidGenders = genders.filter(g => !allowedGenders.includes(g))
+          if (invalidGenders.length > 0) {
+            return {
+              status: 'error',
+              result: null,
+              message: 'Gender must be one of: male, female, other'
+            }
+          }
         }
       }
-
-      if (min < 0 || max < 0) {
-        return {
-          status: 'error',
-          result: null,
-          message: 'Age values cannot be negative'
-        }
-      }
-
-      if (min > 120 || max > 120) {
-        return {
-          status: 'error',
-          result: null,
-          message: 'Age values cannot exceed 120 years'
-        }
-      }
-
-      if (min >= max) {
-        return {
-          status: 'error',
-          result: null,
-          message: 'Minimum age must be less than maximum age'
-        }
-      }
-
-      if (max - min < 1) {
-        return {
-          status: 'error',
-          result: null,
-          message: 'Age range must be at least 1 year'
-        }
-      }
-    }
-
-    // Validate gender if provided (supports single or multiple selections)
-    if (groupData.gender) {
-      const allowedGenders = ['male', 'female', 'other']
-      let gendersArray
-      if (Array.isArray(groupData.gender)) {
-        gendersArray = groupData.gender
-      } else if (typeof groupData.gender === 'object' && groupData.gender !== null) {
-        gendersArray = Object.entries(groupData.gender)
-          .filter(([, isOn]) => Boolean(isOn))
-          .map(([key]) => key)
-      } else {
-        gendersArray = [groupData.gender]
-      }
-
-      const invalidGenders = gendersArray.filter(gender => !allowedGenders.includes(gender))
-      if (invalidGenders.length > 0) {
-        return {
-          status: 'error',
-          result: null,
-          message: 'Gender must be one or more of: male, female, other'
-        }
-      }
-
-      // Normalize to array for the model schema which expects [String]
-      groupData.gender = gendersArray
     }
 
     // Create new group instance

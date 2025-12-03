@@ -18,9 +18,7 @@ function CreateGroupPage() {
       const payload = {
         groupName: values.groupName,
         description: values.description,
-        location: values.location,
-        gender: values.gender,
-        ageGroup: values.ageGroup,
+        filters: values.filters || [], // Send filters array
         status: values.status,
         createdBy: session?.user?.id, // Use the found user ID
         creatorEmail: session?.user?.email,

@@ -77,12 +77,8 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
   const [selectedUsers, setSelectedUsers] = useState([])
   const [matchedUserIds, setMatchedUserIds] = useState([])
   const [unmatchedUserIds, setUnmatchedUserIds] = useState([])
-  // Add this state to track the filter criteria
-  const [filterCriteria, setFilterCriteria] = useState({
-    ageGroup: null,
-    location: null,
-    gender: null
-  })
+  // Add this state to track the filters array in new format
+  const [filters, setFilters] = useState([])
   console.log('selected user in the creategroup form ', selectedUsers)
   //if edit group?
 
@@ -96,21 +92,62 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
         status: data.status || 'private',
         members: data.members || []
       })
-      // Set initial filter criteria from group data
-      setFilterCriteria({
-        ageGroup: data.ageGroup || null,
-        location: data.location || null,
-        gender: data.gender || null
-      })
+      // Set initial filters from group data
+      setFilters(data.filters || [])
       // Set initial selected users
       setSelectedUsers(data.members || [])
+
       // Calculate matched users based on filters if they exist
-      if (data.ageGroup || data.location || data.gender) {
-        const filteredUserIds = filterUsersByCriteria(users, {
-          ageGroup: data.ageGroup,
-          location: data.location,
-          gender: data.gender
+      if (data.filters && data.filters.length > 0) {
+        // Apply filters to get matched users
+        let filteredUserIds = users.map(user => user._id)
+
+        data.filters.forEach((filter, index) => {
+          let currentFilterIds = []
+
+          if (filter.type === 'age') {
+            currentFilterIds = users
+              .filter(u => {
+                const age = u?.profile?.age
+                return age != null && age >= filter.criteria.min && age <= filter.criteria.max
+              })
+              .map(u => u._id)
+          } else if (filter.type === 'location') {
+            currentFilterIds = users
+              .filter(u => {
+                const p = u?.profile || {}
+                return (
+                  (!filter.criteria.country || p.country?.toLowerCase() === filter.criteria.country?.toLowerCase()) &&
+                  (!filter.criteria.region || p.region?.toLowerCase() === filter.criteria.region?.toLowerCase()) &&
+                  (!filter.criteria.city || p.locality?.toLowerCase() === filter.criteria.city?.toLowerCase())
+                )
+              })
+              .map(u => u._id)
+          } else if (filter.type === 'gender') {
+            const genders = Array.isArray(filter.criteria) ? filter.criteria : [filter.criteria]
+            currentFilterIds = users
+              .filter(u => {
+                const gender = u?.profile?.gender?.toLowerCase()
+                return Boolean(gender) && genders.includes(gender)
+              })
+              .map(u => u._id)
+          }
+
+          // Apply operator
+          if (index === 0) {
+            filteredUserIds = currentFilterIds
+          } else {
+            const operator = filter.operator || 'AND'
+            if (operator === 'AND') {
+              filteredUserIds = filteredUserIds.filter(id => currentFilterIds.includes(id))
+            } else if (operator === 'OR') {
+              filteredUserIds = [...new Set([...filteredUserIds, ...currentFilterIds])]
+            } else if (operator === 'NOT') {
+              filteredUserIds = filteredUserIds.filter(id => !currentFilterIds.includes(id))
+            }
+          }
         })
+
         setMatchedUserIds(filteredUserIds)
         setUnmatchedUserIds(users.filter(user => !filteredUserIds.includes(user._id)).map(user => user._id))
         // If there were no explicit members saved, default selection to filtered users
@@ -125,39 +162,6 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
     }
   }, [data, users])
   console.log('selected user in the creategroup after the  useeffect ', selectedUsers)
-  // Helper function to filter users based on criteria
-  const filterUsersByCriteria = (users, criteria) => {
-    return users
-      .filter(user => {
-        const profile = user.profile || {}
-
-        // Age filter
-        const ageMatch =
-          !criteria.ageGroup ||
-          (profile.age && profile.age >= criteria.ageGroup.min && profile.age <= criteria.ageGroup.max)
-
-        // Location filter
-        const locationMatch =
-          !criteria.location ||
-          ((!criteria.location.country ||
-            (profile.country && profile.country.toLowerCase() === criteria.location.country.toLowerCase())) &&
-            (!criteria.location.region ||
-              (profile.region && profile.region.toLowerCase() === criteria.location.region.toLowerCase())) &&
-            (!criteria.location.city ||
-              (profile.locality && profile.locality.toLowerCase() === criteria.location.city.toLowerCase())))
-
-        // Gender filter
-        const genderMatch =
-          !criteria.gender ||
-          (profile.gender &&
-            (Array.isArray(criteria.gender)
-              ? criteria.gender.includes(profile.gender.toLowerCase())
-              : profile.gender.toLowerCase() === criteria.gender.toLowerCase()))
-
-        return ageMatch && locationMatch && genderMatch
-      })
-      .map(user => user._id)
-  }
 
   //fetching the users
   const fetchUsers = async () => {
@@ -297,7 +301,7 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
       groupName: formData.groupName.trim(),
       description: formData.description.trim(),
       status: formData.status,
-      ...filterCriteria, // Include the current filter criteria
+      filters: filters, // Include the filters array
       createdBy: data?.createdBy || session?.user?.id || null,
       creatorEmail: data?.creatorEmail || session?.user?.email || null,
       members: selectedUsers,
@@ -315,9 +319,9 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
   }
   // console.log('form data after submission ', formData);
   // Add this to handle filter changes from GroupByFilter
-  const handleFilterChange = (filteredUserIds, criteria) => {
+  const handleFilterChange = (filteredUserIds, filtersArray) => {
     setSelectedUsers(filteredUserIds)
-    setFilterCriteria(criteria)
+    setFilters(filtersArray)
 
     // Calculate which users are matched and unmatched
     const allUserIds = users.map(user => user._id)
@@ -529,8 +533,8 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
                   <GroupByFilter
                     users={users}
                     key={data}
-                    onFilterChange={(userIds, criteria) => handleFilterChange(userIds, criteria)}
-                    initialCriteria={filterCriteria}
+                    onFilterChange={(userIds, filtersArray) => handleFilterChange(userIds, filtersArray)}
+                    initialFilters={filters}
                   />
                 </Grid>
 

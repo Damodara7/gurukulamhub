@@ -36,38 +36,38 @@ const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
   // Helper function to get filter chips
   const getFilterChips = () => {
     const chips = []
-    // Age filter
-    if (groupData?.ageGroup?.min && groupData?.ageGroup?.max) {
-      chips.push({
-        icon: <CakeIcon sx={{ fontSize: 16 }} />,
-        label: `Age: ${groupData.ageGroup.min}-${groupData.ageGroup.max}`,
-        color: 'primary'
-      })
-    }
 
-    // Location filter
-    if (groupData?.location) {
-      const locationParts = []
-      if (groupData.location.country) locationParts.push(groupData.location.country)
-      if (groupData.location.region) locationParts.push(groupData.location.region)
-      if (groupData.location.city) locationParts.push(groupData.location.city)
+    if (groupData?.filters && Array.isArray(groupData.filters) && groupData.filters.length > 0) {
+      groupData.filters.forEach((filter, index) => {
+        if (filter.type === 'age' && filter.criteria) {
+          const { min, max } = filter.criteria
+          chips.push({
+            icon: <CakeIcon sx={{ fontSize: 16 }} />,
+            label: `Age: ${min}-${max}`,
+            color: 'primary'
+          })
+        } else if (filter.type === 'location' && filter.criteria) {
+          const locationParts = []
+          if (filter.criteria.country) locationParts.push(filter.criteria.country)
+          if (filter.criteria.region) locationParts.push(filter.criteria.region)
+          if (filter.criteria.city) locationParts.push(filter.criteria.city)
 
-      if (locationParts.length > 0) {
-        chips.push({
-          icon: <LocationIcon sx={{ fontSize: 16 }} />,
-          label: `Location: ${locationParts.join(', ')}`,
-          color: 'secondary'
-        })
-      }
-    }
-
-    // Gender filter
-    if (groupData?.gender && Array.isArray(groupData.gender) && groupData.gender.length > 0) {
-      const genderLabels = groupData.gender.map(g => g.charAt(0).toUpperCase() + g.slice(1))
-      chips.push({
-        icon: <PersonIcon sx={{ fontSize: 16 }} />,
-        label: `Gender: ${genderLabels.join(', ')}`,
-        color: 'success'
+          if (locationParts.length > 0) {
+            chips.push({
+              icon: <LocationIcon sx={{ fontSize: 16 }} />,
+              label: `Location: ${locationParts.join(', ')}`,
+              color: 'secondary'
+            })
+          }
+        } else if (filter.type === 'gender' && filter.criteria) {
+          const genderValues = Array.isArray(filter.criteria) ? filter.criteria : [filter.criteria]
+          const genderLabels = genderValues.map(g => g.charAt(0).toUpperCase() + g.slice(1))
+          chips.push({
+            icon: <PersonIcon sx={{ fontSize: 16 }} />,
+            label: `Gender: ${genderLabels.join(', ')}`,
+            color: 'success'
+          })
+        }
       })
     }
 
@@ -79,35 +79,39 @@ const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
   const getMemberFilterChips = member => {
     const chips = []
 
-    // Show age only if group has age filter
-    if (groupData?.ageGroup?.min && groupData?.ageGroup?.max && member.profile?.age) {
-      chips.push({
-        label: `Age: ${member.profile.age}`,
-        color: 'primary'
+    if (groupData?.filters && Array.isArray(groupData.filters) && groupData.filters.length > 0) {
+      groupData.filters.forEach(filter => {
+        // Show age only if group has age filter
+        if (filter.type === 'age' && filter.criteria && member.profile?.age) {
+          chips.push({
+            label: `Age: ${member.profile.age}`,
+            color: 'primary'
+          })
+        }
+
+        // Show gender only if group has gender filter
+        if (filter.type === 'gender' && filter.criteria && member.profile?.gender) {
+          chips.push({
+            label: `Gender: ${member.profile.gender.charAt(0).toUpperCase() + member.profile.gender.slice(1)}`,
+            color: 'success'
+          })
+        }
+
+        // Show location as single chip if group has location filter
+        if (filter.type === 'location' && filter.criteria) {
+          const locationParts = []
+          if (filter.criteria.city && member.profile?.locality) locationParts.push(member.profile.locality)
+          if (filter.criteria.region && member.profile?.region) locationParts.push(member.profile.region)
+          if (filter.criteria.country && member.profile?.country) locationParts.push(member.profile.country)
+
+          if (locationParts.length > 0) {
+            chips.push({
+              label: `Location: ${locationParts.join(', ')}`,
+              color: 'secondary'
+            })
+          }
+        }
       })
-    }
-
-    // Show gender only if group has gender filter
-    if (groupData?.gender && Array.isArray(groupData.gender) && groupData.gender.length > 0 && member.profile?.gender) {
-      chips.push({
-        label: `Gender: ${member.profile.gender.charAt(0).toUpperCase() + member.profile.gender.slice(1)}`,
-        color: 'success'
-      })
-    }
-
-    // Show location as single chip if group has location filter
-    if (groupData?.location) {
-      const locationParts = []
-      if (groupData.location.city && member.profile?.locality) locationParts.push(member.profile.locality)
-      if (groupData.location.region && member.profile?.region) locationParts.push(member.profile.region)
-      if (groupData.location.country && member.profile?.country) locationParts.push(member.profile.country)
-
-      if (locationParts.length > 0) {
-        chips.push({
-          label: `Location: ${locationParts.join(', ')}`,
-          color: 'secondary'
-        })
-      }
     }
 
     return chips

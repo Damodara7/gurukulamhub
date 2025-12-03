@@ -1,15 +1,24 @@
 import mongoose from 'mongoose'
 
-const locationSchema = new mongoose.Schema({
-  country: { type: String },
-  region: { type: String },
-  city: { type: String }
-})
-
-const ageGroupSchema = new mongoose.Schema({
-  min: { type: Number, min: 0, max: 120 },
-  max: { type: Number, min: 0, max: 120 }
-})
+const filterSchema = new mongoose.Schema(
+  {
+    type: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    criteria: {
+      type: mongoose.Schema.Types.Mixed,
+      required: true
+    },
+    operator: {
+      type: String,
+      enum: ['AND', 'OR', 'NOT'],
+      required: false
+    }
+  },
+  { _id: false }
+)
 
 export const groupSchema = new mongoose.Schema(
   {
@@ -20,12 +29,10 @@ export const groupSchema = new mongoose.Schema(
     description: {
       type: String
     },
-    location: locationSchema,
-    gender: {
-      type: [String],
-      enum: ['male', 'female', 'other']
+    filters: {
+      type: [filterSchema],
+      default: []
     },
-    ageGroup: ageGroupSchema,
     status: {
       type: String,
       enum: ['public', 'private'],

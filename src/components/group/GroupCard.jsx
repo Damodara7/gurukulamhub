@@ -430,189 +430,19 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup }) => {
                         }}
                       >
                         {(() => {
-                          // Create filter objects with their order for sorting
-                          const filters = []
+                          // Create filter chips from the filters array
+                          const filterChips = []
 
-                          if (group?.ageGroup) {
-                            filters.push({
-                              type: 'age',
-                              order: group.ageGroup.order || 1,
-                              chip: (
-                                <Tooltip
-                                  key='age'
-                                  arrow
-                                  title={`Age Range: ${group.ageGroup.min}-${group.ageGroup.max} years`}
-                                >
-                                  <Chip
-                                    size='small'
-                                    label={`Age: ${group.ageGroup.min}-${group.ageGroup.max}`}
-                                    icon={<CakeIcon sx={{ fontSize: { xs: 14, sm: 16 } }} />}
-                                    sx={{
-                                      height: { xs: 26, sm: 30 },
-                                      fontSize: { xs: '0.7rem', sm: '0.75rem', md: '0.8rem' },
-                                      fontWeight: 600,
-                                      borderRadius: 1.5,
-                                      background:
-                                        theme.palette.mode === 'dark'
-                                          ? alpha(theme.palette.grey[300], 0.15)
-                                          : `linear-gradient(135deg, ${alpha(theme.palette.grey[600], 0.2)}, ${alpha(
-                                              theme.palette.grey[600],
-                                              0.15
-                                            )})`,
-                                      boxShadow: `0 1px 3px ${alpha(
-                                        theme.palette.mode === 'dark'
-                                          ? theme.palette.common.black
-                                          : theme.palette.grey[400],
-                                        0.08
-                                      )}`,
-                                      color:
-                                        theme.palette.mode === 'dark'
-                                          ? theme.palette.text.primary
-                                          : theme.palette.grey[900],
-                                      border: `1px solid ${alpha(
-                                        theme.palette.mode === 'dark'
-                                          ? theme.palette.grey[300]
-                                          : theme.palette.grey[600],
-                                        0.2
-                                      )}`,
-                                      transition: 'all 0.2s ease-in-out',
-                                      '&:hover': {
-                                        background:
-                                          theme.palette.mode === 'dark'
-                                            ? alpha(theme.palette.grey[300], 0.22)
-                                            : `linear-gradient(135deg, ${alpha(theme.palette.grey[600], 0.28)}, ${alpha(
-                                                theme.palette.grey[600],
-                                                0.22
-                                              )})`,
-                                        boxShadow: `0 2px 4px ${alpha(
-                                          theme.palette.mode === 'dark'
-                                            ? theme.palette.grey[300]
-                                            : theme.palette.grey[600],
-                                          0.12
-                                        )}`,
-                                        transform: 'translateY(-1px)'
-                                      },
-                                      '& .MuiChip-icon': {
-                                        fontSize: 16,
-                                        color:
-                                          theme.palette.mode === 'dark'
-                                            ? theme.palette.text.secondary
-                                            : theme.palette.grey[600],
-                                        marginLeft: '8px',
-                                        marginRight: '-2px'
-                                      },
-                                      '& .MuiChip-label': {
-                                        color:
-                                          theme.palette.mode === 'dark'
-                                            ? theme.palette.text.secondary
-                                            : theme.palette.grey[600],
-                                        paddingLeft: '10px',
-                                        paddingRight: '12px'
-                                      }
-                                    }}
-                                  />
-                                </Tooltip>
-                              )
-                            })
-                          }
-
-                          if (group?.gender) {
-                            const genderValues = Array.isArray(group.gender) ? group.gender : [String(group.gender)]
-                            const genderLabel = genderValues.join(', ')
-                            filters.push({
-                              type: 'gender',
-                              order: group.gender.order || 1,
-                              chip: (
-                                <Tooltip key='gender' arrow title={`Gender: ${genderLabel}`}>
-                                  <Chip
-                                    size='small'
-                                    label={genderLabel.length > 18 ? genderLabel.substring(0, 18) + '...' : genderLabel}
-                                    icon={<PersonIcon sx={{ fontSize: { xs: 14, sm: 16 } }} />}
-                                    sx={{
-                                      height: { xs: 26, sm: 30 },
-                                      fontSize: { xs: '0.7rem', sm: '0.75rem', md: '0.8rem' },
-                                      fontWeight: 600,
-                                      borderRadius: 1.5,
-                                      background:
-                                        theme.palette.mode === 'dark'
-                                          ? alpha(theme.palette.grey[300], 0.15)
-                                          : alpha(theme.palette.grey[400], 0.15),
-                                      boxShadow: `0 1px 3px ${alpha(
-                                        theme.palette.mode === 'dark'
-                                          ? theme.palette.common.black
-                                          : theme.palette.grey[400],
-                                        0.08
-                                      )}`,
-                                      color:
-                                        theme.palette.mode === 'dark'
-                                          ? theme.palette.text.secondary
-                                          : theme.palette.grey[600],
-                                      border: `1px solid ${alpha(
-                                        theme.palette.mode === 'dark'
-                                          ? theme.palette.grey[300]
-                                          : theme.palette.grey[400],
-                                        0.2
-                                      )}`,
-                                      transition: 'all 0.2s ease-in-out',
-                                      '&:hover': {
-                                        background:
-                                          theme.palette.mode === 'dark'
-                                            ? alpha(theme.palette.grey[300], 0.22)
-                                            : alpha(theme.palette.grey[400], 0.22),
-                                        boxShadow: `0 2px 4px ${alpha(
-                                          theme.palette.mode === 'dark'
-                                            ? theme.palette.grey[300]
-                                            : theme.palette.grey[400],
-                                          0.12
-                                        )}`,
-                                        transform: 'translateY(-1px)'
-                                      },
-                                      '& .MuiChip-icon': {
-                                        fontSize: 16,
-                                        color:
-                                          theme.palette.mode === 'dark'
-                                            ? theme.palette.text.secondary
-                                            : theme.palette.grey[600],
-                                        marginLeft: '8px',
-                                        marginRight: '-2px'
-                                      },
-                                      '& .MuiChip-label': {
-                                        color:
-                                          theme.palette.mode === 'dark'
-                                            ? theme.palette.text.secondary
-                                            : theme.palette.grey[600],
-                                        paddingLeft: '10px',
-                                        paddingRight: '12px'
-                                      }
-                                    }}
-                                  />
-                                </Tooltip>
-                              )
-                            })
-                          }
-
-                          if (group?.location?.country || group?.location?.region || group?.location?.city) {
-                            const parts = [
-                              group?.location?.country,
-                              group?.location?.region,
-                              group?.location?.city
-                            ].filter(Boolean)
-                            const locationLabel = parts.join(', ')
-
-                            if (locationLabel) {
-                              filters.push({
-                                type: 'location',
-                                order: group.location.order || 1,
-                                chip: (
-                                  <Tooltip key='location' arrow title={`Location: ${locationLabel}`}>
+                          if (group?.filters && Array.isArray(group.filters) && group.filters.length > 0) {
+                            group.filters.forEach((filter, index) => {
+                              if (filter.type === 'age' && filter.criteria) {
+                                const { min, max } = filter.criteria
+                                filterChips.push(
+                                  <Tooltip key={`age-${index}`} arrow title={`Age Range: ${min}-${max} years`}>
                                     <Chip
                                       size='small'
-                                      label={
-                                        locationLabel.length > 20
-                                          ? locationLabel.substring(0, 20) + '...'
-                                          : locationLabel
-                                      }
-                                      icon={<LocationIcon sx={{ fontSize: { xs: 14, sm: 16 } }} />}
+                                      label={`Age: ${min}-${max}`}
+                                      icon={<CakeIcon sx={{ fontSize: { xs: 14, sm: 16 } }} />}
                                       sx={{
                                         height: { xs: 26, sm: 30 },
                                         fontSize: { xs: '0.7rem', sm: '0.75rem', md: '0.8rem' },
@@ -620,34 +450,40 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup }) => {
                                         borderRadius: 1.5,
                                         background:
                                           theme.palette.mode === 'dark'
-                                            ? alpha(theme.palette.grey[300], 0.12)
-                                            : alpha(theme.palette.grey[500], 0.12),
+                                            ? alpha(theme.palette.grey[300], 0.15)
+                                            : `linear-gradient(135deg, ${alpha(theme.palette.grey[600], 0.2)}, ${alpha(
+                                                theme.palette.grey[600],
+                                                0.15
+                                              )})`,
                                         boxShadow: `0 1px 3px ${alpha(
                                           theme.palette.mode === 'dark'
                                             ? theme.palette.common.black
-                                            : theme.palette.grey[500],
+                                            : theme.palette.grey[400],
                                           0.08
                                         )}`,
                                         color:
                                           theme.palette.mode === 'dark'
-                                            ? theme.palette.text.secondary
-                                            : theme.palette.grey[700],
+                                            ? theme.palette.text.primary
+                                            : theme.palette.grey[900],
                                         border: `1px solid ${alpha(
                                           theme.palette.mode === 'dark'
                                             ? theme.palette.grey[300]
-                                            : theme.palette.grey[500],
-                                          0.25
+                                            : theme.palette.grey[600],
+                                          0.2
                                         )}`,
                                         transition: 'all 0.2s ease-in-out',
                                         '&:hover': {
                                           background:
                                             theme.palette.mode === 'dark'
-                                              ? alpha(theme.palette.grey[300], 0.18)
-                                              : alpha(theme.palette.grey[500], 0.18),
+                                              ? alpha(theme.palette.grey[300], 0.22)
+                                              : `linear-gradient(135deg, ${alpha(
+                                                  theme.palette.grey[600],
+                                                  0.28
+                                                )}, ${alpha(theme.palette.grey[600], 0.22)})`,
                                           boxShadow: `0 2px 4px ${alpha(
                                             theme.palette.mode === 'dark'
                                               ? theme.palette.grey[300]
-                                              : theme.palette.grey[500],
+                                              : theme.palette.grey[600],
                                             0.12
                                           )}`,
                                           transform: 'translateY(-1px)'
@@ -657,7 +493,7 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup }) => {
                                           color:
                                             theme.palette.mode === 'dark'
                                               ? theme.palette.text.secondary
-                                              : theme.palette.grey[700],
+                                              : theme.palette.grey[600],
                                           marginLeft: '8px',
                                           marginRight: '-2px'
                                         },
@@ -665,7 +501,7 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup }) => {
                                           color:
                                             theme.palette.mode === 'dark'
                                               ? theme.palette.text.secondary
-                                              : theme.palette.grey[700],
+                                              : theme.palette.grey[600],
                                           paddingLeft: '10px',
                                           paddingRight: '12px'
                                         }
@@ -673,41 +509,191 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup }) => {
                                     />
                                   </Tooltip>
                                 )
-                              })
-                            }
+                              } else if (filter.type === 'gender' && filter.criteria) {
+                                const genderValues = Array.isArray(filter.criteria)
+                                  ? filter.criteria
+                                  : [String(filter.criteria)]
+                                const genderLabel = genderValues
+                                  .map(g => g.charAt(0).toUpperCase() + g.slice(1))
+                                  .join(', ')
+                                filterChips.push(
+                                  <Tooltip key={`gender-${index}`} arrow title={`Gender: ${genderLabel}`}>
+                                    <Chip
+                                      size='small'
+                                      label={
+                                        genderLabel.length > 18 ? genderLabel.substring(0, 18) + '...' : genderLabel
+                                      }
+                                      icon={<PersonIcon sx={{ fontSize: { xs: 14, sm: 16 } }} />}
+                                      sx={{
+                                        height: { xs: 26, sm: 30 },
+                                        fontSize: { xs: '0.7rem', sm: '0.75rem', md: '0.8rem' },
+                                        fontWeight: 600,
+                                        borderRadius: 1.5,
+                                        background:
+                                          theme.palette.mode === 'dark'
+                                            ? alpha(theme.palette.grey[300], 0.15)
+                                            : alpha(theme.palette.grey[400], 0.15),
+                                        boxShadow: `0 1px 3px ${alpha(
+                                          theme.palette.mode === 'dark'
+                                            ? theme.palette.common.black
+                                            : theme.palette.grey[400],
+                                          0.08
+                                        )}`,
+                                        color:
+                                          theme.palette.mode === 'dark'
+                                            ? theme.palette.text.secondary
+                                            : theme.palette.grey[600],
+                                        border: `1px solid ${alpha(
+                                          theme.palette.mode === 'dark'
+                                            ? theme.palette.grey[300]
+                                            : theme.palette.grey[400],
+                                          0.2
+                                        )}`,
+                                        transition: 'all 0.2s ease-in-out',
+                                        '&:hover': {
+                                          background:
+                                            theme.palette.mode === 'dark'
+                                              ? alpha(theme.palette.grey[300], 0.22)
+                                              : alpha(theme.palette.grey[400], 0.22),
+                                          boxShadow: `0 2px 4px ${alpha(
+                                            theme.palette.mode === 'dark'
+                                              ? theme.palette.grey[300]
+                                              : theme.palette.grey[400],
+                                            0.12
+                                          )}`,
+                                          transform: 'translateY(-1px)'
+                                        },
+                                        '& .MuiChip-icon': {
+                                          fontSize: 16,
+                                          color:
+                                            theme.palette.mode === 'dark'
+                                              ? theme.palette.text.secondary
+                                              : theme.palette.grey[600],
+                                          marginLeft: '8px',
+                                          marginRight: '-2px'
+                                        },
+                                        '& .MuiChip-label': {
+                                          color:
+                                            theme.palette.mode === 'dark'
+                                              ? theme.palette.text.secondary
+                                              : theme.palette.grey[600],
+                                          paddingLeft: '10px',
+                                          paddingRight: '12px'
+                                        }
+                                      }}
+                                    />
+                                  </Tooltip>
+                                )
+                              } else if (filter.type === 'location' && filter.criteria) {
+                                const parts = [
+                                  filter.criteria.country,
+                                  filter.criteria.region,
+                                  filter.criteria.city
+                                ].filter(Boolean)
+                                const locationLabel = parts.join(', ')
+
+                                if (locationLabel) {
+                                  filterChips.push(
+                                    <Tooltip key={`location-${index}`} arrow title={`Location: ${locationLabel}`}>
+                                      <Chip
+                                        size='small'
+                                        label={
+                                          locationLabel.length > 20
+                                            ? locationLabel.substring(0, 20) + '...'
+                                            : locationLabel
+                                        }
+                                        icon={<LocationIcon sx={{ fontSize: { xs: 14, sm: 16 } }} />}
+                                        sx={{
+                                          height: { xs: 26, sm: 30 },
+                                          fontSize: { xs: '0.7rem', sm: '0.75rem', md: '0.8rem' },
+                                          fontWeight: 600,
+                                          borderRadius: 1.5,
+                                          background:
+                                            theme.palette.mode === 'dark'
+                                              ? alpha(theme.palette.grey[300], 0.12)
+                                              : alpha(theme.palette.grey[500], 0.12),
+                                          boxShadow: `0 1px 3px ${alpha(
+                                            theme.palette.mode === 'dark'
+                                              ? theme.palette.common.black
+                                              : theme.palette.grey[500],
+                                            0.08
+                                          )}`,
+                                          color:
+                                            theme.palette.mode === 'dark'
+                                              ? theme.palette.text.secondary
+                                              : theme.palette.grey[700],
+                                          border: `1px solid ${alpha(
+                                            theme.palette.mode === 'dark'
+                                              ? theme.palette.grey[300]
+                                              : theme.palette.grey[500],
+                                            0.25
+                                          )}`,
+                                          transition: 'all 0.2s ease-in-out',
+                                          '&:hover': {
+                                            background:
+                                              theme.palette.mode === 'dark'
+                                                ? alpha(theme.palette.grey[300], 0.18)
+                                                : alpha(theme.palette.grey[500], 0.18),
+                                            boxShadow: `0 2px 4px ${alpha(
+                                              theme.palette.mode === 'dark'
+                                                ? theme.palette.grey[300]
+                                                : theme.palette.grey[500],
+                                              0.12
+                                            )}`,
+                                            transform: 'translateY(-1px)'
+                                          },
+                                          '& .MuiChip-icon': {
+                                            fontSize: 16,
+                                            color:
+                                              theme.palette.mode === 'dark'
+                                                ? theme.palette.text.secondary
+                                                : theme.palette.grey[700],
+                                            marginLeft: '8px',
+                                            marginRight: '-2px'
+                                          },
+                                          '& .MuiChip-label': {
+                                            color:
+                                              theme.palette.mode === 'dark'
+                                                ? theme.palette.text.secondary
+                                                : theme.palette.grey[700],
+                                            paddingLeft: '10px',
+                                            paddingRight: '12px'
+                                          }
+                                        }}
+                                      />
+                                    </Tooltip>
+                                  )
+                                }
+                              }
+                            })
                           }
 
-                          // Sort filters by their order and return chips
-                          return filters.sort((a, b) => a.order - b.order).map(filter => filter.chip)
+                          return filterChips
                         })()}
-                        {!group?.ageGroup &&
-                          !group?.gender &&
-                          !group?.location?.country &&
-                          !group?.location?.region &&
-                          !group?.location?.city && (
-                            <Box
+                        {(!group?.filters || group?.filters?.length === 0) && (
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: 0.5,
+                              width: '100%',
+                              py: 1
+                            }}
+                          >
+                            <FilterIcon sx={{ fontSize: { xs: 12, sm: 14 }, color: 'text.disabled' }} />
+                            <Typography
+                              variant='caption'
                               sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: 0.5,
-                                width: '100%',
-                                py: 1
+                                fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                                color: 'text.disabled',
+                                fontStyle: 'italic'
                               }}
                             >
-                              <FilterIcon sx={{ fontSize: { xs: 12, sm: 14 }, color: 'text.disabled' }} />
-                              <Typography
-                                variant='caption'
-                                sx={{
-                                  fontSize: { xs: '0.7rem', sm: '0.75rem' },
-                                  color: 'text.disabled',
-                                  fontStyle: 'italic'
-                                }}
-                              >
-                                No filters applied
-                              </Typography>
-                            </Box>
-                          )}
+                              No filters applied
+                            </Typography>
+                          </Box>
+                        )}
                       </Stack>
                     </Box>
                   </Box>
