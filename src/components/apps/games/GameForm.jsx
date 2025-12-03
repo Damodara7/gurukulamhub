@@ -1016,10 +1016,14 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
                     ref={fieldRefs.quiz}
                     MenuProps={{
                       PaperProps: {
-                        style: {
-                          maxHeight: '400px',
-                          width: 'calc(100% - 32px)',
-                          margin: '8px 16px'
+                        sx: {
+                          maxHeight: { xs: 300, sm: 400 },
+                          maxWidth: { xs: '90vw', sm: '600px' },
+                          mt: 1,
+                          '& .MuiMenuItem-root': {
+                            whiteSpace: 'normal',
+                            wordWrap: 'break-word'
+                          }
                         }
                       },
                       anchorOrigin: {
@@ -1040,17 +1044,27 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
                         key={quiz._id}
                         value={quiz._id}
                         sx={{
-                          py: 1.5,
+                          py: { xs: 1.5, sm: 2 },
+                          px: { xs: 1.5, sm: 2 },
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          minHeight: { xs: 60, sm: 80 },
                           '&:hover': {
                             backgroundColor: 'action.hover'
+                          },
+                          '&.Mui-selected': {
+                            backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                            '&:hover': {
+                              backgroundColor: alpha(theme.palette.primary.main, 0.12)
+                            }
                           }
                         }}
                       >
                         <Box
                           sx={{
                             display: 'flex',
-                            alignItems: 'center',
-                            gap: 1.5,
+                            alignItems: 'flex-start',
+                            gap: { xs: 1, sm: 1.5 },
                             width: '100%',
                             minWidth: 0
                           }}
@@ -1059,8 +1073,9 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
                           <Box
                             sx={{
                               flexShrink: 0,
-                              width: { xs: 36, sm: 40 },
-                              height: { xs: 36, sm: 40 }
+                              width: { xs: 40, sm: 48 },
+                              height: { xs: 40, sm: 48 },
+                              mt: 0.5
                             }}
                           >
                             <img
@@ -1091,8 +1106,11 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
                                 fontWeight: 600,
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                display: 'block'
+                                display: '-webkit-box',
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical',
+                                fontSize: { xs: '0.875rem', sm: '0.95rem' },
+                                lineHeight: 1.4
                               }}
                             >
                               {quiz.title}
@@ -1104,7 +1122,8 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
                                 whiteSpace: 'nowrap',
-                                display: 'block'
+                                display: 'block',
+                                fontSize: { xs: '0.7rem', sm: '0.75rem' }
                               }}
                             >
                               by {quiz.createdBy}
@@ -1116,8 +1135,11 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
                                   color: 'text.secondary',
                                   overflow: 'hidden',
                                   textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap',
-                                  display: { xs: 'none', sm: 'block' }
+                                  display: '-webkit-box',
+                                  WebkitLineClamp: 1,
+                                  WebkitBoxOrient: 'vertical',
+                                  fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                                  lineHeight: 1.3
                                 }}
                               >
                                 {quiz.details}
