@@ -51,6 +51,8 @@ const QuizQuestion = ({
         borderRadius: { xs: 3, md: 3.5 },
         px: { xs: 2.5, md: 3.5 },
         py: { xs: 3, md: 4 },
+        width: '100%',
+        maxWidth: '100%',
         border: `1px solid ${alpha(theme.palette.primary.main, isDarkMode ? 0.25 : 0.12)}`,
         background: isDarkMode
           ? `linear-gradient(160deg, ${alpha(theme.palette.primary.dark, 0.2)}, ${alpha(theme.palette.background.paper, 0.95)})`
@@ -70,9 +72,9 @@ const QuizQuestion = ({
         }}
       />
 
-      <Stack spacing={{ xs: 2.5, md: 3.5 }} position='relative' zIndex={1}>
-        <Stack spacing={{ xs: 1.2, md: 1.8 }}>
-          <Stack direction={{ xs: 'column', md: 'row' }} spacing={{ xs: 0.4, md: 1 }} alignItems='center'>
+      <Stack spacing={{ xs: 2.5, md: 3.5 }} position='relative' zIndex={1} sx={{ width: '100%', maxWidth: '100%' }}>
+        <Stack spacing={{ xs: 1.2, md: 1.8 }} sx={{ width: '100%', maxWidth: '100%' }}>
+          <Stack direction={{ xs: 'column', md: 'row' }} spacing={{ xs: 0.4, md: 1 }} alignItems='center' sx={{ width: '100%', maxWidth: '100%' }}>
             <Typography
               variant='overline'
               sx={{ letterSpacing: '0.2em', color: alpha(theme.palette.text.primary, 0.6), fontWeight: 700 }}
@@ -94,8 +96,9 @@ const QuizQuestion = ({
             spacing={{ xs: 1.2, md: 2 }}
             alignItems={{ xs: 'flex-start', md: 'center' }}
             justifyContent='space-between'
+            sx={{ width: '100%', maxWidth: '100%' }}
           >
-            <Typography
+            {/* <Typography
               variant='h4'
               sx={{
                 fontSize: { xs: '1.8rem', md: '2.35rem' },
@@ -104,9 +107,9 @@ const QuizQuestion = ({
               }}
             >
               {currentQuestion?.data?.question?.title || currentQuestion?.data?.question?.text || 'Quiz Question'}
-            </Typography>
+            </Typography> */}
 
-            <Box sx={{ minWidth: { xs: '100%', md: 220 } }}>
+            <Box sx={{ minWidth: { xs: '100%', md: 220 }, width: '100%', maxWidth: '100%' }}>
               <LinearProgress
                 variant='determinate'
                 value={progress}
@@ -124,7 +127,7 @@ const QuizQuestion = ({
           </Stack>
         </Stack>
 
-        <Box>
+        <Box sx={{ width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
           {/* Dynamically render the correct template based on the question type */}
           {currentQuestion?.templateId === 'single-choice' && (
             <SingleChoiceTemplate

@@ -1,5 +1,5 @@
-// 'use client'
-// MUI Imports
+'use client'
+
 import {
   Dialog,
   DialogContent,
@@ -15,24 +15,31 @@ import {
   Chip,
   Grid,
   MenuItem,
-  Select,
-  InputLabel
+  Stack,
+  IconButton,
+  alpha,
+  useTheme,
+  useMediaQuery,
+  Divider,
+  Paper
 } from '@mui/material'
 import { useEffect, useRef, useState } from 'react'
-import * as RestApi from '@/utils/restApiUtil'
-import { API_URLS } from '@/configs/apiConfig'
+import CloseIcon from '@mui/icons-material/Close'
+import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive'
 import { useSession } from 'next-auth/react'
 import MediaPreviewPopup from '../videos/MediaPreviewPopup'
 import MultiSelect from '../MultiSelect'
 import { addAlert, updateAlert } from '../../actions/alerts'
 import { getAllVideos } from '../../actions/videos'
 import ReactQuillHTMLEditor from '@/components/ReactQuillHTMLEditor'
-import IconButtonTooltip from '../IconButtonTooltip'
 
 const alertTypes = ['LOGIN_ALERT', 'FEATURE_ALERT']
 
 // AddContent Component
 const AddContent = ({ handleClose, onCreate, videosList = [] }) => {
+  const theme = useTheme()
+  const isDarkMode = theme.palette.mode === 'dark'
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const reactQuillContentRef = useRef()
   const [formData, setFormData] = useState({
     name: '',
@@ -99,12 +106,15 @@ const AddContent = ({ handleClose, onCreate, videosList = [] }) => {
   }
 
   return (
-    <DialogContent className='overflow-visible pbs-0 pbe-6 pli-10 sm:pli-16'>
-      <IconButtonTooltip title={"Close"} onClick={handleClose} className='absolute block-start-4 inline-end-4'>
-        <i className='ri-close-line text-textSecondary' />
-      </IconButtonTooltip>
-
-      <Grid container spacing={2}>
+    <DialogContent
+      sx={{
+        p: { xs: 2.5, sm: 3, md: 4 },
+        overflow: 'visible',
+        width: '100%',
+        maxWidth: '100%'
+      }}
+    >
+      <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
         {/* Alert Name */}
         <Grid item xs={12}>
           <TextField
@@ -112,27 +122,37 @@ const AddContent = ({ handleClose, onCreate, videosList = [] }) => {
             value={formData.name}
             onChange={e => handleSetFormValue('name', e.target.value)}
             fullWidth
-            margin='dense'
             required
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: { xs: 1.5, sm: 2 },
+                fontSize: { xs: '0.9375rem', sm: '1rem' }
+              }
+            }}
           />
           {renderErrorMessage(errors?.name)}
         </Grid>
 
         {/* Alert Type */}
-        <Grid item xs={12}>
+        <Grid item xs={12} sm={6}>
           <TextField
             label='Alert Type'
             select
             value={formData.alertType}
             onChange={e => handleSetFormValue('alertType', e.target.value)}
             fullWidth
-            margin='dense'
             required
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: { xs: 1.5, sm: 2 },
+                fontSize: { xs: '0.9375rem', sm: '1rem' }
+              }
+            }}
           >
             <MenuItem value={''}>Select an option</MenuItem>
             {alertTypes.map(type => (
               <MenuItem key={type} value={type}>
-                {type}
+                {type.replace('_', ' ')}
               </MenuItem>
             ))}
           </TextField>
@@ -140,15 +160,20 @@ const AddContent = ({ handleClose, onCreate, videosList = [] }) => {
         </Grid>
 
         {/* Priority */}
-        <Grid item xs={12}>
+        <Grid item xs={12} sm={6}>
           <TextField
             label='Priority'
             type='number'
             value={formData.priority}
             onChange={e => handleSetFormValue('priority', parseInt(e.target.value, 10))}
             fullWidth
-            margin='dense'
             inputProps={{ min: 1 }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: { xs: 1.5, sm: 2 },
+                fontSize: { xs: '0.9375rem', sm: '1rem' }
+              }
+            }}
           />
           {renderErrorMessage(errors?.priority)}
         </Grid>
@@ -187,33 +212,87 @@ const AddContent = ({ handleClose, onCreate, videosList = [] }) => {
       </Grid>
 
       {/* Status */}
-      <FormControl margin='dense'>
-        <FormControlLabel
-          control={
-            <Switch
-              checked={formData.isActive}
-              onChange={e => handleSetFormValue('isActive', e.target.checked)}
-              name='statusSwitch'
-              color='primary'
-            />
-          }
-          label={formData.isActive ? 'Active' : 'Inactive'}
-        />
-      </FormControl>
+      <Grid item xs={12}>
+        <Paper
+          sx={{
+            p: { xs: 1.5, sm: 2 },
+            borderRadius: { xs: 1.5, sm: 2 },
+            bgcolor: alpha(theme.palette.primary.main, isDarkMode ? 0.08 : 0.04),
+            border: `1px solid ${alpha(theme.palette.primary.main, isDarkMode ? 0.2 : 0.15)}`
+          }}
+        >
+          <FormControlLabel
+            control={
+              <Switch
+                checked={formData.isActive}
+                onChange={e => handleSetFormValue('isActive', e.target.checked)}
+                name='statusSwitch'
+                color='primary'
+              />
+            }
+            label={
+              <Typography fontWeight={600} fontSize={{ xs: '0.9375rem', sm: '1rem' }}>
+                {formData.isActive ? 'Active' : 'Inactive'}
+              </Typography>
+            }
+          />
+        </Paper>
+      </Grid>
+
       {/* Actions */}
-      <DialogActions className='gap-2 justify-center'>
-        <Button onClick={handleClose} variant='outlined' color='primary'>
-          Cancel
-        </Button>
-        <Button component='label' variant='contained' style={{ color: 'white' }} onClick={handleAddRow}>
-          Add
-        </Button>
-      </DialogActions>
+      <Grid item xs={12}>
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={{ xs: 1.5, sm: 2 }}
+          justifyContent='flex-end'
+          sx={{ pt: { xs: 1, sm: 2 } }}
+        >
+          <Button
+            onClick={handleClose}
+            variant='outlined'
+            color='primary'
+            fullWidth={isMobile}
+            sx={{
+              borderRadius: { xs: 1.5, sm: 2 },
+              px: { xs: 3, sm: 4 },
+              py: { xs: 1.1, sm: 1.25 },
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: { xs: '0.9375rem', sm: '1rem' }
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant='contained'
+            component='label'
+            onClick={handleAddRow}
+            fullWidth={isMobile}
+            sx={{
+              borderRadius: { xs: 1.5, sm: 2 },
+              px: { xs: 3, sm: 4 },
+              py: { xs: 1.1, sm: 1.25 },
+              textTransform: 'none',
+              fontWeight: 700,
+              fontSize: { xs: '0.9375rem', sm: '1rem' },
+              color: 'white',
+              boxShadow: isDarkMode
+                ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`
+                : `0 4px 12px ${alpha(theme.palette.primary.main, 0.2)}`
+            }}
+          >
+            Add Alert
+          </Button>
+        </Stack>
+      </Grid>
     </DialogContent>
   )
 }
 
 const EditContent = ({ handleClose, data, onUpdate, videosList = [] }) => {
+  const theme = useTheme()
+  const isDarkMode = theme.palette.mode === 'dark'
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const reactQuillContentRef = useRef()
   const [formData, setFormData] = useState({
     name: data?.name || '',
@@ -283,12 +362,15 @@ const EditContent = ({ handleClose, data, onUpdate, videosList = [] }) => {
 
   return (
     <>
-      {/* "overflow-visible" class affecting the DialogActions & DialogTitle to not fixed */}
-      <DialogContent className='overflow-visible pbs-0 pbe-6 pli-10 sm:pli-16'>
-        <IconButtonTooltip title='Close' onClick={handleClose} className='absolute block-start-4 inline-end-4'>
-          <i className='ri-close-line text-textSecondary' />
-        </IconButtonTooltip>
-        <Grid container spacing={2}>
+      <DialogContent
+        sx={{
+          p: { xs: 2.5, sm: 3, md: 4 },
+          overflow: 'visible',
+          width: '100%',
+          maxWidth: '100%'
+        }}
+      >
+        <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
           {/* Alert Name */}
           <Grid item xs={12}>
             <TextField
@@ -296,27 +378,37 @@ const EditContent = ({ handleClose, data, onUpdate, videosList = [] }) => {
               value={formData.name}
               onChange={e => handleSetFormValue('name', e.target.value)}
               fullWidth
-              margin='dense'
               required
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: { xs: 1.5, sm: 2 },
+                  fontSize: { xs: '0.9375rem', sm: '1rem' }
+                }
+              }}
             />
             {renderErrorMessage(errors?.name)}
           </Grid>
 
           {/* Alert Type */}
-          <Grid item xs={12}>
+          <Grid item xs={12} sm={6}>
             <TextField
               label='Alert Type'
               select
               value={formData.alertType}
               onChange={e => handleSetFormValue('alertType', e.target.value)}
               fullWidth
-              margin='dense'
               required
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: { xs: 1.5, sm: 2 },
+                  fontSize: { xs: '0.9375rem', sm: '1rem' }
+                }
+              }}
             >
               <MenuItem value={''}>Select an option</MenuItem>
               {alertTypes.map(type => (
                 <MenuItem key={type} value={type}>
-                  {type}
+                  {type.replace('_', ' ')}
                 </MenuItem>
               ))}
             </TextField>
@@ -324,15 +416,20 @@ const EditContent = ({ handleClose, data, onUpdate, videosList = [] }) => {
           </Grid>
 
           {/* Priority */}
-          <Grid item xs={12}>
+          <Grid item xs={12} sm={6}>
             <TextField
               label='Priority'
               type='number'
               value={formData.priority}
               onChange={e => handleSetFormValue('priority', parseInt(e.target.value, 10))}
               fullWidth
-              margin='dense'
               inputProps={{ min: 1 }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: { xs: 1.5, sm: 2 },
+                  fontSize: { xs: '0.9375rem', sm: '1rem' }
+                }
+              }}
             />
             {renderErrorMessage(errors?.priority)}
           </Grid>
@@ -372,29 +469,79 @@ const EditContent = ({ handleClose, data, onUpdate, videosList = [] }) => {
           </Grid>
         </Grid>
         {/* Status */}
-        <FormControl margin='normal'>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={formData.isActive}
-                onChange={e => handleSetFormValue('isActive', e.target.checked)}
-                name='statusSwitch'
-                color='primary'
-              />
-            }
-            label={formData.isActive ? 'Active' : 'Inactive'}
-          />
-        </FormControl>
+        <Grid item xs={12}>
+          <Paper
+            sx={{
+              p: { xs: 1.5, sm: 2 },
+              borderRadius: { xs: 1.5, sm: 2 },
+              bgcolor: alpha(theme.palette.primary.main, isDarkMode ? 0.08 : 0.04),
+              border: `1px solid ${alpha(theme.palette.primary.main, isDarkMode ? 0.2 : 0.15)}`
+            }}
+          >
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={formData.isActive}
+                  onChange={e => handleSetFormValue('isActive', e.target.checked)}
+                  name='statusSwitch'
+                  color='primary'
+                />
+              }
+              label={
+                <Typography fontWeight={600} fontSize={{ xs: '0.9375rem', sm: '1rem' }}>
+                  {formData.isActive ? 'Active' : 'Inactive'}
+                </Typography>
+              }
+            />
+          </Paper>
+        </Grid>
+
+        {/* Actions */}
+        <Grid item xs={12}>
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={{ xs: 1.5, sm: 2 }}
+            justifyContent='flex-end'
+            sx={{ pt: { xs: 1, sm: 2 } }}
+          >
+            <Button
+              onClick={handleClose}
+              variant='outlined'
+              color='primary'
+              fullWidth={isMobile}
+              sx={{
+                borderRadius: { xs: 1.5, sm: 2 },
+                px: { xs: 3, sm: 4 },
+                py: { xs: 1.1, sm: 1.25 },
+                textTransform: 'none',
+                fontWeight: 600,
+                fontSize: { xs: '0.9375rem', sm: '1rem' }
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant='contained'
+              onClick={handleUpdateRow}
+              fullWidth={isMobile}
+              sx={{
+                borderRadius: { xs: 1.5, sm: 2 },
+                px: { xs: 3, sm: 4 },
+                py: { xs: 1.1, sm: 1.25 },
+                textTransform: 'none',
+                fontWeight: 700,
+                fontSize: { xs: '0.9375rem', sm: '1rem' },
+                color: 'white',
+                boxShadow: isDarkMode
+                  ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`
+                  : `0 4px 12px ${alpha(theme.palette.primary.main, 0.2)}`
+              }}
+            >
+              Update Alert
+            </Button>
+          </Stack>
+        </Grid>
       </DialogContent>
-      {/* Actions */}
-      <DialogActions className='gap-2 justify-center'>
-        <Button onClick={handleClose} variant='outlined' color='primary'>
-          Cancel
-        </Button>
-        <Button component='label' variant='contained' style={{ color: 'white' }} onClick={handleUpdateRow}>
-          Update
-        </Button>
-      </DialogActions>
     </>
   )
 }
@@ -469,16 +616,92 @@ const AlertDialog = ({ open, setOpen, data, onSuccess }) => {
 
   console.log({ data: data })
 
+  const theme = useTheme()
+  const isDarkMode = theme.palette.mode === 'dark'
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+
   return (
-    <Dialog fullWidth maxWidth='lg' open={open} onClose={handleClose}>
+    <Dialog
+      fullWidth
+      maxWidth='lg'
+      open={open}
+      onClose={handleClose}
+      PaperProps={{
+        sx: {
+          borderRadius: { xs: 2, sm: 3, md: 4 },
+          bgcolor: isDarkMode ? theme.palette.background.paper : 'white',
+          backgroundImage: 'none',
+          boxShadow: isDarkMode
+            ? `0 24px 48px ${alpha(theme.palette.common.black, 0.5)}`
+            : '0 24px 48px rgba(15, 23, 42, 0.12)'
+        }
+      }}
+    >
       <DialogTitle
-        variant='h4'
-        className='flex flex-col gap-2 text-center pbs-10 pbe-6 pli-10 sm:pbs-16 sm:pbe-6 sm:pli-16'
+        sx={{
+          pt: { xs: 3, sm: 4 },
+          pb: { xs: 2, sm: 2.5 },
+          px: { xs: 2.5, sm: 3, md: 4 },
+          position: 'relative',
+          borderBottom: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.15 : 0.1)}`
+        }}
       >
-        {data ? 'Edit Alert' : 'Add New Alert'}
-        <Typography component='span' className='flex flex-col text-center'>
-          {data ? 'Edit and customize the alert as per your requirements.' : 'Alerts you may use and assign to your users.'}
-        </Typography>
+        <IconButton
+          onClick={handleClose}
+          sx={{
+            position: 'absolute',
+            right: { xs: 12, sm: 16 },
+            top: { xs: 12, sm: 16 },
+            color: theme.palette.text.secondary,
+            '&:hover': {
+              bgcolor: alpha(theme.palette.error.main, 0.08),
+              color: theme.palette.error.main
+            }
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
+
+        <Stack direction='row' spacing={1.5} alignItems='center' sx={{ mb: 1 }}>
+          <Box
+            sx={{
+              width: { xs: 40, sm: 44 },
+              height: { xs: 40, sm: 44 },
+              borderRadius: { xs: 1.5, sm: 2 },
+              bgcolor: alpha(theme.palette.primary.main, isDarkMode ? 0.15 : 0.1),
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: theme.palette.primary.main
+            }}
+          >
+            <NotificationsActiveIcon sx={{ fontSize: { xs: 22, sm: 24 } }} />
+          </Box>
+          <Box>
+            <Typography
+              variant='h5'
+              fontWeight={700}
+              sx={{
+                color: 'text.primary',
+                fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' }
+              }}
+            >
+              {data ? 'Edit Alert' : 'Add New Alert'}
+            </Typography>
+            <Typography
+              variant='body2'
+              sx={{
+                color: 'text.secondary',
+                fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+                mt: 0.5
+              }}
+            >
+              {data
+                ? 'Edit and customize the alert as per your requirements.'
+                : 'Create alerts you may use and assign to your users.'}
+            </Typography>
+          </Box>
+        </Stack>
       </DialogTitle>
       {data ? (
         <EditContent handleClose={handleClose} data={data} onUpdate={handleUpdateRow} videosList={videosList} />

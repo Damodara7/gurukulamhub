@@ -36,42 +36,54 @@ import SpaceBarIcon from '@mui/icons-material/SpaceBar'
 export const SingleChoiceTemplate = ({ question }) => {
   const questionObj = question?.data?.question
   const theme = useTheme()
+  const isDarkMode = theme.palette.mode === 'dark'
   
   return (
-    <CardContent sx={{ p: 4, bgcolor: 'background.default' }}>
+    <CardContent sx={{ p: { xs: 2, sm: 3, md: 4 }, bgcolor: 'background.default' }}>
       <Stack spacing={4}>
         {/* Header */}
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          pb: 2.5,
-          borderBottom: '2px solid',
-          borderColor: 'primary.main'
-        }}>
-          <Typography variant="h6" fontWeight={700} sx={{ 
-            color: 'primary.main',
+        <Box
+          sx={{
             display: 'flex',
+            justifyContent: 'space-between',
             alignItems: 'center',
-            gap: 1.5
-          }}>
-            <Box sx={{ 
-              width: 4, 
-              height: 24, 
-              bgcolor: 'primary.main',
-              borderRadius: 2
-            }} />
+            pb: { xs: 1.5, sm: 2, md: 2.5 },
+            borderBottom: '2px solid',
+            borderColor: 'primary.main',
+            flexWrap: 'wrap',
+            gap: { xs: 1, sm: 2 }
+          }}
+        >
+          <Typography
+            variant='h6'
+            fontWeight={700}
+            sx={{
+              color: 'primary.main',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5,
+              fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' }
+            }}
+          >
+            <Box
+              sx={{
+                width: 4,
+                height: 24,
+                bgcolor: 'primary.main',
+                borderRadius: 2
+              }}
+            />
             Single Choice Question
           </Typography>
           {questionObj?.mediaType && (
-            <Chip 
+            <Chip
               label={questionObj.mediaType.replace('-', ' + ')}
-              size="small"
-              sx={{ 
+              size='small'
+              sx={{
                 bgcolor: 'primary.main',
                 color: 'white',
                 fontWeight: 600,
-                fontSize: '0.75rem'
+                fontSize: { xs: '0.6875rem', sm: '0.75rem' }
               }}
             />
           )}
@@ -152,11 +164,19 @@ export const SingleChoiceTemplate = ({ question }) => {
 
         {/* Options */}
         <Box>
-          <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2.5, color: 'text.primary' }}>
+          <Typography
+            variant='subtitle1'
+            fontWeight={600}
+            sx={{
+              mb: 2.5,
+              color: 'text.primary',
+              fontSize: { xs: '0.9375rem', sm: '1rem', md: '1.125rem' }
+            }}
+          >
             Answer Options
           </Typography>
           <RadioGroup>
-            <Grid container spacing={2.5}>
+            <Grid container spacing={{ xs: 2, sm: 2.5 }}>
               {question?.data?.options.map((option, index) => {
                 const optionLabels = ['A', 'B', 'C', 'D', 'E', 'F']
                 return (
@@ -246,7 +266,16 @@ export const SingleChoiceTemplate = ({ question }) => {
                       </Box>
                       
                       {/* Content */}
-                      <Box sx={{ p: 2, flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Box
+                        sx={{
+                          p: { xs: 1.5, sm: 2 },
+                          flexGrow: 1,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          minHeight: { xs: 80, sm: 100 }
+                        }}
+                      >
                         {option.mediaType === 'image' && option.image ? (
                           <Box
                             component='img'
@@ -254,7 +283,7 @@ export const SingleChoiceTemplate = ({ question }) => {
                             alt={option.text}
                             sx={{
                               width: '100%',
-                              height: '120px',
+                              height: { xs: '100px', sm: '120px' },
                               objectFit: 'cover',
                               borderRadius: 1.5,
                               border: '1px solid',
@@ -262,11 +291,20 @@ export const SingleChoiceTemplate = ({ question }) => {
                             }}
                           />
                         ) : (
-                          <Typography variant='body1' fontWeight={500} sx={{ 
-                            color: 'text.primary',
-                            lineHeight: 1.6,
-                            textAlign: 'center'
-                          }}>
+                          <Typography
+                            variant='body1'
+                            fontWeight={500}
+                            sx={{
+                              color: 'text.primary',
+                              lineHeight: 1.6,
+                              textAlign: 'center',
+                              fontSize: { xs: '0.875rem', sm: '0.9375rem', md: '1rem' },
+                              wordWrap: 'break-word',
+                              overflowWrap: 'break-word',
+                              whiteSpace: 'normal',
+                              width: '100%'
+                            }}
+                          >
                             {option.text}
                           </Typography>
                         )}
@@ -286,42 +324,54 @@ export const SingleChoiceTemplate = ({ question }) => {
 export const MultipleChoiceTemplate = ({ question }) => {
   const questionObj = question?.data?.question
   const theme = useTheme()
+  const isDarkMode = theme.palette.mode === 'dark'
   
   return (
-    <CardContent sx={{ p: 4, bgcolor: 'background.default' }}>
+    <CardContent sx={{ p: { xs: 2, sm: 3, md: 4 }, bgcolor: 'background.default' }}>
       <Stack spacing={4}>
         {/* Header */}
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          pb: 2.5,
-          borderBottom: '2px solid',
-          borderColor: 'secondary.main'
-        }}>
-          <Typography variant="h6" fontWeight={700} sx={{ 
-            color: 'secondary.main',
+        <Box
+          sx={{
             display: 'flex',
+            justifyContent: 'space-between',
             alignItems: 'center',
-            gap: 1.5
-          }}>
-            <Box sx={{ 
-              width: 4, 
-              height: 24, 
-              bgcolor: 'secondary.main',
-              borderRadius: 2
-            }} />
+            pb: { xs: 1.5, sm: 2, md: 2.5 },
+            borderBottom: '2px solid',
+            borderColor: 'secondary.main',
+            flexWrap: 'wrap',
+            gap: { xs: 1, sm: 2 }
+          }}
+        >
+          <Typography
+            variant='h6'
+            fontWeight={700}
+            sx={{
+              color: 'secondary.main',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5,
+              fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' }
+            }}
+          >
+            <Box
+              sx={{
+                width: 4,
+                height: 24,
+                bgcolor: 'secondary.main',
+                borderRadius: 2
+              }}
+            />
             Multiple Choice Question
           </Typography>
           {questionObj?.mediaType && (
-            <Chip 
+            <Chip
               label={questionObj.mediaType.replace('-', ' + ')}
-              size="small"
-              sx={{ 
+              size='small'
+              sx={{
                 bgcolor: 'secondary.main',
                 color: 'white',
                 fontWeight: 600,
-                fontSize: '0.75rem'
+                fontSize: { xs: '0.6875rem', sm: '0.75rem' }
               }}
             />
           )}
@@ -402,10 +452,18 @@ export const MultipleChoiceTemplate = ({ question }) => {
 
         {/* Options */}
         <Box>
-          <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2.5, color: 'text.primary' }}>
+          <Typography
+            variant='subtitle1'
+            fontWeight={600}
+            sx={{
+              mb: 2.5,
+              color: 'text.primary',
+              fontSize: { xs: '0.9375rem', sm: '1rem', md: '1.125rem' }
+            }}
+          >
             Answer Options (Select all that apply)
           </Typography>
-          <Grid container spacing={2.5}>
+          <Grid container spacing={{ xs: 2, sm: 2.5 }}>
             {question?.data?.options.map((option, index) => {
               const optionLabels = ['A', 'B', 'C', 'D', 'E', 'F']
               return (
@@ -494,32 +552,50 @@ export const MultipleChoiceTemplate = ({ question }) => {
                       )}
                     </Box>
                     
-                    {/* Content */}
-                    <Box sx={{ p: 2, flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      {option.mediaType === 'image' && option.image ? (
-                        <Box
-                          component='img'
-                          src={option.image}
-                          alt={option.text}
-                          sx={{
-                            width: '100%',
-                            height: '120px',
-                            objectFit: 'cover',
-                            borderRadius: 1.5,
-                            border: '1px solid',
-                            borderColor: 'divider'
-                          }}
-                        />
-                      ) : (
-                        <Typography variant='body1' fontWeight={500} sx={{ 
-                          color: 'text.primary',
-                          lineHeight: 1.6,
-                          textAlign: 'center'
-                        }}>
-                          {option.text}
-                        </Typography>
-                      )}
-                    </Box>
+                      {/* Content */}
+                      <Box
+                        sx={{
+                          p: { xs: 1.5, sm: 2 },
+                          flexGrow: 1,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          minHeight: { xs: 80, sm: 100 }
+                        }}
+                      >
+                        {option.mediaType === 'image' && option.image ? (
+                          <Box
+                            component='img'
+                            src={option.image}
+                            alt={option.text}
+                            sx={{
+                              width: '100%',
+                              height: { xs: '100px', sm: '120px' },
+                              objectFit: 'cover',
+                              borderRadius: 1.5,
+                              border: '1px solid',
+                              borderColor: 'divider'
+                            }}
+                          />
+                        ) : (
+                          <Typography
+                            variant='body1'
+                            fontWeight={500}
+                            sx={{
+                              color: 'text.primary',
+                              lineHeight: 1.6,
+                              textAlign: 'center',
+                              fontSize: { xs: '0.875rem', sm: '0.9375rem', md: '1rem' },
+                              wordWrap: 'break-word',
+                              overflowWrap: 'break-word',
+                              whiteSpace: 'normal',
+                              width: '100%'
+                            }}
+                          >
+                            {option.text}
+                          </Typography>
+                        )}
+                      </Box>
                   </Box>
                 </Grid>
               )
@@ -534,74 +610,105 @@ export const MultipleChoiceTemplate = ({ question }) => {
 export const TrueOrFalseTemplate = ({ question }) => {
   const questionObj = question?.data?.question
   const theme = useTheme()
+  const isDarkMode = theme.palette.mode === 'dark'
   
   return (
-    <CardContent sx={{ p: 4, bgcolor: 'background.default' }}>
+    <CardContent sx={{ p: { xs: 2, sm: 3, md: 4 }, bgcolor: 'background.default' }}>
       <Stack spacing={4}>
         {/* Header */}
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          pb: 2.5,
-          borderBottom: '2px solid',
-          borderColor: 'info.main'
-        }}>
-          <Typography variant="h6" fontWeight={700} sx={{ 
-            color: 'info.main',
+        <Box
+          sx={{
             display: 'flex',
+            justifyContent: 'space-between',
             alignItems: 'center',
-            gap: 1.5
-          }}>
-            <Box sx={{ 
-              width: 4, 
-              height: 24, 
-              bgcolor: 'info.main',
-              borderRadius: 2
-            }} />
+            pb: { xs: 1.5, sm: 2, md: 2.5 },
+            borderBottom: '2px solid',
+            borderColor: 'info.main',
+            flexWrap: 'wrap',
+            gap: { xs: 1, sm: 2 }
+          }}
+        >
+          <Typography
+            variant='h6'
+            fontWeight={700}
+            sx={{
+              color: 'info.main',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5,
+              fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' }
+            }}
+          >
+            <Box
+              sx={{
+                width: 4,
+                height: 24,
+                bgcolor: 'info.main',
+                borderRadius: 2
+              }}
+            />
             True / False Question
           </Typography>
           {questionObj?.mediaType && (
-            <Chip 
+            <Chip
               label={questionObj.mediaType.replace('-', ' + ')}
-              size="small"
-              sx={{ 
+              size='small'
+              sx={{
                 bgcolor: 'info.main',
                 color: 'white',
                 fontWeight: 600,
-                fontSize: '0.75rem'
+                fontSize: { xs: '0.6875rem', sm: '0.75rem' }
               }}
             />
           )}
         </Box>
 
         {/* Question Content */}
-        <Box sx={{
-          p: 3,
-          borderRadius: 2,
-          bgcolor: 'background.paper',
-          border: '1px solid',
-          borderColor: 'divider',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
-        }}>
+        <Box
+          sx={{
+            p: { xs: 2, sm: 2.5, md: 3 },
+            borderRadius: 2,
+            bgcolor: 'background.paper',
+            border: '1px solid',
+            borderColor: 'divider',
+            boxShadow: isDarkMode
+              ? `0 2px 8px ${alpha(theme.palette.common.black, 0.3)}`
+              : `0 2px 8px ${alpha(theme.palette.common.black, 0.04)}`
+          }}
+        >
           {(questionObj?.mediaType === 'text' ||
             questionObj?.mediaType === 'text-image' ||
             questionObj?.mediaType === 'text-video') && (
-            <Typography 
-              variant='h5' 
+            <Typography
+              variant='h5'
               fontWeight={600}
-              sx={{ 
+              sx={{
                 color: questionObj?.text?.trim() ? 'text.primary' : 'error.main',
                 lineHeight: 1.7,
-                mb: questionObj?.image || questionObj?.video ? 3 : 0
+                mb: questionObj?.image || questionObj?.video ? 3 : 0,
+                fontSize: { xs: '1rem', sm: '1.125rem', md: '1.5rem' },
+                wordWrap: 'break-word',
+                overflowWrap: 'break-word',
+                whiteSpace: 'normal'
               }}
             >
               {questionObj?.text?.trim() || '* Question is not completed'}
             </Typography>
           )}
-          
+
           {questionObj?.mediaType === 'video' && (
-            <Typography variant='h5' fontWeight={600} sx={{ color: 'text.primary', mb: 3 }}>
+            <Typography
+              variant='h5'
+              fontWeight={600}
+              sx={{
+                color: 'text.primary',
+                mb: 3,
+                fontSize: { xs: '1rem', sm: '1.125rem', md: '1.5rem' },
+                wordWrap: 'break-word',
+                overflowWrap: 'break-word',
+                whiteSpace: 'normal'
+              }}
+            >
               Watch the video carefully and answer the question.
             </Typography>
           )}
@@ -626,23 +733,36 @@ export const TrueOrFalseTemplate = ({ question }) => {
           )}
           
           {(questionObj?.mediaType === 'video' || questionObj?.mediaType === 'text-video') && questionObj?.video && (
-            <Box sx={{ 
-              p: 2, 
-              bgcolor: 'grey.50', 
-              borderRadius: 2, 
-              border: '2px solid', 
-              borderColor: 'divider',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
-            }}>
+            <Box
+              sx={{
+                p: 2,
+                bgcolor: isDarkMode
+                  ? alpha(theme.palette.background.paper, 0.5)
+                  : alpha(theme.palette.grey[50], 0.8),
+                borderRadius: 2,
+                border: '2px solid',
+                borderColor: 'divider',
+                boxShadow: isDarkMode
+                  ? `0 2px 8px ${alpha(theme.palette.common.black, 0.3)}`
+                  : `0 2px 8px ${alpha(theme.palette.common.black, 0.06)}`
+              }}
+            >
               <VideoAd url={questionObj.video || ''} showPause autoPlay={false} />
               <Box sx={{ mt: 1.5, textAlign: 'center' }}>
                 <ImagePopup imageUrl={questionObj.video || ''} mediaType={'video'} />
               </Box>
             </Box>
           )}
-          
+
           {!questionObj && (
-            <Typography variant='h5' color='error.main' fontWeight={600}>
+            <Typography
+              variant='h5'
+              color='error.main'
+              fontWeight={600}
+              sx={{
+                fontSize: { xs: '1rem', sm: '1.125rem', md: '1.5rem' }
+              }}
+            >
               * Question is not completed!
             </Typography>
           )}
@@ -650,11 +770,19 @@ export const TrueOrFalseTemplate = ({ question }) => {
 
         {/* Options */}
         <Box>
-          <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2.5, color: 'text.primary' }}>
+          <Typography
+            variant='subtitle1'
+            fontWeight={600}
+            sx={{
+              mb: 2.5,
+              color: 'text.primary',
+              fontSize: { xs: '0.9375rem', sm: '1rem', md: '1.125rem' }
+            }}
+          >
             Answer Options
           </Typography>
           <RadioGroup>
-            <Grid container spacing={3}>
+            <Grid container spacing={{ xs: 2, sm: 3 }}>
               {question?.data?.options.map((option, index) => (
                 <Grid item xs={12} sm={6} key={option.id}>
                   <Box
@@ -711,20 +839,31 @@ export const TrueOrFalseTemplate = ({ question }) => {
                     </Box>
                     
                     {/* Text Section */}
-                    <Box sx={{ p: 2.5, flex: 1 }}>
+                    <Box sx={{ p: { xs: 1.5, sm: 2, md: 2.5 }, flex: 1 }}>
                       <Stack spacing={1}>
-                        <Typography variant='h5' fontWeight={600} sx={{ color: 'text.primary' }}>
+                        <Typography
+                          variant='h5'
+                          fontWeight={600}
+                          sx={{
+                            color: 'text.primary',
+                            fontSize: { xs: '1rem', sm: '1.125rem', md: '1.5rem' },
+                            wordWrap: 'break-word',
+                            overflowWrap: 'break-word',
+                            whiteSpace: 'normal',
+                            lineHeight: 1.6
+                          }}
+                        >
                           {option.text}
                         </Typography>
                         {option.correct && (
-                          <Chip 
-                            label="✓ Correct Answer" 
-                            size="small"
+                          <Chip
+                            label='✓ Correct Answer'
+                            size='small'
                             sx={{
                               bgcolor: 'success.main',
                               color: 'white',
                               fontWeight: 700,
-                              fontSize: '0.7rem',
+                              fontSize: { xs: '0.65rem', sm: '0.7rem' },
                               height: 24,
                               width: 'fit-content',
                               '& .MuiChip-label': { px: 1.5 }
@@ -747,78 +886,106 @@ export const TrueOrFalseTemplate = ({ question }) => {
 export const FillInTheBlanksTemplate = ({ question }) => {
   const questionObj = question?.data?.question
   const theme = useTheme()
+  const isDarkMode = theme.palette.mode === 'dark'
   const blankCount = questionObj?.filter(p => p.type === 'blank').length || 0
 
   return (
-    <CardContent sx={{ p: 4, bgcolor: 'background.default' }}>
+    <CardContent sx={{ p: { xs: 2, sm: 3, md: 4 }, bgcolor: 'background.default' }}>
       <Stack spacing={4}>
         {/* Header */}
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          pb: 2.5,
-          borderBottom: '2px solid',
-          borderColor: 'warning.main'
-        }}>
-          <Typography variant="h6" fontWeight={700} sx={{ 
-            color: 'warning.main',
+        <Box
+          sx={{
             display: 'flex',
+            justifyContent: 'space-between',
             alignItems: 'center',
-            gap: 1.5
-          }}>
-            <Box sx={{ 
-              width: 4, 
-              height: 24, 
-              bgcolor: 'warning.main',
-              borderRadius: 2
-            }} />
+            pb: { xs: 1.5, sm: 2, md: 2.5 },
+            borderBottom: '2px solid',
+            borderColor: 'warning.main',
+            flexWrap: 'wrap',
+            gap: { xs: 1, sm: 2 }
+          }}
+        >
+          <Typography
+            variant='h6'
+            fontWeight={700}
+            sx={{
+              color: 'warning.main',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5,
+              fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' }
+            }}
+          >
+            <Box
+              sx={{
+                width: 4,
+                height: 24,
+                bgcolor: 'warning.main',
+                borderRadius: 2
+              }}
+            />
             Fill in the Blanks Question
           </Typography>
-          <Chip 
+          <Chip
             label={`${blankCount} Blank${blankCount !== 1 ? 's' : ''}`}
-            size="small"
-            sx={{ 
+            size='small'
+            sx={{
               bgcolor: 'warning.main',
               color: 'white',
               fontWeight: 600,
-              fontSize: '0.75rem'
+              fontSize: { xs: '0.6875rem', sm: '0.75rem' }
             }}
           />
         </Box>
 
         {/* Question Content */}
-        <Box sx={{
-          p: 3.5,
-          borderRadius: 2,
-          bgcolor: 'background.paper',
-          border: '1px solid',
-          borderColor: 'divider',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
-        }}>
+        <Box
+          sx={{
+            p: { xs: 2, sm: 2.5, md: 3.5 },
+            borderRadius: 2,
+            bgcolor: 'background.paper',
+            border: '1px solid',
+            borderColor: 'divider',
+            boxShadow: isDarkMode
+              ? `0 2px 8px ${alpha(theme.palette.common.black, 0.3)}`
+              : `0 2px 8px ${alpha(theme.palette.common.black, 0.04)}`
+          }}
+        >
           {questionObj?.length === 0 ? (
-            <Typography variant='h5' color='error.main' fontWeight={600}>
+            <Typography
+              variant='h5'
+              color='error.main'
+              fontWeight={600}
+              sx={{
+                fontSize: { xs: '1rem', sm: '1.125rem', md: '1.5rem' }
+              }}
+            >
               * Question is not completed
             </Typography>
           ) : (
-            <Box sx={{ 
-              display: 'flex', 
-              flexWrap: 'wrap', 
-              gap: 1.5, 
-              alignItems: 'center',
-              lineHeight: 2.5
-            }}>
+            <Box
+              sx={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: { xs: 1, sm: 1.5 },
+                alignItems: 'center',
+                lineHeight: { xs: 2, sm: 2.5 }
+              }}
+            >
               {questionObj?.map((part, index) => (
                 <Box key={part.id} sx={{ display: 'inline-flex', alignItems: 'center' }}>
                   {part.type === 'text' ? (
-                    <Typography 
-                      variant='h5' 
-                      component='span' 
+                    <Typography
+                      variant='h5'
+                      component='span'
                       fontWeight={500}
-                      sx={{ 
+                      sx={{
                         color: part.content.trim() ? 'text.primary' : 'error.main',
                         lineHeight: 1.8,
-                        fontSize: '1.3rem'
+                        fontSize: { xs: '1rem', sm: '1.125rem', md: '1.3rem' },
+                        wordWrap: 'break-word',
+                        overflowWrap: 'break-word',
+                        whiteSpace: 'normal'
                       }}
                     >
                       {part.content.trim() || '* Empty text'}
@@ -828,40 +995,51 @@ export const FillInTheBlanksTemplate = ({ question }) => {
                       sx={{
                         display: 'inline-flex',
                         alignItems: 'center',
-                        px: 2.5,
-                        py: 1,
+                        px: { xs: 1.5, sm: 2, md: 2.5 },
+                        py: { xs: 0.75, sm: 1 },
                         borderRadius: 1.5,
-                        bgcolor: part.content.trim() 
-                          ? alpha(theme.palette.warning.main, 0.1)
-                          : alpha(theme.palette.error.main, 0.1),
+                        bgcolor: part.content.trim()
+                          ? isDarkMode
+                            ? alpha(theme.palette.warning.main, 0.15)
+                            : alpha(theme.palette.warning.main, 0.1)
+                          : isDarkMode
+                            ? alpha(theme.palette.error.main, 0.15)
+                            : alpha(theme.palette.error.main, 0.1),
                         border: '2px solid',
-                        borderColor: part.content.trim()
-                          ? 'warning.main'
-                          : 'error.main',
-                        minWidth: 120,
+                        borderColor: part.content.trim() ? 'warning.main' : 'error.main',
+                        minWidth: { xs: 80, sm: 100, md: 120 },
                         boxShadow: part.content.trim()
                           ? `0 2px 8px ${alpha(theme.palette.warning.main, 0.2)}`
                           : `0 2px 8px ${alpha(theme.palette.error.main, 0.15)}`,
                         position: 'relative',
-                        '&::after': part.content.trim() ? {
-                          content: '""',
-                          position: 'absolute',
-                          bottom: -2,
-                          left: '50%',
-                          transform: 'translateX(-50%)',
-                          width: '70%',
-                          height: 2,
-                          bgcolor: 'warning.main',
-                          borderRadius: 1
-                        } : {}
+                        '&::after': part.content.trim()
+                          ? {
+                              content: '""',
+                              position: 'absolute',
+                              bottom: -2,
+                              left: '50%',
+                              transform: 'translateX(-50%)',
+                              width: '70%',
+                              height: 2,
+                              bgcolor: 'warning.main',
+                              borderRadius: 1
+                            }
+                          : {}
                       }}
                     >
-                      <Typography 
-                        variant='h6' 
+                      <Typography
+                        variant='h6'
                         fontWeight={700}
-                        sx={{ 
-                          color: part.content.trim() ? 'warning.dark' : 'error.main',
-                          fontSize: '1.1rem'
+                        sx={{
+                          color: part.content.trim()
+                            ? isDarkMode
+                              ? theme.palette.warning.light
+                              : theme.palette.warning.dark
+                            : 'error.main',
+                          fontSize: { xs: '0.9375rem', sm: '1rem', md: '1.1rem' },
+                          wordWrap: 'break-word',
+                          overflowWrap: 'break-word',
+                          whiteSpace: 'normal'
                         }}
                       >
                         {part.content.trim() || '______'}
@@ -875,20 +1053,48 @@ export const FillInTheBlanksTemplate = ({ question }) => {
         </Box>
 
         {/* Info */}
-        <Box sx={{ 
-          p: 2.5, 
-          borderRadius: 2, 
-          bgcolor: alpha(theme.palette.info.main, 0.06),
-          border: '1px solid',
-          borderColor: alpha(theme.palette.info.main, 0.25),
-          boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
-        }}>
-          <Typography variant="body1" sx={{ color: 'info.dark', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Box component="span" sx={{ fontSize: '1.2rem' }}>💡</Box>
-            Players will need to fill in the <Box component="span" sx={{ 
-              fontWeight: 700, 
-              color: 'warning.main'
-            }}>highlighted blanks</Box> with correct answers.
+        <Box
+          sx={{
+            p: { xs: 2, sm: 2.5 },
+            borderRadius: 2,
+            bgcolor: isDarkMode
+              ? alpha(theme.palette.info.main, 0.1)
+              : alpha(theme.palette.info.main, 0.06),
+            border: '1px solid',
+            borderColor: isDarkMode
+              ? alpha(theme.palette.info.main, 0.3)
+              : alpha(theme.palette.info.main, 0.25),
+            boxShadow: isDarkMode
+              ? `0 2px 8px ${alpha(theme.palette.common.black, 0.3)}`
+              : `0 2px 8px ${alpha(theme.palette.common.black, 0.04)}`
+          }}
+        >
+          <Typography
+            variant='body1'
+            sx={{
+              color: isDarkMode ? theme.palette.info.light : theme.palette.info.dark,
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              fontSize: { xs: '0.875rem', sm: '0.9375rem', md: '1rem' },
+              flexWrap: 'wrap'
+            }}
+          >
+            <Box component='span' sx={{ fontSize: { xs: '1rem', sm: '1.2rem' } }}>
+              💡
+            </Box>
+            Players will need to fill in the{' '}
+            <Box
+              component='span'
+              sx={{
+                fontWeight: 700,
+                color: 'warning.main'
+              }}
+            >
+              highlighted blanks
+            </Box>{' '}
+            with correct answers.
           </Typography>
         </Box>
       </Stack>

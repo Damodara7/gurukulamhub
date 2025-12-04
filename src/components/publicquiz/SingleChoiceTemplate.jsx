@@ -32,14 +32,16 @@ const SingleChoiceTemplate = ({ question, selectedAnswer, onAnswerSelect, readOn
       sx={{
         borderRadius: { xs: 3, md: 3.5 },
         overflow: 'hidden',
+        width: '100%',
+        maxWidth: '100%',
         border: `1px solid ${alpha(theme.palette.primary.main, isDarkMode ? 0.25 : 0.08)}`,
         background: alpha(theme.palette.background.paper, 0.92),
         boxShadow: isDarkMode ? '0 20px 44px rgba(0,0,0,0.3)' : '0 20px 44px rgba(15, 23, 42, 0.14)'
       }}
     >
-      <CardContent sx={{ p: { xs: 3, md: 4 } }}>
-        <Stack spacing={3}>
-          <Stack spacing={1.5} alignItems='center' textAlign='center'>
+      <CardContent sx={{ p: { xs: 3, md: 4 }, width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
+        <Stack spacing={3} sx={{ width: '100%', maxWidth: '100%' }}>
+          <Stack spacing={1.5} alignItems='flex-start' sx={{ width: '100%', maxWidth: '100%' }}>
             {(questionObj?.mediaType === 'text' ||
               questionObj?.mediaType === 'text-image' ||
               questionObj?.mediaType === 'text-video') && (
@@ -47,7 +49,16 @@ const SingleChoiceTemplate = ({ question, selectedAnswer, onAnswerSelect, readOn
                 variant='h5'
                 sx={{
                   fontWeight: 800,
-                  letterSpacing: '-0.015em'
+                  letterSpacing: '-0.015em',
+                  fontSize: { xs: '1.125rem', sm: '1.25rem', md: '1.5rem' },
+                  color: 'text.primary',
+                  width: '100%',
+                  maxWidth: '100%',
+                  wordWrap: 'break-word',
+                  overflowWrap: 'break-word',
+                  whiteSpace: 'normal',
+                  lineHeight: 1.5,
+                  textAlign: 'left'
                 }}
               >
                 {questionObj?.text}
@@ -55,7 +66,17 @@ const SingleChoiceTemplate = ({ question, selectedAnswer, onAnswerSelect, readOn
             )}
 
             {questionObj?.mediaType === 'video' && (
-              <Typography variant='subtitle1' sx={{ color: alpha(theme.palette.text.primary, 0.75), fontWeight: 600 }}>
+              <Typography
+                variant='subtitle1'
+                sx={{
+                  color: alpha(theme.palette.text.primary, 0.75),
+                  fontWeight: 600,
+                  fontSize: { xs: '0.9375rem', sm: '1rem', md: '1.125rem' },
+                  wordWrap: 'break-word',
+                  overflowWrap: 'break-word',
+                  whiteSpace: 'normal'
+                }}
+              >
                 Watch the video carefully and answer the question.
               </Typography>
             )}
@@ -89,208 +110,191 @@ const SingleChoiceTemplate = ({ question, selectedAnswer, onAnswerSelect, readOn
             onChange={e => handleOptionSelect(question._id, e.target.value)}
             sx={{ width: '100%' }}
           >
-            <Grid
-              container
-              spacing={{ xs: 2.2, md: 3 }}
-              justifyContent='center'
-              sx={{ mx: 'auto', width: '100%' }}
-            >
+            <Stack spacing={{ xs: 2, sm: 2.5, md: 3 }} sx={{ width: '100%' }}>
               {question.data.options.map((option, index) => {
                 const isSelected = selectedAnswer === option.id
                 const optionLabel = String.fromCharCode(65 + index)
-                const indicatorStyles = {
-                  mx: 1.5,
-                  mt: 0.5,
-                  alignSelf: { xs: 'center', sm: 'flex-start' },
-                  color: isSelected ? theme.palette.primary.main : alpha(theme.palette.primary.dark, 0.65),
-                  '&.Mui-checked': {
-                    color: theme.palette.primary.main
-                  },
-                  '& .MuiSvgIcon-root': {
-                    fontSize: 26,
-                    filter: isSelected ? 'drop-shadow(0px 6px 14px rgba(15,23,42,0.25))' : 'none'
-                  }
-                }
 
                 return (
-                  <Grid item xs={12} md={6} key={option.id} sx={{ display: 'flex' }}>
-                    <Box
-                      onClick={() => handleOptionSelect(question?._id, option.id)}
-                      sx={{
-                        position: 'relative',
-                        flexGrow: 1,
-                        borderRadius: { xs: 3, md: 3.8 },
-                        p: { xs: 2, sm: 2.4, md: 3 },
-                        border: `1px solid ${alpha(theme.palette.primary.main, isSelected ? (isDarkMode ? 0.45 : 0.3) : isDarkMode ? 0.25 : 0.14)}`,
-                        background: isSelected
-                          ? `linear-gradient(140deg, ${alpha(theme.palette.primary.main, isDarkMode ? 0.4 : 0.32)}, ${alpha(
-                              theme.palette.secondary.main,
-                              isDarkMode ? 0.3 : 0.25
+                  <Box
+                    key={option.id}
+                    onClick={() => handleOptionSelect(question?._id, option.id)}
+                    sx={{
+                      position: 'relative',
+                      width: '100%',
+                      borderRadius: { xs: 2.5, md: 3 },
+                      p: { xs: 2, sm: 2.5, md: 3 },
+                      border: `2px solid ${alpha(
+                        theme.palette.primary.main,
+                        isSelected ? (isDarkMode ? 0.5 : 0.4) : isDarkMode ? 0.25 : 0.15
+                      )}`,
+                      background: isSelected
+                        ? `linear-gradient(140deg, ${alpha(theme.palette.primary.main, isDarkMode ? 0.4 : 0.32)}, ${alpha(
+                            theme.palette.secondary.main,
+                            isDarkMode ? 0.3 : 0.25
+                          )})`
+                        : isDarkMode
+                          ? `linear-gradient(150deg, ${alpha(theme.palette.primary.dark, 0.15)}, ${alpha(
+                              theme.palette.background.paper,
+                              0.9
                             )})`
-                          : isDarkMode
-                            ? `linear-gradient(150deg, ${alpha(theme.palette.primary.dark, 0.2)}, ${alpha(
-                                theme.palette.background.paper,
-                                0.95
-                              )})`
-                            : `linear-gradient(150deg, ${alpha(theme.palette.primary.light, 0.18)}, ${alpha(
-                                theme.palette.common.white,
-                                0.95
-                              )})`,
-                        transition:
-                          'transform 0.3s ease, border-color 0.24s ease, box-shadow 0.3s ease, background 0.3s ease',
-                        cursor: readOnly ? 'default' : 'pointer',
-                        pointerEvents: readOnly ? 'none' : 'auto',
-                        minHeight: { xs: 92, sm: 108, md: 122 },
-                        display: 'flex',
-                        alignItems: 'stretch',
-                        boxShadow: isSelected
-                          ? isDarkMode
-                            ? '0 32px 74px rgba(0,0,0,0.4)'
-                            : '0 32px 74px rgba(15, 23, 42, 0.28)'
-                          : isDarkMode
-                            ? '0 22px 48px rgba(0,0,0,0.2)'
-                            : '0 22px 48px rgba(15, 23, 42, 0.14)',
-                        '&:hover': {
-                          transform: readOnly ? 'none' : 'translateY(-10px)',
-                          boxShadow: readOnly
-                            ? '0 22px 48px rgba(15, 23, 42, 0.14)'
-                            : '0 38px 86px rgba(15, 23, 42, 0.3)',
-                          borderColor: alpha(theme.palette.primary.main, 0.32),
-                          background: readOnly
-                            ? undefined
-                            : `linear-gradient(140deg, ${alpha(theme.palette.primary.main, 0.24)}, ${alpha(
-                                theme.palette.secondary.main,
-                                0.2
-                              )})`
-                        },
-                        '&::before': {
-                          content: '""',
-                          position: 'absolute',
-                          inset: 0,
-                          borderRadius: 'inherit',
-                          background: isSelected
-                            ? `linear-gradient(160deg, ${alpha(theme.palette.common.white, 0.22)}, transparent 60%)`
-                            : `radial-gradient(circle at top left, ${alpha(
-                                theme.palette.primary.light,
-                                0.24
-                              )}, transparent 55%)`,
-                          pointerEvents: 'none',
-                          opacity: 0.9
-                        },
-                        '&::after': {
-                          content: '""',
-                          position: 'absolute',
-                          inset: 1,
-                          borderRadius: 'inherit',
-                          border: `1px solid ${alpha(theme.palette.common.white, isSelected ? 0.38 : 0.15)}`,
-                          pointerEvents: 'none',
-                          opacity: 0.5
-                        }
-                      }}
-                    >
-                      <FormControlLabel
+                          : `linear-gradient(150deg, ${alpha(theme.palette.primary.light, 0.12)}, ${alpha(
+                              theme.palette.common.white,
+                              0.95
+                            )})`,
+                      transition: 'transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease',
+                      cursor: readOnly ? 'default' : 'pointer',
+                      pointerEvents: readOnly ? 'none' : 'auto',
+                      boxShadow: isSelected
+                        ? isDarkMode
+                          ? `0 8px 24px ${alpha(theme.palette.common.black, 0.4)}`
+                          : `0 8px 24px ${alpha(theme.palette.primary.main, 0.25)}`
+                        : isDarkMode
+                          ? `0 4px 12px ${alpha(theme.palette.common.black, 0.3)}`
+                          : `0 4px 12px ${alpha(theme.palette.common.black, 0.08)}`,
+                      '&:hover': readOnly
+                        ? {}
+                        : {
+                            transform: 'translateY(-4px)',
+                            boxShadow: isDarkMode
+                              ? `0 12px 32px ${alpha(theme.palette.common.black, 0.5)}`
+                              : `0 12px 32px ${alpha(theme.palette.primary.main, 0.3)}`,
+                            borderColor: alpha(theme.palette.primary.main, 0.5)
+                          }
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: { xs: 1.5, sm: 2 }, width: '100%' }}>
+                      {/* Radio Button */}
+                      <Radio
+                        checked={isSelected}
                         value={option.id}
-                        control={<Radio disableRipple sx={indicatorStyles} />}
-                        label={
-                          <Stack spacing={1.2} sx={{ flexGrow: 1, position: 'relative', zIndex: 1 }}>
-                            <Box
-                              sx={{
-                                display: 'grid',
-                                gridTemplateColumns: 'auto 1fr auto',
-                                alignItems: 'center',
-                                columnGap: 12,
-                                rowGap: 10,
-                                minWidth: 0
-                              }}
-                            >
-                              <Stack direction='row' spacing={1} alignItems='center'>
-                                <Box
-                                  sx={{
-                                    width: { xs: 38, md: 44 },
-                                    height: { xs: 38, md: 44 },
-                                    borderRadius: { xs: 3.2, md: 3.8 },
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    fontWeight: 700,
-                                    fontSize: { xs: '0.95rem', md: '1.05rem' },
-                                    background: isSelected
-                                      ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.4)}, ${alpha(
-                                          theme.palette.secondary.main,
-                                          0.3
-                                        )})`
-                                      : alpha(theme.palette.primary.main, 0.14),
-                                    color: isSelected ? theme.palette.primary.contrastText : theme.palette.primary.main,
-                                    boxShadow: isSelected ? '0 18px 32px rgba(15, 23, 42, 0.22)' : 'none'
-                                  }}
-                                >
-                                  {optionLabel}
-                                </Box>
-
-                                <Stack spacing={0.35} sx={{ minWidth: 0 }}>
-                                  {option.mediaType === 'text' && option.text && (
-                                    <Typography
-                                      variant='body1'
-                                      sx={{
-                                        fontWeight: 700,
-                                    color: isSelected ? alpha(theme.palette.common.white, 0.95) : theme.palette.text.primary,
-                                    fontSize: { xs: '0.96rem', md: '1.08rem' },
-                                        lineHeight: 1.32
-                                      }}
-                                    >
-                                      {option.text}
-                                    </Typography>
-                                  )}
-                                </Stack>
-                              </Stack>
-
-                              <Stack alignItems='flex-end'>
-                                {isSelected && (
-                                  <Chip
-                                    size='small'
-                                    label='Selected'
-                                    sx={{
-                                      borderRadius: 999,
-                                      fontWeight: 600,
-                                      bgcolor: alpha(theme.palette.success.light, 1),
-                                      color: 'white',
-                                    }}
-                                  />
-                                )}
-                              </Stack>
-                            </Box>
-
-                            {option.mediaType === 'image' && option.image && (
-                              <Box
-                                component='img'
-                                src={option.image}
-                                alt={option.text}
-                                sx={{
-                                  width: '100%',
-                                  maxHeight: { xs: 180, md: 220 },
-                                  objectFit: 'cover',
-                                  borderRadius: 2.5,
-                                  border: `1px solid ${alpha(theme.palette.common.white, isSelected ? 0.32 : 0.14)}`,
-                                  boxShadow: '0 18px 44px rgba(15, 23, 42, 0.2)'
-                                }}
-                              />
-                            )}
-                          </Stack>
-                        }
+                        disableRipple
                         sx={{
-                          alignItems: 'flex-start',
-                          width: '100%',
-                          m: 0,
-                          py: 0,
-                          pr: { xs: 1, md: 1.5 },
-                          gap: 2
+                          mt: -0.5,
+                          p: 0.5,
+                          color: isSelected ? theme.palette.primary.main : alpha(theme.palette.primary.dark, 0.65),
+                          '&.Mui-checked': {
+                            color: theme.palette.primary.main
+                          },
+                          '& .MuiSvgIcon-root': {
+                            fontSize: { xs: 24, sm: 26 },
+                            filter: isSelected
+                              ? `drop-shadow(0px 4px 10px ${alpha(theme.palette.primary.main, 0.3)})`
+                              : 'none'
+                          }
                         }}
                       />
+
+                      {/* Content */}
+                      <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                        {/* Option Label and Text */}
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: { xs: 1, sm: 1.5 },
+                            width: '100%',
+                            flexWrap: 'wrap'
+                          }}
+                        >
+                          {/* Label Badge */}
+                          <Box
+                            sx={{
+                              width: { xs: 36, sm: 40, md: 44 },
+                              height: { xs: 36, sm: 40, md: 44 },
+                              borderRadius: { xs: 2, md: 2.5 },
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontWeight: 700,
+                              fontSize: { xs: '0.9375rem', sm: '1rem', md: '1.125rem' },
+                              flexShrink: 0,
+                              background: isSelected
+                                ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.9)}, ${alpha(
+                                    theme.palette.secondary.main,
+                                    0.8
+                                  )})`
+                                : isDarkMode
+                                  ? alpha(theme.palette.primary.main, 0.25)
+                                  : alpha(theme.palette.primary.main, 0.15),
+                              color: isSelected
+                                ? theme.palette.primary.contrastText
+                                : isDarkMode
+                                  ? theme.palette.primary.light
+                                  : theme.palette.primary.main,
+                              boxShadow: isSelected
+                                ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`
+                                : 'none'
+                            }}
+                          >
+                            {optionLabel}
+                          </Box>
+
+                          {/* Option Text */}
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            {option.mediaType === 'text' && option.text && (
+                              <Typography
+                                variant='body1'
+                                sx={{
+                                  fontWeight: 600,
+                                  color: isSelected
+                                    ? isDarkMode
+                                      ? theme.palette.common.white
+                                      : alpha(theme.palette.common.white, 0.98)
+                                    : theme.palette.text.primary,
+                                  fontSize: { xs: '0.875rem', sm: '0.9375rem', md: '1rem' },
+                                  lineHeight: 1.6,
+                                  wordWrap: 'break-word',
+                                  overflowWrap: 'break-word',
+                                  whiteSpace: 'normal',
+                                  width: '100%'
+                                }}
+                              >
+                                {option.text}
+                              </Typography>
+                            )}
+                          </Box>
+
+                          {/* Selected Chip */}
+                          {isSelected && (
+                            <Chip
+                              size='small'
+                              label='Selected'
+                              sx={{
+                                borderRadius: 999,
+                                fontWeight: 600,
+                                fontSize: { xs: '0.6875rem', sm: '0.75rem' },
+                                height: { xs: 20, sm: 24 },
+                                bgcolor: theme.palette.success.main,
+                                color: 'white',
+                                boxShadow: `0 2px 8px ${alpha(theme.palette.success.main, 0.3)}`
+                              }}
+                            />
+                          )}
+                        </Box>
+
+                        {/* Image if present */}
+                        {option.mediaType === 'image' && option.image && (
+                          <Box
+                            component='img'
+                            src={option.image}
+                            alt={option.text}
+                            sx={{
+                              width: '100%',
+                              maxHeight: { xs: 160, sm: 180, md: 200 },
+                              objectFit: 'cover',
+                              borderRadius: { xs: 1.5, md: 2 },
+                              border: `1px solid ${alpha(theme.palette.divider, 0.2)}`,
+                              boxShadow: `0 4px 16px ${alpha(theme.palette.common.black, 0.1)}`
+                            }}
+                          />
+                        )}
+                      </Box>
                     </Box>
-                  </Grid>
+                  </Box>
                 )
               })}
-            </Grid>
+            </Stack>
           </RadioGroup>
         </Stack>
       </CardContent>

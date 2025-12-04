@@ -49,6 +49,8 @@ const InsertedVideoQuestions = forwardRef(
     ref
   ) => {
     const [errors, setErrors] = useState({}) // Validation errors state
+    const theme = useTheme()
+    const isDarkMode = theme.palette.mode === 'dark'
 
     const initialQuestionState = {
       type: 'single-choice',

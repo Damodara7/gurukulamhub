@@ -18,6 +18,7 @@ import ImagePopup from '../ImagePopup'
 const TrueFalseTemplate = ({ question, selectedAnswer, onAnswerSelect, readOnly = false }) => {
   const questionObj = question?.data?.question
   const theme = useTheme()
+  const isDarkMode = theme.palette.mode === 'dark'
   const handleOptionSelect = (questionId, optionId) => {
     if (!readOnly && onAnswerSelect) {
       onAnswerSelect(questionId, optionId)
@@ -29,14 +30,20 @@ const TrueFalseTemplate = ({ question, selectedAnswer, onAnswerSelect, readOnly 
       sx={{
         borderRadius: { xs: 3, md: 3.5 },
         overflow: 'hidden',
-        border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
-        background: alpha(theme.palette.background.paper, 0.92),
-        boxShadow: '0 20px 44px rgba(15, 23, 42, 0.14)'
+        width: '100%',
+        maxWidth: '100%',
+        border: `1px solid ${isDarkMode ? alpha(theme.palette.divider, 0.12) : alpha(theme.palette.primary.main, 0.08)}`,
+        background: isDarkMode
+          ? alpha(theme.palette.background.paper, 0.6)
+          : alpha(theme.palette.background.paper, 0.92),
+        boxShadow: isDarkMode
+          ? `0 20px 44px ${alpha(theme.palette.common.black, 0.4)}`
+          : `0 20px 44px ${alpha(theme.palette.common.black, 0.14)}`
       }}
     >
-      <CardContent sx={{ p: { xs: 3, md: 4 } }}>
-        <Stack spacing={3}>
-          <Stack spacing={1.5} alignItems='center' textAlign='center'>
+      <CardContent sx={{ p: { xs: 3, md: 4 }, width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
+        <Stack spacing={3} sx={{ width: '100%', maxWidth: '100%' }}>
+          <Stack spacing={1.5} alignItems='flex-start' sx={{ width: '100%', maxWidth: '100%' }}>
             {(questionObj?.mediaType === 'text' ||
               questionObj?.mediaType === 'text-image' ||
               questionObj?.mediaType === 'text-video') && (
@@ -44,14 +51,33 @@ const TrueFalseTemplate = ({ question, selectedAnswer, onAnswerSelect, readOnly 
                 variant='h5'
                 sx={{
                   fontWeight: 800,
-                  letterSpacing: '-0.015em'
+                  letterSpacing: '-0.015em',
+                  fontSize: { xs: '1.125rem', sm: '1.25rem', md: '1.5rem' },
+                  color: 'text.primary',
+                  width: '100%',
+                  maxWidth: '100%',
+                  wordWrap: 'break-word',
+                  overflowWrap: 'break-word',
+                  whiteSpace: 'normal',
+                  lineHeight: 1.5,
+                  textAlign: 'left'
                 }}
               >
                 {questionObj?.text}
               </Typography>
             )}
             {questionObj?.mediaType === 'video' && (
-              <Typography variant='subtitle1' sx={{ color: alpha(theme.palette.text.primary, 0.75), fontWeight: 600 }}>
+              <Typography
+                variant='subtitle1'
+                sx={{
+                  color: alpha(theme.palette.text.primary, isDarkMode ? 0.8 : 0.75),
+                  fontWeight: 600,
+                  fontSize: { xs: '0.9375rem', sm: '1rem', md: '1.125rem' },
+                  wordWrap: 'break-word',
+                  overflowWrap: 'break-word',
+                  whiteSpace: 'normal'
+                }}
+              >
                 Watch the video carefully and answer the question.
               </Typography>
             )}
@@ -204,16 +230,20 @@ const TrueFalseTemplate = ({ question, selectedAnswer, onAnswerSelect, readOnly 
                             {optionLabel}
                           </Box>
 
-                          <Stack spacing={0.35} sx={{ minWidth: 0 }}>
+                          <Stack spacing={0.35} sx={{ minWidth: 0, flex: 1 }}>
                             {option.mediaType === 'text' && option.text && (
                               <Typography
                                 variant='body1'
-                                noWrap
                                 sx={{
                                   fontWeight: 700,
-                                  color: isSelected ? alpha(theme.palette.common.white, 0.95) : theme.palette.text.primary,
-                                  lineHeight: 1.35,
-                                  fontSize: { xs: '0.95rem', sm: '1.02rem', md: '1.1rem' }
+                                  color: isSelected
+                                    ? alpha(theme.palette.common.white, 0.95)
+                                    : theme.palette.text.primary,
+                                  fontSize: { xs: '0.875rem', sm: '0.95rem', md: '1.1rem' },
+                                  lineHeight: 1.5,
+                                  wordWrap: 'break-word',
+                                  overflowWrap: 'break-word',
+                                  whiteSpace: 'normal'
                                 }}
                               >
                                 {option.text}

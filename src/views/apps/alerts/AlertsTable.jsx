@@ -1,9 +1,6 @@
 'use client'
 
-// React Imports
 import { useEffect, useState, useMemo } from 'react'
-
-// MUI Imports
 import {
   Card,
   CardContent,
@@ -17,11 +14,22 @@ import {
   MenuItem,
   ListItemIcon,
   Stack,
-  ListItemText
+  ListItemText,
+  Box,
+  Paper,
+  InputAdornment,
+  alpha,
+  useTheme,
+  useMediaQuery
 } from '@mui/material'
-
-// MUI Icons
-import { DeleteOutline as DeleteOutlineIcon, Edit as EditIcon, Person as PersonIcon } from '@mui/icons-material'
+import {
+  DeleteOutline as DeleteOutlineIcon,
+  Edit as EditIcon,
+  Person as PersonIcon,
+  Add as AddIcon,
+  Search as SearchIcon,
+  NotificationsActive as NotificationsActiveIcon
+} from '@mui/icons-material'
 
 // Third-party Imports
 import classnames from 'classnames'
@@ -91,32 +99,96 @@ const DebouncedInput = ({ value: initialValue, onChange, debounce = 500, ...prop
 // Column Definitions
 const columnHelper = createColumnHelper()
 
-const ActionsMenu = ({ anchorEl, handleClose, handleAction }) => (
-  <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
-    <MenuItem dense onClick={() => handleAction('delete')}>
+const ActionsMenu = ({ anchorEl, handleClose, handleAction, theme, isDarkMode }) => (
+  <Menu
+    anchorEl={anchorEl}
+    open={Boolean(anchorEl)}
+    onClose={handleClose}
+    PaperProps={{
+      sx: {
+        borderRadius: { xs: 1.5, sm: 2 },
+        minWidth: 180,
+        bgcolor: isDarkMode ? theme.palette.background.paper : 'white',
+        border: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.15 : 0.1)}`,
+        boxShadow: isDarkMode
+          ? `0 8px 24px ${alpha(theme.palette.common.black, 0.4)}`
+          : '0 8px 24px rgba(15, 23, 42, 0.1)'
+      }
+    }}
+  >
+    <MenuItem
+      onClick={() => handleAction('edit')}
+      sx={{
+        py: 1.25,
+        px: 2,
+        fontSize: { xs: '0.9375rem', sm: '1rem' },
+        '&:hover': {
+          bgcolor: alpha(theme.palette.primary.main, 0.08)
+        }
+      }}
+    >
       <ListItemIcon>
-        <DeleteOutlineIcon />
+        <EditIcon sx={{ fontSize: 20, color: theme.palette.primary.main }} />
       </ListItemIcon>
-      <ListItemText primary='Delete' />
+      <ListItemText
+        primary='Edit'
+        primaryTypographyProps={{
+          fontWeight: 600,
+          fontSize: { xs: '0.9375rem', sm: '1rem' }
+        }}
+      />
     </MenuItem>
-    <MenuItem dense onClick={() => handleAction('edit')}>
+    <MenuItem
+      onClick={() => handleAction('users')}
+      sx={{
+        py: 1.25,
+        px: 2,
+        fontSize: { xs: '0.9375rem', sm: '1rem' },
+        '&:hover': {
+          bgcolor: alpha(theme.palette.info.main, 0.08)
+        }
+      }}
+    >
       <ListItemIcon>
-        <EditIcon />
+        <PersonIcon sx={{ fontSize: 20, color: theme.palette.info.main }} />
       </ListItemIcon>
-      <ListItemText primary='Edit' />
+      <ListItemText
+        primary='View Users'
+        primaryTypographyProps={{
+          fontWeight: 600,
+          fontSize: { xs: '0.9375rem', sm: '1rem' }
+        }}
+      />
     </MenuItem>
-    <MenuItem dense onClick={() => handleAction('users')}>
+    <MenuItem
+      onClick={() => handleAction('delete')}
+      sx={{
+        py: 1.25,
+        px: 2,
+        fontSize: { xs: '0.9375rem', sm: '1rem' },
+        '&:hover': {
+          bgcolor: alpha(theme.palette.error.main, 0.08)
+        }
+      }}
+    >
       <ListItemIcon>
-        <PersonIcon />
+        <DeleteOutlineIcon sx={{ fontSize: 20, color: theme.palette.error.main }} />
       </ListItemIcon>
-      <ListItemText primary='Users' />
+      <ListItemText
+        primary='Delete'
+        primaryTypographyProps={{
+          fontWeight: 600,
+          fontSize: { xs: '0.9375rem', sm: '1rem' }
+        }}
+      />
     </MenuItem>
   </Menu>
 )
 
 const AlertsTable = () => {
-  // States
-  // const dispatch = useAppDispatch()
+  const theme = useTheme()
+  const isDarkMode = theme.palette.mode === 'dark'
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
@@ -194,11 +266,33 @@ const AlertsTable = () => {
     () => [
       columnHelper.accessor('name', {
         header: 'Title',
-        cell: ({ row }) => <Typography color='text.primary'>{row.original.name}</Typography>
+        cell: ({ row }) => (
+          <Typography
+            fontWeight={600}
+            sx={{
+              color: 'text.primary',
+              fontSize: { xs: '0.875rem', sm: '0.9375rem' }
+            }}
+          >
+            {row.original.name}
+          </Typography>
+        )
       }),
       columnHelper.accessor('alertType', {
         header: 'Alert Type',
-        cell: ({ row }) => <Typography color='text.primary'>{row.original.alertType}</Typography>
+        cell: ({ row }) => (
+          <Chip
+            label={row.original.alertType.replace('_', ' ')}
+            size='small'
+            sx={{
+              bgcolor: alpha(theme.palette.primary.main, isDarkMode ? 0.15 : 0.1),
+              color: theme.palette.primary.main,
+              fontWeight: 600,
+              fontSize: { xs: '0.75rem', sm: '0.8125rem' },
+              borderRadius: { xs: 1, sm: 1.5 }
+            }}
+          />
+        )
       }),
       // columnHelper.accessor('videos', {
       //   header: 'Videos',
@@ -216,24 +310,50 @@ const AlertsTable = () => {
       columnHelper.accessor('createdAt', {
         header: 'Created Date',
         cell: ({ row }) => (
-          <Typography variant='body2'>
-            {new Date(row.original.createdAt).toLocaleDateString('en-GB', {
-              day: '2-digit',
-              month: 'short',
-              year: 'numeric'
-            })}
-            ,{' '}
-            {new Date(row.original.createdAt).toLocaleTimeString('en-US', {
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: true
-            })}
-          </Typography>
+          <Stack spacing={0.25}>
+            <Typography
+              variant='body2'
+              fontWeight={600}
+              sx={{
+                color: 'text.primary',
+                fontSize: { xs: '0.8125rem', sm: '0.875rem' }
+              }}
+            >
+              {new Date(row.original.createdAt).toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+              })}
+            </Typography>
+            <Typography
+              variant='caption'
+              sx={{
+                color: 'text.secondary',
+                fontSize: { xs: '0.75rem', sm: '0.8125rem' }
+              }}
+            >
+              {new Date(row.original.createdAt).toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+              })}
+            </Typography>
+          </Stack>
         )
       }),
       columnHelper.accessor('createdBy', {
         header: 'Created By',
-        cell: ({ row }) => <Typography variant='body2'>{row.original.createdBy}</Typography>
+        cell: ({ row }) => (
+          <Typography
+            variant='body2'
+            sx={{
+              color: 'text.secondary',
+              fontSize: { xs: '0.8125rem', sm: '0.875rem' }
+            }}
+          >
+            {row.original.createdBy}
+          </Typography>
+        )
       }),
       columnHelper.accessor('action', {
         header: 'Actions',
@@ -302,21 +422,132 @@ const AlertsTable = () => {
   }
 
   return (
-    <>
-      <Card>
-        <CardContent className='flex flex-col gap-4 sm:flex-row items-start sm:items-center justify-between'>
-          <DebouncedInput
-            value={globalFilter ?? ''}
-            onChange={value => setGlobalFilter(String(value))}
-            placeholder='Search Alerts'
-            className='is-full sm:is-auto'
-          />
-          <OpenDialogOnElementClick
+    <Box sx={{ width: '100%' }}>
+      {/* Header Section */}
+      <Paper
+        elevation={0}
+        sx={{
+          mb: { xs: 2.5, sm: 3, md: 4 },
+          p: { xs: 2.5, sm: 3, md: 4 },
+          borderRadius: { xs: 2, sm: 3, md: 4 },
+          bgcolor: isDarkMode ? theme.palette.background.paper : 'white',
+          border: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.15 : 0.1)}`,
+          boxShadow: isDarkMode
+            ? `0 2px 12px ${alpha(theme.palette.common.black, 0.3)}`
+            : '0 2px 12px rgba(15, 23, 42, 0.04)'
+        }}
+      >
+        <Stack spacing={{ xs: 2, sm: 2.5 }}>
+          <Stack direction='row' alignItems='center' spacing={1.5}>
+            <Box
+              sx={{
+                width: { xs: 44, sm: 48 },
+                height: { xs: 44, sm: 48 },
+                borderRadius: { xs: 1.5, sm: 2 },
+                bgcolor: alpha(theme.palette.primary.main, isDarkMode ? 0.15 : 0.1),
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: theme.palette.primary.main
+              }}
+            >
+              <NotificationsActiveIcon sx={{ fontSize: { xs: 24, sm: 28 } }} />
+            </Box>
+            <Box sx={{ flex: 1 }}>
+              <Typography
+                variant='h4'
+                fontWeight={800}
+                sx={{
+                  fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
+                  color: 'text.primary',
+                  lineHeight: 1.3
+                }}
+              >
+                Alerts Management
+              </Typography>
+              <Typography
+                variant='body2'
+                sx={{
+                  color: 'text.secondary',
+                  fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+                  mt: 0.5
+                }}
+              >
+                Create and manage alerts for your users
+              </Typography>
+            </Box>
+          </Stack>
+        </Stack>
+      </Paper>
+
+      <Card
+        sx={{
+          borderRadius: { xs: 2, sm: 3, md: 4 },
+          bgcolor: isDarkMode ? theme.palette.background.paper : 'white',
+          border: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.15 : 0.1)}`,
+          boxShadow: isDarkMode
+            ? `0 2px 12px ${alpha(theme.palette.common.black, 0.3)}`
+            : '0 2px 12px rgba(15, 23, 42, 0.04)'
+        }}
+      >
+        <CardContent sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={{ xs: 1.5, sm: 2 }}
+            alignItems={{ xs: 'stretch', sm: 'center' }}
+            justifyContent='space-between'
+          >
+            <TextField
+              value={globalFilter ?? ''}
+              onChange={e => setGlobalFilter(e.target.value)}
+              placeholder='Search alerts...'
+              size='small'
+              fullWidth={isMobile}
+              sx={{
+                maxWidth: { xs: '100%', sm: 320 },
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: { xs: 1.5, sm: 2 },
+                  bgcolor: isDarkMode
+                    ? alpha(theme.palette.background.default, 0.4)
+                    : alpha(theme.palette.grey[50], 0.5)
+                }
+              }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position='start'>
+                    <SearchIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
+                  </InputAdornment>
+                )
+              }}
+            />
+            {/* <Button
+              variant='contained'
+              component='label'
+              startIcon={<AddIcon />}
+              onClick={handleAddRow}
+              fullWidth={isMobile}
+              sx={{
+                borderRadius: { xs: 1.5, sm: 2 },
+                px: { xs: 2.5, sm: 3 },
+                py: { xs: 1, sm: 1.1 },
+                textTransform: 'none',
+                fontWeight: 700,
+                fontSize: { xs: '0.9375rem', sm: '1rem' },
+                color: 'white',
+                boxShadow: isDarkMode
+                  ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`
+                  : `0 4px 12px ${alpha(theme.palette.primary.main, 0.2)}`
+              }}
+            >
+              Add New Alert
+            </Button> */}
+            <OpenDialogOnElementClick
             element={Button}
             elementProps={buttonProps}
             dialog={AlertDialog}
             dialogProps={{ editValue, onSuccess: refreshData }}
           />
+          </Stack>
         </CardContent>
         <div className='overflow-x-auto'>
           <table className={tableStyles.table}>
@@ -402,6 +633,8 @@ const AlertsTable = () => {
               handleGoToAlertUsers()
             }
           }}
+          theme={theme}
+          isDarkMode={isDarkMode}
         />
       </Card>
 
@@ -415,7 +648,7 @@ const AlertsTable = () => {
         type='delete-video' // Set the type based on your context
         onConfirm={handleDelete}
       />
-    </>
+    </Box>
   )
 }
 

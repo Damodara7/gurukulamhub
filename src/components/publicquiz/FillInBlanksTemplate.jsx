@@ -63,6 +63,8 @@ const FillInBlanksTemplate = ({ question, onAnswer, selectedAnswer, readOnly = f
       sx={{
         borderRadius: { xs: 3, md: 3.5 },
         overflow: 'hidden',
+        width: '100%',
+        maxWidth: '100%',
         border: `1px solid ${isDarkMode ? alpha(theme.palette.divider, 0.12) : alpha(theme.palette.primary.main, 0.08)}`,
         background: isDarkMode
           ? alpha(theme.palette.background.paper, 0.6)
@@ -72,16 +74,19 @@ const FillInBlanksTemplate = ({ question, onAnswer, selectedAnswer, readOnly = f
           : `0 20px 44px ${alpha(theme.palette.common.black, 0.14)}`
       }}
     >
-      <CardContent sx={{ p: { xs: 3, md: 4 } }}>
-        <Stack spacing={3}>
-          <Stack spacing={1.5} alignItems='center' textAlign='center'>
+      <CardContent sx={{ p: { xs: 3, md: 4 }, width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
+        <Stack spacing={3} sx={{ width: '100%', maxWidth: '100%' }}>
+          <Stack spacing={1.5} alignItems='flex-start' sx={{ width: '100%', maxWidth: '100%' }}>
             <Typography
               variant='h5'
               sx={{
                 fontWeight: 800,
                 letterSpacing: '-0.015em',
                 fontSize: { xs: '1.25rem', sm: '1.5rem' },
-                color: 'text.primary'
+                color: 'text.primary',
+                width: '100%',
+                maxWidth: '100%',
+                textAlign: 'left'
               }}
             >
               Fill in the missing words to complete the sentence.

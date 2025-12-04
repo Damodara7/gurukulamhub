@@ -578,6 +578,9 @@ const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time
                     borderRadius: 3,
                     px: { xs: 2.4, md: 3 },
                     py: { xs: 2.2, md: 2.6 },
+                    width: '100%',
+                    maxWidth: '100%',
+                    overflow: 'hidden',
                     background: isDarkMode
                       ? `linear-gradient(145deg, ${alpha(theme.palette.primary.dark, 0.2)}, ${alpha(
                           theme.palette.background.paper,
@@ -598,15 +601,62 @@ const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time
                     justifyContent='space-between'
                     alignItems={{ xs: 'flex-start', md: 'center' }}
                   >
-                    <Stack spacing={0.8} sx={{ minWidth: 0 }}>
-                      <Typography variant='overline' sx={{ letterSpacing: '0.18em', opacity: 0.6 }}>
-                        Question {index + 1}
-                      </Typography>
-                      <Typography variant='h6' sx={{ fontWeight: 700, letterSpacing: '-0.01em' }}>
+                    <Stack spacing={0.8} sx={{ minWidth: 0, width: '100%', maxWidth: '100%' }}>
+                      <Stack direction='row' spacing={1} alignItems='center' flexWrap='wrap'>
+                        <Typography variant='overline' sx={{ letterSpacing: '0.18em', opacity: 0.6 }}>
+                          Question {index + 1}
+                        </Typography>
+                        <Chip
+                          label={
+                            question.templateId === 'single-choice'
+                              ? 'Single Choice'
+                              : question.templateId === 'multiple-choice'
+                                ? 'Multiple Choice'
+                                : question.templateId === 'true-or-false'
+                                  ? 'True or False'
+                                  : question.templateId === 'fill-in-blank'
+                                    ? 'Fill in the Blanks'
+                                    : 'Question'
+                          }
+                          size='small'
+                          sx={{
+                            fontSize: '0.65rem',
+                            height: 20,
+                            fontWeight: 600,
+                            borderRadius: 999,
+                            backgroundColor: alpha(theme.palette.info.main, isDarkMode ? 0.2 : 0.12),
+                            color: isDarkMode ? theme.palette.info.light : theme.palette.info.main
+                          }}
+                        />
+                      </Stack>
+                      <Typography
+                        variant='h6'
+                        sx={{
+                          fontWeight: 700,
+                          letterSpacing: '-0.01em',
+                          width: '100%',
+                          maxWidth: '100%',
+                          wordWrap: 'break-word',
+                          overflowWrap: 'break-word',
+                          whiteSpace: 'normal',
+                          textAlign: 'left'
+                        }}
+                      >
                         {questionTitle}
                       </Typography>
                       {questionObj.mediaType === 'text-image' && questionObj.text && (
-                        <Typography variant='body2' sx={{ color: alpha(theme.palette.text.primary, 0.76) }}>
+                        <Typography
+                          variant='body2'
+                          sx={{
+                            color: alpha(theme.palette.text.primary, 0.76),
+                            width: '100%',
+                            maxWidth: '100%',
+                            wordWrap: 'break-word',
+                            overflowWrap: 'break-word',
+                            whiteSpace: 'normal',
+                            textAlign: 'left'
+                          }}
+                        >
                           {questionObj.text}
                         </Typography>
                       )}
@@ -668,9 +718,19 @@ const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time
                   )}
 
                   {(questionObj.mediaType === 'text-video' || questionObj.mediaType === 'video') && questionObj.video && (
-                    <Box display='flex' flexDirection='column' alignItems='center' gap={1}>
+                    <Box display='flex' flexDirection='column' alignItems='flex-start' gap={1} sx={{ width: '100%' }}>
                       {questionObj.text && (
-                        <Typography variant='body2' color={alpha(theme.palette.text.primary, 0.8)}>
+                        <Typography
+                          variant='body2'
+                          color={alpha(theme.palette.text.primary, 0.8)}
+                          sx={{
+                            width: '100%',
+                            wordWrap: 'break-word',
+                            overflowWrap: 'break-word',
+                            whiteSpace: 'normal',
+                            textAlign: 'left'
+                          }}
+                        >
                           {questionObj.text}
                         </Typography>
                       )}
@@ -687,7 +747,18 @@ const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time
                           {question.data.question?.map(part => {
                             if (part.type === 'text') {
                               return (
-                                <Typography key={part.id} variant='body1' component='span' sx={{ mr: 1, color: 'inherit' }}>
+                                <Typography
+                                  key={part.id}
+                                  variant='body1'
+                                  component='span'
+                                  sx={{
+                                    mr: 1,
+                                    color: 'inherit',
+                                    wordWrap: 'break-word',
+                                    overflowWrap: 'break-word',
+                                    whiteSpace: 'normal'
+                                  }}
+                                >
                                   {part.content}
                                 </Typography>
                               )
@@ -767,6 +838,10 @@ const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time
                                     gap: 1,
                                     textAlign: 'center',
                                     height: '100%',
+                                    minHeight: { xs: 80, md: 100 },
+                                    width: '100%',
+                                    maxWidth: '100%',
+                                    overflow: 'hidden',
                                     border: `1px solid ${
                                       isCorrectSelection
                                         ? alpha(theme.palette.success.main, 0.6)
@@ -817,7 +892,20 @@ const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time
                                   )}
 
                                   {option.mediaType === 'text' && option.text && (
-                                    <Typography variant='body1' fontWeight={600}>
+                                    <Typography
+                                      variant='body1'
+                                      fontWeight={600}
+                                      sx={{
+                                        width: '100%',
+                                        maxWidth: '100%',
+                                        wordWrap: 'break-word',
+                                        overflowWrap: 'break-word',
+                                        whiteSpace: 'normal',
+                                        textAlign: 'center',
+                                        lineHeight: 1.6,
+                                        fontSize: { xs: '0.875rem', md: '0.9375rem' }
+                                      }}
+                                    >
                                       {option.text}
                                     </Typography>
                                   )}
@@ -834,10 +922,10 @@ const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time
                             const isWrongPick = isUserAnswer && !isCorrectAnswer
 
                             return (
-                              <Grid item xs={12} sm={6} md={3} key={option.id}>
+                              <Grid item xs={12} sm={6} key={option.id}>
                                 <Box
                                   sx={{
-                                    p: { xs: 1.6, md: 2 },
+                                    p: { xs: 1.8, md: 2.2 },
                                     borderRadius: 2,
                                     border: `1px solid ${
                                       isMatch
@@ -856,14 +944,18 @@ const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time
                                       : isWrongPick
                                         ? theme.palette.error.dark
                                         : theme.palette.text.primary,
-                                    textAlign: 'center',
+                                    textAlign: 'left',
                                     height: '100%',
+                                    minHeight: { xs: 80, md: 100 },
                                     display: 'flex',
                                     flexDirection: 'column',
                                     gap: 1,
                                     justifyContent: 'center',
-                                    alignItems: 'center',
-                                    boxShadow: isUserAnswer ? '0 12px 30px rgba(15, 23, 42, 0.1)' : 'none'
+                                    alignItems: 'flex-start',
+                                    boxShadow: isUserAnswer ? '0 12px 30px rgba(15, 23, 42, 0.1)' : 'none',
+                                    width: '100%',
+                                    maxWidth: '100%',
+                                    overflow: 'hidden'
                                   }}
                                 >
                                   {option.mediaType === 'image' && option.image && (
@@ -885,9 +977,52 @@ const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time
                                     <audio src={option.audioUrl} controls style={{ width: '100%' }} />
                                   )}
                                   {option.mediaType === 'text' && option.text && (
-                                    <Typography variant='body1' fontWeight={600}>
-                                      {option.text}
-                                    </Typography>
+                                    <Stack direction='row' spacing={1} alignItems='flex-start' sx={{ width: '100%', maxWidth: '100%' }}>
+                                      <Box
+                                        sx={{
+                                          minWidth: { xs: 28, md: 32 },
+                                          width: { xs: 28, md: 32 },
+                                          height: { xs: 28, md: 32 },
+                                          borderRadius: 1.5,
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          fontWeight: 700,
+                                          fontSize: { xs: '0.875rem', md: '0.9375rem' },
+                                          flexShrink: 0,
+                                          backgroundColor: isMatch
+                                            ? alpha(theme.palette.success.main, 0.2)
+                                            : isWrongPick
+                                              ? alpha(theme.palette.error.main, 0.2)
+                                              : alpha(theme.palette.primary.main, 0.15),
+                                          color: isMatch
+                                            ? theme.palette.success.dark
+                                            : isWrongPick
+                                              ? theme.palette.error.dark
+                                              : theme.palette.primary.main
+                                        }}
+                                      >
+                                        {String.fromCharCode(65 + question.data.options.indexOf(option))}
+                                      </Box>
+                                      <Typography
+                                        variant='body1'
+                                        sx={{
+                                          flex: 1,
+                                          minWidth: 0,
+                                          fontWeight: 600,
+                                          fontSize: { xs: '0.875rem', md: '0.9375rem' },
+                                          lineHeight: 1.6,
+                                          wordWrap: 'break-word',
+                                          overflowWrap: 'break-word',
+                                          whiteSpace: 'normal',
+                                          textAlign: 'left',
+                                          width: '100%',
+                                          maxWidth: '100%'
+                                        }}
+                                      >
+                                        {option.text}
+                                      </Typography>
+                                    </Stack>
                                   )}
                                 </Box>
                               </Grid>
@@ -899,7 +1034,18 @@ const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time
                   {question.templateId === 'true-or-false' &&
                     attempted &&
                     selectedAnswer !== correctAnswers[0]?.id && (
-                      <Typography variant='body2' color='error' sx={{ fontStyle: 'italic' }}>
+                      <Typography
+                        variant='body2'
+                        color='error'
+                        sx={{
+                          fontStyle: 'italic',
+                          width: '100%',
+                          wordWrap: 'break-word',
+                          overflowWrap: 'break-word',
+                          whiteSpace: 'normal',
+                          textAlign: 'left'
+                        }}
+                      >
                         {`The correct answer is "${correctAnswers[0]?.text}".`}
                       </Typography>
                     )}
@@ -907,13 +1053,35 @@ const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time
                   {question.templateId === 'single-choice' &&
                     attempted &&
                     selectedAnswer !== correctAnswers[0]?.id && (
-                      <Typography variant='body2' color='error' sx={{ fontStyle: 'italic' }}>
+                      <Typography
+                        variant='body2'
+                        color='error'
+                        sx={{
+                          fontStyle: 'italic',
+                          width: '100%',
+                          wordWrap: 'break-word',
+                          overflowWrap: 'break-word',
+                          whiteSpace: 'normal',
+                          textAlign: 'left'
+                        }}
+                      >
                         {`The correct answer is "${correctAnswers[0]?.text}".`}
                       </Typography>
                     )}
 
                   {question.templateId === 'multiple-choice' && attempted && (
-                    <Typography variant='body2' color={incorrectSelected.length > 0 ? 'error' : 'info'} sx={{ fontStyle: 'italic' }}>
+                    <Typography
+                      variant='body2'
+                      color={incorrectSelected.length > 0 ? 'error' : 'info'}
+                      sx={{
+                        fontStyle: 'italic',
+                        width: '100%',
+                        wordWrap: 'break-word',
+                        overflowWrap: 'break-word',
+                        whiteSpace: 'normal',
+                        textAlign: 'left'
+                      }}
+                    >
                       {incorrectSelected.length > 0
                         ? `Correct answers: ${correctAnswers.map(a => `"${a.text}"`).join(', ')}.`
                         : `Great attempt! Correct answers: ${correctAnswers.map(a => `"${a.text}"`).join(', ')}.`}
@@ -921,7 +1089,18 @@ const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time
                   )}
 
                   {question.templateId === 'fill-in-blank' && (
-                    <Typography variant='body2' color='info' sx={{ fontStyle: 'italic' }}>
+                    <Typography
+                      variant='body2'
+                      color='info'
+                      sx={{
+                        fontStyle: 'italic',
+                        width: '100%',
+                        wordWrap: 'break-word',
+                        overflowWrap: 'break-word',
+                        whiteSpace: 'normal',
+                        textAlign: 'left'
+                      }}
+                    >
                       {`Correct answers: ${question.data.question
                         .filter(part => part.type === 'blank')
                         .map(blank => `"${blank.content}"`)
@@ -933,6 +1112,49 @@ const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time
               </Stack>
             )
           })}
+        </Stack>
+
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={{ xs: 1.2, sm: 1.6 }}
+          justifyContent='center'
+          alignItems={{ xs: 'stretch', sm: 'center' }}
+        >
+          <Button
+            variant='contained'
+            color='primary'
+            component='label'
+            startIcon={<ReplayRoundedIcon />}
+            onClick={handleReplay}
+            sx={{
+              borderRadius: 999,
+              px: { xs: 3, sm: 4 },
+              py: { xs: 1.2, sm: 1.4 },
+              color: 'white',
+              textTransform: 'none',
+              fontWeight: 700,
+              fontSize: { xs: '0.95rem', sm: '1rem' }
+            }}
+          >
+            Replay Quiz
+          </Button>
+
+          <Button
+            variant='outlined'
+            color='primary'
+            startIcon={<ArrowBackIosNewRoundedIcon />}
+            onClick={() => router.push('/publicquiz/view')}
+            sx={{
+              borderRadius: 999,
+              px: { xs: 2.6, sm: 3.2 },
+              py: { xs: 1.1, sm: 1.25 },
+              textTransform: 'none',
+              fontWeight: 700,
+              fontSize: { xs: '0.9rem', sm: '0.95rem' }
+            }}
+          >
+            Back to Quizzes
+          </Button>
         </Stack>
       </Stack>
     </Container>

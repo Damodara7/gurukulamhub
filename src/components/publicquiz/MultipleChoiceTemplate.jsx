@@ -17,6 +17,7 @@ import ImagePopup from '../ImagePopup'
 const MultipleChoiceTemplate = ({ question, selectedAnswers, onAnswerSelect, readOnly = false }) => {
   const questionObj = question?.data?.question
   const theme = useTheme()
+  const isDarkMode = theme.palette.mode === 'dark'
 
   // Handle checkbox change
   const handleCheckboxChange = optionId => {
@@ -36,14 +37,20 @@ const MultipleChoiceTemplate = ({ question, selectedAnswers, onAnswerSelect, rea
       sx={{
         borderRadius: { xs: 3, md: 3.5 },
         overflow: 'hidden',
-        border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
-        background: alpha(theme.palette.background.paper, 0.92),
-        boxShadow: '0 20px 44px rgba(15, 23, 42, 0.14)'
+        width: '100%',
+        maxWidth: '100%',
+        border: `1px solid ${isDarkMode ? alpha(theme.palette.divider, 0.12) : alpha(theme.palette.primary.main, 0.08)}`,
+        background: isDarkMode
+          ? alpha(theme.palette.background.paper, 0.6)
+          : alpha(theme.palette.background.paper, 0.92),
+        boxShadow: isDarkMode
+          ? `0 20px 44px ${alpha(theme.palette.common.black, 0.4)}`
+          : `0 20px 44px ${alpha(theme.palette.common.black, 0.14)}`
       }}
     >
-      <CardContent sx={{ p: { xs: 3, md: 4 } }}>
-        <Stack spacing={3}>
-          <Stack spacing={1.5} alignItems='center' textAlign='center'>
+      <CardContent sx={{ p: { xs: 3, md: 4 }, width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
+        <Stack spacing={3} sx={{ width: '100%', maxWidth: '100%' }}>
+          <Stack spacing={1.5} alignItems='flex-start' sx={{ width: '100%', maxWidth: '100%' }}>
             {(questionObj?.mediaType === 'text' ||
               questionObj?.mediaType === 'text-image' ||
               questionObj?.mediaType === 'text-video') && (
@@ -51,14 +58,33 @@ const MultipleChoiceTemplate = ({ question, selectedAnswers, onAnswerSelect, rea
                 variant='h5'
                 sx={{
                   fontWeight: 800,
-                  letterSpacing: '-0.015em'
+                  letterSpacing: '-0.015em',
+                  fontSize: { xs: '1.125rem', sm: '1.25rem', md: '1.5rem' },
+                  color: 'text.primary',
+                  width: '100%',
+                  maxWidth: '100%',
+                  wordWrap: 'break-word',
+                  overflowWrap: 'break-word',
+                  whiteSpace: 'normal',
+                  lineHeight: 1.5,
+                  textAlign: 'left'
                 }}
               >
                 {questionObj?.text}
               </Typography>
             )}
             {questionObj?.mediaType === 'video' && (
-              <Typography variant='subtitle1' sx={{ color: alpha(theme.palette.text.primary, 0.75), fontWeight: 600 }}>
+              <Typography
+                variant='subtitle1'
+                sx={{
+                  color: alpha(theme.palette.text.primary, isDarkMode ? 0.8 : 0.75),
+                  fontWeight: 600,
+                  fontSize: { xs: '0.9375rem', sm: '1rem', md: '1.125rem' },
+                  wordWrap: 'break-word',
+                  overflowWrap: 'break-word',
+                  whiteSpace: 'normal'
+                }}
+              >
                 Watch the video carefully and answer the question.
               </Typography>
             )}
@@ -87,96 +113,74 @@ const MultipleChoiceTemplate = ({ question, selectedAnswers, onAnswerSelect, rea
             </Stack>
           )}
 
-          <Grid
-            container
-            spacing={3}
-            justifyContent='center'
-            sx={{
-              mx: 'auto',
-              width: '100%',
-            }}
-          >
+          <Stack spacing={{ xs: 2, sm: 2.5, md: 3 }} sx={{ width: '100%' }}>
             {question.data.options.map((option, index) => {
               const isSelected = selectedAnswers?.includes(option.id)
               const optionLabel = String.fromCharCode(65 + index)
               return (
-                <Grid item xs={12} md={6} key={option.id}>
-                  <Box
-                    onClick={() => !readOnly && handleCheckboxChange(option.id)}
-                    sx={{
-                      flexGrow: 1,
-                      position: 'relative',
-                      display: 'flex',
-                      gap: 2,
-                      alignItems: 'flex-start',
-                      borderRadius: { xs: 3.2, md: 4 },
-                      p: { xs: 2.2, md: 3.2 },
-                      border: `1px solid ${alpha(theme.palette.primary.main, isSelected ? 0.32 : 0.14)}`,
-                      background: isSelected
-                        ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.32)}, ${alpha(
-                            theme.palette.secondary.main,
-                            0.26
+                <Box
+                  key={option.id}
+                  onClick={() => !readOnly && handleCheckboxChange(option.id)}
+                  sx={{
+                    position: 'relative',
+                    width: '100%',
+                    borderRadius: { xs: 2.5, md: 3 },
+                    p: { xs: 2, sm: 2.5, md: 3 },
+                    border: `2px solid ${alpha(
+                      theme.palette.primary.main,
+                      isSelected ? (isDarkMode ? 0.5 : 0.4) : isDarkMode ? 0.25 : 0.15
+                    )}`,
+                    background: isSelected
+                      ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, isDarkMode ? 0.4 : 0.32)}, ${alpha(
+                          theme.palette.secondary.main,
+                          isDarkMode ? 0.3 : 0.26
+                        )})`
+                      : isDarkMode
+                        ? `linear-gradient(145deg, ${alpha(theme.palette.primary.main, 0.15)}, ${alpha(
+                            theme.palette.background.paper,
+                            0.9
                           )})`
-                        : `linear-gradient(145deg, ${alpha(theme.palette.primary.main, 0.12)}, ${alpha(
+                        : `linear-gradient(145deg, ${alpha(theme.palette.primary.main, 0.08)}, ${alpha(
                             theme.palette.common.white,
-                            0.94
+                            0.95
                           )})`,
-                      transition:
-                        'transform 0.32s ease, border-color 0.26s ease, box-shadow 0.32s ease, background 0.32s ease',
-                      cursor: readOnly ? 'default' : 'pointer',
-                      pointerEvents: readOnly ? 'none' : 'auto',
-                      height: '100%',
-                      minHeight: { xs: 106, md: 138 },
-                      boxShadow: isSelected
-                        ? '0 36px 88px rgba(15, 23, 42, 0.34)'
-                        : '0 24px 52px rgba(15, 23, 42, 0.15)',
-                      '&:hover': {
-                        transform: readOnly ? 'none' : 'translateY(-10px)',
-                        boxShadow: readOnly
-                          ? '0 24px 52px rgba(15, 23, 42, 0.15)'
-                          : '0 42px 96px rgba(15, 23, 42, 0.32)',
-                        borderColor: alpha(theme.palette.primary.main, 0.34),
-                        background: readOnly
-                          ? undefined
-                          : `linear-gradient(145deg, ${alpha(theme.palette.primary.main, 0.18)}, ${alpha(
-                              theme.palette.secondary.main,
-                              0.16
-                            )})`
-                      },
-                      '&::before': {
-                        content: '""',
-                        position: 'absolute',
-                        inset: 0,
-                        borderRadius: 'inherit',
-                        background: isSelected
-                          ? `linear-gradient(160deg, ${alpha(theme.palette.common.white, 0.2)}, transparent 55%)`
-                          : `radial-gradient(circle at top left, ${alpha(theme.palette.primary.light, 0.24)}, transparent 60%)`,
-                        pointerEvents: 'none',
-                        opacity: 0.9
-                      },
-                      '&::after': {
-                        content: '""',
-                        position: 'absolute',
-                        inset: 1,
-                        borderRadius: 'inherit',
-                        border: `1px solid ${alpha(theme.palette.common.white, isSelected ? 0.4 : 0.15)}`,
-                        pointerEvents: 'none',
-                        opacity: 0.5
-                      }
-                    }}
-                  >
+                    transition: 'transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease',
+                    cursor: readOnly ? 'default' : 'pointer',
+                    pointerEvents: readOnly ? 'none' : 'auto',
+                    boxShadow: isSelected
+                      ? isDarkMode
+                        ? `0 8px 24px ${alpha(theme.palette.common.black, 0.4)}`
+                        : `0 8px 24px ${alpha(theme.palette.primary.main, 0.25)}`
+                      : isDarkMode
+                        ? `0 4px 12px ${alpha(theme.palette.common.black, 0.3)}`
+                        : `0 4px 12px ${alpha(theme.palette.common.black, 0.08)}`,
+                    '&:hover': readOnly
+                      ? {}
+                      : {
+                          transform: 'translateY(-4px)',
+                          boxShadow: isDarkMode
+                            ? `0 12px 32px ${alpha(theme.palette.common.black, 0.5)}`
+                            : `0 12px 32px ${alpha(theme.palette.primary.main, 0.3)}`,
+                          borderColor: alpha(theme.palette.primary.main, 0.5)
+                        }
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: { xs: 1.5, sm: 2 }, width: '100%' }}>
+                    {/* Checkbox */}
                     <Checkbox
                       checked={isSelected}
                       sx={{
-                        mt: 0.5,
-                        alignSelf: { xs: 'center', sm: 'flex-start' },
+                        mt: -0.5,
+                        p: 0.5,
                         color: isSelected ? theme.palette.primary.main : alpha(theme.palette.primary.dark, 0.7),
                         '&.Mui-checked': {
                           color: theme.palette.primary.main
                         },
                         '& .MuiSvgIcon-root': {
-                          fontSize: 26,
-                          filter: isSelected ? 'drop-shadow(0px 8px 18px rgba(15,23,42,0.28))' : 'none'
+                          fontSize: { xs: 24, sm: 26 },
+                          filter: isSelected
+                            ? `drop-shadow(0px 4px 10px ${alpha(theme.palette.primary.main, 0.3)})`
+                            : 'none'
                         }
                       }}
                       onChange={e => {
@@ -190,76 +194,93 @@ const MultipleChoiceTemplate = ({ question, selectedAnswers, onAnswerSelect, rea
                       disabled={readOnly}
                     />
 
-                    <Stack spacing={1.4} sx={{ flexGrow: 1, position: 'relative', zIndex: 1 }}>
+                    {/* Content */}
+                    <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                      {/* Option Label and Text */}
                       <Box
                         sx={{
-                          display: 'grid',
-                          gridTemplateColumns: 'auto 1fr auto',
-                          alignItems: 'center',
-                          columnGap: 12,
-                          rowGap: 10,
-                          minWidth: 0
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: { xs: 1, sm: 1.5 },
+                          width: '100%',
+                          flexWrap: 'wrap'
                         }}
                       >
-                        <Stack direction='row' spacing={1.1} alignItems='center' sx={{ minWidth: 0 }}>
-                          <Box
-                            sx={{
-                              width: { xs: 40, md: 46 },
-                              height: { xs: 40, md: 46 },
-                              borderRadius: { xs: 3.2, md: 4 },
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontWeight: 700,
-                              fontSize: { xs: '1rem', md: '1.1rem' },
-                              background: isSelected
-                                ? `linear-gradient(135deg, ${alpha(theme.palette.secondary.light, 0.5)}, ${alpha(
-                                    theme.palette.secondary.dark,
-                                    0.35
-                                  )})`
-                                : alpha(theme.palette.primary.main, 0.14),
-                              color: isSelected ? theme.palette.secondary.contrastText : theme.palette.primary.main,
-                              boxShadow: isSelected ? '0 18px 32px rgba(15, 23, 42, 0.22)' : 'none'
-                            }}
-                          >
-                            {optionLabel}
-                          </Box>
+                        {/* Label Badge */}
+                        <Box
+                          sx={{
+                            width: { xs: 36, sm: 40, md: 46 },
+                            height: { xs: 36, sm: 40, md: 46 },
+                            borderRadius: { xs: 2, md: 2.5 },
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontWeight: 700,
+                            fontSize: { xs: '0.9375rem', sm: '1rem', md: '1.125rem' },
+                            flexShrink: 0,
+                            background: isSelected
+                              ? `linear-gradient(135deg, ${alpha(theme.palette.secondary.main, 0.9)}, ${alpha(
+                                  theme.palette.secondary.dark,
+                                  0.7
+                                )})`
+                              : isDarkMode
+                                ? alpha(theme.palette.primary.main, 0.25)
+                                : alpha(theme.palette.primary.main, 0.15),
+                            color: isSelected
+                              ? theme.palette.secondary.contrastText
+                              : isDarkMode
+                                ? theme.palette.primary.light
+                                : theme.palette.primary.main,
+                            boxShadow: isSelected ? `0 4px 12px ${alpha(theme.palette.secondary.main, 0.3)}` : 'none'
+                          }}
+                        >
+                          {optionLabel}
+                        </Box>
 
-                          <Stack spacing={0.35} sx={{ minWidth: 0 }}>
-                            {option.mediaType === 'text' && option.text && (
-                              <Typography
-                                variant='body1'
-                                sx={{
-                                  fontWeight: 700,
-                                  color: isSelected ? alpha(theme.palette.common.white, 0.95) : theme.palette.text.primary,
-                                  fontSize: { xs: '0.95rem', sm: '1.02rem', md: '1.1rem' },
-                                  lineHeight: 1.32
-                                }}
-                              >
-                                {option.text}
-                              </Typography>
-                            )}
-                          </Stack>
-                        </Stack>
-
-                        <Box />
-
-                        <Stack alignItems='flex-end'>
-                          {isSelected && (
-                            <Chip
-                              size='small'
-                              label='Selected'
+                        {/* Option Text */}
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          {option.mediaType === 'text' && option.text && (
+                            <Typography
+                              variant='body1'
                               sx={{
-                                borderRadius: 999,
                                 fontWeight: 600,
-                                bgcolor: alpha(theme.palette.success.light, 1),
-                                color: 'white',
+                                color: isSelected
+                                  ? isDarkMode
+                                    ? theme.palette.common.white
+                                    : alpha(theme.palette.common.white, 0.98)
+                                  : theme.palette.text.primary,
+                                fontSize: { xs: '0.875rem', sm: '0.9375rem', md: '1rem' },
+                                lineHeight: 1.6,
+                                wordWrap: 'break-word',
+                                overflowWrap: 'break-word',
+                                whiteSpace: 'normal',
+                                width: '100%'
                               }}
-                            />
+                            >
+                              {option.text}
+                            </Typography>
                           )}
-                        </Stack>
+                        </Box>
+
+                        {/* Selected Chip */}
+                        {isSelected && (
+                          <Chip
+                            size='small'
+                            label='Selected'
+                            sx={{
+                              borderRadius: 999,
+                              fontWeight: 600,
+                              fontSize: { xs: '0.6875rem', sm: '0.75rem' },
+                              height: { xs: 20, sm: 24 },
+                              bgcolor: theme.palette.success.main,
+                              color: 'white',
+                              boxShadow: `0 2px 8px ${alpha(theme.palette.success.main, 0.3)}`
+                            }}
+                          />
+                        )}
                       </Box>
 
+                      {/* Image if present */}
                       {option.mediaType === 'image' && option.image && (
                         <Box
                           component='img'
@@ -267,21 +288,20 @@ const MultipleChoiceTemplate = ({ question, selectedAnswers, onAnswerSelect, rea
                           alt={option.text}
                           sx={{
                             width: '100%',
-                            maxHeight: { xs: 180, md: 220 },
+                            maxHeight: { xs: 160, sm: 180, md: 200 },
                             objectFit: 'cover',
-                            borderRadius: 2,
-                            border: `1px solid ${alpha(theme.palette.common.white, isSelected ? 0.3 : 0.12)}`,
-                            boxShadow: '0 20px 46px rgba(15, 23, 42, 0.22)'
+                            borderRadius: { xs: 1.5, md: 2 },
+                            border: `1px solid ${alpha(theme.palette.divider, 0.2)}`,
+                            boxShadow: `0 4px 16px ${alpha(theme.palette.common.black, 0.1)}`
                           }}
                         />
                       )}
-                    </Stack>
-
+                    </Box>
                   </Box>
-                </Grid>
+                </Box>
               )
             })}
-          </Grid>
+          </Stack>
         </Stack>
       </CardContent>
     </Card>
