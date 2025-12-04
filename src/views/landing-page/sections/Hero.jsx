@@ -32,14 +32,15 @@ function Hero({ isAuthenticated = false }) {
     <Box
       sx={{
         position: 'relative',
-        minHeight: { xs: '90vh', md: '95vh' },
+        minHeight: { xs: 'auto', md: '95vh' },
         display: 'flex',
         alignItems: 'center',
         background: `radial-gradient(circle at 20% 50%, ${theme.palette.primary.main}15 0%, transparent 50%),
                      radial-gradient(circle at 80% 80%, ${theme.palette.secondary.main}15 0%, transparent 50%),
                      ${theme.palette.background.default}`,
         overflow: 'hidden',
-        pt: { xs: 10, md: 0 }
+        pt: { xs: 8, md: 0 },
+        py: { xs: 6, md: 8 }
       }}
     >
       {/* Animated background shapes */}
@@ -81,10 +82,10 @@ function Hero({ isAuthenticated = false }) {
       </Box>
 
       <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
-        <Grid container spacing={6} alignItems="center">
+        <Grid container spacing={{ xs: 0, md: 6 }} alignItems="center" sx={{ position: 'relative' }}>
           {/* Left Content */}
           <Grid item xs={12} md={6}>
-            <Stack spacing={4}>
+            <Stack spacing={4} sx={{ position: 'relative', zIndex: 1 }}>
                {/* Badge */}
                <Box
                  sx={{
@@ -341,11 +342,17 @@ function Hero({ isAuthenticated = false }) {
           <Grid item xs={12} md={6}>
             <Box
               sx={{
-                position: 'relative',
-                height: { xs: 400, md: 500 },
+                position: { xs: 'absolute', md: 'relative' },
+                top: { xs: 0, md: 'auto' },
+                left: { xs: 0, md: 'auto' },
+                width: { xs: '100%', md: 'auto' },
+                height: { xs: '100%', md: 'auto' },
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                zIndex: { xs: 0, md: 1 },
+                opacity: { xs: 0.25, md: 1 },
+                pointerEvents: { xs: 'none', md: 'auto' },
                 animation: 'slideInRight 0.8s ease-out'
               }}
             >
@@ -353,8 +360,8 @@ function Hero({ isAuthenticated = false }) {
               <Box
                 sx={{
                   position: 'relative',
-                  width: { xs: 280, md: 350 },
-                  height: { xs: 280, md: 350 },
+                  width: { xs: 180, sm: 260, md: 350 },
+                  height: { xs: 180, sm: 260, md: 350 },
                   borderRadius: '50%',
                   background: `linear-gradient(135deg, ${theme.palette.primary.main}20, ${theme.palette.secondary.main}20)`,
                   display: 'flex',
@@ -375,7 +382,7 @@ function Hero({ isAuthenticated = false }) {
                 <Typography 
                   variant="h1" 
                   sx={{ 
-                    fontSize: { xs: '4rem', sm: '6rem', md: '8rem' },
+                    fontSize: { xs: '2.5rem', sm: '5rem', md: '8rem' },
                     lineHeight: 1
                   }}
                 >

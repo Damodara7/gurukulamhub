@@ -51,95 +51,97 @@ function SocialProof() {
           </Stack>
 
           {/* Testimonials */}
-          <Grid container spacing={{ xs: 3, md: 4 }}>
-            {testimonials.map((testimonial, index) => (
-              <Grid item xs={12} sm={6} md={4} key={index}>
-                <Paper
-                  elevation={0}
-                  sx={{
-                    p: 4,
-                    height: '100%',
-                    borderRadius: 4,
-                    border: '2px solid',
-                    borderColor: 'divider',
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      borderColor: theme.palette.primary.main,
-                      transform: 'translateY(-8px)',
-                      boxShadow: `0 15px 40px ${theme.palette.primary.main}20`
-                    }
-                  }}
-                >
-                  <Stack spacing={3}>
-                    {/* Quote Icon */}
-                    <Box
-                      sx={{
-                        width: { xs: 40, md: 50 },
-                        height: { xs: 40, md: 50 },
-                        borderRadius: 2,
-                        bgcolor: `${theme.palette.primary.main}15`,
-                        color: theme.palette.primary.main,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
-                    >
-                      <FormatQuoteIcon sx={{ fontSize: { xs: 24, md: 30 } }} />
-                    </Box>
-
-                    {/* Rating */}
-                    <Rating 
-                      value={testimonial.rating} 
-                      readOnly 
-                      size="small"
-                      sx={{
-                        '& .MuiRating-icon': {
-                          fontSize: { xs: '1.25rem', md: '1.5rem' }
-                        }
-                      }}
-                    />
-
-                    {/* Text */}
-                    <Typography 
-                      variant="body1" 
-                      sx={{ 
-                        lineHeight: 1.8, 
-                        color: 'text.secondary',
-                        fontSize: { xs: '0.875rem', md: '1rem' }
-                      }}
-                    >
-                      "{testimonial.text}"
-                    </Typography>
-
-                    {/* Author */}
-                    <Stack direction="row" spacing={2} alignItems="center">
-                      <Avatar
-                        src={testimonial.avatar}
-                        alt={testimonial.name}
-                        sx={{ width: { xs: 40, md: 50 }, height: { xs: 40, md: 50 } }}
-                      />
-                      <Box>
-                        <Typography 
-                          variant="subtitle1" 
-                          fontWeight={700}
-                          sx={{ fontSize: { xs: '0.875rem', md: '1rem' } }}
-                        >
-                          {testimonial.name}
-                        </Typography>
-                        <Typography 
-                          variant="body2" 
-                          color="text.secondary"
-                          sx={{ fontSize: { xs: '0.75rem', md: '0.875rem' } }}
-                        >
-                          {testimonial.role}
-                        </Typography>
+          <Box>
+            <Grid container spacing={{ xs: 3, md: 4 }} justifyContent='center'>
+              {testimonials.map((testimonial, index) => (
+                <Grid item xs={12} sm={6} md={4} key={index}>
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      p: 4,
+                      height: '100%',
+                      borderRadius: 4,
+                      border: '2px solid',
+                      borderColor: 'divider',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        borderColor: theme.palette.primary.main,
+                        transform: 'translateY(-8px)',
+                        boxShadow: `0 15px 40px ${theme.palette.primary.main}20`
+                      }
+                    }}
+                  >
+                    <Stack spacing={3}>
+                      {/* Quote Icon */}
+                      <Box
+                        sx={{
+                          width: { xs: 40, md: 50 },
+                          height: { xs: 40, md: 50 },
+                          borderRadius: 2,
+                          bgcolor: `${theme.palette.primary.main}15`,
+                          color: theme.palette.primary.main,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        <FormatQuoteIcon sx={{ fontSize: { xs: 24, md: 30 } }} />
                       </Box>
+
+                      {/* Rating */}
+                      <Rating 
+                        value={testimonial.rating} 
+                        readOnly 
+                        size="small"
+                        sx={{
+                          '& .MuiRating-icon': {
+                            fontSize: { xs: '1.25rem', md: '1.5rem' }
+                          }
+                        }}
+                      />
+
+                      {/* Text */}
+                      <Typography 
+                        variant="body1" 
+                        sx={{ 
+                          lineHeight: 1.8, 
+                          color: 'text.secondary',
+                          fontSize: { xs: '0.875rem', md: '1rem' }
+                        }}
+                      >
+                        "{testimonial.text}"
+                      </Typography>
+
+                      {/* Author */}
+                      <Stack direction="row" spacing={2} alignItems="center">
+                        <Avatar
+                          src={testimonial.avatar}
+                          alt={testimonial.name}
+                          sx={{ width: { xs: 40, md: 50 }, height: { xs: 40, md: 50 } }}
+                        />
+                        <Box>
+                          <Typography 
+                            variant="subtitle1" 
+                            fontWeight={700}
+                            sx={{ fontSize: { xs: '0.875rem', md: '1rem' } }}
+                          >
+                            {testimonial.name}
+                          </Typography>
+                          <Typography 
+                            variant="body2" 
+                            color="text.secondary"
+                            sx={{ fontSize: { xs: '0.75rem', md: '0.875rem' } }}
+                          >
+                            {testimonial.role}
+                          </Typography>
+                        </Box>
+                      </Stack>
                     </Stack>
-                  </Stack>
-                </Paper>
-              </Grid>
-            ))}
-          </Grid>
+                  </Paper>
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
 
           {/* Stats Bar */}
           <Paper

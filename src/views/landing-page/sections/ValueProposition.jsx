@@ -72,9 +72,14 @@ function ValueProposition() {
           </Stack>
 
           {/* Features Grid */}
-          <Grid container spacing={{ xs: 3, md: 4 }}>
-            {features.map((feature, index) => (
-              <Grid item xs={12} sm={6} md={3} key={index}>
+          <Box>
+            <Grid 
+              container 
+              spacing={{ xs: 3, md: 4 }}
+              justifyContent="center"
+            >
+              {features.map((feature, index) => (
+                <Grid item xs={12} sm={6} md={3} key={index}>
                 <Paper
                   elevation={0}
                   sx={{
@@ -129,7 +134,8 @@ function ValueProposition() {
                 </Paper>
               </Grid>
             ))}
-          </Grid>
+            </Grid>
+          </Box>
 
           {/* Bottom Banner */}
           <Paper

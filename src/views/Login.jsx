@@ -857,9 +857,10 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
                                     loading.findAccounts
                                   }
                                   color='primary'
-                                  type='button'
+                                  component='label'
                                   variant='contained'
                                   size='small'
+                                  style={{ color: 'white' }}
                                 >
                                   {loading.findAccounts ? 'Finding...' : 'Find Account'}
                                 </Button>
@@ -1184,10 +1185,11 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
                       disabled={loading.sendOtp}
                       color='primary'
                       variant='contained'
-                      type='button'
+                      component='label'
                       fullWidth
                       onClick={() => sendPhoneOtpToAccount(selectedAccountWithMobile.phone)}
                       sx={{
+                        color: 'white',
                         py: { xs: 1.25, sm: 1.5 },
                         fontSize: { xs: '0.9375rem', sm: '1rem' },
                         fontWeight: 600,
@@ -1227,12 +1229,13 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
                         color='primary'
                         disabled={loading.resendOtp}
                         variant='text'
-                        type='button'
+                        component='label'
                         size={isMobile ? 'small' : 'medium'}
                         onClick={() => handleResendPhoneOtp(selectedAccountWithMobile.phone)}
                         sx={{
                           fontSize: { xs: '0.875rem', sm: '0.9375rem' },
-                          minWidth: { xs: 'auto', sm: 100 }
+                          minWidth: { xs: 'auto', sm: 100 },
+                          color: 'white'
                         }}
                       >
                         Resend
@@ -1280,12 +1283,8 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
                     bgcolor: isDarkMode
                       ? alpha(theme.palette.error.main, 0.15)
                       : alpha(theme.palette.error.light, 0.1),
-                    color: 'error.main',
                     border: `1px solid ${isDarkMode ? alpha(theme.palette.error.main, 0.3) : alpha(theme.palette.error.main, 0.2)}`,
                     borderRadius: { xs: 1, sm: 1.5 },
-                    '& .MuiAlert-icon': {
-                      color: 'error.main'
-                    }
                   }}
                 >
                   {errorMsg}
@@ -1302,12 +1301,8 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
                     bgcolor: isDarkMode
                       ? alpha(theme.palette.success.main, 0.15)
                       : alpha(theme.palette.success.light, 0.1),
-                    color: 'success.main',
                     border: `1px solid ${isDarkMode ? alpha(theme.palette.success.main, 0.3) : alpha(theme.palette.success.main, 0.2)}`,
                     borderRadius: { xs: 1, sm: 1.5 },
-                    '& .MuiAlert-icon': {
-                      color: 'success.main'
-                    }
                   }}
                 >
                   {successMsg}
@@ -1333,9 +1328,13 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
                   <Button
                     disabled={isSubmitting}
                     fullWidth
+                    color='primary'
                     variant='contained'
                     type='submit'
+                    // onClick={handleSubmit(onSubmitWithCode)}
                     sx={{
+                      backgroundColor: 'primary.main',
+                      color: 'white',
                       mt: { xs: 2, sm: 3 },
                       py: { xs: 1.25, sm: 1.5 },
                       fontSize: { xs: '0.9375rem', sm: '1rem' },
@@ -1462,12 +1461,8 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
                     bgcolor: isDarkMode
                       ? alpha(theme.palette.error.main, 0.15)
                       : alpha(theme.palette.error.light, 0.1),
-                    color: 'error.main',
                     border: `1px solid ${isDarkMode ? alpha(theme.palette.error.main, 0.3) : alpha(theme.palette.error.main, 0.2)}`,
                     borderRadius: { xs: 1, sm: 1.5 },
-                    '& .MuiAlert-icon': {
-                      color: 'error.main'
-                    }
                   }}
                 >
                   {errorMsg}
@@ -1484,12 +1479,8 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
                     bgcolor: isDarkMode
                       ? alpha(theme.palette.success.main, 0.15)
                       : alpha(theme.palette.success.light, 0.1),
-                    color: 'success.main',
                     border: `1px solid ${isDarkMode ? alpha(theme.palette.success.main, 0.3) : alpha(theme.palette.success.main, 0.2)}`,
                     borderRadius: { xs: 1, sm: 1.5 },
-                    '& .MuiAlert-icon': {
-                      color: 'success.main'
-                    }
                   }}
                 >
                   {successMsg}
@@ -1501,7 +1492,10 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
                 fullWidth
                 variant='contained'
                 type='submit'
+                // onClick={handleSubmit(onSubmitWithCode)}
                 sx={{
+                  backgroundColor: 'primary.main',
+                  color: 'white',
                   py: { xs: 1.25, sm: 1.5 },
                   fontSize: { xs: '0.9375rem', sm: '1rem' },
                   fontWeight: 600,
