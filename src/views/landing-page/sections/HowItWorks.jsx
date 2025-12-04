@@ -65,97 +65,99 @@ function HowItWorks() {
           </Stack>
 
           {/* Steps */}
-          <Grid container spacing={4}>
-            {steps.map((step, index) => (
-              <Grid item xs={12} md={4} key={index}>
-                <Stack
-                  spacing={3}
-                  alignItems="center"
-                  textAlign="center"
-                  sx={{
-                    p: 4,
-                    borderRadius: 4,
-                    height: '100%',
-                    position: 'relative',
-                    transition: 'transform 0.3s ease',
-                    '&:hover': {
-                      transform: 'translateY(-10px)',
-                      '& .step-emoji': {
-                        transform: 'scale(1.2) rotate(10deg)'
+          <Box>
+            <Grid container spacing={{ xs: 3, md: 4 }} justifyContent="center">
+              {steps.map((step, index) => (
+                <Grid item xs={12} md={4} key={index}>
+                  <Stack
+                    spacing={3}
+                    alignItems="center"
+                    textAlign="center"
+                    sx={{
+                      p: 4,
+                      borderRadius: 4,
+                      height: '100%',
+                      position: 'relative',
+                      transition: 'transform 0.3s ease',
+                      '&:hover': {
+                        transform: 'translateY(-10px)',
+                        '& .step-emoji': {
+                          transform: 'scale(1.2) rotate(10deg)'
+                        }
                       }
-                    }
-                  }}
-                >
-                  {/* Number Badge */}
-                  <Box
-                    sx={{
-                      width: { xs: 40, md: 50 },
-                      height: { xs: 40, md: 50 },
-                      borderRadius: '50%',
-                      bgcolor: theme.palette.primary.main,
-                      color: 'white',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontWeight: 800,
-                      fontSize: { xs: '1.25rem', md: '1.5rem' },
-                      boxShadow: `0 4px 20px ${theme.palette.primary.main}40`
                     }}
                   >
-                    {step.number}
-                  </Box>
-
-                  {/* Emoji */}
-                  <Box
-                    className="step-emoji"
-                    sx={{
-                      fontSize: { xs: '3.5rem', md: '5rem' },
-                      transition: 'transform 0.3s ease'
-                    }}
-                  >
-                    {step.emoji}
-                  </Box>
-
-                  {/* Content */}
-                  <Typography 
-                    variant="h5" 
-                    fontWeight={700}
-                    sx={{ fontSize: { xs: '1.25rem', md: '1.5rem' } }}
-                  >
-                    {step.title}
-                  </Typography>
-                  <Typography 
-                    variant="body1" 
-                    color="text.secondary" 
-                    sx={{ 
-                      lineHeight: 1.7,
-                      fontSize: { xs: '0.875rem', md: '1rem' },
-                      px: { xs: 1, md: 0 }
-                    }}
-                  >
-                    {step.description}
-                  </Typography>
-
-                  {/* Connector Arrow (except last) */}
-                  {index < steps.length - 1 && (
+                    {/* Number Badge */}
                     <Box
                       sx={{
-                        display: { xs: 'none', md: 'block' },
-                        position: 'absolute',
-                        top: '30%',
-                        right: '-10%',
-                        fontSize: '3rem',
-                        color: theme.palette.primary.main,
-                        opacity: 0.3
+                        width: { xs: 40, md: 50 },
+                        height: { xs: 40, md: 50 },
+                        borderRadius: '50%',
+                        bgcolor: theme.palette.primary.main,
+                        color: 'white',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 800,
+                        fontSize: { xs: '1.25rem', md: '1.5rem' },
+                        boxShadow: `0 4px 20px ${theme.palette.primary.main}40`
                       }}
                     >
-                      →
+                      {step.number}
                     </Box>
-                  )}
-                </Stack>
-              </Grid>
-            ))}
-          </Grid>
+
+                    {/* Emoji */}
+                    <Box
+                      className="step-emoji"
+                      sx={{
+                        fontSize: { xs: '3.5rem', md: '5rem' },
+                        transition: 'transform 0.3s ease'
+                      }}
+                    >
+                      {step.emoji}
+                    </Box>
+
+                    {/* Content */}
+                    <Typography 
+                      variant="h5" 
+                      fontWeight={700}
+                      sx={{ fontSize: { xs: '1.25rem', md: '1.5rem' } }}
+                    >
+                      {step.title}
+                    </Typography>
+                    <Typography 
+                      variant="body1" 
+                      color="text.secondary" 
+                      sx={{ 
+                        lineHeight: 1.7,
+                        fontSize: { xs: '0.875rem', md: '1rem' },
+                        px: { xs: 1, md: 0 }
+                      }}
+                    >
+                      {step.description}
+                    </Typography>
+
+                    {/* Connector Arrow (except last) */}
+                    {index < steps.length - 1 && (
+                      <Box
+                        sx={{
+                          display: { xs: 'none', md: 'block' },
+                          position: 'absolute',
+                          top: '30%',
+                          right: '-10%',
+                          fontSize: '3rem',
+                          color: theme.palette.primary.main,
+                          opacity: 0.3
+                        }}
+                      >
+                        →
+                      </Box>
+                    )}
+                  </Stack>
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
         </Stack>
       </Container>
     </Box>

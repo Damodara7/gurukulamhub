@@ -169,6 +169,9 @@ const FeaturesTable = () => {
   const [currentFeature, setCurrentFeature] = useState(null) // To keep track of the feature for actions
   const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false) // Manage confirmation dialog
 
+  const userRoles = session?.user?.roles || ['USER']
+  const isUserSuperAdmin = isSuperAdmin(userRoles)
+
   // Fetch the features from API
   const getFeatureData = async () => {
     console.log('Fetching Features Data now...')
