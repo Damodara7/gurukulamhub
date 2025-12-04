@@ -346,11 +346,11 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
             <MenuItem href={`/${locale}/management/videos`} icon={<i className='ri-video-line' />}>
               {dictionary['navigation'].videos}
             </MenuItem>
-            {/* 
+            
               <MenuItem href={`/${locale}/management/alerts`} icon={<i className='ri-notification-3-line' />}>
                 {dictionary['navigation'].alerts}
               </MenuItem>
-             */}
+            
             <SubMenu label={dictionary['navigation'].roles} icon={<i className='ri-shield-user-line' />}>
               <MenuItem href={`/${locale}/management/roles`}>{dictionary['navigation'].roles}</MenuItem>
               <MenuItem href={`/${locale}/management/geo-roles`}>{dictionary['navigation'].geoRoles}</MenuItem>

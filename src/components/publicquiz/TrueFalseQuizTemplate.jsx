@@ -18,6 +18,7 @@ import ImagePopup from '../ImagePopup'
 const TrueFalseTemplate = ({ question, selectedAnswer, onAnswerSelect, readOnly = false }) => {
   const questionObj = question?.data?.question
   const theme = useTheme()
+  const isDarkMode = theme.palette.mode === 'dark'
   const handleOptionSelect = (questionId, optionId) => {
     if (!readOnly && onAnswerSelect) {
       onAnswerSelect(questionId, optionId)
@@ -29,19 +30,20 @@ const TrueFalseTemplate = ({ question, selectedAnswer, onAnswerSelect, readOnly 
       sx={{
         borderRadius: { xs: 2.5, sm: 3, md: 3.5 },
         overflow: 'hidden',
-        border: `1px solid ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
-        background: theme.palette.background.paper,
-        boxShadow:
-          theme.palette.mode === 'dark' ? '0 20px 44px rgba(0, 0, 0, 0.4)' : '0 20px 44px rgba(15, 23, 42, 0.14)',
-        mx: { xs: 1, sm: 0 },
-        width: { xs: 'calc(100% - 16px)', sm: '100%' },
+        width: '100%',
         maxWidth: '100%',
-        boxSizing: 'border-box'
+        border: `1px solid ${isDarkMode ? alpha(theme.palette.divider, 0.12) : alpha(theme.palette.primary.main, 0.08)}`,
+        background: isDarkMode
+          ? alpha(theme.palette.background.paper, 0.6)
+          : alpha(theme.palette.background.paper, 0.92),
+        boxShadow: isDarkMode
+          ? `0 20px 44px ${alpha(theme.palette.common.black, 0.4)}`
+          : `0 20px 44px ${alpha(theme.palette.common.black, 0.14)}`
       }}
     >
-      <CardContent sx={{ p: { xs: 2, sm: 2.5, md: 3, lg: 4 } }}>
-        <Stack spacing={{ xs: 2, sm: 2.5, md: 3 }}>
-          <Stack spacing={{ xs: 1, sm: 1.5 }} alignItems='center' textAlign='center'>
+      <CardContent sx={{ p: { xs: 3, md: 4 }, width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
+        <Stack spacing={3} sx={{ width: '100%', maxWidth: '100%' }}>
+          <Stack spacing={1.5} alignItems='flex-start' sx={{ width: '100%', maxWidth: '100%' }}>
             {(questionObj?.mediaType === 'text' ||
               questionObj?.mediaType === 'text-image' ||
               questionObj?.mediaType === 'text-video') && (
@@ -50,9 +52,15 @@ const TrueFalseTemplate = ({ question, selectedAnswer, onAnswerSelect, readOnly 
                 sx={{
                   fontWeight: 800,
                   letterSpacing: '-0.015em',
-                  fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem', lg: '2rem' },
-                  px: { xs: 1, sm: 0 },
-                  lineHeight: { xs: 1.4, sm: 1.5 }
+                  fontSize: { xs: '1.125rem', sm: '1.25rem', md: '1.5rem' },
+                  color: 'text.primary',
+                  width: '100%',
+                  maxWidth: '100%',
+                  wordWrap: 'break-word',
+                  overflowWrap: 'break-word',
+                  whiteSpace: 'normal',
+                  lineHeight: 1.5,
+                  textAlign: 'left'
                 }}
               >
                 {questionObj?.text}
@@ -62,10 +70,12 @@ const TrueFalseTemplate = ({ question, selectedAnswer, onAnswerSelect, readOnly 
               <Typography
                 variant='subtitle1'
                 sx={{
-                  color: alpha(theme.palette.text.primary, 0.75),
+                  color: alpha(theme.palette.text.primary, isDarkMode ? 0.8 : 0.75),
                   fontWeight: 600,
-                  fontSize: { xs: '0.875rem', sm: '0.9375rem', md: '1rem' },
-                  px: { xs: 1, sm: 0 }
+                  fontSize: { xs: '0.9375rem', sm: '1rem', md: '1.125rem' },
+                  wordWrap: 'break-word',
+                  overflowWrap: 'break-word',
+                  whiteSpace: 'normal'
                 }}
               >
                 Watch the video carefully and answer the question.
@@ -318,26 +328,20 @@ const TrueFalseTemplate = ({ question, selectedAnswer, onAnswerSelect, readOnly 
                             {optionLabel}
                           </Box>
 
-                          <Stack spacing={{ xs: 0.25, sm: 0.35 }} sx={{ minWidth: 0, flex: 1 }}>
+                          <Stack spacing={0.35} sx={{ minWidth: 0, flex: 1 }}>
                             {option.mediaType === 'text' && option.text && (
                               <Typography
                                 variant='body1'
                                 sx={{
-                                  fontWeight: 400,
+                                  fontWeight: 700,
                                   color: isSelected
-                                    ? theme.palette.mode === 'dark'
-                                      ? theme.palette.common.white
-                                      : alpha(theme.palette.common.white, 0.95)
+                                    ? alpha(theme.palette.common.white, 0.95)
                                     : theme.palette.text.primary,
-                                  lineHeight: { xs: 1.4, sm: 1.5 },
-                                  fontSize: { xs: '0.875rem', sm: '0.9375rem', md: '1rem', lg: '1.1rem' },
-                                  wordBreak: 'break-word',
+                                  fontSize: { xs: '0.875rem', sm: '0.95rem', md: '1.1rem' },
+                                  lineHeight: 1.5,
+                                  wordWrap: 'break-word',
                                   overflowWrap: 'break-word',
-                                  whiteSpace: 'normal',
-                                  display: '-webkit-box',
-                                  WebkitLineClamp: { xs: 3, sm: 4, md: 5 },
-                                  WebkitBoxOrient: 'vertical',
-                                  overflow: 'hidden'
+                                  whiteSpace: 'normal'
                                 }}
                               >
                                 {option.text}

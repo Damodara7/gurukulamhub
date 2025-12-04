@@ -19,6 +19,8 @@ import {
 } from '@mui/material'
 import TranslateIcon from '@mui/icons-material/Translate'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
+import ArrowBackIcon from '@mui/icons-material/ArrowBack'
+import { useRouter } from 'next/navigation'
 
 import languageNotations from '@components/quizbuilder/05_Components/languageNotation.en.json'
 import Loading from '@/components/Loading'
@@ -43,6 +45,7 @@ export const fetchQuizData = async quizId => {
 
 export default function PlayPublicQuiz({ quizId, languageCode = null }) {
   const theme = useTheme()
+  const router = useRouter()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'))
   const isDesktop = useMediaQuery(theme.breakpoints.between('md', 'lg'))
@@ -523,11 +526,25 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
         <Container maxWidth='lg'>
           <Box
             sx={{
-              maxWidth: { xs: '100%', md: 950 },
+              maxWidth: { xs: '100%' },
               mx: 'auto',
               px: { xs: 1.5, sm: 2, md: 0 }
             }}
           >
+            {/* Back Button */}
+            <Button
+              startIcon={<ArrowBackIcon />}
+              onClick={() => router.push('/publicquiz/view')}
+              variant='outlined'
+              sx={{
+                mb: 2,
+                textTransform: 'none',
+                fontWeight: 600,
+                fontSize: { xs: '0.875rem', sm: '0.9375rem' }
+              }}
+            >
+              Back to Quizzes
+            </Button>
             {isCompactHeader ? (
               <Stack spacing={1.6}>
                 <Stack direction='row' alignItems='center' spacing={1.4}>
