@@ -31,12 +31,137 @@ import MediaPreviewPopup from '../videos/MediaPreviewPopup'
 import MultiSelect from '../MultiSelect'
 import { addAlert, updateAlert } from '../../actions/alerts'
 import { getAllVideos } from '../../actions/videos'
+import { getAllAudiences, addAudience } from '../../actions/audience'
 import ReactQuillHTMLEditor from '@/components/ReactQuillHTMLEditor'
+import AddIcon from '@mui/icons-material/Add'
+import GroupsIcon from '@mui/icons-material/Groups'
+import CreateAudienceForm from '../audience/CreateAudienceForm'
 
 const alertTypes = ['LOGIN_ALERT', 'FEATURE_ALERT']
 
+// Helper function to format filter criteria for display
+const formatFilterCriteria = (filter) => {
+  if (!filter || !filter.criteria) return ''
+  
+  switch (filter.type) {
+    case 'age':
+      const { min, max } = filter.criteria
+      if (min !== undefined && max !== undefined) {
+        return `${min}-${max} years`
+      } else if (min !== undefined) {
+        return `${min}+ years`
+      } else if (max !== undefined) {
+        return `up to ${max} years`
+      }
+      return 'Age'
+    
+    case 'location':
+      const parts = []
+      if (filter.criteria.city) parts.push(filter.criteria.city)
+      if (filter.criteria.region) parts.push(filter.criteria.region)
+      if (filter.criteria.country) parts.push(filter.criteria.country)
+      return parts.join(', ') || 'Location'
+    
+    case 'gender':
+      if (filter.criteria.values && Array.isArray(filter.criteria.values)) {
+        return filter.criteria.values.map(g => g.charAt(0).toUpperCase() + g.slice(1)).join(', ')
+      }
+      return 'Gender'
+    
+    default:
+      return filter.type
+  }
+}
+
+// Helper function to format all filters with operators
+const formatAudienceFilters = (filters) => {
+  if (!filters || filters.length === 0) return 'No filters applied'
+  
+  return filters.map((filter, index) => {
+    const criteria = formatFilterCriteria(filter)
+    const operator = filter.operator && index > 0 ? ` ${filter.operator} ` : ''
+    return `${operator}${filter.type}: ${criteria}`
+  }).join(' ')
+}
+
+// Component to display audience option with filters
+const AudienceOption = ({ audience, showFilters = true }) => {
+  const theme = useTheme()
+  const isDarkMode = theme.palette.mode === 'dark'
+  
+  return (
+    <Box sx={{ py: 0.5, width: '100%' }}>
+      <Stack direction='row' spacing={1} alignItems='center' sx={{ mb: showFilters ? 0.5 : 0 }}>
+        <GroupsIcon fontSize='small' sx={{ color: theme.palette.primary.main }} />
+        <Typography fontWeight={600} sx={{ fontSize: '0.95rem' }}>
+          {audience.audienceName}
+        </Typography>
+      </Stack>
+      {showFilters && audience.filters && audience.filters.length > 0 && (
+        <Box
+          sx={{
+            ml: 3.5,
+            p: 0.75,
+            // bgcolor: alpha(theme.palette.primary.main, isDarkMode ? 0.1 : 0.05),
+            borderRadius: 1,
+            // border: `1px solid ${alpha(theme.palette.primary.main, isDarkMode ? 0.2 : 0.15)}`
+          }}
+        >
+          <Stack direction='row' spacing={0.5} flexWrap='wrap' alignItems='center'>
+            {audience.filters.map((filter, index) => (
+              <Box key={index} sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
+                {index > 0 && filter.operator && (
+                  <Chip
+                    label={filter.operator}
+                    size='small'
+                    sx={{
+                      height: '20px',
+                      fontSize: '0.7rem',
+                      fontWeight: 700,
+                      mr: 0.5,
+                      bgcolor: alpha(theme.palette.warning.main, isDarkMode ? 0.2 : 0.15),
+                      color: theme.palette.warning.main,
+                      border: `1px solid ${alpha(theme.palette.warning.main, 0.3)}`
+                    }}
+                  />
+                )}
+                <Chip
+                  label={`${filter.type.toUpperCase()}: ${formatFilterCriteria(filter)}`}
+                  size='small'
+                  sx={{
+                    height: '20px',
+                    fontSize: '0.7rem',
+                    mr: 0.5,
+                    mb: 0.5,
+                    bgcolor: alpha(theme.palette.info.main, isDarkMode ? 0.15 : 0.1),
+                    color: theme.palette.info.main,
+                    border: `1px solid ${alpha(theme.palette.info.main, 0.3)}`
+                  }}
+                />
+              </Box>
+            ))}
+          </Stack>
+        </Box>
+      )}
+      {showFilters && (!audience.filters || audience.filters.length === 0) && (
+        <Typography
+          variant='caption'
+          sx={{
+            ml: 3.5,
+            color: 'text.secondary',
+            fontStyle: 'italic',
+            fontSize: '0.75rem'
+          }}
+        >
+          No filters applied
+        </Typography>
+      )}
+    </Box>
+  )
+}
+
 // AddContent Component
-const AddContent = ({ handleClose, onCreate, videosList = [] }) => {
+const AddContent = ({ handleClose, onCreate, videosList = [], audiencesList = [], showCreateAudience, setShowCreateAudience }) => {
   const theme = useTheme()
   const isDarkMode = theme.palette.mode === 'dark'
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
@@ -47,7 +172,8 @@ const AddContent = ({ handleClose, onCreate, videosList = [] }) => {
     isActive: true,
     priority: 1,
     content: null,
-    videos: []
+    videos: [],
+    audience: ''
   })
   const [errors, setErrors] = useState({}) // State to track errors
 
@@ -103,6 +229,37 @@ const AddContent = ({ handleClose, onCreate, videosList = [] }) => {
     } else {
       return null
     }
+  }
+
+  if (showCreateAudience) {
+    return (
+      <DialogContent
+        sx={{
+          p: { xs: 2.5, sm: 3, md: 4 },
+          overflow: 'auto',
+          width: '100%',
+          maxWidth: '100%',
+          // maxHeight: '70vh'
+        }}
+      >
+        <CreateAudienceForm
+          onSubmit={async (audienceData) => {
+            try {
+              const result = await addAudience({ data: audienceData })
+              if (result?.status === 'success') {
+                handleSetFormValue('audience', result.result._id)
+                setShowCreateAudience(false)
+                // Refresh audiences list
+                window.location.reload()
+              }
+            } catch (error) {
+              console.error('Error creating audience:', error)
+            }
+          }}
+          onCancel={() => setShowCreateAudience(false)}
+        />
+      </DialogContent>
+    )
   }
 
   return (
@@ -186,6 +343,74 @@ const AddContent = ({ handleClose, onCreate, videosList = [] }) => {
             onChange={htmlContent => handleSetFormValue('content', { htmlContent: htmlContent, source: 'react-quill' })}
             required={true}
           />
+        </Grid>
+
+        {/* Audience Selection */}
+        <Grid item xs={12}>
+          <Stack spacing={1}>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Button
+                variant='outlined'
+                size='small'
+                startIcon={<AddIcon fontSize='small' />}
+                onClick={() => setShowCreateAudience(true)}
+                sx={{
+                  minWidth: 'fit-content',
+                  height: '32px',
+                  borderRadius: 1,
+                  px: 2,
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  fontSize: '0.8125rem',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                New Audience
+              </Button>
+            </Box>
+            <TextField
+              label='Select Audience (Optional)'
+              select
+              value={formData.audience}
+              onChange={e => handleSetFormValue('audience', e.target.value)}
+              fullWidth
+              SelectProps={{
+                renderValue: (selected) => {
+                  if (!selected) return <em>None</em>
+                  const selectedAudience = audiencesList.find(a => a._id === selected)
+                  return selectedAudience ? (
+                    <AudienceOption audience={selectedAudience} showFilters={true} />
+                  ) : <em>None</em>
+                },
+                MenuProps: {
+                  PaperProps: {
+                    sx: {
+                      maxHeight: 400,
+                      '& .MuiMenuItem-root': {
+                        whiteSpace: 'normal',
+                        py: 1.5
+                      }
+                    }
+                  }
+                }
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: { xs: 1.5, sm: 2 },
+                  fontSize: { xs: '0.9375rem', sm: '1rem' }
+                }
+              }}
+            >
+              <MenuItem value=''>
+                <em>None</em>
+              </MenuItem>
+              {audiencesList.map(audience => (
+                <MenuItem key={audience._id} value={audience._id}>
+                  <AudienceOption audience={audience} showFilters={true} />
+                </MenuItem>
+              ))}
+            </TextField>
+          </Stack>
         </Grid>
 
         {/* Videos Selection */}
@@ -289,7 +514,7 @@ const AddContent = ({ handleClose, onCreate, videosList = [] }) => {
   )
 }
 
-const EditContent = ({ handleClose, data, onUpdate, videosList = [] }) => {
+const EditContent = ({ handleClose, data, onUpdate, videosList = [], audiencesList = [], showCreateAudience, setShowCreateAudience }) => {
   const theme = useTheme()
   const isDarkMode = theme.palette.mode === 'dark'
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
@@ -300,7 +525,8 @@ const EditContent = ({ handleClose, data, onUpdate, videosList = [] }) => {
     priority: data?.priority || 1,
     videos: data?.videos.map(videoObj => videoObj._id) || [],
     content: data?.content || null,
-    isActive: data?.isActive || false
+    isActive: data?.isActive || false,
+    audience: data?.audience?._id || ''
   })
 
   const [errors, setErrors] = useState({}) // State to track errors
@@ -358,6 +584,37 @@ const EditContent = ({ handleClose, data, onUpdate, videosList = [] }) => {
     } else {
       return null
     }
+  }
+
+  if (showCreateAudience) {
+    return (
+      <DialogContent
+        sx={{
+          p: { xs: 2.5, sm: 3, md: 4 },
+          overflow: 'auto',
+          width: '100%',
+          maxWidth: '100%',
+          maxHeight: '70vh'
+        }}
+      >
+        <CreateAudienceForm
+          onSubmit={async (audienceData) => {
+            try {
+              const result = await addAudience({ data: audienceData })
+              if (result?.status === 'success') {
+                handleSetFormValue('audience', result.result._id)
+                setShowCreateAudience(false)
+                // Refresh audiences list
+                window.location.reload()
+              }
+            } catch (error) {
+              console.error('Error creating audience:', error)
+            }
+          }}
+          onCancel={() => setShowCreateAudience(false)}
+        />
+      </DialogContent>
+    )
   }
 
   return (
@@ -446,6 +703,74 @@ const EditContent = ({ handleClose, data, onUpdate, videosList = [] }) => {
             />
           </Grid>
 
+          {/* Audience Selection */}
+          <Grid item xs={12}>
+            <Stack spacing={1}>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <Button
+                  variant='outlined'
+                  size='small'
+                  startIcon={<AddIcon fontSize='small' />}
+                  onClick={() => setShowCreateAudience(true)}
+                  sx={{
+                    minWidth: 'fit-content',
+                    height: '32px',
+                    borderRadius: 1,
+                    px: 2,
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    fontSize: '0.8125rem',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  New Audience
+                </Button>
+              </Box>
+              <TextField
+                label='Select Audience (Optional)'
+                select
+                value={formData.audience}
+                onChange={e => handleSetFormValue('audience', e.target.value)}
+                fullWidth
+                SelectProps={{
+                  renderValue: (selected) => {
+                    if (!selected) return <em>None</em>
+                    const selectedAudience = audiencesList.find(a => a._id === selected)
+                    return selectedAudience ? (
+                      <AudienceOption audience={selectedAudience} showFilters={true} />
+                    ) : <em>None</em>
+                  },
+                  MenuProps: {
+                    PaperProps: {
+                      sx: {
+                        maxHeight: 400,
+                        '& .MuiMenuItem-root': {
+                          whiteSpace: 'normal',
+                          py: 1.5
+                        }
+                      }
+                    }
+                  }
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: { xs: 1.5, sm: 2 },
+                    fontSize: { xs: '0.9375rem', sm: '1rem' }
+                  }
+                }}
+              >
+                <MenuItem value=''>
+                  <em>None</em>
+                </MenuItem>
+                {audiencesList.map(audience => (
+                  <MenuItem key={audience._id} value={audience._id}>
+                    <AudienceOption audience={audience} showFilters={true} />
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Stack>
+          </Grid>
+
           {/* Videos Selection */}
           <Grid item xs={12}>
             <MultiSelect
@@ -522,6 +847,7 @@ const EditContent = ({ handleClose, data, onUpdate, videosList = [] }) => {
             </Button>
             <Button
               variant='contained'
+              component='label'
               onClick={handleUpdateRow}
               fullWidth={isMobile}
               sx={{
@@ -550,6 +876,8 @@ const EditContent = ({ handleClose, data, onUpdate, videosList = [] }) => {
 const AlertDialog = ({ open, setOpen, data, onSuccess }) => {
   const { data: session } = useSession()
   const [videosList, setVideosList] = useState([])
+  const [audiencesList, setAudiencesList] = useState([])
+  const [showCreateAudience, setShowCreateAudience] = useState(false)
 
   useEffect(() => {
     // Fetch the list of videos from the server
@@ -566,7 +894,22 @@ const AlertDialog = ({ open, setOpen, data, onSuccess }) => {
       }
     }
 
+    // Fetch the list of audiences from the server
+    const fetchAudiences = async () => {
+      try {
+        const response = await getAllAudiences()
+        if (response?.status === 'success') {
+          setAudiencesList(response?.result || [])
+        } else {
+          console.error('Error fetching audiences:', response?.message)
+        }
+      } catch (error) {
+        console.error('An error occurred while fetching audiences:', error)
+      }
+    }
+
     fetchVideos()
+    fetchAudiences()
   }, [open])
 
   const handleClose = () => {
@@ -646,21 +989,23 @@ const AlertDialog = ({ open, setOpen, data, onSuccess }) => {
           borderBottom: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.15 : 0.1)}`
         }}
       >
-        <IconButton
-          onClick={handleClose}
-          sx={{
-            position: 'absolute',
-            right: { xs: 12, sm: 16 },
-            top: { xs: 12, sm: 16 },
-            color: theme.palette.text.secondary,
-            '&:hover': {
-              bgcolor: alpha(theme.palette.error.main, 0.08),
-              color: theme.palette.error.main
-            }
-          }}
-        >
-          <CloseIcon />
-        </IconButton>
+        {!showCreateAudience && (
+          <IconButton
+            onClick={handleClose}
+            sx={{
+              position: 'absolute',
+              right: { xs: 12, sm: 16 },
+              top: { xs: 12, sm: 16 },
+              color: theme.palette.text.secondary,
+              '&:hover': {
+                bgcolor: alpha(theme.palette.error.main, 0.08),
+                color: theme.palette.error.main
+              }
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        )}
 
         <Stack direction='row' spacing={1.5} alignItems='center' sx={{ mb: 1 }}>
           <Box
@@ -704,9 +1049,24 @@ const AlertDialog = ({ open, setOpen, data, onSuccess }) => {
         </Stack>
       </DialogTitle>
       {data ? (
-        <EditContent handleClose={handleClose} data={data} onUpdate={handleUpdateRow} videosList={videosList} />
+        <EditContent 
+          handleClose={handleClose} 
+          data={data} 
+          onUpdate={handleUpdateRow} 
+          videosList={videosList} 
+          audiencesList={audiencesList}
+          showCreateAudience={showCreateAudience}
+          setShowCreateAudience={setShowCreateAudience}
+        />
       ) : (
-        <AddContent handleClose={handleClose} onCreate={handleCreateNewRow} videosList={videosList} />
+        <AddContent 
+          handleClose={handleClose} 
+          onCreate={handleCreateNewRow} 
+          videosList={videosList} 
+          audiencesList={audiencesList}
+          showCreateAudience={showCreateAudience}
+          setShowCreateAudience={setShowCreateAudience}
+        />
       )}
     </Dialog>
   )

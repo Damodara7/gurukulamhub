@@ -21,6 +21,11 @@ export function validateAlertCreateRequestDto(data) {
         errors.videos = 'Videos must be an array of ObjectIds.';
     }
 
+    // Validate audience (optional and should be an ObjectId string)
+    if (data.audience && typeof data.audience !== 'string') {
+        errors.audience = 'Audience must be a valid ObjectId string.';
+    }
+
     // Validate createdBy
     if (!data.createdBy || typeof data.createdBy !== 'string' || !validateEmail(data.createdBy)) {
         errors.createdBy = 'CreatedBy is required and must be a valid email.';
@@ -56,6 +61,11 @@ export function validateAlertUpdateRequestDto(data) {
     // Validate videos (optional for updates, should be an array of ObjectIds)
     if (data.videos && !Array.isArray(data.videos)) {
         errors.videos = 'Videos must be an array of ObjectIds.';
+    }
+
+    // Validate audience (optional for updates, should be an ObjectId string)
+    if (data.audience && typeof data.audience !== 'string') {
+        errors.audience = 'Audience must be a valid ObjectId string.';
     }
 
     // Validate updatedBy (required)

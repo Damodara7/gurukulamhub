@@ -28,7 +28,8 @@ import {
   Person as PersonIcon,
   Add as AddIcon,
   Search as SearchIcon,
-  NotificationsActive as NotificationsActiveIcon
+  NotificationsActive as NotificationsActiveIcon,
+  Groups as GroupsIcon
 } from '@mui/icons-material'
 
 // Third-party Imports
@@ -64,6 +65,40 @@ import AlertDialog from '@/components/alerts/AlertDialog'
 import { useRouter } from 'next/navigation'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
 // import { useAppDispatch } from '@/store/hooks'
+
+// Helper function to format filter criteria for display
+const formatFilterCriteria = (filter) => {
+  if (!filter || !filter.criteria) return ''
+  
+  switch (filter.type) {
+    case 'age':
+      const { min, max } = filter.criteria
+      if (min !== undefined && max !== undefined) {
+        return `${min}-${max} years`
+      } else if (min !== undefined) {
+        return `${min}+ years`
+      } else if (max !== undefined) {
+        return `up to ${max} years`
+      }
+      return 'Age'
+    
+    case 'location':
+      const parts = []
+      if (filter.criteria.city) parts.push(filter.criteria.city)
+      if (filter.criteria.region) parts.push(filter.criteria.region)
+      if (filter.criteria.country) parts.push(filter.criteria.country)
+      return parts.join(', ') || 'Location'
+    
+    case 'gender':
+      if (filter.criteria.values && Array.isArray(filter.criteria.values)) {
+        return filter.criteria.values.map(g => g.charAt(0).toUpperCase() + g.slice(1)).join(', ')
+      }
+      return 'Gender'
+    
+    default:
+      return filter.type
+  }
+}
 
 const fuzzyFilter = (row, columnId, value, addMeta) => {
   // Rank the item
@@ -293,6 +328,102 @@ const AlertsTable = () => {
             }}
           />
         )
+      }),
+      columnHelper.accessor('audience', {
+        header: 'Target Audience',
+        cell: ({ row }) => {
+          const audience = row.original.audience
+          
+          if (!audience) {
+            return (
+              <Typography
+                variant='body2'
+                sx={{
+                  color: 'text.secondary',
+                  fontStyle: 'italic',
+                  fontSize: { xs: '0.8125rem', sm: '0.875rem' }
+                }}
+              >
+                All Users
+              </Typography>
+            )
+          }
+
+          return (
+            <Box sx={{ py: 0.5, minWidth: 200 }}>
+              <Stack direction='row' spacing={0.75} alignItems='center' sx={{ mb: 0.5 }}>
+                <GroupsIcon fontSize='small' sx={{ color: theme.palette.primary.main, fontSize: 18 }} />
+                <Typography 
+                  fontWeight={600} 
+                  sx={{ 
+                    fontSize: '0.875rem',
+                    color: 'text.primary'
+                  }}
+                >
+                  {audience.audienceName}
+                </Typography>
+              </Stack>
+              {audience.filters && audience.filters.length > 0 && (
+                <Box sx={{ ml: 3 }}>
+                  <Stack direction='row' spacing={0.5} flexWrap='wrap' alignItems='center'>
+                    {audience.filters.map((filter, index) => (
+                      <Box key={index} sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
+                        {index > 0 && filter.operator && (
+                          <Chip
+                            label={filter.operator}
+                            size='small'
+                            sx={{
+                              height: '18px',
+                              fontSize: '0.65rem',
+                              fontWeight: 700,
+                              mr: 0.5,
+                              mb: 0.5,
+                              bgcolor: alpha(theme.palette.warning.main, isDarkMode ? 0.2 : 0.15),
+                              color: theme.palette.warning.main,
+                              border: `1px solid ${alpha(theme.palette.warning.main, 0.3)}`,
+                              '& .MuiChip-label': {
+                                px: 0.75
+                              }
+                            }}
+                          />
+                        )}
+                        <Chip
+                          label={`${filter.type.toUpperCase()}: ${formatFilterCriteria(filter)}`}
+                          size='small'
+                          sx={{
+                            height: '18px',
+                            fontSize: '0.65rem',
+                            mr: 0.5,
+                            mb: 0.5,
+                            bgcolor: alpha(theme.palette.info.main, isDarkMode ? 0.15 : 0.1),
+                            color: theme.palette.info.main,
+                            border: `1px solid ${alpha(theme.palette.info.main, 0.3)}`,
+                            '& .MuiChip-label': {
+                              px: 0.75
+                            }
+                          }}
+                        />
+                      </Box>
+                    ))}
+                  </Stack>
+                </Box>
+              )}
+              {(!audience.filters || audience.filters.length === 0) && (
+                <Typography
+                  variant='caption'
+                  sx={{
+                    ml: 3,
+                    color: 'text.secondary',
+                    fontStyle: 'italic',
+                    fontSize: '0.7rem'
+                  }}
+                >
+                  No filters
+                </Typography>
+              )}
+            </Box>
+          )
+        }
       }),
       // columnHelper.accessor('videos', {
       //   header: 'Videos',
