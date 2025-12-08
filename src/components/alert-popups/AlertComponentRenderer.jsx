@@ -11,20 +11,31 @@ const alertTypeToComponentMap = {
 }
 
 function getHighPriorityAlert(userAlerts) {
+  // Use conditional nested access to safely check userAlerts
   if (!Array.isArray(userAlerts) || userAlerts.length === 0) return null
 
   // Filter alerts based on completionStatus and status
+  // Use conditional nested access to safely check alert properties
   const filteredAlerts = userAlerts.filter(
     eachAlert =>
-      eachAlert.completionStatus === 'pending' &&
-      eachAlert.status === 'active' &&
-      eachAlert.alert?.priority !== undefined // Ensure priority exists
+      eachAlert?.completionStatus === 'pending' &&
+      eachAlert?.status === 'active' &&
+      eachAlert?.alert?.priority !== undefined && // Ensure priority exists
+      eachAlert?.alert !== null && // Ensure alert exists
+      eachAlert?.alert !== undefined // Ensure alert is defined
   )
 
+  if (filteredAlerts.length === 0) return null
+
   // Find the alert with the lowest priority
+  // Use conditional nested access to safely access priority
   return (
     filteredAlerts.reduce(
-      (lowest, current) => (current.alert.priority < lowest.alert.priority ? current : lowest),
+      (lowest, current) => {
+        const currentPriority = current?.alert?.priority ?? Infinity
+        const lowestPriority = lowest?.alert?.priority ?? Infinity
+        return currentPriority < lowestPriority ? current : lowest
+      },
       filteredAlerts[0]
     ) || null
   )
@@ -40,11 +51,12 @@ export default function AlertComponentRenderer() {
     try {
       const userAlertsResponse = await getUserWithAlertsByEmail({ email: session?.user?.email })
       if (userAlertsResponse?.status === 'success') {
-        const userAlerts = userAlertsResponse.result.alerts
+        // Use conditional nested access to safely get alerts array
+        const userAlerts = userAlertsResponse?.result?.alerts || []
         const alert = getHighPriorityAlert(userAlerts)
         setHighPriorityAlert(alert)
       } else {
-        console.error('Error fetching user alerts:', userAlertsResponse.message)
+        console.error('Error fetching user alerts:', userAlertsResponse?.message || 'Unknown error')
       }
     } catch (error) {
       console.error('Error fetching alerts:', error)
@@ -60,7 +72,11 @@ export default function AlertComponentRenderer() {
   if (loading) return null
   if (!highPriorityAlert) return null
 
-  const AlertComponent = alertTypeToComponentMap[highPriorityAlert.alert.alertType]
+  // Use conditional nested access to safely get alertType
+  const alertType = highPriorityAlert?.alert?.alertType
+  if (!alertType) return null
+
+  const AlertComponent = alertTypeToComponentMap[alertType]
   if (!AlertComponent) return null
 
   return <AlertComponent alertData={highPriorityAlert} refreshData={fetchData} />

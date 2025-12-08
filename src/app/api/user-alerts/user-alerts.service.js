@@ -4,6 +4,7 @@ import * as AlertService from '../alerts/alerts.service.js'
 import { validateUserAlertCreateRequestDto, validateUserAlertUpdateRequestDto } from './user-alerts.validator.js'; // Import your DTO schema
 import '../videos/videos.model.js'; // Import models of populating ref's
 import '../alerts/alerts.model.js'; // Import models of populating ref's
+import * as ProfileService from '../profile/profile.service.js'; // Import profile service to get user profile
 
 // **Add User Alert**
 export async function add({ data }) {
@@ -106,13 +107,52 @@ export async function getById({ id }) {
         const userAlert = await UserAlert.findById(id)
             .populate({
                 path: 'alerts.alert', // Populate the nested 'alert' field inside 'alerts'
-                populate: {
-                    path: 'videos', // Populate the 'videos' field inside the alert
-                    model: 'videos' // Ensure that the 'videos' model is populated
-                }
+                populate: [
+                    {
+                        path: 'videos', // Populate the 'videos' field inside the alert
+                        model: 'videos' // Ensure that the 'videos' model is populated
+                    },
+                    {
+                        path: 'audience', // Populate the 'audience' field inside the alert
+                        model: 'audiences' // Ensure that the 'audiences' model is populated
+                    }
+                ]
             });
         if (!userAlert) {
             return { status: 'error', message: 'User Alert not found', result: null };
+        }
+
+        // Get user profile to check audience matching
+        let userProfile = null;
+        if (userAlert?.email) {
+            try {
+                const profileResponse = await ProfileService.getByEmail({ email: userAlert.email });
+                if (profileResponse?.status === 'success' && profileResponse?.result?.profile) {
+                    userProfile = profileResponse.result.profile;
+                }
+            } catch (profileError) {
+                console.error('Error fetching user profile for audience filtering:', profileError);
+                // Continue without profile - will filter out alerts with audiences
+            }
+        }
+
+        // Filter alerts based on audience matching
+        if (userAlert?.alerts && Array.isArray(userAlert.alerts)) {
+            userAlert.alerts = userAlert.alerts.filter(userAlertItem => {
+                // Use conditional nested access to safely check alert and audience
+                const alert = userAlertItem?.alert;
+                if (!alert) return false;
+
+                const audience = alert?.audience;
+                
+                // If alert has no audience, show to all users
+                if (!audience) {
+                    return true;
+                }
+
+                // Check if user matches the audience
+                return userMatchesAudience(userProfile, audience);
+            });
         }
 
         console.log('User Alert fetched successfully!');
@@ -123,6 +163,86 @@ export async function getById({ id }) {
     }
 }
 
+// Helper function to check if user matches audience filters
+function userMatchesAudience(userProfile, audience) {
+    // If no audience is set, show to all users
+    if (!audience || !audience.filters || !Array.isArray(audience.filters) || audience.filters.length === 0) {
+        return true;
+    }
+
+    // If user profile doesn't exist, don't match
+    if (!userProfile) {
+        return false;
+    }
+
+    const filters = audience.filters;
+    let currentMatch = true;
+
+    filters.forEach((filter, index) => {
+        if (!filter || !filter.type || !filter.criteria) {
+            return;
+        }
+
+        let filterMatches = false;
+
+        switch (filter.type) {
+            case 'age':
+                const userAge = userProfile?.age;
+                if (typeof userAge === 'number') {
+                    const { min, max } = filter.criteria || {};
+                    const meetsMin = min === undefined || userAge >= min;
+                    const meetsMax = max === undefined || userAge <= max;
+                    filterMatches = meetsMin && meetsMax;
+                }
+                break;
+
+            case 'location':
+                const userCountry = userProfile?.country || '';
+                const userRegion = userProfile?.region || '';
+                const userLocality = userProfile?.locality || '';
+
+                const criteria = filter.criteria || {};
+                const matchesCountry = !criteria.country || 
+                    (typeof userCountry === 'string' && userCountry.trim().toLowerCase() === criteria.country.toLowerCase());
+                const matchesRegion = !criteria.region || 
+                    (typeof userRegion === 'string' && userRegion.trim().toLowerCase() === criteria.region.toLowerCase());
+                const matchesCity = !criteria.city || 
+                    (typeof userLocality === 'string' && userLocality.trim().toLowerCase() === criteria.city.toLowerCase());
+
+                filterMatches = matchesCountry && matchesRegion && matchesCity;
+                break;
+
+            case 'gender':
+                const userGender = userProfile?.gender;
+                if (typeof userGender === 'string') {
+                    const values = Array.isArray(filter.criteria?.values) ? filter.criteria.values : [];
+                    filterMatches = values.includes(userGender.trim().toLowerCase());
+                }
+                break;
+
+            default:
+                filterMatches = false;
+        }
+
+        // Apply operator logic (AND, OR, NOT)
+        if (index === 0) {
+            currentMatch = filterMatches;
+        } else {
+            const operator = (filter.operator || 'AND').toUpperCase();
+            if (operator === 'OR') {
+                currentMatch = currentMatch || filterMatches;
+            } else if (operator === 'NOT') {
+                currentMatch = currentMatch && !filterMatches;
+            } else {
+                // AND (default)
+                currentMatch = currentMatch && filterMatches;
+            }
+        }
+    });
+
+    return currentMatch;
+}
+
 // Get User Alert by QueryParams
 export async function getOneByQueryParams(queryParams = {}) {
     await connectMongo();
@@ -130,14 +250,55 @@ export async function getOneByQueryParams(queryParams = {}) {
         const userAlert = await UserAlert.findOne({ ...queryParams })
             .populate({
                 path: 'alerts.alert', // Populate the nested 'alert' field inside 'alerts'
-                populate: {
-                    path: 'videos', // Populate the 'videos' field inside the alert
-                    model: 'videos' // Ensure that the 'videos' model is populated
-                }
+                populate: [
+                    {
+                        path: 'videos', // Populate the 'videos' field inside the alert
+                        model: 'videos' // Ensure that the 'videos' model is populated
+                    },
+                    {
+                        path: 'audience', // Populate the 'audience' field inside the alert
+                        model: 'audiences' // Ensure that the 'audiences' model is populated
+                    }
+                ]
             });
+        
         if (!userAlert) {
             return { status: 'error', message: 'User Alert not found', result: null };
         }
+
+        // Get user profile to check audience matching
+        let userProfile = null;
+        if (queryParams.email) {
+            try {
+                const profileResponse = await ProfileService.getByEmail({ email: queryParams.email });
+                if (profileResponse?.status === 'success' && profileResponse?.result?.profile) {
+                    userProfile = profileResponse.result.profile;
+                }
+            } catch (profileError) {
+                console.error('Error fetching user profile for audience filtering:', profileError);
+                // Continue without profile - will filter out alerts with audiences
+            }
+        }
+
+        // Filter alerts based on audience matching
+        if (userAlert.alerts && Array.isArray(userAlert.alerts)) {
+            userAlert.alerts = userAlert.alerts.filter(userAlertItem => {
+                // Use conditional nested access to safely check alert and audience
+                const alert = userAlertItem?.alert;
+                if (!alert) return false;
+
+                const audience = alert?.audience;
+                
+                // If alert has no audience, show to all users
+                if (!audience) {
+                    return true;
+                }
+
+                // Check if user matches the audience
+                return userMatchesAudience(userProfile, audience);
+            });
+        }
+
         console.log('User Alert fetched successfully!');
         return { status: 'success', result: userAlert };
     } catch (err) {

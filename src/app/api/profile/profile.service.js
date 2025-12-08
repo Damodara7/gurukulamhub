@@ -347,6 +347,11 @@ export const updateProfileByEmail = async ({ email, data }) => {
         data.countryDialCode = parseInt(data.countryDialCode, 10)
       }
 
+      // Convert age to number if it's provided
+      if (data.age !== undefined && data.age !== null && data.age !== '') {
+        data.age = parseInt(data.age, 10)
+      }
+
       console.log('Address data being saved:', {
         country: data.country,
         region: data.region,

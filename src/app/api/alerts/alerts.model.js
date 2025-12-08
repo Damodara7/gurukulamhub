@@ -19,6 +19,11 @@ const alertsSchema = new mongoose.Schema({
         ref: 'videos',
         default: [],
     },
+    audience: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'audiences',
+        default: null,
+    },
     content: {
         type: Object,
     },

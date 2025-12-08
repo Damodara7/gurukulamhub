@@ -28,7 +28,10 @@ import {
   Person as PersonIcon,
   Add as AddIcon,
   Search as SearchIcon,
-  NotificationsActive as NotificationsActiveIcon
+  NotificationsActive as NotificationsActiveIcon,
+  Groups as GroupsIcon,
+  KeyboardArrowDown as KeyboardArrowDownIcon,
+  KeyboardArrowUp as KeyboardArrowUpIcon
 } from '@mui/icons-material'
 
 // Third-party Imports
@@ -64,6 +67,40 @@ import AlertDialog from '@/components/alerts/AlertDialog'
 import { useRouter } from 'next/navigation'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
 // import { useAppDispatch } from '@/store/hooks'
+
+// Helper function to format filter criteria for display
+const formatFilterCriteria = (filter) => {
+  if (!filter || !filter.criteria) return ''
+  
+  switch (filter.type) {
+    case 'age':
+      const { min, max } = filter.criteria
+      if (min !== undefined && max !== undefined) {
+        return `${min}-${max} years`
+      } else if (min !== undefined) {
+        return `${min}+ years`
+      } else if (max !== undefined) {
+        return `up to ${max} years`
+      }
+      return 'Age'
+    
+    case 'location':
+      const parts = []
+      if (filter.criteria.city) parts.push(filter.criteria.city)
+      if (filter.criteria.region) parts.push(filter.criteria.region)
+      if (filter.criteria.country) parts.push(filter.criteria.country)
+      return parts.join(', ') || 'Location'
+    
+    case 'gender':
+      if (filter.criteria.values && Array.isArray(filter.criteria.values)) {
+        return filter.criteria.values.map(g => g.charAt(0).toUpperCase() + g.slice(1)).join(', ')
+      }
+      return 'Gender'
+    
+    default:
+      return filter.type
+  }
+}
 
 const fuzzyFilter = (row, columnId, value, addMeta) => {
   // Rank the item
@@ -201,6 +238,15 @@ const AlertsTable = () => {
   const [anchorEl, setAnchorEl] = useState(null)
   const [currentRow, setCurrentRow] = useState(null) // To keep track of the feature for actions
   const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false) // Manage confirmation dialog
+  const [expandedAudiences, setExpandedAudiences] = useState([]) // Track which audience filters are expanded (array of alert IDs)
+  
+  // Helper to convert ID to string (handles ObjectId, string, or number)
+  const getIdAsString = (id) => {
+    if (!id) return null
+    if (typeof id === 'string') return id
+    if (typeof id === 'object' && id.toString) return id.toString()
+    return String(id)
+  }
 
   // Fetch the Alerts from API
   const getAlertsData = async () => {
@@ -294,6 +340,180 @@ const AlertsTable = () => {
           />
         )
       }),
+      columnHelper.accessor('audience', {
+        header: 'Target Audience',
+        cell: ({ row }) => {
+          const audience = row.original?.audience
+          // Use alert's _id as the unique key (stable across renders)
+          const alertId = row.original?._id
+          const alertIdString = getIdAsString(alertId)
+          
+          if (!alertIdString) {
+            // Fallback if _id doesn't exist
+            return (
+              <Typography variant='body2' sx={{ color: 'text.secondary', fontSize: { xs: '0.8125rem', sm: '0.875rem' } }}>
+                All Users
+              </Typography>
+            )
+          }
+          
+          const isExpanded = expandedAudiences.includes(alertIdString)
+          const hasFilters = audience?.filters && Array.isArray(audience.filters) && audience.filters.length > 0
+          
+          if (!audience) {
+            return (
+              <Typography
+                variant='body2'
+                sx={{
+                  color: 'text.secondary',
+                  fontStyle: 'italic',
+                  fontSize: { xs: '0.8125rem', sm: '0.875rem' }
+                }}
+              >
+                All Users
+              </Typography>
+            )
+          }
+
+          const toggleFilters = (e) => {
+            e.stopPropagation()
+            e.preventDefault()
+            setExpandedAudiences(prev => {
+              const isCurrentlyExpanded = prev.includes(alertIdString)
+              if (isCurrentlyExpanded) {
+                // Remove from array
+                return prev.filter(id => id !== alertIdString)
+              } else {
+                // Add to array
+                return [...prev, alertIdString]
+              }
+            })
+          }
+
+          return (
+            <Box sx={{ py: 0.5, minWidth: 200 }}>
+              <Stack 
+                direction='row' 
+                spacing={0.75} 
+                alignItems='center' 
+                sx={{ mb: hasFilters && isExpanded ? 0.5 : 0 }}
+              >
+                <GroupsIcon fontSize='small' sx={{ color: theme.palette.primary.main, fontSize: 18 }} />
+                <Typography 
+                  fontWeight={600} 
+                  sx={{ 
+                    fontSize: '0.875rem',
+                    color: 'text.primary',
+                    flex: 1
+                  }}
+                >
+                  {audience.audienceName}
+                </Typography>
+                {hasFilters && (
+                  <IconButton
+                    size='small'
+                    onClick={toggleFilters}
+                    sx={{
+                      p: 0.5,
+                      color: 'text.secondary',
+                      '&:hover': {
+                        bgcolor: alpha(theme.palette.primary.main, 0.08),
+                        color: theme.palette.primary.main
+                      }
+                    }}
+                  >
+                    {isExpanded ? (
+                      <KeyboardArrowUpIcon fontSize='small' />
+                    ) : (
+                      <KeyboardArrowDownIcon fontSize='small' />
+                    )}
+                  </IconButton>
+                )}
+              </Stack>
+              {hasFilters ? (
+                <>
+                  {isExpanded ? (
+                    <Box sx={{ ml: 3, mt: 0.5 }}>
+                      <Stack direction='row' spacing={0.5} flexWrap='wrap' alignItems='center'>
+                        {audience.filters.map((filter, index) => {
+                          if (!filter || !filter.type) return null
+                          return (
+                            <Box key={index} sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
+                              {index > 0 && filter?.operator && (
+                                <Chip
+                                  label={filter.operator}
+                                  size='small'
+                                  sx={{
+                                    height: '18px',
+                                    fontSize: '0.65rem',
+                                    fontWeight: 700,
+                                    mr: 0.5,
+                                    mb: 0.5,
+                                    bgcolor: alpha(theme.palette.warning.main, isDarkMode ? 0.2 : 0.15),
+                                    color: theme.palette.warning.main,
+                                    border: `1px solid ${alpha(theme.palette.warning.main, 0.3)}`,
+                                    '& .MuiChip-label': {
+                                      px: 0.75
+                                    }
+                                  }}
+                                />
+                              )}
+                              <Chip
+                                label={`${filter.type.toUpperCase()}: ${formatFilterCriteria(filter)}`}
+                                size='small'
+                                sx={{
+                                  height: '18px',
+                                  fontSize: '0.65rem',
+                                  mr: 0.5,
+                                  mb: 0.5,
+                                  bgcolor: alpha(theme.palette.info.main, isDarkMode ? 0.15 : 0.1),
+                                  color: theme.palette.info.main,
+                                  border: `1px solid ${alpha(theme.palette.info.main, 0.3)}`,
+                                  '& .MuiChip-label': {
+                                    px: 0.75
+                                  }
+                                }}
+                              />
+                            </Box>
+                          )
+                        })}
+                      </Stack>
+                    </Box>
+                  ) : (
+                    <Typography
+                      variant='caption'
+                      sx={{
+                        ml: 3,
+                        color: 'text.secondary',
+                        fontStyle: 'italic',
+                        fontSize: '0.7rem',
+                        mt: 0.5,
+                        display: 'block'
+                      }}
+                    >
+                      {audience.filters.length} filter{audience.filters.length !== 1 ? 's' : ''} - Click to expand
+                    </Typography>
+                  )}
+                </>
+              ) : (
+                <Typography
+                  variant='caption'
+                  sx={{
+                    ml: 3,
+                    color: 'text.secondary',
+                    fontStyle: 'italic',
+                    fontSize: '0.7rem',
+                    mt: 0.5,
+                    display: 'block'
+                  }}
+                >
+                  No filters
+                </Typography>
+              )}
+            </Box>
+          )
+        }
+      }),
       // columnHelper.accessor('videos', {
       //   header: 'Videos',
       //   cell: ({ row }) => (
@@ -367,12 +587,13 @@ const AlertsTable = () => {
         enableSorting: false
       })
     ],
-    [] // Ensure roles are passed as a dependency to update dynamically
+    [expandedAudiences, theme, isDarkMode] // Include expandedAudiences state to trigger re-render when toggled
   )
 
   const table = useReactTable({
     data: data,
     columns,
+    getRowId: (row) => row._id || row.id, // Use _id as the stable row identifier
     filterFns: {
       fuzzy: fuzzyFilter
     },

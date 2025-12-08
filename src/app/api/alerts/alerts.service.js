@@ -31,7 +31,9 @@ export async function add({ data }) {
 export async function getById({ id }) {
     await connectMongo();
     try {
-        const alert = await Alert.findById(id).populate('videos'); // Populate videos field
+        const alert = await Alert.findById(id)
+            .populate('videos')
+            .populate('audience'); // Populate audience field
         if (!alert) {
             return { status: 'error', message: 'Alert not found', result: null };
         }
@@ -48,7 +50,9 @@ export async function getById({ id }) {
 export async function getOneByQueryParams(queryParams = {}) {
     await connectMongo();
     try {
-        const alert = await Alert.findOne({ ...queryParams }).populate('videos'); // Populate videos field
+        const alert = await Alert.findOne({ ...queryParams })
+            .populate('videos')
+            .populate('audience'); // Populate audience field
         if (!alert) {
             return { status: 'error', message: 'Alert not found', result: null };
         }
@@ -66,6 +70,7 @@ export async function getAll() {
     try {
         const alerts = await Alert.find({})
             .populate('videos') // Populate videos field
+            .populate('audience') // Populate audience field
             .sort({ createdAt: -1 })
         return { status: 'success', result: alerts, message: 'Alerts fetched successfully' };
     } catch (err) {
@@ -79,7 +84,10 @@ export async function getAll() {
 export async function getAllByQueryParams(queryParams = {}) {
     await connectMongo();
     try {
-        const alerts = await Alert.find({ ...queryParams }).sort({ priority: 1 }).populate('videos'); // Sort by priority ascending; Populate videos field
+        const alerts = await Alert.find({ ...queryParams })
+            .sort({ createdAt: -1 })
+            .populate('videos') // Populate videos field
+            .populate('audience'); // Populate audience field
         return { status: 'success', result: alerts, message: 'Alerts fetched successfully' };
     } catch (err) {
         console.error('Error fetching Alerts:', err);
