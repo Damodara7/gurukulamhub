@@ -85,7 +85,7 @@ export async function getAllByQueryParams(queryParams = {}) {
     await connectMongo();
     try {
         const alerts = await Alert.find({ ...queryParams })
-            .sort({ priority: 1 })
+            .sort({ createdAt: -1 })
             .populate('videos') // Populate videos field
             .populate('audience'); // Populate audience field
         return { status: 'success', result: alerts, message: 'Alerts fetched successfully' };

@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import Grid from '@mui/material/Grid'
-import { TextField, Button, Typography, CircularProgress } from '@mui/material'
+import { TextField, Button, Typography, CircularProgress, MenuItem, Select, FormControl, InputLabel } from '@mui/material'
 import CenterBox from '@components/CenterBox'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS as ApiUrls } from '@/configs/apiConfig'
@@ -10,28 +10,103 @@ const NameInfoStep = ({ handleNext, dataFromEmailStep, email }) => {
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [nickName, setNickName] = useState('')
+  const [age, setAge] = useState('')
+  const [gender, setGender] = useState('')
   const [errors, setErrors] = useState({})
   const [isButtonEnabled, setIsButtonEnabled] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  const validateName = name => /^[A-Za-z]+$/.test(name) && name.length >= 3
+  // Better name validation: allows letters, spaces, hyphens, apostrophes, and accented characters
+  // Must start with a letter, have at least 2 characters, max 50 characters
+  // Allows names like: Mary-Jane, O'Brien, José, Van Der Berg, etc.
+  const validateName = name => {
+    if (!name || name.trim().length === 0) return false
+    
+    const trimmedName = name.trim()
+    
+    // Length validation: 2-50 characters
+    if (trimmedName.length < 2 || trimmedName.length > 50) return false
+    
+    // Must start with a letter (including accented characters)
+    if (!/^[A-Za-zÀ-ÿ]/.test(trimmedName)) return false
+    
+    // Allow letters, spaces, hyphens, apostrophes, and accented characters
+    // Must contain at least one letter
+    const nameRegex = /^[A-Za-zÀ-ÿ\s'-]+$/
+    if (!nameRegex.test(trimmedName)) return false
+    
+    // Must not be only spaces, hyphens, or apostrophes
+    if (!/[A-Za-zÀ-ÿ]/.test(trimmedName)) return false
+    
+    // Must not have consecutive spaces, hyphens, or apostrophes
+    if (/[\s'-]{2,}/.test(trimmedName)) return false
+    
+    // Must not end with space, hyphen, or apostrophe
+    if (/[\s'-]$/.test(trimmedName)) return false
+    
+    return true
+  }
+  
+  const validateAge = ageValue => {
+    if (!ageValue) return true // Age is optional
+    const ageNum = parseInt(ageValue, 10)
+    return !isNaN(ageNum) && ageNum >= 6 && ageNum <= 120
+  }
 
   const handleInputChange = (setter, field) => e => {
     const value = e.target.value
     setter(value)
-    if (!validateName(value)) {
-      setErrors(prev => ({ ...prev, [field]: 'Minimum 3 alphabetic characters are required' }))
-    } else {
+    if (field === 'firstName' || field === 'lastName') {
+      if (!value || value.trim().length === 0) {
+        setErrors(prev => ({ ...prev, [field]: `${field === 'firstName' ? 'First' : 'Last'} name is required` }))
+      } else if (!validateName(value)) {
+        const trimmed = value.trim()
+        if (trimmed.length < 2) {
+          setErrors(prev => ({ ...prev, [field]: 'Name must be at least 2 characters long' }))
+        } else if (trimmed.length > 50) {
+          setErrors(prev => ({ ...prev, [field]: 'Name must be less than 50 characters' }))
+        } else if (!/^[A-Za-zÀ-ÿ]/.test(trimmed)) {
+          setErrors(prev => ({ ...prev, [field]: 'Name must start with a letter' }))
+        } else if (!/^[A-Za-zÀ-ÿ\s'-]+$/.test(trimmed)) {
+          setErrors(prev => ({ ...prev, [field]: 'Name can only contain letters, spaces, hyphens, and apostrophes' }))
+        } else {
+          setErrors(prev => ({ ...prev, [field]: 'Please enter a valid name' }))
+        }
+      } else {
+        setErrors(prev => ({ ...prev, [field]: '' }))
+      }
+    } else if (field === 'age') {
+      if (value && !validateAge(value)) {
+        setErrors(prev => ({ ...prev, [field]: 'Age must be between 6 and 120' }))
+      } else {
+        setErrors(prev => ({ ...prev, [field]: '' }))
+      }
+    } else if (field === 'gender') {
       setErrors(prev => ({ ...prev, [field]: '' }))
     }
-    setIsButtonEnabled(validateName(firstName) && validateName(lastName))
+    updateButtonState()
+  }
+
+  const updateButtonState = () => {
+    const firstNameValid = firstName.trim().length > 0 && validateName(firstName)
+    const lastNameValid = lastName.trim().length > 0 && validateName(lastName)
+    const ageValid = !age || validateAge(age)
+    setIsButtonEnabled(firstNameValid && lastNameValid && ageValid)
   }
 
   const updateNameDetails = async () => {
     setLoading(true)
 
+    // Validation
     if (!firstName || !lastName) {
       setErrors(prev => ({ ...prev, firstName: 'First name is required', lastName: 'Last name is required' }))
+      setLoading(false)
+      return
+    }
+
+    if (age && !validateAge(age)) {
+      setErrors(prev => ({ ...prev, age: 'Age must be between 6 and 120' }))
+      setLoading(false)
       return
     }
 
@@ -41,9 +116,21 @@ const NameInfoStep = ({ handleNext, dataFromEmailStep, email }) => {
         firstname: firstName,
         lastname: lastName
       }
+      
       if (dataFromEmailStep.accountType === 'INDIVIDUAL' && nickName) {
         payload = { ...payload, nickname: nickName }
       }
+      
+      // Add age if provided
+      if (age) {
+        payload.age = parseInt(age, 10)
+      }
+      
+      // Add gender if provided
+      if (gender) {
+        payload.gender = gender
+      }
+      
       const result = await RestApi.put(ApiUrls.v0.USERS_PROFILE, payload)
       if (result?.status === 'success') {
         handleNext()
@@ -103,6 +190,47 @@ const NameInfoStep = ({ handleNext, dataFromEmailStep, email }) => {
           />
         </Grid>
       )}
+      {/* {isIndividual && ( */}
+        <>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label='Age'
+              type='number'
+              placeholder='Optional'
+              fullWidth
+              variant='outlined'
+              value={age}
+              onChange={handleInputChange(setAge, 'age')}
+              error={!!errors.age}
+              helperText={errors.age || 'Enter your age (6-120)'}
+              inputProps={{ min: 6, max: 120 }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <FormControl fullWidth variant='outlined'>
+              <InputLabel>Gender</InputLabel>
+              <Select
+                value={gender}
+                onChange={handleInputChange(setGender, 'gender')}
+                label='Gender'
+                error={!!errors.gender}
+              >
+                <MenuItem value=''>
+                  <em>Optional</em>
+                </MenuItem>
+                <MenuItem value='male'>Male</MenuItem>
+                <MenuItem value='female'>Female</MenuItem>
+                <MenuItem value='transgender'>Transgender</MenuItem>
+              </Select>
+            </FormControl>
+            {errors.gender && (
+              <Typography variant='caption' color='error' sx={{ mt: 0.5, display: 'block' }}>
+                {errors.gender}
+              </Typography>
+            )}
+          </Grid>
+        </>
+      {/* )} */}
       <Grid item xs={12}>
         {loading ? (
           <CenterBox>

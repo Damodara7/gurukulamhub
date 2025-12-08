@@ -56,7 +56,7 @@ const userProfileSchema = new mongoose.Schema(
     firstname: { type: String },
     lastname: { type: String },
     image: { type: String },
-    gender: { type: String },
+    gender: { type: String, enum: ['male', 'female', 'transgender'] },
     referredBy: { type: String, default: 'none@gurukulamhub.com' },
     phone: { type: String },
     accountType: { type: String },

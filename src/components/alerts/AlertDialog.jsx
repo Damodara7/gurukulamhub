@@ -161,7 +161,7 @@ const AudienceOption = ({ audience, showFilters = true }) => {
 }
 
 // AddContent Component
-const AddContent = ({ handleClose, onCreate, videosList = [], audiencesList = [], showCreateAudience, setShowCreateAudience }) => {
+const AddContent = ({ handleClose, onCreate, videosList = [], audiencesList = [], showCreateAudience, setShowCreateAudience, refreshAudiences }) => {
   const theme = useTheme()
   const isDarkMode = theme.palette.mode === 'dark'
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
@@ -249,8 +249,10 @@ const AddContent = ({ handleClose, onCreate, videosList = [], audiencesList = []
               if (result?.status === 'success') {
                 handleSetFormValue('audience', result.result._id)
                 setShowCreateAudience(false)
-                // Refresh audiences list
-                window.location.reload()
+                // Refresh audiences list without reloading the page
+                if (refreshAudiences) {
+                  await refreshAudiences()
+                }
               }
             } catch (error) {
               console.error('Error creating audience:', error)
@@ -514,7 +516,7 @@ const AddContent = ({ handleClose, onCreate, videosList = [], audiencesList = []
   )
 }
 
-const EditContent = ({ handleClose, data, onUpdate, videosList = [], audiencesList = [], showCreateAudience, setShowCreateAudience }) => {
+const EditContent = ({ handleClose, data, onUpdate, videosList = [], audiencesList = [], showCreateAudience, setShowCreateAudience, refreshAudiences }) => {
   const theme = useTheme()
   const isDarkMode = theme.palette.mode === 'dark'
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
@@ -604,8 +606,10 @@ const EditContent = ({ handleClose, data, onUpdate, videosList = [], audiencesLi
               if (result?.status === 'success') {
                 handleSetFormValue('audience', result.result._id)
                 setShowCreateAudience(false)
-                // Refresh audiences list
-                window.location.reload()
+                // Refresh audiences list without reloading the page
+                if (refreshAudiences) {
+                  await refreshAudiences()
+                }
               }
             } catch (error) {
               console.error('Error creating audience:', error)
@@ -879,37 +883,39 @@ const AlertDialog = ({ open, setOpen, data, onSuccess }) => {
   const [audiencesList, setAudiencesList] = useState([])
   const [showCreateAudience, setShowCreateAudience] = useState(false)
 
+  // Fetch the list of videos from the server
+  const fetchVideos = async () => {
+    try {
+      const response = await getAllVideos()
+      if (response?.status === 'success') {
+        setVideosList(response?.result || [])
+      } else {
+        console.error('Error fetching videos:', response?.message)
+      }
+    } catch (error) {
+      console.error('An error occurred while fetching videos:', error)
+    }
+  }
+
+  // Fetch the list of audiences from the server
+  const fetchAudiences = async () => {
+    try {
+      const response = await getAllAudiences()
+      if (response?.status === 'success') {
+        setAudiencesList(response?.result || [])
+      } else {
+        console.error('Error fetching audiences:', response?.message)
+      }
+    } catch (error) {
+      console.error('An error occurred while fetching audiences:', error)
+    }
+  }
+
   useEffect(() => {
-    // Fetch the list of videos from the server
-    const fetchVideos = async () => {
-      try {
-        const response = await getAllVideos()
-        if (response?.status === 'success') {
-          setVideosList(response?.result || [])
-        } else {
-          console.error('Error fetching videos:', response?.message)
-        }
-      } catch (error) {
-        console.error('An error occurred while fetching videos:', error)
-      }
+    if (open) {
+      fetchVideos()
+      fetchAudiences()
     }
-
-    // Fetch the list of audiences from the server
-    const fetchAudiences = async () => {
-      try {
-        const response = await getAllAudiences()
-        if (response?.status === 'success') {
-          setAudiencesList(response?.result || [])
-        } else {
-          console.error('Error fetching audiences:', response?.message)
-        }
-      } catch (error) {
-        console.error('An error occurred while fetching audiences:', error)
-      }
-    }
-
-    fetchVideos()
-    fetchAudiences()
   }, [open])
 
   const handleClose = () => {
@@ -956,8 +962,6 @@ const AlertDialog = ({ open, setOpen, data, onSuccess }) => {
       // Handle the error (e.g., show a notification)
     }
   }
-
-  console.log({ data: data })
 
   const theme = useTheme()
   const isDarkMode = theme.palette.mode === 'dark'
@@ -1057,6 +1061,7 @@ const AlertDialog = ({ open, setOpen, data, onSuccess }) => {
           audiencesList={audiencesList}
           showCreateAudience={showCreateAudience}
           setShowCreateAudience={setShowCreateAudience}
+          refreshAudiences={fetchAudiences}
         />
       ) : (
         <AddContent 
@@ -1066,6 +1071,7 @@ const AlertDialog = ({ open, setOpen, data, onSuccess }) => {
           audiencesList={audiencesList}
           showCreateAudience={showCreateAudience}
           setShowCreateAudience={setShowCreateAudience}
+          refreshAudiences={fetchAudiences}
         />
       )}
     </Dialog>
