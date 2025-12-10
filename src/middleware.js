@@ -109,11 +109,6 @@ export default async function middleware(request) {
     return NextResponse.next()
   }
 
-  // Debug logging for root path
-  if (pathname === '/' || pathname === `/${locale}`) {
-    console.log(`[Middleware] Processing root path: ${pathname}, locale: ${locale}`)
-  }
-
   // console.log('pathname:', pathname)
   // retrieve the current response
   //const res = NextResponse.next()
@@ -123,23 +118,7 @@ export default async function middleware(request) {
   // res.headers.append('Access-Control-Allow-Origin', origin);
   // }
 
-  // Wrap auth() in try-catch with timeout to prevent blocking
-  let session = null
-  try {
-    // Add timeout to prevent hanging - reduced to 1 second for faster response
-    // This ensures the page loads quickly even if auth is slow
-    const authPromise = auth()
-    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Auth timeout')), 1000))
-    session = await Promise.race([authPromise, timeoutPromise])
-  } catch (error) {
-    // Silently continue without session if auth fails or times out
-    // This prevents blocking the page load
-    // Log only in development for debugging
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[Middleware] Auth check skipped: ${error.message}`)
-    }
-    session = null
-  }
+  const session = await auth()
 
   const searchParams = request.nextUrl.searchParams
   const redirectTo = searchParams.get('redirectTo')
@@ -201,59 +180,38 @@ export default async function middleware(request) {
     return localizedRedirect(redirectTo, locale, cleanedRequest)
   }
 
-  // Check if the requested route is a guest route (accessible without login)
-  const isRequestedRouteIsGuestRoute = guestRoutes.some(route => pathname.endsWith(route))
-  const isRequestedRouteIsSharedRoute = sharedRoutes.some(route => pathname.endsWith(route))
+  if (!session?.user && privateRoute) {
+    let redirectUrl = '/welcome' // /auth/login
 
-  // If user is not logged in
-  if (!session?.user) {
-    // If trying to access a guest or shared route, allow it
-    if (isRequestedRouteIsGuestRoute || isRequestedRouteIsSharedRoute) {
-      // If pathname already contains a locale, return next() else redirect with localized URL
-      if (isUrlMissingLocale(pathname)) {
-        const redirectUrl = getLocalizedUrl(pathname, locale)
-        console.log(`[Middleware] Adding locale: ${pathname} -> ${redirectUrl}`)
-        return localizedRedirect(pathname, locale, request)
-      }
-      console.log(`[Middleware] Allowing guest/shared route: ${pathname}`)
-      return NextResponse.next()
-    }
+    // if (!(pathname === '/' || pathname === `/${locale}`)) {
+    //   const searchParamsStr = new URLSearchParams({ redirectTo: withoutSuffix(pathname, '/') }).toString()
 
-    // If trying to access root or private route, redirect to welcome
-    if (pathname === '/' || pathname === `/${locale}` || privateRoute) {
-      let redirectUrl = '/welcome'
-      console.log(`[Middleware] Not logged in, redirecting to: ${redirectUrl}`)
-      return localizedRedirect(redirectUrl, locale, request)
-    }
+    //   redirectUrl += `?${searchParamsStr}`
+    // }
+
+    return localizedRedirect(redirectUrl, locale, request)
   }
 
-  // If the user is logged in and is trying to access a guest route, redirect to home
+  // If the user is logged in and is trying to access a guest route, redirect to the root page
+  const isRequestedRouteIsGuestRoute = guestRoutes.some(route => pathname.endsWith(route))
+
+  // if (isUserLoggedIn && isRequestedRouteIsGuestRoute) {
   if (session?.user && isRequestedRouteIsGuestRoute) {
     // Check for corner cases, e.g., based on user roles or certain flags
     if (session?.user.role === 'admin') {
       const adminDashboardUrl = '/admin/dashboard'
       return localizedRedirect(adminDashboardUrl, locale, request) // Admin-specific redirect
     }
-    console.log(`[Middleware] Logged in user accessing guest route, redirecting to: ${HOME_PAGE_URL}`)
     return localizedRedirect(HOME_PAGE_URL, locale, request)
   }
 
   // If the user is logged in and is trying to access root page, redirect to the home page
-  if (session?.user && (pathname === '/' || pathname === `/${locale}`)) {
-    console.log(`[Middleware] Root path detected, redirecting to ${HOME_PAGE_URL}`)
+  if (pathname === '/' || pathname === `/${locale}`) {
     return localizedRedirect(HOME_PAGE_URL, locale, request)
   }
 
   // If pathname already contains a locale, return next() else redirect with localized URL
-  if (isUrlMissingLocale(pathname)) {
-    const redirectUrl = getLocalizedUrl(pathname, locale)
-    console.log(`[Middleware] Adding locale: ${pathname} -> ${redirectUrl}`)
-    return localizedRedirect(pathname, locale, request)
-  }
-
-  // Allow the request to proceed
-  console.log(`[Middleware] Allowing request: ${pathname}`)
-  return NextResponse.next()
+  return isUrlMissingLocale(pathname) ? localizedRedirect(pathname, locale, request) : NextResponse.next()
   // })
 }
 
@@ -339,6 +297,6 @@ export const config = {
      *    - offline.html (offline fallback)
      *    - icons (PWA icons)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|.+?/hook-examples|.+?/menu-examples|images|next.svg|vercel.svg|manifest.json|sw.js|offline.html|icons|workbox-|fallback-).*)'
+    '/((?!api|_next/static|_next/image|favicon.ico|.+?/hook-examples|.+?/menu-examples|images|next.svg|vercel.svg|manifest.json|sw.js|offline|offline.html|icons|workbox-|fallback-).*)'
   ]
 }

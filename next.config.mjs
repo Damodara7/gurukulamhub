@@ -68,7 +68,7 @@ const pwaConfig = withPWA({
   publicExcludes: ['!noprecache/**/*'],
   buildExcludes: [/middleware-manifest\.json$/],
   fallbacks: {
-    document: '/offline'
+    document: '/offline.html'
   },
   workboxOptions: {
     disableDevLogs: false, // Enable dev logs to see PWA-related console messages
