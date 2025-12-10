@@ -65,8 +65,8 @@ const pwaConfig = withPWA({
   register: true,
   skipWaiting: true,
   sw: 'sw.js',
-  publicExcludes: ['!noprecache/**/*'],
-  buildExcludes: [/middleware-manifest\.json$/],
+  publicExcludes: ['!noprecache/**/*', '**/*.map'], // Exclude source maps from PWA
+  buildExcludes: [/middleware-manifest\.json$/, /\.map$/], // Exclude .map files from build
   fallbacks: {
     document: '/offline.html'
   },
