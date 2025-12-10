@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 import withPWA from '@ducanh2912/next-pwa'
+import fs from 'fs'
+import path from 'path'
+import crypto from 'crypto'
 
 const nextConfig = {
   staticPageGenerationTimeout: 180,
@@ -74,6 +77,33 @@ const pwaConfig = withPWA({
     disableDevLogs: false, // Enable dev logs to see PWA-related console messages
     // In development, use NetworkFirst for everything to avoid blocking
     mode: process.env.NODE_ENV === 'development' ? 'development' : 'production',
+    // Override offline.html precache entry to use file content hash instead of static "development"
+    // This ensures offline.html updates when file content changes
+    additionalManifestEntries: (() => {
+      try {
+        const offlineHtmlPath = path.join(process.cwd(), 'public', 'offline.html')
+        if (fs.existsSync(offlineHtmlPath)) {
+          const fileContent = fs.readFileSync(offlineHtmlPath, 'utf8')
+          const hash = crypto.createHash('md5').update(fileContent).digest('hex').substring(0, 8)
+          return [
+            {
+              url: '/offline.html',
+              revision: hash // Use file content hash - changes when file changes
+            }
+          ]
+        }
+      } catch (error) {
+        console.warn('Failed to calculate offline.html hash:', error)
+      }
+
+      // Fallback to null (auto-calculate by workbox)
+      return [
+        {
+          url: '/offline.html',
+          revision: null
+        }
+      ]
+    })(),
     runtimeCaching: [
       {
         urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/i,
