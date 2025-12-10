@@ -36,6 +36,13 @@ local env files
 *.tsbuildinfo
 next-env.d.ts
 
+# source maps (auto-generated, should not be committed)
+*.map
+public/*.map
+public/sw.js.map
+public/workbox-*.map
+public/fallback-*.map
+
 # icon generated file
 src/assets/iconify-icons/generated-icons.js
 src/assets/iconify-icons/generated-icons.css

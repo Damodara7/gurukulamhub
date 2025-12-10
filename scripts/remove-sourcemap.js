@@ -13,18 +13,23 @@ const path = require('path')
 
 const publicDir = path.join(__dirname, '../public')
 
-// Files to clean
-const filesToClean = ['sw.js', 'workbox-1e54d6fe.js']
-
-// Map files to delete
-const mapFilesToDelete = ['sw.js.map', 'workbox-1e54d6fe.js.map']
-
 console.log('🧹 Cleaning source maps for production...\n')
 
+// Check if public directory exists
+if (!fs.existsSync(publicDir)) {
+  console.log('⚠️  Public directory not found, skipping cleanup.')
+  process.exit(0)
+}
+
+// Dynamically find all JS files that might have source maps
+const jsFiles = fs.readdirSync(publicDir).filter(file => {
+  return file.endsWith('.js') && (file === 'sw.js' || file.startsWith('workbox-') || file.startsWith('fallback-'))
+})
+
 // Remove source map references from JS files
-filesToClean.forEach(file => {
+jsFiles.forEach(file => {
   const filePath = path.join(publicDir, file)
-  if (fs.existsSync(filePath)) {
+  try {
     let content = fs.readFileSync(filePath, 'utf8')
     const originalContent = content
 
@@ -35,24 +40,28 @@ filesToClean.forEach(file => {
     if (content !== originalContent) {
       fs.writeFileSync(filePath, content, 'utf8')
       console.log(`✅ Removed source map reference from ${file}`)
-    } else {
-      console.log(`ℹ️  No source map reference found in ${file}`)
     }
-  } else {
-    console.log(`⚠️  ${file} not found, skipping...`)
+  } catch (error) {
+    console.log(`⚠️  Error processing ${file}:`, error.message)
   }
 })
 
-// Delete .map files
-mapFilesToDelete.forEach(file => {
-  const filePath = path.join(publicDir, file)
-  if (fs.existsSync(filePath)) {
-    fs.unlinkSync(filePath)
-    console.log(`✅ Deleted ${file}`)
-  } else {
-    console.log(`ℹ️  ${file} not found (already removed or not generated)`)
-  }
-})
+// Dynamically find and delete ALL .map files in public directory
+const mapFiles = fs.readdirSync(publicDir).filter(file => file.endsWith('.map'))
+
+if (mapFiles.length > 0) {
+  mapFiles.forEach(file => {
+    const filePath = path.join(publicDir, file)
+    try {
+      fs.unlinkSync(filePath)
+      console.log(`✅ Deleted ${file}`)
+    } catch (error) {
+      console.log(`⚠️  Error deleting ${file}:`, error.message)
+    }
+  })
+} else {
+  console.log('ℹ️  No .map files found (already removed or not generated)')
+}
 
 console.log('\n✅ Source map cleanup completed for production!')
 console.log('📦 Service worker will not be triggered by source map changes.')
