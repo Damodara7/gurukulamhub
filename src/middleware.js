@@ -50,7 +50,7 @@ export const getLocale = request => {
   return locale
 }
 
-const localizedRedirect = (url, locale, request ) => {
+const localizedRedirect = (url, locale, request) => {
   // console.log({ request, url })
   let _url = url
   const isLocaleMissing = isUrlMissingLocale(_url)
@@ -78,11 +78,9 @@ const localizedRedirect = (url, locale, request ) => {
     redirectUrl.search = searchParams
   }
 
-
   //console.log({ _url, _basePath, requestUrl: request.url });
   //console.log({ redirectUrl: redirectUrl.toString() });
 
-  
   return NextResponse.redirect(redirectUrl.toString())
 }
 
@@ -91,6 +89,31 @@ export default async function middleware(request) {
   // Get locale from request headers
   const locale = getLocale(request)
   const pathname = request.nextUrl.pathname
+
+  // Skip middleware for static files and PWA files - they should be served directly
+  if (
+    pathname === '/manifest.json' ||
+    pathname === '/sw.js' ||
+    pathname === '/offline.html' ||
+    pathname.startsWith('/icons/') ||
+    pathname.startsWith('/workbox-') ||
+    pathname.startsWith('/fallback-') ||
+    pathname.startsWith('/_next/static/') ||
+    pathname.startsWith('/_next/image/') ||
+    pathname.startsWith('/_next/webpack-hmr') ||
+    pathname.startsWith('/_next/webpack') ||
+    pathname.startsWith('/_next/data/') ||
+    pathname.startsWith('/api/') ||
+    pathname.match(/\.(ico|png|jpg|jpeg|svg|gif|webp|css|js|woff|woff2|ttf|eot|map|json)$/)
+  ) {
+    return NextResponse.next()
+  }
+
+  // Debug logging for root path
+  if (pathname === '/' || pathname === `/${locale}`) {
+    console.log(`[Middleware] Processing root path: ${pathname}, locale: ${locale}`)
+  }
+
   // console.log('pathname:', pathname)
   // retrieve the current response
   //const res = NextResponse.next()
@@ -100,7 +123,23 @@ export default async function middleware(request) {
   // res.headers.append('Access-Control-Allow-Origin', origin);
   // }
 
-  const session = await auth()
+  // Wrap auth() in try-catch with timeout to prevent blocking
+  let session = null
+  try {
+    // Add timeout to prevent hanging - reduced to 1 second for faster response
+    // This ensures the page loads quickly even if auth is slow
+    const authPromise = auth()
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Auth timeout')), 1000))
+    session = await Promise.race([authPromise, timeoutPromise])
+  } catch (error) {
+    // Silently continue without session if auth fails or times out
+    // This prevents blocking the page load
+    // Log only in development for debugging
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[Middleware] Auth check skipped: ${error.message}`)
+    }
+    session = null
+  }
 
   const searchParams = request.nextUrl.searchParams
   const redirectTo = searchParams.get('redirectTo')
@@ -162,38 +201,59 @@ export default async function middleware(request) {
     return localizedRedirect(redirectTo, locale, cleanedRequest)
   }
 
-  if (!session?.user && privateRoute) {
-    let redirectUrl = '/welcome' // /auth/login
+  // Check if the requested route is a guest route (accessible without login)
+  const isRequestedRouteIsGuestRoute = guestRoutes.some(route => pathname.endsWith(route))
+  const isRequestedRouteIsSharedRoute = sharedRoutes.some(route => pathname.endsWith(route))
 
-    // if (!(pathname === '/' || pathname === `/${locale}`)) {
-    //   const searchParamsStr = new URLSearchParams({ redirectTo: withoutSuffix(pathname, '/') }).toString()
+  // If user is not logged in
+  if (!session?.user) {
+    // If trying to access a guest or shared route, allow it
+    if (isRequestedRouteIsGuestRoute || isRequestedRouteIsSharedRoute) {
+      // If pathname already contains a locale, return next() else redirect with localized URL
+      if (isUrlMissingLocale(pathname)) {
+        const redirectUrl = getLocalizedUrl(pathname, locale)
+        console.log(`[Middleware] Adding locale: ${pathname} -> ${redirectUrl}`)
+        return localizedRedirect(pathname, locale, request)
+      }
+      console.log(`[Middleware] Allowing guest/shared route: ${pathname}`)
+      return NextResponse.next()
+    }
 
-    //   redirectUrl += `?${searchParamsStr}`
-    // }
-
-    return localizedRedirect(redirectUrl, locale, request)
+    // If trying to access root or private route, redirect to welcome
+    if (pathname === '/' || pathname === `/${locale}` || privateRoute) {
+      let redirectUrl = '/welcome'
+      console.log(`[Middleware] Not logged in, redirecting to: ${redirectUrl}`)
+      return localizedRedirect(redirectUrl, locale, request)
+    }
   }
 
-  // If the user is logged in and is trying to access a guest route, redirect to the root page
-  const isRequestedRouteIsGuestRoute = guestRoutes.some(route => pathname.endsWith(route))
-
-  // if (isUserLoggedIn && isRequestedRouteIsGuestRoute) {
+  // If the user is logged in and is trying to access a guest route, redirect to home
   if (session?.user && isRequestedRouteIsGuestRoute) {
     // Check for corner cases, e.g., based on user roles or certain flags
     if (session?.user.role === 'admin') {
       const adminDashboardUrl = '/admin/dashboard'
       return localizedRedirect(adminDashboardUrl, locale, request) // Admin-specific redirect
     }
+    console.log(`[Middleware] Logged in user accessing guest route, redirecting to: ${HOME_PAGE_URL}`)
     return localizedRedirect(HOME_PAGE_URL, locale, request)
   }
 
   // If the user is logged in and is trying to access root page, redirect to the home page
-  if (pathname === '/' || pathname === `/${locale}`) {
+  if (session?.user && (pathname === '/' || pathname === `/${locale}`)) {
+    console.log(`[Middleware] Root path detected, redirecting to ${HOME_PAGE_URL}`)
     return localizedRedirect(HOME_PAGE_URL, locale, request)
   }
 
   // If pathname already contains a locale, return next() else redirect with localized URL
-  return isUrlMissingLocale(pathname) ? localizedRedirect(pathname, locale, request) : NextResponse.next()
+  if (isUrlMissingLocale(pathname)) {
+    const redirectUrl = getLocalizedUrl(pathname, locale)
+    console.log(`[Middleware] Adding locale: ${pathname} -> ${redirectUrl}`)
+    return localizedRedirect(pathname, locale, request)
+  }
+
+  // Allow the request to proceed
+  console.log(`[Middleware] Allowing request: ${pathname}`)
+  return NextResponse.next()
   // })
 }
 
@@ -274,7 +334,11 @@ export const config = {
      *    - images (public images)
      *    - next.svg (Next.js logo)
      *    - vercel.svg (Vercel logo)
+     *    - manifest.json (PWA manifest)
+     *    - sw.js (service worker)
+     *    - offline.html (offline fallback)
+     *    - icons (PWA icons)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|.+?/hook-examples|.+?/menu-examples|images|next.svg|vercel.svg).*)'
+    '/((?!api|_next/static|_next/image|favicon.ico|.+?/hook-examples|.+?/menu-examples|images|next.svg|vercel.svg|manifest.json|sw.js|offline.html|icons|workbox-|fallback-).*)'
   ]
 }
