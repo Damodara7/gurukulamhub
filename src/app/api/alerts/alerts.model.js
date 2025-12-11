@@ -1,4 +1,6 @@
 import mongoose from 'mongoose'
+import AudienceModel from '../audience/audience.model'
+import VideoModel from '../videos/videos.model'
 
 const alertsSchema = new mongoose.Schema({
     alertType: {
