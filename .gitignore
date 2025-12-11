@@ -43,6 +43,11 @@ public/sw.js.map
 public/workbox-*.map
 public/fallback-*.map
 
+# PWA auto-generated files (regenerated on each build/dev)
+public/sw.js
+public/workbox-*.js
+public/fallback-*.js
+
 # icon generated file
 src/assets/iconify-icons/generated-icons.js
 src/assets/iconify-icons/generated-icons.css
