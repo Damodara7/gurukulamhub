@@ -46,7 +46,7 @@ const MessageBubble = ({
       sx={{
         width: '100%',
         display: 'flex',
-        mt: showAvatar ? 2 : 1,
+        mb: showAvatar ? 0.5 : 0.5,
         alignItems: 'flex-start',
         position: 'relative',
         background: isSelected
@@ -143,51 +143,65 @@ const MessageBubble = ({
             position: 'relative'
           }}
         >
-        <Paper
-          elevation={0}
-          onContextMenu={(e) => {
-            if (!selectionMode && !isMessageDeletedForMe(message) && !isMessageDeletedForEveryone(message)) {
-              e.preventDefault()
-              onMenuOpen(e, message)
-            }
-          }}
-          sx={{
-            p: { xs: 1.25, sm: 1.5 },
-            borderRadius: { xs: 1.5, sm: 2 },
-            background: isOwnMessage
-              ? `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`
-              : isDarkMode
-                ? alpha(theme.palette.background.paper, 0.95)
-                : '#ffffff',
-            color: isOwnMessage ? 'white' : 'text.primary',
-            wordBreak: 'break-word',
-            position: 'relative',
-            cursor: selectionMode ? 'pointer' : (isOwnMessage && message.readBy?.length > 0 ? 'pointer' : 'default'),
-            border: isOwnMessage
-              ? 'none'
-              : isDarkMode
-                ? `1px solid ${alpha(theme.palette.divider, 0.2)}`
-                : `1px solid ${alpha(theme.palette.divider, 0.15)}`,
-            boxShadow: !isOwnMessage && !isDarkMode
-              ? '0 1px 2px rgba(0, 0, 0, 0.05)'
-              : 'none',
-            position: 'relative',
-            '&:hover': !selectionMode ? {
-              '& .message-menu-dots': {
-                opacity: 1
+          <Paper
+            elevation={0}
+            onContextMenu={(e) => {
+              if (!selectionMode && !isMessageDeletedForMe(message) && !isMessageDeletedForEveryone(message)) {
+                e.preventDefault()
+                onMenuOpen(e, message)
               }
-            } : {}
-          }}
-        >
-          {isMessageDeletedForEveryone(message) ? (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <BlockIcon 
-                sx={{ 
-                  fontSize: { xs: 16, sm: 18 }, 
-                  color: isOwnMessage ? alpha('#fff', 0.8) : 'text.secondary',
-                  flexShrink: 0
-                }} 
-              />
+            }}
+            sx={{
+              p: { xs: 1.25, sm: 1.5 },
+              borderRadius: { xs: 1.5, sm: 2 },
+              background: isOwnMessage
+                ? `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`
+                : isDarkMode
+                  ? alpha(theme.palette.background.paper, 0.95)
+                  : '#ffffff',
+              color: isOwnMessage ? 'white' : 'text.primary',
+              wordBreak: 'break-word',
+              position: 'relative',
+              cursor: selectionMode ? 'pointer' : (isOwnMessage && message.readBy?.length > 0 ? 'pointer' : 'default'),
+              border: isOwnMessage
+                ? 'none'
+                : isDarkMode
+                  ? `1px solid ${alpha(theme.palette.divider, 0.2)}`
+                  : `1px solid ${alpha(theme.palette.divider, 0.15)}`,
+              boxShadow: !isOwnMessage && !isDarkMode
+                ? '0 1px 2px rgba(0, 0, 0, 0.05)'
+                : 'none',
+              position: 'relative',
+              '&:hover': !selectionMode ? {
+                '& .message-menu-dots': {
+                  opacity: 1
+                }
+              } : {}
+            }}
+          >
+            {isMessageDeletedForEveryone(message) ? (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                <BlockIcon 
+                  sx={{ 
+                    fontSize: { xs: 16, sm: 18 }, 
+                    color: isOwnMessage ? alpha('#fff', 0.8) : 'text.secondary',
+                    flexShrink: 0
+                  }} 
+                />
+                <Typography
+                  variant='body2'
+                  sx={{
+                    fontStyle: 'italic',
+                    color: isOwnMessage ? alpha('#fff', 0.7) : 'text.secondary',
+                    fontSize: { xs: '0.875rem', sm: '0.9375rem' }
+                  }}
+                >
+                  {isOwnMessage
+                    ? 'You deleted this message'
+                    : `${getSenderName(message.senderEmail)} deleted this message`}
+                </Typography>
+              </Box>
+            ) : isMessageDeletedForMe(message) ? (
               <Typography
                 variant='body2'
                 sx={{
@@ -196,154 +210,140 @@ const MessageBubble = ({
                   fontSize: { xs: '0.875rem', sm: '0.9375rem' }
                 }}
               >
-                {isOwnMessage
-                  ? 'You deleted this message'
-                  : `${getSenderName(message.senderEmail)} deleted this message`}
+                This message was deleted
               </Typography>
-            </Box>
-          ) : isMessageDeletedForMe(message) ? (
-            <Typography
-              variant='body2'
-              sx={{
-                fontStyle: 'italic',
-                color: isOwnMessage ? alpha('#fff', 0.7) : 'text.secondary',
-                fontSize: { xs: '0.875rem', sm: '0.9375rem' }
-              }}
-            >
-              This message was deleted
-            </Typography>
-          ) : (
-            <>
-              {!isOwnMessage && showAvatar && (
-                <Typography
-                  variant='caption'
-                  sx={{
-                    mb: 0.5,
-                    fontWeight: 600,
-                    fontSize: { xs: '0.7rem', sm: '0.75rem' },
-                    color: getAvatarBackgroundColor 
-                      ? getAvatarBackgroundColor(message.senderEmail)
-                      : getColorFromString(message.senderEmail),
-                    display: 'block'
-                  }}
-                >
-                  {getSenderName(message.senderEmail)}
-                  {message.senderEmail === groupData?.creatorEmail && (
-                    <Chip
-                      label='Admin'
-                      size='small'
-                      sx={{
-                        height: { xs: 14, sm: 16 },
-                        fontSize: { xs: '0.55rem', sm: '0.6rem' },
-                        ml: 0.5,
-                        background: alpha(theme.palette.primary.main, isDarkMode ? 0.2 : 0.12),
-                        color: theme.palette.primary.main
-                      }}
-                    />
-                  )}
-                </Typography>
-              )}
-              <Typography
-                variant='body2'
-                component='div'
-                sx={{
-                  fontSize: { xs: '0.875rem', sm: '0.9375rem' },
-                  color: isOwnMessage ? 'white' : 'text.primary',
-                  mb: 0,
-                  mr: 10,
-                  whiteSpace: 'pre-wrap', // Preserve newlines and wrap text
-                  wordBreak: 'break-word' // Break long words if needed
-                }}
-              >
-                {message.message}
-              </Typography>
-              {/* Three dots menu - appears on hover for all messages, span not IconButton */}
-              {!selectionMode && !isMessageDeletedForMe(message) && !isMessageDeletedForEveryone(message) && (
-                <Box
-                  component='span'
-                  className='message-menu-dots'
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onMenuOpen(e, message)
-                  }}
-                  sx={{
-                    position: 'absolute',
-                    top: { xs: 4, sm: 6 },
-                    right: { xs: 4, sm: 6 },
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    opacity: 0,
-                    transition: 'opacity 0.2s',
-                    color: isOwnMessage ? 'white' : 'text.secondary',
-                    zIndex: 1
-                  }}
-                >
-                  <MoreVertIcon sx={{ fontSize: { xs: 18, sm: 20 } }} />
-                </Box>
-              )}
-              {/* Timestamp container at bottom */}
-              <Stack
-                direction='row'
-                alignItems='center'
-                spacing={1}
-                sx={{
-                  mt: 0,
-                  justifyContent: 'flex-end',
-                  width: '100%'
-                }}
-              >
-                {message.isEdited && (
+            ) : (
+              <>
+                {!isOwnMessage && showAvatar && (
                   <Typography
                     variant='caption'
                     sx={{
-                      fontSize: { xs: '0.6rem', sm: '0.65rem' },
-                      opacity: isOwnMessage ? 0.8 : 0.6,
-                      color: isOwnMessage ? 'white' : 'text.secondary',
-                      fontStyle: 'italic'
+                      mb: 0.5,
+                      fontWeight: 600,
+                      fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                      color: getAvatarBackgroundColor 
+                        ? getAvatarBackgroundColor(message.senderEmail)
+                        : getColorFromString(message.senderEmail),
+                      display: 'block'
                     }}
                   >
-                    Edited
+                    {getSenderName(message.senderEmail)}
+                    {message.senderEmail === groupData?.creatorEmail && (
+                      <Chip
+                        label='Admin'
+                        size='small'
+                        sx={{
+                          height: { xs: 14, sm: 16 },
+                          fontSize: { xs: '0.55rem', sm: '0.6rem' },
+                          ml: 0.5,
+                          background: alpha(theme.palette.primary.main, isDarkMode ? 0.2 : 0.12),
+                          color: theme.palette.primary.main
+                        }}
+                      />
+                    )}
                   </Typography>
                 )}
                 <Typography
-                  variant='caption'
+                  variant='body2'
+                  component='div'
                   sx={{
-                    fontSize: { xs: '0.65rem', sm: '0.7rem' },
-                    opacity: isOwnMessage ? 0.8 : 0.6,
-                    color: isOwnMessage ? 'white' : 'text.secondary',
-                    whiteSpace: 'nowrap'
+                    fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+                    color: isOwnMessage ? 'white' : 'text.primary',
+                    mb: 0,
+                    mr: 10,
+                    whiteSpace: 'pre-wrap', // Preserve newlines and wrap text
+                    wordBreak: 'break-word' // Break long words if needed
                   }}
                 >
-                  {formatMessageTime(message.createdAt)}
+                  {message.message}
                 </Typography>
-                {isOwnMessage && (
+                {/* Three dots menu - appears on hover for all messages, span not IconButton */}
+                {!selectionMode && !isMessageDeletedForMe(message) && !isMessageDeletedForEveryone(message) && (
                   <Box
+                    component='span'
+                    className='message-menu-dots'
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onMenuOpen(e, message)
+                    }}
                     sx={{
-                      ml: 0.25,
-                      display: 'inline-flex',
+                      position: 'absolute',
+                      top: { xs: 4, sm: 6 },
+                      right: { xs: 4, sm: 6 },
+                      display: 'flex',
                       alignItems: 'center',
-                      '& svg': {
-                        fontSize: { xs: 16, sm: 18 },
-                        filter: (() => {
-                          // Filter out sender's own read receipt
-                          const readByExcludingSender = message.readBy?.filter(reader => reader.userEmail !== message.senderEmail) || []
-                          const totalMembersExcludingSender = getAllMembers().filter(m => m.email !== message.senderEmail).length
-                          return readByExcludingSender.length === totalMembersExcludingSender
-                            ? 'drop-shadow(0 0 2px rgba(33, 150, 243, 0.5))'
-                            : 'none'
-                        })()
-                      }
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      opacity: 0,
+                      transition: 'opacity 0.2s',
+                      color: isOwnMessage ? 'white' : 'text.secondary',
+                      zIndex: 1
                     }}
                   >
-                    {getReadStatusIcon(message)}
+                    <MoreVertIcon sx={{ fontSize: { xs: 18, sm: 20 } }} />
                   </Box>
                 )}
-              </Stack>
-            </>
-          )}
-        </Paper>
+                {/* Timestamp container at bottom */}
+                <Stack
+                  direction='row'
+                  alignItems='center'
+                  spacing={1}
+                  sx={{
+                    mt: 0,
+                    justifyContent: 'flex-end',
+                    width: '100%'
+                  }}
+                >
+                  {message.isEdited && (
+                    <Typography
+                      variant='caption'
+                      sx={{
+                        fontSize: { xs: '0.6rem', sm: '0.65rem' },
+                        opacity: isOwnMessage ? 0.8 : 0.6,
+                        color: isOwnMessage ? 'white' : 'text.secondary',
+                        fontStyle: 'italic'
+                      }}
+                    >
+                      Edited
+                    </Typography>
+                  )}
+                  <Typography
+                    variant='caption'
+                    sx={{
+                      fontSize: { xs: '0.65rem', sm: '0.7rem' },
+                      opacity: isOwnMessage ? 0.8 : 0.6,
+                      color: isOwnMessage ? 'white' : 'text.secondary',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {formatMessageTime(message.createdAt)}
+                  </Typography>
+                  {isOwnMessage && (
+                    <Box
+                      sx={{
+                        ml: 0.25,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        '& svg': {
+                          fontSize: { xs: 16, sm: 18 },
+                          filter: (() => {
+                            // Filter out sender's own read receipt
+                            const readByExcludingSender = message.readBy?.filter(reader => reader.userEmail !== message.senderEmail) || []
+                            const totalMembersExcludingSender = getAllMembers().filter(m => m.email !== message.senderEmail).length
+                            return readByExcludingSender.length === totalMembersExcludingSender
+                              ? 'drop-shadow(0 0 2px rgba(33, 150, 243, 0.5))'
+                              : 'none'
+                          })()
+                        }
+                      }}
+                    >
+                      {getReadStatusIcon(message)}
+                    </Box>
+                  )}
+                </Stack>
+              </>
+            )}
+          </Paper>
         </Box>
       </Box>
     </Box>

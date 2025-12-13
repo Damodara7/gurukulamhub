@@ -1,5 +1,5 @@
 'use client'
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Paper, Box, Stack, TextField, IconButton, Typography, CircularProgress, useTheme, alpha, useMediaQuery, Chip } from '@mui/material'
 import { Send as SendIcon, Close as CloseIcon } from '@mui/icons-material'
 
@@ -22,6 +22,47 @@ const ChatInput = ({
   const isDarkMode = theme.palette.mode === 'dark'
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
 
+  // Helper function to focus the input
+  const focusInput = React.useCallback(() => {
+    if (!canSend || !isConnected) return
+    
+    // Try to focus with a small delay to ensure DOM is ready
+    const attemptFocus = () => {
+      if (!inputRef.current) return
+      
+      // For MUI TextField with inputRef, the ref points directly to the input/textarea element
+      // But sometimes it might be the TextField wrapper, so we check both
+      let inputElement = inputRef.current
+      
+      // If it's not a textarea/input, try to find it
+      if (inputElement.tagName !== 'TEXTAREA' && inputElement.tagName !== 'INPUT') {
+        inputElement = inputRef.current.querySelector('textarea') || 
+                       inputRef.current.querySelector('input') ||
+                       inputRef.current
+      }
+      
+      if (inputElement && typeof inputElement.focus === 'function') {
+        try {
+          inputElement.focus()
+        } catch (e) {
+          console.error('Error focusing input:', e)
+        }
+      }
+    }
+    
+    // Try immediately and with delays
+    attemptFocus()
+    setTimeout(attemptFocus, 100)
+    setTimeout(attemptFocus, 250)
+  }, [canSend, isConnected])
+
+  // Auto-focus input when component mounts or when conditions change
+  useEffect(() => {
+    if (canSend && isConnected && !editingMessage) {
+      focusInput()
+    }
+  }, [canSend, isConnected, editingMessage, focusInput])
+
   return (
     <Box sx={{ position: 'relative' }}>
       {/* Edit Message Popup - Above input, not over it */}
@@ -37,11 +78,11 @@ const ChatInput = ({
             p: { xs: 1.25, sm: 1.5 },
             background: isDarkMode
               ? alpha(theme.palette.primary.main, 0.15)
-              : alpha(theme.palette.primary.main, 0.08),
+              : alpha(theme.palette.primary.main, 0.8),
             border: `1px solid ${alpha(theme.palette.primary.main, isDarkMode ? 0.4 : 0.3)}`,
             borderRadius: { xs: 1.5, sm: 2 },
             zIndex: 10,
-            backdropFilter: 'blur(10px)'
+            backdropFilter: 'blur(100px)'
           }}
         >
           <Stack direction='row' spacing={1} alignItems='center' justifyContent='space-between'>
@@ -50,18 +91,19 @@ const ChatInput = ({
                 <Chip
                   label='Editing'
                   size='small'
-                  color='primary'
                   sx={{
                     height: { xs: 20, sm: 22 },
                     fontSize: { xs: '0.65rem', sm: '0.7rem' },
-                    fontWeight: 600
+                    fontWeight: 600,
+                    color: 'primary.main',
+                    backgroundColor: 'white'
                   }}
                 />
                 <Typography
                   variant='caption'
                   sx={{
                     fontSize: { xs: '0.7rem', sm: '0.75rem' },
-                    color: 'text.secondary',
+                    color: 'white',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap'
@@ -71,10 +113,9 @@ const ChatInput = ({
                 </Typography>
               </Stack>
               <Typography
-                variant='body2'
+                variant='h6'
                 sx={{
-                  fontSize: { xs: '0.8rem', sm: '0.875rem' },
-                  color: 'text.secondary',
+                  color: 'white',
                   fontStyle: 'italic',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
@@ -90,7 +131,7 @@ const ChatInput = ({
               size='small'
               onClick={onCancelEdit}
               sx={{
-                color: 'text.secondary',
+                color: 'white',
                 width: { xs: 28, sm: 32 },
                 height: { xs: 28, sm: 32 },
                 flexShrink: 0

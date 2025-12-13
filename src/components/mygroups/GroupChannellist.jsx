@@ -17,6 +17,8 @@ import {
   InputAdornment,
   CircularProgress,
   Tooltip,
+  Badge,
+  IconButton,
   useTheme,
   useMediaQuery
 } from '@mui/material'
@@ -29,7 +31,8 @@ import {
   Search as SearchIcon,
   CheckCircle as CheckCircleIcon,
   Cancel as CancelIcon,
-  HourglassEmpty as HourglassEmptyIcon
+  HourglassEmpty as HourglassEmptyIcon,
+  ChevronRight as ChevronRightIcon
 } from '@mui/icons-material'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
@@ -50,6 +53,8 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
   const [requestStatus, setRequestStatus] = useState({})
   const [requestDetails, setRequestDetails] = useState({})
   const [loading, setLoading] = useState({})
+  const [unreadCounts, setUnreadCounts] = useState({})
+  const [loadingUnreadCounts, setLoadingUnreadCounts] = useState(false)
   const [socket, setSocket] = useState(null)
   const [isConnected, setIsConnected] = useState(false)
   const [userSocket, setUserSocket] = useState(null)
@@ -179,7 +184,7 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
     }
   }, [session?.user?.email])
 
-  // WebSocket connection for groups list updates
+  // WebSocket connection for groups list updates and real-time message updates
   useEffect(() => {
     const wsUrl =
       typeof window !== 'undefined'
@@ -218,6 +223,91 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
       }
     }
   }, [session?.user?.email])
+
+  // WebSocket connections for each group to listen for new messages
+  useEffect(() => {
+    if (!session?.user?.email || groups.length === 0) return
+
+    const groupSockets = {}
+
+    groups.forEach(group => {
+      const wsUrl =
+        typeof window !== 'undefined'
+          ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${
+              window.location.host
+            }/api/ws/groups/${group._id}/chat`
+          : ''
+
+      if (wsUrl) {
+        const wsRef = new WebSocket(wsUrl)
+
+        wsRef.onopen = () => {
+          console.log(`[WS] Connected to group ${group._id} chat`)
+        }
+
+        wsRef.onmessage = event => {
+          try {
+            const msg = JSON.parse(event.data)
+
+            if (msg.type === 'newMessage' || msg.type === 'newChatMessage') {
+              const message = msg.data
+              // Only increment if message is not from current user and not deleted
+              if (
+                message.senderEmail !== session.user.email &&
+                !message.deletedFor?.some(d => d.userEmail === session.user.email) &&
+                !message.deletedForEveryone
+              ) {
+                // Check if message is already read
+                const isRead = message.readBy?.some(reader => reader.userEmail === session.user.email)
+                if (!isRead) {
+                  setUnreadCounts(prev => ({
+                    ...prev,
+                    [group._id]: (prev[group._id] || 0) + 1
+                  }))
+                }
+              }
+            } else if (msg.type === 'messageUpdate') {
+              const message = msg.data
+              // If message was marked as read, decrement count
+              const isRead = message.readBy?.some(reader => reader.userEmail === session.user.email)
+              if (isRead && message.senderEmail !== session.user.email) {
+                setUnreadCounts(prev => {
+                  const currentCount = prev[group._id] || 0
+                  if (currentCount > 0) {
+                    return {
+                      ...prev,
+                      [group._id]: currentCount - 1
+                    }
+                  }
+                  return prev
+                })
+              }
+            }
+          } catch (e) {
+            console.error(`[WS] Error parsing message for group ${group._id}:`, e)
+          }
+        }
+
+        wsRef.onerror = err => {
+          console.error(`[WS] Error for group ${group._id}:`, err)
+        }
+
+        wsRef.onclose = () => {
+          console.log(`[WS] Connection closed for group ${group._id}`)
+        }
+
+        groupSockets[group._id] = wsRef
+      }
+    })
+
+    return () => {
+      Object.values(groupSockets).forEach(ws => {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.close()
+        }
+      })
+    }
+  }, [groups, session?.user?.email])
 
   // Check request status when channels prop changes (e.g., after groups list update)
   useEffect(() => {
@@ -260,6 +350,66 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
 
     checkRequestStatus()
   }, [channels, session?.user?.email])
+
+  // Fetch unread message counts for groups
+  useEffect(() => {
+    const fetchUnreadCounts = async () => {
+      if (!session?.user?.email || groups.length === 0) return
+
+      setLoadingUnreadCounts(true)
+      try {
+        const counts = {}
+        
+        // Fetch counts for all groups in parallel
+        const fetchPromises = groups.map(async (group) => {
+          try {
+            // Fetch recent messages (most recent first, limit 500 to catch more unread messages)
+            const result = await RestApi.get(
+              `${API_URLS.v0.USERS_GROUP_CHAT}?groupId=${group._id}&limit=500&userEmail=${session.user.email}`
+            )
+            
+            if (result?.status === 'success' && Array.isArray(result.result)) {
+              // Count messages that are not read by this user and not sent by this user
+              const unreadCount = result.result.filter(msg => {
+                // Don't count own messages
+                if (msg.senderEmail === session.user.email) return false
+                // Don't count messages deleted for this user
+                if (msg.deletedFor?.some(d => d.userEmail === session.user.email)) return false
+                // Don't count messages deleted for everyone
+                if (msg.deletedForEveryone) return false
+                // Check if message is read by this user
+                const isRead = msg.readBy?.some(reader => reader.userEmail === session.user.email)
+                return !isRead
+              }).length
+              
+              return { groupId: group._id, count: unreadCount }
+            }
+            return { groupId: group._id, count: 0 }
+          } catch (error) {
+            console.error(`Error fetching unread count for group ${group._id}:`, error)
+            return { groupId: group._id, count: 0 }
+          }
+        })
+        
+        const results = await Promise.all(fetchPromises)
+        
+        // Build counts object
+        results.forEach(({ groupId, count }) => {
+          if (count > 0) {
+            counts[groupId] = count
+          }
+        })
+        
+        setUnreadCounts(counts)
+      } catch (error) {
+        console.error('Error fetching unread counts:', error)
+      } finally {
+        setLoadingUnreadCounts(false)
+      }
+    }
+
+    fetchUnreadCounts()
+  }, [groups, session?.user?.email])
 
   // Store the view mode when user manually switches to channels
   const [userSelectedChannels, setUserSelectedChannels] = useState(false)
@@ -466,52 +616,86 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
     }
   }
 
-  const renderGroupItem = item => (
-    <ListItem
-      key={item._id}
-      onClick={() => router.push(`/mygroups/${item._id}/chat`)}
-      sx={{
-        px: { xs: 1.5, sm: 2, md: 2.5 },
-        py: { xs: 1.25, sm: 1.5, md: 1.75 },
-        border: '1px solid',
-        borderColor: alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.5),
-        borderRadius: { xs: 1.5, sm: 2 },
-        mb: { xs: 1.25, sm: 1.5, md: 1.75 },
-        backgroundColor: isDarkMode
-          ? alpha(theme.palette.background.paper, 0.6)
-          : 'background.paper',
-        transition: 'all 0.3s ease-in-out',
-        cursor: 'pointer',
-        '&:hover': {
-          transform: 'translateY(-2px)',
-          borderColor: alpha(theme.palette.primary.main, isDarkMode ? 0.4 : 0.3),
-          boxShadow: isDarkMode
-            ? `0 8px 24px ${alpha(theme.palette.common.black, 0.3)}`
-            : '0 8px 24px rgba(0,0,0,0.08)',
+  const renderGroupItem = item => {
+    const unreadCount = unreadCounts[item._id] || 0
+    
+    return (
+      <ListItem
+        key={item._id}
+        onClick={() => router.push(`/mygroups/${item._id}/chat`)}
+        sx={{
+          px: { xs: 1.5, sm: 2, md: 2.5 },
+          py: { xs: 1.25, sm: 1.5, md: 1.75 },
+          border: '1px solid',
+          borderColor: alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.1),
+          borderRadius: { xs: 1.5, sm: 2 },
+          mb: { xs: 1.25, sm: 1.5, md: 1.75 },
           backgroundColor: isDarkMode
-            ? alpha(theme.palette.background.paper, 0.8)
-            : undefined
-        }
-      }}
-    >
-      <ListItemAvatar sx={{ minWidth: { xs: 56, sm: 64, md: 72 } }}>
-        <Avatar
-          sx={{
-            background: `linear-gradient(135deg, ${theme.palette.secondary?.main || theme.palette.primary.main}, ${alpha(
-              theme.palette.secondary?.main || theme.palette.primary.main,
-              0.72
-            )})`,
-            width: { xs: 44, sm: 48, md: 50 },
-            height: { xs: 44, sm: 48, md: 50 },
-            color: theme.palette.common.white,
+            ? alpha(theme.palette.background.paper, 0.6)
+            : 'background.paper',
+          transition: 'all 0.3s ease-in-out',
+          cursor: 'pointer',
+          position: 'relative',
+          '&:hover': {
+            transform: 'translateY(-2px)',
+            borderColor: alpha(theme.palette.primary.dark, isDarkMode ? 0.4 : 1),
             boxShadow: isDarkMode
-              ? `0 2px 8px ${alpha(theme.palette.secondary?.main || theme.palette.primary.main, 0.4)}`
-              : `0 2px 8px ${alpha(theme.palette.secondary?.main || theme.palette.primary.main, 0.3)}`
-          }}
-        >
-          <GroupIcon fontSize='small' />
-        </Avatar>
-      </ListItemAvatar>
+              ? `0 8px 24px ${alpha(theme.palette.common.black, 0.3)}`
+              : '0 8px 24px rgba(0,0,0,0.08)',
+            backgroundColor: isDarkMode
+              ? alpha(theme.palette.background.paper, 0.8)
+              : alpha(theme.palette.primary.dark, 0.1),
+            '& .arrow-icon': {
+              transform: 'translateX(4px)',
+              opacity: 1
+            }
+          }
+        }}
+      >
+        <ListItemAvatar sx={{ minWidth: { xs: 56, sm: 64, md: 72 } }}>
+          <Badge
+            badgeContent={unreadCount > 0 ? (unreadCount > 99 ? '99+' : unreadCount) : null}
+            color='error'
+            overlap='circular'
+            anchorOrigin={{
+              vertical: 'top',
+              horizontal: 'right'
+            }}
+            sx={{
+              '& .MuiBadge-badge': {
+                fontSize: { xs: '0.65rem', sm: '0.7rem' },
+                fontWeight: 700,
+                minWidth: { xs: 18, sm: 20 },
+                height: { xs: 18, sm: 20 },
+                padding: { xs: '0 5px', sm: '0 6px' },
+                borderRadius: '10px',
+                backgroundColor: '#25D366', // WhatsApp green
+                color: 'white',
+                border: `2px solid ${isDarkMode ? theme.palette.background.paper : 'white'}`,
+                boxShadow: `0 2px 8px ${alpha('#25D366', 0.4)}`,
+                top: { xs: 2, sm: 4 },
+                right: { xs: 2, sm: 4 }
+              }
+            }}
+          >
+            <Avatar
+              sx={{
+                background: `linear-gradient(135deg, ${theme.palette.secondary?.main || theme.palette.primary.main}, ${alpha(
+                  theme.palette.secondary?.main || theme.palette.primary.main,
+                  0.72
+                )})`,
+                width: { xs: 44, sm: 48, md: 50 },
+                height: { xs: 44, sm: 48, md: 50 },
+                color: theme.palette.common.white,
+                boxShadow: isDarkMode
+                  ? `0 2px 8px ${alpha(theme.palette.secondary?.main || theme.palette.primary.main, 0.4)}`
+                  : `0 2px 8px ${alpha(theme.palette.secondary?.main || theme.palette.primary.main, 0.3)}`
+              }}
+            >
+              <GroupIcon fontSize='small' />
+            </Avatar>
+          </Badge>
+        </ListItemAvatar>
 
       <ListItemText
         primary={
@@ -597,8 +781,29 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
           </Box>
         }
       />
+      <IconButton
+        className='arrow-icon'
+        sx={{
+          ml: { xs: 0, sm: 1 },
+          color: 'text.secondary',
+          opacity: { xs: 1, sm: 0.6 },
+          transition: 'all 0.3s ease',
+          p: { xs: 0.5, sm: 0.75 },
+          '&:hover': {
+            color: 'primary.main',
+            backgroundColor: 'transparent'
+          }
+        }}
+        onClick={(e) => {
+          e.stopPropagation()
+          router.push(`/mygroups/${item._id}/chat`)
+        }}
+      >
+        <ChevronRightIcon sx={{ fontSize: { xs: 24, sm: 28 } }} />
+      </IconButton>
     </ListItem>
-  )
+    )
+  }
 
   const renderChannelItem = item => (
     <ListItem

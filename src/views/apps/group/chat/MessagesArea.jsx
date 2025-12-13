@@ -149,8 +149,15 @@ const MessagesArea = ({
           const isOwnMessage = message.senderEmail === session?.user?.email
           const previousMessage = index > 0 ? messages[index - 1] : null
           const showDateHeader = shouldShowDateHeader(message, previousMessage)
+          // Show avatar if:
+          // 1. No previous message
+          // 2. Different sender
+          // 3. More than 5 minutes gap
+          // 4. Previous message was deleted for everyone (to show sender name context)
+          const previousWasDeletedForEveryone = previousMessage && isMessageDeletedForEveryone(previousMessage)
           const showAvatar = !previousMessage || previousMessage.senderEmail !== message.senderEmail ||
-            (new Date(message.createdAt) - new Date(previousMessage.createdAt)) > 300000 // 5 minutes
+            (new Date(message.createdAt) - new Date(previousMessage.createdAt)) > 300000 || // 5 minutes
+            previousWasDeletedForEveryone
           const isSystemMessage = message.messageType === 'system'
 
           return (

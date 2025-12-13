@@ -224,9 +224,20 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
             }, 100)
           } else if (msg.type === 'messageUpdate') {
             setMessages(prev => {
-              const updated = prev.map(m =>
-                m._id === msg.data._id ? { ...m, ...msg.data } : m
-              )
+              // Update existing message or add if it doesn't exist (shouldn't happen, but handle it)
+              const messageExists = prev.some(m => m._id === msg.data._id)
+              let updated
+              
+              if (messageExists) {
+                // Update existing message
+                updated = prev.map(m =>
+                  m._id === msg.data._id ? { ...m, ...msg.data } : m
+                )
+              } else {
+                // Message doesn't exist in current list, just return previous (shouldn't happen for updates)
+                updated = prev
+              }
+              
               // Filter out messages deleted for this user, but keep messages deleted for everyone (to show with banned icon)
               return updated.filter(m => {
                 const isDeletedForMe = m.deletedFor?.some(d => d.userEmail === session?.user?.email)
@@ -347,7 +358,17 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
         if (result?.status === 'success') {
           setEditingMessage(null)
           setNewMessage('')
-          inputRef.current?.focus()
+          // Focus input after editing
+          setTimeout(() => {
+            if (inputRef.current) {
+              const inputElement = inputRef.current.querySelector('textarea') || 
+                                   inputRef.current.querySelector('input') ||
+                                   inputRef.current
+              if (inputElement) {
+                inputElement.focus()
+              }
+            }
+          }, 100)
           toast.success('Message edited successfully')
         } else {
           toast.error(result?.message || 'Failed to edit message')
@@ -373,7 +394,17 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
       })
 
       if (result?.status === 'success') {
-        inputRef.current?.focus()
+        // Focus input after sending message
+        setTimeout(() => {
+          if (inputRef.current) {
+            const inputElement = inputRef.current.querySelector('textarea') || 
+                                 inputRef.current.querySelector('input') ||
+                                 inputRef.current
+            if (inputElement) {
+              inputElement.focus()
+            }
+          }
+        }, 100)
       } else {
         toast.error(result?.message || 'Failed to send message')
         setNewMessage(messageText)
@@ -858,7 +889,8 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
     }
   }, [selectionMode])
 
-  const handleDeleteClick = (fromMenu = false) => {
+  const handleDeleteClick = (messageId, fromMenu = false) => {
+    setSelectedMessages(new Set([messageId]))
     setDeleteFromMenu(fromMenu) // Mark if delete dialog is opened from menu
     setDeleteDialogOpen(true)
     if (fromMenu) {
@@ -911,6 +943,8 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
           const result = await RestApi.del(`${API_URLS.v0.USERS_GROUP_CHAT}?messageId=${messageId}&deleteForEveryone=${shouldDeleteForEveryone}`)
           if (result?.status === 'success') {
             successCount++
+            // WebSocket will broadcast the update, which will trigger messageUpdate handler
+            // No need to manually update state here
           } else {
             errorCount++
             toast.error(result?.message || 'Failed to delete message')
@@ -926,14 +960,15 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
       }
       
       setDeleteDialogOpen(false)
+      setSelectedMessages(new Set())
       setDeleteType(null)
       
       if (selectionMode) {
         handleCancelSelection()
       }
       
-      // Refresh messages
-      fetchMessages()
+      // WebSocket will handle real-time updates automatically via messageUpdate event
+      // No need to manually update state or reload messages
     } catch (error) {
       console.error('Error deleting messages:', error)
       toast.error('Failed to delete messages')
@@ -1069,14 +1104,28 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
         onSelectMode={() => handleSelectMode(menuMessage)}
         onEditClick={() => {
           setEditingMessage(menuMessage)
-          setNewMessage(menuMessage.message) // Prepopulate input with message text
+          const messageText = menuMessage.message
+          setNewMessage(messageText) // Prepopulate input with message text
           handleMessageMenuClose()
-          // Focus input after a short delay to ensure it's rendered
+          // Focus input and set cursor to end after a short delay to ensure it's rendered
           setTimeout(() => {
-            inputRef.current?.focus()
+            if (inputRef.current) {
+              // For MUI TextField with inputRef, the ref points directly to the input/textarea element
+              inputRef.current.focus()
+              // Set cursor position to end of text
+              const length = messageText.length
+              if (inputRef.current.setSelectionRange) {
+                inputRef.current.setSelectionRange(length, length)
+              } else if (inputRef.current.createTextRange) {
+                // Fallback for IE
+                const range = inputRef.current.createTextRange()
+                range.collapse(false)
+                range.select()
+              }
+            }
           }, 100)
         }}
-        onDeleteClick={() => handleDeleteClick(true)} // From menu
+        onDeleteClick={() => handleDeleteClick(menuMessage._id, true)} // From menu
         isMessageDeletedForEveryone={isMessageDeletedForEveryone}
         isMessageDeletedForMe={isMessageDeletedForMe}
       />
@@ -1088,6 +1137,7 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
           setDeleteDialogOpen(false)
           setDeleteType(null)
           setDeleteFromMenu(false)
+          setSelectedMessages(new Set())
         }}
         selectedCount={selectedMessages.size}
         menuMessage={menuMessage}
@@ -1096,6 +1146,7 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
         onConfirm={handleDeleteConfirm}
         isMessageDeletedForEveryone={isMessageDeletedForEveryone}
         fromMenu={deleteFromMenu}
+        groupData={groupData}
       />
 
       {/* Members Drawer */}

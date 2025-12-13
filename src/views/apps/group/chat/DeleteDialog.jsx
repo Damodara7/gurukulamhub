@@ -23,7 +23,8 @@ const DeleteDialog = ({
   selectedMessages,
   onConfirm,
   isMessageDeletedForEveryone,
-  fromMenu = false // New prop to indicate if opened from menu
+  fromMenu = false, // New prop to indicate if opened from menu
+  groupData
 }) => {
   const theme = useTheme()
   const isDarkMode = theme.palette.mode === 'dark'
@@ -46,7 +47,7 @@ const DeleteDialog = ({
   // 1. Not deleted for everyone
   // 2. All messages are from the current user (sender)
   // When opened from menu, we want to show both options if the message is from the user
-  const canDeleteForEveryone = !hasDeletedForEveryone && allMessagesAreFromUser
+  const canDeleteForEveryone = (!hasDeletedForEveryone && allMessagesAreFromUser) || (fromMenu && (menuMessage?.senderEmail || selectedMessages[0]?.senderEmail) === session?.user?.email)
 
   return (
     <Dialog
