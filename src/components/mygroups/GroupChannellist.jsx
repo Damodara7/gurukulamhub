@@ -34,6 +34,7 @@ import {
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import { toast } from 'react-toastify'
 
 const GroupChannellist = ({ groups = [], channels = [] }) => {
@@ -43,6 +44,7 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
   const isDesktop = useMediaQuery(theme.breakpoints.between('md', 'lg'))
   const isDarkMode = theme.palette.mode === 'dark'
   const { data: session } = useSession()
+  const router = useRouter()
   const [viewMode, setViewMode] = useState('groups')
   const [searchQuery, setSearchQuery] = useState('')
   const [requestStatus, setRequestStatus] = useState({})
@@ -467,6 +469,7 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
   const renderGroupItem = item => (
     <ListItem
       key={item._id}
+      onClick={() => router.push(`/mygroups/${item._id}/chat`)}
       sx={{
         px: { xs: 1.5, sm: 2, md: 2.5 },
         py: { xs: 1.25, sm: 1.5, md: 1.75 },

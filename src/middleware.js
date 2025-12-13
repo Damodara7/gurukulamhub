@@ -91,6 +91,12 @@ export default async function middleware(request) {
   // Get locale from request headers
   const locale = getLocale(request)
   const pathname = request.nextUrl.pathname
+  
+  // Skip middleware for WebSocket routes - they need to bypass all middleware logic
+  if (pathname.startsWith('/api/ws')) {
+    return NextResponse.next()
+  }
+  
   // console.log('pathname:', pathname)
   // retrieve the current response
   //const res = NextResponse.next()

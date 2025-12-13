@@ -57,6 +57,10 @@ export const groupSchema = new mongoose.Schema(
       type: String,
       required: true
     },
+    isAnnouncementOnly: {
+      type: Boolean,
+      default: false
+    },
     isDeleted: {
       type: Boolean,
       default: false

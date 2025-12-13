@@ -51,7 +51,8 @@ export const API_URLS = {
     SPONSORSHIP: `${API_BASE_URL}/sponsorship`,
     SPONSORSHIP_PAYMENT: `${API_BASE_URL}/sponsorship-payment`,
     USERS_GROUP_REQUEST: `${API_BASE_URL}/group-request`,
-
+    USERS_GROUP_CHAT: `${API_BASE_URL}/group-chat`,
+    USERS_GROUP_CHAT_ACTIONS: `${API_BASE_URL}/group-chat/actions`,
     GAME_SPONSORSHIP: `${API_BASE_URL}/game-sponsorship`,
     GAME_SPONSORSHIP_PAYMENT: `${API_BASE_URL}/game-sponsorship-payment`
   },

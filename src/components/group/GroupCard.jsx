@@ -11,6 +11,7 @@ import {
   Tooltip,
   Badge,
   Button,
+  IconButton,
   useTheme
 } from '@mui/material'
 import { alpha } from '@mui/material/styles'
@@ -27,7 +28,9 @@ import {
   GroupAdd as GroupAddIcon,
   Cake as CakeIcon,
   LocationOn as LocationIcon,
-  FilterList as FilterIcon
+  FilterList as FilterIcon,
+  Campaign as CampaignIcon,
+  Chat as ChatIcon
 } from '@mui/icons-material'
 import GroupFallBackCard from './GroupFallBackCard'
 import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
@@ -263,41 +266,70 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup }) => {
                         </Typography>
                       </Tooltip>
 
-                      {group?.status === 'public' ? (
-                        <Chip
-                          size='small'
-                          icon={<PublicIcon sx={{ fontSize: { xs: 12, sm: 14 } }} />}
-                          label='Public'
-                          sx={{
-                            height: { xs: 22, sm: 24 },
-                            fontWeight: 600,
-                            fontSize: { xs: '0.65rem', sm: '0.7rem' },
-                            background: alpha(theme.palette.success.main, 0.12),
-                            color: theme.palette.success.main,
-                            border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
-                            '& .MuiChip-icon': {
-                              color: theme.palette.success.main
-                            }
-                          }}
-                        />
-                      ) : (
-                        <Chip
-                          size='small'
-                          icon={<LockIcon sx={{ fontSize: { xs: 12, sm: 14 } }} />}
-                          label='Private'
-                          sx={{
-                            height: { xs: 22, sm: 24 },
-                            fontWeight: 600,
-                            fontSize: { xs: '0.65rem', sm: '0.7rem' },
-                            background: alpha(theme.palette.warning.main, 0.12),
-                            color: theme.palette.warning.main,
-                            border: `1px solid ${alpha(theme.palette.warning.main, 0.2)}`,
-                            '& .MuiChip-icon': {
-                              color: theme.palette.warning.main
-                            }
-                          }}
-                        />
-                      )}
+                      <Stack direction='row' spacing={0.5} alignItems='center'>
+                        {group?.isAnnouncementOnly && (
+                          <Tooltip title='Announcement mode - Only admins can send messages' arrow>
+                            <IconButton
+                              size='small'
+                              sx={{
+                                width: { xs: 24, sm: 28 },
+                                height: { xs: 24, sm: 28 },
+                                p: 0.5,
+                                background: alpha(theme.palette.info.main, 0.12),
+                                color: theme.palette.info.main,
+                                border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`,
+                                '&:hover': {
+                                  background: alpha(theme.palette.info.main, 0.2),
+                                  borderColor: alpha(theme.palette.info.main, 0.4)
+                                }
+                              }}
+                            >
+                              <CampaignIcon sx={{ fontSize: { xs: 14, sm: 16 } }} />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                        {group?.status === 'public' ? (
+                          <Tooltip title='Public Group' arrow>
+                            <IconButton
+                              size='small'
+                              sx={{
+                                width: { xs: 24, sm: 28 },
+                                height: { xs: 24, sm: 28 },
+                                p: 0.5,
+                                background: alpha(theme.palette.success.main, 0.12),
+                                color: theme.palette.success.main,
+                                border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
+                                '&:hover': {
+                                  background: alpha(theme.palette.success.main, 0.2),
+                                  borderColor: alpha(theme.palette.success.main, 0.4)
+                                }
+                              }}
+                            >
+                              <PublicIcon sx={{ fontSize: { xs: 14, sm: 16 } }} />
+                            </IconButton>
+                          </Tooltip>
+                        ) : (
+                          <Tooltip title='Private Group' arrow>
+                            <IconButton
+                              size='small'
+                              sx={{
+                                width: { xs: 24, sm: 28 },
+                                height: { xs: 24, sm: 28 },
+                                p: 0.5,
+                                background: alpha(theme.palette.warning.main, 0.12),
+                                color: theme.palette.warning.main,
+                                border: `1px solid ${alpha(theme.palette.warning.main, 0.2)}`,
+                                '&:hover': {
+                                  background: alpha(theme.palette.warning.main, 0.2),
+                                  borderColor: alpha(theme.palette.warning.main, 0.4)
+                                }
+                              }}
+                            >
+                              <LockIcon sx={{ fontSize: { xs: 14, sm: 16 } }} />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                      </Stack>
                     </Stack>
                   </Box>
 
@@ -697,128 +729,145 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup }) => {
                       </Stack>
                     </Box>
                   </Box>
-                  {/* Action Buttons - With Text Labels */}
+                  {/* Action Buttons - Icon Only */}
                   <Divider sx={{ my: { xs: 1, sm: 1.5 } }} />
-                  <Stack direction='row' spacing={{ xs: 0.5, sm: 1 }} justifyContent='space-between'>
-                    <Button
-                      size='small'
-                      variant='outlined'
-                      onClick={() => onViewGroup(group._id)}
-                      sx={{
-                        flex: 1,
-                        fontSize: { xs: '0.75rem', sm: '0.8125rem' },
-                        py: { xs: 0.5, sm: 0.75 },
-                        px: { xs: 1, sm: 1.5 },
-                        borderRadius: 2,
-                        borderColor: alpha(theme.palette.info.main, 0.2),
-                        color: alpha(theme.palette.info.main, 0.6),
-                        fontWeight: 600,
-                        transition: 'all 0.3s ease',
-                        '&:hover': {
-                          borderColor: theme.palette.info.main,
+                  <Stack 
+                    direction='row' 
+                    spacing={{ xs: 2, sm: 3 }} 
+                    justifyContent='center' 
+                    alignItems='center'
+                    flexWrap='wrap'
+                  >
+                    <Tooltip title='Open Chat' arrow placement='top'>
+                      <IconButton
+                        onClick={() => router.push(`/management/group/${group._id}/chat`)}
+                        size='large'
+                        sx={{
+                          color: theme.palette.success.main,
+                          background: alpha(theme.palette.success.main, 0.08),
+                          border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
+                          width: { xs: 44, sm: 48 },
+                          height: { xs: 44, sm: 48 },
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            background: alpha(theme.palette.success.main, 0.15),
+                            borderColor: alpha(theme.palette.success.main, 0.4),
+                            transform: 'translateY(-2px)',
+                            boxShadow: `0 4px 12px ${alpha(theme.palette.success.main, 0.3)}`
+                          }
+                        }}
+                      >
+                        <ChatIcon sx={{ fontSize: { xs: 22, sm: 24 } }} />
+                      </IconButton>
+                    </Tooltip>
+                    
+                    <Tooltip title='View Group Details' arrow placement='top'>
+                      <IconButton
+                        onClick={() => onViewGroup(group._id)}
+                        size='large'
+                        sx={{
                           color: theme.palette.info.main,
                           background: alpha(theme.palette.info.main, 0.08),
-                          transform: { xs: 'translateY(-1px)', sm: 'translateY(-2px)' },
-                          boxShadow: `0 4px 12px ${alpha(theme.palette.info.main, 0.2)}`
-                        }
-                      }}
-                      startIcon={<VisibilityIcon sx={{ fontSize: { xs: 16, sm: 18 } }} />}
-                    >
-                      View
-                    </Button>
-                    <Button
-                      size='small'
-                      variant='outlined'
-                      onClick={() => onEditGroup(group._id)}
-                      sx={{
-                        flex: 1,
-                        fontSize: { xs: '0.75rem', sm: '0.8125rem' },
-                        py: { xs: 0.5, sm: 0.75 },
-                        px: { xs: 1, sm: 1.5 },
-                        borderRadius: 2,
-                        borderColor: alpha(theme.palette.warning.main, 0.2),
-                        color: alpha(theme.palette.warning.main, 0.6),
-                        fontWeight: 600,
-                        transition: 'all 0.3s ease',
-                        '&:hover': {
-                          borderColor: theme.palette.warning.main,
+                          border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`,
+                          width: { xs: 44, sm: 48 },
+                          height: { xs: 44, sm: 48 },
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            background: alpha(theme.palette.info.main, 0.15),
+                            borderColor: alpha(theme.palette.info.main, 0.4),
+                            transform: 'translateY(-2px)',
+                            boxShadow: `0 4px 12px ${alpha(theme.palette.info.main, 0.3)}`
+                          }
+                        }}
+                      >
+                        <VisibilityIcon sx={{ fontSize: { xs: 22, sm: 24 } }} />
+                      </IconButton>
+                    </Tooltip>
+                    
+                    <Tooltip title='Edit Group' arrow placement='top'>
+                      <IconButton
+                        onClick={() => onEditGroup(group._id)}
+                        size='large'
+                        sx={{
                           color: theme.palette.warning.main,
                           background: alpha(theme.palette.warning.main, 0.08),
-                          transform: { xs: 'translateY(-1px)', sm: 'translateY(-2px)' },
-                          boxShadow: `0 4px 12px ${alpha(theme.palette.warning.main, 0.2)}`
-                        }
-                      }}
-                      startIcon={<EditIcon sx={{ fontSize: { xs: 16, sm: 18 } }} />}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      size='small'
-                      variant='outlined'
-                      onClick={() => handleDeleteClick(group)}
-                      sx={{
-                        flex: 1,
-                        fontSize: { xs: '0.75rem', sm: '0.8125rem' },
-                        py: { xs: 0.5, sm: 0.75 },
-                        px: { xs: 1, sm: 1.5 },
-                        borderRadius: 2,
-                        borderColor: alpha(theme.palette.error.main, 0.2),
-                        color: alpha(theme.palette.error.main, 0.6),
-                        fontWeight: 600,
-                        transition: 'all 0.3s ease',
-                        '&:hover': {
-                          borderColor: theme.palette.error.main,
+                          border: `1px solid ${alpha(theme.palette.warning.main, 0.2)}`,
+                          width: { xs: 44, sm: 48 },
+                          height: { xs: 44, sm: 48 },
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            background: alpha(theme.palette.warning.main, 0.15),
+                            borderColor: alpha(theme.palette.warning.main, 0.4),
+                            transform: 'translateY(-2px)',
+                            boxShadow: `0 4px 12px ${alpha(theme.palette.warning.main, 0.3)}`
+                          }
+                        }}
+                      >
+                        <EditIcon sx={{ fontSize: { xs: 22, sm: 24 } }} />
+                      </IconButton>
+                    </Tooltip>
+                    
+                    <Tooltip title='Delete Group' arrow placement='top'>
+                      <IconButton
+                        onClick={() => handleDeleteClick(group)}
+                        size='large'
+                        sx={{
                           color: theme.palette.error.main,
                           background: alpha(theme.palette.error.main, 0.08),
-                          transform: { xs: 'translateY(-1px)', sm: 'translateY(-2px)' },
-                          boxShadow: `0 4px 12px ${alpha(theme.palette.error.main, 0.2)}`
-                        }
-                      }}
-                      startIcon={<DeleteIcon sx={{ fontSize: { xs: 16, sm: 18 } }} />}
-                    >
-                      Delete
-                    </Button>
+                          border: `1px solid ${alpha(theme.palette.error.main, 0.2)}`,
+                          width: { xs: 44, sm: 48 },
+                          height: { xs: 44, sm: 48 },
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            background: alpha(theme.palette.error.main, 0.15),
+                            borderColor: alpha(theme.palette.error.main, 0.4),
+                            transform: 'translateY(-2px)',
+                            boxShadow: `0 4px 12px ${alpha(theme.palette.error.main, 0.3)}`
+                          }
+                        }}
+                      >
+                        <DeleteIcon sx={{ fontSize: { xs: 22, sm: 24 } }} />
+                      </IconButton>
+                    </Tooltip>
+                    
                     {pendingRequests[group._id] > 0 && session?.user?.email === group?.creatorEmail && (
-                      <Box sx={{ position: 'relative', flex: '0 0 auto' }}>
-                        <Tooltip title={`${pendingRequests[group._id]} pending join requests`}>
-                          <Badge
-                            badgeContent={pendingRequests[group._id]}
-                            color='error'
+                      <Tooltip title={`${pendingRequests[group._id]} pending join requests`} arrow placement='top'>
+                        <Badge
+                          badgeContent={pendingRequests[group._id]}
+                          color='error'
+                          sx={{
+                            '& .MuiBadge-badge': {
+                              right: { xs: 4, sm: 6 },
+                              top: { xs: 4, sm: 6 },
+                              fontSize: { xs: '0.65rem', sm: '0.7rem' },
+                              padding: '0 4px',
+                              minWidth: { xs: 18, sm: 20 },
+                              height: { xs: 18, sm: 20 }
+                            }
+                          }}
+                        >
+                          <IconButton
+                            onClick={() => handleJoinRequestClick(group)}
+                            size='large'
                             sx={{
-                              '& .MuiBadge-badge': {
-                                right: 5,
-                                top: -3,
-                                fontSize: { xs: '0.6rem', sm: '0.65rem' },
-                                padding: '0 4px'
+                              color: theme.palette.primary.main,
+                              background: alpha(theme.palette.primary.main, 0.08),
+                              border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                              width: { xs: 44, sm: 48 },
+                              height: { xs: 44, sm: 48 },
+                              transition: 'all 0.3s ease',
+                              '&:hover': {
+                                background: alpha(theme.palette.primary.main, 0.15),
+                                borderColor: alpha(theme.palette.primary.main, 0.4),
+                                transform: 'translateY(-2px)',
+                                boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`
                               }
                             }}
                           >
-                            <Button
-                              size='small'
-                              variant='outlined'
-                              onClick={() => handleJoinRequestClick(group)}
-                              sx={{
-                                px: { xs: 1, sm: 1.25 },
-                                py: { xs: 0.5, sm: 0.75 },
-                                borderRadius: 2,
-                                borderColor: alpha(theme.palette.primary.main, 0.2),
-                                color: alpha(theme.palette.primary.main, 0.6),
-                                fontWeight: 600,
-                                transition: 'all 0.3s ease',
-                                '&:hover': {
-                                  borderColor: theme.palette.primary.main,
-                                  color: theme.palette.primary.main,
-                                  background: alpha(theme.palette.primary.main, 0.08),
-                                  transform: { xs: 'translateY(-1px)', sm: 'translateY(-2px)' },
-                                  boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.2)}`
-                                }
-                              }}
-                            >
-                              <GroupAddIcon sx={{ fontSize: { xs: 14, sm: 16 } }} />
-                            </Button>
-                          </Badge>
-                        </Tooltip>
-                      </Box>
+                            <GroupAddIcon sx={{ fontSize: { xs: 22, sm: 24 } }} />
+                          </IconButton>
+                        </Badge>
+                      </Tooltip>
                     )}
                   </Stack>
                 </CardContent>

@@ -20,6 +20,7 @@ function CreateGroupPage() {
         description: values.description,
         filters: values.filters || [], // Send filters array
         status: values.status,
+        isAnnouncementOnly: values.isAnnouncementOnly || false,
         createdBy: session?.user?.id, // Use the found user ID
         creatorEmail: session?.user?.email,
         members: values.members,
