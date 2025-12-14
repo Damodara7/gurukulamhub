@@ -23,11 +23,19 @@ export default function MyGroupsPage() {
   // Helper function to process groups data and update state
   const processGroupsData = groups => {
     const userEmail = session?.user?.email
-    if (!userEmail) return
+    if (!userEmail) {
+      // If no user email, clear the groups and channels
+      setUserGroups([])
+      setChannels([])
+      return
+    }
 
-    // Filter user's groups (groups where user is a member)
+    // Filter user's groups (groups where user is a member OR creator)
     const userGroupsFiltered = groups.filter(group => {
-      // First check if user is in the members array
+      // Check if user is the creator
+      const isCreator = group.creatorEmail === userEmail
+      
+      // Check if user is in the members array
       const isMemberInArray = group.members?.some(member => {
         if (typeof member === 'object' && member.email) {
           return member.email === userEmail
@@ -35,22 +43,23 @@ export default function MyGroupsPage() {
         return false
       })
 
-      // For now, we'll rely on the groupIds approach which should be updated
-      // when a user is added to a group through the request approval process
-      return isMemberInArray
+      // User is in the group if they are creator or member
+      return isCreator || isMemberInArray
     })
     setUserGroups(userGroupsFiltered)
 
-    // Filter channels (public groups where user is not a member)
+    // Filter channels (public groups where user is not a member and not creator)
     const channelsFiltered = groups.filter(group => {
       const isPublic = group.status === 'public'
+      const isCreator = group.creatorEmail === userEmail
       const isNotMember = !group.members?.some(member => {
         if (typeof member === 'object' && member.email) {
           return member.email === userEmail
         }
         return false
       })
-      return isPublic && isNotMember
+      // Channel: public, not creator, and not a member
+      return isPublic && !isCreator && isNotMember
     })
     setChannels(channelsFiltered)
   }
@@ -60,11 +69,16 @@ export default function MyGroupsPage() {
       setLoading(true)
       setError(null)
 
-      const result = await RestApi.get(`${API_URLS.v0.USERS_GROUP}`)
+      // Fetch all groups by passing a parameter to bypass creator filter
+      // The API will return all groups, and we'll filter on the frontend
+      const result = await RestApi.get(`${API_URLS.v0.USERS_GROUP}?all=true`)
 
       if (result?.status === 'success') {
         const groups = result.result || []
-        processGroupsData(groups)
+        // Process groups data to filter user's groups and channels
+        if (session?.user?.email) {
+          processGroupsData(groups)
+        }
       } else {
         console.error('Error Fetching groups:', result.message)
         setError(result.message || 'Failed to fetch groups')
@@ -85,6 +99,9 @@ export default function MyGroupsPage() {
 
   // WebSocket connection for groups list updates
   useEffect(() => {
+    // Only connect WebSocket if session is available
+    if (!session?.user?.email) return
+
     const wsUrl =
       typeof window !== 'undefined'
         ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/api/ws/groups`
@@ -121,7 +138,7 @@ export default function MyGroupsPage() {
         wsRef.close()
       }
     }
-  }, [])
+  }, [session?.user?.email])
 
   if (loading) {
     return (
@@ -164,7 +181,7 @@ export default function MyGroupsPage() {
     <Box
       component='main'
       sx={{
-        minHeight: { xs: '100dvh', md: '100vh' },
+        minHeight: '100%',
         display: 'flex',
         flexDirection: 'column',
         background: isDarkMode

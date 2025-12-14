@@ -254,6 +254,48 @@ export const updateOne = async (groupId, updateData) => {
         if (usersToAdd.length > 0) {
           await User.updateMany({ _id: { $in: usersToAdd } }, { $addToSet: { groupIds: groupId } })
           console.log(`Added group to ${usersToAdd.length} users`)
+          
+          // Create system messages for added members
+          const adminEmail = updateData.updatorEmail || existingGroup.creatorEmail
+          if (adminEmail) {
+            const UserModel = mongoose.model('users')
+            const UserProfile = mongoose.model('userprofiles')
+            
+            // Get admin's name
+            const adminUser = await UserModel.findOne({ email: adminEmail }).lean()
+            let adminName = adminEmail.split('@')[0]
+            if (adminUser?.profile) {
+              const adminProfile = await UserProfile.findById(adminUser.profile).lean()
+              if (adminProfile) {
+                adminName = `${adminProfile.firstname || ''} ${adminProfile.lastname || ''}`.trim() || adminName
+              }
+            }
+            
+            // Get names of added users and create system messages
+            const addedUsers = await UserModel.find({ _id: { $in: usersToAdd } }).lean()
+            for (const addedUser of addedUsers) {
+              let userName = addedUser.email?.split('@')[0] || 'User'
+              if (addedUser.profile) {
+                const userProfile = await UserProfile.findById(addedUser.profile).lean()
+                if (userProfile) {
+                  userName = `${userProfile.firstname || ''} ${userProfile.lastname || ''}`.trim() || userName
+                }
+              }
+              
+              // Create system message
+              try {
+                const { createSystemMessage } = await import('../group-chat/group-chat.service.js')
+                await createSystemMessage(
+                  groupId,
+                  `${userName} was added by ${adminName}`,
+                  adminEmail
+                )
+              } catch (msgError) {
+                console.error('Error creating system message for added member:', msgError)
+                // Don't fail the update if system message creation fails
+              }
+            }
+          }
         }
 
         // Remove group from users who are no longer members
@@ -288,17 +330,27 @@ export const updateOne = async (groupId, updateData) => {
     // Save the updated group
     const updatedGroup = await existingGroup.save()
 
+    // Populate members with profiles before returning
+    const populatedGroup = await Group.findById(groupId)
+      .populate({
+        path: 'members',
+        populate: {
+          path: 'profile'
+        }
+      })
+      .lean()
+
     // Broadcast WebSocket event for group update
     try {
       broadcastGroupsListUpdates()
-      broadcastGroupDetails(groupId, updatedGroup.toObject())
+      broadcastGroupDetails(groupId, populatedGroup || updatedGroup.toObject())
     } catch (wsError) {
       console.error('Error broadcasting group updated event:', wsError)
     }
 
     return {
       status: 'success',
-      result: updatedGroup.toObject(),
+      result: populatedGroup || updatedGroup.toObject(),
       message: 'Group updated successfully'
     }
   } catch (error) {

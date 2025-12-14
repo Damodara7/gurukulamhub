@@ -66,6 +66,7 @@ const EditGroupPage = ({ groupId = null }) => {
         updaterEmail: session?.user?.email,
         members: values.members,
         membersCount: values.members.length,
+        isAnnouncementOnly: values.isAnnouncementOnly || false,
         // Ensure filter criteria is included
         ageGroup: values.ageGroup,
         location: values.location,

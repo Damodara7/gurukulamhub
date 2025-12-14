@@ -1,0 +1,45 @@
+{
+  "name": "GurukulamHub - Indian Knowledge Systems",
+  "short_name": "GurukulamHub",
+  "description": "GurukulamHub - Indian Knowledge Systems",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "categories": [
+    "education",
+    "learning"
+  ],
+  "screenshots": [
+    {
+      "src": "/images/pages/profile-banner.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "GurukulamHub Desktop View"
+    },
+    {
+      "src": "/images/pages/profile-banner.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "GurukulamHub Mobile View"
+    }
+  ],
+  "id": "/"
+}

@@ -50,7 +50,7 @@ export const getLocale = request => {
   return locale
 }
 
-const localizedRedirect = (url, locale, request ) => {
+const localizedRedirect = (url, locale, request) => {
   // console.log({ request, url })
   let _url = url
   const isLocaleMissing = isUrlMissingLocale(_url)
@@ -78,11 +78,9 @@ const localizedRedirect = (url, locale, request ) => {
     redirectUrl.search = searchParams
   }
 
-
   //console.log({ _url, _basePath, requestUrl: request.url });
   //console.log({ redirectUrl: redirectUrl.toString() });
 
-  
   return NextResponse.redirect(redirectUrl.toString())
 }
 
@@ -91,6 +89,27 @@ export default async function middleware(request) {
   // Get locale from request headers
   const locale = getLocale(request)
   const pathname = request.nextUrl.pathname
+
+  // Skip middleware for static files and PWA files - they should be served directly
+  if (
+    pathname.startsWith('/api/ws') ||
+    pathname === '/manifest.json' ||
+    pathname === '/sw.js' ||
+    pathname === '/offline.html' ||
+    pathname.startsWith('/icons/') ||
+    pathname.startsWith('/workbox-') ||
+    pathname.startsWith('/fallback-') ||
+    pathname.startsWith('/_next/static/') ||
+    pathname.startsWith('/_next/image/') ||
+    pathname.startsWith('/_next/webpack-hmr') ||
+    pathname.startsWith('/_next/webpack') ||
+    pathname.startsWith('/_next/data/') ||
+    pathname.startsWith('/api/') ||
+    pathname.match(/\.(ico|png|jpg|jpeg|svg|gif|webp|css|js|woff|woff2|ttf|eot|map|json)$/)
+  ) {
+    return NextResponse.next()
+  }
+
   // console.log('pathname:', pathname)
   // retrieve the current response
   //const res = NextResponse.next()
@@ -272,9 +291,15 @@ export const config = {
      * - _next/image (image optimization files)
      * - all items inside the public folder
      *    - images (public images)
+     *    - sounds (public audio files)
+     *    - animations (public animations)
      *    - next.svg (Next.js logo)
      *    - vercel.svg (Vercel logo)
+     *    - manifest.json (PWA manifest)
+     *    - sw.js (service worker)
+     *    - offline.html (offline fallback)
+     *    - icons (PWA icons)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|.+?/hook-examples|.+?/menu-examples|images|next.svg|vercel.svg).*)'
+    '/((?!api|_next/static|_next/image|favicon.ico|.+?/hook-examples|.+?/menu-examples|images|sounds|animations|next.svg|vercel.svg|sample_music.mp3|manifest.json|sw.js|offline|offline.html|icons|workbox-|fallback-).*)'
   ]
 }

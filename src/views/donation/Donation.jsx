@@ -75,8 +75,8 @@ const Donation = () => {
           Support Gurukulhub with a Donation
         </Typography>
         <Typography variant='body1' color='text.secondary'>
-          Your donation helps us to improve and bring more amazing quizzes to the GurukulHub community. We appreciate your
-          generosity!
+          Your donation helps us to improve and bring more amazing quizzes to the GurukulHub community. We appreciate
+          your generosity!
         </Typography>
       </Box>
 
@@ -97,12 +97,12 @@ const Donation = () => {
       <Grid container spacing={4}>
         {/* Donation Card */}
         <Grid item xs={12}>
-          <Card sx={{ p: 3, textAlign: 'center', backgroundColor: '#f9f9f9' }}>
+          <Card sx={{ p: 3, textAlign: 'center', bgcolor: 'action.hover' }}>
             <CardContent>
               <Typography variant='h5' color='secondary' gutterBottom>
                 Why Donate?
               </Typography>
-              <Typography variant='body1' gutterBottom>
+              <Typography variant='body1' color='text.secondary' gutterBottom>
                 Your contributions help us build new features, enhance the user experience, and continue to make
                 learning fun for everyone.
               </Typography>
@@ -115,8 +115,8 @@ const Donation = () => {
 
         {/* Donation Form */}
         <Grid item xs={12}>
-          <Paper elevation={3} sx={{ p: 4 }}>
-            <Typography variant='h5' gutterBottom>
+          <Paper elevation={3} sx={{ p: 4, bgcolor: 'background.paper' }}>
+            <Typography variant='h5' gutterBottom color='text.primary'>
               Make a Donation
             </Typography>
 

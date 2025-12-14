@@ -12,6 +12,9 @@ import themeConfig from '@configs/themeConfig'
 // Styled Component Imports
 import AppReactToastify from '@/libs/styles/AppReactToastify'
 
+// PWA Components
+import PWARegistration from '@/components/PWARegistration'
+
 // Util Imports
 import { getDemoName, getMode, getSettingsFromCookie, getSystemMode } from '@core/utils/serverHelpers'
 import { auth } from '@/libs/auth'
@@ -36,7 +39,10 @@ const Providers = async props => {
         <SettingsProvider settingsCookie={settingsCookie} mode={mode} demoName={demoName}>
           <ThemeProvider direction={direction} systemMode={systemMode}>
             <GameProvider>
-              <GroupProvider>{children}</GroupProvider>
+              <GroupProvider>
+                <PWARegistration />
+                {children}
+              </GroupProvider>
             </GameProvider>
             <AppReactToastify position={themeConfig.toastPosition} hideProgressBar rtl={direction === 'rtl'} />
           </ThemeProvider>
