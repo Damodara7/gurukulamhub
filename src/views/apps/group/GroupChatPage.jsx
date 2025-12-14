@@ -24,6 +24,7 @@ import { ArrowBack as ArrowBackIcon, PersonRemove as PersonRemoveIcon, DoneAll a
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { format, formatDistanceToNow, isToday, isYesterday } from 'date-fns'
+import useSound from 'use-sound'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { toast } from 'react-toastify'
@@ -78,8 +79,57 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
   const [editingMessage, setEditingMessage] = useState(null) // Message being edited
   const [deleteFromMenu, setDeleteFromMenu] = useState(false) // Track if delete dialog opened from menu
   const [deleteGroupDialogOpen, setDeleteGroupDialogOpen] = useState(false) // Delete group confirmation dialog
+  const [soundEnabled, setSoundEnabled] = useState(true) // Sound enabled by default
+  const soundEnabledRef = useRef(true) // Ref to track sound state for WebSocket handler
+  const [newMessageForNotification, setNewMessageForNotification] = useState(null) // Track new messages for notification sound
+
+  // Sound hooks
+  const [playSoundOn] = useSound('/sounds/sound-on.mp3', { volume: 0.7 })
+  const [playSoundOff] = useSound('/sounds/sound-off.mp3', { volume: 0.7 })
+  const [playNotificationSound] = useSound('/sounds/notification.mp3', { volume: 0.7 })
 
   const isCreator = groupData?.creatorEmail === session?.user?.email
+
+  // Play notification sound when new message arrives (outside WebSocket handler)
+  useEffect(() => {
+    if (newMessageForNotification && soundEnabled) {
+      const message = newMessageForNotification
+      // Check if we should play the sound
+      if (
+        message.senderEmail !== session?.user?.email &&
+        !message.deletedFor?.some(d => d.userEmail === session?.user?.email) &&
+        !message.deletedForEveryone
+      ) {
+        console.log('Playing notification sound for new message (from state)')
+        try {
+          playNotificationSound()
+        } catch (error) {
+          console.error('Error playing notification sound:', error)
+        }
+      }
+      // Clear the state after playing
+      setNewMessageForNotification(null)
+    }
+  }, [newMessageForNotification, soundEnabled, session?.user?.email, playNotificationSound])
+
+  // Toggle sound function
+  const handleToggleSound = () => {
+    const newSoundState = !soundEnabled
+    
+    if (newSoundState) {
+      playSoundOn()
+    } else {
+      playSoundOff()
+    }
+    
+    setSoundEnabled(newSoundState)
+    soundEnabledRef.current = newSoundState
+  }
+
+  // Update ref when soundEnabled changes
+  useEffect(() => {
+    soundEnabledRef.current = soundEnabled
+  }, [soundEnabled])
 
   // Check if user can send messages
   useEffect(() => {
@@ -204,17 +254,29 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
           if (msg.type === 'connected') {
             console.log('[WS] Chat connection confirmed')
           } else if (msg.type === 'newMessage' || msg.type === 'newChatMessage') {
+            const message = msg.data
+            
+            // Store message for notification sound (will be played in useEffect outside WebSocket)
+            if (
+              soundEnabledRef.current &&
+              message.senderEmail !== session?.user?.email &&
+              !message.deletedFor?.some(d => d.userEmail === session?.user?.email) &&
+              !message.deletedForEveryone
+            ) {
+              setNewMessageForNotification(message)
+            }
+            
             setMessages(prev => {
-              const exists = prev.some(m => m._id === msg.data._id)
+              const exists = prev.some(m => m._id === message._id)
               if (exists) return prev
               // Filter out if deleted for this user, but keep messages deleted for everyone (to show with banned icon)
-              const isDeletedForMe = msg.data.deletedFor?.some(d => d.userEmail === session?.user?.email)
+              const isDeletedForMe = message.deletedFor?.some(d => d.userEmail === session?.user?.email)
               if (isDeletedForMe) return prev
-              const updated = [...prev, msg.data]
+              const updated = [...prev, message]
               // Mark new message as read (only if not deleted for everyone and not own message)
-              if (!msg.data.deletedForEveryone && msg.data.senderEmail !== session?.user?.email) {
+              if (!message.deletedForEveryone && message.senderEmail !== session?.user?.email) {
                 setTimeout(() => {
-                  markMessageAsRead(msg.data._id)
+                  markMessageAsRead(message._id)
                 }, 100)
               }
               return updated
@@ -1029,6 +1091,8 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
         onBack={() => router.push(backPath)}
         onMembersClick={() => setMembersDrawerOpen(true)}
         onSettingsClick={() => setSettingsDialogOpen(true)}
+        soundEnabled={soundEnabled}
+        onToggleSound={handleToggleSound}
       />
 
       {/* Messages Area */}

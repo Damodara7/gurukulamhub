@@ -278,9 +278,11 @@ export const config = {
      * - _next/image (image optimization files)
      * - all items inside the public folder
      *    - images (public images)
+     *    - sounds (public audio files)
+     *    - animations (public animations)
      *    - next.svg (Next.js logo)
      *    - vercel.svg (Vercel logo)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|.+?/hook-examples|.+?/menu-examples|images|next.svg|vercel.svg).*)'
+    '/((?!api|_next/static|_next/image|favicon.ico|.+?/hook-examples|.+?/menu-examples|images|sounds|animations|next.svg|vercel.svg|sample_music.mp3).*)'
   ]
 }

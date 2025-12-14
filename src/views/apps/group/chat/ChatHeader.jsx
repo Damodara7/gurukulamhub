@@ -7,7 +7,9 @@ import {
   Public as PublicIcon,
   Lock as LockIcon,
   Settings as SettingsIcon,
-  Info as InfoIcon
+  Info as InfoIcon,
+  VolumeUp as VolumeUpIcon,
+  VolumeOff as VolumeOffIcon
 } from '@mui/icons-material'
 
 const ChatHeader = ({
@@ -16,7 +18,9 @@ const ChatHeader = ({
   isCreator,
   onBack,
   onMembersClick,
-  onSettingsClick
+  onSettingsClick,
+  soundEnabled,
+  onToggleSound
 }) => {
   const theme = useTheme()
   const isDarkMode = theme.palette.mode === 'dark'
@@ -129,6 +133,21 @@ const ChatHeader = ({
           </Stack>
         </Box>
         <Stack direction='row' spacing={{ xs: 0.5, sm: 1 }}>
+          <Tooltip title={soundEnabled ? 'Sound On' : 'Sound Off'} arrow>
+            <IconButton
+              onClick={onToggleSound}
+              size={isMobile ? 'small' : 'medium'}
+              sx={{
+                color: soundEnabled ? theme.palette.success.main : theme.palette.text.secondary
+              }}
+            >
+              {soundEnabled ? (
+                <VolumeUpIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />
+              ) : (
+                <VolumeOffIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />
+              )}
+            </IconButton>
+          </Tooltip>
           <IconButton
             onClick={onMembersClick}
             size={isMobile ? 'small' : 'medium'}

@@ -47,6 +47,8 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup }) => {
   const [pendingRequests, setPendingRequests] = useState({})
   const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false)
   const [groupToDelete, setGroupToDelete] = useState(null)
+  const [unreadCounts, setUnreadCounts] = useState({})
+  const [loadingUnreadCounts, setLoadingUnreadCounts] = useState(false)
   // WebSocket handling moved to parent component (AllGroupPage)
 
   // Check for pending requests for each group
@@ -141,6 +143,151 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup }) => {
     }
   }, [groups, session?.user?.email])
 
+  // Fetch unread message counts for groups
+  useEffect(() => {
+    const fetchUnreadCounts = async () => {
+      if (!session?.user?.email || groups.length === 0) return
+
+      setLoadingUnreadCounts(true)
+      try {
+        const counts = {}
+        
+        // Fetch counts for all groups in parallel
+        const fetchPromises = groups.map(async (group) => {
+          try {
+            // Fetch recent messages (most recent first, limit 500 to catch more unread messages)
+            const result = await RestApi.get(
+              `${API_URLS.v0.USERS_GROUP_CHAT}?groupId=${group._id}&limit=500&userEmail=${session.user.email}`
+            )
+            
+            if (result?.status === 'success' && Array.isArray(result.result)) {
+              // Count messages that are not read by this user and not sent by this user
+              const unreadCount = result.result.filter(msg => {
+                // Don't count own messages
+                if (msg.senderEmail === session.user.email) return false
+                // Don't count messages deleted for this user
+                if (msg.deletedFor?.some(d => d.userEmail === session.user.email)) return false
+                // Don't count messages deleted for everyone
+                if (msg.deletedForEveryone) return false
+                // Check if message is read by this user
+                const isRead = msg.readBy?.some(reader => reader.userEmail === session.user.email)
+                return !isRead
+              }).length
+              
+              return { groupId: group._id, count: unreadCount }
+            }
+            return { groupId: group._id, count: 0 }
+          } catch (error) {
+            console.error(`Error fetching unread count for group ${group._id}:`, error)
+            return { groupId: group._id, count: 0 }
+          }
+        })
+        
+        const results = await Promise.all(fetchPromises)
+        
+        // Build counts object
+        results.forEach(({ groupId, count }) => {
+          if (count > 0) {
+            counts[groupId] = count
+          }
+        })
+        
+        setUnreadCounts(counts)
+      } catch (error) {
+        console.error('Error fetching unread counts:', error)
+      } finally {
+        setLoadingUnreadCounts(false)
+      }
+    }
+
+    fetchUnreadCounts()
+  }, [groups, session?.user?.email])
+
+  // WebSocket connections for each group to listen for new messages
+  useEffect(() => {
+    if (!session?.user?.email || groups.length === 0) return
+
+    const groupSockets = {}
+
+    groups.forEach(group => {
+      const wsUrl =
+        typeof window !== 'undefined'
+          ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${
+              window.location.host
+            }/api/ws/groups/${group._id}/chat`
+          : ''
+
+      if (wsUrl) {
+        const wsRef = new WebSocket(wsUrl)
+
+        wsRef.onopen = () => {
+          console.log(`[WS] GroupCard connected to group ${group._id} chat`)
+        }
+
+        wsRef.onmessage = event => {
+          try {
+            const msg = JSON.parse(event.data)
+
+            if (msg.type === 'newMessage' || msg.type === 'newChatMessage') {
+              const message = msg.data
+              // Only increment if message is not from current user and not deleted
+              if (
+                message.senderEmail !== session.user.email &&
+                !message.deletedFor?.some(d => d.userEmail === session.user.email) &&
+                !message.deletedForEveryone
+              ) {
+                // Check if message is already read
+                const isRead = message.readBy?.some(reader => reader.userEmail === session.user.email)
+                if (!isRead) {
+                  setUnreadCounts(prev => ({
+                    ...prev,
+                    [group._id]: (prev[group._id] || 0) + 1
+                  }))
+                }
+              }
+            } else if (msg.type === 'messageUpdate') {
+              const message = msg.data
+              // If message was marked as read, decrement count
+              const isRead = message.readBy?.some(reader => reader.userEmail === session.user.email)
+              if (isRead && message.senderEmail !== session.user.email) {
+                setUnreadCounts(prev => {
+                  const currentCount = prev[group._id] || 0
+                  if (currentCount > 0) {
+                    return {
+                      ...prev,
+                      [group._id]: currentCount - 1
+                    }
+                  }
+                  return prev
+                })
+              }
+            }
+          } catch (e) {
+            console.error(`[WS] GroupCard error parsing message for group ${group._id}:`, e)
+          }
+        }
+
+        wsRef.onerror = err => {
+          console.error(`[WS] GroupCard error for group ${group._id}:`, err)
+        }
+
+        wsRef.onclose = () => {
+          console.log(`[WS] GroupCard connection closed for group ${group._id}`)
+        }
+
+        groupSockets[group._id] = wsRef
+      }
+    })
+
+    return () => {
+      Object.values(groupSockets).forEach(ws => {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.close()
+        }
+      })
+    }
+  }, [groups, session?.user?.email])
+
   const handleJoinRequestClick = group => {
     // Navigate to the group request page with groupId in the URL path
     router.push(`/management/group/${group._id}/request`)
@@ -214,6 +361,8 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup }) => {
           const groupName = group?.groupName
             ? group.groupName.charAt(0).toUpperCase() + group.groupName.slice(1)
             : 'Untitled Group'
+          
+          const unreadCount = unreadCounts[group._id] || 0
 
           return (
             <Grid item xs={12} sm={6} md={4} lg={3} xl={3} key={group?._id || group?.groupName}>
@@ -739,26 +888,51 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup }) => {
                     flexWrap='wrap'
                   >
                     <Tooltip title='Open Chat' arrow placement='top'>
-                      <IconButton
-                        onClick={() => router.push(`/management/group/${group._id}/chat`)}
-                        size='large'
+                      <Badge
+                        badgeContent={unreadCount > 0 ? (unreadCount > 99 ? '99+' : unreadCount) : null}
+                        overlap='circular'
+                        anchorOrigin={{
+                          vertical: 'top',
+                          horizontal: 'right'
+                        }}
                         sx={{
-                          color: theme.palette.success.main,
-                          background: alpha(theme.palette.success.main, 0.08),
-                          border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
-                          width: { xs: 44, sm: 48 },
-                          height: { xs: 44, sm: 48 },
-                          transition: 'all 0.3s ease',
-                          '&:hover': {
-                            background: alpha(theme.palette.success.main, 0.15),
-                            borderColor: alpha(theme.palette.success.main, 0.4),
-                            transform: 'translateY(-2px)',
-                            boxShadow: `0 4px 12px ${alpha(theme.palette.success.main, 0.3)}`
+                          '& .MuiBadge-badge': {
+                            fontSize: { xs: '0.65rem', sm: '0.7rem' },
+                            fontWeight: 700,
+                            minWidth: { xs: 18, sm: 20 },
+                            height: { xs: 18, sm: 20 },
+                            padding: { xs: '0 5px', sm: '0 6px' },
+                            borderRadius: '10px',
+                            backgroundColor: '#25D366', // WhatsApp green
+                            color: 'white',
+                            border: `2px solid ${theme.palette.mode === 'dark' ? theme.palette.background.paper : 'white'}`,
+                            boxShadow: `0 2px 8px ${alpha('#25D366', 0.4)}`,
+                            top: { xs: 2, sm: 4 },
+                            right: { xs: 2, sm: 4 }
                           }
                         }}
                       >
-                        <ChatIcon sx={{ fontSize: { xs: 22, sm: 24 } }} />
-                      </IconButton>
+                        <IconButton
+                          onClick={() => router.push(`/management/group/${group._id}/chat`)}
+                          size='large'
+                          sx={{
+                            color: theme.palette.success.main,
+                            background: alpha(theme.palette.success.main, 0.08),
+                            border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
+                            width: { xs: 44, sm: 48 },
+                            height: { xs: 44, sm: 48 },
+                            transition: 'all 0.3s ease',
+                            '&:hover': {
+                              background: alpha(theme.palette.success.main, 0.15),
+                              borderColor: alpha(theme.palette.success.main, 0.4),
+                              transform: 'translateY(-2px)',
+                              boxShadow: `0 4px 12px ${alpha(theme.palette.success.main, 0.3)}`
+                            }
+                          }}
+                        >
+                          <ChatIcon sx={{ fontSize: { xs: 22, sm: 24 } }} />
+                        </IconButton>
+                      </Badge>
                     </Tooltip>
                     
                     <Tooltip title='View Group Details' arrow placement='top'>
