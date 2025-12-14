@@ -1,6 +1,6 @@
 'use client'
 import React from 'react'
-import { Box, Chip, IconButton, Typography, CircularProgress, useTheme, alpha, useMediaQuery } from '@mui/material'
+import { Box, Chip, Typography, CircularProgress, useTheme, alpha } from '@mui/material'
 import SystemMessage from './SystemMessage'
 import MessageBubble from './MessageBubble'
 
@@ -82,31 +82,87 @@ const MessagesArea = ({
       }}
     >
       {hasMore && messages.length > 0 && (
-        <Box sx={{ textAlign: 'center', mb: { xs: 1.5, sm: 2 } }}>
-          <IconButton
+        <Box 
+          sx={{ 
+            textAlign: 'center', 
+            mb: { xs: 1.5, sm: 2 },
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}
+        >
+          <Box
+            component='button'
             onClick={onLoadMore}
             disabled={loadingMore}
-            size={isMobile ? 'small' : 'medium'}
             sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 1,
+              px: { xs: 2.5, sm: 3 },
+              py: { xs: 1, sm: 1.25 },
+              minWidth: { xs: 160, sm: 180 },
+              borderRadius: '20px',
+              border: 'none',
+              background: isDarkMode
+                ? alpha(theme.palette.background.paper, 0.6)
+                : alpha(theme.palette.grey[200], 0.8),
               color: 'text.secondary',
-              minWidth: { xs: 120, sm: 140 },
-              minHeight: { xs: 36, sm: 40 },
-              '&:hover': {
-                background: alpha(theme.palette.primary.main, isDarkMode ? 0.12 : 0.08)
+              cursor: loadingMore ? 'not-allowed' : 'pointer',
+              transition: 'all 0.2s ease',
+              fontSize: { xs: '0.8125rem', sm: '0.875rem' },
+              fontWeight: 500,
+              fontFamily: theme.typography.fontFamily,
+              boxShadow: isDarkMode
+                ? '0 2px 4px rgba(0, 0, 0, 0.1)'
+                : '0 1px 3px rgba(0, 0, 0, 0.08)',
+              '&:hover:not(:disabled)': {
+                background: isDarkMode
+                  ? alpha(theme.palette.background.paper, 0.8)
+                  : alpha(theme.palette.grey[300], 0.9),
+                transform: 'translateY(-1px)',
+                boxShadow: isDarkMode
+                  ? '0 4px 8px rgba(0, 0, 0, 0.15)'
+                  : '0 2px 6px rgba(0, 0, 0, 0.12)'
+              },
+              '&:active:not(:disabled)': {
+                transform: 'translateY(0)',
+                boxShadow: isDarkMode
+                  ? '0 2px 4px rgba(0, 0, 0, 0.1)'
+                  : '0 1px 3px rgba(0, 0, 0, 0.08)'
+              },
+              '&:disabled': {
+                opacity: 0.6,
+                cursor: 'not-allowed'
               }
             }}
           >
             {loadingMore ? (
-              <CircularProgress size={isMobile ? 18 : 20} />
+              <>
+                <CircularProgress size={isMobile ? 16 : 18} thickness={4} />
+                <Typography
+                  variant='caption'
+                  sx={{ 
+                    fontSize: { xs: '0.8125rem', sm: '0.875rem' },
+                    fontWeight: 500
+                  }}
+                >
+                  Loading...
+                </Typography>
+              </>
             ) : (
               <Typography
                 variant='caption'
-                sx={{ fontSize: { xs: '0.75rem', sm: '0.8125rem' } }}
+                sx={{ 
+                  fontSize: { xs: '0.8125rem', sm: '0.875rem' },
+                  fontWeight: 500
+                }}
               >
                 Load older messages
               </Typography>
             )}
-          </IconButton>
+          </Box>
         </Box>
       )}
 
