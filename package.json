@@ -154,6 +154,7 @@
     "tailwindcss-logical": "3.0.1",
     "timezone": "^1.0.23",
     "tsx": "4.7.0",
+    "use-sound": "^5.0.0",
     "utc": "^0.1.0",
     "uuid": "^9.0.1",
     "valibot": "^0.31.0-rc.5",

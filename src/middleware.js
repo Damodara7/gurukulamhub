@@ -92,6 +92,7 @@ export default async function middleware(request) {
 
   // Skip middleware for static files and PWA files - they should be served directly
   if (
+    pathname.startsWith('/api/ws') ||
     pathname === '/manifest.json' ||
     pathname === '/sw.js' ||
     pathname === '/offline.html' ||
@@ -290,6 +291,8 @@ export const config = {
      * - _next/image (image optimization files)
      * - all items inside the public folder
      *    - images (public images)
+     *    - sounds (public audio files)
+     *    - animations (public animations)
      *    - next.svg (Next.js logo)
      *    - vercel.svg (Vercel logo)
      *    - manifest.json (PWA manifest)
@@ -297,6 +300,6 @@ export const config = {
      *    - offline.html (offline fallback)
      *    - icons (PWA icons)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|.+?/hook-examples|.+?/menu-examples|images|next.svg|vercel.svg|manifest.json|sw.js|offline|offline.html|icons|workbox-|fallback-).*)'
+    '/((?!api|_next/static|_next/image|favicon.ico|.+?/hook-examples|.+?/menu-examples|images|sounds|animations|next.svg|vercel.svg|sample_music.mp3|manifest.json|sw.js|offline|offline.html|icons|workbox-|fallback-).*)'
   ]
 }

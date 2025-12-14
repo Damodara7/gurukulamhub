@@ -20,6 +20,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  FormControlLabel,
+  Switch,
   useTheme
 } from '@mui/material'
 import { alpha } from '@mui/material/styles'
@@ -55,12 +57,13 @@ const validateForm = formData => {
 
 const formFieldOrder = ['groupName', 'description']
 
-const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
+const CreateGroupForm = ({ onSubmit, onCancel, data = null, showHeader = true }) => {
   const theme = useTheme()
   const initialFormData = {
     groupName: '',
     description: '',
-    status: 'private'
+    status: 'private',
+    isAnnouncementOnly: false
   }
   const { data: session } = useSession()
   const [formData, setFormData] = useState(initialFormData)
@@ -90,6 +93,7 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
         groupName: data.groupName || '',
         description: data.description || '',
         status: data.status || 'private',
+        isAnnouncementOnly: data.isAnnouncementOnly || false,
         members: data.members || []
       })
       // Set initial filters from group data
@@ -301,6 +305,7 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
       groupName: formData.groupName.trim(),
       description: formData.description.trim(),
       status: formData.status,
+      isAnnouncementOnly: formData.isAnnouncementOnly,
       filters: filters, // Include the filters array
       createdBy: data?.createdBy || session?.user?.id || null,
       creatorEmail: data?.creatorEmail || session?.user?.email || null,
@@ -339,7 +344,6 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
         background: `radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 50%),
                      radial-gradient(circle at 80% 80%, ${alpha(
                        theme.palette.secondary.main,
@@ -349,7 +353,7 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
       }}
     >
       {/* Elegant Header */}
-      <Box
+      {showHeader && <Box
         sx={{
           backdropFilter: 'blur(20px)',
           bgcolor:
@@ -416,7 +420,7 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
             </Typography>
           </Box>
         </Box>
-      </Box>
+      </Box>}
 
       {/* Main Content */}
       <Box sx={{ maxWidth: '1200px', margin: '0 auto', px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 } }}>
@@ -527,6 +531,43 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null }) => {
                       <MenuItem value='private'>Private</MenuItem>
                     </Select>
                   </FormControl>
+                </Grid>
+
+                <Grid item xs={12}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={formData.isAnnouncementOnly}
+                        onChange={handleChange}
+                        name='isAnnouncementOnly'
+                        color='primary'
+                      />
+                    }
+                    label={
+                      <Typography
+                        variant='body1'
+                        sx={{
+                          fontWeight: 500,
+                          color: 'text.primary',
+                          fontSize: { xs: '0.875rem', sm: '0.9375rem' }
+                        }}
+                      >
+                        Announcement mode
+                      </Typography>
+                    }
+                  />
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                    sx={{
+                      display: 'block',
+                      mt: 0.5,
+                      ml: 4.5,
+                      fontSize: { xs: '0.75rem', sm: '0.8125rem' }
+                    }}
+                  >
+                    Only admins can send messages
+                  </Typography>
                 </Grid>
 
                 <Grid item xs={12}>

@@ -19,7 +19,10 @@ import {
   Person as PersonIcon,
   Cake as CakeIcon,
   SportsEsports as GameIcon,
-  OpenInNew as OpenInNewIcon
+  OpenInNew as OpenInNewIcon,
+  Campaign as CampaignIcon,
+  Public as PublicIcon,
+  Lock as LockIcon
 } from '@mui/icons-material'
 import { format } from 'date-fns'
 import { useRouter } from 'next/navigation'
@@ -215,6 +218,71 @@ const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
                 {groupData.description}
               </Typography>
             )}
+            {/* Group Status and Announcement Mode */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 1,
+                mt: 2,
+                flexWrap: 'wrap'
+              }}
+            >
+              {groupData?.isAnnouncementOnly && (
+                <Chip
+                  icon={<CampaignIcon sx={{ fontSize: { xs: 14, sm: 16 } }} />}
+                  label='Announcement Mode'
+                  size='small'
+                  sx={{
+                    height: { xs: 28, sm: 32 },
+                    fontWeight: 600,
+                    fontSize: { xs: '0.75rem', sm: '0.8125rem' },
+                    background: alpha(theme.palette.info.main, 0.12),
+                    color: theme.palette.info.main,
+                    border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`,
+                    '& .MuiChip-icon': {
+                      color: theme.palette.info.main
+                    }
+                  }}
+                />
+              )}
+              {groupData?.status === 'public' ? (
+                <Chip
+                  icon={<PublicIcon sx={{ fontSize: { xs: 14, sm: 16 } }} />}
+                  label='Public'
+                  size='small'
+                  sx={{
+                    height: { xs: 28, sm: 32 },
+                    fontWeight: 600,
+                    fontSize: { xs: '0.75rem', sm: '0.8125rem' },
+                    background: alpha(theme.palette.success.main, 0.12),
+                    color: theme.palette.success.main,
+                    border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
+                    '& .MuiChip-icon': {
+                      color: theme.palette.success.main
+                    }
+                  }}
+                />
+              ) : (
+                <Chip
+                  icon={<LockIcon sx={{ fontSize: { xs: 14, sm: 16 } }} />}
+                  label='Private'
+                  size='small'
+                  sx={{
+                    height: { xs: 28, sm: 32 },
+                    fontWeight: 600,
+                    fontSize: { xs: '0.75rem', sm: '0.8125rem' },
+                    background: alpha(theme.palette.warning.main, 0.12),
+                    color: theme.palette.warning.main,
+                    border: `1px solid ${alpha(theme.palette.warning.main, 0.2)}`,
+                    '& .MuiChip-icon': {
+                      color: theme.palette.warning.main
+                    }
+                  }}
+                />
+              )}
+            </Box>
           </Box>
         </Box>
       </Box>

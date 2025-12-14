@@ -50,7 +50,7 @@ const validateForm = formData => {
 
 const formFieldOrder = ['audienceName', 'description']
 
-const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
+const CreateAudienceForm = ({ onSubmit, onCancel, data = null, showHeading = true }) => {
   const theme = useTheme()
   const initialFormData = {
     audienceName: '',
@@ -503,7 +503,7 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
       }}
     >
       {/* Elegant Header */}
-      <Box
+      {showHeading && <Box
         sx={{
           backdropFilter: 'blur(20px)',
           bgcolor:
@@ -570,7 +570,7 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null }) => {
             </Typography>
           </Box>
         </Box>
-      </Box>
+      </Box>}
 
       {/* Main Content */}
       <Box sx={{ maxWidth: '1200px', margin: '0 auto', px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 } }}>
