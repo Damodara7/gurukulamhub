@@ -25,22 +25,22 @@ if (typeof window === 'undefined') {
 export const metadata = {
   title: 'GurukulamHub - Indian Knowledge Systems',
   description: 'GurukulamHub - Indian Knowledge Systems',
-  manifest: '/manifest.json',
+  manifest: '/api/manifest', // Use dynamic manifest API route that checks authentication
   themeColor: '#000000',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'GurukulamHub',
+    title: 'GurukulamHub'
   },
   formatDetection: {
-    telephone: false,
+    telephone: false
   },
   openGraph: {
     type: 'website',
     siteName: 'GurukulamHub',
     title: 'GurukulamHub - Indian Knowledge Systems',
-    description: 'GurukulamHub - Indian Knowledge Systems',
-  },
+    description: 'GurukulamHub - Indian Knowledge Systems'
+  }
 }
 
 const RootLayout = ({ children, params }) => {
