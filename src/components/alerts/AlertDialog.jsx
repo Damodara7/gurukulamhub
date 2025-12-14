@@ -243,6 +243,7 @@ const AddContent = ({ handleClose, onCreate, videosList = [], audiencesList = []
         }}
       >
         <CreateAudienceForm
+          showHeading={false}
           onSubmit={async (audienceData) => {
             try {
               const result = await addAudience({ data: audienceData })
@@ -371,7 +372,7 @@ const AddContent = ({ handleClose, onCreate, videosList = [], audiencesList = []
               </Button>
             </Box>
             <TextField
-              label='Select Audience (Optional)'
+              label='Select Target Audience (Optional)'
               select
               value={formData.audience}
               onChange={e => handleSetFormValue('audience', e.target.value)}
@@ -600,6 +601,7 @@ const EditContent = ({ handleClose, data, onUpdate, videosList = [], audiencesLi
         }}
       >
         <CreateAudienceForm
+          showHeading={false}
           onSubmit={async (audienceData) => {
             try {
               const result = await addAudience({ data: audienceData })
@@ -731,7 +733,7 @@ const EditContent = ({ handleClose, data, onUpdate, videosList = [], audiencesLi
                 </Button>
               </Box>
               <TextField
-                label='Select Audience (Optional)'
+                label='Select Target Audience (Optional)'
                 select
                 value={formData.audience}
                 onChange={e => handleSetFormValue('audience', e.target.value)}

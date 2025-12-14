@@ -181,7 +181,7 @@ export default function MyGroupsPage() {
     <Box
       component='main'
       sx={{
-        minHeight: { xs: '100dvh', md: '100vh' },
+        minHeight: '100%',
         display: 'flex',
         flexDirection: 'column',
         background: isDarkMode

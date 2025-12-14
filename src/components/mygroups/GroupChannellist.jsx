@@ -32,7 +32,9 @@ import {
   CheckCircle as CheckCircleIcon,
   Cancel as CancelIcon,
   HourglassEmpty as HourglassEmptyIcon,
-  ChevronRight as ChevronRightIcon
+  ChevronRight as ChevronRightIcon,
+  Person as PersonIcon,
+  Star as StarIcon
 } from '@mui/icons-material'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
@@ -705,19 +707,27 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
               flexDirection: { xs: 'column', sm: 'row' },
               alignItems: { xs: 'flex-start', sm: 'center' },
               justifyContent: 'space-between',
-              gap: { xs: 1, sm: 0 }
+              gap: { xs: 1, sm: 0 },
+              mb: { xs: 0.5, sm: 0.75 }
             }}
           >
             <Tooltip title={item.groupName || 'Untitled Group'} arrow>
               <Typography
-                variant='subtitle1'
+                variant='h6'
                 sx={{
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
                   flex: 1,
-              width: { xs: '100%', sm: '170px', md: '200px' },
-              fontSize: { xs: '0.95rem', sm: '0.98rem', md: '1rem' }
+                  width: { xs: '100%', sm: '170px', md: '200px' },
+                  fontSize: { xs: '1.1rem', sm: '1.2rem', md: '1.3rem' },
+                  fontWeight: 700,
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary?.main || theme.palette.primary.dark})`,
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  color: 'transparent',
+                  lineHeight: 1.3
                 }}
               >
                 {item.groupName || 'Untitled Group'}
@@ -763,7 +773,7 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
                     WebkitBoxOrient: 'vertical',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
-                    mb: 0.5,
+                    mb: 0.75,
                     fontSize: { xs: '0.83rem', sm: '0.87rem', md: '0.9rem' }
                   }}
                 >
@@ -771,13 +781,73 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
                 </Typography>
               </Tooltip>
             )}
-            <Typography
-              variant='caption'
-              color='text.secondary'
-              sx={{ fontSize: { xs: '0.76rem', sm: '0.78rem', md: '0.8rem' } }}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: { xs: 1.5, sm: 2 },
+                flexWrap: 'wrap'
+              }}
             >
-              {item.membersCount || item.members?.length || 0} members
-            </Typography>
+              {/* Creator Info */}
+              {item.creatorEmail && (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.5,
+                    px: { xs: 0.75, sm: 1 },
+                    py: { xs: 0.25, sm: 0.5 },
+                    borderRadius: 1,
+                    background: isDarkMode
+                      ? alpha(theme.palette.primary.main, 0.15)
+                      : alpha(theme.palette.primary.main, 0.08),
+                    border: `1px solid ${alpha(theme.palette.primary.main, isDarkMode ? 0.3 : 0.2)}`
+                  }}
+                >
+                  <StarIcon
+                    sx={{
+                      fontSize: { xs: 14, sm: 16 },
+                      color: theme.palette.primary.main
+                    }}
+                  />
+                  <Tooltip
+                    title={`Created by: ${item.creatorEmail}`}
+                    arrow
+                  >
+                    <Typography
+                      variant='caption'
+                      sx={{
+                        fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                        color: 'text.primary',
+                        fontWeight: 500,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        maxWidth: { xs: '120px', sm: '150px' }
+                      }}
+                    >
+                      {item.creatorEmail.split('@')[0]}
+                    </Typography>
+                  </Tooltip>
+                </Box>
+              )}
+              
+              {/* Members Count */}
+              <Typography
+                variant='caption'
+                color='text.secondary'
+                sx={{
+                  fontSize: { xs: '0.76rem', sm: '0.78rem', md: '0.8rem' },
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.5
+                }}
+              >
+                <GroupIcon sx={{ fontSize: { xs: 14, sm: 16 } }} />
+                {item.membersCount || item.members?.length || 0} members
+              </Typography>
+            </Box>
           </Box>
         }
       />
