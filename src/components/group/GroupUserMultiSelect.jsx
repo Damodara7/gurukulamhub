@@ -10,11 +10,13 @@ import {
   DialogContent,
   Divider,
   IconButton,
+  InputAdornment,
   List,
   ListItem,
   ListItemAvatar,
   ListItemButton,
   ListItemText,
+  TextField,
   Typography,
   Tooltip,
   Stack,
@@ -78,6 +80,10 @@ const GroupUserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUse
   const [visibleUsers, setVisibleUsers] = useState([])
   const [overflowCount, setOverflowCount] = useState(0)
   const containerRef = useRef(null)
+  // Track manually selected users (users selected from "Not Selected Users" section)
+  const [manuallySelectedUserIds, setManuallySelectedUserIds] = useState(new Set())
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Calculate how many users can fit in one line based on container width
   useEffect(() => {
@@ -144,6 +150,48 @@ const GroupUserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUse
     }
   }, [selectedUsers, users.length])
 
+  // Track if we've initialized manually selected users and the last selectedUsers count
+  // This helps detect when new data loads (e.g., switching groups in edit mode)
+  const hasInitialized = useRef(false)
+  const lastSelectedCount = useRef(0)
+
+  // Initialize manually selected users when component loads with existing data (edit mode)
+  // Users that are selected but NOT in matchedUserIds are considered manually selected
+  // Reset initialization if selectedUsers count changes significantly (new data loaded)
+  useEffect(() => {
+    // Detect if new data has been loaded (selectedUsers count changed significantly)
+    const countChanged = Math.abs(selectedUsers.length - lastSelectedCount.current) > 0
+    if (countChanged && hasInitialized.current) {
+      // Reset initialization when new data loads
+      hasInitialized.current = false
+      setManuallySelectedUserIds(new Set())
+    }
+    lastSelectedCount.current = selectedUsers.length
+
+    // Only initialize once when we have both selectedUsers and matchedUserIds calculated
+    // This handles edit mode where data loads asynchronously
+    if (!hasInitialized.current && selectedUsers.length > 0 && users.length > 0) {
+      // Wait for matchedUserIds to be calculated (when filters are applied or when all users are matched)
+      // If matchedUserIds is empty, it means no filters are applied, so all selected users are filter-selected
+      // If matchedUserIds has values, users selected but not in matchedUserIds are manually selected
+      if (matchedUserIds.length > 0) {
+        // Users selected but not matching current filter criteria are manually selected
+        const initiallyManuallySelected = selectedUsers.filter(userId => !matchedUserIds.includes(userId))
+
+        if (initiallyManuallySelected.length > 0) {
+          setManuallySelectedUserIds(new Set(initiallyManuallySelected))
+          hasInitialized.current = true
+        } else {
+          // All selected users match the filter, so none are manually selected
+          hasInitialized.current = true
+        }
+      } else if (matchedUserIds.length === 0 && selectedUsers.length > 0) {
+        // No filters applied - all selected users are filter-selected (not manually selected)
+        hasInitialized.current = true
+      }
+    }
+  }, [matchedUserIds, selectedUsers, users.length]) // Run when filters or selections change
+
   const handleToggleAll = () => {
     if (selectAll || intermediate) {
       onSelectChange([])
@@ -155,11 +203,22 @@ const GroupUserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUse
   const handleToggle = userId => {
     const currentIndex = selectedUsers.indexOf(userId)
     const newSelected = [...selectedUsers]
+    const isCurrentlyUnmatched = unmatchedUserIds.includes(userId)
 
     if (currentIndex === -1) {
       newSelected.push(userId)
+      // If selecting from unmatched users, track as manually selected
+      if (isCurrentlyUnmatched) {
+        setManuallySelectedUserIds(prev => new Set([...prev, userId]))
+      }
     } else {
       newSelected.splice(currentIndex, 1)
+      // Remove from manually selected if it was manually selected
+      setManuallySelectedUserIds(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(userId)
+        return newSet
+      })
     }
 
     onSelectChange(newSelected)
@@ -390,6 +449,52 @@ const GroupUserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUse
     return matchedUserIds.includes(user._id)
   }
 
+  // Search filter function - searches by name, email, location, gender, age
+  const matchesSearch = user => {
+    if (!searchQuery.trim()) return true
+
+    const query = searchQuery.toLowerCase().trim()
+    const name = getDisplayName(user).toLowerCase()
+    const email = (user.email || '').toLowerCase()
+    const location = getLocation(user).toLowerCase()
+    const gender = getGender(user).toLowerCase()
+    const age = getAge(user).toLowerCase()
+
+    return (
+      name.includes(query) ||
+      email.includes(query) ||
+      location.includes(query) ||
+      gender.includes(query) ||
+      age.includes(query)
+    )
+  }
+
+  // Separate selected users into manually selected and filter-selected
+  // Manually selected = users in the manuallySelectedUserIds Set (regardless of filter match)
+  // Filter selected = users that match filter but are NOT manually selected
+  const getSeparatedSelectedUsers = () => {
+    const manuallySelected = users.filter(
+      user => selectedUsers.includes(user._id) && manuallySelectedUserIds.has(user._id) && matchesSearch(user)
+    )
+    const filterSelected = users.filter(
+      user =>
+        selectedUsers.includes(user._id) &&
+        !manuallySelectedUserIds.has(user._id) &&
+        matchedUserIds.includes(user._id) &&
+        matchesSearch(user)
+    )
+
+    return {
+      manuallySelected,
+      filterSelected
+    }
+  }
+
+  const { manuallySelected, filterSelected } = getSeparatedSelectedUsers()
+
+  // Apply search filter to unmatched users
+  const filteredUnmatchedUsers = unmatchedUsers.filter(matchesSearch)
+
   return (
     <Box>
       <Box
@@ -425,7 +530,10 @@ const GroupUserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUse
 
       <Dialog
         open={open}
-        onClose={() => setOpen(false)}
+        onClose={() => {
+          setOpen(false)
+          setSearchQuery('') // Clear search when dialog closes
+        }}
         maxWidth='lg'
         fullWidth
         BackdropProps={{
@@ -508,6 +616,54 @@ const GroupUserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUse
                   ? `${selectedUsers.length} member${selectedUsers.length > 1 ? 's' : ''} selected`
                   : 'Select members for this group'}
               </Typography>
+              {/* Search Bar */}
+              <TextField
+                fullWidth
+                placeholder='Search users by name, email, location...'
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                size='small'
+                sx={{
+                  mt: 2,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    backgroundColor:
+                      theme.palette.mode === 'dark'
+                        ? alpha(theme.palette.background.paper, 0.5)
+                        : alpha(theme.palette.background.paper, 0.8),
+                    '&:hover': {
+                      backgroundColor:
+                        theme.palette.mode === 'dark'
+                          ? alpha(theme.palette.background.paper, 0.7)
+                          : alpha(theme.palette.background.paper, 0.9)
+                    },
+                    '&.Mui-focused': {
+                      backgroundColor:
+                        theme.palette.mode === 'dark'
+                          ? alpha(theme.palette.background.paper, 0.8)
+                          : theme.palette.background.paper
+                    }
+                  }
+                }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position='start'>
+                      <i className='ri-search-line' style={{ color: theme.palette.text.secondary }} />
+                    </InputAdornment>
+                  ),
+                  endAdornment: searchQuery && (
+                    <InputAdornment position='end'>
+                      <IconButton
+                        size='small'
+                        onClick={() => setSearchQuery('')}
+                        sx={{ color: theme.palette.text.secondary }}
+                      >
+                        <i className='ri-close-line' />
+                      </IconButton>
+                    </InputAdornment>
+                  )
+                }}
+              />
             </Stack>
             <IconButtonTooltip
               title='Close'
@@ -587,146 +743,320 @@ const GroupUserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUse
             </ListItem>
             <Divider />
 
-            {/* Always show selected users section (matched users) */}
-            <ListItem
-              sx={{
-                py: { xs: 1, sm: 0.75, md: 1 },
-                px: { xs: 1.5, sm: 2, md: 2.5, lg: 3 }
-              }}
-            >
-              <Typography
-                variant='subtitle2'
-                color='primary'
-                sx={{
-                  fontSize: { xs: '0.875rem', sm: '0.9375rem' },
-                  fontWeight: 600
-                }}
-              >
-                Selected Users ({matchedUsers.length})
-              </Typography>
-            </ListItem>
-
-            {matchedUsers.map(user => {
-              const labelId = `checkbox-list-label-${user._id}`
-              const isSelected = selectedUsers.indexOf(user._id) !== -1
-
-              return (
+            {/* Show manually selected users first */}
+            {manuallySelected.length > 0 && (
+              <>
                 <ListItem
-                  key={user._id}
-                  disablePadding
-                  onClick={() => handleToggle(user._id)}
                   sx={{
-                    flexDirection: 'row',
-                    alignItems: 'flex-start',
-                    py: { xs: 2, sm: 1.5, md: 2 },
-                    px: { xs: 1.5, sm: 2, md: 2.5, lg: 3 },
-                    borderBottom: theme => `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-                    cursor: 'pointer',
-                    '&:hover': {
-                      backgroundColor: alpha(theme.palette.action.hover, 0.5)
-                    },
-                    '&:last-child': {
-                      borderBottom: 'none'
-                    }
+                    py: { xs: 1, sm: 0.75, md: 1 },
+                    px: { xs: 1.5, sm: 2, md: 2.5, lg: 3 }
                   }}
                 >
-                  <ListItemAvatar
+                  <Typography
+                    variant='subtitle2'
+                    color='primary'
                     sx={{
-                      mr: { xs: 1.5, sm: 2, md: 2.5 },
-                      flexShrink: 0
+                      fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+                      fontWeight: 600
                     }}
                   >
-                    <Avatar
-                      src={user?.image || user?.profile?.image}
-                      sx={{
-                        width: { xs: 48, sm: 56, md: 64 },
-                        height: { xs: 48, sm: 56, md: 64 }
-                      }}
-                    >
-                      {getInitials(user)}
-                    </Avatar>
-                  </ListItemAvatar>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', minWidth: 0, flex: 1 }}>
-                    <Box
-                      sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'flex-start' }}
-                    >
-                      <ListItemText
-                        id={labelId}
-                        primary={
-                          <Typography
-                            variant='subtitle1'
-                            sx={{
-                              fontWeight: 600,
-                              fontSize: { xs: '0.9375rem', sm: '1rem', md: '1.0625rem' },
-                              mb: 0.5
-                            }}
-                          >
-                            {getDisplayName(user)}
-                          </Typography>
-                        }
-                        secondary={
-                          <Typography
-                            variant='body2'
-                            color='text.secondary'
-                            sx={{
-                              fontSize: { xs: '0.8125rem', sm: '0.875rem', md: '0.9375rem' },
-                              wordBreak: 'break-word'
-                            }}
-                          >
-                            {user.email}
-                          </Typography>
-                        }
-                      />
-                      <Checkbox
-                        edge='end'
-                        checked={isSelected}
-                        onChange={e => {
-                          e.stopPropagation()
-                          handleToggle(user._id)
-                        }}
-                        onClick={e => e.stopPropagation()}
-                        tabIndex={-1}
-                        disableRipple
-                        inputProps={{ 'aria-labelledby': labelId }}
-                        sx={{
-                          mt: { xs: 0.5, sm: 0 }
-                        }}
-                      />
-                    </Box>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        gap: { xs: 1, sm: 1.5 },
-                        mt: { xs: 1.5, sm: 1 },
-                        flexWrap: 'wrap'
-                      }}
-                    >
-                      <Chip
-                        label={getGender(user)}
-                        size='small'
-                        variant='outlined'
-                        sx={{ fontSize: { xs: '0.65rem', sm: '0.7rem' }, height: { xs: 20, sm: 24 } }}
-                      />
-                      <Chip
-                        label={getLocation(user)}
-                        size='small'
-                        variant='outlined'
-                        sx={{ fontSize: { xs: '0.65rem', sm: '0.7rem' }, height: { xs: 20, sm: 24 } }}
-                      />
-                      <Chip
-                        label={getAge(user)}
-                        size='small'
-                        variant='outlined'
-                        sx={{ fontSize: { xs: '0.65rem', sm: '0.7rem' }, height: { xs: 20, sm: 24 } }}
-                      />
-                    </Box>
-                  </Box>
+                    Manually Selected Users ({manuallySelected.length}
+                    {searchQuery &&
+                      ` of ${
+                        users.filter(u => selectedUsers.includes(u._id) && manuallySelectedUserIds.has(u._id)).length
+                      }`}
+                    )
+                  </Typography>
                 </ListItem>
-              )
-            })}
+
+                {manuallySelected.map(user => {
+                  const labelId = `checkbox-list-label-${user._id}`
+                  const isSelected = selectedUsers.indexOf(user._id) !== -1
+
+                  return (
+                    <ListItem
+                      key={user._id}
+                      disablePadding
+                      onClick={() => handleToggle(user._id)}
+                      sx={{
+                        flexDirection: 'row',
+                        alignItems: 'flex-start',
+                        py: { xs: 2, sm: 1.5, md: 2 },
+                        px: { xs: 1.5, sm: 2, md: 2.5, lg: 3 },
+                        borderBottom: theme => `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                        cursor: 'pointer',
+                        backgroundColor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.08 : 0.04),
+                        '&:hover': {
+                          backgroundColor: alpha(theme.palette.action.hover, 0.5)
+                        },
+                        '&:last-child': {
+                          borderBottom: 'none'
+                        }
+                      }}
+                    >
+                      <ListItemAvatar
+                        sx={{
+                          mr: { xs: 1.5, sm: 2, md: 2.5 },
+                          flexShrink: 0
+                        }}
+                      >
+                        <Avatar
+                          src={user?.image || user?.profile?.image}
+                          sx={{
+                            width: { xs: 48, sm: 56, md: 64 },
+                            height: { xs: 48, sm: 56, md: 64 }
+                          }}
+                        >
+                          {getInitials(user)}
+                        </Avatar>
+                      </ListItemAvatar>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', minWidth: 0, flex: 1 }}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            width: '100%',
+                            alignItems: 'flex-start'
+                          }}
+                        >
+                          <ListItemText
+                            id={labelId}
+                            primary={
+                              <Typography
+                                variant='subtitle1'
+                                sx={{
+                                  fontWeight: 600,
+                                  fontSize: { xs: '0.9375rem', sm: '1rem', md: '1.0625rem' },
+                                  mb: 0.5
+                                }}
+                              >
+                                {getDisplayName(user)}
+                              </Typography>
+                            }
+                            secondary={
+                              <Typography
+                                variant='body2'
+                                color='text.secondary'
+                                sx={{
+                                  fontSize: { xs: '0.8125rem', sm: '0.875rem', md: '0.9375rem' },
+                                  wordBreak: 'break-word'
+                                }}
+                              >
+                                {user.email}
+                              </Typography>
+                            }
+                          />
+                          <Checkbox
+                            edge='end'
+                            checked={isSelected}
+                            onChange={e => {
+                              e.stopPropagation()
+                              handleToggle(user._id)
+                            }}
+                            onClick={e => e.stopPropagation()}
+                            tabIndex={-1}
+                            disableRipple
+                            inputProps={{ 'aria-labelledby': labelId }}
+                            sx={{
+                              mt: { xs: 0.5, sm: 0 }
+                            }}
+                          />
+                        </Box>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            gap: { xs: 1, sm: 1.5 },
+                            mt: { xs: 1.5, sm: 1 },
+                            flexWrap: 'wrap'
+                          }}
+                        >
+                          <Chip
+                            label={getGender(user)}
+                            size='small'
+                            variant='outlined'
+                            sx={{ fontSize: { xs: '0.65rem', sm: '0.7rem' }, height: { xs: 20, sm: 24 } }}
+                          />
+                          <Chip
+                            label={getLocation(user)}
+                            size='small'
+                            variant='outlined'
+                            sx={{ fontSize: { xs: '0.65rem', sm: '0.7rem' }, height: { xs: 20, sm: 24 } }}
+                          />
+                          <Chip
+                            label={getAge(user)}
+                            size='small'
+                            variant='outlined'
+                            sx={{ fontSize: { xs: '0.65rem', sm: '0.7rem' }, height: { xs: 20, sm: 24 } }}
+                          />
+                        </Box>
+                      </Box>
+                    </ListItem>
+                  )
+                })}
+
+                {filterSelected.length > 0 && <Divider sx={{ my: { xs: 1, sm: 0.5 } }} />}
+              </>
+            )}
+
+            {/* Show filter-selected users below manually selected */}
+            {filterSelected.length > 0 && (
+              <>
+                <ListItem
+                  sx={{
+                    py: { xs: 1, sm: 0.75, md: 1 },
+                    px: { xs: 1.5, sm: 2, md: 2.5, lg: 3 }
+                  }}
+                >
+                  <Typography
+                    variant='subtitle2'
+                    color='text.secondary'
+                    sx={{
+                      fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+                      fontWeight: 600
+                    }}
+                  >
+                    Filter Selected Users ({filterSelected.length}
+                    {searchQuery &&
+                      ` of ${
+                        users.filter(
+                          u =>
+                            selectedUsers.includes(u._id) &&
+                            !manuallySelectedUserIds.has(u._id) &&
+                            matchedUserIds.includes(u._id)
+                        ).length
+                      }`}
+                    )
+                  </Typography>
+                </ListItem>
+
+                {filterSelected.map(user => {
+                  const labelId = `checkbox-list-label-${user._id}`
+                  const isSelected = selectedUsers.indexOf(user._id) !== -1
+
+                  return (
+                    <ListItem
+                      key={user._id}
+                      disablePadding
+                      onClick={() => handleToggle(user._id)}
+                      sx={{
+                        flexDirection: 'row',
+                        alignItems: 'flex-start',
+                        py: { xs: 2, sm: 1.5, md: 2 },
+                        px: { xs: 1.5, sm: 2, md: 2.5, lg: 3 },
+                        borderBottom: theme => `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                        cursor: 'pointer',
+                        '&:hover': {
+                          backgroundColor: alpha(theme.palette.action.hover, 0.5)
+                        },
+                        '&:last-child': {
+                          borderBottom: 'none'
+                        }
+                      }}
+                    >
+                      <ListItemAvatar
+                        sx={{
+                          mr: { xs: 1.5, sm: 2, md: 2.5 },
+                          flexShrink: 0
+                        }}
+                      >
+                        <Avatar
+                          src={user?.image || user?.profile?.image}
+                          sx={{
+                            width: { xs: 48, sm: 56, md: 64 },
+                            height: { xs: 48, sm: 56, md: 64 }
+                          }}
+                        >
+                          {getInitials(user)}
+                        </Avatar>
+                      </ListItemAvatar>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%', minWidth: 0, flex: 1 }}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            width: '100%',
+                            alignItems: 'flex-start'
+                          }}
+                        >
+                          <ListItemText
+                            id={labelId}
+                            primary={
+                              <Typography
+                                variant='subtitle1'
+                                sx={{
+                                  fontWeight: 600,
+                                  fontSize: { xs: '0.9375rem', sm: '1rem', md: '1.0625rem' },
+                                  mb: 0.5
+                                }}
+                              >
+                                {getDisplayName(user)}
+                              </Typography>
+                            }
+                            secondary={
+                              <Typography
+                                variant='body2'
+                                color='text.secondary'
+                                sx={{
+                                  fontSize: { xs: '0.8125rem', sm: '0.875rem', md: '0.9375rem' },
+                                  wordBreak: 'break-word'
+                                }}
+                              >
+                                {user.email}
+                              </Typography>
+                            }
+                          />
+                          <Checkbox
+                            edge='end'
+                            checked={isSelected}
+                            onChange={e => {
+                              e.stopPropagation()
+                              handleToggle(user._id)
+                            }}
+                            onClick={e => e.stopPropagation()}
+                            tabIndex={-1}
+                            disableRipple
+                            inputProps={{ 'aria-labelledby': labelId }}
+                            sx={{
+                              mt: { xs: 0.5, sm: 0 }
+                            }}
+                          />
+                        </Box>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            gap: { xs: 1, sm: 1.5 },
+                            mt: { xs: 1.5, sm: 1 },
+                            flexWrap: 'wrap'
+                          }}
+                        >
+                          <Chip
+                            label={getGender(user)}
+                            size='small'
+                            variant='outlined'
+                            sx={{ fontSize: { xs: '0.65rem', sm: '0.7rem' }, height: { xs: 20, sm: 24 } }}
+                          />
+                          <Chip
+                            label={getLocation(user)}
+                            size='small'
+                            variant='outlined'
+                            sx={{ fontSize: { xs: '0.65rem', sm: '0.7rem' }, height: { xs: 20, sm: 24 } }}
+                          />
+                          <Chip
+                            label={getAge(user)}
+                            size='small'
+                            variant='outlined'
+                            sx={{ fontSize: { xs: '0.65rem', sm: '0.7rem' }, height: { xs: 20, sm: 24 } }}
+                          />
+                        </Box>
+                      </Box>
+                    </ListItem>
+                  )
+                })}
+              </>
+            )}
 
             {/* Always show not selected users section (unmatched users) */}
-            {unmatchedUsers.length > 0 && (
+            {filteredUnmatchedUsers.length > 0 && (
               <>
                 <Divider sx={{ my: { xs: 1, sm: 0.5 } }} />
                 <ListItem
@@ -743,10 +1073,11 @@ const GroupUserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUse
                       fontWeight: 600
                     }}
                   >
-                    Not Selected Users ({unmatchedUsers.length})
+                    Not Selected Users ({filteredUnmatchedUsers.length}
+                    {searchQuery && ` of ${unmatchedUsers.length}`})
                   </Typography>
                 </ListItem>
-                {unmatchedUsers.map(user => {
+                {filteredUnmatchedUsers.map(user => {
                   const labelId = `checkbox-list-label-${user._id}`
                   const isSelected = selectedUsers.indexOf(user._id) !== -1
 
