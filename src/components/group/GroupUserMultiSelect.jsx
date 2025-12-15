@@ -150,47 +150,89 @@ const GroupUserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUse
     }
   }, [selectedUsers, users.length])
 
-  // Track if we've initialized manually selected users and the last selectedUsers count
-  // This helps detect when new data loads (e.g., switching groups in edit mode)
+  // Track initialization state - reset when dialog opens to ensure fresh initialization
   const hasInitialized = useRef(false)
-  const lastSelectedCount = useRef(0)
+  const lastDialogOpenState = useRef(false)
+  const lastMatchedUserIdsLength = useRef(-1)
+
+  // Re-initialize manually selected users when dialog opens in edit mode
+  // This ensures we correctly identify manually selected users when the popup is opened
+  useEffect(() => {
+    // When dialog opens, reset initialization to allow re-identification
+    if (open && !lastDialogOpenState.current) {
+      hasInitialized.current = false
+      lastMatchedUserIdsLength.current = -1
+      setManuallySelectedUserIds(new Set())
+    }
+    lastDialogOpenState.current = open
+  }, [open])
+
+  // Also reset initialization when matchedUserIds changes significantly (filters recalculated)
+  useEffect(() => {
+    if (open && hasInitialized.current) {
+      // If matchedUserIds length changed significantly, it might mean filters were recalculated
+      // Reset to allow re-identification
+      if (
+        lastMatchedUserIdsLength.current >= 0 &&
+        Math.abs(matchedUserIds.length - lastMatchedUserIdsLength.current) > 0
+      ) {
+        hasInitialized.current = false
+        setManuallySelectedUserIds(new Set())
+      }
+      lastMatchedUserIdsLength.current = matchedUserIds.length
+    }
+  }, [open, matchedUserIds.length])
 
   // Initialize manually selected users when component loads with existing data (edit mode)
   // Users that are selected but NOT in matchedUserIds are considered manually selected
-  // Reset initialization if selectedUsers count changes significantly (new data loaded)
   useEffect(() => {
-    // Detect if new data has been loaded (selectedUsers count changed significantly)
-    const countChanged = Math.abs(selectedUsers.length - lastSelectedCount.current) > 0
-    if (countChanged && hasInitialized.current) {
-      // Reset initialization when new data loads
-      hasInitialized.current = false
-      setManuallySelectedUserIds(new Set())
-    }
-    lastSelectedCount.current = selectedUsers.length
+    // Only initialize when dialog is open and we have the necessary data
+    if (!open) return
 
-    // Only initialize once when we have both selectedUsers and matchedUserIds calculated
-    // This handles edit mode where data loads asynchronously
+    // Wait for both selectedUsers and users to be loaded
+    // Also wait for matchedUserIds to be calculated (it might be empty array if no filters, or array with IDs if filters exist)
     if (!hasInitialized.current && selectedUsers.length > 0 && users.length > 0) {
-      // Wait for matchedUserIds to be calculated (when filters are applied or when all users are matched)
-      // If matchedUserIds is empty, it means no filters are applied, so all selected users are filter-selected
-      // If matchedUserIds has values, users selected but not in matchedUserIds are manually selected
-      if (matchedUserIds.length > 0) {
-        // Users selected but not matching current filter criteria are manually selected
-        const initiallyManuallySelected = selectedUsers.filter(userId => !matchedUserIds.includes(userId))
+      // matchedUserIds could be:
+      // - Empty array []: No filters applied, or filters haven't been calculated yet
+      // - Array with IDs: Filters applied and calculated
+      // We need to identify users in selectedUsers but NOT in matchedUserIds
 
-        if (initiallyManuallySelected.length > 0) {
-          setManuallySelectedUserIds(new Set(initiallyManuallySelected))
-          hasInitialized.current = true
-        } else {
-          // All selected users match the filter, so none are manually selected
-          hasInitialized.current = true
-        }
-      } else if (matchedUserIds.length === 0 && selectedUsers.length > 0) {
-        // No filters applied - all selected users are filter-selected (not manually selected)
+      // If matchedUserIds is empty, we can't determine manually selected users yet
+      // (unless we know for sure no filters exist - but we can't know that until matchedUserIds is set)
+      // So we'll identify manually selected users when matchedUserIds is available
+
+      // Calculate manually selected users: those in selectedUsers but not in matchedUserIds
+      const initiallyManuallySelected = selectedUsers.filter(userId => !matchedUserIds.includes(userId))
+
+      // Only mark as initialized if we have a definitive answer
+      // If matchedUserIds.length === 0, it could mean:
+      // 1. No filters (all users match) - all selected are filter-selected
+      // 2. Filters not calculated yet - wait
+      // We'll proceed if matchedUserIds has been set (even if empty) OR if we found manually selected users
+
+      if (initiallyManuallySelected.length > 0) {
+        // Found manually selected users - these are users in selectedUsers but not in matchedUserIds
+        setManuallySelectedUserIds(new Set(initiallyManuallySelected))
         hasInitialized.current = true
+        console.log('✅ Initialized manually selected users:', Array.from(initiallyManuallySelected))
+        console.log(
+          '   Total selected:',
+          selectedUsers.length,
+          'Matched by filter:',
+          matchedUserIds.length,
+          'Manually selected:',
+          initiallyManuallySelected.length
+        )
+      } else if (matchedUserIds.length > 0 || (matchedUserIds.length === 0 && users.length > 0)) {
+        // All selected users match the filter, OR no filters and all users are considered matched
+        // Mark as initialized only if we're confident matchedUserIds has been calculated
+        // If matchedUserIds.length === 0 but we have users, it likely means no filters (all users match)
+        hasInitialized.current = true
+        console.log('ℹ️ All selected users match filter - no manually selected users')
+        console.log('   Total selected:', selectedUsers.length, 'Matched by filter:', matchedUserIds.length)
       }
     }
-  }, [matchedUserIds, selectedUsers, users.length]) // Run when filters or selections change
+  }, [open, matchedUserIds, selectedUsers, users.length]) // Run when dialog opens, filters, or selections change
 
   const handleToggleAll = () => {
     if (selectAll || intermediate) {
