@@ -133,7 +133,7 @@ function PrimaryQuizBuilder({ quiz, isAdmin = false }) {
   }, [builderAreaRef.current]) // Run when ref changes
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: theme.palette.background.default, pb: 6 }}>
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: theme.palette.background.default, minHeight: 0}}>
       {/* Header Section */}
       <Box
         sx={{
@@ -200,10 +200,14 @@ function PrimaryQuizBuilder({ quiz, isAdmin = false }) {
       </Box>
 
       {/* Main Content */}
-      <Container maxWidth='xl'>
-        <Stack spacing={4}>
+      <Box sx={{flex: 1, gap: 4, display: 'flex', flexDirection: 'column', minHeight: 0, 
+      // overflow: 'hidden'
+
+      }}>
           <QuizDetails quiz={quiz} />
-          <Box sx={{ minHeight: '600px', height: 'calc(100vh - 400px)' }}>
+          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, 
+            // overflow: 'hidden' 
+            }}>
             <QuestionBuilderArea
               ref={builderAreaRef}
               quiz={quiz}
@@ -211,9 +215,8 @@ function PrimaryQuizBuilder({ quiz, isAdmin = false }) {
               validateQuizQuestions={validateQuizQuestionsFunc}
               validationErrors={errors}
             />
-          </Box>
-        </Stack>
-      </Container>
+        </Box>
+      </Box>
 
       {/* Snackbar */}
       <Snackbar

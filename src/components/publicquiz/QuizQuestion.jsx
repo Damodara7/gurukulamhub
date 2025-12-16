@@ -164,7 +164,7 @@ const QuizQuestion = ({
           {hasHint && (
             <Box
               sx={{
-                borderRadius: 20,
+                borderRadius: 5,
                 px: { xs: 2.6, sm: 3.2 },
                 py: { xs: 2.2, sm: 2.6 },
                 background: isDarkMode
@@ -192,65 +192,39 @@ const QuizQuestion = ({
                   spacing={{ xs: 1.6, sm: 2 }}
                   alignItems={{ xs: 'flex-start', sm: 'center' }}
                   justifyContent='space-between'
+                  sx={{ p: { xs: 1, sm: 2 } }}
                 >
-                  <Stack
-                    direction='row'
-                    spacing={1.8}
-                    alignItems='center'
-                    sx={{ minWidth: 0 }}
-                  >
-                    <Box
-                      sx={{
-                        width: 54,
-                        height: 54,
-                        position: 'relative',
-                        borderRadius: '46%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        background: `linear-gradient(145deg, ${alpha(theme.palette.info.main, 0.24)}, ${alpha(
-                          theme.palette.info.light,
-                          0.32
-                        )})`,
-                        color: theme.palette.info.dark,
-                        boxShadow: '0 14px 28px rgba(2, 136, 209, 0.2)'
-                      }}
-                    >
-                      <LightbulbOutlinedIcon fontSize='small' />
-                    </Box>
-
-                    <Stack spacing={0.4} sx={{ minWidth: 0 }}>
-                      <Stack direction='row' spacing={1} alignItems='center' flexWrap='wrap'>
-                        <Typography
-                          variant='subtitle1'
-                          fontWeight={800}
-                          color={theme.palette.info.dark}
-                          sx={{ letterSpacing: '0.01em' }}
-                        >
-                          {hintUsed ? 'Hint unlocked' : 'Hint locked'}
-                        </Typography>
-                        <Chip
-                          icon={hintUsed ? <LockOpenOutlinedIcon sx={{ fontSize: '1rem' }} /> : <LockOutlinedIcon sx={{ fontSize: '1rem' }} />}
-                          label={hintUsed ? 'Unlocked' : 'Locked'}
-                          size='small'
-                          color={hintUsed ? 'success' : 'info'}
-                        />
-                      </Stack>
-                      {!hintUsed && <Typography
-                        variant='body2'
-                        color={alpha(theme.palette.text.primary, 0.85)}
-                        sx={{ lineHeight: 1.65 }}
+                  <Stack spacing={0.4} sx={{ minWidth: 0 }}>
+                    <Stack direction='row' spacing={1} alignItems='center' flexWrap='wrap'>
+                      <Typography
+                        variant='subtitle1'
+                        fontWeight={800}
+                        color={theme.palette.info.dark}
+                        sx={{ letterSpacing: '0.01em' }}
                       >
-                        Be cautious — revealing the hint might deduct points, so unlock it only if you truly need it.
-                      </Typography>}
-                      {hintUsed && <Typography
-                        variant='h5'
-                        color={alpha(theme.palette.text.primary, 0.92)}
-                        sx={{ lineHeight: 1.7 }}
-                      >
-                        {currentQuestion.data.hint}
-                      </Typography>}
+                        {hintUsed ? 'Hint unlocked' : 'Hint locked'}
+                      </Typography>
+                      <Chip
+                        icon={hintUsed ? <LockOpenOutlinedIcon sx={{ fontSize: '1rem' }} /> : <LockOutlinedIcon sx={{ fontSize: '1rem' }} />}
+                        label={hintUsed ? 'Unlocked' : 'Locked'}
+                        size='small'
+                        color={hintUsed ? 'success' : 'info'}
+                      />
                     </Stack>
+                    {!hintUsed && <Typography
+                      variant='body2'
+                      color={alpha(theme.palette.text.primary, 0.85)}
+                      sx={{ lineHeight: 1.65 }}
+                    >
+                      Be cautious — revealing the hint might deduct points, so unlock it only if you truly need it.
+                    </Typography>}
+                    {hintUsed && <Typography
+                      variant='h5'
+                      color={alpha(theme.palette.text.primary, 0.92)}
+                      sx={{ lineHeight: 1.7 }}
+                    >
+                      {currentQuestion.data.hint}
+                    </Typography>}
                   </Stack>
 
                   {!hintUsed && (

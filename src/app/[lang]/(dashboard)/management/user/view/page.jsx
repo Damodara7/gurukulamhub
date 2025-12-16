@@ -7,6 +7,7 @@ import Grid from '@mui/material/Grid'
 // Component Imports
 import UserLeftOverview from '@views/apps/user/view/user-left-overview'
 import UserRight from '@views/apps/user/view/user-right'
+import { Box } from '@mui/material'
 
 const OverViewTab = dynamic(() => import('@views/apps/user/view/user-right/overview'))
 const SecurityTab = dynamic(() => import('@views/apps/user/view/user-right/security'))
@@ -39,14 +40,18 @@ const UserViewTab = async () => {
   const data = await getPricingData()
 
   return (
-    <Grid container spacing={6}>
-      <Grid item xs={12} lg={4} md={5}>
-        <UserLeftOverview />
-      </Grid>
-      <Grid item xs={12} lg={8} md={7}>
-        <UserRight tabContentList={tabContentList(data)} />
-      </Grid>
-    </Grid>
+    <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', p: { xs: 3, md: 4 } }}>
+      <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden' }}>
+        <Grid container spacing={6}>
+          <Grid item xs={12} lg={4} md={5}>
+            <UserLeftOverview />
+          </Grid>
+          <Grid item xs={12} lg={8} md={7}>
+            <UserRight tabContentList={tabContentList(data)} />
+          </Grid>
+        </Grid>
+      </Box>
+    </Box>
   )
 }
 

@@ -56,5 +56,7 @@ export default async function ViewQuizPage({ params }) {
     )
   }
 
-  return <ViewQuiz quiz={quiz} />
+  return <Box sx={{height: '100%', display: 'flex', flexDirection: 'column'}}>
+    <ViewQuiz quiz={quiz} />
+  </Box>
 }

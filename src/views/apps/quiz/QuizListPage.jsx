@@ -36,7 +36,7 @@ function QuizListPage() {
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: theme.palette.background.default, pb: { xs: 3, sm: 4, md: 6 } }}>
+    <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', bgcolor: theme.palette.background.default, }}>
       <TabContext value={activeTab}>
         {/* Header Section */}
         <Box
@@ -246,11 +246,11 @@ function QuizListPage() {
         </Box>
 
         {/* Content Area */}
-        <Container maxWidth='xl' sx={{ px: { xs: 1.5, sm: 2, md: 3 } }}>
-          <TabPanel value={activeTab} sx={{ p: 0, mt: { xs: 1, sm: 2 } }}>
+        <Box sx={{ px: { xs: 1.5, sm: 2, md: 3 }, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+          <TabPanel value={activeTab} sx={{ p: 0, mt: { xs: 1, sm: 2 }, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
             {tabPanelObject[activeTab]}
           </TabPanel>
-        </Container>
+        </Box>
       </TabContext>
     </Box>
   )

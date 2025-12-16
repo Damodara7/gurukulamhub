@@ -2,7 +2,7 @@ import React from 'react'
 import { auth } from '@/libs/auth'
 import { redirect } from 'next/navigation'
 import LandingPage from '@/views/landing-page/LandingPage'
-import { Grid, Stack } from '@mui/material'
+import { Box, Grid, Stack } from '@mui/material'
 import DonateButton from '@/components/DonateButton'
 import Marquee from '../dashboards/myprogress/Marquee/Marquee'
 
@@ -23,17 +23,14 @@ async function HomePage({ searchParams }) {
   }
 
   return (
-    <Stack>
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Top fixed marquee - add padding to main content */}
       <DonateButton />
       <Marquee position='top' positionClass='top-[4.4rem]' />
-      <Grid container spacing={6} sx={{ pt: '60px', pb: '70px' }}>
-        {/* Add padding for  top and bottom marquees */}
-        <Grid item xs={12}>
-          <LandingPage isAuthenticated={true} />
-        </Grid>
-      </Grid>
-    </Stack>
+      <Box sx={{ flex:1, my: 15, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
+        <LandingPage isAuthenticated={true} />
+      </Box>
+    </Box>
   )
 }
 

@@ -2,10 +2,12 @@
 import React, { useEffect, useState } from 'react'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
-import { Box, CircularProgress, Alert, Container, Typography, useTheme, useMediaQuery } from '@mui/material'
+import { Box, CircularProgress, Alert, Container, Typography, useTheme, useMediaQuery, Button, TextField, InputAdornment, Stack } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { useSession } from 'next-auth/react'
 import GroupChannellist from '@/components/mygroups/GroupChannellist'
+import { Group as GroupIcon, Campaign as ChannelIcon, Search as SearchIcon } from '@mui/icons-material'
+
 export default function MyGroupsPage() {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
@@ -16,6 +18,8 @@ export default function MyGroupsPage() {
   const [channels, setChannels] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [viewMode, setViewMode] = useState('groups')
+  const [searchQuery, setSearchQuery] = useState('')
   const { data: session } = useSession()
   const [socket, setSocket] = useState(null)
   const [isConnected, setIsConnected] = useState(false)
@@ -204,9 +208,9 @@ export default function MyGroupsPage() {
             ? alpha(theme.palette.background.paper, 0.85)
             : alpha('#fff', 0.78),
           borderBottom: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.1 : 0.08)}`,
-          px: { xs: 2, sm: 2.5, md: 3, lg: 4 },
-          pt: { xs: 3.5, sm: 4.5, md: 5.5, lg: 6 },
-          pb: { xs: 3.5, sm: 4.5, md: 5.5, lg: 6 }
+          px: { xs: 1.5, sm: 2, md: 2.5 },
+          pt: { xs: 1.5, sm: 2, md: 2.5 },
+          pb: { xs: 1.5, sm: 2, md: 2.5 }
         }}
       >
         <Container maxWidth='lg'>
@@ -216,7 +220,7 @@ export default function MyGroupsPage() {
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: { xs: 2.5, md: 3 }
+              gap: { xs: 1.5, sm: 2 }
             }}
           >
             {/* Icon and Title */}
@@ -225,28 +229,28 @@ export default function MyGroupsPage() {
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: { xs: 1.75, sm: 2.25 },
+                gap: { xs: 1, sm: 1.25 },
                 flexWrap: 'wrap'
               }}
             >
               <Box
                 sx={{
-                  width: { xs: 48, sm: 56, md: 64, lg: 68 },
-                  height: { xs: 48, sm: 56, md: 64, lg: 68 },
-                  borderRadius: { xs: '14px', sm: '15px', md: '16px' },
+                  width: { xs: 36, sm: 40, md: 44 },
+                  height: { xs: 36, sm: 40, md: 44 },
+                  borderRadius: { xs: '10px', sm: '12px', md: '14px' },
                   background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary?.main || theme.palette.primary.light})`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   boxShadow: isDarkMode
-                    ? `0 10px 30px ${alpha(theme.palette.primary.main, 0.4)}`
-                    : `0 10px 30px ${alpha(theme.palette.primary.main, 0.28)}`
+                    ? `0 6px 20px ${alpha(theme.palette.primary.main, 0.3)}`
+                    : `0 6px 20px ${alpha(theme.palette.primary.main, 0.2)}`
                 }}
               >
                 <i
                   className='ri-group-line'
                   style={{
-                    fontSize: 'clamp(22px, 5.5vw, 28px)',
+                    fontSize: 'clamp(18px, 4vw, 22px)',
                     color: theme.palette.common.white,
                     lineHeight: 1
                   }}
@@ -256,17 +260,16 @@ export default function MyGroupsPage() {
                 component='h1'
                 sx={{
                   fontSize: {
-                    xs: 'clamp(1.7rem, 5.5vw, 2.1rem)',
-                    sm: 'clamp(2rem, 4vw, 2.5rem)',
-                    md: 'clamp(2.3rem, 2.8vw, 2.9rem)',
-                    lg: 'clamp(2.6rem, 2vw, 3.2rem)'
+                    xs: 'clamp(1.3rem, 4vw, 1.6rem)',
+                    sm: 'clamp(1.5rem, 3vw, 1.8rem)',
+                    md: 'clamp(1.7rem, 2.5vw, 2rem)'
                   },
-                  lineHeight: { xs: 1.18, sm: 1.2, md: 1.25 },
+                  lineHeight: { xs: 1.2, sm: 1.25 },
                   fontWeight: 700,
                   background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary?.main || theme.palette.primary.light})`,
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
-                  letterSpacing: { xs: '-0.015em', sm: '-0.018em', md: '-0.02em' },
+                  letterSpacing: { xs: '-0.01em', sm: '-0.015em' },
                   textAlign: 'center'
                 }}
               >
@@ -274,17 +277,16 @@ export default function MyGroupsPage() {
               </Typography>
             </Box>
             <Typography
-              variant='body1'
+              variant='body2'
               color='text.secondary'
               sx={{
                 fontSize: {
-                  xs: 'clamp(0.88rem, 4vw, 0.98rem)',
-                  sm: 'clamp(0.95rem, 2.8vw, 1.05rem)',
-                  md: 'clamp(1rem, 2.2vw, 1.15rem)',
-                  lg: 'clamp(1.05rem, 1.8vw, 1.18rem)'
+                  xs: 'clamp(0.8rem, 3vw, 0.875rem)',
+                  sm: 'clamp(0.85rem, 2.5vw, 0.9rem)',
+                  md: 'clamp(0.875rem, 2vw, 0.95rem)'
                 },
-                lineHeight: { xs: 1.65, sm: 1.75, md: 1.8 },
-                maxWidth: { xs: '100%', sm: '540px', md: '600px', lg: '620px' },
+                lineHeight: { xs: 1.5, sm: 1.6 },
+                maxWidth: { xs: '100%', sm: '500px', md: '550px' },
                 fontWeight: 400,
                 px: { xs: 1, sm: 0 },
                 color: isDarkMode ? alpha(theme.palette.text.secondary, 0.9) : undefined
@@ -292,6 +294,153 @@ export default function MyGroupsPage() {
             >
               Connect with your communities and discover new channels to join
             </Typography>
+          </Box>
+
+          {/* Tabs and Search */}
+          <Box
+            sx={{
+              width: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: { xs: 1.25, sm: 1.5 },
+              mt: { xs: 1.5, sm: 2 }
+            }}
+          >
+            {/* Toggle Buttons */}
+            <Box
+              sx={{
+                width: '100%',
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: { xs: 1, sm: 1.25 },
+                maxWidth: { xs: '100%', sm: 450, md: 500 }
+              }}
+            >
+              <Button
+                variant={viewMode === 'groups' ? 'contained' : 'outlined'}
+                size='small'
+                component='label'
+                onClick={() => {
+                  setViewMode('groups')
+                  setSearchQuery('')
+                }}
+                startIcon={<GroupIcon sx={{ fontSize: { xs: 16, sm: 18 } }} />}
+                sx={{
+                  textTransform: 'none',
+                  borderRadius: { xs: 1.25, sm: 1.5 },
+                  color: viewMode === 'groups' ? 'white' : 'text.primary',
+                  px: { xs: 2, sm: 2.25, md: 2.5 },
+                  py: { xs: 0.75, sm: 0.875, md: 1 },
+                  fontWeight: 600,
+                  minWidth: { xs: '100%', sm: 120, md: 130 },
+                  fontSize: { xs: '0.8rem', sm: '0.85rem', md: '0.9rem' },
+                  boxShadow: viewMode === 'groups'
+                    ? isDarkMode
+                      ? `0 3px 10px ${alpha(theme.palette.primary.main, 0.3)}`
+                      : `0 3px 10px ${alpha(theme.palette.primary.main, 0.25)}`
+                    : 'none',
+                  transition: 'all 0.3s ease',
+                  ...(isDarkMode &&
+                    viewMode !== 'groups' && {
+                      borderColor: alpha(theme.palette.divider, 0.3),
+                      '&:hover': {
+                        borderColor: alpha(theme.palette.primary.main, 0.5),
+                        backgroundColor: alpha(theme.palette.primary.main, 0.08)
+                      }
+                    }),
+                  '&:hover': {
+                    transform: 'translateY(-1px)',
+                    boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, viewMode === 'groups' ? (isDarkMode ? 0.4 : 0.3) : 0.1)}`
+                  }
+                }}
+              >
+                Groups ({userGroups.length})
+              </Button>
+              <Button
+                variant={viewMode === 'channels' ? 'contained' : 'outlined'}
+                component='label'
+                size='small'
+                onClick={() => {
+                  setViewMode('channels')
+                  setSearchQuery('')
+                }}
+                startIcon={<ChannelIcon sx={{ fontSize: { xs: 16, sm: 18 } }} />}
+                sx={{
+                  textTransform: 'none',
+                  borderRadius: { xs: 1.25, sm: 1.5 },
+                  color: viewMode === 'channels' ? 'white' : 'text.primary',
+                  px: { xs: 2, sm: 2.25, md: 2.5 },
+                  py: { xs: 0.75, sm: 0.875, md: 1 },
+                  fontWeight: 600,
+                  minWidth: { xs: '100%', sm: 120, md: 130 },
+                  fontSize: { xs: '0.8rem', sm: '0.85rem', md: '0.9rem' },
+                  boxShadow: viewMode === 'channels'
+                    ? isDarkMode
+                      ? `0 3px 10px ${alpha(theme.palette.primary.main, 0.3)}`
+                      : `0 3px 10px ${alpha(theme.palette.primary.main, 0.25)}`
+                    : 'none',
+                  transition: 'all 0.3s ease',
+                  ...(isDarkMode &&
+                    viewMode !== 'channels' && {
+                      borderColor: alpha(theme.palette.divider, 0.3),
+                      '&:hover': {
+                        borderColor: alpha(theme.palette.primary.main, 0.5),
+                        backgroundColor: alpha(theme.palette.primary.main, 0.08)
+                      }
+                    }),
+                  '&:hover': {
+                    transform: 'translateY(-1px)',
+                    boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, viewMode === 'channels' ? (isDarkMode ? 0.4 : 0.3) : 0.1)}`
+                  }
+                }}
+              >
+                Channels ({channels.length})
+              </Button>
+            </Box>
+
+            {/* Search Bar */}
+            <TextField
+              placeholder={viewMode === 'groups' ? 'Search groups by name...' : 'Search channels by name...'}
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              size='small'
+              sx={{
+                width: '100%',
+                maxWidth: { xs: '100%', sm: 360, md: 400 },
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: { xs: 1.25, sm: 1.5 },
+                  height: { xs: 36, sm: 40, md: 42 },
+                  fontSize: { xs: '0.85rem', sm: '0.875rem', md: '0.9rem' },
+                  backgroundColor: isDarkMode
+                    ? alpha(theme.palette.background.default, 0.6)
+                    : undefined,
+                  ...(isDarkMode && {
+                    '& fieldset': {
+                      borderColor: alpha(theme.palette.divider, 0.3)
+                    },
+                    '&:hover fieldset': {
+                      borderColor: alpha(theme.palette.primary.main, 0.5)
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: theme.palette.primary.main
+                    }
+                  })
+                },
+                '& .MuiInputBase-input': {
+                  color: isDarkMode ? theme.palette.text.primary : undefined
+                }
+              }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position='start'>
+                    <SearchIcon sx={{ fontSize: { xs: 18, sm: 20 } }} color={isDarkMode ? 'action' : 'action'} />
+                  </InputAdornment>
+                )
+              }}
+            />
           </Box>
         </Container>
       </Box>
@@ -314,20 +463,19 @@ export default function MyGroupsPage() {
             mx: 'auto',
             bgcolor: isDarkMode
               ? alpha(theme.palette.background.paper, 0.9)
-              : alpha(theme.palette.background.paper, 0.85),
-            borderRadius: { xs: 2, sm: 2.5, md: 3 },
-            boxShadow: isDarkMode
-              ? `0 12px 32px ${alpha(theme.palette.common.black, 0.4)}`
-              : `0 12px 32px ${alpha(theme.palette.common.black, 0.08)}`,
-            border: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.2 : 0.08)}`,
-            backdropFilter: 'blur(12px)',
+              : undefined,
             overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column'
           }}
         >
           <Box sx={{ flex: 1, overflow: 'auto' }}>
-            <GroupChannellist groups={userGroups} channels={channels} />
+            <GroupChannellist 
+              groups={userGroups} 
+              channels={channels} 
+              viewMode={viewMode}
+              searchQuery={searchQuery}
+            />
           </Box>
         </Box>
       </Box>

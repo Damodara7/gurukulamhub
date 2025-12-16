@@ -63,6 +63,7 @@ const ViewDetails = ({ game }) => {
   const [copyTooltip, setCopyTooltip] = useState('Copy PIN')
   const [expandedReward, setExpandedReward] = useState(null)
   const [sharePopupOpen, setSharePopupOpen] = useState(false)
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false)
   const router = useRouter()
   const { data: session } = useSession()
   const [currentUsergroupIds, setCurrentUsergroupIds] = useState([])
@@ -102,8 +103,8 @@ const ViewDetails = ({ game }) => {
   // Early return after all hooks
   if (!game) {
     return (
-      <Box sx={{ 
-        minHeight: '100vh', 
+        <Box sx={{ 
+          flex: 1, 
         bgcolor: 'background.default', 
         display: 'flex', 
         alignItems: 'center', 
@@ -146,53 +147,71 @@ const ViewDetails = ({ game }) => {
   }
 
   return (
-    <Box sx={{ 
-      minHeight: '100vh', 
+      <Box sx={{
+        height: '100%',
       bgcolor: 'background.default', 
       pb: { xs: 4, sm: 6, md: 8 },
       width: '100%',
-      overflowX: 'hidden'
+      display: 'flex',
+      flexDirection: 'column'
     }}>
       {/* Header Section */}
       <Box
         sx={{
           bgcolor: 'background.paper',
-          pt: { xs: 3, sm: 4, md: 6 },
-          pb: { xs: 3, sm: 4, md: 6 },
+          pt: isHeaderCollapsed ? { xs: 1, sm: 1.25, md: 1.5 } : { xs: 1.5, sm: 2, md: 2.5 },
+          pb: isHeaderCollapsed ? { xs: 1, sm: 1.25, md: 1.5 } : { xs: 1.5, sm: 2, md: 2.5 },
           borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
           boxShadow: theme.palette.mode === 'dark' 
             ? '0 2px 8px rgba(0,0,0,0.3)'
-            : '0 2px 8px rgba(0,0,0,0.05)'
+            : '0 2px 8px rgba(0,0,0,0.05)',
+          transition: 'all 0.3s ease'
         }}
       >
         <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 3, md: 4 } }}>
-          <Stack spacing={{ xs: 2, sm: 2.5, md: 3 }}>
-            <Button
-              variant="outlined"
-              startIcon={<ArrowBackIosNewRoundedIcon sx={{ fontSize: { xs: 16, sm: 18 } }} />}
-              onClick={() => router.push('/public-games')}
-              sx={{
-                alignSelf: 'flex-start',
-                textTransform: 'none',
-                fontWeight: 600,
-                color: theme.palette.primary.main,
-                gap: 0.5,
-                fontSize: { xs: '0.875rem', sm: '1rem' },
-                px: { xs: 1.5, sm: 2 },
-                py: { xs: 0.75, sm: 1 },
-                '&:hover': {
-                  backgroundColor: alpha(theme.palette.primary.main, 0.08)
-                }
-              }}
-            >
-              Back to Public Games
-            </Button>
+          <Stack spacing={{ xs: 1.5, sm: 2, md: 2 }}>
+            {/* Back Button and Expand/Collapse */}
+            <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
+              <Button
+                variant="outlined"
+                startIcon={<ArrowBackIosNewRoundedIcon sx={{ fontSize: { xs: 14, sm: 16 } }} />}
+                onClick={() => router.push('/public-games')}
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  color: theme.palette.primary.main,
+                  gap: 0.5,
+                  fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                  px: { xs: 1.25, sm: 1.5 },
+                  py: { xs: 0.5, sm: 0.75 },
+                  '&:hover': {
+                    backgroundColor: alpha(theme.palette.primary.main, 0.08)
+                  }
+                }}
+              >
+                Back to Public Games
+              </Button>
+              <IconButton
+                onClick={() => setIsHeaderCollapsed(!isHeaderCollapsed)}
+                size="small"
+                sx={{
+                  color: 'text.secondary',
+                  '&:hover': {
+                    bgcolor: alpha(theme.palette.primary.main, 0.1),
+                    color: 'text.primary'
+                  }
+                }}
+              >
+                {isHeaderCollapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}
+              </IconButton>
+            </Stack>
+            
             {/* Title */}
             <Typography
               variant="h3"
               fontWeight={800}
               sx={{
-                fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' },
+                fontSize: { xs: '1.25rem', sm: '1.75rem', md: '2rem' },
                 color: 'text.primary',
                 lineHeight: 1.3
               }}
@@ -200,124 +219,127 @@ const ViewDetails = ({ game }) => {
               {game.title}
             </Typography>
 
-            {/* Status & Actions */}
-            <Stack 
-              direction={{ xs: 'column', sm: 'row' }} 
-              justifyContent="space-between" 
-              alignItems={{ xs: 'flex-start', sm: 'center' }} 
-              flexWrap="wrap" 
-              gap={{ xs: 1.5, sm: 2 }}
-            >
-              {getStatusChip()}
-              
-              <Stack 
-                direction="row" 
-                spacing={{ xs: 1, sm: 2 }}
-                sx={{ width: { xs: '100%', sm: 'auto' } }}
-                flexWrap="wrap"
-              >
-                {game.pin && (
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: { xs: 0.75, sm: 1 },
-                      px: { xs: 1.5, sm: 2 },
-                      py: { xs: 0.75, sm: 1 },
-                      borderRadius: 2,
-                      bgcolor: theme.palette.mode === 'dark' 
-                        ? alpha(theme.palette.common.white, 0.05)
-                        : alpha(theme.palette.common.black, 0.03),
-                      border: `1px solid ${alpha(theme.palette.divider, 0.1)}`
-                    }}
+            {/* Collapsible Content */}
+            {!isHeaderCollapsed && (
+              <>
+                {/* Status & Actions */}
+                <Stack 
+                  direction={{ xs: 'column', sm: 'row' }} 
+                  justifyContent="space-between" 
+                  alignItems={{ xs: 'flex-start', sm: 'center' }} 
+                  flexWrap="wrap" 
+                  gap={{ xs: 1, sm: 1.5 }}
+                >
+                  {getStatusChip()}
+                  
+                  <Stack 
+                    direction="row" 
+                    spacing={{ xs: 0.75, sm: 1.5 }}
+                    sx={{ width: { xs: '100%', sm: 'auto' } }}
+                    flexWrap="wrap"
                   >
-                    <Typography 
-                      variant="body2" 
-                      fontWeight={600} 
-                      sx={{ 
-                        color: 'text.primary', 
-                        fontSize: { xs: '0.75rem', sm: '0.875rem' }
-                      }}
-                    >
-                      PIN: {game.pin}
-                    </Typography>
-                    <Tooltip title={copyTooltip}>
-                      <IconButton 
-                        onClick={handleCopyPin} 
-                        size="small" 
-                        sx={{ 
-                          p: 0.5,
-                          color: 'text.secondary',
-                          '&:hover': {
-                            color: 'text.primary'
-                          }
+                    {game.pin && (
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: { xs: 0.5, sm: 0.75 },
+                          px: { xs: 1.25, sm: 1.5 },
+                          py: { xs: 0.5, sm: 0.75 },
+                          borderRadius: 2,
+                          bgcolor: theme.palette.mode === 'dark' 
+                            ? alpha(theme.palette.common.white, 0.05)
+                            : alpha(theme.palette.common.black, 0.03),
+                          border: `1px solid ${alpha(theme.palette.divider, 0.1)}`
                         }}
                       >
-                        <ContentCopy sx={{ fontSize: { xs: 14, sm: 16 } }} />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
+                        <Typography 
+                          variant="body2" 
+                          fontWeight={600} 
+                          sx={{ 
+                            color: 'text.primary', 
+                            fontSize: { xs: '0.7rem', sm: '0.8rem' }
+                          }}
+                        >
+                          PIN: {game.pin}
+                        </Typography>
+                        <Tooltip title={copyTooltip}>
+                          <IconButton 
+                            onClick={handleCopyPin} 
+                            size="small" 
+                            sx={{ 
+                              p: 0.4,
+                              color: 'text.secondary',
+                              '&:hover': {
+                                color: 'text.primary'
+                              }
+                            }}
+                          >
+                            <ContentCopy sx={{ fontSize: { xs: 13, sm: 15 } }} />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                    )}
+                    
+                    <Button
+                      variant="outlined"
+                      startIcon={<ShareIcon sx={{ fontSize: { xs: 14, sm: 16 } }} />}
+                      onClick={() => setSharePopupOpen(true)}
+                      sx={{
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                        px: { xs: 1.25, sm: 1.5 },
+                        py: { xs: 0.5, sm: 0.75 }
+                      }}
+                    >
+                      Share
+                    </Button>
+                  </Stack>
+                </Stack>
+
+                {/* Description */}
+                {game?.description && (
+                  <Typography
+                    variant="body1"
+                    sx={{
+                      fontSize: { xs: '0.875rem', sm: '0.9375rem', md: '1rem' },
+                      color: 'text.secondary',
+                      lineHeight: 1.6,
+                      maxWidth: '900px'
+                    }}
+                  >
+                    {game.description}
+                  </Typography>
                 )}
-                
-                <Button
-                  variant="outlined"
-                  startIcon={<ShareIcon sx={{ fontSize: { xs: 16, sm: 18 } }} />}
-                  onClick={() => setSharePopupOpen(true)}
-                  sx={{
-                    textTransform: 'none',
-                    fontWeight: 600,
-                    fontSize: { xs: '0.875rem', sm: '1rem' },
-                    px: { xs: 1.5, sm: 2 },
-                    py: { xs: 0.75, sm: 1 }
-                  }}
+
+                {/* Quick Info Bar */}
+                <Stack 
+                  direction="row" 
+                  spacing={{ xs: 1.5, sm: 2, md: 2.5 }} 
+                  flexWrap="wrap" 
+                  sx={{ pt: { xs: 0.25, sm: 0.5 } }}
                 >
-                  Share
-                </Button>
-              </Stack>
-            </Stack>
-
-            {/* Description */}
-            {game?.description && (
-              <Typography
-                variant="body1"
-                sx={{
-                  fontSize: { xs: '0.95rem', sm: '1rem', md: '1.05rem' },
-                  color: 'text.secondary',
-                  lineHeight: 1.7,
-                  maxWidth: '900px'
-                }}
-              >
-                {game.description}
-              </Typography>
-            )}
-
-            {/* Quick Info Bar */}
-            <Stack 
-              direction="row" 
-              spacing={{ xs: 2, sm: 3, md: 4 }} 
-              flexWrap="wrap" 
-              sx={{ pt: { xs: 0.5, sm: 1 } }}
-            >
-              <Stack direction="row" spacing={{ xs: 0.75, sm: 1 }} alignItems="center">
+                  <Stack direction="row" spacing={{ xs: 0.6, sm: 0.75 }} alignItems="center">
                 <Box
                   sx={{
-                    width: { xs: 28, sm: 32 },
-                    height: { xs: 28, sm: 32 },
-                    borderRadius: 1.5,
+                    width: { xs: 24, sm: 28 },
+                    height: { xs: 24, sm: 28 },
+                    borderRadius: 1.25,
                     bgcolor: alpha(theme.palette.info.main, theme.palette.mode === 'dark' ? 0.2 : 0.1),
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
                   }}
                 >
-                  <AccessTime sx={{ fontSize: { xs: 16, sm: 18 }, color: 'info.main' }} />
+                  <AccessTime sx={{ fontSize: { xs: 14, sm: 16 }, color: 'info.main' }} />
                 </Box>
                 <Box>
                   <Typography 
                     variant="caption" 
                     sx={{ 
                       color: 'text.secondary', 
-                      fontSize: { xs: '0.65rem', sm: '0.7rem' }
+                      fontSize: { xs: '0.6rem', sm: '0.65rem' }
                     }}
                   >
                     STARTS
@@ -327,34 +349,34 @@ const ViewDetails = ({ game }) => {
                     fontWeight={600} 
                     sx={{ 
                       color: 'text.primary', 
-                      fontSize: { xs: '0.8rem', sm: '0.875rem' }
+                      fontSize: { xs: '0.75rem', sm: '0.8rem' }
                     }}
                   >
                     {format(new Date(game.startTime), 'MMM d, h:mm a')}
                   </Typography>
                 </Box>
-              </Stack>
-              
-              <Stack direction="row" spacing={{ xs: 0.75, sm: 1 }} alignItems="center">
+                  </Stack>
+                  
+                  <Stack direction="row" spacing={{ xs: 0.6, sm: 0.75 }} alignItems="center">
                 <Box
                   sx={{
-                    width: { xs: 28, sm: 32 },
-                    height: { xs: 28, sm: 32 },
-                    borderRadius: 1.5,
+                    width: { xs: 24, sm: 28 },
+                    height: { xs: 24, sm: 28 },
+                    borderRadius: 1.25,
                     bgcolor: alpha(theme.palette.secondary.main, theme.palette.mode === 'dark' ? 0.2 : 0.1),
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
                   }}
                 >
-                  <People sx={{ fontSize: { xs: 16, sm: 18 }, color: 'secondary.main' }} />
+                  <People sx={{ fontSize: { xs: 14, sm: 16 }, color: 'secondary.main' }} />
                 </Box>
                 <Box>
                   <Typography 
                     variant="caption" 
                     sx={{ 
                       color: 'text.secondary', 
-                      fontSize: { xs: '0.65rem', sm: '0.7rem' }
+                      fontSize: { xs: '0.6rem', sm: '0.65rem' }
                     }}
                   >
                     PLAYERS
@@ -364,35 +386,35 @@ const ViewDetails = ({ game }) => {
                     fontWeight={600} 
                     sx={{ 
                       color: 'text.primary', 
-                      fontSize: { xs: '0.8rem', sm: '0.875rem' }
+                      fontSize: { xs: '0.75rem', sm: '0.8rem' }
                     }}
                   >
                     {game?.registeredUsers?.length || 0} / {game?.maxPlayers || '∞'}
                   </Typography>
                 </Box>
-              </Stack>
-              
-              {game.location && (
-                <Stack direction="row" spacing={{ xs: 0.75, sm: 1 }} alignItems="center">
+                  </Stack>
+                  
+                  {game.location && (
+                    <Stack direction="row" spacing={{ xs: 0.6, sm: 0.75 }} alignItems="center">
                   <Box
                     sx={{
-                      width: { xs: 28, sm: 32 },
-                      height: { xs: 28, sm: 32 },
-                      borderRadius: 1.5,
+                      width: { xs: 24, sm: 28 },
+                      height: { xs: 24, sm: 28 },
+                      borderRadius: 1.25,
                       bgcolor: alpha(theme.palette.warning.main, theme.palette.mode === 'dark' ? 0.2 : 0.1),
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center'
                     }}
                   >
-                    <LocationOn sx={{ fontSize: { xs: 16, sm: 18 }, color: 'warning.main' }} />
+                    <LocationOn sx={{ fontSize: { xs: 14, sm: 16 }, color: 'warning.main' }} />
                   </Box>
                   <Box>
                     <Typography 
                       variant="caption" 
                       sx={{ 
                         color: 'text.secondary', 
-                        fontSize: { xs: '0.65rem', sm: '0.7rem' }
+                        fontSize: { xs: '0.6rem', sm: '0.65rem' }
                       }}
                     >
                       LOCATION
@@ -402,22 +424,26 @@ const ViewDetails = ({ game }) => {
                       fontWeight={600} 
                       sx={{ 
                         color: 'text.primary', 
-                        fontSize: { xs: '0.8rem', sm: '0.875rem' }
+                        fontSize: { xs: '0.75rem', sm: '0.8rem' }
                       }}
                     >
                       {game?.location?.city || game?.location?.region || game?.location?.country || 'Anywhere'}
                     </Typography>
                   </Box>
+                    </Stack>
+                  )}
                 </Stack>
-              )}
-            </Stack>
+              </>
+            )}
           </Stack>
         </Container>
       </Box>
 
-      <Container maxWidth="lg" sx={{ 
+      <Box sx={{ 
         mt: { xs: 3, sm: 4 },
-        px: { xs: 2, sm: 3, md: 4 }
+        px: { xs: 2, sm: 3, md: 4 },
+        flex: 1,
+        overflow: 'auto'
       }}>
         {/* Group Restriction Alert */}
         {isRestricted && (
@@ -1242,7 +1268,7 @@ const ViewDetails = ({ game }) => {
             </Box>
           </Card>
         )}
-      </Container>
+      </Box>
 
       <ShareGamePopup open={sharePopupOpen} onClose={() => setSharePopupOpen(false)} game={game} />
     </Box>

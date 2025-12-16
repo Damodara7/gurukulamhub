@@ -102,7 +102,9 @@ export default function QuestionsVerticalMenu({
   }
 
   return (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0,
+      // overflow: 'hidden'
+     }}>
       {/* Header with Toggle */}
       <Box
         sx={{
@@ -112,7 +114,8 @@ export default function QuestionsVerticalMenu({
           borderColor: 'primary.main',
           display: 'flex',
           justifyContent: isCollapsed ? 'center' : 'space-between',
-          alignItems: 'center'
+          alignItems: 'center',
+          flexShrink: 0
         }}
       >
         {!isCollapsed && (
@@ -156,12 +159,15 @@ export default function QuestionsVerticalMenu({
 
       {/* Expanded State - Full Menu */}
       {!isCollapsed && (
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0,
+          //  overflow: 'hidden'
+         }}>
           {/* Create New Button */}
           <Box
             sx={{
               p: 2,
-              borderBottom: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`
+              borderBottom: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
+              flexShrink: 0
             }}
           >
             <Button
@@ -192,16 +198,23 @@ export default function QuestionsVerticalMenu({
           </Box>
 
           {/* Scrollable questions list */}
-          <Box sx={{ flex: 1, overflowY: 'auto', p: 2, minHeight: 0 }}>
+          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: 2, minHeight: 0, 
+            // overflow: 'hidden'
+           }}>
             {loading.primaryQuestions && <Loading />}
             {!loading.primaryQuestions && questions?.length === 0 && (
               <Box
                 sx={{
                   p: 3,
+                  flex: 1,
                   textAlign: 'center',
                   borderRadius: 2,
                   border: '1px dashed',
-                  borderColor: 'divider'
+                  borderColor: 'divider',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center'
                 }}
               >
                 <QuestionMarkIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 1, opacity: 0.5 }} />
@@ -210,57 +223,59 @@ export default function QuestionsVerticalMenu({
                 </Typography>
               </Box>
             )}
-            {!loading.primaryQuestions &&
-              questions?.map((question, index) => {
-                const errors = getQuestionErrors(question._id)
-                const hasErrors = errors.length > 0
-                return (
-                  <Card
-                    key={question._id}
-                    sx={{
-                      mb: 2,
-                      cursor: 'pointer',
-                      border: '1px solid',
-                      borderColor: hasErrors
-                        ? theme.palette.error.main
-                        : selectedQuestion?._id === question._id
-                          ? theme.palette.primary.main
-                          : alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08),
-                      borderRadius: 2,
-                      bgcolor: hasErrors
-                        ? alpha(theme.palette.error.main, 0.05)
-                        : selectedQuestion?._id === question._id
-                          ? alpha(theme.palette.primary.main, 0.05)
-                          : theme.palette.background.paper,
-                      boxShadow:
-                        selectedQuestion?._id === question._id
-                          ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.15)}`
-                          : hasErrors
-                            ? `0 2px 8px ${alpha(theme.palette.error.main, 0.15)}`
-                            : theme.palette.mode === 'dark'
-                              ? '0 2px 8px rgba(0, 0, 0, 0.3)'
-                              : '0 2px 8px rgba(0, 0, 0, 0.04)',
-                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                      transform: selectedQuestion?._id === question._id ? 'translateX(4px)' : 'none',
-                      position: 'relative',
-                      '&:hover': {
-                        borderColor: hasErrors ? theme.palette.error.main : theme.palette.primary.main,
-                        transform: 'translateX(4px)',
-                        boxShadow: hasErrors
-                          ? `0 4px 12px ${alpha(theme.palette.error.main, 0.2)}`
-                          : `0 4px 12px ${alpha(theme.palette.primary.main, 0.2)}`
-                      }
-                    }}
-                    onClick={() => onSelect(question)}
-                  >
-                    {renderDummyTemplate(
-                      question,
-                      `${index + 1}. ${question?.data?.question?.text || '* Question is not completed!'}`,
-                      index + 1
-                    )}
-                  </Card>
-                )
-              })}
+            {!loading.primaryQuestions && questions?.length > 0 && (
+              <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden', minHeight: 0 }}>
+                {questions?.map((question, index) => {
+                  const errors = getQuestionErrors(question._id)
+                  const hasErrors = errors.length > 0
+                  return (
+                    <Card
+                      key={question._id}
+                      sx={{
+                        mb: 2,
+                        cursor: 'pointer',
+                        border: '1px solid',
+                        borderColor: selectedQuestion?._id === question._id
+                        ? theme.palette.primary.main : hasErrors
+                          ? theme.palette.error.main 
+                            : alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08),
+                        borderRadius: 2,
+                        bgcolor: selectedQuestion?._id === question._id
+                        ? alpha(theme.palette.primary.main, 0.05) : hasErrors
+                          ? alpha(theme.palette.error.main, 0.05)
+                            : theme.palette.background.paper,
+                        boxShadow:
+                          selectedQuestion?._id === question._id
+                            ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.15)}`
+                            : hasErrors
+                              ? `0 2px 8px ${alpha(theme.palette.error.main, 0.15)}`
+                              : theme.palette.mode === 'dark'
+                                ? '0 2px 8px rgba(0, 0, 0, 0.3)'
+                                : '0 2px 8px rgba(0, 0, 0, 0.04)',
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        transform: selectedQuestion?._id === question._id ? 'translateX(4px)' : 'none',
+                        position: 'relative',
+                        flexShrink: 0,
+                        '&:hover': {
+                          borderColor: hasErrors ? theme.palette.error.main : theme.palette.primary.main,
+                          transform: 'translateX(4px)',
+                          boxShadow: hasErrors
+                            ? `0 4px 12px ${alpha(theme.palette.error.main, 0.2)}`
+                            : `0 4px 12px ${alpha(theme.palette.primary.main, 0.2)}`
+                        }
+                      }}
+                      onClick={() => onSelect(question)}
+                    >
+                      {renderDummyTemplate(
+                        question,
+                        `${index + 1}. ${question?.data?.question?.text || '* Question is not completed!'}`,
+                        index + 1
+                      )}
+                    </Card>
+                  )
+                })}
+              </Box>
+              )}
           </Box>
         </Box>
       )}
@@ -270,7 +285,7 @@ export default function QuestionsVerticalMenu({
         <Box
           sx={{
             flex: 1,
-            overflowY: 'auto',
+            overflow: 'auto',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -326,17 +341,15 @@ export default function QuestionsVerticalMenu({
                       height: 40,
                       borderRadius: 1.5,
                       border: '2px solid',
-                      borderColor: hasErrors
-                        ? theme.palette.error.main
-                        : isSelected
-                          ? theme.palette.primary.main
-                          : alpha(theme.palette.primary.main, 0.3),
+                      borderColor: isSelected
+                      ? theme.palette.primary.main :hasErrors
+                        ? theme.palette.error.main : alpha(theme.palette.primary.main, 0.3),
                       bgcolor: hasErrors
                         ? alpha(theme.palette.error.main, 0.1)
                         : isSelected
                           ? theme.palette.primary.main
                           : theme.palette.background.paper,
-                      color: isSelected ? 'white' : hasErrors ? theme.palette.error.main : theme.palette.primary.main,
+                      color: isSelected ? theme.palette.primary.main : hasErrors ? theme.palette.error.main : theme.palette.primary.main,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',

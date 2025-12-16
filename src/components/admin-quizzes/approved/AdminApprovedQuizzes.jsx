@@ -38,9 +38,7 @@ function AdminApprovedQuizzes() {
   }
 
   return (
-    <>
       <QuizzesTable data={quizzes}  refreshData={getQuizData} />
-    </>
   )
 }
 

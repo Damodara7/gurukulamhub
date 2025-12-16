@@ -493,7 +493,9 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null, showHeading = tru
   return (
     <Box
       sx={{
-        // minHeight: '100vh',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
         background: `radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 50%),
                      radial-gradient(circle at 80% 80%, ${alpha(
                        theme.palette.secondary.main,
@@ -573,7 +575,7 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null, showHeading = tru
       </Box>}
 
       {/* Main Content */}
-      <Box sx={{ maxWidth: '1200px', margin: '0 auto', px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 } }}>
+      <Box sx={{ px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 }, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
         <Card
           sx={{
             borderRadius: 2,

@@ -785,7 +785,11 @@ const AdvListTable = () => {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: 0,
+        overflow: 'hidden',
         background: `radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 50%),
                      radial-gradient(circle at 80% 80%, ${alpha(
                        theme.palette.secondary.main,
@@ -794,6 +798,7 @@ const AdvListTable = () => {
                      ${theme.palette.background.default}`
       }}
     >
+      {/* Header */}
       <Box
         sx={{
           backdropFilter: 'blur(16px)',
@@ -803,7 +808,7 @@ const AdvListTable = () => {
           pb: { xs: 4, md: 6 }
         }}
       >
-        <Container maxWidth='lg'>
+        <Box sx={{ p: { xs: 3, md: 4 } }}>
           <Box sx={{ textAlign: 'center' }}>
             <Stack
               direction='row'
@@ -858,13 +863,17 @@ const AdvListTable = () => {
               Manage and monitor all advertisements across your platform
             </Typography>
           </Box>
-        </Container>
+        </Box>
       </Box>
 
       {/* Content Area */}
-      <Container maxWidth='lg' sx={{ py: { xs: 3, md: 4 } }}>
+      <Box sx={{ p: { xs: 3, md: 4 }, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
         <Card
           sx={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: 0,
             borderRadius: '16px',
             boxShadow: theme =>
               `0 8px 24px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.3 : 0.08)}`,
@@ -929,7 +938,7 @@ const AdvListTable = () => {
               Total {data?.length || 0} advertisement{data?.length !== 1 ? 's' : ''}
             </Typography>
           </Box>
-          <Box sx={{ px: { xs: 2, sm: 3 }, py: { xs: 2, sm: 3 } }}>
+          <Box sx={{ px: { xs: 2, sm: 3 }, py: { xs: 2, sm: 3 }, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
             {table.getFilteredRowModel().rows.length === 0 ? (
               <Box
                 sx={{
@@ -1170,93 +1179,95 @@ const AdvListTable = () => {
                 </Stack>
               </Box>
             ) : (
-              <div className='overflow-x-auto'>
-                <table className={tableStyles.table}>
-                  <thead>
-                    {table.getHeaderGroups().map(headerGroup => (
-                      <tr key={headerGroup.id}>
-                        {headerGroup.headers.map(header => (
-                          <th
-                            key={header.id}
-                            className='enhanced-table-header'
-                            style={{
-                              background:
-                                theme.palette.mode === 'dark'
-                                  ? alpha(theme.palette.background.paper, 0.8)
-                                  : alpha(theme.palette.background.paper, 0.5),
-                              color: theme.palette.text.primary,
-                              borderBottom: `2px solid ${theme.palette.divider}`
-                            }}
-                          >
-                            {header.isPlaceholder ? null : (
-                              <>
-                                <div
-                                  className={classnames({
-                                    'flex items-center': header.column.getIsSorted(),
-                                    'cursor-pointer select-none': header.column.getCanSort()
-                                  })}
-                                  onClick={header.column.getToggleSortingHandler()}
-                                >
-                                  {flexRender(header.column.columnDef.header, header.getContext())}
-                                  {{
-                                    asc: <i className='ri-arrow-up-s-line text-xl' />,
-                                    desc: <i className='ri-arrow-down-s-line text-xl' />
-                                  }[header.column.getIsSorted()] ?? null}
-                                </div>
-                              </>
-                            )}
-                          </th>
-                        ))}
-                      </tr>
-                    ))}
-                  </thead>
-                  <tbody>
-                    {table.getRowModel().rows.map(row => (
-                      <tr
-                        key={row.id}
-                        className={classnames('enhanced-table-row', { selected: row.getIsSelected() })}
-                        style={{
-                          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
-                          ...(row.getIsSelected() && {
-                            background: `linear-gradient(90deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(
-                              theme.palette.secondary.main,
-                              0.1
-                            )} 100%)`,
-                            borderLeft: `4px solid ${theme.palette.primary.main}`
-                          })
-                        }}
-                        onMouseEnter={e => {
-                          if (!row.getIsSelected()) {
-                            e.currentTarget.style.background = `linear-gradient(90deg, ${alpha(
-                              theme.palette.primary.main,
-                              theme.palette.mode === 'dark' ? 0.15 : 0.08
-                            )} 0%, ${alpha(
-                              theme.palette.secondary.main,
-                              theme.palette.mode === 'dark' ? 0.15 : 0.08
-                            )} 100%)`
-                            e.currentTarget.style.boxShadow = `0 4px 12px ${alpha(
-                              theme.palette.primary.main,
-                              theme.palette.mode === 'dark' ? 0.2 : 0.08
-                            )}`
-                          }
-                        }}
-                        onMouseLeave={e => {
-                          if (!row.getIsSelected()) {
-                            e.currentTarget.style.background = 'transparent'
-                            e.currentTarget.style.boxShadow = 'none'
-                          }
-                        }}
-                      >
-                        {row.getVisibleCells().map(cell => (
-                          <td key={cell.id} className='enhanced-table-cell'>
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+                <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+                  <table className={tableStyles.table}>
+                    <thead style={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: theme.palette.background.paper }}>
+                      {table.getHeaderGroups().map(headerGroup => (
+                        <tr key={headerGroup.id}>
+                          {headerGroup.headers.map(header => (
+                            <th
+                              key={header.id}
+                              className='enhanced-table-header'
+                              style={{
+                                background:
+                                  theme.palette.mode === 'dark'
+                                    ? alpha(theme.palette.background.paper, 0.8)
+                                    : alpha(theme.palette.background.paper, 0.5),
+                                color: theme.palette.text.primary,
+                                borderBottom: `2px solid ${theme.palette.divider}`
+                              }}
+                            >
+                              {header.isPlaceholder ? null : (
+                                <>
+                                  <div
+                                    className={classnames({
+                                      'flex items-center': header.column.getIsSorted(),
+                                      'cursor-pointer select-none': header.column.getCanSort()
+                                    })}
+                                    onClick={header.column.getToggleSortingHandler()}
+                                  >
+                                    {flexRender(header.column.columnDef.header, header.getContext())}
+                                    {{
+                                      asc: <i className='ri-arrow-up-s-line text-xl' />,
+                                      desc: <i className='ri-arrow-down-s-line text-xl' />
+                                    }[header.column.getIsSorted()] ?? null}
+                                  </div>
+                                </>
+                              )}
+                            </th>
+                          ))}
+                        </tr>
+                      ))}
+                    </thead>
+                    <tbody>
+                      {table.getRowModel().rows.map(row => (
+                        <tr
+                          key={row.id}
+                          className={classnames('enhanced-table-row', { selected: row.getIsSelected() })}
+                          style={{
+                            borderBottom: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+                            ...(row.getIsSelected() && {
+                              background: `linear-gradient(90deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(
+                                theme.palette.secondary.main,
+                                0.1
+                              )} 100%)`,
+                              borderLeft: `4px solid ${theme.palette.primary.main}`
+                            })
+                          }}
+                          onMouseEnter={e => {
+                            if (!row.getIsSelected()) {
+                              e.currentTarget.style.background = `linear-gradient(90deg, ${alpha(
+                                theme.palette.primary.main,
+                                theme.palette.mode === 'dark' ? 0.15 : 0.08
+                              )} 0%, ${alpha(
+                                theme.palette.secondary.main,
+                                theme.palette.mode === 'dark' ? 0.15 : 0.08
+                              )} 100%)`
+                              e.currentTarget.style.boxShadow = `0 4px 12px ${alpha(
+                                theme.palette.primary.main,
+                                theme.palette.mode === 'dark' ? 0.2 : 0.08
+                              )}`
+                            }
+                          }}
+                          onMouseLeave={e => {
+                            if (!row.getIsSelected()) {
+                              e.currentTarget.style.background = 'transparent'
+                              e.currentTarget.style.boxShadow = 'none'
+                            }
+                          }}
+                        >
+                          {row.getVisibleCells().map(cell => (
+                            <td key={cell.id} className='enhanced-table-cell'>
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </Box>
+              </Box>
             )}
           </Box>
           {!isMobile && table.getFilteredRowModel().rows.length > 0 && (
@@ -1320,7 +1331,7 @@ const AdvListTable = () => {
           type='delete-advertisement'
           onConfirm={handleDelete}
         />
-      </Container>
+      </Box>
     </Box>
   )
 }

@@ -14,7 +14,11 @@ const GameCreationModeSelector = ({ onModeSelect }) => {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        flex: 1,
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
         background: `radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 50%),
                      radial-gradient(circle at 80% 80%, ${alpha(
                        theme.palette.secondary.main,
@@ -36,7 +40,7 @@ const GameCreationModeSelector = ({ onModeSelect }) => {
           pb: { xs: 3, sm: 4, md: 6 }
         }}
       >
-        <Container maxWidth='lg' sx={{ px: { xs: 2, sm: 3 } }}>
+        <Box sx={{ p: { xs: 2, sm: 3 }}}>
           <Box sx={{ textAlign: 'center' }}>
             {/* Icon and Title */}
             <Box
@@ -90,11 +94,21 @@ const GameCreationModeSelector = ({ onModeSelect }) => {
               Choose how you want to create your game
             </Typography>
           </Box>
-        </Container>
+        </Box>
       </Box>
 
       {/* Content Area */}
-      <Container maxWidth='lg' sx={{ py: { xs: 2, sm: 3, md: 4 }, px: { xs: 2, sm: 3 } }}>
+      <Box
+        sx={{
+          p: { xs: 2, sm: 3, md: 4 },
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          overflowY: 'auto',
+          overflowX: 'hidden'
+        }}
+      >
         {/* Cards Section */}
         <Grid container spacing={{ xs: 2, sm: 3, md: 4 }} sx={{ mb: { xs: 3, md: 5 } }}>
           {/* Option 1: Create & Schedule with existing sponsors */}
@@ -330,7 +344,9 @@ const GameCreationModeSelector = ({ onModeSelect }) => {
             border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
             boxShadow:
               theme.palette.mode === 'dark' ? `0 2px 8px ${alpha(theme.palette.common.black, 0.3)}` : theme.shadows[2],
-            p: { xs: 2, sm: 3, md: 4 }
+            p: { xs: 2, sm: 3, md: 4 },
+            mt: { xs: 2, sm: 3, md: 4 },
+            flexShrink: 0
           }}
         >
           <Grid container spacing={{ xs: 2, sm: 3 }}>
@@ -442,7 +458,7 @@ const GameCreationModeSelector = ({ onModeSelect }) => {
             </Grid>
           </Grid>
         </Card>
-      </Container>
+      </Box>
     </Box>
   )
 }

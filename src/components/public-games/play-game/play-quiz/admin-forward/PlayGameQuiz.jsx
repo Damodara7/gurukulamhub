@@ -373,64 +373,62 @@ export default function AdminForwardPlayGame({ game: initialGame }) {
   }
 
   return (
-    <>
-      <Box sx={{ mx: 'auto', px: 2, width: { xs: '100%', sm: '100%' }, height: '100%' }}>
-        {mappedQuestions.length > 0 ? (
-          <AdminForwardGameQuizQuestion
-            currentQuestion={currentQuestion}
-            currentQuestionIndex={currentQuestionIndex}
-            questions={mappedQuestions}
-            selectedAnswers={effectiveSelectedAnswers}
-            handleAnswerFillInBlanks={hasSubmittedCurrent ? undefined : handleAnswerFillInBlanks}
-            handleAnswerSelect={hasSubmittedCurrent ? undefined : handleAnswerSelect}
-            handleShowHint={hasSubmittedCurrent ? undefined : handleShowHint}
-            hintUsed={effectiveHintUsed}
-            hasHint={effectiveHasHint}
-            isSkippable={false}
-            handleSkip={null}
-            timeLeft={null}
-            disabled={hasSubmittedCurrent || submitting}
-          />
-        ) : (
-          <Alert severity='error'>No mappedQuestions available for this quiz</Alert>
-        )}
+    <Box sx={{ mx: 'auto', px: 2, width: { xs: '100%', sm: '100%' }, height: '100%', display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
+      {mappedQuestions.length > 0 ? (
+        <AdminForwardGameQuizQuestion
+          currentQuestion={currentQuestion}
+          currentQuestionIndex={currentQuestionIndex}
+          questions={mappedQuestions}
+          selectedAnswers={effectiveSelectedAnswers}
+          handleAnswerFillInBlanks={hasSubmittedCurrent ? undefined : handleAnswerFillInBlanks}
+          handleAnswerSelect={hasSubmittedCurrent ? undefined : handleAnswerSelect}
+          handleShowHint={hasSubmittedCurrent ? undefined : handleShowHint}
+          hintUsed={effectiveHintUsed}
+          hasHint={effectiveHasHint}
+          isSkippable={false}
+          handleSkip={null}
+          timeLeft={null}
+          disabled={hasSubmittedCurrent || submitting}
+        />
+      ) : (
+        <Alert severity='error'>No mappedQuestions available for this quiz</Alert>
+      )}
 
-        {/* Submit button and waiting message */}
-        {currentQuestion && (
-          <Box sx={{ mt: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <Button
-              onClick={handleSubmit}
-              disabled={
+      {/* Submit button and waiting message */}
+      {currentQuestion && (
+        <Box sx={{ mt: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <Button
+            onClick={handleSubmit}
+            disabled={
+              submitting ||
+              hasSubmittedCurrent ||
+              isAnswerEmpty(currentQuestion, effectiveSelectedAnswers[currentQuestion._id])
+            }
+            color={submitting ? 'secondary' : hasSubmittedCurrent ? 'success' : 'primary'}
+            component='label'
+            variant='contained'
+            mb={4}
+            style={{
+              color: '#fff',
+              cursor:
                 submitting ||
                 hasSubmittedCurrent ||
                 isAnswerEmpty(currentQuestion, effectiveSelectedAnswers[currentQuestion._id])
-              }
-              color={submitting ? 'secondary' : hasSubmittedCurrent ? 'success' : 'primary'}
-              component='label'
-              variant='contained'
-              mb={4}
-              style={{
-                color: '#fff',
-                cursor:
-                  submitting ||
-                  hasSubmittedCurrent ||
-                  isAnswerEmpty(currentQuestion, effectiveSelectedAnswers[currentQuestion._id])
-                    ? 'not-allowed'
-                    : 'pointer'
-              }}
-            >
-              {submitting ? 'Submitting...' : hasSubmittedCurrent ? 'Submitted' : 'Submit'}
-            </Button>
-          </Box>
-        )}
-        {currentQuestion && hasSubmittedCurrent && (
-          <Box sx={{ mt: 2, textAlign: 'center', color: '#1976d2', fontWeight: 500 }}>
-            Please Wait for next question...
-          </Box>
-        )}
+                  ? 'not-allowed'
+                  : 'pointer'
+            }}
+          >
+            {submitting ? 'Submitting...' : hasSubmittedCurrent ? 'Submitted' : 'Submit'}
+          </Button>
+        </Box>
+      )}
+      {currentQuestion && hasSubmittedCurrent && (
+        <Box sx={{ mt: 2, textAlign: 'center', color: '#1976d2', fontWeight: 500 }}>
+          Please Wait for next question...
+        </Box>
+      )}
 
-        <Leaderboard game={game} duringPlay={true} isAdmin={true} />
-      </Box>
-    </>
+      <Leaderboard game={game} duringPlay={true} isAdmin={true} />
+    </Box>
   )
 }

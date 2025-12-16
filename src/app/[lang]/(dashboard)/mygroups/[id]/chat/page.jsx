@@ -68,7 +68,7 @@ export default function Page({ params }) {
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          height: '89vh',
+          height: '100%',
           background: `radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.08 : 0.05)} 0%, transparent 50%),
                        radial-gradient(circle at 80% 80%, ${alpha(theme.palette.secondary.main, theme.palette.mode === 'dark' ? 0.08 : 0.05)} 0%, transparent 50%),
                        ${theme.palette.background.default}`
@@ -92,6 +92,10 @@ export default function Page({ params }) {
     )
   }
 
-  return <GroupChatPage groupId={groupId} groupData={groupData} backPath='/mygroups' />
+  return (
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <GroupChatPage groupId={groupId} groupData={groupData} backPath='/mygroups' />
+    </Box>
+  )
 }
 

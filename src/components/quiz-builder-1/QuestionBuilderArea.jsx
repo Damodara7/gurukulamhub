@@ -240,23 +240,22 @@ const QuestionBuilderArea = forwardRef(
     }))
 
     return (
-      <Box sx={{ display: 'flex', gap: 3, height: '100%', overflow: 'hidden', minHeight: 0 }}>
+      <Box sx={{ display: 'flex', gap: 3, flex: 1, minHeight: 0, 
+        // overflow: 'hidden',
+       }}>
         {/* Left Sidebar - Questions List (Sticky) */}
         <Box
           sx={{
             width: isMenuCollapsed ? 72 : 340,
-            height: '100%',
-            bgcolor: theme.palette.background.paper,
+            background: theme.palette.background.paper,
             borderRadius: 2,
             border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
             boxShadow: theme.palette.mode === 'dark' ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.04)',
-            overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
-            position: 'sticky',
-            top: 0,
-            alignSelf: 'flex-start',
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+            minHeight: 0,
+            // overflow: 'hidden',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
           <QuestionsVerticalMenu
@@ -276,11 +275,10 @@ const QuestionBuilderArea = forwardRef(
         <Box
           sx={{
             flex: 1,
-            minWidth: 0,
-            height: 'auto',
-            maxHeight: '100%',
-            overflowY: 'auto',
-            overflowX: 'hidden'
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: 0,
+            // overflow: 'hidden'
           }}
         >
           <Box
@@ -288,17 +286,21 @@ const QuestionBuilderArea = forwardRef(
               p: 3,
               border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
               borderRadius: 2,
-              minHeight: '100%',
-              bgcolor: theme.palette.background.paper,
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              background: theme.palette.background.paper,
               boxShadow: theme.palette.mode === 'dark' ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.04)',
               transition: 'all 0.3s ease',
+              minHeight: 0,
+              // overflow: 'hidden',
               '&:hover': {
                 borderColor: alpha(theme.palette.primary.main, 0.3),
                 boxShadow:
                   theme.palette.mode === 'dark'
                     ? `0 4px 20px ${alpha(theme.palette.primary.main, 0.2)}`
                     : `0 4px 20px ${alpha(theme.palette.primary.main, 0.08)}`
-              }
+              },
             }}
           >
             {!hasClickedNew && (

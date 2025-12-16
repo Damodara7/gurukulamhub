@@ -47,7 +47,7 @@ function SelectedQuiz({ quiz, isAdmin=false }) {
   if (isLoading) {
     return (
       <Box sx={{ 
-        minHeight: '100vh', 
+        minHeight: '100%', 
         bgcolor: '#f8f9fa', 
         display: 'flex', 
         alignItems: 'center', 
@@ -64,7 +64,7 @@ function SelectedQuiz({ quiz, isAdmin=false }) {
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa', pb: 6 }}>
+    <Box sx={{  bgcolor: '#f8f9fa', pb: 6, height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Header Section */}
       <Box
         sx={{
@@ -102,7 +102,7 @@ function SelectedQuiz({ quiz, isAdmin=false }) {
         </Container>
       </Box>
 
-      <Container maxWidth="xl">
+      <Box sx={{ px: { xs: 2, sm: 3, md: 4 }, flex: 1, overflow: 'auto' }}>
         <Stack spacing={4}>
           {/* Quiz Details Card */}
           <Box
@@ -184,7 +184,7 @@ function SelectedQuiz({ quiz, isAdmin=false }) {
             </Box>
           </Box>
         </Stack>
-      </Container>
+      </Box>
     </Box>
   )
 }

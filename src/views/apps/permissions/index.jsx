@@ -478,7 +478,11 @@ const FeaturesTable = () => {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: 0,
+        overflow: 'hidden',
         background: `radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 50%),
                      radial-gradient(circle at 80% 80%, ${alpha(
                        theme.palette.secondary.main,
@@ -553,18 +557,22 @@ const FeaturesTable = () => {
       </Box>
 
       {/* Content Area */}
-      <Container maxWidth='lg' sx={{ py: { xs: 3, md: 4 } }}>
+      <Box sx={{ p: { xs: 3, md: 4 }, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
         <Card
           sx={{
             background: theme.palette.background.paper,
             boxShadow: theme => theme.shadows[3],
             borderRadius: 3,
-            overflow: 'hidden',
             border: theme => `1px solid ${theme.palette.divider}`,
             transition: 'box-shadow 0.3s ease-in-out',
             '&:hover': {
               boxShadow: theme => theme.shadows[6]
-            }
+            },
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: 0,
+            overflow: 'hidden'
           }}
         >
           <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
@@ -610,7 +618,7 @@ const FeaturesTable = () => {
               Total {data?.length || 0} feature{data?.length !== 1 ? 's' : ''}
             </Typography>
           </div>
-          <Box sx={{ px: { xs: 2, sm: 3 }, py: { xs: 2, sm: 3 } }}>
+          <Box sx={{ px: { xs: 2, sm: 3 }, py: { xs: 2, sm: 3 }, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
             {table.getFilteredRowModel().rows.length === 0 ? (
               <Box
                 sx={{
@@ -800,9 +808,10 @@ const FeaturesTable = () => {
                 </Stack>
               </Box>
             ) : (
-              <div className='overflow-x-auto'>
+              <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
+                <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
                 <table className={tableStyles.table}>
-                  <thead>
+                  <thead style={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: theme.palette.background.paper }}>
                     {table.getHeaderGroups().map(headerGroup => (
                       <tr key={headerGroup.id}>
                         {headerGroup.headers.map(header => (
@@ -859,9 +868,10 @@ const FeaturesTable = () => {
                         ))}
                       </tr>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                    </tbody>
+                  </table>
+                </Box>
+              </Box>
             )}
           </Box>
           {!isMobile && table.getFilteredRowModel().rows.length > 0 && (
@@ -902,7 +912,7 @@ const FeaturesTable = () => {
           type='delete-feature' // Set the type based on your context
           onConfirm={handleDelete}
         />
-      </Container>
+      </Box>
     </Box>
   )
 }

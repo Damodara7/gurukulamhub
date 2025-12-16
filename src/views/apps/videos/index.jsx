@@ -18,7 +18,9 @@ function Videos() {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        minHeight: '100%',
+        display: 'flex',
+        flexDirection: 'column',
         background: `radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 50%),
                      radial-gradient(circle at 80% 80%, ${alpha(
                        theme.palette.secondary.main,
@@ -93,10 +95,14 @@ function Videos() {
       </Box>
 
       {/* Content Area */}
-      <Container maxWidth='lg' sx={{ py: { xs: 3, md: 4 } }}>
-        {/* Videos Table */}
-        <VideosTable />
-      </Container>
+      <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', p: { xs: 3, md: 4 } }}>
+        <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden' }}>
+          <Box sx={{flexShrink: 0}}>
+            {/* Videos Table */}
+            <VideosTable />
+          </Box>
+        </Box>
+      </Box>
     </Box>
   )
 }

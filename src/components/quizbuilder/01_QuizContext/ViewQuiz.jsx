@@ -137,7 +137,7 @@ const ViewQuiz = ({ data, theme: themeFromProps, onSelectQuiz, isAdmin = false }
   }
   const mobileTabPanelMaxHeight = 'calc(100vh - 170px)'
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: theme.palette.background.default, pb: { xs: 4, sm: 6 } }}>
+    <Box sx={{ height: '100%', width: '100%', display: 'flex', flexDirection: 'column', bgcolor: theme.palette.background.default }}>
       <TabContext value={activeTab}>
         {/* Header Section */}
         <Box
@@ -339,10 +339,10 @@ const ViewQuiz = ({ data, theme: themeFromProps, onSelectQuiz, isAdmin = false }
 
         {/* Content Area */}
         <Container
-          maxWidth='xl'
           sx={{
-            px: { xs: 1.5, sm: 2, md: 3 },
-            py: { xs: 2, sm: 3, md: 4 }
+            flex: 1,
+            width: '100%',
+            overflow: 'auto'
           }}
         >
           <TabPanel
@@ -354,7 +354,6 @@ const ViewQuiz = ({ data, theme: themeFromProps, onSelectQuiz, isAdmin = false }
                 px: { xs: 0, sm: 0.5 }
               },
               maxHeight: isSmDown ? mobileTabPanelMaxHeight : 'none',
-              overflowY: isSmDown ? 'auto' : 'visible',
               pr: { xs: 0, sm: 0.5 }
             }}
           >

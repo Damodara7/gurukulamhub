@@ -35,9 +35,7 @@ function AdminPendingQuizzes() {
   }
 
   return (
-    <>
-      <QuizzesTable data={quizzes} refreshData={getQuizData} />
-    </>
+    <QuizzesTable data={quizzes} refreshData={getQuizData} />
   )
 }
 

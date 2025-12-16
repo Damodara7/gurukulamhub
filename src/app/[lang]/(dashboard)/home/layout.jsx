@@ -23,28 +23,30 @@ const Layout = async ({ children, params }) => {
   const skin = getSkin()
 
   return (
-    <Providers direction={direction}>
-      <Box>
-        {/* Header Component */}
-        {/* <HomePageHeader dictionary={dictionary} /> */}
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Providers direction={direction}>
+        <Box sx={{ flex: 1, height: '100%', display: 'flex', flexDirection: 'column' }}>
+          {/* Header Component */}
+          {/* <HomePageHeader dictionary={dictionary} /> */}
 
-        {/* Main content */}
-        <Box sx={{ p: 2 }}>{children}</Box>
+          {/* Main content */}
+          <Box sx={{ p: 2, flex: 1, height: '100%', display: 'flex', flexDirection: 'column' }}>{children}</Box>
 
-        {/* Scroll to Top Button */}
-        <ScrollToTop className='mui-fixed'>
-          <Button
-            variant='contained'
-            className='is-10 bs-10 rounded-full p-0 min-is-0 flex items-center justify-center'
-          >
-            <i className='ri-arrow-up-line' />
-          </Button>
-        </ScrollToTop>
+          {/* Scroll to Top Button */}
+          <ScrollToTop className='mui-fixed'>
+            <Button
+              variant='contained'
+              className='is-10 bs-10 rounded-full p-0 min-is-0 flex items-center justify-center'
+            >
+              <i className='ri-arrow-up-line' />
+            </Button>
+          </ScrollToTop>
 
-        {/* Customizer */}
-        <Customizer dir={direction} />
-      </Box>
-    </Providers>
+          {/* Customizer */}
+          <Customizer dir={direction} />
+        </Box>
+      </Providers>
+    </Box>
   )
 }
 

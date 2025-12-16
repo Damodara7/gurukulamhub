@@ -88,11 +88,12 @@ export const PublicGamesPage = () => {
   const theme = useTheme()
 
   return (
-    <Box sx={{ 
-      minHeight: '100vh', 
+    <Box sx={{
+      height: '100%',
       bgcolor: 'background.default',
       width: '100%',
-      overflowX: 'hidden'
+      display: 'flex',
+      flexDirection: 'column'
     }}>
       {/* Header Section */}
       <Box
@@ -169,12 +170,14 @@ export const PublicGamesPage = () => {
       </Box>
 
       {/* Games List */}
-      <Container maxWidth="lg" sx={{ 
+      <Box sx={{ 
         py: { xs: 3, sm: 4, md: 6 },
-        px: { xs: 2, sm: 3, md: 4 }
+        px: { xs: 2, sm: 3, md: 4 },
+        flex: 1,
+        overflow: 'auto'
       }}>
         <PublicGamesList games={filteredGames} loading={loading} error={error} />
-      </Container>
+      </Box>
     </Box>
   )
 }

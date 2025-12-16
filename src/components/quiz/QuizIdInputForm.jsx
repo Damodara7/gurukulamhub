@@ -386,12 +386,11 @@ const QuizIdInputForm = ({ mode = 'play' }) => {
     <Box
       component='section'
       sx={{
+        flex: 1,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        minHeight: { xs: '100dvh', sm: '100vh' },
         position: 'relative',
-        overflow: 'hidden',
         width: '100%',
         px: { xs: 1.5, sm: 2, md: 3, lg: 4 },
         py: { xs: 4, sm: 6, md: 7, lg: 8 },

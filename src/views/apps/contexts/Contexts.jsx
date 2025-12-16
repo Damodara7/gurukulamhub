@@ -134,8 +134,10 @@ function Contexts({ contextType = 'GENERIC' }) {
   return (
     <Box
       sx={{
-        minHeight: '100dvh',
+        height: '100%',
+        minHeight: 0,
         display: 'flex',
+        overflow: 'hidden',
         flexDirection: 'column',
         background: `radial-gradient(circle at 18% 18%, ${alpha(theme.palette.primary.main, 0.06)} 0%, transparent 55%),
                      radial-gradient(circle at 82% 82%, ${alpha(
@@ -214,14 +216,15 @@ function Contexts({ contextType = 'GENERIC' }) {
       </Box>
 
       {/* Content Area */}
-      <Container
-        maxWidth='lg'
+      <Box
         sx={{
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
+          minHeight: 0,
+          overflow: 'hidden',
           width: '100%',
-          py: { xs: 3, md: 4 }
+          p: { xs: 3, md: 4 }
         }}
       >
         <Box
@@ -229,6 +232,8 @@ function Contexts({ contextType = 'GENERIC' }) {
             flex: 1,
             display: 'flex',
             flexDirection: 'column',
+            overflow: 'hidden',
+            minHeight: 0,
             bgcolor: 'background.paper',
             borderRadius: 3,
             p: { xs: 2.5, sm: 3.5, md: 4 },
@@ -304,7 +309,7 @@ function Contexts({ contextType = 'GENERIC' }) {
             }
           }
         `}</style>
-      </Container>
+      </Box>
     </Box>
   )
 }

@@ -43,7 +43,8 @@ export default async function EditQuizQuestionsPage({ params }) {
 
   if (!quiz) {
     return (
-      <CenterBox>
+      <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <CenterBox>
         <Alert
           sx={{ padding: '0.5rem' }}
           severity=''
@@ -54,6 +55,7 @@ export default async function EditQuizQuestionsPage({ params }) {
           Please check and try again.
         </Alert>
       </CenterBox>
+      </Box>
     )
   }
 

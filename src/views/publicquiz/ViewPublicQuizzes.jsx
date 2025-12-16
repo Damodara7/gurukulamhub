@@ -108,8 +108,11 @@ export default function ViewPublicQuizzes() {
 
   return (
     <Box 
-      sx={{ 
-        minHeight: '100vh',
+      sx={{
+        height: "100%",
+        width: "100%",
+        display: 'flex',
+        flexDirection: 'column',
         background: `radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 50%),
                      radial-gradient(circle at 80% 80%, ${alpha(theme.palette.secondary.main, 0.05)} 0%, transparent 50%),
                      ${theme.palette.background.default}`
@@ -123,12 +126,12 @@ export default function ViewPublicQuizzes() {
             ? alpha(theme.palette.background.paper, 0.8)
             : alpha(theme.palette.background.paper, 0.7),
           borderBottom: `1px solid ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.15 : 0.08)}`,
-          pt: { xs: 4, sm: 5, md: 8 },
-          pb: { xs: 4, sm: 5, md: 8 }
+          pt: { xs: 1.5, sm: 2, md: 2.5 },
+          pb: { xs: 1.5, sm: 2, md: 2.5 }
         }}
       >
         <Container maxWidth="lg">
-          <Stack spacing={{ xs: 3, sm: 4, md: 5 }} alignItems="center">
+          <Stack spacing={{ xs: 1.5, sm: 2, md: 2.5 }} alignItems="center">
             {/* Elegant Title */}
             <Box sx={{ textAlign: 'center', px: { xs: 2, sm: 0 } }}>
               <Typography
@@ -138,7 +141,7 @@ export default function ViewPublicQuizzes() {
                   background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
-                  mb: { xs: 1.5, md: 2 },
+                  mb: { xs: 0.5, md: 1 },
                   letterSpacing: '-0.02em'
                 }}
               >
@@ -149,7 +152,7 @@ export default function ViewPublicQuizzes() {
                 color="text.secondary"
                 sx={{ 
                   fontSize: { xs: '0.9rem', sm: '1rem', md: '1.05rem' },
-                  lineHeight: 1.8,
+                  lineHeight: 1.5,
                   maxWidth: 600,
                   mx: 'auto',
                   fontWeight: 400,
@@ -237,7 +240,7 @@ export default function ViewPublicQuizzes() {
       </Box>
 
       {/* Quiz Cards */}
-      <Container maxWidth="lg" sx={{ py: { xs: 4, sm: 5, md: 8 }, px: { xs: 2, sm: 3, md: 4 } }}>
+      <Box width="100%" sx={{ py: { xs: 4, sm: 5, md: 8 }, px: { xs: 2, sm: 3, md: 4 }, flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
         <Grid container spacing={{ xs: 2, sm: 3, md: 4 }}>
           {loading ? (
             renderSkeletonCards()
@@ -590,7 +593,7 @@ export default function ViewPublicQuizzes() {
             </Grid>
           )}
         </Grid>
-      </Container>
+      </Box>
     </Box>
   )
 }

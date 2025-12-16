@@ -392,6 +392,11 @@ const AdminPendingQuizzesTable = ({ data, refreshData }) => {
   return (
     <Card
       sx={{
+        flex:1,
+        display: 'flex',
+        overflow: 'hidden',
+        minHeight: 0,
+        flexDirection: 'column',
         borderRadius: { xs: 2, sm: '16px' },
         boxShadow: theme.palette.mode === 'dark' ? '0 4px 20px rgba(0, 0, 0, 0.4)' : '0 4px 20px rgba(0, 0, 0, 0.08)',
         border: `2px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
@@ -403,7 +408,7 @@ const AdminPendingQuizzesTable = ({ data, refreshData }) => {
           display: 'flex',
           justifyContent: 'center',
           py: { xs: 2, sm: 3 },
-          px: { xs: 1.5, sm: 3 }
+          px: { xs: 1.5, sm: 3 },
         }}
       >
         <DebouncedInput
@@ -454,7 +459,7 @@ const AdminPendingQuizzesTable = ({ data, refreshData }) => {
           }}
         />
       </CardContent>
-      <CardContent sx={{ px: { xs: 1.5, sm: 3 }, pb: { xs: 2, sm: 3 } }}>
+      <CardContent sx={{ px: { xs: 1.5, sm: 3 }, pb: { xs: 2, sm: 3 }, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
         {filteredRows.length === 0 ? (
           <Box
             sx={{
@@ -475,8 +480,10 @@ const AdminPendingQuizzesTable = ({ data, refreshData }) => {
         ) : isMobile ? (
           <Box
             sx={{
-              maxHeight: 'calc(100vh - 200px)',
+              flex: 1,
               overflowY: 'auto',
+              overflowX: 'hidden',
+              minHeight: 0,
               pr: 1,
               '&::-webkit-scrollbar': {
                 width: 6
@@ -652,34 +659,35 @@ const AdminPendingQuizzesTable = ({ data, refreshData }) => {
             </Stack>
           </Box>
         ) : (
-          <div className='overflow-x-auto'>
-            <table className={tableStyles.table}>
-              <thead>
-                {table.getHeaderGroups().map(headerGroup => (
-                  <tr key={headerGroup.id}>
-                    {headerGroup.headers.map(header => (
-                      <th key={header.id}>
-                        {header.isPlaceholder ? null : (
-                          <div
-                            className={classnames({
-                              'flex items-center': header.column.getIsSorted(),
-                              'cursor-pointer select-none': header.column.getCanSort()
-                            })}
-                            onClick={header.column.getToggleSortingHandler()}
-                          >
-                            {flexRender(header.column.columnDef.header, header.getContext())}
-                            {{
-                              asc: <i className='ri-arrow-up-s-line text-xl' />,
-                              desc: <i className='ri-arrow-down-s-line text-xl' />
-                            }[header.column.getIsSorted()] ?? null}
-                          </div>
-                        )}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead>
-              <tbody>
+          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+            <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'auto', minHeight: 0 }}>
+              <table className={tableStyles.table} style={{ width: '100%' }}>
+                <thead style={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: theme.palette.background.paper }}>
+                  {table.getHeaderGroups().map(headerGroup => (
+                    <tr key={headerGroup.id}>
+                      {headerGroup.headers.map(header => (
+                        <th key={header.id}>
+                          {header.isPlaceholder ? null : (
+                            <div
+                              className={classnames({
+                                'flex items-center': header.column.getIsSorted(),
+                                'cursor-pointer select-none': header.column.getCanSort()
+                              })}
+                              onClick={header.column.getToggleSortingHandler()}
+                            >
+                              {flexRender(header.column.columnDef.header, header.getContext())}
+                              {{
+                                asc: <i className='ri-arrow-up-s-line text-xl' />,
+                                desc: <i className='ri-arrow-down-s-line text-xl' />
+                              }[header.column.getIsSorted()] ?? null}
+                            </div>
+                          )}
+                        </th>
+                      ))}
+                    </tr>
+                  ))}
+                </thead>
+                <tbody>
                 {filteredRows.length === 0 ? (
                   <tr>
                     <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
@@ -758,7 +766,8 @@ const AdminPendingQuizzesTable = ({ data, refreshData }) => {
                 )}
               </tbody>
             </table>
-          </div>
+            </Box>
+          </Box>
         )}
 
         {/* Pagination component - Only show on desktop/tablet */}

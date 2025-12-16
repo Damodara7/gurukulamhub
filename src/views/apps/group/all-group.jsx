@@ -93,7 +93,7 @@ const AllGroupPage = () => {
     return (
       <Box
         sx={{
-          minHeight: '100vh',
+          height: '100%',
           background: `radial-gradient(circle at 20% 20%, ${alpha(
             theme.palette.primary.main,
             0.05
@@ -150,7 +150,9 @@ const AllGroupPage = () => {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
         background: `radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 50%),
                      radial-gradient(circle at 80% 80%, ${alpha(
                        theme.palette.secondary.main,
@@ -227,42 +229,42 @@ const AllGroupPage = () => {
       </Box>
 
       {/* Content Area */}
-      <Container maxWidth='lg' sx={{ py: { xs: 3, md: 4 } }}>
+      <Box sx={{ p: { xs: 3, md: 4 }, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
         <GroupCard groups={groups} onEditGroup={handleEditGroup} onViewGroup={handleViewGroup} />
+      </Box>
 
-        {/* Create Group Button - Responsive: below cards on mobile, fixed on desktop */}
-        <Box
+      {/* Create Group Button - Responsive: below cards on mobile, fixed on desktop */}
+      <Box
+        sx={{
+          display: { xs: 'flex', sm: 'block' },
+          justifyContent: 'center',
+          mt: { xs: 3, sm: 0 },
+          mb: { xs: 0, sm: 0 }
+        }}
+      >
+        <Button
+          variant='contained'
+          component='label'
+          onClick={handleCreateNewGroup}
+          startIcon={<AddIcon />}
           sx={{
-            display: { xs: 'flex', sm: 'block' },
-            justifyContent: 'center',
-            mt: { xs: 3, sm: 0 },
-            mb: { xs: 0, sm: 0 }
+            color: 'white',
+            // Mobile: normal flow, below cards
+            position: { xs: 'static', sm: 'fixed' },
+            bottom: { xs: 'auto', sm: 24 },
+            right: { xs: 'auto', sm: 24 },
+            zIndex: { xs: 'auto', sm: 1001 },
+            // Responsive sizing
+            fontSize: { xs: '1rem', sm: '1.2rem' },
+            borderRadius: '12px',
+            px: { xs: 3, sm: 4 },
+            py: { xs: 1.25, sm: 1.5 },
+            minWidth: { xs: 200, sm: 220 }
           }}
         >
-          <Button
-            variant='contained'
-            component='label'
-            onClick={handleCreateNewGroup}
-            startIcon={<AddIcon />}
-            sx={{
-              color: 'white',
-              // Mobile: normal flow, below cards
-              position: { xs: 'static', sm: 'fixed' },
-              bottom: { xs: 'auto', sm: 24 },
-              right: { xs: 'auto', sm: 24 },
-              zIndex: { xs: 'auto', sm: 1001 },
-              // Responsive sizing
-              fontSize: { xs: '1rem', sm: '1.2rem' },
-              borderRadius: '12px',
-              px: { xs: 3, sm: 4 },
-              py: { xs: 1.25, sm: 1.5 },
-              minWidth: { xs: 200, sm: 220 }
-            }}
-          >
-            Create Group
-          </Button>
-        </Box>
-      </Container>
+          Create Group
+        </Button>
+      </Box>
     </Box>
   )
 }

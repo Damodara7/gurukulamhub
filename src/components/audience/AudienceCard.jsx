@@ -75,28 +75,7 @@ const AudienceCard = ({ audiences, onEditAudience, onViewAudience, dynamicCounts
       sx={{
         width: '100%',
         // Only apply max-height and scrolling on mobile
-        maxHeight: { xs: 'calc(100vh - 250px)', sm: 'none' },
-        overflowY: { xs: 'auto', sm: 'visible' },
-        overflowX: 'hidden',
         pr: { xs: 0, sm: 0 },
-        // Custom scrollbar styling - only on mobile
-        '&::-webkit-scrollbar': {
-          width: { xs: '8px', sm: '0px' }
-        },
-        '&::-webkit-scrollbar-track': {
-          backgroundColor: alpha(theme.palette.divider, 0.1),
-          borderRadius: '4px'
-        },
-        '&::-webkit-scrollbar-thumb': {
-          backgroundColor: alpha(theme.palette.primary.main, 0.4),
-          borderRadius: '4px',
-          '&:hover': {
-            backgroundColor: alpha(theme.palette.primary.main, 0.6)
-          }
-        },
-        scrollbarWidth: { xs: 'thin', sm: 'none' },
-        WebkitOverflowScrolling: { xs: 'touch', sm: 'auto' },
-        scrollBehavior: 'smooth'
       }}
     >
       <Grid container spacing={{ xs: 2, sm: 3, md: 3 }}>

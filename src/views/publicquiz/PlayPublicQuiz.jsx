@@ -15,11 +15,14 @@ import {
   Container,
   useTheme,
   useMediaQuery,
-  alpha
+  alpha,
+  IconButton
 } from '@mui/material'
 import TranslateIcon from '@mui/icons-material/Translate'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import { useRouter } from 'next/navigation'
 
 import languageNotations from '@components/quizbuilder/05_Components/languageNotation.en.json'
@@ -63,6 +66,7 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
   const [skippedQuestions, setSkippedQuestions] = useState([])
   const [isTimerActive, setIsTimerActive] = useState(false)
   const [time, setTime] = useState(0)
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false)
 
   useEffect(() => {
     if (languageCode && languageCode !== selectedLanguage) {
@@ -280,13 +284,15 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
 
   if (showSummary) {
     return (
-      <QuizSummary
-        questions={questions}
-        selectedAnswers={selectedAnswers}
-        usedHints={usedHints}
-        handleReplay={handleReplay}
-        time={time}
-      />
+      <Box sx={{flex: 1, overflow: 'auto'}}>
+        <QuizSummary
+          questions={questions}
+          selectedAnswers={selectedAnswers}
+          usedHints={usedHints}
+          handleReplay={handleReplay}
+          time={time}
+        />
+      </Box>
     )
   }
 
@@ -509,18 +515,23 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        height: '100%',
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
         bgcolor: isDarkMode ? theme.palette.background.default : '#f8f9fa',
         pb: { xs: 4, md: 6 }
       }}
     >
+      {/* Header */}
       <Box
         sx={{
           bgcolor: isDarkMode ? theme.palette.background.paper : 'white',
-          pt: { xs: 2, md: 4 },
-          pb: { xs: 2.5, md: 4 },
+          pt: isHeaderCollapsed ? { xs: 0.75, md: 1 } : { xs: 1.5, md: 2.5 },
+          pb: isHeaderCollapsed ? { xs: 0.75, md: 1 } : { xs: 1.5, md: 2.5 },
           borderBottom: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.1 : 0.08)}`,
-          mb: { xs: 2.5, md: 4 }
+          mb: isHeaderCollapsed ? { xs: 1, md: 1.5 } : { xs: 2, md: 3 },
+          transition: 'all 0.3s ease'
         }}
       >
         <Container maxWidth='lg'>
@@ -531,23 +542,82 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
               px: { xs: 1.5, sm: 2, md: 0 }
             }}
           >
-            {/* Back Button */}
-            <Button
-              startIcon={<ArrowBackIcon />}
-              onClick={() => router.push('/publicquiz/view')}
-              variant='outlined'
-              sx={{
-                mb: 2,
-                textTransform: 'none',
-                fontWeight: 600,
-                fontSize: { xs: '0.875rem', sm: '0.9375rem' }
-              }}
-            >
-              Back to Quizzes
-            </Button>
+            {/* Collapsed Header - Only Timer */}
+            {isHeaderCollapsed ? (
+              <Stack direction='row' alignItems='center' justifyContent='space-between' spacing={1}>
+                {startQuiz && questions.length > 0 ? (
+                  <Timer
+                    time={time}
+                    setTime={setTime}
+                    isActive={isTimerActive}
+                    compact={true}
+                    sx={{
+                      flex: 1,
+                      minWidth: 0
+                    }}
+                  />
+                ) : (
+                  <Box
+                    sx={{
+                      flex: 1,
+                      py: { xs: 0.8, md: 1 },
+                      px: { xs: 1.2, md: 1.5 },
+                      color: alpha(theme.palette.text.primary, 0.68),
+                      borderRadius: 1.5,
+                      border: `1px dashed ${alpha(theme.palette.primary.main, isDarkMode ? 0.3 : 0.2)}`,
+                      bgcolor: isDarkMode ? alpha(theme.palette.background.default, 0.5) : 'transparent',
+                      textAlign: 'center'
+                    }}
+                  >
+                    <Typography variant='caption' fontWeight={600}>
+                      Timer will appear when quiz starts
+                    </Typography>
+                  </Box>
+                )}
+                <IconButton
+                  onClick={() => setIsHeaderCollapsed(false)}
+                  size='small'
+                  sx={{
+                    color: 'text.secondary',
+                    '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.1) }
+                  }}
+                >
+                  <ExpandMoreIcon />
+                </IconButton>
+              </Stack>
+            ) : (
+              <>
+                {/* Back Button and Expand/Collapse */}
+                <Stack direction='row' alignItems='center' justifyContent='space-between' mb={1.5}>
+                  <Button
+                    startIcon={<ArrowBackIcon />}
+                    onClick={() => router.push('/publicquiz/view')}
+                    variant='outlined'
+                    size={isMobile ? 'small' : 'medium'}
+                    sx={{
+                      textTransform: 'none',
+                      fontWeight: 600,
+                      fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                      py: { xs: 0.5, sm: 0.75 },
+                      px: { xs: 1, sm: 1.5 }
+                    }}
+                  >
+                    Back to Quizzes
+                  </Button>
+                  <IconButton
+                    onClick={() => setIsHeaderCollapsed(true)}
+                    size='small'
+                    sx={{
+                      color: 'text.secondary',
+                      '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.1) }
+                    }}
+                  >
+                    <ExpandLessIcon />
+                  </IconButton>
+                </Stack>
             {isCompactHeader ? (
-              <Stack spacing={1.6}>
-                <Stack direction='row' alignItems='center' spacing={1.4}>
+              <Stack spacing={1.2}>
+                <Stack direction='row' alignItems='center' spacing={1}>
                   <Box
                     component='img'
                     src={quizImage}
@@ -556,36 +626,41 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
                       e.currentTarget.src = 'https://fakeimg.pl/200x200/?text=Quiz'
                     }}
                     sx={{
-                      width: 76,
-                      height: 76,
-                      borderRadius: 2.5,
+                      width: { xs: 56, sm: 64 },
+                      height: { xs: 56, sm: 64 },
+                      borderRadius: 2,
                       objectFit: 'cover',
                       border: `1px solid ${alpha(theme.palette.primary.main, 0.18)}`,
-                      boxShadow: '0 8px 18px rgba(15, 23, 42, 0.12)'
+                      boxShadow: '0 4px 12px rgba(15, 23, 42, 0.1)',
+                      flexShrink: 0
                     }}
                   />
 
-                  <Stack spacing={0.6} flex={1} minWidth={0} sx={{ px: 0.5 }}>
+                  <Stack spacing={0.4} flex={1} minWidth={0} sx={{ px: 0.5 }}>
                     <Typography
-                      variant='h5'
+                      variant='h6'
                       fontWeight={800}
                       sx={{
-                        fontSize: '1.35rem',
-                        lineHeight: 1.15,
+                        fontSize: { xs: '1.1rem', sm: '1.25rem' },
+                        lineHeight: 1.2,
                         background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                         WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent'
+                        WebkitTextFillColor: 'transparent',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 1,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden'
                       }}
                     >
                       {quiz.title}
                     </Typography>
                     <Typography
-                      variant='body2'
+                      variant='caption'
                       color='text.secondary'
                       sx={{
-                        fontSize: '0.88rem',
+                        fontSize: { xs: '0.75rem', sm: '0.8rem' },
                         display: '-webkit-box',
-                        WebkitLineClamp: 2,
+                        WebkitLineClamp: 1,
                         WebkitBoxOrient: 'vertical',
                         overflow: 'hidden'
                       }}
@@ -603,35 +678,35 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
                     sx={{
                       width: '100%',
                       minWidth: 'auto',
-                      px: 1.8,
-                      py: 1.4
+                      px: { xs: 1.2, sm: 1.5 },
+                      py: { xs: 1, sm: 1.2 }
                     }}
                   />
                 ) : (
                   <Stack
-                    spacing={0.6}
+                    spacing={0.4}
                     alignItems='center'
                     justifyContent='center'
                     textAlign='center'
                     sx={{
                       width: '100%',
-                      py: 1.6,
+                      py: { xs: 1, sm: 1.2 },
                       color: alpha(theme.palette.text.primary, 0.68),
-                      borderRadius: { xs: 2, sm: 2.5 },
+                      borderRadius: 2,
                       border: `1px dashed ${alpha(theme.palette.primary.main, isDarkMode ? 0.3 : 0.2)}`,
                       bgcolor: isDarkMode ? alpha(theme.palette.background.default, 0.5) : 'transparent'
                     }}
                   >
-                    <Typography variant='caption' fontWeight={700}>
+                    <Typography variant='caption' fontWeight={600} sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>
                       Timer will appear here.
                     </Typography>
-                    <Typography variant='caption'>
+                    <Typography variant='caption' sx={{ fontSize: { xs: '0.65rem', sm: '0.7rem' } }}>
                       Hit <strong>Start Quiz</strong> to begin tracking your time.
                     </Typography>
                   </Stack>
                 )}
 
-                <Stack direction='row' spacing={0.8} flexWrap='wrap'>
+                <Stack direction='row' spacing={0.6} flexWrap='wrap'>
                   {selectedLanguage && (
                     <Chip
                       label={selectedLanguageInfo?.name}
@@ -639,7 +714,9 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
                       sx={{
                         bgcolor: alpha(theme.palette.info.main, 0.14),
                         color: theme.palette.info.main,
-                        fontWeight: 600
+                        fontWeight: 600,
+                        height: { xs: 20, sm: 24 },
+                        fontSize: { xs: '0.7rem', sm: '0.75rem' }
                       }}
                     />
                   )}
@@ -650,7 +727,9 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
                       sx={{
                         bgcolor: alpha(theme.palette.success.main, 0.14),
                         color: theme.palette.success.main,
-                        fontWeight: 600
+                        fontWeight: 600,
+                        height: { xs: 20, sm: 24 },
+                        fontSize: { xs: '0.7rem', sm: '0.75rem' }
                       }}
                     />
                   )}
@@ -659,13 +738,13 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
             ) : (
               <Stack
                 direction={{ xs: 'column', md: 'row' }}
-                spacing={{ xs: 2.4, md: 4 }}
+                spacing={{ xs: 1.5, md: 2.5 }}
                 alignItems={{ xs: 'center', md: 'stretch' }}
                 justifyContent='space-between'
               >
                 <Stack
                   direction={{ xs: 'column', md: 'row' }}
-                  spacing={{ xs: 1.6, md: 3 }}
+                  spacing={{ xs: 1.2, md: 2 }}
                   alignItems='center'
                   flex={1}
                 >
@@ -677,64 +756,83 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
                       e.currentTarget.src = 'https://fakeimg.pl/200x200/?text=Quiz'
                     }}
                     sx={{
-                      width: { xs: 84, sm: 96, md: 120 },
-                      height: { xs: 84, sm: 96, md: 120 },
-                      borderRadius: { xs: 2.5, md: 3 },
+                      width: { xs: 64, sm: 80, md: 100 },
+                      height: { xs: 64, sm: 80, md: 100 },
+                      borderRadius: { xs: 2, md: 2.5 },
                       objectFit: 'cover',
                       border: `1px solid ${alpha(theme.palette.primary.main, 0.18)}`,
-                      boxShadow: '0 10px 22px rgba(15, 23, 42, 0.14)'
+                      boxShadow: '0 6px 16px rgba(15, 23, 42, 0.12)',
+                      flexShrink: 0
                     }}
                   />
 
                   <Stack
-                    spacing={{ xs: 1.1, md: 1.5 }}
+                    spacing={{ xs: 0.8, md: 1 }}
                     alignItems={{ xs: 'center', md: 'flex-start' }}
                     textAlign={{ xs: 'center', md: 'left' }}
                     flex={1}
                     justifyContent='center'
+                    minWidth={0}
                   >
                     <Typography
-                      variant='h4'
+                      variant='h5'
                       fontWeight={800}
                       sx={{
-                        fontSize: { xs: '1.55rem', sm: '1.75rem', md: '2.25rem' },
+                        fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.875rem' },
                         background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                         WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent'
+                        WebkitTextFillColor: 'transparent',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden'
                       }}
                     >
                       {quiz.title}
                     </Typography>
                     <Typography
-                      variant='body1'
+                      variant='body2'
                       color='text.secondary'
-                      sx={{ maxWidth: 520, fontSize: { xs: '0.9rem', md: '1rem' } }}
+                      sx={{
+                        maxWidth: 520,
+                        fontSize: { xs: '0.8rem', sm: '0.875rem', md: '0.9375rem' },
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden'
+                      }}
                     >
                       {quiz.details || 'Select a language to start playing this quiz.'}
                     </Typography>
                     <Stack
                       direction='row'
-                      spacing={1}
+                      spacing={0.75}
                       flexWrap='wrap'
                       justifyContent={{ xs: 'center', md: 'flex-start' }}
                     >
                       {selectedLanguage && (
                         <Chip
                           label={selectedLanguageInfo?.name}
+                          size='small'
                           sx={{
                             bgcolor: alpha(theme.palette.info.main, 0.12),
                             color: theme.palette.info.main,
-                            fontWeight: 600
+                            fontWeight: 600,
+                            fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                            height: { xs: 22, sm: 24 }
                           }}
                         />
                       )}
                       {selectedLanguage && (
                         <Chip
                           label={`${currentQuestionCount} Questions`}
+                          size='small'
                           sx={{
                             bgcolor: alpha(theme.palette.success.main, 0.12),
                             color: theme.palette.success.main,
-                            fontWeight: 600
+                            fontWeight: 600,
+                            fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                            height: { xs: 22, sm: 24 }
                           }}
                         />
                       )}
@@ -749,43 +847,45 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
                     isActive={isTimerActive}
                     sx={{
                       alignSelf: { xs: 'stretch', md: 'center' },
-                      width: { xs: '100%', sm: 260, md: 280 },
-                      maxWidth: { xs: '100%', md: 320 },
-                      mt: { xs: 1.5, md: 0 }
+                      width: { xs: '100%', sm: 240, md: 260 },
+                      maxWidth: { xs: '100%', md: 300 },
+                      mt: { xs: 1, md: 0 }
                     }}
                   />
                 ) : (
                   <Stack
-                    spacing={0.6}
+                    spacing={0.5}
                     alignItems='center'
                     justifyContent='center'
                     textAlign='center'
                     sx={{
-                      width: { xs: '100%', sm: 260, md: 280 },
-                      maxWidth: { xs: '100%', md: 320 },
-                      minHeight: { xs: 96, md: 120 },
+                      width: { xs: '100%', sm: 240, md: 260 },
+                      maxWidth: { xs: '100%', md: 300 },
+                      minHeight: { xs: 80, md: 100 },
                       color: alpha(theme.palette.text.primary, 0.68),
                       borderRadius: { xs: 2, sm: 2.5 },
                       border: `1px dashed ${alpha(theme.palette.primary.main, isDarkMode ? 0.3 : 0.2)}`,
                       bgcolor: isDarkMode ? alpha(theme.palette.background.default, 0.5) : 'transparent',
-                      px: { xs: 2, sm: 3 }
+                      px: { xs: 1.5, sm: 2 }
                     }}
                   >
-                    <Typography variant='subtitle2' fontWeight={700}>
+                    <Typography variant='caption' fontWeight={700} sx={{ fontSize: { xs: '0.75rem', sm: '0.8rem' } }}>
                       Get ready to track your time.
                     </Typography>
-                    <Typography variant='body2' color='text.secondary'>
+                    <Typography variant='caption' color='text.secondary' sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>
                       Press <strong>Start Quiz</strong> and the timer begins automatically.
                     </Typography>
                   </Stack>
                 )}
               </Stack>
             )}
+          </>
+        )}
           </Box>
         </Container>
       </Box>
 
-      <Container maxWidth='lg' sx={{ px: { xs: 1.5, md: 0 } }}>
+      <Container maxWidth='lg' sx={{ px: { xs: 1.5, md: 0 }, flex: 1, overflow: 'auto' }}>
         <Box sx={{ maxWidth: 1080, mx: 'auto', px: { xs: 0, md: 1 } }}>{renderBody()}</Box>
       </Container>
     </Box>

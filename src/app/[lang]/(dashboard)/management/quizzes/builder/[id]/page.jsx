@@ -14,7 +14,8 @@ export default async function SelectedQuizPage({ params }) {
 
   if (!isValidObjectId(id)) {
     return (
-      <CenterBox>
+      <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <CenterBox>
         <Alert
           sx={{ padding: '0.5rem' }}
           severity=''
@@ -25,6 +26,7 @@ export default async function SelectedQuizPage({ params }) {
           Please check and try again.
         </Alert>
       </CenterBox>
+      </Box>
     )
   }
 
@@ -44,7 +46,8 @@ export default async function SelectedQuizPage({ params }) {
 
   if(!quiz){
     return (
-      <CenterBox>
+      <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <CenterBox>
         <Alert
           sx={{ padding: '0.5rem' }}
           severity=''
@@ -55,6 +58,7 @@ export default async function SelectedQuizPage({ params }) {
           Please check and try again.
         </Alert>
       </CenterBox>
+      </Box>
     )
   }
 

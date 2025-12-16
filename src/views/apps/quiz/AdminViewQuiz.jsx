@@ -64,7 +64,8 @@ const AdminViewQuiz = ({ quizId }) => {
   const [loading, setLoading] = useState({ quizzes: false, secondaryQuestions: false })
   const [selectedPrimaryQuestionId, setSelectedPrimaryQuestionId] = useState(null)
   const [confirmationDialogOpen, setConfirmationDialogOpen] = useState({ pending: false, reject: false })
-  const [isQuizInfoExpanded, setIsQuizInfoExpanded] = useState(true)
+  const [isQuizInfoExpanded, setIsQuizInfoExpanded] = useState(false)
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false)
 
   useEffect(() => {
     const fetchQuizData = async () => {
@@ -182,7 +183,7 @@ const AdminViewQuiz = ({ quizId }) => {
 
   if (loading.quizzes) {
     return (
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100%' }}>
         <Stack spacing={2} alignItems='center'>
           <CircularProgress size={48} />
           <Typography variant='body1' color='text.secondary' fontWeight={500}>
@@ -195,7 +196,7 @@ const AdminViewQuiz = ({ quizId }) => {
 
   if (!quizData) {
     return (
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100%' }}>
         <Alert severity='error'>Quiz not found.</Alert>
       </Box>
     )
@@ -216,96 +217,124 @@ const AdminViewQuiz = ({ quizId }) => {
   const statusConfig = getStatusConfig()
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: theme.palette.background.default, pb: 6 }}>
+    <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', bgcolor: theme.palette.background.default }}>
       {/* Header Section */}
       <Box
         sx={{
           bgcolor: theme.palette.background.paper,
-          pt: { xs: 3, md: 4 },
-          pb: { xs: 3, md: 4 },
+          pt: isHeaderCollapsed ? { xs: 1, sm: 1.25 } : { xs: 1.5, sm: 2 },
+          pb: isHeaderCollapsed ? { xs: 1, sm: 1.25 } : { xs: 1.5, sm: 2 },
           borderBottom: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
-          mb: 4
+          mb: isHeaderCollapsed ? 1 : 2,
+          transition: 'all 0.3s ease',
+          flexShrink: 0
         }}
       >
         <Container maxWidth='xl'>
-          <Stack spacing={3}>
-            {/* Back Button */}
-            <Button
-              startIcon={<ArrowBackIcon />}
-              onClick={() => router.push('/management/user-quizzes/list')}
-              sx={{
-                alignSelf: 'flex-start',
-                px: 0,
-                color: 'text.secondary',
-                textTransform: 'none',
-                fontWeight: 600,
-                '&:hover': {
-                  bgcolor: 'transparent',
-                  color: 'primary.main'
-                }
-              }}
-            >
-              Back to Quiz List
-            </Button>
-
-            {/* Title Section */}
-            <Stack direction='row' alignItems='center' spacing={2} flexWrap='wrap'>
-              <Stack direction='row' alignItems='center' spacing={1.5} sx={{ flex: 1 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 1.5,
-                    bgcolor: theme.palette.primary.main,
-                    color: 'white',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <VisibilityIcon sx={{ fontSize: 22 }} />
-                </Box>
-                <Typography
-                  variant='h4'
-                  fontWeight={800}
-                  sx={{
-                    fontSize: { xs: '1.5rem', md: '2rem' },
-                    background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent'
-                  }}
-                >
-                  Review Quiz
-                </Typography>
-              </Stack>
-
-              {/* Status Chip */}
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+            <Stack direction='row' alignItems='center' spacing={1.5} sx={{ flex: 1, minWidth: 0 }}>
+              <Button
+                startIcon={<ArrowBackIcon />}
+                onClick={() => router.push('/management/user-quizzes/list')}
+                size='small'
+                sx={{
+                  px: 0,
+                  minWidth: 'auto',
+                  color: 'text.secondary',
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  fontSize: { xs: '0.75rem', sm: '0.8125rem' },
+                  '&:hover': {
+                    bgcolor: 'transparent',
+                    color: 'primary.main'
+                  }
+                }}
+              >
+                Back
+              </Button>
+              <Box
+                sx={{
+                  width: { xs: 28, sm: 32 },
+                  height: { xs: 28, sm: 32 },
+                  borderRadius: 1.5,
+                  bgcolor: theme.palette.primary.main,
+                  color: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}
+              >
+                <VisibilityIcon sx={{ fontSize: { xs: 16, sm: 18 } }} />
+              </Box>
+              <Typography
+                variant='h6'
+                fontWeight={700}
+                sx={{
+                  fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' },
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  minWidth: 0,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                Review Quiz
+              </Typography>
               <Chip
                 icon={statusConfig.icon}
                 label={statusConfig.label}
                 color={statusConfig.color}
+                size='small'
                 sx={{
                   fontWeight: 700,
-                  fontSize: '0.8rem',
-                  height: 32,
+                  fontSize: { xs: '0.6875rem', sm: '0.75rem' },
+                  height: { xs: 24, sm: 26 },
+                  flexShrink: 0,
                   '& .MuiChip-icon': {
+                    fontSize: { xs: '0.875rem', sm: '1rem' },
                     color: 'inherit'
                   }
                 }}
               />
             </Stack>
-
-            {/* Description */}
-            <Typography variant='body1' sx={{ color: theme.palette.text.secondary }}>
+            <IconButton
+              onClick={() => setIsHeaderCollapsed(!isHeaderCollapsed)}
+              size='small'
+              sx={{
+                color: 'text.secondary',
+                flexShrink: 0,
+                '&:hover': {
+                  bgcolor: alpha(theme.palette.primary.main, 0.1),
+                  color: 'text.primary'
+                }
+              }}
+            >
+              {isHeaderCollapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}
+            </IconButton>
+          </Box>
+          {!isHeaderCollapsed && (
+            <Typography
+              variant='body2'
+              sx={{
+                color: theme.palette.text.secondary,
+                fontSize: { xs: '0.75rem', sm: '0.8125rem' },
+                mt: 1,
+                ml: { xs: 0, sm: 5.5 }
+              }}
+            >
               Review quiz details, questions, and manage approval status
             </Typography>
-          </Stack>
+          )}
         </Container>
       </Box>
 
       {/* Main Content */}
-      <Container maxWidth='xl'>
-        <Stack spacing={4}>
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', px: { xs: 2, md: 3 } }}>
+        <Stack spacing={4} sx={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           {/* Quiz Details Card */}
           <Card
             sx={{
@@ -313,7 +342,8 @@ const AdminViewQuiz = ({ quizId }) => {
               bgcolor: theme.palette.background.paper,
               border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
               boxShadow: theme.palette.mode === 'dark' ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.04)',
-              overflow: 'hidden'
+              overflow: 'hidden',
+              flexShrink: 0
             }}
           >
             <Box
@@ -542,124 +572,138 @@ const AdminViewQuiz = ({ quizId }) => {
           </Card>
 
           {/* Questions Section */}
-          <Grid container spacing={3}>
-            {/* Primary Questions Sidebar */}
-            <Grid item xs={12} md={3}>
-              <Card
-                sx={{
-                  borderRadius: 2,
-                  bgcolor: theme.palette.background.paper,
-                  border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
-                  boxShadow:
-                    theme.palette.mode === 'dark' ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.04)',
-                  position: { md: 'sticky' },
-                  top: 20
-                }}
-              >
-                <Box
+          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+            <Grid container spacing={3} sx={{ flex: 1, minHeight: 0, display: 'flex' }}>
+              {/* Primary Questions Sidebar */}
+              <Grid item xs={12} md={3} sx={{ display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%' }}>
+                <Card
                   sx={{
-                    p: 2,
-                    bgcolor: alpha(theme.palette.primary.main, 0.08),
-                    borderBottom: '2px solid',
-                    borderColor: 'primary.main'
+                    borderRadius: 2,
+                    bgcolor: theme.palette.background.paper,
+                    border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
+                    boxShadow:
+                      theme.palette.mode === 'dark' ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.04)',
+                    position: { md: 'sticky' },
+                    top: 20,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: '100%',
+                    minHeight: 0,
+                    overflow: 'hidden'
                   }}
                 >
-                  <Stack direction='row' alignItems='center' spacing={1.5}>
-                    <Box
-                      sx={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: 1.5,
-                        bgcolor: 'primary.main',
-                        color: 'white',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
-                    >
-                      <QuestionMarkIcon sx={{ fontSize: 20 }} />
-                    </Box>
-                    <Stack>
-                      <Typography variant='caption' sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
-                        PRIMARY QUESTIONS
-                      </Typography>
-                      <Typography variant='body2' fontWeight={600}>
-                        {quizData.language?.name || 'N/A'}
-                      </Typography>
-                    </Stack>
-                  </Stack>
-                </Box>
-
-                <Box
-                  sx={{
-                    overflowY: { md: 'auto', xs: 'visible' },
-                    overflowX: { md: 'visible', xs: 'auto' },
-                    whiteSpace: { md: 'normal', xs: 'nowrap' },
-                    maxHeight: { md: '60vh', xs: 'auto' },
-                    p: 1.5
-                  }}
-                >
-                  {primaryQuestions.length > 0 ? (
-                    primaryQuestions.map((question, index) => (
-                      <Card
-                        key={question._id}
-                        onClick={() => handlePrimaryQuestionClick(question._id)}
+                  <Box
+                    sx={{
+                      p: 2,
+                      bgcolor: alpha(theme.palette.primary.main, 0.08),
+                      borderBottom: '2px solid',
+                      borderColor: 'primary.main',
+                      flexShrink: 0
+                    }}
+                  >
+                    <Stack direction='row' alignItems='center' spacing={1.5}>
+                      <Box
                         sx={{
-                          mb: 1.5,
-                          width: { md: '100%', xs: 200 },
-                          display: { md: 'block', xs: 'inline-block' },
-                          mr: { xs: 1.5, md: 0 },
-                          cursor: 'pointer',
-                          border: '2px solid',
-                          borderColor: selectedPrimaryQuestionId === question._id ? 'primary.main' : 'divider',
-                          bgcolor:
-                            selectedPrimaryQuestionId === question._id
-                              ? alpha(theme.palette.primary.main, 0.05)
-                              : theme.palette.background.paper,
-                          boxShadow:
-                            selectedPrimaryQuestionId === question._id
-                              ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.15)}`
-                              : theme.palette.mode === 'dark'
-                                ? '0 2px 8px rgba(0,0,0,0.3)'
-                                : '0 2px 8px rgba(0,0,0,0.04)',
-                          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                          '&:hover': {
-                            borderColor: 'primary.main',
-                            boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.15)}`,
-                            transform: 'translateX(4px)'
-                          }
+                          width: 36,
+                          height: 36,
+                          borderRadius: 1.5,
+                          bgcolor: 'primary.main',
+                          color: 'white',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
                         }}
                       >
-                        {(() => {
-                          switch (question.templateId) {
-                            case 'single-choice':
-                              return <DummySingleChoiceTemplate question={question} />
-                            case 'multiple-choice':
-                              return <DummyMultipleChoiceTemplate question={question} />
-                            case 'true-or-false':
-                              return <DummyTrueOrFalseTemplate question={question} />
-                            case 'fill-in-blank':
-                              return <DummyFillInTheBlanksTemplate question={question} />
-                            default:
-                              return <Typography>No Template Found</Typography>
-                          }
-                        })()}
-                      </Card>
-                    ))
-                  ) : (
-                    <Box sx={{ p: 3, textAlign: 'center' }}>
-                      <Typography variant='body2' color='text.secondary'>
-                        No questions available
-                      </Typography>
-                    </Box>
-                  )}
-                </Box>
-              </Card>
-            </Grid>
+                        <QuestionMarkIcon sx={{ fontSize: 20 }} />
+                      </Box>
+                      <Stack>
+                        <Typography variant='caption' sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+                          PRIMARY QUESTIONS
+                        </Typography>
+                        <Typography variant='body2' fontWeight={600}>
+                          {quizData.language?.name || 'N/A'}
+                        </Typography>
+                      </Stack>
+                    </Stack>
+                  </Box>
 
-            {/* Main Content Area */}
-            <Grid item xs={12} md={9}>
-              <Stack spacing={3}>
+                  <Box
+                    sx={{
+                      whiteSpace: { md: 'normal', xs: 'nowrap' },
+                      p: 1.5,
+                      flex: 1,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      minHeight: 0,
+                      overflow: 'hidden'
+                    }}
+                  >
+                    <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', minHeight: 0 }}>
+                      {primaryQuestions.length > 0 ? (
+                        primaryQuestions.map((question, index) => (
+                          <Card
+                            key={question._id}
+                            onClick={() => handlePrimaryQuestionClick(question._id)}
+                            sx={{
+                              mb: 1.5,
+                              width: { md: '100%', xs: 200 },
+                              display: { md: 'block', xs: 'inline-block' },
+                              mr: { xs: 1.5, md: 0 },
+                              cursor: 'pointer',
+                              border: '2px solid',
+                              borderColor: selectedPrimaryQuestionId === question._id ? 'primary.main' : 'divider',
+                              bgcolor:
+                                selectedPrimaryQuestionId === question._id
+                                  ? alpha(theme.palette.primary.main, 0.05)
+                                  : theme.palette.background.paper,
+                              boxShadow:
+                                selectedPrimaryQuestionId === question._id
+                                  ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.15)}`
+                                  : theme.palette.mode === 'dark'
+                                    ? '0 2px 8px rgba(0,0,0,0.3)'
+                                    : '0 2px 8px rgba(0,0,0,0.04)',
+                              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                              flexShrink: 0,
+                              '&:hover': {
+                                borderColor: 'primary.main',
+                                boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.15)}`,
+                                transform: 'translateX(4px)'
+                              }
+                            }}
+                          >
+                            {(() => {
+                              switch (question.templateId) {
+                                case 'single-choice':
+                                  return <DummySingleChoiceTemplate question={question} />
+                                case 'multiple-choice':
+                                  return <DummyMultipleChoiceTemplate question={question} />
+                                case 'true-or-false':
+                                  return <DummyTrueOrFalseTemplate question={question} />
+                                case 'fill-in-blank':
+                                  return <DummyFillInTheBlanksTemplate question={question} />
+                                default:
+                                  return <Typography>No Template Found</Typography>
+                              }
+                            })()}
+                          </Card>
+                        ))
+                      ) : (
+                        <Box sx={{ p: 3, textAlign: 'center' }}>
+                          <Typography variant='body2' color='text.secondary'>
+                            No questions available
+                          </Typography>
+                        </Box>
+                      )}
+                    </Box>
+                  </Box>
+                </Card>
+              </Grid>
+
+              {/* Main Content Area */}
+              <Grid item xs={12} md={9} sx={{ display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%', flex: 1 }}>
+                <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', height: '100%' }}>
+                  <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', minHeight: 0, WebkitOverflowScrolling: 'touch', pr: 1 }}>
+                    <Stack spacing={3}>
                 {/* Selected Primary Question */}
                 {selectedPrimaryQuestionId && (
                   <Card
@@ -668,7 +712,8 @@ const AdminViewQuiz = ({ quizId }) => {
                       bgcolor: theme.palette.background.paper,
                       border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
                       boxShadow:
-                        theme.palette.mode === 'dark' ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.04)'
+                        theme.palette.mode === 'dark' ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.04)',
+                      flexShrink: 0
                     }}
                   >
                     <Box
@@ -739,7 +784,12 @@ const AdminViewQuiz = ({ quizId }) => {
                     bgcolor: theme.palette.background.paper,
                     border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
                     boxShadow:
-                      theme.palette.mode === 'dark' ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.04)'
+                      theme.palette.mode === 'dark' ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.04)',
+                    flexShrink: 0,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    minHeight: 0,
+                    overflow: 'hidden'
                   }}
                 >
                   <Box
@@ -774,7 +824,7 @@ const AdminViewQuiz = ({ quizId }) => {
                     </Stack>
                   </Box>
 
-                  <Box sx={{ p: 2, maxHeight: '60vh', overflowY: 'auto', pr: 1 }}>
+                  <Box sx={{ p: 2, flex: 1, overflowY: 'auto', overflowX: 'hidden', minHeight: 0 }}>
                     {loading.secondaryQuestions ? (
                       <Box sx={{ display: 'flex', justifyContent: 'center', p: 6 }}>
                         <CircularProgress />
@@ -793,7 +843,8 @@ const AdminViewQuiz = ({ quizId }) => {
                               boxShadow:
                                 theme.palette.mode === 'dark'
                                   ? '0 2px 8px rgba(0,0,0,0.3)'
-                                  : '0 2px 8px rgba(0,0,0,0.06)'
+                                  : '0 2px 8px rgba(0,0,0,0.06)',
+                              flexShrink: 0
                             }}
                           >
                             <Box
@@ -861,9 +912,12 @@ const AdminViewQuiz = ({ quizId }) => {
                     )}
                   </Box>
                 </Card>
-              </Stack>
+                    </Stack>
+                  </Box>
+                </Box>
+              </Grid>
             </Grid>
-          </Grid>
+          </Box>
 
           {/* Action Buttons */}
           <Card
@@ -872,33 +926,22 @@ const AdminViewQuiz = ({ quizId }) => {
               bgcolor: theme.palette.background.paper,
               border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
               boxShadow: theme.palette.mode === 'dark' ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.04)',
-              overflow: 'hidden'
+              overflow: 'hidden',
+              flexShrink: 0
             }}
           >
-            <Box
-              sx={{
-                p: 2,
-                bgcolor: alpha(theme.palette.info.main, 0.05),
-                borderBottom: '1px solid',
-                borderColor: 'divider'
-              }}
-            >
-              <Typography variant='h6' fontWeight={700}>
-                Quiz Actions
-              </Typography>
-            </Box>
-            <CardContent>
+            <Box sx={{ p: { xs: 1.5, sm: 2 } }}>
               <Stack direction='row' spacing={2} justifyContent='center' flexWrap='wrap'>
                 {quizData.approvalState !== 'approved' && quizData.approvalState !== 'published' && (
                   <Button
                     variant='contained'
                     color='success'
                     component='label'
-                    size='large'
+                    size='medium'
                     startIcon={<CheckCircleIcon />}
                     onClick={() => handleApproveQuiz()}
                     sx={{
-                      px: 4,
+                      px: 3,
                       color: 'white',
                       textTransform: 'none',
                       fontWeight: 600
@@ -912,11 +955,11 @@ const AdminViewQuiz = ({ quizId }) => {
                     variant='contained'
                     color='warning'
                     component='label'
-                    size='large'
+                    size='medium'
                     startIcon={<PendingIcon />}
                     onClick={() => handleMoveToPendingConfirmation()}
                     sx={{
-                      px: 4,
+                      px: 3,
                       color: 'white',
                       textTransform: 'none',
                       fontWeight: 600
@@ -930,11 +973,11 @@ const AdminViewQuiz = ({ quizId }) => {
                     variant='contained'
                     color='error'
                     component='label'
-                    size='large'
+                    size='medium'
                     startIcon={<CancelIcon />}
                     onClick={() => handleRejectQuizConfirmation()}
                     sx={{
-                      px: 4,
+                      px: 3,
                       color: 'white',
                       textTransform: 'none',
                       fontWeight: 600
@@ -944,10 +987,10 @@ const AdminViewQuiz = ({ quizId }) => {
                   </Button>
                 )}
               </Stack>
-            </CardContent>
+            </Box>
           </Card>
         </Stack>
-      </Container>
+      </Box>
 
       {/* Confirmation Dialog */}
       <ConfirmationDialog

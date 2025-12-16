@@ -216,19 +216,18 @@ const GamePinInputFormPage = () => {
     <Box
       component='main'
       sx={{
-        minHeight: { xs: '100dvh', sm: '100vh' },
+        flex: 1,
         display: 'flex',
+        height: '100%',
         alignItems: 'center',
         justifyContent: 'center',
         position: 'relative',
-        overflow: 'hidden',
         width: '100%',
         px: { xs: 1.5, sm: 2, md: 3, lg: 4 },
         py: { xs: 5, sm: 6, md: 7, lg: 8 },
         background: isDarkMode
           ? `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`
           : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        overflowX: 'hidden'
       }}
     >
       <Box

@@ -78,166 +78,172 @@ export default function GameDetailsPage({ game: initialGame = null, gameId }) {
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: theme.palette.background.default }}>
-      {/* Gradient Header Banner */}
-      <Box
-        sx={{
-          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-          pt: { xs: 3, sm: 4 },
-          pb: { xs: 4, sm: 6 },
-          mb: { xs: -3, sm: -4 },
-          position: 'relative',
-          overflow: 'hidden',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background:
-              'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
-            opacity: 0.4
-          }
-        }}
-      />
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', bgcolor: theme.palette.background.default }}>
+      <Box sx={{flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'auto'}}>
+        {/* Gradient Header Banner */}
+        <Box
+          sx={{
+            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+            pt: { xs: 3, sm: 4 },
+            pb: { xs: 4, sm: 6 },
+            mb: { xs: -3, sm: -4 },
+            position: 'relative',
+            overflow: 'hidden',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background:
+                'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+              opacity: 0.4
+            }
+          }}
+        />
 
-      <Box
-        sx={{
-          px: { xs: 1, sm: 2, md: 3, lg: 4 },
-          pb: { xs: 2, sm: 3, md: 4 },
-          position: 'relative',
-          mt: { xs: -2, sm: -3 }
-        }}
-      >
-        {/* Game Header Section */}
-        <GameHeader game={game} />
+        <Box
+          sx={{
+            px: { xs: 1, sm: 2, md: 3, lg: 4 },
+            pb: { xs: 2, sm: 3, md: 4 },
+            position: 'relative',
+            mt: { xs: -2, sm: -3 },
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          {/* Game Header Section */}
+          <GameHeader game={game} />
 
-        {/* Group Information Section */}
-        <GameGroupInfo game={game} />
+          {/* Group Information Section */}
+          <GameGroupInfo game={game} />
 
-        {/* Promotional Video Section */}
-        {game.promotionalVideoUrl && (
-          <Card
-            sx={{
-              mb: 3,
-              borderRadius: '16px',
-              boxShadow:
-                theme.palette.mode === 'dark'
-                  ? `0 4px 20px ${alpha(theme.palette.common.black, 0.4)}`
-                  : '0 4px 20px rgba(0, 0, 0, 0.08)',
-              background: theme.palette.background.paper,
-              overflow: 'hidden'
-            }}
-          >
-            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-              <Typography
-                variant='h6'
-                sx={{
-                  mb: { xs: 2, sm: 3 },
-                  fontWeight: 700,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1,
-                  color: theme.palette.text.primary,
-                  fontSize: { xs: '1rem', sm: '1.25rem' }
-                }}
-              >
-                <Videocam sx={{ fontSize: { xs: 20, sm: 24 }, color: theme.palette.primary.main }} />
-                Promotional Video
-              </Typography>
-              <Box
-                sx={{
-                  position: 'relative',
-                  pt: '56.25%', // 16:9 aspect ratio
-                  borderRadius: { xs: '8px', sm: '12px' },
-                  overflow: 'hidden',
-                  boxShadow:
-                    theme.palette.mode === 'dark'
-                      ? `0 4px 12px ${alpha(theme.palette.common.black, 0.3)}`
-                      : '0 4px 12px rgba(0, 0, 0, 0.1)'
-                }}
-              >
-                <ReactPlayer
-                  url={game.promotionalVideoUrl}
-                  width='100%'
-                  height='100%'
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0
-                  }}
-                  controls
-                />
-              </Box>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Game Information Grid */}
-        <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mb: { xs: 2, sm: 3 } }}>
-          {/* Location Details */}
-          <GameLocationInfo game={game} />
-
-          {/* Game Statistics */}
-          <GameStatistics game={game} />
-        </Grid>
-
-        {/* Registration & Participation Section */}
-        <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mb: { xs: 2, sm: 3 } }}>
-          {/* Registered Players */}
-          <RegisteredPlayersTable
-            registeredUsers={game?.registeredUsers}
-            participatedUsers={game?.participatedUsers}
-            game={game}
-          />
-
-          {/* Participated Players */}
-          <ParticipatedPlayersTable game={game} participatedUsers={game?.participatedUsers} />
-        </Grid>
-
-        {/* Leaderboard Section */}
-        <AdminLeaderboard game={game} />
-
-        {/* Rewards Section */}
-        {game.rewards.length > 0 && (
-          <Card
-            sx={{
-              borderRadius: '16px',
-              boxShadow:
-                theme.palette.mode === 'dark'
-                  ? `0 4px 20px ${alpha(theme.palette.common.black, 0.4)}`
-                  : '0 4px 20px rgba(0, 0, 0, 0.08)',
-              background: theme.palette.background.paper,
-              overflow: 'hidden'
-            }}
-          >
-            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-              <Box
-                sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: { xs: 2, sm: 3 } }}
-              >
+          {/* Promotional Video Section */}
+          {game.promotionalVideoUrl && (
+            <Card
+              sx={{
+                mb: 3,
+                borderRadius: '16px',
+                boxShadow:
+                  theme.palette.mode === 'dark'
+                    ? `0 4px 20px ${alpha(theme.palette.common.black, 0.4)}`
+                    : '0 4px 20px rgba(0, 0, 0, 0.08)',
+                background: theme.palette.background.paper,
+                overflow: 'hidden'
+              }}
+            >
+              <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                 <Typography
-                  variant='h5'
+                  variant='h6'
                   sx={{
+                    mb: { xs: 2, sm: 3 },
                     fontWeight: 700,
                     display: 'flex',
                     alignItems: 'center',
                     gap: 1,
                     color: theme.palette.text.primary,
-                    fontSize: { xs: '1.1rem', sm: '1.5rem' }
+                    fontSize: { xs: '1rem', sm: '1.25rem' }
                   }}
                 >
-                  <EmojiEvents sx={{ fontSize: { xs: 20, sm: 24 }, color: theme.palette.primary.main }} />
-                  Rewards
+                  <Videocam sx={{ fontSize: { xs: 20, sm: 24 }, color: theme.palette.primary.main }} />
+                  Promotional Video
                 </Typography>
-              </Box>
+                <Box
+                  sx={{
+                    position: 'relative',
+                    pt: '56.25%', // 16:9 aspect ratio
+                    borderRadius: { xs: '8px', sm: '12px' },
+                    overflow: 'hidden',
+                    boxShadow:
+                      theme.palette.mode === 'dark'
+                        ? `0 4px 12px ${alpha(theme.palette.common.black, 0.3)}`
+                        : '0 4px 12px rgba(0, 0, 0, 0.1)'
+                  }}
+                >
+                  <ReactPlayer
+                    url={game.promotionalVideoUrl}
+                    width='100%'
+                    height='100%'
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0
+                    }}
+                    controls
+                  />
+                </Box>
+              </CardContent>
+            </Card>
+          )}
 
-              {/* Rewards List */}
-              <RewardsList rewards={game?.rewards} />
-            </CardContent>
-          </Card>
-        )}
+          {/* Game Information Grid */}
+          <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mb: { xs: 2, sm: 3 } }}>
+            {/* Location Details */}
+            <GameLocationInfo game={game} />
+
+            {/* Game Statistics */}
+            <GameStatistics game={game} />
+          </Grid>
+
+          {/* Registration & Participation Section */}
+          <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mb: { xs: 2, sm: 3 } }}>
+            {/* Registered Players */}
+            <RegisteredPlayersTable
+              registeredUsers={game?.registeredUsers}
+              participatedUsers={game?.participatedUsers}
+              game={game}
+            />
+
+            {/* Participated Players */}
+            <ParticipatedPlayersTable game={game} participatedUsers={game?.participatedUsers} />
+          </Grid>
+
+          {/* Leaderboard Section */}
+          <AdminLeaderboard game={game} />
+
+          {/* Rewards Section */}
+          {game.rewards.length > 0 && (
+            <Card
+              sx={{
+                borderRadius: '16px',
+                boxShadow:
+                  theme.palette.mode === 'dark'
+                    ? `0 4px 20px ${alpha(theme.palette.common.black, 0.4)}`
+                    : '0 4px 20px rgba(0, 0, 0, 0.08)',
+                background: theme.palette.background.paper,
+                overflow: 'hidden'
+              }}
+            >
+              <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+                <Box
+                  sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: { xs: 2, sm: 3 } }}
+                >
+                  <Typography
+                    variant='h5'
+                    sx={{
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      color: theme.palette.text.primary,
+                      fontSize: { xs: '1.1rem', sm: '1.5rem' }
+                    }}
+                  >
+                    <EmojiEvents sx={{ fontSize: { xs: 20, sm: 24 }, color: theme.palette.primary.main }} />
+                    Rewards
+                  </Typography>
+                </Box>
+
+                {/* Rewards List */}
+                <RewardsList rewards={game?.rewards} />
+              </CardContent>
+            </Card>
+          )}
+        </Box>
       </Box>
+      
     </Box>
   )
 }

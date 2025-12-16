@@ -216,13 +216,15 @@ function CreateGamePage({ isSuperUser = false }) {
   }
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
-      {creationMode === 'request_sponsorship' ? (
-        <GameRequestSponsorshipForm onSubmit={handleSubmit} quizzes={quizzes} onCancel={handleCancel} />
-      ) : (
-        <GameForm onSubmit={handleSubmit} quizzes={quizzes} onCancel={handleCancel} />
-      )}
-    </LocalizationProvider>
+      <Box sx={{flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden'}}>
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+            {creationMode === 'request_sponsorship' ? (
+              <GameRequestSponsorshipForm onSubmit={handleSubmit} quizzes={quizzes} onCancel={handleCancel} />
+            ) : (
+              <GameForm onSubmit={handleSubmit} quizzes={quizzes} onCancel={handleCancel} />
+            )}
+        </LocalizationProvider>
+      </Box>
   )
 }
 
