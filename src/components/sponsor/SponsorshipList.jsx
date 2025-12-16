@@ -122,25 +122,35 @@ const SponsorshipList = ({ tableData, sponsorType = 'all', filter }) => {
           ...columnHelper.accessor('games', {
             header: 'Sponsored Games',
             cell: ({ row }) => {
-              return <Typography variant='body1'>{row.original?.games?.join(', ') || <span style={{fontSize: '0.85rem', fontStyle: 'italic'}}>Any game</span>}</Typography>
+              return (
+                <Typography variant='body1'>
+                  {row.original?.games?.join(', ') || (
+                    <span style={{ fontSize: '0.85rem', fontStyle: 'italic' }}>Any game</span>
+                  )}
+                </Typography>
+              )
             }
           })
         },
         // (sponsorType === 'all' || sponsorType === 'quiz') && {
-          {
+        {
           id: 'quizzes',
           accessorFn: row => row.quizzes?.map(q => q.title).join(', ') || '',
           ...columnHelper.accessor('quizzes', {
             header: 'Sponsored Quizzes',
             cell: ({ row }) => {
               return (
-                <Typography variant='body1'>{row.original?.quizzes?.map(q => q.title).join(', ') || <span style={{fontSize: '0.85rem', fontStyle: 'italic'}}>Any quiz</span>}</Typography>
+                <Typography variant='body1'>
+                  {row.original?.quizzes?.map(q => q.title).join(', ') || (
+                    <span style={{ fontSize: '0.85rem', fontStyle: 'italic' }}>Any quiz</span>
+                  )}
+                </Typography>
               )
             }
           })
         },
         // (sponsorType === 'all' || sponsorType === 'area' || sponsorType === 'quiz') && {
-          {
+        {
           id: 'location',
           ...columnHelper.accessor('location', {
             header: 'Sponsored By Area',
@@ -155,7 +165,11 @@ const SponsorshipList = ({ tableData, sponsorType = 'all', filter }) => {
               if (row.original?.location?.city) {
                 area += `, ${row.original?.location?.city}`
               }
-              return <Typography variant='body1'>{area || <span style={{fontSize: '0.85rem', fontStyle: 'italic'}}>Any location</span>}</Typography>
+              return (
+                <Typography variant='body1'>
+                  {area || <span style={{ fontSize: '0.85rem', fontStyle: 'italic' }}>Any location</span>}
+                </Typography>
+              )
             }
           })
         },
@@ -185,23 +199,22 @@ const SponsorshipList = ({ tableData, sponsorType = 'all', filter }) => {
           ...columnHelper.accessor('rewardDetails', {
             header: 'Reward Details',
             cell: ({ row }) => {
-              const { rewardType, currency } = row.original;
-              
+              const { rewardType, currency } = row.original
+
               if (rewardType === 'cash') {
                 const formattedAmount = new Intl.NumberFormat(undefined, {
                   style: 'currency',
                   currency: currency || 'INR'
-                }).format(row.original?.sponsorshipAmount || 0);
-                return <Typography variant='body1'>{formattedAmount}</Typography>;
+                }).format(row.original?.sponsorshipAmount || 0)
+                return <Typography variant='body1'>{formattedAmount}</Typography>
               } else {
                 // For physical gifts
-                const formatCurrency = (value) => (
+                const formatCurrency = value =>
                   new Intl.NumberFormat(undefined, {
                     style: 'currency',
                     currency: currency || 'INR'
                   }).format(value || 0)
-                );
-        
+
                 return (
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                     <Typography variant='body1' noWrap>
@@ -214,7 +227,7 @@ const SponsorshipList = ({ tableData, sponsorType = 'all', filter }) => {
                       Total: {formatCurrency(row.original.rewardValue || 0)}
                     </Typography>
                   </Box>
-                );
+                )
               }
             }
           })
@@ -241,7 +254,11 @@ const SponsorshipList = ({ tableData, sponsorType = 'all', filter }) => {
 
             const SponsoredDetailsTooltipContent = () => {
               if (!sponsored || sponsored.length === 0) {
-                return <Typography variant='caption' sx={{ color: 'white' }}>Not used in any game yet.</Typography>
+                return (
+                  <Typography variant='caption' sx={{ color: 'white' }}>
+                    Not used in any game yet.
+                  </Typography>
+                )
               }
 
               return (
@@ -258,7 +275,14 @@ const SponsorshipList = ({ tableData, sponsorType = 'all', filter }) => {
                           <Typography
                             variant='body2'
                             component='div'
-                            sx={{ fontWeight: 'bold', color: 'white', display: 'flex', alignItems: 'center', gap: 0.5, cursor: s.game?._id ? 'pointer' : 'default' }}
+                            sx={{
+                              fontWeight: 'bold',
+                              color: 'white',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 0.5,
+                              cursor: s.game?._id ? 'pointer' : 'default'
+                            }}
                             onClick={() => {
                               if (s.game?._id) {
                                 router.push(`/public-games/${s.game._id}`)
@@ -266,13 +290,18 @@ const SponsorshipList = ({ tableData, sponsorType = 'all', filter }) => {
                             }}
                           >
                             Game: {s.game?.title || 'N/A'}
-                            {s.game?._id && <i className='ri-external-link-line' style={{ fontSize: '1em', marginLeft: 4 }} />}
+                            {s.game?._id && (
+                              <i className='ri-external-link-line' style={{ fontSize: '1em', marginLeft: 4 }} />
+                            )}
                           </Typography>
                           <Typography variant='caption' component='div' sx={{ color: 'white', ml: 1 }}>
                             Quiz: {s.game?.quiz?.title || 'N/A'}
                           </Typography>
                           <Typography variant='caption' component='div' sx={{ color: 'white', ml: 1 }}>
-                            Used: {rewardType === 'cash' ? formatCurrency(usedAmount, currency) : `${usedAmount} ${usedAmount === 1 ? 'item' : 'items'}`}
+                            Used:{' '}
+                            {rewardType === 'cash'
+                              ? formatCurrency(usedAmount, currency)
+                              : `${usedAmount} ${usedAmount === 1 ? 'item' : 'items'}`}
                           </Typography>
                         </div>
                         {index < sponsored.length - 1 && (
@@ -324,17 +353,24 @@ const SponsorshipList = ({ tableData, sponsorType = 'all', filter }) => {
           ...columnHelper.accessor('status', {
             header: 'Status',
             cell: ({ row }) => {
-              const { rewardType, sponsorshipStatus, nonCashSponsorshipStatus, nonCashSponsorshipRejectionReason, rejectorEmail } = row.original
+              const {
+                rewardType,
+                sponsorshipStatus,
+                nonCashSponsorshipStatus,
+                nonCashSponsorshipRejectionReason,
+                rejectorEmail
+              } = row.original
               const status = rewardType === 'cash' ? sponsorshipStatus : nonCashSponsorshipStatus
-              const statusColor = {
-                created: 'default',
-                pending: 'warning',
-                failed: 'error',
-                completed: 'success',
-                expired: 'secondary',
-                rejected: 'error'
-              }[status] || 'default'
-              
+              const statusColor =
+                {
+                  created: 'default',
+                  pending: 'warning',
+                  failed: 'error',
+                  completed: 'success',
+                  expired: 'secondary',
+                  rejected: 'error'
+                }[status] || 'default'
+
               return (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                   <Chip size='small' color={statusColor} label={status} />
@@ -346,18 +382,18 @@ const SponsorshipList = ({ tableData, sponsorType = 'all', filter }) => {
                   {status === 'rejected' && rewardType === 'physicalGift' && (
                     <>
                       {rejectorEmail && nonCashSponsorshipRejectionReason && (
-                        <Tooltip 
+                        <Tooltip
                           title={
                             <Box sx={{ p: 1 }}>
-                              <Typography variant="body2" sx={{ color: 'white', mb: 0.5 }}>
+                              <Typography variant='body2' sx={{ color: 'white', mb: 0.5 }}>
                                 <strong>Rejected by:</strong> {rejectorEmail}
                               </Typography>
-                              <Typography variant="body2" sx={{ color: 'white' }}>
+                              <Typography variant='body2' sx={{ color: 'white' }}>
                                 <strong>Reason:</strong> {nonCashSponsorshipRejectionReason}
                               </Typography>
                             </Box>
-                          } 
-                          placement="top"
+                          }
+                          placement='top'
                         >
                           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, cursor: 'pointer' }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -377,11 +413,11 @@ const SponsorshipList = ({ tableData, sponsorType = 'all', filter }) => {
                               >
                                 {rejectorEmail.charAt(0).toUpperCase()}
                               </Box>
-                              <Typography 
-                                variant='caption' 
-                                color='text.secondary' 
-                                sx={{ 
-                                  fontSize: '0.75rem', 
+                              <Typography
+                                variant='caption'
+                                color='text.secondary'
+                                sx={{
+                                  fontSize: '0.75rem',
                                   maxWidth: '150px',
                                   overflow: 'hidden',
                                   textOverflow: 'ellipsis',
@@ -391,10 +427,10 @@ const SponsorshipList = ({ tableData, sponsorType = 'all', filter }) => {
                                 {rejectorEmail}
                               </Typography>
                             </Box>
-                            <Typography 
-                              variant='caption' 
-                              color='error.main' 
-                              sx={{ 
+                            <Typography
+                              variant='caption'
+                              color='error.main'
+                              sx={{
                                 fontSize: '0.75rem',
                                 maxWidth: '150px',
                                 overflow: 'hidden',
@@ -449,27 +485,36 @@ const SponsorshipList = ({ tableData, sponsorType = 'all', filter }) => {
   })
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: theme.palette.background.default, pb: 8 }}>
-      {/* Hero Section */}
+    <Box
+      sx={{
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        bgcolor: theme.palette.background.default,
+        overflow: 'hidden'
+      }}
+    >
+      {/* Hero Section - Fixed */}
       <Box
         sx={{
+          flexShrink: 0,
           bgcolor: theme.palette.mode === 'dark' ? theme.palette.background.paper : 'white',
-          pt: { xs: 4, md: 6 },
-          pb: { xs: 4, md: 6 },
+          pt: { xs: 2.5, md: 3 },
+          pb: { xs: 2.5, md: 3 },
           borderBottom: `1px solid ${alpha(theme.palette.divider, 0.5)}`
         }}
       >
         <Container maxWidth='lg'>
-          <Stack spacing={4}>
+          <Stack spacing={{ xs: 2, sm: 2.5 }}>
             {/* Title Section */}
             <Box sx={{ textAlign: 'center' }}>
-              <Stack direction="row" spacing={1.5} alignItems="center" justifyContent="center" sx={{ mb: 2 }}>
-                <EmojiEventsIcon sx={{ fontSize: 40, color: 'primary.main' }} />
+              <Stack direction='row' spacing={1.5} alignItems='center' justifyContent='center' sx={{ mb: 1.5 }}>
+                <EmojiEventsIcon sx={{ fontSize: { xs: 32, sm: 36 }, color: 'primary.main' }} />
                 <Typography
-                  variant='h3'
-                  fontWeight={800}
+                  variant='h4'
+                  fontWeight={700}
                   sx={{
-                    fontSize: { xs: '2rem', md: '2.5rem' },
+                    fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
                     background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
@@ -480,8 +525,18 @@ const SponsorshipList = ({ tableData, sponsorType = 'all', filter }) => {
                   Your Sponsorships
                 </Typography>
               </Stack>
-              <Typography variant='body1' sx={{ color: 'text.secondary', fontSize: '1.05rem', lineHeight: 1.7, maxWidth: 600, mx: 'auto' }}>
-                View and track all the sponsorships you've created. Monitor their usage, status, and manage your sponsorship portfolio.
+              <Typography
+                variant='body2'
+                sx={{
+                  color: 'text.secondary',
+                  fontSize: { xs: '0.85rem', sm: '0.9rem', md: '0.95rem' },
+                  lineHeight: 1.6,
+                  maxWidth: 600,
+                  mx: 'auto'
+                }}
+              >
+                View and track all the sponsorships you've created. Monitor their usage, status, and manage your
+                sponsorship portfolio.
               </Typography>
             </Box>
 
@@ -503,30 +558,12 @@ const SponsorshipList = ({ tableData, sponsorType = 'all', filter }) => {
                   scrollButtons='auto'
                   allowScrollButtonsMobile
                 >
-                  <Tab
-                    value='all'
-                    label={
-                      <div className='flex items-center gap-1.5'>
-                        All
-                      </div>
-                    }
-                  />
+                  <Tab value='all' label={<div className='flex items-center gap-1.5'>All</div>} />
                   <Tab
                     value='awaiting'
-                    label={
-                      <div className='flex items-center gap-1.5'>
-                        Awaiting Admin Response
-                      </div>
-                    }
+                    label={<div className='flex items-center gap-1.5'>Awaiting Admin Response</div>}
                   />
-                  <Tab
-                    value='rejected'
-                    label={
-                      <div className='flex items-center gap-1.5'>
-                        Rejected
-                      </div>
-                    }
-                  />
+                  <Tab value='rejected' label={<div className='flex items-center gap-1.5'>Rejected</div>} />
                 </CustomTabList>
               </TabContext>
             </Box>
@@ -534,147 +571,180 @@ const SponsorshipList = ({ tableData, sponsorType = 'all', filter }) => {
         </Container>
       </Box>
 
-      {/* Table Section */}
-      <Box sx={{ mt: 4, width: '100%' }}>
-        <Card
-          sx={{
-            borderRadius: 4,
-            border: `1px solid ${alpha(theme.palette.divider, 0.4)}`,
-            boxShadow: theme.palette.mode === 'dark' ? 'none' : '0 20px 45px rgba(15, 30, 67, 0.08)',
-            bgcolor: theme.palette.background.paper,
-            overflow: 'hidden',
-            mx: { xs: 2, md: 4 }
-          }}
-        >
-          <CardContent
+      {/* Table Section - Scrollable */}
+      <Box
+        sx={{
+          flex: 1,
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          minHeight: 0,
+          WebkitOverflowScrolling: 'touch',
+          scrollbarGutter: 'stable',
+          // Custom scrollbar styling
+          '&::-webkit-scrollbar': {
+            width: '8px'
+          },
+          '&::-webkit-scrollbar-track': {
+            background: alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.1 : 0.05),
+            borderRadius: '4px'
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background:
+              theme.palette.mode === 'dark'
+                ? alpha(theme.palette.common.white, 0.3)
+                : alpha(theme.palette.common.black, 0.2),
+            borderRadius: '4px',
+            '&:hover': {
+              background:
+                theme.palette.mode === 'dark'
+                  ? alpha(theme.palette.common.white, 0.4)
+                  : alpha(theme.palette.common.black, 0.3)
+            }
+          }
+        }}
+      >
+        <Box sx={{ mt: 4, width: '100%', pb: { xs: 6, sm: 8, md: 10 } }}>
+          <Card
             sx={{
-              p: { xs: 3, md: 4 },
-              '&:last-child': { pb: { xs: 3, md: 4 } }
+              borderRadius: 4,
+              border: `1px solid ${alpha(theme.palette.divider, 0.4)}`,
+              boxShadow: theme.palette.mode === 'dark' ? 'none' : '0 20px 45px rgba(15, 30, 67, 0.08)',
+              bgcolor: theme.palette.background.paper,
+              overflow: 'hidden',
+              mx: { xs: 2, md: 4 }
             }}
           >
-            <Box
+            <CardContent
               sx={{
-                display: 'flex',
-                flexDirection: { xs: 'column', sm: 'row' },
-                justifyContent: 'space-between',
-                alignItems: { xs: 'flex-start', sm: 'center' },
-                gap: 3,
-                mb: 2
+                p: { xs: 3, md: 4 },
+                '&:last-child': { pb: { xs: 3, md: 4 } }
               }}
             >
-              <Typography
-                variant='h6'
+              <Box
                 sx={{
-                  fontWeight: 600,
-                  color: 'text.primary',
-                  fontSize: { xs: '1.1rem', md: '1.25rem' }
+                  display: 'flex',
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  justifyContent: 'space-between',
+                  alignItems: { xs: 'flex-start', sm: 'center' },
+                  gap: 3,
+                  mb: 2
                 }}
               >
-                Sponsorship Details
-              </Typography>
-              <Box sx={{ width: { xs: '100%', sm: 'auto' } }}>
-                <DebouncedInput
-                  value={globalFilter ?? ''}
-                  onChange={value => setGlobalFilter(String(value))}
-                  placeholder='Search sponsorships...'
-                  className='is-full sm:is-auto'
+                <Typography
+                  variant='h6'
                   sx={{
-                    width: { xs: '100%', sm: 300 },
-                    '& .MuiOutlinedInput-root': {
-                      bgcolor: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.05) : 'transparent',
-                      '& fieldset': {
-                        borderColor: alpha(theme.palette.divider, 0.5)
-                      },
-                      '&:hover fieldset': {
-                        borderColor: alpha(theme.palette.primary.main, 0.5)
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: theme.palette.primary.main
-                      }
-                    }
+                    fontWeight: 600,
+                    color: 'text.primary',
+                    fontSize: { xs: '1.1rem', md: '1.25rem' }
                   }}
-                />
+                >
+                  Sponsorship Details
+                </Typography>
+                <Box sx={{ width: { xs: '100%', sm: 'auto' } }}>
+                  <DebouncedInput
+                    value={globalFilter ?? ''}
+                    onChange={value => setGlobalFilter(String(value))}
+                    placeholder='Search sponsorships...'
+                    className='is-full sm:is-auto'
+                    sx={{
+                      width: { xs: '100%', sm: 300 },
+                      '& .MuiOutlinedInput-root': {
+                        bgcolor:
+                          theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.05) : 'transparent',
+                        '& fieldset': {
+                          borderColor: alpha(theme.palette.divider, 0.5)
+                        },
+                        '&:hover fieldset': {
+                          borderColor: alpha(theme.palette.primary.main, 0.5)
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: theme.palette.primary.main
+                        }
+                      }
+                    }}
+                  />
+                </Box>
               </Box>
-            </Box>
-          </CardContent>
-          <Divider sx={{ borderColor: alpha(theme.palette.divider, 0.5) }} />
-        <div className='overflow-x-auto'>
-          <table className={tableStyles.table}>
-            <thead>
-              {table.getHeaderGroups().map(headerGroup => (
-                <tr key={headerGroup.id}>
-                  {headerGroup.headers.map(header => (
-                    <th key={header.id}>
-                      {header.isPlaceholder ? null : (
-                        <>
-                          <div
-                            className={classnames({
-                              'flex items-center': header.column.getIsSorted(),
-                              'cursor-pointer select-none': header.column.getCanSort()
-                            })}
-                            onClick={header.column.getToggleSortingHandler()}
-                          >
-                            {flexRender(header.column.columnDef.header, header.getContext())}
-                            {{
-                              asc: <i className='ri-arrow-up-s-line text-xl' />,
-                              desc: <i className='ri-arrow-down-s-line text-xl' />
-                            }[header.column.getIsSorted()] ?? null}
-                          </div>
-                        </>
-                      )}
-                    </th>
+            </CardContent>
+            <Divider sx={{ borderColor: alpha(theme.palette.divider, 0.5) }} />
+            <div className='overflow-x-auto'>
+              <table className={tableStyles.table}>
+                <thead>
+                  {table.getHeaderGroups().map(headerGroup => (
+                    <tr key={headerGroup.id}>
+                      {headerGroup.headers.map(header => (
+                        <th key={header.id}>
+                          {header.isPlaceholder ? null : (
+                            <>
+                              <div
+                                className={classnames({
+                                  'flex items-center': header.column.getIsSorted(),
+                                  'cursor-pointer select-none': header.column.getCanSort()
+                                })}
+                                onClick={header.column.getToggleSortingHandler()}
+                              >
+                                {flexRender(header.column.columnDef.header, header.getContext())}
+                                {{
+                                  asc: <i className='ri-arrow-up-s-line text-xl' />,
+                                  desc: <i className='ri-arrow-down-s-line text-xl' />
+                                }[header.column.getIsSorted()] ?? null}
+                              </div>
+                            </>
+                          )}
+                        </th>
+                      ))}
+                    </tr>
                   ))}
-                </tr>
-              ))}
-            </thead>
-            {table.getFilteredRowModel().rows.length === 0 ? (
-              <tbody>
-                <tr>
-                  <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
-                    No data available
-                  </td>
-                </tr>
-              </tbody>
-            ) : (
-              <tbody>
-                {table
-                  .getRowModel()
-                  .rows.slice(0, table.getState().pagination.pageSize)
-                  .map(row => {
-                    return (
-                      <tr key={row.id} className={classnames({ selected: row.getIsSelected() })}>
-                        {row.getVisibleCells().map(cell => (
-                          <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
-                        ))}
-                      </tr>
-                    )
-                  })}
-              </tbody>
-            )}
-          </table>
-        </div>
-          <TablePagination
-            rowsPerPageOptions={[10, 25, 50]}
-            component='div'
-            className='border-bs'
-            count={table.getFilteredRowModel().rows.length}
-            rowsPerPage={table.getState().pagination.pageSize}
-            page={table.getState().pagination.pageIndex}
-            SelectProps={{
-              inputProps: { 'aria-label': 'rows per page' }
-            }}
-            onPageChange={(_, page) => {
-              table.setPageIndex(page)
-            }}
-            onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
-            sx={{
-              borderTop: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
-              '& .MuiTablePagination-toolbar': {
-                px: { xs: 2, md: 3 }
-              }
-            }}
-          />
-        </Card>
+                </thead>
+                {table.getFilteredRowModel().rows.length === 0 ? (
+                  <tbody>
+                    <tr>
+                      <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
+                        No data available
+                      </td>
+                    </tr>
+                  </tbody>
+                ) : (
+                  <tbody>
+                    {table
+                      .getRowModel()
+                      .rows.slice(0, table.getState().pagination.pageSize)
+                      .map(row => {
+                        return (
+                          <tr key={row.id} className={classnames({ selected: row.getIsSelected() })}>
+                            {row.getVisibleCells().map(cell => (
+                              <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                            ))}
+                          </tr>
+                        )
+                      })}
+                  </tbody>
+                )}
+              </table>
+            </div>
+            <TablePagination
+              rowsPerPageOptions={[10, 25, 50]}
+              component='div'
+              className='border-bs'
+              count={table.getFilteredRowModel().rows.length}
+              rowsPerPage={table.getState().pagination.pageSize}
+              page={table.getState().pagination.pageIndex}
+              SelectProps={{
+                inputProps: { 'aria-label': 'rows per page' }
+              }}
+              onPageChange={(_, page) => {
+                table.setPageIndex(page)
+              }}
+              onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
+              sx={{
+                borderTop: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+                '& .MuiTablePagination-toolbar': {
+                  px: { xs: 2, md: 3 }
+                }
+              }}
+            />
+          </Card>
+        </Box>
       </Box>
     </Box>
   )

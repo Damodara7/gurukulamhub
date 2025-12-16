@@ -95,7 +95,7 @@ const SponsorQuizzes = () => {
   const [sponsorerType, setSponsorerType] = useState('individual')
   const [rewardType, setRewardType] = useState(REWARD_TYPES.CASH)
   const [formData, setFormData] = useState({ ...initialFormData, email: session?.user?.email })
-  
+
   // Phone input states
   const [phoneInput, setPhoneInput] = useState('')
   const [countryDialCode, setCountryDialCode] = useState('91') // Default to India +91
@@ -193,9 +193,7 @@ const SponsorQuizzes = () => {
       setCountryDialCode(country.dialCode)
 
       // Map country code to country name
-      const countryObj = CountryRegionData.find(
-        data => data[1]?.toLowerCase() === country.countryCode?.toLowerCase()
-      )
+      const countryObj = CountryRegionData.find(data => data[1]?.toLowerCase() === country.countryCode?.toLowerCase())
 
       if (countryObj) {
         setSelectedCountryObject({ country: countryObj[0], countryCode: countryObj[1] })
@@ -364,7 +362,7 @@ const SponsorQuizzes = () => {
 
   const handleSponsorerTypeChange = newType => {
     setSponsorerType(newType)
-    
+
     // Clear errors for fields that are no longer relevant
     if (newType === 'individual') {
       // Clear organization-specific errors
@@ -396,9 +394,7 @@ const SponsorQuizzes = () => {
 
   const selectedQuizNames = useMemo(() => {
     const quizIds = new Set(selectedQuizzes)
-    return quizzes
-      ?.filter(quiz => quizIds.has(quiz._id))
-      ?.map(quiz => quiz.title || quiz.name)
+    return quizzes?.filter(quiz => quizIds.has(quiz._id))?.map(quiz => quiz.title || quiz.name)
   }, [quizzes, selectedQuizzes])
 
   const hasSpecificQuizzes = selectedQuizzes.some(quizId => quizId !== 'any-quiz')
@@ -456,22 +452,25 @@ const SponsorQuizzes = () => {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
         bgcolor: theme.palette.background.default,
-        pb: 8
+        overflow: 'hidden'
       }}
     >
-      {/* Hero Section */}
+      {/* Hero Section - Fixed */}
       <Box
         sx={{
+          flexShrink: 0,
           bgcolor: theme.palette.background.paper,
-          pt: { xs: 4, md: 6 },
-          pb: { xs: 4, md: 6 },
+          pt: { xs: 2.5, md: 3 },
+          pb: { xs: 2.5, md: 3 },
           borderBottom: `1px solid ${alpha(theme.palette.divider, 0.6)}`
         }}
       >
         <Container maxWidth='lg'>
-          <Stack spacing={{ xs: 2.5, sm: 3 }}>
+          <Stack spacing={{ xs: 1.5, sm: 2 }}>
             <Button
               variant='text'
               startIcon={<ArrowBack />}
@@ -493,10 +492,10 @@ const SponsorQuizzes = () => {
             </Button>
 
             <Typography
-              variant='h3'
-              fontWeight={800}
+              variant='h4'
+              fontWeight={700}
               sx={{
-                fontSize: { xs: '1.75rem', md: '2.5rem' },
+                fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
                 background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
@@ -510,48 +509,89 @@ const SponsorQuizzes = () => {
             <Stack
               direction={{ xs: 'column', sm: 'row' }}
               alignItems={{ xs: 'flex-start', sm: 'center' }}
-              spacing={{ xs: 1.5, sm: 1 }}
+              spacing={{ xs: 1, sm: 1 }}
             >
               <Chip
-                icon={<EmojiEvents sx={{ fontSize: { xs: 16, sm: 18 } }} />}
+                icon={<EmojiEvents sx={{ fontSize: { xs: 14, sm: 16 } }} />}
                 label='Quiz Sponsorship Program'
                 sx={{
                   fontWeight: 700,
                   bgcolor: alpha(theme.palette.primary.main, isDarkMode ? 0.15 : 0.08),
                   color: theme.palette.primary.main,
                   border: `1px solid ${alpha(theme.palette.primary.main, isDarkMode ? 0.3 : 0.2)}`,
-                  fontSize: { xs: '0.8rem', sm: '0.875rem' },
-                  height: { xs: 28, sm: 32 }
+                  fontSize: { xs: '0.75rem', sm: '0.8rem' },
+                  height: { xs: 24, sm: 28 }
                 }}
               />
               <Chip
-                icon={<LocationOn sx={{ fontSize: { xs: 16, sm: 18 } }} />}
+                icon={<LocationOn sx={{ fontSize: { xs: 14, sm: 16 } }} />}
                 label='Pan-India Outreach'
                 sx={{
                   fontWeight: 700,
                   bgcolor: alpha(theme.palette.secondary?.main || theme.palette.primary.main, isDarkMode ? 0.15 : 0.08),
                   color: theme.palette.secondary?.main || theme.palette.primary.main,
-                  border: `1px solid ${alpha(theme.palette.secondary?.main || theme.palette.primary.main, isDarkMode ? 0.3 : 0.2)}`,
-                  fontSize: { xs: '0.8rem', sm: '0.875rem' },
-                  height: { xs: 28, sm: 32 }
+                  border: `1px solid ${alpha(
+                    theme.palette.secondary?.main || theme.palette.primary.main,
+                    isDarkMode ? 0.3 : 0.2
+                  )}`,
+                  fontSize: { xs: '0.75rem', sm: '0.8rem' },
+                  height: { xs: 24, sm: 28 }
                 }}
               />
             </Stack>
 
             <Typography
-              variant='body1'
+              variant='body2'
               sx={{
-                fontSize: { xs: '0.95rem', sm: '1rem', md: '1.05rem' },
+                fontSize: { xs: '0.85rem', sm: '0.9rem', md: '0.95rem' },
                 color: 'text.secondary',
-                lineHeight: 1.7,
+                lineHeight: 1.6,
                 maxWidth: { xs: '100%', sm: '800px', md: '900px' }
               }}
             >
-              Your sponsorship helps us preserve, celebrate, and share India&apos;s ancient knowledge systems
-              through curated quizzes. Join a community of patrons championing cultural education and high-quality
-              learning content.
+              Your sponsorship helps us preserve, celebrate, and share India&apos;s ancient knowledge systems through
+              curated quizzes. Join a community of patrons championing cultural education and high-quality learning
+              content.
             </Typography>
+          </Stack>
+        </Container>
+      </Box>
 
+      {/* Content Section - Scrollable */}
+      <Box
+        sx={{
+          flex: 1,
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          minHeight: 0,
+          WebkitOverflowScrolling: 'touch',
+          scrollbarGutter: 'stable',
+          // Custom scrollbar styling
+          '&::-webkit-scrollbar': {
+            width: '8px'
+          },
+          '&::-webkit-scrollbar-track': {
+            background: alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.1 : 0.05),
+            borderRadius: '4px'
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background:
+              theme.palette.mode === 'dark'
+                ? alpha(theme.palette.common.white, 0.3)
+                : alpha(theme.palette.common.black, 0.2),
+            borderRadius: '4px',
+            '&:hover': {
+              background:
+                theme.palette.mode === 'dark'
+                  ? alpha(theme.palette.common.white, 0.4)
+                  : alpha(theme.palette.common.black, 0.3)
+            }
+          }
+        }}
+      >
+        <Container maxWidth='lg' sx={{ mt: 4, pb: { xs: 6, sm: 8, md: 10 } }}>
+          <Stack spacing={4}>
+            {/* Impact Highlights */}
             <Grid container spacing={2}>
               {impactHighlights.map(highlight => (
                 <Grid item xs={12} md={4} key={highlight.title}>
@@ -613,379 +653,302 @@ const SponsorQuizzes = () => {
                 </Grid>
               ))}
             </Grid>
-          </Stack>
-        </Container>
-      </Box>
 
-      {/* Content Section */}
-      <Container maxWidth='lg' sx={{ mt: 4 }}>
-        <Stack spacing={4}>
+            <form onSubmit={handleSubmit}>
+              <Stack spacing={3}>
+                <Card
+                  sx={{
+                    borderRadius: 4,
+                    border: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+                    boxShadow: theme.palette.mode === 'dark' ? 'none' : '0 2px 12px rgba(0,0,0,0.08)'
+                  }}
+                >
+                  <CardContent sx={{ p: { xs: 3, md: 4 } }}>
+                    <Stack spacing={2}>
+                      <Stack direction='row' spacing={2} alignItems='center'>
+                        <Box
+                          sx={{
+                            width: 44,
+                            height: 44,
+                            borderRadius: 2,
+                            bgcolor:
+                              theme.palette.mode === 'dark'
+                                ? alpha(theme.palette.primary.main, 0.2)
+                                : alpha(theme.palette.primary.main, 0.1),
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          <EmojiEvents sx={{ color: theme.palette.primary.main }} />
+                        </Box>
+                        <Box>
+                          <Typography variant='h6' fontWeight={700}>
+                            Choose the quizzes you want to sponsor
+                          </Typography>
+                          <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                            Target specific quizzes or back the entire program for maximum outreach.
+                          </Typography>
+                        </Box>
+                      </Stack>
 
-          <form onSubmit={handleSubmit}>
-            <Stack spacing={3}>
-              <Card
-                sx={{
-                  borderRadius: 4,
-                  border: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
-                  boxShadow: theme.palette.mode === 'dark' ? 'none' : '0 2px 12px rgba(0,0,0,0.08)'
-                }}
-              >
-                <CardContent sx={{ p: { xs: 3, md: 4 } }}>
-                  <Stack spacing={2}>
-                    <Stack direction='row' spacing={2} alignItems='center'>
-                      <Box
-                        sx={{
-                          width: 44,
-                          height: 44,
-                          borderRadius: 2,
-                          bgcolor:
-                            theme.palette.mode === 'dark'
-                              ? alpha(theme.palette.primary.main, 0.2)
-                              : alpha(theme.palette.primary.main, 0.1),
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        <EmojiEvents sx={{ color: theme.palette.primary.main }} />
-                      </Box>
-                      <Box>
-                        <Typography variant='h6' fontWeight={700}>
-                          Choose the quizzes you want to sponsor
-                        </Typography>
-                        <Typography variant='body2' sx={{ color: 'text.secondary' }}>
-                          Target specific quizzes or back the entire program for maximum outreach.
-                        </Typography>
-                      </Box>
+                      <Divider sx={{ my: 1 }} />
+
+                      {isQuizzesLoading ? (
+                        <Box sx={{ py: 6, display: 'flex', justifyContent: 'center' }}>
+                          <CircularProgress size={32} />
+                        </Box>
+                      ) : (
+                        <QuizSelection
+                          quizzes={quizzes}
+                          selectedQuizzes={selectedQuizzes}
+                          setSelectedQuizzes={setSelectedQuizzes}
+                          errors={errors}
+                          setErrors={setErrors}
+                        />
+                      )}
                     </Stack>
+                  </CardContent>
+                </Card>
 
-                    <Divider sx={{ my: 1 }} />
+                <Card
+                  sx={{
+                    borderRadius: 4,
+                    border: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+                    boxShadow: theme.palette.mode === 'dark' ? 'none' : '0 2px 12px rgba(0,0,0,0.08)'
+                  }}
+                >
+                  <CardContent sx={{ p: { xs: 3, md: 4 } }}>
+                    <Stack spacing={2}>
+                      <Stack direction='row' spacing={2} alignItems='center'>
+                        <Box
+                          sx={{
+                            width: 44,
+                            height: 44,
+                            borderRadius: 2,
+                            bgcolor:
+                              theme.palette.mode === 'dark'
+                                ? alpha(theme.palette.secondary.main, 0.22)
+                                : alpha(theme.palette.secondary.main, 0.12),
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          <LocationOn sx={{ color: theme.palette.secondary.main }} />
+                        </Box>
+                        <Box>
+                          <Typography variant='h6' fontWeight={700}>
+                            Define your preferred locations
+                          </Typography>
+                          <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                            Focus your sponsorship on specific regions or open it up to all participants.
+                          </Typography>
+                        </Box>
+                      </Stack>
 
-                    {isQuizzesLoading ? (
-                      <Box sx={{ py: 6, display: 'flex', justifyContent: 'center' }}>
-                        <CircularProgress size={32} />
-                      </Box>
-                    ) : (
-                      <QuizSelection
-                        quizzes={quizzes}
-                        selectedQuizzes={selectedQuizzes}
-                        setSelectedQuizzes={setSelectedQuizzes}
-                        errors={errors}
-                        setErrors={setErrors}
+                      <Divider sx={{ my: 1 }} />
+
+                      <LocationSelection
+                        selectedCountryObject={selectedCountryObject}
+                        setSelectedCountryObject={setSelectedCountryObject}
+                        selectedRegion={selectedRegion}
+                        setSelectedRegion={setSelectedRegion}
+                        city={city}
+                        setCity={setCity}
+                        cityOptions={cityOptions}
+                        loading={loading}
+                        getCitiesData={getCitiesData}
                       />
-                    )}
-                  </Stack>
-                </CardContent>
-              </Card>
-
-              <Card
-                sx={{
-                  borderRadius: 4,
-                  border: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
-                  boxShadow: theme.palette.mode === 'dark' ? 'none' : '0 2px 12px rgba(0,0,0,0.08)'
-                }}
-              >
-                <CardContent sx={{ p: { xs: 3, md: 4 } }}>
-                  <Stack spacing={2}>
-                    <Stack direction='row' spacing={2} alignItems='center'>
-                      <Box
-                        sx={{
-                          width: 44,
-                          height: 44,
-                          borderRadius: 2,
-                          bgcolor:
-                            theme.palette.mode === 'dark'
-                              ? alpha(theme.palette.secondary.main, 0.22)
-                              : alpha(theme.palette.secondary.main, 0.12),
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        <LocationOn sx={{ color: theme.palette.secondary.main }} />
-                      </Box>
-                      <Box>
-                        <Typography variant='h6' fontWeight={700}>
-                          Define your preferred locations
-                        </Typography>
-                        <Typography variant='body2' sx={{ color: 'text.secondary' }}>
-                          Focus your sponsorship on specific regions or open it up to all participants.
-                        </Typography>
-                      </Box>
                     </Stack>
+                  </CardContent>
+                </Card>
 
-                    <Divider sx={{ my: 1 }} />
-
-                    <LocationSelection
-                      selectedCountryObject={selectedCountryObject}
-                      setSelectedCountryObject={setSelectedCountryObject}
-                      selectedRegion={selectedRegion}
-                      setSelectedRegion={setSelectedRegion}
-                      city={city}
-                      setCity={setCity}
-                      cityOptions={cityOptions}
-                      loading={loading}
-                      getCitiesData={getCitiesData}
-                    />
-                  </Stack>
-                </CardContent>
-              </Card>
-
-              <Card
-                sx={{
-                  borderRadius: 4,
-                  border: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
-                  boxShadow: theme.palette.mode === 'dark' ? 'none' : '0 2px 12px rgba(0,0,0,0.08)'
-                }}
-              >
-                <CardContent sx={{ p: { xs: 3, md: 4 } }}>
-                  <Stack spacing={2}>
-                    <Stack direction='row' spacing={2} alignItems='center'>
-                      <Box
-                        sx={{
-                          width: 44,
-                          height: 44,
-                          borderRadius: 2,
-                          bgcolor:
-                            theme.palette.mode === 'dark'
-                              ? alpha(theme.palette.success.main, 0.22)
-                              : alpha(theme.palette.success.main, 0.12),
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        <VolunteerActivism sx={{ color: theme.palette.success.main }} />
-                      </Box>
-                      <Box>
-                        <Typography variant='h6' fontWeight={700}>
-                          Share your sponsor profile
-                        </Typography>
-                        <Typography variant='body2' sx={{ color: 'text.secondary' }}>
-                          Tell us more about yourself or your organisation so that we can recognise your support.
-                        </Typography>
-                      </Box>
-                    </Stack>
-
-                    <Divider sx={{ my: 1 }} />
-
-                    <SponsorerInfo
-                      sponsorerType={sponsorerType}
-                      setSponsorerType={handleSponsorerTypeChange}
-                      formData={formData}
-                      errors={errors}
-                      handleChange={handleChange}
-                      phoneInput={phoneInput}
-                      countryDialCode={countryDialCode}
-                      selectedCountryObject={selectedCountryObject}
-                      handlePhoneInputChange={handlePhoneInputChange}
-                    />
-                  </Stack>
-                </CardContent>
-              </Card>
-
-              <Card
-                sx={{
-                  borderRadius: 4,
-                  border: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
-                  boxShadow: theme.palette.mode === 'dark' ? 'none' : '0 2px 12px rgba(0,0,0,0.08)'
-                }}
-              >
-                <CardContent sx={{ p: { xs: 3, md: 4 } }}>
-                  <Stack spacing={2}>
-                    <Stack direction='row' spacing={2} alignItems='center'>
-                      <Box
-                        sx={{
-                          width: 44,
-                          height: 44,
-                          borderRadius: 2,
-                          bgcolor:
-                            theme.palette.mode === 'dark'
-                              ? alpha(theme.palette.warning.main, 0.24)
-                              : alpha(theme.palette.warning.main, 0.12),
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        <Redeem sx={{ color: theme.palette.warning.main }} />
-                      </Box>
-                      <Box>
-                        <Typography variant='h6' fontWeight={700}>
-                          Choose your reward contribution
-                        </Typography>
-                        <Typography variant='body2' sx={{ color: 'text.secondary' }}>
-                          Decide between cash sponsorship or curated physical rewards for quiz winners.
-                        </Typography>
-                      </Box>
-                    </Stack>
-
-                    <Divider sx={{ my: 1 }} />
-
-                    <RewardSection
-                      rewardTypeOptions={rewardTypeOptions}
-                      rewardType={rewardType}
-                      setRewardType={setRewardType}
-                      formData={formData}
-                      handleChange={handleChange}
-                      errors={errors}
-                    />
-                  </Stack>
-                </CardContent>
-              </Card>
-
-              <Stack spacing={{ xs: 1.5, sm: 2 }}>
-                <Button
-                  component='label'
-                  variant='contained'
-                  onClick={handleSubmit}
-                  size='large'
+                <Card
                   sx={{
-                    color: 'white',
-                    py: { xs: 1.25, sm: 1.5 },
-                    fontWeight: 700,
-                    textTransform: 'none',
-                    borderRadius: { xs: 1.5, sm: 2 },
-                    fontSize: { xs: '0.95rem', sm: '1rem' },
-                    boxShadow: isDarkMode ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}` : undefined,
-                    '&:hover': {
-                      boxShadow: isDarkMode
-                        ? `0 8px 20px ${alpha(theme.palette.primary.main, 0.4)}`
-                        : '0 8px 20px rgba(0,0,0,0.16)',
-                      transform: 'translateY(-1px)'
-                    }
-                  }}
-                  disabled={loading.submitting}
-                >
-                  {loading.submitting ? (
-                    <Stack direction='row' spacing={1.5} alignItems='center'>
-                      <CircularProgress size={22} sx={{ color: 'white' }} />
-                      <span>Submitting...</span>
-                    </Stack>
-                  ) : (
-                    'Submit Sponsorship'
-                  )}
-                </Button>
-
-                <Alert
-                  icon={<CheckCircleOutline fontSize='inherit' />}
-                  severity='success'
-                  sx={{
-                    borderRadius: { xs: 2, sm: 3 },
-                    bgcolor:
-                      theme.palette.mode === 'dark'
-                        ? alpha(theme.palette.success.main, 0.18)
-                        : alpha(theme.palette.success.main, 0.08),
-                    color: theme.palette.mode === 'dark' ? theme.palette.success.light : theme.palette.success.dark,
-                    fontSize: { xs: '0.9rem', sm: '1rem' },
-                    '& .MuiAlert-icon': {
-                      fontSize: { xs: '1.2rem', sm: '1.5rem' }
-                    }
+                    borderRadius: 4,
+                    border: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+                    boxShadow: theme.palette.mode === 'dark' ? 'none' : '0 2px 12px rgba(0,0,0,0.08)'
                   }}
                 >
-                  Sponsors are acknowledged across campaign promotions and receive periodic impact reports on their
-                  contribution.
-                </Alert>
-              </Stack>
-            </Stack>
-          </form>
+                  <CardContent sx={{ p: { xs: 3, md: 4 } }}>
+                    <Stack spacing={2}>
+                      <Stack direction='row' spacing={2} alignItems='center'>
+                        <Box
+                          sx={{
+                            width: 44,
+                            height: 44,
+                            borderRadius: 2,
+                            bgcolor:
+                              theme.palette.mode === 'dark'
+                                ? alpha(theme.palette.success.main, 0.22)
+                                : alpha(theme.palette.success.main, 0.12),
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          <VolunteerActivism sx={{ color: theme.palette.success.main }} />
+                        </Box>
+                        <Box>
+                          <Typography variant='h6' fontWeight={700}>
+                            Share your sponsor profile
+                          </Typography>
+                          <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                            Tell us more about yourself or your organisation so that we can recognise your support.
+                          </Typography>
+                        </Box>
+                      </Stack>
 
-          <Card
-            sx={{
-              borderRadius: { xs: 3, md: 4 },
-              border: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.5)}`,
-              boxShadow: isDarkMode
-                ? `0 2px 12px ${alpha(theme.palette.common.black, 0.3)}`
-                : '0 2px 12px rgba(0,0,0,0.08)',
-              bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.6) : undefined
-            }}
-          >
-            <CardContent sx={{ p: { xs: 2.5, sm: 3, md: 4 } }}>
-              <Typography
-                variant='body2'
-                fontWeight={700}
-                sx={{
-                  color: theme.palette.primary.main,
-                  letterSpacing: { xs: 1, sm: 1.5 },
-                  fontSize: { xs: '0.75rem', sm: '0.8rem', md: '0.875rem' }
-                }}
-                gutterBottom
-              >
-                SPONSORSHIP SNAPSHOT
-              </Typography>
+                      <Divider sx={{ my: 1 }} />
 
-              <Stack spacing={{ xs: 2, sm: 2.5 }}>
-                <Box>
-                  <Typography
-                    variant='subtitle2'
-                    fontWeight={700}
+                      <SponsorerInfo
+                        sponsorerType={sponsorerType}
+                        setSponsorerType={handleSponsorerTypeChange}
+                        formData={formData}
+                        errors={errors}
+                        handleChange={handleChange}
+                        phoneInput={phoneInput}
+                        countryDialCode={countryDialCode}
+                        selectedCountryObject={selectedCountryObject}
+                        handlePhoneInputChange={handlePhoneInputChange}
+                      />
+                    </Stack>
+                  </CardContent>
+                </Card>
+
+                <Card
+                  sx={{
+                    borderRadius: 4,
+                    border: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+                    boxShadow: theme.palette.mode === 'dark' ? 'none' : '0 2px 12px rgba(0,0,0,0.08)'
+                  }}
+                >
+                  <CardContent sx={{ p: { xs: 3, md: 4 } }}>
+                    <Stack spacing={2}>
+                      <Stack direction='row' spacing={2} alignItems='center'>
+                        <Box
+                          sx={{
+                            width: 44,
+                            height: 44,
+                            borderRadius: 2,
+                            bgcolor:
+                              theme.palette.mode === 'dark'
+                                ? alpha(theme.palette.warning.main, 0.24)
+                                : alpha(theme.palette.warning.main, 0.12),
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          <Redeem sx={{ color: theme.palette.warning.main }} />
+                        </Box>
+                        <Box>
+                          <Typography variant='h6' fontWeight={700}>
+                            Choose your reward contribution
+                          </Typography>
+                          <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                            Decide between cash sponsorship or curated physical rewards for quiz winners.
+                          </Typography>
+                        </Box>
+                      </Stack>
+
+                      <Divider sx={{ my: 1 }} />
+
+                      <RewardSection
+                        rewardTypeOptions={rewardTypeOptions}
+                        rewardType={rewardType}
+                        setRewardType={setRewardType}
+                        formData={formData}
+                        handleChange={handleChange}
+                        errors={errors}
+                      />
+                    </Stack>
+                  </CardContent>
+                </Card>
+
+                <Stack spacing={{ xs: 1.5, sm: 2 }}>
+                  <Button
+                    component='label'
+                    variant='contained'
+                    onClick={handleSubmit}
+                    size='large'
                     sx={{
-                      color: 'text.primary',
-                      fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' }
-                    }}
-                    gutterBottom
-                  >
-                    Quiz Focus
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{
-                      color: 'text.secondary',
-                      lineHeight: 1.6,
-                      fontSize: { xs: '0.88rem', sm: '0.9rem', md: '0.95rem' }
-                    }}
-                  >
-                    {hasSpecificQuizzes && selectedQuizNames?.length
-                      ? selectedQuizNames.join(', ')
-                      : 'Supporting any quiz that aligns with our traditional knowledge initiative.'}
-                  </Typography>
-                </Box>
-
-                <Divider sx={{ borderColor: alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.5) }} />
-
-                <Box>
-                  <Typography
-                    variant='subtitle2'
-                    fontWeight={700}
-                    sx={{
-                      color: 'text.primary',
-                      fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' }
-                    }}
-                    gutterBottom
-                  >
-                    Location Preference
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{
-                      color: 'text.secondary',
-                      fontSize: { xs: '0.88rem', sm: '0.9rem', md: '0.95rem' }
-                    }}
-                  >
-                    {locationSummary}
-                  </Typography>
-                </Box>
-
-                <Divider sx={{ borderColor: alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.5) }} />
-
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 1.5, sm: 2 }} alignItems='flex-start'>
-                  <Box
-                    sx={{
-                      width: { xs: 44, sm: 48 },
-                      height: { xs: 44, sm: 48 },
+                      color: 'white',
+                      py: { xs: 1.25, sm: 1.5 },
+                      fontWeight: 700,
+                      textTransform: 'none',
                       borderRadius: { xs: 1.5, sm: 2 },
+                      fontSize: { xs: '0.95rem', sm: '1rem' },
+                      boxShadow: isDarkMode ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}` : undefined,
+                      '&:hover': {
+                        boxShadow: isDarkMode
+                          ? `0 8px 20px ${alpha(theme.palette.primary.main, 0.4)}`
+                          : '0 8px 20px rgba(0,0,0,0.16)',
+                        transform: 'translateY(-1px)'
+                      }
+                    }}
+                    disabled={loading.submitting}
+                  >
+                    {loading.submitting ? (
+                      <Stack direction='row' spacing={1.5} alignItems='center'>
+                        <CircularProgress size={22} sx={{ color: 'white' }} />
+                        <span>Submitting...</span>
+                      </Stack>
+                    ) : (
+                      'Submit Sponsorship'
+                    )}
+                  </Button>
+
+                  <Alert
+                    icon={<CheckCircleOutline fontSize='inherit' />}
+                    severity='success'
+                    sx={{
+                      borderRadius: { xs: 2, sm: 3 },
                       bgcolor:
                         theme.palette.mode === 'dark'
-                          ? alpha(theme.palette.primary.main, 0.2)
-                          : alpha(theme.palette.primary.main, 0.1),
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
+                          ? alpha(theme.palette.success.main, 0.18)
+                          : alpha(theme.palette.success.main, 0.08),
+                      color: theme.palette.mode === 'dark' ? theme.palette.success.light : theme.palette.success.dark,
+                      fontSize: { xs: '0.9rem', sm: '1rem' },
+                      '& .MuiAlert-icon': {
+                        fontSize: { xs: '1.2rem', sm: '1.5rem' }
+                      }
                     }}
                   >
-                    {rewardSummary.icon}
-                  </Box>
-                  <Box sx={{ flex: 1 }}>
+                    Sponsors are acknowledged across campaign promotions and receive periodic impact reports on their
+                    contribution.
+                  </Alert>
+                </Stack>
+              </Stack>
+            </form>
+
+            <Card
+              sx={{
+                borderRadius: { xs: 3, md: 4 },
+                border: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.5)}`,
+                boxShadow: isDarkMode
+                  ? `0 2px 12px ${alpha(theme.palette.common.black, 0.3)}`
+                  : '0 2px 12px rgba(0,0,0,0.08)',
+                bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.6) : undefined
+              }}
+            >
+              <CardContent sx={{ p: { xs: 2.5, sm: 3, md: 4 } }}>
+                <Typography
+                  variant='body2'
+                  fontWeight={700}
+                  sx={{
+                    color: theme.palette.primary.main,
+                    letterSpacing: { xs: 1, sm: 1.5 },
+                    fontSize: { xs: '0.75rem', sm: '0.8rem', md: '0.875rem' }
+                  }}
+                  gutterBottom
+                >
+                  SPONSORSHIP SNAPSHOT
+                </Typography>
+
+                <Stack spacing={{ xs: 2, sm: 2.5 }}>
+                  <Box>
                     <Typography
                       variant='subtitle2'
                       fontWeight={700}
@@ -993,36 +956,107 @@ const SponsorQuizzes = () => {
                         color: 'text.primary',
                         fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' }
                       }}
+                      gutterBottom
                     >
-                      {rewardSummary.title}
-                    </Typography>
-                    <Typography
-                      variant='body1'
-                      fontWeight={600}
-                      sx={{
-                        color: theme.palette.primary.main,
-                        fontSize: { xs: '0.95rem', sm: '1rem', md: '1.05rem' }
-                      }}
-                    >
-                      {rewardSummary.primaryText}
+                      Quiz Focus
                     </Typography>
                     <Typography
                       variant='body2'
                       sx={{
                         color: 'text.secondary',
-                        mt: 0.5,
+                        lineHeight: 1.6,
                         fontSize: { xs: '0.88rem', sm: '0.9rem', md: '0.95rem' }
                       }}
                     >
-                      {rewardSummary.secondaryText}
+                      {hasSpecificQuizzes && selectedQuizNames?.length
+                        ? selectedQuizNames.join(', ')
+                        : 'Supporting any quiz that aligns with our traditional knowledge initiative.'}
                     </Typography>
                   </Box>
+
+                  <Divider sx={{ borderColor: alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.5) }} />
+
+                  <Box>
+                    <Typography
+                      variant='subtitle2'
+                      fontWeight={700}
+                      sx={{
+                        color: 'text.primary',
+                        fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' }
+                      }}
+                      gutterBottom
+                    >
+                      Location Preference
+                    </Typography>
+                    <Typography
+                      variant='body2'
+                      sx={{
+                        color: 'text.secondary',
+                        fontSize: { xs: '0.88rem', sm: '0.9rem', md: '0.95rem' }
+                      }}
+                    >
+                      {locationSummary}
+                    </Typography>
+                  </Box>
+
+                  <Divider sx={{ borderColor: alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.5) }} />
+
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 1.5, sm: 2 }} alignItems='flex-start'>
+                    <Box
+                      sx={{
+                        width: { xs: 44, sm: 48 },
+                        height: { xs: 44, sm: 48 },
+                        borderRadius: { xs: 1.5, sm: 2 },
+                        bgcolor:
+                          theme.palette.mode === 'dark'
+                            ? alpha(theme.palette.primary.main, 0.2)
+                            : alpha(theme.palette.primary.main, 0.1),
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      {rewardSummary.icon}
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography
+                        variant='subtitle2'
+                        fontWeight={700}
+                        sx={{
+                          color: 'text.primary',
+                          fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' }
+                        }}
+                      >
+                        {rewardSummary.title}
+                      </Typography>
+                      <Typography
+                        variant='body1'
+                        fontWeight={600}
+                        sx={{
+                          color: theme.palette.primary.main,
+                          fontSize: { xs: '0.95rem', sm: '1rem', md: '1.05rem' }
+                        }}
+                      >
+                        {rewardSummary.primaryText}
+                      </Typography>
+                      <Typography
+                        variant='body2'
+                        sx={{
+                          color: 'text.secondary',
+                          mt: 0.5,
+                          fontSize: { xs: '0.88rem', sm: '0.9rem', md: '0.95rem' }
+                        }}
+                      >
+                        {rewardSummary.secondaryText}
+                      </Typography>
+                    </Box>
+                  </Stack>
                 </Stack>
-              </Stack>
-            </CardContent>
-          </Card>
-        </Stack>
-      </Container>
+              </CardContent>
+            </Card>
+          </Stack>
+        </Container>
+      </Box>
     </Box>
   )
 }

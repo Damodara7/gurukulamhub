@@ -54,34 +54,29 @@ const initialFormData = {
   rewardDescription: ''
 }
 
-const GameSponsorDialog = ({
-  open,
-  onClose,
-  game,
-  reward,
-  maxAmount
-}) => {
+const GameSponsorDialog = ({ open, onClose, game, reward, maxAmount }) => {
   const router = useRouter()
   const theme = useTheme()
   const isDarkMode = theme.palette.mode === 'dark'
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const { data: session } = useSession()
-  
+
   // Calculate sponsorship details
-  const totalNeeded = reward.rewardType === 'cash' 
-    ? reward.rewardValuePerWinner * reward.numberOfWinnersForThisPosition
-    : reward.numberOfWinnersForThisPosition
-  
-  const alreadySponsored = reward.sponsors?.reduce((sum, sponsor) => 
-    sum + (sponsor.allocated || sponsor.rewardDetails?.allocated || 0), 0
-  ) || 0
-  
+  const totalNeeded =
+    reward.rewardType === 'cash'
+      ? reward.rewardValuePerWinner * reward.numberOfWinnersForThisPosition
+      : reward.numberOfWinnersForThisPosition
+
+  const alreadySponsored =
+    reward.sponsors?.reduce((sum, sponsor) => sum + (sponsor.allocated || sponsor.rewardDetails?.allocated || 0), 0) ||
+    0
+
   const requiredAmount = totalNeeded - alreadySponsored
-  
+
   const [sponsorerType, setSponsorerType] = useState('individual')
   const [rewardType, setRewardType] = useState(reward.rewardType)
-  const [formData, setFormData] = useState({ 
-    ...initialFormData, 
+  const [formData, setFormData] = useState({
+    ...initialFormData,
     email: session?.user?.email || '',
     sponsorshipAmount: '',
     numberOfNonCashItems: ''
@@ -92,13 +87,13 @@ const GameSponsorDialog = ({
   // Reset form when dialog opens/closes
   useEffect(() => {
     if (open) {
-      const initialData = { 
-        ...initialFormData, 
+      const initialData = {
+        ...initialFormData,
         email: session?.user?.email || '',
         sponsorshipAmount: '',
         numberOfNonCashItems: ''
       }
-      
+
       setFormData(initialData)
       setErrors({})
       setSponsorerType('individual')
@@ -137,10 +132,7 @@ const GameSponsorDialog = ({
       (isNaN(formData.sponsorshipAmount) || parseFloat(formData.sponsorshipAmount) <= 0)
     ) {
       newErrors.sponsorshipAmount = 'Amount must be greater than 0'
-    } else if (
-      rewardType === REWARD_TYPES.CASH &&
-      parseFloat(formData.sponsorshipAmount) > requiredAmount
-    ) {
+    } else if (rewardType === REWARD_TYPES.CASH && parseFloat(formData.sponsorshipAmount) > requiredAmount) {
       newErrors.sponsorshipAmount = `Amount cannot exceed remaining need of ${requiredAmount}`
     }
 
@@ -233,7 +225,7 @@ const GameSponsorDialog = ({
     <Dialog
       open={open}
       onClose={onClose}
-      maxWidth="md"
+      maxWidth='md'
       fullWidth
       PaperProps={{
         sx: {
@@ -254,13 +246,13 @@ const GameSponsorDialog = ({
       >
         <Stack
           direction={{ xs: 'column', sm: 'row' }}
-          justifyContent="space-between"
+          justifyContent='space-between'
           alignItems={{ xs: 'flex-start', sm: 'flex-start' }}
           spacing={{ xs: 1.5, sm: 0 }}
         >
           <Box>
             <Typography
-              variant="h5"
+              variant='h5'
               fontWeight={800}
               sx={{
                 color: 'text.primary',
@@ -271,7 +263,7 @@ const GameSponsorDialog = ({
               Sponsor Game Reward
             </Typography>
             <Typography
-              variant="body2"
+              variant='body2'
               sx={{
                 color: 'text.secondary',
                 fontSize: { xs: '0.88rem', sm: '0.9rem', md: '0.95rem' }
@@ -282,7 +274,7 @@ const GameSponsorDialog = ({
           </Box>
           <IconButton
             onClick={onClose}
-            size="small"
+            size='small'
             sx={{
               bgcolor: isDarkMode ? alpha(theme.palette.background.default, 0.6) : alpha(theme.palette.grey[100], 0.8),
               color: 'text.primary',
@@ -295,7 +287,7 @@ const GameSponsorDialog = ({
               transition: 'all 0.3s ease'
             }}
           >
-            <CloseIcon fontSize="small" />
+            <CloseIcon fontSize='small' />
           </IconButton>
         </Stack>
       </DialogTitle>
@@ -318,7 +310,9 @@ const GameSponsorDialog = ({
               left: 0,
               width: { xs: 4, sm: 6 },
               height: '100%',
-              background: `linear-gradient(180deg, ${theme.palette.primary.main}, ${theme.palette.secondary?.main || theme.palette.primary.light})`
+              background: `linear-gradient(180deg, ${theme.palette.primary.main}, ${
+                theme.palette.secondary?.main || theme.palette.primary.light
+              })`
             }
           }}
         >
@@ -350,7 +344,7 @@ const GameSponsorDialog = ({
               </Box>
               <Box>
                 <Typography
-                  variant="subtitle1"
+                  variant='subtitle1'
                   fontWeight={700}
                   sx={{
                     color: 'text.primary',
@@ -361,22 +355,19 @@ const GameSponsorDialog = ({
                   {game.title}
                 </Typography>
                 <Typography
-                  variant="body2"
+                  variant='body2'
                   sx={{
                     color: 'text.secondary',
                     fontSize: { xs: '0.88rem', sm: '0.9rem', md: '0.95rem' }
                   }}
                 >
-                  Position {reward.position} • {reward.numberOfWinnersForThisPosition} winner{reward.numberOfWinnersForThisPosition > 1 ? 's' : ''}
+                  Position {reward.position} • {reward.numberOfWinnersForThisPosition} winner
+                  {reward.numberOfWinnersForThisPosition > 1 ? 's' : ''}
                 </Typography>
               </Box>
             </Stack>
 
-            <Stack
-              direction={{ xs: 'column', sm: 'row' }}
-              spacing={{ xs: 1, sm: 1.5 }}
-              flexWrap="wrap"
-            >
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 1, sm: 1.5 }} flexWrap='wrap'>
               <Chip
                 icon={
                   reward.rewardType === 'cash' ? (
@@ -406,7 +397,9 @@ const GameSponsorDialog = ({
                 }}
               />
               <Chip
-                label={`Max: ${reward.rewardType === 'cash' ? `${reward.currency} ${requiredAmount}` : `${requiredAmount} items`}`}
+                label={`Max: ${
+                  reward.rewardType === 'cash' ? `${reward.currency} ${requiredAmount}` : `${requiredAmount} items`
+                }`}
                 sx={{
                   bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : 'white',
                   color: theme.palette.primary.main,
@@ -421,7 +414,7 @@ const GameSponsorDialog = ({
 
         {/* Personal Information Section */}
         <Box sx={{ mb: { xs: 3, sm: 4 } }}>
-          <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: { xs: 2.5, sm: 3 } }}>
+          <Stack direction='row' alignItems='center' spacing={1.5} sx={{ mb: { xs: 2.5, sm: 3 } }}>
             <Box
               sx={{
                 width: { xs: 32, sm: 36 },
@@ -436,7 +429,7 @@ const GameSponsorDialog = ({
               <Person sx={{ fontSize: { xs: 18, sm: 20 }, color: theme.palette.primary.main }} />
             </Box>
             <Typography
-              variant="subtitle1"
+              variant='subtitle1'
               fontWeight={700}
               sx={{
                 color: 'text.primary',
@@ -478,20 +471,16 @@ const GameSponsorDialog = ({
                 }}
               >
                 <InputLabel>Sponsor Type *</InputLabel>
-                <Select
-                  value={sponsorerType}
-                  onChange={e => setSponsorerType(e.target.value)}
-                  label="Sponsor Type *"
-                >
-                  <MenuItem value="individual">
-                    <Stack direction="row" alignItems="center" spacing={1.5}>
-                      <Person fontSize="small" sx={{ color: theme.palette.primary.main }} />
+                <Select value={sponsorerType} onChange={e => setSponsorerType(e.target.value)} label='Sponsor Type *'>
+                  <MenuItem value='individual'>
+                    <Stack direction='row' alignItems='center' spacing={1.5}>
+                      <Person fontSize='small' sx={{ color: theme.palette.primary.main }} />
                       <span>Individual</span>
                     </Stack>
                   </MenuItem>
-                  <MenuItem value="organization">
-                    <Stack direction="row" alignItems="center" spacing={1.5}>
-                      <Business fontSize="small" sx={{ color: theme.palette.primary.main }} />
+                  <MenuItem value='organization'>
+                    <Stack direction='row' alignItems='center' spacing={1.5}>
+                      <Business fontSize='small' sx={{ color: theme.palette.primary.main }} />
                       <span>Organization</span>
                     </Stack>
                   </MenuItem>
@@ -502,13 +491,13 @@ const GameSponsorDialog = ({
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Full Name *"
-                name="fullname"
+                label='Full Name *'
+                name='fullname'
                 value={formData.fullname}
                 onChange={handleChange}
                 error={!!errors.fullname}
                 helperText={errors.fullname}
-                placeholder="Enter your full name"
+                placeholder='Enter your full name'
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     backgroundColor: isDarkMode ? alpha(theme.palette.background.default, 0.6) : 'white',
@@ -543,12 +532,12 @@ const GameSponsorDialog = ({
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Email *"
-                name="email"
-                type="email"
+                label='Email *'
+                name='email'
+                type='email'
                 value={formData.email}
                 onChange={handleChange}
-                placeholder="your@email.com"
+                placeholder='your@email.com'
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     backgroundColor: isDarkMode ? alpha(theme.palette.background.default, 0.6) : 'white',
@@ -579,13 +568,13 @@ const GameSponsorDialog = ({
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Mobile Number *"
-                name="mobileNumber"
+                label='Mobile Number *'
+                name='mobileNumber'
                 value={formData.mobileNumber}
                 onChange={handleChange}
                 error={!!errors.mobileNumber}
                 helperText={errors.mobileNumber || '10-digit Indian mobile'}
-                placeholder="98XXXXXXXX"
+                placeholder='98XXXXXXXX'
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     backgroundColor: isDarkMode ? alpha(theme.palette.background.default, 0.6) : 'white',
@@ -622,7 +611,7 @@ const GameSponsorDialog = ({
         {/* Organization Fields */}
         {sponsorerType === 'organization' && (
           <Box sx={{ mb: { xs: 3, sm: 4 } }}>
-            <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: { xs: 2.5, sm: 3 } }}>
+            <Stack direction='row' alignItems='center' spacing={1.5} sx={{ mb: { xs: 2.5, sm: 3 } }}>
               <Box
                 sx={{
                   width: { xs: 32, sm: 36 },
@@ -642,7 +631,7 @@ const GameSponsorDialog = ({
                 />
               </Box>
               <Typography
-                variant="subtitle1"
+                variant='subtitle1'
                 fontWeight={700}
                 sx={{
                   color: 'text.primary',
@@ -657,13 +646,13 @@ const GameSponsorDialog = ({
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Organization Name *"
-                  name="orgName"
+                  label='Organization Name *'
+                  name='orgName'
                   value={formData.orgName}
                   onChange={handleChange}
                   error={!!errors.orgName}
                   helperText={errors.orgName}
-                  placeholder="Enter organization name"
+                  placeholder='Enter organization name'
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       backgroundColor: isDarkMode ? alpha(theme.palette.background.default, 0.6) : 'white',
@@ -698,13 +687,13 @@ const GameSponsorDialog = ({
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Website *"
-                  name="website"
+                  label='Website *'
+                  name='website'
                   value={formData.website}
                   onChange={handleChange}
                   error={!!errors.website}
                   helperText={errors.website}
-                  placeholder="https://example.com"
+                  placeholder='https://example.com'
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       backgroundColor: isDarkMode ? alpha(theme.palette.background.default, 0.6) : 'white',
@@ -766,17 +755,12 @@ const GameSponsorDialog = ({
                   }}
                 >
                   <InputLabel>Organization Type *</InputLabel>
-                  <Select
-                    name="orgType"
-                    value={formData.orgType}
-                    onChange={handleChange}
-                    label="Organization Type *"
-                  >
-                    <MenuItem value="corporate">Corporate</MenuItem>
-                    <MenuItem value="ngo">NGO</MenuItem>
-                    <MenuItem value="educational">Educational Institution</MenuItem>
-                    <MenuItem value="government">Government</MenuItem>
-                    <MenuItem value="other">Other</MenuItem>
+                  <Select name='orgType' value={formData.orgType} onChange={handleChange} label='Organization Type *'>
+                    <MenuItem value='corporate'>Corporate</MenuItem>
+                    <MenuItem value='ngo'>NGO</MenuItem>
+                    <MenuItem value='educational'>Educational Institution</MenuItem>
+                    <MenuItem value='government'>Government</MenuItem>
+                    <MenuItem value='other'>Other</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
@@ -786,7 +770,7 @@ const GameSponsorDialog = ({
 
         {/* Sponsorship Details Section */}
         <Box>
-          <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: { xs: 2.5, sm: 3 } }}>
+          <Stack direction='row' alignItems='center' spacing={1.5} sx={{ mb: { xs: 2.5, sm: 3 } }}>
             <Box
               sx={{
                 width: { xs: 32, sm: 36 },
@@ -801,7 +785,7 @@ const GameSponsorDialog = ({
               <EmojiEvents sx={{ fontSize: { xs: 18, sm: 20 }, color: theme.palette.warning.main }} />
             </Box>
             <Typography
-              variant="subtitle1"
+              variant='subtitle1'
               fontWeight={700}
               sx={{
                 color: 'text.primary',
@@ -818,9 +802,9 @@ const GameSponsorDialog = ({
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label="Sponsorship Amount (INR) *"
-                  name="sponsorshipAmount"
-                  type="number"
+                  label='Sponsorship Amount (INR) *'
+                  name='sponsorshipAmount'
+                  type='number'
                   value={formData.sponsorshipAmount}
                   onChange={handleChange}
                   error={!!errors.sponsorshipAmount}
@@ -882,13 +866,13 @@ const GameSponsorDialog = ({
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
-                    label="Item Description *"
-                    name="nonCashItem"
+                    label='Item Description *'
+                    name='nonCashItem'
                     value={formData.nonCashItem}
                     onChange={handleChange}
                     error={!!errors.nonCashItem}
                     helperText={errors.nonCashItem}
-                    placeholder="E.g., Laptop, Tablet, Books"
+                    placeholder='E.g., Laptop, Tablet, Books'
                     sx={{
                       '& .MuiOutlinedInput-root': {
                         backgroundColor: isDarkMode ? alpha(theme.palette.background.default, 0.6) : 'white',
@@ -939,15 +923,15 @@ const GameSponsorDialog = ({
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label="Quantity *"
-                    name="numberOfNonCashItems"
-                    type="number"
+                    label='Quantity *'
+                    name='numberOfNonCashItems'
+                    type='number'
                     value={formData.numberOfNonCashItems}
                     onChange={handleChange}
                     error={!!errors.numberOfNonCashItems}
                     helperText={errors.numberOfNonCashItems || `Maximum: ${requiredAmount} items`}
                     inputProps={{ min: 1, max: requiredAmount }}
-                    placeholder="Number of items"
+                    placeholder='Number of items'
                     sx={{
                       '& .MuiOutlinedInput-root': {
                         backgroundColor: isDarkMode ? alpha(theme.palette.background.default, 0.6) : 'white',
@@ -982,15 +966,15 @@ const GameSponsorDialog = ({
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label="Value per Item (INR) *"
-                    name="rewardValuePerItem"
-                    type="number"
+                    label='Value per Item (INR) *'
+                    name='rewardValuePerItem'
+                    type='number'
                     value={formData.rewardValuePerItem}
                     onChange={handleChange}
                     error={!!errors.rewardValuePerItem}
                     helperText={errors.rewardValuePerItem}
                     inputProps={{ min: 1 }}
-                    placeholder="Value in INR"
+                    placeholder='Value in INR'
                     sx={{
                       '& .MuiOutlinedInput-root': {
                         backgroundColor: isDarkMode ? alpha(theme.palette.background.default, 0.6) : 'white',
@@ -1025,13 +1009,13 @@ const GameSponsorDialog = ({
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
-                    label="Reward Description (Optional)"
-                    name="rewardDescription"
+                    label='Reward Description (Optional)'
+                    name='rewardDescription'
                     value={formData.rewardDescription}
                     onChange={handleChange}
                     multiline
                     rows={3}
-                    placeholder="Additional details about the reward"
+                    placeholder='Additional details about the reward'
                     sx={{
                       '& .MuiOutlinedInput-root': {
                         backgroundColor: isDarkMode ? alpha(theme.palette.background.default, 0.6) : 'white',
@@ -1068,9 +1052,7 @@ const GameSponsorDialog = ({
         sx={{
           p: { xs: 2.5, sm: 3, md: 4 },
           pt: { xs: 2, sm: 2.5, md: 3 },
-          bgcolor: isDarkMode
-            ? alpha(theme.palette.background.default, 0.6)
-            : alpha(theme.palette.grey[50], 0.8),
+          bgcolor: isDarkMode ? alpha(theme.palette.background.default, 0.6) : alpha(theme.palette.grey[50], 0.8),
           borderTop: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.1)}`,
           gap: { xs: 1.5, sm: 2 },
           flexDirection: { xs: 'column-reverse', sm: 'row' }
@@ -1108,7 +1090,7 @@ const GameSponsorDialog = ({
         </Button>
         <Button
           onClick={handleSubmit}
-          variant="contained"
+          variant='contained'
           disabled={loading}
           component='label'
           fullWidth={isMobile}
@@ -1135,8 +1117,10 @@ const GameSponsorDialog = ({
               <CircularProgress size={18} sx={{ mr: 1, color: 'white' }} />
               Processing...
             </>
+          ) : rewardType === REWARD_TYPES.CASH ? (
+            'Proceed to Payment'
           ) : (
-            rewardType === REWARD_TYPES.CASH ? 'Proceed to Payment' : 'Submit Sponsorship'
+            'Submit Sponsorship'
           )}
         </Button>
       </DialogActions>
