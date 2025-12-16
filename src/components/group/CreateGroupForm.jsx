@@ -344,6 +344,9 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null, showHeader = true })
   return (
     <Box
       sx={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
         background: `radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 50%),
                      radial-gradient(circle at 80% 80%, ${alpha(
                        theme.palette.secondary.main,
@@ -423,7 +426,7 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null, showHeader = true })
       </Box>}
 
       {/* Main Content */}
-      <Box sx={{ maxWidth: '1200px', margin: '0 auto', px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 } }}>
+      <Box sx={{ margin: '0 auto', px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 }, flex: 1, overflow: 'auto' }}>
         <Card
           sx={{
             borderRadius: 2,

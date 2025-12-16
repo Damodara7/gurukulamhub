@@ -81,8 +81,8 @@ const QuizBuilderView = ({ isAdmin = false }) => {
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#f8f9fa', pb: 6 }}>
-      <TabContext value={activeTab}>
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: '#f8f9fa', pb: 6 }}>
+      <TabContext value={activeTab} >
         {/* Header Section */}
         <Box
           sx={{
@@ -120,7 +120,7 @@ const QuizBuilderView = ({ isAdmin = false }) => {
           </Container>
         </Box>
 
-        <Container maxWidth='xl'>
+        <Box sx={{flex: 1, display: 'flex', flexDirection: 'column'}} >
           {/* Tabs Section */}
           <Box
             sx={{
@@ -176,13 +176,14 @@ const QuizBuilderView = ({ isAdmin = false }) => {
 
           {/* Content Area */}
           <TabPanel value={activeTab}>
+            <Box sx={{flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto'}}>
             {loading ? (
               <Box
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  minHeight: '400px'
+                  flex: 1
                 }}
               >
                 <Stack spacing={2} alignItems='center'>
@@ -460,8 +461,9 @@ const QuizBuilderView = ({ isAdmin = false }) => {
                 </Typography>
               </Box>
             )}
+            </Box>
           </TabPanel>
-        </Container>
+        </Box>
       </TabContext>
     </Box>
   )

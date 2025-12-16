@@ -1,7 +1,7 @@
 // components/Timer.js
 import React, { useEffect } from 'react'
 import { Typography, Box, Stack, LinearProgress, useTheme, alpha } from '@mui/material'
-import AccessTimeFilledIcon from '@mui/icons-material/AccessTimeFilled'
+import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import { keyframes } from '@mui/system'
 
 // Convert time to MM:SS format
@@ -9,6 +9,18 @@ export const formatTime = seconds => {
   const minutes = Math.floor(seconds / 60)
   const remainingSeconds = seconds % 60
   return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`
+}
+
+// Format time with hours if needed
+export const formatTimeExtended = seconds => {
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  const remainingSeconds = seconds % 60
+  
+  if (hours > 0) {
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`
+  }
+  return formatTime(seconds)
 }
 
 export const formatTimeWithUnits = seconds => {
@@ -32,21 +44,17 @@ export const formatTimeWithUnits = seconds => {
 }
 
 const pulse = keyframes`
-  0% {
-    transform: scale(1);
+  0%, 100% {
     opacity: 1;
+    transform: scale(1);
   }
-  70% {
-    transform: scale(1.75);
-    opacity: 0;
-  }
-  100% {
-    transform: scale(1.75);
-    opacity: 0;
+  50% {
+    opacity: 0.7;
+    transform: scale(1.05);
   }
 `
 
-const Timer = ({ isActive, time = 0, setTime = () => {}, totalSeconds = null, label = 'Timer', sx }) => {
+const Timer = ({ isActive, time = 0, setTime = () => {}, totalSeconds = null, label = 'Timer', sx, compact = false }) => {
   const theme = useTheme()
   const isDarkMode = theme.palette.mode === 'dark'
   const hasTotal = typeof totalSeconds === 'number' && totalSeconds > 0
@@ -63,34 +71,132 @@ const Timer = ({ isActive, time = 0, setTime = () => {}, totalSeconds = null, la
     return () => clearInterval(interval)
   }, [isActive, setTime])
 
+  // Compact mode for collapsed header
+  if (compact) {
+    return (
+      <Box
+        sx={{
+          position: 'relative',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: { xs: 1, sm: 1.25 },
+          px: { xs: 1.2, md: 1.5 },
+          py: { xs: 0.75, md: 0.9 },
+          borderRadius: { xs: 1.5, md: 2 },
+          border: `1.5px solid ${alpha(theme.palette.primary.main, isDarkMode ? 0.3 : 0.2)}`,
+          background: isDarkMode
+            ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.15)}, ${alpha(theme.palette.primary.dark, 0.1)})`
+            : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)}, ${alpha(theme.palette.primary.light, 0.05)})`,
+          boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, isDarkMode ? 0.2 : 0.15)}`,
+          backdropFilter: 'blur(10px)',
+          overflow: 'hidden',
+          ...sx
+        }}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: { xs: 28, sm: 32 },
+            height: { xs: 28, sm: 32 },
+            borderRadius: '50%',
+            bgcolor: alpha(theme.palette.primary.main, isDarkMode ? 0.2 : 0.15),
+            color: theme.palette.primary.main,
+            flexShrink: 0,
+            position: 'relative',
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              inset: -2,
+              borderRadius: '50%',
+              border: `1.5px solid ${alpha(theme.palette.primary.main, 0.3)}`,
+              opacity: isActive ? 1 : 0.5,
+              animation: isActive ? `${pulse} 2s ease-in-out infinite` : 'none'
+            }
+          }}
+        >
+          <AccessTimeIcon sx={{ fontSize: { xs: 16, sm: 18 } }} />
+        </Box>
+
+        <Stack spacing={0} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Typography
+            variant='h6'
+            component='p'
+            sx={{
+              fontWeight: 700,
+              letterSpacing: '-0.01em',
+              fontSize: { xs: '1.1rem', sm: '1.25rem' },
+              lineHeight: 1.2,
+              color: theme.palette.text.primary,
+              fontFamily: 'monospace',
+              textAlign: 'center'
+            }}
+            aria-live='polite'
+          >
+            {formatTime(time)}
+          </Typography>
+          {!isActive && (
+            <Typography
+              variant='caption'
+              sx={{
+                color: alpha(theme.palette.text.secondary, 0.7),
+                fontSize: { xs: '0.65rem', sm: '0.7rem' },
+                lineHeight: 1,
+                textAlign: 'center'
+              }}
+            >
+              Paused
+            </Typography>
+          )}
+        </Stack>
+
+        {progress !== null && (
+          <LinearProgress
+            variant='determinate'
+            value={progress}
+            sx={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              width: '100%',
+              height: 2,
+              backgroundColor: 'transparent',
+              '& .MuiLinearProgress-bar': {
+                background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`
+              }
+            }}
+          />
+        )}
+      </Box>
+    )
+  }
+
+  // Full mode for expanded header
   return (
     <Box
       sx={{
         position: 'relative',
         display: 'flex',
         alignItems: 'center',
-        gap: { xs: 1.75, md: 2.5 },
-        px: { xs: 2.2, md: 2.8 },
-        py: { xs: 1.9, md: 2.2 },
-        borderRadius: { xs: 2.2, md: 2.6 },
-        border: `1px solid ${alpha(theme.palette.primary.main, isDarkMode ? 0.25 : 0.12)}`,
+        justifyContent: 'center',
+        gap: { xs: 1.5, sm: 2 },
+        px: { xs: 1.8, sm: 2.2, md: 2.5 },
+        py: { xs: 1.4, sm: 1.6, md: 1.8 },
+        borderRadius: { xs: 2, sm: 2.5 },
+        border: `1.5px solid ${alpha(theme.palette.primary.main, isDarkMode ? 0.25 : 0.15)}`,
         background: isDarkMode
-          ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.2)}, ${alpha(theme.palette.primary.dark, 0.15)})`
-          : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.14)}, ${alpha(theme.palette.primary.dark, 0.08)})`,
-        boxShadow: isDarkMode
-          ? `0 24px 54px ${alpha(theme.palette.primary.main, 0.3)}`
-          : `0 24px 54px ${alpha(theme.palette.primary.main, 0.18)}`,
-        backdropFilter: 'blur(20px)',
+          ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.18)}, ${alpha(theme.palette.primary.dark, 0.12)})`
+          : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.12)}, ${alpha(theme.palette.primary.light, 0.08)})`,
+        boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, isDarkMode ? 0.25 : 0.18)}`,
+        backdropFilter: 'blur(12px)',
         color: theme.palette.text.primary,
         overflow: 'hidden',
-        minWidth: { xs: '100%', sm: 218 },
-        maxWidth: { xs: '100%', sm: 260 },
-        transition: 'transform 0.25s ease, box-shadow 0.25s ease',
+        transition: 'all 0.3s ease',
         '&:hover': {
-          transform: 'translateY(-2px)',
-          boxShadow: isDarkMode
-            ? `0 28px 60px ${alpha(theme.palette.primary.main, 0.35)}`
-            : `0 28px 60px ${alpha(theme.palette.primary.main, 0.22)}`
+          transform: 'translateY(-1px)',
+          boxShadow: `0 6px 20px ${alpha(theme.palette.primary.main, isDarkMode ? 0.3 : 0.22)}`
         },
         ...sx
       }}
@@ -100,9 +206,9 @@ const Timer = ({ isActive, time = 0, setTime = () => {}, totalSeconds = null, la
           position: 'absolute',
           inset: 0,
           background: isDarkMode
-            ? `linear-gradient(160deg, ${alpha(theme.palette.common.white, 0.08)}, transparent)`
-            : `linear-gradient(160deg, ${alpha(theme.palette.common.white, 0.24)}, transparent)`,
-          opacity: 0.7,
+            ? `linear-gradient(135deg, ${alpha(theme.palette.common.white, 0.05)}, transparent)`
+            : `linear-gradient(135deg, ${alpha(theme.palette.common.white, 0.2)}, transparent)`,
+          opacity: 0.6,
           pointerEvents: 'none'
         }}
       />
@@ -110,64 +216,72 @@ const Timer = ({ isActive, time = 0, setTime = () => {}, totalSeconds = null, la
       <Box
         sx={{
           position: 'relative',
-          width: { xs: 48, md: 54 },
-          height: { xs: 48, md: 54 },
+          width: { xs: 44, sm: 48, md: 52 },
+          height: { xs: 44, sm: 48, md: 52 },
           borderRadius: '50%',
-          bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.9) : theme.palette.common.white,
+          bgcolor: alpha(theme.palette.primary.main, isDarkMode ? 0.2 : 0.15),
           color: theme.palette.primary.main,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: `0 18px 40px ${alpha(theme.palette.primary.main, isDarkMode ? 0.35 : 0.25)}`,
+          flexShrink: 0,
+          boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, isDarkMode ? 0.3 : 0.25)}`,
           '&::after': {
             content: '""',
             position: 'absolute',
-            inset: -4,
+            inset: -3,
             borderRadius: '50%',
-            border: `1.5px solid ${alpha(theme.palette.primary.main, isDarkMode ? 0.45 : 0.35)}`,
-            opacity: isActive ? 1 : 0.45,
-            animation: isActive ? `${pulse} 2.6s ease-out infinite` : 'none'
+            border: `1.5px solid ${alpha(theme.palette.primary.main, 0.4)}`,
+            opacity: isActive ? 1 : 0.5,
+            animation: isActive ? `${pulse} 2s ease-in-out infinite` : 'none'
           }
         }}
       >
-        <AccessTimeFilledIcon sx={{ fontSize: { xs: 22, md: 24 } }} />
+        <AccessTimeIcon sx={{ fontSize: { xs: 20, sm: 22, md: 24 } }} />
       </Box>
 
-      <Stack spacing={0.35} sx={{ flex: 1, minWidth: 0, position: 'relative', zIndex: 1 }}>
-        <Stack direction='row' spacing={1} alignItems='center'>
-          <Typography
-            variant='overline'
-            sx={{
-              letterSpacing: '0.12em',
-              color: alpha(theme.palette.text.primary, 0.7),
-              fontWeight: 700
-            }}
-          >
-            {label.toUpperCase()}
-          </Typography>
+      <Stack spacing={0.3} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 1 }}>
+        <Stack direction='row' spacing={0.75} alignItems='center' justifyContent='center' flexWrap='wrap'>
+          {label && (
+            <Typography
+              variant='caption'
+              sx={{
+                letterSpacing: '0.05em',
+                color: alpha(theme.palette.text.primary, 0.7),
+                fontWeight: 600,
+                fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                textTransform: 'uppercase'
+              }}
+            >
+              {label}
+            </Typography>
+          )}
           <Box
             sx={{
-              width: 8,
-              height: 8,
+              width: 6,
+              height: 6,
               borderRadius: '50%',
-              bgcolor: isActive ? theme.palette.success.main : theme.palette.grey[400],
-              boxShadow: `0 0 0 6px ${alpha(
-                isActive ? theme.palette.success.main : theme.palette.grey[400],
-                0.12
-              )}`
+              bgcolor: isActive ? theme.palette.success.main : theme.palette.grey[500],
+              boxShadow: `0 0 0 3px ${alpha(
+                isActive ? theme.palette.success.main : theme.palette.grey[500],
+                0.2
+              )}`,
+              animation: isActive ? `${pulse} 2s ease-in-out infinite` : 'none'
             }}
           />
         </Stack>
 
         <Typography
-          variant='h4'
+          variant='h5'
           component='p'
           sx={{
-            fontWeight: 800,
-            letterSpacing: '-0.02em',
-            fontSize: { xs: '1.85rem', md: '2.2rem' },
-            lineHeight: 1.05,
-            color: theme.palette.text.primary
+            fontWeight: 700,
+            letterSpacing: '-0.01em',
+            fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
+            lineHeight: 1.1,
+            color: theme.palette.text.primary,
+            fontFamily: 'monospace',
+            textAlign: 'center'
           }}
           aria-live='polite'
         >
@@ -175,14 +289,16 @@ const Timer = ({ isActive, time = 0, setTime = () => {}, totalSeconds = null, la
         </Typography>
 
         <Typography
-          variant='body2'
+          variant='caption'
           sx={{
-            color: alpha(theme.palette.text.primary, 0.65),
-            fontWeight: 500
+            color: alpha(theme.palette.text.secondary, 0.7),
+            fontWeight: 500,
+            fontSize: { xs: '0.7rem', sm: '0.75rem' },
+            textAlign: 'center'
           }}
         >
-          {isActive ? 'Counting up' : 'Paused'}
-          {remaining !== null ? ` • ${formatTimeWithUnits(remaining)} left` : ''}
+          {isActive ? 'Running' : 'Paused'}
+          {remaining !== null && ` • ${formatTime(remaining)} remaining`}
         </Typography>
       </Stack>
 
@@ -195,12 +311,11 @@ const Timer = ({ isActive, time = 0, setTime = () => {}, totalSeconds = null, la
             bottom: 0,
             left: 0,
             width: '100%',
-            height: 4,
-            borderRadius: '0 0 14px 14px',
-            backgroundColor: alpha(theme.palette.common.white, 0.3),
+            height: 3,
+            backgroundColor: 'transparent',
             '& .MuiLinearProgress-bar': {
-              borderRadius: '0 0 14px 14px',
-              background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`
+              background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+              borderRadius: '0 0 8px 8px'
             }
           }}
         />

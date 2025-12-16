@@ -81,7 +81,7 @@ const StartPlayGame = ({ game }) => {
     gameMode === 'live' ? (forwardType === 'auto' ? PlayGameQuiz : AdminForwardPlayGame) : AssessmentPlayGameQuiz
 
   return (
-    <Box p={4} height='100%'>
+    <Box p={4} sx={{ flex: 1, height: '100%', display: 'flex', flexDirection: 'column', }}>
       <PlayGameQuizByMode quiz={quiz} questions={questions} game={data} />
     </Box>
   )

@@ -155,7 +155,7 @@ export default function QuizCardList({ isAdmin = false }) {
   }
 
   return (
-    <Box>
+    <Box sx={{width: '100%'}}>
       {selectedQuizIds.length > 0 && (
         <Box
           sx={{

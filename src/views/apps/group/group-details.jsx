@@ -11,7 +11,8 @@ import {
   Paper,
   Button,
   useTheme,
-  alpha
+  alpha,
+  IconButton
 } from '@mui/material'
 import {
   Group as GroupIcon,
@@ -22,7 +23,9 @@ import {
   OpenInNew as OpenInNewIcon,
   Campaign as CampaignIcon,
   Public as PublicIcon,
-  Lock as LockIcon
+  Lock as LockIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon
 } from '@mui/icons-material'
 import { format } from 'date-fns'
 import { useRouter } from 'next/navigation'
@@ -33,6 +36,7 @@ const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
   const router = useRouter()
   const { data: session } = useSession()
   const theme = useTheme()
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = React.useState(false)
 
   // Check if current user is admin of this group
   const isAdmin = session?.user?.email === groupData?.creatorEmail
@@ -123,7 +127,9 @@ const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
         background: `radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 50%),
                      radial-gradient(circle at 80% 80%, ${alpha(
                        theme.palette.secondary.main,
@@ -141,154 +147,172 @@ const GroupDetailsPage = ({ groupId, groupData, gamesData = [] }) => {
               ? alpha(theme.palette.background.paper, 0.8)
               : alpha(theme.palette.background.paper, 0.7),
           borderBottom: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
-          pt: { xs: 4, md: 6 },
-          pb: { xs: 4, md: 6 }
+          pt: isHeaderCollapsed ? { xs: 1, sm: 1.25, md: 1.5 } : { xs: 1.5, sm: 2, md: 2.5 },
+          pb: isHeaderCollapsed ? { xs: 1, sm: 1.25, md: 1.5 } : { xs: 1.5, sm: 2, md: 2.5 },
+          transition: 'all 0.3s ease'
         }}
       >
-        <Box sx={{ maxWidth: '1200px', margin: '0 auto', px: { xs: 2, sm: 3, md: 4 } }}>
-          <Box sx={{ textAlign: 'center' }}>
+        <Box sx={{ px: { xs: 2, sm: 3, md: 4 } }}>
+          <Box >
             {/* Icon and Title */}
             <Box
               sx={{
+                width: '100%',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                gap: 2,
-                mb: 2,
-                width: '100%',
-                flexWrap: { xs: 'wrap', sm: 'nowrap' }
+                gap: { xs: 1, sm: 1.25 },
+                mb: isHeaderCollapsed ? 0 : { xs: 1, sm: 1.5 },
+                flexWrap: 'nowrap'
               }}
             >
               <Box
                 sx={{
-                  width: { xs: 48, sm: 56 },
-                  height: { xs: 48, sm: 56 },
-                  borderRadius: '12px',
+                  width: { xs: 36, sm: 40, md: 44 },
+                  height: { xs: 36, sm: 40, md: 44 },
+                  borderRadius: { xs: '10px', sm: '12px' },
                   background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`,
+                  boxShadow: `0 3px 10px ${alpha(theme.palette.primary.main, 0.25)}`,
                   flexShrink: 0
                 }}
               >
-                <GroupIcon sx={{ fontSize: '28px', color: 'white' }} />
+                <GroupIcon sx={{ fontSize: { xs: 20, sm: 22, md: 24 }, color: 'white' }} />
               </Box>
               <Typography
                 sx={{
-                  fontSize: { xs: '1.25rem', sm: '1.5rem', md: '2.5rem' },
+                  fontSize: { xs: '1.1rem', sm: '1.3rem', md: '1.6rem' },
                   fontWeight: 700,
                   background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
-                  letterSpacing: '-0.02em',
+                  letterSpacing: '-0.01em',
                   lineHeight: 1.3,
-                  textAlign: 'center',
-                  maxWidth: { xs: 'calc(100% - 80px)', sm: 'calc(100% - 100px)', md: '800px' },
                   minWidth: 0,
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   display: '-webkit-box',
-                  WebkitLineClamp: 2,
+                  WebkitLineClamp: isHeaderCollapsed ? 1 : 2,
                   WebkitBoxOrient: 'vertical',
-                  wordBreak: 'break-word'
+                  wordBreak: 'break-word',
+                  textAlign: 'left',
+                  flex: 1
                 }}
                 title={groupData?.groupName || 'Group Details'}
               >
                 {groupData?.groupName || 'Group Details'}
               </Typography>
-            </Box>
-            {groupData?.description && (
-              <Typography
-                variant='body1'
-                color='text.secondary'
+              <IconButton
+                onClick={() => setIsHeaderCollapsed(!isHeaderCollapsed)}
+                size="small"
                 sx={{
-                  fontSize: { xs: '0.875rem', sm: '0.9375rem', md: '1.05rem' },
-                  lineHeight: { xs: 1.5, sm: 1.6, md: 1.8 },
-                  width: { xs: '100%', sm: '70%' },
-                  mx: 'auto',
-                  fontWeight: 400,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  maxWidth: '100%'
+                  color: 'text.secondary',
+                  flexShrink: 0,
+                  ml: 'auto',
+                  '&:hover': {
+                    bgcolor: alpha(theme.palette.primary.main, 0.1),
+                    color: 'text.primary'
+                  }
                 }}
               >
-                {groupData.description}
-              </Typography>
-            )}
-            {/* Group Status and Announcement Mode */}
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 1,
-                mt: 2,
-                flexWrap: 'wrap'
-              }}
-            >
-              {groupData?.isAnnouncementOnly && (
-                <Chip
-                  icon={<CampaignIcon sx={{ fontSize: { xs: 14, sm: 16 } }} />}
-                  label='Announcement Mode'
-                  size='small'
-                  sx={{
-                    height: { xs: 28, sm: 32 },
-                    fontWeight: 600,
-                    fontSize: { xs: '0.75rem', sm: '0.8125rem' },
-                    background: alpha(theme.palette.info.main, 0.12),
-                    color: theme.palette.info.main,
-                    border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`,
-                    '& .MuiChip-icon': {
-                      color: theme.palette.info.main
-                    }
-                  }}
-                />
-              )}
-              {groupData?.status === 'public' ? (
-                <Chip
-                  icon={<PublicIcon sx={{ fontSize: { xs: 14, sm: 16 } }} />}
-                  label='Public'
-                  size='small'
-                  sx={{
-                    height: { xs: 28, sm: 32 },
-                    fontWeight: 600,
-                    fontSize: { xs: '0.75rem', sm: '0.8125rem' },
-                    background: alpha(theme.palette.success.main, 0.12),
-                    color: theme.palette.success.main,
-                    border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
-                    '& .MuiChip-icon': {
-                      color: theme.palette.success.main
-                    }
-                  }}
-                />
-              ) : (
-                <Chip
-                  icon={<LockIcon sx={{ fontSize: { xs: 14, sm: 16 } }} />}
-                  label='Private'
-                  size='small'
-                  sx={{
-                    height: { xs: 28, sm: 32 },
-                    fontWeight: 600,
-                    fontSize: { xs: '0.75rem', sm: '0.8125rem' },
-                    background: alpha(theme.palette.warning.main, 0.12),
-                    color: theme.palette.warning.main,
-                    border: `1px solid ${alpha(theme.palette.warning.main, 0.2)}`,
-                    '& .MuiChip-icon': {
-                      color: theme.palette.warning.main
-                    }
-                  }}
-                />
-              )}
+                {isHeaderCollapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}
+              </IconButton>
             </Box>
+            {!isHeaderCollapsed && (
+              <>
+                {groupData?.description && (
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                    sx={{
+                      fontSize: { xs: '0.8rem', sm: '0.875rem', md: '0.9375rem' },
+                      lineHeight: { xs: 1.4, sm: 1.5, md: 1.6 },
+                      fontWeight: 400,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      maxWidth: '100%',
+                      mb: { xs: 1, sm: 1.25 }
+                    }}
+                  >
+                    {groupData.description}
+                  </Typography>
+                )}
+                {/* Group Status and Announcement Mode */}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'flex-start',
+                    gap: { xs: 0.75, sm: 1 },
+                    mt: { xs: 1, sm: 1.25 },
+                    flexWrap: 'wrap'
+                  }}
+                >
+                  {groupData?.isAnnouncementOnly && (
+                    <Chip
+                      icon={<CampaignIcon sx={{ fontSize: { xs: 12, sm: 14 } }} />}
+                      label='Announcement Mode'
+                      size='small'
+                      sx={{
+                        height: { xs: 24, sm: 26 },
+                        fontWeight: 600,
+                        fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                        background: alpha(theme.palette.info.main, 0.12),
+                        color: theme.palette.info.main,
+                        border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`,
+                        '& .MuiChip-icon': {
+                          color: theme.palette.info.main
+                        }
+                      }}
+                    />
+                  )}
+                  {groupData?.status === 'public' ? (
+                    <Chip
+                      icon={<PublicIcon sx={{ fontSize: { xs: 12, sm: 14 } }} />}
+                      label='Public'
+                      size='small'
+                      sx={{
+                        height: { xs: 24, sm: 26 },
+                        fontWeight: 600,
+                        fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                        background: alpha(theme.palette.success.main, 0.12),
+                        color: theme.palette.success.main,
+                        border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
+                        '& .MuiChip-icon': {
+                          color: theme.palette.success.main
+                        }
+                      }}
+                    />
+                  ) : (
+                    <Chip
+                      icon={<LockIcon sx={{ fontSize: { xs: 12, sm: 14 } }} />}
+                      label='Private'
+                      size='small'
+                      sx={{
+                        height: { xs: 24, sm: 26 },
+                        fontWeight: 600,
+                        fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                        background: alpha(theme.palette.warning.main, 0.12),
+                        color: theme.palette.warning.main,
+                        border: `1px solid ${alpha(theme.palette.warning.main, 0.2)}`,
+                        '& .MuiChip-icon': {
+                          color: theme.palette.warning.main
+                        }
+                      }}
+                    />
+                  )}
+                </Box>
+              </>
+            )}
           </Box>
         </Box>
       </Box>
 
       {/* Main Content */}
-      <Box sx={{ maxWidth: '1200px', margin: '0 auto', px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 } }}>
+      <Box sx={{ px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 }, flex: 1, overflow: 'auto' }}>
         {/* Filters Section */}
         <Card
           sx={{

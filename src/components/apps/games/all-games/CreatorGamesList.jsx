@@ -159,11 +159,6 @@ const CreatorGameList = ({ games = [], loading = false, onRefresh, setGames, isS
         <FallBackCard content='No games found.' path='/' btnText='Back To Home Page' />
       ) : (
         <Box
-          sx={{
-            maxHeight: { xs: 'calc(100vh - 170px)', sm: 'none' },
-            overflowY: { xs: 'auto', sm: 'visible' },
-            overflowX: 'hidden'
-          }}
         >
           <Grid container spacing={{ xs: 2, sm: 3, md: 4 }}>
             {gamesToUse.map(game => (

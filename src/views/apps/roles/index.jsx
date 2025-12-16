@@ -51,7 +51,11 @@ const Roles = ({}) => {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: 0,
+        overflow: 'hidden',
         background: `radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 50%),
                      radial-gradient(circle at 80% 80%, ${alpha(
                        theme.palette.secondary.main,
@@ -70,7 +74,7 @@ const Roles = ({}) => {
           pb: { xs: 4, md: 6 }
         }}
       >
-        <Container maxWidth='lg'>
+        <Box>
           <Box sx={{ textAlign: 'center' }}>
             {/* Icon and Title */}
             <Box
@@ -122,11 +126,12 @@ const Roles = ({}) => {
               Define roles to control access to menus and features for your administrators
             </Typography>
           </Box>
-        </Container>
+        </Box>
       </Box>
 
       {/* Content Area */}
-      <Container maxWidth='lg' sx={{ py: { xs: 3, md: 4 } }}>
+      <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', p: { xs: 3, md: 4 } }}>
+        <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden' }}>
         <Grid container spacing={{ xs: 3, sm: 4, md: 6 }}>
           {/* Role Cards Section */}
           <Grid item xs={12}>
@@ -165,7 +170,8 @@ const Roles = ({}) => {
             <RolesTable tableData={users} refreshUsers={refreshUsers} />
           </Grid>
         </Grid>
-      </Container>
+        </Box>
+      </Box>
     </Box>
   )
 }

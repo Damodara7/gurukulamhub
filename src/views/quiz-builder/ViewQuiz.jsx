@@ -154,7 +154,7 @@ function ViewQuiz({ quiz, isAdmin = false }) {
   console.log('Secondary questions:', secQuestions)
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: theme.palette.background.default, pb: 6 }}>
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: theme.palette.background.default, pb: 6 }}>
       {/* Header Section */}
       <Box
         sx={{
@@ -248,7 +248,7 @@ function ViewQuiz({ quiz, isAdmin = false }) {
         </Container>
       </Box>
 
-      <Container maxWidth='xl'>
+      <Box sx={{flex: 1, overflow: 'auto'}}>
         <Stack spacing={4}>
           {/* Quiz Details */}
           <QuizDetails quiz={quizData} />
@@ -564,7 +564,7 @@ function ViewQuiz({ quiz, isAdmin = false }) {
             </Grid>
           </Grid>
         </Stack>
-      </Container>
+      </Box>
     </Box>
   )
 }

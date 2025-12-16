@@ -1,8 +1,11 @@
 import React from 'react'
 import PlayPublicQuiz from '@/views/publicquiz/PlayPublicQuiz'
+import { Box } from '@mui/material'
 
 function page({ params, searchParams }) {
-  return <PlayPublicQuiz quizId={params.quizId} languageCode={searchParams?.languageCode} />
+  return <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <PlayPublicQuiz quizId={params.quizId} languageCode={searchParams?.languageCode} />
+  </Box>
 }
 
 export default page

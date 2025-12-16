@@ -45,7 +45,7 @@ const GameDetailsPage = () => {
     return (
       <Box
         sx={{
-          minHeight: '100vh',
+          flex: 1,
           bgcolor: theme.palette.background.default,
           display: 'flex',
           alignItems: 'center',
@@ -61,8 +61,8 @@ const GameDetailsPage = () => {
   if (error || !game) {
     return (
       <Box
-        sx={{
-          minHeight: '100vh',
+          sx={{
+            flex: 1,
           bgcolor: theme.palette.background.default,
           display: 'flex',
           alignItems: 'center',

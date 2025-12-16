@@ -51,7 +51,11 @@ const GeoRoles = ({}) => {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: 0,
+        overflow: 'hidden',
         background: `radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 50%),
                      radial-gradient(circle at 80% 80%, ${alpha(
                        theme.palette.secondary.main,
@@ -126,46 +130,48 @@ const GeoRoles = ({}) => {
       </Box>
 
       {/* Content Area */}
-      <Container maxWidth='lg' sx={{ py: { xs: 3, md: 4 } }}>
-        <Grid container spacing={{ xs: 3, sm: 4, md: 6 }}>
-          {/* Geo-Role Cards Section */}
-          <Grid item xs={12}>
-            <GeoRoleCards />
-          </Grid>
+      <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', p: { xs: 3, md: 4 } }}>
+        <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden' }}>
+          <Grid container spacing={{ xs: 3, sm: 4, md: 6 }}>
+            {/* Geo-Role Cards Section */}
+            <Grid item xs={12}>
+              <GeoRoleCards />
+            </Grid>
 
-          {/* Users Table Section */}
-          <Grid item xs={12}>
-            <Box
-              sx={{
-                background: theme.palette.background.paper,
-                borderRadius: 3,
-                p: { xs: 3, sm: 4 },
-                boxShadow: theme => theme.shadows[2],
-                border: theme => `1px solid ${alpha(theme.palette.divider, 0.08)}`,
-                mb: 3
-              }}
-            >
-              <Typography
-                variant='h5'
+            {/* Users Table Section */}
+            <Grid item xs={12}>
+              <Box
                 sx={{
-                  fontWeight: 700,
-                  mb: 1,
-                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text'
+                  background: theme.palette.background.paper,
+                  borderRadius: 3,
+                  p: { xs: 3, sm: 4 },
+                  boxShadow: theme => theme.shadows[2],
+                  border: theme => `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+                  mb: 3
                 }}
               >
-                Users with Geographical Roles
-              </Typography>
-              <Typography variant='body2' color='text.secondary'>
-                View and manage all accounts with location-based role assignments
-              </Typography>
-            </Box>
-            <GeoRolesTable tableData={users} refreshUsers={refreshUsers} />
+                <Typography
+                  variant='h5'
+                  sx={{
+                    fontWeight: 700,
+                    mb: 1,
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text'
+                  }}
+                >
+                  Users with Geographical Roles
+                </Typography>
+                <Typography variant='body2' color='text.secondary'>
+                  View and manage all accounts with location-based role assignments
+                </Typography>
+              </Box>
+              <GeoRolesTable tableData={users} refreshUsers={refreshUsers} />
+            </Grid>
           </Grid>
-        </Grid>
-      </Container>
+        </Box>
+      </Box>
     </Box>
   )
 }

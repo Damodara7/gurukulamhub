@@ -402,6 +402,11 @@ const AdminApprovedQuizzesTable = ({ data, refreshData }) => {
   return (
     <Card
       sx={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        minHeight: 0,
         borderRadius: { xs: 2, sm: '16px' },
         boxShadow: theme.palette.mode === 'dark' ? '0 4px 20px rgba(0, 0, 0, 0.4)' : '0 4px 20px rgba(0, 0, 0, 0.08)',
         border: `2px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
@@ -464,7 +469,7 @@ const AdminApprovedQuizzesTable = ({ data, refreshData }) => {
           }}
         />
       </CardContent>
-      <CardContent sx={{ px: { xs: 1.5, sm: 3 }, pb: { xs: 2, sm: 3 } }}>
+      <CardContent sx={{ px: { xs: 1.5, sm: 3 }, pb: { xs: 2, sm: 3 }, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
         {filteredRows.length === 0 ? (
           <Box
             sx={{
@@ -485,7 +490,7 @@ const AdminApprovedQuizzesTable = ({ data, refreshData }) => {
         ) : isMobile ? (
           <Box
             sx={{
-              maxHeight: 'calc(100vh - 200px)',
+              flex: 1,
               overflowY: 'auto',
               pr: 1,
               '&::-webkit-scrollbar': {
@@ -662,113 +667,951 @@ const AdminApprovedQuizzesTable = ({ data, refreshData }) => {
             </Stack>
           </Box>
         ) : (
-          <div className='overflow-x-auto'>
-            <table className={tableStyles.table}>
-              <thead>
-                {table.getHeaderGroups().map(headerGroup => (
-                  <tr key={headerGroup.id}>
-                    {headerGroup.headers.map(header => (
-                      <th key={header.id}>
-                        {header.isPlaceholder ? null : (
-                          <div
-                            className={classnames({
-                              'flex items-center': header.column.getIsSorted(),
-                              'cursor-pointer select-none': header.column.getCanSort()
-                            })}
-                            onClick={header.column.getToggleSortingHandler()}
-                          >
-                            {flexRender(header.column.columnDef.header, header.getContext())}
-                            {{
-                              asc: <i className='ri-arrow-up-s-line text-xl' />,
-                              desc: <i className='ri-arrow-down-s-line text-xl' />
-                            }[header.column.getIsSorted()] ?? null}
-                          </div>
-                        )}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead>
-              <tbody>
-                {filteredRows.length === 0 ? (
-                  <tr>
-                    <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
-                      <Box
-                        sx={{
-                          padding: '48px 16px',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          gap: '12px'
-                        }}
-                      >
-                        <i className='ri-quiz-line' style={{ fontSize: 48, opacity: 0.5 }} />
-                        <Typography variant='h6' color='text.secondary'>
-                          No quizzes found
-                        </Typography>
-                        <Typography variant='body2' color='text.disabled'>
-                          Try adjusting your search or filter criteria
-                        </Typography>
-                      </Box>
-                    </td>
-                  </tr>
-                ) : (
-                  filteredRows
-                    .slice(
-                      table.getState().pagination.pageIndex * table.getState().pagination.pageSize,
-                      (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize
-                    )
-                    .map((row, index) => (
-                      <tr
-                        key={row.id}
-                        className={classnames({ selected: row.getIsSelected() })}
-                        style={{
-                          background: row.getIsSelected()
-                            ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.15)} 0%, ${alpha(
-                                theme.palette.success.dark,
-                                0.15
-                              )} 100%)`
-                            : index % 2 === 0
-                              ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.03)} 0%, ${alpha(
+          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+            <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'auto', minHeight: 0 }}>
+              <table className={tableStyles.table}>
+                <thead style={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: theme.palette.background.paper }}>
+                  {table.getHeaderGroups().map(headerGroup => (
+                    <tr key={headerGroup.id}>
+                      {headerGroup.headers.map(header => (
+                        <th key={header.id}>
+                          {header.isPlaceholder ? null : (
+                            <div
+                              className={classnames({
+                                'flex items-center': header.column.getIsSorted(),
+                                'cursor-pointer select-none': header.column.getCanSort()
+                              })}
+                              onClick={header.column.getToggleSortingHandler()}
+                            >
+                              {flexRender(header.column.columnDef.header, header.getContext())}
+                              {{
+                                asc: <i className='ri-arrow-up-s-line text-xl' />,
+                                desc: <i className='ri-arrow-down-s-line text-xl' />
+                              }[header.column.getIsSorted()] ?? null}
+                            </div>
+                          )}
+                        </th>
+                      ))}
+                    </tr>
+                  ))}
+                </thead>
+                <tbody>
+                  {filteredRows.length === 0 ? (
+                    <tr>
+                      <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
+                        <Box
+                          sx={{
+                            padding: '48px 16px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '12px'
+                          }}
+                        >
+                          <i className='ri-quiz-line' style={{ fontSize: 48, opacity: 0.5 }} />
+                          <Typography variant='h6' color='text.secondary'>
+                            No quizzes found
+                          </Typography>
+                          <Typography variant='body2' color='text.disabled'>
+                            Try adjusting your search or filter criteria
+                          </Typography>
+                        </Box>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredRows
+                      .slice(
+                        table.getState().pagination.pageIndex * table.getState().pagination.pageSize,
+                        (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize
+                      )
+                      .map((row, index) => (
+                        <tr
+                          key={row.id}
+                          className={classnames({ selected: row.getIsSelected() })}
+                          style={{
+                            background: row.getIsSelected()
+                              ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.15)} 0%, ${alpha(
                                   theme.palette.success.dark,
-                                  0.03
+                                  0.15
                                 )} 100%)`
-                              : theme.palette.mode === 'dark'
-                                ? theme.palette.background.default
-                                : theme.palette.background.paper,
-                          borderLeft: '3px solid transparent'
-                        }}
-                        onMouseEnter={e => {
-                          e.currentTarget.style.background = `linear-gradient(135deg, ${alpha(
-                            theme.palette.success.main,
-                            0.12
-                          )} 0%, ${alpha(theme.palette.success.dark, 0.12)} 100%)`
-                          e.currentTarget.style.borderLeft = `3px solid ${theme.palette.success.main}`
-                        }}
-                        onMouseLeave={e => {
-                          if (!row.getIsSelected()) {
-                            e.currentTarget.style.background =
-                              index % 2 === 0
+                              : index % 2 === 0
                                 ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.03)} 0%, ${alpha(
                                     theme.palette.success.dark,
                                     0.03
                                   )} 100%)`
                                 : theme.palette.mode === 'dark'
                                   ? theme.palette.background.default
-                                  : theme.palette.background.paper
-                            e.currentTarget.style.borderLeft = '3px solid transparent'
-                          }
-                        }}
-                      >
-                        {row.getVisibleCells().map(cell => (
-                          <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
-                        ))}
-                      </tr>
-                    ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                                  : theme.palette.background.paper,
+                            borderLeft: '3px solid transparent'
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.background = `linear-gradient(135deg, ${alpha(
+                              theme.palette.success.main,
+                              0.12
+                            )} 0%, ${alpha(theme.palette.success.dark, 0.12)} 100%)`
+                            e.currentTarget.style.borderLeft = `3px solid ${theme.palette.success.main}`
+                          }}
+                          onMouseLeave={e => {
+                            if (!row.getIsSelected()) {
+                              e.currentTarget.style.background =
+                                index % 2 === 0
+                                  ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.03)} 0%, ${alpha(
+                                      theme.palette.success.dark,
+                                      0.03
+                                    )} 100%)`
+                                  : theme.palette.mode === 'dark'
+                                    ? theme.palette.background.default
+                                    : theme.palette.background.paper
+                              e.currentTarget.style.borderLeft = '3px solid transparent'
+                            }
+                          }}
+                        >
+                          {row.getVisibleCells().map(cell => (
+                            <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                          ))}
+                        </tr>
+                      ))
+                  )}
+                  {filteredRows.length === 0 ? (
+                    <tr>
+                      <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
+                        <Box
+                          sx={{
+                            padding: '48px 16px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '12px'
+                          }}
+                        >
+                          <i className='ri-quiz-line' style={{ fontSize: 48, opacity: 0.5 }} />
+                          <Typography variant='h6' color='text.secondary'>
+                            No quizzes found
+                          </Typography>
+                          <Typography variant='body2' color='text.disabled'>
+                            Try adjusting your search or filter criteria
+                          </Typography>
+                        </Box>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredRows
+                      .slice(
+                        table.getState().pagination.pageIndex * table.getState().pagination.pageSize,
+                        (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize
+                      )
+                      .map((row, index) => (
+                        <tr
+                          key={row.id}
+                          className={classnames({ selected: row.getIsSelected() })}
+                          style={{
+                            background: row.getIsSelected()
+                              ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.15)} 0%, ${alpha(
+                                  theme.palette.success.dark,
+                                  0.15
+                                )} 100%)`
+                              : index % 2 === 0
+                                ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.03)} 0%, ${alpha(
+                                    theme.palette.success.dark,
+                                    0.03
+                                  )} 100%)`
+                                : theme.palette.mode === 'dark'
+                                  ? theme.palette.background.default
+                                  : theme.palette.background.paper,
+                            borderLeft: '3px solid transparent'
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.background = `linear-gradient(135deg, ${alpha(
+                              theme.palette.success.main,
+                              0.12
+                            )} 0%, ${alpha(theme.palette.success.dark, 0.12)} 100%)`
+                            e.currentTarget.style.borderLeft = `3px solid ${theme.palette.success.main}`
+                          }}
+                          onMouseLeave={e => {
+                            if (!row.getIsSelected()) {
+                              e.currentTarget.style.background =
+                                index % 2 === 0
+                                  ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.03)} 0%, ${alpha(
+                                      theme.palette.success.dark,
+                                      0.03
+                                    )} 100%)`
+                                  : theme.palette.mode === 'dark'
+                                    ? theme.palette.background.default
+                                    : theme.palette.background.paper
+                              e.currentTarget.style.borderLeft = '3px solid transparent'
+                            }
+                          }}
+                        >
+                          {row.getVisibleCells().map(cell => (
+                            <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                          ))}
+                        </tr>
+                      ))
+                  )}
+                  {filteredRows.length === 0 ? (
+                    <tr>
+                      <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
+                        <Box
+                          sx={{
+                            padding: '48px 16px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '12px'
+                          }}
+                        >
+                          <i className='ri-quiz-line' style={{ fontSize: 48, opacity: 0.5 }} />
+                          <Typography variant='h6' color='text.secondary'>
+                            No quizzes found
+                          </Typography>
+                          <Typography variant='body2' color='text.disabled'>
+                            Try adjusting your search or filter criteria
+                          </Typography>
+                        </Box>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredRows
+                      .slice(
+                        table.getState().pagination.pageIndex * table.getState().pagination.pageSize,
+                        (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize
+                      )
+                      .map((row, index) => (
+                        <tr
+                          key={row.id}
+                          className={classnames({ selected: row.getIsSelected() })}
+                          style={{
+                            background: row.getIsSelected()
+                              ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.15)} 0%, ${alpha(
+                                  theme.palette.success.dark,
+                                  0.15
+                                )} 100%)`
+                              : index % 2 === 0
+                                ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.03)} 0%, ${alpha(
+                                    theme.palette.success.dark,
+                                    0.03
+                                  )} 100%)`
+                                : theme.palette.mode === 'dark'
+                                  ? theme.palette.background.default
+                                  : theme.palette.background.paper,
+                            borderLeft: '3px solid transparent'
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.background = `linear-gradient(135deg, ${alpha(
+                              theme.palette.success.main,
+                              0.12
+                            )} 0%, ${alpha(theme.palette.success.dark, 0.12)} 100%)`
+                            e.currentTarget.style.borderLeft = `3px solid ${theme.palette.success.main}`
+                          }}
+                          onMouseLeave={e => {
+                            if (!row.getIsSelected()) {
+                              e.currentTarget.style.background =
+                                index % 2 === 0
+                                  ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.03)} 0%, ${alpha(
+                                      theme.palette.success.dark,
+                                      0.03
+                                    )} 100%)`
+                                  : theme.palette.mode === 'dark'
+                                    ? theme.palette.background.default
+                                    : theme.palette.background.paper
+                              e.currentTarget.style.borderLeft = '3px solid transparent'
+                            }
+                          }}
+                        >
+                          {row.getVisibleCells().map(cell => (
+                            <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                          ))}
+                        </tr>
+                      ))
+                  )}
+                  {filteredRows.length === 0 ? (
+                    <tr>
+                      <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
+                        <Box
+                          sx={{
+                            padding: '48px 16px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '12px'
+                          }}
+                        >
+                          <i className='ri-quiz-line' style={{ fontSize: 48, opacity: 0.5 }} />
+                          <Typography variant='h6' color='text.secondary'>
+                            No quizzes found
+                          </Typography>
+                          <Typography variant='body2' color='text.disabled'>
+                            Try adjusting your search or filter criteria
+                          </Typography>
+                        </Box>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredRows
+                      .slice(
+                        table.getState().pagination.pageIndex * table.getState().pagination.pageSize,
+                        (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize
+                      )
+                      .map((row, index) => (
+                        <tr
+                          key={row.id}
+                          className={classnames({ selected: row.getIsSelected() })}
+                          style={{
+                            background: row.getIsSelected()
+                              ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.15)} 0%, ${alpha(
+                                  theme.palette.success.dark,
+                                  0.15
+                                )} 100%)`
+                              : index % 2 === 0
+                                ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.03)} 0%, ${alpha(
+                                    theme.palette.success.dark,
+                                    0.03
+                                  )} 100%)`
+                                : theme.palette.mode === 'dark'
+                                  ? theme.palette.background.default
+                                  : theme.palette.background.paper,
+                            borderLeft: '3px solid transparent'
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.background = `linear-gradient(135deg, ${alpha(
+                              theme.palette.success.main,
+                              0.12
+                            )} 0%, ${alpha(theme.palette.success.dark, 0.12)} 100%)`
+                            e.currentTarget.style.borderLeft = `3px solid ${theme.palette.success.main}`
+                          }}
+                          onMouseLeave={e => {
+                            if (!row.getIsSelected()) {
+                              e.currentTarget.style.background =
+                                index % 2 === 0
+                                  ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.03)} 0%, ${alpha(
+                                      theme.palette.success.dark,
+                                      0.03
+                                    )} 100%)`
+                                  : theme.palette.mode === 'dark'
+                                    ? theme.palette.background.default
+                                    : theme.palette.background.paper
+                              e.currentTarget.style.borderLeft = '3px solid transparent'
+                            }
+                          }}
+                        >
+                          {row.getVisibleCells().map(cell => (
+                            <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                          ))}
+                        </tr>
+                      ))
+                  )}
+                  {filteredRows.length === 0 ? (
+                    <tr>
+                      <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
+                        <Box
+                          sx={{
+                            padding: '48px 16px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '12px'
+                          }}
+                        >
+                          <i className='ri-quiz-line' style={{ fontSize: 48, opacity: 0.5 }} />
+                          <Typography variant='h6' color='text.secondary'>
+                            No quizzes found
+                          </Typography>
+                          <Typography variant='body2' color='text.disabled'>
+                            Try adjusting your search or filter criteria
+                          </Typography>
+                        </Box>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredRows
+                      .slice(
+                        table.getState().pagination.pageIndex * table.getState().pagination.pageSize,
+                        (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize
+                      )
+                      .map((row, index) => (
+                        <tr
+                          key={row.id}
+                          className={classnames({ selected: row.getIsSelected() })}
+                          style={{
+                            background: row.getIsSelected()
+                              ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.15)} 0%, ${alpha(
+                                  theme.palette.success.dark,
+                                  0.15
+                                )} 100%)`
+                              : index % 2 === 0
+                                ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.03)} 0%, ${alpha(
+                                    theme.palette.success.dark,
+                                    0.03
+                                  )} 100%)`
+                                : theme.palette.mode === 'dark'
+                                  ? theme.palette.background.default
+                                  : theme.palette.background.paper,
+                            borderLeft: '3px solid transparent'
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.background = `linear-gradient(135deg, ${alpha(
+                              theme.palette.success.main,
+                              0.12
+                            )} 0%, ${alpha(theme.palette.success.dark, 0.12)} 100%)`
+                            e.currentTarget.style.borderLeft = `3px solid ${theme.palette.success.main}`
+                          }}
+                          onMouseLeave={e => {
+                            if (!row.getIsSelected()) {
+                              e.currentTarget.style.background =
+                                index % 2 === 0
+                                  ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.03)} 0%, ${alpha(
+                                      theme.palette.success.dark,
+                                      0.03
+                                    )} 100%)`
+                                  : theme.palette.mode === 'dark'
+                                    ? theme.palette.background.default
+                                    : theme.palette.background.paper
+                              e.currentTarget.style.borderLeft = '3px solid transparent'
+                            }
+                          }}
+                        >
+                          {row.getVisibleCells().map(cell => (
+                            <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                          ))}
+                        </tr>
+                      ))
+                  )}
+                  {filteredRows.length === 0 ? (
+                    <tr>
+                      <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
+                        <Box
+                          sx={{
+                            padding: '48px 16px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '12px'
+                          }}
+                        >
+                          <i className='ri-quiz-line' style={{ fontSize: 48, opacity: 0.5 }} />
+                          <Typography variant='h6' color='text.secondary'>
+                            No quizzes found
+                          </Typography>
+                          <Typography variant='body2' color='text.disabled'>
+                            Try adjusting your search or filter criteria
+                          </Typography>
+                        </Box>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredRows
+                      .slice(
+                        table.getState().pagination.pageIndex * table.getState().pagination.pageSize,
+                        (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize
+                      )
+                      .map((row, index) => (
+                        <tr
+                          key={row.id}
+                          className={classnames({ selected: row.getIsSelected() })}
+                          style={{
+                            background: row.getIsSelected()
+                              ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.15)} 0%, ${alpha(
+                                  theme.palette.success.dark,
+                                  0.15
+                                )} 100%)`
+                              : index % 2 === 0
+                                ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.03)} 0%, ${alpha(
+                                    theme.palette.success.dark,
+                                    0.03
+                                  )} 100%)`
+                                : theme.palette.mode === 'dark'
+                                  ? theme.palette.background.default
+                                  : theme.palette.background.paper,
+                            borderLeft: '3px solid transparent'
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.background = `linear-gradient(135deg, ${alpha(
+                              theme.palette.success.main,
+                              0.12
+                            )} 0%, ${alpha(theme.palette.success.dark, 0.12)} 100%)`
+                            e.currentTarget.style.borderLeft = `3px solid ${theme.palette.success.main}`
+                          }}
+                          onMouseLeave={e => {
+                            if (!row.getIsSelected()) {
+                              e.currentTarget.style.background =
+                                index % 2 === 0
+                                  ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.03)} 0%, ${alpha(
+                                      theme.palette.success.dark,
+                                      0.03
+                                    )} 100%)`
+                                  : theme.palette.mode === 'dark'
+                                    ? theme.palette.background.default
+                                    : theme.palette.background.paper
+                              e.currentTarget.style.borderLeft = '3px solid transparent'
+                            }
+                          }}
+                        >
+                          {row.getVisibleCells().map(cell => (
+                            <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                          ))}
+                        </tr>
+                      ))
+                  )}
+                  {filteredRows.length === 0 ? (
+                    <tr>
+                      <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
+                        <Box
+                          sx={{
+                            padding: '48px 16px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '12px'
+                          }}
+                        >
+                          <i className='ri-quiz-line' style={{ fontSize: 48, opacity: 0.5 }} />
+                          <Typography variant='h6' color='text.secondary'>
+                            No quizzes found
+                          </Typography>
+                          <Typography variant='body2' color='text.disabled'>
+                            Try adjusting your search or filter criteria
+                          </Typography>
+                        </Box>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredRows
+                      .slice(
+                        table.getState().pagination.pageIndex * table.getState().pagination.pageSize,
+                        (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize
+                      )
+                      .map((row, index) => (
+                        <tr
+                          key={row.id}
+                          className={classnames({ selected: row.getIsSelected() })}
+                          style={{
+                            background: row.getIsSelected()
+                              ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.15)} 0%, ${alpha(
+                                  theme.palette.success.dark,
+                                  0.15
+                                )} 100%)`
+                              : index % 2 === 0
+                                ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.03)} 0%, ${alpha(
+                                    theme.palette.success.dark,
+                                    0.03
+                                  )} 100%)`
+                                : theme.palette.mode === 'dark'
+                                  ? theme.palette.background.default
+                                  : theme.palette.background.paper,
+                            borderLeft: '3px solid transparent'
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.background = `linear-gradient(135deg, ${alpha(
+                              theme.palette.success.main,
+                              0.12
+                            )} 0%, ${alpha(theme.palette.success.dark, 0.12)} 100%)`
+                            e.currentTarget.style.borderLeft = `3px solid ${theme.palette.success.main}`
+                          }}
+                          onMouseLeave={e => {
+                            if (!row.getIsSelected()) {
+                              e.currentTarget.style.background =
+                                index % 2 === 0
+                                  ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.03)} 0%, ${alpha(
+                                      theme.palette.success.dark,
+                                      0.03
+                                    )} 100%)`
+                                  : theme.palette.mode === 'dark'
+                                    ? theme.palette.background.default
+                                    : theme.palette.background.paper
+                              e.currentTarget.style.borderLeft = '3px solid transparent'
+                            }
+                          }}
+                        >
+                          {row.getVisibleCells().map(cell => (
+                            <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                          ))}
+                        </tr>
+                      ))
+                  )}
+                  {filteredRows.length === 0 ? (
+                    <tr>
+                      <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
+                        <Box
+                          sx={{
+                            padding: '48px 16px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '12px'
+                          }}
+                        >
+                          <i className='ri-quiz-line' style={{ fontSize: 48, opacity: 0.5 }} />
+                          <Typography variant='h6' color='text.secondary'>
+                            No quizzes found
+                          </Typography>
+                          <Typography variant='body2' color='text.disabled'>
+                            Try adjusting your search or filter criteria
+                          </Typography>
+                        </Box>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredRows
+                      .slice(
+                        table.getState().pagination.pageIndex * table.getState().pagination.pageSize,
+                        (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize
+                      )
+                      .map((row, index) => (
+                        <tr
+                          key={row.id}
+                          className={classnames({ selected: row.getIsSelected() })}
+                          style={{
+                            background: row.getIsSelected()
+                              ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.15)} 0%, ${alpha(
+                                  theme.palette.success.dark,
+                                  0.15
+                                )} 100%)`
+                              : index % 2 === 0
+                                ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.03)} 0%, ${alpha(
+                                    theme.palette.success.dark,
+                                    0.03
+                                  )} 100%)`
+                                : theme.palette.mode === 'dark'
+                                  ? theme.palette.background.default
+                                  : theme.palette.background.paper,
+                            borderLeft: '3px solid transparent'
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.background = `linear-gradient(135deg, ${alpha(
+                              theme.palette.success.main,
+                              0.12
+                            )} 0%, ${alpha(theme.palette.success.dark, 0.12)} 100%)`
+                            e.currentTarget.style.borderLeft = `3px solid ${theme.palette.success.main}`
+                          }}
+                          onMouseLeave={e => {
+                            if (!row.getIsSelected()) {
+                              e.currentTarget.style.background =
+                                index % 2 === 0
+                                  ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.03)} 0%, ${alpha(
+                                      theme.palette.success.dark,
+                                      0.03
+                                    )} 100%)`
+                                  : theme.palette.mode === 'dark'
+                                    ? theme.palette.background.default
+                                    : theme.palette.background.paper
+                              e.currentTarget.style.borderLeft = '3px solid transparent'
+                            }
+                          }}
+                        >
+                          {row.getVisibleCells().map(cell => (
+                            <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                          ))}
+                        </tr>
+                      ))
+                  )}
+                  {filteredRows.length === 0 ? (
+                    <tr>
+                      <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
+                        <Box
+                          sx={{
+                            padding: '48px 16px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '12px'
+                          }}
+                        >
+                          <i className='ri-quiz-line' style={{ fontSize: 48, opacity: 0.5 }} />
+                          <Typography variant='h6' color='text.secondary'>
+                            No quizzes found
+                          </Typography>
+                          <Typography variant='body2' color='text.disabled'>
+                            Try adjusting your search or filter criteria
+                          </Typography>
+                        </Box>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredRows
+                      .slice(
+                        table.getState().pagination.pageIndex * table.getState().pagination.pageSize,
+                        (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize
+                      )
+                      .map((row, index) => (
+                        <tr
+                          key={row.id}
+                          className={classnames({ selected: row.getIsSelected() })}
+                          style={{
+                            background: row.getIsSelected()
+                              ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.15)} 0%, ${alpha(
+                                  theme.palette.success.dark,
+                                  0.15
+                                )} 100%)`
+                              : index % 2 === 0
+                                ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.03)} 0%, ${alpha(
+                                    theme.palette.success.dark,
+                                    0.03
+                                  )} 100%)`
+                                : theme.palette.mode === 'dark'
+                                  ? theme.palette.background.default
+                                  : theme.palette.background.paper,
+                            borderLeft: '3px solid transparent'
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.background = `linear-gradient(135deg, ${alpha(
+                              theme.palette.success.main,
+                              0.12
+                            )} 0%, ${alpha(theme.palette.success.dark, 0.12)} 100%)`
+                            e.currentTarget.style.borderLeft = `3px solid ${theme.palette.success.main}`
+                          }}
+                          onMouseLeave={e => {
+                            if (!row.getIsSelected()) {
+                              e.currentTarget.style.background =
+                                index % 2 === 0
+                                  ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.03)} 0%, ${alpha(
+                                      theme.palette.success.dark,
+                                      0.03
+                                    )} 100%)`
+                                  : theme.palette.mode === 'dark'
+                                    ? theme.palette.background.default
+                                    : theme.palette.background.paper
+                              e.currentTarget.style.borderLeft = '3px solid transparent'
+                            }
+                          }}
+                        >
+                          {row.getVisibleCells().map(cell => (
+                            <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                          ))}
+                        </tr>
+                      ))
+                  )}
+                  {filteredRows.length === 0 ? (
+                    <tr>
+                      <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
+                        <Box
+                          sx={{
+                            padding: '48px 16px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '12px'
+                          }}
+                        >
+                          <i className='ri-quiz-line' style={{ fontSize: 48, opacity: 0.5 }} />
+                          <Typography variant='h6' color='text.secondary'>
+                            No quizzes found
+                          </Typography>
+                          <Typography variant='body2' color='text.disabled'>
+                            Try adjusting your search or filter criteria
+                          </Typography>
+                        </Box>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredRows
+                      .slice(
+                        table.getState().pagination.pageIndex * table.getState().pagination.pageSize,
+                        (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize
+                      )
+                      .map((row, index) => (
+                        <tr
+                          key={row.id}
+                          className={classnames({ selected: row.getIsSelected() })}
+                          style={{
+                            background: row.getIsSelected()
+                              ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.15)} 0%, ${alpha(
+                                  theme.palette.success.dark,
+                                  0.15
+                                )} 100%)`
+                              : index % 2 === 0
+                                ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.03)} 0%, ${alpha(
+                                    theme.palette.success.dark,
+                                    0.03
+                                  )} 100%)`
+                                : theme.palette.mode === 'dark'
+                                  ? theme.palette.background.default
+                                  : theme.palette.background.paper,
+                            borderLeft: '3px solid transparent'
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.background = `linear-gradient(135deg, ${alpha(
+                              theme.palette.success.main,
+                              0.12
+                            )} 0%, ${alpha(theme.palette.success.dark, 0.12)} 100%)`
+                            e.currentTarget.style.borderLeft = `3px solid ${theme.palette.success.main}`
+                          }}
+                          onMouseLeave={e => {
+                            if (!row.getIsSelected()) {
+                              e.currentTarget.style.background =
+                                index % 2 === 0
+                                  ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.03)} 0%, ${alpha(
+                                      theme.palette.success.dark,
+                                      0.03
+                                    )} 100%)`
+                                  : theme.palette.mode === 'dark'
+                                    ? theme.palette.background.default
+                                    : theme.palette.background.paper
+                              e.currentTarget.style.borderLeft = '3px solid transparent'
+                            }
+                          }}
+                        >
+                          {row.getVisibleCells().map(cell => (
+                            <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                          ))}
+                        </tr>
+                      ))
+                  )}
+                  {filteredRows.length === 0 ? (
+                    <tr>
+                      <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
+                        <Box
+                          sx={{
+                            padding: '48px 16px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '12px'
+                          }}
+                        >
+                          <i className='ri-quiz-line' style={{ fontSize: 48, opacity: 0.5 }} />
+                          <Typography variant='h6' color='text.secondary'>
+                            No quizzes found
+                          </Typography>
+                          <Typography variant='body2' color='text.disabled'>
+                            Try adjusting your search or filter criteria
+                          </Typography>
+                        </Box>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredRows
+                      .slice(
+                        table.getState().pagination.pageIndex * table.getState().pagination.pageSize,
+                        (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize
+                      )
+                      .map((row, index) => (
+                        <tr
+                          key={row.id}
+                          className={classnames({ selected: row.getIsSelected() })}
+                          style={{
+                            background: row.getIsSelected()
+                              ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.15)} 0%, ${alpha(
+                                  theme.palette.success.dark,
+                                  0.15
+                                )} 100%)`
+                              : index % 2 === 0
+                                ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.03)} 0%, ${alpha(
+                                    theme.palette.success.dark,
+                                    0.03
+                                  )} 100%)`
+                                : theme.palette.mode === 'dark'
+                                  ? theme.palette.background.default
+                                  : theme.palette.background.paper,
+                            borderLeft: '3px solid transparent'
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.background = `linear-gradient(135deg, ${alpha(
+                              theme.palette.success.main,
+                              0.12
+                            )} 0%, ${alpha(theme.palette.success.dark, 0.12)} 100%)`
+                            e.currentTarget.style.borderLeft = `3px solid ${theme.palette.success.main}`
+                          }}
+                          onMouseLeave={e => {
+                            if (!row.getIsSelected()) {
+                              e.currentTarget.style.background =
+                                index % 2 === 0
+                                  ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.03)} 0%, ${alpha(
+                                      theme.palette.success.dark,
+                                      0.03
+                                    )} 100%)`
+                                  : theme.palette.mode === 'dark'
+                                    ? theme.palette.background.default
+                                    : theme.palette.background.paper
+                              e.currentTarget.style.borderLeft = '3px solid transparent'
+                            }
+                          }}
+                        >
+                          {row.getVisibleCells().map(cell => (
+                            <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                          ))}
+                        </tr>
+                      ))
+                  )}
+                  {filteredRows.length === 0 ? (
+                    <tr>
+                      <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
+                        <Box
+                          sx={{
+                            padding: '48px 16px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '12px'
+                          }}
+                        >
+                          <i className='ri-quiz-line' style={{ fontSize: 48, opacity: 0.5 }} />
+                          <Typography variant='h6' color='text.secondary'>
+                            No quizzes found
+                          </Typography>
+                          <Typography variant='body2' color='text.disabled'>
+                            Try adjusting your search or filter criteria
+                          </Typography>
+                        </Box>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredRows
+                      .slice(
+                        table.getState().pagination.pageIndex * table.getState().pagination.pageSize,
+                        (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize
+                      )
+                      .map((row, index) => (
+                        <tr
+                          key={row.id}
+                          className={classnames({ selected: row.getIsSelected() })}
+                          style={{
+                            background: row.getIsSelected()
+                              ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.15)} 0%, ${alpha(
+                                  theme.palette.success.dark,
+                                  0.15
+                                )} 100%)`
+                              : index % 2 === 0
+                                ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.03)} 0%, ${alpha(
+                                    theme.palette.success.dark,
+                                    0.03
+                                  )} 100%)`
+                                : theme.palette.mode === 'dark'
+                                  ? theme.palette.background.default
+                                  : theme.palette.background.paper,
+                            borderLeft: '3px solid transparent'
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.background = `linear-gradient(135deg, ${alpha(
+                              theme.palette.success.main,
+                              0.12
+                            )} 0%, ${alpha(theme.palette.success.dark, 0.12)} 100%)`
+                            e.currentTarget.style.borderLeft = `3px solid ${theme.palette.success.main}`
+                          }}
+                          onMouseLeave={e => {
+                            if (!row.getIsSelected()) {
+                              e.currentTarget.style.background =
+                                index % 2 === 0
+                                  ? `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.03)} 0%, ${alpha(
+                                      theme.palette.success.dark,
+                                      0.03
+                                    )} 100%)`
+                                  : theme.palette.mode === 'dark'
+                                    ? theme.palette.background.default
+                                    : theme.palette.background.paper
+                              e.currentTarget.style.borderLeft = '3px solid transparent'
+                            }
+                          }}
+                        >
+                          {row.getVisibleCells().map(cell => (
+                            <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                          ))}
+                        </tr>
+                      ))
+                  )}
+                </tbody>
+              </table>
+            </Box>
+          </Box>
         )}
 
         {/* Pagination component - Only show on desktop/tablet */}

@@ -1053,7 +1053,7 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
           flexDirection: 'column',
           justifyContent: 'center',
           alignItems: 'center',
-          height: { xs: '100vh', sm: '100vh', md: '89vh' },
+          height: '100%',
           gap: 2,
           background: `radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, isDarkMode ? 0.08 : 0.05)} 0%, transparent 50%),
                        radial-gradient(circle at 80% 80%, ${alpha(theme.palette.secondary.main, isDarkMode ? 0.08 : 0.05)} 0%, transparent 50%),
@@ -1075,7 +1075,7 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
   return (
     <Box
       sx={{
-        height: { xs: '100vh', sm: '100vh', md: '89vh' },
+        height: '100%',
         display: 'flex',
         flexDirection: 'column',
         background: `radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, isDarkMode ? 0.08 : 0.05)} 0%, transparent 50%),

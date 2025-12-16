@@ -13,17 +13,23 @@ function QuestionTemplateArea({
   const theme = useTheme()
 
   return (
-    <Box sx={{ height: '100%', overflow: 'auto', p: 1 }}>
+    <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0,  p: 1,
+      // overflow: 'hidden',
+     }}>
       {selectedQuestion && (
-        <DynamicQuestionTemplate
-          key={selectedQuestion._id}
-          id={selectedQuestion.id}
-          templateId={selectedQuestion.templateId}
-          data={selectedQuestion}
-          saveQuestion={onSaveQuestion}
-          deleteQuestion={onDeleteQuestion}
-          validationErrors={validationErrors}
-        />
+        <Box sx={{ flex: 1, overflowY: 'auto', minHeight: 0
+          // overflowX: 'hidden',
+         }}>
+          <DynamicQuestionTemplate
+            key={selectedQuestion._id}
+            id={selectedQuestion.id}
+            templateId={selectedQuestion.templateId}
+            data={selectedQuestion}
+            saveQuestion={onSaveQuestion}
+            deleteQuestion={onDeleteQuestion}
+            validationErrors={validationErrors}
+          />
+        </Box>
       )}
       {!selectedQuestion && (
         <Box

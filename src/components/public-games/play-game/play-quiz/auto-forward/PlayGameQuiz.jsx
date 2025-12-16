@@ -489,20 +489,20 @@ export default function PlayGameQuiz({ game: initialGame, onGameEnd }) {
   const progress = (remainingTime / game.duration) * 100
 
   return (
-    <>
-      <Box sx={{ mx: 'auto', px: 2, width: { xs: '100%', sm: '100%' }, height: '100%' }}>
-        <Paper elevation={0} sx={{ p: 2, my: 4, maxWidth: 'lg', mx: 'auto' }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant='h6' component='div'>
-              Time Remaining
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-              <TimerChip remainingTime={remainingTime} duration={game.duration} />
-            </Box>
+    <Box sx={{ mx: 'auto', px: 2, width: { xs: '100%', sm: '100%' }, height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Paper elevation={0} sx={{ p: 2, my: 4, maxWidth: 'lg', mx: 'auto' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant='h6' component='div'>
+            Time Remaining
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+            <TimerChip remainingTime={remainingTime} duration={game.duration} />
           </Box>
-          <ProgressBar progress={progress} />
-        </Paper>
+        </Box>
+        <ProgressBar progress={progress} />
+      </Paper>
 
+      <Box sx={{ flex: 1, overflow: 'auto' }}>
         {mappedQuestions.length > 0 ? (
           <QuizQuestion
             currentQuestion={currentQuestion}
@@ -556,6 +556,6 @@ export default function PlayGameQuiz({ game: initialGame, onGameEnd }) {
 
         <Leaderboard game={game} duringPlay={true} isAdmin={true} />
       </Box>
-    </>
+    </Box>
   )
 }

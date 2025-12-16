@@ -58,7 +58,7 @@ const GameRegistrationNotice = ({ game }) => {
   // Determine location text
 
   return (
-    <Box display='flex' flexDirection='column' alignItems='center' bgcolor='#f5f5f5' px={2} py={4} gap={4}>
+    <Box display='flex' flexDirection='column' alignItems='center' bgcolor='#f5f5f5' px={2} py={4} gap={4} sx={{ flex: 1, height: '100%', display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
       <Card sx={{ maxWidth: 500, p: 3, textAlign: 'center' }}>
         <CardContent>
           <Typography variant='h5' gutterBottom>

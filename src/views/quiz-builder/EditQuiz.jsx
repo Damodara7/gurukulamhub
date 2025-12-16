@@ -274,7 +274,9 @@ function EditQuiz({ quiz, isAdmin = false }) {
     <>
       <Box
         sx={{
-          minHeight: '100vh',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
           background: `radial-gradient(circle at 20% 20%, ${alpha(
             theme.palette.primary.main,
             0.05
@@ -355,7 +357,7 @@ function EditQuiz({ quiz, isAdmin = false }) {
         </Box>
 
         {/* Main Content */}
-        <Box sx={{ maxWidth: '1200px', margin: '0 auto', px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 } }}>
+        <Box sx={{ px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 }, flex: 1, overflow: 'auto' }}>
           <Card
             sx={{
               borderRadius: 2,

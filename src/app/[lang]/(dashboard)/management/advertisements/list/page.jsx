@@ -44,7 +44,11 @@ const AdvtListApp = () => {
     return (
       <CenterBox
         sx={{
-          minHeight: '100dvh',
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0,
+          overflow: 'hidden',
           px: { xs: 2, sm: 4 },
           textAlign: 'center'
         }}
@@ -59,11 +63,13 @@ const AdvtListApp = () => {
   return (
     <Box
       component='section'
-      sx={{
-        minHeight: '100dvh',
-        backgroundColor: theme => theme.palette.background.default,
-        display: 'flex',
-        flexDirection: 'column'
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          backgroundColor: theme => theme.palette.background.default,
       }}
     >
       <AdvList tableData={data} />

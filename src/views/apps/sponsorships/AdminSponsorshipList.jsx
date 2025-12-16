@@ -780,7 +780,11 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: 0,
+        overflow: 'hidden',
         background: `radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 50%),
                      radial-gradient(circle at 80% 80%, ${alpha(
                        theme.palette.secondary.main,
@@ -988,271 +992,280 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
       </Box>
 
       {/* Content Area */}
-      <Container maxWidth='lg' sx={{ py: { xs: 3, md: 4 } }}>
-        {/* Main Content Card */}
-        <Card
-          sx={{
-            borderRadius: { xs: '16px', sm: '20px' },
-            backgroundColor: theme.palette.background.paper,
-            boxShadow:
-              theme.palette.mode === 'dark'
-                ? `0 4px 20px ${alpha(theme.palette.common.black, 0.3)}`
-                : '0 4px 20px rgba(0, 0, 0, 0.08)',
-            overflow: 'hidden',
-            border: `1px solid ${alpha(theme.palette.divider, 0.12)}`
-          }}
-        >
-          <CardContent
+      <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', p: { xs: 3, md: 4 } }}>
+        <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden' }}>
+          {/* Main Content Card */}
+          <Card
             sx={{
-              p: { xs: 2.5, sm: 3, md: 4 },
+              borderRadius: { xs: '16px', sm: '20px' },
+              backgroundColor: theme.palette.background.paper,
+              boxShadow:
+                theme.palette.mode === 'dark'
+                  ? `0 4px 20px ${alpha(theme.palette.common.black, 0.3)}`
+                  : '0 4px 20px rgba(0, 0, 0, 0.08)',
+              overflow: 'hidden',
+              border: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
               display: 'flex',
-              flexDirection: { xs: 'column', md: 'row' },
-              gap: { xs: 3, sm: 4 },
-              alignItems: { xs: 'stretch', md: 'center' },
-              justifyContent: 'space-between'
+              flexDirection: 'column',
+              flex: 1,
+              minHeight: 0
             }}
           >
-            {/* Section Title with Count */}
-            <Box>
-              <Typography
-                variant='h5'
-                sx={{
-                  fontWeight: 700,
-                  fontSize: { xs: '1.25rem', sm: '1.5rem' },
-                  mb: 0.5,
-                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text'
-                }}
-              >
-                {filter === 'awaiting'
-                  ? 'Pending Approvals'
-                  : filter === 'rejected'
-                    ? 'Rejected Sponsorships'
-                    : 'All Sponsorships'}
-              </Typography>
-              <Typography variant='body2' color='text.secondary' sx={{ fontSize: '0.875rem' }}>
-                {table.getFilteredRowModel().rows.length} total records
-              </Typography>
-            </Box>
-
-            {/* Filter Controls */}
-            <Box
+            <CardContent
               sx={{
+                p: { xs: 2.5, sm: 3, md: 4 },
                 display: 'flex',
-                flexDirection: { xs: 'column', sm: 'row' },
-                gap: 2,
-                alignItems: 'stretch',
-                width: { xs: '100%', md: 'auto' }
+                flexDirection: { xs: 'column', md: 'row' },
+                gap: { xs: 3, sm: 4 },
+                alignItems: { xs: 'stretch', md: 'center' },
+                justifyContent: 'space-between'
               }}
             >
-              <FormControl
-                size='small'
-                sx={{
-                  minWidth: { xs: '100%', sm: 200 },
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: '12px',
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
-                      boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.12)}`
-                    }
-                  }
-                }}
-              >
-                <InputLabel id='sponsorship-status-label'>Status Filter</InputLabel>
-                <Select
-                  labelId='sponsorship-status-label'
-                  value={sponsorshipStatus}
-                  label='Status Filter'
-                  onChange={handleSponsorshipStatusChange}
+              {/* Section Title with Count */}
+              <Box>
+                <Typography
+                  variant='h5'
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: { xs: '1.25rem', sm: '1.5rem' },
+                    mb: 0.5,
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text'
+                  }}
                 >
-                  <MenuItem value='all'>All</MenuItem>
-                  <MenuItem value='completed'>Completed</MenuItem>
-                  <MenuItem value='failed'>Failed</MenuItem>
-                  <MenuItem value='cancelled'>Cancelled</MenuItem>
-                  <MenuItem value='pending'>Pending</MenuItem>
-                  <MenuItem value='created'>Created</MenuItem>
-                </Select>
-              </FormControl>
-              <DebouncedInput
-                value={globalFilter ?? ''}
-                onChange={value => setGlobalFilter(String(value))}
-                placeholder='Search sponsors...'
-                size='small'
-                sx={{
-                  minWidth: { xs: '100%', sm: 350, md: 450 },
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: '12px',
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
-                      boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.12)}`
-                    },
-                    '&.Mui-focused': {
-                      boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.2)}`
-                    }
-                  }
-                }}
-                InputProps={{
-                  startAdornment: (
-                    <Box sx={{ mr: 1, display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
-                      <i className='ri-search-line' style={{ fontSize: '1.25rem' }} />
-                    </Box>
-                  )
-                }}
-              />
-            </Box>
-          </CardContent>
-          <Divider />
-          <Box sx={{ px: { xs: 1, sm: 2 }, py: { xs: 2, sm: 2.5 } }}>
-            {filteredRows.length === 0 ? (
-              <Box
-                sx={{
-                  textAlign: 'center',
-                  py: 6,
-                  borderRadius: 3,
-                  backgroundColor: alpha(theme.palette.primary.main, 0.02),
-                  color: 'text.secondary',
-                  fontWeight: 600
-                }}
-              >
-                No data available
+                  {filter === 'awaiting'
+                    ? 'Pending Approvals'
+                    : filter === 'rejected'
+                      ? 'Rejected Sponsorships'
+                      : 'All Sponsorships'}
+                </Typography>
+                <Typography variant='body2' color='text.secondary' sx={{ fontSize: '0.875rem' }}>
+                  {table.getFilteredRowModel().rows.length} total records
+                </Typography>
               </Box>
-            ) : isMobile ? (
-              <Box
-                sx={{
-                  maxHeight: { xs: '65vh', sm: '70vh' },
-                  overflowY: 'auto',
-                  pr: 1.5,
-                  '&::-webkit-scrollbar': {
-                    width: 6
-                  },
-                  '&::-webkit-scrollbar-thumb': {
-                    backgroundColor: alpha(theme.palette.primary.main, 0.3),
-                    borderRadius: 8
-                  }
-                }}
-              >
-                <Stack spacing={2.5}>{filteredRows.map(row => renderMobileRowCard(row))}</Stack>
-              </Box>
-            ) : (
-              <div className='overflow-x-auto'>
-                <table className={tableStyles.table}>
-                  <thead>
-                    {table.getHeaderGroups().map(headerGroup => (
-                      <tr key={headerGroup.id}>
-                        {headerGroup.headers.map(header => (
-                          <th key={header.id}>
-                            {header.isPlaceholder ? null : (
-                              <>
-                                <div
-                                  className={classnames({
-                                    'flex items-center': header.column.getIsSorted(),
-                                    'cursor-pointer select-none': header.column.getCanSort()
-                                  })}
-                                  onClick={header.column.getToggleSortingHandler()}
-                                >
-                                  {flexRender(header.column.columnDef.header, header.getContext())}
-                                  {{
-                                    asc: <i className='ri-arrow-up-s-line text-xl' />,
-                                    desc: <i className='ri-arrow-down-s-line text-xl' />
-                                  }[header.column.getIsSorted()] ?? null}
-                                </div>
-                              </>
-                            )}
-                          </th>
-                        ))}
-                      </tr>
-                    ))}
-                  </thead>
-                  <tbody>
-                    {paginatedRows.map(row => (
-                      <tr
-                        key={row.id}
-                        className={classnames({ selected: row.getIsSelected() })}
-                        style={{
-                          cursor: 'pointer'
-                        }}
-                        onMouseEnter={e => {
-                          e.currentTarget.style.backgroundColor = alpha(
-                            theme.palette.primary.main,
-                            theme.palette.mode === 'dark' ? 0.15 : 0.08
-                          )
-                          e.currentTarget.style.boxShadow = `0 2px 8px ${alpha(
-                            theme.palette.primary.main,
-                            theme.palette.mode === 'dark' ? 0.25 : 0.15
-                          )}`
-                        }}
-                        onMouseLeave={e => {
-                          if (!row.getIsSelected()) {
-                            e.currentTarget.style.backgroundColor = 'transparent'
-                          }
-                          e.currentTarget.style.boxShadow = 'none'
-                        }}
-                      >
-                        {row.getVisibleCells().map(cell => (
-                          <td
-                            key={cell.id}
-                            style={{
-                              padding: '16px 12px',
-                              borderBottom: `1px solid ${alpha(theme.palette.divider, 0.08)}`
-                            }}
-                          >
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </Box>
-          {!isMobile && (
-            <Box
-              sx={{
-                borderTop: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
-                backgroundColor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.08 : 0.02)
-              }}
-            >
-              <TablePagination
-                rowsPerPageOptions={[10, 25, 50, 100]}
-                component='div'
-                count={filteredRows.length}
-                rowsPerPage={table.getState().pagination.pageSize}
-                page={table.getState().pagination.pageIndex}
-                SelectProps={{
-                  inputProps: { 'aria-label': 'rows per page' }
-                }}
-                onPageChange={(_, page) => {
-                  table.setPageIndex(page)
-                }}
-                onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
-                sx={{
-                  '& .MuiTablePagination-toolbar': {
-                    px: { xs: 2, sm: 3 },
-                    py: 2,
-                    minHeight: { xs: 64, sm: 72 }
-                  },
-                  '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
-                    fontSize: '0.875rem',
-                    color: 'text.secondary',
-                    fontWeight: 500
-                  },
-                  '& .MuiIconButton-root': {
-                    borderRadius: '8px',
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
-                      backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                      color: theme.palette.primary.main
-                    }
-                  }
-                }}
-              />
-            </Box>
-          )}
-        </Card>
 
+              {/* Filter Controls */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  gap: 2,
+                  alignItems: 'stretch',
+                  width: { xs: '100%', md: 'auto' }
+                }}
+              >
+                <FormControl
+                  size='small'
+                  sx={{
+                    minWidth: { xs: '100%', sm: 200 },
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '12px',
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.12)}`
+                      }
+                    }
+                  }}
+                >
+                  <InputLabel id='sponsorship-status-label'>Status Filter</InputLabel>
+                  <Select
+                    labelId='sponsorship-status-label'
+                    value={sponsorshipStatus}
+                    label='Status Filter'
+                    onChange={handleSponsorshipStatusChange}
+                  >
+                    <MenuItem value='all'>All</MenuItem>
+                    <MenuItem value='completed'>Completed</MenuItem>
+                    <MenuItem value='failed'>Failed</MenuItem>
+                    <MenuItem value='cancelled'>Cancelled</MenuItem>
+                    <MenuItem value='pending'>Pending</MenuItem>
+                    <MenuItem value='created'>Created</MenuItem>
+                  </Select>
+                </FormControl>
+                <DebouncedInput
+                  value={globalFilter ?? ''}
+                  onChange={value => setGlobalFilter(String(value))}
+                  placeholder='Search sponsors...'
+                  size='small'
+                  sx={{
+                    minWidth: { xs: '100%', sm: 350, md: 450 },
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '12px',
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.12)}`
+                      },
+                      '&.Mui-focused': {
+                        boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.2)}`
+                      }
+                    }
+                  }}
+                  InputProps={{
+                    startAdornment: (
+                      <Box sx={{ mr: 1, display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
+                        <i className='ri-search-line' style={{ fontSize: '1.25rem' }} />
+                      </Box>
+                    )
+                  }}
+                />
+              </Box>
+            </CardContent>
+            <Divider />
+            <Box sx={{ px: { xs: 1, sm: 2 }, py: { xs: 2, sm: 2.5 }, flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              {filteredRows.length === 0 ? (
+                <Box
+                  sx={{
+                    textAlign: 'center',
+                    py: 6,
+                    borderRadius: 3,
+                    backgroundColor: alpha(theme.palette.primary.main, 0.02),
+                    color: 'text.secondary',
+                    fontWeight: 600
+                  }}
+                >
+                  No data available
+                </Box>
+              ) : isMobile ? (
+                <Box
+                  sx={{
+                    flex: 1,
+                    minHeight: 0,
+                    overflowY: 'auto',
+                    overflowX: 'hidden',
+                    pr: 1.5,
+                    '&::-webkit-scrollbar': {
+                      width: 6
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                      backgroundColor: alpha(theme.palette.primary.main, 0.3),
+                      borderRadius: 8
+                    }
+                  }}
+                >
+                  <Stack spacing={2.5}>{filteredRows.map(row => renderMobileRowCard(row))}</Stack>
+                </Box>
+              ) : (
+                <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'auto' }}>
+                  <table className={tableStyles.table}>
+                    <thead>
+                      {table.getHeaderGroups().map(headerGroup => (
+                        <tr key={headerGroup.id}>
+                          {headerGroup.headers.map(header => (
+                            <th key={header.id}>
+                              {header.isPlaceholder ? null : (
+                                <>
+                                  <div
+                                    className={classnames({
+                                      'flex items-center': header.column.getIsSorted(),
+                                      'cursor-pointer select-none': header.column.getCanSort()
+                                    })}
+                                    onClick={header.column.getToggleSortingHandler()}
+                                  >
+                                    {flexRender(header.column.columnDef.header, header.getContext())}
+                                    {{
+                                      asc: <i className='ri-arrow-up-s-line text-xl' />,
+                                      desc: <i className='ri-arrow-down-s-line text-xl' />
+                                    }[header.column.getIsSorted()] ?? null}
+                                  </div>
+                                </>
+                              )}
+                            </th>
+                          ))}
+                        </tr>
+                      ))}
+                    </thead>
+                    <tbody>
+                      {paginatedRows.map(row => (
+                        <tr
+                          key={row.id}
+                          className={classnames({ selected: row.getIsSelected() })}
+                          style={{
+                            cursor: 'pointer'
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.backgroundColor = alpha(
+                              theme.palette.primary.main,
+                              theme.palette.mode === 'dark' ? 0.15 : 0.08
+                            )
+                            e.currentTarget.style.boxShadow = `0 2px 8px ${alpha(
+                              theme.palette.primary.main,
+                              theme.palette.mode === 'dark' ? 0.25 : 0.15
+                            )}`
+                          }}
+                          onMouseLeave={e => {
+                            if (!row.getIsSelected()) {
+                              e.currentTarget.style.backgroundColor = 'transparent'
+                            }
+                            e.currentTarget.style.boxShadow = 'none'
+                          }}
+                        >
+                          {row.getVisibleCells().map(cell => (
+                            <td
+                              key={cell.id}
+                              style={{
+                                padding: '16px 12px',
+                                borderBottom: `1px solid ${alpha(theme.palette.divider, 0.08)}`
+                              }}
+                            >
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </Box>
+              )}
+            </Box>
+            {!isMobile && (
+              <Box
+                sx={{
+                  borderTop: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
+                  backgroundColor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.08 : 0.02)
+                }}
+              >
+                <TablePagination
+                  rowsPerPageOptions={[10, 25, 50, 100]}
+                  component='div'
+                  count={filteredRows.length}
+                  rowsPerPage={table.getState().pagination.pageSize}
+                  page={table.getState().pagination.pageIndex}
+                  SelectProps={{
+                    inputProps: { 'aria-label': 'rows per page' }
+                  }}
+                  onPageChange={(_, page) => {
+                    table.setPageIndex(page)
+                  }}
+                  onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
+                  sx={{
+                    '& .MuiTablePagination-toolbar': {
+                      px: { xs: 2, sm: 3 },
+                      py: 2,
+                      minHeight: { xs: 64, sm: 72 }
+                    },
+                    '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
+                      fontSize: '0.875rem',
+                      color: 'text.secondary',
+                      fontWeight: 500
+                    },
+                    '& .MuiIconButton-root': {
+                      borderRadius: '8px',
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                        color: theme.palette.primary.main
+                      }
+                    }
+                  }}
+                />
+              </Box>
+            )}
+          </Card>
+        </Box>
+      </Box>
+      
         {/* Modern Rejection Dialog */}
         <Dialog
           maxWidth='sm'
@@ -1431,7 +1444,6 @@ const AdminSponsorshipList = ({ tableData, sponsorType = 'all', sponsorshipStatu
             </Button>
           </DialogActions>
         </Dialog>
-      </Container>
     </Box>
   )
 }

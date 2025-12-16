@@ -32,13 +32,11 @@ function Hero({ isAuthenticated = false }) {
     <Box
       sx={{
         position: 'relative',
-        minHeight: { xs: 'auto', md: '95vh' },
         display: 'flex',
         alignItems: 'center',
         background: `radial-gradient(circle at 20% 50%, ${theme.palette.primary.main}15 0%, transparent 50%),
                      radial-gradient(circle at 80% 80%, ${theme.palette.secondary.main}15 0%, transparent 50%),
                      ${theme.palette.background.default}`,
-        overflow: 'hidden',
         pt: { xs: 8, md: 0 },
         py: { xs: 6, md: 8 }
       }}

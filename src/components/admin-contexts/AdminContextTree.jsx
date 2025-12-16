@@ -401,7 +401,7 @@ const AdminContextTree = ({
   if (loading) return <>Fetching Subjects Please Wait...</>
 
   return (
-    <Box sx={{ width: '100%' }}>
+    <Box sx={{ width: '100%', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
       <Stack spacing={{ xs: 2, md: 3 }} sx={{ mb: { xs: 2.5, md: 3 } }}>
         <Typography
           variant='h5'
@@ -479,7 +479,12 @@ const AdminContextTree = ({
           sx={{
             mb: { xs: 2, md: 2.5 },
             fontSize: { xs: '0.78rem', sm: '0.85rem' },
-            color: alpha(theme.palette.text.primary, 0.7)
+            color: alpha(theme.palette.text.primary, 0.7),
+            display: 'flex',
+            flexDirection: 'column',
+            flex: 1,
+            minHeight: 0,
+            overflow: 'hidden'
           }}
         >
           {breadcrumbs.map((crumb, index) => (
@@ -508,7 +513,7 @@ const AdminContextTree = ({
         </Stack>
       )}
 
-      <Box sx={{ height: { xs: '65vh', sm: '70vh', md: '74vh' }, width: '100%' }}>
+      <Box sx={{ width: '100%', flex: 1, overflow: 'auto' }}>
         <SortableTree
           onNodeSelect={(node, path) => handleNodeSelect(node, path)}
           onClick={node => handleNodeClick(node)}

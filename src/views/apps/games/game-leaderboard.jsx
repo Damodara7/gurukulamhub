@@ -8,19 +8,24 @@ import AdminLeaderboard from '@/components/apps/games/game-details/AdminLeaderbo
 
 export default function GameLeaderboardPage({ gameId, game }) {
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: 3, flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       {/* Game Header with minimal info */}
-      <GameHeader game={game} />
+      <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <Box>
+          <GameHeader game={game} />
+        </Box>
 
-      <AdminLeaderboard
-        game={game}
-        maxheight={600}
-        description={
-          game.status === 'live'
-            ? 'Live rankings as players compete in the game'
-            : 'Final rankings from the completed game'
-        }
-      />
+        <Box sx={{flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'auto'}}>
+          <AdminLeaderboard
+            game={game}
+            description={
+              game.status === 'live'
+                ? 'Live rankings as players compete in the game'
+                : 'Final rankings from the completed game'
+            }
+          />
+        </Box>
+      </Box>
     </Box>
   )
 }

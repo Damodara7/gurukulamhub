@@ -37,8 +37,6 @@ export default async function page({ params }) {
     return <FallBackCard content='You can go back to All Games' path='/apps/games' btnText='Back To All Games' />
   }
   return (
-    <>
       <ForwardGameQuestion gameId={id} game={gameData} />
-    </>
   )
 }

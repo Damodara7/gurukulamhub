@@ -27,6 +27,12 @@ const LayoutContent = ({ children }) => {
         [`${verticalLayoutClasses.contentCompact} is-full`]: contentCompact,
         [verticalLayoutClasses.contentWide]: contentWide
       })}
+      style={{ 
+        flex: '1 1 auto',
+        minHeight: 0,
+        height: '100%',
+        overflow: 'hidden'
+      }}
     >
       {children}
     </StyledMain>

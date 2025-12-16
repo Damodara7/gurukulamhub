@@ -22,117 +22,119 @@ function AdminForwardPage({ game = null }) {
   const admininstructions = game?.status === 'lobby'
   const livemode = game?.status === 'live'
   return (
-    <>
-      <AdminForwardHeader game={game} />
+    <Box sx={{flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden'}}>
+      <Box sx={{flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'auto'}}>
+        <AdminForwardHeader game={game} />
 
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        {/* First Row - Info Cards */}
-        <Grid item xs={12} container spacing={3}>
-          <AdminForwardLocationInfo game={game} />
+        <Grid container spacing={3} sx={{ mb: 3 }}>
+          {/* First Row - Info Cards */}
+          <Grid item xs={12} container spacing={3}>
+            <AdminForwardLocationInfo game={game} />
 
-          <AdminForwardRegisteredUsersCard game={game} />
+            <AdminForwardRegisteredUsersCard game={game} />
 
-          <AdminForwardQuizCard game={game} />
+            <AdminForwardQuizCard game={game} />
 
-          {showParticipatedUsers && <AdminForwardParticipatedUserCard game={game} />}
-        </Grid>
+            {showParticipatedUsers && <AdminForwardParticipatedUserCard game={game} />}
+          </Grid>
 
-        {/* Second Row - Leaderboard */}
-        <Grid item xs={12}>
-          {showParticipatedUsers && (
-            <AdminLeaderboard
-              game={game}
-              sx={{
-                width: '100%',
-                '& .MuiCardContent-root': {
-                  p: 0,
-                  '& > :not(style)': { m: 2 } // Add margin to all direct children except style
-                }
-              }}
-            />
+          {/* Second Row - Leaderboard */}
+          <Grid item xs={12}>
+            {showParticipatedUsers && (
+              <AdminLeaderboard
+                game={game}
+                sx={{
+                  width: '100%',
+                  '& .MuiCardContent-root': {
+                    p: 0,
+                    '& > :not(style)': { m: 2 } // Add margin to all direct children except style
+                  }
+                }}
+              />
+            )}
+          </Grid>
+
+          {/* Third Row - Rewards (if any) */}
+          {game.rewards.length > 0 && (
+            <Grid item xs={12}>
+              <Card>
+                <CardContent>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                    <Typography variant='h6'>
+                      <EmojiEvents sx={{ mr: 1, verticalAlign: 'middle' }} />
+                      Rewards
+                    </Typography>
+                  </Box>
+                  <RewardsList rewards={game?.rewards} />
+                </CardContent>
+              </Card>
+            </Grid>
+          )}
+          {admininstructions && <AdminInstructions game={game} />}
+
+          {cancel && (
+            <Grid xs={12} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }} gap={1}>
+              <Card sx={{ maxWidth: 600, p: 1, textAlign: 'center' }}>
+                <CardContent>
+                  <Typography
+                    variant='h5'
+                    gutterBottom
+                    color='error'
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 2
+                    }}
+                  >
+                    <CancelIcon color='error' sx={{ fontSize: 30 }} />
+                    Game Cancellation Notice
+                  </Typography>
+                  <Typography
+                    variant='h4'
+                    sx={{
+                      color: 'primary.main', // Use theme color or replace with a hex
+                      fontWeight: 700, // Bold weight
+                      letterSpacing: 1, // Slight spacing between letters
+                      mb: 1, // Bottom margin
+                      textTransform: 'capitalize' // Optional: Capitalizes each word
+                    }}
+                  >
+                    {game?.title}
+                  </Typography>
+                  <Box
+                    sx={{
+                      p: 2,
+                      borderRadius: 1
+                    }}
+                  >
+                    <Typography variant='h6' color='error' gutterBottom>
+                      ⚠️ This game has been cancelled
+                    </Typography>
+                    <Typography variant='body1'>
+                      {game?.cancellationReason || 'Please provide cancellation details for registered players'}
+                    </Typography>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          )}
+
+          {!livemode && (
+            <Grid xs={12} sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+              <Button
+                component='label'
+                variant='contained'
+                onClick={() => router.push('/management/games')}
+                sx={{ color: 'white' }}
+              >
+                Back To All Games
+              </Button>
+            </Grid>
           )}
         </Grid>
-
-        {/* Third Row - Rewards (if any) */}
-        {game.rewards.length > 0 && (
-          <Grid item xs={12}>
-            <Card>
-              <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant='h6'>
-                    <EmojiEvents sx={{ mr: 1, verticalAlign: 'middle' }} />
-                    Rewards
-                  </Typography>
-                </Box>
-                <RewardsList rewards={game?.rewards} />
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-        {admininstructions && <AdminInstructions game={game} />}
-
-        {cancel && (
-          <Grid xs={12} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }} gap={1}>
-            <Card sx={{ maxWidth: 600, p: 1, textAlign: 'center' }}>
-              <CardContent>
-                <Typography
-                  variant='h5'
-                  gutterBottom
-                  color='error'
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 2
-                  }}
-                >
-                  <CancelIcon color='error' sx={{ fontSize: 30 }} />
-                  Game Cancellation Notice
-                </Typography>
-                <Typography
-                  variant='h4'
-                  sx={{
-                    color: 'primary.main', // Use theme color or replace with a hex
-                    fontWeight: 700, // Bold weight
-                    letterSpacing: 1, // Slight spacing between letters
-                    mb: 1, // Bottom margin
-                    textTransform: 'capitalize' // Optional: Capitalizes each word
-                  }}
-                >
-                  {game?.title}
-                </Typography>
-                <Box
-                  sx={{
-                    p: 2,
-                    borderRadius: 1
-                  }}
-                >
-                  <Typography variant='h6' color='error' gutterBottom>
-                    ⚠️ This game has been cancelled
-                  </Typography>
-                  <Typography variant='body1'>
-                    {game?.cancellationReason || 'Please provide cancellation details for registered players'}
-                  </Typography>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-
-        {!livemode && (
-          <Grid xs={12} sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-            <Button
-              component='label'
-              variant='contained'
-              onClick={() => router.push('/management/games')}
-              sx={{ color: 'white' }}
-            >
-              Back To All Games
-            </Button>
-          </Grid>
-        )}
-      </Grid>
-    </>
+      </Box>
+    </Box>
   )
 }
 

@@ -116,7 +116,7 @@ const SponsorshipDetailPage = ({ id = null }) => {
         display: 'flex', 
         justifyContent: 'center', 
         alignItems: 'center', 
-        minHeight: '60vh',
+        height: '100%',
         bgcolor: theme.palette.background.default
       }}>
         <Stack spacing={2} alignItems='center'>
@@ -130,7 +130,7 @@ const SponsorshipDetailPage = ({ id = null }) => {
   if (!sponsorship) {
     return (
       <Box sx={{ 
-        minHeight: '100vh',
+        minHeight: '100%',
         bgcolor: theme.palette.background.default,
         display: 'flex',
         alignItems: 'center',
@@ -180,7 +180,7 @@ const SponsorshipDetailPage = ({ id = null }) => {
   }[status] || 'default'
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: theme.palette.background.default, pb: 6 }}>
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: theme.palette.background.default, pb: 6 }}>
       {/* Hero Section */}
       <Box
         sx={{
@@ -250,7 +250,7 @@ const SponsorshipDetailPage = ({ id = null }) => {
       </Box>
 
       {/* Content Section */}
-      <Container maxWidth='lg' sx={{ mt: 4 }}>
+      <Box sx={{ mt: 4, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
 
         {/* Basic Information */}
         <Card
@@ -260,7 +260,7 @@ const SponsorshipDetailPage = ({ id = null }) => {
             border: `1px solid ${alpha(theme.palette.divider, 0.4)}`,
             boxShadow: theme.palette.mode === 'dark' ? 'none' : '0 4px 20px rgba(0,0,0,0.06)',
             bgcolor: theme.palette.background.paper,
-            overflow: 'hidden'
+            flexShrink: 0
           }}
         >
           <CardContent sx={{ p: { xs: 3, md: 4 } }}>
@@ -406,7 +406,7 @@ const SponsorshipDetailPage = ({ id = null }) => {
             border: `1px solid ${alpha(theme.palette.divider, 0.4)}`,
             boxShadow: theme.palette.mode === 'dark' ? 'none' : '0 4px 20px rgba(0,0,0,0.06)',
             bgcolor: theme.palette.background.paper,
-            overflow: 'hidden'
+            flexShrink: 0
           }}
         >
           <CardContent sx={{ p: { xs: 3, md: 4 } }}>
@@ -552,7 +552,7 @@ const SponsorshipDetailPage = ({ id = null }) => {
             border: `1px solid ${alpha(theme.palette.divider, 0.4)}`,
             boxShadow: theme.palette.mode === 'dark' ? 'none' : '0 4px 20px rgba(0,0,0,0.06)',
             bgcolor: theme.palette.background.paper,
-            overflow: 'hidden'
+            flexShrink: 0
           }}
         >
           <CardContent sx={{ p: { xs: 3, md: 4 } }}>
@@ -598,7 +598,7 @@ const SponsorshipDetailPage = ({ id = null }) => {
               border: `1px solid ${alpha(theme.palette.divider, 0.4)}`,
               boxShadow: theme.palette.mode === 'dark' ? 'none' : '0 4px 20px rgba(0,0,0,0.06)',
               bgcolor: theme.palette.background.paper,
-              overflow: 'hidden'
+              flexShrink: 0
             }}
           >
             <CardContent sx={{ p: { xs: 3, md: 4 } }}>
@@ -728,7 +728,7 @@ const SponsorshipDetailPage = ({ id = null }) => {
               border: `1px solid ${alpha(theme.palette.divider, 0.4)}`,
               boxShadow: theme.palette.mode === 'dark' ? 'none' : '0 4px 20px rgba(0,0,0,0.06)',
               bgcolor: theme.palette.background.paper,
-              overflow: 'hidden'
+              flexShrink: 0
             }}
           >
             <CardContent sx={{ p: { xs: 3, md: 4 } }}>
@@ -809,7 +809,7 @@ const SponsorshipDetailPage = ({ id = null }) => {
               border: `1px solid ${alpha(theme.palette.divider, 0.4)}`,
               boxShadow: theme.palette.mode === 'dark' ? 'none' : '0 4px 20px rgba(0,0,0,0.06)',
               bgcolor: theme.palette.background.paper,
-              overflow: 'hidden'
+              flexShrink: 0
             }}
           >
             <CardContent sx={{ p: { xs: 3, md: 4 } }}>
@@ -885,7 +885,7 @@ const SponsorshipDetailPage = ({ id = null }) => {
               border: `1px solid ${alpha(theme.palette.divider, 0.4)}`,
               boxShadow: theme.palette.mode === 'dark' ? 'none' : '0 4px 20px rgba(0,0,0,0.06)',
               bgcolor: theme.palette.background.paper,
-              overflow: 'hidden'
+              flexShrink: 0
             }}
           >
             <CardContent sx={{ p: { xs: 3, md: 4 } }}>
@@ -937,7 +937,7 @@ const SponsorshipDetailPage = ({ id = null }) => {
             </CardContent>
           </Card>
         )}
-      </Container>
+      </Box>
 
       {/* Rejection Dialog */}
       <Dialog

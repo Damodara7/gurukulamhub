@@ -355,7 +355,7 @@ const LearningTable = () => {
   const isDarkMode = theme.palette.mode === 'dark'
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: isDarkMode ? theme.palette.background.default : '#f8f9fa', pb: 6 }}>
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: isDarkMode ? theme.palette.background.default : '#f8f9fa', pb: 6 }}>
       {/* Header Section */}
       <Box
         sx={{
@@ -495,189 +495,14 @@ const LearningTable = () => {
       </Box>
 
       {/* Main Content */}
-      <Container maxWidth="xl">
-        <Card
-          sx={{
-            borderRadius: { xs: 1.5, sm: 2 },
-            bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.6) : 'white',
-            border: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.1)}`,
-            boxShadow: isDarkMode
-              ? `0 2px 12px ${alpha(theme.palette.common.black, 0.3)}`
-              : '0 2px 12px rgba(0,0,0,0.04)'
-          }}
-        >
-          {/* Filters Section */}
-          <CardContent sx={{ borderBottom: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.1)}` }}>
-            <Stack 
-              direction={{ xs: 'column', sm: 'row' }} 
-              spacing={2} 
-              alignItems={{ xs: 'stretch', sm: 'center' }}
-              justifyContent="space-between"
-            >
-              <TextField
-                size="small"
-                value={globalFilter ?? ''}
-                onChange={e => setGlobalFilter(String(e.target.value))}
-                placeholder='Search videos...'
-                sx={{
-                  minWidth: { xs: '100%', sm: 300 },
-                  '& .MuiOutlinedInput-root': {
-                    bgcolor: isDarkMode
-                      ? alpha(theme.palette.background.paper, 0.4)
-                      : alpha(theme.palette.grey[100], 0.5)
-                  }
-                }}
-                InputProps={{
-                  startAdornment: (
-                    <SearchIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} />
-                  )
-                }}
-              />
-              
-              <FormControl size='small' sx={{ minWidth: { xs: '100%', sm: 180 } }}>
-                <InputLabel>Date Range</InputLabel>
-                <Select 
-                  label='Date Range' 
-                  value={dateRange} 
-                  onChange={e => setDateRange(e.target.value)}
-                  sx={{
-                    bgcolor: isDarkMode
-                      ? alpha(theme.palette.background.paper, 0.4)
-                      : alpha(theme.palette.grey[100], 0.5)
-                  }}
-                >
-                  <MenuItem value='all'>All Time</MenuItem>
-                  <MenuItem value='today'>Today</MenuItem>
-                  <MenuItem value='last7days'>Last 7 Days</MenuItem>
-                  <MenuItem value='last30days'>Last 30 Days</MenuItem>
-                </Select>
-              </FormControl>
-            </Stack>
-          </CardContent>
-          {/* Loading State */}
-          {loading && (
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', py: 8 }}>
-              <Stack spacing={2} alignItems="center">
-                <CircularProgress size={48} />
-                <Typography variant="body1" color="text.secondary" fontWeight={500}>
-                  Loading your learning data...
-                </Typography>
-              </Stack>
-            </Box>
-          )}
-
-          {/* Table */}
-          {!loading && (
-            <>
-              <div className='overflow-x-auto'>
-                <table className={tableStyles.table}>
-                  <thead>
-                    {table.getHeaderGroups().map(headerGroup => (
-                      <tr key={headerGroup.id}>
-                        {headerGroup.headers.map(header => (
-                          <th key={header.id} className='text-center'>
-                            {header.isPlaceholder ? null : (
-                              <>
-                                <div
-                                  className={classnames({
-                                    'flex items-center justify-center': header.column.getIsSorted(),
-                                    'cursor-pointer select-none': header.column.getCanSort()
-                                  })}
-                                  onClick={header.column.getToggleSortingHandler()}
-                                >
-                                  {flexRender(header.column.columnDef.header, header.getContext())}
-                                  {{
-                                    asc: <i className='ri-arrow-up-s-line text-xl' />,
-                                    desc: <i className='ri-arrow-down-s-line text-xl' />
-                                  }[header.column.getIsSorted()] ?? null}
-                                </div>
-                              </>
-                            )}
-                          </th>
-                        ))}
-                      </tr>
-                    ))}
-                  </thead>
-                  {table.getFilteredRowModel().rows.length === 0 ? (
-                    <tbody>
-                      <tr>
-                        <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
-                          <Box sx={{ py: 8 }}>
-                            <SchoolIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2, opacity: 0.5 }} />
-                            <Typography variant='h6' color='text.secondary' fontWeight={600} gutterBottom>
-                              No Learning Data Found
-                            </Typography>
-                            <Typography variant='body2' color='text.secondary'>
-                              {globalFilter || dateRange !== 'all'
-                                ? 'Try adjusting your filters to see more results'
-                                : 'Start watching videos to track your learning progress'}
-                            </Typography>
-                          </Box>
-                        </td>
-                      </tr>
-                    </tbody>
-                  ) : (
-                    <tbody>
-                      {table
-                        .getRowModel()
-                        .rows.slice(0, table.getState().pagination.pageSize)
-                        .map(row => (
-                          <tr 
-                            key={row.id} 
-                            className={classnames({ selected: row.getIsSelected() })}
-                            style={{
-                              transition: 'background-color 0.2s ease',
-                            }}
-                          >
-                            {row.getVisibleCells().map(cell => (
-                              <td key={cell.id} className='text-center'>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
-                            ))}
-                          </tr>
-                        ))}
-                    </tbody>
-                  )}
-                </table>
-              </div>
-
-              {/* Pagination */}
-              {table.getFilteredRowModel().rows.length > 0 && (
-                <TablePagination
-                  rowsPerPageOptions={[5, 7, 10, 25]}
-                  component='div'
-                  className='border-bs'
-                  count={table.getFilteredRowModel().rows.length}
-                  rowsPerPage={table.getState().pagination.pageSize}
-                  page={table.getState().pagination.pageIndex}
-                  SelectProps={{
-                    inputProps: { 'aria-label': 'rows per page' }
-                  }}
-                  onPageChange={(_, page) => {
-                    table.setPageIndex(page)
-                  }}
-                  onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
-                  sx={{
-                    borderTop: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.1)}`,
-                    '.MuiTablePagination-toolbar': {
-                      py: 2
-                    }
-                  }}
-                />
-              )}
-            </>
-          )}
-
-          {/* Menu for more options */}
-          <ActionsMenu
-            anchorEl={anchorEl}
-            handleClose={handleClose}
-            handleAction={action => {
-              if (action === 'view') {
-                handleViewRow()
-              }
-            }}
-          />
-        </Card>
-      </Container>
+      <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', p: { xs: 3, md: 4 } }}>
+        <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden' }}>
+          <Box sx={{flexShrink: 0}}>
+            {/* Learning Table */}
+            <LearningTable />
+          </Box>
+        </Box>
+      </Box>
 
       {open && <LearningVideoInfo data={viewRowData} open={open} onClose={handleCloseRow} />}
     </Box>

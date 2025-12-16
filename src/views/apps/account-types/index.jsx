@@ -370,7 +370,9 @@ const AccountTypesTable = () => {
   return (
     <Box
       sx={{
-        minHeight: '100dvh',
+        flex: 1,
+        minHeight: 0,
+        overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
         background: `radial-gradient(circle at 18% 18%, ${alpha(theme.palette.primary.main, 0.06)} 0%, transparent 55%),
@@ -447,14 +449,15 @@ const AccountTypesTable = () => {
       </Box>
 
       {/* Content Area */}
-      <Container
-        maxWidth='lg'
+      <Box
         sx={{
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
           width: '100%',
-          py: { xs: 3, md: 4 }
+          p: { xs: 3, md: 4 },
+          minHeight: 0,
+          overflow: 'hidden'
         }}
       >
         <Card
@@ -462,6 +465,7 @@ const AccountTypesTable = () => {
             flex: 1,
             display: 'flex',
             flexDirection: 'column',
+            minHeight: 0,
             background: theme.palette.background.paper,
             borderRadius: 3,
             boxShadow:
@@ -529,7 +533,7 @@ const AccountTypesTable = () => {
               Total {data?.length || 0} account type{data?.length !== 1 ? 's' : ''}
             </Typography>
           </Box>
-          <Box sx={{ px: { xs: 2, sm: 3 }, py: { xs: 2, sm: 3 } }}>
+          <Box sx={{ px: { xs: 2, sm: 3 }, py: { xs: 2, sm: 3 }, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden'}}>
             {table.getFilteredRowModel().rows.length === 0 ? (
               <Box
                 sx={{
@@ -678,68 +682,70 @@ const AccountTypesTable = () => {
                 </Stack>
               </Box>
             ) : (
-              <div className='overflow-x-auto'>
-                <table className={tableStyles.table}>
-                  <thead>
-                    {table.getHeaderGroups().map(headerGroup => (
-                      <tr key={headerGroup.id}>
-                        {headerGroup.headers.map(header => (
-                          <th key={header.id}>
-                            {header.isPlaceholder ? null : (
-                              <>
-                                <div
-                                  className={classnames({
-                                    'flex items-center': header.column.getIsSorted(),
-                                    'cursor-pointer select-none': header.column.getCanSort()
-                                  })}
-                                  onClick={header.column.getToggleSortingHandler()}
-                                >
-                                  {flexRender(header.column.columnDef.header, header.getContext())}
-                                  {{
-                                    asc: <i className='ri-arrow-up-s-line text-xl' />,
-                                    desc: <i className='ri-arrow-down-s-line text-xl' />
-                                  }[header.column.getIsSorted()] ?? null}
-                                </div>
-                              </>
-                            )}
-                          </th>
-                        ))}
-                      </tr>
-                    ))}
-                  </thead>
-                  <tbody>
-                    {table.getRowModel().rows.map(row => (
-                      <tr
-                        key={row.id}
-                        className={classnames({ selected: row.getIsSelected() })}
-                        style={{
-                          cursor: 'pointer'
-                        }}
-                        onMouseEnter={e => {
-                          e.currentTarget.style.backgroundColor = alpha(
-                            theme.palette.primary.main,
-                            theme.palette.mode === 'dark' ? 0.15 : 0.08
-                          )
-                          e.currentTarget.style.boxShadow = `0 2px 8px ${alpha(
-                            theme.palette.primary.main,
-                            theme.palette.mode === 'dark' ? 0.25 : 0.15
-                          )}`
-                        }}
-                        onMouseLeave={e => {
-                          if (!row.getIsSelected()) {
-                            e.currentTarget.style.backgroundColor = 'transparent'
-                          }
-                          e.currentTarget.style.boxShadow = 'none'
-                        }}
-                      >
-                        {row.getVisibleCells().map(cell => (
-                          <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <Box sx={{flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden'}}>
+                <Box sx={{flex: 1, minHeight: 0, overflow: 'auto'}}>
+                  <table className={tableStyles.table}>
+                    <thead style={{position: 'sticky', top: 0, zIndex: 10, backgroundColor: theme.palette.background.paper}}>
+                      {table.getHeaderGroups().map(headerGroup => (
+                        <tr key={headerGroup.id}>
+                          {headerGroup.headers.map(header => (
+                            <th key={header.id}>
+                              {header.isPlaceholder ? null : (
+                                <>
+                                  <div
+                                    className={classnames({
+                                      'flex items-center': header.column.getIsSorted(),
+                                      'cursor-pointer select-none': header.column.getCanSort()
+                                    })}
+                                    onClick={header.column.getToggleSortingHandler()}
+                                  >
+                                    {flexRender(header.column.columnDef.header, header.getContext())}
+                                    {{
+                                      asc: <i className='ri-arrow-up-s-line text-xl' />,
+                                      desc: <i className='ri-arrow-down-s-line text-xl' />
+                                    }[header.column.getIsSorted()] ?? null}
+                                  </div>
+                                </>
+                              )}
+                            </th>
+                          ))}
+                        </tr>
+                      ))}
+                    </thead>
+                    <tbody>
+                      {table.getRowModel().rows.map(row => (
+                        <tr
+                          key={row.id}
+                          className={classnames({ selected: row.getIsSelected() })}
+                          style={{
+                            cursor: 'pointer'
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.backgroundColor = alpha(
+                              theme.palette.primary.main,
+                              theme.palette.mode === 'dark' ? 0.15 : 0.08
+                            )
+                            e.currentTarget.style.boxShadow = `0 2px 8px ${alpha(
+                              theme.palette.primary.main,
+                              theme.palette.mode === 'dark' ? 0.25 : 0.15
+                            )}`
+                          }}
+                          onMouseLeave={e => {
+                            if (!row.getIsSelected()) {
+                              e.currentTarget.style.backgroundColor = 'transparent'
+                            }
+                            e.currentTarget.style.boxShadow = 'none'
+                          }}
+                        >
+                          {row.getVisibleCells().map(cell => (
+                            <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </Box>
+              </Box>
             )}
           </Box>
           {!isMobile && table.getFilteredRowModel().rows.length > 0 && (
@@ -780,7 +786,7 @@ const AccountTypesTable = () => {
           type='delete-account-type'
           onConfirm={handleDelete}
         />
-      </Container>
+      </Box>
     </Box>
   )
 }

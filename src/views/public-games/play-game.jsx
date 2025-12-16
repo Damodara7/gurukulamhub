@@ -53,7 +53,7 @@ function PlayGamePage() {
 
   if (loading) {
     return (
-      <Box p={4} display='flex' justifyContent='center'>
+      <Box p={4} display='flex' justifyContent='center' height='100%'>
         <CircularProgress />
       </Box>
     )
@@ -72,7 +72,9 @@ function PlayGamePage() {
 
   //check if game has ended
   if (game.status === 'completed') {
-    return <GameEnded game={game} onExit={handleExit}  />
+    return <Box sx={{ flex: 1, height: '100%', display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
+      <GameEnded game={game} onExit={handleExit}  />
+    </Box>
   }
 
   // caluculate the difference in minutes

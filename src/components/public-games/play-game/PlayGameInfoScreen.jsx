@@ -27,7 +27,9 @@ import {
   ContentCopy,
   Share as ShareIcon,
   EmojiEvents,
-  Check as CheckIcon
+  Check as CheckIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon
 } from '@mui/icons-material'
 import ReactPlayer from 'react-player'
 import { format, formatDistanceToNow } from 'date-fns'
@@ -46,6 +48,7 @@ const GamePlayInfoScreen = ({ game, setShouldStartGame }) => {
   const [copyTooltip, setCopyTooltip] = useState('Copy PIN')
   const [sharePopupOpen, setSharePopupOpen] = useState(false)
   const [pinCopied, setPinCopied] = useState(false)
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false)
 
   const handleCopyPin = async () => {
     try {
@@ -135,80 +138,105 @@ const GamePlayInfoScreen = ({ game, setShouldStartGame }) => {
 `
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: theme.palette.background.default, pb: 6 }}>
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: theme.palette.background.default, pb: 6 }}>
       {/* Hero Section */}
       <Box
         sx={{
           bgcolor: theme.palette.mode === 'dark' ? theme.palette.background.paper : 'white',
-          pt: { xs: 4, md: 5 },
-          pb: { xs: 4, md: 5 },
-          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.5)}`
+          pt: isHeaderCollapsed ? { xs: 1, sm: 1.25, md: 1.5 } : { xs: 1.5, sm: 2, md: 2.5 },
+          pb: isHeaderCollapsed ? { xs: 1, sm: 1.25, md: 1.5 } : { xs: 1.5, sm: 2, md: 2.5 },
+          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+          transition: 'all 0.3s ease'
         }}
       >
         <Container maxWidth='lg'>
-          <Stack spacing={3}>
-            <Stack direction='row' spacing={1.5} alignItems='center'>
-              <SportsEsports sx={{ fontSize: 32, color: theme.palette.primary.main }} />
-              <Typography
-                variant='h3'
-                fontWeight={800}
+          <Stack spacing={isHeaderCollapsed ? 1 : { xs: 1.5, sm: 2 }}>
+            <Stack direction='row' spacing={1} alignItems='center' justifyContent='space-between'>
+              <Stack direction='row' spacing={1} alignItems='center' flex={1} minWidth={0}>
+                <SportsEsports sx={{ fontSize: { xs: 20, sm: 24, md: 28 }, color: theme.palette.primary.main, flexShrink: 0 }} />
+                <Typography
+                  variant='h3'
+                  fontWeight={800}
+                  sx={{
+                    fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' },
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    lineHeight: 1.2,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  {game.title}
+                </Typography>
+              </Stack>
+              <IconButton
+                onClick={() => setIsHeaderCollapsed(!isHeaderCollapsed)}
+                size="small"
                 sx={{
-                  fontSize: { xs: '1.75rem', md: '2.25rem' },
-                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                  lineHeight: 1.2
-                }}
-              >
-                {game.title}
-              </Typography>
-            </Stack>
-            <Stack
-              direction={{ xs: 'column', sm: 'row' }}
-              spacing={2}
-              alignItems={{ xs: 'flex-start', sm: 'center' }}
-              flexWrap='wrap'
-            >
-              {getStatusChip()}
-              <Chip
-                icon={<EmojiEvents sx={{ fontSize: 18 }} />}
-                label={`PIN: ${game.pin}`}
-                sx={{
-                  fontWeight: 700,
-                  bgcolor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.22 : 0.12),
-                  color: theme.palette.primary.main,
-                  border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
+                  color: 'text.secondary',
+                  flexShrink: 0,
                   '&:hover': {
-                    bgcolor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.3 : 0.18)
+                    bgcolor: alpha(theme.palette.primary.main, 0.1),
+                    color: 'text.primary'
                   }
                 }}
-                onClick={handleCopyPin}
-                deleteIcon={
-                  <Tooltip title={copyTooltip} placement='top' arrow>
-                    <IconButton
-                      size='small'
-                      onClick={e => {
-                        e.stopPropagation()
-                        handleCopyPin()
-                      }}
-                      sx={{
-                        color: pinCopied ? 'success.main' : 'primary.main',
-                        '&:hover': {
-                          bgcolor: alpha(
-                            pinCopied ? theme.palette.success.main : theme.palette.primary.main,
-                            theme.palette.mode === 'dark' ? 0.2 : 0.1
-                          )
-                        }
-                      }}
-                    >
-                      {pinCopied ? <CheckIcon sx={{ fontSize: 18 }} /> : <ContentCopy sx={{ fontSize: 18 }} />}
-                    </IconButton>
-                  </Tooltip>
-                }
-                onDelete={() => {}}
-              />
+              >
+                {isHeaderCollapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}
+              </IconButton>
             </Stack>
+            {!isHeaderCollapsed && (
+              <Stack
+                direction={{ xs: 'column', sm: 'row' }}
+                spacing={{ xs: 1, sm: 1.5 }}
+                alignItems={{ xs: 'flex-start', sm: 'center' }}
+                flexWrap='wrap'
+              >
+                {getStatusChip()}
+                <Chip
+                  icon={<EmojiEvents sx={{ fontSize: { xs: 14, sm: 16 } }} />}
+                  label={`PIN: ${game.pin}`}
+                  size="small"
+                  sx={{
+                    fontWeight: 600,
+                    fontSize: { xs: '0.75rem', sm: '0.8rem' },
+                    bgcolor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.22 : 0.12),
+                    color: theme.palette.primary.main,
+                    border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
+                    height: { xs: 24, sm: 28 },
+                    '&:hover': {
+                      bgcolor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.3 : 0.18)
+                    }
+                  }}
+                  onClick={handleCopyPin}
+                  deleteIcon={
+                    <Tooltip title={copyTooltip} placement='top' arrow>
+                      <IconButton
+                        size='small'
+                        onClick={e => {
+                          e.stopPropagation()
+                          handleCopyPin()
+                        }}
+                        sx={{
+                          color: pinCopied ? 'success.main' : 'primary.main',
+                          '&:hover': {
+                            bgcolor: alpha(
+                              pinCopied ? theme.palette.success.main : theme.palette.primary.main,
+                              theme.palette.mode === 'dark' ? 0.2 : 0.1
+                            )
+                          }
+                        }}
+                      >
+                        {pinCopied ? <CheckIcon sx={{ fontSize: { xs: 14, sm: 16 } }} /> : <ContentCopy sx={{ fontSize: { xs: 14, sm: 16 } }} />}
+                      </IconButton>
+                    </Tooltip>
+                  }
+                  onDelete={() => {}}
+                />
+              </Stack>
+            )}
           </Stack>
         </Container>
       </Box>
@@ -323,7 +351,7 @@ const GamePlayInfoScreen = ({ game, setShouldStartGame }) => {
         </Alert>
       </Container>
 
-      <Container maxWidth='lg'>
+      <Box sx={{ flex: 1, overflow: 'auto' }}>
         <Grid container spacing={4}>
           {/* Left Column - Game Media */}
           <Grid item xs={12} md={8} sx={{ order: { xs: 2, md: 1 } }}>
@@ -720,7 +748,7 @@ const GamePlayInfoScreen = ({ game, setShouldStartGame }) => {
             </Card>
           </Grid>
         </Grid>
-      </Container>
+      </Box>
     </Box>
   )
 }

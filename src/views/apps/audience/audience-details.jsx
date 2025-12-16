@@ -385,7 +385,9 @@ const AudienceDetailsPage = ({ audienceId, audienceData, gamesData = [] }) => {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
         background: `radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 50%),
                      radial-gradient(circle at 80% 80%, ${alpha(
                        theme.palette.secondary.main,
@@ -407,7 +409,7 @@ const AudienceDetailsPage = ({ audienceId, audienceData, gamesData = [] }) => {
           pb: { xs: 4, md: 6 }
         }}
       >
-        <Box sx={{ maxWidth: '1200px', margin: '0 auto', px: { xs: 2, sm: 3, md: 4 } }}>
+        <Box sx={{  px: { xs: 2, sm: 3, md: 4 } }}>
           <Box sx={{ textAlign: 'center' }}>
             {/* Icon and Title */}
             <Box
@@ -485,10 +487,11 @@ const AudienceDetailsPage = ({ audienceId, audienceData, gamesData = [] }) => {
       </Box>
 
       {/* Main Content */}
-      <Box sx={{ maxWidth: '1200px', margin: '0 auto', px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 } }}>
+      <Box sx={{ px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 }, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
         {/* Filters Section */}
         <Card
           sx={{
+            minHeight: '200px',
             mb: { xs: 3, sm: 4 },
             borderRadius: { xs: 2, sm: 2 },
             background: theme.palette.background.paper,
@@ -662,6 +665,7 @@ const AudienceDetailsPage = ({ audienceId, audienceData, gamesData = [] }) => {
         {/* Audience Members Section */}
         <Card
           sx={{
+            minHeight: '500px',
             borderRadius: { xs: 2, sm: 2 },
             background: theme.palette.background.paper,
             boxShadow:
@@ -921,6 +925,7 @@ const AudienceDetailsPage = ({ audienceId, audienceData, gamesData = [] }) => {
         {/* Audience Games Section */}
         <Card
           sx={{
+            minHeight: '300px',
             mt: { xs: 3, sm: 4 },
             borderRadius: { xs: 2, sm: 2 },
             background: theme.palette.background.paper,

@@ -150,7 +150,7 @@ const AllAudiencePage = () => {
     return (
       <Box
         sx={{
-          minHeight: '100vh',
+          height: '100%',
           background: `radial-gradient(circle at 20% 20%, ${alpha(
             theme.palette.primary.main,
             0.05
@@ -207,13 +207,15 @@ const AllAudiencePage = () => {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        height: '100%',
         background: `radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 50%),
                      radial-gradient(circle at 80% 80%, ${alpha(
                        theme.palette.secondary.main,
                        0.05
                      )} 0%, transparent 50%),
-                     ${theme.palette.background.default}`
+                     ${theme.palette.background.default}`,
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       {/* Elegant Header */}
@@ -288,7 +290,7 @@ const AllAudiencePage = () => {
       </Box>
 
       {/* Content Area */}
-      <Container maxWidth='lg' sx={{ py: { xs: 3, md: 4 } }}>
+      <Box sx={{ p: { xs: 3, md: 4 }, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
         <AudienceCard
           audiences={audiences}
           onEditAudience={handleEditAudience}
@@ -329,7 +331,7 @@ const AllAudiencePage = () => {
             Create Audience
           </Button>
         </Box>
-      </Container>
+      </Box>
     </Box>
   )
 }

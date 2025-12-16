@@ -42,7 +42,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'react-toastify'
 
-const GroupChannellist = ({ groups = [], channels = [] }) => {
+const GroupChannellist = ({ groups = [], channels = [], viewMode: externalViewMode = 'groups', searchQuery: externalSearchQuery = '' }) => {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'))
@@ -50,8 +50,11 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
   const isDarkMode = theme.palette.mode === 'dark'
   const { data: session } = useSession()
   const router = useRouter()
-  const [viewMode, setViewMode] = useState('groups')
-  const [searchQuery, setSearchQuery] = useState('')
+  // Use external props if provided, otherwise use internal state (for backward compatibility)
+  const [internalViewMode, setInternalViewMode] = useState('groups')
+  const [internalSearchQuery, setInternalSearchQuery] = useState('')
+  const viewMode = externalViewMode !== undefined ? externalViewMode : internalViewMode
+  const searchQuery = externalSearchQuery !== undefined ? externalSearchQuery : internalSearchQuery
   const [requestStatus, setRequestStatus] = useState({})
   const [requestDetails, setRequestDetails] = useState({})
   const [loading, setLoading] = useState({})
@@ -413,9 +416,6 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
     fetchUnreadCounts()
   }, [groups, session?.user?.email])
 
-  // Store the view mode when user manually switches to channels
-  const [userSelectedChannels, setUserSelectedChannels] = useState(false)
-
   // To send join request to a channel
   const handleSendRequest = async channelId => {
     if (!session?.user?.email) {
@@ -607,16 +607,14 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
     )
   })
 
-  // Handle view mode change and clear search
-  const handleViewModeChange = mode => {
-    setViewMode(mode)
-    if (mode === 'groups') {
-      setSearchQuery('') // Clear search when switching to groups
-      setUserSelectedChannels(false) // Reset the flag when user goes to groups
-    } else if (mode === 'channels') {
-      setUserSelectedChannels(true) // Mark that user manually selected channels
-    }
-  }
+  // Filter groups based on search query
+  const filteredGroups = groups.filter(group => {
+    if (!searchQuery.trim()) return true
+    return (
+      group.groupName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      group.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  })
 
   const renderGroupItem = item => {
     const unreadCount = unreadCounts[item._id] || 0
@@ -1002,187 +1000,10 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
     </ListItem>
   )
 
-  const currentData = viewMode === 'groups' ? groups : filteredChannels
-  const currentTitle = viewMode === 'groups' ? 'My Groups' : 'Channels'
+  const currentData = viewMode === 'groups' ? filteredGroups : filteredChannels
 
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* Header with Toggle Buttons */}
-      <Box
-        sx={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 10,
-          borderBottom: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.15 : 0.1)}`,
-          px: { xs: 1.5, sm: 2.5, md: 3 },
-          py: { xs: 2, sm: 2.5, md: 3 },
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: { xs: 1.75, sm: 2, md: 2.5 },
-          backgroundColor: isDarkMode
-            ? alpha(theme.palette.background.paper, 0.9)
-            : alpha('#fff', 0.82),
-          backdropFilter: 'blur(10px)',
-          boxShadow: isDarkMode
-            ? `0 4px 12px ${alpha(theme.palette.common.black, 0.2)}`
-            : '0 4px 12px rgba(0,0,0,0.05)'
-        }}
-      >
-        <Box
-          sx={{
-            width: '100%',
-            display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row' },
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: { xs: 1.25, sm: 1.75 }
-          }}
-        >
-          <Button
-            variant={viewMode === 'groups' ? 'contained' : 'outlined'}
-            component={viewMode === 'groups' ? 'label' : 'button'}
-            size='medium'
-            onClick={() => handleViewModeChange('groups')}
-            startIcon={<GroupIcon />}
-            sx={{
-              textTransform: 'none',
-              borderRadius: { xs: 1.5, sm: 2 },
-              color: viewMode === 'groups' ? 'white' : 'text.primary',
-              px: { xs: 2.5, sm: 2.8, md: 3 },
-              py: { xs: 1, sm: 1.1, md: 1.25 },
-              fontWeight: 600,
-              minWidth: { xs: '100%', sm: 140, md: 150 },
-              fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' },
-              boxShadow: viewMode === 'groups'
-                ? isDarkMode
-                  ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.4)}`
-                  : `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`
-                : 'none',
-              transition: 'all 0.3s ease',
-              ...(isDarkMode &&
-                viewMode !== 'groups' && {
-                  borderColor: alpha(theme.palette.divider, 0.3),
-                  '&:hover': {
-                    borderColor: alpha(theme.palette.primary.main, 0.5),
-                    backgroundColor: alpha(theme.palette.primary.main, 0.08)
-                  }
-                }),
-              '&:hover': {
-                transform: 'translateY(-2px)',
-                boxShadow: `0 6px 16px ${alpha(theme.palette.primary.main, viewMode === 'groups' ? (isDarkMode ? 0.5 : 0.4) : 0.1)}`
-              }
-            }}
-          >
-            Groups ({groups.length})
-          </Button>
-          <Button
-            variant={viewMode === 'channels' ? 'contained' : 'outlined'}
-            component={viewMode === 'channels' ? 'label' : 'button'}
-            size='medium'
-            onClick={() => handleViewModeChange('channels')}
-            startIcon={<ChannelIcon />}
-            sx={{
-              textTransform: 'none',
-              borderRadius: { xs: 1.5, sm: 2 },
-              color: viewMode === 'channels' ? 'white' : 'text.primary',
-              px: { xs: 2.5, sm: 2.8, md: 3 },
-              py: { xs: 1, sm: 1.1, md: 1.25 },
-              fontWeight: 600,
-              minWidth: { xs: '100%', sm: 140, md: 150 },
-              fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' },
-              boxShadow: viewMode === 'channels'
-                ? isDarkMode
-                  ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.4)}`
-                  : `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`
-                : 'none',
-              transition: 'all 0.3s ease',
-              ...(isDarkMode &&
-                viewMode !== 'channels' && {
-                  borderColor: alpha(theme.palette.divider, 0.3),
-                  '&:hover': {
-                    borderColor: alpha(theme.palette.primary.main, 0.5),
-                    backgroundColor: alpha(theme.palette.primary.main, 0.08)
-                  }
-                }),
-              '&:hover': {
-                transform: 'translateY(-2px)',
-                boxShadow: `0 6px 16px ${alpha(theme.palette.primary.main, viewMode === 'channels' ? (isDarkMode ? 0.5 : 0.4) : 0.1)}`
-              }
-            }}
-          >
-            Channels ({channels.length})
-          </Button>
-        </Box>
-
-        {/* Selected button text below */}
-        <Typography
-          variant='h6'
-          sx={{
-            color: 'text.primary',
-            fontWeight: 600,
-            display: 'flex',
-            alignItems: 'center',
-            gap: { xs: 0.75, sm: 1 },
-            fontSize: { xs: '1rem', sm: '1.1rem', md: '1.2rem' },
-            flexWrap: 'wrap',
-            justifyContent: 'center'
-          }}
-        >
-          {viewMode === 'groups' ? (
-            <GroupIcon sx={{ fontSize: { xs: '1.1rem', sm: '1.2rem', md: '1.3rem' } }} />
-          ) : (
-            <ChannelIcon sx={{ fontSize: { xs: '1.1rem', sm: '1.2rem', md: '1.3rem' } }} />
-          )}
-          <Typography component='span' sx={{ fontSize: 'inherit', fontWeight: 'inherit' }}>
-            {currentTitle} ({currentData.length})
-          </Typography>
-        </Typography>
-
-        {/* Search bar for channels */}
-        {viewMode === 'channels' && (
-          <TextField
-            placeholder='Search channels by name...'
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            size='medium'
-            sx={{
-              width: '100%',
-              maxWidth: { xs: '100%', sm: 400, md: 450 },
-              '& .MuiOutlinedInput-root': {
-                borderRadius: { xs: 1.5, sm: 2 },
-                height: { xs: 42, sm: 46, md: 48 },
-                fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' },
-                backgroundColor: isDarkMode
-                  ? alpha(theme.palette.background.default, 0.6)
-                  : undefined,
-                ...(isDarkMode && {
-                  '& fieldset': {
-                    borderColor: alpha(theme.palette.divider, 0.3)
-                  },
-                  '&:hover fieldset': {
-                    borderColor: alpha(theme.palette.primary.main, 0.5)
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: theme.palette.primary.main
-                  }
-                })
-              },
-              '& .MuiInputBase-input': {
-                color: isDarkMode ? theme.palette.text.primary : undefined
-              }
-            }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position='start'>
-                  <SearchIcon color={isDarkMode ? 'action' : 'action'} />
-                </InputAdornment>
-              )
-            }}
-          />
-        )}
-      </Box>
-
       {/* Content with scrollable area */}
       <Box sx={{ flex: 1, overflow: 'hidden' }}>
         {currentData.length === 0 ? (
@@ -1293,7 +1114,7 @@ const GroupChannellist = ({ groups = [], channels = [] }) => {
             }}
           >
             {viewMode === 'groups'
-              ? groups.map(item => renderGroupItem(item))
+              ? filteredGroups.map(item => renderGroupItem(item))
               : filteredChannels.map(item => renderChannelItem(item))}
           </Box>
         )}

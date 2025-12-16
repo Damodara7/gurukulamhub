@@ -114,7 +114,9 @@ const AllGamesPage = ({ creatorEmail = '', isSuperUser = false }) => {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
         background: `radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 50%),
                      radial-gradient(circle at 80% 80%, ${alpha(
                        theme.palette.secondary.main,
@@ -212,7 +214,7 @@ const AllGamesPage = ({ creatorEmail = '', isSuperUser = false }) => {
       </Box>
 
       {/* Games List */}
-      <Container maxWidth='lg' sx={{ py: { xs: 2, sm: 3, md: 4 }, px: { xs: 1, sm: 2, md: 3 } }}>
+      <Box sx={{ p: { xs: 2, sm: 3, md: 4 }, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
         <CreatorGamesList
           games={filteredGames}
           isSuperUser={isSuperUser}
@@ -220,7 +222,7 @@ const AllGamesPage = ({ creatorEmail = '', isSuperUser = false }) => {
           onRefresh={fetchGames}
           loading={loading}
         />
-      </Container>
+      </Box>
 
       {/* Create New Button - Mobile: Below cards, Desktop: Fixed position */}
       <Box
