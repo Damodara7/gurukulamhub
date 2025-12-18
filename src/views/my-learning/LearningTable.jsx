@@ -30,8 +30,8 @@ import {
 import { alpha } from '@mui/material/styles'
 
 // MUI Icons
-import { 
-  DeleteOutline as DeleteOutlineIcon, 
+import {
+  DeleteOutline as DeleteOutlineIcon,
   Visibility as VisibilityIcon,
   School as SchoolIcon,
   EmojiEvents as TrophyIcon,
@@ -132,6 +132,8 @@ const LearningTable = () => {
 
   const [dateRange, setDateRange] = useState('all') // Default to 'all'
 
+  const isDarkMode = theme.palette.mode === 'dark'
+
   // Fetch the videos from API
   const getUserLearningData = async () => {
     setLoading(true)
@@ -193,7 +195,7 @@ const LearningTable = () => {
       columnHelper.accessor('video.name', {
         header: 'Video',
         cell: ({ row }) => (
-          <Stack spacing={0.5} alignItems="flex-start">
+          <Stack spacing={0.5} alignItems='flex-start'>
             <Typography
               variant='body1'
               fontWeight={600}
@@ -213,7 +215,7 @@ const LearningTable = () => {
         cell: ({ row }) => (
           <Chip
             label={`${row.original?.learningPoints}/${row.original?.totalPoints}`}
-            size="small"
+            size='small'
             sx={{
               bgcolor: alpha(theme.palette.success.main, 0.1),
               color: 'success.main',
@@ -261,7 +263,7 @@ const LearningTable = () => {
       columnHelper.accessor('completionPercent', {
         header: '% Completed',
         cell: ({ row }) => (
-          <Stack spacing={0.5} alignItems="center">
+          <Stack spacing={0.5} alignItems='center'>
             <Typography
               variant='body2'
               fontWeight={700}
@@ -273,7 +275,7 @@ const LearningTable = () => {
               {row.original?.completionPercent}%
             </Typography>
             <LinearProgress
-              variant="determinate"
+              variant='determinate'
               value={row.original?.completionPercent}
               sx={{
                 width: 60,
@@ -293,8 +295,8 @@ const LearningTable = () => {
         header: 'Actions',
         cell: ({ row }) => (
           <div className='flex items-center justify-center'>
-            <IconButtonTooltip 
-              title='View Details' 
+            <IconButtonTooltip
+              title='View Details'
               onClick={e => handleMoreClick(e, row.original)}
               sx={{
                 color: 'primary.main',
@@ -310,7 +312,7 @@ const LearningTable = () => {
         enableSorting: false
       })
     ],
-    [data, theme] // Ensure roles are passed as a dependency to update dynamically
+    [isDarkMode, theme, handleMoreClick] // Dependencies for columns
   )
 
   const table = useReactTable({
@@ -352,10 +354,16 @@ const LearningTable = () => {
     setOpen(false) // Close the dialog
   }
 
-  const isDarkMode = theme.palette.mode === 'dark'
-
   return (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: isDarkMode ? theme.palette.background.default : '#f8f9fa', pb: 6 }}>
+    <Box
+      sx={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        bgcolor: isDarkMode ? theme.palette.background.default : '#f8f9fa',
+        pb: 6
+      }}
+    >
       {/* Header Section */}
       <Box
         sx={{
@@ -366,11 +374,11 @@ const LearningTable = () => {
           mb: 4
         }}
       >
-        <Container maxWidth="xl">
+        <Container maxWidth='xl'>
           <Stack spacing={2}>
             {/* Title */}
             <Typography
-              variant="h4"
+              variant='h4'
               fontWeight={800}
               sx={{
                 fontSize: { xs: '1.5rem', md: '2rem' },
@@ -385,9 +393,9 @@ const LearningTable = () => {
               <SchoolIcon sx={{ fontSize: { xs: 32, md: 40 }, color: 'primary.main' }} />
               My Learning Journey
             </Typography>
-            
+
             <Typography
-              variant="body1"
+              variant='body1'
               sx={{
                 color: isDarkMode ? alpha(theme.palette.common.white, 0.8) : '#5f6368',
                 maxWidth: '800px',
@@ -400,19 +408,19 @@ const LearningTable = () => {
 
             {/* Stats Cards */}
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 2 }}>
-                  <Box
-                    sx={{
-                      flex: 1,
-                      p: { xs: 2, sm: 2.5 },
-                      borderRadius: { xs: 1.5, sm: 2 },
-                      bgcolor: isDarkMode
-                        ? alpha(theme.palette.success.main, 0.15)
-                        : alpha(theme.palette.success.main, 0.08),
-                      border: '1px solid',
-                      borderColor: alpha(theme.palette.success.main, isDarkMode ? 0.3 : 0.2)
-                    }}
-                  >
-                <Stack direction="row" alignItems="center" spacing={2}>
+              <Box
+                sx={{
+                  flex: 1,
+                  p: { xs: 2, sm: 2.5 },
+                  borderRadius: { xs: 1.5, sm: 2 },
+                  bgcolor: isDarkMode
+                    ? alpha(theme.palette.success.main, 0.15)
+                    : alpha(theme.palette.success.main, 0.08),
+                  border: '1px solid',
+                  borderColor: alpha(theme.palette.success.main, isDarkMode ? 0.3 : 0.2)
+                }}
+              >
+                <Stack direction='row' alignItems='center' spacing={2}>
                   <Box
                     sx={{
                       width: 48,
@@ -429,7 +437,7 @@ const LearningTable = () => {
                   </Box>
                   <Box>
                     <Typography
-                      variant="caption"
+                      variant='caption'
                       sx={{
                         color: isDarkMode ? alpha(theme.palette.common.white, 0.7) : '#5f6368',
                         fontSize: { xs: '0.7rem', sm: '0.75rem' },
@@ -438,26 +446,26 @@ const LearningTable = () => {
                     >
                       TOTAL POINTS EARNED
                     </Typography>
-                    <Typography variant="h4" fontWeight={800} sx={{ color: 'success.main' }}>
+                    <Typography variant='h4' fontWeight={800} sx={{ color: 'success.main' }}>
                       {totalPoints}
                     </Typography>
                   </Box>
                 </Stack>
               </Box>
 
-                  <Box
-                    sx={{
-                      flex: 1,
-                      p: { xs: 2, sm: 2.5 },
-                      borderRadius: { xs: 1.5, sm: 2 },
-                      bgcolor: isDarkMode
-                        ? alpha(theme.palette.primary.main, 0.15)
-                        : alpha(theme.palette.primary.main, 0.08),
-                      border: '1px solid',
-                      borderColor: alpha(theme.palette.primary.main, isDarkMode ? 0.3 : 0.2)
-                    }}
-                  >
-                <Stack direction="row" alignItems="center" spacing={2}>
+              <Box
+                sx={{
+                  flex: 1,
+                  p: { xs: 2, sm: 2.5 },
+                  borderRadius: { xs: 1.5, sm: 2 },
+                  bgcolor: isDarkMode
+                    ? alpha(theme.palette.primary.main, 0.15)
+                    : alpha(theme.palette.primary.main, 0.08),
+                  border: '1px solid',
+                  borderColor: alpha(theme.palette.primary.main, isDarkMode ? 0.3 : 0.2)
+                }}
+              >
+                <Stack direction='row' alignItems='center' spacing={2}>
                   <Box
                     sx={{
                       width: 48,
@@ -474,7 +482,7 @@ const LearningTable = () => {
                   </Box>
                   <Box>
                     <Typography
-                      variant="caption"
+                      variant='caption'
                       sx={{
                         color: isDarkMode ? alpha(theme.palette.common.white, 0.7) : '#5f6368',
                         fontSize: { xs: '0.7rem', sm: '0.75rem' },
@@ -483,7 +491,7 @@ const LearningTable = () => {
                     >
                       VIDEOS COMPLETED
                     </Typography>
-                    <Typography variant="h4" fontWeight={800} sx={{ color: 'primary.main' }}>
+                    <Typography variant='h4' fontWeight={800} sx={{ color: 'primary.main' }}>
                       {data.length}
                     </Typography>
                   </Box>
@@ -495,14 +503,125 @@ const LearningTable = () => {
       </Box>
 
       {/* Main Content */}
-      <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', p: { xs: 3, md: 4 } }}>
-        <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden' }}>
-          <Box sx={{flexShrink: 0}}>
-            {/* Learning Table */}
-            <LearningTable />
-          </Box>
-        </Box>
-      </Box>
+      <Container
+        maxWidth='xl'
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          py: { xs: 2, md: 3 }
+        }}
+      >
+        <Card
+          sx={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : 'white',
+            boxShadow: theme.shadows[3],
+            borderRadius: { xs: 2, sm: 3 },
+            overflow: 'hidden'
+          }}
+        >
+          <CardContent sx={{ p: { xs: 2, sm: 3 }, flexShrink: 0 }}>
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={2}
+              justifyContent='space-between'
+              alignItems={{ xs: 'stretch', sm: 'center' }}
+            >
+              <DebouncedInput
+                value={globalFilter ?? ''}
+                onChange={value => setGlobalFilter(String(value))}
+                placeholder='Search videos...'
+                fullWidth
+                sx={{ maxWidth: { sm: '400px' } }}
+                InputProps={{
+                  startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />
+                }}
+              />
+              <FormControl size='small' sx={{ minWidth: { xs: '100%', sm: 180 } }}>
+                <InputLabel>Date Range</InputLabel>
+                <Select value={dateRange} label='Date Range' onChange={e => setDateRange(e.target.value)}>
+                  <MenuItem value='all'>All Time</MenuItem>
+                  <MenuItem value='today'>Today</MenuItem>
+                  <MenuItem value='last7days'>Last 7 Days</MenuItem>
+                  <MenuItem value='last30days'>Last 30 Days</MenuItem>
+                </Select>
+              </FormControl>
+            </Stack>
+          </CardContent>
+
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 8 }}>
+              <CircularProgress />
+            </Box>
+          ) : (
+            <>
+              <Box sx={{ overflow: 'auto', flex: 1 }}>
+                <table className={tableStyles.table}>
+                  <thead>
+                    {table.getHeaderGroups().map(headerGroup => (
+                      <tr key={headerGroup.id}>
+                        {headerGroup.headers.map(header => (
+                          <th key={header.id}>
+                            {header.isPlaceholder ? null : (
+                              <div
+                                className={classnames({
+                                  'flex items-center': header.column.getIsSorted(),
+                                  'cursor-pointer select-none': header.column.getCanSort()
+                                })}
+                                onClick={header.column.getToggleSortingHandler()}
+                              >
+                                {flexRender(header.column.columnDef.header, header.getContext())}
+                                {(() => {
+                                  const sorted = header.column.getIsSorted()
+                                  return sorted === 'asc' ? ' 🔼' : sorted === 'desc' ? ' 🔽' : null
+                                })()}
+                              </div>
+                            )}
+                          </th>
+                        ))}
+                      </tr>
+                    ))}
+                  </thead>
+                  <tbody>
+                    {table.getRowModel().rows.length > 0 ? (
+                      table.getRowModel().rows.map(row => (
+                        <tr key={row.id} className={classnames({ selected: row.getIsSelected() })}>
+                          {row.getVisibleCells().map(cell => (
+                            <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                          ))}
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={columns.length} style={{ textAlign: 'center', padding: '40px' }}>
+                          <Typography variant='body1' color='text.secondary'>
+                            No learning records found
+                          </Typography>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </Box>
+              <TablePagination
+                rowsPerPageOptions={[5, 10, 25, 50]}
+                component='div'
+                count={table.getFilteredRowModel().rows.length}
+                rowsPerPage={table.getState().pagination.pageSize}
+                page={table.getState().pagination.pageIndex}
+                onPageChange={(_, page) => table.setPageIndex(page)}
+                onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
+                sx={{ borderTop: `1px solid ${alpha(theme.palette.divider, 0.1)}` }}
+              />
+            </>
+          )}
+        </Card>
+      </Container>
 
       {open && <LearningVideoInfo data={viewRowData} open={open} onClose={handleCloseRow} />}
     </Box>
