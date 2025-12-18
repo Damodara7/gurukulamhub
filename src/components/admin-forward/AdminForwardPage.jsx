@@ -22,8 +22,18 @@ function AdminForwardPage({ game = null }) {
   const admininstructions = game?.status === 'lobby'
   const livemode = game?.status === 'live'
   return (
-    <Box sx={{flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden'}}>
-      <Box sx={{flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'auto'}}>
+    <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <Box
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'auto',
+          px: { xs: 2, sm: 3 },
+          py: { xs: 2, sm: 3 }
+        }}
+      >
         <AdminForwardHeader game={game} />
 
         <Grid container spacing={3} sx={{ mb: 3 }}>

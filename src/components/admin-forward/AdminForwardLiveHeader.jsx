@@ -29,14 +29,32 @@ function AdminForwardLiveHeader({ registeredUsers, participatedUsers, game }) {
 
   return (
     <>
-      <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 3 }}>
-        <Button variant='outlined' color='primary' size='small'  onClick={() => handleOpenDialog('registered')} startIcon={<HowToReg />}>
-          Registered Users ({registeredUsers?.length})
+      <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 3, flexWrap: 'wrap' }}>
+        <Button
+          variant='outlined'
+          color='primary'
+          size='small'
+          onClick={() => handleOpenDialog('registered')}
+          startIcon={<HowToReg />}
+        >
+          Registered Users ({registeredUsers?.length || 0})
         </Button>
-        <Button variant='outlined' color='primary' size='small' onClick={() => handleOpenDialog('participated')} startIcon={<CheckCircle />}>
-          Participated Users ({participatedUsers?.length})
+        <Button
+          variant='outlined'
+          color='primary'
+          size='small'
+          onClick={() => handleOpenDialog('participated')}
+          startIcon={<CheckCircle />}
+        >
+          Participated Users ({participatedUsers?.length || 0})
         </Button>
-        <Button variant='outlined' color='primary' size='small' onClick={() => handleOpenDialog('leaderboard')} startIcon={<EmojiEvents />}>
+        <Button
+          variant='outlined'
+          color='primary'
+          size='small'
+          onClick={() => handleOpenDialog('leaderboard')}
+          startIcon={<EmojiEvents />}
+        >
           Leaderboard
         </Button>
       </Box>

@@ -22,7 +22,7 @@ const pulse = keyframes`
   100% { transform: scale(1); }
 `
 
-function AdminForwardHeader({ game  }) {
+function AdminForwardHeader({ game }) {
   const theme = useTheme()
   const [countdownColor, setCountdownColor] = useState('primary.main')
   const [timeRemaining, setTimeRemaining] = useState('')
@@ -66,29 +66,38 @@ function AdminForwardHeader({ game  }) {
   const gamestatus = game?.status === 'completed' || game?.status === 'live' || game?.status === 'cancelled'
 
   return (
-    <Card sx={{ mb: 3 }}>
-      <Box sx={{ display: 'flex', p: 3 }}>
+    <Card sx={{ mb: 3, overflow: 'visible' }}>
+      <Box
+        sx={{ display: 'flex', p: { xs: 2, sm: 3 }, flexDirection: { xs: 'column', md: 'row' }, overflow: 'visible' }}
+      >
         <Avatar
           variant='rounded'
           src={game?.thumbnailPoster || imagePlaceholder?.src}
           sx={{
-            width: 150,
-            height: 150,
-            mr: 3,
-            borderRadius: 2
+            width: { xs: 100, sm: 120, md: 150 },
+            height: { xs: 100, sm: 120, md: 150 },
+            mr: { xs: 0, md: 3 },
+            mb: { xs: 2, md: 0 },
+            borderRadius: 2,
+            alignSelf: { xs: 'center', md: 'flex-start' }
           }}
           onError={e => (e.target.src = imagePlaceholder?.src)}
         />
-        <Box sx={{ flexGrow: 1 }}>
+        <Box sx={{ flexGrow: 1, minWidth: 0, overflow: 'visible' }}>
           <Box
             sx={{
               display: 'flex',
               alignItems: 'center',
               mb: 2,
-              gap: 2
+              gap: 2,
+              flexWrap: 'wrap'
             }}
           >
-            <Typography variant='h4' component='h1'>
+            <Typography
+              variant='h4'
+              component='h1'
+              sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' }, wordBreak: 'break-word' }}
+            >
               {game.title}
             </Typography>
             <Chip
@@ -96,6 +105,7 @@ function AdminForwardHeader({ game  }) {
               color={statusColors[game.status]}
               variant='outlined'
               size='medium'
+              sx={{ flexShrink: 0 }}
             />
           </Box>
           <Typography variant='body1' color='text.secondary' sx={{ mb: 2 }}>
@@ -109,64 +119,92 @@ function AdminForwardHeader({ game  }) {
             />
           </Box>
           {!gamestatus && (
-            <Alert
-              severity={
-                countdownColor === 'error.main' ? 'error' : countdownColor === 'warning.main' ? 'warning' : 'info'
-              }
-              icon={false}
+            <Box
               sx={{
-                mt: 3,
-                mb: 2,
-                p: 1,
-                alignItems: 'center',
-                animation: `${blink} 1s infinite`,
-                '& .MuiAlert-message': {
-                  width: '100%',
-                  display: 'flex',
-                  justifyContent: 'center'
-                }
+                mt: 2,
+                mb: 1,
+                width: '100%',
+                position: 'relative',
+                overflow: 'visible'
               }}
             >
-              <Typography
-                variant='h6'
+              <Alert
+                severity={
+                  countdownColor === 'error.main' ? 'error' : countdownColor === 'warning.main' ? 'warning' : 'info'
+                }
+                icon={false}
                 sx={{
-                  fontWeight: 800,
-                  display: 'flex',
+                  p: { xs: 1.5, sm: 2 },
                   alignItems: 'center',
-                  gap: 2,
-                  color:
-                    countdownColor === 'error.main'
-                      ? theme.palette.error.dark
-                      : countdownColor === 'warning.main'
-                        ? theme.palette.warning.dark
-                        : theme.palette.info.dark
+                  animation: `${blink} 1s infinite`,
+                  overflow: 'visible',
+                  '& .MuiAlert-message': {
+                    width: '100%',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                    gap: { xs: 1, sm: 1.5 },
+                    overflow: 'visible'
+                  }
                 }}
               >
                 <Box
                   component='span'
                   sx={{
                     animation: `${pulse} 1s infinite`,
-                    display: 'inline-flex'
+                    display: 'inline-flex',
+                    flexShrink: 0
                   }}
                 >
-                  <AccessTime fontSize='medium' />
+                  <AccessTime fontSize='small' />
                 </Box>
-                The game will start automatically in:
+                <Typography
+                  variant='body2'
+                  sx={{
+                    fontWeight: 600,
+                    fontSize: { xs: '0.75rem', sm: '0.85rem' },
+                    color:
+                      countdownColor === 'error.main'
+                        ? theme.palette.error.dark
+                        : countdownColor === 'warning.main'
+                          ? theme.palette.warning.dark
+                          : theme.palette.info.dark,
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0
+                  }}
+                >
+                  The game will start automatically in:
+                </Typography>
                 <Box
                   component='span'
                   sx={{
-                    px: 1.5,
-                    py: 0.5,
+                    px: { xs: 1.25, sm: 1.5 },
+                    py: { xs: 0.5, sm: 0.75 },
                     bgcolor: 'background.default',
                     borderRadius: 1,
-                    minWidth: '120px',
-                    textAlign: 'center'
+                    minWidth: { xs: '100px', sm: '120px' },
+                    textAlign: 'center',
+                    fontWeight: 700,
+                    fontSize: { xs: '0.85rem', sm: '0.95rem' },
+                    fontFamily: 'monospace',
+                    letterSpacing: '0.05em',
+                    color:
+                      countdownColor === 'error.main'
+                        ? theme.palette.error.dark
+                        : countdownColor === 'warning.main'
+                          ? theme.palette.warning.dark
+                          : theme.palette.info.dark,
+                    flexShrink: 0,
+                    overflow: 'visible',
+                    whiteSpace: 'nowrap',
+                    display: 'inline-block'
                   }}
                 >
                   {timeRemaining || game?.status}
                 </Box>
-              </Typography>
-            </Alert>
+              </Alert>
+            </Box>
           )}
         </Box>
       </Box>

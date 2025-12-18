@@ -1,7 +1,18 @@
 'use client'
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { Box, Typography, Alert, CardContent, useTheme, LinearProgress, Chip, Paper, Button } from '@mui/material'
+import {
+  Box,
+  Typography,
+  Alert,
+  CardContent,
+  useTheme,
+  LinearProgress,
+  Chip,
+  Paper,
+  Button,
+  alpha
+} from '@mui/material'
 import Loading from '@/components/Loading'
 import QuizQuestion from './GameQuizQuestion'
 import Timer, { formatTime } from '@/components/Timer'
@@ -21,14 +32,32 @@ const getColor = percentage => {
 
 const TimerChip = ({ remainingTime, duration }) => {
   const progress = (remainingTime / duration) * 100
+  const theme = useTheme()
+  const color = getColor(progress)
+  const colorValue =
+    color === 'primary'
+      ? theme.palette.primary.main
+      : color === 'warning'
+        ? theme.palette.warning.main
+        : theme.palette.error.main
 
   return (
     <Chip
       label={formatTime(remainingTime)}
-      color={getColor(progress)}
-      variant='outlined'
+      color={color}
+      variant='filled'
       sx={{
-        transition: 'background-color 0.3s ease'
+        fontWeight: 700,
+        fontSize: { xs: '0.85rem', sm: '0.9rem' },
+        fontFamily: 'monospace',
+        letterSpacing: '0.05em',
+        bgcolor: alpha(colorValue, theme.palette.mode === 'dark' ? 0.25 : 0.15),
+        color: colorValue,
+        border: `1.5px solid ${alpha(colorValue, 0.4)}`,
+        transition: 'all 0.3s ease',
+        '&:hover': {
+          bgcolor: alpha(colorValue, theme.palette.mode === 'dark' ? 0.3 : 0.2)
+        }
       }}
     />
   )
@@ -141,7 +170,7 @@ export default function PlayGameQuiz({ game: initialGame, onGameEnd }) {
   const quiz = game?.quiz
   const questions = game?.questions
 
-   const storageKey = `game-${game?._id}-quiz-${quiz?._id}-state`
+  const storageKey = `game-${game?._id}-quiz-${quiz?._id}-state`
 
   const mappedQuestions = useMemo(() => {
     let cumulativeTime = 0
@@ -221,18 +250,18 @@ export default function PlayGameQuiz({ game: initialGame, onGameEnd }) {
   }, [questionTimeLeft])
 
   const currentQuestion = mappedQuestions[currentQuestionIndex]
-  const hintUsed = !!usedHints[currentQuestion?._id];
-  const hasHint = !!currentQuestion?.data?.hint;
-  const isSkippable = currentQuestion?.data?.skippable;
+  const hintUsed = !!usedHints[currentQuestion?._id]
+  const hasHint = !!currentQuestion?.data?.hint
+  const isSkippable = currentQuestion?.data?.skippable
 
   // Derive submitted state from server/player data
-  const userEmail = session?.user?.email;
-  const player = useMemo(() => game?.participatedUsers?.find(p => p.email === userEmail), [game, userEmail]);
+  const userEmail = session?.user?.email
+  const player = useMemo(() => game?.participatedUsers?.find(p => p.email === userEmail), [game, userEmail])
   const isCurrentSubmitted = useMemo(() => {
-    if (!player || !currentQuestion) return false;
-    return player.answers?.some(ans => ans.question?.toString() === currentQuestion._id?.toString());
-  }, [player, currentQuestion]);
-  const canSubmit = !isCurrentSubmitted && questionTimeLeft > 0 && !submitting;
+    if (!player || !currentQuestion) return false
+    return player.answers?.some(ans => ans.question?.toString() === currentQuestion._id?.toString())
+  }, [player, currentQuestion])
+  const canSubmit = !isCurrentSubmitted && questionTimeLeft > 0 && !submitting
 
   // Track last answer time (ms from question start)
   function handleAnswerSelect(questionId, optionId) {
@@ -364,21 +393,21 @@ export default function PlayGameQuiz({ game: initialGame, onGameEnd }) {
   }
 
   async function handleSubmit() {
-    if (!currentQuestion || isCurrentSubmitted || submitting) return;
-    setSubmitting(true);
-    const isLastQuestion = currentQuestionIndex === mappedQuestions.length - 1;
-    await calculateAndUpdateUserScore({ finish: isLastQuestion });
+    if (!currentQuestion || isCurrentSubmitted || submitting) return
+    setSubmitting(true)
+    const isLastQuestion = currentQuestionIndex === mappedQuestions.length - 1
+    await calculateAndUpdateUserScore({ finish: isLastQuestion })
     // Fetch latest game data to update player answers/submission state
     try {
-      const res = await RestApi.get(`${API_URLS.v0.USERS_GAME}/${game._id}`);
+      const res = await RestApi.get(`${API_URLS.v0.USERS_GAME}/${game._id}`)
       if (res.status === 'success' && res.result) {
-        setGame(res.result);
-        forceUpdate(n => n + 1);
+        setGame(res.result)
+        forceUpdate(n => n + 1)
       }
     } catch (e) {
       // Optionally handle error
     }
-    setSubmitting(false);
+    setSubmitting(false)
   }
 
   const handleExit = () => {
@@ -400,41 +429,45 @@ export default function PlayGameQuiz({ game: initialGame, onGameEnd }) {
 
   // Timer for question expiry and moving to next question
   useEffect(() => {
-    if (!currentQuestion) return;
-    const now = new Date();
-    const expiresAt = new Date(currentQuestion?.data?.expiresAt);
-    const msLeft = expiresAt - now;
-    setQuestionTimeLeft(Math.max(Math.floor(msLeft / 1000), 0));
+    if (!currentQuestion) return
+    const now = new Date()
+    const expiresAt = new Date(currentQuestion?.data?.expiresAt)
+    const msLeft = expiresAt - now
+    setQuestionTimeLeft(Math.max(Math.floor(msLeft / 1000), 0))
 
     if (msLeft <= 0) {
       // Move to the next question immediately
-      const nextIdx = mappedQuestions.findIndex((q, idx) => idx > currentQuestionIndex && new Date(q.data.expiresAt) > now);
+      const nextIdx = mappedQuestions.findIndex(
+        (q, idx) => idx > currentQuestionIndex && new Date(q.data.expiresAt) > now
+      )
       if (nextIdx !== -1) {
-        setCurrentQuestionIndex(nextIdx);
+        setCurrentQuestionIndex(nextIdx)
       } else {
-        setGameEnded(true);
+        setGameEnded(true)
       }
-      return;
+      return
     }
 
     // Timer for current question
     const interval = setInterval(() => {
-      const now = new Date();
-      const msLeft = expiresAt - now;
-      setQuestionTimeLeft(Math.max(Math.floor(msLeft / 1000), 0));
+      const now = new Date()
+      const msLeft = expiresAt - now
+      setQuestionTimeLeft(Math.max(Math.floor(msLeft / 1000), 0))
       if (msLeft <= 0) {
-        clearInterval(interval);
+        clearInterval(interval)
         // Move to next question immediately
-        const nextIdx = mappedQuestions.findIndex((q, idx) => idx > currentQuestionIndex && new Date(q.data.expiresAt) > now);
+        const nextIdx = mappedQuestions.findIndex(
+          (q, idx) => idx > currentQuestionIndex && new Date(q.data.expiresAt) > now
+        )
         if (nextIdx !== -1) {
-          setCurrentQuestionIndex(nextIdx);
+          setCurrentQuestionIndex(nextIdx)
         } else {
-          setGameEnded(true);
+          setGameEnded(true)
         }
       }
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [currentQuestionIndex, mappedQuestions]);
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [currentQuestionIndex, mappedQuestions])
 
   // 2. WebSocket setup for real-time updates
   useEffect(() => {
@@ -458,7 +491,9 @@ export default function PlayGameQuiz({ game: initialGame, onGameEnd }) {
           const userEmail = session?.user?.email
           const player = data?.participatedUsers?.find(p => p.email === userEmail)
           const currentQuestion = data?.questions?.[currentQuestionIndex]
-          const hasSubmitted = player?.answers?.some(ans => ans.question?.toString() === currentQuestion?._id?.toString())
+          const hasSubmitted = player?.answers?.some(
+            ans => ans.question?.toString() === currentQuestion?._id?.toString()
+          )
           if (hasSubmitted) setSubmitting(false)
           forceUpdate(n => n + 1)
         }
@@ -487,20 +522,91 @@ export default function PlayGameQuiz({ game: initialGame, onGameEnd }) {
   }
 
   const progress = (remainingTime / game.duration) * 100
+  const theme = useTheme()
 
   return (
-    <Box sx={{ mx: 'auto', px: 2, width: { xs: '100%', sm: '100%' }, height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Paper elevation={0} sx={{ p: 2, my: 4, maxWidth: 'lg', mx: 'auto' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant='h6' component='div'>
-            Time Remaining
-          </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+    <Box
+      sx={{
+        mx: 'auto',
+        px: 2,
+        width: { xs: '100%', sm: '100%' },
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column'
+      }}
+    >
+      {/* Compact Time Remaining Display */}
+      <Box
+        sx={{
+          maxWidth: 'lg',
+          mx: 'auto',
+          mt: { xs: 2, sm: 2.5 },
+          mb: { xs: 2, sm: 2.5 },
+          width: '100%',
+          position: 'relative'
+        }}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: { xs: 1.5, sm: 2 },
+            px: { xs: 2, sm: 2.5 },
+            py: { xs: 1.25, sm: 1.5 },
+            borderRadius: 2,
+            bgcolor: theme => alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.12 : 0.08),
+            border: theme =>
+              `1px solid ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.25 : 0.2)}`,
+            position: 'relative',
+            overflow: 'hidden',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 3,
+              background: theme =>
+                `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+              transform: `scaleX(${progress / 100})`,
+              transformOrigin: 'left',
+              transition: 'transform 0.3s ease'
+            }
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5 }, flex: 1, minWidth: 0 }}>
+            <TimeIcon
+              sx={{
+                fontSize: { xs: 18, sm: 20 },
+                color:
+                  getColor(progress) === 'primary'
+                    ? theme.palette.primary.main
+                    : getColor(progress) === 'warning'
+                      ? theme.palette.warning.main
+                      : theme.palette.error.main,
+                flexShrink: 0
+              }}
+            />
+            <Typography
+              variant='body2'
+              sx={{
+                fontSize: { xs: '0.75rem', sm: '0.8rem' },
+                fontWeight: 600,
+                color: 'text.secondary',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              Time Remaining
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5 }, flexShrink: 0 }}>
             <TimerChip remainingTime={remainingTime} duration={game.duration} />
           </Box>
         </Box>
-        <ProgressBar progress={progress} />
-      </Paper>
+      </Box>
 
       <Box sx={{ flex: 1, overflow: 'auto' }}>
         {mappedQuestions.length > 0 ? (

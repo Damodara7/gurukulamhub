@@ -4,14 +4,13 @@ import React, { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation' // Using App Router
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
-import { CircularProgress, Box, Typography, useTheme, CardContent, Button, Card  } from '@mui/material'
+import { CircularProgress, Box, Typography, useTheme, CardContent, Button, Card } from '@mui/material'
 import PlayGameInfoScreen from '@/components/public-games/play-game/PlayGameInfoScreen'
 import StartPlayGame from '@/components/public-games/play-game/StartPlayGame'
 import GameEnded from '@/components/public-games/play-game/GameEnded'
 import GameRegistrationNotice from '@/components/public-games/play-game/GameRegistrationNotice'
 import textAlign from 'tailwindcss-logical/plugins/textAlign'
 import FallBackCard from '@/components/apps/games/FallBackCard'
-
 
 function PlayGamePage() {
   const params = useParams()
@@ -29,7 +28,7 @@ function PlayGamePage() {
         console.log('API Response:', res) // Log full response
         if (res.status === 'success') {
           setGame(res.result)
-          setShouldStartGame(res.result?.status==='live')
+          setShouldStartGame(res.result?.status === 'live')
         } else {
           console.error('API Error:', res.message)
           setError(res.message)
@@ -72,13 +71,15 @@ function PlayGamePage() {
 
   //check if game has ended
   if (game.status === 'completed') {
-    return <Box sx={{ flex: 1, height: '100%', display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
-      <GameEnded game={game} onExit={handleExit}  />
-    </Box>
+    return (
+      <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'auto', width: '100%' }}>
+        <GameEnded game={game} onExit={handleExit} />
+      </Box>
+    )
   }
 
   // caluculate the difference in minutes
-  // first we get the starttime and then get the current time and we get the result in the milliseconds 
+  // first we get the starttime and then get the current time and we get the result in the milliseconds
   // for convertiing milliseconds to minutes we divide by 1000 and then by 60
   // this will give us the time left in minutes
 
@@ -92,14 +93,13 @@ function PlayGamePage() {
   if (shouldStartGame) {
     return <StartPlayGame game={game} setGame={setGame} />
   }
-  
+
   //default-case - show game info screen
-  if(game.status === 'lobby'){
+  if (game.status === 'lobby') {
     return <PlayGameInfoScreen game={game} setShouldStartGame={setShouldStartGame} />
   }
 
-  return <GameRegistrationNotice game={game}/>
-
+  return <GameRegistrationNotice game={game} />
 }
 
 export default PlayGamePage

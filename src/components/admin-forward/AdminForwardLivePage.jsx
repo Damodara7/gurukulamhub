@@ -12,8 +12,7 @@ import { useSession } from 'next-auth/react'
 import AdminForwardQuizQuestion from './AdminForwardQuizQuestion'
 import AdminForwardLiveHeader from './AdminForwardLiveHeader'
 
-
-function AdminForwardLivePage({ quiz, questions, game , setGame, onGameEnd }) {
+function AdminForwardLivePage({ quiz, questions, game, setGame, onGameEnd }) {
   const { data: session } = useSession()
   const router = useRouter()
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
@@ -32,8 +31,6 @@ function AdminForwardLivePage({ quiz, questions, game , setGame, onGameEnd }) {
   }, [questions])
 
   const currentQuestion = mappedQuestions[currentQuestionIndex]
-
-  
 
   const handleGameEnd = async () => {
     try {
@@ -70,22 +67,20 @@ function AdminForwardLivePage({ quiz, questions, game , setGame, onGameEnd }) {
       if (currentQuestionIndex < mappedQuestions.length - 1) {
         // For non-final questions, just increment the index
         try {
-            const res = await RestApi.post(`${API_URLS.v0.USERS_GAME}/${game._id}/admin-forward/forward-question`, {
-              user: { email: session.user.email },
-              currentQuestionIndex
-            })
-            if (res.status === 'success') {
-              setGame(res.result)
-              setCurrentQuestionIndex(res.result.liveQuestionIndex)
-              console.log(res.result.liveQuestionIndex)
-            } else {
-              console.error('Failed to end game:', result.message)
-            }
-          
+          const res = await RestApi.post(`${API_URLS.v0.USERS_GAME}/${game._id}/admin-forward/forward-question`, {
+            user: { email: session.user.email },
+            currentQuestionIndex
+          })
+          if (res.status === 'success') {
+            setGame(res.result)
+            setCurrentQuestionIndex(res.result.liveQuestionIndex)
+            console.log(res.result.liveQuestionIndex)
+          } else {
+            console.error('Failed to end game:', result.message)
+          }
         } catch (error) {
           console.error('Error ending game:', error)
         }
-
       } else {
         // For the final question, end the game
         await handleGameEnd()
@@ -99,10 +94,20 @@ function AdminForwardLivePage({ quiz, questions, game , setGame, onGameEnd }) {
     setCurrentQuestionIndex(game?.liveQuestionIndex)
   }, [game?.liveQuestionIndex])
 
-
   return (
     <>
-      <Box sx={{ mx: 'auto', px: 2, width: { xs: '100%', sm: '100%' }, height: '100%' }}>
+      <Box
+        sx={{
+          mx: 'auto',
+          px: { xs: 2, sm: 3 },
+          py: { xs: 2, sm: 3 },
+          width: { xs: '100%', sm: '100%' },
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'auto'
+        }}
+      >
         <AdminForwardLiveHeader
           registeredUsers={game?.registeredUsers}
           participatedUsers={game?.participatedUsers}

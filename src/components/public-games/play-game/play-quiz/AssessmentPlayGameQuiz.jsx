@@ -1,7 +1,7 @@
 'use client'
 import React, { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Box, Typography, Alert, CardContent, useTheme, LinearProgress, Chip, Paper } from '@mui/material'
+import { Box, Typography, Alert, CardContent, useTheme, LinearProgress, Chip, Paper, alpha } from '@mui/material'
 import Loading from '@/components/Loading'
 import QuizQuestion from '@/components/publicquiz/QuizQuestion'
 import Timer, { formatTime } from '@/components/Timer'
@@ -20,14 +20,32 @@ const getColor = percentage => {
 
 const TimerChip = ({ remainingTime, duration }) => {
   const progress = (remainingTime / duration) * 100
+  const theme = useTheme()
+  const color = getColor(progress)
+  const colorValue =
+    color === 'primary'
+      ? theme.palette.primary.main
+      : color === 'warning'
+        ? theme.palette.warning.main
+        : theme.palette.error.main
 
   return (
     <Chip
       label={formatTime(remainingTime)}
-      color={getColor(progress)}
-      variant='outlined'
+      color={color}
+      variant='filled'
       sx={{
-        transition: 'background-color 0.3s ease'
+        fontWeight: 700,
+        fontSize: { xs: '0.85rem', sm: '0.9rem' },
+        fontFamily: 'monospace',
+        letterSpacing: '0.05em',
+        bgcolor: alpha(colorValue, theme.palette.mode === 'dark' ? 0.25 : 0.15),
+        color: colorValue,
+        border: `1.5px solid ${alpha(colorValue, 0.4)}`,
+        transition: 'all 0.3s ease',
+        '&:hover': {
+          bgcolor: alpha(colorValue, theme.palette.mode === 'dark' ? 0.3 : 0.2)
+        }
       }}
     />
   )
@@ -108,6 +126,7 @@ async function updateUserScore(gameId, { user, userAnswer, finish }) {
 
 export default function PlayGameQuiz({ game }) {
   const { data: session } = useSession()
+  const theme = useTheme()
   console.log('game data :  ', game)
   const router = useRouter()
   // Inside PlayGameQuiz
@@ -342,26 +361,98 @@ export default function PlayGameQuiz({ game }) {
   const isGameEnded = new Date() > new Date(new Date(game.startTime).getTime() + game.duration * 1000)
 
   if (gameEnded || isGameEnded || isUserCompletedGame) {
-    return <Box sx={{ flex: 1, height: '100%', display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
-      <GameEnded game={game} onExit={handleExit} />
-    </Box>
+    return (
+      <Box sx={{ flex: 1, height: '100%', display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
+        <GameEnded game={game} onExit={handleExit} />
+      </Box>
+    )
   }
 
   const progress = (remainingTime / game.duration) * 100
 
   return (
-    <Box sx={{ mx: 'auto', px: 2, width: { xs: '100%', sm: '100%' }, height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Paper elevation={0} sx={{ p: 2, my: 4, maxWidth: 'lg', mx: 'auto' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant='h6' component='div'>
-            Time Remaining
-          </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+    <Box
+      sx={{
+        mx: 'auto',
+        px: 2,
+        width: { xs: '100%', sm: '100%' },
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column'
+      }}
+    >
+      {/* Compact Time Remaining Display */}
+      <Box
+        sx={{
+          maxWidth: 'lg',
+          mx: 'auto',
+          mt: { xs: 2, sm: 2.5 },
+          mb: { xs: 2, sm: 2.5 },
+          width: '100%',
+          position: 'relative'
+        }}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: { xs: 1.5, sm: 2 },
+            px: { xs: 2, sm: 2.5 },
+            py: { xs: 1.25, sm: 1.5 },
+            borderRadius: 2,
+            bgcolor: theme => alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.12 : 0.08),
+            border: theme =>
+              `1px solid ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.25 : 0.2)}`,
+            position: 'relative',
+            overflow: 'hidden',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 3,
+              background: theme =>
+                `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+              transform: `scaleX(${progress / 100})`,
+              transformOrigin: 'left',
+              transition: 'transform 0.3s ease'
+            }
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5 }, flex: 1, minWidth: 0 }}>
+            <TimeIcon
+              sx={{
+                fontSize: { xs: 18, sm: 20 },
+                color: theme =>
+                  getColor(progress) === 'primary'
+                    ? theme.palette.primary.main
+                    : getColor(progress) === 'warning'
+                      ? theme.palette.warning.main
+                      : theme.palette.error.main,
+                flexShrink: 0
+              }}
+            />
+            <Typography
+              variant='body2'
+              sx={{
+                fontSize: { xs: '0.75rem', sm: '0.8rem' },
+                fontWeight: 600,
+                color: 'text.secondary',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              Time Remaining
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5 }, flexShrink: 0 }}>
             <TimerChip remainingTime={remainingTime} duration={game.duration} />
           </Box>
         </Box>
-        <ProgressBar progress={progress} />
-      </Paper>
+      </Box>
 
       <Box sx={{ flex: 1, overflow: 'auto' }}>
         {questions.length > 0 ? (

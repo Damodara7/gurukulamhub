@@ -31,9 +31,9 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
   const [loading, setLoading] = useState(false)
   const wsRef = useRef(null)
   const [highlightedRows, setHighlightedRows] = useState({})
-  
+
   // Check if a player is the current user
-  const isCurrentUser = (player) => {
+  const isCurrentUser = player => {
     return player?.email === session?.user?.email || player?.user?.email === session?.user?.email
   }
 
@@ -185,17 +185,15 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
     const r = parseInt(hex.slice(1, 3), 16)
     const g = parseInt(hex.slice(3, 5), 16)
     const b = parseInt(hex.slice(5, 7), 16)
-    
+
     // Get background color based on theme
-    const bgColor = theme.palette.mode === 'dark' 
-      ? theme.palette.background.paper 
-      : '#ffffff'
-    
+    const bgColor = theme.palette.mode === 'dark' ? theme.palette.background.paper : '#ffffff'
+
     // Parse background color
     const bgR = theme.palette.mode === 'dark' ? 45 : 255 // Approximate dark paper or white
     const bgG = theme.palette.mode === 'dark' ? 40 : 255
     const bgB = theme.palette.mode === 'dark' ? 60 : 255
-    
+
     // Blend with background
     return `rgba(${Math.round(r * (1 - blendAlpha) + bgR * blendAlpha)}, ${Math.round(
       g * (1 - blendAlpha) + bgG * blendAlpha
@@ -205,32 +203,28 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
   // Helper to check if a player moved up or down
   const getRowAnimation = (player, index) => {
     const isUser = isCurrentUser(player)
-    
+
     // Highlight if recently moved
     if (highlightedRows[player._id] === 'up') {
-      return { 
-        backgroundColor: theme.palette.mode === 'dark' 
-          ? alpha(theme.palette.success.main, 0.2) 
-          : '#e0ffe0', 
+      return {
+        backgroundColor: theme.palette.mode === 'dark' ? alpha(theme.palette.success.main, 0.2) : '#e0ffe0',
         transition: 'background-color 0.5s',
         borderLeft: isUser ? `4px solid ${theme.palette.primary.main}` : 'none'
       }
     }
     if (highlightedRows[player._id] === 'down') {
-      return { 
-        backgroundColor: theme.palette.mode === 'dark' 
-          ? alpha(theme.palette.error.main, 0.2) 
-          : '#ffe0e0', 
+      return {
+        backgroundColor: theme.palette.mode === 'dark' ? alpha(theme.palette.error.main, 0.2) : '#ffe0e0',
         transition: 'background-color 0.5s',
         borderLeft: isUser ? `4px solid ${theme.palette.primary.main}` : 'none'
       }
     }
     // Default: color based on player email, blended with background
     // Add special highlight for current user
-    return { 
-      backgroundColor: isUser 
+    return {
+      backgroundColor: isUser
         ? alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.25 : 0.12)
-        : blendWithBackground(stringToColor(player.email), theme.palette.mode === 'dark' ? 0.15 : 0.8), 
+        : blendWithBackground(stringToColor(player.email), theme.palette.mode === 'dark' ? 0.15 : 0.8),
       transition: 'background-color 0.5s',
       borderLeft: isUser ? `4px solid ${theme.palette.primary.main}` : 'none',
       boxShadow: isUser ? `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}` : 'none'
@@ -250,7 +244,9 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
   }
 
   return (
-    <Box sx={{ mx: 'auto', width: '100%', maxWidth: duringPlay || !isAdmin ? 'md' : 'md', my: 5, px: { xs: 2, md: 0 } }}>
+    <Box
+      sx={{ mx: 'auto', width: '100%', maxWidth: duringPlay || !isAdmin ? 'md' : 'md', my: 5, px: { xs: 2, md: 0 } }}
+    >
       <Typography
         variant='h6'
         sx={{
@@ -279,9 +275,10 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
           <TableHead>
             <TableRow
               sx={{
-                bgcolor: theme.palette.mode === 'dark' 
-                  ? alpha(theme.palette.background.paper, 0.5) 
-                  : alpha(theme.palette.primary.main, 0.05),
+                bgcolor:
+                  theme.palette.mode === 'dark'
+                    ? alpha(theme.palette.background.paper, 0.5)
+                    : alpha(theme.palette.primary.main, 0.05),
                 borderBottom: `2px solid ${alpha(theme.palette.divider, 0.5)}`
               }}
             >
@@ -349,9 +346,8 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
                         component='span'
                         sx={{
                           fontSize: '0.75rem',
-                          color: theme.palette.mode === 'dark' 
-                            ? alpha(theme.palette.common.white, 0.6) 
-                            : 'text.secondary',
+                          color:
+                            theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.6) : 'text.secondary',
                           fontWeight: 400,
                           textTransform: 'none'
                         }}
@@ -392,9 +388,7 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
                 >
                   <TableCell
                     sx={{
-                      color: theme.palette.mode === 'dark' 
-                        ? alpha(theme.palette.common.white, 0.9) 
-                        : 'text.primary',
+                      color: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.9) : 'text.primary',
                       fontWeight: index < 3 || isCurrentUser(player) ? 700 : 500,
                       borderBottom: `1px solid ${alpha(theme.palette.divider, 0.3)}`
                     }}
@@ -403,9 +397,7 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
                   </TableCell>
                   <TableCell
                     sx={{
-                      color: theme.palette.mode === 'dark' 
-                        ? alpha(theme.palette.common.white, 0.9) 
-                        : 'text.primary',
+                      color: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.9) : 'text.primary',
                       fontWeight: index < 3 || isCurrentUser(player) ? 700 : 500,
                       borderBottom: `1px solid ${alpha(theme.palette.divider, 0.3)}`
                     }}
@@ -454,9 +446,7 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
                   <TableCell
                     align='right'
                     sx={{
-                      color: theme.palette.mode === 'dark' 
-                        ? alpha(theme.palette.common.white, 0.9) 
-                        : 'text.primary',
+                      color: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.9) : 'text.primary',
                       fontWeight: index < 3 || isCurrentUser(player) ? 700 : 500,
                       borderBottom: `1px solid ${alpha(theme.palette.divider, 0.3)}`
                     }}
@@ -466,9 +456,7 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
                   <TableCell
                     align='right'
                     sx={{
-                      color: theme.palette.mode === 'dark' 
-                        ? alpha(theme.palette.common.white, 0.9) 
-                        : 'text.primary',
+                      color: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.9) : 'text.primary',
                       fontWeight: index < 3 || isCurrentUser(player) ? 700 : 500,
                       borderBottom: `1px solid ${alpha(theme.palette.divider, 0.3)}`
                     }}
@@ -479,9 +467,7 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
                     <TableCell
                       align='right'
                       sx={{
-                        color: theme.palette.mode === 'dark' 
-                          ? alpha(theme.palette.common.white, 0.9) 
-                          : 'text.primary',
+                        color: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.9) : 'text.primary',
                         fontWeight: index < 3 || isCurrentUser(player) ? 700 : 500,
                         borderBottom: `1px solid ${alpha(theme.palette.divider, 0.3)}`
                       }}
@@ -493,9 +479,7 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
                     <TableCell
                       align='right'
                       sx={{
-                        color: theme.palette.mode === 'dark' 
-                          ? alpha(theme.palette.common.white, 0.9) 
-                          : 'text.primary',
+                        color: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.9) : 'text.primary',
                         fontWeight: index < 3 || isCurrentUser(player) ? 700 : 500,
                         borderBottom: `1px solid ${alpha(theme.palette.divider, 0.3)}`
                       }}

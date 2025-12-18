@@ -18,13 +18,22 @@ const GameEnded = ({ onExit, game = null, isAdmin = false }) => {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
-        background: `radial-gradient(circle at 20% 30%, ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.15 : 0.08)} 0%, transparent 50%),
-                     radial-gradient(circle at 80% 70%, ${alpha(theme.palette.secondary.main, theme.palette.mode === 'dark' ? 0.15 : 0.08)} 0%, transparent 50%),
+        width: '100%',
+        minHeight: '100%',
+        background: `radial-gradient(circle at 20% 30%, ${alpha(
+          theme.palette.primary.main,
+          theme.palette.mode === 'dark' ? 0.15 : 0.08
+        )} 0%, transparent 50%),
+                     radial-gradient(circle at 80% 70%, ${alpha(
+                       theme.palette.secondary.main,
+                       theme.palette.mode === 'dark' ? 0.15 : 0.08
+                     )} 0%, transparent 50%),
                      ${theme.palette.background.default}`,
         py: { xs: 4, md: 6 },
         position: 'relative',
-        overflow: 'hidden'
+        overflow: 'auto',
+        overflowX: 'hidden',
+        pb: { xs: 6, md: 8 }
       }}
     >
       {/* Decorative Background Elements */}
@@ -42,7 +51,16 @@ const GameEnded = ({ onExit, game = null, isAdmin = false }) => {
         }}
       />
 
-      <Container maxWidth='lg' sx={{ width: '100%', position: 'relative', zIndex: 1 }}>
+      <Container
+        maxWidth='lg'
+        sx={{
+          width: '100%',
+          position: 'relative',
+          zIndex: 1,
+          pb: { xs: 2, md: 3 },
+          px: { xs: 2, sm: 3, md: 4 }
+        }}
+      >
         {/* Hero Section */}
         <Box
           sx={{
@@ -92,7 +110,7 @@ const GameEnded = ({ onExit, game = null, isAdmin = false }) => {
               sx={{
                 width: { xs: 240, sm: 320, md: 380 },
                 height: { xs: 240, sm: 320, md: 380 },
-                position: 'relative',
+                position: 'relative'
               }}
             >
               <Lottie animationData={trophyAnimation} loop={false} />
@@ -104,12 +122,13 @@ const GameEnded = ({ onExit, game = null, isAdmin = false }) => {
                 maxWidth: 600,
                 mx: 'auto',
                 mt: { xs: -1, md: -1.5 },
-                bgcolor: theme.palette.mode === 'dark' ? alpha(theme.palette.background.paper, 0.8) : alpha('#fff', 0.9),
+                bgcolor:
+                  theme.palette.mode === 'dark' ? alpha(theme.palette.background.paper, 0.8) : alpha('#fff', 0.9),
                 backdropFilter: 'blur(20px)',
                 borderRadius: 4,
                 border: `1px solid ${alpha(theme.palette.divider, 0.2)}`,
                 boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.3 : 0.1)}`,
-                overflow: 'visible',
+                overflow: 'visible'
               }}
             >
               <CardContent sx={{ p: { xs: 3, md: 4 }, pt: { xs: 4, md: 5 } }}>
@@ -160,9 +179,15 @@ const GameEnded = ({ onExit, game = null, isAdmin = false }) => {
                 bgcolor: theme.palette.mode === 'dark' ? theme.palette.background.paper : 'white',
                 borderRadius: 4,
                 border: `1px solid ${alpha(theme.palette.divider, 0.3)}`,
-                boxShadow: `0 12px 40px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.3 : 0.08)}`,
-                overflow: 'hidden',
+                boxShadow: `0 12px 40px ${alpha(
+                  theme.palette.common.black,
+                  theme.palette.mode === 'dark' ? 0.3 : 0.08
+                )}`,
+                overflow: 'visible',
                 position: 'relative',
+                maxHeight: { xs: '70vh', md: '80vh' },
+                display: 'flex',
+                flexDirection: 'column',
                 '&::before': {
                   content: '""',
                   position: 'absolute',
@@ -175,7 +200,32 @@ const GameEnded = ({ onExit, game = null, isAdmin = false }) => {
                 }
               }}
             >
-              <Leaderboard game={game} isAdmin={isAdmin} />
+              <Box
+                sx={{
+                  overflow: 'auto',
+                  overflowX: 'hidden',
+                  maxHeight: { xs: '70vh', md: '80vh' },
+                  '&::-webkit-scrollbar': {
+                    width: '8px'
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    background:
+                      theme.palette.mode === 'dark'
+                        ? alpha(theme.palette.common.black, 0.2)
+                        : alpha(theme.palette.common.black, 0.05),
+                    borderRadius: '4px'
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    background: alpha(theme.palette.primary.main, 0.5),
+                    borderRadius: '4px',
+                    '&:hover': {
+                      background: alpha(theme.palette.primary.main, 0.7)
+                    }
+                  }
+                }}
+              >
+                <Leaderboard game={game} isAdmin={isAdmin} />
+              </Box>
             </Card>
           </Box>
         )}
@@ -185,8 +235,14 @@ const GameEnded = ({ onExit, game = null, isAdmin = false }) => {
           <Card
             sx={{
               mb: { xs: 4, md: 5 },
-              bgcolor: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.2 : 0.1)}, ${alpha(theme.palette.secondary.main, theme.palette.mode === 'dark' ? 0.15 : 0.08)})`,
-              background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.2 : 0.1)}, ${alpha(theme.palette.secondary.main, theme.palette.mode === 'dark' ? 0.15 : 0.08)})`,
+              bgcolor: `linear-gradient(135deg, ${alpha(
+                theme.palette.primary.main,
+                theme.palette.mode === 'dark' ? 0.2 : 0.1
+              )}, ${alpha(theme.palette.secondary.main, theme.palette.mode === 'dark' ? 0.15 : 0.08)})`,
+              background: `linear-gradient(135deg, ${alpha(
+                theme.palette.primary.main,
+                theme.palette.mode === 'dark' ? 0.2 : 0.1
+              )}, ${alpha(theme.palette.secondary.main, theme.palette.mode === 'dark' ? 0.15 : 0.08)})`,
               borderRadius: 3,
               border: `2px solid ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.4 : 0.25)}`,
               boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.2 : 0.15)}`,
@@ -242,7 +298,7 @@ const GameEnded = ({ onExit, game = null, isAdmin = false }) => {
         )}
 
         {/* Action Button */}
-        <Stack alignItems='center' sx={{ mt: { xs: 2, md: 3 } }}>
+        <Stack alignItems='center' sx={{ mt: { xs: 2, md: 3 }, mb: { xs: 1, md: 2 } }}>
           <Button
             variant='contained'
             size='large'
@@ -271,7 +327,10 @@ const GameEnded = ({ onExit, game = null, isAdmin = false }) => {
                 transition: 'left 0.5s'
               },
               '&:hover': {
-                boxShadow: `0 12px 32px ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.5 : 0.45)}`,
+                boxShadow: `0 12px 32px ${alpha(
+                  theme.palette.primary.main,
+                  theme.palette.mode === 'dark' ? 0.5 : 0.45
+                )}`,
                 transform: 'translateY(-3px)',
                 '&::before': {
                   left: '100%'
