@@ -3,7 +3,7 @@ import { API_URLS } from '@/configs/apiConfig'
 import { auth } from '@/libs/auth'
 import * as RestApi from '@/utils/restApiUtil'
 import ViewQuiz from '@/views/quiz-builder/ViewQuiz'
-import { Alert, AlertTitle } from '@mui/material'
+import { Alert, AlertTitle, Box } from '@mui/material'
 import { isValidObjectId } from 'mongoose'
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined'
 
@@ -40,7 +40,7 @@ export default async function ViewQuizPage({ params }) {
 
   const quiz = await getQuizData()
 
-  if(!quiz){
+  if (!quiz) {
     return (
       <CenterBox>
         <Alert
@@ -56,7 +56,9 @@ export default async function ViewQuizPage({ params }) {
     )
   }
 
-  return <Box sx={{height: '100%', display: 'flex', flexDirection: 'column'}}>
-    <ViewQuiz quiz={quiz} />
-  </Box>
+  return (
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <ViewQuiz quiz={quiz} />
+    </Box>
+  )
 }

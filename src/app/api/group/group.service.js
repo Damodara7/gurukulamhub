@@ -83,6 +83,13 @@ export const addOne = async groupData => {
   await connectMongo()
   try {
     const user = await User.findOne({ email: groupData.creatorEmail })
+    if (!user) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Creator user not found'
+      }
+    }
     groupData.createdBy = user._id
     // Validate required fields
     console.log('groupData', groupData)
@@ -175,39 +182,66 @@ export const addOne = async groupData => {
 
     const savedGroup = await newGroup.save()
 
+    // Ensure creator is always added to the group (regardless of filters)
+    const creatorId = savedGroup.createdBy?.toString() || groupData.createdBy?.toString()
+    const creatorObjectId = user._id
+
+    try {
+      // Add creator to group members array if not already present
+      if (!savedGroup.members || !savedGroup.members.some(m => m.toString() === creatorId)) {
+        savedGroup.members = savedGroup.members || []
+        savedGroup.members.push(creatorObjectId)
+        savedGroup.membersCount = savedGroup.members.length
+        await savedGroup.save()
+        console.log(`[Group Service] Automatically added creator ${groupData.creatorEmail} to group members`)
+      }
+
+      // Add creator to their own groupIds array
+      await User.findByIdAndUpdate(creatorObjectId, { $addToSet: { groupIds: savedGroup._id } })
+      console.log(`[Group Service] Added group ${savedGroup._id} to creator's groupIds`)
+    } catch (creatorError) {
+      console.error('[Group Service] Error adding creator to group:', creatorError)
+      // This is critical - rethrow to let main catch handle it
+      throw new Error(`Failed to add creator to group: ${creatorError.message}`)
+    }
+
     // Update all selected users' groupIds arrays with the new group ID
     if (groupData.members && groupData.members.length > 0) {
       try {
-        // Add group to selected users
-        await User.updateMany({ _id: { $in: groupData.members } }, { $addToSet: { groupIds: savedGroup._id } })
-        console.log(`Updated ${groupData.members.length} users with group ID ${savedGroup._id}`)
+        // Filter out creator from members list (already added above)
+        const membersWithoutCreator = groupData.members.filter(memberId => memberId.toString() !== creatorId)
 
-        // Create notifications for members (excluding the creator)
-        const creatorId = savedGroup.createdBy?.toString() || groupData.createdBy?.toString()
-        const membersToNotify = groupData.members.filter(memberId => memberId.toString() !== creatorId)
+        if (membersWithoutCreator.length > 0) {
+          // Add group to selected users (excluding creator)
+          await User.updateMany({ _id: { $in: membersWithoutCreator } }, { $addToSet: { groupIds: savedGroup._id } })
+          console.log(`Updated ${membersWithoutCreator.length} users with group ID ${savedGroup._id}`)
 
-        if (membersToNotify.length > 0) {
-          try {
-            const UserModel = mongoose.model('users')
-            const addedUsers = await UserModel.find({ _id: { $in: membersToNotify } }).lean()
+          // Create notifications for members (excluding the creator)
+          const membersToNotify = membersWithoutCreator
 
-            for (const addedUser of addedUsers) {
-              try {
-                await createGroupJoinedNotification(addedUser._id, {
-                  _id: savedGroup._id,
-                  groupName: savedGroup.groupName,
-                  addedBy: groupData.creatorEmail || 'Admin',
-                  membersCount: savedGroup.membersCount || savedGroup.members?.length || 0
-                })
-              } catch (notificationError) {
-                console.error('Error creating group joined notification for user:', addedUser._id, notificationError)
-                // Don't fail group creation if notification creation fails
+          if (membersToNotify.length > 0) {
+            try {
+              const UserModel = mongoose.model('users')
+              const addedUsers = await UserModel.find({ _id: { $in: membersToNotify } }).lean()
+
+              for (const addedUser of addedUsers) {
+                try {
+                  await createGroupJoinedNotification(addedUser._id, {
+                    _id: savedGroup._id,
+                    groupName: savedGroup.groupName,
+                    addedBy: groupData.creatorEmail || 'Admin',
+                    membersCount: savedGroup.membersCount || savedGroup.members?.length || 0
+                  })
+                } catch (notificationError) {
+                  console.error('Error creating group joined notification for user:', addedUser._id, notificationError)
+                  // Don't fail group creation if notification creation fails
+                }
               }
+              console.log(`Created notifications for ${membersToNotify.length} group members`)
+            } catch (notificationError) {
+              console.error('Error creating group joined notifications:', notificationError)
+              // Don't fail group creation if notification creation fails
             }
-            console.log(`Created notifications for ${membersToNotify.length} group members`)
-          } catch (notificationError) {
-            console.error('Error creating group joined notifications:', notificationError)
-            // Don't fail group creation if notification creation fails
           }
         }
       } catch (updateError) {
@@ -218,9 +252,10 @@ export const addOne = async groupData => {
 
     // Broadcast WebSocket event for group creation
     try {
-      broadcastGroupsListUpdates()
+      await broadcastGroupsListUpdates()
     } catch (wsError) {
       console.error('Error broadcasting group created event:', wsError)
+      // Don't fail group creation if WebSocket broadcast fails
     }
 
     return {
@@ -272,21 +307,52 @@ export const updateOne = async (groupId, updateData) => {
     // Handle member synchronization if members array is provided
     if (updateData.members !== undefined) {
       try {
+        // Ensure creator is always in the group (regardless of filters or member updates)
+        const creatorId = existingGroup.createdBy?.toString()
+        if (creatorId) {
+          try {
+            // Get creator user
+            const creatorUser = await User.findById(creatorId)
+            if (!creatorUser) {
+              console.warn(`[Group Service] Creator user ${creatorId} not found, skipping creator auto-add`)
+            } else {
+              // Ensure creator is in members array
+              const updateDataMembers = updateData.members || []
+              const creatorInNewMembers = updateDataMembers.some(memberId =>
+                memberId.toString ? memberId.toString() === creatorId : String(memberId) === creatorId
+              )
+
+              if (!creatorInNewMembers) {
+                // Add creator to members array if not present
+                updateData.members = [...updateDataMembers, new mongoose.Types.ObjectId(creatorId)]
+                console.log(`[Group Service] Automatically re-added creator to group members during update`)
+              }
+
+              // Ensure creator has group in their groupIds
+              await User.findByIdAndUpdate(creatorId, { $addToSet: { groupIds: groupId } })
+              console.log(`[Group Service] Ensured creator has group in their groupIds`)
+            }
+          } catch (creatorError) {
+            console.error('[Group Service] Error ensuring creator is in group:', creatorError)
+            // Continue with update even if creator check fails
+          }
+        }
+
         // Get current members from the group document (source of truth)
         const currentMemberIds = (existingGroup.members || []).map(memberId =>
           memberId.toString ? memberId.toString() : String(memberId)
         )
 
-        // Convert updateData.members to strings for comparison
+        // Convert updateData.members to strings for comparison (after ensuring creator is included)
         const newMemberIds = (updateData.members || []).map(memberId =>
           memberId.toString ? memberId.toString() : String(memberId)
         )
 
-        // Find users to add (in new list but not in current list)
-        const usersToAdd = newMemberIds.filter(userId => !currentMemberIds.includes(userId))
+        // Find users to add (in new list but not in current list, excluding creator)
+        const usersToAdd = newMemberIds.filter(userId => !currentMemberIds.includes(userId) && userId !== creatorId)
 
-        // Find users to remove (in current list but not in new list)
-        const usersToRemove = currentMemberIds.filter(userId => !newMemberIds.includes(userId))
+        // Find users to remove (in current list but not in new list, excluding creator)
+        const usersToRemove = currentMemberIds.filter(userId => !newMemberIds.includes(userId) && userId !== creatorId)
 
         console.log('[Group Service] Member changes detected:', {
           currentCount: currentMemberIds.length,
@@ -518,10 +584,11 @@ export const updateOne = async (groupId, updateData) => {
 
     // Broadcast WebSocket event for group update
     try {
-      broadcastGroupsListUpdates()
+      await broadcastGroupsListUpdates()
       broadcastGroupDetails(groupId, populatedGroup || updatedGroup.toObject())
     } catch (wsError) {
       console.error('Error broadcasting group updated event:', wsError)
+      // Don't fail group update if WebSocket broadcast fails
     }
 
     return {
@@ -588,7 +655,7 @@ export const deleteOne = async groupId => {
 
     // Broadcast WebSocket event for group deletion
     try {
-      broadcastGroupsListUpdates()
+      await broadcastGroupsListUpdates()
     } catch (wsError) {
       console.error('Error broadcasting group deleted event:', wsError)
     }

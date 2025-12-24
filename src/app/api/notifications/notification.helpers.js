@@ -322,9 +322,12 @@ export const createProfileCompletionNotification = async (userId, profileData) =
     const totalFields = profileData.totalFields || 0
     const filledFields = profileData.filledFields || 0
 
-    // Only send notification at specific thresholds (50%, 75%, 90%)
+    // For scheduled reminders (from scheduler), we don't check thresholds
+    // We send notification if completion < 90% and 24 hours have passed
+    // For manual triggers (from profile update), we still check thresholds
+    const isScheduledReminder = profileData.isScheduledReminder !== false // Default to true if not specified
     const thresholds = [50, 75, 90]
-    const shouldNotify = thresholds.includes(completionPercentage)
+    const shouldNotify = isScheduledReminder || thresholds.includes(completionPercentage)
 
     if (!shouldNotify) {
       return {
@@ -334,11 +337,23 @@ export const createProfileCompletionNotification = async (userId, profileData) =
       }
     }
 
+    // Create personalized message with missing fields
+    let message = `Your profile is ${completionPercentage}% complete.`
+
+    if (Array.isArray(missingFields) && missingFields.length > 0) {
+      const fieldsToShow = missingFields.slice(0, 10) // Show max 10 fields
+      const fieldsList = fieldsToShow.join(', ')
+      const moreFieldsCount = missingFields.length > 10 ? ` and ${missingFields.length - 10} more` : ''
+      message += ` Please fill in: ${fieldsList}${moreFieldsCount}.`
+    } else {
+      message += ' Fill in more details to unlock features.'
+    }
+
     const notificationData = {
       userId: userId,
       type: 'PROFILE_COMPLETION_REMINDER',
       title: 'Complete Your Profile',
-      message: `Your profile is ${completionPercentage}% complete. Fill in more details to unlock features.`,
+      message: message,
       priority: 'low',
       relatedEntity: {
         entityType: 'profile',
@@ -348,7 +363,8 @@ export const createProfileCompletionNotification = async (userId, profileData) =
         completionPercentage,
         missingFields: Array.isArray(missingFields) ? missingFields : [missingFields],
         totalFields,
-        filledFields
+        filledFields,
+        isScheduledReminder: isScheduledReminder
       },
       actionUrl: '/pages/user-profile',
       actionLabel: 'Complete Profile'
