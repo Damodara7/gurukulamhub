@@ -860,7 +860,7 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
                                   component='label'
                                   variant='contained'
                                   size='small'
-                                  style={{ color: 'white' }}
+                                  style={{ color: 'white !important' }}
                                 >
                                   {loading.findAccounts ? 'Finding...' : 'Find Account'}
                                 </Button>
@@ -1228,7 +1228,7 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
                       <Button
                         color='primary'
                         disabled={loading.resendOtp}
-                        variant='text'
+                        variant='contained'
                         component='label'
                         size={isMobile ? 'small' : 'medium'}
                         onClick={() => handleResendPhoneOtp(selectedAccountWithMobile.phone)}

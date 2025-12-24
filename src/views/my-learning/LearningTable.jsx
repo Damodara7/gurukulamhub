@@ -161,6 +161,8 @@ const LearningTable = () => {
   const handleMoreClick = (event, rowOriginal) => {
     setAnchorEl(event.currentTarget)
     setCurrentRow(rowOriginal) // Save the current rowOriginal to reference in actions
+    setOpen(true)
+    setViewRowData(rowOriginal)
   }
 
   // Function to close the menu
@@ -346,7 +348,6 @@ const LearningTable = () => {
   const handleViewRow = () => {
     setViewRowData(currentRow) // Pass the entire row object or just the necessary fields
     setOpen(true) // Open the dialog
-    handleClose() // Close the Anchor Menu
   }
 
   const handleCloseRow = () => {
