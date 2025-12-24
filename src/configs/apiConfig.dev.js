@@ -48,7 +48,8 @@ export const API_URLS = {
     USERS_GROUP_CHAT: `${API_BASE_URL}/group-chat`,
     USERS_GROUP_CHAT_ACTIONS: `${API_BASE_URL}/group-chat/actions`,
     GAME_SPONSORSHIP: `${API_BASE_URL}/game-sponsorship`,
-    GAME_SPONSORSHIP_PAYMENT: `${API_BASE_URL}/game-sponsorship-payment`
+    GAME_SPONSORSHIP_PAYMENT: `${API_BASE_URL}/game-sponsorship-payment`,
+    NOTIFICATIONS: `${API_BASE_URL}/notifications`
     // Add more URLs for API version 1
   },
   v1: {

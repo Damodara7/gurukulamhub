@@ -169,7 +169,88 @@ export async function getAll({filters = {}}) {
 export async function updateOne({ email, data: updatedData }) {
   await connectMongo()
   try {
+    // Get the user before update to check if roles changed
+    const oldUser = await User.findOne({ email }).select('-password').lean()
+    
     const updatedUser = await User.findOneAndUpdate({ email }, updatedData, { new: true }).select('-password') // Return updated user without password
+    
+    // Check if roles were updated
+    if (updatedData.roles && oldUser && Array.isArray(updatedData.roles) && Array.isArray(oldUser.roles)) {
+      console.log('[User Service] Checking role changes...')
+      console.log('[User Service] Old roles:', oldUser.roles)
+      console.log('[User Service] New roles:', updatedData.roles)
+      
+      // Convert all roles to strings for comparison
+      const oldRolesStr = oldUser.roles.map(r => String(r))
+      const newRolesStr = updatedData.roles.map(r => String(r))
+      
+      const newRoles = newRolesStr.filter(role => !oldRolesStr.includes(role))
+      const removedRoles = oldRolesStr.filter(role => !newRolesStr.includes(role))
+      
+      console.log('[User Service] New roles detected:', newRoles)
+      console.log('[User Service] Removed roles detected:', removedRoles)
+      
+      // Create notification for each newly assigned role
+      if (newRoles.length > 0) {
+        try {
+          const { createRoleAssignedNotification } = await import('../api/notifications/notification.helpers.js')
+          
+          for (const newRole of newRoles) {
+            // Skip USER role as it's default
+            if (newRole !== 'USER') {
+              console.log('[User Service] Creating role assigned notification for:', newRole)
+              const result = await createRoleAssignedNotification(updatedUser._id, {
+                roleName: newRole,
+                assignedBy: updatedData.assignedBy || updatedData.updatedBy || 'Admin',
+                allRoles: updatedData.roles
+              })
+              console.log('[User Service] Role assigned notification result:', result)
+            }
+          }
+        } catch (notificationError) {
+          console.error('[User Service] Error creating role assigned notification:', notificationError)
+          console.error('[User Service] Error stack:', notificationError.stack)
+          // Don't fail the update if notification creation fails
+        }
+      }
+      
+      // Create notification for each removed role
+      if (removedRoles.length > 0) {
+        try {
+          console.log('[User Service] Creating role removed notifications for:', removedRoles)
+          const { createRoleRemovedNotification } = await import('../api/notifications/notification.helpers.js')
+          
+          for (const removedRole of removedRoles) {
+            // Skip USER role as it's default and shouldn't be removed
+            if (removedRole !== 'USER') {
+              console.log('[User Service] Creating role removed notification for:', removedRole, 'User ID:', updatedUser._id)
+              const result = await createRoleRemovedNotification(updatedUser._id, {
+                roleName: removedRole,
+                removedBy: updatedData.removedBy || updatedData.updatedBy || 'Admin',
+                remainingRoles: updatedData.roles
+              })
+              console.log('[User Service] Role removed notification result:', result)
+            } else {
+              console.log('[User Service] Skipping USER role removal notification')
+            }
+          }
+        } catch (notificationError) {
+          console.error('[User Service] Error creating role removed notification:', notificationError)
+          console.error('[User Service] Error stack:', notificationError.stack)
+          // Don't fail the update if notification creation fails
+        }
+      } else {
+        console.log('[User Service] No roles were removed')
+      }
+    } else {
+      console.log('[User Service] Roles not updated or missing data:', {
+        hasUpdatedRoles: !!updatedData.roles,
+        hasOldUser: !!oldUser,
+        isArrayUpdated: Array.isArray(updatedData.roles),
+        isArrayOld: Array.isArray(oldUser?.roles)
+      })
+    }
+    
     return { status: 'success', result: updatedUser, message: 'User updated successfully' }
   } catch (error) {
     // console.log(`Error updating user: ${error}`)

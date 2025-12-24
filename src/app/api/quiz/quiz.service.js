@@ -5,6 +5,14 @@ import * as QuestionService from '../question/question.service.js'
 import { quizCreateRequestDtoSchema, validateQuizQuestions } from './quiz.validator.js'
 import mongoose from 'mongoose'
 import * as ApiResponseUtils from '@/utils/apiResponses'
+import {
+  createQuizApprovedNotification,
+  createQuizRejectedNotification,
+  createQuizPendingApprovalNotification,
+  createQuizPublishedNotification
+} from '../notifications/notification.helpers.js'
+import User from '@/app/models/user.model.js'
+import { ROLES_LOOKUP } from '@/configs/roles-lookup.js'
 
 const Artifact = 'Quiz'
 const ArtifactModel = Quiz
@@ -48,6 +56,56 @@ export async function add(addRequestData) {
     const newArtifact = new ArtifactModel({ ...addRequestData })
     await newArtifact.save()
     console.log(`${Artifact}` + ' added successfully!')
+
+    // If quiz is submitted for approval (approvalState is 'pending'), notify admins
+    if (newArtifact.approvalState === 'pending') {
+      try {
+        console.log('[Quiz Service] Quiz created with pending state, finding admins...')
+        // Find all admin users (SUPER_ADMIN, ADMIN, or QUIZ_REVIEWER roles)
+        // These are the roles that can approve/reject quizzes
+        const adminUsers = await User.find({
+          $and: [
+            {
+              $or: [
+                { roles: { $in: [ROLES_LOOKUP.SUPER_ADMIN, ROLES_LOOKUP.ADMIN, 'QUIZ_REVIEWER'] } },
+                { isAdmin: true }
+              ]
+            },
+            {
+              $or: [{ isActive: true }, { isActive: { $exists: false } }]
+            }
+          ]
+        })
+          .select('_id email roles isAdmin isActive')
+          .lean()
+
+        console.log('[Quiz Service] Found admin users:', adminUsers?.length || 0)
+        if (adminUsers && adminUsers.length > 0) {
+          console.log(
+            '[Quiz Service] Admin users:',
+            adminUsers.map(u => ({ id: u._id, email: u.email, roles: u.roles }))
+          )
+          const adminUserIds = adminUsers.map(admin => admin._id)
+          const notificationResult = await createQuizPendingApprovalNotification(adminUserIds, {
+            _id: newArtifact._id,
+            id: newArtifact.id,
+            title: newArtifact.title,
+            createdBy: newArtifact.createdBy || newArtifact.owner
+          })
+          console.log(
+            `[Quiz Service] Created pending approval notifications for ${adminUserIds.length} admins`,
+            notificationResult
+          )
+        } else {
+          console.warn('[Quiz Service] No admin users found to notify')
+        }
+      } catch (notificationError) {
+        console.error('[Quiz Service] Error creating quiz pending approval notifications:', notificationError)
+        console.error('[Quiz Service] Error stack:', notificationError.stack)
+        // Don't fail quiz creation if notification creation fails
+      }
+    }
+
     // const allArtifacts = await getAllEvenDeleted()
     return { status: 'success', result: newArtifact, message: `${Artifact}` + ' Added Successfully', statusCode: 201 }
   } catch (err) {
@@ -62,11 +120,173 @@ export async function updateById(id, updateData) {
   await connectMongo()
 
   try {
+    // Get the quiz before update to check if approvalState is changing
+    const oldQuiz = await ArtifactModel.findById(id).lean()
+
     const updatedArtifact = await ArtifactModel.findByIdAndUpdate(id, updateData, { new: true }) // Return updated document
     if (!updatedArtifact) {
       console.error(`${Artifact}` + 'not found for update.')
       return { status: 'error', result: null, message: `${Artifact}` + 'not found for update.', statusCode: 404 }
     }
+
+    // Check if approvalState changed
+    if (updateData.approvalState && oldQuiz && oldQuiz.approvalState !== updateData.approvalState) {
+      try {
+        // If quiz is submitted for approval (changed to 'pending'), notify admins
+        if (updateData.approvalState === 'pending' && oldQuiz.approvalState !== 'pending') {
+          console.log('[Quiz Service] Quiz state changed to pending, finding admins...')
+          console.log('[Quiz Service] Old state:', oldQuiz.approvalState, 'New state:', updateData.approvalState)
+          // Find all admin users (SUPER_ADMIN, ADMIN, or QUIZ_REVIEWER roles)
+          // These are the roles that can approve/reject quizzes
+          const adminUsers = await User.find({
+            $and: [
+              {
+                $or: [
+                  { roles: { $in: [ROLES_LOOKUP.SUPER_ADMIN, ROLES_LOOKUP.ADMIN, 'QUIZ_REVIEWER'] } },
+                  { isAdmin: true }
+                ]
+              },
+              {
+                $or: [{ isActive: true }, { isActive: { $exists: false } }]
+              }
+            ]
+          })
+            .select('_id email roles isAdmin isActive')
+            .lean()
+
+          console.log('[Quiz Service] Found admin users:', adminUsers?.length || 0)
+          if (adminUsers && adminUsers.length > 0) {
+            console.log(
+              '[Quiz Service] Admin users:',
+              adminUsers.map(u => ({ id: u._id, email: u.email, roles: u.roles }))
+            )
+            const adminUserIds = adminUsers.map(admin => admin._id)
+            const notificationResult = await createQuizPendingApprovalNotification(adminUserIds, {
+              _id: updatedArtifact._id,
+              id: updatedArtifact.id,
+              title: updatedArtifact.title,
+              createdBy: updatedArtifact.createdBy || updatedArtifact.owner
+            })
+            console.log(
+              `[Quiz Service] Created pending approval notifications for ${adminUserIds.length} admins`,
+              notificationResult
+            )
+          } else {
+            console.warn('[Quiz Service] No admin users found to notify')
+          }
+        }
+
+        // If quiz is approved or rejected, notify the quiz owner
+        if (updateData.approvalState === 'approved' || updateData.approvalState === 'rejected') {
+          // Get the quiz owner's user ID
+          const ownerUser = await User.findOne({ email: updatedArtifact.owner || updatedArtifact.createdBy })
+
+          if (ownerUser) {
+            if (updateData.approvalState === 'approved') {
+              // Create approved notification
+              await createQuizApprovedNotification(ownerUser._id, {
+                _id: updatedArtifact._id,
+                id: updatedArtifact.id,
+                title: updatedArtifact.title,
+                approvedBy: updateData.approvedBy || 'Admin'
+              })
+            } else if (updateData.approvalState === 'rejected') {
+              // Create rejected notification
+              await createQuizRejectedNotification(ownerUser._id, {
+                _id: updatedArtifact._id,
+                id: updatedArtifact.id,
+                title: updatedArtifact.title,
+                approvedBy: updateData.approvedBy || 'Admin',
+                rejectedBy: updateData.approvedBy || 'Admin',
+                remarks: updatedArtifact.remarks || []
+              })
+            }
+          }
+        }
+
+        // If quiz is published, notify all active users (only for PUBLIC quizzes)
+        if (updateData.approvalState === 'published' && oldQuiz.approvalState !== 'published') {
+          console.log('[Quiz Service] ===== QUIZ PUBLISHED NOTIFICATION START =====')
+          console.log('[Quiz Service] Quiz published:', {
+            quizId: updatedArtifact._id,
+            quizTitle: updatedArtifact.title,
+            privacy: updatedArtifact.privacy,
+            oldState: oldQuiz.approvalState,
+            newState: updateData.approvalState
+          })
+
+          // Only notify for PUBLIC quizzes
+          if (updatedArtifact.privacy === 'PUBLIC') {
+            try {
+              // Get all active users
+              const allActiveUsers = await User.find({
+                isActive: true,
+                isVerified: true
+              })
+                .select('_id')
+                .lean()
+
+              const allActiveUserIds = allActiveUsers.map(user => user._id.toString())
+              console.log(`[Quiz Service] Found ${allActiveUserIds.length} active users`)
+
+              // Find users who already have QUIZ_PUBLISHED notification for this quiz
+              const Notification = mongoose.model('notifications')
+              const existingNotifications = await Notification.find({
+                type: 'QUIZ_PUBLISHED',
+                'relatedEntity.entityType': 'quiz',
+                'relatedEntity.entityId': updatedArtifact._id.toString()
+              })
+                .select('userId')
+                .lean()
+
+              const usersWithExistingNotifications = existingNotifications.map(n => n.userId.toString())
+              console.log(
+                `[Quiz Service] Found ${usersWithExistingNotifications.length} users who already have notifications`
+              )
+
+              // Exclude users who already have notifications
+              const usersToNotify = allActiveUserIds.filter(userId => !usersWithExistingNotifications.includes(userId))
+
+              console.log('[Quiz Service] Users to notify:', {
+                totalActive: allActiveUserIds.length,
+                alreadyHaveNotification: usersWithExistingNotifications.length,
+                toNotify: usersToNotify.length
+              })
+
+              // Send notifications to all users who don't already have one
+              if (usersToNotify.length > 0) {
+                const notificationResult = await createQuizPublishedNotification(usersToNotify, {
+                  _id: updatedArtifact._id,
+                  id: updatedArtifact.id,
+                  title: updatedArtifact.title,
+                  syllabus: updatedArtifact.syllabus,
+                  details: updatedArtifact.details,
+                  publishedBy: updateData.approvedBy || updatedArtifact.owner || 'Admin'
+                })
+                console.log(
+                  `[Quiz Service] ✅ Sent published notifications to ${usersToNotify.length} users:`,
+                  notificationResult
+                )
+              } else {
+                console.log('[Quiz Service] ⏭️ All users already have notifications for this quiz')
+              }
+            } catch (publishNotificationError) {
+              console.error('[Quiz Service] ❌❌❌ ERROR in quiz published notification ❌❌❌')
+              console.error('[Quiz Service] Error message:', publishNotificationError.message)
+              console.error('[Quiz Service] Error stack:', publishNotificationError.stack)
+              // Don't fail the update if notification creation fails
+            }
+          } else {
+            console.log('[Quiz Service] ⏭️ Quiz is PRIVATE, skipping public notifications')
+          }
+          console.log('[Quiz Service] ===== QUIZ PUBLISHED NOTIFICATION COMPLETE =====')
+        }
+      } catch (notificationError) {
+        console.error('Error creating quiz notification:', notificationError)
+        // Don't fail the update if notification creation fails
+      }
+    }
+
     // const allArtifacts = await getAllEvenDeleted()
     // if(allAds)
     return {
@@ -109,7 +329,7 @@ export async function saveQuiz(id, updateData) {
     }
 
     // Update to saved if all questions are validated
-    let updatedArtifact = await ArtifactModel.findOneAndUpdate({ _id: id, approvalState: 'draft'}, updateData)
+    let updatedArtifact = await ArtifactModel.findOneAndUpdate({ _id: id, approvalState: 'draft' }, updateData)
 
     return {
       status: 'success',

@@ -6,6 +6,7 @@ import Game from '../game/game.model.js'
 import GroupRequest from '../group-request/group-request.model.js'
 import { broadcastGroupsList } from '../ws/groups/publishers'
 import { broadcastGroupDetails } from '../ws/groups/[groupId]/publishers'
+import { createGroupJoinedNotification, createGroupRemovedNotification } from '../notifications/notification.helpers.js'
 
 export const getOne = async (filter = {}) => {
   await connectMongo()
@@ -180,6 +181,35 @@ export const addOne = async groupData => {
         // Add group to selected users
         await User.updateMany({ _id: { $in: groupData.members } }, { $addToSet: { groupIds: savedGroup._id } })
         console.log(`Updated ${groupData.members.length} users with group ID ${savedGroup._id}`)
+
+        // Create notifications for members (excluding the creator)
+        const creatorId = savedGroup.createdBy?.toString() || groupData.createdBy?.toString()
+        const membersToNotify = groupData.members.filter(memberId => memberId.toString() !== creatorId)
+
+        if (membersToNotify.length > 0) {
+          try {
+            const UserModel = mongoose.model('users')
+            const addedUsers = await UserModel.find({ _id: { $in: membersToNotify } }).lean()
+
+            for (const addedUser of addedUsers) {
+              try {
+                await createGroupJoinedNotification(addedUser._id, {
+                  _id: savedGroup._id,
+                  groupName: savedGroup.groupName,
+                  addedBy: groupData.creatorEmail || 'Admin',
+                  membersCount: savedGroup.membersCount || savedGroup.members?.length || 0
+                })
+              } catch (notificationError) {
+                console.error('Error creating group joined notification for user:', addedUser._id, notificationError)
+                // Don't fail group creation if notification creation fails
+              }
+            }
+            console.log(`Created notifications for ${membersToNotify.length} group members`)
+          } catch (notificationError) {
+            console.error('Error creating group joined notifications:', notificationError)
+            // Don't fail group creation if notification creation fails
+          }
+        }
       } catch (updateError) {
         console.error('Error updating users with group ID:', updateError)
         // Don't fail group creation if user update fails
@@ -242,25 +272,42 @@ export const updateOne = async (groupId, updateData) => {
     // Handle member synchronization if members array is provided
     if (updateData.members !== undefined) {
       try {
-        // Get current users in this group
-        const currentUsersInGroup = await User.find({ groupIds: groupId }, { _id: 1 }).lean()
-        const currentUserIds = currentUsersInGroup.map(u => u._id.toString())
+        // Get current members from the group document (source of truth)
+        const currentMemberIds = (existingGroup.members || []).map(memberId =>
+          memberId.toString ? memberId.toString() : String(memberId)
+        )
 
-        // Find users to add and remove
-        const usersToAdd = updateData.members.filter(userId => !currentUserIds.includes(userId.toString()))
-        const usersToRemove = currentUserIds.filter(userId => !updateData.members.includes(userId.toString()))
+        // Convert updateData.members to strings for comparison
+        const newMemberIds = (updateData.members || []).map(memberId =>
+          memberId.toString ? memberId.toString() : String(memberId)
+        )
+
+        // Find users to add (in new list but not in current list)
+        const usersToAdd = newMemberIds.filter(userId => !currentMemberIds.includes(userId))
+
+        // Find users to remove (in current list but not in new list)
+        const usersToRemove = currentMemberIds.filter(userId => !newMemberIds.includes(userId))
+
+        console.log('[Group Service] Member changes detected:', {
+          currentCount: currentMemberIds.length,
+          newCount: newMemberIds.length,
+          toAdd: usersToAdd.length,
+          toRemove: usersToRemove.length
+        })
 
         // Add group to new users
         if (usersToAdd.length > 0) {
-          await User.updateMany({ _id: { $in: usersToAdd } }, { $addToSet: { groupIds: groupId } })
+          // Convert string IDs back to ObjectIds for MongoDB query
+          const usersToAddObjectIds = usersToAdd.map(id => new mongoose.Types.ObjectId(id))
+          await User.updateMany({ _id: { $in: usersToAddObjectIds } }, { $addToSet: { groupIds: groupId } })
           console.log(`Added group to ${usersToAdd.length} users`)
-          
+
           // Create system messages for added members
           const adminEmail = updateData.updatorEmail || existingGroup.creatorEmail
           if (adminEmail) {
             const UserModel = mongoose.model('users')
             const UserProfile = mongoose.model('userprofiles')
-            
+
             // Get admin's name
             const adminUser = await UserModel.findOne({ email: adminEmail }).lean()
             let adminName = adminEmail.split('@')[0]
@@ -270,9 +317,9 @@ export const updateOne = async (groupId, updateData) => {
                 adminName = `${adminProfile.firstname || ''} ${adminProfile.lastname || ''}`.trim() || adminName
               }
             }
-            
+
             // Get names of added users and create system messages
-            const addedUsers = await UserModel.find({ _id: { $in: usersToAdd } }).lean()
+            const addedUsers = await UserModel.find({ _id: { $in: usersToAddObjectIds } }).lean()
             for (const addedUser of addedUsers) {
               let userName = addedUser.email?.split('@')[0] || 'User'
               if (addedUser.profile) {
@@ -281,27 +328,156 @@ export const updateOne = async (groupId, updateData) => {
                   userName = `${userProfile.firstname || ''} ${userProfile.lastname || ''}`.trim() || userName
                 }
               }
-              
+
               // Create system message
               try {
                 const { createSystemMessage } = await import('../group-chat/group-chat.service.js')
-                await createSystemMessage(
-                  groupId,
-                  `${userName} was added by ${adminName}`,
-                  adminEmail
-                )
+                await createSystemMessage(groupId, `${userName} was added by ${adminName}`, adminEmail)
               } catch (msgError) {
                 console.error('Error creating system message for added member:', msgError)
                 // Don't fail the update if system message creation fails
               }
+
+              // Create notification for added user
+              try {
+                await createGroupJoinedNotification(addedUser._id, {
+                  _id: groupId,
+                  groupName: existingGroup.groupName,
+                  addedBy: adminEmail,
+                  membersCount: existingGroup.membersCount || existingGroup.members?.length || 0
+                })
+              } catch (notificationError) {
+                console.error('Error creating group joined notification:', notificationError)
+                // Don't fail the update if notification creation fails
+              }
+            }
+
+            // *** NEW: Send game notifications for users added to group ***
+            try {
+              console.log('[Group Service] ===== GAME NOTIFICATIONS FOR ADDED USERS START =====')
+              const Notification = mongoose.model('notifications')
+              const { createGameCreatedNotification } = await import('../notifications/notification.helpers.js')
+
+              // Find all games using this group that are still active/joinable
+              const gamesUsingGroup = await Game.find({
+                groupId: groupId,
+                isDeleted: false,
+                status: { $in: ['created', 'approved', 'lobby', 'live'] } // Active/joinable statuses
+              }).lean()
+
+              console.log(`[Group Service] Found ${gamesUsingGroup.length} active games using this group`)
+
+              for (const game of gamesUsingGroup) {
+                console.log(`[Group Service] Processing game: ${game.title} (${game._id})`)
+
+                // Find users who already have GAME_CREATED notification for this game
+                const existingNotifications = await Notification.find({
+                  type: 'GAME_CREATED',
+                  'relatedEntity.entityType': 'game',
+                  'relatedEntity.entityId': game._id.toString(),
+                  userId: { $in: usersToAddObjectIds }
+                })
+                  .select('userId')
+                  .lean()
+
+                const usersWithExistingNotifications = existingNotifications.map(n => n.userId.toString())
+                console.log(
+                  `[Group Service] Found ${usersWithExistingNotifications.length} users who already have notifications for this game`
+                )
+
+                // Exclude users who already have notifications
+                const usersToNotify = usersToAdd.filter(userId => !usersWithExistingNotifications.includes(userId))
+
+                console.log(`[Group Service] Users to notify for game ${game.title}:`, {
+                  totalAdded: usersToAdd.length,
+                  alreadyHaveNotification: usersWithExistingNotifications.length,
+                  toNotify: usersToNotify.length
+                })
+
+                // Send welcome notifications to users who don't already have one
+                if (usersToNotify.length > 0) {
+                  await createGameCreatedNotification(usersToNotify, {
+                    _id: game._id,
+                    title: game.title,
+                    groupName: existingGroup.groupName,
+                    createdBy: game.creatorEmail,
+                    registrationDeadline: game.registrationEndTime || game.endTime,
+                    maxParticipants: game.maxPlayers
+                  })
+                  console.log(`[Group Service] ✅ Sent game welcome notifications for game: ${game.title}`)
+                } else {
+                  console.log(`[Group Service] ⏭️ All added users already have notifications for game: ${game.title}`)
+                }
+              }
+              console.log('[Group Service] ===== GAME NOTIFICATIONS FOR ADDED USERS COMPLETE =====')
+            } catch (gameNotificationError) {
+              console.error('[Group Service] Error sending game notifications for added users:', gameNotificationError)
+              // Don't fail the group update if game notification creation fails
             }
           }
         }
 
         // Remove group from users who are no longer members
         if (usersToRemove.length > 0) {
-          await User.updateMany({ _id: { $in: usersToRemove } }, { $pull: { groupIds: groupId } })
+          // Convert string IDs back to ObjectIds for MongoDB query
+          const usersToRemoveObjectIds = usersToRemove.map(id => new mongoose.Types.ObjectId(id))
+          await User.updateMany({ _id: { $in: usersToRemoveObjectIds } }, { $pull: { groupIds: groupId } })
           console.log(`Removed group from ${usersToRemove.length} users`)
+
+          // Create notifications for removed users
+          const adminEmail = updateData.updatorEmail || existingGroup.creatorEmail
+          if (adminEmail) {
+            const UserModel = mongoose.model('users')
+            const removedUsers = await UserModel.find({ _id: { $in: usersToRemoveObjectIds } }).lean()
+
+            for (const removedUser of removedUsers) {
+              try {
+                await createGroupRemovedNotification(removedUser._id, {
+                  _id: groupId,
+                  groupName: existingGroup.groupName,
+                  removedBy: adminEmail,
+                  updatorEmail: adminEmail
+                })
+              } catch (notificationError) {
+                console.error('Error creating group removed notification:', notificationError)
+                // Don't fail the update if notification creation fails
+              }
+            }
+          }
+
+          // *** NEW: Send game notifications for users removed from group ***
+          try {
+            console.log('[Group Service] ===== GAME NOTIFICATIONS FOR REMOVED USERS START =====')
+            const { createGameAccessRemovedNotification } = await import('../notifications/notification.helpers.js')
+
+            // Find all games using this group that are still active/joinable
+            const gamesUsingGroup = await Game.find({
+              groupId: groupId,
+              isDeleted: false,
+              status: { $in: ['created', 'approved', 'lobby', 'live'] } // Active/joinable statuses
+            }).lean()
+
+            console.log(`[Group Service] Found ${gamesUsingGroup.length} active games using this group`)
+
+            for (const game of gamesUsingGroup) {
+              console.log(`[Group Service] Processing game: ${game.title} (${game._id})`)
+
+              // Send removal notifications to users removed from group
+              if (usersToRemove.length > 0) {
+                await createGameAccessRemovedNotification(usersToRemove, {
+                  _id: game._id,
+                  title: game.title,
+                  groupName: existingGroup.groupName,
+                  updatedBy: adminEmail || 'Admin'
+                })
+                console.log(`[Group Service] ✅ Sent game removal notifications for game: ${game.title}`)
+              }
+            }
+            console.log('[Group Service] ===== GAME NOTIFICATIONS FOR REMOVED USERS COMPLETE =====')
+          } catch (gameNotificationError) {
+            console.error('[Group Service] Error sending game notifications for removed users:', gameNotificationError)
+            // Don't fail the group update if game notification creation fails
+          }
         }
       } catch (memberUpdateError) {
         console.error('Error updating group members:', memberUpdateError)
