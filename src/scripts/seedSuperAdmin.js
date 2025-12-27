@@ -81,10 +81,20 @@ async function generateUniqueMemberId() {
 // Get SUPER_ADMIN email from environment variable
 const SUPER_ADMIN_EMAIL = process.env.SUPER_ADMIN_EMAIL || process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL
 
+// Only exit if we're actually running the script (not during build)
+// During build time, this will be undefined but that's OK - it will be set at runtime
 if (!SUPER_ADMIN_EMAIL) {
-  console.error('❌ ERROR: SUPER_ADMIN_EMAIL environment variable is not set!')
-  console.error('Please set SUPER_ADMIN_EMAIL in your .env.local file')
-  process.exit(1)
+  // During Next.js build, don't exit - just warn
+  if (process.env.NEXT_PHASE === 'phase-production-build' || process.env.NEXT_PHASE === 'phase-development-build') {
+    console.warn('⚠️  SUPER_ADMIN_EMAIL not set during build - this is OK, set it at runtime')
+  } else {
+    console.error('❌ ERROR: SUPER_ADMIN_EMAIL environment variable is not set!')
+    console.error('Please set SUPER_ADMIN_EMAIL in your .env.local file')
+    // Only exit if not in build phase
+    if (!process.env.NEXT_PHASE) {
+      process.exit(1)
+    }
+  }
 }
 
 /**

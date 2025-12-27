@@ -114,6 +114,7 @@ export async function handleMobileLogin({ email, mobile, otp, captcha, redirectU
   }
 }
 export async function handleCredentialsLogin({ email, password, code, captcha, redirectUrl }) {
+  console.log('In handleCredentialsLogin: ', email, password, code, captcha, redirectUrl)
   const wholeRedirectUrl = `${process.env.NEXTAUTH_URL}${redirectUrl}`
   console.log('Whole redirect url: ', wholeRedirectUrl)
 

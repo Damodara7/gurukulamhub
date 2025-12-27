@@ -25,7 +25,7 @@ async function startServer(port = 4000) {
           "https://gurukulamhub-production.up.railway.app",
           "https://www.gurukulamhub.com",
           "https://gurukulamhub.com",
-          "https://willyard-larue-acquiescingly.ngrok-free.dev"
+          "https://gurukulamhub.com"
         ],
         credentials: true
       }

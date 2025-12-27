@@ -1,0 +1,59 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gurukulamhub-ingress
+  namespace: gurukulamhub
+  annotations:
+    # For Nginx Ingress Controller
+    kubernetes.io/ingress.class: "nginx"
+    # SSL redirect - WebSocket connections over wss:// are already HTTPS, so this won't interfere
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    # WebSocket support - CRITICAL for real-time messaging
+    # The websocket-services annotation tells NGINX to handle WebSocket upgrades for this service
+    # nginx.ingress.kubernetes.io/websocket-services: "gurukulamhub-app"
+    # nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
+    # nginx.ingress.kubernetes.io/configuration-snippet: |
+    #   # WebSocket upgrade headers - websocket-services handles routing, but we ensure headers are set
+    #   proxy_set_header Upgrade $http_upgrade;
+    #   proxy_set_header Connection "upgrade";
+    #   # Standard proxy headers
+    #   proxy_set_header Host $host;
+    #   proxy_set_header X-Real-IP $remote_addr;
+    #   proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    #   proxy_set_header X-Forwarded-Proto $scheme;
+    # For Traefik (alternative)
+    # traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    # traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  # Uncomment and configure TLS if you have SSL certificates
+  # tls:
+  # - hosts:
+  #   - gurukulamhub.com
+  #   - www.gurukulamhub.com
+  #   secretName: gurukulamhub-tls
+  rules:
+  - host: gurukulamhub.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: gurukulamhub-app
+            port:
+              number: 80
+  - host: www.gurukulamhub.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: gurukulamhub-app
+            port:
+              number: 80
+

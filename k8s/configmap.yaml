@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gurukulamhub-config
+  namespace: gurukulamhub
+data:
+  # -----------------------------------------------------------------------------
+  # Non-sensitive Public Configuration
+  # -----------------------------------------------------------------------------
+  NODE_ENV: "production"
+  PORT: "3000"
+  BASEPATH: ""
+  USE_FALLBACK_MUTATION: "true"
+  
+  # -----------------------------------------------------------------------------
+  # Public Keys (safe to expose - these are meant for client-side use)
+  # -----------------------------------------------------------------------------
+  NEXT_PUBLIC_RECAPTCHA_SITE_KEY: "6LdybtIrAAAAAB1ZeuTJ-m-okYqu4tN2YN2Fkjms"
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_test_51OZar7SBB7wnYOSIs4gZrZqWeEJFlGlKP0KUREQBdJFn4TytYos3hfNb7XSTDeEjZmC0oaNOzZL4MeFrE34SrkXF00rWrNG7Yh"
+  GOOGLE_CLIENT_ID: "872140549132-k3ndunp63cl0j05mmi9uh1bctrt0pla9.apps.googleusercontent.com"
+  
+  # -----------------------------------------------------------------------------
+  # Public URLs (can be in ConfigMap or Secrets - your choice)
+  # -----------------------------------------------------------------------------
+  NEXT_PUBLIC_DOCS_URL: "https://demos.themeselection.com/materio-mui-react-nextjs-admin-template/documentation"
+  
+  # -----------------------------------------------------------------------------
+  # AWS S3 Public Configuration (bucket names and region - not sensitive)
+  # -----------------------------------------------------------------------------
+  NEXT_PUBLIC_AWS_S3_GAMES_UPLOAD_BUCKET: "squizmegames"
+  NEXT_PUBLIC_AWS_S3_REGION: "ap-south-1"
+  NEXT_PUBLIC_AWS_S3_USERPROFILE_UPLOAD_BUCKET: "squizme-userprofile"
+  NEXT_PUBLIC_AWS_S3_QUIZ_UPLOAD_BUCKET: "squizme-quiz"
+  
+  # Note: All sensitive data (passwords, secrets, API keys) MUST be in Secrets
+  # See k8s/secret.yaml.template for sensitive variables
+  # 
+  # For convenience (development only), see k8s/configmap-all.yaml which includes everything
+

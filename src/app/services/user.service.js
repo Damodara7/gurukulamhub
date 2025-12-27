@@ -55,6 +55,7 @@ export async function getByEmail({ email }) {
   await connectMongo()
   try {
     let user = await User.findOne({ email }).select('-password').lean().populate('profile')
+    console.log('User: ', user)
     if (user && !user.isActive) {
       return {
         status: 'error',
