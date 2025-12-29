@@ -51,132 +51,104 @@ function PaymentSuccess({ paymentId, sponsorship, amount }) {
   }).format(amount)
 
   return (
-    <Container
-      maxWidth='sm'
-      sx={{
-        mt: { xs: 4, sm: 8 },
-        '@media print': {
-          mt: 0,
-          '& button': { display: 'none' }
-        }
-      }}
+    <Box sx={{
+      width: '100%',
+      height: '100%',
+      minHeight: 0,
+      overflow: 'auto',
+      p: { xs: 3, sm: 4 }
+    }}
     >
-      <Card
+      <Container
+        maxWidth='sm'
         sx={{
-          textAlign: 'center',
-          p: { xs: 2.5, sm: 3, md: 4 },
-          boxShadow: isDarkMode
-            ? `0 8px 32px ${alpha(theme.palette.common.black, 0.4)}`
-            : theme.shadows[10],
-          border: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.1)}`,
-          bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : 'white',
-          borderRadius: { xs: 3, md: 4 }
+          '@media print': {
+            mt: 0,
+            '& button': { display: 'none' }
+          },
         }}
       >
-        <CardContent sx={{ p: { xs: 1, sm: 2, md: 0 } }}>
-          {/* Animated Success */}
-          <Box sx={{ width: { xs: 120, sm: 140, md: 150 }, height: { xs: 120, sm: 140, md: 150 }, mx: 'auto', mb: { xs: 2, sm: 2.5 } }}>
-            <Lottie animationData={successAnimation} loop={false} />
-          </Box>
+        <Card
+          sx={{
+            textAlign: 'center',
+            p: { xs: 2.5, sm: 3, md: 4 },
+            boxShadow: isDarkMode
+              ? `0 8px 32px ${alpha(theme.palette.common.black, 0.4)}`
+              : theme.shadows[10],
+            border: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.1)}`,
+            bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : 'white',
+            borderRadius: { xs: 3, md: 4 }
+          }}
+        >
+          <CardContent sx={{ p: { xs: 1, sm: 2, md: 0 } }}>
+            {/* Animated Success */}
+            <Box sx={{ width: { xs: 120, sm: 140, md: 150 }, height: { xs: 120, sm: 140, md: 150 }, mx: 'auto', mb: { xs: 2, sm: 2.5 } }}>
+              <Lottie animationData={successAnimation} loop={false} />
+            </Box>
 
-          <Typography
-            variant='h4'
-            component='h1'
-            gutterBottom
-            sx={{
-              fontWeight: 700,
-              fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
-              color: 'text.primary'
-            }}
-          >
-            Payment Successful!
-          </Typography>
-
-          <Typography
-            variant='body1'
-            color='text.secondary'
-            paragraph
-            sx={{
-              fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' },
-              px: { xs: 1, sm: 0 }
-            }}
-          >
-            Thank you for your sponsorship. A confirmation has been sent to your email.
-          </Typography>
-
-          {/* Amount Paid */}
-          <Box
-            sx={{
-              background: `linear-gradient(135deg, ${theme.palette.success.dark} 0%, ${theme.palette.success.main} 100%)`,
-              borderRadius: { xs: 2, sm: 2.5 },
-              p: { xs: 2.5, sm: 3 },
-              my: { xs: 2.5, sm: 3 },
-              color: 'common.white',
-              boxShadow: isDarkMode
-                ? `0 4px 16px ${alpha(theme.palette.success.main, 0.3)}`
-                : theme.shadows[4]
-            }}
-          >
             <Typography
-              variant='h6'
+              variant='h4'
+              component='h1'
+              gutterBottom
               sx={{
-                fontWeight: 600,
-                color: 'white',
-                fontSize: { xs: '0.95rem', sm: '1rem', md: '1.1rem' }
+                fontWeight: 700,
+                fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
+                color: 'text.primary'
               }}
             >
-              Amount Paid
+              Payment Successful!
             </Typography>
+
             <Typography
-              variant='h3'
+              variant='body1'
+              color='text.secondary'
+              paragraph
               sx={{
-                mt: { xs: 0.75, sm: 1 },
-                fontWeight: 800,
-                color: 'white',
-                fontSize: { xs: '1.75rem', sm: '2rem', md: '2.5rem' }
+                fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' },
+                px: { xs: 1, sm: 0 }
               }}
             >
-              {formattedAmount}
+              Thank you for your sponsorship. A confirmation has been sent to your email.
             </Typography>
-          </Box>
 
-          <Box sx={{ textAlign: 'left', mt: { xs: 2.5, sm: 3 } }}>
-            {sponsorship.sponsorType === 'game' && (
-              <Box
+            {/* Amount Paid */}
+            <Box
+              sx={{
+                background: `linear-gradient(135deg, ${theme.palette.success.dark} 0%, ${theme.palette.success.main} 100%)`,
+                borderRadius: { xs: 2, sm: 2.5 },
+                p: { xs: 2.5, sm: 3 },
+                my: { xs: 2.5, sm: 3 },
+                color: 'common.white',
+                boxShadow: isDarkMode
+                  ? `0 4px 16px ${alpha(theme.palette.success.main, 0.3)}`
+                  : theme.shadows[4]
+              }}
+            >
+              <Typography
+                variant='h6'
                 sx={{
-                  display: 'flex',
-                  flexDirection: { xs: 'column', sm: 'row' },
-                  alignItems: { xs: 'flex-start', sm: 'center' },
-                  gap: { xs: 0.5, sm: 1, md: 2 },
-                  mb: { xs: 1.25, sm: 1.5 }
+                  fontWeight: 600,
+                  color: 'white',
+                  fontSize: { xs: '0.95rem', sm: '1rem', md: '1.1rem' }
                 }}
               >
-                <Typography
-                  variant='body1'
-                  sx={{
-                    fontWeight: 500,
-                    color: 'text.primary',
-                    fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' }
-                  }}
-                >
-                  You sponsored for games:
-                </Typography>
-                <Typography
-                  variant='body1'
-                  component='span'
-                  sx={{
-                    fontFamily: 'monospace',
-                    color: 'text.secondary',
-                    fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' },
-                    wordBreak: 'break-word'
-                  }}
-                >
-                  {sponsorship.games.join(', ') || 'Any game'}
-                </Typography>
-              </Box>
-            )}
-            {sponsorship.sponsorType === 'quiz' && (
-              <>
+                Amount Paid
+              </Typography>
+              <Typography
+                variant='h3'
+                sx={{
+                  mt: { xs: 0.75, sm: 1 },
+                  fontWeight: 800,
+                  color: 'white',
+                  fontSize: { xs: '1.75rem', sm: '2rem', md: '2.5rem' }
+                }}
+              >
+                {formattedAmount}
+              </Typography>
+            </Box>
+
+            <Box sx={{ textAlign: 'left', mt: { xs: 2.5, sm: 3 } }}>
+              {sponsorship.sponsorType === 'game' && (
                 <Box
                   sx={{
                     display: 'flex',
@@ -194,7 +166,7 @@ function PaymentSuccess({ paymentId, sponsorship, amount }) {
                       fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' }
                     }}
                   >
-                    You sponsored for quizzes:
+                    You sponsored for games:
                   </Typography>
                   <Typography
                     variant='body1'
@@ -206,10 +178,94 @@ function PaymentSuccess({ paymentId, sponsorship, amount }) {
                       wordBreak: 'break-word'
                     }}
                   >
-                    {sponsorship?.quizzes?.map(q => q.title).join(', ') || 'Any quiz'}
+                    {sponsorship.games.join(', ') || 'Any game'}
                   </Typography>
                 </Box>
-                {(() => {
+              )}
+              {sponsorship.sponsorType === 'quiz' && (
+                <>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: { xs: 'column', sm: 'row' },
+                      alignItems: { xs: 'flex-start', sm: 'center' },
+                      gap: { xs: 0.5, sm: 1, md: 2 },
+                      mb: { xs: 1.25, sm: 1.5 }
+                    }}
+                  >
+                    <Typography
+                      variant='body1'
+                      sx={{
+                        fontWeight: 500,
+                        color: 'text.primary',
+                        fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' }
+                      }}
+                    >
+                      You sponsored for quizzes:
+                    </Typography>
+                    <Typography
+                      variant='body1'
+                      component='span'
+                      sx={{
+                        fontFamily: 'monospace',
+                        color: 'text.secondary',
+                        fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' },
+                        wordBreak: 'break-word'
+                      }}
+                    >
+                      {sponsorship?.quizzes?.map(q => q.title).join(', ') || 'Any quiz'}
+                    </Typography>
+                  </Box>
+                  {(() => {
+                    let area = ``
+                    if (sponsorship.location?.country) {
+                      area += `${sponsorship.location?.country}`
+                    }
+                    if (sponsorship.location?.region) {
+                      area += `, ${sponsorship.location?.region}`
+                    }
+                    if (sponsorship.location?.city) {
+                      area += `, ${sponsorship.location?.city}`
+                    }
+                    return (
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          flexDirection: { xs: 'column', sm: 'row' },
+                          alignItems: { xs: 'flex-start', sm: 'center' },
+                          gap: { xs: 0.5, sm: 1, md: 2 },
+                          mb: { xs: 1.25, sm: 1.5 }
+                        }}
+                      >
+                        <Typography
+                          variant='body1'
+                          sx={{
+                            fontWeight: 500,
+                            color: 'text.primary',
+                            fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' }
+                          }}
+                        >
+                          You sponsored for games in area:
+                        </Typography>
+                        <Typography
+                          variant='body1'
+                          component='span'
+                          sx={{
+                            fontFamily: 'monospace',
+                            color: 'text.secondary',
+                            fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' },
+                            wordBreak: 'break-word'
+                          }}
+                        >
+                          {area || 'Any location'}
+                        </Typography>
+                      </Box>
+                    )
+                  })()}
+                </>
+              )}
+              {sponsorship.sponsorType === 'area' &&
+                (() => {
                   let area = ``
                   if (sponsorship.location?.country) {
                     area += `${sponsorship.location?.country}`
@@ -255,231 +311,183 @@ function PaymentSuccess({ paymentId, sponsorship, amount }) {
                     </Box>
                   )
                 })()}
-              </>
-            )}
-            {sponsorship.sponsorType === 'area' &&
-              (() => {
-                let area = ``
-                if (sponsorship.location?.country) {
-                  area += `${sponsorship.location?.country}`
-                }
-                if (sponsorship.location?.region) {
-                  area += `, ${sponsorship.location?.region}`
-                }
-                if (sponsorship.location?.city) {
-                  area += `, ${sponsorship.location?.city}`
-                }
-                return (
-                  <Box
+            </Box>
+
+            {/* IDs with Copy Functionality */}
+            <Box sx={{ textAlign: 'left', mt: { xs: 2.5, sm: 3 } }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  alignItems: { xs: 'flex-start', sm: 'center' },
+                  gap: { xs: 1, sm: 1.5, md: 2 },
+                  mb: { xs: 1.25, sm: 1.5 },
+                  flexWrap: 'wrap'
+                }}
+              >
+                <Typography
+                  variant='body1'
+                  sx={{
+                    fontWeight: 500,
+                    color: 'text.primary',
+                    fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' }
+                  }}
+                >
+                  Payment ID:
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, minWidth: { xs: '100%', sm: 'auto' } }}>
+                  <Typography
+                    variant='body1'
+                    component='span'
                     sx={{
-                      display: 'flex',
-                      flexDirection: { xs: 'column', sm: 'row' },
-                      alignItems: { xs: 'flex-start', sm: 'center' },
-                      gap: { xs: 0.5, sm: 1, md: 2 },
-                      mb: { xs: 1.25, sm: 1.5 }
+                      fontFamily: 'monospace',
+                      color: 'text.secondary',
+                      fontSize: { xs: '0.85rem', sm: '0.9rem', md: '0.95rem' },
+                      wordBreak: 'break-all'
                     }}
                   >
-                    <Typography
-                      variant='body1'
-                      sx={{
-                        fontWeight: 500,
-                        color: 'text.primary',
-                        fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' }
-                      }}
+                    {paymentId}
+                  </Typography>
+                  <Tooltip title={copied.paymentId ? 'Copied!' : 'Copy'}>
+                    <IconButtonTooltip
+                      title='Copy'
+                      size='small'
+                      onClick={() => handleCopy(paymentId, 'paymentId')}
+                      aria-label='Copy payment ID'
                     >
-                      You sponsored for games in area:
-                    </Typography>
-                    <Typography
-                      variant='body1'
-                      component='span'
-                      sx={{
-                        fontFamily: 'monospace',
-                        color: 'text.secondary',
-                        fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' },
-                        wordBreak: 'break-word'
-                      }}
-                    >
-                      {area || 'Any location'}
-                    </Typography>
-                  </Box>
-                )
-              })()}
-          </Box>
+                      <ContentCopyIcon fontSize='small' />
+                    </IconButtonTooltip>
+                  </Tooltip>
+                </Box>
+              </Box>
 
-          {/* IDs with Copy Functionality */}
-          <Box sx={{ textAlign: 'left', mt: { xs: 2.5, sm: 3 } }}>
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: { xs: 'column', sm: 'row' },
-                alignItems: { xs: 'flex-start', sm: 'center' },
-                gap: { xs: 1, sm: 1.5, md: 2 },
-                mb: { xs: 1.25, sm: 1.5 },
-                flexWrap: 'wrap'
-              }}
-            >
-              <Typography
-                variant='body1'
+              <Box
                 sx={{
-                  fontWeight: 500,
-                  color: 'text.primary',
-                  fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' }
+                  display: 'flex',
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  alignItems: { xs: 'flex-start', sm: 'center' },
+                  gap: { xs: 1, sm: 1.5, md: 2 },
+                  flexWrap: 'wrap'
                 }}
               >
-                Payment ID:
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, minWidth: { xs: '100%', sm: 'auto' } }}>
                 <Typography
                   variant='body1'
-                  component='span'
                   sx={{
-                    fontFamily: 'monospace',
-                    color: 'text.secondary',
-                    fontSize: { xs: '0.85rem', sm: '0.9rem', md: '0.95rem' },
-                    wordBreak: 'break-all'
+                    fontWeight: 500,
+                    color: 'text.primary',
+                    fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' }
                   }}
                 >
-                  {paymentId}
+                  Sponsorship ID:
                 </Typography>
-                <Tooltip title={copied.paymentId ? 'Copied!' : 'Copy'}>
-                  <IconButtonTooltip
-                    title='Copy'
-                    size='small'
-                    onClick={() => handleCopy(paymentId, 'paymentId')}
-                    aria-label='Copy payment ID'
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, minWidth: { xs: '100%', sm: 'auto' } }}>
+                  <Typography
+                    variant='body1'
+                    component='span'
+                    sx={{
+                      fontFamily: 'monospace',
+                      color: 'text.secondary',
+                      fontSize: { xs: '0.85rem', sm: '0.9rem', md: '0.95rem' },
+                      wordBreak: 'break-all'
+                    }}
                   >
-                    <ContentCopyIcon fontSize='small' />
-                  </IconButtonTooltip>
-                </Tooltip>
+                    {sponsorship._id}
+                  </Typography>
+                  <Tooltip title={copied.sponsorshipId ? 'Copied!' : 'Copy'}>
+                    <IconButtonTooltip
+                      title='Copy'
+                      size='small'
+                      onClick={() => handleCopy(sponsorship._id, 'sponsorshipId')}
+                      aria-label='Copy sponsorship ID'
+                    >
+                      <ContentCopyIcon fontSize='small' />
+                    </IconButtonTooltip>
+                  </Tooltip>
+                </Box>
               </Box>
             </Box>
 
+            {/* Action Buttons */}
             <Box
               sx={{
+                mt: { xs: 3, sm: 4 },
                 display: 'flex',
                 flexDirection: { xs: 'column', sm: 'row' },
-                alignItems: { xs: 'flex-start', sm: 'center' },
-                gap: { xs: 1, sm: 1.5, md: 2 },
-                flexWrap: 'wrap'
+                justifyContent: 'center',
+                gap: { xs: 1.5, sm: 2 }
               }}
             >
-              <Typography
-                variant='body1'
+              <Button
+                variant='contained'
+                color='primary'
+                component='label'
+                startIcon={<HomeIcon />}
+                onClick={handleGoHome}
+                fullWidth={isMobile}
                 sx={{
-                  fontWeight: 500,
-                  color: 'text.primary',
-                  fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' }
-                }}
-              >
-                Sponsorship ID:
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, minWidth: { xs: '100%', sm: 'auto' } }}>
-                <Typography
-                  variant='body1'
-                  component='span'
-                  sx={{
-                    fontFamily: 'monospace',
-                    color: 'text.secondary',
-                    fontSize: { xs: '0.85rem', sm: '0.9rem', md: '0.95rem' },
-                    wordBreak: 'break-all'
-                  }}
-                >
-                  {sponsorship._id}
-                </Typography>
-                <Tooltip title={copied.sponsorshipId ? 'Copied!' : 'Copy'}>
-                  <IconButtonTooltip
-                    title='Copy'
-                    size='small'
-                    onClick={() => handleCopy(sponsorship._id, 'sponsorshipId')}
-                    aria-label='Copy sponsorship ID'
-                  >
-                    <ContentCopyIcon fontSize='small' />
-                  </IconButtonTooltip>
-                </Tooltip>
-              </Box>
-            </Box>
-          </Box>
-
-          {/* Action Buttons */}
-          <Box
-            sx={{
-              mt: { xs: 3, sm: 4 },
-              display: 'flex',
-              flexDirection: { xs: 'column', sm: 'row' },
-              justifyContent: 'center',
-              gap: { xs: 1.5, sm: 2 }
-            }}
-          >
-            <Button
-              variant='contained'
-              color='primary'
-              component='label'
-              startIcon={<HomeIcon />}
-              onClick={handleGoHome}
-              fullWidth={isMobile}
-              sx={{
-                px: { xs: 3, sm: 4 },
-                py: { xs: 1.25, sm: 1.5 },
-                fontWeight: 600,
-                fontSize: { xs: '0.9rem', sm: '1rem' },
-                borderRadius: { xs: 1.5, sm: 2 },
-                color: 'white',
-                boxShadow: isDarkMode ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}` : undefined,
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  boxShadow: isDarkMode
-                    ? `0 6px 16px ${alpha(theme.palette.primary.main, 0.4)}`
-                    : undefined
-                },
-                transition: 'transform 0.2s'
-              }}
-            >
-              Your Sponsorships
-            </Button>
-
-            <Button
-              variant='outlined'
-              color='primary'
-              onClick={() => window.print()}
-              fullWidth={isMobile}
-              sx={{
-                px: { xs: 3, sm: 4 },
-                py: { xs: 1.25, sm: 1.5 },
-                fontWeight: 600,
-                fontSize: { xs: '0.9rem', sm: '1rem' },
-                borderRadius: { xs: 1.5, sm: 2 },
-                ...(isDarkMode && {
-                  borderColor: alpha(theme.palette.divider, 0.3),
+                  px: { xs: 3, sm: 4 },
+                  py: { xs: 1.25, sm: 1.5 },
+                  fontWeight: 600,
+                  fontSize: { xs: '0.9rem', sm: '1rem' },
+                  borderRadius: { xs: 1.5, sm: 2 },
+                  color: 'white',
+                  boxShadow: isDarkMode ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}` : undefined,
                   '&:hover': {
-                    borderColor: alpha(theme.palette.primary.main, 0.5),
-                    backgroundColor: alpha(theme.palette.primary.main, 0.08)
-                  }
-                }),
-                '&:hover': { transform: 'translateY(-2px)' },
-                '@media print': { display: 'none' },
-                transition: 'transform 0.2s'
+                    transform: 'translateY(-2px)',
+                    boxShadow: isDarkMode
+                      ? `0 6px 16px ${alpha(theme.palette.primary.main, 0.4)}`
+                      : undefined
+                  },
+                  transition: 'transform 0.2s'
+                }}
+              >
+                Your Sponsorships
+              </Button>
+
+              <Button
+                variant='outlined'
+                color='primary'
+                onClick={() => window.print()}
+                fullWidth={isMobile}
+                sx={{
+                  px: { xs: 3, sm: 4 },
+                  py: { xs: 1.25, sm: 1.5 },
+                  fontWeight: 600,
+                  fontSize: { xs: '0.9rem', sm: '1rem' },
+                  borderRadius: { xs: 1.5, sm: 2 },
+                  ...(isDarkMode && {
+                    borderColor: alpha(theme.palette.divider, 0.3),
+                    '&:hover': {
+                      borderColor: alpha(theme.palette.primary.main, 0.5),
+                      backgroundColor: alpha(theme.palette.primary.main, 0.08)
+                    }
+                  }),
+                  '&:hover': { transform: 'translateY(-2px)' },
+                  '@media print': { display: 'none' },
+                  transition: 'transform 0.2s'
+                }}
+              >
+                Print Receipt
+              </Button>
+            </Box>
+
+            {/* Countdown Notice */}
+            <Typography
+              variant='caption'
+              color='text.secondary'
+              sx={{
+                display: 'block',
+                mt: { xs: 2.5, sm: 3 },
+                fontStyle: 'italic',
+                fontSize: { xs: '0.8rem', sm: '0.875rem' }
               }}
             >
-              Print Receipt
-            </Button>
-          </Box>
-
-          {/* Countdown Notice */}
-          <Typography
-            variant='caption'
-            color='text.secondary'
-            sx={{
-              display: 'block',
-              mt: { xs: 2.5, sm: 3 },
-              fontStyle: 'italic',
-              fontSize: { xs: '0.8rem', sm: '0.875rem' }
-            }}
-          >
-            Redirecting to homepage in {countdown} seconds...
-          </Typography>
-        </CardContent>
-      </Card>
-    </Container>
+              Redirecting to homepage in {countdown} seconds...
+            </Typography>
+          </CardContent>
+        </Card>
+      </Container>
+    </Box>
   )
 }
 

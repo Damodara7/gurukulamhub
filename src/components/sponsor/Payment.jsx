@@ -31,7 +31,7 @@ function Payment({ sponsorship }) {
 
   if (!sponsorship)
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', minHeight: 0, overflow: 'auto' }}>
         <CircularProgress />
       </Box>
     )
@@ -88,7 +88,7 @@ function Payment({ sponsorship }) {
   }
 
   return (
-    <Container maxWidth="md" sx={{ py: { xs: 3, sm: 4 } }}>
+    <Box sx={{ p: { xs: 3, sm: 4 }, width: '100%', height: '100%', minHeight: 0, overflow: 'auto' }}>
       {/* Instructions */}
       <Box
         sx={{
@@ -330,7 +330,7 @@ function Payment({ sponsorship }) {
           )}
         </CardContent>
       </Card>
-    </Container>
+    </Box>
   )
 }
 

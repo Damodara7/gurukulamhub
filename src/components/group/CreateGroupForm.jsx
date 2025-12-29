@@ -8,8 +8,10 @@ import {
   Button,
   Card,
   CardContent,
+  Collapse,
   Divider,
   Grid,
+  IconButton,
   TextField,
   Typography,
   Snackbar,
@@ -25,7 +27,7 @@ import {
   useTheme
 } from '@mui/material'
 import { alpha } from '@mui/material/styles'
-import { Group as GroupIcon, People as PeopleIcon } from '@mui/icons-material'
+import { ExpandLess, ExpandMore, Group as GroupIcon, People as PeopleIcon } from '@mui/icons-material'
 
 import { useSession } from 'next-auth/react'
 import GroupUserMultiSelect from './GroupUserMultiSelect'
@@ -82,6 +84,7 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null, showHeader = true })
   const [unmatchedUserIds, setUnmatchedUserIds] = useState([])
   // Add this state to track the filters array in new format
   const [filters, setFilters] = useState([])
+  const [isHeaderExpanded, setIsHeaderExpanded] = useState(true)
   console.log('selected user in the creategroup form ', selectedUsers)
   //if edit group?
 
@@ -356,74 +359,113 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null, showHeader = true })
       }}
     >
       {/* Elegant Header */}
-      {showHeader && <Box
-        sx={{
-          backdropFilter: 'blur(20px)',
-          bgcolor:
-            theme.palette.mode === 'dark'
-              ? alpha(theme.palette.background.paper, 0.8)
-              : alpha(theme.palette.background.paper, 0.7),
-          borderBottom: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
-          pt: { xs: 4, md: 6 },
-          pb: { xs: 4, md: 6 }
-        }}
-      >
-        <Box sx={{ maxWidth: '1200px', margin: '0 auto', px: { xs: 2, sm: 3, md: 4 } }}>
-          <Box sx={{ textAlign: 'center' }}>
-            {/* Icon and Title */}
-            <Box
+      {showHeader && (
+        <Box
+          sx={{
+            backdropFilter: 'blur(20px)',
+            bgcolor:
+              theme.palette.mode === 'dark'
+                ? alpha(theme.palette.background.paper, 0.8)
+                : alpha(theme.palette.background.paper, 0.7),
+            borderBottom: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
+            pt: isHeaderExpanded ? { xs: 4, md: 6 } : { xs: 2, md: 2.5 },
+            pb: isHeaderExpanded ? { xs: 4, md: 6 } : { xs: 2, md: 2.5 },
+            transition: 'padding 0.3s ease'
+          }}
+        >
+          <Box sx={{ maxWidth: '1200px', margin: '0 auto', px: { xs: 2, sm: 3, md: 4 }, position: 'relative' }}>
+            {/* Chevron Toggle Button - Right side, vertically centered */}
+            <IconButton
+              onClick={() => setIsHeaderExpanded(!isHeaderExpanded)}
               sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 2,
-                mb: 2
+                position: 'absolute',
+                right: { xs: 2, sm: 3, md: 4 },
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: theme.palette.text.secondary,
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  bgcolor: alpha(theme.palette.primary.main, 0.1),
+                  color: theme.palette.primary.main
+                }
               }}
             >
+              {isHeaderExpanded ? <ExpandLess /> : <ExpandMore />}
+            </IconButton>
+
+            {/* Centered Content */}
+            <Box sx={{ textAlign: 'center', pr: { xs: 6, sm: 7, md: 8 } }}>
+              {/* Icon and Title */}
               <Box
                 sx={{
-                  width: { xs: 48, sm: 56 },
-                  height: { xs: 48, sm: 56 },
-                  borderRadius: '12px',
-                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`
+                  gap: isHeaderExpanded ? 2 : 1.5,
+                  mb: isHeaderExpanded ? 2 : 0,
+                  transition: 'all 0.3s ease'
                 }}
               >
-                <GroupIcon sx={{ fontSize: '28px', color: 'white' }} />
+                <Box
+                  sx={{
+                    width: isHeaderExpanded ? { xs: 48, sm: 56 } : { xs: 36, sm: 40 },
+                    height: isHeaderExpanded ? { xs: 48, sm: 56 } : { xs: 36, sm: 40 },
+                    borderRadius: '12px',
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`,
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  <GroupIcon
+                    sx={{
+                      fontSize: isHeaderExpanded ? '28px' : { xs: '20px', sm: '22px' },
+                      color: 'white',
+                      transition: 'font-size 0.3s ease'
+                    }}
+                  />
+                </Box>
+                <Typography
+                  sx={{
+                    fontSize: isHeaderExpanded
+                      ? { xs: '1.5rem', sm: '1.75rem', md: '2.5rem' }
+                      : { xs: '1.125rem', sm: '1.25rem', md: '1.5rem' },
+                    fontWeight: 700,
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    letterSpacing: '-0.02em',
+                    transition: 'font-size 0.3s ease'
+                  }}
+                >
+                  {data ? 'Edit Group' : 'Create Group'}
+                </Typography>
               </Box>
-              <Typography
-                sx={{
-                  fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.5rem' },
-                  fontWeight: 700,
-                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  letterSpacing: '-0.02em'
-                }}
-              >
-                {data ? 'Edit Group' : 'Create Group'}
-              </Typography>
+
+              {/* Collapsible Subheading */}
+              <Collapse in={isHeaderExpanded} timeout={300}>
+                <Typography
+                  variant='body1'
+                  color='text.secondary'
+                  sx={{
+                    fontSize: '1.05rem',
+                    lineHeight: 1.8,
+                    fontWeight: 400,
+                    maxWidth: '600px',
+                    mx: 'auto',
+                    mt: 2
+                  }}
+                >
+                  {data
+                    ? 'Update group details and manage members with smart filters'
+                    : 'Create a new group and organize members with custom criteria'}
+                </Typography>
+              </Collapse>
             </Box>
-            <Typography
-              variant='body1'
-              color='text.secondary'
-              sx={{
-                fontSize: '1.05rem',
-                lineHeight: 1.8,
-                fontWeight: 400,
-                maxWidth: '600px',
-                mx: 'auto'
-              }}
-            >
-              {data
-                ? 'Update group details and manage members with smart filters'
-                : 'Create a new group and organize members with custom criteria'}
-            </Typography>
           </Box>
         </Box>
-      </Box>}
+      )}
 
       {/* Main Content */}
       <Box sx={{ margin: '0 auto', px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 }, flex: 1, overflow: 'auto' }}>

@@ -189,6 +189,15 @@ If the image exists, the pods should find it automatically in Docker Desktop.
 # Switch to Docker Desktop context
 kubectl config use-context docker-desktop
 
+# Delete everything
+kubectl delete namespace gurukulamhub
+
+# Install NGINX Ingress Controller
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.1/deploy/static/provider/cloud/deploy.yaml
+
+# Wait for it to be ready
+kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=90s
+
 # Build image
 docker build -t gurukulamhub-app:latest .
 
@@ -197,6 +206,17 @@ kubectl apply -f k8s/namespace.yaml
 kubectl apply -f k8s/configmap-all.yaml
 kubectl apply -f k8s/deployment.yaml
 kubectl apply -f k8s/service.yaml
+kubectl apply -f k8s/ingress.yaml
+
+
+kubectl get ingress -n gurukulamhub
+# NAME                   CLASS   HOSTS                                   ADDRESS     PORTS   AGE
+# gurukulamhub-ingress   nginx   gurukulamhub.com,www.gurukulamhub.com   localhost   80      3m33s
+
+kubectl get svc -n ingress-nginx
+# NAME                                 TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
+# ingress-nginx-controller             LoadBalancer   10.106.90.196    localhost     80:32158/TCP,443:30311/TCP   2d
+# ingress-nginx-controller-admission   ClusterIP      10.107.191.155   <none>        443/TCP                      2d
 
 # Port forward for local access
 kubectl port-forward svc/gurukulamhub-app 3000:80 -n gurukulamhub

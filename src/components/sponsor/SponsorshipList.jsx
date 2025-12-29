@@ -40,10 +40,12 @@ import { API_URLS } from '@/configs/apiConfig'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
-import { Box, Divider, Tab, Tooltip, Container, Stack, alpha, useTheme } from '@mui/material'
+import { Box, Divider, Tab, Tooltip, Container, Stack, alpha, useTheme, IconButton, Collapse } from '@mui/material'
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney'
 import CardGiftcardIcon from '@mui/icons-material/CardGiftcard'
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
+import ExpandMore from '@mui/icons-material/ExpandMore'
+import ExpandLess from '@mui/icons-material/ExpandLess'
 
 const fuzzyFilter = (row, columnId, value, addMeta) => {
   // Rank the item
@@ -87,6 +89,9 @@ const SponsorshipList = ({ tableData, sponsorType = 'all', filter }) => {
 
   const [data, setData] = useState(...[tableData])
   const [globalFilter, setGlobalFilter] = useState('')
+  
+  // State for header collapse
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false)
 
   // Hooks
   const { lang: locale } = useParams()
@@ -484,6 +489,15 @@ const SponsorshipList = ({ tableData, sponsorType = 'all', filter }) => {
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
 
+  // Auto-collapse header after 1 minute
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsHeaderCollapsed(true)
+    }, 60000) // 1 minute = 60000ms
+
+    return () => clearTimeout(timer)
+  }, [])
+
   return (
     <Box
       sx={{
@@ -499,74 +513,99 @@ const SponsorshipList = ({ tableData, sponsorType = 'all', filter }) => {
         sx={{
           flexShrink: 0,
           bgcolor: theme.palette.mode === 'dark' ? theme.palette.background.paper : 'white',
-          pt: { xs: 2.5, md: 3 },
-          pb: { xs: 2.5, md: 3 },
-          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.5)}`
+          pt: isHeaderCollapsed ? { xs: 1, md: 1.5 } : { xs: 2.5, md: 3 },
+          pb: isHeaderCollapsed ? { xs: 1, md: 1.5 } : { xs: 2.5, md: 3 },
+          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+          transition: 'padding 0.3s ease'
         }}
       >
         <Container maxWidth='lg'>
-          <Stack spacing={{ xs: 2, sm: 2.5 }}>
+          <Stack spacing={isHeaderCollapsed ? { xs: 0.5, sm: 0.75 } : { xs: 2, sm: 2.5 }}>
             {/* Title Section */}
-            <Box sx={{ textAlign: 'center' }}>
-              <Stack direction='row' spacing={1.5} alignItems='center' justifyContent='center' sx={{ mb: 1.5 }}>
-                <EmojiEventsIcon sx={{ fontSize: { xs: 32, sm: 36 }, color: 'primary.main' }} />
+            <Box sx={{ textAlign: 'center', position: 'relative' }}>
+              <IconButton
+                onClick={() => setIsHeaderCollapsed(!isHeaderCollapsed)}
+                size='small'
+                sx={{
+                  position: 'absolute',
+                  right: 0,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: 'text.secondary',
+                  '&:hover': {
+                    bgcolor: alpha(theme.palette.primary.main, 0.1),
+                    color: 'primary.main'
+                  }
+                }}
+              >
+                {isHeaderCollapsed ? <ExpandMore /> : <ExpandLess />}
+              </IconButton>
+              <Stack direction='row' spacing={1.5} alignItems='center' justifyContent='center' sx={{ mb: isHeaderCollapsed ? 0.5 : 1.5 }}>
+                <EmojiEventsIcon sx={{ fontSize: isHeaderCollapsed ? { xs: 20, sm: 24 } : { xs: 32, sm: 36 }, color: 'primary.main' }} />
                 <Typography
                   variant='h4'
                   fontWeight={700}
                   sx={{
-                    fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
+                    fontSize: isHeaderCollapsed
+                      ? { xs: '1rem', sm: '1.1rem', md: '1.2rem' }
+                      : { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
                     background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                     backgroundClip: 'text',
-                    letterSpacing: '-0.01em'
+                    letterSpacing: '-0.01em',
+                    transition: 'font-size 0.3s ease'
                   }}
                 >
                   Your Sponsorships
                 </Typography>
               </Stack>
-              <Typography
-                variant='body2'
-                sx={{
-                  color: 'text.secondary',
-                  fontSize: { xs: '0.85rem', sm: '0.9rem', md: '0.95rem' },
-                  lineHeight: 1.6,
-                  maxWidth: 600,
-                  mx: 'auto'
-                }}
-              >
-                View and track all the sponsorships you've created. Monitor their usage, status, and manage your
-                sponsorship portfolio.
-              </Typography>
+              <Collapse in={!isHeaderCollapsed} timeout={300}>
+                <Typography
+                  variant='body2'
+                  sx={{
+                    color: 'text.secondary',
+                    fontSize: { xs: '0.85rem', sm: '0.9rem', md: '0.95rem' },
+                    lineHeight: 1.6,
+                    maxWidth: 600,
+                    mx: 'auto'
+                  }}
+                >
+                  View and track all the sponsorships you've created. Monitor their usage, status, and manage your
+                  sponsorship portfolio.
+                </Typography>
+              </Collapse>
             </Box>
 
             {/* Tabs */}
-            <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-              <TabContext value={filter || sponsorType}>
-                <CustomTabList
-                  onChange={(e, val) => {
-                    let url = `/sponsor/list`
-                    if (val === 'awaiting' || val === 'rejected') {
-                      url += `?filter=${val}`
-                    } else if (val !== 'all') {
-                      url += `?sponsorType=${val}`
-                    }
-                    router.push(url)
-                  }}
-                  variant='scrollable'
-                  pill='true'
-                  scrollButtons='auto'
-                  allowScrollButtonsMobile
-                >
-                  <Tab value='all' label={<div className='flex items-center gap-1.5'>All</div>} />
-                  <Tab
-                    value='awaiting'
-                    label={<div className='flex items-center gap-1.5'>Awaiting Admin Response</div>}
-                  />
-                  <Tab value='rejected' label={<div className='flex items-center gap-1.5'>Rejected</div>} />
-                </CustomTabList>
-              </TabContext>
-            </Box>
+            <Collapse in={!isHeaderCollapsed} timeout={300}>
+              <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+                <TabContext value={filter || sponsorType}>
+                  <CustomTabList
+                    onChange={(e, val) => {
+                      let url = `/sponsor/list`
+                      if (val === 'awaiting' || val === 'rejected') {
+                        url += `?filter=${val}`
+                      } else if (val !== 'all') {
+                        url += `?sponsorType=${val}`
+                      }
+                      router.push(url)
+                    }}
+                    variant='scrollable'
+                    pill='true'
+                    scrollButtons='auto'
+                    allowScrollButtonsMobile
+                  >
+                    <Tab value='all' label={<div className='flex items-center gap-1.5'>All</div>} />
+                    <Tab
+                      value='awaiting'
+                      label={<div className='flex items-center gap-1.5'>Awaiting Admin Response</div>}
+                    />
+                    <Tab value='rejected' label={<div className='flex items-center gap-1.5'>Rejected</div>} />
+                  </CustomTabList>
+                </TabContext>
+              </Box>
+            </Collapse>
           </Stack>
         </Container>
       </Box>

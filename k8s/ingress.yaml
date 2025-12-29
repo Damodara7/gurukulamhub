@@ -5,7 +5,7 @@ metadata:
   namespace: gurukulamhub
   annotations:
     # For Nginx Ingress Controller
-    kubernetes.io/ingress.class: "nginx"
+    # kubernetes.io/ingress.class: "nginx"  -------> Warning: annotation "kubernetes.io/ingress.class" is deprecated, please use 'spec.ingressClassName' instead
     # SSL redirect - WebSocket connections over wss:// are already HTTPS, so this won't interfere
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
@@ -29,6 +29,7 @@ metadata:
     # traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
     # traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
+  ingressClassName: nginx
   # Uncomment and configure TLS if you have SSL certificates
   # tls:
   # - hosts:

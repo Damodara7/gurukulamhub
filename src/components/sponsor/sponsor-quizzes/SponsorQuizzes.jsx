@@ -16,7 +16,9 @@ import {
   Alert,
   alpha,
   useTheme,
-  useMediaQuery
+  useMediaQuery,
+  IconButton,
+  Collapse
 } from '@mui/material'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
@@ -42,7 +44,9 @@ import {
   Public,
   Redeem,
   School,
-  VolunteerActivism
+  VolunteerActivism,
+  ExpandMore,
+  ExpandLess
 } from '@mui/icons-material'
 
 // Reward types
@@ -95,6 +99,9 @@ const SponsorQuizzes = () => {
   const [sponsorerType, setSponsorerType] = useState('individual')
   const [rewardType, setRewardType] = useState(REWARD_TYPES.CASH)
   const [formData, setFormData] = useState({ ...initialFormData, email: session?.user?.email })
+  
+  // State for header collapse
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false)
 
   // Phone input states
   const [phoneInput, setPhoneInput] = useState('')
@@ -149,6 +156,15 @@ const SponsorQuizzes = () => {
 
   useEffect(() => {
     getQuizData()
+  }, [])
+
+  // Auto-collapse header after 1 minute
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsHeaderCollapsed(true)
+    }, 60000) // 1 minute = 60000ms
+
+    return () => clearTimeout(timer)
   }, [])
 
   // Update formData.phone when phoneInput or countryDialCode changes
@@ -452,7 +468,6 @@ const SponsorQuizzes = () => {
   return (
     <Box
       sx={{
-        height: '100vh',
         display: 'flex',
         flexDirection: 'column',
         bgcolor: theme.palette.background.default,
@@ -464,95 +479,119 @@ const SponsorQuizzes = () => {
         sx={{
           flexShrink: 0,
           bgcolor: theme.palette.background.paper,
-          pt: { xs: 2.5, md: 3 },
-          pb: { xs: 2.5, md: 3 },
-          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.6)}`
+          pt: isHeaderCollapsed ? { xs: 1, md: 1.5 } : { xs: 2.5, md: 3 },
+          pb: isHeaderCollapsed ? { xs: 1, md: 1.5 } : { xs: 2.5, md: 3 },
+          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.6)}`,
+          transition: 'padding 0.3s ease'
         }}
       >
         <Container maxWidth='lg'>
-          <Stack spacing={{ xs: 1.5, sm: 2 }}>
-            <Button
-              variant='text'
-              startIcon={<ArrowBack />}
-              onClick={() => router.back()}
-              sx={{
-                width: 'fit-content',
-                textTransform: 'none',
-                fontWeight: 600,
-                color: 'text.secondary',
-                px: 0,
-                fontSize: { xs: '0.95rem', sm: '1rem' },
-                '&:hover': {
-                  bgcolor: 'transparent',
-                  color: 'primary.main'
-                }
-              }}
-            >
-              Back
-            </Button>
+          <Stack spacing={isHeaderCollapsed ? { xs: 0.5, sm: 0.75 } : { xs: 1.5, sm: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+              <Button
+                variant='text'
+                startIcon={<ArrowBack sx={{ fontSize: isHeaderCollapsed ? { xs: 16, sm: 18 } : { xs: 20, sm: 22 } }} />}
+                onClick={() => router.back()}
+                sx={{
+                  width: 'fit-content',
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  color: 'text.secondary',
+                  px: 0,
+                  fontSize: isHeaderCollapsed ? { xs: '0.8rem', sm: '0.85rem' } : { xs: '0.95rem', sm: '1rem' },
+                  minWidth: 'auto',
+                  '&:hover': {
+                    bgcolor: 'transparent',
+                    color: 'primary.main'
+                  }
+                }}
+              >
+                Back
+              </Button>
+              <IconButton
+                onClick={() => setIsHeaderCollapsed(!isHeaderCollapsed)}
+                size='small'
+                sx={{
+                  color: 'text.secondary',
+                  '&:hover': {
+                    bgcolor: alpha(theme.palette.primary.main, 0.1),
+                    color: 'primary.main'
+                  }
+                }}
+              >
+                {isHeaderCollapsed ? <ExpandMore /> : <ExpandLess />}
+              </IconButton>
+            </Box>
 
             <Typography
               variant='h4'
               fontWeight={700}
               sx={{
-                fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
+                fontSize: isHeaderCollapsed
+                  ? { xs: '1rem', sm: '1.1rem', md: '1.2rem' }
+                  : { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
                 background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
-                lineHeight: 1.3
+                lineHeight: 1.3,
+                transition: 'font-size 0.3s ease'
               }}
             >
               Sponsor Traditional Knowledge Quizzes
             </Typography>
 
-            <Stack
-              direction={{ xs: 'column', sm: 'row' }}
-              alignItems={{ xs: 'flex-start', sm: 'center' }}
-              spacing={{ xs: 1, sm: 1 }}
-            >
-              <Chip
-                icon={<EmojiEvents sx={{ fontSize: { xs: 14, sm: 16 } }} />}
-                label='Quiz Sponsorship Program'
-                sx={{
-                  fontWeight: 700,
-                  bgcolor: alpha(theme.palette.primary.main, isDarkMode ? 0.15 : 0.08),
-                  color: theme.palette.primary.main,
-                  border: `1px solid ${alpha(theme.palette.primary.main, isDarkMode ? 0.3 : 0.2)}`,
-                  fontSize: { xs: '0.75rem', sm: '0.8rem' },
-                  height: { xs: 24, sm: 28 }
-                }}
-              />
-              <Chip
-                icon={<LocationOn sx={{ fontSize: { xs: 14, sm: 16 } }} />}
-                label='Pan-India Outreach'
-                sx={{
-                  fontWeight: 700,
-                  bgcolor: alpha(theme.palette.secondary?.main || theme.palette.primary.main, isDarkMode ? 0.15 : 0.08),
-                  color: theme.palette.secondary?.main || theme.palette.primary.main,
-                  border: `1px solid ${alpha(
-                    theme.palette.secondary?.main || theme.palette.primary.main,
-                    isDarkMode ? 0.3 : 0.2
-                  )}`,
-                  fontSize: { xs: '0.75rem', sm: '0.8rem' },
-                  height: { xs: 24, sm: 28 }
-                }}
-              />
-            </Stack>
+            <Collapse in={!isHeaderCollapsed} timeout={300}>
+              <Stack
+                direction={{ xs: 'column', sm: 'row' }}
+                alignItems={{ xs: 'flex-start', sm: 'center' }}
+                spacing={{ xs: 1, sm: 1 }}
+              >
+                <Chip
+                  icon={<EmojiEvents sx={{ fontSize: { xs: 14, sm: 16 } }} />}
+                  label='Quiz Sponsorship Program'
+                  sx={{
+                    fontWeight: 700,
+                    bgcolor: alpha(theme.palette.primary.main, isDarkMode ? 0.15 : 0.08),
+                    color: theme.palette.primary.main,
+                    border: `1px solid ${alpha(theme.palette.primary.main, isDarkMode ? 0.3 : 0.2)}`,
+                    fontSize: { xs: '0.75rem', sm: '0.8rem' },
+                    height: { xs: 24, sm: 28 }
+                  }}
+                />
+                <Chip
+                  icon={<LocationOn sx={{ fontSize: { xs: 14, sm: 16 } }} />}
+                  label='Pan-India Outreach'
+                  sx={{
+                    fontWeight: 700,
+                    bgcolor: alpha(theme.palette.secondary?.main || theme.palette.primary.main, isDarkMode ? 0.15 : 0.08),
+                    color: theme.palette.secondary?.main || theme.palette.primary.main,
+                    border: `1px solid ${alpha(
+                      theme.palette.secondary?.main || theme.palette.primary.main,
+                      isDarkMode ? 0.3 : 0.2
+                    )}`,
+                    fontSize: { xs: '0.75rem', sm: '0.8rem' },
+                    height: { xs: 24, sm: 28 }
+                  }}
+                />
+              </Stack>
+            </Collapse>
 
-            <Typography
-              variant='body2'
-              sx={{
-                fontSize: { xs: '0.85rem', sm: '0.9rem', md: '0.95rem' },
-                color: 'text.secondary',
-                lineHeight: 1.6,
-                maxWidth: { xs: '100%', sm: '800px', md: '900px' }
-              }}
-            >
-              Your sponsorship helps us preserve, celebrate, and share India&apos;s ancient knowledge systems through
-              curated quizzes. Join a community of patrons championing cultural education and high-quality learning
-              content.
-            </Typography>
+            <Collapse in={!isHeaderCollapsed} timeout={300}>
+              <Typography
+                variant='body2'
+                sx={{
+                  fontSize: { xs: '0.85rem', sm: '0.9rem', md: '0.95rem' },
+                  color: 'text.secondary',
+                  lineHeight: 1.6,
+                  maxWidth: { xs: '100%', sm: '800px', md: '900px' }
+                }}
+              >
+                Your sponsorship helps us preserve, celebrate, and share India&apos;s ancient knowledge systems through
+                curated quizzes. Join a community of patrons championing cultural education and high-quality learning
+                content.
+              </Typography>
+            </Collapse>
           </Stack>
         </Container>
       </Box>
