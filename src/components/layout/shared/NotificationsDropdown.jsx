@@ -79,9 +79,11 @@ const getNotificationIcon = type => {
   const iconMap = {
     QUIZ_APPROVED: 'ri-checkbox-circle-line',
     QUIZ_REJECTED: 'ri-close-circle-line',
+    QUIZ_PUBLISHED: 'ri-file-list-line',
     QUIZ_PENDING_APPROVAL: 'ri-time-line',
     GAME_CREATED: 'ri-gamepad-line',
     GROUP_JOINED: 'ri-group-line',
+    GAME_ACCESS_REMOVED: 'ri-gamepad-2-line',
     GROUP_REMOVED: 'ri-group-2-line',
     ROLE_ASSIGNED: 'ri-shield-user-line',
     ROLE_REMOVED: 'ri-shield-cross-line',
@@ -94,9 +96,11 @@ const getNotificationColor = type => {
   const colorMap = {
     QUIZ_APPROVED: 'success',
     QUIZ_REJECTED: 'error',
+    QUIZ_PUBLISHED: 'info',
     QUIZ_PENDING_APPROVAL: 'warning',
     GAME_CREATED: 'primary',
     GROUP_JOINED: 'info',
+    GAME_ACCESS_REMOVED: 'error',
     GROUP_REMOVED: 'error',
     ROLE_ASSIGNED: 'warning',
     ROLE_REMOVED: 'error',
@@ -154,6 +158,11 @@ const NotificationDropdown = () => {
 
   // Refs
   const anchorRef = useRef(null)
+  const reconnectTimeoutRef = useRef(null)
+  const reconnectAttemptsRef = useRef(0)
+  const wsRefRef = useRef(null)
+  const lastFetchTimeRef = useRef(0)
+  const isInitialLoadRef = useRef(true)
 
   // Hooks
   const { data: session } = useSession()
@@ -170,59 +179,58 @@ const NotificationDropdown = () => {
   const userRoles = session?.user?.roles || []
   const isAdmin = userRoles?.includes('ADMIN') || userRoles?.includes('SUPER_ADMIN') || false
 
-  // Fetch notifications from API - always fetch all notifications
-  const fetchNotifications = useCallback(async () => {
-    if (!userId) {
-      console.log('[Notifications] No userId available, skipping fetch')
-      return
-    }
+  // Fetch notifications from API - optimized with caching
+  const fetchNotifications = useCallback(
+    async (showLoading = true) => {
+      if (!userId) {
+        console.log('[Notifications] No userId available, skipping fetch')
+        return
+      }
 
-    try {
-      setLoading(true)
-      console.log('[Notifications] Fetching all notifications for userId:', userId)
+      // Only show loading spinner on initial load or if explicitly requested
+      if (showLoading && isInitialLoadRef.current) {
+        setLoading(true)
+      }
 
-      // Always fetch all notifications, we'll filter on client side
-      const apiUrl = `${API_URLS.v0.NOTIFICATIONS}?limit=100&sortBy=createdAt&sortOrder=desc`
+      try {
+        console.log('[Notifications] Fetching all notifications for userId:', userId)
 
-      const result = await RestApi.get(apiUrl)
+        // Always fetch all notifications, we'll filter on client side
+        const apiUrl = `${API_URLS.v0.NOTIFICATIONS}?limit=100&sortBy=createdAt&sortOrder=desc`
 
-      console.log('[Notifications] Full API Response:', JSON.stringify(result, null, 2))
-      console.log('[Notifications] result.result type:', typeof result?.result)
-      console.log('[Notifications] result.result isArray:', Array.isArray(result?.result))
+        const result = await RestApi.get(apiUrl)
 
-      if (result?.status === 'success') {
-        // Handle paginated response or direct array
-        let notificationsList = []
+        if (result?.status === 'success') {
+          // Handle paginated response or direct array
+          let notificationsList = []
 
-        // Check if result.result is an object with notifications property (paginated)
-        if (result.result && typeof result.result === 'object' && !Array.isArray(result.result)) {
-          if (result.result.notifications && Array.isArray(result.result.notifications)) {
-            notificationsList = result.result.notifications
-            console.log('[Notifications] Found paginated response with', notificationsList.length, 'notifications')
+          // Check if result.result is an object with notifications property (paginated)
+          if (result.result && typeof result.result === 'object' && !Array.isArray(result.result)) {
+            if (result.result.notifications && Array.isArray(result.result.notifications)) {
+              notificationsList = result.result.notifications
+            } else if (Array.isArray(result.result)) {
+              notificationsList = result.result
+            }
           } else if (Array.isArray(result.result)) {
             notificationsList = result.result
-            console.log('[Notifications] Found direct array response with', notificationsList.length, 'notifications')
           }
-        } else if (Array.isArray(result.result)) {
-          notificationsList = result.result
-          console.log('[Notifications] Found direct array response with', notificationsList.length, 'notifications')
-        }
 
-        console.log('[Notifications] Final notifications list:', notificationsList)
-        console.log('[Notifications] Setting notifications:', notificationsList.length)
-        setNotifications(notificationsList)
-        const unread = notificationsList.filter(n => !n.isRead).length
-        setUnreadCount(unread)
-        console.log('[Notifications] Unread count:', unread)
-      } else {
-        console.error('[Notifications] Failed to fetch notifications:', result?.message)
+          setNotifications(notificationsList)
+          const unread = notificationsList.filter(n => !n.isRead).length
+          setUnreadCount(unread)
+          lastFetchTimeRef.current = Date.now()
+          isInitialLoadRef.current = false
+        } else {
+          console.error('[Notifications] Failed to fetch notifications:', result?.message)
+        }
+      } catch (error) {
+        console.error('[Notifications] Error fetching notifications:', error)
+      } finally {
+        setLoading(false)
       }
-    } catch (error) {
-      console.error('[Notifications] Error fetching notifications:', error)
-    } finally {
-      setLoading(false)
-    }
-  }, [userId])
+    },
+    [userId]
+  )
 
   // Fetch notification count
   const fetchNotificationCount = useCallback(async () => {
@@ -238,11 +246,17 @@ const NotificationDropdown = () => {
     }
   }, [userId])
 
-  // WebSocket connection for real-time notifications
-  useEffect(() => {
+  // WebSocket connection function with reconnection logic
+  const connectWebSocket = useCallback(() => {
     if (!userId) {
       console.log('[Notifications WS] No userId available, skipping WebSocket connection')
       return
+    }
+
+    // Clear any existing reconnection timeout
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current)
+      reconnectTimeoutRef.current = null
     }
 
     const wsUrl =
@@ -252,15 +266,20 @@ const NotificationDropdown = () => {
           }/api/ws/notifications/${userId}`
         : ''
 
+    if (!wsUrl) return
+
     console.log('[Notifications WS] Connecting to:', wsUrl)
 
-    if (wsUrl) {
+    try {
       const wsRef = new WebSocket(wsUrl)
+      wsRefRef.current = wsRef
 
       wsRef.onopen = () => {
         console.log('[Notifications WS] Connected to notifications for userId:', userId)
         setIsConnected(true)
         setSocket(wsRef)
+        // Reset reconnection attempts on successful connection
+        reconnectAttemptsRef.current = 0
       }
 
       wsRef.onmessage = event => {
@@ -303,37 +322,92 @@ const NotificationDropdown = () => {
         setIsConnected(false)
       }
 
-      wsRef.onclose = () => {
-        console.log('[WS] Notification connection closed')
+      wsRef.onclose = event => {
+        console.log('[WS] Notification connection closed', {
+          code: event.code,
+          reason: event.reason,
+          wasClean: event.wasClean
+        })
         setIsConnected(false)
         setSocket(null)
-      }
+        wsRefRef.current = null
 
-      return () => {
-        wsRef.close()
+        // Don't reconnect if it was a clean close or component is unmounting
+        if (event.code === 1000 || event.wasClean) {
+          console.log('[WS] Connection closed cleanly, not reconnecting')
+          return
+        }
+
+        // Attempt to reconnect with exponential backoff
+        const maxAttempts = 5
+        if (reconnectAttemptsRef.current < maxAttempts) {
+          reconnectAttemptsRef.current++
+
+          // Exponential backoff: 1s, 2s, 4s, 8s, 16s (max 30s)
+          const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current - 1), 30000)
+
+          console.log(
+            `[WS] Attempting to reconnect in ${delay}ms (attempt ${reconnectAttemptsRef.current}/${maxAttempts})`
+          )
+
+          reconnectTimeoutRef.current = setTimeout(() => {
+            console.log(`[WS] Reconnecting... (attempt ${reconnectAttemptsRef.current})`)
+            connectWebSocket()
+          }, delay)
+        } else {
+          console.log('[WS] Max reconnection attempts reached. Please refresh the page to reconnect.')
+        }
       }
+    } catch (error) {
+      console.error('[WS] Error creating WebSocket connection:', error)
+      setIsConnected(false)
     }
   }, [userId])
 
-  // Fetch notifications on mount and when dropdown opens
+  // WebSocket connection effect
+  useEffect(() => {
+    connectWebSocket()
+
+    // Cleanup function
+    return () => {
+      // Clear reconnection timeout
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current)
+        reconnectTimeoutRef.current = null
+      }
+
+      // Close WebSocket connection
+      if (wsRefRef.current) {
+        wsRefRef.current.close(1000, 'Component unmounting')
+        wsRefRef.current = null
+      }
+
+      // Reset reconnection attempts
+      reconnectAttemptsRef.current = 0
+      setIsConnected(false)
+      setSocket(null)
+    }
+  }, [connectWebSocket])
+
+  // Fetch notifications on mount only
   useEffect(() => {
     if (userId) {
-      fetchNotifications()
-      fetchNotificationCount()
+      fetchNotifications(true) // Show loading on initial mount
     }
-  }, [userId, fetchNotifications, fetchNotificationCount])
+  }, [userId, fetchNotifications])
 
-  // Reset to All tab when opening
+  // Reset to All tab when opening and refresh notifications if needed
   useEffect(() => {
     if (open) {
       setActiveTab(0) // Always open to All tab
-    }
-  }, [open])
 
-  // Refresh notifications when dropdown opens
-  useEffect(() => {
-    if (open && userId) {
-      fetchNotifications() // Always fetch all notifications
+      // Only refresh if data is stale (older than 30 seconds)
+      const timeSinceLastFetch = Date.now() - lastFetchTimeRef.current
+      const REFRESH_INTERVAL = 30000 // 30 seconds
+
+      if (userId && timeSinceLastFetch > REFRESH_INTERVAL) {
+        fetchNotifications(false) // Don't show loading, fetch in background
+      }
     }
   }, [open, userId, fetchNotifications])
 

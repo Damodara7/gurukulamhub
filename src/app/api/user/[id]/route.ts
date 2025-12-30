@@ -75,6 +75,16 @@ export async function DELETE(_: NextRequest, { params }: { params: { id: string 
     await connectMongo()
     const user = await User.findById(params.id)
     if (user) {
+      // Delete user's notifications before deleting the user
+      try {
+        const Notification = (await import('@/app/api/notifications/notification.model.js')).default
+        await Notification.deleteMany({ userId: user._id })
+        console.log(`[User Delete] Deleted notifications for user ${params.id}`)
+      } catch (notificationError) {
+        console.error(`[User Delete] Error deleting notifications for user ${params.id}:`, notificationError)
+        // Continue with user deletion even if notification deletion fails
+      }
+
       await User.findByIdAndDelete(user._id)
       const successResult = ApiResponseUtils.createSuccessResponse(`User ${params.id} has been deleted`)
       return ApiResponseUtils.sendSuccessResponse(successResult, HttpStatusCode.Ok)

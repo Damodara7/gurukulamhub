@@ -325,6 +325,23 @@ export const addMany = async notificationsData => {
       notifications.push(new Notification(notificationData))
     }
 
+    // Verify all users exist before creating notifications
+    const userIds = [...new Set(notificationsData.map(n => n.userId.toString()))]
+    const existingUsers = await User.find({ _id: { $in: userIds } })
+      .select('_id')
+      .lean()
+    const existingUserIds = new Set(existingUsers.map(u => u._id.toString()))
+
+    // Check if all userIds exist
+    const invalidUserIds = userIds.filter(id => !existingUserIds.has(id))
+    if (invalidUserIds.length > 0) {
+      return {
+        status: 'error',
+        result: null,
+        message: `User(s) not found: ${invalidUserIds.join(', ')}`
+      }
+    }
+
     // Bulk insert
     const savedNotifications = await Notification.insertMany(notifications, {
       ordered: false // Continue inserting even if some fail

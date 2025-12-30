@@ -20,8 +20,19 @@ const DialogExamples = async () => {
   const data = await getPricingData()
 
   return (
-    <Grid container spacing={6}>
-      <Grid item xs={12}>
+    <Grid
+      container
+      spacing={0}
+      sx={{
+        height: '100%',
+        minHeight: 0,
+        '& .MuiGrid-item': {
+          height: '100%',
+          minHeight: 0
+        }
+      }}
+    >
+      <Grid item xs={12} sx={{ height: '100%', minHeight: 0 }}>
         <ReferAndEarn />
       </Grid>
     </Grid>

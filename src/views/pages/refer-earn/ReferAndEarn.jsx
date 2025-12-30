@@ -147,7 +147,8 @@ const ReferAndEarn = () => {
   return (
     <Box
       sx={{
-        height: 'calc(100vh - 56px)',
+        height: '100%',
+        minHeight: 0,
         display: 'flex',
         flexDirection: 'column',
         bgcolor: isDarkMode ? theme.palette.background.default : '#f8f9fa',
@@ -224,26 +225,33 @@ const ReferAndEarn = () => {
           overflowY: 'auto',
           overflowX: 'hidden',
           pt: 2,
-          pb: { xs: 8, sm: 10, md: 12 },
+          pb: { xs: 3, sm: 4, md: 4 },
           minHeight: 0,
-          maxHeight: 'calc(100% - 16px)',
+          maxHeight: '100%',
           WebkitOverflowScrolling: 'touch',
           scrollbarGutter: 'stable',
           // Custom scrollbar styling for better appearance
           '&::-webkit-scrollbar': {
-            width: '8px'
+            width: '10px'
           },
           '&::-webkit-scrollbar-track': {
             background: isDarkMode ? alpha(theme.palette.common.black, 0.1) : alpha(theme.palette.common.black, 0.05),
-            borderRadius: '4px'
+            borderRadius: '5px',
+            margin: '8px 0'
           },
           '&::-webkit-scrollbar-thumb': {
-            background: isDarkMode ? alpha(theme.palette.common.white, 0.3) : alpha(theme.palette.common.black, 0.2),
-            borderRadius: '4px',
+            background: isDarkMode ? alpha(theme.palette.common.white, 0.3) : alpha(theme.palette.primary.main, 0.3),
+            borderRadius: '5px',
+            border: `2px solid ${isDarkMode ? 'transparent' : alpha(theme.palette.background.default, 0.1)}`,
             '&:hover': {
-              background: isDarkMode ? alpha(theme.palette.common.white, 0.4) : alpha(theme.palette.common.black, 0.3)
+              background: isDarkMode ? alpha(theme.palette.common.white, 0.5) : alpha(theme.palette.primary.main, 0.5)
             }
-          }
+          },
+          // Firefox scrollbar
+          scrollbarWidth: 'thin',
+          scrollbarColor: isDarkMode
+            ? `${alpha(theme.palette.common.white, 0.3)} ${alpha(theme.palette.common.black, 0.1)}`
+            : `${alpha(theme.palette.primary.main, 0.3)} ${alpha(theme.palette.common.black, 0.05)}`
         }}
       >
         <Container
@@ -251,7 +259,7 @@ const ReferAndEarn = () => {
           sx={{
             width: '100%',
             boxSizing: 'border-box',
-            pb: { xs: 2, sm: 2.5, md: 3 }
+            pb: { xs: 1, sm: 1.5, md: 2 }
           }}
         >
           <Stack spacing={3}>
@@ -431,8 +439,7 @@ const ReferAndEarn = () => {
                 boxShadow: isDarkMode
                   ? `0 2px 12px ${alpha(theme.palette.common.black, 0.3)}`
                   : '0 2px 12px rgba(0,0,0,0.04)',
-                overflow: 'visible',
-                mb: { xs: 2, sm: 2.5 }
+                overflow: 'visible'
               }}
             >
               <Box
@@ -464,8 +471,8 @@ const ReferAndEarn = () => {
                 </Stack>
               </Box>
 
-              <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
-                <Stack spacing={3}>
+              <CardContent sx={{ p: { xs: 2.5, sm: 3 }, pb: { xs: 2, sm: 2.5 } }}>
+                <Stack spacing={2.5}>
                   <Typography
                     variant='body2'
                     color='text.secondary'
@@ -554,13 +561,13 @@ const ReferAndEarn = () => {
                   <Divider />
 
                   {/* Social Share Buttons */}
-                  <Box sx={{ pt: 1 }}>
+                  <Box sx={{ pt: 1, pb: 0.5 }}>
                     <Typography
                       variant='subtitle2'
                       fontWeight={600}
                       gutterBottom
                       sx={{
-                        mb: 2,
+                        mb: 1.5,
                         fontSize: { xs: '0.9rem', sm: '0.95rem', md: '1rem' },
                         color: isDarkMode ? theme.palette.common.white : 'text.primary'
                       }}
@@ -573,7 +580,8 @@ const ReferAndEarn = () => {
                       flexWrap='wrap'
                       sx={{
                         gap: { xs: 1, sm: 1.5 },
-                        justifyContent: { xs: 'center', sm: 'flex-start' }
+                        justifyContent: { xs: 'center', sm: 'flex-start' },
+                        mb: 0
                       }}
                     >
                       <EmailShareButton
