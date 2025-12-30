@@ -422,7 +422,9 @@ export const addOne = async gameData => {
           groupName: groupName,
           createdBy: savedGame.creatorEmail,
           registrationDeadline: savedGame.registrationEndTime || savedGame.endTime,
-          maxParticipants: savedGame.maxPlayers
+          maxParticipants: savedGame.maxPlayers,
+          thumbnailPoster: savedGame.thumbnailPoster || savedGame.thumbnailUrl,
+          quiz: savedGame.quiz
         })
       }
     } catch (notificationError) {
@@ -770,7 +772,9 @@ export const updateOne = async (gameId, updateData) => {
               groupName: null, // Game is now public, no group
               createdBy: updatedGame.creatorEmail,
               registrationDeadline: updatedGame.registrationEndTime || updatedGame.endTime,
-              maxParticipants: updatedGame.maxPlayers
+              maxParticipants: updatedGame.maxPlayers,
+              thumbnailPoster: updatedGame.thumbnailPoster || updatedGame.thumbnailUrl,
+              quiz: updatedGame.quiz
             })
             console.log(`[Game Service] Step 5.2 - ✅ Public game notification result:`, addResult)
           } else {
@@ -880,7 +884,9 @@ export const updateOne = async (gameId, updateData) => {
               groupName: newGroupName,
               createdBy: updatedGame.creatorEmail,
               registrationDeadline: updatedGame.registrationEndTime || updatedGame.endTime,
-              maxParticipants: updatedGame.maxPlayers
+              maxParticipants: updatedGame.maxPlayers,
+              thumbnailPoster: updatedGame.thumbnailPoster || updatedGame.thumbnailUrl,
+              quiz: updatedGame.quiz
             })
             console.log(`[Game Service] Step 5.2 - ✅ Welcome notification result:`, addResult)
           } else {

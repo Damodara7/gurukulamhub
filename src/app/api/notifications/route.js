@@ -25,7 +25,7 @@ export async function GET(req) {
     const searchParams = new URLSearchParams(url.searchParams)
     const queryParamsObj = Object.fromEntries(searchParams.entries())
 
-    const { id, userId, unread, count, ...rest } = queryParamsObj
+    const { id, userId, unread, favorite, count, ...rest } = queryParamsObj
 
     // Get session for authentication
     const session = await auth()
@@ -39,13 +39,13 @@ export async function GET(req) {
     // Get single notification by ID
     if (id) {
       artifact = await ArtifactService.getOne({ _id: id })
-      
+
       // Security check: ensure user can only access their own notifications
       if (artifact.status === 'success' && artifact.result) {
         const notificationUserId = artifact.result.userId?._id?.toString() || artifact.result.userId?.toString()
         const currentUser = await User.findOne({ email: session.user.email })
         const currentUserId = currentUser?._id?.toString()
-        
+
         // Check if user is admin or owns the notification
         const isAdmin = session.user.roles?.includes('SUPER_ADMIN') || session.user.isAdmin
         if (!isAdmin && notificationUserId !== currentUserId) {
@@ -53,12 +53,12 @@ export async function GET(req) {
           return ApiResponseUtils.sendErrorResponse(errorResponse)
         }
       }
-    } 
+    }
     // Get notification counts
     else if (count === 'true') {
       // Determine target userId
       let targetUserId = userId
-      
+
       // If userId not provided, use current user's ID
       if (!targetUserId) {
         const currentUser = await User.findOne({ email: session.user.email })
@@ -79,14 +79,14 @@ export async function GET(req) {
           }
         }
       }
-      
+
       artifact = await ArtifactService.getCount(targetUserId)
     }
     // Get unread notifications
     else if (unread === 'true') {
       // Determine target userId
       let targetUserId = userId
-      
+
       // If userId not provided, use current user's ID
       if (!targetUserId) {
         const currentUser = await User.findOne({ email: session.user.email })
@@ -107,14 +107,42 @@ export async function GET(req) {
           }
         }
       }
-      
+
       artifact = await ArtifactService.getUnread(targetUserId, rest)
+    }
+    // Get favorite notifications
+    else if (favorite === 'true') {
+      // Determine target userId
+      let targetUserId = userId
+
+      // If userId not provided, use current user's ID
+      if (!targetUserId) {
+        const currentUser = await User.findOne({ email: session.user.email })
+        if (!currentUser) {
+          const errorResponse = ApiResponseUtils.createErrorResponse('User not found')
+          return ApiResponseUtils.sendErrorResponse(errorResponse)
+        }
+        targetUserId = currentUser._id.toString()
+      } else {
+        // Security check: only admins can get favorite notifications for other users
+        const isAdmin = session.user.roles?.includes('SUPER_ADMIN') || session.user.isAdmin
+        if (!isAdmin) {
+          const currentUser = await User.findOne({ email: session.user.email })
+          const currentUserId = currentUser?._id?.toString()
+          if (targetUserId !== currentUserId) {
+            const errorResponse = ApiResponseUtils.createErrorResponse('Unauthorized to access notifications')
+            return ApiResponseUtils.sendErrorResponse(errorResponse)
+          }
+        }
+      }
+
+      artifact = await ArtifactService.getFavorite(targetUserId, rest)
     }
     // Get all notifications
     else {
       // Determine target userId
       let targetUserId = userId
-      
+
       // If userId not provided, use current user's ID
       if (!targetUserId) {
         const currentUser = await User.findOne({ email: session.user.email })
@@ -135,7 +163,7 @@ export async function GET(req) {
           }
         }
       }
-      
+
       // Validate and call getAll
       console.log('[Notifications Route] Getting notifications for userId:', targetUserId)
       console.log('[Notifications Route] Options:', rest)
@@ -145,7 +173,7 @@ export async function GET(req) {
 
     if (artifact.status === 'success') {
       // Include pagination in result if available
-      const responseData = artifact.pagination 
+      const responseData = artifact.pagination
         ? { notifications: artifact.result, pagination: artifact.pagination }
         : artifact.result
       const successResponse = ApiResponseUtils.createSuccessResponse(artifact.message, responseData)
@@ -206,10 +234,12 @@ export async function POST(request) {
       const currentUser = await User.findOne({ email: session.user.email })
       const currentUserId = currentUser?._id?.toString()
       const isAdmin = session.user.roles?.includes('SUPER_ADMIN') || session.user.isAdmin
-      
+
       const targetUserId = reqBody.userId?.toString()
       if (!isAdmin && targetUserId !== currentUserId) {
-        const errorResponse = ApiResponseUtils.createErrorResponse('Unauthorized to create notifications for other users')
+        const errorResponse = ApiResponseUtils.createErrorResponse(
+          'Unauthorized to create notifications for other users'
+        )
         return ApiResponseUtils.sendErrorResponse(errorResponse)
       }
 
@@ -235,7 +265,7 @@ export async function POST(request) {
 /**
  * PUT /api/notifications
  * Update notification or mark as read
- * Body: { _id, ...updateData } or { markAsRead: notificationId } or { markAllAsRead: true }
+ * Body: { _id, ...updateData } or { markAsRead: notificationId } or { markAllAsRead: true } or { toggleFavorite: notificationId }
  */
 export async function PUT(request) {
   try {
@@ -251,8 +281,22 @@ export async function PUT(request) {
     const currentUser = await User.findOne({ email: session.user.email })
     const currentUserId = currentUser?._id?.toString()
 
+    // Handle toggle favorite operation
+    if (reqBody.toggleFavorite) {
+      // Toggle favorite status for single notification
+      const notificationId = reqBody.toggleFavorite
+      const updateResult = await ArtifactService.toggleFavorite(notificationId, currentUserId)
+
+      if (updateResult.status === 'success') {
+        const successResponse = ApiResponseUtils.createSuccessResponse(updateResult.message, updateResult.result)
+        return ApiResponseUtils.sendSuccessResponse(successResponse)
+      } else {
+        const errorResponse = ApiResponseUtils.createErrorResponse(updateResult.message)
+        return ApiResponseUtils.sendErrorResponse(errorResponse)
+      }
+    }
     // Handle mark as read operations
-    if (reqBody.markAsRead) {
+    else if (reqBody.markAsRead) {
       // Mark single notification as read
       const notificationId = reqBody.markAsRead
       const updateResult = await ArtifactService.markAsRead(notificationId, currentUserId)
@@ -288,7 +332,7 @@ export async function PUT(request) {
       if (notification.status === 'success' && notification.result) {
         const notificationUserId = notification.result.userId?._id?.toString() || notification.result.userId?.toString()
         const isAdmin = session.user.roles?.includes('SUPER_ADMIN') || session.user.isAdmin
-        
+
         if (!isAdmin && notificationUserId !== currentUserId) {
           const errorResponse = ApiResponseUtils.createErrorResponse('Unauthorized to update this notification')
           return ApiResponseUtils.sendErrorResponse(errorResponse)
@@ -368,4 +412,3 @@ export async function DELETE(req) {
     return ApiResponseUtils.sendErrorResponse(errorResponse)
   }
 }
-

@@ -51,6 +51,12 @@ const notificationSchema = new mongoose.Schema(
       default: null
     },
 
+    isFavorite: {
+      type: Boolean,
+      default: false,
+      index: true
+    },
+
     // **Priority (for sorting/filtering)**
     priority: {
       type: String,
@@ -117,6 +123,9 @@ notificationSchema.index({ userId: 1, createdAt: -1 })
 
 // Compound index for unread notifications
 notificationSchema.index({ userId: 1, isRead: 1, createdAt: -1 })
+
+// Compound index for favorite notifications
+notificationSchema.index({ userId: 1, isFavorite: 1, createdAt: -1 })
 
 // Index for priority-based queries
 notificationSchema.index({ userId: 1, priority: -1, createdAt: -1 })

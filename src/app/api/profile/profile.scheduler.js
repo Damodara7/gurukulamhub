@@ -157,13 +157,37 @@ async function checkAndSendProfileReminders() {
           continue
         }
 
-        // Delete previous profile completion reminder notification for this user
+        // Check if a notification was already sent today for this user
+        // This prevents duplicate notifications if scheduler runs multiple times
+        const todayStart = new Date()
+        todayStart.setHours(0, 0, 0, 0) // Start of today (00:00:00)
+        const todayEnd = new Date()
+        todayEnd.setHours(23, 59, 59, 999) // End of today (23:59:59)
+
+        const existingNotification = await Notification.findOne({
+          userId: user._id,
+          type: 'PROFILE_COMPLETION_REMINDER',
+          createdAt: {
+            $gte: todayStart,
+            $lte: todayEnd
+          }
+        }).lean()
+
+        // Skip if notification already sent today
+        if (existingNotification) {
+          usersSkipped++
+          continue
+        }
+
+        // Delete previous profile completion reminder notifications for this user (older than today)
         // This ensures user only sees the latest notification (clean notification list)
-        // Old notification is removed before sending new one
         try {
           await Notification.deleteMany({
             userId: user._id,
-            type: 'PROFILE_COMPLETION_REMINDER'
+            type: 'PROFILE_COMPLETION_REMINDER',
+            createdAt: {
+              $lt: todayStart // Only delete notifications older than today
+            }
           })
         } catch (deleteError) {
           console.error(`[Profile Scheduler] Error deleting previous notifications for ${user.email}:`, deleteError)
@@ -182,7 +206,8 @@ async function checkAndSendProfileReminders() {
           totalFields: allFields.length,
           filledFields,
           profileId: profile._id,
-          isScheduledReminder: true // Mark as scheduled reminder to bypass threshold check
+          isScheduledReminder: true, // Mark as scheduled reminder to bypass threshold check
+          image: profile.image
         })
 
         if (notificationResult.status === 'success') {
@@ -211,7 +236,7 @@ async function checkAndSendProfileReminders() {
 export async function initializeProfileScheduler() {
   console.log('[Profile Scheduler] Initializing profile completion reminder scheduler...')
 
-  // Schedule to run at 8 AM (morning)
+  // Schedule to run at 8 AM (morning) - only once per day
   cron.schedule(
     '0 8 * * *', // Every day at 8:00 AM
     async () => {
@@ -224,20 +249,7 @@ export async function initializeProfileScheduler() {
     }
   )
 
-  // Schedule to run at 6 PM (evening)
-  cron.schedule(
-    '0 18 * * *', // Every day at 6:00 PM (18:00)
-    async () => {
-      await checkAndSendProfileReminders()
-    },
-    {
-      scheduled: true,
-      timezone: 'Asia/Kolkata',
-      runOnInit: false // Don't run immediately, wait for first scheduled time
-    }
-  )
-
-  console.log('[Profile Scheduler] Initialized - Daily at 8:00 AM and 6:00 PM (Asia/Kolkata)')
+  console.log('[Profile Scheduler] Initialized - Daily at 8:00 AM (Asia/Kolkata)')
 }
 
 // Export the check function for manual testing if needed

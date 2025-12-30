@@ -90,7 +90,8 @@ export async function add(addRequestData) {
             _id: newArtifact._id,
             id: newArtifact.id,
             title: newArtifact.title,
-            createdBy: newArtifact.createdBy || newArtifact.owner
+            createdBy: newArtifact.createdBy || newArtifact.owner,
+            thumbnail: newArtifact.thumbnail
           })
           console.log(
             `[Quiz Service] Created pending approval notifications for ${adminUserIds.length} admins`,
@@ -165,7 +166,8 @@ export async function updateById(id, updateData) {
               _id: updatedArtifact._id,
               id: updatedArtifact.id,
               title: updatedArtifact.title,
-              createdBy: updatedArtifact.createdBy || updatedArtifact.owner
+              createdBy: updatedArtifact.createdBy || updatedArtifact.owner,
+              thumbnail: updatedArtifact.thumbnail
             })
             console.log(
               `[Quiz Service] Created pending approval notifications for ${adminUserIds.length} admins`,
@@ -188,7 +190,8 @@ export async function updateById(id, updateData) {
                 _id: updatedArtifact._id,
                 id: updatedArtifact.id,
                 title: updatedArtifact.title,
-                approvedBy: updateData.approvedBy || 'Admin'
+                approvedBy: updateData.approvedBy || 'Admin',
+                thumbnail: updatedArtifact.thumbnail
               })
             } else if (updateData.approvalState === 'rejected') {
               // Create rejected notification
@@ -198,7 +201,8 @@ export async function updateById(id, updateData) {
                 title: updatedArtifact.title,
                 approvedBy: updateData.approvedBy || 'Admin',
                 rejectedBy: updateData.approvedBy || 'Admin',
-                remarks: updatedArtifact.remarks || []
+                remarks: updatedArtifact.remarks || [],
+                thumbnail: updatedArtifact.thumbnail
               })
             }
           }
@@ -261,7 +265,8 @@ export async function updateById(id, updateData) {
                   title: updatedArtifact.title,
                   syllabus: updatedArtifact.syllabus,
                   details: updatedArtifact.details,
-                  publishedBy: updateData.approvedBy || updatedArtifact.owner || 'Admin'
+                  publishedBy: updateData.approvedBy || updatedArtifact.owner || 'Admin',
+                  thumbnail: updatedArtifact.thumbnail
                 })
                 console.log(
                   `[Quiz Service] ✅ Sent published notifications to ${usersToNotify.length} users:`,

@@ -5,12 +5,13 @@ export const createQuizApprovedNotification = async (userId, quizData) => {
     const quizId = quizData._id?.toString() || quizData.id || quizData._id
     const quizTitle = quizData.title || 'Your Quiz'
     const approvedBy = quizData.approvedBy || 'Admin'
+    const quizThumbnail = quizData.thumbnail || quizData.quiz?.thumbnail || null
 
     const notificationData = {
       userId: userId,
       type: 'QUIZ_APPROVED',
-      title: 'Quiz Approved',
-      message: `Your quiz "${quizTitle}" has been approved by ${approvedBy}.`,
+      title: `Quiz "${quizTitle}" Approved`,
+      message: `Now ur quiz "${quizTitle}" is approved by ${approvedBy}.`,
       priority: 'high',
       relatedEntity: {
         entityType: 'quiz',
@@ -20,7 +21,8 @@ export const createQuizApprovedNotification = async (userId, quizData) => {
         quizTitle,
         quizId,
         approvedBy,
-        approvedAt: new Date().toISOString()
+        approvedAt: new Date().toISOString(),
+        avatarImage: quizThumbnail
       },
       actionUrl: `/myquizzes/view`,
       actionLabel: 'View Quiz'
@@ -43,12 +45,13 @@ export const createQuizRejectedNotification = async (userId, quizData) => {
     const quizTitle = quizData.title || 'Your Quiz'
     const rejectedBy = quizData.approvedBy || quizData.rejectedBy || 'Admin'
     const remarks = quizData.remarks || []
+    const quizThumbnail = quizData.thumbnail || quizData.quiz?.thumbnail || null
 
     const notificationData = {
       userId: userId,
       type: 'QUIZ_REJECTED',
-      title: 'Quiz Rejected',
-      message: `Your quiz "${quizTitle}" has been rejected.${remarks.length > 0 ? ' Please review the remarks.' : ''}`,
+      title: `Quiz "${quizTitle}" Rejected`,
+      message: `Now ur quiz "${quizTitle}" is rejected.${remarks.length > 0 ? ' Please review the remarks.' : ''}`,
       priority: 'high',
       relatedEntity: {
         entityType: 'quiz',
@@ -59,7 +62,8 @@ export const createQuizRejectedNotification = async (userId, quizData) => {
         quizId,
         rejectedBy,
         remarks: Array.isArray(remarks) ? remarks : [remarks],
-        rejectedAt: new Date().toISOString()
+        rejectedAt: new Date().toISOString(),
+        avatarImage: quizThumbnail
       },
       actionUrl: `/myquizzes/view`,
       actionLabel: 'View Quiz'
@@ -99,6 +103,7 @@ export const createGameCreatedNotification = async (userIds, gameData) => {
     const createdBy = gameData.createdBy?.email || gameData.creatorEmail || 'Admin'
     const registrationDeadline = gameData.registrationDeadline || gameData.endTime
     const maxParticipants = gameData.maxParticipants || gameData.maxPlayers
+    const gameThumbnail = gameData.thumbnailPoster || gameData.thumbnail || gameData.quiz?.thumbnail || null
 
     console.log('[Notification Helper] Prepared data:', {
       gameId,
@@ -117,7 +122,7 @@ export const createGameCreatedNotification = async (userIds, gameData) => {
     const notificationsData = userIds.map(userId => ({
       userId: userId,
       type: 'GAME_CREATED',
-      title: 'New Game Available',
+      title: `Game On: "${gameTitle}"`,
       message: message,
       priority: 'high',
       relatedEntity: {
@@ -130,7 +135,8 @@ export const createGameCreatedNotification = async (userIds, gameData) => {
         groupName,
         createdBy,
         registrationDeadline: registrationDeadline ? new Date(registrationDeadline).toISOString() : null,
-        maxParticipants
+        maxParticipants,
+        avatarImage: gameThumbnail
       },
       actionUrl: `/public-games`,
       actionLabel: 'View Games',
@@ -169,8 +175,8 @@ export const createGroupJoinedNotification = async (userId, groupData) => {
     const notificationData = {
       userId: userId,
       type: 'GROUP_JOINED',
-      title: 'Welcome to Group',
-      message: `You have been added to the group "${groupName}".`,
+      title: `Joined in Group: "${groupName}"`,
+      message: `Now u are added to the "${groupName}" group.`,
       priority: 'medium',
       relatedEntity: {
         entityType: 'group',
@@ -208,8 +214,8 @@ export const createGroupRemovedNotification = async (userId, groupData) => {
     const notificationData = {
       userId: userId,
       type: 'GROUP_REMOVED',
-      title: 'Removed from Group',
-      message: `You have been removed from the group "${groupName}".`,
+      title: `Removed from Group: "${groupName}"`,
+      message: `Now u are removed from the "${groupName}" group.`,
       priority: 'high',
       relatedEntity: {
         entityType: 'group',
@@ -245,8 +251,8 @@ export const createRoleAssignedNotification = async (userId, roleData) => {
     const notificationData = {
       userId: userId,
       type: 'ROLE_ASSIGNED',
-      title: 'New Role Assigned',
-      message: `You have been assigned the role "${roleName}".`,
+      title: `Role Assigned: "${roleName}"`,
+      message: `Now u are assigned the  "${roleName}" role.`,
       priority: 'high',
       relatedEntity: {
         entityType: 'role',
@@ -283,8 +289,8 @@ export const createRoleRemovedNotification = async (userId, roleData) => {
     const notificationData = {
       userId: userId,
       type: 'ROLE_REMOVED',
-      title: 'Role Removed',
-      message: `The role "${roleName}" has been removed from your account.`,
+      title: `Role Removed: "${roleName}"`,
+      message: `Now u are removed from the "${roleName}" role.`,
       priority: 'high',
       relatedEntity: {
         entityType: 'role',
@@ -333,12 +339,12 @@ export const createProfileCompletionNotification = async (userId, profileData) =
       return {
         status: 'success',
         result: null,
-        message: 'Profile completion percentage does not meet notification threshold'
+        message: 'Now ur profile is not 100% complete. Please fill in more details to unlock features.'
       }
     }
 
     // Create personalized message with missing fields
-    let message = `Your profile is ${completionPercentage}% complete.`
+    let message = `Now ur profile is ${completionPercentage}% complete.`
 
     if (Array.isArray(missingFields) && missingFields.length > 0) {
       const fieldsToShow = missingFields.slice(0, 10) // Show max 10 fields
@@ -346,8 +352,10 @@ export const createProfileCompletionNotification = async (userId, profileData) =
       const moreFieldsCount = missingFields.length > 10 ? ` and ${missingFields.length - 10} more` : ''
       message += ` Please fill in: ${fieldsList}${moreFieldsCount}.`
     } else {
-      message += ' Fill in more details to unlock features.'
+      message += ' Please fill more details to unlock features.'
     }
+
+    const profileImage = profileData.image || profileData.profileImage || null
 
     const notificationData = {
       userId: userId,
@@ -364,7 +372,8 @@ export const createProfileCompletionNotification = async (userId, profileData) =
         missingFields: Array.isArray(missingFields) ? missingFields : [missingFields],
         totalFields,
         filledFields,
-        isScheduledReminder: isScheduledReminder
+        isScheduledReminder: isScheduledReminder,
+        avatarImage: profileImage
       },
       actionUrl: '/pages/user-profile',
       actionLabel: 'Complete Profile'
@@ -396,14 +405,15 @@ export const createQuizPendingApprovalNotification = async (adminUserIds, quizDa
     const quizId = quizData._id?.toString() || quizData.id || quizData._id
     const quizTitle = quizData.title || 'A Quiz'
     const createdBy = quizData.createdBy || quizData.owner || 'User'
+    const quizThumbnail = quizData.thumbnail || quizData.quiz?.thumbnail || null
 
     console.log('[Notification Helper] Quiz data:', { quizId, quizTitle, createdBy })
 
     const notificationsData = adminUserIds.map(adminUserId => ({
       userId: adminUserId,
       type: 'QUIZ_PENDING_APPROVAL',
-      title: 'Quiz Pending Approval',
-      message: `A new quiz "${quizTitle}" has been submitted for approval by ${createdBy}. Please review and approve or reject it.`,
+      title: `Quiz on "${quizTitle}" waiting for Approval`,
+      message: `Now ur quiz "${quizTitle}" is waiting for approval by ${createdBy}. Please review and approve or reject it.`,
       priority: 'high',
       relatedEntity: {
         entityType: 'quiz',
@@ -413,7 +423,8 @@ export const createQuizPendingApprovalNotification = async (adminUserIds, quizDa
         quizTitle,
         quizId,
         createdBy,
-        submittedAt: new Date().toISOString()
+        submittedAt: new Date().toISOString(),
+        avatarImage: quizThumbnail
       },
       actionUrl: `/management/user-quizzes/list`,
       actionLabel: 'Review Quiz'
@@ -456,6 +467,7 @@ export const createQuizPublishedNotification = async (userIds, quizData) => {
     const quizTitle = quizData.title || 'New Quiz'
     const syllabus = quizData.syllabus || quizData.details || ''
     const publishedBy = quizData.publishedBy || quizData.approvedBy || quizData.createdBy || 'Admin'
+    const quizThumbnail = quizData.thumbnail || quizData.quiz?.thumbnail || null
 
     // Truncate syllabus if too long (max 150 characters for notification message)
     const syllabusPreview = syllabus.length > 150 ? syllabus.substring(0, 150) + '...' : syllabus
@@ -474,7 +486,7 @@ export const createQuizPublishedNotification = async (userIds, quizData) => {
     const notificationsData = userIds.map(userId => ({
       userId: userId,
       type: 'QUIZ_PUBLISHED',
-      title: 'New Quiz Published',
+      title: `Quiz on "${quizTitle}" is published`,
       message: message,
       priority: 'high',
       relatedEntity: {
@@ -486,7 +498,8 @@ export const createQuizPublishedNotification = async (userIds, quizData) => {
         quizId,
         syllabus: syllabus,
         publishedBy,
-        publishedAt: new Date().toISOString()
+        publishedAt: new Date().toISOString(),
+        avatarImage: quizThumbnail
       },
       actionUrl: `/publicquiz/view`,
       actionLabel: 'View Quiz'
@@ -535,6 +548,7 @@ export const createGameAccessRemovedNotification = async (userIds, gameData) => 
     const gameId = gameData._id?.toString() || gameData.id || gameData._id
     const gameTitle = gameData.title || gameData.quiz?.title || 'Game'
     const updatedBy = gameData.updatedBy || gameData.updaterEmail || 'Admin'
+    const gameThumbnail = gameData.thumbnailPoster || gameData.thumbnail || gameData.quiz?.thumbnail || null
 
     console.log('[Notification Helper] Prepared data:', {
       gameId,
@@ -551,7 +565,7 @@ export const createGameAccessRemovedNotification = async (userIds, gameData) => 
     const notificationsData = userIds.map(userId => ({
       userId: userId,
       type: 'GAME_ACCESS_REMOVED',
-      title: 'Access Removed from Game',
+      title: `U are removed from the "${gameTitle}" game`,
       message: message,
       priority: 'high',
       relatedEntity: {
@@ -563,7 +577,8 @@ export const createGameAccessRemovedNotification = async (userIds, gameData) => 
         gameId,
         groupName,
         updatedBy,
-        removedAt: new Date().toISOString()
+        removedAt: new Date().toISOString(),
+        avatarImage: gameThumbnail
       },
       actionUrl: `/public-games`,
       actionLabel: 'View Games'

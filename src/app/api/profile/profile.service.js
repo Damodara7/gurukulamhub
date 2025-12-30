@@ -475,15 +475,30 @@ export const updateProfileByEmail = async ({ email, data }) => {
       // Calculate profile completion and send notification if threshold crossed
       try {
         const profileFields = [
-          'firstname', 'lastname', 'age', 'gender', 'phone', 'image',
-          'country', 'region', 'zipcode', 'locality', 'address',
-          'motherTongue', 'languages', 'schools', 'workingPositions',
-          'linkedInUrl', 'facebookUrl', 'instagramUrl', 'organization'
+          'firstname',
+          'lastname',
+          'age',
+          'gender',
+          'phone',
+          'image',
+          'country',
+          'region',
+          'zipcode',
+          'locality',
+          'address',
+          'motherTongue',
+          'languages',
+          'schools',
+          'workingPositions',
+          'linkedInUrl',
+          'facebookUrl',
+          'instagramUrl',
+          'organization'
         ]
-        
+
         let filledFields = 0
         const missingFields = []
-        
+
         for (const field of profileFields) {
           const value = profile[field]
           if (value !== undefined && value !== null && value !== '') {
@@ -498,15 +513,15 @@ export const updateProfileByEmail = async ({ email, data }) => {
             missingFields.push(field)
           }
         }
-        
+
         const totalFields = profileFields.length
         const completionPercentage = Math.round((filledFields / totalFields) * 100)
-        
+
         // Check if completion percentage crosses a threshold (50%, 75%, 90%)
         const thresholds = [50, 75, 90]
         const previousProfile = await UserProfile.findOne({ email }).lean()
         let previousPercentage = 0
-        
+
         if (previousProfile) {
           let prevFilled = 0
           for (const field of profileFields) {
@@ -521,12 +536,12 @@ export const updateProfileByEmail = async ({ email, data }) => {
           }
           previousPercentage = Math.round((prevFilled / totalFields) * 100)
         }
-        
+
         // Check if we crossed a threshold
-        const crossedThreshold = thresholds.find(threshold => 
-          previousPercentage < threshold && completionPercentage >= threshold
+        const crossedThreshold = thresholds.find(
+          threshold => previousPercentage < threshold && completionPercentage >= threshold
         )
-        
+
         if (crossedThreshold) {
           const user = await User.findOne({ email })
           if (user) {
@@ -535,7 +550,8 @@ export const updateProfileByEmail = async ({ email, data }) => {
               missingFields: missingFields.slice(0, 5), // Limit to 5 missing fields
               totalFields,
               filledFields,
-              profileId: profile._id
+              profileId: profile._id,
+              image: profile.image
             })
           }
         }

@@ -72,6 +72,8 @@ export const getAll = async (userId, options = {}) => {
     const limit = options.limit ? parseInt(options.limit) : 50
     const type = options.type
     const isRead = options.isRead !== undefined ? options.isRead === 'true' || options.isRead === true : undefined
+    const isFavorite =
+      options.isFavorite !== undefined ? options.isFavorite === 'true' || options.isFavorite === true : undefined
     const priority = options.priority
     const sortBy = options.sortBy || 'createdAt'
 
@@ -95,6 +97,7 @@ export const getAll = async (userId, options = {}) => {
     const filter = { userId: userIdObjectId }
     if (type) filter.type = type
     if (isRead !== undefined) filter.isRead = isRead
+    if (isFavorite !== undefined) filter.isFavorite = isFavorite
     if (priority) filter.priority = priority
 
     // Calculate pagination
@@ -142,6 +145,19 @@ export const getUnread = async (userId, options = {}) => {
       status: 'error',
       result: null,
       message: error.message || 'Failed to retrieve unread notifications'
+    }
+  }
+}
+
+export const getFavorite = async (userId, options = {}) => {
+  await connectMongo()
+  try {
+    return await getAll(userId, { ...options, isFavorite: true })
+  } catch (error) {
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to retrieve favorite notifications'
     }
   }
 }
@@ -625,6 +641,86 @@ export const getByType = async (userId, type, options = {}) => {
       status: 'error',
       result: null,
       message: error.message || 'Failed to retrieve notifications by type'
+    }
+  }
+}
+
+export const toggleFavorite = async (notificationId, userId = null) => {
+  await connectMongo()
+  try {
+    if (!notificationId) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Notification ID is required'
+      }
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(notificationId)) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Invalid notification ID format'
+      }
+    }
+
+    // Build filter
+    const filter = { _id: notificationId }
+    if (userId) {
+      if (!mongoose.Types.ObjectId.isValid(userId)) {
+        return {
+          status: 'error',
+          result: null,
+          message: 'Invalid user ID format'
+        }
+      }
+      filter.userId = userId
+    }
+
+    // Get current notification to toggle favorite status
+    const notification = await Notification.findOne(filter)
+    if (!notification) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Notification not found or unauthorized'
+      }
+    }
+
+    // Toggle favorite status
+    const newFavoriteStatus = !notification.isFavorite
+    const updatedNotification = await Notification.findOneAndUpdate(
+      filter,
+      {
+        isFavorite: newFavoriteStatus
+      },
+      { new: true }
+    ).lean()
+
+    // Emit WebSocket event for notification update
+    try {
+      const notificationUserId = updatedNotification.userId?.toString() || updatedNotification.userId
+      if (notificationUserId) {
+        broadcastNotificationUpdate(notificationUserId, {
+          notificationId: updatedNotification._id?.toString() || updatedNotification._id,
+          isFavorite: newFavoriteStatus
+        })
+      }
+    } catch (wsError) {
+      console.error('Error broadcasting notification update via WebSocket:', wsError)
+      // Don't fail the operation if WebSocket fails
+    }
+
+    return {
+      status: 'success',
+      result: updatedNotification,
+      message: `Notification ${newFavoriteStatus ? 'added to' : 'removed from'} favorites`
+    }
+  } catch (error) {
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to toggle favorite status'
     }
   }
 }
