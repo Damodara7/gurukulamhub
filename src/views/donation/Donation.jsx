@@ -69,41 +69,7 @@ const Donation = () => {
         overflow: 'hidden'
       }}
     >
-      {/* Page Header - Fixed */}
-      <Box
-        sx={{
-          flexShrink: 0,
-          bgcolor: theme.palette.background.default,
-          py: { xs: 3, md: 4 },
-          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`
-        }}
-      >
-        <Container maxWidth='lg'>
-          <CenterBox>
-            <AlertMessage
-              description={
-                <>
-                  This page is currently under development — <strong>stay tuned for updates!</strong>
-                </>
-              }
-              title={'Page Under Development'}
-              severity='info'
-              showIcon={true}
-            />
-          </CenterBox>
-          <Box sx={{ textAlign: 'center', mt: 3, mb: 2 }}>
-            <Typography variant='h3' gutterBottom color='primary'>
-              Support Gurukulhub with a Donation
-            </Typography>
-            <Typography variant='body1' color='text.secondary'>
-              Your donation helps us to improve and bring more amazing quizzes to the GurukulHub community. We
-              appreciate your generosity!
-            </Typography>
-          </Box>
-        </Container>
-      </Box>
-
-      {/* Main Content - Scrollable */}
+      {/* All Content - Scrollable */}
       <Box
         sx={{
           flex: 1,
@@ -135,6 +101,40 @@ const Donation = () => {
           }
         }}
       >
+        {/* Page Header - Now Scrollable */}
+        <Box
+          sx={{
+            bgcolor: theme.palette.background.default,
+            py: { xs: 2, md: 2.5 },
+            borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`
+          }}
+        >
+          <Container maxWidth='lg'>
+            <CenterBox>
+              <AlertMessage
+                description={
+                  <>
+                    This page is currently under development — <strong>stay tuned for updates!</strong>
+                  </>
+                }
+                title={'Page Under Development'}
+                severity='info'
+                showIcon={true}
+              />
+            </CenterBox>
+            <Box sx={{ textAlign: 'center', mt: 2, mb: 1.5 }}>
+              <Typography variant='h3' gutterBottom color='primary' sx={{ mb: 1 }}>
+                Support Gurukulhub with a Donation
+              </Typography>
+              <Typography variant='body1' color='text.secondary'>
+                Your donation helps us to improve and bring more amazing quizzes to the GurukulHub community. We
+                appreciate your generosity!
+              </Typography>
+            </Box>
+          </Container>
+        </Box>
+
+        {/* Main Content */}
         <Container maxWidth='lg' sx={{ py: { xs: 4, md: 5 }, pb: { xs: 6, sm: 8, md: 10 } }}>
           {/* Progress Bar Section */}
           <Box sx={{ textAlign: 'center', mb: 6 }}>

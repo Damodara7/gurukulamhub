@@ -4,7 +4,7 @@ import { API_URLS } from '@/configs/apiConfig'
 import { auth } from '@/libs/auth'
 import SelectedQuiz from '@/views/quiz-builder/SelectedQuiz'
 import PrimaryQuizBuilder from '@/views/quiz-builder/PrimaryQuizBuilder'
-import { Alert, AlertTitle } from '@mui/material'
+import { Alert, AlertTitle, Box } from '@mui/material'
 import { isValidObjectId } from 'mongoose'
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined'
 import LoadingDialog from '@/components/LoadingDialog'
@@ -16,16 +16,16 @@ export default async function SelectedQuizPage({ params }) {
     return (
       <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
         <CenterBox>
-        <Alert
-          sx={{ padding: '0.5rem' }}
-          severity=''
-          icon={<WarningAmberOutlinedIcon fontSize='inherit' />}
-          color='error'
-        >
-          <AlertTitle>Not a valid quiz id!</AlertTitle>
-          Please check and try again.
-        </Alert>
-      </CenterBox>
+          <Alert
+            sx={{ padding: '0.5rem' }}
+            severity=''
+            icon={<WarningAmberOutlinedIcon fontSize='inherit' />}
+            color='error'
+          >
+            <AlertTitle>Not a valid quiz id!</AlertTitle>
+            Please check and try again.
+          </Alert>
+        </CenterBox>
       </Box>
     )
   }
@@ -44,24 +44,24 @@ export default async function SelectedQuizPage({ params }) {
 
   const quiz = await getQuizData()
 
-  if(!quiz){
+  if (!quiz) {
     return (
       <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
         <CenterBox>
-        <Alert
-          sx={{ padding: '0.5rem' }}
-          severity=''
-          icon={<WarningAmberOutlinedIcon fontSize='inherit' />}
-          color='error'
-        >
-          <AlertTitle>Quiz not found!</AlertTitle>
-          Please check and try again.
-        </Alert>
-      </CenterBox>
+          <Alert
+            sx={{ padding: '0.5rem' }}
+            severity=''
+            icon={<WarningAmberOutlinedIcon fontSize='inherit' />}
+            color='error'
+          >
+            <AlertTitle>Quiz not found!</AlertTitle>
+            Please check and try again.
+          </Alert>
+        </CenterBox>
       </Box>
     )
   }
 
-  return <PrimaryQuizBuilder quiz={quiz} isAdmin={true}/>
+  return <PrimaryQuizBuilder quiz={quiz} isAdmin={true} />
   // return <SelectedQuiz quiz={quiz} />
 }

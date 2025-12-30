@@ -245,15 +245,21 @@ const GroupUserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUse
   const handleToggle = userId => {
     const currentIndex = selectedUsers.indexOf(userId)
     const newSelected = [...selectedUsers]
-    const isCurrentlyUnmatched = unmatchedUserIds.includes(userId)
+    const isCurrentlyMatched = matchedUserIds.includes(userId)
+    const wasManuallySelected = manuallySelectedUserIds.has(userId)
 
     if (currentIndex === -1) {
+      // Selecting a user
       newSelected.push(userId)
-      // If selecting from unmatched users, track as manually selected
-      if (isCurrentlyUnmatched) {
+      // If user is not matched by filters OR was previously manually selected, track as manually selected
+      // This ensures:
+      // 1. Users selected from "Not Selected Users" section are tracked as manually selected
+      // 2. Users that were previously manually selected and then deselected, when selected again, remain manually selected
+      if (!isCurrentlyMatched || wasManuallySelected) {
         setManuallySelectedUserIds(prev => new Set([...prev, userId]))
       }
     } else {
+      // Deselecting a user
       newSelected.splice(currentIndex, 1)
       // Remove from manually selected if it was manually selected
       setManuallySelectedUserIds(prev => {
@@ -515,15 +521,23 @@ const GroupUserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUse
   // Manually selected = users in the manuallySelectedUserIds Set (regardless of filter match)
   // Filter selected = users that match filter but are NOT manually selected
   const getSeparatedSelectedUsers = () => {
-    const manuallySelected = users.filter(
-      user => selectedUsers.includes(user._id) && manuallySelectedUserIds.has(user._id) && matchesSearch(user)
+    // Get all selected users that match search
+    const allSelectedMatchingSearch = users.filter(
+      user => selectedUsers.includes(user._id) && matchesSearch(user)
     )
-    const filterSelected = users.filter(
+    
+    // Manually selected: users in manuallySelectedUserIds Set
+    // These are users that were explicitly selected from "Not Selected Users" section
+    const manuallySelected = allSelectedMatchingSearch.filter(
+      user => manuallySelectedUserIds.has(user._id)
+    )
+    
+    // Filter selected: users that match filter but are NOT manually selected
+    // These are users that were automatically selected by filters
+    const filterSelected = allSelectedMatchingSearch.filter(
       user =>
-        selectedUsers.includes(user._id) &&
         !manuallySelectedUserIds.has(user._id) &&
-        matchedUserIds.includes(user._id) &&
-        matchesSearch(user)
+        matchedUserIds.includes(user._id)
     )
 
     return {

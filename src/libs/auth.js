@@ -181,6 +181,9 @@ export const authOptions = {
       if (session.user) {
         session.user.name = token.name
         session.user.email = token.email
+        if (token?.id) {
+          session.user.id = token.id
+        }
         if (token?.firstname) {
           session.user.firstname = token?.firstname
         }

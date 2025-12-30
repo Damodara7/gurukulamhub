@@ -1,6 +1,7 @@
 import connectMongo from '@/utils/dbConnect-mongo'
 import UserProfile from './profile.model'
 import User from '../../models/user.model'
+import { createProfileCompletionNotification } from '../notifications/notification.helpers.js'
 
 export async function getAll() {
   await connectMongo()
@@ -470,6 +471,94 @@ export const updateProfileByEmail = async ({ email, data }) => {
         countryCode: profile.countryCode || 'EMPTY',
         countryDialCode: profile.countryDialCode || 'EMPTY'
       })
+
+      // Calculate profile completion and send notification if threshold crossed
+      try {
+        const profileFields = [
+          'firstname',
+          'lastname',
+          'age',
+          'gender',
+          'phone',
+          'image',
+          'country',
+          'region',
+          'zipcode',
+          'locality',
+          'address',
+          'motherTongue',
+          'languages',
+          'schools',
+          'workingPositions',
+          'linkedInUrl',
+          'facebookUrl',
+          'instagramUrl',
+          'organization'
+        ]
+
+        let filledFields = 0
+        const missingFields = []
+
+        for (const field of profileFields) {
+          const value = profile[field]
+          if (value !== undefined && value !== null && value !== '') {
+            if (Array.isArray(value) && value.length > 0) {
+              filledFields++
+            } else if (!Array.isArray(value)) {
+              filledFields++
+            } else {
+              missingFields.push(field)
+            }
+          } else {
+            missingFields.push(field)
+          }
+        }
+
+        const totalFields = profileFields.length
+        const completionPercentage = Math.round((filledFields / totalFields) * 100)
+
+        // Check if completion percentage crosses a threshold (50%, 75%, 90%)
+        const thresholds = [50, 75, 90]
+        const previousProfile = await UserProfile.findOne({ email }).lean()
+        let previousPercentage = 0
+
+        if (previousProfile) {
+          let prevFilled = 0
+          for (const field of profileFields) {
+            const value = previousProfile[field]
+            if (value !== undefined && value !== null && value !== '') {
+              if (Array.isArray(value) && value.length > 0) {
+                prevFilled++
+              } else if (!Array.isArray(value)) {
+                prevFilled++
+              }
+            }
+          }
+          previousPercentage = Math.round((prevFilled / totalFields) * 100)
+        }
+
+        // Check if we crossed a threshold
+        const crossedThreshold = thresholds.find(
+          threshold => previousPercentage < threshold && completionPercentage >= threshold
+        )
+
+        if (crossedThreshold) {
+          const user = await User.findOne({ email })
+          if (user) {
+            await createProfileCompletionNotification(user._id, {
+              completionPercentage: crossedThreshold,
+              missingFields: missingFields.slice(0, 5), // Limit to 5 missing fields
+              totalFields,
+              filledFields,
+              profileId: profile._id,
+              image: profile.image
+            })
+          }
+        }
+      } catch (completionError) {
+        console.error('Error calculating profile completion:', completionError)
+        // Don't fail the profile update if completion calculation fails
+      }
 
       return { status: 'success', result: profile, message: 'User profile updated successfully' }
     } else {

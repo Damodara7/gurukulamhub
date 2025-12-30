@@ -147,7 +147,7 @@ const ReferAndEarn = () => {
   return (
     <Box
       sx={{
-        height: '100vh',
+        height: 'calc(100vh - 56px)',
         display: 'flex',
         flexDirection: 'column',
         bgcolor: isDarkMode ? theme.palette.background.default : '#f8f9fa',
@@ -158,20 +158,20 @@ const ReferAndEarn = () => {
       <Box
         sx={{
           bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.8) : theme.palette.common.white,
-          pt: { xs: 2.5, md: 3 },
-          pb: { xs: 2.5, md: 3 },
+          pt: { xs: 2, md: 2.5 },
+          pb: { xs: 2, md: 2.5 },
           borderBottom: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.1)}`,
           flexShrink: 0
         }}
       >
         <Container maxWidth='lg'>
-          <Stack spacing={1.5} alignItems='center' textAlign='center'>
+          <Stack spacing={1} alignItems='center' textAlign='center'>
             {/* Icon and Title */}
-            <Stack direction='row' spacing={2} alignItems='center' justifyContent='center'>
+            <Stack direction='row' spacing={1.5} alignItems='center' justifyContent='center'>
               <Box
                 sx={{
-                  width: 56,
-                  height: 56,
+                  width: 48,
+                  height: 48,
                   borderRadius: 2,
                   bgcolor: theme.palette.primary.main,
                   color: 'white',
@@ -182,14 +182,14 @@ const ReferAndEarn = () => {
                   flexShrink: 0
                 }}
               >
-                <CardGiftcardIcon sx={{ fontSize: 28 }} />
+                <CardGiftcardIcon sx={{ fontSize: 24 }} />
               </Box>
 
               <Typography
                 variant='h4'
                 fontWeight={700}
                 sx={{
-                  fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
+                  fontSize: { xs: '1.35rem', sm: '1.6rem', md: '1.85rem' },
                   background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent'
@@ -203,10 +203,10 @@ const ReferAndEarn = () => {
             <Typography
               variant='body2'
               sx={{
-                fontSize: { xs: '0.85rem', sm: '0.9rem', md: '0.95rem' },
+                fontSize: { xs: '0.8rem', sm: '0.85rem', md: '0.9rem' },
                 color: isDarkMode ? alpha(theme.palette.common.white, 0.8) : '#5f6368',
                 maxWidth: '700px',
-                lineHeight: 1.6,
+                lineHeight: 1.5,
                 px: { xs: 2, sm: 0 }
               }}
             >
@@ -226,7 +226,7 @@ const ReferAndEarn = () => {
           pt: 2,
           pb: { xs: 8, sm: 10, md: 12 },
           minHeight: 0,
-          maxHeight: '100%',
+          maxHeight: 'calc(100% - 16px)',
           WebkitOverflowScrolling: 'touch',
           scrollbarGutter: 'stable',
           // Custom scrollbar styling for better appearance
@@ -250,7 +250,8 @@ const ReferAndEarn = () => {
           maxWidth='lg'
           sx={{
             width: '100%',
-            boxSizing: 'border-box'
+            boxSizing: 'border-box',
+            pb: { xs: 2, sm: 2.5, md: 3 }
           }}
         >
           <Stack spacing={3}>
@@ -463,7 +464,7 @@ const ReferAndEarn = () => {
                 </Stack>
               </Box>
 
-              <CardContent sx={{ p: { xs: 2.5, sm: 3 }, pb: { xs: 5, sm: 4, md: 4.5 } }}>
+              <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
                 <Stack spacing={3}>
                   <Typography
                     variant='body2'
@@ -553,7 +554,7 @@ const ReferAndEarn = () => {
                   <Divider />
 
                   {/* Social Share Buttons */}
-                  <Box sx={{ pt: 1, pb: { xs: 3, sm: 2.5, md: 3 } }}>
+                  <Box sx={{ pt: 1 }}>
                     <Typography
                       variant='subtitle2'
                       fontWeight={600}
@@ -572,9 +573,7 @@ const ReferAndEarn = () => {
                       flexWrap='wrap'
                       sx={{
                         gap: { xs: 1, sm: 1.5 },
-                        justifyContent: { xs: 'center', sm: 'flex-start' },
-                        pb: { xs: 2, sm: 1.5, md: 2 },
-                        mb: { xs: 1, sm: 0 }
+                        justifyContent: { xs: 'center', sm: 'flex-start' }
                       }}
                     >
                       <EmailShareButton

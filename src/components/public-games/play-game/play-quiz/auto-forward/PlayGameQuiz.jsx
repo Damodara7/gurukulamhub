@@ -141,6 +141,7 @@ export default function PlayGameQuiz({ game: initialGame, onGameEnd }) {
   const { data: session } = useSession()
   // console.log('game data :  ', game)
   const router = useRouter()
+  const theme = useTheme() // Move hook to top level before any conditional returns
 
   // 1. Local game state and wsRef
   const [game, setGame] = useState(initialGame)
@@ -522,7 +523,6 @@ export default function PlayGameQuiz({ game: initialGame, onGameEnd }) {
   }
 
   const progress = (remainingTime / game.duration) * 100
-  const theme = useTheme()
 
   return (
     <Box
