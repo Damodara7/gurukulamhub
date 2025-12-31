@@ -1,6 +1,7 @@
 import connectMongo from '@/utils/dbConnect-mongo'
 import mongoose from 'mongoose'
 import IndividualChatMessage from './individual-chat.model.js'
+import DeletedChat from './deleted-chat.model.js'
 import User from '@/app/models/user.model'
 
 // Helper function to generate chatId from two emails (sorted to ensure consistency)
@@ -481,14 +482,21 @@ export const markAllMessagesAsRead = async (chatId, userEmail) => {
 export const getUserChats = async (userEmail) => {
   await connectMongo()
   try {
+    // Get list of deleted chatIds for this user (chats that should be hidden)
+    const deletedChatIds = await DeletedChat.distinct('chatId', {
+      userEmail: userEmail.toLowerCase().trim()
+    })
+
     // First, get all unique chatIds where user is either sender or receiver (regardless of deletion)
     // This ensures we include chats even if all messages are cleared for the user
+    // But exclude chats that are deleted (hidden from user's list)
     const allChatIds = await IndividualChatMessage.distinct('chatId', {
       $or: [
         { senderEmail: userEmail },
         { receiverEmail: userEmail }
       ],
-      isDeleted: false
+      isDeleted: false,
+      chatId: { $nin: deletedChatIds } // Exclude deleted chats
     })
 
     // For each chatId, find the last message that's NOT deleted for this user
@@ -736,11 +744,79 @@ export const clearChat = async (chatId, userEmail) => {
   }
 }
 
-// Delete chat - same as clear chat (for now, both do the same thing)
-// In future, this could be enhanced to completely remove the chat from user's list
+// Delete chat - marks chat as deleted (hidden from user's list) and clears all messages
 export const deleteChat = async (chatId, userEmail) => {
-  // For now, delete chat is the same as clear chat
-  // In future, we might want to add a separate flag to hide the chat from user's list
-  return await clearChat(chatId, userEmail)
+  await connectMongo()
+  try {
+    // Verify user is a participant
+    const [email1, email2] = chatId.split('_')
+    if (!email1 || !email2) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Invalid chat ID format'
+      }
+    }
+
+    const normalizedUserEmail = userEmail.toLowerCase().trim()
+    const normalizedEmail1 = email1.toLowerCase().trim()
+    const normalizedEmail2 = email2.toLowerCase().trim()
+    const isParticipant = normalizedUserEmail === normalizedEmail1 || normalizedUserEmail === normalizedEmail2
+
+    if (!isParticipant) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Access denied'
+      }
+    }
+
+    // First, clear all messages (same as clearChat)
+    const clearResult = await clearChat(chatId, userEmail)
+    if (clearResult.status !== 'success') {
+      return clearResult
+    }
+
+    // Then, mark the chat as deleted (hidden from user's list)
+    // Use upsert to avoid duplicate entries
+    await DeletedChat.findOneAndUpdate(
+      {
+        chatId,
+        userEmail: normalizedUserEmail
+      },
+      {
+        chatId,
+        userEmail: normalizedUserEmail,
+        deletedAt: new Date()
+      },
+      {
+        upsert: true,
+        new: true
+      }
+    )
+
+    // Broadcast chat deletion update (to remove from chat list)
+    try {
+      const { broadcastIndividualChatDeleted } = await import('../ws/messenger/publishers')
+      if (broadcastIndividualChatDeleted) {
+        broadcastIndividualChatDeleted(chatId, normalizedUserEmail)
+      }
+    } catch (wsError) {
+      console.error('Error broadcasting delete chat update:', wsError)
+    }
+
+    return {
+      status: 'success',
+      result: { count: clearResult.result?.count || 0 },
+      message: `Chat deleted and ${clearResult.result?.count || 0} messages cleared`
+    }
+  } catch (error) {
+    console.error('Error in deleteChat:', error)
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to delete chat'
+    }
+  }
 }
 

@@ -21,9 +21,16 @@ import {
   useMediaQuery,
   alpha,
   Divider,
-  Chip
+  Chip,
+  Tabs,
+  Tab,
 } from '@mui/material'
-import { Search as SearchIcon, Group as GroupIcon, Person as PersonIcon, Send as SendIcon } from '@mui/icons-material'
+import { 
+  Search as SearchIcon, 
+  Group as GroupIcon, 
+  Person as PersonIcon, 
+  Send as SendIcon
+} from '@mui/icons-material'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { format, isToday, isYesterday } from 'date-fns'
@@ -113,6 +120,7 @@ const ChatList = () => {
   const [searchEmail, setSearchEmail] = useState('')
   const [searching, setSearching] = useState(false)
   const [searchResult, setSearchResult] = useState(null)
+  const [activeTab, setActiveTab] = useState(0) // 0: All, 1: Groups, 2: Unread
 
   // Refs
   const messengerSocketRef = useRef(null)
@@ -478,6 +486,19 @@ const ChatList = () => {
             })
           })
         }
+        // Individual chat deleted - remove from list
+        else if (msg.type === 'individualChatDeleted') {
+          const { chatId, userEmail } = msg
+          // Only remove if it's for the current user
+          if (userEmail === session.user.email) {
+            const normalizedChatId = normalizeChatIdForComparison(chatId)
+            setChats(prev => prev.filter(c => {
+              if (c.type !== 'individual') return true
+              const normalizedCId = normalizeChatIdForComparison(c.id)
+              return normalizedCId !== normalizedChatId && c.id !== chatId && c.id !== normalizedChatId
+            }))
+          }
+        }
         // Groups list update - refetch silently
         else if (msg.type === 'groupsListUpdate') {
           if (!isFetchingRef.current) {
@@ -510,7 +531,7 @@ const ChatList = () => {
   const sortedAndFilteredChats = useMemo(() => {
     // First, sort chats by actual last message time (most recent first)
     // Use lastMessageTimestamp (actual timestamp even if cleared) for sorting
-    const sorted = [...chats].sort((a, b) => {
+    let sorted = [...chats].sort((a, b) => {
       const timeA = a.lastMessageTimestamp ? new Date(a.lastMessageTimestamp).getTime() : 
                     (a.lastMessage?.createdAt ? new Date(a.lastMessage.createdAt).getTime() : 0)
       const timeB = b.lastMessageTimestamp ? new Date(b.lastMessageTimestamp).getTime() : 
@@ -523,6 +544,16 @@ const ChatList = () => {
       return 0
     })
 
+    // Filter by active tab
+    if (activeTab === 1) {
+      // Groups only
+      sorted = sorted.filter(chat => chat.type === 'group')
+    } else if (activeTab === 2) {
+      // Unread only
+      sorted = sorted.filter(chat => (chat.unreadCount || 0) > 0)
+    }
+    // activeTab === 0 means "All", so no filtering needed
+
     // Then filter by search query if provided
     if (!searchQuery.trim()) return sorted
 
@@ -533,7 +564,7 @@ const ChatList = () => {
         (chat.email && chat.email.toLowerCase().includes(query)) ||
         (chat.lastMessage && chat.lastMessage.message?.toLowerCase().includes(query))
     )
-  }, [chats, searchQuery])
+  }, [chats, searchQuery, activeTab])
 
   // Format last message time
   const formatLastMessageTime = timestamp => {
@@ -619,47 +650,78 @@ const ChatList = () => {
       {/* Header */}
       <Box
         sx={{
-          p: { xs: 2, sm: 3 },
           borderBottom: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.12 : 0.08)}`,
           bgcolor: theme.palette.background.paper
         }}
       >
-        <Stack direction='row' alignItems='center' justifyContent='space-between' spacing={2} sx={{ mb: 2 }}>
-          <Typography variant='h5' fontWeight={700} sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
-            Messages
-          </Typography>
-          <Button
-            variant='contained'
-            color='primary'
-            component='label'
-            startIcon={<PersonIcon />}
-            onClick={() => setSearchDialogOpen(true)}
-            size={isMobile ? 'small' : 'medium'}
-            sx={{ textTransform: 'none', color: 'white' }}
-          >
-            New Chat
-          </Button>
-        </Stack>
-
-        <TextField
-          fullWidth
-          placeholder='Search chats...'
-          value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
-          size='small'
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position='start'>
-                <SearchIcon sx={{ color: 'text.secondary' }} />
-              </InputAdornment>
-            )
-          }}
+        <Box
           sx={{
-            '& .MuiOutlinedInput-root': {
-              bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.6) : 'white'
-            }
+            p: { xs: 2, sm: 3 },
+            pb: { xs: 1.5, sm: 2 }
           }}
-        />
+        >
+          <Stack direction='row' alignItems='center' justifyContent='space-between' spacing={2} sx={{ mb: 2 }}>
+            <Typography variant='h5' fontWeight={700} sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
+              Messages
+            </Typography>
+            <Button
+              variant='contained'
+              color='primary'
+              component='label'
+              startIcon={<PersonIcon />}
+              onClick={() => setSearchDialogOpen(true)}
+              size={isMobile ? 'small' : 'medium'}
+              sx={{ textTransform: 'none', color: 'white' }}
+            >
+              New Chat
+            </Button>
+          </Stack>
+
+          <TextField
+            fullWidth
+            placeholder='Search chats...'
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            size='small'
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position='start'>
+                  <SearchIcon sx={{ color: 'text.secondary' }} />
+                </InputAdornment>
+              )
+            }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.6) : 'white'
+              }
+            }}
+          />
+        </Box>
+
+        {/* Tabs */}
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', px: { xs: 2, sm: 3 } }}>
+          <Tabs
+            value={activeTab}
+            onChange={(e, newValue) => setActiveTab(newValue)}
+            sx={{
+              minHeight: 48,
+              '& .MuiTab-root': {
+                minHeight: 48,
+                textTransform: 'none',
+                fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+                fontWeight: 500,
+                px: { xs: 1.5, sm: 2 }
+              },
+              '& .Mui-selected': {
+                fontWeight: 600
+              }
+            }}
+          >
+            <Tab label='All' />
+            <Tab label='Groups' />
+            <Tab label='Unread' />
+          </Tabs>
+        </Box>
       </Box>
 
       {/* Chat List */}
@@ -667,7 +729,13 @@ const ChatList = () => {
         {sortedAndFilteredChats.length === 0 ? (
           <Box sx={{ p: 4, textAlign: 'center' }}>
             <Typography variant='body2' color='text.secondary'>
-              {searchQuery ? 'No chats found' : 'No chats yet. Start a new conversation!'}
+              {searchQuery 
+                ? 'No chats found' 
+                : activeTab === 1 
+                  ? 'No groups yet' 
+                  : activeTab === 2 
+                    ? 'No unread messages' 
+                    : 'No chats yet. Start a new conversation!'}
             </Typography>
           </Box>
         ) : (

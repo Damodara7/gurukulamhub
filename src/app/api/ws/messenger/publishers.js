@@ -41,6 +41,18 @@ export function broadcastIndividualChatMessage(chatId, message) {
 }
 
 /**
+ * Broadcast individual chat deletion (chat removed from user's list)
+ */
+export function broadcastIndividualChatDeleted(chatId, userEmail) {
+  broadcastToMessenger({
+    type: 'individualChatDeleted',
+    chatId: chatId,
+    userEmail: userEmail
+  })
+  console.log(`[WS] Messenger: Broadcasting individualChatDeleted for chatId: ${chatId}, user: ${userEmail}`)
+}
+
+/**
  * Broadcast individual chat message update (read status, edit, delete)
  */
 export function broadcastIndividualChatMessageUpdate(chatId, message) {
