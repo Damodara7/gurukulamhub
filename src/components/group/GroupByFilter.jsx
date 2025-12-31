@@ -177,14 +177,26 @@ const GroupByFilter = ({ users, onFilterChange, initialFilters = [] }) => {
         label = `Location: ${parts.join(', ')}`
         value = { country: country || '', state: region || '', city: city || '' }
       } else if (filter.type === 'gender') {
-        const genders = Array.isArray(filter.criteria) ? filter.criteria : [filter.criteria]
+        // Handle both array format ['male', 'female'] and object format { male: true, female: false }
+        let genders = []
+        if (Array.isArray(filter.criteria)) {
+          genders = filter.criteria.filter(g => typeof g === 'string')
+        } else if (filter.criteria && typeof filter.criteria === 'object') {
+          // Convert object format to array of keys where value is truthy
+          genders = Object.entries(filter.criteria)
+            .filter(([, value]) => Boolean(value))
+            .map(([key]) => key)
+        } else if (typeof filter.criteria === 'string') {
+          genders = [filter.criteria]
+        }
+
         currentFilterIds = users
           .filter(u => {
             const gender = u?.profile?.gender?.toLowerCase()
             return Boolean(gender) && genders.includes(gender)
           })
           .map(u => u._id)
-        label = `Gender: ${genders.map(g => g.charAt(0).toUpperCase() + g.slice(1)).join(', ')}`
+        label = `Gender: ${genders.map(g => String(g).charAt(0).toUpperCase() + String(g).slice(1)).join(', ')}`
         value = genders.reduce((acc, g) => ({ ...acc, [g]: true }), {})
       }
 

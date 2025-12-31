@@ -490,10 +490,13 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null, showHeading = tru
     }
   }
 
+  const isDarkMode = theme.palette.mode === 'dark'
+
   return (
     <Box
       sx={{
         height: '100%',
+        minHeight: 0,
         display: 'flex',
         flexDirection: 'column',
         background: `radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 50%),
@@ -501,81 +504,120 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null, showHeading = tru
                        theme.palette.secondary.main,
                        0.05
                      )} 0%, transparent 50%),
-                     ${theme.palette.background.default}`
+                     ${theme.palette.background.default}`,
+        overflow: 'hidden'
       }}
     >
       {/* Elegant Header */}
-      {showHeading && <Box
-        sx={{
-          backdropFilter: 'blur(20px)',
-          bgcolor:
-            theme.palette.mode === 'dark'
-              ? alpha(theme.palette.background.paper, 0.8)
-              : alpha(theme.palette.background.paper, 0.7),
-          borderBottom: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
-          pt: { xs: 4, md: 6 },
-          pb: { xs: 4, md: 6 }
-        }}
-      >
-        <Box sx={{ maxWidth: '1200px', margin: '0 auto', px: { xs: 2, sm: 3, md: 4 } }}>
-          <Box sx={{ textAlign: 'center' }}>
-            {/* Icon and Title */}
-            <Box
-              sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 2,
-                mb: 2
-              }}
-            >
+      {showHeading && (
+        <Box
+          sx={{
+            backdropFilter: 'blur(20px)',
+            bgcolor:
+              theme.palette.mode === 'dark'
+                ? alpha(theme.palette.background.paper, 0.8)
+                : alpha(theme.palette.background.paper, 0.7),
+            borderBottom: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
+            pt: { xs: 3, sm: 4, md: 5 },
+            pb: { xs: 3, sm: 4, md: 5 },
+            flexShrink: 0
+          }}
+        >
+          <Box sx={{ maxWidth: '1200px', margin: '0 auto', px: { xs: 2, sm: 3, md: 4 } }}>
+            <Box sx={{ textAlign: 'center' }}>
+              {/* Icon and Title */}
               <Box
                 sx={{
-                  width: { xs: 48, sm: 56 },
-                  height: { xs: 48, sm: 56 },
-                  borderRadius: '12px',
-                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`
+                  gap: 1.5,
+                  mb: 1
                 }}
               >
-                <i className='ri-team-line' style={{ fontSize: '28px', color: 'white' }} />
+                <Box
+                  sx={{
+                    width: { xs: 36, sm: 40, md: 44 },
+                    height: { xs: 36, sm: 40, md: 44 },
+                    borderRadius: '10px',
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`
+                  }}
+                >
+                  <i className='ri-team-line' style={{ fontSize: '20px', color: 'white' }} />
+                </Box>
+                <Typography
+                  sx={{
+                    fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' },
+                    fontWeight: 700,
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    letterSpacing: '-0.02em'
+                  }}
+                >
+                  {data ? 'Edit Audience' : 'Create Audience'}
+                </Typography>
               </Box>
               <Typography
+                variant='body2'
+                color='text.secondary'
                 sx={{
-                  fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.5rem' },
-                  fontWeight: 700,
-                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  letterSpacing: '-0.02em'
+                  fontSize: { xs: '0.875rem', sm: '0.9375rem', md: '1rem' },
+                  lineHeight: 1.6,
+                  fontWeight: 400,
+                  maxWidth: '600px',
+                  mx: 'auto'
                 }}
               >
-                {data ? 'Edit Audience' : 'Create Audience'}
+                {data
+                  ? 'Update audience details and filter criteria to refine your target group'
+                  : 'Define your target audience with smart filters and custom criteria'}
               </Typography>
             </Box>
-            <Typography
-              variant='body1'
-              color='text.secondary'
-              sx={{
-                fontSize: '1.05rem',
-                lineHeight: 1.8,
-                fontWeight: 400,
-                maxWidth: '600px',
-                mx: 'auto'
-              }}
-            >
-              {data
-                ? 'Update audience details and filter criteria to refine your target group'
-                : 'Define your target audience with smart filters and custom criteria'}
-            </Typography>
           </Box>
         </Box>
-      </Box>}
+      )}
 
-      {/* Main Content */}
-      <Box sx={{ px: { xs: 2, sm: 3, md: 4 }, py: { xs: 3, md: 4 }, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
+      {/* Main Content - Scrollable */}
+      <Box
+        sx={{
+          flex: 1,
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          pt: { xs: 2, sm: 3, md: 3 },
+          pb: { xs: 3, sm: 4, md: 4 },
+          px: { xs: 2, sm: 3, md: 4 },
+          minHeight: 0,
+          maxHeight: '100%',
+          WebkitOverflowScrolling: 'touch',
+          scrollbarGutter: 'stable',
+          // Custom scrollbar styling for better appearance
+          '&::-webkit-scrollbar': {
+            width: '10px'
+          },
+          '&::-webkit-scrollbar-track': {
+            background: isDarkMode ? alpha(theme.palette.common.black, 0.1) : alpha(theme.palette.common.black, 0.05),
+            borderRadius: '5px',
+            margin: '8px 0'
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: isDarkMode ? alpha(theme.palette.common.white, 0.3) : alpha(theme.palette.primary.main, 0.3),
+            borderRadius: '5px',
+            border: `2px solid ${isDarkMode ? 'transparent' : alpha(theme.palette.background.default, 0.1)}`,
+            '&:hover': {
+              background: isDarkMode ? alpha(theme.palette.common.white, 0.5) : alpha(theme.palette.primary.main, 0.5)
+            }
+          },
+          // Firefox scrollbar
+          scrollbarWidth: 'thin',
+          scrollbarColor: isDarkMode
+            ? `${alpha(theme.palette.common.white, 0.3)} ${alpha(theme.palette.common.black, 0.1)}`
+            : `${alpha(theme.palette.primary.main, 0.3)} ${alpha(theme.palette.common.black, 0.05)}`
+        }}
+      >
         <Card
           sx={{
             borderRadius: 2,
@@ -585,7 +627,8 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null, showHeading = tru
                 ? `0 2px 8px ${alpha(theme.palette.common.black, 0.3)}`
                 : `0 2px 8px ${alpha(theme.palette.primary.main, 0.08)}`,
             border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
-            overflow: 'hidden',
+            width: '100%',
+            boxSizing: 'border-box',
             '&:hover': {
               boxShadow:
                 theme.palette.mode === 'dark'
@@ -631,7 +674,7 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null, showHeading = tru
             </Snackbar>
 
             <form onSubmit={handleSubmit}>
-              <Grid container spacing={3}>
+              <Grid container spacing={3} sx={{ pb: 2 }}>
                 <Grid item xs={12}>
                   <TextField
                     fullWidth

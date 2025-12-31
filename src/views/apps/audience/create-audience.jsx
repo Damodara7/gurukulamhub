@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'react-toastify'
 import { useSession } from 'next-auth/react'
 import CreateAudienceForm from '@/components/audience/CreateAudienceForm'
+import { Box } from '@mui/material'
+
 function CreateAudiencePage() {
   const { data: session } = useSession()
   const [loading, setLoading] = useState(false)
@@ -56,7 +58,11 @@ function CreateAudiencePage() {
     router.push('/management/audience') // Redirect to audiences list
   }
 
-  return <CreateAudienceForm onSubmit={handleSubmit} onCancel={handleCancel} loading={loading} />
+  return (
+    <Box sx={{ height: '100%', width: '100%', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+      <CreateAudienceForm onSubmit={handleSubmit} onCancel={handleCancel} loading={loading} />
+    </Box>
+  )
 }
 
 export default CreateAudiencePage
