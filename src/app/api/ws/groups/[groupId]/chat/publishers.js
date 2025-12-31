@@ -27,6 +27,10 @@ export function broadcastGroupChatMessage(groupId, message) {
   }
 
   console.log(`[WS] Chat message broadcasted to ${sentCount}/${clients.size} clients for group ${groupId}`)
+  
+  // Also broadcast to messenger clients
+  const MessengerPublishers = require('../../../messenger/publishers.js')
+  MessengerPublishers.broadcastGroupChatMessage(groupId, message)
 }
 
 // Utility to broadcast message updates (edit/delete)
@@ -48,5 +52,9 @@ export function broadcastMessageUpdate(groupId, updateData) {
       }
     }
   }
+  
+  // Also broadcast to messenger clients
+  const MessengerPublishers = require('../../../messenger/publishers.js')
+  MessengerPublishers.broadcastGroupChatMessageUpdate(groupId, updateData)
 }
 

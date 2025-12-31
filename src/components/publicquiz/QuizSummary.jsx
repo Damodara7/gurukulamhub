@@ -506,6 +506,9 @@ const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time
                   ? Array.isArray(selectedAnswer) && selectedAnswer.length > 0
                   : Boolean(selectedAnswer)
 
+            // Check if all options are images
+            const allOptionsAreImages = question?.data?.options?.every(opt => opt.mediaType === 'image' && opt.image) || false
+
             let statusColor = 'default'
             let statusLabel = 'Not attempted'
             let StatusIcon = CancelRoundedIcon
@@ -741,7 +744,11 @@ const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time
                   <Divider sx={{ borderColor: alpha(theme.palette.primary.main, 0.1) }} />
 
                   <Box>
-                    <Grid container spacing={1.4}>
+                    <Grid 
+                      container 
+                      spacing={1.4}
+                      sx={{ alignItems: allOptionsAreImages ? 'stretch' : 'flex-start' }}
+                    >
                       {question.templateId === 'fill-in-blank' ? (
                         <Grid item xs={12}>
                           {question.data.question?.map(part => {
@@ -818,7 +825,7 @@ const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time
                           })}
                         </Grid>
                       ) : question.templateId === 'true-or-false'
-                        ? question.data.options?.map(option => {
+                        ? question.data.options?.map((option, optIndex) => {
                             const isUserAnswer = Array.isArray(selectedAnswer)
                               ? selectedAnswer.includes(option.id)
                               : selectedAnswer === option.id
@@ -827,18 +834,24 @@ const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time
                             const isWrongSelection = isUserAnswer && !isCorrectAnswer
 
                             return (
-                              <Grid item xs={12} sm={6} key={option.id}>
+                              <Grid 
+                                item 
+                                xs={allOptionsAreImages ? 12 : 12} 
+                                sm={allOptionsAreImages ? 6 : 6} 
+                                key={option.id}
+                                sx={{ display: 'flex', height: allOptionsAreImages ? '100%' : 'auto' }}
+                              >
                                 <Box
                                   sx={{
-                                    p: { xs: 1.8, md: 2.2 },
+                                    p: allOptionsAreImages ? { xs: 1.2, md: 1.5 } : { xs: 1.8, md: 2.2 },
                                     borderRadius: 2,
                                     display: 'flex',
-                                    flexDirection: 'column',
+                                    flexDirection: allOptionsAreImages ? 'column' : 'column',
                                     alignItems: 'center',
                                     gap: 1,
                                     textAlign: 'center',
-                                    height: '100%',
-                                    minHeight: { xs: 80, md: 100 },
+                                    height: allOptionsAreImages ? '100%' : 'auto',
+                                    minHeight: allOptionsAreImages ? { xs: 140, md: 160 } : { xs: 80, md: 100 },
                                     width: '100%',
                                     maxWidth: '100%',
                                     overflow: 'hidden',
@@ -849,71 +862,164 @@ const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time
                                           ? alpha(theme.palette.error.main, 0.6)
                                           : alpha(theme.palette.primary.main, 0.12)
                                     }`,
-                                    background: `linear-gradient(135deg, ${
-                                      isCorrectSelection
-                                        ? alpha(theme.palette.success.light, 0.3)
-                                        : isWrongSelection
-                                          ? alpha(theme.palette.error.light, 0.3)
-                                          : alpha(theme.palette.background.paper, 0.9)
-                                    }, ${alpha(theme.palette.background.paper, 0.95)})`,
+                                    background: isCorrectSelection
+                                      ? alpha(theme.palette.success.light, 0.32)
+                                      : isWrongSelection
+                                        ? alpha(theme.palette.error.light, 0.3)
+                                        : alpha(theme.palette.background.paper, 0.92),
                                     color: isCorrectSelection
                                       ? theme.palette.success.dark
                                       : isWrongSelection
                                         ? theme.palette.error.dark
                                         : theme.palette.text.primary,
-                                    boxShadow: isUserAnswer ? '0 10px 24px rgba(15, 23, 42, 0.12)' : 'none'
+                                    boxShadow: isUserAnswer ? '0 12px 30px rgba(15, 23, 42, 0.1)' : 'none'
                                   }}
                                 >
-                                  {option.mediaType === 'image' && option.image && (
-                                    <Box
-                                      component='img'
-                                      src={option.image}
-                                      alt={option.text || ''}
-                                      sx={{
-                                        width: '100%',
-                                        maxHeight: 120,
-                                        objectFit: 'cover',
-                                        borderRadius: 1.5
-                                      }}
-                                    />
+                                  {allOptionsAreImages && (
+                                    <Stack spacing={1} sx={{ width: '100%', flex: 1, minHeight: 0 }}>
+                                      <Stack
+                                        direction='row'
+                                        spacing={1}
+                                        alignItems='center'
+                                        justifyContent='space-between'
+                                        sx={{ width: '100%', minHeight: { xs: 32, md: 36 } }}
+                                      >
+                                        <Box
+                                          sx={{
+                                            width: { xs: 28, md: 32 },
+                                            height: { xs: 28, md: 32 },
+                                            borderRadius: 1.5,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            fontWeight: 700,
+                                            fontSize: { xs: '0.875rem', md: '0.9375rem' },
+                                            flexShrink: 0,
+                                            backgroundColor: isCorrectSelection
+                                              ? alpha(theme.palette.success.main, 0.2)
+                                              : isWrongSelection
+                                                ? alpha(theme.palette.error.main, 0.2)
+                                                : alpha(theme.palette.primary.main, 0.15),
+                                            color: isCorrectSelection
+                                              ? theme.palette.success.dark
+                                              : isWrongSelection
+                                                ? theme.palette.error.dark
+                                                : theme.palette.primary.main
+                                          }}
+                                        >
+                                          {String.fromCharCode(65 + optIndex)}
+                                        </Box>
+                                      </Stack>
+                                      {option.mediaType === 'image' && option.image && (
+                                        <Box
+                                          sx={{
+                                            width: '100%',
+                                            position: 'relative',
+                                            borderRadius: 1.5,
+                                            overflow: 'hidden',
+                                            border: `1px solid ${alpha(
+                                              theme.palette.primary.main,
+                                              isCorrectSelection
+                                                ? 0.4
+                                                : isWrongSelection
+                                                  ? 0.4
+                                                  : 0.12
+                                            )}`,
+                                            backgroundColor: theme.palette.mode === 'dark' 
+                                              ? alpha(theme.palette.common.black, 0.2)
+                                              : alpha(theme.palette.common.white, 0.5),
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            height: { xs: 100, md: 120 },
+                                            p: { xs: 1, md: 1.2 },
+                                            flexShrink: 0
+                                          }}
+                                        >
+                                          <Box
+                                            component='img'
+                                            src={option.image}
+                                            alt={option.text || `Option ${String.fromCharCode(65 + optIndex)}`}
+                                            sx={{
+                                              width: '100%',
+                                              height: '100%',
+                                              maxWidth: '100%',
+                                              objectFit: 'contain',
+                                              display: 'block'
+                                            }}
+                                          />
+                                        </Box>
+                                      )}
+                                      <Typography
+                                        variant='body2'
+                                        sx={{
+                                          fontWeight: 500,
+                                          fontSize: { xs: '0.75rem', md: '0.8125rem' },
+                                          textAlign: 'center',
+                                          minHeight: { xs: 20, md: 22 },
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center'
+                                        }}
+                                      >
+                                        {option.text || `option-${optIndex + 1}`}
+                                      </Typography>
+                                    </Stack>
                                   )}
-                                  {option.mediaType === 'video' && option.videoUrl && (
-                                    <video
-                                      src={option.videoUrl}
-                                      controls
-                                      style={{
-                                        width: '100%',
-                                        borderRadius: 8
-                                      }}
-                                    />
-                                  )}
-                                  {option.mediaType === 'audio' && option.audioUrl && (
-                                    <audio src={option.audioUrl} controls style={{ width: '100%' }} />
-                                  )}
+                                  {!allOptionsAreImages && (
+                                    <>
+                                      {option.mediaType === 'image' && option.image && (
+                                        <Box
+                                          component='img'
+                                          src={option.image}
+                                          alt={option.text || ''}
+                                          sx={{
+                                            width: '100%',
+                                            maxHeight: 120,
+                                            objectFit: 'cover',
+                                            borderRadius: 1.5
+                                          }}
+                                        />
+                                      )}
+                                      {option.mediaType === 'video' && option.videoUrl && (
+                                        <video
+                                          src={option.videoUrl}
+                                          controls
+                                          style={{
+                                            width: '100%',
+                                            borderRadius: 8
+                                          }}
+                                        />
+                                      )}
+                                      {option.mediaType === 'audio' && option.audioUrl && (
+                                        <audio src={option.audioUrl} controls style={{ width: '100%' }} />
+                                      )}
 
-                                  {option.mediaType === 'text' && option.text && (
-                                    <Typography
-                                      variant='body1'
-                                      fontWeight={600}
-                                      sx={{
-                                        width: '100%',
-                                        maxWidth: '100%',
-                                        wordWrap: 'break-word',
-                                        overflowWrap: 'break-word',
-                                        whiteSpace: 'normal',
-                                        textAlign: 'center',
-                                        lineHeight: 1.6,
-                                        fontSize: { xs: '0.875rem', md: '0.9375rem' }
-                                      }}
-                                    >
-                                      {option.text}
-                                    </Typography>
+                                      {option.mediaType === 'text' && option.text && (
+                                        <Typography
+                                          variant='body1'
+                                          fontWeight={600}
+                                          sx={{
+                                            width: '100%',
+                                            maxWidth: '100%',
+                                            wordWrap: 'break-word',
+                                            overflowWrap: 'break-word',
+                                            whiteSpace: 'normal',
+                                            textAlign: 'center',
+                                            lineHeight: 1.6,
+                                            fontSize: { xs: '0.875rem', md: '0.9375rem' }
+                                          }}
+                                        >
+                                          {option.text}
+                                        </Typography>
+                                      )}
+                                    </>
                                   )}
                                 </Box>
                               </Grid>
                             )
                           })
-                        : question.data.options?.map(option => {
+                        : question.data.options?.map((option, optIndex) => {
                             const isUserAnswer = Array.isArray(selectedAnswer)
                               ? selectedAnswer.includes(option.id)
                               : selectedAnswer === option.id
@@ -922,10 +1028,16 @@ const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time
                             const isWrongPick = isUserAnswer && !isCorrectAnswer
 
                             return (
-                              <Grid item xs={12} sm={6} key={option.id}>
+                              <Grid 
+                                item 
+                                xs={allOptionsAreImages ? 12 : 12} 
+                                sm={allOptionsAreImages ? 6 : 6} 
+                                key={option.id}
+                                sx={{ display: 'flex', height: allOptionsAreImages ? '100%' : 'auto' }}
+                              >
                                 <Box
                                   sx={{
-                                    p: { xs: 1.8, md: 2.2 },
+                                    p: allOptionsAreImages ? { xs: 1.2, md: 1.5 } : { xs: 1.8, md: 2.2 },
                                     borderRadius: 2,
                                     border: `1px solid ${
                                       isMatch
@@ -945,84 +1057,179 @@ const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time
                                         ? theme.palette.error.dark
                                         : theme.palette.text.primary,
                                     textAlign: 'left',
-                                    height: '100%',
-                                    minHeight: { xs: 80, md: 100 },
+                                    height: allOptionsAreImages ? '100%' : 'auto',
+                                    minHeight: allOptionsAreImages ? { xs: 140, md: 160 } : { xs: 80, md: 100 },
                                     display: 'flex',
-                                    flexDirection: 'column',
+                                    flexDirection: allOptionsAreImages ? 'column' : 'column',
                                     gap: 1,
-                                    justifyContent: 'center',
-                                    alignItems: 'flex-start',
+                                    justifyContent: allOptionsAreImages ? 'flex-start' : 'center',
+                                    alignItems: allOptionsAreImages ? 'stretch' : 'flex-start',
                                     boxShadow: isUserAnswer ? '0 12px 30px rgba(15, 23, 42, 0.1)' : 'none',
                                     width: '100%',
                                     maxWidth: '100%',
                                     overflow: 'hidden'
                                   }}
                                 >
-                                  {option.mediaType === 'image' && option.image && (
-                                    <Box
-                                      component='img'
-                                      src={option.image}
-                                      alt={option.text || ''}
-                                      sx={{ width: '100%', maxHeight: 120, objectFit: 'cover', borderRadius: 1.5 }}
-                                    />
-                                  )}
-                                  {option.mediaType === 'video' && option.videoUrl && (
-                                    <video
-                                      src={option.videoUrl}
-                                      controls
-                                      style={{ width: '100%', borderRadius: 8 }}
-                                    />
-                                  )}
-                                  {option.mediaType === 'audio' && option.audioUrl && (
-                                    <audio src={option.audioUrl} controls style={{ width: '100%' }} />
-                                  )}
-                                  {option.mediaType === 'text' && option.text && (
-                                    <Stack direction='row' spacing={1} alignItems='flex-start' sx={{ width: '100%', maxWidth: '100%' }}>
-                                      <Box
+                                  {allOptionsAreImages ? (
+                                    <Stack spacing={1} sx={{ width: '100%', flex: 1, minHeight: 0 }}>
+                                      <Stack
+                                        direction='row'
+                                        spacing={1}
+                                        alignItems='center'
+                                        justifyContent='space-between'
+                                        sx={{ width: '100%', minHeight: { xs: 32, md: 36 } }}
+                                      >
+                                        <Box
+                                          sx={{
+                                            minWidth: { xs: 28, md: 32 },
+                                            width: { xs: 28, md: 32 },
+                                            height: { xs: 28, md: 32 },
+                                            borderRadius: 1.5,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            fontWeight: 700,
+                                            fontSize: { xs: '0.875rem', md: '0.9375rem' },
+                                            flexShrink: 0,
+                                            backgroundColor: isMatch
+                                              ? alpha(theme.palette.success.main, 0.2)
+                                              : isWrongPick
+                                                ? alpha(theme.palette.error.main, 0.2)
+                                                : alpha(theme.palette.primary.main, 0.15),
+                                            color: isMatch
+                                              ? theme.palette.success.dark
+                                              : isWrongPick
+                                                ? theme.palette.error.dark
+                                                : theme.palette.primary.main
+                                          }}
+                                        >
+                                          {String.fromCharCode(65 + optIndex)}
+                                        </Box>
+                                      </Stack>
+                                      {option.mediaType === 'image' && option.image && (
+                                        <Box
+                                          sx={{
+                                            width: '100%',
+                                            position: 'relative',
+                                            borderRadius: 1.5,
+                                            overflow: 'hidden',
+                                            border: `1px solid ${alpha(
+                                              theme.palette.primary.main,
+                                              isMatch
+                                                ? 0.4
+                                                : isWrongPick
+                                                  ? 0.4
+                                                  : 0.12
+                                            )}`,
+                                            backgroundColor: theme.palette.mode === 'dark' 
+                                              ? alpha(theme.palette.common.black, 0.2)
+                                              : alpha(theme.palette.common.white, 0.5),
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            height: { xs: 100, md: 120 },
+                                            p: { xs: 1, md: 1.2 },
+                                            flexShrink: 0
+                                          }}
+                                        >
+                                          <Box
+                                            component='img'
+                                            src={option.image}
+                                            alt={option.text || `Option ${String.fromCharCode(65 + optIndex)}`}
+                                            sx={{
+                                              width: '100%',
+                                              height: '100%',
+                                              maxWidth: '100%',
+                                              objectFit: 'contain',
+                                              display: 'block'
+                                            }}
+                                          />
+                                        </Box>
+                                      )}
+                                      <Typography
+                                        variant='body2'
                                         sx={{
-                                          minWidth: { xs: 28, md: 32 },
-                                          width: { xs: 28, md: 32 },
-                                          height: { xs: 28, md: 32 },
-                                          borderRadius: 1.5,
+                                          fontWeight: 500,
+                                          fontSize: { xs: '0.75rem', md: '0.8125rem' },
+                                          textAlign: 'center',
+                                          minHeight: { xs: 20, md: 22 },
                                           display: 'flex',
                                           alignItems: 'center',
-                                          justifyContent: 'center',
-                                          fontWeight: 700,
-                                          fontSize: { xs: '0.875rem', md: '0.9375rem' },
-                                          flexShrink: 0,
-                                          backgroundColor: isMatch
-                                            ? alpha(theme.palette.success.main, 0.2)
-                                            : isWrongPick
-                                              ? alpha(theme.palette.error.main, 0.2)
-                                              : alpha(theme.palette.primary.main, 0.15),
-                                          color: isMatch
-                                            ? theme.palette.success.dark
-                                            : isWrongPick
-                                              ? theme.palette.error.dark
-                                              : theme.palette.primary.main
+                                          justifyContent: 'center'
                                         }}
                                       >
-                                        {String.fromCharCode(65 + question.data.options.indexOf(option))}
-                                      </Box>
-                                      <Typography
-                                        variant='body1'
-                                        sx={{
-                                          flex: 1,
-                                          minWidth: 0,
-                                          fontWeight: 600,
-                                          fontSize: { xs: '0.875rem', md: '0.9375rem' },
-                                          lineHeight: 1.6,
-                                          wordWrap: 'break-word',
-                                          overflowWrap: 'break-word',
-                                          whiteSpace: 'normal',
-                                          textAlign: 'left',
-                                          width: '100%',
-                                          maxWidth: '100%'
-                                        }}
-                                      >
-                                        {option.text}
+                                        {option.text || `option-${optIndex + 1}`}
                                       </Typography>
                                     </Stack>
+                                  ) : (
+                                    <>
+                                      {option.mediaType === 'image' && option.image && (
+                                        <Box
+                                          component='img'
+                                          src={option.image}
+                                          alt={option.text || ''}
+                                          sx={{ width: '100%', maxHeight: 120, objectFit: 'cover', borderRadius: 1.5 }}
+                                        />
+                                      )}
+                                      {option.mediaType === 'video' && option.videoUrl && (
+                                        <video
+                                          src={option.videoUrl}
+                                          controls
+                                          style={{ width: '100%', borderRadius: 8 }}
+                                        />
+                                      )}
+                                      {option.mediaType === 'audio' && option.audioUrl && (
+                                        <audio src={option.audioUrl} controls style={{ width: '100%' }} />
+                                      )}
+                                      {option.mediaType === 'text' && option.text && (
+                                        <Stack direction='row' spacing={1} alignItems='flex-start' sx={{ width: '100%', maxWidth: '100%' }}>
+                                          <Box
+                                            sx={{
+                                              minWidth: { xs: 28, md: 32 },
+                                              width: { xs: 28, md: 32 },
+                                              height: { xs: 28, md: 32 },
+                                              borderRadius: 1.5,
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              justifyContent: 'center',
+                                              fontWeight: 700,
+                                              fontSize: { xs: '0.875rem', md: '0.9375rem' },
+                                              flexShrink: 0,
+                                              backgroundColor: isMatch
+                                                ? alpha(theme.palette.success.main, 0.2)
+                                                : isWrongPick
+                                                  ? alpha(theme.palette.error.main, 0.2)
+                                                  : alpha(theme.palette.primary.main, 0.15),
+                                              color: isMatch
+                                                ? theme.palette.success.dark
+                                                : isWrongPick
+                                                  ? theme.palette.error.dark
+                                                  : theme.palette.primary.main
+                                            }}
+                                          >
+                                            {String.fromCharCode(65 + optIndex)}
+                                          </Box>
+                                          <Typography
+                                            variant='body1'
+                                            sx={{
+                                              flex: 1,
+                                              minWidth: 0,
+                                              fontWeight: 600,
+                                              fontSize: { xs: '0.875rem', md: '0.9375rem' },
+                                              lineHeight: 1.6,
+                                              wordWrap: 'break-word',
+                                              overflowWrap: 'break-word',
+                                              whiteSpace: 'normal',
+                                              textAlign: 'left',
+                                              width: '100%',
+                                              maxWidth: '100%'
+                                            }}
+                                          >
+                                            {option.text}
+                                          </Typography>
+                                        </Stack>
+                                      )}
+                                    </>
                                   )}
                                 </Box>
                               </Grid>
@@ -1046,7 +1253,12 @@ const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time
                           textAlign: 'left'
                         }}
                       >
-                        {`The correct answer is "${correctAnswers[0]?.text}".`}
+                        {(() => {
+                          const correctOption = correctAnswers[0]
+                          const correctIndex = question.data.options?.findIndex(opt => opt.id === correctOption?.id) ?? -1
+                          const correctAnswerText = correctOption?.text || `option-${correctIndex + 1}`
+                          return `The correct answer is "${correctAnswerText}".`
+                        })()}
                       </Typography>
                     )}
 
@@ -1065,7 +1277,12 @@ const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time
                           textAlign: 'left'
                         }}
                       >
-                        {`The correct answer is "${correctAnswers[0]?.text}".`}
+                        {(() => {
+                          const correctOption = correctAnswers[0]
+                          const correctIndex = question.data.options?.findIndex(opt => opt.id === correctOption?.id) ?? -1
+                          const correctAnswerText = correctOption?.text || `option-${correctIndex + 1}`
+                          return `The correct answer is "${correctAnswerText}".`
+                        })()}
                       </Typography>
                     )}
 
@@ -1082,9 +1299,16 @@ const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time
                         textAlign: 'left'
                       }}
                     >
-                      {incorrectSelected.length > 0
-                        ? `Correct answers: ${correctAnswers.map(a => `"${a.text}"`).join(', ')}.`
-                        : `Great attempt! Correct answers: ${correctAnswers.map(a => `"${a.text}"`).join(', ')}.`}
+                      {(() => {
+                        const correctAnswersList = correctAnswers.map(correctOpt => {
+                          const correctIndex = question.data.options?.findIndex(opt => opt.id === correctOpt.id) ?? -1
+                          return correctOpt.text || `option-${correctIndex + 1}`
+                        })
+                        const answersText = correctAnswersList.map(a => `"${a}"`).join(', ')
+                        return incorrectSelected.length > 0
+                          ? `Correct answers: ${answersText}.`
+                          : `Great attempt! Correct answers: ${answersText}.`
+                      })()}
                     </Typography>
                   )}
 

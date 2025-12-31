@@ -9,4 +9,8 @@ export function broadcastGroupsList(groupsList) {
       client.send(message)
     }
   }
+  
+  // Also broadcast to messenger clients
+  const MessengerPublishers = require('../messenger/publishers.js')
+  MessengerPublishers.broadcastGroupsListUpdate()
 }

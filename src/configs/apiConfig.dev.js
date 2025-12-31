@@ -47,6 +47,11 @@ export const API_URLS = {
     USERS_GROUP_REQUEST: `${API_BASE_URL}/group-request`,
     USERS_GROUP_CHAT: `${API_BASE_URL}/group-chat`,
     USERS_GROUP_CHAT_ACTIONS: `${API_BASE_URL}/group-chat/actions`,
+    USERS_INDIVIDUAL_CHAT: `${API_BASE_URL}/individual-chat`,
+    USERS_INDIVIDUAL_CHAT_ACTIONS: `${API_BASE_URL}/individual-chat/actions`,
+    USERS_INDIVIDUAL_CHAT_CHATS: `${API_BASE_URL}/individual-chat/chats`,
+    USERS_INDIVIDUAL_CHAT_SEARCH: `${API_BASE_URL}/individual-chat/search`,
+    MESSENGER_COMBINED_CHATS: `${API_BASE_URL}/messenger/combined-chats`,
     GAME_SPONSORSHIP: `${API_BASE_URL}/game-sponsorship`,
     GAME_SPONSORSHIP_PAYMENT: `${API_BASE_URL}/game-sponsorship-payment`
     // Add more URLs for API version 1

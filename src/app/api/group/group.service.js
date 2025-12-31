@@ -2,6 +2,7 @@ import connectMongo from '@/utils/dbConnect-mongo'
 import mongoose from 'mongoose'
 import Group from './group.model.js'
 import User from '@/app/models/user.model.js'
+import UserProfile from '@/app/api/profile/profile.model.js'
 import Game from '../game/game.model.js'
 import GroupRequest from '../group-request/group-request.model.js'
 import { broadcastGroupsList } from '../ws/groups/publishers'
@@ -74,6 +75,66 @@ export const getAll = async (filter = {}) => {
       status: 'error',
       result: null,
       message: error.message || 'Failed to retrieve groups'
+    }
+  }
+}
+
+// Get groups where user is either creator or member (optimized backend filtering)
+export const getUserGroups = async (userEmail) => {
+  await connectMongo()
+  try {
+    if (!userEmail) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'User email is required'
+      }
+    }
+
+    // First, get the user's ObjectId
+    const user = await User.findOne({ email: userEmail }).lean()
+    if (!user) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'User not found'
+      }
+    }
+
+    const userId = user._id
+
+    // Query groups where:
+    // 1. User is the creator (creatorEmail matches)
+    // 2. OR user is in the members array (members contains userId)
+    // 3. AND group is not deleted
+    const groups = await Group.find({
+      isDeleted: false,
+      $or: [
+        { creatorEmail: userEmail },
+        { members: userId }
+      ]
+    })
+      .sort({ createdAt: -1 })
+      .lean()
+      .populate([
+        {
+          path: 'members',
+          populate: {
+            path: 'profile'
+          }
+        }
+      ])
+
+    return {
+      status: 'success',
+      result: groups,
+      message: `Found ${groups.length} user groups`
+    }
+  } catch (error) {
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to retrieve user groups'
     }
   }
 }
@@ -486,6 +547,115 @@ export const hardDeleteOne = async groupId => {
       status: 'error',
       result: null,
       message: error.message || 'Failed to permanently delete group'
+    }
+  }
+}
+
+// Exit group - remove user from group
+export const exitGroup = async (groupId, userEmail) => {
+  await connectMongo()
+  try {
+    if (!mongoose.Types.ObjectId.isValid(groupId)) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Invalid group ID format'
+      }
+    }
+
+    const group = await Group.findOne({ _id: groupId, isDeleted: false })
+      .populate('members', 'email profile')
+    
+    if (!group) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Group not found'
+      }
+    }
+
+    // Creator cannot exit the group (they must delete it instead)
+    if (group.creatorEmail === userEmail) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Group creator cannot exit the group. Please delete the group instead.'
+      }
+    }
+
+    // Check if user is a member
+    const user = await User.findOne({ email: userEmail }).lean()
+    if (!user) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'User not found'
+      }
+    }
+
+    const userId = user._id
+    const isMember = group.members?.some(m => {
+      const memberId = typeof m === 'object' && m._id ? m._id.toString() : m.toString()
+      return memberId === userId.toString()
+    })
+
+    if (!isMember) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'You are not a member of this group'
+      }
+    }
+
+    // Remove user from group members
+    group.members = group.members.filter(m => {
+      const memberId = typeof m === 'object' && m._id ? m._id.toString() : m.toString()
+      return memberId !== userId.toString()
+    })
+
+    // Remove group from user's groupIds
+    await User.findByIdAndUpdate(userId, { $pull: { groupIds: groupId } })
+
+    // Save updated group
+    await group.save()
+
+    // Create system message
+    try {
+      let userName = userEmail.split('@')[0]
+      if (user.profile) {
+        const userProfile = await UserProfile.findById(user.profile).lean()
+        if (userProfile) {
+          userName = `${userProfile.firstname || ''} ${userProfile.lastname || ''}`.trim() || userName
+        }
+      }
+      
+      const { createSystemMessage } = await import('../group-chat/group-chat.service.js')
+      await createSystemMessage(groupId, `${userName} left the group`, userEmail)
+    } catch (msgError) {
+      console.error('Error creating system message for exited member:', msgError)
+    }
+
+    // Broadcast group list update
+    try {
+      const { broadcastGroupsList } = await import('../ws/groups/publishers')
+      if (broadcastGroupsList) {
+        broadcastGroupsList()
+      }
+    } catch (wsError) {
+      console.error('Error broadcasting group list update:', wsError)
+    }
+
+    return {
+      status: 'success',
+      result: { groupId, groupName: group.groupName },
+      message: 'Successfully exited the group'
+    }
+  } catch (error) {
+    console.error('Error in exitGroup:', error)
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to exit group'
     }
   }
 }

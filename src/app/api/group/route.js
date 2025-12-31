@@ -22,33 +22,45 @@ export async function GET(req) {
       // Get session to check user role
       const session = await auth()
       
-      // Build filter based on user role
-      let filter = { ...rest }
+      // Check if 'userGroups' parameter is passed to fetch user's groups (creator or member)
+      const fetchUserGroups = queryParamsObj.userGroups === 'true'
       
-      // Check if 'all' parameter is passed to fetch all groups (for MyGroupsPage)
-      const fetchAll = queryParamsObj.all === 'true'
-      
-      // If user is not SUPER_ADMIN, only show groups created by them (unless 'all' is requested)
-      if (session?.user?.email) {
-        const userRoles = session.user.roles || []
-        const isSuperAdmin = userRoles.includes('SUPER_ADMIN')
-        
-        // If 'all' is requested, don't filter by creatorEmail (for MyGroupsPage to filter on frontend)
-        // If SUPER_ADMIN, no filter is applied - they see all groups
-        if (!isSuperAdmin && !fetchAll) {
-          // Filter to show only groups created by the logged-in user
-          filter.creatorEmail = session.user.email
+      if (fetchUserGroups) {
+        // Use optimized backend filtering for user groups
+        if (!session?.user?.email) {
+          const errorResponse = ApiResponseUtils.createErrorResponse('Unauthorized')
+          return ApiResponseUtils.sendErrorResponse(errorResponse)
         }
+        artifact = await ArtifactService.getUserGroups(session.user.email)
       } else {
-        // If no session, return empty result or error
-        const errorResponse = ApiResponseUtils.createErrorResponse('Unauthorized')
-        return ApiResponseUtils.sendErrorResponse(errorResponse)
+        // Build filter based on user role (existing logic)
+        let filter = { ...rest }
+        
+        // Check if 'all' parameter is passed to fetch all groups (for MyGroupsPage)
+        const fetchAll = queryParamsObj.all === 'true'
+        
+        // If user is not SUPER_ADMIN, only show groups created by them (unless 'all' is requested)
+        if (session?.user?.email) {
+          const userRoles = session.user.roles || []
+          const isSuperAdmin = userRoles.includes('SUPER_ADMIN')
+          
+          // If 'all' is requested, don't filter by creatorEmail (for MyGroupsPage to filter on frontend)
+          // If SUPER_ADMIN, no filter is applied - they see all groups
+          if (!isSuperAdmin && !fetchAll) {
+            // Filter to show only groups created by the logged-in user
+            filter.creatorEmail = session.user.email
+          }
+        } else {
+          // If no session, return empty result or error
+          const errorResponse = ApiResponseUtils.createErrorResponse('Unauthorized')
+          return ApiResponseUtils.sendErrorResponse(errorResponse)
+        }
+        
+        // Remove 'all' from filter as it's not a database field
+        delete filter.all
+        
+        artifact = await ArtifactService.getAll(filter)
       }
-      
-      // Remove 'all' from filter as it's not a database field
-      delete filter.all
-      
-      artifact = await ArtifactService.getAll(filter)
     }
 
     if (artifact.status === 'success') {

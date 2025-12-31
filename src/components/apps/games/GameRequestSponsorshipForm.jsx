@@ -349,6 +349,19 @@ const GameRequestSponsorshipForm = ({ onSubmit, quizzes, onCancel, data = null }
       return
     }
 
+    // Check if rewards are added
+    if (!formData.rewards || formData.rewards.length === 0) {
+      const errorMsg = "To request sponsorship, you need to add rewards. If you want to create a game without rewards, use 'Create Game & Schedule' instead."
+      setErrorMessage(errorMsg)
+      setShowErrorSnackbar(true)
+      
+      // Scroll to rewards section
+      if (fieldRefs.tags && fieldRefs.tags.current) {
+        fieldRefs.tags.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+      return
+    }
+
     // Check if all rewards have sufficient sponsorships
     const needsSponsorship = formData.rewards.some(reward => {
       const totalNeeded =

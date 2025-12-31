@@ -668,3 +668,98 @@ export const createSystemMessage = async (groupId, systemMessage, adminEmail) =>
   }
 }
 
+// Clear group chat - delete all messages for a user (mark as deleted for user)
+export const clearGroupChat = async (groupId, userEmail) => {
+  await connectMongo()
+  try {
+    if (!mongoose.Types.ObjectId.isValid(groupId)) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Invalid group ID format'
+      }
+    }
+
+    const groupIdForQuery = new mongoose.Types.ObjectId(groupId)
+
+    // Verify user is a member or creator
+    const group = await Group.findOne({ _id: groupIdForQuery, isDeleted: false })
+      .populate('members', 'email')
+      .lean()
+
+    if (!group) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Group not found'
+      }
+    }
+
+    const isCreator = group.creatorEmail === userEmail
+    const isMember = group.members?.some(m => {
+      const memberEmail = typeof m === 'object' && m.email ? m.email : m
+      return memberEmail === userEmail
+    })
+
+    if (!isCreator && !isMember) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'You are not a member of this group'
+      }
+    }
+
+    // Get all messages in this group that are not already deleted for this user
+    const messages = await GroupChatMessage.find({
+      groupId: groupIdForQuery,
+      isDeleted: false,
+      'deletedFor.userEmail': { $ne: userEmail }
+    })
+
+    // Mark all messages as deleted for this user
+    const updatePromises = messages.map(message => {
+      const alreadyDeleted = message.deletedFor?.some(d => d.userEmail === userEmail)
+      if (!alreadyDeleted) {
+        message.deletedFor.push({
+          userEmail,
+          deletedAt: new Date()
+        })
+        return message.save()
+      }
+      return Promise.resolve()
+    })
+
+    await Promise.all(updatePromises)
+
+    // Broadcast updates
+    try {
+      const { broadcastMessageUpdate } = await import('../ws/groups/[groupId]/chat/publishers')
+      if (broadcastMessageUpdate) {
+        const updatedMessages = await GroupChatMessage.find({
+          groupId: groupIdForQuery,
+          _id: { $in: messages.map(m => m._id) }
+        }).lean()
+
+        for (const updatedMessage of updatedMessages) {
+          broadcastMessageUpdate(groupId, updatedMessage)
+        }
+      }
+    } catch (wsError) {
+      console.error('Error broadcasting clear chat updates:', wsError)
+    }
+
+    return {
+      status: 'success',
+      result: { count: messages.length },
+      message: `Cleared ${messages.length} messages`
+    }
+  } catch (error) {
+    console.error('Error in clearGroupChat:', error)
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to clear group chat'
+    }
+  }
+}
+
