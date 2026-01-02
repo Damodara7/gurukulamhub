@@ -412,7 +412,7 @@ const FillInBlanksQuestionTemplate = ({
                             <TextField
                               fullWidth
                               variant='outlined'
-                              label={`Text Part ${index + 1}`}
+                              label={`Text Part ${questionParts.filter((p, i) => i <= index && p.type === 'text').length}`}
                               placeholder='Enter text portion of the question'
                               value={part.content}
                               error={

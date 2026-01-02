@@ -800,11 +800,11 @@ export const TrueOrFalseTemplate = ({ question }) => {
           <RadioGroup>
             <Grid container spacing={{ xs: 2, sm: 3 }}>
               {question?.data?.options.map((option, index) => (
-                <Grid item xs={12} sm={6} key={option.id}>
+                <Grid item xs={12} sm={6} key={option.id} sx={{ display: 'flex' }}>
                   <Box
                     sx={{
                       display: 'flex',
-                      alignItems: 'center',
+                      alignItems: 'stretch',
                       gap: 0,
                       border: '2px solid',
                       borderColor: option.correct ? 'success.main' : alpha(theme.palette.info.main, 0.3),
@@ -817,6 +817,8 @@ export const TrueOrFalseTemplate = ({ question }) => {
                       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                       position: 'relative',
                       overflow: 'hidden',
+                      width: '100%',
+                      height: '100%',
                       '&:hover': {
                         transform: 'translateY(-4px)',
                         borderColor: option.correct ? 'success.dark' : 'info.main',
@@ -838,7 +840,8 @@ export const TrueOrFalseTemplate = ({ question }) => {
                           : alpha(theme.palette.info.main, 0.08),
                         borderRight: '1px solid',
                         borderColor: 'divider',
-                        minWidth: 80
+                        minWidth: 80,
+                        flexShrink: 0
                       }}
                     >
                       {option.id === 'true' ? (
@@ -865,7 +868,16 @@ export const TrueOrFalseTemplate = ({ question }) => {
                     </Box>
 
                     {/* Text Section */}
-                    <Box sx={{ p: { xs: 1.5, sm: 2, md: 2.5 }, flex: 1 }}>
+                    <Box
+                      sx={{
+                        p: { xs: 1.5, sm: 2, md: 2.5 },
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center',
+                        minHeight: '100%'
+                      }}
+                    >
                       <Stack spacing={1}>
                         <Typography
                           variant='h5'

@@ -2,12 +2,23 @@ import Stripe from 'stripe'
 import connectMongo from '@/utils/dbConnect-mongo'
 import Sponsorship from '@/app/api/sponsorship/sponsorship.model'
 import * as GameSponsorshipService from '../game-sponsorship/game-sponsorship.service'
+import {
+  broadcastSponsorGameDetails,
+  broadcastRewardSponsorshipUpdate
+} from '@/app/api/ws/sponsor-games/[gameId]/publishers'
+import { broadcastSponsorGamesList, broadcastGameStatusChange } from '@/app/api/ws/sponsor-games/publishers'
 
 // Lazy initialization to avoid build-time errors
 let stripe = null
 const getStripe = () => {
   if (!stripe) {
-    stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '')
+    const secretKey = process.env.STRIPE_SECRET_KEY || process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY
+
+    if (!secretKey) {
+      throw new Error('Stripe secret key is not configured. Please set STRIPE_SECRET_KEY or NEXT_PUBLIC_STRIPE_SECRET_KEY in the environment.')
+    }
+
+    stripe = new Stripe(secretKey, { apiVersion: '2023-10-16' })
   }
   return stripe
 }
@@ -89,6 +100,32 @@ export async function handlePaymentSuccess(paymentIntent) {
     )
 
     if (result.status === 'success') {
+      const { game, reward } = result.result
+
+      // Broadcast WebSocket updates
+      try {
+        // Broadcast updated game details
+        if (game) {
+          broadcastSponsorGameDetails(gameId, game)
+        }
+
+        // Broadcast reward sponsorship update
+        const updatedReward = game?.rewards?.find(
+          r => (r._id && r._id.toString() === rewardId) || r.position.toString() === rewardId
+        )
+        if (updatedReward) {
+          broadcastRewardSponsorshipUpdate(gameId, rewardId, updatedReward)
+        }
+
+        // If game is now fully sponsored, broadcast status change
+        if (game?.status === 'sponsored') {
+          broadcastGameStatusChange(gameId, 'sponsored')
+        }
+      } catch (wsError) {
+        console.error('[WS] Error broadcasting sponsor game updates:', wsError)
+        // Don't fail the payment if WebSocket broadcast fails
+      }
+
       return {
         status: 'success',
         message: 'Game sponsorship payment processed successfully',

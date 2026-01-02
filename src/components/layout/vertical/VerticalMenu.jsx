@@ -273,6 +273,12 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
           <MenuItem href={`/${locale}/pages/dialog-examples`} icon={<i className='ri-user-received-line' />}>
             {dictionary['navigation'].refer}
           </MenuItem>
+          
+          {/* Messanger */}
+          <MenuItem href={`/${locale}/messanger`} icon={<i className='ri-message-line' />}>
+            {dictionary['navigation'].messanger}
+          </MenuItem>
+
           {/* <SubMenu label={dictionary['navigation'].mysettings} icon={<i className='ri-earth-fill' />}>
             <MenuItem href={`/${locale}/pages/account-settings`}>{dictionary['navigation'].accountSettings}</MenuItem>
           </SubMenu> */}

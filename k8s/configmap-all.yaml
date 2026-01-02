@@ -1,0 +1,100 @@
+# ⚠️ WARNING: This ConfigMap contains SECRETS
+# 
+# This is for DEVELOPMENT/TESTING ONLY or if you accept the security risk.
+# ConfigMaps are stored in plain text in etcd and can be read by anyone with cluster access.
+#
+# For PRODUCTION, use k8s/configmap.yaml + k8s/secret.yaml instead!
+#
+# Security Risks:
+# - ConfigMaps are base64 encoded but NOT encrypted
+# - Anyone with 'kubectl get configmap' access can see all values
+# - Secrets are encrypted at rest and have better access controls
+#
+# Usage: kubectl apply -f k8s/configmap-all.yaml -n gurukulamhub
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gurukulamhub-config
+  namespace: gurukulamhub
+data:
+  # -----------------------------------------------------------------------------
+  # App Configuration
+  # -----------------------------------------------------------------------------
+  BASEPATH: ""
+  DOMAIN: "gurukulamhub.com"
+  NEXT_PUBLIC_APP_URL: "https://gurukulamhub.com"
+  NEXT_PUBLIC_DOCS_URL: "https://demos.themeselection.com/materio-mui-react-nextjs-admin-template/documentation"
+  NODE_ENV: "production"
+  PORT: "3000"
+  USE_FALLBACK_MUTATION: "true"
+  
+  # -----------------------------------------------------------------------------
+  # Authentication (NextAuth.js)
+  # -----------------------------------------------------------------------------
+  NEXTAUTH_BASEPATH: "/api/auth"
+  NEXTAUTH_URL: "https://gurukulamhub.com"
+  AUTH_TRUST_HOST: "https://gurukulamhub.com"
+  NEXTAUTH_SECRET: "LSy/VCrsA5GAvwQhMTGkohdviqCcJLkHPHtrIuJtyJ0="
+  
+  # -----------------------------------------------------------------------------
+  # Google OAuth 2.0
+  # -----------------------------------------------------------------------------
+  GOOGLE_CLIENT_ID: "872140549132-k3ndunp63cl0j05mmi9uh1bctrt0pla9.apps.googleusercontent.com"
+  GOOGLE_CLIENT_SECRET: "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"
+  
+  # -----------------------------------------------------------------------------
+  # Database
+  # -----------------------------------------------------------------------------
+  DATABASE_URL: "mongodb+srv://gurkulhub_dbuser:2025Mongodb@cluster0.dlhzk.mongodb.net/gurkulhub?retryWrites=true&w=majority&appName=Cluster0"
+  MONGODB_URI: "mongodb+srv://gurkulhub_dbuser:2025Mongodb@cluster0.dlhzk.mongodb.net/gurkulhub?retryWrites=true&w=majority&appName=Cluster0"
+  MONGODB_DB: "gurkulhub"
+  
+  # -----------------------------------------------------------------------------
+  # API Configuration
+  # -----------------------------------------------------------------------------
+  API_URL: "https://gurukulamhub.com/api"
+  NEXT_PUBLIC_API_URL: "https://gurukulamhub.com/api"
+  
+  # -----------------------------------------------------------------------------
+  # Redis Configuration
+  # -----------------------------------------------------------------------------
+  REDIS_PORT: "6379"
+  REDIS_HOST: "gurukulamhub-redis"
+  REDIS_URL: "redis://gurukulamhub-redis:6379"
+  
+  # -----------------------------------------------------------------------------
+  # AWS S3 Configuration (⚠️ VERY SENSITIVE - Access Keys!)
+  # -----------------------------------------------------------------------------
+  NEXT_PUBLIC_AWS_S3_ACCESS_KEY_ID: "AKIAU6GDX5HJIHWTXVMD"
+  NEXT_PUBLIC_AWS_S3_ACCESS_KEY_SECRET: "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"
+  NEXT_PUBLIC_AWS_S3_GAMES_UPLOAD_BUCKET: "squizmegames"
+  NEXT_PUBLIC_AWS_S3_REGION: "ap-south-1"
+  NEXT_PUBLIC_AWS_S3_USERPROFILE_UPLOAD_BUCKET: "squizme-userprofile"
+  NEXT_PUBLIC_AWS_S3_QUIZ_UPLOAD_BUCKET: "squizme-quiz"
+  
+  # -----------------------------------------------------------------------------
+  # Google ReCAPTCHA
+  # -----------------------------------------------------------------------------
+  NEXT_PUBLIC_RECAPTCHA_SITE_KEY: "6LdybtIrAAAAAB1ZeuTJ-m-okYqu4tN2YN2Fkjms"
+  RECAPTCHA_SECRET_KEY: "6LdybtIrAAAAAODGKuB-bcesbOlM_qsd1V7SXmEA"
+  
+  # -----------------------------------------------------------------------------
+  # Socket Server
+  # -----------------------------------------------------------------------------
+  NEXT_PUBLIC_SOCKET_IO_SERVER: "https://gurukulamhub.com"
+  SOCKET_SERVER_URL: "https://gurukulamhub.com"
+  
+  # -----------------------------------------------------------------------------
+  # Stripe Configuration
+  # -----------------------------------------------------------------------------
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_test_51OZar7SBB7wnYOSIs4gZrZqWeEJFlGlKP0KUREQBdJFn4TytYos3hfNb7XSTDeEjZmC0oaNOzZL4MeFrE34SrkXF00rWrNG7Yh"
+  NEXT_PUBLIC_STRIPE_SECRET_KEY: "sk_test_51OZar7SBB7wnYOSIxgxrydQim2M1f1oVPg6ty5yiU7McIYKM1qCwj7fDibjlXCqOps8xMZsDIk686MqiDDh3TsF500xWdlk6VD"
+  STRIPE_SECRET_KEY: "sk_test_51OZar7SBB7wnYOSIxgxrydQim2M1f1oVPg6ty5yiU7McIYKM1qCwj7fDibjlXCqOps8xMZsDIk686MqiDDh3TsF500xWdlk6VD"
+  STRIPE_WEBHOOK_SECRET: "whsec_7e58bb3bbfef88f65591b5bbbb2e931b3cccf8f906edb012ea8a4aeff3fc2586"
+  
+  # -----------------------------------------------------------------------------
+  # Admin Configuration
+  # -----------------------------------------------------------------------------
+  SUPER_ADMIN_EMAIL: "rnoonegen@gmail.com"
+

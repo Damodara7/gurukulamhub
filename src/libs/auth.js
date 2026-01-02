@@ -244,17 +244,24 @@ export const authOptions = {
             // console.log('USERS_SIGNIN_WITH_GOOGLE user creation Result is....', result)
 
             if (result?.status === 'success') {
+              // console.log('RETURNING TRUE FOR GOOGLE SIGNIN')
+              return true
             } else {
               console.error('User profile create/update failed.', result?.message)
-              return false
-              // throw new Error(result?.message || 'Signup error')
+              // Don't deny access if API call fails - allow sign in but log the error
+              // This prevents AccessDenied errors when API is temporarily unavailable
+              console.warn('Allowing Google sign-in despite API error. User:', user?.email)
+              return true
+              // return false // Original behavior - deny access on API failure
             }
           } catch (err) {
             console.error('Signup Error (catch block):', err)
+            // Don't deny access on network errors - allow sign in
+            // This prevents AccessDenied errors when API is temporarily unavailable
+            console.warn('Allowing Google sign-in despite network error. User:', user?.email)
+            return true
+            // Original behavior would be: return false
           }
-          // console.log('RETURNING TRUE FOR GOOGLE SIGNIN')
-
-          return true
         }
         // console.log('RETURNING FALSE FOR GOOGLE SIGNIN')
         return false

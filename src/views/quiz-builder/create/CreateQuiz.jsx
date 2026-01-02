@@ -27,7 +27,9 @@ import {
   CardActions,
   CardContent,
   CardHeader,
+  Collapse,
   Grid,
+  IconButton,
   Stack,
   Typography,
   useTheme
@@ -35,7 +37,7 @@ import {
 import { alpha } from '@mui/material/styles'
 import CenterBox from '@/components/CenterBox'
 import { useRouter } from 'next/navigation'
-import { Description, Quiz } from '@mui/icons-material'
+import { Description, ExpandLess, ExpandMore, Quiz } from '@mui/icons-material'
 import GoBackButton from '@/components/GoBackButton'
 
 function CreateQuiz({ isAdmin = false }) {
@@ -46,6 +48,7 @@ function CreateQuiz({ isAdmin = false }) {
   // const [formData, setFormData] = useState({})
   const [loading, setLoading] = useState(false)
   const [formSubmitted, setFormSubmitted] = useState(false)
+  const [isHeaderExpanded, setIsHeaderExpanded] = useState(true)
   const user = session?.user
 
   // const handleInputChange = event => {
@@ -255,61 +258,105 @@ function CreateQuiz({ isAdmin = false }) {
                 ? alpha(theme.palette.background.paper, 0.8)
                 : alpha(theme.palette.background.paper, 0.7),
             borderBottom: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
-            pt: { xs: 4, md: 6 },
-            pb: { xs: 4, md: 6 }
+            pt: isHeaderExpanded ? { xs: 4, md: 6 } : { xs: 2, md: 2.5 },
+            pb: isHeaderExpanded ? { xs: 4, md: 6 } : { xs: 2, md: 2.5 },
+            transition: 'padding 0.3s ease'
           }}
         >
-          <Box sx={{ maxWidth: '1200px', margin: '0 auto', px: { xs: 2, sm: 3, md: 4 } }}>
-            <Box sx={{ textAlign: 'center' }}>
+          <Box
+            sx={{
+              maxWidth: '1200px',
+              margin: '0 auto',
+              px: { xs: 2, sm: 3, md: 4 },
+              position: 'relative'
+            }}
+          >
+            {/* Chevron Toggle Button - Right side, vertically centered */}
+            <IconButton
+              onClick={() => setIsHeaderExpanded(!isHeaderExpanded)}
+              sx={{
+                position: 'absolute',
+                right: { xs: 2, sm: 3, md: 4 },
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: theme.palette.text.secondary,
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  bgcolor: alpha(theme.palette.primary.main, 0.1),
+                  color: theme.palette.primary.main
+                }
+              }}
+            >
+              {isHeaderExpanded ? <ExpandLess /> : <ExpandMore />}
+            </IconButton>
+
+            {/* Centered Content */}
+            <Box sx={{ textAlign: 'center', pr: { xs: 6, sm: 7, md: 8 } }}>
               {/* Icon and Title */}
               <Box
                 sx={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 2,
-                  mb: 2
+                  gap: isHeaderExpanded ? 2 : 1.5,
+                  mb: isHeaderExpanded ? 2 : 0,
+                  transition: 'all 0.3s ease'
                 }}
               >
                 <Box
                   sx={{
-                    width: { xs: 48, sm: 56 },
-                    height: { xs: 48, sm: 56 },
+                    width: isHeaderExpanded ? { xs: 48, sm: 56 } : { xs: 36, sm: 40 },
+                    height: isHeaderExpanded ? { xs: 48, sm: 56 } : { xs: 36, sm: 40 },
                     borderRadius: '12px',
                     background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`
+                    boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`,
+                    transition: 'all 0.3s ease'
                   }}
                 >
-                  <Quiz sx={{ fontSize: '28px', color: 'white' }} />
+                  <Quiz
+                    sx={{
+                      fontSize: isHeaderExpanded ? '28px' : { xs: '20px', sm: '22px' },
+                      color: 'white',
+                      transition: 'font-size 0.3s ease'
+                    }}
+                  />
                 </Box>
                 <Typography
                   sx={{
-                    fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.5rem' },
+                    fontSize: isHeaderExpanded
+                      ? { xs: '1.5rem', sm: '1.75rem', md: '2.5rem' }
+                      : { xs: '1.125rem', sm: '1.25rem', md: '1.5rem' },
                     fontWeight: 700,
                     background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
-                    letterSpacing: '-0.02em'
+                    letterSpacing: '-0.02em',
+                    transition: 'font-size 0.3s ease'
                   }}
                 >
                   Create Your Quiz
                 </Typography>
               </Box>
-              <Typography
-                variant='body1'
-                color='text.secondary'
-                sx={{
-                  fontSize: '1.05rem',
-                  lineHeight: 1.8,
-                  fontWeight: 400,
-                  maxWidth: '600px',
-                  mx: 'auto'
-                }}
-              >
-                Design an engaging quiz experience with beautiful customization options
-              </Typography>
+
+              {/* Collapsible Subheading */}
+              <Collapse in={isHeaderExpanded} timeout={300}>
+                <Typography
+                  variant='body1'
+                  color='text.secondary'
+                  sx={{
+                    fontSize: '1.05rem',
+                    lineHeight: 1.8,
+                    fontWeight: 400,
+                    maxWidth: '600px',
+                    mx: 'auto',
+                    mt: 2
+                  }}
+                >
+                  Design an engaging quiz experience with beautiful customization options
+                </Typography>
+              </Collapse>
             </Box>
           </Box>
         </Box>

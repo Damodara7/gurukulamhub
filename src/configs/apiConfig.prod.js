@@ -1,12 +1,21 @@
 // apiConfig.prod.js
 
-// export const API_BASE_URL = 'http://ec2-13-51-204-221.eu-north-1.compute.amazonaws.com:3000/api'
-// export const API_BASE_URL = 'https://gurukulamhub-production.up.railway.app/api'
-// export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://gurukulamhub.up.railway.app/api'
-// export const API_BASE_URL = 'https://gurukulamhub.up.railway.app/api'
-// export const API_BASE_URL = 'http://192.168.31.199:3000/api'
-// export const API_BASE_URL = 'http://172.17.27.250:3000/api'
-export const API_BASE_URL = 'https://willyard-larue-acquiescingly.ngrok-free.dev/api'
+// Use environment variable if available, otherwise fallback to hardcoded URL
+// For server-side calls, use 127.0.0.1 (IPv4) instead of localhost to avoid IPv6 resolution issues
+const getApiBaseUrl = () => {
+  // Server-side: Use 127.0.0.1 (IPv4) to call the same Next.js server
+  if (typeof window === 'undefined') {
+    // Server-side: Use 127.0.0.1 with PORT to call the same Next.js instance
+    // Using 127.0.0.1 instead of localhost avoids IPv6 (::1) resolution issues
+    // This avoids DNS resolution issues where gurukulamhub.com -> 127.0.0.1:443
+    const port = process.env.PORT || 3000
+    return `http://127.0.0.1:${port}/api`
+  }
+  // Client-side: Use NEXT_PUBLIC_API_URL or default
+  return process.env.NEXT_PUBLIC_API_URL || 'https://gurukulamhub.com/api'
+}
+
+export const API_BASE_URL = getApiBaseUrl()
 
 export const API_URLS = {
   v0: {

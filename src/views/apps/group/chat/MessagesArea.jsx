@@ -30,7 +30,8 @@ const MessagesArea = ({
   getAllMembers,
   session,
   theme,
-  isMobile
+  isMobile,
+  isIndividualChat = false // Flag to indicate individual chat
 }) => {
   const isDarkMode = theme.palette.mode === 'dark'
 
@@ -210,10 +211,16 @@ const MessagesArea = ({
           // 2. Different sender
           // 3. More than 5 minutes gap
           // 4. Previous message was deleted for everyone (to show sender name context)
+          // For individual chats, don't show avatar for the other person (only show for own messages if needed)
           const previousWasDeletedForEveryone = previousMessage && isMessageDeletedForEveryone(previousMessage)
-          const showAvatar = !previousMessage || previousMessage.senderEmail !== message.senderEmail ||
+          let showAvatar = !previousMessage || previousMessage.senderEmail !== message.senderEmail ||
             (new Date(message.createdAt) - new Date(previousMessage.createdAt)) > 300000 || // 5 minutes
             previousWasDeletedForEveryone
+          
+          // For individual chats, hide avatar for the other person's messages
+          if (isIndividualChat && !isOwnMessage) {
+            showAvatar = false
+          }
           const isSystemMessage = message.messageType === 'system'
 
           return (

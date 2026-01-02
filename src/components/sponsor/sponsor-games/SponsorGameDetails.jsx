@@ -6,7 +6,9 @@ import {
   Typography,
   Card,
   CardContent,
+  Collapse,
   Grid,
+  IconButton,
   Button,
   Chip,
   Stack,
@@ -28,7 +30,9 @@ import {
   People,
   ArrowBack,
   Person,
-  CheckCircle
+  CheckCircle,
+  ExpandLess,
+  ExpandMore
 } from '@mui/icons-material'
 import ReactPlayer from 'react-player'
 import * as RestApi from '@/utils/restApiUtil'
@@ -44,10 +48,86 @@ const SponsorGameDetails = ({ gameId }) => {
   const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'))
   const [game, setGame] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [isHeaderExpanded, setIsHeaderExpanded] = useState(true)
+  const [socket, setSocket] = useState(null)
+  const [isConnected, setIsConnected] = useState(false)
 
   useEffect(() => {
     if (gameId) {
       fetchGameDetails()
+    }
+  }, [gameId])
+
+  // WebSocket connection for real-time game details updates
+  useEffect(() => {
+    if (!gameId) return
+
+    const wsUrl =
+      typeof window !== 'undefined'
+        ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/api/ws/sponsor-games/${gameId}`
+        : ''
+
+    if (wsUrl) {
+      const wsRef = new WebSocket(wsUrl)
+
+      wsRef.onopen = () => {
+        console.log(`[WS] Connected to sponsor game ${gameId} updates`)
+        setIsConnected(true)
+        setSocket(wsRef)
+      }
+
+      wsRef.onmessage = event => {
+        try {
+          const msg = JSON.parse(event.data)
+
+          if (msg.type === 'sponsorGameDetails') {
+            // Full game details update
+            console.log('[WS] Sponsor game details updated')
+            setGame(msg.data)
+          } else if (msg.type === 'sponsorshipUpdate') {
+            // Sponsorship update (new sponsor, payment success, etc.)
+            console.log('[WS] Sponsorship update received:', msg.data)
+            // Refresh game details to get latest data
+            fetchGameDetails()
+          } else if (msg.type === 'rewardSponsorshipUpdate') {
+            // Reward sponsorship update
+            console.log('[WS] Reward sponsorship update received:', msg.data)
+            const { rewardId, reward } = msg.data
+
+            // Update the specific reward in the game state
+            setGame(prevGame => {
+              if (!prevGame || !prevGame.rewards) return prevGame
+
+              const updatedRewards = prevGame.rewards.map(r =>
+                (r._id && r._id.toString() === rewardId) || r.position.toString() === rewardId.toString()
+                  ? { ...r, ...reward }
+                  : r
+              )
+
+              return {
+                ...prevGame,
+                rewards: updatedRewards
+              }
+            })
+          }
+        } catch (e) {
+          console.error('[WS] Error parsing sponsor game message', e)
+        }
+      }
+
+      wsRef.onerror = err => {
+        console.error(`[WS] Sponsor game ${gameId} error`, err)
+        setIsConnected(false)
+      }
+
+      wsRef.onclose = () => {
+        console.log(`[WS] Sponsor game ${gameId} connection closed`)
+        setIsConnected(false)
+      }
+
+      return () => {
+        wsRef.close()
+      }
     }
   }, [gameId])
 
@@ -113,7 +193,7 @@ const SponsorGameDetails = ({ gameId }) => {
     return (
       <Box
         sx={{
-          minHeight: '100vh',
+          minHeight: '100%',
           bgcolor: theme.palette.background.default,
           display: 'flex',
           alignItems: 'center',
@@ -167,7 +247,7 @@ const SponsorGameDetails = ({ gameId }) => {
   return (
     <Box
       sx={{
-        height: '100vh',
+        height: '100%',
         display: 'flex',
         flexDirection: 'column',
         bgcolor: theme.palette.background.default,
@@ -179,13 +259,33 @@ const SponsorGameDetails = ({ gameId }) => {
         sx={{
           flexShrink: 0,
           bgcolor: isDarkMode ? theme.palette.background.paper : 'white',
-          pt: { xs: 2.5, md: 3 },
-          pb: { xs: 2.5, md: 3 },
-          borderBottom: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.15 : 0.1)}`
+          pt: isHeaderExpanded ? { xs: 2.5, md: 3 } : { xs: 1.5, md: 2 },
+          pb: isHeaderExpanded ? { xs: 2.5, md: 3 } : { xs: 1.5, md: 2 },
+          borderBottom: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.15 : 0.1)}`,
+          transition: 'padding 0.3s ease'
         }}
       >
-        <Container maxWidth='lg'>
-          <Stack spacing={{ xs: 1.5, sm: 2 }}>
+        <Container maxWidth='lg' sx={{ position: 'relative' }}>
+          {/* Chevron Toggle Button - Right side, vertically centered */}
+          <IconButton
+            onClick={() => setIsHeaderExpanded(!isHeaderExpanded)}
+            sx={{
+              position: 'absolute',
+              right: 0,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: theme.palette.text.secondary,
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                color: theme.palette.primary.main
+              }
+            }}
+          >
+            {isHeaderExpanded ? <ExpandLess /> : <ExpandMore />}
+          </IconButton>
+
+          <Stack spacing={{ xs: 1.5, sm: 2 }} sx={{ pr: { xs: 6, sm: 7, md: 8 } }}>
             {/* Back Button */}
             <Button
               variant='outlined'
@@ -213,222 +313,230 @@ const SponsorGameDetails = ({ gameId }) => {
               variant='h4'
               fontWeight={700}
               sx={{
-                fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
+                fontSize: isHeaderExpanded
+                  ? { xs: '1.5rem', sm: '1.75rem', md: '2rem' }
+                  : { xs: '1.125rem', sm: '1.25rem', md: '1.5rem' },
                 background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${
                   theme.palette.secondary?.main || theme.palette.primary.light
                 })`,
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
-                lineHeight: 1.3
+                lineHeight: 1.3,
+                transition: 'font-size 0.3s ease'
               }}
             >
               {game.title}
             </Typography>
 
-            {/* Status */}
-            <Stack
-              direction='row'
-              justifyContent='space-between'
-              alignItems='center'
-              flexWrap='wrap'
-              gap={{ xs: 1.5, sm: 2 }}
-            >
-              <Chip
-                label='Awaiting Sponsorship'
-                size='small'
-                sx={{
-                  bgcolor: alpha(theme.palette.warning.main, isDarkMode ? 0.15 : 0.1),
-                  color: theme.palette.warning.main,
-                  fontWeight: 700,
-                  fontSize: { xs: '0.65rem', sm: '0.7rem' },
-                  border: `2px solid ${alpha(theme.palette.warning.main, isDarkMode ? 0.4 : 0.3)}`,
-                  height: { xs: 24, sm: 26 }
-                }}
-              />
-            </Stack>
-
-            {/* Description */}
-            {game?.description && (
-              <Typography
-                variant='body2'
-                sx={{
-                  fontSize: { xs: '0.85rem', sm: '0.9rem', md: '0.95rem' },
-                  color: 'text.secondary',
-                  lineHeight: 1.6,
-                  maxWidth: { xs: '100%', sm: '800px', md: '900px' }
-                }}
-              >
-                {game.description}
-              </Typography>
-            )}
-
-            {/* Quick Info Bar */}
-            <Stack
-              direction={{ xs: 'column', sm: 'row' }}
-              spacing={{ xs: 2, sm: 3, md: 4 }}
-              flexWrap='wrap'
-              sx={{ pt: 1 }}
-            >
-              <Stack direction='row' spacing={1} alignItems='center'>
-                <Box
-                  sx={{
-                    width: { xs: 28, sm: 32 },
-                    height: { xs: 28, sm: 32 },
-                    borderRadius: { xs: 1.25, sm: 1.5 },
-                    bgcolor: isDarkMode ? alpha(theme.palette.info.main, 0.2) : alpha(theme.palette.info.main, 0.1),
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
+            {/* Collapsible Content */}
+            <Collapse in={isHeaderExpanded} timeout={300}>
+              <Stack spacing={{ xs: 1.5, sm: 2 }}>
+                {/* Status */}
+                <Stack
+                  direction='row'
+                  justifyContent='space-between'
+                  alignItems='center'
+                  flexWrap='wrap'
+                  gap={{ xs: 1.5, sm: 2 }}
                 >
-                  <Schedule sx={{ fontSize: { xs: 16, sm: 18 }, color: theme.palette.info.main }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant='caption'
+                  <Chip
+                    label='Awaiting Sponsorship'
+                    size='small'
                     sx={{
-                      color: 'text.secondary',
-                      fontSize: { xs: '0.65rem', sm: '0.7rem' }
-                    }}
-                  >
-                    MODE
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    fontWeight={600}
-                    sx={{
-                      color: 'text.primary',
-                      fontSize: { xs: '0.83rem', sm: '0.875rem' }
-                    }}
-                  >
-                    {game.gameMode === 'live' ? 'Live Game' : 'Self-paced'}
-                  </Typography>
-                </Box>
-              </Stack>
-
-              <Stack direction='row' spacing={1} alignItems='center'>
-                <Box
-                  sx={{
-                    width: { xs: 28, sm: 32 },
-                    height: { xs: 28, sm: 32 },
-                    borderRadius: { xs: 1.25, sm: 1.5 },
-                    bgcolor: isDarkMode
-                      ? alpha(theme.palette.secondary?.main || theme.palette.primary.main, 0.2)
-                      : alpha(theme.palette.secondary?.main || theme.palette.primary.main, 0.1),
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <People
-                    sx={{
-                      fontSize: { xs: 16, sm: 18 },
-                      color: theme.palette.secondary?.main || theme.palette.primary.main
+                      bgcolor: alpha(theme.palette.warning.main, isDarkMode ? 0.15 : 0.1),
+                      color: theme.palette.warning.main,
+                      fontWeight: 700,
+                      fontSize: { xs: '0.65rem', sm: '0.7rem' },
+                      border: `2px solid ${alpha(theme.palette.warning.main, isDarkMode ? 0.4 : 0.3)}`,
+                      height: { xs: 24, sm: 26 }
                     }}
                   />
-                </Box>
-                <Box>
-                  <Typography
-                    variant='caption'
-                    sx={{
-                      color: 'text.secondary',
-                      fontSize: { xs: '0.65rem', sm: '0.7rem' }
-                    }}
-                  >
-                    PLAYERS
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    fontWeight={600}
-                    sx={{
-                      color: 'text.primary',
-                      fontSize: { xs: '0.83rem', sm: '0.875rem' }
-                    }}
-                  >
-                    Max {game.maxPlayers}
-                  </Typography>
-                </Box>
-              </Stack>
+                </Stack>
 
-              <Stack direction='row' spacing={1} alignItems='center'>
-                <Box
-                  sx={{
-                    width: { xs: 28, sm: 32 },
-                    height: { xs: 28, sm: 32 },
-                    borderRadius: { xs: 1.25, sm: 1.5 },
-                    bgcolor: isDarkMode
-                      ? alpha(theme.palette.warning.main, 0.2)
-                      : alpha(theme.palette.warning.main, 0.1),
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <EmojiEvents sx={{ fontSize: { xs: 16, sm: 18 }, color: theme.palette.warning.main }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant='caption'
-                    sx={{
-                      color: 'text.secondary',
-                      fontSize: { xs: '0.65rem', sm: '0.7rem' }
-                    }}
-                  >
-                    REWARDS
-                  </Typography>
+                {/* Description */}
+                {game?.description && (
                   <Typography
                     variant='body2'
-                    fontWeight={600}
                     sx={{
-                      color: 'text.primary',
-                      fontSize: { xs: '0.83rem', sm: '0.875rem' }
+                      fontSize: { xs: '0.85rem', sm: '0.9rem', md: '0.95rem' },
+                      color: 'text.secondary',
+                      lineHeight: 1.6,
+                      maxWidth: { xs: '100%', sm: '800px', md: '900px' }
                     }}
                   >
-                    {game.rewards?.length || 0} Available
+                    {game.description}
                   </Typography>
-                </Box>
-              </Stack>
+                )}
 
-              <Stack direction='row' spacing={1} alignItems='center'>
-                <Box
-                  sx={{
-                    width: { xs: 28, sm: 32 },
-                    height: { xs: 28, sm: 32 },
-                    borderRadius: { xs: 1.25, sm: 1.5 },
-                    bgcolor: isDarkMode
-                      ? alpha(theme.palette.success.main, 0.2)
-                      : alpha(theme.palette.success.main, 0.1),
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
+                {/* Quick Info Bar */}
+                <Stack
+                  direction={{ xs: 'column', sm: 'row' }}
+                  spacing={{ xs: 2, sm: 3, md: 4 }}
+                  flexWrap='wrap'
+                  sx={{ pt: 1 }}
                 >
-                  <Person sx={{ fontSize: { xs: 16, sm: 18 }, color: theme.palette.success.main }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant='caption'
-                    sx={{
-                      color: 'text.secondary',
-                      fontSize: { xs: '0.65rem', sm: '0.7rem' }
-                    }}
-                  >
-                    ORGANIZER
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    fontWeight={600}
-                    sx={{
-                      color: 'text.primary',
-                      fontSize: { xs: '0.83rem', sm: '0.875rem' }
-                    }}
-                  >
-                    {game.creatorEmail?.split('@')[0] || 'N/A'}
-                  </Typography>
-                </Box>
+                  <Stack direction='row' spacing={1} alignItems='center'>
+                    <Box
+                      sx={{
+                        width: { xs: 28, sm: 32 },
+                        height: { xs: 28, sm: 32 },
+                        borderRadius: { xs: 1.25, sm: 1.5 },
+                        bgcolor: isDarkMode ? alpha(theme.palette.info.main, 0.2) : alpha(theme.palette.info.main, 0.1),
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      <Schedule sx={{ fontSize: { xs: 16, sm: 18 }, color: theme.palette.info.main }} />
+                    </Box>
+                    <Box>
+                      <Typography
+                        variant='caption'
+                        sx={{
+                          color: 'text.secondary',
+                          fontSize: { xs: '0.65rem', sm: '0.7rem' }
+                        }}
+                      >
+                        MODE
+                      </Typography>
+                      <Typography
+                        variant='body2'
+                        fontWeight={600}
+                        sx={{
+                          color: 'text.primary',
+                          fontSize: { xs: '0.83rem', sm: '0.875rem' }
+                        }}
+                      >
+                        {game.gameMode === 'live' ? 'Live Game' : 'Self-paced'}
+                      </Typography>
+                    </Box>
+                  </Stack>
+
+                  <Stack direction='row' spacing={1} alignItems='center'>
+                    <Box
+                      sx={{
+                        width: { xs: 28, sm: 32 },
+                        height: { xs: 28, sm: 32 },
+                        borderRadius: { xs: 1.25, sm: 1.5 },
+                        bgcolor: isDarkMode
+                          ? alpha(theme.palette.secondary?.main || theme.palette.primary.main, 0.2)
+                          : alpha(theme.palette.secondary?.main || theme.palette.primary.main, 0.1),
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      <People
+                        sx={{
+                          fontSize: { xs: 16, sm: 18 },
+                          color: theme.palette.secondary?.main || theme.palette.primary.main
+                        }}
+                      />
+                    </Box>
+                    <Box>
+                      <Typography
+                        variant='caption'
+                        sx={{
+                          color: 'text.secondary',
+                          fontSize: { xs: '0.65rem', sm: '0.7rem' }
+                        }}
+                      >
+                        PLAYERS
+                      </Typography>
+                      <Typography
+                        variant='body2'
+                        fontWeight={600}
+                        sx={{
+                          color: 'text.primary',
+                          fontSize: { xs: '0.83rem', sm: '0.875rem' }
+                        }}
+                      >
+                        Max {game.maxPlayers}
+                      </Typography>
+                    </Box>
+                  </Stack>
+
+                  <Stack direction='row' spacing={1} alignItems='center'>
+                    <Box
+                      sx={{
+                        width: { xs: 28, sm: 32 },
+                        height: { xs: 28, sm: 32 },
+                        borderRadius: { xs: 1.25, sm: 1.5 },
+                        bgcolor: isDarkMode
+                          ? alpha(theme.palette.warning.main, 0.2)
+                          : alpha(theme.palette.warning.main, 0.1),
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      <EmojiEvents sx={{ fontSize: { xs: 16, sm: 18 }, color: theme.palette.warning.main }} />
+                    </Box>
+                    <Box>
+                      <Typography
+                        variant='caption'
+                        sx={{
+                          color: 'text.secondary',
+                          fontSize: { xs: '0.65rem', sm: '0.7rem' }
+                        }}
+                      >
+                        REWARDS
+                      </Typography>
+                      <Typography
+                        variant='body2'
+                        fontWeight={600}
+                        sx={{
+                          color: 'text.primary',
+                          fontSize: { xs: '0.83rem', sm: '0.875rem' }
+                        }}
+                      >
+                        {game.rewards?.length || 0} Available
+                      </Typography>
+                    </Box>
+                  </Stack>
+
+                  <Stack direction='row' spacing={1} alignItems='center'>
+                    <Box
+                      sx={{
+                        width: { xs: 28, sm: 32 },
+                        height: { xs: 28, sm: 32 },
+                        borderRadius: { xs: 1.25, sm: 1.5 },
+                        bgcolor: isDarkMode
+                          ? alpha(theme.palette.success.main, 0.2)
+                          : alpha(theme.palette.success.main, 0.1),
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      <Person sx={{ fontSize: { xs: 16, sm: 18 }, color: theme.palette.success.main }} />
+                    </Box>
+                    <Box>
+                      <Typography
+                        variant='caption'
+                        sx={{
+                          color: 'text.secondary',
+                          fontSize: { xs: '0.65rem', sm: '0.7rem' }
+                        }}
+                      >
+                        ORGANIZER
+                      </Typography>
+                      <Typography
+                        variant='body2'
+                        fontWeight={600}
+                        sx={{
+                          color: 'text.primary',
+                          fontSize: { xs: '0.83rem', sm: '0.875rem' }
+                        }}
+                      >
+                        {game.creatorEmail?.split('@')[0] || 'N/A'}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </Stack>
               </Stack>
-            </Stack>
+            </Collapse>
           </Stack>
         </Container>
       </Box>

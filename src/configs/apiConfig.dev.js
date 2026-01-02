@@ -1,5 +1,5 @@
 export const API_BASE_URL = 'http://localhost:3000/api'
-// export const API_BASE_URL = 'https://willyard-larue-acquiescingly.ngrok-free.dev/api'
+// export const API_BASE_URL = 'https://gurukulamhub.com/api'
 
 export const API_URLS = {
   v0: {
@@ -47,6 +47,11 @@ export const API_URLS = {
     USERS_GROUP_REQUEST: `${API_BASE_URL}/group-request`,
     USERS_GROUP_CHAT: `${API_BASE_URL}/group-chat`,
     USERS_GROUP_CHAT_ACTIONS: `${API_BASE_URL}/group-chat/actions`,
+    USERS_INDIVIDUAL_CHAT: `${API_BASE_URL}/individual-chat`,
+    USERS_INDIVIDUAL_CHAT_ACTIONS: `${API_BASE_URL}/individual-chat/actions`,
+    USERS_INDIVIDUAL_CHAT_CHATS: `${API_BASE_URL}/individual-chat/chats`,
+    USERS_INDIVIDUAL_CHAT_SEARCH: `${API_BASE_URL}/individual-chat/search`,
+    MESSENGER_COMBINED_CHATS: `${API_BASE_URL}/messenger/combined-chats`,
     GAME_SPONSORSHIP: `${API_BASE_URL}/game-sponsorship`,
     GAME_SPONSORSHIP_PAYMENT: `${API_BASE_URL}/game-sponsorship-payment`,
     NOTIFICATIONS: `${API_BASE_URL}/notifications`

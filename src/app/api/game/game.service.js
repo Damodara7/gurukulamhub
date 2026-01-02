@@ -11,6 +11,7 @@ import Player from '@/app/api/player/player.model'
 import { broadcastLeaderboard } from '../ws/leaderboard/[gameId]/publishers'
 import { broadcastGamesList } from '../ws/games/publishers'
 import { broadcastGameDetails } from '../ws/games/[gameId]/publishers'
+import { broadcastSponsorGamesList } from '../ws/sponsor-games/publishers'
 import UserProfile from '@/app/api/profile/profile.model'
 import Group from '@/app/api/group/group.model'
 import {
@@ -1921,6 +1922,12 @@ export async function broadcastAdminGamesUpdate() {
   try {
     const allGamesRes = await getAll()
     broadcastGamesList(allGamesRes.result)
+
+    // Also broadcast sponsor games list (games awaiting sponsorship)
+    const sponsorGames = (allGamesRes.result || []).filter(game => game.status === 'awaiting_sponsorship')
+    if (sponsorGames.length > 0) {
+      broadcastSponsorGamesList(sponsorGames)
+    }
   } catch (e) {
     console.error('Failed to broadcast admin games list:', e)
   }
@@ -1928,11 +1935,19 @@ export async function broadcastAdminGamesUpdate() {
 
 export async function broadcastGameDetailsUpdates(gameId, updatedGame = null) {
   try {
-    if (!updatedGame) {
+    let game = updatedGame
+    if (!game) {
       const gameRes = await getOne({ _id: gameId })
-      broadcastGameDetails(gameId, gameRes.result)
+      game = gameRes.result
+      broadcastGameDetails(gameId, game)
     } else {
-      broadcastGameDetails(gameId, updatedGame)
+      broadcastGameDetails(gameId, game)
+    }
+
+    // Also broadcast to sponsor games WebSocket if game is awaiting sponsorship
+    if (game && game.status === 'awaiting_sponsorship') {
+      const { broadcastSponsorGameDetails } = await import('../ws/sponsor-games/[gameId]/publishers')
+      broadcastSponsorGameDetails(gameId, game)
     }
   } catch (e) {
     console.error('Failed to broadcast game details:', e)

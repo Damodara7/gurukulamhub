@@ -6,6 +6,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  DialogContentText,
   Button,
   Switch,
   FormControlLabel,
@@ -20,7 +21,7 @@ import {
   IconButton,
   Divider
 } from '@mui/material'
-import { ArrowBack as ArrowBackIcon, PersonRemove as PersonRemoveIcon, DoneAll as DoneAllIcon, CheckCircle as CheckCircleIcon } from '@mui/icons-material'
+import { ArrowBack as ArrowBackIcon, PersonRemove as PersonRemoveIcon, DoneAll as DoneAllIcon, CheckCircle as CheckCircleIcon, MoreVert as MoreVertIcon, ExitToApp as ExitToAppIcon, DeleteForever as DeleteForeverIcon } from '@mui/icons-material'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { format, formatDistanceToNow, isToday, isYesterday } from 'date-fns'
@@ -82,6 +83,9 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
   const [soundEnabled, setSoundEnabled] = useState(true) // Sound enabled by default
   const soundEnabledRef = useRef(true) // Ref to track sound state for WebSocket handler
   const [newMessageForNotification, setNewMessageForNotification] = useState(null) // Track new messages for notification sound
+  const [menuAnchor, setMenuAnchor] = useState(null)
+  const [clearChatDialogOpen, setClearChatDialogOpen] = useState(false)
+  const [exitGroupDialogOpen, setExitGroupDialogOpen] = useState(false)
 
   // Sound hooks
   const [playSoundOn] = useSound('/sounds/sound-on.mp3', { volume: 0.7 })
@@ -208,11 +212,17 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
     }
   }, [groupId])
 
+  // Fetch messages immediately when groupId is available
+  // If groupData is provided, we can start fetching messages right away
   useEffect(() => {
-    if (groupId) {
+    if (groupId && initialGroupData) {
+      // If we have initial group data, fetch messages immediately
+      fetchMessages()
+    } else if (groupId && groupData) {
+      // If group data was fetched separately, fetch messages
       fetchMessages()
     }
-  }, [groupId, fetchMessages])
+  }, [groupId, initialGroupData, groupData, fetchMessages])
 
   // Mark all messages as read
   const markAllMessagesAsRead = async () => {
@@ -815,9 +825,46 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
     return <CheckCircleIcon sx={{ fontSize: { xs: 16, sm: 18 }, color: 'rgba(255, 255, 255, 0.7)' }} />
   }
 
-  // Generate color from string (for consistent name colors)
+  // Generate color from string with contrast adjustment (same as ChatList)
   const getColorFromString = (str) => {
-    return stringToColor(str || 'user')
+    if (!str) return null
+    let color = stringToColor(str || 'user')
+    
+    const hex = color.replace('#', '')
+    let r = parseInt(hex.substr(0, 2), 16)
+    let g = parseInt(hex.substr(2, 2), 16)
+    let b = parseInt(hex.substr(4, 2), 16)
+    
+    const getLuminance = (r, g, b) => {
+      const [rs, gs, bs] = [r, g, b].map(val => {
+        val = val / 255
+        return val <= 0.03928 ? val / 12.92 : Math.pow((val + 0.055) / 1.055, 2.4)
+      })
+      return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs
+    }
+    
+    let luminance = getLuminance(r, g, b)
+    
+    let attempts = 0
+    while (luminance > 0.4 && attempts < 10) {
+      r = Math.max(0, Math.floor(r * 0.7))
+      g = Math.max(0, Math.floor(g * 0.7))
+      b = Math.max(0, Math.floor(b * 0.7))
+      luminance = getLuminance(r, g, b)
+      attempts++
+    }
+    
+    const maxChannel = Math.max(r, g, b)
+    if (maxChannel < 80) {
+      const boost = 80 / maxChannel
+      r = Math.min(255, Math.floor(r * boost))
+      g = Math.min(255, Math.floor(g * boost))
+      b = Math.min(255, Math.floor(b * boost))
+    }
+    
+    color = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
+    
+    return color
   }
 
   // Get avatar background color from sender name (ensures good contrast with white text)
@@ -950,6 +997,51 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
       }
     }
   }, [selectionMode])
+
+  // Handle clear group chat
+  const handleClearGroupChat = async () => {
+    try {
+      const result = await RestApi.post(API_URLS.v0.USERS_GROUP_CHAT_ACTIONS, {
+        action: 'clearChat',
+        groupId
+      })
+      
+      if (result?.status === 'success') {
+        toast.success('Group chat cleared successfully')
+        setMessages([])
+        setClearChatDialogOpen(false)
+        setMenuAnchor(null)
+      } else {
+        toast.error(result?.message || 'Failed to clear group chat')
+      }
+    } catch (error) {
+      console.error('Error clearing group chat:', error)
+      toast.error('Failed to clear group chat')
+    }
+  }
+
+  // Handle exit group
+  const handleExitGroup = async () => {
+    try {
+      const result = await RestApi.post(API_URLS.v0.USERS_GROUP_CHAT_ACTIONS, {
+        action: 'exitGroup',
+        groupId
+      })
+      
+      if (result?.status === 'success') {
+        toast.success('Successfully exited the group')
+        setExitGroupDialogOpen(false)
+        setMenuAnchor(null)
+        // Navigate back to chat list
+        router.push(backPath)
+      } else {
+        toast.error(result?.message || 'Failed to exit group')
+      }
+    } catch (error) {
+      console.error('Error exiting group:', error)
+      toast.error('Failed to exit group')
+    }
+  }
 
   const handleDeleteClick = (messageId, fromMenu = false) => {
     setSelectedMessages(new Set([messageId]))
@@ -1084,16 +1176,89 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
       }}
     >
       {/* Header */}
-      <ChatHeader
-        groupData={groupData}
-        isConnected={isConnected}
-        isCreator={isCreator}
-        onBack={() => router.push(backPath)}
-        onMembersClick={() => setMembersDrawerOpen(true)}
-        onSettingsClick={() => setSettingsDialogOpen(true)}
-        soundEnabled={soundEnabled}
-        onToggleSound={handleToggleSound}
-      />
+      <Box sx={{ position: 'relative' }}>
+        <ChatHeader
+          groupData={groupData}
+          isConnected={isConnected}
+          isCreator={isCreator}
+          onBack={() => router.push(backPath)}
+          onMembersClick={() => setMembersDrawerOpen(true)}
+          onSettingsClick={() => setSettingsDialogOpen(true)}
+          soundEnabled={soundEnabled}
+          onToggleSound={handleToggleSound}
+          onMoreOptionsClick={(e) => setMenuAnchor(e.currentTarget)}
+          isGroup={true}
+          avatarColor={groupData?.groupName ? getColorFromString(groupData.groupName) : null}
+        />
+        <Menu
+          anchorEl={menuAnchor}
+          open={Boolean(menuAnchor)}
+          onClose={() => setMenuAnchor(null)}
+        >
+          <MenuItem onClick={() => {
+            setMenuAnchor(null)
+            setClearChatDialogOpen(true)
+          }}>
+            Clear Chat
+          </MenuItem>
+          {isCreator && (
+            <MenuItem 
+              onClick={() => {
+                setMenuAnchor(null)
+                setDeleteGroupDialogOpen(true)
+              }} 
+              sx={{ color: 'error.main' }}
+            >
+              <DeleteForeverIcon sx={{ mr: 1, fontSize: 20 }} />
+              Delete Group
+            </MenuItem>
+          )}
+          {!isCreator && (
+            <MenuItem 
+              onClick={() => {
+                setMenuAnchor(null)
+                setExitGroupDialogOpen(true)
+              }} 
+              sx={{ color: 'error.main' }}
+            >
+              <ExitToAppIcon sx={{ mr: 1, fontSize: 20 }} />
+              Exit Group
+            </MenuItem>
+          )}
+        </Menu>
+      </Box>
+      
+      {/* Clear Chat Confirmation Dialog */}
+      <Dialog open={clearChatDialogOpen} onClose={() => setClearChatDialogOpen(false)}>
+        <DialogTitle>Clear Chat</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to clear all messages in this group chat? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setClearChatDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleClearGroupChat} color='primary' variant='contained' component='label' sx={{ color: 'white' }}>
+            Clear
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Exit Group Confirmation Dialog */}
+      <Dialog open={exitGroupDialogOpen} onClose={() => setExitGroupDialogOpen(false)}>
+        <DialogTitle>Exit Group</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to exit this group? You will no longer receive messages from this group and cannot rejoin unless you are added again.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setExitGroupDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleExitGroup} color='error' variant='contained' component='label'>
+            Exit Group
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Messages Area */}
       <MessagesArea

@@ -1,6 +1,6 @@
 'use client'
 import React from 'react'
-import { Paper, Stack, Box, Typography, IconButton, Tooltip, Chip, useTheme, alpha, useMediaQuery } from '@mui/material'
+import { Paper, Stack, Box, Typography, IconButton, Tooltip, Chip, Avatar, useTheme, alpha, useMediaQuery } from '@mui/material'
 import {
   ArrowBack as ArrowBackIcon,
   Campaign as CampaignIcon,
@@ -9,7 +9,9 @@ import {
   Settings as SettingsIcon,
   Info as InfoIcon,
   VolumeUp as VolumeUpIcon,
-  VolumeOff as VolumeOffIcon
+  VolumeOff as VolumeOffIcon,
+  MoreVert as MoreVertIcon,
+  Group as GroupIcon
 } from '@mui/icons-material'
 
 const ChatHeader = ({
@@ -20,7 +22,12 @@ const ChatHeader = ({
   onMembersClick,
   onSettingsClick,
   soundEnabled,
-  onToggleSound
+  onToggleSound,
+  onMoreOptionsClick,
+  isIndividualChat = false, // Flag to indicate individual chat
+  avatarText = null, // Avatar initial text
+  avatarColor = null, // Avatar background color
+  isGroup = false // Flag to show group icon instead of avatar
 }) => {
   const theme = useTheme()
   const isDarkMode = theme.palette.mode === 'dark'
@@ -49,6 +56,33 @@ const ChatHeader = ({
         >
           <ArrowBackIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />
         </IconButton>
+        {/* Avatar */}
+        {isGroup ? (
+          <Avatar
+            sx={{
+              width: { xs: 40, sm: 50 },
+              height: { xs: 40, sm: 50 },
+              fontSize: { xs: '1rem', sm: '1.25rem' },
+              bgcolor: avatarColor || theme.palette.primary.main,
+              color: 'white'
+            }}
+          >
+            <GroupIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />
+          </Avatar>
+        ) : avatarText ? (
+          <Avatar
+            sx={{
+              width: { xs: 40, sm: 50 },
+              height: { xs: 40, sm: 50 },
+              fontSize: { xs: '1rem', sm: '1.25rem' },
+              fontWeight: 600,
+              bgcolor: avatarColor || theme.palette.primary.main,
+              color: 'white'
+            }}
+          >
+            {avatarText}
+          </Avatar>
+        ) : null}
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Stack
             direction='row'
@@ -111,26 +145,37 @@ const ChatHeader = ({
               />
             )}
           </Stack>
-          <Stack
-            direction='row'
-            gap={{ xs: 1, sm: 2 }}
-            sx={{ mt: { xs: 0.5, sm: 0 } }}
-          >
-            <Typography
-              variant='caption'
-              color='text.secondary'
-              sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}
+          {!isIndividualChat && (
+            <Stack
+              direction='row'
+              gap={{ xs: 1, sm: 2 }}
+              sx={{ mt: { xs: 0.5, sm: 0 } }}
             >
-              {groupData?.membersCount || 0} members
-            </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+                sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}
+              >
+                {groupData?.membersCount || 0} members
+              </Typography>
+              <Typography
+                variant='caption'
+                color={!isConnected ? 'text.secondary' : 'success.main'}
+                sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}
+              >
+                {!isConnected ? ' • Connecting...' : ' • Connected'}
+              </Typography>
+            </Stack>
+          )}
+          {isIndividualChat && (
             <Typography
               variant='caption'
               color={!isConnected ? 'text.secondary' : 'success.main'}
-              sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}
+              sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, mt: { xs: 0.5, sm: 0 } }}
             >
-              {!isConnected ? ' • Connecting...' : ' • Connected'}
+              {!isConnected ? 'Connecting...' : 'Connected'}
             </Typography>
-          </Stack>
+          )}
         </Box>
         <Stack direction='row' spacing={{ xs: 0.5, sm: 1 }}>
           <Tooltip title={soundEnabled ? 'Sound On' : 'Sound Off'} arrow>
@@ -148,15 +193,17 @@ const ChatHeader = ({
               )}
             </IconButton>
           </Tooltip>
-          <IconButton
-            onClick={onMembersClick}
-            size={isMobile ? 'small' : 'medium'}
-            sx={{
-              color: theme.palette.text.primary
-            }}
-          >
-            <InfoIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />
-          </IconButton>
+          {!isIndividualChat && (
+            <IconButton
+              onClick={onMembersClick}
+              size={isMobile ? 'small' : 'medium'}
+              sx={{
+                color: theme.palette.text.primary
+              }}
+            >
+              <InfoIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />
+            </IconButton>
+          )}
           {isCreator && (
             <IconButton
               onClick={onSettingsClick}
@@ -166,6 +213,17 @@ const ChatHeader = ({
               }}
             >
               <SettingsIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />
+            </IconButton>
+          )}
+          {onMoreOptionsClick && (
+            <IconButton
+              onClick={onMoreOptionsClick}
+              size={isMobile ? 'small' : 'medium'}
+              sx={{
+                color: theme.palette.text.primary
+              }}
+            >
+              <MoreVertIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />
             </IconButton>
           )}
         </Stack>
