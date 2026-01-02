@@ -69,14 +69,7 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null, showHeading = tru
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [users, setUsers] = useState([])
   const [matchedUserIds, setMatchedUserIds] = useState([])
-  // Add this state to track the filter criteria
-  const [filterCriteria, setFilterCriteria] = useState({
-    ageGroup: null,
-    location: null,
-    gender: null
-  })
   const [canonicalFilters, setCanonicalFilters] = useState([])
-  //if edit audience?
 
   useEffect(() => {
     if (data) {
@@ -85,22 +78,23 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null, showHeading = tru
         audienceName: data.audienceName || '',
         description: data.description || ''
       })
-      // Set initial filter criteria from audience data
-      setFilterCriteria({
-        ageGroup: data.ageGroup || null,
-        location: data.location || null,
-        gender: data.gender || null
-      })
-      const canonical = buildCanonicalFromAudience(data)
-      setCanonicalFilters(canonical)
+      // Set canonical filters from audience data (backend already converts legacy to canonical)
+      const filters = Array.isArray(data.filters) ? data.filters : []
+      setCanonicalFilters(filters)
 
       if (users.length > 0) {
-        if (canonical.length > 0) {
-          const matched = applyCanonicalFilters(users, canonical)
+        if (filters.length > 0) {
+          const matched = applyCanonicalFilters(users, filters)
           setMatchedUserIds(matched.map(user => user._id))
         } else {
           setMatchedUserIds(users.map(user => user._id))
         }
+      }
+    } else {
+      // Reset filters when in create mode
+      setCanonicalFilters([])
+      if (users.length > 0) {
+        setMatchedUserIds(users.map(user => user._id))
       }
     }
   }, [data, users])
@@ -110,8 +104,12 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null, showHeading = tru
       const age = user.profile?.age
       if (typeof age !== 'number') return false
       const { min, max } = criteria || {}
-      const meetsMin = min === undefined || age >= min
-      const meetsMax = max === undefined || age <= max
+      // Require both min and max to be defined (matching backend validation)
+      if (min === undefined || max === undefined) {
+        return false
+      }
+      const meetsMin = age >= min
+      const meetsMax = age <= max
       return meetsMin && meetsMax
     },
     location: (user, criteria) => {
@@ -175,6 +173,7 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null, showHeading = tru
         return
       }
 
+      // Apply filter to current user set (for AND and NOT operations)
       const matched = usersPool.filter(user => handler(user, filter.criteria))
 
       if (index === 0) {
@@ -185,8 +184,19 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null, showHeading = tru
       const operation = (filter.operator || 'AND').toUpperCase()
 
       if (operation === 'OR') {
-        currentUsers = dedupeUsersById([...currentUsers, ...matched])
+        // OR operation: Apply current filter to ALL users first, then union with current results
+        // This matches the backend logic for consistency
+        const currentFilterAppliedToAllUsers = usersPool.filter(user => handler(user, filter.criteria))
+        const currentUserIds = new Set(currentUsers.map(user => user._id?.toString()))
+        const allFilterUserIds = new Set(currentFilterAppliedToAllUsers.map(user => user._id?.toString()))
+        const combinedUserIds = new Set([...currentUserIds, ...allFilterUserIds])
+        currentUsers = usersPool.filter(user => combinedUserIds.has(user._id?.toString()))
+      } else if (operation === 'NOT') {
+        // NOT operation: exclude users that match the filter from current set
+        const matchedIds = new Set(matched.map(user => user._id?.toString()))
+        currentUsers = currentUsers.filter(user => !matchedIds.has(user._id?.toString()))
       } else {
+        // Default to AND (intersection)
         const matchedIds = new Set(matched.map(user => user._id?.toString()))
         currentUsers = currentUsers.filter(user => matchedIds.has(user._id?.toString()))
       }
@@ -195,59 +205,52 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null, showHeading = tru
     return dedupeUsersById(currentUsers)
   }
 
-  const buildCanonicalFromAudience = audienceLike => {
-    if (Array.isArray(audienceLike?.filters) && audienceLike.filters.length > 0) {
-      return audienceLike.filters
-    }
-
-    const legacyFilters = []
-
-    if (
-      audienceLike?.ageGroup &&
-      (audienceLike.ageGroup.min !== undefined || audienceLike.ageGroup.max !== undefined)
-    ) {
-      legacyFilters.push({
-        type: 'age',
-        criteria: {
-          min: audienceLike.ageGroup.min,
-          max: audienceLike.ageGroup.max
-        },
-        operator: audienceLike.ageGroup.operation || null
-      })
-    }
-
-    if (
-      audienceLike?.location &&
-      (audienceLike.location.country || audienceLike.location.region || audienceLike.location.city)
-    ) {
-      legacyFilters.push({
-        type: 'location',
-        criteria: {
-          country: audienceLike.location.country,
-          region: audienceLike.location.region,
-          city: audienceLike.location.city
-        },
-        operator: audienceLike.location.operation || null
-      })
-    }
-
-    if (audienceLike?.gender) {
-      const genderValues = Array.isArray(audienceLike.gender?.values)
-        ? audienceLike.gender.values
-        : Array.isArray(audienceLike.gender)
-          ? audienceLike.gender
-          : []
-
-      if (genderValues.length > 0) {
-        legacyFilters.push({
-          type: 'gender',
-          criteria: { values: genderValues },
-          operator: audienceLike.gender.operation || null
-        })
+  // Convert canonical filters to legacy format for display purposes only
+  const convertCanonicalToLegacyFormat = filters => {
+    if (!Array.isArray(filters) || filters.length === 0) {
+      return {
+        ageGroup: null,
+        location: null,
+        gender: null
       }
     }
 
-    return legacyFilters
+    let ageGroup = null
+    let location = null
+    let gender = null
+
+    filters.forEach((filter, index) => {
+      const operation = index === 0 ? undefined : filter.operator
+
+      switch (filter.type) {
+        case 'age':
+          ageGroup = {
+            ...filter.criteria,
+            operation
+          }
+          break
+        case 'location':
+          location = {
+            ...filter.criteria,
+            operation
+          }
+          break
+        case 'gender':
+          gender = {
+            values: Array.isArray(filter.criteria?.values) ? filter.criteria.values : [],
+            operation
+          }
+          break
+        default:
+          break
+      }
+    })
+
+    return {
+      ageGroup,
+      location,
+      gender
+    }
   }
 
   //fetching the users
@@ -259,13 +262,12 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null, showHeading = tru
         const verifiedUsers = (result.result || []).filter(user => user?.isVerified)
         setUsers(verifiedUsers)
         // If no filters applied initially, show all verified users
-        if (!data?.ageGroup && !data?.location && !data?.gender) {
+        if (!data || !data.filters || data.filters.length === 0) {
           setMatchedUserIds(verifiedUsers.map(user => user._id))
         }
       }
     } catch (error) {
       console.error('Error fetching users:', error)
-      toast.error('An error occurred while loading users')
       setErrorMessage('Failed to load users')
       setShowErrorSnackbar(true)
     } finally {
@@ -395,65 +397,6 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null, showHeading = tru
 
     submission.filters = Array.isArray(canonicalFilters) ? canonicalFilters : []
 
-    // Add individual schema filters with operation
-    // Handle ageGroup filter
-    if (filterCriteria.ageGroup) {
-      submission.ageGroup = {
-        ...filterCriteria.ageGroup,
-        operation: formData.ageOperation || null
-      }
-    } else {
-      // Explicitly set to null when filter is removed
-      submission.ageGroup = null
-    }
-
-    // Handle location filter
-    if (filterCriteria.location) {
-      submission.location = {
-        ...filterCriteria.location,
-        operation: formData.locationOperation || null
-      }
-    } else {
-      // Explicitly set to null when filter is removed
-      submission.location = null
-    }
-
-    // Handle gender filter
-    if (filterCriteria.gender) {
-      // Check if gender is already an array or an object
-      let genderArray
-      if (Array.isArray(filterCriteria.gender)) {
-        // If it's already an array, check if it contains indexes or names
-        if (filterCriteria.gender.some(item => item === '0' || item === '1' || item === '2')) {
-          // Convert indexes to gender names
-          const genderMap = { 0: 'male', 1: 'female', 2: 'other' }
-          genderArray = filterCriteria.gender.map(index => genderMap[index]).filter(Boolean)
-        } else {
-          // Already contains gender names
-          genderArray = filterCriteria.gender
-        }
-      } else if (filterCriteria.gender && filterCriteria.gender.values && Array.isArray(filterCriteria.gender.values)) {
-        // New format with values array
-        genderArray = filterCriteria.gender.values
-      } else {
-        // Convert gender object to array format (old format with boolean properties)
-        genderArray = Object.entries(filterCriteria.gender)
-          .filter(([, isSelected]) => isSelected)
-          .map(([gender]) => gender)
-      }
-
-      // Create gender object with values array and metadata
-      submission.gender = {
-        values: genderArray,
-        operation: formData.genderOperation || null
-      }
-    } else {
-      // Explicitly set to null when filter is removed
-      submission.gender = null
-    }
-
-    // Removed filters logging - not using filter schema
-
     try {
       await onSubmit(submission)
     } catch (error) {
@@ -463,29 +406,13 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null, showHeading = tru
       setIsSubmitting(false)
     }
   }
-  // Add this to handle filter changes from GroupByFilter
+  // Handle filter changes from AudienceByFilter
   const handleFilterChange = (filteredUserIds, criteria, meta) => {
-    // Update filter criteria - this handles both additions and removals
-    setFilterCriteria(criteria)
     setMatchedUserIds(filteredUserIds)
-
-    // Store operation data for individual schemas
-    if (meta) {
-      setFormData(prev => ({
-        ...prev,
-        ageOperation: meta.ageOperation,
-        locationOperation: meta.locationOperation,
-        genderOperation: meta.genderOperation
-      }))
-      setCanonicalFilters(Array.isArray(meta.canonicalFilters) ? meta.canonicalFilters : [])
+    // Update canonical filters from meta data
+    if (meta && Array.isArray(meta.canonicalFilters)) {
+      setCanonicalFilters(meta.canonicalFilters)
     } else {
-      // If no operationsData, clear all operation data
-      setFormData(prev => ({
-        ...prev,
-        ageOperation: null,
-        locationOperation: null,
-        genderOperation: null
-      }))
       setCanonicalFilters([])
     }
   }
@@ -719,8 +646,12 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null, showHeading = tru
                     onFilterChange={(userIds, criteria, operationsData) =>
                       handleFilterChange(userIds, criteria, operationsData)
                     }
-                    initialCriteria={filterCriteria}
-                    initialCanonicalFilters={data?.filters || []}
+                    initialCriteria={{
+                      ageGroup: null,
+                      location: null,
+                      gender: null
+                    }}
+                    initialCanonicalFilters={canonicalFilters}
                   />
                 </Grid>
 
@@ -734,8 +665,8 @@ const CreateAudienceForm = ({ onSubmit, onCancel, data = null, showHeading = tru
                   <AudienceUserMultiSelect
                     users={users}
                     matchedUserIds={matchedUserIds}
-                    hasFilters={!!(filterCriteria.ageGroup || filterCriteria.location || filterCriteria.gender)}
-                    filterCriteria={filterCriteria}
+                    hasFilters={canonicalFilters.length > 0}
+                    filterCriteria={convertCanonicalToLegacyFormat(canonicalFilters)}
                   />
                 </Grid>
                 <Grid item xs={12} mt={4}>

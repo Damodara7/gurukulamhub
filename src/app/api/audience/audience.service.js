@@ -315,6 +315,10 @@ export const applyIndividualSchemaFilters = (users, audience) => {
         const allFilterUserIds = new Set(currentFilterAppliedToAllUsers.map(user => user._id?.toString()))
         const combinedUserIds = new Set([...currentUserIds, ...allFilterUserIds])
         currentUsers = users.filter(user => combinedUserIds.has(user._id?.toString()))
+      } else if (operation === 'NOT') {
+        // NOT operation: exclude users that match the filter from current set
+        const matchedUserIds = new Set(filteredUsers.map(user => user._id?.toString()))
+        currentUsers = currentUsers.filter(user => !matchedUserIds.has(user._id?.toString()))
       } else {
         // Default to AND (intersection)
         const filteredUserIds = new Set(filteredUsers.map(user => user._id?.toString()))
@@ -334,9 +338,13 @@ const FILTER_HANDLERS = {
       return false
     }
 
-    const { min, max } = criteria
-    const meetsMin = min === undefined || userAge >= min
-    const meetsMax = max === undefined || userAge <= max
+    const { min, max } = criteria || {}
+    // Require both min and max to be defined (matching validation requirements)
+    if (min === undefined || max === undefined) {
+      return false
+    }
+    const meetsMin = userAge >= min
+    const meetsMax = userAge <= max
     return meetsMin && meetsMax
   },
   location: (user, criteria) => {
