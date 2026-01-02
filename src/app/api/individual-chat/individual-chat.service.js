@@ -320,6 +320,17 @@ export const editMessage = async (messageId, newMessage, userEmail) => {
       }
     }
 
+    // Check time limit (1 hour)
+    const messageAge = Date.now() - new Date(message.createdAt).getTime()
+    const oneHour = 60 * 60 * 1000
+    if (messageAge > oneHour) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Cannot edit message after 1 hour'
+      }
+    }
+
     const updatedMessage = await IndividualChatMessage.findByIdAndUpdate(
       messageId,
       {

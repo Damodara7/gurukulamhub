@@ -43,11 +43,25 @@ const DeleteDialog = ({
         .every(m => m.senderEmail === session?.user?.email)
     : menuMessage?.senderEmail === session?.user?.email
 
+  // Check if any message is older than 1 hour
+  const oneHour = 60 * 60 * 1000
+  const hasMessageOlderThanOneHour = selectedCount > 0
+    ? messages.some(m => {
+        if (!selectedMessages.has(m._id)) return false
+        const messageAge = m.createdAt ? Date.now() - new Date(m.createdAt).getTime() : Infinity
+        return messageAge > oneHour
+      })
+    : menuMessage?.createdAt 
+      ? (Date.now() - new Date(menuMessage.createdAt).getTime()) > oneHour
+      : false
+
   // Show "delete for everyone" if:
   // 1. Not deleted for everyone
   // 2. All messages are from the current user (sender)
+  // 3. No message is older than 1 hour
   // When opened from menu, we want to show both options if the message is from the user
-  const canDeleteForEveryone = (!hasDeletedForEveryone && allMessagesAreFromUser) || (fromMenu && (menuMessage?.senderEmail || selectedMessages[0]?.senderEmail) === session?.user?.email)
+  const canDeleteForEveryone = (!hasDeletedForEveryone && allMessagesAreFromUser && !hasMessageOlderThanOneHour) || 
+    (fromMenu && menuMessage?.senderEmail === session?.user?.email && !hasMessageOlderThanOneHour)
 
   return (
     <Dialog
