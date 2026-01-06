@@ -218,7 +218,8 @@ kubectl get svc -n ingress-nginx
 # ingress-nginx-controller             LoadBalancer   10.106.90.196    localhost     80:32158/TCP,443:30311/TCP   2d
 # ingress-nginx-controller-admission   ClusterIP      10.107.191.155   <none>        443/TCP                      2d
 
-# Port forward for local access
+# Port forward for local access 
+# ❌ NO NEED to run this now, as we are using another WAY - (`C:\Windows\System32\drivers\etc\hosts` --> 127.0.0.1 www.gurukulamhub.com)
 kubectl port-forward svc/gurukulamhub-app 3000:80 -n gurukulamhub
 
 # View logs
@@ -229,5 +230,8 @@ kubectl rollout restart deployment/gurukulamhub-app -n gurukulamhub
 
 # Delete everything
 kubectl delete namespace gurukulamhub
+
+
+# TYPE ✅ thisisunsafe ✅ in brower (gurukulamhub.com --> `C:\Windows\System32\drivers\etc\hosts` --> 127.0.0.1 www.gurukulamhub.com)
 ```
 
