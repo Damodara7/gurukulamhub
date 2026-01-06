@@ -17,7 +17,11 @@ import {
   DialogActions,
   Button
 } from '@mui/material'
-import { MoreVert as MoreVertIcon } from '@mui/icons-material'
+import { 
+  MoreVert as MoreVertIcon,
+  CheckCircle as CheckCircleIcon,
+  DoneAll as DoneAllIcon
+} from '@mui/icons-material'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { format, formatDistanceToNow, isToday, isYesterday } from 'date-fns'
@@ -566,14 +570,17 @@ const IndividualChatPage = ({ chatId, backPath = '/messanger' }) => {
   }
 
   const getReadStatusIcon = (message) => {
+    // Filter out sender's own read receipt
     const readByExcludingSender = message.readBy?.filter(reader => reader.userEmail !== message.senderEmail) || []
     
     if (readByExcludingSender.length === 0) {
-      return null // Single check for sent
+      // Sent but not read - single check (gray)
+      return <CheckCircleIcon sx={{ fontSize: { xs: 16, sm: 18 }, color: 'rgba(255, 255, 255, 0.7)' }} />
     }
     
-    // Double check for read (individual chat - only one other person)
-    return readByExcludingSender.length > 0
+    // In individual chat, there's only one other person
+    // If they've read it, show blue double check (WhatsApp style)
+    return <DoneAllIcon sx={{ fontSize: { xs: 16, sm: 18 }, color: '#4FC3F7' }} />
   }
 
   const getColorFromString = (str) => {

@@ -122,6 +122,19 @@ const ChatList = () => {
   const [searchResult, setSearchResult] = useState(null)
   const [activeTab, setActiveTab] = useState(0) // 0: All, 1: Groups, 2: Unread
 
+  // Calculate counts for each tab
+  const tabCounts = useMemo(() => {
+    const allCount = chats.length
+    const groupsCount = chats.filter(chat => chat.type === 'group').length
+    const unreadCount = chats.filter(chat => (chat.unreadCount || 0) > 0).length
+    
+    return {
+      all: allCount,
+      groups: groupsCount,
+      unread: unreadCount
+    }
+  }, [chats])
+
   // Refs
   const messengerSocketRef = useRef(null)
   const hasFetchedRef = useRef(false)
@@ -717,9 +730,9 @@ const ChatList = () => {
               }
             }}
           >
-            <Tab label='All' />
-            <Tab label='Groups' />
-            <Tab label='Unread' />
+            <Tab label={`All (${tabCounts.all})`} />
+            <Tab label={`Groups (${tabCounts.groups})`} />
+            <Tab label={`Unread (${tabCounts.unread})`} />
           </Tabs>
         </Box>
       </Box>
