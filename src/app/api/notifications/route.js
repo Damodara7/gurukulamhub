@@ -2,6 +2,7 @@ import * as NotificationService from './notification.service.js'
 import * as ApiResponseUtils from '@/utils/apiResponses'
 import { auth } from '@/libs/auth'
 import User from '@/app/models/user.model.js'
+import connectMongo from '@/utils/dbConnect-mongo'
 
 const Artifact = 'Notifications'
 const ArtifactService = NotificationService
@@ -15,12 +16,14 @@ const ArtifactService = NotificationService
  * - limit: Items per page (default: 50)
  * - type: Filter by notification type
  * - isRead: Filter by read status (true/false)
- * - priority: Filter by priority (low/medium/high)
  * - unread: Get only unread notifications (true)
  * - count: Get notification counts only (true)
  */
 export async function GET(req) {
   try {
+    // Connect to database
+    await connectMongo()
+
     const url = new URL(req.url)
     const searchParams = new URLSearchParams(url.searchParams)
     const queryParamsObj = Object.fromEntries(searchParams.entries())
@@ -198,6 +201,9 @@ export async function GET(req) {
  */
 export async function POST(request) {
   try {
+    // Connect to database
+    await connectMongo()
+
     const reqBody = await request.json()
 
     // Get session for authentication
@@ -269,6 +275,9 @@ export async function POST(request) {
  */
 export async function PUT(request) {
   try {
+    // Connect to database
+    await connectMongo()
+
     const reqBody = await request.json()
 
     // Get session for authentication
@@ -363,6 +372,9 @@ export async function PUT(request) {
  */
 export async function DELETE(req) {
   try {
+    // Connect to database
+    await connectMongo()
+
     const url = new URL(req.url)
     const searchParams = new URLSearchParams(url.searchParams)
     const id = searchParams.get('id')

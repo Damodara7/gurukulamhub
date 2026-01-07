@@ -20,8 +20,13 @@ const notificationSchema = new mongoose.Schema(
         'QUIZ_PUBLISHED',
         'GAME_CREATED',
         'GAME_ACCESS_REMOVED',
+        'GAME_DELETED',
+        'GAME_REMINDER',
         'GROUP_JOINED',
         'GROUP_REMOVED',
+        'GROUP_REQUEST_RECEIVED',
+        'GROUP_REQUEST_APPROVED',
+        'GROUP_REQUEST_REJECTED',
         'ROLE_ASSIGNED',
         'ROLE_REMOVED',
         'PROFILE_COMPLETION_REMINDER'
@@ -54,14 +59,6 @@ const notificationSchema = new mongoose.Schema(
     isFavorite: {
       type: Boolean,
       default: false,
-      index: true
-    },
-
-    // **Priority (for sorting/filtering)**
-    priority: {
-      type: String,
-      enum: ['low', 'medium', 'high'],
-      default: 'medium',
       index: true
     },
 
@@ -126,9 +123,6 @@ notificationSchema.index({ userId: 1, isRead: 1, createdAt: -1 })
 
 // Compound index for favorite notifications
 notificationSchema.index({ userId: 1, isFavorite: 1, createdAt: -1 })
-
-// Index for priority-based queries
-notificationSchema.index({ userId: 1, priority: -1, createdAt: -1 })
 
 // TTL Index - Auto-delete notifications older than 90 days
 // Note: MongoDB TTL indexes work on date fields and delete documents after the specified seconds

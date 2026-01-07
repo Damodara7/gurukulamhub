@@ -7,6 +7,7 @@ import {
   broadcastNotificationCount,
   broadcastNotificationUpdate
 } from '../ws/notifications/[userId]/publishers.js'
+import { sendPushNotification } from './push.service.js'
 
 export const getOne = async (filter = {}) => {
   await connectMongo()
@@ -74,7 +75,6 @@ export const getAll = async (userId, options = {}) => {
     const isRead = options.isRead !== undefined ? options.isRead === 'true' || options.isRead === true : undefined
     const isFavorite =
       options.isFavorite !== undefined ? options.isFavorite === 'true' || options.isFavorite === true : undefined
-    const priority = options.priority
     const sortBy = options.sortBy || 'createdAt'
 
     // Handle sortOrder - can be "desc", "asc", or a number
@@ -98,7 +98,6 @@ export const getAll = async (userId, options = {}) => {
     if (type) filter.type = type
     if (isRead !== undefined) filter.isRead = isRead
     if (isFavorite !== undefined) filter.isFavorite = isFavorite
-    if (priority) filter.priority = priority
 
     // Calculate pagination
     const skip = (page - 1) * limit
@@ -265,6 +264,50 @@ export const addOne = async notificationData => {
       // Don't fail the notification creation if WebSocket fails
     }
 
+    // Send push notification
+    try {
+      // Filter out large base64 images from metadata for push notifications
+      // Push notifications have a 4096 byte limit, so exclude large images
+      const filteredMetadata = {}
+      if (notificationData.metadata) {
+        Object.keys(notificationData.metadata).forEach(key => {
+          const value = notificationData.metadata[key]
+          // Skip large base64 images (base64 strings are typically > 1000 chars)
+          if (typeof value === 'string' && value.length > 1000) {
+            return
+          }
+          // Skip known large image fields
+          if (key === 'thumbnailPoster' || key === 'thumbnailUrl' || key === 'avatarImage') {
+            return
+          }
+          filteredMetadata[key] = value
+        })
+      }
+
+      // Use default icon instead of base64 image to keep payload small
+      const pushResult = await sendPushNotification(notificationData.userId, {
+        title: notificationData.title,
+        body: notificationData.message,
+        icon: '/icons/icon-192x192.png', // Always use default icon, not base64 image
+        url: notificationData.actionUrl || '/',
+        tag: notificationData.type,
+        data: {
+          notificationId: notificationObj._id?.toString() || notificationObj._id,
+          type: notificationData.type,
+          ...filteredMetadata
+        }
+      })
+
+      if (pushResult.status === 'success') {
+        console.log(`[Notification Service] ✅ Push notification sent: ${pushResult.message}`)
+      } else {
+        console.warn(`[Notification Service] ⚠️ Push notification failed: ${pushResult.message}`)
+      }
+    } catch (pushError) {
+      console.error('[Notification Service] Error sending push notification:', pushError)
+      // Don't fail the notification creation if push fails
+    }
+
     return {
       status: 'success',
       result: notificationObj,
@@ -374,6 +417,60 @@ export const addMany = async notificationsData => {
     } catch (wsError) {
       console.error('Error broadcasting notifications via WebSocket:', wsError)
       // Don't fail the notification creation if WebSocket fails
+    }
+
+    // Send push notifications for each notification
+    try {
+      for (let i = 0; i < savedNotifications.length; i++) {
+        const savedNotification = savedNotifications[i]
+        const notificationObj = savedNotification.toObject ? savedNotification.toObject() : savedNotification
+        const originalNotificationData = notificationsData[i]
+
+        // Filter out large base64 images from metadata for push notifications
+        // Push notifications have a 4096 byte limit, so exclude large images
+        const filteredMetadata = {}
+        if (originalNotificationData.metadata) {
+          Object.keys(originalNotificationData.metadata).forEach(key => {
+            const value = originalNotificationData.metadata[key]
+            // Skip large base64 images (base64 strings are typically > 1000 chars)
+            if (typeof value === 'string' && value.length > 1000) {
+              return
+            }
+            // Skip known large image fields
+            if (key === 'thumbnailPoster' || key === 'thumbnailUrl' || key === 'avatarImage') {
+              return
+            }
+            filteredMetadata[key] = value
+          })
+        }
+
+        // Use default icon instead of base64 image to keep payload small
+        const pushResult = await sendPushNotification(originalNotificationData.userId, {
+          title: originalNotificationData.title,
+          body: originalNotificationData.message,
+          icon: '/icons/icon-192x192.png', // Always use default icon, not base64 image
+          url: originalNotificationData.actionUrl || '/',
+          tag: originalNotificationData.type,
+          data: {
+            notificationId: notificationObj._id?.toString() || notificationObj._id,
+            type: originalNotificationData.type,
+            ...filteredMetadata
+          }
+        })
+
+        if (pushResult.status === 'success') {
+          console.log(
+            `[Notification Service] ✅ Push notification sent to user ${originalNotificationData.userId}: ${pushResult.message}`
+          )
+        } else {
+          console.warn(
+            `[Notification Service] ⚠️ Push notification failed for user ${originalNotificationData.userId}: ${pushResult.message}`
+          )
+        }
+      }
+    } catch (pushError) {
+      console.error('[Notification Service] Error sending push notifications:', pushError)
+      // Don't fail the notification creation if push fails
     }
 
     return {

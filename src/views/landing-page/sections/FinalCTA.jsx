@@ -42,8 +42,8 @@ function FinalCTA({ isAuthenticated = false }) {
         }}
       />
 
-      <Container maxWidth="md" sx={{ position: 'relative', zIndex: 1 }}>
-        <Stack spacing={5} alignItems="center" textAlign="center">
+      <Container maxWidth='md' sx={{ position: 'relative', zIndex: 1 }}>
+        <Stack spacing={5} alignItems='center' textAlign='center'>
           {/* Icon */}
           <Box
             sx={{
@@ -56,21 +56,19 @@ function FinalCTA({ isAuthenticated = false }) {
 
           {/* Headline */}
           <Typography
-            variant="h2"
+            variant='h2'
             sx={{
               fontWeight: 900,
               fontSize: { xs: '2rem', md: '3rem' },
               lineHeight: 1.2
             }}
           >
-            {isAuthenticated 
-              ? 'Keep Your Momentum Going!' 
-              : 'Ready to Start Your Learning Journey?'}
+            {isAuthenticated ? 'Keep Your Momentum Going!' : 'Ready to Start Your Learning Journey?'}
           </Typography>
 
           {/* Subheadline */}
           <Typography
-            variant="h5"
+            variant='h5'
             sx={{
               fontSize: { xs: '1.1rem', md: '1.3rem' },
               opacity: 0.95,
@@ -85,9 +83,9 @@ function FinalCTA({ isAuthenticated = false }) {
 
           {/* CTA Button */}
           <Button
-            variant="contained"
+            variant='contained'
             component='label'
-            size="large"
+            size='large'
             startIcon={<RocketLaunchIcon />}
             onClick={handleGetStarted}
             sx={{
@@ -110,38 +108,38 @@ function FinalCTA({ isAuthenticated = false }) {
               transition: 'all 0.3s ease'
             }}
           >
-            {isAuthenticated ? 'Start New Quiz Now' : 'Get Started Free Now'}
+            {isAuthenticated ? 'Start Playing Quizzes Now' : 'Get Started Free Now'}
           </Button>
 
           {/* Trust Badges */}
           {!isAuthenticated && (
-            <Stack 
-              direction={{ xs: 'column', sm: 'row' }} 
-              spacing={{ xs: 1.5, sm: 3 }} 
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={{ xs: 1.5, sm: 3 }}
               sx={{ pt: 2 }}
-              alignItems="center"
+              alignItems='center'
             >
-              <Typography 
-                variant="body1" 
-                sx={{ 
+              <Typography
+                variant='body1'
+                sx={{
                   opacity: 0.9,
                   fontSize: { xs: '0.875rem', md: '1rem' }
                 }}
               >
                 ✓ No credit card required
               </Typography>
-              <Typography 
-                variant="body1" 
-                sx={{ 
+              <Typography
+                variant='body1'
+                sx={{
                   opacity: 0.9,
                   fontSize: { xs: '0.875rem', md: '1rem' }
                 }}
               >
                 ✓ Free forever
               </Typography>
-              <Typography 
-                variant="body1" 
-                sx={{ 
+              <Typography
+                variant='body1'
+                sx={{
                   opacity: 0.9,
                   fontSize: { xs: '0.875rem', md: '1rem' }
                 }}
@@ -155,7 +153,8 @@ function FinalCTA({ isAuthenticated = false }) {
 
       <style jsx global>{`
         @keyframes bounce {
-          0%, 100% {
+          0%,
+          100% {
             transform: translateY(0);
           }
           50% {
@@ -168,4 +167,3 @@ function FinalCTA({ isAuthenticated = false }) {
 }
 
 export default FinalCTA
-
