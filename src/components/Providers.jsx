@@ -14,6 +14,7 @@ import AppReactToastify from '@/libs/styles/AppReactToastify'
 
 // PWA Components
 import PWARegistration from '@/components/PWARegistration'
+import SubscribeToPush from '@/components/push/SubscribeToPush'
 
 // Util Imports
 import { getDemoName, getMode, getSettingsFromCookie, getSystemMode } from '@core/utils/serverHelpers'
@@ -41,6 +42,7 @@ const Providers = async props => {
             <GameProvider>
               <GroupProvider>
                 <PWARegistration />
+                <SubscribeToPush /> {/* Auto-subscribe when user logs in and permission is granted */}
                 {children}
               </GroupProvider>
             </GameProvider>

@@ -82,6 +82,8 @@ const pwaConfig = withPWA({
     disableDevLogs: false, // Enable dev logs to see PWA-related console messages
     // In development, use NetworkFirst for everything to avoid blocking
     mode: process.env.NODE_ENV === 'development' ? 'development' : 'production',
+    // Import push notification handler
+    importScripts: ['/push-handler.js'],
     // Override offline.html precache entry to use file content hash instead of static "development"
     // This ensures offline.html updates when file content changes
     additionalManifestEntries: (() => {

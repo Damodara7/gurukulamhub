@@ -16,7 +16,8 @@ import UserProfile from '@/app/api/profile/profile.model'
 import Group from '@/app/api/group/group.model'
 import {
   createGameCreatedNotification,
-  createGameAccessRemovedNotification
+  createGameAccessRemovedNotification,
+  createGameDeletedNotification
 } from '../notifications/notification.helpers.js'
 
 // Helper to enrich a single game with registeredUsers, participatedUsers, and questions
@@ -1005,6 +1006,56 @@ export const deleteOne = async (gameId, { email }) => {
 
     // Revert sponsorships
     await revertSponsorshipsForGame(deletedGame)
+
+    // Send notifications to users who had access to this game
+    try {
+      console.log('[Game Service] ===== GAME DELETION NOTIFICATION START =====')
+      let usersToNotify = []
+
+      // If game had a group, notify all members of that group
+      if (existingGame.groupId) {
+        const group = await Group.findById(existingGame.groupId).populate('members').lean()
+        if (group && group.members) {
+          usersToNotify = group.members.map(member => (member._id || member).toString())
+          console.log(`[Game Service] Found ${usersToNotify.length} group members to notify`)
+        }
+      } else {
+        // If no group, notify all users who have GAME_CREATED notification for this game
+        const Notification = mongoose.model('notifications')
+        const existingNotifications = await Notification.find({
+          type: 'GAME_CREATED',
+          'relatedEntity.entityType': 'game',
+          'relatedEntity.entityId': gameId.toString()
+        })
+          .select('userId')
+          .lean()
+
+        usersToNotify = existingNotifications.map(n => n.userId.toString())
+        console.log(`[Game Service] Found ${usersToNotify.length} users with game notifications to notify`)
+      }
+
+      // Send deletion notifications
+      if (usersToNotify.length > 0) {
+        const notificationResult = await createGameDeletedNotification(usersToNotify, {
+          _id: deletedGame._id,
+          title: deletedGame.title,
+          deletedBy: user.email,
+          deleterEmail: user.email,
+          thumbnailPoster: deletedGame.thumbnailPoster || deletedGame.thumbnailUrl,
+          quiz: deletedGame.quiz
+        })
+        console.log(
+          `[Game Service] ✅ Sent deletion notifications to ${usersToNotify.length} users:`,
+          notificationResult
+        )
+      } else {
+        console.log('[Game Service] ⏭️ No users to notify for game deletion')
+      }
+      console.log('[Game Service] ===== GAME DELETION NOTIFICATION COMPLETE =====')
+    } catch (notificationError) {
+      console.error('[Game Service] Error sending game deletion notifications:', notificationError)
+      // Don't fail the game deletion if notification creation fails
+    }
 
     // Broadcast games list update
     broadcastGamesUpdate()

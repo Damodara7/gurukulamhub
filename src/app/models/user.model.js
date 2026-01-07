@@ -87,7 +87,32 @@ export const userSchema = new mongoose.Schema(
     referralToken: {
       type: String,
       unique: true
-    }
+    },
+    pushSubscriptions: [
+      {
+        endpoint: {
+          type: String,
+          required: true
+        },
+        keys: {
+          p256dh: {
+            type: String,
+            required: true
+          },
+          auth: {
+            type: String,
+            required: true
+          }
+        },
+        deviceInfo: {
+          userAgent: String,
+          createdAt: {
+            type: Date,
+            default: Date.now
+          }
+        }
+      }
+    ]
   },
   { timestamps: true }
 )

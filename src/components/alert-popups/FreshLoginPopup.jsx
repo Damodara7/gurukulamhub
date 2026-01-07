@@ -175,7 +175,7 @@ const FreshLoginPopup = ({ alertData = {}, refreshData = () => {} }) => {
         <AlertVideos ref={alertVideosRef} videos={alertData?.alert?.videos} onVideoEnd={handleVideoEnd} />
       </DialogContent>
       <DialogActions className='pt-2'>
-        <Button onClick={handleRemindMeLater} variant='outlined' color='secondary' disabled={isAllVideosWatched}>
+        <Button onClick={handleRemindMeLater} variant='outlined' color='primary' disabled={isAllVideosWatched}>
           Remind me later
         </Button>
         <Button

@@ -1,4 +1,5 @@
 import * as NotificationService from './notification.service.js'
+import mongoose from 'mongoose'
 
 export const createQuizApprovedNotification = async (userId, quizData) => {
   try {
@@ -12,7 +13,6 @@ export const createQuizApprovedNotification = async (userId, quizData) => {
       type: 'QUIZ_APPROVED',
       title: `Quiz "${quizTitle}" Approved`,
       message: `Now ur quiz "${quizTitle}" is approved by ${approvedBy}.`,
-      priority: 'high',
       relatedEntity: {
         entityType: 'quiz',
         entityId: quizId
@@ -52,7 +52,6 @@ export const createQuizRejectedNotification = async (userId, quizData) => {
       type: 'QUIZ_REJECTED',
       title: `Quiz "${quizTitle}" Rejected`,
       message: `Now ur quiz "${quizTitle}" is rejected.${remarks.length > 0 ? ' Please review the remarks.' : ''}`,
-      priority: 'high',
       relatedEntity: {
         entityType: 'quiz',
         entityId: quizId
@@ -124,7 +123,6 @@ export const createGameCreatedNotification = async (userIds, gameData) => {
       type: 'GAME_CREATED',
       title: `Game On: "${gameTitle}"`,
       message: message,
-      priority: 'high',
       relatedEntity: {
         entityType: 'game',
         entityId: gameId
@@ -177,7 +175,6 @@ export const createGroupJoinedNotification = async (userId, groupData) => {
       type: 'GROUP_JOINED',
       title: `Joined in Group: "${groupName}"`,
       message: `Now u are added to the "${groupName}" group.`,
-      priority: 'medium',
       relatedEntity: {
         entityType: 'group',
         entityId: groupId
@@ -210,13 +207,19 @@ export const createGroupRemovedNotification = async (userId, groupData) => {
     const groupName = groupData.groupName || 'a group'
     const removedBy =
       groupData.removedBy || groupData.updatorEmail || groupData.createdBy?.email || groupData.creatorEmail || 'Admin'
+    const isDeleted = groupData.isDeleted || false
+
+    // Different message for group deletion vs user removal
+    const title = isDeleted ? `Group Deleted: "${groupName}"` : `Removed from Group: "${groupName}"`
+    const message = isDeleted
+      ? `The group "${groupName}" has been deleted. You are no longer a member of this group.`
+      : `Now u are removed from the "${groupName}" group.`
 
     const notificationData = {
       userId: userId,
       type: 'GROUP_REMOVED',
-      title: `Removed from Group: "${groupName}"`,
-      message: `Now u are removed from the "${groupName}" group.`,
-      priority: 'high',
+      title: title,
+      message: message,
       relatedEntity: {
         entityType: 'group',
         entityId: groupId
@@ -225,7 +228,8 @@ export const createGroupRemovedNotification = async (userId, groupData) => {
         groupName,
         groupId,
         removedBy,
-        removedAt: new Date().toISOString()
+        removedAt: new Date().toISOString(),
+        isDeleted: isDeleted
       },
       actionUrl: `/mygroups`,
       actionLabel: 'View Groups'
@@ -253,7 +257,6 @@ export const createRoleAssignedNotification = async (userId, roleData) => {
       type: 'ROLE_ASSIGNED',
       title: `Role Assigned: "${roleName}"`,
       message: `Now u are assigned the  "${roleName}" role.`,
-      priority: 'high',
       relatedEntity: {
         entityType: 'role',
         entityId: roleName
@@ -291,7 +294,6 @@ export const createRoleRemovedNotification = async (userId, roleData) => {
       type: 'ROLE_REMOVED',
       title: `Role Removed: "${roleName}"`,
       message: `Now u are removed from the "${roleName}" role.`,
-      priority: 'high',
       relatedEntity: {
         entityType: 'role',
         entityId: roleName
@@ -362,7 +364,6 @@ export const createProfileCompletionNotification = async (userId, profileData) =
       type: 'PROFILE_COMPLETION_REMINDER',
       title: 'Complete Your Profile',
       message: message,
-      priority: 'low',
       relatedEntity: {
         entityType: 'profile',
         entityId: profileData.profileId || userId
@@ -414,7 +415,6 @@ export const createQuizPendingApprovalNotification = async (adminUserIds, quizDa
       type: 'QUIZ_PENDING_APPROVAL',
       title: `Quiz on "${quizTitle}" waiting for Approval`,
       message: `Now ur quiz "${quizTitle}" is waiting for approval by ${createdBy}. Please review and approve or reject it.`,
-      priority: 'high',
       relatedEntity: {
         entityType: 'quiz',
         entityId: quizId
@@ -488,7 +488,6 @@ export const createQuizPublishedNotification = async (userIds, quizData) => {
       type: 'QUIZ_PUBLISHED',
       title: `Quiz on "${quizTitle}" is published`,
       message: message,
-      priority: 'high',
       relatedEntity: {
         entityType: 'quiz',
         entityId: quizId
@@ -567,7 +566,6 @@ export const createGameAccessRemovedNotification = async (userIds, gameData) => 
       type: 'GAME_ACCESS_REMOVED',
       title: `U are removed from the "${gameTitle}" game`,
       message: message,
-      priority: 'high',
       relatedEntity: {
         entityType: 'game',
         entityId: gameId
@@ -602,6 +600,427 @@ export const createGameAccessRemovedNotification = async (userIds, gameData) => 
       status: 'error',
       result: null,
       message: error.message || 'Failed to create game access removed notifications'
+    }
+  }
+}
+
+export const createGameDeletedNotification = async (userIds, gameData) => {
+  console.log('[Notification Helper] ===== createGameDeletedNotification START =====')
+  console.log('[Notification Helper] Input:', {
+    userIds,
+    userIdsCount: userIds?.length,
+    gameData
+  })
+
+  try {
+    if (!Array.isArray(userIds) || userIds.length === 0) {
+      console.log('[Notification Helper] ⚠️ No users to notify (empty array)')
+      return {
+        status: 'success',
+        result: null,
+        message: 'No users to notify'
+      }
+    }
+
+    const gameId = gameData._id?.toString() || gameData.id || gameData._id
+    const gameTitle = gameData.title || gameData.quiz?.title || 'Game'
+    const deletedBy = gameData.deletedBy || gameData.deleterEmail || 'Admin'
+    const gameThumbnail = gameData.thumbnailPoster || gameData.thumbnail || gameData.quiz?.thumbnail || null
+
+    console.log('[Notification Helper] Prepared data:', {
+      gameId,
+      gameTitle,
+      deletedBy,
+      notificationCount: userIds.length
+    })
+
+    const notificationsData = userIds.map(userId => ({
+      userId: userId,
+      type: 'GAME_DELETED',
+      title: `Game Deleted: "${gameTitle}"`,
+      message: `The game "${gameTitle}" has been deleted. You are no longer able to access this game.`,
+      relatedEntity: {
+        entityType: 'game',
+        entityId: gameId
+      },
+      metadata: {
+        gameTitle,
+        gameId,
+        deletedBy,
+        deletedAt: new Date().toISOString(),
+        avatarImage: gameThumbnail
+      },
+      actionUrl: `/public-games`,
+      actionLabel: 'View Games'
+    }))
+
+    console.log(
+      '[Notification Helper] Calling NotificationService.addMany with',
+      notificationsData.length,
+      'notifications'
+    )
+    const result = await NotificationService.addMany(notificationsData)
+    console.log('[Notification Helper] ✅ NotificationService.addMany result:', result)
+    console.log('[Notification Helper] ===== createGameDeletedNotification END =====')
+    return result
+  } catch (error) {
+    console.error('[Notification Helper] ❌❌❌ ERROR in createGameDeletedNotification ❌❌❌')
+    console.error('[Notification Helper] Error message:', error.message)
+    console.error('[Notification Helper] Error stack:', error.stack)
+    console.error('[Notification Helper] Full error:', error)
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to create game deleted notifications'
+    }
+  }
+}
+
+export const createGroupRequestReceivedNotification = async (adminUserId, requestData) => {
+  try {
+    console.log('[Notification Helper] ===== createGroupRequestReceivedNotification START =====')
+    console.log('[Notification Helper] Input:', {
+      adminUserId,
+      adminUserIdType: typeof adminUserId,
+      requestData
+    })
+
+    // Ensure adminUserId is valid
+    if (!adminUserId) {
+      console.error('[Notification Helper] ❌ adminUserId is missing or invalid')
+      return {
+        status: 'error',
+        result: null,
+        message: 'Admin user ID is required'
+      }
+    }
+
+    // Ensure userId is valid - mongoose can handle both ObjectId and valid ObjectId string
+    // Keep as-is if it's already an ObjectId, otherwise ensure it's a valid ObjectId string
+    let adminUserIdValid = adminUserId
+    if (typeof adminUserId === 'string' && !mongoose.Types.ObjectId.isValid(adminUserId)) {
+      console.error('[Notification Helper] ❌ adminUserId is not a valid ObjectId string')
+      return {
+        status: 'error',
+        result: null,
+        message: 'Invalid admin user ID format'
+      }
+    }
+
+    const groupId = requestData.groupId?.toString() || requestData.groupId
+    const groupName = requestData.groupName || 'a group'
+    const requesterEmail = requestData.userEmail || requestData.requesterEmail || 'a user'
+    const requesterName = requestData.requesterName || requestData.userName || requesterEmail.split('@')[0]
+    const requestId = requestData._id?.toString() || requestData.id || requestData.requestId
+    const requestedAt = requestData.createdAt || requestData.requestedAt || new Date()
+
+    console.log('[Notification Helper] Prepared data:', {
+      adminUserId: adminUserIdValid,
+      adminUserIdType: typeof adminUserIdValid,
+      groupId,
+      groupName,
+      requesterEmail,
+      requesterName,
+      requestId
+    })
+
+    const notificationData = {
+      userId: adminUserIdValid,
+      type: 'GROUP_REQUEST_RECEIVED',
+      title: `New Join Request: "${groupName}"`,
+      message: `${requesterName} (${requesterEmail}) wants to join the group "${groupName}".`,
+      relatedEntity: {
+        entityType: 'group',
+        entityId: groupId
+      },
+      metadata: {
+        groupName,
+        groupId,
+        requesterEmail,
+        requesterName,
+        requestId,
+        requestedAt: requestedAt instanceof Date ? requestedAt.toISOString() : requestedAt
+      },
+      actionUrl: `/mygroups/${groupId}/requests`,
+      actionLabel: 'Review Request'
+    }
+
+    console.log('[Notification Helper] Notification data prepared:', {
+      userId: notificationData.userId,
+      userIdType: typeof notificationData.userId,
+      type: notificationData.type,
+      title: notificationData.title,
+      message: notificationData.message
+    })
+
+    const result = await NotificationService.addOne(notificationData)
+    console.log('[Notification Helper] ✅ NotificationService.addOne result:', result)
+    console.log('[Notification Helper] ===== createGroupRequestReceivedNotification END =====')
+    return result
+  } catch (error) {
+    console.error('[Notification Helper] ❌❌❌ ERROR in createGroupRequestReceivedNotification ❌❌❌')
+    console.error('[Notification Helper] Error message:', error.message)
+    console.error('[Notification Helper] Error stack:', error.stack)
+    console.error('[Notification Helper] Full error:', error)
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to create group request received notification'
+    }
+  }
+}
+
+export const createGroupRequestApprovedNotification = async (userId, requestData) => {
+  try {
+    console.log('[Notification Helper] ===== createGroupRequestApprovedNotification START =====')
+    console.log('[Notification Helper] Input:', {
+      userId,
+      userIdType: typeof userId,
+      requestData
+    })
+
+    // Validate userId
+    if (!userId) {
+      console.error('[Notification Helper] ❌ userId is missing or invalid')
+      return {
+        status: 'error',
+        result: null,
+        message: 'User ID is required'
+      }
+    }
+
+    if (typeof userId === 'string' && !mongoose.Types.ObjectId.isValid(userId)) {
+      console.error('[Notification Helper] ❌ userId is not a valid ObjectId string')
+      return {
+        status: 'error',
+        result: null,
+        message: 'Invalid user ID format'
+      }
+    }
+
+    const groupId = requestData.groupId?.toString() || requestData.groupId
+    const groupName = requestData.groupName || 'a group'
+    const approvedBy = requestData.approvedBy || requestData.approvedEmail || 'Admin'
+    const approvedAt = requestData.approvedAt || new Date()
+
+    console.log('[Notification Helper] Prepared data:', {
+      userId,
+      groupId,
+      groupName,
+      approvedBy
+    })
+
+    const notificationData = {
+      userId: userId,
+      type: 'GROUP_REQUEST_APPROVED',
+      title: `Request Approved: "${groupName}"`,
+      message: `Your request to join "${groupName}" has been approved!`,
+      relatedEntity: {
+        entityType: 'group',
+        entityId: groupId
+      },
+      metadata: {
+        groupName,
+        groupId,
+        approvedBy,
+        approvedAt: approvedAt instanceof Date ? approvedAt.toISOString() : approvedAt
+      },
+      actionUrl: `/mygroups/${groupId}`,
+      actionLabel: 'View Group'
+    }
+
+    console.log('[Notification Helper] Notification data prepared:', notificationData)
+    const result = await NotificationService.addOne(notificationData)
+    console.log('[Notification Helper] ✅ NotificationService.addOne result:', result)
+    console.log('[Notification Helper] ===== createGroupRequestApprovedNotification END =====')
+    return result
+  } catch (error) {
+    console.error('[Notification Helper] ❌❌❌ ERROR in createGroupRequestApprovedNotification ❌❌❌')
+    console.error('[Notification Helper] Error message:', error.message)
+    console.error('[Notification Helper] Error stack:', error.stack)
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to create group request approved notification'
+    }
+  }
+}
+
+export const createGroupRequestRejectedNotification = async (userId, requestData) => {
+  try {
+    console.log('[Notification Helper] ===== createGroupRequestRejectedNotification START =====')
+    console.log('[Notification Helper] Input:', {
+      userId,
+      userIdType: typeof userId,
+      requestData
+    })
+
+    // Validate userId
+    if (!userId) {
+      console.error('[Notification Helper] ❌ userId is missing or invalid')
+      return {
+        status: 'error',
+        result: null,
+        message: 'User ID is required'
+      }
+    }
+
+    if (typeof userId === 'string' && !mongoose.Types.ObjectId.isValid(userId)) {
+      console.error('[Notification Helper] ❌ userId is not a valid ObjectId string')
+      return {
+        status: 'error',
+        result: null,
+        message: 'Invalid user ID format'
+      }
+    }
+
+    const groupId = requestData.groupId?.toString() || requestData.groupId
+    const groupName = requestData.groupName || 'a group'
+    const rejectedBy = requestData.rejectedBy || requestData.rejectedEmail || 'Admin'
+    const rejectedReason = requestData.rejectedReason || requestData.rejectionReason || null
+    const rejectedAt = requestData.rejectedAt || new Date()
+
+    console.log('[Notification Helper] Prepared data:', {
+      userId,
+      groupId,
+      groupName,
+      rejectedBy,
+      hasRejectionReason: !!rejectedReason
+    })
+
+    // Build message with optional rejection reason
+    let message = `Your request to join "${groupName}" was rejected.`
+    if (rejectedReason && rejectedReason.trim()) {
+      message += ` Reason: ${rejectedReason.trim()}`
+    }
+
+    const notificationData = {
+      userId: userId,
+      type: 'GROUP_REQUEST_REJECTED',
+      title: `Request Rejected: "${groupName}"`,
+      message: message,
+      relatedEntity: {
+        entityType: 'group',
+        entityId: groupId
+      },
+      metadata: {
+        groupName,
+        groupId,
+        rejectedBy,
+        rejectedAt: rejectedAt instanceof Date ? rejectedAt.toISOString() : rejectedAt,
+        rejectedReason: rejectedReason || null
+      },
+      actionUrl: `/mygroups`,
+      actionLabel: 'View Groups'
+    }
+
+    console.log('[Notification Helper] Notification data prepared:', notificationData)
+    const result = await NotificationService.addOne(notificationData)
+    console.log('[Notification Helper] ✅ NotificationService.addOne result:', result)
+    console.log('[Notification Helper] ===== createGroupRequestRejectedNotification END =====')
+    return result
+  } catch (error) {
+    console.error('[Notification Helper] ❌❌❌ ERROR in createGroupRequestRejectedNotification ❌❌❌')
+    console.error('[Notification Helper] Error message:', error.message)
+    console.error('[Notification Helper] Error stack:', error.stack)
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to create group request rejected notification'
+    }
+  }
+}
+
+export const createGameReminderNotification = async (userId, gameData) => {
+  try {
+    console.log('[Notification Helper] ===== createGameReminderNotification START =====')
+    console.log('[Notification Helper] Input:', {
+      userId,
+      gameData
+    })
+
+    // Validate userId
+    if (!userId) {
+      console.error('[Notification Helper] ❌ userId is missing or invalid')
+      return {
+        status: 'error',
+        result: null,
+        message: 'User ID is required'
+      }
+    }
+
+    if (typeof userId === 'string' && !mongoose.Types.ObjectId.isValid(userId)) {
+      console.error('[Notification Helper] ❌ userId is not a valid ObjectId string')
+      return {
+        status: 'error',
+        result: null,
+        message: 'Invalid user ID format'
+      }
+    }
+
+    const gameId = gameData._id?.toString() || gameData.id || gameData._id
+    const gameTitle = gameData.title || 'Game'
+    const startTime = gameData.startTime ? new Date(gameData.startTime) : null
+    const gameThumbnail = gameData.thumbnailPoster || gameData.thumbnail || null
+
+    if (!startTime) {
+      console.error('[Notification Helper] ❌ Game start time is missing')
+      return {
+        status: 'error',
+        result: null,
+        message: 'Game start time is required'
+      }
+    }
+
+    // Format the start time for display
+    const formattedStartTime = startTime.toLocaleString('en-US', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZoneName: 'short'
+    })
+
+    const notificationData = {
+      userId: userId,
+      type: 'GAME_REMINDER',
+      title: `Game Reminder: "${gameTitle}"`,
+      message: `Don't forget! Your game "${gameTitle}" starts tomorrow at ${formattedStartTime}. Be ready to join!`,
+      relatedEntity: {
+        entityType: 'game',
+        entityId: gameId
+      },
+      metadata: {
+        gameTitle,
+        gameId,
+        startTime: startTime.toISOString(),
+        formattedStartTime,
+        reminderSentAt: new Date().toISOString()
+      },
+      actionUrl: `/public-games/${gameId}/play`,
+      actionLabel: 'View Game'
+    }
+
+    console.log('[Notification Helper] Notification data prepared:', {
+      userId: notificationData.userId,
+      type: notificationData.type,
+      title: notificationData.title
+    })
+
+    const result = await NotificationService.addOne(notificationData)
+    console.log('[Notification Helper] ✅ NotificationService.addOne result:', result)
+    console.log('[Notification Helper] ===== createGameReminderNotification END =====')
+    return result
+  } catch (error) {
+    console.error('[Notification Helper] ❌❌❌ ERROR in createGameReminderNotification ❌❌❌')
+    console.error('[Notification Helper] Error message:', error.message)
+    console.error('[Notification Helper] Error stack:', error.stack)
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to create game reminder notification'
     }
   }
 }

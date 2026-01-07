@@ -7,7 +7,11 @@ import Game from '../game/game.model.js'
 import GroupRequest from '../group-request/group-request.model.js'
 import { broadcastGroupsList } from '../ws/groups/publishers'
 import { broadcastGroupDetails } from '../ws/groups/[groupId]/publishers'
-import { createGroupJoinedNotification, createGroupRemovedNotification } from '../notifications/notification.helpers.js'
+import {
+  createGroupJoinedNotification,
+  createGroupRemovedNotification,
+  createGameCreatedNotification
+} from '../notifications/notification.helpers.js'
 
 export const getOne = async (filter = {}) => {
   await connectMongo()
@@ -670,7 +674,7 @@ export const deleteOne = async groupId => {
   await connectMongo()
   try {
     // Find the existing group by ID and ensure it's not already deleted
-    const existingGroup = await Group.findOne({ _id: groupId, isDeleted: false })
+    const existingGroup = await Group.findOne({ _id: groupId, isDeleted: false }).populate('members').lean()
 
     if (!existingGroup) {
       return {
@@ -678,6 +682,56 @@ export const deleteOne = async groupId => {
         result: null,
         message: 'Group not found or already deleted'
       }
+    }
+
+    // Get group members BEFORE deletion (for notifications)
+    const groupMemberIds = existingGroup.members
+      ? existingGroup.members.map(member => (member._id || member).toString())
+      : []
+    const groupName = existingGroup.groupName || 'the group'
+
+    console.log(`[Group Service] Group deletion: Found ${groupMemberIds.length} members to notify`)
+
+    // Send GROUP_REMOVED notifications to all group members
+    try {
+      console.log('[Group Service] ===== GROUP DELETION NOTIFICATIONS START =====')
+      if (groupMemberIds.length > 0) {
+        const UserModel = mongoose.model('users')
+        const groupMembers = await UserModel.find({ _id: { $in: groupMemberIds } }).lean()
+
+        for (const member of groupMembers) {
+          try {
+            await createGroupRemovedNotification(member._id, {
+              _id: groupId,
+              groupName: groupName,
+              removedBy: 'System',
+              updatorEmail: 'System',
+              isDeleted: true
+            })
+          } catch (notificationError) {
+            console.error(`Error creating group removed notification for user ${member._id}:`, notificationError)
+            // Continue even if notification fails
+          }
+        }
+        console.log(`[Group Service] ✅ Sent GROUP_REMOVED notifications to ${groupMembers.length} group members`)
+      } else {
+        console.log('[Group Service] ⏭️ No group members to notify')
+      }
+    } catch (notificationError) {
+      console.error('[Group Service] Error sending group deletion notifications:', notificationError)
+      // Continue with deletion even if notifications fail
+    }
+
+    // Find all games using this group (BEFORE removing groupId)
+    let gamesUsingGroup = []
+    try {
+      gamesUsingGroup = await Game.find({
+        groupId: groupId,
+        isDeleted: false
+      }).lean()
+      console.log(`[Group Service] Found ${gamesUsingGroup.length} games using this group`)
+    } catch (gameQueryError) {
+      console.error('[Group Service] Error finding games using group:', gameQueryError)
     }
 
     // Remove group from all users before soft delete
@@ -698,6 +752,80 @@ export const deleteOne = async groupId => {
       // Continue with group deletion even if game update fails
     }
 
+    // Send GAME_CREATED notifications to users who were NOT in the group
+    try {
+      if (gamesUsingGroup.length > 0) {
+        console.log('[Group Service] ===== GAME NOTIFICATIONS FOR GROUP DELETION START =====')
+        const Notification = mongoose.model('notifications')
+
+        // Get all active users
+        const allActiveUsers = await User.find({
+          isActive: true,
+          isVerified: true
+        })
+          .select('_id')
+          .lean()
+
+        const allActiveUserIds = allActiveUsers.map(user => user._id.toString())
+        console.log(`[Group Service] Found ${allActiveUserIds.length} active users`)
+
+        // Exclude users who were in the deleted group
+        const usersNotInGroup = allActiveUserIds.filter(userId => !groupMemberIds.includes(userId))
+        console.log(`[Group Service] Users not in deleted group: ${usersNotInGroup.length}`)
+
+        for (const game of gamesUsingGroup) {
+          try {
+            // Find users who already have GAME_CREATED notification for this game
+            const existingNotifications = await Notification.find({
+              type: 'GAME_CREATED',
+              'relatedEntity.entityType': 'game',
+              'relatedEntity.entityId': game._id.toString()
+            })
+              .select('userId')
+              .lean()
+
+            const usersWithExistingNotifications = existingNotifications.map(n => n.userId.toString())
+            console.log(
+              `[Group Service] Game "${game.title}": ${usersWithExistingNotifications.length} users already have notification`
+            )
+
+            // Exclude users who already have notifications
+            const usersToNotify = usersNotInGroup.filter(userId => !usersWithExistingNotifications.includes(userId))
+
+            console.log(`[Group Service] Game "${game.title}": ${usersToNotify.length} users to notify`)
+
+            // Send GAME_CREATED notifications to eligible users
+            if (usersToNotify.length > 0) {
+              await createGameCreatedNotification(usersToNotify, {
+                _id: game._id,
+                title: game.title,
+                groupName: null, // Game is now public, no group
+                createdBy: game.creatorEmail,
+                registrationDeadline: game.registrationEndTime || game.endTime,
+                maxParticipants: game.maxPlayers,
+                thumbnailPoster: game.thumbnailPoster || game.thumbnailUrl,
+                quiz: game.quiz
+              })
+              console.log(
+                `[Group Service] ✅ Sent GAME_CREATED notifications for game "${game.title}" to ${usersToNotify.length} users`
+              )
+            } else {
+              console.log(`[Group Service] ⏭️ All eligible users already have notifications for game "${game.title}"`)
+            }
+          } catch (gameNotificationError) {
+            console.error(`[Group Service] Error sending notifications for game ${game._id}:`, gameNotificationError)
+            // Continue with next game even if this one fails
+          }
+        }
+        console.log('[Group Service] ===== GAME NOTIFICATIONS FOR GROUP DELETION COMPLETE =====')
+      } else {
+        console.log('[Group Service] ⏭️ No games using this group, skipping game notifications')
+      }
+    } catch (gameNotificationError) {
+      console.error('[Group Service] Error processing game notifications for group deletion:', gameNotificationError)
+      // Continue with deletion even if game notifications fail
+    }
+
     // Delete all group requests associated with this group
     try {
       const deleteResult = await GroupRequest.deleteMany({ groupId: groupId })
@@ -708,11 +836,15 @@ export const deleteOne = async groupId => {
     }
 
     // Perform soft delete
-    existingGroup.isDeleted = true
-    existingGroup.deletedAt = new Date()
+    const groupToDelete = await Group.findById(groupId)
+    if (groupToDelete) {
+      groupToDelete.isDeleted = true
+      groupToDelete.deletedAt = new Date()
+      await groupToDelete.save()
+    }
 
-    // Save the updated group
-    const deletedGroup = await existingGroup.save()
+    // Get deleted group for return
+    const deletedGroup = await Group.findById(groupId).lean()
 
     // Broadcast WebSocket event for group deletion
     try {
@@ -720,6 +852,8 @@ export const deleteOne = async groupId => {
     } catch (wsError) {
       console.error('Error broadcasting group deleted event:', wsError)
     }
+
+    console.log('[Group Service] ===== GROUP DELETION NOTIFICATIONS COMPLETE =====')
 
     return {
       status: 'success',
