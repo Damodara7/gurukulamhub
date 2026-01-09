@@ -1248,6 +1248,21 @@ export const joinGame = async (gameId, userData) => {
     })
     await player.save()
 
+    // Send registration notification to user (with push notification)
+    try {
+      await createGameRegisteredNotification(user._id, {
+        _id: game._id,
+        title: game.title,
+        startTime: game.startTime,
+        registrationEndTime: game.registrationEndTime,
+        thumbnailPoster: game.thumbnailPoster || game.thumbnailUrl,
+        quiz: game.quiz
+      })
+    } catch (notificationError) {
+      console.error('Error sending game registration notification:', notificationError)
+      // Don't fail the registration if notification fails
+    }
+
     const enrichedGame = await enrichGameWithDetails(game)
 
     broadcastGameDetailsUpdates(gameId)

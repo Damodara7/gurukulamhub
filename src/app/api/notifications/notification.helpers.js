@@ -931,9 +931,9 @@ export const createGroupRequestRejectedNotification = async (userId, requestData
   }
 }
 
-export const createGameReminderNotification = async (userId, gameData) => {
+export const createGameRegisteredNotification = async (userId, gameData) => {
   try {
-    console.log('[Notification Helper] ===== createGameReminderNotification START =====')
+    console.log('[Notification Helper] ===== createGameRegisteredNotification START =====')
     console.log('[Notification Helper] Input:', {
       userId,
       gameData
@@ -959,35 +959,42 @@ export const createGameReminderNotification = async (userId, gameData) => {
     }
 
     const gameId = gameData._id?.toString() || gameData.id || gameData._id
-    const gameTitle = gameData.title || 'Game'
+    const gameTitle = gameData.title || gameData.quiz?.title || 'Game'
     const startTime = gameData.startTime ? new Date(gameData.startTime) : null
-    const gameThumbnail = gameData.thumbnailPoster || gameData.thumbnail || null
+    const gameThumbnail = gameData.thumbnailPoster || gameData.thumbnail || gameData.quiz?.thumbnail || null
+    const registrationDeadline = gameData.registrationEndTime || gameData.registrationDeadline || null
 
-    if (!startTime) {
-      console.error('[Notification Helper] ❌ Game start time is missing')
-      return {
-        status: 'error',
-        result: null,
-        message: 'Game start time is required'
-      }
+    console.log('[Notification Helper] Prepared data:', {
+      userId,
+      gameId,
+      gameTitle,
+      startTime,
+      hasThumbnail: !!gameThumbnail
+    })
+
+    // Format start time for display if available
+    let formattedStartTime = null
+    if (startTime) {
+      formattedStartTime = startTime.toLocaleString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZoneName: 'short'
+      })
     }
 
-    // Format the start time for display
-    const formattedStartTime = startTime.toLocaleString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZoneName: 'short'
-    })
+    const message = startTime
+      ? `You've successfully registered for the game "${gameTitle}". The game starts on ${formattedStartTime}. Get ready to play!`
+      : `You've successfully registered for the game "${gameTitle}". Get ready to play!`
 
     const notificationData = {
       userId: userId,
-      type: 'GAME_REMINDER',
-      title: `Game Reminder: "${gameTitle}"`,
-      message: `Don't forget! Your game "${gameTitle}" starts tomorrow at ${formattedStartTime}. Be ready to join!`,
+      type: 'GAME_REGISTERED',
+      title: `Registered for Game: "${gameTitle}"`,
+      message: message,
       relatedEntity: {
         entityType: 'game',
         entityId: gameId
@@ -995,9 +1002,11 @@ export const createGameReminderNotification = async (userId, gameData) => {
       metadata: {
         gameTitle,
         gameId,
-        startTime: startTime.toISOString(),
+        startTime: startTime ? startTime.toISOString() : null,
         formattedStartTime,
-        reminderSentAt: new Date().toISOString()
+        registrationDeadline: registrationDeadline ? new Date(registrationDeadline).toISOString() : null,
+        registeredAt: new Date().toISOString(),
+        avatarImage: gameThumbnail
       },
       actionUrl: `/public-games/${gameId}/play`,
       actionLabel: 'View Game'
@@ -1011,16 +1020,16 @@ export const createGameReminderNotification = async (userId, gameData) => {
 
     const result = await NotificationService.addOne(notificationData)
     console.log('[Notification Helper] ✅ NotificationService.addOne result:', result)
-    console.log('[Notification Helper] ===== createGameReminderNotification END =====')
+    console.log('[Notification Helper] ===== createGameRegisteredNotification END =====')
     return result
   } catch (error) {
-    console.error('[Notification Helper] ❌❌❌ ERROR in createGameReminderNotification ❌❌❌')
+    console.error('[Notification Helper] ❌❌❌ ERROR in createGameRegisteredNotification ❌❌❌')
     console.error('[Notification Helper] Error message:', error.message)
     console.error('[Notification Helper] Error stack:', error.stack)
     return {
       status: 'error',
       result: null,
-      message: error.message || 'Failed to create game reminder notification'
+      message: error.message || 'Failed to create game registered notification'
     }
   }
 }
