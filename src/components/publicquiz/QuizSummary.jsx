@@ -1,5 +1,5 @@
 // QuizSummary.js
-import React from 'react'
+import React, { useState } from 'react'
 import {
   Box,
   Typography,
@@ -12,7 +12,12 @@ import {
   Paper,
   Chip,
   LinearProgress,
-  Avatar
+  Avatar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton
 } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded'
@@ -23,14 +28,16 @@ import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
 import CancelRoundedIcon from '@mui/icons-material/CancelRounded'
 import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined'
 import WorkspacePremiumOutlinedIcon from '@mui/icons-material/WorkspacePremiumOutlined'
+import ZoomInIcon from '@mui/icons-material/ZoomIn'
 import { useRouter } from 'next/navigation'
 import { formatTime, formatTimeWithUnits } from '../Timer'
-import VideoAd from '@/views/apps/advertisements/VideoAd/VideoAd'
+import ReactPlayer from 'react-player'
 
 const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time }) => {
   const router = useRouter()
   const theme = useTheme()
   const isDarkMode = theme.palette.mode === 'dark'
+  const [imagePreviewOpen, setImagePreviewOpen] = useState({})
 
   // Correct answers count
   const correctAnswersCount = questions.reduce((total, question) => {
@@ -706,18 +713,112 @@ const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time
                   </Stack>
 
                   {(questionObj.mediaType === 'image' || questionObj.mediaType === 'text-image') && questionObj.image && (
-                    <Box
-                      component='img'
-                      src={questionObj.image}
-                      alt='Question'
-                      sx={{
-                        width: '100%',
-                        maxHeight: 260,
-                        objectFit: 'cover',
-                        borderRadius: 2,
-                        border: `1px solid ${alpha(theme.palette.primary.main, 0.15)}`
-                      }}
-                    />
+                    <>
+                      <Box
+                        onClick={() => setImagePreviewOpen({ ...imagePreviewOpen, [question._id]: true })}
+                        sx={{
+                          width: '100%',
+                          position: 'relative',
+                          borderRadius: 2,
+                          overflow: 'hidden',
+                          border: `2px solid ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.25 : 0.15)}`,
+                          boxShadow:
+                            theme.palette.mode === 'dark'
+                              ? '0 12px 32px rgba(0, 0, 0, 0.4)'
+                              : '0 12px 32px rgba(15, 23, 42, 0.15)',
+                          bgcolor: theme.palette.mode === 'dark' 
+                            ? alpha(theme.palette.common.black, 0.3)
+                            : alpha(theme.palette.common.white, 0.8),
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          p: { xs: 1, sm: 1.5 },
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            boxShadow:
+                              theme.palette.mode === 'dark'
+                                ? '0 16px 40px rgba(0, 0, 0, 0.5)'
+                                : '0 16px 40px rgba(15, 23, 42, 0.2)',
+                            borderColor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.35 : 0.25),
+                            '& .enlarge-overlay': {
+                              opacity: 1
+                            }
+                          }
+                        }}
+                      >
+                        <Box
+                          component='img'
+                          src={questionObj.image}
+                          alt='Question'
+                          sx={{
+                            width: 'auto',
+                            height: 'auto',
+                            maxWidth: '100%',
+                            maxHeight: { xs: 180, sm: 220, md: 240 },
+                            objectFit: 'contain',
+                            display: 'block',
+                            borderRadius: 1
+                          }}
+                        />
+                        <Box
+                          className='enlarge-overlay'
+                          sx={{
+                            position: 'absolute',
+                            inset: 0,
+                            bgcolor: alpha(theme.palette.common.black, 0.4),
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            opacity: 0,
+                            transition: 'opacity 0.3s ease',
+                            backdropFilter: 'blur(2px)'
+                          }}
+                        >
+                          <Stack direction='row' spacing={1} alignItems='center'>
+                            <ZoomInIcon sx={{ color: theme.palette.common.white, fontSize: 28 }} />
+                            <Typography
+                              variant='body2'
+                              sx={{
+                                color: theme.palette.common.white,
+                                fontWeight: 600,
+                                bgcolor: alpha(theme.palette.common.black, 0.6),
+                                px: 1.5,
+                                py: 0.5,
+                                borderRadius: 1
+                              }}
+                            >
+                              Click to view full size
+                            </Typography>
+                          </Stack>
+                        </Box>
+                      </Box>
+                      <Dialog
+                        open={imagePreviewOpen[question._id] || false}
+                        onClose={() => setImagePreviewOpen({ ...imagePreviewOpen, [question._id]: false })}
+                        maxWidth='lg'
+                        fullWidth
+                      >
+                        <DialogTitle>Question {index + 1} Image</DialogTitle>
+                        <DialogContent>
+                          <Box
+                            component='img'
+                            src={questionObj.image}
+                            alt='Question Full Size'
+                            sx={{
+                              width: '100%',
+                              height: 'auto',
+                              maxHeight: '70vh',
+                              objectFit: 'contain',
+                              display: 'block'
+                            }}
+                          />
+                        </DialogContent>
+                        <DialogActions>
+                          <Button onClick={() => setImagePreviewOpen({ ...imagePreviewOpen, [question._id]: false })}>Close</Button>
+                        </DialogActions>
+                      </Dialog>
+                    </>
                   )}
 
                   {(questionObj.mediaType === 'text-video' || questionObj.mediaType === 'video') && questionObj.video && (
@@ -737,7 +838,61 @@ const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time
                           {questionObj.text}
                         </Typography>
                       )}
-                      <VideoAd url={questionObj.video || ''} height='180px' showPause autoPlay={false} />
+                      <Box
+                        sx={{
+                          width: '100%',
+                          position: 'relative',
+                          borderRadius: 2,
+                          overflow: 'hidden',
+                          border: `2px solid ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.25 : 0.15)}`,
+                          boxShadow:
+                            theme.palette.mode === 'dark'
+                              ? '0 12px 32px rgba(0, 0, 0, 0.4)'
+                              : '0 12px 32px rgba(15, 23, 42, 0.15)',
+                          bgcolor: theme.palette.mode === 'dark' ? '#000' : '#000',
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            boxShadow:
+                              theme.palette.mode === 'dark'
+                                ? '0 16px 40px rgba(0, 0, 0, 0.5)'
+                                : '0 16px 40px rgba(15, 23, 42, 0.2)',
+                            borderColor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.35 : 0.25)
+                          }
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            width: '100%',
+                            position: 'relative',
+                            paddingTop: { xs: '40%', sm: '35%', md: '32%' }, // Smaller aspect ratio for summary
+                            bgcolor: '#000',
+                            maxHeight: { xs: 200, sm: 240, md: 280 }
+                          }}
+                        >
+                          <ReactPlayer
+                            url={questionObj.video || ''}
+                            playing={false}
+                            controls={true}
+                            width='100%'
+                            height='100%'
+                            style={{
+                              position: 'absolute',
+                              top: 0,
+                              left: 0
+                            }}
+                            config={{
+                              youtube: {
+                                playerVars: {
+                                  autoplay: 0,
+                                  modestbranding: 1,
+                                  rel: 0
+                                }
+                              }
+                            }}
+                            onError={e => console.error('Video error occurred:', e)}
+                          />
+                        </Box>
+                      </Box>
                     </Box>
                   )}
 
@@ -910,45 +1065,111 @@ const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time
                                           {String.fromCharCode(65 + optIndex)}
                                         </Box>
                                       </Stack>
-                                      {option.mediaType === 'image' && option.image && (
-                                        <Box
-                                          sx={{
-                                            width: '100%',
-                                            position: 'relative',
-                                            borderRadius: 1.5,
-                                            overflow: 'hidden',
-                                            border: `1px solid ${alpha(
-                                              theme.palette.primary.main,
-                                              isCorrectSelection
-                                                ? 0.4
-                                                : isWrongSelection
-                                                  ? 0.4
-                                                  : 0.12
-                                            )}`,
-                                            backgroundColor: theme.palette.mode === 'dark' 
-                                              ? alpha(theme.palette.common.black, 0.2)
-                                              : alpha(theme.palette.common.white, 0.5),
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            height: { xs: 100, md: 120 },
-                                            p: { xs: 1, md: 1.2 },
-                                            flexShrink: 0
-                                          }}
-                                        >
+                                      {(option.mediaType === 'image' || option.mediaType === 'text-image') && option.image && (
+                                        <>
                                           <Box
-                                            component='img'
-                                            src={option.image}
-                                            alt={option.text || `Option ${String.fromCharCode(65 + optIndex)}`}
+                                            onClick={() => setImagePreviewOpen({ ...imagePreviewOpen, [`${question._id}-${option.id}`]: true })}
                                             sx={{
                                               width: '100%',
-                                              height: '100%',
-                                              maxWidth: '100%',
-                                              objectFit: 'contain',
-                                              display: 'block'
+                                              position: 'relative',
+                                              borderRadius: 1.5,
+                                              overflow: 'hidden',
+                                              border: `1px solid ${alpha(
+                                                theme.palette.primary.main,
+                                                isCorrectSelection
+                                                  ? 0.4
+                                                  : isWrongSelection
+                                                    ? 0.4
+                                                    : 0.12
+                                              )}`,
+                                              backgroundColor: theme.palette.mode === 'dark' 
+                                                ? alpha(theme.palette.common.black, 0.2)
+                                                : alpha(theme.palette.common.white, 0.5),
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              justifyContent: 'center',
+                                              height: { xs: 100, md: 120 },
+                                              p: { xs: 1, md: 1.2 },
+                                              flexShrink: 0,
+                                              cursor: 'pointer',
+                                              transition: 'all 0.3s ease',
+                                              '&:hover': {
+                                                '& .enlarge-overlay': {
+                                                  opacity: 1
+                                                }
+                                              }
                                             }}
-                                          />
-                                        </Box>
+                                          >
+                                            <Box
+                                              component='img'
+                                              src={option.image}
+                                              alt={option.text || `Option ${String.fromCharCode(65 + optIndex)}`}
+                                              sx={{
+                                                width: '100%',
+                                                height: '100%',
+                                                maxWidth: '100%',
+                                                objectFit: 'contain',
+                                                display: 'block'
+                                              }}
+                                            />
+                                            <Box
+                                              className='enlarge-overlay'
+                                              sx={{
+                                                position: 'absolute',
+                                                inset: 0,
+                                                bgcolor: alpha(theme.palette.common.black, 0.4),
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                opacity: 0,
+                                                transition: 'opacity 0.3s ease',
+                                                backdropFilter: 'blur(2px)'
+                                              }}
+                                            >
+                                              <Stack direction='row' spacing={0.75} alignItems='center'>
+                                                <ZoomInIcon sx={{ color: theme.palette.common.white, fontSize: 20 }} />
+                                                <Typography
+                                                  variant='caption'
+                                                  sx={{
+                                                    color: theme.palette.common.white,
+                                                    fontWeight: 600,
+                                                    bgcolor: alpha(theme.palette.common.black, 0.6),
+                                                    px: 1,
+                                                    py: 0.5,
+                                                    borderRadius: 0.75
+                                                  }}
+                                                >
+                                                  Click to view
+                                                </Typography>
+                                              </Stack>
+                                            </Box>
+                                          </Box>
+                                          <Dialog
+                                            open={imagePreviewOpen[`${question._id}-${option.id}`] || false}
+                                            onClose={() => setImagePreviewOpen({ ...imagePreviewOpen, [`${question._id}-${option.id}`]: false })}
+                                            maxWidth='md'
+                                            fullWidth
+                                          >
+                                            <DialogTitle>Option {String.fromCharCode(65 + optIndex)} Image</DialogTitle>
+                                            <DialogContent>
+                                              <Box
+                                                component='img'
+                                                src={option.image}
+                                                alt={option.text || `Option ${String.fromCharCode(65 + optIndex)} Full Size`}
+                                                sx={{
+                                                  width: '100%',
+                                                  height: 'auto',
+                                                  maxHeight: '70vh',
+                                                  objectFit: 'contain',
+                                                  display: 'block'
+                                                }}
+                                              />
+                                            </DialogContent>
+                                            <DialogActions>
+                                              <Button onClick={() => setImagePreviewOpen({ ...imagePreviewOpen, [`${question._id}-${option.id}`]: false })}>Close</Button>
+                                            </DialogActions>
+                                          </Dialog>
+                                        </>
                                       )}
                                       <Typography
                                         variant='body2'
@@ -967,35 +1188,9 @@ const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time
                                     </Stack>
                                   )}
                                   {!allOptionsAreImages && (
-                                    <>
-                                      {option.mediaType === 'image' && option.image && (
-                                        <Box
-                                          component='img'
-                                          src={option.image}
-                                          alt={option.text || ''}
-                                          sx={{
-                                            width: '100%',
-                                            maxHeight: 120,
-                                            objectFit: 'cover',
-                                            borderRadius: 1.5
-                                          }}
-                                        />
-                                      )}
-                                      {option.mediaType === 'video' && option.videoUrl && (
-                                        <video
-                                          src={option.videoUrl}
-                                          controls
-                                          style={{
-                                            width: '100%',
-                                            borderRadius: 8
-                                          }}
-                                        />
-                                      )}
-                                      {option.mediaType === 'audio' && option.audioUrl && (
-                                        <audio src={option.audioUrl} controls style={{ width: '100%' }} />
-                                      )}
-
-                                      {option.mediaType === 'text' && option.text && (
+                                    <Stack spacing={1.5} sx={{ width: '100%' }}>
+                                      {/* Option Text */}
+                                      {(option.mediaType === 'text' || option.mediaType === 'text-image') && option.text && (
                                         <Typography
                                           variant='body1'
                                           fontWeight={600}
@@ -1013,7 +1208,125 @@ const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time
                                           {option.text}
                                         </Typography>
                                       )}
-                                    </>
+                                      
+                                      {/* Option Image */}
+                                      {(option.mediaType === 'image' || option.mediaType === 'text-image') && option.image && (
+                                        <Box
+                                          onClick={() => setImagePreviewOpen({ ...imagePreviewOpen, [`${question._id}-${option.id}`]: true })}
+                                          sx={{
+                                            width: '100%',
+                                            position: 'relative',
+                                            borderRadius: 1.5,
+                                            overflow: 'hidden',
+                                            border: `1px solid ${alpha(theme.palette.divider, 0.2)}`,
+                                            boxShadow: `0 4px 12px ${alpha(theme.palette.common.black, 0.1)}`,
+                                            bgcolor: theme.palette.mode === 'dark' 
+                                              ? alpha(theme.palette.common.black, 0.2)
+                                              : alpha(theme.palette.common.white, 0.5),
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            p: 0.75,
+                                            cursor: 'pointer',
+                                            transition: 'all 0.3s ease',
+                                            '&:hover': {
+                                              boxShadow: `0 6px 16px ${alpha(theme.palette.common.black, 0.15)}`,
+                                              '& .enlarge-overlay': {
+                                                opacity: 1
+                                              }
+                                            }
+                                          }}
+                                        >
+                                          <Box
+                                            component='img'
+                                            src={option.image}
+                                            alt={option.text || `Option ${String.fromCharCode(65 + optIndex)}`}
+                                            sx={{
+                                              width: 'auto',
+                                              height: 'auto',
+                                              maxWidth: '100%',
+                                              maxHeight: { xs: 100, sm: 120, md: 140 },
+                                              objectFit: 'contain',
+                                              display: 'block'
+                                            }}
+                                          />
+                                          <Box
+                                            className='enlarge-overlay'
+                                            sx={{
+                                              position: 'absolute',
+                                              inset: 0,
+                                              bgcolor: alpha(theme.palette.common.black, 0.4),
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              justifyContent: 'center',
+                                              opacity: 0,
+                                              transition: 'opacity 0.3s ease',
+                                              backdropFilter: 'blur(2px)'
+                                            }}
+                                          >
+                                            <Stack direction='row' spacing={0.75} alignItems='center'>
+                                              <ZoomInIcon sx={{ color: theme.palette.common.white, fontSize: 20 }} />
+                                              <Typography
+                                                variant='caption'
+                                                sx={{
+                                                  color: theme.palette.common.white,
+                                                  fontWeight: 600,
+                                                  bgcolor: alpha(theme.palette.common.black, 0.6),
+                                                  px: 1,
+                                                  py: 0.5,
+                                                  borderRadius: 0.75
+                                                }}
+                                              >
+                                                Click to view
+                                              </Typography>
+                                            </Stack>
+                                          </Box>
+                                        </Box>
+                                      )}
+                                      
+                                      {/* Image Preview Dialog */}
+                                      {(option.mediaType === 'image' || option.mediaType === 'text-image') && option.image && (
+                                        <Dialog
+                                          open={imagePreviewOpen[`${question._id}-${option.id}`] || false}
+                                          onClose={() => setImagePreviewOpen({ ...imagePreviewOpen, [`${question._id}-${option.id}`]: false })}
+                                          maxWidth='md'
+                                          fullWidth
+                                        >
+                                          <DialogTitle>Option {String.fromCharCode(65 + optIndex)} Image</DialogTitle>
+                                          <DialogContent>
+                                            <Box
+                                              component='img'
+                                              src={option.image}
+                                              alt={option.text || `Option ${String.fromCharCode(65 + optIndex)} Full Size`}
+                                              sx={{
+                                                width: '100%',
+                                                height: 'auto',
+                                                maxHeight: '70vh',
+                                                objectFit: 'contain',
+                                                display: 'block'
+                                              }}
+                                            />
+                                          </DialogContent>
+                                          <DialogActions>
+                                            <Button onClick={() => setImagePreviewOpen({ ...imagePreviewOpen, [`${question._id}-${option.id}`]: false })}>Close</Button>
+                                          </DialogActions>
+                                        </Dialog>
+                                      )}
+                                      
+                                      {option.mediaType === 'video' && option.videoUrl && (
+                                        <video
+                                          src={option.videoUrl}
+                                          controls
+                                          style={{
+                                            width: '100%',
+                                            borderRadius: 8
+                                          }}
+                                        />
+                                      )}
+                                      {option.mediaType === 'audio' && option.audioUrl && (
+                                        <audio src={option.audioUrl} controls style={{ width: '100%' }} />
+                                      )}
+                                    </Stack>
                                   )}
                                 </Box>
                               </Grid>
@@ -1106,45 +1419,111 @@ const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time
                                           {String.fromCharCode(65 + optIndex)}
                                         </Box>
                                       </Stack>
-                                      {option.mediaType === 'image' && option.image && (
-                                        <Box
-                                          sx={{
-                                            width: '100%',
-                                            position: 'relative',
-                                            borderRadius: 1.5,
-                                            overflow: 'hidden',
-                                            border: `1px solid ${alpha(
-                                              theme.palette.primary.main,
-                                              isMatch
-                                                ? 0.4
-                                                : isWrongPick
-                                                  ? 0.4
-                                                  : 0.12
-                                            )}`,
-                                            backgroundColor: theme.palette.mode === 'dark' 
-                                              ? alpha(theme.palette.common.black, 0.2)
-                                              : alpha(theme.palette.common.white, 0.5),
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            height: { xs: 100, md: 120 },
-                                            p: { xs: 1, md: 1.2 },
-                                            flexShrink: 0
-                                          }}
-                                        >
+                                      {(option.mediaType === 'image' || option.mediaType === 'text-image') && option.image && (
+                                        <>
                                           <Box
-                                            component='img'
-                                            src={option.image}
-                                            alt={option.text || `Option ${String.fromCharCode(65 + optIndex)}`}
+                                            onClick={() => setImagePreviewOpen({ ...imagePreviewOpen, [`${question._id}-${option.id}`]: true })}
                                             sx={{
                                               width: '100%',
-                                              height: '100%',
-                                              maxWidth: '100%',
-                                              objectFit: 'contain',
-                                              display: 'block'
+                                              position: 'relative',
+                                              borderRadius: 1.5,
+                                              overflow: 'hidden',
+                                              border: `1px solid ${alpha(
+                                                theme.palette.primary.main,
+                                                isMatch
+                                                  ? 0.4
+                                                  : isWrongPick
+                                                    ? 0.4
+                                                    : 0.12
+                                              )}`,
+                                              backgroundColor: theme.palette.mode === 'dark' 
+                                                ? alpha(theme.palette.common.black, 0.2)
+                                                : alpha(theme.palette.common.white, 0.5),
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              justifyContent: 'center',
+                                              height: { xs: 100, md: 120 },
+                                              p: { xs: 1, md: 1.2 },
+                                              flexShrink: 0,
+                                              cursor: 'pointer',
+                                              transition: 'all 0.3s ease',
+                                              '&:hover': {
+                                                '& .enlarge-overlay': {
+                                                  opacity: 1
+                                                }
+                                              }
                                             }}
-                                          />
-                                        </Box>
+                                          >
+                                            <Box
+                                              component='img'
+                                              src={option.image}
+                                              alt={option.text || `Option ${String.fromCharCode(65 + optIndex)}`}
+                                              sx={{
+                                                width: '100%',
+                                                height: '100%',
+                                                maxWidth: '100%',
+                                                objectFit: 'contain',
+                                                display: 'block'
+                                              }}
+                                            />
+                                            <Box
+                                              className='enlarge-overlay'
+                                              sx={{
+                                                position: 'absolute',
+                                                inset: 0,
+                                                bgcolor: alpha(theme.palette.common.black, 0.4),
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                opacity: 0,
+                                                transition: 'opacity 0.3s ease',
+                                                backdropFilter: 'blur(2px)'
+                                              }}
+                                            >
+                                              <Stack direction='row' spacing={0.75} alignItems='center'>
+                                                <ZoomInIcon sx={{ color: theme.palette.common.white, fontSize: 20 }} />
+                                                <Typography
+                                                  variant='caption'
+                                                  sx={{
+                                                    color: theme.palette.common.white,
+                                                    fontWeight: 600,
+                                                    bgcolor: alpha(theme.palette.common.black, 0.6),
+                                                    px: 1,
+                                                    py: 0.5,
+                                                    borderRadius: 0.75
+                                                  }}
+                                                >
+                                                  Click to view
+                                                </Typography>
+                                              </Stack>
+                                            </Box>
+                                          </Box>
+                                          <Dialog
+                                            open={imagePreviewOpen[`${question._id}-${option.id}`] || false}
+                                            onClose={() => setImagePreviewOpen({ ...imagePreviewOpen, [`${question._id}-${option.id}`]: false })}
+                                            maxWidth='md'
+                                            fullWidth
+                                          >
+                                            <DialogTitle>Option {String.fromCharCode(65 + optIndex)} Image</DialogTitle>
+                                            <DialogContent>
+                                              <Box
+                                                component='img'
+                                                src={option.image}
+                                                alt={option.text || `Option ${String.fromCharCode(65 + optIndex)} Full Size`}
+                                                sx={{
+                                                  width: '100%',
+                                                  height: 'auto',
+                                                  maxHeight: '70vh',
+                                                  objectFit: 'contain',
+                                                  display: 'block'
+                                                }}
+                                              />
+                                            </DialogContent>
+                                            <DialogActions>
+                                              <Button onClick={() => setImagePreviewOpen({ ...imagePreviewOpen, [`${question._id}-${option.id}`]: false })}>Close</Button>
+                                            </DialogActions>
+                                          </Dialog>
+                                        </>
                                       )}
                                       <Typography
                                         variant='body2'
@@ -1162,26 +1541,9 @@ const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time
                                       </Typography>
                                     </Stack>
                                   ) : (
-                                    <>
-                                      {option.mediaType === 'image' && option.image && (
-                                        <Box
-                                          component='img'
-                                          src={option.image}
-                                          alt={option.text || ''}
-                                          sx={{ width: '100%', maxHeight: 120, objectFit: 'cover', borderRadius: 1.5 }}
-                                        />
-                                      )}
-                                      {option.mediaType === 'video' && option.videoUrl && (
-                                        <video
-                                          src={option.videoUrl}
-                                          controls
-                                          style={{ width: '100%', borderRadius: 8 }}
-                                        />
-                                      )}
-                                      {option.mediaType === 'audio' && option.audioUrl && (
-                                        <audio src={option.audioUrl} controls style={{ width: '100%' }} />
-                                      )}
-                                      {option.mediaType === 'text' && option.text && (
+                                    <Stack spacing={1.5} sx={{ width: '100%' }}>
+                                      {/* Option Label and Text */}
+                                      {(option.mediaType === 'text' || option.mediaType === 'text-image') && option.text && (
                                         <Stack direction='row' spacing={1} alignItems='flex-start' sx={{ width: '100%', maxWidth: '100%' }}>
                                           <Box
                                             sx={{
@@ -1229,7 +1591,122 @@ const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time
                                           </Typography>
                                         </Stack>
                                       )}
-                                    </>
+                                      
+                                      {/* Option Image */}
+                                      {(option.mediaType === 'image' || option.mediaType === 'text-image') && option.image && (
+                                        <Box
+                                          onClick={() => setImagePreviewOpen({ ...imagePreviewOpen, [`${question._id}-${option.id}`]: true })}
+                                          sx={{
+                                            width: '100%',
+                                            position: 'relative',
+                                            borderRadius: 1.5,
+                                            overflow: 'hidden',
+                                            border: `1px solid ${alpha(theme.palette.divider, 0.2)}`,
+                                            boxShadow: `0 4px 12px ${alpha(theme.palette.common.black, 0.1)}`,
+                                            bgcolor: theme.palette.mode === 'dark' 
+                                              ? alpha(theme.palette.common.black, 0.2)
+                                              : alpha(theme.palette.common.white, 0.5),
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            p: 0.75,
+                                            cursor: 'pointer',
+                                            transition: 'all 0.3s ease',
+                                            '&:hover': {
+                                              boxShadow: `0 6px 16px ${alpha(theme.palette.common.black, 0.15)}`,
+                                              '& .enlarge-overlay': {
+                                                opacity: 1
+                                              }
+                                            }
+                                          }}
+                                        >
+                                          <Box
+                                            component='img'
+                                            src={option.image}
+                                            alt={option.text || `Option ${String.fromCharCode(65 + optIndex)}`}
+                                            sx={{
+                                              width: 'auto',
+                                              height: 'auto',
+                                              maxWidth: '100%',
+                                              maxHeight: { xs: 100, sm: 120, md: 140 },
+                                              objectFit: 'contain',
+                                              display: 'block'
+                                            }}
+                                          />
+                                          <Box
+                                            className='enlarge-overlay'
+                                            sx={{
+                                              position: 'absolute',
+                                              inset: 0,
+                                              bgcolor: alpha(theme.palette.common.black, 0.4),
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              justifyContent: 'center',
+                                              opacity: 0,
+                                              transition: 'opacity 0.3s ease',
+                                              backdropFilter: 'blur(2px)'
+                                            }}
+                                          >
+                                            <Stack direction='row' spacing={0.75} alignItems='center'>
+                                              <ZoomInIcon sx={{ color: theme.palette.common.white, fontSize: 20 }} />
+                                              <Typography
+                                                variant='caption'
+                                                sx={{
+                                                  color: theme.palette.common.white,
+                                                  fontWeight: 600,
+                                                  bgcolor: alpha(theme.palette.common.black, 0.6),
+                                                  px: 1,
+                                                  py: 0.5,
+                                                  borderRadius: 0.75
+                                                }}
+                                              >
+                                                Click to view
+                                              </Typography>
+                                            </Stack>
+                                          </Box>
+                                        </Box>
+                                      )}
+                                      
+                                      {/* Image Preview Dialog */}
+                                      {(option.mediaType === 'image' || option.mediaType === 'text-image') && option.image && (
+                                        <Dialog
+                                          open={imagePreviewOpen[`${question._id}-${option.id}`] || false}
+                                          onClose={() => setImagePreviewOpen({ ...imagePreviewOpen, [`${question._id}-${option.id}`]: false })}
+                                          maxWidth='md'
+                                          fullWidth
+                                        >
+                                          <DialogTitle>Option {String.fromCharCode(65 + optIndex)} Image</DialogTitle>
+                                          <DialogContent>
+                                            <Box
+                                              component='img'
+                                              src={option.image}
+                                              alt={option.text || `Option ${String.fromCharCode(65 + optIndex)} Full Size`}
+                                              sx={{
+                                                width: '100%',
+                                                height: 'auto',
+                                                maxHeight: '70vh',
+                                                objectFit: 'contain',
+                                                display: 'block'
+                                              }}
+                                            />
+                                          </DialogContent>
+                                          <DialogActions>
+                                            <Button onClick={() => setImagePreviewOpen({ ...imagePreviewOpen, [`${question._id}-${option.id}`]: false })}>Close</Button>
+                                          </DialogActions>
+                                        </Dialog>
+                                      )}
+                                      
+                                      {option.mediaType === 'video' && option.videoUrl && (
+                                        <video
+                                          src={option.videoUrl}
+                                          controls
+                                          style={{ width: '100%', borderRadius: 8 }}
+                                        />
+                                      )}
+                                      {option.mediaType === 'audio' && option.audioUrl && (
+                                        <audio src={option.audioUrl} controls style={{ width: '100%' }} />
+                                      )}
+                                    </Stack>
                                   )}
                                 </Box>
                               </Grid>

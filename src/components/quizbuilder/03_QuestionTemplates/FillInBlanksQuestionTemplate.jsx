@@ -298,7 +298,7 @@ const FillInBlanksQuestionTemplate = ({
               Fill in the Blanks Question
             </Typography>
             <Typography variant='caption' sx={{ color: 'text.secondary' }}>
-              ID: {id} • Language: {language}
+              Language: {language}
             </Typography>
           </Box>
           {hasErrors && <Chip label='Has Errors' color='error' size='small' sx={{ height: 28, fontWeight: 600 }} />}

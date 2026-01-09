@@ -40,7 +40,7 @@ const blink = keyframes`
   100% { opacity: 1; }
 `
 
-const GamePlayInfoScreen = ({ game, setShouldStartGame }) => {
+const PlayGameInfoScreen = ({ game, setShouldStartGame }) => {
   const theme = useTheme()
   const [timeRemaining, setTimeRemaining] = useState('')
   const [isVideoReady, setIsVideoReady] = useState(false)
@@ -138,7 +138,7 @@ const GamePlayInfoScreen = ({ game, setShouldStartGame }) => {
 `
 
   return (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: theme.palette.background.default, pb: 6 }}>
+    <Box sx={{ height: '100%', width: '100%', display: 'flex', flexDirection: 'column', bgcolor: theme.palette.background.default, pb: 6 }}>
       {/* Hero Section */}
       <Box
         sx={{
@@ -753,4 +753,4 @@ const GamePlayInfoScreen = ({ game, setShouldStartGame }) => {
   )
 }
 
-export default GamePlayInfoScreen
+export default PlayGameInfoScreen
