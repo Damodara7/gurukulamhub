@@ -16,14 +16,12 @@ import 'remixicon/fonts/remixicon.css'
 import { scheduleCleanupUnverifiedUsers } from '@/actions/scheduler'
 import { initializeScheduler } from '@/app/api/game/game.scheduler'
 import { initializeProfileScheduler } from '@/app/api/profile/profile.scheduler'
-import { initializeGameReminderScheduler } from '@/app/api/game/game-reminder.scheduler'
 
 // Execute only on server
 if (typeof window === 'undefined') {
   scheduleCleanupUnverifiedUsers()
   initializeScheduler()
   initializeProfileScheduler()
-  initializeGameReminderScheduler()
 }
 
 export const metadata = {
