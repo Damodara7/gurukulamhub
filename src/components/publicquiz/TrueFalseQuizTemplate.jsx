@@ -12,8 +12,7 @@ import {
   alpha,
   useTheme
 } from '@mui/material'
-import VideoAd from '@/views/apps/advertisements/VideoAd/VideoAd'
-import ImagePopup from '../ImagePopup'
+import ReactPlayer from 'react-player'
 
 const TrueFalseTemplate = ({ question, selectedAnswer, onAnswerSelect, readOnly = false }) => {
   const questionObj = question?.data?.question
@@ -88,28 +87,105 @@ const TrueFalseTemplate = ({ question, selectedAnswer, onAnswerSelect, readOnly 
 
           {(questionObj?.mediaType === 'image' || questionObj?.mediaType === 'text-image') && questionObj?.image && (
             <Box
-              component='img'
-              src={questionObj.image}
-              alt='Question'
               sx={{
                 width: '100%',
-                maxHeight: { xs: 260, md: 320 },
-                objectFit: 'cover',
-                borderRadius: { xs: 2, md: 2.5 },
-                border: `1px solid ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.2 : 0.15)}`,
+                position: 'relative',
+                borderRadius: { xs: 2, sm: 2.5, md: 3 },
+                overflow: 'hidden',
+                border: `2px solid ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.25 : 0.15)}`,
                 boxShadow:
                   theme.palette.mode === 'dark'
-                    ? '0 18px 40px rgba(0, 0, 0, 0.5)'
-                    : '0 18px 40px rgba(15, 23, 42, 0.18)'
+                    ? '0 20px 48px rgba(0, 0, 0, 0.5)'
+                    : '0 20px 48px rgba(15, 23, 42, 0.2)',
+                bgcolor: theme.palette.mode === 'dark' 
+                  ? alpha(theme.palette.common.black, 0.3)
+                  : alpha(theme.palette.common.white, 0.8),
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                p: { xs: 1.5, sm: 2, md: 2.5 },
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  boxShadow:
+                    theme.palette.mode === 'dark'
+                      ? '0 24px 56px rgba(0, 0, 0, 0.6)'
+                      : '0 24px 56px rgba(15, 23, 42, 0.25)',
+                  borderColor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.35 : 0.25)
+                }
               }}
-            />
+            >
+              <Box
+                component='img'
+                src={questionObj.image}
+                alt='Question'
+                sx={{
+                  width: 'auto',
+                  height: 'auto',
+                  maxWidth: '100%',
+                  maxHeight: { xs: 220, sm: 280, md: 350, lg: 420 },
+                  objectFit: 'contain',
+                  display: 'block',
+                  borderRadius: { xs: 1, sm: 1.5, md: 2 }
+                }}
+              />
+            </Box>
           )}
 
           {(questionObj?.mediaType === 'video' || questionObj?.mediaType === 'text-video') && questionObj?.video && (
-            <Stack spacing={1.5} alignItems='center'>
-              <VideoAd url={questionObj.video || ''} height='240px' showPause autoPlay={false} />
-              <ImagePopup imageUrl={questionObj.video || ''} mediaType='video' />
-            </Stack>
+            <Box
+              sx={{
+                width: '100%',
+                position: 'relative',
+                borderRadius: { xs: 2, sm: 2.5, md: 3 },
+                overflow: 'hidden',
+                border: `2px solid ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.25 : 0.15)}`,
+                boxShadow:
+                  theme.palette.mode === 'dark'
+                    ? '0 20px 48px rgba(0, 0, 0, 0.5)'
+                    : '0 20px 48px rgba(15, 23, 42, 0.2)',
+                bgcolor: theme.palette.mode === 'dark' ? '#000' : '#000',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  boxShadow:
+                    theme.palette.mode === 'dark'
+                      ? '0 24px 56px rgba(0, 0, 0, 0.6)'
+                      : '0 24px 56px rgba(15, 23, 42, 0.25)',
+                  borderColor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.35 : 0.25)
+                }
+              }}
+            >
+              <Box
+                sx={{
+                  width: '100%',
+                  position: 'relative',
+                  paddingTop: '56.25%', // 16:9 aspect ratio
+                  bgcolor: '#000'
+                }}
+              >
+                <ReactPlayer
+                  url={questionObj.video || ''}
+                  playing={true}
+                  controls={true}
+                  width='100%'
+                  height='100%'
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0
+                  }}
+                  config={{
+                    youtube: {
+                      playerVars: {
+                        autoplay: 1,
+                        modestbranding: 1,
+                        rel: 0
+                      }
+                    }
+                  }}
+                  onError={e => console.error('Video error occurred:', e)}
+                />
+              </Box>
+            </Box>
           )}
 
           <RadioGroup
@@ -478,7 +554,7 @@ const TrueFalseTemplate = ({ question, selectedAnswer, onAnswerSelect, readOnly 
                             </Box>
 
                             <Stack spacing={0.35} sx={{ minWidth: 0, flex: 1 }}>
-                              {option.mediaType === 'text' && option.text && (
+                              {(option.mediaType === 'text' || option.mediaType === 'text-image') && option.text && (
                                 <Typography
                                   variant='body1'
                                   sx={{
@@ -499,7 +575,7 @@ const TrueFalseTemplate = ({ question, selectedAnswer, onAnswerSelect, readOnly 
                             </Stack>
                           </Stack>
 
-                          {option.mediaType === 'image' && option.image && (
+                          {(option.mediaType === 'image' || option.mediaType === 'text-image') && option.image && (
                             <Box
                               component='img'
                               src={option.image}

@@ -21,7 +21,11 @@ import {
   alpha,
   Divider,
   Stack,
-  Chip
+  Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from '@mui/material'
 import SaveIcon from '@mui/icons-material/Save'
 import DeleteIcon from '@mui/icons-material/Delete'
@@ -34,10 +38,13 @@ import TimerIcon from '@mui/icons-material/Timer'
 import QuestionMarkIcon from '@mui/icons-material/QuestionMark'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import CancelIcon from '@mui/icons-material/Cancel'
+import PlayCircleIcon from '@mui/icons-material/PlayCircle'
+import VideoLibraryIcon from '@mui/icons-material/VideoLibrary'
 import { filterInput, excludeQuesstionChars } from '@/utils/regexUtil'
 
 import VideoAd from '@views/apps/advertisements/VideoAd/VideoAd'
 import ImagePopup from '@/components/ImagePopup'
+import ReactPlayer from 'react-player'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
 import DeleteConfirmationDialog from '@/components/dialogs/DeleteConfirmationDialog'
 
@@ -92,6 +99,12 @@ const TrueFalseQuestionTemplate = ({
   )
 
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false)
+  const [imagePreviewOpen, setImagePreviewOpen] = useState(false)
+  const [videoPreviewOpen, setVideoPreviewOpen] = useState(false)
+  const [optionImagePreviewOpen, setOptionImagePreviewOpen] = useState({})
+  const [optionsMediaType, setOptionsMediaType] = useState(
+    options.length > 0 && options[0]?.mediaType ? options[0].mediaType : 'text'
+  )
   const [loading, setLoading] = useState({ save: false, delete: false })
 
   const onDeleteQuestion = async () => {
@@ -244,6 +257,17 @@ const TrueFalseQuestionTemplate = ({
     setOptions(updatedOptions)
   }
 
+  const toggleAllOptionsMediaType = newType => {
+    setOptionsMediaType(newType)
+    const updatedOptions = options.map(option => ({
+      ...option,
+      mediaType: newType,
+      // Clear image if switching away from image types
+      image: newType === 'text' ? '' : option.image
+    }))
+    setOptions(updatedOptions)
+  }
+
   const getQuestionErrors = questionId => {
     return validationErrors.filter(error => error.questionId === questionId)
   }
@@ -271,6 +295,49 @@ const TrueFalseQuestionTemplate = ({
 
   const hasExactlyOneCorrectOption = options?.filter(op => op.correct).length === 1 || false
   const theme = useTheme()
+
+  // Helper function to extract video information from URL
+  const getVideoInfo = url => {
+    if (!url) return { isYouTube: false, videoId: null, videoName: null }
+    
+    try {
+      // Check for YouTube URLs
+      const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/
+      const match = url.match(youtubeRegex)
+      
+      if (match && match[1]) {
+        return {
+          isYouTube: true,
+          videoId: match[1],
+          videoName: `YouTube Video (${match[1]})`
+        }
+      }
+      
+      // For other video URLs, extract domain or use URL as name
+      try {
+        const urlObj = new URL(url)
+        return {
+          isYouTube: false,
+          videoId: null,
+          videoName: urlObj.hostname || 'Video'
+        }
+      } catch {
+        return {
+          isYouTube: false,
+          videoId: null,
+          videoName: 'Video'
+        }
+      }
+    } catch {
+      return {
+        isYouTube: false,
+        videoId: null,
+        videoName: 'Video'
+      }
+    }
+  }
+
+  const videoInfo = getVideoInfo(question.video)
 
   return (
     <>
@@ -320,7 +387,7 @@ const TrueFalseQuestionTemplate = ({
               True/False Question
             </Typography>
             <Typography variant='caption' sx={{ color: 'text.secondary' }}>
-              ID: {id} • Language: {language}
+              Language: {language}
             </Typography>
           </Box>
           {hasErrors && <Chip label='Has Errors' color='error' size='small' sx={{ height: 28, fontWeight: 600 }} />}
@@ -396,45 +463,170 @@ const TrueFalseQuestionTemplate = ({
 
                 {/* Image Input and Preview */}
                 {(question.mediaType === 'image' || question.mediaType === 'text-image') && (
-                  <Box display='flex' alignItems='center' gap={2}>
-                    <TextField
-                      type='file'
-                      fullWidth
-                      disabled={loading.save || loading.delete}
-                      label='Question Image'
-                      InputLabelProps={{ shrink: true }}
-                      error={hasErrors && !question.image && getErrorMessage('question.image')}
-                      helperText={!question.image && getErrorMessage('question.image')}
-                      onChange={e => handleQuestionMediaUpload(e.target.files[0], 'image')}
-                      inputProps={{ accept: 'image/*' }}
-                      variant='outlined'
-                      sx={{
-                        flex: 1,
-                        '& .MuiOutlinedInput-root': {
-                          bgcolor: 'white',
-                          '&:hover .MuiOutlinedInput-notchedOutline': {
-                            borderColor: theme.palette.primary.main
-                          }
-                        }
-                      }}
-                    />
+                  <Stack spacing={2}>
                     {question.image && (
-                      <Box
-                        component='img'
-                        src={question.image}
-                        alt='Uploaded Preview'
-                        sx={{
-                          width: 80,
-                          height: 80,
-                          objectFit: 'cover',
-                          borderRadius: 2,
-                          border: '2px solid',
-                          borderColor: 'divider',
-                          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                        }}
-                      />
+                      <>
+                        <Box
+                          sx={{
+                            position: 'relative',
+                            width: '100%',
+                            height: 200,
+                            borderRadius: 2,
+                            overflow: 'hidden',
+                            border: '2px solid',
+                            borderColor: alpha(theme.palette.primary.main, 0.2),
+                            bgcolor: theme.palette.background.paper,
+                            transition: 'all 0.3s ease',
+                            '&:hover': {
+                              borderColor: theme.palette.primary.main,
+                              boxShadow:
+                                theme.palette.mode === 'dark'
+                                  ? '0 8px 24px rgba(0,0,0,0.4)'
+                                  : '0 8px 24px rgba(0,0,0,0.15)',
+                              transform: 'translateY(-2px)',
+                              '& .enlarge-overlay': {
+                                opacity: 1
+                              },
+                              '& .clear-button': {
+                                opacity: 1
+                              }
+                            }
+                          }}
+                        >
+                          <Box
+                            onClick={() => setImagePreviewOpen(true)}
+                            sx={{
+                              width: '100%',
+                              height: '100%',
+                              cursor: 'pointer',
+                              position: 'relative'
+                            }}
+                          >
+                            <Box
+                              component='img'
+                              src={question.image}
+                              alt='Uploaded Preview'
+                              sx={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'contain',
+                                display: 'block'
+                              }}
+                            />
+                            <Box
+                              className='enlarge-overlay'
+                              sx={{
+                                position: 'absolute',
+                                inset: 0,
+                                bgcolor: alpha(theme.palette.common.black, 0.4),
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                opacity: 0,
+                                transition: 'opacity 0.3s ease',
+                                backdropFilter: 'blur(2px)'
+                              }}
+                            >
+                              <Typography
+                                variant='body2'
+                                sx={{
+                                  color: theme.palette.common.white,
+                                  fontWeight: 600,
+                                  bgcolor: alpha(theme.palette.common.black, 0.6),
+                                  px: 2,
+                                  py: 1,
+                                  borderRadius: 1
+                                }}
+                              >
+                                Click to view full size
+                              </Typography>
+                            </Box>
+                          </Box>
+                          <IconButton
+                            className='clear-button'
+                            onClick={e => {
+                              e.stopPropagation()
+                              handleQuestionChange('image', '')
+                            }}
+                            sx={{
+                              position: 'absolute',
+                              top: 8,
+                              right: 8,
+                              bgcolor: 'white',
+                              opacity: 0.9,
+                              zIndex: 10,
+                              transition: 'all 0.3s ease',
+                              boxShadow: theme.palette.mode === 'dark' 
+                                ? '0 2px 8px rgba(0,0,0,0.5)' 
+                                : '0 2px 8px rgba(0,0,0,0.2)',
+                              '&:hover': {
+                                bgcolor: 'white !important',
+                                opacity: 1,
+                                transform: 'scale(1.1)'
+                              }
+                            }}
+                            size='small'
+                            title='Remove image'
+                          >
+                            <DeleteIcon fontSize='small' color='error' />
+                          </IconButton>
+                        </Box>
+                        <Dialog
+                          open={imagePreviewOpen}
+                          onClose={() => setImagePreviewOpen(false)}
+                          maxWidth='lg'
+                          fullWidth
+                        >
+                          <DialogTitle>Image Preview</DialogTitle>
+                          <DialogContent>
+                            <Box
+                              component='img'
+                              src={question.image}
+                              alt='Full Size Preview'
+                              sx={{
+                                width: '100%',
+                                height: 'auto',
+                                maxHeight: '70vh',
+                                objectFit: 'contain',
+                                display: 'block'
+                              }}
+                            />
+                          </DialogContent>
+                          <DialogActions>
+                            <Button onClick={() => setImagePreviewOpen(false)}>Close</Button>
+                          </DialogActions>
+                        </Dialog>
+                      </>
                     )}
-                  </Box>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+                      <Button
+                        variant='outlined'
+                        component='label'
+                        startIcon={<ImageIcon />}
+                        disabled={loading.save || loading.delete}
+                        sx={{
+                          flexShrink: 0,
+                          borderColor: hasErrors && !question.image ? theme.palette.error.main : undefined,
+                          '&:hover': {
+                            borderColor: hasErrors && !question.image ? theme.palette.error.main : theme.palette.primary.main
+                          }
+                        }}
+                      >
+                        {question.image ? 'Change Image' : 'Upload Image'}
+                        <input
+                          type='file'
+                          hidden
+                          accept='image/*'
+                          onChange={e => handleQuestionMediaUpload(e.target.files[0], 'image')}
+                        />
+                      </Button>
+                      {hasErrors && !question.image && (
+                        <Typography variant='caption' color='error' sx={{ width: '100%', textAlign: 'center' }}>
+                          {getErrorMessage('question.image')}
+                        </Typography>
+                      )}
+                    </Box>
+                  </Stack>
                 )}
 
                 {/* Video URL Input */}
@@ -459,21 +651,201 @@ const TrueFalseQuestionTemplate = ({
                       }}
                     />
                     {question.video && (
-                      <Box
-                        sx={{
-                          mt: 2,
-                          p: 2,
-                          bgcolor: theme.palette.background.paper,
-                          borderRadius: 2,
-                          border: '1px solid',
-                          borderColor: alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)
-                        }}
-                      >
-                        <VideoAd url={question.video || ''} showPause autoPlay={false} />
-                        <Box sx={{ mt: 1, textAlign: 'center' }}>
-                          <ImagePopup imageUrl={question.video || ''} mediaType={'video'} />
+                      <>
+                        <Box
+                          sx={{
+                            mt: 2,
+                            position: 'relative',
+                            p: 2.5,
+                            bgcolor: theme.palette.background.paper,
+                            borderRadius: 2,
+                            border: '2px solid',
+                            borderColor: alpha(theme.palette.primary.main, 0.2),
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 2,
+                            '&:hover': {
+                              borderColor: theme.palette.primary.main,
+                              boxShadow:
+                                theme.palette.mode === 'dark'
+                                  ? '0 8px 24px rgba(0,0,0,0.4)'
+                                  : '0 8px 24px rgba(0,0,0,0.15)',
+                              transform: 'translateY(-2px)',
+                              bgcolor: alpha(theme.palette.primary.main, 0.02),
+                              '& .clear-video-button': {
+                                opacity: 1
+                              }
+                            }
+                          }}
+                        >
+                          <Box
+                            onClick={() => setVideoPreviewOpen(true)}
+                            sx={{
+                              flex: 1,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 2,
+                              minWidth: 0
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                width: 56,
+                                height: 56,
+                                borderRadius: 2,
+                                bgcolor: alpha(theme.palette.error.main, 0.1),
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexShrink: 0
+                              }}
+                            >
+                              {videoInfo.isYouTube ? (
+                                <PlayCircleIcon sx={{ fontSize: 32, color: 'error.main' }} />
+                              ) : (
+                                <VideoLibraryIcon sx={{ fontSize: 32, color: 'error.main' }} />
+                              )}
+                            </Box>
+                            <Box sx={{ flex: 1, minWidth: 0 }}>
+                              <Typography
+                                variant='subtitle1'
+                                fontWeight={600}
+                                sx={{
+                                  color: theme.palette.text.primary,
+                                  mb: 0.5,
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap'
+                                }}
+                              >
+                                {videoInfo.videoName}
+                              </Typography>
+                              <Typography
+                                variant='caption'
+                                sx={{
+                                  color: theme.palette.text.secondary,
+                                  display: 'block',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap'
+                                }}
+                              >
+                                {videoInfo.isYouTube ? 'YouTube Video' : 'Video URL'}
+                              </Typography>
+                              <Typography
+                                variant='caption'
+                                sx={{
+                                  color: theme.palette.primary.main,
+                                  fontWeight: 500,
+                                  mt: 0.5,
+                                  display: 'block'
+                                }}
+                              >
+                                Click to preview
+                              </Typography>
+                            </Box>
+                          </Box>
+                          <IconButton
+                            className='clear-video-button'
+                            onClick={e => {
+                              e.stopPropagation()
+                              handleQuestionChange('video', '')
+                            }}
+                            sx={{
+                              position: 'absolute',
+                              top: 8,
+                              right: 8,
+                              bgcolor: 'white',
+                              opacity: 0.9,
+                              zIndex: 10,
+                              transition: 'all 0.3s ease',
+                              boxShadow: theme.palette.mode === 'dark' 
+                                ? '0 2px 8px rgba(0,0,0,0.5)' 
+                                : '0 2px 8px rgba(0,0,0,0.2)',
+                              '&:hover': {
+                                bgcolor: 'white !important',
+                                opacity: 1,
+                                transform: 'scale(1.1)'
+                              }
+                            }}
+                            size='small'
+                            title='Remove video'
+                          >
+                            <DeleteIcon fontSize='small' color='error' />
+                          </IconButton>
                         </Box>
-                      </Box>
+                        <Dialog
+                          open={videoPreviewOpen}
+                          onClose={() => setVideoPreviewOpen(false)}
+                          maxWidth='lg'
+                          fullWidth
+                          PaperProps={{
+                            sx: {
+                              borderRadius: 3,
+                              bgcolor: theme.palette.background.paper
+                            }
+                          }}
+                        >
+                          <DialogTitle sx={{ pb: 1 }}>
+                            <Stack direction='row' alignItems='center' spacing={1.5}>
+                              {videoInfo.isYouTube ? (
+                                <PlayCircleIcon sx={{ fontSize: 24, color: 'error.main' }} />
+                              ) : (
+                                <VideoLibraryIcon sx={{ fontSize: 24, color: 'error.main' }} />
+                              )}
+                              <Typography variant='h6' fontWeight={600}>
+                                {videoInfo.videoName}
+                              </Typography>
+                            </Stack>
+                          </DialogTitle>
+                          <DialogContent sx={{ p: 0, position: 'relative' }}>
+                            <Box
+                              sx={{
+                                width: '100%',
+                                position: 'relative',
+                                bgcolor: theme.palette.mode === 'dark' ? '#000' : '#000',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                minHeight: { xs: 300, sm: 400, md: 500 },
+                                '& .react-player': {
+                                  borderRadius: 0
+                                }
+                              }}
+                            >
+                              <ReactPlayer
+                                url={question.video || ''}
+                                playing={true}
+                                controls={true}
+                                width='100%'
+                                height='100%'
+                                style={{
+                                  position: 'absolute',
+                                  top: 0,
+                                  left: 0
+                                }}
+                                config={{
+                                  youtube: {
+                                    playerVars: {
+                                      autoplay: 1,
+                                      modestbranding: 1,
+                                      rel: 0
+                                    }
+                                  }
+                                }}
+                                onError={e => {
+                                  console.error('Video error occurred:', e)
+                                }}
+                              />
+                            </Box>
+                          </DialogContent>
+                          <DialogActions>
+                            <Button onClick={() => setVideoPreviewOpen(false)}>Close</Button>
+                          </DialogActions>
+                        </Dialog>
+                      </>
                     )}
                   </>
                 )}
@@ -492,32 +864,57 @@ const TrueFalseQuestionTemplate = ({
                 bgcolor: alpha(theme.palette.secondary.main, 0.02)
               }}
             >
-              <Stack direction='row' alignItems='center' spacing={1.5} sx={{ mb: 2.5 }}>
-                <Box
-                  sx={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 2,
-                    bgcolor: alpha(theme.palette.secondary.main, 0.15),
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <CheckCircleIcon sx={{ fontSize: 20, color: 'secondary.main' }} />
-                </Box>
-                <Typography variant='subtitle1' fontWeight={700} sx={{ color: theme.palette.text.primary }}>
-                  True/False Options
-                </Typography>
-                <Chip
-                  label='2 options'
-                  size='small'
-                  sx={{
-                    bgcolor: alpha(theme.palette.secondary.main, 0.1),
-                    color: 'secondary.main',
-                    fontWeight: 600
-                  }}
-                />
+              <Stack spacing={2} sx={{ mb: 2.5 }}>
+                <Stack direction='row' alignItems='center' spacing={1.5}>
+                  <Box
+                    sx={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 2,
+                      bgcolor: alpha(theme.palette.secondary.main, 0.15),
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <CheckCircleIcon sx={{ fontSize: 20, color: 'secondary.main' }} />
+                  </Box>
+                  <Typography variant='subtitle1' fontWeight={700} sx={{ color: theme.palette.text.primary }}>
+                    True/False Options
+                  </Typography>
+                  <Chip
+                    label='2 options'
+                    size='small'
+                    sx={{
+                      bgcolor: alpha(theme.palette.secondary.main, 0.1),
+                      color: 'secondary.main',
+                      fontWeight: 600
+                    }}
+                  />
+                </Stack>
+                {mode === 'primary' && (
+                  <FormControl fullWidth size='small'>
+                    <InputLabel>Options Type</InputLabel>
+                    <Select
+                      label='Options Type'
+                      value={optionsMediaType}
+                      onChange={e => toggleAllOptionsMediaType(e.target.value)}
+                      sx={{
+                        bgcolor: theme.palette.background.paper,
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: alpha(theme.palette.secondary.main, 0.3)
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: theme.palette.secondary.main
+                        }
+                      }}
+                    >
+                      <MenuItem value='text'>📝 Text Only</MenuItem>
+                      <MenuItem value='image'>🖼️ Image Only</MenuItem>
+                      <MenuItem value='text-image'>📝🖼️ Text & Image</MenuItem>
+                    </Select>
+                  </FormControl>
+                )}
               </Stack>
 
               <Stack spacing={2}>
@@ -552,40 +949,26 @@ const TrueFalseQuestionTemplate = ({
                       )}
 
                       <Box sx={{ flex: 1 }}>
-                        {option.mediaType === 'image' ? (
-                          <Stack direction='row' alignItems='center' spacing={1.5}>
+                        <Stack spacing={1.5}>
+                          {/* Option Text Input */}
+                          {(optionsMediaType === 'text' || optionsMediaType === 'text-image') && (
                             <TextField
-                              disabled={loading.save || loading.delete}
                               fullWidth
-                              type='file'
-                              inputProps={{ accept: 'image/*' }}
-                              onChange={e => handleOptionMediaUpload(index, e.target.files[0], 'image')}
+                              size='small'
+                              disabled={loading.save || loading.delete}
                               label={option.text}
-                              InputLabelProps={{ shrink: true }}
+                              value={option.text}
+                              onChange={e => handleOptionChange(index, 'text', e.target.value)}
+                              onBlur={e => handleOptionChange(index, 'text', e.target.value)}
                               error={
                                 hasErrors &&
-                                !option.image &&
-                                (getErrorMessage(`options.${option.id}.image`) ||
-                                  getErrorMessage(`options.${option.id}`))
+                                !option.text.trim() &&
+                                (getErrorMessage(`options.${option.id}.text`) || getErrorMessage(`options.${option.id}`))
                               }
                               helperText={
-                                !option.image &&
-                                (getErrorMessage(`options.${option.id}.image`) ||
-                                  getErrorMessage(`options.${option.id}`))
+                                !option.text.trim() &&
+                                (getErrorMessage(`options.${option.id}.text`) || getErrorMessage(`options.${option.id}`))
                               }
-                              InputProps={{
-                                endAdornment: (
-                                  <InputAdornment position='end'>
-                                    <IconButtonTooltip
-                                      title='Switch to Text'
-                                      disabled={loading.save || loading.delete}
-                                      onClick={() => toggleOptionMediaType(index, 'text')}
-                                    >
-                                      <TextFieldsIcon color='primary' />
-                                    </IconButtonTooltip>
-                                  </InputAdornment>
-                                )
-                              }}
                               sx={{
                                 '& .MuiOutlinedInput-root': {
                                   bgcolor: alpha(theme.palette.background.paper, 0.5),
@@ -595,93 +978,178 @@ const TrueFalseQuestionTemplate = ({
                                 }
                               }}
                             />
-                            {option.image && (
-                              <Box
-                                component='img'
-                                src={option.image}
-                                alt={option.text}
+                          )}
+
+                          {/* Option Image Upload and Preview */}
+                          {(optionsMediaType === 'image' || optionsMediaType === 'text-image') && (
+                            <Stack spacing={1}>
+                              {option.image && (
+                                <>
+                                  <Box
+                                    sx={{
+                                      position: 'relative',
+                                      width: '100%',
+                                      height: 120,
+                                      borderRadius: 2,
+                                      overflow: 'hidden',
+                                      border: '2px solid',
+                                      borderColor: alpha(theme.palette.primary.main, 0.2),
+                                      bgcolor: theme.palette.background.paper,
+                                      transition: 'all 0.3s ease',
+                                      '&:hover': {
+                                        borderColor: theme.palette.primary.main,
+                                        boxShadow:
+                                          theme.palette.mode === 'dark'
+                                            ? '0 6px 20px rgba(0,0,0,0.4)'
+                                            : '0 6px 20px rgba(0,0,0,0.12)',
+                                        transform: 'translateY(-2px)',
+                                        '& .enlarge-overlay': {
+                                          opacity: 1
+                                        },
+                                        '& .clear-button': {
+                                          opacity: 1
+                                        }
+                                      }
+                                    }}
+                                  >
+                                    <Box
+                                      onClick={() => setOptionImagePreviewOpen({ ...optionImagePreviewOpen, [index]: true })}
+                                      sx={{
+                                        width: '100%',
+                                        height: '100%',
+                                        cursor: 'pointer',
+                                        position: 'relative'
+                                      }}
+                                    >
+                                      <Box
+                                        component='img'
+                                        src={option.image}
+                                        alt={option.text}
+                                        sx={{
+                                          width: '100%',
+                                          height: '100%',
+                                          objectFit: 'contain',
+                                          display: 'block'
+                                        }}
+                                      />
+                                      <Box
+                                        className='enlarge-overlay'
+                                        sx={{
+                                          position: 'absolute',
+                                          inset: 0,
+                                          bgcolor: alpha(theme.palette.common.black, 0.4),
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          opacity: 0,
+                                          transition: 'opacity 0.3s ease',
+                                          backdropFilter: 'blur(2px)'
+                                        }}
+                                      >
+                                        <Typography
+                                          variant='caption'
+                                          sx={{
+                                            color: theme.palette.common.white,
+                                            fontWeight: 600,
+                                            bgcolor: alpha(theme.palette.common.black, 0.6),
+                                            px: 1.5,
+                                            py: 0.5,
+                                            borderRadius: 1
+                                          }}
+                                        >
+                                          Click to view full size
+                                        </Typography>
+                                      </Box>
+                                    </Box>
+                                    <IconButton
+                                      className='clear-button'
+                                      onClick={e => {
+                                        e.stopPropagation()
+                                        handleOptionChange(index, 'image', '')
+                                      }}
+                                      sx={{
+                                        position: 'absolute',
+                                        top: 4,
+                                        right: 4,
+                                        bgcolor: 'white',
+                                        opacity: 0.9,
+                                        zIndex: 10,
+                                        transition: 'all 0.3s ease',
+                                        boxShadow: theme.palette.mode === 'dark' 
+                                          ? '0 2px 6px rgba(0,0,0,0.5)' 
+                                          : '0 2px 6px rgba(0,0,0,0.2)',
+                                        '&:hover': {
+                                          bgcolor: 'white !important',
+                                          opacity: 1,
+                                          transform: 'scale(1.1)'
+                                        }
+                                      }}
+                                      size='small'
+                                      title='Remove image'
+                                    >
+                                      <DeleteIcon fontSize='small' color='error' />
+                                    </IconButton>
+                                  </Box>
+                                  <Dialog
+                                    open={optionImagePreviewOpen[index] || false}
+                                    onClose={() => setOptionImagePreviewOpen({ ...optionImagePreviewOpen, [index]: false })}
+                                    maxWidth='md'
+                                    fullWidth
+                                  >
+                                    <DialogTitle>{option.text} Image Preview</DialogTitle>
+                                    <DialogContent>
+                                      <Box
+                                        component='img'
+                                        src={option.image}
+                                        alt={`${option.text} Full Size`}
+                                        sx={{
+                                          width: '100%',
+                                          height: 'auto',
+                                          maxHeight: '70vh',
+                                          objectFit: 'contain',
+                                          display: 'block'
+                                        }}
+                                      />
+                                    </DialogContent>
+                                    <DialogActions>
+                                      <Button onClick={() => setOptionImagePreviewOpen({ ...optionImagePreviewOpen, [index]: false })}>Close</Button>
+                                    </DialogActions>
+                                  </Dialog>
+                                </>
+                              )}
+                              <Button
+                                variant='outlined'
+                                component='label'
+                                startIcon={<ImageIcon />}
+                                disabled={loading.save || loading.delete}
+                                size='small'
                                 sx={{
-                                  width: 60,
-                                  height: 60,
-                                  objectFit: 'cover',
-                                  borderRadius: 1.5,
-                                  border: '2px solid',
-                                  borderColor: alpha(
-                                    theme.palette.divider,
-                                    theme.palette.mode === 'dark' ? 0.12 : 0.08
-                                  ),
-                                  boxShadow:
-                                    theme.palette.mode === 'dark'
-                                      ? '0 2px 8px rgba(0,0,0,0.4)'
-                                      : '0 2px 8px rgba(0,0,0,0.1)'
+                                  borderColor: hasErrors && !option.image && (optionsMediaType === 'image' || optionsMediaType === 'text-image') 
+                                    ? theme.palette.error.main 
+                                    : undefined,
+                                  '&:hover': {
+                                    borderColor: hasErrors && !option.image && (optionsMediaType === 'image' || optionsMediaType === 'text-image')
+                                      ? theme.palette.error.main
+                                      : theme.palette.primary.main
+                                  }
                                 }}
-                              />
-                            )}
-                          </Stack>
-                        ) : option.mediaType === 'text' ? (
-                          <TextField
-                            fullWidth
-                            disabled={loading.save || loading.delete}
-                            label={option.text}
-                            value={option.text}
-                            onChange={e => handleOptionChange(index, 'text', e.target.value)}
-                            onBlur={e => handleOptionChange(index, 'text', e.target.value)}
-                            error={
-                              hasErrors &&
-                              !option.text.trim() &&
-                              (getErrorMessage(`options.${option.id}.text`) || getErrorMessage(`options.${option.id}`))
-                            }
-                            helperText={
-                              !option.text.trim() &&
-                              (getErrorMessage(`options.${option.id}.text`) || getErrorMessage(`options.${option.id}`))
-                            }
-                            InputProps={{
-                              endAdornment: (
-                                <InputAdornment position='end'>
-                                  <IconButtonTooltip
-                                    title='Switch to Image'
-                                    disabled={loading.save || loading.delete}
-                                    onClick={() => toggleOptionMediaType(index, 'image')}
-                                  >
-                                    <ImageIcon color='primary' />
-                                  </IconButtonTooltip>
-                                </InputAdornment>
-                              )
-                            }}
-                            sx={{
-                              '& .MuiOutlinedInput-root': {
-                                bgcolor: alpha(theme.palette.background.paper, 0.5),
-                                '&:hover .MuiOutlinedInput-notchedOutline': {
-                                  borderColor: theme.palette.primary.main
-                                }
-                              }
-                            }}
-                          />
-                        ) : (
-                          <TextField
-                            disabled={loading.save || loading.delete}
-                            fullWidth
-                            label={`${option.text} (${option.mediaType})`}
-                            InputProps={{
-                              endAdornment: (
-                                <InputAdornment position='end'>
-                                  <IconButtonTooltip
-                                    title='Switch to Text'
-                                    disabled={loading.save || loading.delete}
-                                    onClick={() => toggleOptionMediaType(index, 'text')}
-                                  >
-                                    <TextFieldsIcon color='primary' />
-                                  </IconButtonTooltip>
-                                </InputAdornment>
-                              )
-                            }}
-                            sx={{
-                              '& .MuiOutlinedInput-root': {
-                                bgcolor: alpha(theme.palette.background.paper, 0.5)
-                              }
-                            }}
-                          />
-                        )}
+                              >
+                                {option.image ? 'Change Image' : 'Upload Image'}
+                                <input
+                                  type='file'
+                                  hidden
+                                  accept='image/*'
+                                  onChange={e => handleOptionMediaUpload(index, e.target.files[0], 'image')}
+                                />
+                              </Button>
+                              {hasErrors && !option.image && (optionsMediaType === 'image' || optionsMediaType === 'text-image') && (
+                                <Typography variant='caption' color='error' sx={{ fontSize: '0.7rem' }}>
+                                  {getErrorMessage(`options.${option.id}.image`) || getErrorMessage(`options.${option.id}`)}
+                                </Typography>
+                              )}
+                            </Stack>
+                          )}
+                        </Stack>
                       </Box>
 
                       <FormControlLabel
