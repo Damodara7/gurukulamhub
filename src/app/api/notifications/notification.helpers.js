@@ -981,8 +981,7 @@ export const createGameRegisteredNotification = async (userId, gameData) => {
         month: 'long',
         day: 'numeric',
         hour: '2-digit',
-        minute: '2-digit',
-        timeZoneName: 'short'
+        minute: '2-digit'
       })
     }
 
@@ -1030,6 +1029,85 @@ export const createGameRegisteredNotification = async (userId, gameData) => {
       status: 'error',
       result: null,
       message: error.message || 'Failed to create game registered notification'
+    }
+  }
+}
+
+export const createGameCompletedNotification = async (userId, gameData) => {
+  try {
+    console.log('[Notification Helper] ===== createGameCompletedNotification START =====')
+    console.log('[Notification Helper] Input:', {
+      userId,
+      gameData
+    })
+
+    // Validate userId
+    if (!userId) {
+      console.error('[Notification Helper] ❌ userId is missing or invalid')
+      return {
+        status: 'error',
+        result: null,
+        message: 'User ID is required'
+      }
+    }
+
+    if (typeof userId === 'string' && !mongoose.Types.ObjectId.isValid(userId)) {
+      console.error('[Notification Helper] ❌ userId is not a valid ObjectId string')
+      return {
+        status: 'error',
+        result: null,
+        message: 'Invalid user ID format'
+      }
+    }
+
+    const gameId = gameData._id?.toString() || gameData.id || gameData._id
+    const gameTitle = gameData.title || gameData.quiz?.title || 'Game'
+    const gameThumbnail = gameData.thumbnailPoster || gameData.thumbnail || gameData.quiz?.thumbnail || null
+
+    console.log('[Notification Helper] Prepared data:', {
+      userId,
+      gameId,
+      gameTitle,
+      hasThumbnail: !!gameThumbnail
+    })
+
+    const notificationData = {
+      userId: userId,
+      type: 'GAME_COMPLETED',
+      title: `Game Completed: "${gameTitle}"`,
+      message: `Congratulations! You've successfully completed the game "${gameTitle}". Check your results and see how you performed!`,
+      relatedEntity: {
+        entityType: 'game',
+        entityId: gameId
+      },
+      metadata: {
+        gameTitle,
+        gameId,
+        completedAt: new Date().toISOString(),
+        avatarImage: gameThumbnail
+      },
+      actionUrl: `/public-games/${gameId}/play`,
+      actionLabel: 'View Results'
+    }
+
+    console.log('[Notification Helper] Notification data prepared:', {
+      userId: notificationData.userId,
+      type: notificationData.type,
+      title: notificationData.title
+    })
+
+    const result = await NotificationService.addOne(notificationData)
+    console.log('[Notification Helper] ✅ NotificationService.addOne result:', result)
+    console.log('[Notification Helper] ===== createGameCompletedNotification END =====')
+    return result
+  } catch (error) {
+    console.error('[Notification Helper] ❌❌❌ ERROR in createGameCompletedNotification ❌❌❌')
+    console.error('[Notification Helper] Error message:', error.message)
+    console.error('[Notification Helper] Error stack:', error.stack)
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to create game completed notification'
     }
   }
 }

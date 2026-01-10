@@ -16,6 +16,8 @@ import UserProfile from '@/app/api/profile/profile.model'
 import Group from '@/app/api/group/group.model'
 import {
   createGameCreatedNotification,
+  createGameRegisteredNotification,
+  createGameCompletedNotification,
   createGameAccessRemovedNotification,
   createGameDeletedNotification
 } from '../notifications/notification.helpers.js'
@@ -376,63 +378,74 @@ export const addOne = async gameData => {
       gameScheduler.onGameApproved(savedGame._id)
     }
 
-    // Broadcast games list update
-    await broadcastGamesUpdate()
-
-    // Also broadcast admin games update for awaiting_sponsorship and sponsored games
-    if (gameData.status === 'awaiting_sponsorship' || gameData.status === 'sponsored') {
-      await broadcastAdminGamesUpdate()
-    }
-
-    // Create notifications for eligible users when game is created
-    try {
-      let eligibleUserIds = []
-
-      // If game has a group, notify all members of that group
-      if (savedGame.groupId) {
-        const group = await Group.findById(savedGame.groupId).populate('members').lean()
-        if (group && group.members) {
-          eligibleUserIds = group.members.map(member => member._id || member)
+    // Broadcast games list update (non-blocking)
+    ;(async () => {
+      try {
+        await broadcastGamesUpdate()
+        // Also broadcast admin games update for awaiting_sponsorship and sponsored games
+        if (gameData.status === 'awaiting_sponsorship' || gameData.status === 'sponsored') {
+          await broadcastAdminGamesUpdate()
         }
-      } else {
-        // If no group, notify all active users (game is public)
-        const allActiveUsers = await User.find({
-          isActive: true,
-          isVerified: true
-        })
-          .select('_id')
-          .lean()
-
-        if (allActiveUsers && allActiveUsers.length > 0) {
-          eligibleUserIds = allActiveUsers.map(user => user._id)
-          console.log(`Game created without group - notifying ${eligibleUserIds.length} active users`)
-        }
+      } catch (broadcastError) {
+        console.error('Error broadcasting games update:', broadcastError)
       }
+    })()
 
-      // Create notifications for eligible users
-      if (eligibleUserIds.length > 0) {
-        // Get group name if game has a group
-        let groupName = null
+    // ✅ NON-BLOCKING: Create notifications for eligible users when game is created
+    // Fire and forget - don't await, let it run in background
+    ;(async () => {
+      try {
+        let eligibleUserIds = []
+
+        // If game has a group, notify all members of that group
         if (savedGame.groupId) {
-          const group = await Group.findById(savedGame.groupId).select('groupName').lean()
-          groupName = group?.groupName || null
+          const group = await Group.findById(savedGame.groupId).populate('members').lean()
+          if (group && group.members) {
+            eligibleUserIds = group.members.map(member => member._id || member)
+          }
+        } else {
+          // If no group, notify all active users (game is public)
+          const allActiveUsers = await User.find({
+            isActive: true,
+            isVerified: true
+          })
+            .select('_id')
+            .lean()
+
+          if (allActiveUsers && allActiveUsers.length > 0) {
+            eligibleUserIds = allActiveUsers.map(user => user._id)
+            console.log(`Game created without group - notifying ${eligibleUserIds.length} active users`)
+          }
         }
 
-        await createGameCreatedNotification(eligibleUserIds, {
-          _id: savedGame._id,
-          title: savedGame.title,
-          groupName: groupName,
-          createdBy: savedGame.creatorEmail,
-          registrationDeadline: savedGame.registrationEndTime || savedGame.endTime,
-          maxParticipants: savedGame.maxPlayers,
-          thumbnailPoster: savedGame.thumbnailPoster || savedGame.thumbnailUrl,
-          quiz: savedGame.quiz
-        })
+        // Create notifications for eligible users
+        if (eligibleUserIds.length > 0) {
+          // Get group name if game has a group
+          let groupName = null
+          if (savedGame.groupId) {
+            const group = await Group.findById(savedGame.groupId).select('groupName').lean()
+            groupName = group?.groupName || null
+          }
+
+          await createGameCreatedNotification(eligibleUserIds, {
+            _id: savedGame._id,
+            title: savedGame.title,
+            groupName: groupName,
+            createdBy: savedGame.creatorEmail,
+            registrationDeadline: savedGame.registrationEndTime || savedGame.endTime,
+            maxParticipants: savedGame.maxPlayers,
+            thumbnailPoster: savedGame.thumbnailPoster || savedGame.thumbnailUrl,
+            quiz: savedGame.quiz
+          })
+          console.log(
+            `[Game Service] ✅ Sent game created notifications to ${eligibleUserIds.length} user(s) in background`
+          )
+        }
+      } catch (notificationError) {
+        console.error('[Game Service] ❌ Error creating game notifications:', notificationError)
+        // Don't fail the game creation if notification creation fails
       }
-    } catch (notificationError) {
-      console.error('Error creating game notifications:', notificationError)
-      // Don't fail the game creation if notification creation fails
-    }
+    })()
 
     return {
       status: 'success',
@@ -1248,23 +1261,9 @@ export const joinGame = async (gameId, userData) => {
     })
     await player.save()
 
-    // Send registration notification to user (with push notification)
-    try {
-      await createGameRegisteredNotification(user._id, {
-        _id: game._id,
-        title: game.title,
-        startTime: game.startTime,
-        registrationEndTime: game.registrationEndTime,
-        thumbnailPoster: game.thumbnailPoster || game.thumbnailUrl,
-        quiz: game.quiz
-      })
-    } catch (notificationError) {
-      console.error('Error sending game registration notification:', notificationError)
-      // Don't fail the registration if notification fails
-    }
-
     const enrichedGame = await enrichGameWithDetails(game)
 
+    // Broadcast updates (non-blocking)
     broadcastGameDetailsUpdates(gameId)
     const leaderboard = enrichedGame?.participatedUsers?.map(p => ({
       ...p,
@@ -1272,6 +1271,25 @@ export const joinGame = async (gameId, userData) => {
     }))
     broadcastLeaderboard(gameId, leaderboard)
     broadcastGamesUpdate()
+
+    // ✅ NON-BLOCKING: Send registration notification to user (with push notification)
+    // Fire and forget - don't await, let it run in background
+    ;(async () => {
+      try {
+        await createGameRegisteredNotification(user._id, {
+          _id: game._id,
+          title: game.title,
+          startTime: game.startTime,
+          registrationEndTime: game.registrationEndTime,
+          thumbnailPoster: game.thumbnailPoster || game.thumbnailUrl,
+          quiz: game.quiz
+        })
+        console.log(`[Game Service] ✅ Sent game registered notification to user ${user._id} in background`)
+      } catch (notificationError) {
+        console.error('[Game Service] ❌ Error sending game registration notification:', notificationError)
+        // Don't fail the registration if notification fails
+      }
+    })()
 
     return {
       status: 'success',
@@ -1472,6 +1490,8 @@ export const updatePlayerProgress = async (gameId, { user, userAnswer, finish })
     player.score += scoreDelta
     player.fffPoints = (player.fffPoints || 0) + fffPointsDelta
 
+    const wasJustCompleted = finish && player.status !== 'completed'
+
     if (finish) {
       player.completed = true
       player.status = 'completed'
@@ -1525,6 +1545,25 @@ export const updatePlayerProgress = async (gameId, { user, userAnswer, finish })
       broadcastGameDetailsUpdates(gameId)
     } catch (e) {
       console.error('Failed to broadcast leaderboard:', e)
+    }
+
+    // ✅ NON-BLOCKING: Send game completed notification when player finishes the game
+    // Only send if the player just completed (wasn't already completed)
+    if (wasJustCompleted) {
+      ;(async () => {
+        try {
+          await createGameCompletedNotification(player.user?.toString() || player.user, {
+            _id: game._id || gameId,
+            title: game.title,
+            thumbnailPoster: game.thumbnailPoster || game.thumbnailUrl,
+            quiz: game.quiz
+          })
+          console.log(`[Game Service] ✅ Sent game completed notification to user ${player.user} in background`)
+        } catch (notificationError) {
+          console.error('[Game Service] ❌ Error sending game completed notification:', notificationError)
+          // Don't fail the progress update if notification fails
+        }
+      })()
     }
 
     return {
