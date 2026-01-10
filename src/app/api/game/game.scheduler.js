@@ -299,10 +299,50 @@ async function scheduleLiveTransition(gameId, startTime) {
         }
       } else {
         console.log(`📌 Game ${gameId} within grace period, moving to live`)
-        await Game.findByIdAndUpdate(gameId, { $set: { status: 'live' } })
-        const endTime = new Date(startTime.getTime() + game.duration * 1000)
-        await scheduleCompletion(gameId, endTime)
-        await broadcastGamesUpdate()
+
+        // ✅ ATOMIC CHECK: Only update if game is still 'lobby' or 'approved' (prevents duplicate notifications)
+        const updatedGame = await Game.findOneAndUpdate(
+          {
+            _id: gameId,
+            isDeleted: false,
+            status: { $in: ['approved', 'lobby'] } // ✅ CRITICAL: Only update if not already 'live'
+          },
+          { $set: { status: 'live' } },
+          { new: true }
+        )
+
+        if (updatedGame) {
+          const endTime = new Date(startTime.getTime() + game.duration * 1000)
+          await scheduleCompletion(gameId, endTime)
+          await broadcastGamesUpdate()
+
+          // ✅ NON-BLOCKING: Send "game started" notifications to all registered users
+          // Only sent if this actually moved the game to 'live' (not already 'live')
+          ;(async () => {
+            try {
+              const { createGameStartedNotificationsForRegisteredUsers } = await import(
+                '../notifications/notification.helpers.js'
+              )
+              await createGameStartedNotificationsForRegisteredUsers(gameId.toString(), {
+                _id: updatedGame._id || gameId,
+                title: updatedGame.title,
+                thumbnailPoster: updatedGame.thumbnailPoster || updatedGame.thumbnailUrl,
+                quiz: updatedGame.quiz
+              })
+              console.log(`[Game Scheduler] ✅ Sent game started notifications for game ${gameId} (grace period)`)
+            } catch (notificationError) {
+              console.error(
+                `[Game Scheduler] ❌ Error sending game started notifications for game ${gameId}:`,
+                notificationError
+              )
+            }
+          })()
+        } else {
+          // Game was already moved to 'live' by another process
+          console.log(
+            `📌 Game ${gameId} was already moved to 'live' status (grace period), skipping duplicate notification`
+          )
+        }
       }
       broadcastGameDetailsUpdates(gameId)
       return
@@ -314,23 +354,65 @@ async function scheduleLiveTransition(gameId, startTime) {
       convertToISOString(startTime),
       async () => {
         try {
-          const currentGame = await Game.findById(gameId)
-          if (!currentGame || ['cancelled', 'completed'].includes(currentGame.status)) {
-            console.log(`📌 Game ${gameId} was cancelled/completed before live transition`)
+          // ✅ CHECK: If game is already 'live', skip (prevent duplicate notifications)
+          const currentGame = await Game.findById(gameId).select('status').lean()
+          if (!currentGame || ['cancelled', 'completed', 'live'].includes(currentGame.status)) {
+            if (currentGame?.status === 'live') {
+              console.log(`📌 Game ${gameId} is already 'live' status, skipping duplicate notification`)
+            } else {
+              console.log(`📌 Game ${gameId} was ${currentGame?.status || 'deleted'}, skipping live transition`)
+            }
             return
           }
 
           console.log(`📌 Moving game ${gameId} to live status`)
-          const updatedGame = await Game.findByIdAndUpdate(gameId, { $set: { status: 'live' } }, { new: true })
+
+          // ✅ ATOMIC CHECK: Only update if game is still 'lobby' or 'approved' (prevents duplicate notifications)
+          // This prevents race conditions where reschedulePendingGames or other processes already moved the game to 'live'
+          const updatedGame = await Game.findOneAndUpdate(
+            {
+              _id: gameId,
+              isDeleted: false,
+              status: { $in: ['approved', 'lobby'] } // ✅ CRITICAL: Only update if not already 'live'
+            },
+            { $set: { status: 'live' } },
+            { new: true }
+          )
 
           if (updatedGame) {
-            console.log(`📌 Game ${gameId} status updated to live`)
+            console.log(`📌 Game ${gameId} status updated to live by scheduler`)
             const endTime = new Date(startTime.getTime() + updatedGame.duration * 1000)
             if (updatedGame.forwardType !== 'admin') {
               scheduleCompletion(gameId, endTime)
             }
             await broadcastGamesUpdate()
             broadcastGameDetailsUpdates(gameId)
+
+            // ✅ NON-BLOCKING: Send "game started" notifications to all registered users
+            // Fire and forget - don't await, let it run in background
+            // Only sent if this scheduler actually moved the game to 'live' (not already 'live')
+            ;(async () => {
+              try {
+                const { createGameStartedNotificationsForRegisteredUsers } = await import(
+                  '../notifications/notification.helpers.js'
+                )
+                await createGameStartedNotificationsForRegisteredUsers(gameId.toString(), {
+                  _id: updatedGame._id || gameId,
+                  title: updatedGame.title,
+                  thumbnailPoster: updatedGame.thumbnailPoster || updatedGame.thumbnailUrl,
+                  quiz: updatedGame.quiz
+                })
+                console.log(`[Game Scheduler] ✅ Sent game started notifications for game ${gameId}`)
+              } catch (notificationError) {
+                console.error(
+                  `[Game Scheduler] ❌ Error sending game started notifications for game ${gameId}:`,
+                  notificationError
+                )
+              }
+            })()
+          } else {
+            // Game was already moved to 'live' by another process (reschedulePendingGames, etc.)
+            console.log(`📌 Game ${gameId} was already moved to 'live' status, skipping duplicate notification`)
           }
         } catch (error) {
           console.error(`❌ Error updating game ${gameId} status:`, error)
@@ -575,10 +657,50 @@ export async function reschedulePendingGames() {
               }
             } else {
               console.log(`📌 Game ${game._id} within grace period, moving to live`)
-              await Game.findByIdAndUpdate(game._id, { $set: { status: 'live' } })
-              const endTime = new Date(game.startTime.getTime() + game.duration * 1000 + 30 * 1000)
-              await scheduleCompletion(game._id, endTime)
-              await broadcastGamesUpdate()
+
+              // ✅ ATOMIC CHECK: Only update if game is still 'lobby' or 'approved' (prevents duplicate notifications)
+              const updatedGame = await Game.findOneAndUpdate(
+                {
+                  _id: game._id,
+                  isDeleted: false,
+                  status: { $in: ['approved', 'lobby'] } // ✅ CRITICAL: Only update if not already 'live'
+                },
+                { $set: { status: 'live' } },
+                { new: true }
+              )
+
+              if (updatedGame) {
+                const endTime = new Date(game.startTime.getTime() + game.duration * 1000 + 30 * 1000)
+                await scheduleCompletion(game._id, endTime)
+                await broadcastGamesUpdate()
+
+                // ✅ NON-BLOCKING: Send "game started" notifications to all registered users
+                // Only sent if this actually moved the game to 'live' (not already 'live')
+                ;(async () => {
+                  try {
+                    const { createGameStartedNotificationsForRegisteredUsers } = await import(
+                      '../notifications/notification.helpers.js'
+                    )
+                    await createGameStartedNotificationsForRegisteredUsers(game._id.toString(), {
+                      _id: updatedGame._id || game._id,
+                      title: updatedGame.title,
+                      thumbnailPoster: updatedGame.thumbnailPoster || updatedGame.thumbnailUrl,
+                      quiz: updatedGame.quiz
+                    })
+                    console.log(`[Game Scheduler] ✅ Sent game started notifications for game ${game._id} (reschedule)`)
+                  } catch (notificationError) {
+                    console.error(
+                      `[Game Scheduler] ❌ Error sending game started notifications for game ${game._id}:`,
+                      notificationError
+                    )
+                  }
+                })()
+              } else {
+                // Game was already moved to 'live' by another process
+                console.log(
+                  `📌 Game ${game._id} was already moved to 'live' status (reschedule), skipping duplicate notification`
+                )
+              }
             }
           }
         } else if (game.status === 'live' && game.forwardType !== 'admin') {

@@ -1130,7 +1130,7 @@ export const createGameCompletedNotificationsForParticipatedUsers = async (gameI
         completedAt: new Date().toISOString(),
         avatarImage: gameData.thumbnailPoster || gameData.thumbnail || gameData.quiz?.thumbnail || null
       },
-      actionUrl: `/public-games/${gameId}/results`,
+      actionUrl: `/public-games/${gameId}/play`,
       actionLabel: 'View Results'
     }))
 
@@ -1393,6 +1393,196 @@ export const createGameCancelledNotificationsForRegisteredUsers = async (gameId,
       status: 'error',
       result: null,
       message: error.message || 'Failed to create game cancelled notifications'
+    }
+  }
+}
+
+// ✅ IN-MEMORY LOCK: Prevent concurrent processing of the same game for "game started" notifications
+const processingStartedGameIds = new Set()
+
+export const createGameStartedNotificationsForRegisteredUsers = async (gameId, gameData) => {
+  // ✅ IN-MEMORY LOCK: Prevent concurrent processing (race condition protection)
+  const lockKey = `started_${gameId}`
+  if (processingStartedGameIds.has(lockKey)) {
+    console.log(
+      `[Notification Helper] ⏭️ Game ${gameId} is already being processed for started notifications, skipping duplicate`
+    )
+    return {
+      status: 'success',
+      result: null,
+      message: 'Already processing notifications for this game'
+    }
+  }
+
+  try {
+    processingStartedGameIds.add(lockKey)
+    console.log('[Notification Helper] ===== createGameStartedNotificationsForRegisteredUsers START =====')
+    console.log('[Notification Helper] Checking for registered users for started game:', gameId)
+
+    await connectMongo()
+    const Player = (await import('../player/player.model.js')).default
+
+    // Find all players who registered for the game (any status: registered, participated, or completed)
+    // Notify all registered users that the game has started
+    const registeredPlayers = await Player.find({
+      game: gameId,
+      status: { $in: ['registered', 'participated', 'completed'] }
+    })
+      .select('user')
+      .lean()
+
+    if (!registeredPlayers || registeredPlayers.length === 0) {
+      console.log('[Notification Helper] ⏭️ No registered users for started game')
+      processingStartedGameIds.delete(lockKey)
+      return {
+        status: 'success',
+        result: null,
+        message: 'No users to notify (no registrations)'
+      }
+    }
+
+    // Extract unique user IDs
+    const allUserIds = [...new Set(registeredPlayers.map(p => p.user?.toString()).filter(Boolean))]
+
+    console.log(`[Notification Helper] Found ${allUserIds.length} user(s) registered for the started game`)
+
+    if (allUserIds.length === 0) {
+      console.log('[Notification Helper] ⏭️ No valid user IDs found')
+      processingStartedGameIds.delete(lockKey)
+      return {
+        status: 'success',
+        result: null,
+        message: 'No users to notify'
+      }
+    }
+
+    // ✅ SAFEGUARD: Check for existing GAME_STARTED notifications to prevent duplicates
+    // Check for notifications sent in the last 24 hours to prevent duplicates
+    const existingNotifications = await Notification.find({
+      type: 'GAME_STARTED',
+      'relatedEntity.entityType': 'game',
+      'relatedEntity.entityId': gameId.toString(),
+      userId: { $in: allUserIds.map(id => new mongoose.Types.ObjectId(id)) },
+      createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } // Last 24 hours
+    })
+      .select('userId')
+      .lean()
+
+    const existingUserIds = new Set(existingNotifications.map(n => n.userId?.toString()).filter(Boolean))
+
+    if (existingNotifications.length > 0) {
+      console.log(
+        `[Notification Helper] ⚠️ Found ${existingNotifications.length} existing GAME_STARTED notification(s) for game ${gameId}`
+      )
+    }
+
+    // ✅ Filter out users who already have the notification
+    let userIdsToNotify = allUserIds.filter(userId => !existingUserIds.has(userId))
+
+    console.log(
+      `[Notification Helper] 📧 Total registered users: ${allUserIds.length}, Already notified: ${existingUserIds.size}, To notify: ${userIdsToNotify.length}`
+    )
+
+    if (userIdsToNotify.length === 0) {
+      console.log(
+        `[Notification Helper] ⏭️ All users already have GAME_STARTED notification for game ${gameId}, skipping`
+      )
+      processingStartedGameIds.delete(lockKey)
+      return {
+        status: 'success',
+        result: null,
+        message: 'All users already notified'
+      }
+    }
+
+    // ✅ FINAL CHECK: Double-check for existing notifications right before saving (reduces race condition window)
+    // This is an additional safeguard in case another process created notifications between our initial check and now
+    const finalCheckNotifications = await Notification.find({
+      type: 'GAME_STARTED',
+      'relatedEntity.entityType': 'game',
+      'relatedEntity.entityId': gameId.toString(),
+      userId: { $in: userIdsToNotify.map(id => new mongoose.Types.ObjectId(id)) },
+      createdAt: { $gte: new Date(Date.now() - 60 * 1000) } // Last 1 minute (more recent check)
+    })
+      .select('userId')
+      .lean()
+
+    if (finalCheckNotifications.length > 0) {
+      const finalExistingUserIds = new Set(finalCheckNotifications.map(n => n.userId?.toString()).filter(Boolean))
+      const finalUserIdsToNotify = userIdsToNotify.filter(userId => !finalExistingUserIds.has(userId))
+
+      if (finalUserIdsToNotify.length === 0) {
+        console.log(
+          `[Notification Helper] ⏭️ Final check: All users already have GAME_STARTED notification for game ${gameId} (race condition prevented), skipping`
+        )
+        processingStartedGameIds.delete(lockKey)
+        return {
+          status: 'success',
+          result: null,
+          message: 'All users already notified (race condition prevented)'
+        }
+      }
+
+      // Update userIdsToNotify to only include users who don't have notifications
+      console.log(
+        `[Notification Helper] ⚠️ Final check: ${finalCheckNotifications.length} users already have notifications, sending to ${finalUserIdsToNotify.length} remaining users`
+      )
+      userIdsToNotify = finalUserIdsToNotify
+    }
+
+    // Send notifications only to users who don't already have it (build array after final check)
+    const notificationsData = userIdsToNotify.map(userId => ({
+      userId: userId,
+      type: 'GAME_STARTED',
+      title: `Game Started: "${gameData.title || 'Game'}"`,
+      message: `You registered for the game "${
+        gameData.title || 'Game'
+      }" and it's now live! Please join the game and start playing.`,
+      relatedEntity: {
+        entityType: 'game',
+        entityId: gameId.toString()
+      },
+      metadata: {
+        gameTitle: gameData.title,
+        gameId: gameId.toString(),
+        startedAt: new Date().toISOString(),
+        avatarImage: gameData.thumbnailPoster || gameData.thumbnail || gameData.quiz?.thumbnail || null
+      },
+      actionUrl: `/public-games/${gameId}/play`,
+      actionLabel: 'Join Game'
+    }))
+
+    console.log(
+      '[Notification Helper] Calling NotificationService.addMany with',
+      notificationsData.length,
+      'game started notifications'
+    )
+    const result = await NotificationService.addMany(notificationsData)
+    console.log('[Notification Helper] ✅ NotificationService.addMany result:', result)
+    console.log('[Notification Helper] ===== createGameStartedNotificationsForRegisteredUsers END =====')
+
+    // Remove from processing set after 2 minutes (cleanup) - shorter timeout since notifications should be sent quickly
+    setTimeout(
+      () => {
+        processingStartedGameIds.delete(lockKey)
+        console.log(`[Notification Helper] 🔓 Released lock for game started notifications: ${gameId}`)
+      },
+      2 * 60 * 1000
+    )
+
+    return result
+  } catch (error) {
+    console.error('[Notification Helper] ❌❌❌ ERROR in createGameStartedNotificationsForRegisteredUsers ❌❌❌')
+    console.error('[Notification Helper] Error message:', error.message)
+    console.error('[Notification Helper] Error stack:', error.stack)
+
+    // Remove from processing set on error
+    processingStartedGameIds.delete(lockKey)
+
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to create game started notifications'
     }
   }
 }
