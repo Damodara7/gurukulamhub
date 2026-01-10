@@ -1,5 +1,7 @@
 import * as NotificationService from './notification.service.js'
 import mongoose from 'mongoose'
+import connectMongo from '@/utils/dbConnect-mongo'
+import Notification from './notification.model.js'
 
 export const createQuizApprovedNotification = async (userId, quizData) => {
   try {
@@ -1033,81 +1035,364 @@ export const createGameRegisteredNotification = async (userId, gameData) => {
   }
 }
 
-export const createGameCompletedNotification = async (userId, gameData) => {
+export const createGameCompletedNotificationsForParticipatedUsers = async (gameId, gameData) => {
   try {
-    console.log('[Notification Helper] ===== createGameCompletedNotification START =====')
-    console.log('[Notification Helper] Input:', {
-      userId,
-      gameData
-    })
+    console.log('[Notification Helper] ===== createGameCompletedNotificationsForParticipatedUsers START =====')
+    console.log('[Notification Helper] Checking for participated users for game:', gameId)
 
-    // Validate userId
-    if (!userId) {
-      console.error('[Notification Helper] ❌ userId is missing or invalid')
+    await connectMongo()
+    const Player = (await import('../player/player.model.js')).default
+
+    // Find all players who participated or completed (status: 'participated' or 'completed')
+    const participatedPlayers = await Player.find({
+      game: gameId,
+      status: { $in: ['participated', 'completed'] }
+    })
+      .select('user')
+      .lean()
+
+    if (!participatedPlayers || participatedPlayers.length === 0) {
+      console.log('[Notification Helper] ⏭️ No participated users found')
       return {
-        status: 'error',
+        status: 'success',
         result: null,
-        message: 'User ID is required'
+        message: 'No users to notify (no participants)'
       }
     }
 
-    if (typeof userId === 'string' && !mongoose.Types.ObjectId.isValid(userId)) {
-      console.error('[Notification Helper] ❌ userId is not a valid ObjectId string')
+    // Extract unique user IDs
+    const allUserIds = [...new Set(participatedPlayers.map(p => p.user?.toString()).filter(Boolean))]
+
+    console.log(`[Notification Helper] Found ${allUserIds.length} user(s) who participated in the game`)
+
+    if (allUserIds.length === 0) {
+      console.log('[Notification Helper] ⏭️ No valid user IDs found')
       return {
-        status: 'error',
+        status: 'success',
         result: null,
-        message: 'Invalid user ID format'
+        message: 'No users to notify'
       }
     }
 
-    const gameId = gameData._id?.toString() || gameData.id || gameData._id
-    const gameTitle = gameData.title || gameData.quiz?.title || 'Game'
-    const gameThumbnail = gameData.thumbnailPoster || gameData.thumbnail || gameData.quiz?.thumbnail || null
-
-    console.log('[Notification Helper] Prepared data:', {
-      userId,
-      gameId,
-      gameTitle,
-      hasThumbnail: !!gameThumbnail
+    // ✅ SAFEGUARD: Check for existing GAME_COMPLETED notifications to prevent duplicates
+    // Check for notifications sent in the last 24 hours to prevent duplicates
+    const existingNotifications = await Notification.find({
+      type: 'GAME_COMPLETED',
+      'relatedEntity.entityType': 'game',
+      'relatedEntity.entityId': gameId.toString(),
+      userId: { $in: allUserIds.map(id => new mongoose.Types.ObjectId(id)) },
+      createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } // Last 24 hours
     })
+      .select('userId')
+      .lean()
 
-    const notificationData = {
+    const existingUserIds = new Set(existingNotifications.map(n => n.userId?.toString()).filter(Boolean))
+
+    if (existingNotifications.length > 0) {
+      console.log(
+        `[Notification Helper] ⚠️ Found ${existingNotifications.length} existing GAME_COMPLETED notification(s) for game ${gameId}`
+      )
+    }
+
+    // ✅ Filter out users who already have the notification
+    const userIdsToNotify = allUserIds.filter(userId => !existingUserIds.has(userId))
+
+    console.log(
+      `[Notification Helper] 📧 Total participated users: ${allUserIds.length}, Already notified: ${existingUserIds.size}, To notify: ${userIdsToNotify.length}`
+    )
+
+    if (userIdsToNotify.length === 0) {
+      console.log(
+        `[Notification Helper] ⏭️ All users already have GAME_COMPLETED notification for game ${gameId}, skipping`
+      )
+      return {
+        status: 'success',
+        result: null,
+        message: 'All users already notified'
+      }
+    }
+
+    // Send notifications only to users who don't already have it
+    const notificationsData = userIdsToNotify.map(userId => ({
       userId: userId,
       type: 'GAME_COMPLETED',
-      title: `Game Completed: "${gameTitle}"`,
-      message: `Congratulations! You've successfully completed the game "${gameTitle}". Check your results and see how you performed!`,
+      title: `Game Completed: "${gameData.title || 'Game'}"`,
+      message: `Congratulations! The game "${
+        gameData.title || 'Game'
+      }" has been completed. Check your results and see how you performed!`,
       relatedEntity: {
         entityType: 'game',
-        entityId: gameId
+        entityId: gameId.toString()
       },
       metadata: {
-        gameTitle,
-        gameId,
+        gameTitle: gameData.title,
+        gameId: gameId.toString(),
         completedAt: new Date().toISOString(),
-        avatarImage: gameThumbnail
+        avatarImage: gameData.thumbnailPoster || gameData.thumbnail || gameData.quiz?.thumbnail || null
       },
-      actionUrl: `/public-games/${gameId}/play`,
+      actionUrl: `/public-games/${gameId}/results`,
       actionLabel: 'View Results'
-    }
+    }))
 
-    console.log('[Notification Helper] Notification data prepared:', {
-      userId: notificationData.userId,
-      type: notificationData.type,
-      title: notificationData.title
-    })
-
-    const result = await NotificationService.addOne(notificationData)
-    console.log('[Notification Helper] ✅ NotificationService.addOne result:', result)
-    console.log('[Notification Helper] ===== createGameCompletedNotification END =====')
+    console.log(
+      '[Notification Helper] Calling NotificationService.addMany with',
+      notificationsData.length,
+      'game completed notifications'
+    )
+    const result = await NotificationService.addMany(notificationsData)
+    console.log('[Notification Helper] ✅ NotificationService.addMany result:', result)
+    console.log('[Notification Helper] ===== createGameCompletedNotificationsForParticipatedUsers END =====')
     return result
   } catch (error) {
-    console.error('[Notification Helper] ❌❌❌ ERROR in createGameCompletedNotification ❌❌❌')
+    console.error('[Notification Helper] ❌❌❌ ERROR in createGameCompletedNotificationsForParticipatedUsers ❌❌❌')
     console.error('[Notification Helper] Error message:', error.message)
     console.error('[Notification Helper] Error stack:', error.stack)
     return {
       status: 'error',
       result: null,
-      message: error.message || 'Failed to create game completed notification'
+      message: error.message || 'Failed to create game completed notifications'
+    }
+  }
+}
+
+export const createGameMissedNotificationsForRegisteredUsers = async (gameId, gameData) => {
+  try {
+    console.log('[Notification Helper] ===== createGameMissedNotificationsForRegisteredUsers START =====')
+    console.log('[Notification Helper] Checking for registered but not participated users for game:', gameId)
+
+    await connectMongo()
+    const Player = (await import('../player/player.model.js')).default
+
+    // Find all players who registered but never participated (status is still 'registered')
+    const missedPlayers = await Player.find({
+      game: gameId,
+      status: 'registered' // Only those who registered but didn't participate
+    })
+      .select('user')
+      .lean()
+
+    if (!missedPlayers || missedPlayers.length === 0) {
+      console.log('[Notification Helper] ⏭️ No registered users who missed the game')
+      return {
+        status: 'success',
+        result: null,
+        message: 'No users to notify (all participated)'
+      }
+    }
+
+    // Extract unique user IDs
+    const allUserIds = [...new Set(missedPlayers.map(p => p.user?.toString()).filter(Boolean))]
+
+    console.log(`[Notification Helper] Found ${allUserIds.length} user(s) who registered but didn't participate`)
+
+    if (allUserIds.length === 0) {
+      console.log('[Notification Helper] ⏭️ No valid user IDs found')
+      return {
+        status: 'success',
+        result: null,
+        message: 'No users to notify'
+      }
+    }
+
+    // ✅ SAFEGUARD: Check for existing GAME_MISSED notifications to prevent duplicates
+    // Check for notifications sent in the last 24 hours to prevent duplicates
+    const existingNotifications = await Notification.find({
+      type: 'GAME_MISSED',
+      'relatedEntity.entityType': 'game',
+      'relatedEntity.entityId': gameId.toString(),
+      userId: { $in: allUserIds.map(id => new mongoose.Types.ObjectId(id)) },
+      createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } // Last 24 hours
+    })
+      .select('userId')
+      .lean()
+
+    const existingUserIds = new Set(existingNotifications.map(n => n.userId?.toString()).filter(Boolean))
+
+    if (existingNotifications.length > 0) {
+      console.log(
+        `[Notification Helper] ⚠️ Found ${existingNotifications.length} existing GAME_MISSED notification(s) for game ${gameId}`
+      )
+    }
+
+    // ✅ Filter out users who already have the notification
+    const userIdsToNotify = allUserIds.filter(userId => !existingUserIds.has(userId))
+
+    console.log(
+      `[Notification Helper] 📧 Total registered users: ${allUserIds.length}, Already notified: ${existingUserIds.size}, To notify: ${userIdsToNotify.length}`
+    )
+
+    if (userIdsToNotify.length === 0) {
+      console.log(
+        `[Notification Helper] ⏭️ All users already have GAME_MISSED notification for game ${gameId}, skipping`
+      )
+      return {
+        status: 'success',
+        result: null,
+        message: 'All users already notified'
+      }
+    }
+
+    // Send notifications only to users who don't already have it
+    const notificationsData = userIdsToNotify.map(userId => ({
+      userId: userId,
+      type: 'GAME_MISSED',
+      title: `Game Missed: "${gameData.title || 'Game'}"`,
+      message: `You registered for the game "${
+        gameData.title || 'Game'
+      }" but didn't participate. The game has been completed. Better luck next time!`,
+      relatedEntity: {
+        entityType: 'game',
+        entityId: gameId.toString()
+      },
+      metadata: {
+        gameTitle: gameData.title,
+        gameId: gameId.toString(),
+        missedAt: new Date().toISOString(),
+        avatarImage: gameData.thumbnailPoster || gameData.thumbnail || gameData.quiz?.thumbnail || null
+      },
+      actionUrl: `/public-games`,
+      actionLabel: 'View Games'
+    }))
+
+    console.log(
+      '[Notification Helper] Calling NotificationService.addMany with',
+      notificationsData.length,
+      'missed game notifications'
+    )
+    const result = await NotificationService.addMany(notificationsData)
+    console.log('[Notification Helper] ✅ NotificationService.addMany result:', result)
+    console.log('[Notification Helper] ===== createGameMissedNotificationsForRegisteredUsers END =====')
+    return result
+  } catch (error) {
+    console.error('[Notification Helper] ❌❌❌ ERROR in createGameMissedNotificationsForRegisteredUsers ❌❌❌')
+    console.error('[Notification Helper] Error message:', error.message)
+    console.error('[Notification Helper] Error stack:', error.stack)
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to create game missed notifications'
+    }
+  }
+}
+
+export const createGameCancelledNotificationsForRegisteredUsers = async (gameId, gameData) => {
+  try {
+    console.log('[Notification Helper] ===== createGameCancelledNotificationsForRegisteredUsers START =====')
+    console.log('[Notification Helper] Checking for registered users for cancelled game:', gameId)
+
+    await connectMongo()
+    const Player = (await import('../player/player.model.js')).default
+
+    // Find all players who registered (any status: registered, participated, or completed)
+    // Notify all registered users regardless of participation status
+    const registeredPlayers = await Player.find({
+      game: gameId,
+      status: { $in: ['registered', 'participated', 'completed'] }
+    })
+      .select('user')
+      .lean()
+
+    if (!registeredPlayers || registeredPlayers.length === 0) {
+      console.log('[Notification Helper] ⏭️ No registered users for cancelled game')
+      return {
+        status: 'success',
+        result: null,
+        message: 'No users to notify (no registrations)'
+      }
+    }
+
+    // Extract unique user IDs
+    const allUserIds = [...new Set(registeredPlayers.map(p => p.user?.toString()).filter(Boolean))]
+
+    console.log(`[Notification Helper] Found ${allUserIds.length} user(s) registered for the cancelled game`)
+
+    if (allUserIds.length === 0) {
+      console.log('[Notification Helper] ⏭️ No valid user IDs found')
+      return {
+        status: 'success',
+        result: null,
+        message: 'No users to notify'
+      }
+    }
+
+    // ✅ SAFEGUARD: Check for existing GAME_CANCELLED notifications to prevent duplicates
+    // Check for notifications sent in the last 24 hours to prevent duplicates
+    const existingNotifications = await Notification.find({
+      type: 'GAME_CANCELLED',
+      'relatedEntity.entityType': 'game',
+      'relatedEntity.entityId': gameId.toString(),
+      userId: { $in: allUserIds.map(id => new mongoose.Types.ObjectId(id)) },
+      createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } // Last 24 hours
+    })
+      .select('userId')
+      .lean()
+
+    const existingUserIds = new Set(existingNotifications.map(n => n.userId?.toString()).filter(Boolean))
+
+    if (existingNotifications.length > 0) {
+      console.log(
+        `[Notification Helper] ⚠️ Found ${existingNotifications.length} existing GAME_CANCELLED notification(s) for game ${gameId}`
+      )
+    }
+
+    // ✅ Filter out users who already have the notification
+    const userIdsToNotify = allUserIds.filter(userId => !existingUserIds.has(userId))
+
+    console.log(
+      `[Notification Helper] 📧 Total registered users: ${allUserIds.length}, Already notified: ${existingUserIds.size}, To notify: ${userIdsToNotify.length}`
+    )
+
+    if (userIdsToNotify.length === 0) {
+      console.log(
+        `[Notification Helper] ⏭️ All users already have GAME_CANCELLED notification for game ${gameId}, skipping`
+      )
+      return {
+        status: 'success',
+        result: null,
+        message: 'All users already notified'
+      }
+    }
+
+    const cancellationReason = gameData.cancellationReason || 'Game has been cancelled'
+
+    // Send notifications only to users who don't already have it
+    const notificationsData = userIdsToNotify.map(userId => ({
+      userId: userId,
+      type: 'GAME_CANCELLED',
+      title: `Game Cancelled: "${gameData.title || 'Game'}"`,
+      message: `The game "${gameData.title || 'Game'}" has been cancelled. ${cancellationReason}`,
+      relatedEntity: {
+        entityType: 'game',
+        entityId: gameId.toString()
+      },
+      metadata: {
+        gameTitle: gameData.title,
+        gameId: gameId.toString(),
+        cancelledAt: new Date().toISOString(),
+        cancellationReason: cancellationReason,
+        avatarImage: gameData.thumbnailPoster || gameData.thumbnail || gameData.quiz?.thumbnail || null
+      },
+      actionUrl: `/public-games`,
+      actionLabel: 'View Games'
+    }))
+
+    console.log(
+      '[Notification Helper] Calling NotificationService.addMany with',
+      notificationsData.length,
+      'game cancelled notifications'
+    )
+    const result = await NotificationService.addMany(notificationsData)
+    console.log('[Notification Helper] ✅ NotificationService.addMany result:', result)
+    console.log('[Notification Helper] ===== createGameCancelledNotificationsForRegisteredUsers END =====')
+    return result
+  } catch (error) {
+    console.error('[Notification Helper] ❌❌❌ ERROR in createGameCancelledNotificationsForRegisteredUsers ❌❌❌')
+    console.error('[Notification Helper] Error message:', error.message)
+    console.error('[Notification Helper] Error stack:', error.stack)
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to create game cancelled notifications'
     }
   }
 }

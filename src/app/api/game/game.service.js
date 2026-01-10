@@ -17,7 +17,9 @@ import Group from '@/app/api/group/group.model'
 import {
   createGameCreatedNotification,
   createGameRegisteredNotification,
-  createGameCompletedNotification,
+  createGameCompletedNotificationsForParticipatedUsers,
+  createGameMissedNotificationsForRegisteredUsers,
+  createGameCancelledNotificationsForRegisteredUsers,
   createGameAccessRemovedNotification,
   createGameDeletedNotification
 } from '../notifications/notification.helpers.js'
@@ -622,6 +624,12 @@ export const updateOne = async (gameId, updateData) => {
       updateData.rewards = updatedRewards
     }
 
+    // ✅ Track if status is being changed TO 'cancelled' for notification (check BEFORE applying updates)
+    const oldStatus = existingGame.status
+    const isBeingCancelled = updateData.status === 'cancelled' && oldStatus !== 'cancelled'
+    const cancellationReason =
+      updateData.cancellationReason || existingGame.cancellationReason || 'Game has been cancelled'
+
     // Apply updates to the existing game document
     Object.keys(updateData).forEach(key => {
       // Special handling for groupId to ensure it's properly set
@@ -652,7 +660,8 @@ export const updateOne = async (gameId, updateData) => {
       } else {
         existingGame[key] = updateData[key]
       }
-      if (key === 'status' && existingGame.status === 'cancelled') {
+      // Handle un-cancelling a cancelled game (if game WAS cancelled and is being un-cancelled)
+      if (key === 'status' && oldStatus === 'cancelled' && updateData[key] !== 'cancelled') {
         existingGame.cancellationReason = undefined
         // For admin case (approving)
         if (user?.roles?.includes(ROLES_LOOKUP.ADMIN)) {
@@ -661,7 +670,7 @@ export const updateOne = async (gameId, updateData) => {
           existingGame.approverEmail = updateData.updaterEmail
           existingGame.approvedAt = new Date()
         }
-        // For non-admin case (cancelling)
+        // For non-admin case (reverting cancellation)
         else {
           existingGame.status = 'created'
           // Use $unset in the save operation
@@ -695,6 +704,27 @@ export const updateOne = async (gameId, updateData) => {
 
     // Save the updated game
     const updatedGame = await existingGame.save({ validateBeforeSave: false })
+
+    // ✅ NON-BLOCKING: Send "game cancelled" notifications if game was manually cancelled via updateOne
+    if (isBeingCancelled && updatedGame.status === 'cancelled') {
+      ;(async () => {
+        try {
+          await createGameCancelledNotificationsForRegisteredUsers(gameId.toString(), {
+            _id: updatedGame._id || gameId,
+            title: updatedGame.title,
+            cancellationReason: cancellationReason,
+            thumbnailPoster: updatedGame.thumbnailPoster || updatedGame.thumbnailUrl,
+            quiz: updatedGame.quiz
+          })
+          console.log(`[Game Service] ✅ Sent game cancelled notifications for manually cancelled game ${gameId}`)
+        } catch (notificationError) {
+          console.error(
+            `[Game Service] ❌ Error sending game cancelled notifications for manually cancelled game ${gameId}:`,
+            notificationError
+          )
+        }
+      })()
+    }
 
     // Handle group change notifications
     console.log('[Game Service] ===== NOTIFICATION PROCESSING START =====')
@@ -1547,24 +1577,8 @@ export const updatePlayerProgress = async (gameId, { user, userAnswer, finish })
       console.error('Failed to broadcast leaderboard:', e)
     }
 
-    // ✅ NON-BLOCKING: Send game completed notification when player finishes the game
-    // Only send if the player just completed (wasn't already completed)
-    if (wasJustCompleted) {
-      ;(async () => {
-        try {
-          await createGameCompletedNotification(player.user?.toString() || player.user, {
-            _id: game._id || gameId,
-            title: game.title,
-            thumbnailPoster: game.thumbnailPoster || game.thumbnailUrl,
-            quiz: game.quiz
-          })
-          console.log(`[Game Service] ✅ Sent game completed notification to user ${player.user} in background`)
-        } catch (notificationError) {
-          console.error('[Game Service] ❌ Error sending game completed notification:', notificationError)
-          // Don't fail the progress update if notification fails
-        }
-      })()
-    }
+    // Note: Game completed notifications are sent when the entire game completes (via scheduler or admin-forwarding)
+    // No need to send individual notifications here to avoid duplicates
 
     return {
       status: 'success',
@@ -1983,10 +1997,92 @@ export const forwardQuestion = async (gameId, user, currentQuestionIndex) => {
       game.liveQuestionStartedAt = new Date()
       game.duration = (new Date().getTime() - new Date(game?.startTime).getTime()) / 1000
       await game.save()
-      // Update all players
+
+      // ✅ CRITICAL: Identify participated users BEFORE updating player statuses
+      // We need to know who actually participated vs who just registered
       const now = new Date()
-      await Player.updateMany({ game: gameId }, { $set: { status: 'completed', completed: true, finishedAt: now } })
-      message = 'Game completed and all players marked as completed.'
+
+      // Get all players BEFORE updating statuses to identify who participated vs who just registered
+      const allPlayersBeforeUpdate = await Player.find({ game: gameId }).select('user status').lean()
+
+      // Identify users who actually participated (status: 'participated' or 'completed')
+      const participatedUserIds = [
+        ...new Set(
+          allPlayersBeforeUpdate
+            .filter(p => p.status === 'participated' || p.status === 'completed')
+            .map(p => p.user?.toString())
+            .filter(Boolean)
+        )
+      ]
+
+      // Identify users who only registered but didn't participate (status: 'registered')
+      const registeredOnlyUserIds = [
+        ...new Set(
+          allPlayersBeforeUpdate
+            .filter(p => p.status === 'registered')
+            .map(p => p.user?.toString())
+            .filter(Boolean)
+        )
+      ]
+
+      console.log(
+        `[Game Service] Admin-forwarded game ${gameId} completion - Participated: ${participatedUserIds.length}, Registered only: ${registeredOnlyUserIds.length}`
+      )
+
+      // Update player statuses:
+      // - Participated users → 'completed'
+      // - Registered-only users → keep as 'registered' (don't mark as completed - they missed it)
+      if (participatedUserIds.length > 0) {
+        await Player.updateMany(
+          { game: gameId, user: { $in: participatedUserIds.map(id => new mongoose.Types.ObjectId(id)) } },
+          { $set: { status: 'completed', completed: true, finishedAt: now } }
+        )
+        console.log(`[Game Service] ✅ Updated ${participatedUserIds.length} participated user(s) to completed status`)
+      }
+
+      // ✅ NON-BLOCKING: Send notifications in background (fire-and-forget)
+      // Don't await - let them run in background so API response is immediate
+      ;(async () => {
+        try {
+          // Send "game missed" notifications to registered but not participated users
+          if (registeredOnlyUserIds.length > 0) {
+            await createGameMissedNotificationsForRegisteredUsers(gameId.toString(), {
+              _id: game._id || gameId,
+              title: game.title,
+              thumbnailPoster: game.thumbnailPoster || game.thumbnailUrl,
+              quiz: game.quiz
+            })
+            console.log(
+              `[Game Service] ✅ Sent game missed notifications to ${registeredOnlyUserIds.length} registered-only user(s)`
+            )
+          }
+
+          // Send "game completed" notifications ONLY to users who actually participated
+          if (participatedUserIds.length > 0) {
+            const { createGameCompletedNotificationsForParticipatedUsers } = await import(
+              '../notifications/notification.helpers.js'
+            )
+
+            await createGameCompletedNotificationsForParticipatedUsers(gameId.toString(), {
+              _id: game._id || gameId,
+              title: game.title,
+              thumbnailPoster: game.thumbnailPoster || game.thumbnailUrl,
+              quiz: game.quiz
+            })
+            console.log(
+              `[Game Service] ✅ Sent game completed notifications to ${participatedUserIds.length} participated user(s)`
+            )
+          }
+        } catch (notificationError) {
+          console.error(
+            `[Game Service] ❌ Error sending notifications for admin-forwarded game ${gameId}:`,
+            notificationError
+          )
+          // Don't fail the game completion if notifications fail
+        }
+      })()
+
+      message = `Game completed. ${participatedUserIds.length} participated user(s) marked as completed, ${registeredOnlyUserIds.length} registered-only user(s) kept as registered.`
     } else {
       // Increment liveQuestionIndex
       game.liveQuestionIndex = currentQuestionIndex + 1

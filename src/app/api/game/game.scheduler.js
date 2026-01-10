@@ -6,6 +6,9 @@ import { broadcastGameDetailsUpdates, broadcastGamesUpdate } from './game.servic
 // Object to store our scheduled tasks
 const gameStatusTasks = {}
 
+// ✅ IN-MEMORY LOCK: Prevent concurrent processing of the same game
+const processingGameIds = new Set()
+
 function convertToISOString(time) {
   const cronTime = `${time.getSeconds()} ${time.getMinutes()} ${time.getHours()} ${time.getDate()} ${
     time.getMonth() + 1
@@ -18,6 +21,98 @@ function cancelTask(gameId) {
   if (gameStatusTasks[gameId]) {
     gameStatusTasks[gameId].stop()
     delete gameStatusTasks[gameId]
+  }
+}
+
+// ✅ Helper function to complete a game with proper notifications (used by scheduler)
+async function completeGame(gameId) {
+  // ✅ IN-MEMORY LOCK: Prevent concurrent processing
+  if (processingGameIds.has(gameId)) {
+    console.log(`📌 Game ${gameId} is already being processed, skipping duplicate completion`)
+    return
+  }
+
+  try {
+    processingGameIds.add(gameId)
+    console.log(`📌 Completing game ${gameId}...`)
+
+    const currentTime = new Date()
+
+    // ✅ ATOMIC CHECK: Only update if game is still 'live' (prevents duplicate notifications)
+    const updatedGame = await Game.findOneAndUpdate(
+      {
+        _id: gameId,
+        isDeleted: false,
+        status: 'live' // ✅ CRITICAL: Only complete games that are still 'live'
+      },
+      {
+        $set: { status: 'completed' }
+      },
+      {
+        new: true
+      }
+    )
+
+    // ✅ Only proceed if game was actually completed by this call
+    if (!updatedGame) {
+      console.log(`📌 Game ${gameId} was already completed or not in 'live' status, skipping`)
+      processingGameIds.delete(gameId)
+      return
+    }
+
+    // Update all Player documents for this game with status 'participated' to completed
+    await Player.updateMany(
+      { game: gameId, status: 'participated' },
+      { $set: { status: 'completed', completed: true, finishedAt: currentTime } }
+    )
+
+    console.log(`📌 Game ${gameId} status updated to completed by scheduler`)
+    await broadcastGamesUpdate()
+    broadcastGameDetailsUpdates(gameId)
+
+    // ✅ NON-BLOCKING: Send notifications when entire game completes
+    ;(async () => {
+      try {
+        const {
+          createGameCompletedNotificationsForParticipatedUsers,
+          createGameMissedNotificationsForRegisteredUsers
+        } = await import('../notifications/notification.helpers.js')
+
+        // Send "Game Completed" notifications to participated users
+        await createGameCompletedNotificationsForParticipatedUsers(gameId.toString(), {
+          _id: updatedGame._id || gameId,
+          title: updatedGame.title,
+          thumbnailPoster: updatedGame.thumbnailPoster || updatedGame.thumbnailUrl,
+          quiz: updatedGame.quiz
+        })
+        console.log(`[Game Scheduler] ✅ Sent game completed notifications for game ${gameId}`)
+
+        // Send "Game Missed" notifications to registered but not participated users
+        await createGameMissedNotificationsForRegisteredUsers(gameId.toString(), {
+          _id: updatedGame._id || gameId,
+          title: updatedGame.title,
+          thumbnailPoster: updatedGame.thumbnailPoster || updatedGame.thumbnailUrl,
+          quiz: updatedGame.quiz
+        })
+        console.log(`[Game Scheduler] ✅ Sent game missed notifications for game ${gameId}`)
+      } catch (notificationError) {
+        console.error(
+          `[Game Scheduler] ❌ Error sending completion/missed notifications for game ${gameId}:`,
+          notificationError
+        )
+      } finally {
+        // Remove from processing set after 5 minutes (cleanup)
+        setTimeout(
+          () => {
+            processingGameIds.delete(gameId)
+          },
+          5 * 60 * 1000
+        )
+      }
+    })()
+  } catch (error) {
+    console.error(`❌ Error completing game ${gameId}:`, error)
+    processingGameIds.delete(gameId)
   }
 }
 
@@ -37,15 +132,43 @@ async function checkAndCancelOverdueGames() {
     for (const game of overdueGames) {
       try {
         console.log(`📌 Game ${game._id} missed start time, cancelling`)
-        await Game.findByIdAndUpdate(game._id, {
-          $set: {
-            status: 'cancelled',
-            cancellationReason: 'Game did not start on time'
-          }
-        })
+        const updatedGame = await Game.findByIdAndUpdate(
+          game._id,
+          {
+            $set: {
+              status: 'cancelled',
+              cancellationReason: 'Game did not start on time'
+            }
+          },
+          { new: true }
+        )
         cancelTask(game._id)
         await broadcastGamesUpdate()
         broadcastGameDetailsUpdates(game._id)
+
+        // ✅ NON-BLOCKING: Send "game cancelled" notifications to all registered users
+        if (updatedGame) {
+          ;(async () => {
+            try {
+              const { createGameCancelledNotificationsForRegisteredUsers } = await import(
+                '../notifications/notification.helpers.js'
+              )
+              await createGameCancelledNotificationsForRegisteredUsers(game._id.toString(), {
+                _id: updatedGame._id || game._id,
+                title: updatedGame.title,
+                cancellationReason: updatedGame.cancellationReason || 'Game did not start on time',
+                thumbnailPoster: updatedGame.thumbnailPoster || updatedGame.thumbnailUrl,
+                quiz: updatedGame.quiz
+              })
+              console.log(`[Game Scheduler] ✅ Sent game cancelled notifications for game ${game._id}`)
+            } catch (notificationError) {
+              console.error(
+                `[Game Scheduler] ❌ Error sending game cancelled notifications for game ${game._id}:`,
+                notificationError
+              )
+            }
+          })()
+        }
       } catch (error) {
         console.error(`❌ Error cancelling game ${game._id}:`, error)
       }
@@ -139,13 +262,41 @@ async function scheduleLiveTransition(gameId, startTime) {
       const gracePeriod = new Date(now.getTime() - 5 * 60000) // 5 minutes grace period
       if (startTime <= gracePeriod) {
         console.log(`📌 Game ${gameId} missed start time by more than 5 minutes, cancelling`)
-        await Game.findByIdAndUpdate(gameId, {
-          $set: {
-            status: 'cancelled',
-            cancellationReason: 'Game did not start on time'
-          }
-        })
+        const updatedGame = await Game.findByIdAndUpdate(
+          gameId,
+          {
+            $set: {
+              status: 'cancelled',
+              cancellationReason: 'Game did not start on time'
+            }
+          },
+          { new: true }
+        )
         await broadcastGamesUpdate()
+
+        // ✅ NON-BLOCKING: Send "game cancelled" notifications to all registered users
+        if (updatedGame) {
+          ;(async () => {
+            try {
+              const { createGameCancelledNotificationsForRegisteredUsers } = await import(
+                '../notifications/notification.helpers.js'
+              )
+              await createGameCancelledNotificationsForRegisteredUsers(gameId.toString(), {
+                _id: updatedGame._id || gameId,
+                title: updatedGame.title,
+                cancellationReason: updatedGame.cancellationReason || 'Game did not start on time',
+                thumbnailPoster: updatedGame.thumbnailPoster || updatedGame.thumbnailUrl,
+                quiz: updatedGame.quiz
+              })
+              console.log(`[Game Scheduler] ✅ Sent game cancelled notifications for game ${gameId}`)
+            } catch (notificationError) {
+              console.error(
+                `[Game Scheduler] ❌ Error sending game cancelled notifications for game ${gameId}:`,
+                notificationError
+              )
+            }
+          })()
+        }
       } else {
         console.log(`📌 Game ${gameId} within grace period, moving to live`)
         await Game.findByIdAndUpdate(gameId, { $set: { status: 'live' } })
@@ -199,13 +350,28 @@ async function scheduleCompletion(gameId, endTime) {
   try {
     const now = new Date()
 
-    // Don't schedule if the time is in the past
-    if (endTime < now) {
-      console.log(`📌 End time for game ${gameId} is in the past, not scheduling`)
+    // ✅ CHECK: If game is already completed or cancelled, don't schedule
+    const game = await Game.findById(gameId).select('status').lean()
+    if (!game || ['completed', 'cancelled'].includes(game.status)) {
+      console.log(`📌 Game ${gameId} is already ${game?.status || 'deleted'}, skipping completion scheduling`)
       return
     }
 
-    // Cancel any existing task for this game
+    // ✅ CHECK: If task is already scheduled, don't schedule again (prevents duplicates)
+    if (gameStatusTasks[gameId]) {
+      console.log(`📌 Game ${gameId} already has a completion task scheduled, skipping duplicate`)
+      return
+    }
+
+    // Don't schedule if the time is in the past (but still complete it immediately)
+    if (endTime < now) {
+      console.log(`📌 End time for game ${gameId} is in the past, completing immediately`)
+      // Complete the game immediately using the helper function
+      await completeGame(gameId)
+      return
+    }
+
+    // Cancel any existing task for this game (shouldn't happen due to check above, but safe guard)
     cancelTask(gameId)
 
     const task = cron.schedule(
@@ -215,34 +381,103 @@ async function scheduleCompletion(gameId, endTime) {
           console.log(`📌 Moving game ${gameId} to completed status`)
 
           const currentTime = new Date()
-          // Update the game status
-          const updatedGame = await Game.findOneAndUpdate(
-            {
-              _id: gameId,
-              isDeleted: false
-            },
-            {
-              $set: { status: 'completed' }
-            },
-            {
-              new: true
-            }
-          )
 
-          // Update all Player documents for this game with status 'participated' to completed
-          await Player.updateMany(
-            { game: gameId, status: 'participated' },
-            { $set: { status: 'completed', completed: true, finishedAt: currentTime } }
-          )
-
-          if (updatedGame) {
-            console.log(`📌 Game ${gameId} status updated to completed`)
-            // Clean up the task
+          // ✅ IN-MEMORY LOCK: Prevent concurrent processing
+          if (processingGameIds.has(gameId)) {
+            console.log(`📌 Game ${gameId} is already being processed by another task, skipping duplicate`)
             delete gameStatusTasks[gameId]
-            await broadcastGamesUpdate()
-            broadcastGameDetailsUpdates(gameId)
-          } else {
-            console.error(`❌ Failed to update game ${gameId} status`)
+            return
+          }
+
+          processingGameIds.add(gameId)
+
+          try {
+            // ✅ ATOMIC CHECK: Only update if game is still 'live' (prevents duplicate notifications)
+            // This prevents race conditions where admin-forwarding or manual completion already completed the game
+            const updatedGame = await Game.findOneAndUpdate(
+              {
+                _id: gameId,
+                isDeleted: false,
+                status: 'live' // ✅ CRITICAL: Only complete games that are still 'live'
+              },
+              {
+                $set: { status: 'completed' }
+              },
+              {
+                new: true
+              }
+            )
+
+            // ✅ Only proceed if game was actually completed by this scheduler
+            if (updatedGame) {
+              // Update all Player documents for this game with status 'participated' to completed
+              await Player.updateMany(
+                { game: gameId, status: 'participated' },
+                { $set: { status: 'completed', completed: true, finishedAt: currentTime } }
+              )
+
+              console.log(`📌 Game ${gameId} status updated to completed by scheduler`)
+              // Clean up the task
+              delete gameStatusTasks[gameId]
+              await broadcastGamesUpdate()
+              broadcastGameDetailsUpdates(gameId)
+
+              // ✅ NON-BLOCKING: Send notifications when entire game completes
+              // Only sent if this scheduler actually completed the game (not already completed)
+              ;(async () => {
+                try {
+                  const {
+                    createGameCompletedNotificationsForParticipatedUsers,
+                    createGameMissedNotificationsForRegisteredUsers
+                  } = await import('../notifications/notification.helpers.js')
+
+                  // Send "Game Completed" notifications to participated users
+                  await createGameCompletedNotificationsForParticipatedUsers(gameId.toString(), {
+                    _id: updatedGame._id || gameId,
+                    title: updatedGame.title,
+                    thumbnailPoster: updatedGame.thumbnailPoster || updatedGame.thumbnailUrl,
+                    quiz: updatedGame.quiz
+                  })
+                  console.log(`[Game Scheduler] ✅ Sent game completed notifications for game ${gameId}`)
+
+                  // Send "Game Missed" notifications to registered but not participated users
+                  await createGameMissedNotificationsForRegisteredUsers(gameId.toString(), {
+                    _id: updatedGame._id || gameId,
+                    title: updatedGame.title,
+                    thumbnailPoster: updatedGame.thumbnailPoster || updatedGame.thumbnailUrl,
+                    quiz: updatedGame.quiz
+                  })
+                  console.log(`[Game Scheduler] ✅ Sent game missed notifications for game ${gameId}`)
+                } catch (notificationError) {
+                  console.error(
+                    `[Game Scheduler] ❌ Error sending completion/missed notifications for game ${gameId}:`,
+                    notificationError
+                  )
+                } finally {
+                  // Remove from processing set after 2 minutes (cleanup) - shorter timeout since notifications should be sent quickly
+                  setTimeout(
+                    () => {
+                      processingGameIds.delete(gameId)
+                      console.log(`[Game Scheduler] 🔓 Released lock for game ${gameId}`)
+                    },
+                    2 * 60 * 1000
+                  )
+                }
+              })()
+            } else {
+              // Game was already completed by another process (admin-forwarding, manual completion, etc.)
+              // OR game status is not 'live' (maybe already cancelled or completed)
+              console.log(
+                `📌 Game ${gameId} was already completed or not in 'live' status, skipping scheduler completion`
+              )
+              // Clean up the task anyway since game is already completed
+              delete gameStatusTasks[gameId]
+              processingGameIds.delete(gameId)
+            }
+          } catch (error) {
+            console.error(`❌ Error updating game ${gameId} status:`, error)
+            processingGameIds.delete(gameId)
+            delete gameStatusTasks[gameId]
           }
         } catch (error) {
           console.error(`❌ Error updating game ${gameId} status:`, error)
@@ -303,13 +538,41 @@ export async function reschedulePendingGames() {
             const gracePeriod = new Date(now.getTime() - 5 * 60000)
             if (game.startTime <= gracePeriod) {
               console.log(`📌 Game ${game._id} missed start time by more than 5 minutes, cancelling`)
-              await Game.findByIdAndUpdate(game._id, {
-                $set: {
-                  status: 'cancelled',
-                  cancellationReason: 'Game did not start on time'
-                }
-              })
+              const updatedGame = await Game.findByIdAndUpdate(
+                game._id,
+                {
+                  $set: {
+                    status: 'cancelled',
+                    cancellationReason: 'Game did not start on time'
+                  }
+                },
+                { new: true }
+              )
               await broadcastGamesUpdate()
+
+              // ✅ NON-BLOCKING: Send "game cancelled" notifications to all registered users
+              if (updatedGame) {
+                ;(async () => {
+                  try {
+                    const { createGameCancelledNotificationsForRegisteredUsers } = await import(
+                      '../notifications/notification.helpers.js'
+                    )
+                    await createGameCancelledNotificationsForRegisteredUsers(game._id.toString(), {
+                      _id: updatedGame._id || game._id,
+                      title: updatedGame.title,
+                      cancellationReason: updatedGame.cancellationReason || 'Game did not start on time',
+                      thumbnailPoster: updatedGame.thumbnailPoster || updatedGame.thumbnailUrl,
+                      quiz: updatedGame.quiz
+                    })
+                    console.log(`[Game Scheduler] ✅ Sent game cancelled notifications for game ${game._id}`)
+                  } catch (notificationError) {
+                    console.error(
+                      `[Game Scheduler] ❌ Error sending game cancelled notifications for game ${game._id}:`,
+                      notificationError
+                    )
+                  }
+                })()
+              }
             } else {
               console.log(`📌 Game ${game._id} within grace period, moving to live`)
               await Game.findByIdAndUpdate(game._id, { $set: { status: 'live' } })
@@ -319,13 +582,21 @@ export async function reschedulePendingGames() {
             }
           }
         } else if (game.status === 'live' && game.forwardType !== 'admin') {
+          // ✅ Check if game is already completed before rescheduling
+          const currentGame = await Game.findById(game._id).select('status').lean()
+          if (currentGame?.status === 'completed') {
+            console.log(`📌 Game ${game._id} is already completed, skipping reschedule`)
+            continue
+          }
+
           const endTime = new Date(game.startTime.getTime() + game.duration * 1000)
           if (endTime > now) {
+            // Schedule completion for future
             await scheduleCompletion(game._id, endTime)
           } else {
-            console.log(`📌 Game ${game._id} live past end time, completing`)
-            await Game.findByIdAndUpdate(game._id, { $set: { status: 'completed' } })
-            await broadcastGamesUpdate()
+            // Game is past end time, complete it immediately with proper notifications
+            console.log(`📌 Game ${game._id} live past end time, completing immediately`)
+            await completeGame(game._id)
           }
         }
       } catch (error) {
