@@ -23,7 +23,9 @@ import {
   DialogTitle,
   IconButton,
   Tabs,
-  Tab
+  Tab,
+  Button,
+  Tooltip
 } from '@mui/material'
 
 // Third Party Components
@@ -632,16 +634,47 @@ const NotificationDropdown = () => {
             >
               Notifications
             </Typography>
-            <IconButton
-              onClick={handleClose}
-              size='medium'
-              sx={{
-                minWidth: { xs: '40px', sm: '44px', md: '48px', lg: '52px', xl: '56px' },
-                minHeight: { xs: '40px', sm: '44px', md: '48px', lg: '52px', xl: '56px' }
-              }}
-            >
-              <i className='ri-close-line' />
-            </IconButton>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1 } }}>
+              {/* Mark All as Read Button - Always visible, disabled when no unread notifications */}
+              <Tooltip title={unreadCount > 0 ? 'Mark all as read' : 'All notifications are already read'} arrow>
+                <span>
+                  <Button
+                    onClick={readAllNotifications}
+                    disabled={unreadCount === 0}
+                    size='small'
+                    variant='text'
+                    sx={{
+                      minWidth: 'auto',
+                      px: { xs: 1, sm: 1.5 },
+                      py: { xs: 0.5, sm: 0.75 },
+                      fontSize: { xs: '0.75rem', sm: '0.8125rem', md: '0.875rem' },
+                      textTransform: 'none',
+                      color: unreadCount > 0 ? 'primary.main' : 'text.disabled',
+                      '&:hover': {
+                        backgroundColor: unreadCount > 0 ? 'action.hover' : 'transparent'
+                      },
+                      '&.Mui-disabled': {
+                        color: 'text.disabled',
+                        opacity: 0.5
+                      }
+                    }}
+                  >
+                    <i className='ri-check-double-line' style={{ marginRight: '4px', fontSize: '1rem' }} />
+                    <span style={{ display: isSmallScreen ? 'none' : 'inline' }}>Mark all read</span>
+                  </Button>
+                </span>
+              </Tooltip>
+              <IconButton
+                onClick={handleClose}
+                size='medium'
+                sx={{
+                  minWidth: { xs: '40px', sm: '44px', md: '48px', lg: '52px', xl: '56px' },
+                  minHeight: { xs: '40px', sm: '44px', md: '48px', lg: '52px', xl: '56px' }
+                }}
+              >
+                <i className='ri-close-line' />
+              </IconButton>
+            </Box>
           </div>
           <Tabs
             value={activeTab}

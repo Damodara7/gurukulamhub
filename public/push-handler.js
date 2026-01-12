@@ -76,7 +76,23 @@ self.addEventListener('notificationclick', event => {
   event.notification.close()
 
   const notificationData = event.notification.data || {}
-  const urlToOpen = notificationData.url || '/'
+  let urlToOpen = notificationData.url || '/'
+
+  // Append notificationId to URL if available (for auto-marking as read)
+  const notificationId = notificationData.notificationId
+  if (notificationId) {
+    try {
+      const url = new URL(urlToOpen, self.location.origin)
+      url.searchParams.set('notificationId', notificationId)
+      urlToOpen = url.pathname + url.search + url.hash
+      console.log('[Push Handler] Added notificationId to URL:', notificationId)
+    } catch (error) {
+      // If URL parsing fails, append as query parameter manually
+      const separator = urlToOpen.includes('?') ? '&' : '?'
+      urlToOpen = `${urlToOpen}${separator}notificationId=${encodeURIComponent(notificationId)}`
+      console.log('[Push Handler] Added notificationId to URL (fallback):', notificationId)
+    }
+  }
 
   // Handle action clicks
   if (event.action === 'open' || !event.action) {
@@ -91,8 +107,23 @@ self.addEventListener('notificationclick', event => {
           // Check if there's already a window open
           for (let i = 0; i < clientList.length; i++) {
             const client = clientList[i]
-            if (client.url === urlToOpen && 'focus' in client) {
-              return client.focus()
+            // Check if URL matches (without query params for comparison)
+            const clientUrlPath = new URL(client.url).pathname
+            const targetUrlPath = new URL(urlToOpen, self.location.origin).pathname
+
+            if (clientUrlPath === targetUrlPath && 'focus' in client) {
+              // If window exists, navigate it to the new URL with notificationId
+              if (client.focus) {
+                client.focus()
+              }
+              // Post message to the client to handle notificationId
+              if (client.postMessage && notificationId) {
+                client.postMessage({
+                  type: 'NOTIFICATION_CLICKED',
+                  notificationId: notificationId
+                })
+              }
+              return Promise.resolve()
             }
           }
 

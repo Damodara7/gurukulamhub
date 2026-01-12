@@ -15,6 +15,7 @@ import AppReactToastify from '@/libs/styles/AppReactToastify'
 // PWA Components
 import PWARegistration from '@/components/PWARegistration'
 import SubscribeToPush from '@/components/push/SubscribeToPush'
+import PushNotificationHandler from '@/components/push/PushNotificationHandler'
 
 // Util Imports
 import { getDemoName, getMode, getSettingsFromCookie, getSystemMode } from '@core/utils/serverHelpers'
@@ -43,6 +44,7 @@ const Providers = async props => {
               <GroupProvider>
                 <PWARegistration />
                 <SubscribeToPush /> {/* Auto-subscribe when user logs in and permission is granted */}
+                <PushNotificationHandler /> {/* Handle push notification clicks and auto-mark as read */}
                 {children}
               </GroupProvider>
             </GameProvider>
