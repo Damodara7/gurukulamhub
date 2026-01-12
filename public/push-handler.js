@@ -44,8 +44,8 @@ self.addEventListener('push', event => {
     }
   }
 
-  // Show notification
-  const promiseChain = self.registration.showNotification(notificationData.title, {
+  // Show notification with sound support
+  const notificationOptions = {
     body: notificationData.body,
     icon: notificationData.icon,
     badge: notificationData.badge,
@@ -64,7 +64,18 @@ self.addEventListener('push', event => {
         title: 'Close'
       }
     ]
-  })
+  }
+
+  // Add sound if provided (default sound for all notifications)
+  // Note: Browser support varies - Chrome/Edge support custom sounds, others may use system default
+  if (notificationData.sound) {
+    notificationOptions.sound = notificationData.sound
+  } else {
+    // Default sound for all push notifications
+    notificationOptions.sound = '/sounds/notification.mp3'
+  }
+
+  const promiseChain = self.registration.showNotification(notificationData.title, notificationOptions)
 
   event.waitUntil(promiseChain)
 })

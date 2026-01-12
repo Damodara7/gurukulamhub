@@ -35,6 +35,7 @@ if (vapidPublicKey && vapidPrivateKey && vapidEmail) {
  * @param {string} [notificationData.badge] - Badge URL (default: /icons/icon-192x192.png)
  * @param {string} [notificationData.url] - URL to open when notification is clicked
  * @param {string} [notificationData.tag] - Notification tag for grouping
+ * @param {string} [notificationData.sound] - Sound file URL (default: /sounds/notification.mp3)
  * @param {Object} [notificationData.data] - Additional data to pass with notification
  * @returns {Promise<Object>} Result object with status and message
  */
@@ -113,6 +114,7 @@ export async function sendPushNotification(userId, notificationData) {
     }
 
     // Prepare push payload (must be under 4096 bytes)
+    // Include sound for push notifications (default sound for all notifications)
     const payload = JSON.stringify({
       title: notificationData.title,
       body: notificationData.body,
@@ -120,6 +122,7 @@ export async function sendPushNotification(userId, notificationData) {
       badge: notificationData.badge || '/icons/icon-192x192.png',
       tag: notificationData.tag || 'default',
       url: notificationData.url || notificationData.actionUrl || '/',
+      sound: notificationData.sound || '/sounds/notification.mp3', // Default sound for all push notifications
       data: {
         url: notificationData.url || notificationData.actionUrl || '/',
         ...filteredData
