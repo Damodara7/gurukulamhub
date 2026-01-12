@@ -1,12 +1,21 @@
 // apiConfig.prod.js
 
-// export const API_BASE_URL = 'http://ec2-13-51-204-221.eu-north-1.compute.amazonaws.com:3000/api'
-// export const API_BASE_URL = 'https://gurukulamhub-production.up.railway.app/api'
-// export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://gurukulamhub.up.railway.app/api'
-// export const API_BASE_URL = 'https://gurukulamhub.up.railway.app/api'
-// export const API_BASE_URL = 'http://192.168.31.199:3000/api'
-// export const API_BASE_URL = 'http://172.17.27.250:3000/api'
-export const API_BASE_URL = 'https://willyard-larue-acquiescingly.ngrok-free.dev/api'
+// Use environment variable if available, otherwise fallback to hardcoded URL
+// For server-side calls, use 127.0.0.1 (IPv4) instead of localhost to avoid IPv6 resolution issues
+const getApiBaseUrl = () => {
+  // Server-side: Use 127.0.0.1 (IPv4) to call the same Next.js server
+  if (typeof window === 'undefined') {
+    // Server-side: Use 127.0.0.1 with PORT to call the same Next.js instance
+    // Using 127.0.0.1 instead of localhost avoids IPv6 (::1) resolution issues
+    // This avoids DNS resolution issues where gurukulamhub.com -> 127.0.0.1:443
+    const port = process.env.PORT || 3000
+    return `http://127.0.0.1:${port}/api`
+  }
+  // Client-side: Use NEXT_PUBLIC_API_URL or default
+  return process.env.NEXT_PUBLIC_API_URL || 'https://gurukulamhub.com/api'
+}
+
+export const API_BASE_URL = getApiBaseUrl()
 
 export const API_URLS = {
   v0: {
@@ -51,10 +60,16 @@ export const API_URLS = {
     SPONSORSHIP: `${API_BASE_URL}/sponsorship`,
     SPONSORSHIP_PAYMENT: `${API_BASE_URL}/sponsorship-payment`,
     USERS_GROUP_REQUEST: `${API_BASE_URL}/group-request`,
+    GAME_SPONSORSHIP: `${API_BASE_URL}/game-sponsorship`,
+    GAME_SPONSORSHIP_PAYMENT: `${API_BASE_URL}/game-sponsorship-payment`,
+    NOTIFICATIONS: `${API_BASE_URL}/notifications`,
     USERS_GROUP_CHAT: `${API_BASE_URL}/group-chat`,
     USERS_GROUP_CHAT_ACTIONS: `${API_BASE_URL}/group-chat/actions`,
-    GAME_SPONSORSHIP: `${API_BASE_URL}/game-sponsorship`,
-    GAME_SPONSORSHIP_PAYMENT: `${API_BASE_URL}/game-sponsorship-payment`
+    USERS_INDIVIDUAL_CHAT: `${API_BASE_URL}/individual-chat`,
+    USERS_INDIVIDUAL_CHAT_ACTIONS: `${API_BASE_URL}/individual-chat/actions`,
+    USERS_INDIVIDUAL_CHAT_CHATS: `${API_BASE_URL}/individual-chat/chats`,
+    USERS_INDIVIDUAL_CHAT_SEARCH: `${API_BASE_URL}/individual-chat/search`,
+    MESSENGER_COMBINED_CHATS: `${API_BASE_URL}/messenger/combined-chats`,
   },
   v1: {
     USERS_SIGNUP: `${API_BASE_URL}/v1/users/signup`,

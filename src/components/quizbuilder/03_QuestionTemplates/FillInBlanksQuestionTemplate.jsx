@@ -298,7 +298,7 @@ const FillInBlanksQuestionTemplate = ({
               Fill in the Blanks Question
             </Typography>
             <Typography variant='caption' sx={{ color: 'text.secondary' }}>
-              ID: {id} • Language: {language}
+              Language: {language}
             </Typography>
           </Box>
           {hasErrors && <Chip label='Has Errors' color='error' size='small' sx={{ height: 28, fontWeight: 600 }} />}
@@ -412,7 +412,7 @@ const FillInBlanksQuestionTemplate = ({
                             <TextField
                               fullWidth
                               variant='outlined'
-                              label={`Text Part ${index + 1}`}
+                              label={`Text Part ${questionParts.filter((p, i) => i <= index && p.type === 'text').length}`}
                               placeholder='Enter text portion of the question'
                               value={part.content}
                               error={

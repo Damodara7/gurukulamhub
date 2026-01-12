@@ -4,24 +4,22 @@ import Grid from '@mui/material/Grid'
 // Component Imports
 import ReferAndEarn from '@views/pages/refer-earn/ReferAndEarn'
 
-const getPricingData = async () => {
-  // Vars
-  const res = await fetch(`${process.env.API_URL}/pages/pricing`)
-
-  if (!res.ok) {
-    throw new Error('Failed to fetch data')
-  }
-
-  return res.json()
-}
-
 const DialogExamples = async () => {
-  // Vars
-  const data = await getPricingData()
 
   return (
-    <Grid container spacing={6}>
-      <Grid item xs={12}>
+    <Grid
+      container
+      spacing={0}
+      sx={{
+        height: '100%',
+        minHeight: 0,
+        '& .MuiGrid-item': {
+          height: '100%',
+          minHeight: 0
+        }
+      }}
+    >
+      <Grid item xs={12} sx={{ height: '100%', minHeight: 0 }}>
         <ReferAndEarn />
       </Grid>
     </Grid>

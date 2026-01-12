@@ -11,8 +11,18 @@ import Player from '@/app/api/player/player.model'
 import { broadcastLeaderboard } from '../ws/leaderboard/[gameId]/publishers'
 import { broadcastGamesList } from '../ws/games/publishers'
 import { broadcastGameDetails } from '../ws/games/[gameId]/publishers'
+import { broadcastSponsorGamesList } from '../ws/sponsor-games/publishers'
 import UserProfile from '@/app/api/profile/profile.model'
 import Group from '@/app/api/group/group.model'
+import {
+  createGameCreatedNotification,
+  createGameRegisteredNotification,
+  createGameCompletedNotificationsForParticipatedUsers,
+  createGameMissedNotificationsForRegisteredUsers,
+  createGameCancelledNotificationsForRegisteredUsers,
+  createGameAccessRemovedNotification,
+  createGameDeletedNotification
+} from '../notifications/notification.helpers.js'
 
 // Helper to enrich a single game with registeredUsers, participatedUsers, and questions
 async function enrichGameWithDetails(game) {
@@ -257,17 +267,21 @@ export const addOne = async gameData => {
 
     // Validate required fields
     const requiredFields = ['title', 'pin', 'quiz', 'createdBy']
-    
+
     // Only require startTime if status is not awaiting_sponsorship or sponsored
     if (gameData.status !== 'awaiting_sponsorship' && gameData.status !== 'sponsored') {
       requiredFields.push('startTime')
     }
-    
+
     // Only require duration for self-paced games that are not awaiting sponsorship or sponsored
-    if (gameData.gameMode === 'self-paced' && gameData.status !== 'awaiting_sponsorship' && gameData.status !== 'sponsored') {
+    if (
+      gameData.gameMode === 'self-paced' &&
+      gameData.status !== 'awaiting_sponsorship' &&
+      gameData.status !== 'sponsored'
+    ) {
       requiredFields.push('duration')
     }
-    
+
     const missingFields = requiredFields.filter(field => !gameData[field] && gameData[field] !== 0)
 
     if (missingFields.length > 0) {
@@ -344,16 +358,16 @@ export const addOne = async gameData => {
         if (!reward.sponsors || reward.sponsors.length === 0) {
           return false // No sponsors means not fully sponsored
         }
-        
+
         const totalSponsored = reward.sponsors.reduce((sum, sponsor) => {
           const allocated = parseFloat(sponsor.rewardDetails?.allocated || sponsor.allocated || 0)
           return sum + (isNaN(allocated) ? 0 : allocated)
         }, 0)
-        
+
         const totalNeeded = parseFloat(reward.rewardValuePerWinner || 0)
         return totalSponsored >= totalNeeded
       })
-      
+
       if (allRewardsFullySponsored) {
         savedGame.status = 'sponsored'
         await savedGame.save({ validateBeforeSave: false })
@@ -366,13 +380,74 @@ export const addOne = async gameData => {
       gameScheduler.onGameApproved(savedGame._id)
     }
 
-    // Broadcast games list update
-    await broadcastGamesUpdate()
-    
-    // Also broadcast admin games update for awaiting_sponsorship and sponsored games
-    if (gameData.status === 'awaiting_sponsorship' || gameData.status === 'sponsored') {
-      await broadcastAdminGamesUpdate()
-    }
+    // Broadcast games list update (non-blocking)
+    ;(async () => {
+      try {
+        await broadcastGamesUpdate()
+        // Also broadcast admin games update for awaiting_sponsorship and sponsored games
+        if (gameData.status === 'awaiting_sponsorship' || gameData.status === 'sponsored') {
+          await broadcastAdminGamesUpdate()
+        }
+      } catch (broadcastError) {
+        console.error('Error broadcasting games update:', broadcastError)
+      }
+    })()
+
+    // ✅ NON-BLOCKING: Create notifications for eligible users when game is created
+    // Fire and forget - don't await, let it run in background
+    ;(async () => {
+      try {
+        let eligibleUserIds = []
+
+        // If game has a group, notify all members of that group
+        if (savedGame.groupId) {
+          const group = await Group.findById(savedGame.groupId).populate('members').lean()
+          if (group && group.members) {
+            eligibleUserIds = group.members.map(member => member._id || member)
+          }
+        } else {
+          // If no group, notify all active users (game is public)
+          const allActiveUsers = await User.find({
+            isActive: true,
+            isVerified: true
+          })
+            .select('_id')
+            .lean()
+
+          if (allActiveUsers && allActiveUsers.length > 0) {
+            eligibleUserIds = allActiveUsers.map(user => user._id)
+            console.log(`Game created without group - notifying ${eligibleUserIds.length} active users`)
+          }
+        }
+
+        // Create notifications for eligible users
+        if (eligibleUserIds.length > 0) {
+          // Get group name if game has a group
+          let groupName = null
+          if (savedGame.groupId) {
+            const group = await Group.findById(savedGame.groupId).select('groupName').lean()
+            groupName = group?.groupName || null
+          }
+
+          await createGameCreatedNotification(eligibleUserIds, {
+            _id: savedGame._id,
+            title: savedGame.title,
+            groupName: groupName,
+            createdBy: savedGame.creatorEmail,
+            registrationDeadline: savedGame.registrationEndTime || savedGame.endTime,
+            maxParticipants: savedGame.maxPlayers,
+            thumbnailPoster: savedGame.thumbnailPoster || savedGame.thumbnailUrl,
+            quiz: savedGame.quiz
+          })
+          console.log(
+            `[Game Service] ✅ Sent game created notifications to ${eligibleUserIds.length} user(s) in background`
+          )
+        }
+      } catch (notificationError) {
+        console.error('[Game Service] ❌ Error creating game notifications:', notificationError)
+        // Don't fail the game creation if notification creation fails
+      }
+    })()
 
     return {
       status: 'success',
@@ -449,6 +524,56 @@ export const updateOne = async (gameId, updateData) => {
       }
     }
 
+    // *** CRITICAL: Store old groupId BEFORE any updates are applied ***
+    console.log('[Game Service] ===== GROUP CHANGE DETECTION START =====')
+    const oldGroupId = existingGame.groupId
+      ? existingGame.groupId.toString
+        ? existingGame.groupId.toString()
+        : String(existingGame.groupId)
+      : null
+    console.log('[Game Service] Step 1 - Captured OLD groupId from existingGame:', {
+      oldGroupId,
+      oldGroupIdType: typeof oldGroupId,
+      existingGameGroupId: existingGame.groupId,
+      existingGameGroupIdType: typeof existingGame.groupId
+    })
+
+    // Determine new groupId from updateData (handle undefined, null, ObjectId, and string)
+    let newGroupId = oldGroupId
+    if (updateData.groupId !== undefined) {
+      console.log('[Game Service] Step 2 - Processing updateData.groupId:', {
+        updateDataGroupId: updateData.groupId,
+        updateDataGroupIdType: typeof updateData.groupId,
+        isNull: updateData.groupId === null,
+        isEmpty: updateData.groupId === '',
+        isStringNull: updateData.groupId === 'null'
+      })
+
+      if (updateData.groupId === null || updateData.groupId === '' || updateData.groupId === 'null') {
+        newGroupId = null
+        console.log('[Game Service] Step 2.1 - New groupId set to NULL')
+      } else {
+        // Handle ObjectId, string, or object with _id property
+        let groupIdValue = updateData.groupId
+        if (groupIdValue && typeof groupIdValue === 'object' && groupIdValue._id) {
+          console.log('[Game Service] Step 2.2 - Extracting _id from object:', groupIdValue._id)
+          groupIdValue = groupIdValue._id
+        }
+        newGroupId = groupIdValue.toString ? groupIdValue.toString() : String(groupIdValue)
+        console.log('[Game Service] Step 2.3 - Converted to string:', newGroupId)
+      }
+    } else {
+      console.log('[Game Service] Step 2 - updateData.groupId is undefined, keeping oldGroupId')
+    }
+
+    console.log('[Game Service] Step 3 - Group comparison:', {
+      oldGroupId,
+      newGroupId,
+      areEqual: oldGroupId === newGroupId,
+      willProcessNotifications: oldGroupId !== newGroupId
+    })
+    console.log('[Game Service] ===== GROUP CHANGE DETECTION END =====')
+
     // Handle rewards update if present in updateData
     if (updateData.rewards !== undefined) {
       // Create a map of existing rewards by _id
@@ -499,10 +624,44 @@ export const updateOne = async (gameId, updateData) => {
       updateData.rewards = updatedRewards
     }
 
+    // ✅ Track if status is being changed TO 'cancelled' for notification (check BEFORE applying updates)
+    const oldStatus = existingGame.status
+    const isBeingCancelled = updateData.status === 'cancelled' && oldStatus !== 'cancelled'
+    const cancellationReason =
+      updateData.cancellationReason || existingGame.cancellationReason || 'Game has been cancelled'
+
     // Apply updates to the existing game document
     Object.keys(updateData).forEach(key => {
-      existingGame[key] = updateData[key]
-      if (key === 'status' && existingGame.status === 'cancelled') {
+      // Special handling for groupId to ensure it's properly set
+      if (key === 'groupId' && updateData[key] !== undefined) {
+        console.log('[Game Service] Applying groupId update to existingGame:', {
+          key,
+          updateValue: updateData[key],
+          updateValueType: typeof updateData[key]
+        })
+        if (updateData[key] === null || updateData[key] === '' || updateData[key] === 'null') {
+          existingGame[key] = null
+        } else {
+          // Handle ObjectId, string, or object with _id property
+          let groupIdValue = updateData[key]
+          if (groupIdValue && typeof groupIdValue === 'object' && groupIdValue._id) {
+            groupIdValue = groupIdValue._id
+          }
+          // Convert to ObjectId if it's a string
+          if (typeof groupIdValue === 'string' && mongoose.Types.ObjectId.isValid(groupIdValue)) {
+            existingGame[key] = new mongoose.Types.ObjectId(groupIdValue)
+          } else if (groupIdValue && groupIdValue.toString) {
+            existingGame[key] = groupIdValue
+          } else {
+            existingGame[key] = groupIdValue
+          }
+        }
+        console.log('[Game Service] After applying groupId, existingGame.groupId:', existingGame[key])
+      } else {
+        existingGame[key] = updateData[key]
+      }
+      // Handle un-cancelling a cancelled game (if game WAS cancelled and is being un-cancelled)
+      if (key === 'status' && oldStatus === 'cancelled' && updateData[key] !== 'cancelled') {
         existingGame.cancellationReason = undefined
         // For admin case (approving)
         if (user?.roles?.includes(ROLES_LOOKUP.ADMIN)) {
@@ -511,7 +670,7 @@ export const updateOne = async (gameId, updateData) => {
           existingGame.approverEmail = updateData.updaterEmail
           existingGame.approvedAt = new Date()
         }
-        // For non-admin case (cancelling)
+        // For non-admin case (reverting cancellation)
         else {
           existingGame.status = 'created'
           // Use $unset in the save operation
@@ -546,6 +705,253 @@ export const updateOne = async (gameId, updateData) => {
     // Save the updated game
     const updatedGame = await existingGame.save({ validateBeforeSave: false })
 
+    // ✅ NON-BLOCKING: Send "game cancelled" notifications if game was manually cancelled via updateOne
+    if (isBeingCancelled && updatedGame.status === 'cancelled') {
+      ;(async () => {
+        try {
+          await createGameCancelledNotificationsForRegisteredUsers(gameId.toString(), {
+            _id: updatedGame._id || gameId,
+            title: updatedGame.title,
+            cancellationReason: cancellationReason,
+            thumbnailPoster: updatedGame.thumbnailPoster || updatedGame.thumbnailUrl,
+            quiz: updatedGame.quiz
+          })
+          console.log(`[Game Service] ✅ Sent game cancelled notifications for manually cancelled game ${gameId}`)
+        } catch (notificationError) {
+          console.error(
+            `[Game Service] ❌ Error sending game cancelled notifications for manually cancelled game ${gameId}:`,
+            notificationError
+          )
+        }
+      })()
+    }
+
+    // Handle group change notifications
+    console.log('[Game Service] ===== NOTIFICATION PROCESSING START =====')
+    console.log('[Game Service] Checking if group changed:', {
+      oldGroupId,
+      newGroupId,
+      areEqual: oldGroupId === newGroupId,
+      willProcess: oldGroupId !== newGroupId
+    })
+
+    if (oldGroupId !== newGroupId) {
+      console.log('[Game Service] ✅ Group changed detected! Processing notifications...')
+      try {
+        let oldGroupMemberIds = []
+        let newGroupMemberIds = []
+
+        // Get old group members if old group exists
+        if (oldGroupId) {
+          console.log('[Game Service] Step 4.1 - Fetching old group:', oldGroupId)
+          const oldGroup = await Group.findById(oldGroupId).populate('members').lean()
+          console.log('[Game Service] Step 4.1 - Old group query result:', {
+            found: !!oldGroup,
+            hasMembers: !!(oldGroup && oldGroup.members),
+            memberCount: oldGroup?.members?.length || 0
+          })
+
+          if (oldGroup && oldGroup.members) {
+            oldGroupMemberIds = oldGroup.members.map(member => (member._id || member).toString())
+            console.log(
+              `[Game Service] Step 4.1 - Old group has ${oldGroupMemberIds.length} members:`,
+              oldGroupMemberIds
+            )
+          } else {
+            console.log(`[Game Service] Step 4.1 - ❌ Old group not found or has no members: ${oldGroupId}`)
+          }
+        } else {
+          console.log('[Game Service] Step 4.1 - Old groupId is null, skipping')
+        }
+
+        // Handle different scenarios
+        if (newGroupId === null) {
+          // SCENARIO: Game becomes PUBLIC (groupId removed)
+          console.log('[Game Service] Step 4.2 - Game is becoming PUBLIC (groupId removed)')
+
+          // Get all active users
+          const allActiveUsers = await User.find({
+            isActive: true,
+            isVerified: true
+          })
+            .select('_id')
+            .lean()
+
+          const allActiveUserIds = allActiveUsers.map(user => user._id.toString())
+          console.log(`[Game Service] Step 4.2 - Found ${allActiveUserIds.length} active users`)
+
+          // Find users who already have GAME_CREATED notification for this game
+          const Notification = mongoose.model('notifications')
+          const existingNotifications = await Notification.find({
+            type: 'GAME_CREATED',
+            'relatedEntity.entityType': 'game',
+            'relatedEntity.entityId': updatedGame._id.toString()
+          })
+            .select('userId')
+            .lean()
+
+          const usersWithExistingNotifications = existingNotifications.map(n => n.userId.toString())
+          console.log(
+            `[Game Service] Step 4.2 - Found ${usersWithExistingNotifications.length} users who already have notifications`
+          )
+
+          // Exclude users who already have notifications
+          const usersToAdd = allActiveUserIds.filter(userId => !usersWithExistingNotifications.includes(userId))
+
+          console.log('[Game Service] Step 4.2 - Users to notify (excluding those with existing notifications):', {
+            count: usersToAdd.length,
+            userIds: usersToAdd
+          })
+
+          // Don't send removal notifications - old group members can still play (game is now public)
+          console.log(
+            '[Game Service] Step 4.2 - ⏭️ Skipping removal notifications (game is now public, old group members can still play)'
+          )
+
+          // Send welcome notifications to all users who don't already have one
+          if (usersToAdd.length > 0) {
+            console.log('[Game Service] Step 5.2 - Sending public game notifications...')
+            const addResult = await createGameCreatedNotification(usersToAdd, {
+              _id: updatedGame._id,
+              title: updatedGame.title,
+              groupName: null, // Game is now public, no group
+              createdBy: updatedGame.creatorEmail,
+              registrationDeadline: updatedGame.registrationEndTime || updatedGame.endTime,
+              maxParticipants: updatedGame.maxPlayers,
+              thumbnailPoster: updatedGame.thumbnailPoster || updatedGame.thumbnailUrl,
+              quiz: updatedGame.quiz
+            })
+            console.log(`[Game Service] Step 5.2 - ✅ Public game notification result:`, addResult)
+          } else {
+            console.log('[Game Service] Step 5.2 - ⏭️ All users already have notifications, skipping')
+          }
+        } else {
+          // SCENARIO: Group changed from one to another
+          console.log('[Game Service] Step 4.2 - Group changed from one to another')
+
+          // Get new group members if new group exists
+          console.log('[Game Service] Step 4.2 - Fetching new group:', newGroupId)
+          const newGroup = await Group.findById(newGroupId).populate('members').lean()
+          console.log('[Game Service] Step 4.2 - New group query result:', {
+            found: !!newGroup,
+            hasMembers: !!(newGroup && newGroup.members),
+            memberCount: newGroup?.members?.length || 0
+          })
+
+          if (newGroup && newGroup.members) {
+            newGroupMemberIds = newGroup.members.map(member => (member._id || member).toString())
+            console.log(
+              `[Game Service] Step 4.2 - New group has ${newGroupMemberIds.length} members:`,
+              newGroupMemberIds
+            )
+          } else {
+            console.log(`[Game Service] Step 4.2 - ❌ New group not found or has no members: ${newGroupId}`)
+          }
+
+          // Find users who are ONLY in old group (need removal notification)
+          console.log('[Game Service] Step 4.3 - Calculating users to remove...')
+          const usersToRemove = oldGroupMemberIds.filter(userId => !newGroupMemberIds.includes(userId))
+          console.log('[Game Service] Step 4.3 - Users to remove:', {
+            count: usersToRemove.length,
+            userIds: usersToRemove
+          })
+
+          // Find users who are ONLY in new group (need welcome notification)
+          console.log('[Game Service] Step 4.4 - Calculating users to add...')
+          const usersToAdd = newGroupMemberIds.filter(userId => !oldGroupMemberIds.includes(userId))
+          console.log('[Game Service] Step 4.4 - Users to add:', {
+            count: usersToAdd.length,
+            userIds: usersToAdd
+          })
+
+          const usersInBoth = oldGroupMemberIds.filter(userId => newGroupMemberIds.includes(userId))
+          console.log('[Game Service] Step 4.5 - Summary:', {
+            usersToRemove: usersToRemove.length,
+            usersToAdd: usersToAdd.length,
+            usersInBoth: usersInBoth.length,
+            usersInBothIds: usersInBoth
+          })
+
+          // Send removal notifications to users who lost access
+          if (usersToRemove.length > 0) {
+            console.log('[Game Service] Step 5.1 - Sending removal notifications...')
+
+            // Get old group name for the notification message
+            let oldGroupName = null
+            if (oldGroupId) {
+              const oldGroup = await Group.findById(oldGroupId).select('groupName').lean()
+              oldGroupName = oldGroup?.groupName || null
+            }
+
+            console.log('[Game Service] Step 5.1 - Notification data:', {
+              userIds: usersToRemove,
+              gameId: updatedGame._id,
+              gameTitle: updatedGame.title,
+              oldGroupName: oldGroupName,
+              updatedBy: updateData.updaterEmail || 'Admin'
+            })
+
+            const removeResult = await createGameAccessRemovedNotification(usersToRemove, {
+              _id: updatedGame._id,
+              title: updatedGame.title,
+              groupName: oldGroupName,
+              updatedBy: updateData.updaterEmail || 'Admin'
+            })
+            console.log(`[Game Service] Step 5.1 - ✅ Removal notification result:`, removeResult)
+          } else {
+            console.log('[Game Service] Step 5.1 - ⏭️ No users to remove, skipping removal notifications')
+          }
+
+          // Send welcome notifications to users who gained access (use GAME_CREATED notification)
+          if (usersToAdd.length > 0) {
+            console.log('[Game Service] Step 5.2 - Sending welcome notifications...')
+
+            // Get new group name for the notification message
+            let newGroupName = null
+            if (newGroupId) {
+              const newGroup = await Group.findById(newGroupId).select('groupName').lean()
+              newGroupName = newGroup?.groupName || null
+            }
+
+            console.log('[Game Service] Step 5.2 - Notification data:', {
+              userIds: usersToAdd,
+              gameId: updatedGame._id,
+              gameTitle: updatedGame.title,
+              newGroupName: newGroupName,
+              createdBy: updatedGame.creatorEmail,
+              registrationDeadline: updatedGame.registrationEndTime || updatedGame.endTime,
+              maxParticipants: updatedGame.maxPlayers
+            })
+
+            const addResult = await createGameCreatedNotification(usersToAdd, {
+              _id: updatedGame._id,
+              title: updatedGame.title,
+              groupName: newGroupName,
+              createdBy: updatedGame.creatorEmail,
+              registrationDeadline: updatedGame.registrationEndTime || updatedGame.endTime,
+              maxParticipants: updatedGame.maxPlayers,
+              thumbnailPoster: updatedGame.thumbnailPoster || updatedGame.thumbnailUrl,
+              quiz: updatedGame.quiz
+            })
+            console.log(`[Game Service] Step 5.2 - ✅ Welcome notification result:`, addResult)
+          } else {
+            console.log('[Game Service] Step 5.2 - ⏭️ No users to add, skipping welcome notifications')
+          }
+        }
+
+        console.log('[Game Service] ===== NOTIFICATION PROCESSING COMPLETE =====')
+      } catch (notificationError) {
+        console.error('[Game Service] ❌❌❌ ERROR in notification processing ❌❌❌')
+        console.error('[Game Service] Error message:', notificationError.message)
+        console.error('[Game Service] Error stack:', notificationError.stack)
+        console.error('[Game Service] Full error object:', notificationError)
+        // Don't fail the game update if notification creation fails
+      }
+    } else {
+      console.log('[Game Service] ⏭️ No group change detected (oldGroupId === newGroupId), skipping notifications')
+      console.log('[Game Service] ===== NOTIFICATION PROCESSING SKIPPED =====')
+    }
+
     // Update sponsorships
     await updateSponsorshipsForGame(updatedGame)
 
@@ -555,16 +961,16 @@ export const updateOne = async (gameId, updateData) => {
         if (!reward.sponsors || reward.sponsors.length === 0) {
           return false // No sponsors means not fully sponsored
         }
-        
+
         const totalSponsored = reward.sponsors.reduce((sum, sponsor) => {
           const allocated = parseFloat(sponsor.rewardDetails?.allocated || sponsor.allocated || 0)
           return sum + (isNaN(allocated) ? 0 : allocated)
         }, 0)
-        
+
         const totalNeeded = parseFloat(reward.rewardValuePerWinner || 0)
         return totalSponsored >= totalNeeded
       })
-      
+
       if (allRewardsFullySponsored) {
         updatedGame.status = 'sponsored'
         await updatedGame.save()
@@ -574,7 +980,7 @@ export const updateOne = async (gameId, updateData) => {
 
     // Broadcast games list update
     broadcastGamesUpdate()
-    
+
     // Also broadcast admin games update for awaiting_sponsorship and sponsored games
     if (updatedGame.status === 'awaiting_sponsorship' || updatedGame.status === 'sponsored') {
       await broadcastAdminGamesUpdate()
@@ -643,6 +1049,56 @@ export const deleteOne = async (gameId, { email }) => {
 
     // Revert sponsorships
     await revertSponsorshipsForGame(deletedGame)
+
+    // Send notifications to users who had access to this game
+    try {
+      console.log('[Game Service] ===== GAME DELETION NOTIFICATION START =====')
+      let usersToNotify = []
+
+      // If game had a group, notify all members of that group
+      if (existingGame.groupId) {
+        const group = await Group.findById(existingGame.groupId).populate('members').lean()
+        if (group && group.members) {
+          usersToNotify = group.members.map(member => (member._id || member).toString())
+          console.log(`[Game Service] Found ${usersToNotify.length} group members to notify`)
+        }
+      } else {
+        // If no group, notify all users who have GAME_CREATED notification for this game
+        const Notification = mongoose.model('notifications')
+        const existingNotifications = await Notification.find({
+          type: 'GAME_CREATED',
+          'relatedEntity.entityType': 'game',
+          'relatedEntity.entityId': gameId.toString()
+        })
+          .select('userId')
+          .lean()
+
+        usersToNotify = existingNotifications.map(n => n.userId.toString())
+        console.log(`[Game Service] Found ${usersToNotify.length} users with game notifications to notify`)
+      }
+
+      // Send deletion notifications
+      if (usersToNotify.length > 0) {
+        const notificationResult = await createGameDeletedNotification(usersToNotify, {
+          _id: deletedGame._id,
+          title: deletedGame.title,
+          deletedBy: user.email,
+          deleterEmail: user.email,
+          thumbnailPoster: deletedGame.thumbnailPoster || deletedGame.thumbnailUrl,
+          quiz: deletedGame.quiz
+        })
+        console.log(
+          `[Game Service] ✅ Sent deletion notifications to ${usersToNotify.length} users:`,
+          notificationResult
+        )
+      } else {
+        console.log('[Game Service] ⏭️ No users to notify for game deletion')
+      }
+      console.log('[Game Service] ===== GAME DELETION NOTIFICATION COMPLETE =====')
+    } catch (notificationError) {
+      console.error('[Game Service] Error sending game deletion notifications:', notificationError)
+      // Don't fail the game deletion if notification creation fails
+    }
 
     // Broadcast games list update
     broadcastGamesUpdate()
@@ -837,6 +1293,7 @@ export const joinGame = async (gameId, userData) => {
 
     const enrichedGame = await enrichGameWithDetails(game)
 
+    // Broadcast updates (non-blocking)
     broadcastGameDetailsUpdates(gameId)
     const leaderboard = enrichedGame?.participatedUsers?.map(p => ({
       ...p,
@@ -844,6 +1301,25 @@ export const joinGame = async (gameId, userData) => {
     }))
     broadcastLeaderboard(gameId, leaderboard)
     broadcastGamesUpdate()
+
+    // ✅ NON-BLOCKING: Send registration notification to user (with push notification)
+    // Fire and forget - don't await, let it run in background
+    ;(async () => {
+      try {
+        await createGameRegisteredNotification(user._id, {
+          _id: game._id,
+          title: game.title,
+          startTime: game.startTime,
+          registrationEndTime: game.registrationEndTime,
+          thumbnailPoster: game.thumbnailPoster || game.thumbnailUrl,
+          quiz: game.quiz
+        })
+        console.log(`[Game Service] ✅ Sent game registered notification to user ${user._id} in background`)
+      } catch (notificationError) {
+        console.error('[Game Service] ❌ Error sending game registration notification:', notificationError)
+        // Don't fail the registration if notification fails
+      }
+    })()
 
     return {
       status: 'success',
@@ -1044,6 +1520,8 @@ export const updatePlayerProgress = async (gameId, { user, userAnswer, finish })
     player.score += scoreDelta
     player.fffPoints = (player.fffPoints || 0) + fffPointsDelta
 
+    const wasJustCompleted = finish && player.status !== 'completed'
+
     if (finish) {
       player.completed = true
       player.status = 'completed'
@@ -1098,6 +1576,9 @@ export const updatePlayerProgress = async (gameId, { user, userAnswer, finish })
     } catch (e) {
       console.error('Failed to broadcast leaderboard:', e)
     }
+
+    // Note: Game completed notifications are sent when the entire game completes (via scheduler or admin-forwarding)
+    // No need to send individual notifications here to avoid duplicates
 
     return {
       status: 'success',
@@ -1516,10 +1997,92 @@ export const forwardQuestion = async (gameId, user, currentQuestionIndex) => {
       game.liveQuestionStartedAt = new Date()
       game.duration = (new Date().getTime() - new Date(game?.startTime).getTime()) / 1000
       await game.save()
-      // Update all players
+
+      // ✅ CRITICAL: Identify participated users BEFORE updating player statuses
+      // We need to know who actually participated vs who just registered
       const now = new Date()
-      await Player.updateMany({ game: gameId }, { $set: { status: 'completed', completed: true, finishedAt: now } })
-      message = 'Game completed and all players marked as completed.'
+
+      // Get all players BEFORE updating statuses to identify who participated vs who just registered
+      const allPlayersBeforeUpdate = await Player.find({ game: gameId }).select('user status').lean()
+
+      // Identify users who actually participated (status: 'participated' or 'completed')
+      const participatedUserIds = [
+        ...new Set(
+          allPlayersBeforeUpdate
+            .filter(p => p.status === 'participated' || p.status === 'completed')
+            .map(p => p.user?.toString())
+            .filter(Boolean)
+        )
+      ]
+
+      // Identify users who only registered but didn't participate (status: 'registered')
+      const registeredOnlyUserIds = [
+        ...new Set(
+          allPlayersBeforeUpdate
+            .filter(p => p.status === 'registered')
+            .map(p => p.user?.toString())
+            .filter(Boolean)
+        )
+      ]
+
+      console.log(
+        `[Game Service] Admin-forwarded game ${gameId} completion - Participated: ${participatedUserIds.length}, Registered only: ${registeredOnlyUserIds.length}`
+      )
+
+      // Update player statuses:
+      // - Participated users → 'completed'
+      // - Registered-only users → keep as 'registered' (don't mark as completed - they missed it)
+      if (participatedUserIds.length > 0) {
+        await Player.updateMany(
+          { game: gameId, user: { $in: participatedUserIds.map(id => new mongoose.Types.ObjectId(id)) } },
+          { $set: { status: 'completed', completed: true, finishedAt: now } }
+        )
+        console.log(`[Game Service] ✅ Updated ${participatedUserIds.length} participated user(s) to completed status`)
+      }
+
+      // ✅ NON-BLOCKING: Send notifications in background (fire-and-forget)
+      // Don't await - let them run in background so API response is immediate
+      ;(async () => {
+        try {
+          // Send "game missed" notifications to registered but not participated users
+          if (registeredOnlyUserIds.length > 0) {
+            await createGameMissedNotificationsForRegisteredUsers(gameId.toString(), {
+              _id: game._id || gameId,
+              title: game.title,
+              thumbnailPoster: game.thumbnailPoster || game.thumbnailUrl,
+              quiz: game.quiz
+            })
+            console.log(
+              `[Game Service] ✅ Sent game missed notifications to ${registeredOnlyUserIds.length} registered-only user(s)`
+            )
+          }
+
+          // Send "game completed" notifications ONLY to users who actually participated
+          if (participatedUserIds.length > 0) {
+            const { createGameCompletedNotificationsForParticipatedUsers } = await import(
+              '../notifications/notification.helpers.js'
+            )
+
+            await createGameCompletedNotificationsForParticipatedUsers(gameId.toString(), {
+              _id: game._id || gameId,
+              title: game.title,
+              thumbnailPoster: game.thumbnailPoster || game.thumbnailUrl,
+              quiz: game.quiz
+            })
+            console.log(
+              `[Game Service] ✅ Sent game completed notifications to ${participatedUserIds.length} participated user(s)`
+            )
+          }
+        } catch (notificationError) {
+          console.error(
+            `[Game Service] ❌ Error sending notifications for admin-forwarded game ${gameId}:`,
+            notificationError
+          )
+          // Don't fail the game completion if notifications fail
+        }
+      })()
+
+      message = `Game completed. ${participatedUserIds.length} participated user(s) marked as completed, ${registeredOnlyUserIds.length} registered-only user(s) kept as registered.`
     } else {
       // Increment liveQuestionIndex
       game.liveQuestionIndex = currentQuestionIndex + 1
@@ -1560,6 +2123,12 @@ export async function broadcastAdminGamesUpdate() {
   try {
     const allGamesRes = await getAll()
     broadcastGamesList(allGamesRes.result)
+
+    // Also broadcast sponsor games list (games awaiting sponsorship)
+    const sponsorGames = (allGamesRes.result || []).filter(game => game.status === 'awaiting_sponsorship')
+    if (sponsorGames.length > 0) {
+      broadcastSponsorGamesList(sponsorGames)
+    }
   } catch (e) {
     console.error('Failed to broadcast admin games list:', e)
   }
@@ -1567,11 +2136,19 @@ export async function broadcastAdminGamesUpdate() {
 
 export async function broadcastGameDetailsUpdates(gameId, updatedGame = null) {
   try {
-    if (!updatedGame) {
+    let game = updatedGame
+    if (!game) {
       const gameRes = await getOne({ _id: gameId })
-      broadcastGameDetails(gameId, gameRes.result)
+      game = gameRes.result
+      broadcastGameDetails(gameId, game)
     } else {
-      broadcastGameDetails(gameId, updatedGame)
+      broadcastGameDetails(gameId, game)
+    }
+
+    // Also broadcast to sponsor games WebSocket if game is awaiting sponsorship
+    if (game && game.status === 'awaiting_sponsorship') {
+      const { broadcastSponsorGameDetails } = await import('../ws/sponsor-games/[gameId]/publishers')
+      broadcastSponsorGameDetails(gameId, game)
     }
   } catch (e) {
     console.error('Failed to broadcast game details:', e)

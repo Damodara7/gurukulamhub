@@ -7,6 +7,7 @@ import crypto from 'crypto'
 const nextConfig = {
   staticPageGenerationTimeout: 180,
   transpilePackages: ['mui-file-input'],
+  output: 'standalone', // Enable standalone output for Docker
   images: {
     domains: ['squizme-quiz.s3.ap-south-1.amazonaws.com'] // Add your S3 bucket domain here
   },
@@ -37,11 +38,15 @@ const nextConfig = {
     'https://gurukulamhub-production.up.railway.app',
     'https://gurukulamhub.up.railway.app',
     'https://gurukulamhub.com',
-    'https://willyard-larue-acquiescingly.ngrok-free.dev',
+    'https://gurukulamhub.com',
     // '*' is allowed, but use with caution!
     '*'
   ],
   reactStrictMode: false,
+  // Disable ESLint during builds (for Docker/production builds)
+  eslint: {
+    ignoreDuringBuilds: true
+  },
   experimental: {
     serverActions: {
       bodySizeLimit: '2mb'
@@ -77,6 +82,8 @@ const pwaConfig = withPWA({
     disableDevLogs: false, // Enable dev logs to see PWA-related console messages
     // In development, use NetworkFirst for everything to avoid blocking
     mode: process.env.NODE_ENV === 'development' ? 'development' : 'production',
+    // Import push notification handler
+    importScripts: ['/push-handler.js'],
     // Override offline.html precache entry to use file content hash instead of static "development"
     // This ensures offline.html updates when file content changes
     additionalManifestEntries: (() => {

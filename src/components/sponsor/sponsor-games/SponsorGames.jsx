@@ -43,9 +43,69 @@ const SponsorGames = () => {
   const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'))
   const [games, setGames] = useState([])
   const [loading, setLoading] = useState(true)
+  const [socket, setSocket] = useState(null)
+  const [isConnected, setIsConnected] = useState(false)
 
   useEffect(() => {
     fetchGamesAwaitingSponsorship()
+  }, [])
+
+  // WebSocket connection for real-time sponsor games list updates
+  useEffect(() => {
+    const wsUrl =
+      typeof window !== 'undefined'
+        ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/api/ws/sponsor-games`
+        : ''
+
+    if (wsUrl) {
+      const wsRef = new WebSocket(wsUrl)
+
+      wsRef.onopen = () => {
+        console.log('[WS] Connected to sponsor games list updates')
+        setIsConnected(true)
+        setSocket(wsRef)
+      }
+
+      wsRef.onmessage = event => {
+        try {
+          const msg = JSON.parse(event.data)
+
+          if (msg.type === 'sponsorGamesList') {
+            // Full games list update
+            console.log('[WS] Sponsor games list updated')
+            setGames(msg.data || [])
+          } else if (msg.type === 'gameStatusChange') {
+            // Game status changed (e.g., from awaiting_sponsorship to sponsored)
+            console.log('[WS] Game status changed:', msg.data)
+            const { gameId, status } = msg.data
+
+            if (status === 'sponsored') {
+              // Remove game from list if it's now fully sponsored
+              setGames(prevGames => prevGames.filter(game => game._id !== gameId))
+            } else {
+              // Refresh the list to get updated data
+              fetchGamesAwaitingSponsorship()
+            }
+          }
+        } catch (e) {
+          console.error('[WS] Error parsing sponsor games message', e)
+        }
+      }
+
+      wsRef.onerror = err => {
+        console.error('[WS] Sponsor games list error', err)
+        setIsConnected(false)
+      }
+
+      wsRef.onclose = () => {
+        console.log('[WS] Sponsor games list connection closed')
+        setIsConnected(false)
+      }
+
+      return () => {
+        wsRef.close()
+      }
+    }
   }, [])
 
   const fetchGamesAwaitingSponsorship = async () => {

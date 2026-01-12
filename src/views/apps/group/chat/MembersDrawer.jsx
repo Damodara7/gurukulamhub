@@ -1,5 +1,5 @@
 'use client'
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Drawer,
   Box,
@@ -15,7 +15,8 @@ import {
   Tooltip,
   useTheme,
   alpha,
-  useMediaQuery
+  useMediaQuery,
+  Button
 } from '@mui/material'
 import {
   ArrowBack as ArrowBackIcon,
@@ -34,6 +35,21 @@ const MembersDrawer = ({
   const theme = useTheme()
   const isDarkMode = theme.palette.mode === 'dark'
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+  const [visibleCount, setVisibleCount] = useState(15)
+
+  // Reset visible count when drawer opens or members change
+  useEffect(() => {
+    if (open) {
+      setVisibleCount(15)
+    }
+  }, [open, members.length])
+
+  const handleShowMore = () => {
+    setVisibleCount(prev => Math.min(prev + 10, members.length))
+  }
+
+  const visibleMembers = members.slice(0, visibleCount)
+  const hasMore = members.length > visibleCount
 
   return (
     <Drawer
@@ -44,12 +60,20 @@ const MembersDrawer = ({
         sx: {
           width: { xs: '100%', sm: 380, md: 400 },
           background: theme.palette.background.default,
-          borderLeft: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.12 : 0.08)}`
+          borderLeft: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.12 : 0.08)}`,
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%'
         }
       }}
     >
-      <Box sx={{ p: { xs: 1.5, sm: 2 } }}>
-        <Stack direction='row' alignItems='center' justifyContent='space-between' sx={{ mb: 2 }}>
+      {/* Fixed Header */}
+      <Box sx={{ 
+        p: { xs: 1.5, sm: 2 },
+        borderBottom: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.12 : 0.08)}`,
+        flexShrink: 0
+      }}>
+        <Stack direction='row' alignItems='center' justifyContent='space-between'>
           <Stack direction='row' alignItems='center' spacing={{ xs: 1, sm: 1.5 }}>
             <Typography
               variant={isMobile ? 'subtitle1' : 'h6'}
@@ -100,8 +124,18 @@ const MembersDrawer = ({
             </IconButton>
           </Stack>
         </Stack>
-        <List>
-          {members.map((member, index) => (
+      </Box>
+
+      {/* Scrollable Members List */}
+      <Box sx={{ 
+        flex: 1,
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
+        <List sx={{ py: 0, flex: 1 }}>
+          {visibleMembers.map((member, index) => (
             <ListItem
               key={member.email || index}
               secondaryAction={
@@ -187,6 +221,25 @@ const MembersDrawer = ({
             </ListItem>
           ))}
         </List>
+        {hasMore && (
+          <Box sx={{ 
+            p: 2, 
+            borderTop: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.12 : 0.08)}`,
+            flexShrink: 0
+          }}>
+            <Button
+              fullWidth
+              variant='outlined'
+              onClick={handleShowMore}
+              sx={{
+                textTransform: 'none',
+                fontSize: { xs: '0.875rem', sm: '0.9375rem' }
+              }}
+            >
+              Show More ({members.length - visibleCount} remaining)
+            </Button>
+          </Box>
+        )}
       </Box>
     </Drawer>
   )

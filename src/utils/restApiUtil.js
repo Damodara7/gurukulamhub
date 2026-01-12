@@ -3,8 +3,9 @@ import axios from 'axios'
 import * as APIConfig from '../configs/apiConfig'
 
 // Create an Axios instance with default configuration
+// Use API_BASE_URL directly, not API_URLS.API_BASE_URL
 const axiosInstance = axios.create({
-  baseURL: APIConfig.API_URLS.API_BASE_URL, // Replace with your API base URL
+  baseURL: APIConfig.API_BASE_URL, // Use API_BASE_URL directly
   timeout: 50000, // Timeout in milliseconds
   headers: {
     'Content-Type': 'application/json'
@@ -24,10 +25,18 @@ export const get = async (url, params = {}) => {
     } else if (error.response) {
       console.error('Server error:', error.response.data)
     } else {
-      console.error('Network error:', error.message)
+      console.error('Network error:', error.message, error.code)
     }
-    return error?.response?.data
-    // throw new Error(error?.message);
+    // Return error response data if available, otherwise return error object
+    if (error?.response?.data) {
+      return error.response.data
+    }
+    // For network errors (ECONNREFUSED, etc.), return an error object
+    return {
+      status: 'error',
+      message: error.message || 'Network error',
+      result: null
+    }
   }
 }
 
@@ -91,7 +100,7 @@ export const del = async (url, data = {}) => {
 
 // Create an Axios instance with default configuration
 const axiosFormInstance = axios.create({
-  baseURL: APIConfig.API_URLS.API_BASE_URL, // Replace with your API base URL
+  baseURL: APIConfig.API_BASE_URL, // Use API_BASE_URL directly
   timeout: 5000 // Timeout in milliseconds
 })
 

@@ -5,40 +5,41 @@ import * as OtpService from './otp.service'
 import * as SMSService from './sms.service'
 import User from '../models/user.model'
 import UserProfile from '../api/profile/profile.model'
+import Notification from '../api/notifications/notification.model'
 import * as UserProfileService from '../api/profile/profile.service'
 import crypto from 'crypto'
 
 // Utility to generate password
 function generatePassword(email) {
   // Hash the email using SHA-256 (or any secure hash)
-  const hash = crypto.createHash("sha256").update(email).digest("hex");
+  const hash = crypto.createHash('sha256').update(email).digest('hex')
 
   // Define character pools for password
-  const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  const specials = "!@#$%^&*()_+{}|:<>?";
-  const lower = "abcdefghijklmnopqrstuvwxyz";
-  const digits = "0123456789";
+  const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+  const specials = '!@#$%^&*()_+{}|:<>?'
+  const lower = 'abcdefghijklmnopqrstuvwxyz'
+  const digits = '0123456789'
 
   // Select characters based on hash values
-  const upperChar = upper[parseInt(hash.substring(0, 2), 16) % upper.length];
-  const specialChar = specials[parseInt(hash.substring(2, 4), 16) % specials.length];
-  const lowerChar = lower[parseInt(hash.substring(4, 6), 16) % lower.length];
-  const digitChar = digits[parseInt(hash.substring(6, 8), 16) % digits.length];
+  const upperChar = upper[parseInt(hash.substring(0, 2), 16) % upper.length]
+  const specialChar = specials[parseInt(hash.substring(2, 4), 16) % specials.length]
+  const lowerChar = lower[parseInt(hash.substring(4, 6), 16) % lower.length]
+  const digitChar = digits[parseInt(hash.substring(6, 8), 16) % digits.length]
 
   // Create the password with a mix of characters
   const remainingChars = hash
     .substring(8, 16)
-    .split("")
+    .split('')
     .map((char, index) => {
-      const pool = index % 2 === 0 ? lower : digits;
-      return pool[parseInt(char, 16) % pool.length];
-    });
+      const pool = index % 2 === 0 ? lower : digits
+      return pool[parseInt(char, 16) % pool.length]
+    })
 
   // Combine and shuffle
-  let password = [upperChar, specialChar, lowerChar, digitChar, ...remainingChars].slice(0, 8);
-  password = password.sort(() => Math.random() - 0.5).join("");
+  let password = [upperChar, specialChar, lowerChar, digitChar, ...remainingChars].slice(0, 8)
+  password = password.sort(() => Math.random() - 0.5).join('')
 
-  return password;
+  return password
 }
 
 import { resetPasswordTemplate } from '@/utils/email-templates/resetPasswordTemplate'
@@ -55,6 +56,7 @@ export async function getByEmail({ email }) {
   await connectMongo()
   try {
     let user = await User.findOne({ email }).select('-password').lean().populate('profile')
+    console.log('User: ', user)
     if (user && !user.isActive) {
       return {
         status: 'error',
@@ -150,7 +152,7 @@ export async function addGroupToUser(userId, groupId) {
   }
 }
 
-export async function getAll({filters = {}}) {
+export async function getAll({ filters = {} }) {
   await connectMongo() // Connect to the MongoDB database
 
   try {
@@ -169,7 +171,93 @@ export async function getAll({filters = {}}) {
 export async function updateOne({ email, data: updatedData }) {
   await connectMongo()
   try {
+    // Get the user before update to check if roles changed
+    const oldUser = await User.findOne({ email }).select('-password').lean()
+
     const updatedUser = await User.findOneAndUpdate({ email }, updatedData, { new: true }).select('-password') // Return updated user without password
+
+    // Check if roles were updated
+    if (updatedData.roles && oldUser && Array.isArray(updatedData.roles) && Array.isArray(oldUser.roles)) {
+      console.log('[User Service] Checking role changes...')
+      console.log('[User Service] Old roles:', oldUser.roles)
+      console.log('[User Service] New roles:', updatedData.roles)
+
+      // Convert all roles to strings for comparison
+      const oldRolesStr = oldUser.roles.map(r => String(r))
+      const newRolesStr = updatedData.roles.map(r => String(r))
+
+      const newRoles = newRolesStr.filter(role => !oldRolesStr.includes(role))
+      const removedRoles = oldRolesStr.filter(role => !newRolesStr.includes(role))
+
+      console.log('[User Service] New roles detected:', newRoles)
+      console.log('[User Service] Removed roles detected:', removedRoles)
+
+      // Create notification for each newly assigned role
+      if (newRoles.length > 0) {
+        try {
+          const { createRoleAssignedNotification } = await import('../api/notifications/notification.helpers.js')
+
+          for (const newRole of newRoles) {
+            // Skip USER role as it's default
+            if (newRole !== 'USER') {
+              console.log('[User Service] Creating role assigned notification for:', newRole)
+              const result = await createRoleAssignedNotification(updatedUser._id, {
+                roleName: newRole,
+                assignedBy: updatedData.assignedBy || updatedData.updatedBy || 'Admin',
+                allRoles: updatedData.roles
+              })
+              console.log('[User Service] Role assigned notification result:', result)
+            }
+          }
+        } catch (notificationError) {
+          console.error('[User Service] Error creating role assigned notification:', notificationError)
+          console.error('[User Service] Error stack:', notificationError.stack)
+          // Don't fail the update if notification creation fails
+        }
+      }
+
+      // Create notification for each removed role
+      if (removedRoles.length > 0) {
+        try {
+          console.log('[User Service] Creating role removed notifications for:', removedRoles)
+          const { createRoleRemovedNotification } = await import('../api/notifications/notification.helpers.js')
+
+          for (const removedRole of removedRoles) {
+            // Skip USER role as it's default and shouldn't be removed
+            if (removedRole !== 'USER') {
+              console.log(
+                '[User Service] Creating role removed notification for:',
+                removedRole,
+                'User ID:',
+                updatedUser._id
+              )
+              const result = await createRoleRemovedNotification(updatedUser._id, {
+                roleName: removedRole,
+                removedBy: updatedData.removedBy || updatedData.updatedBy || 'Admin',
+                remainingRoles: updatedData.roles
+              })
+              console.log('[User Service] Role removed notification result:', result)
+            } else {
+              console.log('[User Service] Skipping USER role removal notification')
+            }
+          }
+        } catch (notificationError) {
+          console.error('[User Service] Error creating role removed notification:', notificationError)
+          console.error('[User Service] Error stack:', notificationError.stack)
+          // Don't fail the update if notification creation fails
+        }
+      } else {
+        console.log('[User Service] No roles were removed')
+      }
+    } else {
+      console.log('[User Service] Roles not updated or missing data:', {
+        hasUpdatedRoles: !!updatedData.roles,
+        hasOldUser: !!oldUser,
+        isArrayUpdated: Array.isArray(updatedData.roles),
+        isArrayOld: Array.isArray(oldUser?.roles)
+      })
+    }
+
     return { status: 'success', result: updatedUser, message: 'User updated successfully' }
   } catch (error) {
     // console.log(`Error updating user: ${error}`)
@@ -206,12 +294,12 @@ export async function add({ data: userData }) {
 
     if (savedNewUser) {
       const emailOtpResult = await srvSendEmailOtp(userData.email, 'verifyEmail')
-      return { 
-        status: 'success', 
-        result: { 
-          ...savedNewUser.toObject(), 
-          testingOtp: emailOtpResult?.testingOtp || null 
-        }, 
+      return {
+        status: 'success',
+        result: {
+          ...savedNewUser.toObject(),
+          testingOtp: emailOtpResult?.testingOtp || null
+        },
         message: 'User added successfully'
       }
     } else {
@@ -280,13 +368,13 @@ export async function bulkAddByAdmin({ usersData }) {
     // Process users in parallel batches for better performance
     const batchSize = 10 // Process 10 users at a time to avoid overwhelming the DB
     const batches = []
-    
+
     for (let i = 0; i < usersData.length; i += batchSize) {
       batches.push(usersData.slice(i, i + batchSize))
     }
 
     for (const batch of batches) {
-      const batchPromises = batch.map(async (userData) => {
+      const batchPromises = batch.map(async userData => {
         try {
           // Check if user already exists
           const existingUser = await User.findOne({ email: userData.email }).select('-password').lean()
@@ -300,7 +388,7 @@ export async function bulkAddByAdmin({ usersData }) {
 
           // Generate password
           const password = generatePassword(userData.email)
-          
+
           // Hash password
           const salt = await bcryptjs.genSalt(12)
           const hashedPassword = await bcryptjs.hash(password, salt)
@@ -355,7 +443,7 @@ export async function bulkAddByAdmin({ usersData }) {
       })
 
       const batchResults = await Promise.all(batchPromises)
-      
+
       // Categorize results
       batchResults.forEach(result => {
         if (result.status === 'success') {
@@ -411,12 +499,12 @@ export async function addOrUpdate({ email, data }) {
 
       if (!user.isVerified) {
         const emailOtpResult = await srvSendEmailOtp(email, 'verifyEmail')
-        return { 
-          status: 'success', 
-          result: { 
-            ...user.toObject(), 
-            testingOtp: emailOtpResult?.testingOtp || null 
-          }, 
+        return {
+          status: 'success',
+          result: {
+            ...user.toObject(),
+            testingOtp: emailOtpResult?.testingOtp || null
+          },
           message: 'Otp resent successfully'
         }
       }
@@ -663,7 +751,7 @@ export async function srvSendEmailOtp(email, purpose) {
       content
     })
     // console.log('Mail Response:', mailResponse)
-    
+
     // Add testing OTP to the response for development/testing purposes
     return {
       ...mailResponse,
@@ -883,14 +971,15 @@ export async function srvSendRoleRemovedNotification({ userEmail, roleName, rema
     }
 
     const userProfile = user.profile
-    const userName = userProfile 
-      ? `${userProfile.firstname || ''} ${userProfile.lastname || ''}`.trim() || null
-      : null
+    const userName = userProfile ? `${userProfile.firstname || ''} ${userProfile.lastname || ''}`.trim() || null : null
 
     // Ensure USER role is always present
-    const finalRemainingRoles = remainingRoles && remainingRoles.length > 0
-      ? remainingRoles.includes('USER') ? remainingRoles : ['USER', ...remainingRoles]
-      : ['USER']
+    const finalRemainingRoles =
+      remainingRoles && remainingRoles.length > 0
+        ? remainingRoles.includes('USER')
+          ? remainingRoles
+          : ['USER', ...remainingRoles]
+        : ['USER']
 
     const siteLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/${locale}/auth/login`
 
@@ -940,7 +1029,7 @@ export async function srvSendPhoneOtp(email, phone, name) {
     // Send the sms
     const smsResponse = await SMSService.srvSendSMS(content)
     // console.log('SMS Response:', smsResponse)
-    
+
     // Add testing OTP to the response for development/testing purposes
     return {
       ...smsResponse,
@@ -1181,9 +1270,13 @@ export async function cleanupUnverifiedUsers() {
       // Delete associated user profiles
       await UserProfile.deleteMany({ email: { $in: userEmails } })
 
+      // Delete associated notifications
+      const userIds = users.map(user => user._id)
+      await Notification.deleteMany({ userId: { $in: userIds } })
+
       return {
         status: 'success',
-        message: `${users.length} unverified users and their profiles deleted successfully`
+        message: `${users.length} unverified users, their profiles, and notifications deleted successfully`
       }
     } else {
       return {

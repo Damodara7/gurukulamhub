@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gurukulamhub-app
+  namespace: gurukulamhub
+  labels:
+    app: gurukulamhub-app
+spec:
+  replicas: 1  # Set to 1 for WebSocket real-time messaging (WebSocket state is per-pod)
+  # Note: With multiple replicas, WebSocket connections on different pods won't see each other's messages
+  # For production with multiple replicas, consider using Redis pub/sub for WebSocket state sharing
+  selector:
+    matchLabels:
+      app: gurukulamhub-app
+  template:
+    metadata:
+      labels:
+        app: gurukulamhub-app
+    spec:
+      containers:
+      - name: app
+        image: gurukulamhub-app:latest  # Change to your registry/image name
+        imagePullPolicy: IfNotPresent  # Use Always in production with registry
+        ports:
+        - containerPort: 3000
+          name: http
+          protocol: TCP
+        envFrom:
+        - configMapRef:
+            name: gurukulamhub-config
+        # Uncomment below if using Secrets instead of configmap-all.yaml
+        # - secretRef:
+        #     name: gurukulamhub-secrets
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        # Volume mounts if needed for Prisma database
+        # volumeMounts:
+        # - name: prisma-db
+        #   mountPath: /app/prisma/dev.db
+      # volumes:
+      # - name: prisma-db
+      #   persistentVolumeClaim:
+      #     claimName: prisma-pvc
+      restartPolicy: Always
+

@@ -52,7 +52,16 @@ function PlayGamePage() {
 
   if (loading) {
     return (
-      <Box p={4} display='flex' justifyContent='center' height='100%'>
+      <Box
+        sx={{
+          width: '100vw',
+          height: '100vh',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          bgcolor: 'background.default'
+        }}
+      >
         <CircularProgress />
       </Box>
     )
@@ -60,19 +69,39 @@ function PlayGamePage() {
 
   if (error || !game) {
     return (
-      <FallBackCard
-        error={error}
-        path='/public-games'
-        content='You can go back to Public Games '
-        btnText='Back To Public Games'
-      />
+      <Box
+        sx={{
+          width: '100vw',
+          height: '100vh',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          bgcolor: 'background.default'
+        }}
+      >
+        <FallBackCard
+          error={error}
+          path='/public-games'
+          content='You can go back to Public Games '
+          btnText='Back To Public Games'
+        />
+      </Box>
     )
   }
 
   //check if game has ended
   if (game.status === 'completed') {
     return (
-      <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'auto', width: '100%' }}>
+      <Box
+        sx={{
+          width: '100vw',
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'auto',
+          bgcolor: 'background.default'
+        }}
+      >
         <GameEnded game={game} onExit={handleExit} />
       </Box>
     )
@@ -96,10 +125,36 @@ function PlayGamePage() {
 
   //default-case - show game info screen
   if (game.status === 'lobby') {
-    return <PlayGameInfoScreen game={game} setShouldStartGame={setShouldStartGame} />
+    return (
+      <Box
+        sx={{
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'auto',
+          bgcolor: 'background.default'
+        }}
+      >
+        <PlayGameInfoScreen game={game} setShouldStartGame={setShouldStartGame} />
+      </Box>
+    )
   }
 
-  return <GameRegistrationNotice game={game} />
+  return (
+    <Box
+      sx={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'auto',
+        bgcolor: 'background.default'
+      }}
+    >
+      <GameRegistrationNotice game={game} />
+    </Box>
+  )
 }
 
 export default PlayGamePage

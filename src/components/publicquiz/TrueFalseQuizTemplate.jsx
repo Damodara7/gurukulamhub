@@ -12,8 +12,7 @@ import {
   alpha,
   useTheme
 } from '@mui/material'
-import VideoAd from '@/views/apps/advertisements/VideoAd/VideoAd'
-import ImagePopup from '../ImagePopup'
+import ReactPlayer from 'react-player'
 
 const TrueFalseTemplate = ({ question, selectedAnswer, onAnswerSelect, readOnly = false }) => {
   const questionObj = question?.data?.question
@@ -24,6 +23,9 @@ const TrueFalseTemplate = ({ question, selectedAnswer, onAnswerSelect, readOnly 
       onAnswerSelect(questionId, optionId)
     }
   }
+  
+  // Check if all options are images
+  const allOptionsAreImages = question?.data?.options?.every(opt => opt.mediaType === 'image' && opt.image) || false
   return (
     <Card
       elevation={0}
@@ -85,28 +87,105 @@ const TrueFalseTemplate = ({ question, selectedAnswer, onAnswerSelect, readOnly 
 
           {(questionObj?.mediaType === 'image' || questionObj?.mediaType === 'text-image') && questionObj?.image && (
             <Box
-              component='img'
-              src={questionObj.image}
-              alt='Question'
               sx={{
                 width: '100%',
-                maxHeight: { xs: 260, md: 320 },
-                objectFit: 'cover',
-                borderRadius: { xs: 2, md: 2.5 },
-                border: `1px solid ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.2 : 0.15)}`,
+                position: 'relative',
+                borderRadius: { xs: 2, sm: 2.5, md: 3 },
+                overflow: 'hidden',
+                border: `2px solid ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.25 : 0.15)}`,
                 boxShadow:
                   theme.palette.mode === 'dark'
-                    ? '0 18px 40px rgba(0, 0, 0, 0.5)'
-                    : '0 18px 40px rgba(15, 23, 42, 0.18)'
+                    ? '0 20px 48px rgba(0, 0, 0, 0.5)'
+                    : '0 20px 48px rgba(15, 23, 42, 0.2)',
+                bgcolor: theme.palette.mode === 'dark' 
+                  ? alpha(theme.palette.common.black, 0.3)
+                  : alpha(theme.palette.common.white, 0.8),
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                p: { xs: 1.5, sm: 2, md: 2.5 },
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  boxShadow:
+                    theme.palette.mode === 'dark'
+                      ? '0 24px 56px rgba(0, 0, 0, 0.6)'
+                      : '0 24px 56px rgba(15, 23, 42, 0.25)',
+                  borderColor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.35 : 0.25)
+                }
               }}
-            />
+            >
+              <Box
+                component='img'
+                src={questionObj.image}
+                alt='Question'
+                sx={{
+                  width: 'auto',
+                  height: 'auto',
+                  maxWidth: '100%',
+                  maxHeight: { xs: 220, sm: 280, md: 350, lg: 420 },
+                  objectFit: 'contain',
+                  display: 'block',
+                  borderRadius: { xs: 1, sm: 1.5, md: 2 }
+                }}
+              />
+            </Box>
           )}
 
           {(questionObj?.mediaType === 'video' || questionObj?.mediaType === 'text-video') && questionObj?.video && (
-            <Stack spacing={1.5} alignItems='center'>
-              <VideoAd url={questionObj.video || ''} height='240px' showPause autoPlay={false} />
-              <ImagePopup imageUrl={questionObj.video || ''} mediaType='video' />
-            </Stack>
+            <Box
+              sx={{
+                width: '100%',
+                position: 'relative',
+                borderRadius: { xs: 2, sm: 2.5, md: 3 },
+                overflow: 'hidden',
+                border: `2px solid ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.25 : 0.15)}`,
+                boxShadow:
+                  theme.palette.mode === 'dark'
+                    ? '0 20px 48px rgba(0, 0, 0, 0.5)'
+                    : '0 20px 48px rgba(15, 23, 42, 0.2)',
+                bgcolor: theme.palette.mode === 'dark' ? '#000' : '#000',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  boxShadow:
+                    theme.palette.mode === 'dark'
+                      ? '0 24px 56px rgba(0, 0, 0, 0.6)'
+                      : '0 24px 56px rgba(15, 23, 42, 0.25)',
+                  borderColor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.35 : 0.25)
+                }
+              }}
+            >
+              <Box
+                sx={{
+                  width: '100%',
+                  position: 'relative',
+                  paddingTop: '56.25%', // 16:9 aspect ratio
+                  bgcolor: '#000'
+                }}
+              >
+                <ReactPlayer
+                  url={questionObj.video || ''}
+                  playing={true}
+                  controls={true}
+                  width='100%'
+                  height='100%'
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0
+                  }}
+                  config={{
+                    youtube: {
+                      playerVars: {
+                        autoplay: 1,
+                        modestbranding: 1,
+                        rel: 0
+                      }
+                    }
+                  }}
+                  onError={e => console.error('Video error occurred:', e)}
+                />
+              </Box>
+            </Box>
           )}
 
           <RadioGroup
@@ -118,7 +197,7 @@ const TrueFalseTemplate = ({ question, selectedAnswer, onAnswerSelect, readOnly 
               container
               spacing={{ xs: 2, sm: 2.5, md: 3 }}
               justifyContent='center'
-              sx={{ mx: 'auto', width: '100%', overflow: 'hidden' }}
+              sx={{ mx: 'auto', width: '100%', overflow: 'hidden', alignItems: allOptionsAreImages ? 'stretch' : 'flex-start' }}
             >
               {question?.data?.options?.map((option, index) => {
                 const isSelected = selectedAnswer === option.id
@@ -127,7 +206,8 @@ const TrueFalseTemplate = ({ question, selectedAnswer, onAnswerSelect, readOnly 
                 return (
                   <Grid
                     item
-                    xs={12}
+                    xs={allOptionsAreImages ? 12 : 12}
+                    sm={allOptionsAreImages ? 6 : 12}
                     key={option.id}
                     sx={{
                       display: 'flex',
@@ -137,7 +217,8 @@ const TrueFalseTemplate = ({ question, selectedAnswer, onAnswerSelect, readOnly 
                       overflow: 'visible',
                       width: '100%',
                       maxWidth: '100%',
-                      boxSizing: 'border-box'
+                      boxSizing: 'border-box',
+                      height: allOptionsAreImages ? '100%' : 'auto'
                     }}
                   >
                     <Box
@@ -145,11 +226,15 @@ const TrueFalseTemplate = ({ question, selectedAnswer, onAnswerSelect, readOnly 
                       sx={{
                         position: 'relative',
                         display: 'flex',
+                        flexDirection: allOptionsAreImages ? 'column' : 'row',
                         gap: { xs: 1.5, sm: 2, md: 2.4 },
-                        alignItems: 'center',
+                        alignItems: allOptionsAreImages ? 'stretch' : 'center',
                         borderRadius: { xs: 2.5, sm: 3, md: 3.5, lg: 3.8 },
-                        p: { xs: 1.5, sm: 2, md: 2.5, lg: 3 },
+                        p: allOptionsAreImages 
+                          ? { xs: 2, sm: 2.5, md: 3 }
+                          : { xs: 1.5, sm: 2, md: 2.5, lg: 3 },
                         width: '100%',
+                        height: allOptionsAreImages ? '100%' : 'auto',
                         maxWidth: '100%',
                         overflow: 'hidden',
                         boxSizing: 'border-box',
@@ -181,7 +266,9 @@ const TrueFalseTemplate = ({ question, selectedAnswer, onAnswerSelect, readOnly 
                           'transform 0.2s ease, border-color 0.24s ease, box-shadow 0.2s ease, background 0.3s ease, scale 0.2s ease',
                         cursor: readOnly ? 'default' : 'pointer',
                         pointerEvents: readOnly ? 'none' : 'auto',
-                        minHeight: { xs: 'auto', sm: 90, md: 110, lg: 118 },
+                        minHeight: allOptionsAreImages 
+                          ? 'auto'
+                          : { xs: 'auto', sm: 90, md: 110, lg: 118 },
                         maxHeight: 'none',
                         boxShadow: isSelected
                           ? theme.palette.mode === 'dark'
@@ -253,135 +340,274 @@ const TrueFalseTemplate = ({ question, selectedAnswer, onAnswerSelect, readOnly 
                         }
                       }}
                     >
-                      <Radio
-                        disableRipple
-                        checked={isSelected}
-                        value={option.id}
-                        sx={{
-                          mr: { xs: 1, sm: 1.25, md: 1.5 },
-                          color: isSelected
-                            ? theme.palette.primary.main
-                            : theme.palette.mode === 'dark'
-                              ? alpha(theme.palette.primary.light, 0.7)
-                              : alpha(theme.palette.primary.dark, 0.65),
-                          '&.Mui-checked': {
-                            color: theme.palette.primary.main
-                          },
-                          '& .MuiSvgIcon-root': {
-                            fontSize: { xs: 22, sm: 24, md: 26 },
-                            filter: isSelected ? 'drop-shadow(0px 8px 18px rgba(15,23,42,0.28))' : 'none'
-                          }
-                        }}
-                      />
+                      {!allOptionsAreImages && (
+                        <Radio
+                          disableRipple
+                          checked={isSelected}
+                          value={option.id}
+                          sx={{
+                            mr: { xs: 1, sm: 1.25, md: 1.5 },
+                            color: isSelected
+                              ? theme.palette.primary.main
+                              : theme.palette.mode === 'dark'
+                                ? alpha(theme.palette.primary.light, 0.7)
+                                : alpha(theme.palette.primary.dark, 0.65),
+                            '&.Mui-checked': {
+                              color: theme.palette.primary.main
+                            },
+                            '& .MuiSvgIcon-root': {
+                              fontSize: { xs: 22, sm: 24, md: 26 },
+                              filter: isSelected ? 'drop-shadow(0px 8px 18px rgba(15,23,42,0.28))' : 'none'
+                            }
+                          }}
+                        />
+                      )}
 
-                      <Stack
-                        direction='row'
-                        spacing={{ xs: 1, sm: 1.4, md: 2 }}
-                        alignItems='center'
-                        justifyContent='space-between'
-                        sx={{
-                          flexGrow: 1,
-                          position: 'relative',
-                          zIndex: 1,
-                          flexWrap: 'wrap',
-                          minWidth: 0,
-                          overflow: 'hidden',
-                          width: '100%'
-                        }}
-                      >
-                        <Stack
-                          direction='row'
-                          spacing={{ xs: 0.75, sm: 1.2 }}
-                          alignItems='center'
-                          sx={{ minWidth: 0, flex: 1, overflow: 'hidden' }}
-                        >
-                          <Box
+                      {allOptionsAreImages ? (
+                        <Stack spacing={2} sx={{ width: '100%', position: 'relative', zIndex: 1, flex: 1, minHeight: 0 }}>
+                          <Stack
+                            direction='row'
+                            spacing={1.5}
+                            alignItems='center'
+                            justifyContent='space-between'
+                            sx={{ width: '100%', px: 0.5, minHeight: { xs: 48, sm: 52, md: 56 } }}
+                          >
+                            <Box
+                              sx={{
+                                width: { xs: 40, sm: 44, md: 48 },
+                                height: { xs: 40, sm: 44, md: 48 },
+                                borderRadius: { xs: 2.5, sm: 3, md: 3.5 },
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontWeight: 700,
+                                fontSize: { xs: '1.125rem', sm: '1.25rem', md: '1.375rem' },
+                                flexShrink: 0,
+                                background: isSelected
+                                  ? theme.palette.mode === 'dark'
+                                    ? alpha(theme.palette.primary.main, 0.5)
+                                    : alpha(theme.palette.common.white, 0.4)
+                                  : alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.25 : 0.18),
+                                color: isSelected
+                                  ? theme.palette.mode === 'dark'
+                                    ? theme.palette.primary.contrastText
+                                    : theme.palette.primary.dark
+                                  : theme.palette.mode === 'dark'
+                                    ? theme.palette.primary.light
+                                    : theme.palette.primary.main,
+                                boxShadow: isSelected
+                                  ? theme.palette.mode === 'dark'
+                                    ? '0 8px 16px rgba(0, 0, 0, 0.4)'
+                                    : '0 8px 16px rgba(15, 23, 42, 0.15)'
+                                  : 'none',
+                                transition: 'all 0.2s ease'
+                              }}
+                            >
+                              {optionLabel}
+                            </Box>
+                            <Radio
+                              disableRipple
+                              checked={isSelected}
+                              value={option.id}
+                              sx={{
+                                color: isSelected
+                                  ? theme.palette.primary.main
+                                  : theme.palette.mode === 'dark'
+                                    ? alpha(theme.palette.primary.light, 0.7)
+                                    : alpha(theme.palette.primary.dark, 0.65),
+                                '&.Mui-checked': {
+                                  color: theme.palette.primary.main
+                                },
+                                '& .MuiSvgIcon-root': {
+                                  fontSize: { xs: 26, sm: 28, md: 30 },
+                                  filter: isSelected ? 'drop-shadow(0px 4px 12px rgba(15,23,42,0.25))' : 'none'
+                                }
+                              }}
+                            />
+                          </Stack>
+                          {option.mediaType === 'image' && option.image && (
+                            <Box
+                              sx={{
+                                width: '100%',
+                                position: 'relative',
+                                borderRadius: { xs: 2.5, sm: 3, md: 3.5 },
+                                overflow: 'hidden',
+                                border: `2px solid ${alpha(
+                                  theme.palette.primary.main,
+                                  isSelected
+                                    ? theme.palette.mode === 'dark'
+                                      ? 0.5
+                                      : 0.4
+                                    : theme.palette.mode === 'dark'
+                                      ? 0.15
+                                      : 0.12
+                                )}`,
+                                boxShadow: isSelected
+                                  ? theme.palette.mode === 'dark'
+                                    ? '0 16px 32px rgba(0, 0, 0, 0.5)'
+                                    : '0 16px 32px rgba(15, 23, 42, 0.25)'
+                                  : theme.palette.mode === 'dark'
+                                    ? '0 8px 20px rgba(0, 0, 0, 0.3)'
+                                    : '0 8px 20px rgba(15, 23, 42, 0.12)',
+                                backgroundColor: theme.palette.mode === 'dark' 
+                                  ? alpha(theme.palette.common.black, 0.3)
+                                  : alpha(theme.palette.common.white, 0.6),
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                height: { xs: 200, sm: 240, md: 280 },
+                                p: { xs: 1.5, sm: 2, md: 2.5 },
+                                transition: 'all 0.3s ease',
+                                flexShrink: 0
+                              }}
+                            >
+                              <Box
+                                component='img'
+                                src={option.image}
+                                alt={option.text || `Option ${optionLabel}`}
+                                sx={{
+                                  width: '100%',
+                                  height: '100%',
+                                  maxWidth: '100%',
+                                  objectFit: 'contain',
+                                  display: 'block',
+                                  transition: 'transform 0.3s ease',
+                                  '&:hover': {
+                                    transform: readOnly ? 'none' : 'scale(1.02)'
+                                  }
+                                }}
+                              />
+                            </Box>
+                          )}
+                          <Typography
+                            variant='body2'
                             sx={{
-                              width: { xs: 32, sm: 36, md: 40, lg: 46 },
-                              height: { xs: 32, sm: 36, md: 40, lg: 46 },
-                              borderRadius: { xs: 2.5, sm: 3, md: 3.5, lg: 4 },
+                              fontWeight: 600,
+                              color: isSelected
+                                ? alpha(theme.palette.common.white, 0.95)
+                                : theme.palette.text.primary,
+                              fontSize: { xs: '0.875rem', sm: '0.9375rem', md: '1rem' },
+                              textAlign: 'center',
+                              px: 1,
+                              minHeight: { xs: 24, sm: 26, md: 28 },
                               display: 'flex',
                               alignItems: 'center',
-                              justifyContent: 'center',
-                              fontWeight: 400,
-                              fontSize: { xs: '0.875rem', sm: '0.9375rem', md: '1rem', lg: '1.1rem' },
-                              flexShrink: 0,
-                              background: isSelected
-                                ? theme.palette.mode === 'dark'
-                                  ? alpha(theme.palette.primary.main, 0.4)
-                                  : alpha(theme.palette.common.white, 0.34)
-                                : alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.25 : 0.18),
-                              color: isSelected
-                                ? theme.palette.mode === 'dark'
-                                  ? theme.palette.primary.contrastText
-                                  : theme.palette.primary.dark
-                                : theme.palette.mode === 'dark'
-                                  ? theme.palette.primary.light
-                                  : theme.palette.primary.main,
-                              boxShadow: isSelected
-                                ? theme.palette.mode === 'dark'
-                                  ? '0 12px 24px rgba(0, 0, 0, 0.5)'
-                                  : '0 12px 24px rgba(15, 23, 42, 0.18)'
-                                : 'none'
+                              justifyContent: 'center'
                             }}
                           >
-                            {optionLabel}
-                          </Box>
-
-                          <Stack spacing={0.35} sx={{ minWidth: 0, flex: 1 }}>
-                            {option.mediaType === 'text' && option.text && (
-                              <Typography
-                                variant='body1'
-                                sx={{
-                                  fontWeight: 700,
-                                  color: isSelected
-                                    ? alpha(theme.palette.common.white, 0.95)
-                                    : theme.palette.text.primary,
-                                  fontSize: { xs: '0.875rem', sm: '0.95rem', md: '1.1rem' },
-                                  lineHeight: 1.5,
-                                  wordWrap: 'break-word',
-                                  overflowWrap: 'break-word',
-                                  whiteSpace: 'normal'
-                                }}
-                              >
-                                {option.text}
-                              </Typography>
-                            )}
-                          </Stack>
+                            {option.text || `option-${index + 1}`}
+                          </Typography>
                         </Stack>
-
-                        {option.mediaType === 'image' && option.image && (
-                          <Box
-                            component='img'
-                            src={option.image}
-                            alt={option.text}
-                            sx={{
-                              width: { xs: 48, sm: 54, md: 60, lg: 68 },
-                              height: { xs: 48, sm: 54, md: 60, lg: 68 },
-                              maxWidth: { xs: 48, sm: 54, md: 60, lg: 68 },
-                              maxHeight: { xs: 48, sm: 54, md: 60, lg: 68 },
-                              objectFit: 'cover',
-                              borderRadius: { xs: 2, sm: 2.25, md: 2.5 },
-                              border: `1px solid ${alpha(
-                                theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.common.white,
-                                isSelected
+                      ) : (
+                        <Stack
+                          direction='row'
+                          spacing={{ xs: 1, sm: 1.4, md: 2 }}
+                          alignItems='center'
+                          justifyContent='space-between'
+                          sx={{
+                            flexGrow: 1,
+                            position: 'relative',
+                            zIndex: 1,
+                            flexWrap: 'wrap',
+                            minWidth: 0,
+                            overflow: 'hidden',
+                            width: '100%'
+                          }}
+                        >
+                          <Stack
+                            direction='row'
+                            spacing={{ xs: 0.75, sm: 1.2 }}
+                            alignItems='center'
+                            sx={{ minWidth: 0, flex: 1, overflow: 'hidden' }}
+                          >
+                            <Box
+                              sx={{
+                                width: { xs: 32, sm: 36, md: 40, lg: 46 },
+                                height: { xs: 32, sm: 36, md: 40, lg: 46 },
+                                borderRadius: { xs: 2.5, sm: 3, md: 3.5, lg: 4 },
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontWeight: 400,
+                                fontSize: { xs: '0.875rem', sm: '0.9375rem', md: '1rem', lg: '1.1rem' },
+                                flexShrink: 0,
+                                background: isSelected
                                   ? theme.palette.mode === 'dark'
-                                    ? 0.15
-                                    : 0.3
+                                    ? alpha(theme.palette.primary.main, 0.4)
+                                    : alpha(theme.palette.common.white, 0.34)
+                                  : alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.25 : 0.18),
+                                color: isSelected
+                                  ? theme.palette.mode === 'dark'
+                                    ? theme.palette.primary.contrastText
+                                    : theme.palette.primary.dark
                                   : theme.palette.mode === 'dark'
-                                    ? 0.08
-                                    : 0.12
-                              )}`,
-                              boxShadow:
-                                theme.palette.mode === 'dark'
-                                  ? '0 12px 24px rgba(0, 0, 0, 0.5)'
-                                  : '0 12px 24px rgba(15, 23, 42, 0.18)',
-                              flexShrink: 0,
-                              display: 'block'
-                            }}
-                          />
-                        )}
-                      </Stack>
+                                    ? theme.palette.primary.light
+                                    : theme.palette.primary.main,
+                                boxShadow: isSelected
+                                  ? theme.palette.mode === 'dark'
+                                    ? '0 12px 24px rgba(0, 0, 0, 0.5)'
+                                    : '0 12px 24px rgba(15, 23, 42, 0.18)'
+                                  : 'none'
+                              }}
+                            >
+                              {optionLabel}
+                            </Box>
+
+                            <Stack spacing={0.35} sx={{ minWidth: 0, flex: 1 }}>
+                              {(option.mediaType === 'text' || option.mediaType === 'text-image') && option.text && (
+                                <Typography
+                                  variant='body1'
+                                  sx={{
+                                    fontWeight: 700,
+                                    color: isSelected
+                                      ? alpha(theme.palette.common.white, 0.95)
+                                      : theme.palette.text.primary,
+                                    fontSize: { xs: '0.875rem', sm: '0.95rem', md: '1.1rem' },
+                                    lineHeight: 1.5,
+                                    wordWrap: 'break-word',
+                                    overflowWrap: 'break-word',
+                                    whiteSpace: 'normal'
+                                  }}
+                                >
+                                  {option.text}
+                                </Typography>
+                              )}
+                            </Stack>
+                          </Stack>
+
+                          {(option.mediaType === 'image' || option.mediaType === 'text-image') && option.image && (
+                            <Box
+                              component='img'
+                              src={option.image}
+                              alt={option.text}
+                              sx={{
+                                width: { xs: 48, sm: 54, md: 60, lg: 68 },
+                                height: { xs: 48, sm: 54, md: 60, lg: 68 },
+                                maxWidth: { xs: 48, sm: 54, md: 60, lg: 68 },
+                                maxHeight: { xs: 48, sm: 54, md: 60, lg: 68 },
+                                objectFit: 'cover',
+                                borderRadius: { xs: 2, sm: 2.25, md: 2.5 },
+                                border: `1px solid ${alpha(
+                                  theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.common.white,
+                                  isSelected
+                                    ? theme.palette.mode === 'dark'
+                                      ? 0.15
+                                      : 0.3
+                                    : theme.palette.mode === 'dark'
+                                      ? 0.08
+                                      : 0.12
+                                )}`,
+                                boxShadow:
+                                  theme.palette.mode === 'dark'
+                                    ? '0 12px 24px rgba(0, 0, 0, 0.5)'
+                                    : '0 12px 24px rgba(15, 23, 42, 0.18)',
+                                flexShrink: 0,
+                                display: 'block'
+                              }}
+                            />
+                          )}
+                        </Stack>
+                      )}
                     </Box>
                   </Grid>
                 )

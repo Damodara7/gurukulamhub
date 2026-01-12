@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  # Next.js Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gurukulamhub-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=${DATABASE_URL}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - API_URL=${API_URL:-http://localhost:3000/api}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:3000/api}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - NEXT_PUBLIC_RECAPTCHA_SITE_KEY=${NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
+      - RECAPTCHA_SECRET_KEY=${RECAPTCHA_SECRET_KEY}
+      - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}
+      - NEXT_PUBLIC_STRIPE_SECRET_KEY=${NEXT_PUBLIC_STRIPE_SECRET_KEY}
+      - NEXT_PUBLIC_SOCKET_IO_SERVER=${NEXT_PUBLIC_SOCKET_IO_SERVER:-http://localhost:3000}
+      - SOCKET_SERVER_URL=${SOCKET_SERVER_URL:-http://localhost:3000}
+    env_file:
+      - .env.production
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - gurukulamhub-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Redis Service
+  redis:
+    image: redis:7-alpine
+    container_name: gurukulamhub-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    networks:
+      - gurukulamhub-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  gurukulamhub-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+    driver: local
+

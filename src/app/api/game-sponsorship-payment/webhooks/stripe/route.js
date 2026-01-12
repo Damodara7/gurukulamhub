@@ -2,6 +2,11 @@ import { NextResponse } from 'next/server'
 import * as GameSponsorshipPaymentService from '../../game-sponsorship-payment.service'
 import Stripe from 'stripe'
 import Sponsorship from '@/app/api/sponsorship/sponsorship.model'
+import {
+  broadcastSponsorGameDetails,
+  broadcastRewardSponsorshipUpdate
+} from '@/app/api/ws/sponsor-games/[gameId]/publishers'
+import { broadcastGameStatusChange } from '@/app/api/ws/sponsor-games/publishers'
 
 export const dynamic = 'force-dynamic'; // Ensure this is a dynamic route
 export const runtime = 'nodejs'; // Specify the runtime environment
@@ -47,10 +52,34 @@ export async function POST(request) {
 
         // Only process game sponsorship payments
         if (paymentIntent.metadata.type === 'game_sponsorship') {
+          const { gameId, rewardId } = paymentIntent.metadata
           const result = await GameSponsorshipPaymentService.handlePaymentSuccess(paymentIntent)
           
           if (result.status === 'success') {
             console.log('Game sponsorship payment processed successfully')
+            
+            // Broadcast WebSocket updates (already done in service, but ensure it's broadcasted)
+            try {
+              const { game } = result.result || {}
+              if (game && gameId) {
+                broadcastSponsorGameDetails(gameId, game)
+                
+                // Broadcast reward update
+                const updatedReward = game?.rewards?.find(
+                  r => (r._id && r._id.toString() === rewardId) || r.position.toString() === rewardId
+                )
+                if (updatedReward) {
+                  broadcastRewardSponsorshipUpdate(gameId, rewardId, updatedReward)
+                }
+
+                // If game is now fully sponsored, broadcast status change
+                if (game.status === 'sponsored') {
+                  broadcastGameStatusChange(gameId, 'sponsored')
+                }
+              }
+            } catch (wsError) {
+              console.error('[WS] Error broadcasting webhook updates:', wsError)
+            }
           } else {
             console.error('Game sponsorship payment processing failed:', result.message)
           }

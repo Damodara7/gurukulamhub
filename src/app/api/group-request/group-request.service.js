@@ -6,6 +6,11 @@ import User from '@/app/models/user.model.js'
 import { broadcastGroupRequests } from '../ws/group-requests/[groupId]/publishers.js'
 import { broadcastToUser } from '../ws/users/[userEmail]/publishers.js'
 import { broadcastGroupsListUpdates } from '../group/group.service.js'
+import {
+  createGroupRequestReceivedNotification,
+  createGroupRequestApprovedNotification,
+  createGroupRequestRejectedNotification
+} from '../notifications/notification.helpers.js'
 
 export const createRequest = async requestData => {
   await connectMongo()
@@ -79,6 +84,72 @@ export const createRequest = async requestData => {
     // Create new request
     const newRequest = new GroupRequest(requestData)
     const savedRequest = await newRequest.save()
+
+    // Send notification to group admin about the new request
+    try {
+      console.log('[Group Request Service] ===== GROUP REQUEST NOTIFICATION START =====')
+      console.log('[Group Request Service] Group creator email:', group.creatorEmail)
+
+      // Find admin user by creatorEmail
+      const adminUser = await User.findOne({ email: group.creatorEmail })
+      console.log('[Group Request Service] Admin user found:', adminUser ? 'Yes' : 'No')
+
+      if (adminUser) {
+        console.log('[Group Request Service] Admin user ID:', adminUser._id)
+
+        // Get user profile for requester name
+        let requesterName = requestData.userEmail.split('@')[0] // Default fallback
+        try {
+          if (user.profile) {
+            const UserProfile = mongoose.model('userprofiles')
+            const requesterProfile = await UserProfile.findById(user.profile).lean()
+            if (requesterProfile) {
+              const fullName = `${requesterProfile.firstname || ''} ${requesterProfile.lastname || ''}`.trim()
+              if (fullName) {
+                requesterName = fullName
+              }
+            }
+          }
+        } catch (profileError) {
+          console.error('[Group Request Service] Error fetching requester profile:', profileError)
+          // Continue with default name
+        }
+
+        console.log('[Group Request Service] Requester name:', requesterName)
+        console.log('[Group Request Service] Calling createGroupRequestReceivedNotification...')
+        console.log('[Group Request Service] Admin user ID (ObjectId):', adminUser._id)
+        console.log('[Group Request Service] Admin user ID (String):', adminUser._id.toString())
+
+        const notificationResult = await createGroupRequestReceivedNotification(adminUser._id, {
+          groupId: group._id,
+          groupName: group.groupName,
+          userEmail: requestData.userEmail,
+          requesterEmail: requestData.userEmail,
+          requesterName: requesterName,
+          _id: savedRequest._id,
+          id: savedRequest._id,
+          requestId: savedRequest._id,
+          createdAt: savedRequest.createdAt,
+          requestedAt: savedRequest.createdAt
+        })
+
+        console.log('[Group Request Service] Notification result:', notificationResult)
+
+        if (notificationResult?.status === 'success') {
+          console.log('[Group Request Service] ✅ Sent GROUP_REQUEST_RECEIVED notification to admin successfully')
+        } else {
+          console.error('[Group Request Service] ❌ Failed to send notification:', notificationResult?.message)
+        }
+      } else {
+        console.log('[Group Request Service] ⚠️ Admin user not found for email:', group.creatorEmail)
+      }
+      console.log('[Group Request Service] ===== GROUP REQUEST NOTIFICATION COMPLETE =====')
+    } catch (notificationError) {
+      console.error('[Group Request Service] ❌❌❌ ERROR sending group request received notification ❌❌❌')
+      console.error('[Group Request Service] Error message:', notificationError.message)
+      console.error('[Group Request Service] Error stack:', notificationError.stack)
+      // Don't fail the request creation if notification fails
+    }
 
     // Broadcast WebSocket event for group request sent
     try {
@@ -282,6 +353,23 @@ export const approveRequest = async (requestId, adminEmail) => {
 
       // Add group to user's groupIds using $addToSet to prevent duplicates
       await User.updateOne({ _id: user._id }, { $addToSet: { groupIds: request.groupId } })
+
+      // Send notification to user about approval
+      try {
+        console.log('[Group Request Service] ===== GROUP REQUEST APPROVED NOTIFICATION START =====')
+        await createGroupRequestApprovedNotification(user._id, {
+          groupId: group._id,
+          groupName: group.groupName,
+          approvedBy: adminEmail,
+          approvedEmail: adminEmail,
+          approvedAt: request.approvedAt
+        })
+        console.log('[Group Request Service] ✅ Sent GROUP_REQUEST_APPROVED notification to user')
+        console.log('[Group Request Service] ===== GROUP REQUEST APPROVED NOTIFICATION COMPLETE =====')
+      } catch (notificationError) {
+        console.error('[Group Request Service] Error sending group request approved notification:', notificationError)
+        // Don't fail the approval if notification fails
+      }
     }
 
     // Broadcast WebSocket event for group request approved
@@ -390,9 +478,30 @@ export const rejectRequest = async (requestId, adminEmail, rejectionReason) => {
     // Clean up user's groupIds if they were previously added
     try {
       const user = await User.findOne({ email: request.userEmail })
-      if (user && user.groupIds && user.groupIds.includes(request.groupId)) {
-        await User.updateOne({ _id: user._id }, { $pull: { groupIds: request.groupId } })
-        console.log(`Removed group ${request.groupId} from user ${request.userEmail} after rejection`)
+      if (user) {
+        if (user.groupIds && user.groupIds.includes(request.groupId)) {
+          await User.updateOne({ _id: user._id }, { $pull: { groupIds: request.groupId } })
+          console.log(`Removed group ${request.groupId} from user ${request.userEmail} after rejection`)
+        }
+
+        // Send notification to user about rejection
+        try {
+          console.log('[Group Request Service] ===== GROUP REQUEST REJECTED NOTIFICATION START =====')
+          await createGroupRequestRejectedNotification(user._id, {
+            groupId: group._id,
+            groupName: group.groupName,
+            rejectedBy: adminEmail,
+            rejectedEmail: adminEmail,
+            rejectedReason: request.rejectedReason,
+            rejectionReason: request.rejectedReason,
+            rejectedAt: request.rejectedAt
+          })
+          console.log('[Group Request Service] ✅ Sent GROUP_REQUEST_REJECTED notification to user')
+          console.log('[Group Request Service] ===== GROUP REQUEST REJECTED NOTIFICATION COMPLETE =====')
+        } catch (notificationError) {
+          console.error('[Group Request Service] Error sending group request rejected notification:', notificationError)
+          // Don't fail the rejection if notification fails
+        }
       }
     } catch (userUpdateError) {
       console.error('Error removing group from user after rejection:', userUpdateError)

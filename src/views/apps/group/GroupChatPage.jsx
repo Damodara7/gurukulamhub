@@ -6,6 +6,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  DialogContentText,
   Button,
   Switch,
   FormControlLabel,
@@ -20,7 +21,7 @@ import {
   IconButton,
   Divider
 } from '@mui/material'
-import { ArrowBack as ArrowBackIcon, PersonRemove as PersonRemoveIcon, DoneAll as DoneAllIcon, CheckCircle as CheckCircleIcon } from '@mui/icons-material'
+import { ArrowBack as ArrowBackIcon, PersonRemove as PersonRemoveIcon, DoneAll as DoneAllIcon, CheckCircle as CheckCircleIcon, MoreVert as MoreVertIcon, ExitToApp as ExitToAppIcon, DeleteForever as DeleteForeverIcon } from '@mui/icons-material'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { format, formatDistanceToNow, isToday, isYesterday } from 'date-fns'
@@ -30,6 +31,8 @@ import { API_URLS } from '@/configs/apiConfig'
 import { toast } from 'react-toastify'
 import CreateGroupForm from '@/components/group/CreateGroupForm'
 import { stringToColor } from '@/utils/stringToColor'
+import * as ChatEncryption from '@/utils/chatEncryption'
+import * as KeyManagement from '@/utils/keyManagement'
 import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
 import ChatHeader from './chat/ChatHeader'
 import MessagesArea from './chat/MessagesArea'
@@ -82,6 +85,11 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
   const [soundEnabled, setSoundEnabled] = useState(true) // Sound enabled by default
   const soundEnabledRef = useRef(true) // Ref to track sound state for WebSocket handler
   const [newMessageForNotification, setNewMessageForNotification] = useState(null) // Track new messages for notification sound
+  const [menuAnchor, setMenuAnchor] = useState(null)
+  const [clearChatDialogOpen, setClearChatDialogOpen] = useState(false)
+  const [exitGroupDialogOpen, setExitGroupDialogOpen] = useState(false)
+  const [encryptionReady, setEncryptionReady] = useState(false)
+  const encryptionReadyRef = useRef(false)
 
   // Sound hooks
   const [playSoundOn] = useSound('/sounds/sound-on.mp3', { volume: 0.7 })
@@ -130,6 +138,63 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
   useEffect(() => {
     soundEnabledRef.current = soundEnabled
   }, [soundEnabled])
+
+  // Initialize encryption for the user
+  useEffect(() => {
+    const initEncryption = async () => {
+      if (!session?.user?.email) return
+
+      try {
+        // Initialize user encryption (generate key pair if needed)
+        const { publicKey } = await ChatEncryption.initializeUserEncryption(session.user.email)
+
+        // Upload public key to server if not already uploaded
+        try {
+          const existingKey = await RestApi.get(`/encryption/keys?userId=${session.user.email}`)
+          if (!existingKey?.result?.publicKey) {
+            await RestApi.post('/encryption/keys', { publicKey })
+            console.log('[Encryption] Public key uploaded to server')
+          }
+        } catch (error) {
+          console.warn('[Encryption] Failed to upload public key:', error)
+        }
+      } catch (error) {
+        console.error('[Encryption] Error initializing encryption:', error)
+      }
+    }
+
+    initEncryption()
+  }, [session?.user?.email])
+
+  // Setup encryption for group chat
+  useEffect(() => {
+    const setupGroupEncryption = async () => {
+      if (!groupId || !session?.user?.email) return
+
+      try {
+        // Setup group chat encryption (creates or retrieves shared group key)
+        const success = await ChatEncryption.setupGroupChatEncryption(groupId, isCreator)
+
+        if (success) {
+          setEncryptionReady(true)
+          encryptionReadyRef.current = true
+          console.log('[Encryption] Group chat encryption set up successfully')
+        } else {
+          console.warn('[Encryption] Failed to set up group chat encryption')
+          setEncryptionReady(false)
+          encryptionReadyRef.current = false
+        }
+      } catch (error) {
+        console.error('[Encryption] Error setting up group chat encryption:', error)
+        setEncryptionReady(false)
+        encryptionReadyRef.current = false
+      }
+    }
+
+    if (groupId && isCreator !== undefined) {
+      setupGroupEncryption()
+    }
+  }, [groupId, session?.user?.email, isCreator])
 
   // Check if user can send messages
   useEffect(() => {
@@ -184,15 +249,34 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
       if (result?.status === 'success') {
         const fetchedMessages = result.result || []
         
+        // Decrypt messages if encryption is ready
+        const decryptedMessages = await Promise.all(
+          fetchedMessages.map(async (msg) => {
+            if (msg.message && encryptionReadyRef.current) {
+              try {
+                const decrypted = await ChatEncryption.decryptIfEncrypted(
+                  msg.message,
+                  (encrypted) => ChatEncryption.decryptGroupMessage(encrypted, groupId)
+                )
+                return { ...msg, message: decrypted }
+              } catch (error) {
+                console.warn('[Encryption] Failed to decrypt message:', error)
+                return msg
+              }
+            }
+            return msg
+          })
+        )
+        
         if (before) {
-          setMessages(prev => [...fetchedMessages, ...prev])
-          setHasMore(fetchedMessages.length === 50)
+          setMessages(prev => [...decryptedMessages, ...prev])
+          setHasMore(decryptedMessages.length === 50)
         } else {
-          setMessages(fetchedMessages)
-          setHasMore(fetchedMessages.length === 50)
+          setMessages(decryptedMessages)
+          setHasMore(decryptedMessages.length === 50)
           
           // Mark all messages as read when opening chat
-          if (fetchedMessages.length > 0) {
+          if (decryptedMessages.length > 0) {
             markAllMessagesAsRead()
           }
         }
@@ -208,11 +292,17 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
     }
   }, [groupId])
 
+  // Fetch messages immediately when groupId is available
+  // If groupData is provided, we can start fetching messages right away
   useEffect(() => {
-    if (groupId) {
+    if (groupId && initialGroupData) {
+      // If we have initial group data, fetch messages immediately
+      fetchMessages()
+    } else if (groupId && groupData) {
+      // If group data was fetched separately, fetch messages
       fetchMessages()
     }
-  }, [groupId, fetchMessages])
+  }, [groupId, initialGroupData, groupData, fetchMessages])
 
   // Mark all messages as read
   const markAllMessagesAsRead = async () => {
@@ -247,7 +337,7 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
         markAllMessagesAsRead()
       }
 
-      wsRef.onmessage = event => {
+      wsRef.onmessage = async event => {
         try {
           const msg = JSON.parse(event.data)
           
@@ -256,27 +346,121 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
           } else if (msg.type === 'newMessage' || msg.type === 'newChatMessage') {
             const message = msg.data
             
+            // Decrypt message if encrypted (try even if encryptionReadyRef is false)
+            let decryptedMessage = message
+            if (message.message) {
+              const isMessageEncrypted = ChatEncryption.isEncrypted(message.message)
+              try {
+                const decrypted = await ChatEncryption.decryptIfEncrypted(
+                  message.message,
+                  (encrypted) => ChatEncryption.decryptGroupMessage(encrypted, groupId)
+                )
+                // Check if decryption actually succeeded (message changed)
+                if (decrypted !== message.message) {
+                  decryptedMessage = { ...message, message: decrypted }
+                } else if (isMessageEncrypted) {
+                  // Message is encrypted but decryption returned the same value (failed)
+                  // This means the key might not be ready yet - retry after a delay
+                  console.log('[Encryption] Decryption failed for encrypted message, will retry:', message._id)
+                  const isOwnMessage = message.senderEmail === session?.user?.email
+                  // Retry decryption after a short delay, especially for own messages
+                  setTimeout(async () => {
+                    try {
+                      const retryDecrypted = await ChatEncryption.decryptIfEncrypted(
+                        message.message,
+                        (encrypted) => ChatEncryption.decryptGroupMessage(encrypted, groupId)
+                      )
+                      if (retryDecrypted !== message.message) {
+                        // Decryption succeeded, update the message in state
+                        setMessages(prev => {
+                          return prev.map(m => 
+                            m._id === message._id 
+                              ? { ...m, message: retryDecrypted }
+                              : m
+                          )
+                        })
+                        console.log('[Encryption] Retry decryption succeeded for message:', message._id)
+                      } else {
+                        // Still failed, try one more time after a longer delay
+                        if (isOwnMessage) {
+                          setTimeout(async () => {
+                            try {
+                              const finalRetry = await ChatEncryption.decryptIfEncrypted(
+                                message.message,
+                                (encrypted) => ChatEncryption.decryptGroupMessage(encrypted, groupId)
+                              )
+                              if (finalRetry !== message.message) {
+                                setMessages(prev => {
+                                  return prev.map(m => 
+                                    m._id === message._id 
+                                      ? { ...m, message: finalRetry }
+                                      : m
+                                  )
+                                })
+                                console.log('[Encryption] Final retry decryption succeeded for message:', message._id)
+                              }
+                            } catch (finalError) {
+                              console.warn('[Encryption] Final retry decryption failed:', finalError)
+                            }
+                          }, 1000)
+                        }
+                      }
+                    } catch (retryError) {
+                      console.warn('[Encryption] Retry decryption failed:', retryError)
+                    }
+                  }, isOwnMessage ? 100 : 500) // Retry faster for own messages
+                }
+              } catch (error) {
+                console.warn('[Encryption] Failed to decrypt incoming message:', error)
+                // If message appears encrypted, retry after a delay
+                if (isMessageEncrypted) {
+                  const isOwnMessage = message.senderEmail === session?.user?.email
+                  setTimeout(async () => {
+                    try {
+                      const retryDecrypted = await ChatEncryption.decryptIfEncrypted(
+                        message.message,
+                        (encrypted) => ChatEncryption.decryptGroupMessage(encrypted, groupId)
+                      )
+                      if (retryDecrypted !== message.message) {
+                        setMessages(prev => {
+                          return prev.map(m => 
+                            m._id === message._id 
+                              ? { ...m, message: retryDecrypted }
+                              : m
+                          )
+                        })
+                        console.log('[Encryption] Retry decryption succeeded for message:', message._id)
+                      }
+                    } catch (retryError) {
+                      console.warn('[Encryption] Retry decryption failed:', retryError)
+                    }
+                  }, isOwnMessage ? 100 : 500)
+                }
+                // Continue with original message (backward compatibility)
+              }
+            }
+            
             // Store message for notification sound (will be played in useEffect outside WebSocket)
             if (
               soundEnabledRef.current &&
-              message.senderEmail !== session?.user?.email &&
-              !message.deletedFor?.some(d => d.userEmail === session?.user?.email) &&
-              !message.deletedForEveryone
+              decryptedMessage.senderEmail !== session?.user?.email &&
+              !decryptedMessage.deletedFor?.some(d => d.userEmail === session?.user?.email) &&
+              !decryptedMessage.deletedForEveryone
             ) {
-              setNewMessageForNotification(message)
+              setNewMessageForNotification(decryptedMessage)
             }
             
             setMessages(prev => {
-              const exists = prev.some(m => m._id === message._id)
+              const exists = prev.some(m => m._id === decryptedMessage._id)
               if (exists) return prev
               // Filter out if deleted for this user, but keep messages deleted for everyone (to show with banned icon)
-              const isDeletedForMe = message.deletedFor?.some(d => d.userEmail === session?.user?.email)
+              const isDeletedForMe = decryptedMessage.deletedFor?.some(d => d.userEmail === session?.user?.email)
               if (isDeletedForMe) return prev
-              const updated = [...prev, message]
+              const updated = [...prev, decryptedMessage]
               // Mark new message as read (only if not deleted for everyone and not own message)
-              if (!message.deletedForEveryone && message.senderEmail !== session?.user?.email) {
+              if (!decryptedMessage.deletedForEveryone && decryptedMessage.senderEmail !== session?.user?.email) {
                 setTimeout(() => {
-                  markMessageAsRead(message._id)
+                  markMessageAsRead(decryptedMessage._id)
                 }, 100)
               }
               return updated
@@ -412,9 +596,22 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
     if (editingMessage) {
       setSending(true)
       try {
+        // Encrypt message if encryption is ready
+        let messageToSend = messageText
+        if (encryptionReadyRef.current) {
+          try {
+            messageToSend = await ChatEncryption.encryptGroupMessage(messageText, groupId)
+          } catch (error) {
+            console.error('[Encryption] Failed to encrypt edited message:', error)
+            toast.error('Failed to encrypt message. Please try again.')
+            setSending(false)
+            return
+          }
+        }
+
         const result = await RestApi.put(API_URLS.v0.USERS_GROUP_CHAT, {
           messageId: editingMessage._id,
-          message: messageText
+          message: messageToSend
         })
 
         if (result?.status === 'success') {
@@ -449,9 +646,23 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
     setSending(true)
 
     try {
+      // Encrypt message if encryption is ready
+      let messageToSend = messageText
+      if (encryptionReadyRef.current) {
+        try {
+          messageToSend = await ChatEncryption.encryptGroupMessage(messageText, groupId)
+        } catch (error) {
+          console.error('[Encryption] Failed to encrypt message:', error)
+          toast.error('Failed to encrypt message. Please try again.')
+          setSending(false)
+          setNewMessage(messageText)
+          return
+        }
+      }
+
       const result = await RestApi.post(API_URLS.v0.USERS_GROUP_CHAT, {
         groupId,
-        message: messageText,
+        message: messageToSend,
         messageType: 'text'
       })
 
@@ -815,9 +1026,46 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
     return <CheckCircleIcon sx={{ fontSize: { xs: 16, sm: 18 }, color: 'rgba(255, 255, 255, 0.7)' }} />
   }
 
-  // Generate color from string (for consistent name colors)
+  // Generate color from string with contrast adjustment (same as ChatList)
   const getColorFromString = (str) => {
-    return stringToColor(str || 'user')
+    if (!str) return null
+    let color = stringToColor(str || 'user')
+    
+    const hex = color.replace('#', '')
+    let r = parseInt(hex.substr(0, 2), 16)
+    let g = parseInt(hex.substr(2, 2), 16)
+    let b = parseInt(hex.substr(4, 2), 16)
+    
+    const getLuminance = (r, g, b) => {
+      const [rs, gs, bs] = [r, g, b].map(val => {
+        val = val / 255
+        return val <= 0.03928 ? val / 12.92 : Math.pow((val + 0.055) / 1.055, 2.4)
+      })
+      return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs
+    }
+    
+    let luminance = getLuminance(r, g, b)
+    
+    let attempts = 0
+    while (luminance > 0.4 && attempts < 10) {
+      r = Math.max(0, Math.floor(r * 0.7))
+      g = Math.max(0, Math.floor(g * 0.7))
+      b = Math.max(0, Math.floor(b * 0.7))
+      luminance = getLuminance(r, g, b)
+      attempts++
+    }
+    
+    const maxChannel = Math.max(r, g, b)
+    if (maxChannel < 80) {
+      const boost = 80 / maxChannel
+      r = Math.min(255, Math.floor(r * boost))
+      g = Math.min(255, Math.floor(g * boost))
+      b = Math.min(255, Math.floor(b * boost))
+    }
+    
+    color = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
+    
+    return color
   }
 
   // Get avatar background color from sender name (ensures good contrast with white text)
@@ -950,6 +1198,51 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
       }
     }
   }, [selectionMode])
+
+  // Handle clear group chat
+  const handleClearGroupChat = async () => {
+    try {
+      const result = await RestApi.post(API_URLS.v0.USERS_GROUP_CHAT_ACTIONS, {
+        action: 'clearChat',
+        groupId
+      })
+      
+      if (result?.status === 'success') {
+        toast.success('Group chat cleared successfully')
+        setMessages([])
+        setClearChatDialogOpen(false)
+        setMenuAnchor(null)
+      } else {
+        toast.error(result?.message || 'Failed to clear group chat')
+      }
+    } catch (error) {
+      console.error('Error clearing group chat:', error)
+      toast.error('Failed to clear group chat')
+    }
+  }
+
+  // Handle exit group
+  const handleExitGroup = async () => {
+    try {
+      const result = await RestApi.post(API_URLS.v0.USERS_GROUP_CHAT_ACTIONS, {
+        action: 'exitGroup',
+        groupId
+      })
+      
+      if (result?.status === 'success') {
+        toast.success('Successfully exited the group')
+        setExitGroupDialogOpen(false)
+        setMenuAnchor(null)
+        // Navigate back to chat list
+        router.push(backPath)
+      } else {
+        toast.error(result?.message || 'Failed to exit group')
+      }
+    } catch (error) {
+      console.error('Error exiting group:', error)
+      toast.error('Failed to exit group')
+    }
+  }
 
   const handleDeleteClick = (messageId, fromMenu = false) => {
     setSelectedMessages(new Set([messageId]))
@@ -1084,16 +1377,90 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
       }}
     >
       {/* Header */}
-      <ChatHeader
-        groupData={groupData}
-        isConnected={isConnected}
-        isCreator={isCreator}
-        onBack={() => router.push(backPath)}
-        onMembersClick={() => setMembersDrawerOpen(true)}
-        onSettingsClick={() => setSettingsDialogOpen(true)}
-        soundEnabled={soundEnabled}
-        onToggleSound={handleToggleSound}
-      />
+      <Box sx={{ position: 'relative' }}>
+        <ChatHeader
+          groupData={groupData}
+          isConnected={isConnected}
+          isCreator={isCreator}
+          onBack={() => router.push(backPath)}
+          onMembersClick={() => setMembersDrawerOpen(true)}
+          onSettingsClick={() => setSettingsDialogOpen(true)}
+          soundEnabled={soundEnabled}
+          onToggleSound={handleToggleSound}
+          onMoreOptionsClick={(e) => setMenuAnchor(e.currentTarget)}
+          isGroup={true}
+          avatarColor={groupData?.groupName ? getColorFromString(groupData.groupName) : null}
+          encryptionReady={encryptionReady}
+        />
+        <Menu
+          anchorEl={menuAnchor}
+          open={Boolean(menuAnchor)}
+          onClose={() => setMenuAnchor(null)}
+        >
+          <MenuItem onClick={() => {
+            setMenuAnchor(null)
+            setClearChatDialogOpen(true)
+          }}>
+            Clear Chat
+          </MenuItem>
+          {isCreator && (
+            <MenuItem 
+              onClick={() => {
+                setMenuAnchor(null)
+                setDeleteGroupDialogOpen(true)
+              }} 
+              sx={{ color: 'error.main' }}
+            >
+              <DeleteForeverIcon sx={{ mr: 1, fontSize: 20 }} />
+              Delete Group
+            </MenuItem>
+          )}
+          {!isCreator && (
+            <MenuItem 
+              onClick={() => {
+                setMenuAnchor(null)
+                setExitGroupDialogOpen(true)
+              }} 
+              sx={{ color: 'error.main' }}
+            >
+              <ExitToAppIcon sx={{ mr: 1, fontSize: 20 }} />
+              Exit Group
+            </MenuItem>
+          )}
+        </Menu>
+      </Box>
+      
+      {/* Clear Chat Confirmation Dialog */}
+      <Dialog open={clearChatDialogOpen} onClose={() => setClearChatDialogOpen(false)}>
+        <DialogTitle>Clear Chat</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to clear all messages in this group chat? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setClearChatDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleClearGroupChat} color='primary' variant='contained' component='label' sx={{ color: 'white' }}>
+            Clear
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Exit Group Confirmation Dialog */}
+      <Dialog open={exitGroupDialogOpen} onClose={() => setExitGroupDialogOpen(false)}>
+        <DialogTitle>Exit Group</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to exit this group? You will no longer receive messages from this group and cannot rejoin unless you are added again.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setExitGroupDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleExitGroup} color='error' variant='contained' component='label'>
+            Exit Group
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Messages Area */}
       <MessagesArea
@@ -1166,9 +1533,18 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
           handleMessageMenuClose()
         }}
         onSelectMode={() => handleSelectMode(menuMessage)}
-        onEditClick={() => {
+        onEditClick={async () => {
           setEditingMessage(menuMessage)
-          const messageText = menuMessage.message
+          // Ensure message is decrypted before editing
+          let messageText = menuMessage.message
+          if (encryptionReadyRef.current && ChatEncryption.isEncrypted(messageText)) {
+            try {
+              messageText = await ChatEncryption.decryptGroupMessage(messageText, groupId)
+            } catch (error) {
+              console.warn('[Encryption] Failed to decrypt message for editing:', error)
+              // Continue with original message if decryption fails
+            }
+          }
           setNewMessage(messageText) // Prepopulate input with message text
           handleMessageMenuClose()
           // Focus input and set cursor to end after a short delay to ensure it's rendered

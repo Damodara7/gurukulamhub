@@ -3,7 +3,7 @@ import { API_URLS } from '@/configs/apiConfig'
 import { auth } from '@/libs/auth'
 import * as RestApi from '@/utils/restApiUtil'
 import SelectedQuiz from '@/views/quiz-builder/SelectedQuiz'
-import { Alert, AlertTitle } from '@mui/material'
+import { Alert, AlertTitle, Box } from '@mui/material'
 import { isValidObjectId } from 'mongoose'
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined'
 import LoadingDialog from '@/components/LoadingDialog'
@@ -45,16 +45,16 @@ export default async function EditQuizQuestionsPage({ params }) {
     return (
       <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
         <CenterBox>
-        <Alert
-          sx={{ padding: '0.5rem' }}
-          severity=''
-          icon={<WarningAmberOutlinedIcon fontSize='inherit' />}
-          color='error'
-        >
-          <AlertTitle>Quiz not found!</AlertTitle>
-          Please check and try again.
-        </Alert>
-      </CenterBox>
+          <Alert
+            sx={{ padding: '0.5rem' }}
+            severity=''
+            icon={<WarningAmberOutlinedIcon fontSize='inherit' />}
+            color='error'
+          >
+            <AlertTitle>Quiz not found!</AlertTitle>
+            Please check and try again.
+          </Alert>
+        </CenterBox>
       </Box>
     )
   }

@@ -219,6 +219,46 @@ export async function POST(request) {
       )
     }
 
+    if (action === 'clearChat') {
+      if (!groupId) {
+        return ApiResponseUtils.sendErrorResponse(
+          ApiResponseUtils.createErrorResponse('Group ID is required')
+        )
+      }
+
+      const result = await GroupChatService.clearGroupChat(groupId, session.user.email)
+      
+      if (result.status === 'success') {
+        return ApiResponseUtils.sendSuccessResponse(
+          ApiResponseUtils.createSuccessResponse(result.message, result.result)
+        )
+      } else {
+        return ApiResponseUtils.sendErrorResponse(
+          ApiResponseUtils.createErrorResponse(result.message)
+        )
+      }
+    }
+
+    if (action === 'exitGroup') {
+      if (!groupId) {
+        return ApiResponseUtils.sendErrorResponse(
+          ApiResponseUtils.createErrorResponse('Group ID is required')
+        )
+      }
+
+      const result = await GroupService.exitGroup(groupId, session.user.email)
+      
+      if (result.status === 'success') {
+        return ApiResponseUtils.sendSuccessResponse(
+          ApiResponseUtils.createSuccessResponse(result.message, result.result)
+        )
+      } else {
+        return ApiResponseUtils.sendErrorResponse(
+          ApiResponseUtils.createErrorResponse(result.message)
+        )
+      }
+    }
+
     return ApiResponseUtils.sendErrorResponse(
       ApiResponseUtils.createErrorResponse('Invalid action')
     )

@@ -1,4 +1,6 @@
 import React, { useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import {
   Card,
   CardHeader,
@@ -81,6 +83,8 @@ const ActionsMenu = ({ anchorEl, handleClose, handleAction }) => (
 const NetworkTreeTable = ({ currentUserNode, handleChangeNode }) => {
   const theme = useTheme()
   const isDarkMode = theme.palette.mode === 'dark'
+  const router = useRouter()
+  const { data: session } = useSession()
   const [rowSelection, setRowSelection] = useState({})
   const [globalFilter, setGlobalFilter] = useState('')
   const [anchorEl, setAnchorEl] = useState(null)
@@ -95,7 +99,19 @@ const NetworkTreeTable = ({ currentUserNode, handleChangeNode }) => {
   const isSmallScreen = useMediaQuery(theme => theme.breakpoints.down('sm'))
 
   const handleAction = action => {
-    console.log(`Action: ${action} for user ${actionRow.name}`)
+    if (action === 'chat' && actionRow?.email && session?.user?.email) {
+      // Create chatId by sorting emails (same format as in ChatList)
+      const emails = [session.user.email, actionRow.email].sort()
+      const chatId = `${emails[0]}_${emails[1]}`
+      // Navigate to individual chat page
+      router.push(`/messanger/${encodeURIComponent(chatId)}`)
+    } else if (action === 'schedule') {
+      // TODO: Implement schedule meeting functionality
+      console.log(`Schedule meeting with ${actionRow.name}`)
+    } else if (action === 'email') {
+      // TODO: Implement send email functionality
+      console.log(`Send email to ${actionRow.name}`)
+    }
     setAnchorEl(null)
   }
 

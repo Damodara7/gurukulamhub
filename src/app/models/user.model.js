@@ -87,6 +87,42 @@ export const userSchema = new mongoose.Schema(
     referralToken: {
       type: String,
       unique: true
+    },
+    pushSubscriptions: [
+      {
+        endpoint: {
+          type: String,
+          required: true
+        },
+        keys: {
+          p256dh: {
+            type: String,
+            required: true
+          },
+          auth: {
+            type: String,
+            required: true
+          }
+        },
+        deviceInfo: {
+          userAgent: String,
+          createdAt: {
+            type: Date,
+            default: Date.now
+          }
+        }
+      }
+    ],
+    // End-to-end encryption public key (base64 encoded)
+    publicEncryptionKey: {
+      type: String,
+      default: null,
+      index: false
+    },
+    // Timestamp when encryption key was last updated
+    encryptionKeyUpdatedAt: {
+      type: Date,
+      default: null
     }
   },
   { timestamps: true }

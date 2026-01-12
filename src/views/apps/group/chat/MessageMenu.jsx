@@ -31,9 +31,19 @@ const MessageMenu = ({
   const isDeletedForEveryone = isMessageDeletedForEveryone(menuMessage)
   const isDeletedForMe = isMessageDeletedForMe(menuMessage)
 
+  // Check if message is older than 1 hour
+  const messageAge = menuMessage.createdAt 
+    ? Date.now() - new Date(menuMessage.createdAt).getTime() 
+    : Infinity
+  const oneHour = 60 * 60 * 1000
+  const isOlderThanOneHour = messageAge > oneHour
+
   // Info should be available for own messages (not others') that are not deleted for everyone
   // Show Info even if no one has seen it yet
   const canShowInfo = isMenuMessageOwn && !isDeletedForEveryone
+  
+  // Edit is only available for own messages that are not deleted and not older than 1 hour
+  const canEdit = isMenuMessageOwn && !isDeletedForMe && !isOlderThanOneHour
 
   // If deleted for everyone, only show "Delete for me" option
   if (isDeletedForEveryone) {
@@ -94,7 +104,7 @@ const MessageMenu = ({
         <CheckboxOutlineBlankIcon sx={{ mr: 1.5, fontSize: { xs: 18, sm: 20 } }} />
         Select
       </MenuItem>
-      {isMenuMessageOwn && !isDeletedForMe && (
+      {canEdit && (
         <MenuItem
           onClick={onEditClick}
           sx={{ py: { xs: 1, sm: 1.25 }, fontSize: { xs: '0.875rem', sm: '0.9375rem' } }}
