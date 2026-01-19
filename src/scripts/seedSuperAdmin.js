@@ -20,37 +20,23 @@
  * - Or import and call initializeSuperAdmin() from your app startup
  */
 
-// Use relative paths for standalone Node.js execution
-import { createRequire } from 'module'
-import { fileURLToPath } from 'url'
-import { dirname, resolve } from 'path'
+require('dotenv').config();
 
-// Create require function for CommonJS modules and models
-const require = createRequire(import.meta.url)
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
+const crypto = require('crypto');
+const path = require('path');
 
-// Load environment variables first
-import { config } from 'dotenv'
-config({ path: resolve(process.cwd(), '.env.local') })
-config({ path: resolve(process.cwd(), '.env') }) // Fallback to .env
+const connectMongo = require('../src/app/services/game-runner-service/db-connect/dbConnect-mongo.js');
 
-// Use the existing dbConnect-mongo.js from game-runner-service
-const connectMongo = require('../app/services/game-runner-service/db-connect/dbConnect-mongo.js')
+const Feature = require('../src/app/api/feature/feature.model.js').default;
+const Role = require('../src/app/api/role/role.model.js').default;
+const User = require('../src/app/models/user.model.js').default;
+const UserProfile = require('../src/app/api/profile/profile.model.js').default;
 
-// Import models using require to avoid ES module extension issues
-// These models have imports without .js extensions which work in Next.js but not in standalone Node
-const Feature = require('../app/api/feature/feature.model.js').default
-const Role = require('../app/api/role/role.model.js').default
-const User = require('../app/models/user.model.js').default
-const UserProfile = require('../app/api/profile/profile.model.js').default
+const { FEATURES_LOOKUP } = require('../src/configs/features-lookup.js');
+const { PERMISSIONS_LOOKUP } = require('../src/configs/permissions-lookup.js');
+const { ROLES_LOOKUP } = require('../src/configs/roles-lookup.js');
 
-// Import configs (these should work with ES modules)
-import { FEATURES_LOOKUP } from '../configs/features-lookup.js'
-import { PERMISSIONS_LOOKUP } from '../configs/permissions-lookup.js'
-import { ROLES_LOOKUP } from '../configs/roles-lookup.js'
-import bcryptjs from 'bcryptjs'
-import crypto from 'crypto'
+const bcryptjs = require('bcryptjs');
 
 // Import memberId generation function
 // Note: We'll implement a simple version here to avoid circular dependencies
@@ -440,7 +426,7 @@ async function isSuperAdminAlreadyInitialized() {
  * Ensures only ONE SUPER_ADMIN user exists
  * Skips initialization if already properly set up
  */
-export async function initializeSuperAdmin() {
+async function initializeSuperAdmin() {
   // If initialization is already in progress, return the existing promise
   if (initializationInProgress && initializationPromise) {
     console.log('⏳ SUPER_ADMIN initialization already in progress, waiting...')
@@ -522,3 +508,14 @@ if (isMainModule) {
     })
 }
 
+module.exports = { initializeSuperAdmin }
+
+/* CLI support */
+if (require.main === module) {
+  initializeSuperAdmin()
+    .then(() => process.exit(0))
+    .catch(err => {
+      console.error(err);
+      process.exit(1);
+    });
+}
