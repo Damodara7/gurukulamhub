@@ -260,3 +260,6 @@ echo "  Check status:    docker compose -f $APP_DIR/docker-compose.yml ps"
 echo "  Nginx logs:      tail -f /var/log/nginx/error.log"
 echo ""
 
+
+
+

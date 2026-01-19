@@ -12,7 +12,7 @@ const getApiBaseUrl = () => {
     return `http://127.0.0.1:${port}/api`
   }
   // Client-side: Use NEXT_PUBLIC_API_URL or default
-  return process.env.NEXT_PUBLIC_API_URL || 'https://gurukulamhub.com/api'
+  return process.env.NEXT_PUBLIC_API_URL || 'https://gurukulamhub.org/api'
 }
 
 export const API_BASE_URL = getApiBaseUrl()
