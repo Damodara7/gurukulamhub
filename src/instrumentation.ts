@@ -7,6 +7,9 @@
  * Note: This requires experimental.instrumentationHook to be enabled in next.config.mjs
  */
 
+// Explicitly set runtime to Node.js to prevent Edge runtime compilation
+export const runtime = 'nodejs'
+
 export async function register() {
   // This runs once when the server starts
   if (process.env.NEXT_RUNTIME === 'nodejs') {
