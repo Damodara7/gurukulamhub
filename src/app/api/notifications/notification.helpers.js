@@ -1619,3 +1619,216 @@ export const createGameStartedNotificationsForRegisteredUsers = async (gameId, g
     }
   }
 }
+
+export const createPhysicalGiftSponsorshipPendingNotification = async (adminUserIds, sponsorshipData) => {
+  try {
+    console.log('[Notification Helper] Creating physical gift sponsorship pending approval notifications for admins:', adminUserIds)
+    if (!Array.isArray(adminUserIds) || adminUserIds.length === 0) {
+      console.warn('[Notification Helper] No admin user IDs provided')
+      return {
+        status: 'error',
+        result: null,
+        message: 'Admin user IDs array is required and must not be empty'
+      }
+    }
+
+    const sponsorshipId = sponsorshipData._id?.toString() || sponsorshipData.id || sponsorshipData._id
+    const sponsorName = sponsorshipData.fullname || sponsorshipData.email || 'A sponsor'
+    const itemName = sponsorshipData.nonCashItem || 'Physical Gift'
+    const quantity = sponsorshipData.numberOfNonCashItems || 0
+    const sponsorEmail = sponsorshipData.email || sponsorshipData.accountHolderEmail || 'Unknown'
+
+    console.log('[Notification Helper] Sponsorship data:', { sponsorshipId, sponsorName, itemName, quantity })
+
+    const notificationsData = adminUserIds.map(adminUserId => ({
+      userId: adminUserId,
+      type: 'SPONSORSHIP_PENDING_APPROVAL',
+      title: `Physical Gift Sponsorship Pending Approval`,
+      message: `${sponsorName} has submitted a physical gift sponsorship: ${quantity} × ${itemName}. Please review and approve or reject it.`,
+      relatedEntity: {
+        entityType: 'sponsorship',
+        entityId: sponsorshipId
+      },
+      metadata: {
+        sponsorshipId,
+        sponsorName,
+        sponsorEmail,
+        itemName,
+        quantity,
+        rewardValue: sponsorshipData.rewardValue || 0,
+        rewardValuePerItem: sponsorshipData.rewardValuePerItem || 0,
+        submittedAt: new Date().toISOString()
+      },
+      actionUrl: `/management/sponsorships/${sponsorshipId}`,
+      actionLabel: 'Review Sponsorship'
+    }))
+
+    console.log('[Notification Helper] Notification data prepared:', notificationsData.length, 'notifications')
+    const result = await NotificationService.addMany(notificationsData)
+    console.log('[Notification Helper] Notification creation result:', result)
+    return result
+  } catch (error) {
+    console.error('[Notification Helper] Error creating physical gift sponsorship pending approval notifications:', error)
+    console.error('[Notification Helper] Error stack:', error.stack)
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to create physical gift sponsorship pending approval notifications'
+    }
+  }
+}
+
+export const createSponsorshipApprovedNotification = async (sponsorUserId, sponsorshipData) => {
+  try {
+    console.log('[Notification Helper] Creating sponsorship approved notification for sponsor:', sponsorUserId)
+    
+    if (!sponsorUserId) {
+      console.error('[Notification Helper] ❌ sponsorUserId is missing or invalid')
+      return {
+        status: 'error',
+        result: null,
+        message: 'Sponsor user ID is required'
+      }
+    }
+
+    if (typeof sponsorUserId === 'string' && !mongoose.Types.ObjectId.isValid(sponsorUserId)) {
+      console.error('[Notification Helper] ❌ sponsorUserId is not a valid ObjectId string')
+      return {
+        status: 'error',
+        result: null,
+        message: 'Invalid sponsor user ID format'
+      }
+    }
+
+    const sponsorshipId = sponsorshipData._id?.toString() || sponsorshipData.id || sponsorshipData._id
+    const itemName = sponsorshipData.nonCashItem || 'Physical Gift'
+    const quantity = sponsorshipData.numberOfNonCashItems || 0
+    const approvedBy = sponsorshipData.approvedBy || sponsorshipData.approverEmail || 'Admin'
+    const approvedAt = sponsorshipData.approvedAt || new Date()
+
+    console.log('[Notification Helper] Prepared data:', {
+      sponsorUserId,
+      sponsorshipId,
+      itemName,
+      quantity,
+      approvedBy
+    })
+
+    const notificationData = {
+      userId: sponsorUserId,
+      type: 'SPONSORSHIP_APPROVED',
+      title: `Sponsorship Approved: ${quantity} × ${itemName}`,
+      message: `Your physical gift sponsorship of ${quantity} × ${itemName} has been approved! The gifts are now available for distribution to quiz winners.`,
+      relatedEntity: {
+        entityType: 'sponsorship',
+        entityId: sponsorshipId
+      },
+      metadata: {
+        sponsorshipId,
+        itemName,
+        quantity,
+        approvedBy,
+        approvedAt: approvedAt instanceof Date ? approvedAt.toISOString() : approvedAt,
+        rewardValue: sponsorshipData.rewardValue || 0
+      },
+      actionUrl: `/sponsor/list`,
+      actionLabel: 'View Sponsorships'
+    }
+
+    console.log('[Notification Helper] Notification data prepared:', notificationData)
+    const result = await NotificationService.addOne(notificationData)
+    console.log('[Notification Helper] ✅ NotificationService.addOne result:', result)
+    return result
+  } catch (error) {
+    console.error('[Notification Helper] ❌❌❌ ERROR in createSponsorshipApprovedNotification ❌❌❌')
+    console.error('[Notification Helper] Error message:', error.message)
+    console.error('[Notification Helper] Error stack:', error.stack)
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to create sponsorship approved notification'
+    }
+  }
+}
+
+export const createSponsorshipRejectedNotification = async (sponsorUserId, sponsorshipData) => {
+  try {
+    console.log('[Notification Helper] Creating sponsorship rejected notification for sponsor:', sponsorUserId)
+    
+    if (!sponsorUserId) {
+      console.error('[Notification Helper] ❌ sponsorUserId is missing or invalid')
+      return {
+        status: 'error',
+        result: null,
+        message: 'Sponsor user ID is required'
+      }
+    }
+
+    if (typeof sponsorUserId === 'string' && !mongoose.Types.ObjectId.isValid(sponsorUserId)) {
+      console.error('[Notification Helper] ❌ sponsorUserId is not a valid ObjectId string')
+      return {
+        status: 'error',
+        result: null,
+        message: 'Invalid sponsor user ID format'
+      }
+    }
+
+    const sponsorshipId = sponsorshipData._id?.toString() || sponsorshipData.id || sponsorshipData._id
+    const itemName = sponsorshipData.nonCashItem || 'Physical Gift'
+    const quantity = sponsorshipData.numberOfNonCashItems || 0
+    const rejectedBy = sponsorshipData.rejectedBy || sponsorshipData.rejectorEmail || 'Admin'
+    const rejectionReason = sponsorshipData.nonCashSponsorshipRejectionReason || sponsorshipData.rejectionReason || null
+    const rejectedAt = sponsorshipData.rejectedAt || new Date()
+
+    console.log('[Notification Helper] Prepared data:', {
+      sponsorUserId,
+      sponsorshipId,
+      itemName,
+      quantity,
+      rejectedBy,
+      hasRejectionReason: !!rejectionReason
+    })
+
+    // Build message with optional rejection reason
+    let message = `Your physical gift sponsorship of ${quantity} × ${itemName} was rejected.`
+    if (rejectionReason && rejectionReason.trim()) {
+      message += ` Reason: ${rejectionReason.trim()}`
+    }
+
+    const notificationData = {
+      userId: sponsorUserId,
+      type: 'SPONSORSHIP_REJECTED',
+      title: `Sponsorship Rejected: ${quantity} × ${itemName}`,
+      message: message,
+      relatedEntity: {
+        entityType: 'sponsorship',
+        entityId: sponsorshipId
+      },
+      metadata: {
+        sponsorshipId,
+        itemName,
+        quantity,
+        rejectedBy,
+        rejectedAt: rejectedAt instanceof Date ? rejectedAt.toISOString() : rejectedAt,
+        rejectionReason: rejectionReason || null,
+        rewardValue: sponsorshipData.rewardValue || 0
+      },
+      actionUrl: `/sponsor/list`,
+      actionLabel: 'View Sponsorships'
+    }
+
+    console.log('[Notification Helper] Notification data prepared:', notificationData)
+    const result = await NotificationService.addOne(notificationData)
+    console.log('[Notification Helper] ✅ NotificationService.addOne result:', result)
+    return result
+  } catch (error) {
+    console.error('[Notification Helper] ❌❌❌ ERROR in createSponsorshipRejectedNotification ❌❌❌')
+    console.error('[Notification Helper] Error message:', error.message)
+    console.error('[Notification Helper] Error stack:', error.stack)
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to create sponsorship rejected notification'
+    }
+  }
+}
