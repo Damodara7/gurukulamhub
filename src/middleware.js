@@ -119,7 +119,15 @@ export default async function middleware(request) {
   // res.headers.append('Access-Control-Allow-Origin', origin);
   // }
 
-  const session = await auth()
+  // Try to get session, but handle gracefully if auth() fails in Edge runtime
+  let session = null
+  try {
+    session = await auth()
+  } catch (error) {
+    // In Edge runtime, auth() might fail due to eval() restrictions
+    // Continue without session - routes will handle authentication separately
+    console.warn('Middleware: Could not get session in Edge runtime:', error.message)
+  }
 
   const searchParams = request.nextUrl.searchParams
   const redirectTo = searchParams.get('redirectTo')

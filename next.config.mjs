@@ -56,6 +56,7 @@ const nextConfig = {
     if (isServer) {
       config.externals = [...(config.externals || []), 'ws']
     }
+    
     return config
   },
   // Temporarily ignore build errors to allow WebSocket routes with next-ws

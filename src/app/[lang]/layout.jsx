@@ -7,11 +7,12 @@ import { i18n } from '@configs/i18n'
 // Style Imports
 import '@/app/globals.css'
 
-import 'animate.css'
-
 // Generated Icon CSS Imports
 //import '@assets/iconify-icons/generated-icons.css'
 import 'remixicon/fonts/remixicon.css'
+
+// Note: animate.css is imported in client components where it's needed
+// to avoid server-side CSS parsing issues
 
 import { scheduleCleanupUnverifiedUsers } from '@/actions/scheduler'
 import { initializeScheduler } from '@/app/api/game/game.scheduler'
