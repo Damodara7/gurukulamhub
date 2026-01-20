@@ -1,5 +1,5 @@
 'use client'
-import './Marquee.css'
+// Note: Marquee.css is imported in globals.css to avoid server-side parsing issues in production
 import React, { useEffect, useState } from 'react'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS as ApiUrls } from '@/configs/apiConfig'
