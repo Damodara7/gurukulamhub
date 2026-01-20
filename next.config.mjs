@@ -46,10 +46,28 @@ const nextConfig = {
     // Enable instrumentation hook to run code once on server startup
     instrumentationHook: true
   },
-  webpack: (config, { isServer }) => {
+  webpack: (config, { isServer, webpack }) => {
     if (isServer) {
       config.externals = [...(config.externals || []), 'ws']
     }
+    
+    // Exclude instrumentation from Edge runtime compilation
+    // This prevents the EvalError when Next.js tries to compile instrumentation for Edge runtime
+    // Check if this is an Edge runtime build (middleware or edge routes)
+    const isEdgeRuntime = config.name === 'edge-server' || 
+                         config.name === 'middleware' ||
+                         (config.target && config.target.includes('edge'))
+    
+    if (isEdgeRuntime) {
+      // For Edge runtime builds, replace instrumentation with an empty stub
+      config.plugins.push(
+        new webpack.NormalModuleReplacementPlugin(
+          /[\\/]instrumentation\.(ts|js|tsx|jsx)$/,
+          require.resolve('./src/instrumentation.edge-stub.js')
+        )
+      )
+    }
+    
     return config
   },
   // Temporarily ignore build errors to allow WebSocket routes with next-ws
