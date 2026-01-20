@@ -62,17 +62,7 @@ const nextConfig = {
                          config.name === 'middleware' ||
                          (config.target && config.target.includes('edge'))
     
-    if (isEdgeRuntime) {
-      // For Edge runtime builds, replace instrumentation with an empty stub
-      // Use path.resolve to get absolute path to the stub file
-      const stubPath = path.resolve(__dirname, 'src', 'instrumentation.edge-stub.js')
-      config.plugins.push(
-        new webpack.NormalModuleReplacementPlugin(
-          /[\\/]instrumentation\.(ts|js|tsx|jsx)$/,
-          stubPath
-        )
-      )
-    }
+    // No special handling needed - instrumentation.ts is now minimal and Edge-safe
     
     return config
   },
