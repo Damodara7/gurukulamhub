@@ -24,8 +24,19 @@ import { i18n } from '@configs/i18n'
 import { getDictionary } from '@/utils/getDictionary'
 import { getMode, getSkin, getSystemMode } from '@core/utils/serverHelpers'
 import AlertComponentRenderer from '@/components/alert-popups/AlertComponentRenderer'
+import { auth } from '@/libs/auth'
+import { redirect } from 'next/navigation'
 
 const Layout = async ({ children, params }) => {
+  // Authentication check - protect all dashboard routes
+  // This runs in Node.js runtime, so auth() works without Edge runtime eval() errors
+  const session = await auth()
+  
+  if (!session?.user) {
+    // User not authenticated - redirect to welcome page
+    redirect(`/${params.lang}/welcome`)
+  }
+
   // Vars
   const direction = i18n.langDirection[params.lang]
   const dictionary = await getDictionary(params.lang)
