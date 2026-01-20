@@ -72,7 +72,7 @@ export const userSchema = new mongoose.Schema(
     referredBy: {
       type: String,
       // required: [true, 'Please provide email'],
-      default: 'none@gurukulamhub.com'
+      default: 'none@gurukulamhub.org'
     },
     referralSource: {
       type: String

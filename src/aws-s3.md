@@ -29,7 +29,7 @@
 ],
 "AllowedOrigins": [
 "http://localhost:3000",
-"https://gurukulamhub.com"
+"https://gurukulamhub.org"
 ],
 "ExposeHeaders": [],
 "MaxAgeSeconds": 3000

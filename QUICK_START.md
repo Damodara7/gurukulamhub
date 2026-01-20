@@ -7,7 +7,7 @@ This is a condensed guide to get you up and running quickly. For detailed inform
 - [ ] Docker installed
 - [ ] Kubernetes cluster running (minikube, k3s, or full cluster)
 - [ ] kubectl configured
-- [ ] Domain `gurukulamhub.com` pointing to your server IP (or local DNS configured)
+- [ ] Domain `gurukulamhub.org` pointing to your server IP (or local DNS configured)
 
 ## Quick Deployment Steps
 
@@ -45,7 +45,7 @@ kubectl apply -f k8s/configmap.yaml
 # Create Secrets (replace with your actual values)
 kubectl create secret generic gurukulamhub-secrets \
   --from-literal=DATABASE_URL='your-mongodb-url' \
-  --from-literal=NEXTAUTH_URL='https://gurukulamhub.com' \
+  --from-literal=NEXTAUTH_URL='https://gurukulamhub.org' \
   --from-literal=NEXTAUTH_SECRET='your-secret' \
   --from-literal=REDIS_URL='redis://gurukulamhub-redis:6379' \
   -n gurukulamhub
@@ -69,13 +69,13 @@ kubectl apply -f k8s/ingress.yaml
 ### 4. Configure DNS
 
 **For Local Network Access:**
-- Windows: Add to `C:\Windows\System32\drivers\etc\hosts`: `<server-ip> gurukulamhub.com`
-- Linux/Mac: Add to `/etc/hosts`: `<server-ip> gurukulamhub.com`
+- Windows: Add to `C:\Windows\System32\drivers\etc\hosts`: `<server-ip> gurukulamhub.org`
+- Linux/Mac: Add to `/etc/hosts`: `<server-ip> gurukulamhub.org`
 
 **For Internet Access:**
 - Configure DNS A records at your domain registrar:
-  - `gurukulamhub.com` → `<your-server-ip>`
-  - `www.gurukulamhub.com` → `<your-server-ip>`
+  - `gurukulamhub.org` → `<your-server-ip>`
+  - `www.gurukulamhub.org` → `<your-server-ip>`
 
 ### 5. Verify Deployment
 
@@ -90,7 +90,7 @@ kubectl get pods -n gurukulamhub
 kubectl logs -f deployment/gurukulamhub-app -n gurukulamhub
 
 # Test health endpoint
-curl http://gurukulamhub.com/api/health
+curl http://gurukulamhub.org/api/health
 ```
 
 ## Common Commands
@@ -132,8 +132,8 @@ kubectl get svc -n gurukulamhub
 
 **DNS issues:**
 ```bash
-nslookup gurukulamhub.com
-dig gurukulamhub.com
+nslookup gurukulamhub.org
+dig gurukulamhub.org
 ```
 
 ## Next Steps

@@ -96,7 +96,7 @@ kubectl port-forward svc/gurukulamhub-app 3000:80 -n gurukulamhub
 
 Access the app at: `http://localhost:3000`
 
-### Option B: Enable Ingress Controller (For gurukulamhub.com URL)
+### Option B: Enable Ingress Controller (For gurukulamhub.org URL)
 
 **Install NGINX Ingress Controller:**
 
@@ -108,18 +108,18 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/cont
 kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=90s
 ```
 
-**Update your hosts file** to map `gurukulamhub.com` to `localhost`:
+**Update your hosts file** to map `gurukulamhub.org` to `localhost`:
 
 **Windows** (`C:\Windows\System32\drivers\etc\hosts`):
 ```
-127.0.0.1 gurukulamhub.com
-127.0.0.1 www.gurukulamhub.com
+127.0.0.1 gurukulamhub.org
+127.0.0.1 www.gurukulamhub.org
 ```
 
 **Linux/Mac** (`/etc/hosts`):
 ```
-127.0.0.1 gurukulamhub.com
-127.0.0.1 www.gurukulamhub.com
+127.0.0.1 gurukulamhub.org
+127.0.0.1 www.gurukulamhub.org
 ```
 
 **Deploy Ingress:**
@@ -127,7 +127,7 @@ kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.
 kubectl apply -f k8s/ingress.yaml
 ```
 
-Access the app at: `http://gurukulamhub.com`
+Access the app at: `http://gurukulamhub.org`
 
 ## Step 9: Verify Deployment
 
@@ -211,7 +211,7 @@ kubectl apply -f k8s/ingress.yaml
 
 kubectl get ingress -n gurukulamhub
 # NAME                   CLASS   HOSTS                                   ADDRESS     PORTS   AGE
-# gurukulamhub-ingress   nginx   gurukulamhub.com,www.gurukulamhub.com   localhost   80      3m33s
+# gurukulamhub-ingress   nginx   gurukulamhub.org,www.gurukulamhub.org   localhost   80      3m33s
 
 kubectl get svc -n ingress-nginx
 # NAME                                 TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
@@ -219,7 +219,7 @@ kubectl get svc -n ingress-nginx
 # ingress-nginx-controller-admission   ClusterIP      10.107.191.155   <none>        443/TCP                      2d
 
 # Port forward for local access 
-# ❌ NO NEED to run this now, as we are using another WAY - (`C:\Windows\System32\drivers\etc\hosts` --> 127.0.0.1 www.gurukulamhub.com)
+# ❌ NO NEED to run this now, as we are using another WAY - (`C:\Windows\System32\drivers\etc\hosts` --> 127.0.0.1 www.gurukulamhub.org)
 kubectl port-forward svc/gurukulamhub-app 3000:80 -n gurukulamhub
 
 # View logs
@@ -232,6 +232,6 @@ kubectl rollout restart deployment/gurukulamhub-app -n gurukulamhub
 kubectl delete namespace gurukulamhub
 
 
-# TYPE ✅ thisisunsafe ✅ in brower (gurukulamhub.com --> `C:\Windows\System32\drivers\etc\hosts` --> 127.0.0.1 www.gurukulamhub.com)
+# TYPE ✅ thisisunsafe ✅ in brower (gurukulamhub.org --> `C:\Windows\System32\drivers\etc\hosts` --> 127.0.0.1 www.gurukulamhub.org)
 ```
 

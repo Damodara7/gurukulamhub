@@ -99,7 +99,7 @@ kubectl apply -f k8s/configmap.yaml
 # 2. Create Secrets (replace values with your actual secrets)
 kubectl create secret generic gurukulamhub-secrets `
   --from-literal=DATABASE_URL='mongodb+srv://gurkulhub_dbuser:2025Mongodb@cluster0.dlhzk.mongodb.net/gurkulhub?retryWrites=true&w=majority&appName=Cluster0' `
-  --from-literal=NEXTAUTH_URL='http://gurukulamhub.com' `
+  --from-literal=NEXTAUTH_URL='http://gurukulamhub.org' `
   --from-literal=NEXTAUTH_SECRET='LSy/VCrsA5GAvwQhMTGkohdviqCcJLkHPHtrIuJtyJ0=' `
   --from-literal=GOOGLE_CLIENT_SECRET='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' `
   --from-literal=RECAPTCHA_SECRET_KEY='6LdybtIrAAAAAODGKuB-bcesbOlM_qsd1V7SXmEA' `
@@ -189,7 +189,7 @@ minikube ip
 
 2. **Add this line (replace with minikube IP):**
    ```
-   <minikube-ip> gurukulamhub.com www.gurukulamhub.com
+   <minikube-ip> gurukulamhub.org www.gurukulamhub.org
    ```
 
    **To get minikube IP:**
@@ -233,7 +233,7 @@ minikube service gurukulamhub-app -n gurukulamhub
 minikube service ingress-nginx-controller -n ingress-nginx --url
 
 # Or access via domain (after hosts file configuration)
-# http://gurukulamhub.com
+# http://gurukulamhub.org
 ```
 
 ## Step 14: Verify Deployment

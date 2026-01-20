@@ -1,6 +1,6 @@
 # Docker & Kubernetes Deployment Guide for GurukulamHub
 
-This guide provides step-by-step instructions to deploy the GurukulamHub Next.js application using Docker and Kubernetes on a local server, accessible via `gurukulamhub.com`.
+This guide provides step-by-step instructions to deploy the GurukulamHub Next.js application using Docker and Kubernetes on a local server, accessible via `gurukulamhub.org`.
 
 ## Prerequisites
 
@@ -8,7 +8,7 @@ This guide provides step-by-step instructions to deploy the GurukulamHub Next.js
 2. **Docker Compose** (version 2.0+)
 3. **Kubernetes** (minikube, k3s, or full Kubernetes cluster)
 4. **kubectl** configured to access your cluster
-5. **Domain Configuration**: DNS pointing `gurukulamhub.com` to your server's IP
+5. **Domain Configuration**: DNS pointing `gurukulamhub.org` to your server's IP
 6. **Ingress Controller** (Nginx Ingress or Traefik)
 
 ## Table of Contents
@@ -90,18 +90,18 @@ kubectl apply -f k8s/configmap.yaml
 ```bash
 kubectl create secret generic gurukulamhub-secrets \
   --from-literal=DATABASE_URL='your-mongodb-connection-string' \
-  --from-literal=NEXTAUTH_URL='https://gurukulamhub.com' \
+  --from-literal=NEXTAUTH_URL='https://gurukulamhub.org' \
   --from-literal=NEXTAUTH_SECRET='your-nextauth-secret' \
   --from-literal=GOOGLE_CLIENT_ID='your-google-client-id' \
   --from-literal=GOOGLE_CLIENT_SECRET='your-google-client-secret' \
-  --from-literal=API_URL='https://gurukulamhub.com/api' \
-  --from-literal=NEXT_PUBLIC_API_URL='https://gurukulamhub.com/api' \
+  --from-literal=API_URL='https://gurukulamhub.org/api' \
+  --from-literal=NEXT_PUBLIC_API_URL='https://gurukulamhub.org/api' \
   --from-literal=REDIS_URL='redis://gurukulamhub-redis:6379' \
   --from-literal=RECAPTCHA_SECRET_KEY='your-recaptcha-secret' \
   --from-literal=NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY='your-stripe-pub-key' \
   --from-literal=NEXT_PUBLIC_STRIPE_SECRET_KEY='your-stripe-secret-key' \
-  --from-literal=NEXT_PUBLIC_SOCKET_IO_SERVER='https://gurukulamhub.com' \
-  --from-literal=SOCKET_SERVER_URL='https://gurukulamhub.com' \
+  --from-literal=NEXT_PUBLIC_SOCKET_IO_SERVER='https://gurukulamhub.org' \
+  --from-literal=SOCKET_SERVER_URL='https://gurukulamhub.org' \
   -n gurukulamhub
 ```
 
@@ -202,23 +202,23 @@ kubectl get nodes -o wide
 
 ## Part 3: DNS Configuration
 
-To access your application via `gurukulamhub.com`:
+To access your application via `gurukulamhub.org`:
 
 ### Option 1: Local DNS (for local network access)
 
 **On Windows (hosts file):**
 1. Open `C:\Windows\System32\drivers\etc\hosts` as Administrator
-2. Add: `<your-server-ip> gurukulamhub.com www.gurukulamhub.com`
+2. Add: `<your-server-ip> gurukulamhub.org www.gurukulamhub.org`
 
 **On Linux/Mac:**
 ```bash
 sudo nano /etc/hosts
-# Add: <your-server-ip> gurukulamhub.com www.gurukulamhub.com
+# Add: <your-server-ip> gurukulamhub.org www.gurukulamhub.org
 ```
 
 **On other devices:**
 - Configure your router's DNS or use a local DNS server
-- Point `gurukulamhub.com` to your server's IP
+- Point `gurukulamhub.org` to your server's IP
 
 ### Option 2: Public DNS (for internet access)
 
@@ -228,10 +228,10 @@ sudo nano /etc/hosts
    ```
 
 2. **Configure DNS records:**
-   - Go to your domain registrar (where you bought gurukulamhub.com)
+   - Go to your domain registrar (where you bought gurukulamhub.org)
    - Add A records:
-     - `gurukulamhub.com` → `<your-server-ip>`
-     - `www.gurukulamhub.com` → `<your-server-ip>`
+     - `gurukulamhub.org` → `<your-server-ip>`
+     - `www.gurukulamhub.org` → `<your-server-ip>`
 
 3. **Wait for DNS propagation** (can take 5 minutes to 48 hours)
 
@@ -315,7 +315,7 @@ kubectl port-forward svc/gurukulamhub-app 3000:80 -n gurukulamhub
 
 ```bash
 # Test health endpoint
-curl http://gurukulamhub.com/api/health
+curl http://gurukulamhub.org/api/health
 
 # Or via port-forward
 curl http://localhost:3000/api/health
@@ -390,8 +390,8 @@ kubectl get events -n gurukulamhub --sort-by='.lastTimestamp'
 
 3. **Check DNS:**
    ```bash
-   nslookup gurukulamhub.com
-   dig gurukulamhub.com
+   nslookup gurukulamhub.org
+   dig gurukulamhub.org
    ```
 
 ### Database Connection Issues

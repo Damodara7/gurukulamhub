@@ -377,7 +377,7 @@ const EmailStep = ({
               label='Email'
               fullWidth
               required
-              placeholder='none@gurukulamhub.com'
+              placeholder='none@gurukulamhub.org'
               value={email}
               // error={!validEmail}
               // helperText={!validEmail ? 'Invalid email format' : ''}

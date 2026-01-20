@@ -27,7 +27,7 @@ const nextConfig = {
   // If you intend to allow all origins for development or testing, it is technically valid,
   // but you should avoid this in production environments.
   allowedDevOrigins: [
-    'https://gurukulamhub.com',
+    'https://gurukulamhub.org',
     'https://gurukulamhub.org',
     'https://www.gurukulamhub.org',
     'https://localhost:3000',

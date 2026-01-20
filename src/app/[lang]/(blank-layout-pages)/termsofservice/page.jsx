@@ -20,7 +20,7 @@ const TermsPage = () => {
 
           <h2>1. Introduction</h2>
 
-          <p>Welcome to https://triesoltech.com/. (https://gurukulamhub.com) These terms of service (Terms, Terms of Service)
+          <p>Welcome to https://triesoltech.com/. (https://gurukulamhub.org) These terms of service (Terms, Terms of Service)
           outline the rules and regulations governing your use of our website and the services offered by Triesol Technologies
           (we, us, or our).</p>
 

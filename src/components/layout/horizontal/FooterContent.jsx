@@ -38,7 +38,7 @@ const FooterContent = () => {
       </p>
       {!isBreakpointReached && (
         <div className='flex items-center gap-4'>
-          <Link href='https://gurukulamhub.com/license' target='_blank' className='text-primary'>
+          <Link href='https://gurukulamhub.org/license' target='_blank' className='text-primary'>
             License
           </Link>
         </div>

@@ -38,7 +38,7 @@ export async function getByEmail({ email }) {
         lastname: user.lastname || '',
         image: user.image || '',
         gender: '',
-        referredBy: 'none@gurukulamhub.com',
+        referredBy: 'none@gurukulamhub.org',
         phone: '',
         accountType: 'INDIVIDUAL',
         nickname: '',

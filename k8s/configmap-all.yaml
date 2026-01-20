@@ -22,8 +22,8 @@ data:
   # App Configuration
   # -----------------------------------------------------------------------------
   BASEPATH: ""
-  DOMAIN: "gurukulamhub.com"
-  NEXT_PUBLIC_APP_URL: "https://gurukulamhub.com"
+  DOMAIN: "gurukulamhub.org"
+  NEXT_PUBLIC_APP_URL: "https://gurukulamhub.org"
   NEXT_PUBLIC_DOCS_URL: "https://demos.themeselection.com/materio-mui-react-nextjs-admin-template/documentation"
   NODE_ENV: "production"
   PORT: "3000"
@@ -33,8 +33,8 @@ data:
   # Authentication (NextAuth.js)
   # -----------------------------------------------------------------------------
   NEXTAUTH_BASEPATH: "/api/auth"
-  NEXTAUTH_URL: "https://gurukulamhub.com"
-  AUTH_TRUST_HOST: "https://gurukulamhub.com"
+  NEXTAUTH_URL: "https://gurukulamhub.org"
+  AUTH_TRUST_HOST: "https://gurukulamhub.org"
   NEXTAUTH_SECRET: "LSy/VCrsA5GAvwQhMTGkohdviqCcJLkHPHtrIuJtyJ0="
   
   # -----------------------------------------------------------------------------
@@ -53,8 +53,8 @@ data:
   # -----------------------------------------------------------------------------
   # API Configuration
   # -----------------------------------------------------------------------------
-  API_URL: "https://gurukulamhub.com/api"
-  NEXT_PUBLIC_API_URL: "https://gurukulamhub.com/api"
+  API_URL: "https://gurukulamhub.org/api"
+  NEXT_PUBLIC_API_URL: "https://gurukulamhub.org/api"
   
   # -----------------------------------------------------------------------------
   # Redis Configuration
@@ -82,8 +82,8 @@ data:
   # -----------------------------------------------------------------------------
   # Socket Server
   # -----------------------------------------------------------------------------
-  NEXT_PUBLIC_SOCKET_IO_SERVER: "https://gurukulamhub.com"
-  SOCKET_SERVER_URL: "https://gurukulamhub.com"
+  NEXT_PUBLIC_SOCKET_IO_SERVER: "https://gurukulamhub.org"
+  SOCKET_SERVER_URL: "https://gurukulamhub.org"
   
   # -----------------------------------------------------------------------------
   # Stripe Configuration

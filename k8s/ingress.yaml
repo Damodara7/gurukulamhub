@@ -33,11 +33,11 @@ spec:
   # Uncomment and configure TLS if you have SSL certificates
   # tls:
   # - hosts:
-  #   - gurukulamhub.com
-  #   - www.gurukulamhub.com
+  #   - gurukulamhub.org
+  #   - www.gurukulamhub.org
   #   secretName: gurukulamhub-tls
   rules:
-  - host: gurukulamhub.com
+  - host: gurukulamhub.org
     http:
       paths:
       - path: /
@@ -47,7 +47,7 @@ spec:
             name: gurukulamhub-app
             port:
               number: 80
-  - host: www.gurukulamhub.com
+  - host: www.gurukulamhub.org
     http:
       paths:
       - path: /

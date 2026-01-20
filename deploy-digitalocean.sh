@@ -40,7 +40,7 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 # Get domain name
-read -p "Enter your domain name (e.g., gurukulamhub.com): " DOMAIN
+read -p "Enter your domain name (e.g., gurukulamhub.org): " DOMAIN
 if [ -z "$DOMAIN" ]; then
     print_error "Domain name is required"
     exit 1

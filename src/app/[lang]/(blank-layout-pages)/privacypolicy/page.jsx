@@ -18,7 +18,7 @@ const TermsPage = () => {
 
       <p>Triesol Tech (Triesol, we, us, or our) respects the privacy of our users (you or your).
          This Privacy Policy describes the types of information we collect from and about you when you visit our website
-          https://triesoltech.com/, https://gurukulamhub.com/, as well as our practices for collecting, using, maintaining, protecting,
+          https://triesoltech.com/, https://gurukulamhub.org/, as well as our practices for collecting, using, maintaining, protecting,
            and disclosing that information.</p>
 
       <h2>Information We Collect</h2>

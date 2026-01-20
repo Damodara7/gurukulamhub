@@ -18,7 +18,7 @@ This document provides a high-level overview of the Docker and Kubernetes deploy
 - **k8s/redis-deployment.yaml** - Redis deployment, service, and PVC
 - **k8s/deployment.yaml** - Application deployment
 - **k8s/service.yaml** - Kubernetes service
-- **k8s/ingress.yaml** - Ingress for gurukulamhub.com domain
+- **k8s/ingress.yaml** - Ingress for gurukulamhub.org domain
 
 ### Configuration Files
 - **.env.production.template** - Production environment variables template
@@ -104,7 +104,7 @@ This document provides a high-level overview of the Docker and Kubernetes deploy
    kubectl apply -f k8s/ingress.yaml
    ```
    - Routes external traffic to service
-   - Configures domain: gurukulamhub.com
+   - Configures domain: gurukulamhub.org
 
 ### Phase 3: DNS Configuration
 
@@ -117,7 +117,7 @@ This document provides a high-level overview of the Docker and Kubernetes deploy
 2. **Configure DNS**
    - **Local Network**: Edit hosts file on each device
    - **Internet**: Configure DNS A records at domain registrar
-   - Point `gurukulamhub.com` and `www.gurukulamhub.com` to server IP
+   - Point `gurukulamhub.org` and `www.gurukulamhub.org` to server IP
 
 ### Phase 4: SSL/TLS (Optional but Recommended)
 
@@ -139,7 +139,7 @@ Internet
 [Ingress Controller]
    |
    v
-[Kubernetes Ingress] (gurukulamhub.com)
+[Kubernetes Ingress] (gurukulamhub.org)
    |
    v
 [Service] (ClusterIP)
@@ -193,7 +193,7 @@ Internet
 
 1. **Local Testing**: `http://localhost:3000` (port-forward)
 2. **Cluster Internal**: `http://gurukulamhub-app.gurukulamhub.svc.cluster.local`
-3. **External**: `https://gurukulamhub.com` (via Ingress)
+3. **External**: `https://gurukulamhub.org` (via Ingress)
 
 ## Scaling
 

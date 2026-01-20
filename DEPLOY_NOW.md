@@ -6,7 +6,7 @@ Before starting, ensure you have:
 - [ ] Docker installed and running
 - [ ] Kubernetes cluster running (minikube, k3s, or full cluster)
 - [ ] kubectl configured and connected to your cluster
-- [ ] Domain `gurukulamhub.com` pointing to your server (or local DNS configured)
+- [ ] Domain `gurukulamhub.org` pointing to your server (or local DNS configured)
 
 ---
 
@@ -64,23 +64,23 @@ kubectl apply -f k8s/configmap.yaml
 # Replace the values with your actual secrets from dev.env
 kubectl create secret generic gurukulamhub-secrets \
   --from-literal=DATABASE_URL='mongodb+srv://gurkulhub_dbuser:2025Mongodb@cluster0.dlhzk.mongodb.net/gurkulhub?retryWrites=true&w=majority&appName=Cluster0' \
-  --from-literal=NEXTAUTH_URL='https://gurukulamhub.com' \
+  --from-literal=NEXTAUTH_URL='https://gurukulamhub.org' \
   --from-literal=NEXTAUTH_SECRET='LSy/VCrsA5GAvwQhMTGkohdviqCcJLkHPHtrIuJtyJ0=' \
   --from-literal=GOOGLE_CLIENT_ID='872140549132-k3ndunp63cl0j05mmi9uh1bctrt0pla9.apps.googleusercontent.com' \
   --from-literal=GOOGLE_CLIENT_SECRET='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' \
-  --from-literal=API_URL='https://gurukulamhub.com/api' \
-  --from-literal=NEXT_PUBLIC_API_URL='https://gurukulamhub.com/api' \
+  --from-literal=API_URL='https://gurukulamhub.org/api' \
+  --from-literal=NEXT_PUBLIC_API_URL='https://gurukulamhub.org/api' \
   --from-literal=REDIS_URL='redis://gurukulamhub-redis:6379' \
   --from-literal=RECAPTCHA_SECRET_KEY='6LdybtIrAAAAAODGKuB-bcesbOlM_qsd1V7SXmEA' \
   --from-literal=NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY='pk_test_51OZar7SBB7wnYOSIs4gZrZqWeEJFlGlKP0KUREQBdJFn4TytYos3hfNb7XSTDeEjZmC0oaNOzZL4MeFrE34SrkXF00rWrNG7Yh' \
   --from-literal=NEXT_PUBLIC_STRIPE_SECRET_KEY='sk_test_51OZar7SBB7wnYOSIxgxrydQim2M1f1oVPg6ty5yiU7McIYKM1qCwj7fDibjlXCqOps8xMZsDIk686MqiDDh3TsF500xWdlk6VD' \
-  --from-literal=NEXT_PUBLIC_SOCKET_IO_SERVER='https://gurukulamhub.com' \
-  --from-literal=SOCKET_SERVER_URL='https://gurukulamhub.com' \
+  --from-literal=NEXT_PUBLIC_SOCKET_IO_SERVER='https://gurukulamhub.org' \
+  --from-literal=SOCKET_SERVER_URL='https://gurukulamhub.org' \
   --from-literal=BASEPATH='' \
-  --from-literal=DOMAIN='gurukulamhub.com' \
-  --from-literal=NEXT_PUBLIC_APP_URL='https://gurukulamhub.com' \
+  --from-literal=DOMAIN='gurukulamhub.org' \
+  --from-literal=NEXT_PUBLIC_APP_URL='https://gurukulamhub.org' \
   --from-literal=NEXTAUTH_BASEPATH='/api/auth' \
-  --from-literal=AUTH_TRUST_HOST='https://gurukulamhub.com' \
+  --from-literal=AUTH_TRUST_HOST='https://gurukulamhub.org' \
   --from-literal=MONGODB_URI='mongodb+srv://gurkulhub_dbuser:2025Mongodb@cluster0.dlhzk.mongodb.net/gurkulhub?retryWrites=true&w=majority&appName=Cluster0' \
   --from-literal=MONGODB_DB='gurkulhub' \
   --from-literal=REDIS_PORT='6379' \
@@ -228,12 +228,12 @@ kubectl get ingress gurukulamhub-ingress -n gurukulamhub
 
 **Windows:**
 1. Open `C:\Windows\System32\drivers\etc\hosts` as Administrator
-2. Add: `<your-server-ip> gurukulamhub.com www.gurukulamhub.com`
+2. Add: `<your-server-ip> gurukulamhub.org www.gurukulamhub.org`
 
 **Linux/Mac:**
 ```bash
 sudo nano /etc/hosts
-# Add: <your-server-ip> gurukulamhub.com www.gurukulamhub.com
+# Add: <your-server-ip> gurukulamhub.org www.gurukulamhub.org
 ```
 
 ### For Internet Access:
@@ -244,8 +244,8 @@ sudo nano /etc/hosts
    ```
 
 2. **Configure DNS at your domain registrar:**
-   - Add A record: `gurukulamhub.com` → `<your-server-ip>`
-   - Add A record: `www.gurukulamhub.com` → `<your-server-ip>`
+   - Add A record: `gurukulamhub.org` → `<your-server-ip>`
+   - Add A record: `www.gurukulamhub.org` → `<your-server-ip>`
 
 3. **Wait for DNS propagation** (5 minutes to 48 hours)
 
@@ -265,7 +265,7 @@ kubectl port-forward svc/gurukulamhub-app 3000:80 -n gurukulamhub
 # Then in browser: http://localhost:3000/api/health
 
 # Or test via ingress (after DNS is configured)
-curl http://gurukulamhub.com/api/health
+curl http://gurukulamhub.org/api/health
 ```
 
 ---
@@ -280,9 +280,9 @@ kubectl port-forward svc/gurukulamhub-app 3000:80 -n gurukulamhub
 
 ### Via Ingress (Production):
 ```
-http://gurukulamhub.com
+http://gurukulamhub.org
 # or
-https://gurukulamhub.com (if SSL is configured)
+https://gurukulamhub.org (if SSL is configured)
 ```
 
 ---

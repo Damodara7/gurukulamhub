@@ -23,9 +23,9 @@ async function startServer(port = 4000) {
           "http://localhost:3000",
           "https://gurukulamhub.up.railway.app",
           "https://gurukulamhub-production.up.railway.app",
-          "https://www.gurukulamhub.com",
-          "https://gurukulamhub.com",
-          "https://gurukulamhub.com"
+          "https://www.gurukulamhub.org",
+          "https://gurukulamhub.org",
+          "https://gurukulamhub.org"
         ],
         credentials: true
       }

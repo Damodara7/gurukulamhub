@@ -44,7 +44,7 @@ DATABASE_URL=mongodb+srv://gurkulhub_dbuser:2025Mongodb@cluster0.dlhzk.mongodb.n
 
 # NextAuth Configuration
 # NEXTAUTH_URL=http://$(hostname -I | awk '{print $1}'):3000
-NEXTAUTH_URL=https://gurukulamhub.com
+NEXTAUTH_URL=https://gurukulamhub.org
 NEXTAUTH_SECRET=LSy/VCrsA5GAvwQhMTGkohdviqCcJLkHPHtrIuJtyJ0=
 
 # Google OAuth Configuration
@@ -54,8 +54,8 @@ GOOGLE_CLIENT_SECRET=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
 # API Configuration
 # API_URL=http://$(hostname -I | awk '{print $1}'):3000/api
 # NEXT_PUBLIC_API_URL=http://$(hostname -I | awk '{print $1}'):3000/api
-API_URL=https://gurukulamhub.com/api
-NEXT_PUBLIC_API_URL=https://gurukulamhub.com/api
+API_URL=https://gurukulamhub.org/api
+NEXT_PUBLIC_API_URL=https://gurukulamhub.org/api
 
 # Redis Configuration
 REDIS_URL=redis://localhost:6379
@@ -71,8 +71,8 @@ NEXT_PUBLIC_STRIPE_SECRET_KEY=sk_test_51OZar7SBB7wnYOSIxgxrydQim2M1f1oVPg6ty5yiU
 # Socket.IO Configuration
 # NEXT_PUBLIC_SOCKET_IO_SERVER=http://$(hostname -I | awk '{print $1}'):3000
 # SOCKET_SERVER_URL=http://$(hostname -I | awk '{print $1}'):3000
-NEXT_PUBLIC_SOCKET_IO_SERVER=https://gurukulamhub.com
-SOCKET_SERVER_URL=https://gurukulamhub.com
+NEXT_PUBLIC_SOCKET_IO_SERVER=https://gurukulamhub.org
+SOCKET_SERVER_URL=https://gurukulamhub.org
 
 # Other configurations
 # NODE_ENV=development
@@ -102,7 +102,7 @@ sleep 5
 # Get server information for display
 SERVER_HOSTNAME=$(hostname)
 SERVER_IP=$(hostname -I | awk '{print $1}')
-NGROK_URL="https://gurukulamhub.com"
+NGROK_URL="https://gurukulamhub.org"
 
 # Check if the application is responding
 if curl -f http://localhost:3000 >/dev/null 2>&1; then

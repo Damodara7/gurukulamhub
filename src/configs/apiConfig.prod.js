@@ -7,7 +7,7 @@ const getApiBaseUrl = () => {
   if (typeof window === 'undefined') {
     // Server-side: Use 127.0.0.1 with PORT to call the same Next.js instance
     // Using 127.0.0.1 instead of localhost avoids IPv6 (::1) resolution issues
-    // This avoids DNS resolution issues where gurukulamhub.com -> 127.0.0.1:443
+    // This avoids DNS resolution issues where gurukulamhub.org -> 127.0.0.1:443
     const port = process.env.PORT || 3000
     return `http://127.0.0.1:${port}/api`
   }

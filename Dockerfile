@@ -57,9 +57,9 @@ ENV NODE_ENV=production
 # These values must match your ConfigMap values
 # NOTE: These are embedded in the client bundle at build time
 ENV NEXT_PUBLIC_RECAPTCHA_SITE_KEY=6LdybtIrAAAAAB1ZeuTJ-m-okYqu4tN2YN2Fkjms
-ENV NEXT_PUBLIC_APP_URL=https://gurukulamhub.com
-ENV NEXT_PUBLIC_API_URL=https://gurukulamhub.com/api
-ENV NEXT_PUBLIC_SOCKET_IO_SERVER=https://gurukulamhub.com
+ENV NEXT_PUBLIC_APP_URL=https://gurukulamhub.org
+ENV NEXT_PUBLIC_API_URL=https://gurukulamhub.org/api
+ENV NEXT_PUBLIC_SOCKET_IO_SERVER=https://gurukulamhub.org
 ENV NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_51OZar7SBB7wnYOSIs4gZrZqWeEJFlGlKP0KUREQBdJFn4TytYos3hfNb7XSTDeEjZmC0oaNOzZL4MeFrE34SrkXF00rWrNG7Yh
 ENV NEXT_PUBLIC_AWS_S3_ACCESS_KEY_ID=AKIAU6GDX5HJIHWTXVMD
 ENV NEXT_PUBLIC_AWS_S3_ACCESS_KEY_SECRET=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

@@ -371,7 +371,7 @@ async function initializeSuperAdminUser() {
         socialLogin: 'credentials',
         referralToken,
         memberId,
-        referredBy: 'system@gurukulamhub.com'
+        referredBy: 'system@gurukulamhub.org'
       })
       
       await newUser.save()
