@@ -3,6 +3,10 @@ import withPWA from '@ducanh2912/next-pwa'
 import fs from 'fs'
 import path from 'path'
 import crypto from 'crypto'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 const nextConfig = {
   staticPageGenerationTimeout: 180,
@@ -60,10 +64,12 @@ const nextConfig = {
     
     if (isEdgeRuntime) {
       // For Edge runtime builds, replace instrumentation with an empty stub
+      // Use path.resolve to get absolute path to the stub file
+      const stubPath = path.resolve(__dirname, 'src', 'instrumentation.edge-stub.js')
       config.plugins.push(
         new webpack.NormalModuleReplacementPlugin(
           /[\\/]instrumentation\.(ts|js|tsx|jsx)$/,
-          require.resolve('./src/instrumentation.edge-stub.js')
+          stubPath
         )
       )
     }
