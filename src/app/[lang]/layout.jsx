@@ -1,6 +1,3 @@
-// Third-party Imports
-import 'react-perfect-scrollbar/dist/css/styles.css'
-
 // Config Imports
 import { i18n } from '@configs/i18n'
 
@@ -9,10 +6,10 @@ import '@/app/globals.css'
 
 // Generated Icon CSS Imports
 //import '@assets/iconify-icons/generated-icons.css'
-import 'remixicon/fonts/remixicon.css'
+// import 'remixicon/fonts/remixicon.css'
 
-// Note: animate.css is imported in client components where it's needed
-// to avoid server-side CSS parsing issues
+// Note: CSS imports for third-party libraries (react-perfect-scrollbar, animate.css)
+// are imported in client components or globals.css to avoid server-side parsing issues
 
 import { scheduleCleanupUnverifiedUsers } from '@/actions/scheduler'
 import { initializeScheduler } from '@/app/api/game/game.scheduler'

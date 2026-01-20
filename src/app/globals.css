@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Third-party CSS imports - imported here to avoid server-side parsing issues */
+@import 'react-perfect-scrollbar/dist/css/styles.css';
+@import 'remixicon/fonts/remixicon.css';
+
 :root {
   --border-radius: var(--mui-shape-borderRadius);
   --border-color: var(--mui-palette-divider);
