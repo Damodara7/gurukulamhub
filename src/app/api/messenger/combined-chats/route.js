@@ -5,6 +5,9 @@ import * as GroupService from '../../group/group.service.js'
 import connectMongo from '@/utils/dbConnect-mongo'
 import GroupChatMessage from '../../group-chat/group-chat.model.js'
 
+// Force dynamic rendering - this route uses auth() which requires headers
+export const dynamic = 'force-dynamic'
+
 // Get combined individual chats and groups, sorted by most recent message
 export async function GET(req) {
   try {

@@ -10,6 +10,9 @@
 import { initializeSuperAdmin } from '@/scripts/seedSuperAdmin'
 import * as ApiResponseUtils from '@/utils/apiResponses'
 
+// Force dynamic rendering - this route uses request.url
+export const dynamic = 'force-dynamic'
+
 export async function GET(request) {
   try {
     // Optional: Add authentication check here
