@@ -31,6 +31,8 @@ import { API_URLS } from '@/configs/apiConfig'
 import { toast } from 'react-toastify'
 import CreateGroupForm from '@/components/group/CreateGroupForm'
 import { stringToColor } from '@/utils/stringToColor'
+import * as ChatEncryption from '@/utils/chatEncryption'
+import * as KeyManagement from '@/utils/keyManagement'
 import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
 import ChatHeader from './chat/ChatHeader'
 import MessagesArea from './chat/MessagesArea'
@@ -86,6 +88,8 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
   const [menuAnchor, setMenuAnchor] = useState(null)
   const [clearChatDialogOpen, setClearChatDialogOpen] = useState(false)
   const [exitGroupDialogOpen, setExitGroupDialogOpen] = useState(false)
+  const [encryptionReady, setEncryptionReady] = useState(false)
+  const encryptionReadyRef = useRef(false)
 
   // Sound hooks
   const [playSoundOn] = useSound('/sounds/sound-on.mp3', { volume: 0.7 })
@@ -134,6 +138,63 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
   useEffect(() => {
     soundEnabledRef.current = soundEnabled
   }, [soundEnabled])
+
+  // Initialize encryption for the user
+  useEffect(() => {
+    const initEncryption = async () => {
+      if (!session?.user?.email) return
+
+      try {
+        // Initialize user encryption (generate key pair if needed)
+        const { publicKey } = await ChatEncryption.initializeUserEncryption(session.user.email)
+
+        // Upload public key to server if not already uploaded
+        try {
+          const existingKey = await RestApi.get(`/encryption/keys?userId=${session.user.email}`)
+          if (!existingKey?.result?.publicKey) {
+            await RestApi.post('/encryption/keys', { publicKey })
+            console.log('[Encryption] Public key uploaded to server')
+          }
+        } catch (error) {
+          console.warn('[Encryption] Failed to upload public key:', error)
+        }
+      } catch (error) {
+        console.error('[Encryption] Error initializing encryption:', error)
+      }
+    }
+
+    initEncryption()
+  }, [session?.user?.email])
+
+  // Setup encryption for group chat
+  useEffect(() => {
+    const setupGroupEncryption = async () => {
+      if (!groupId || !session?.user?.email) return
+
+      try {
+        // Setup group chat encryption (creates or retrieves shared group key)
+        const success = await ChatEncryption.setupGroupChatEncryption(groupId, isCreator)
+
+        if (success) {
+          setEncryptionReady(true)
+          encryptionReadyRef.current = true
+          console.log('[Encryption] Group chat encryption set up successfully')
+        } else {
+          console.warn('[Encryption] Failed to set up group chat encryption')
+          setEncryptionReady(false)
+          encryptionReadyRef.current = false
+        }
+      } catch (error) {
+        console.error('[Encryption] Error setting up group chat encryption:', error)
+        setEncryptionReady(false)
+        encryptionReadyRef.current = false
+      }
+    }
+
+    if (groupId && isCreator !== undefined) {
+      setupGroupEncryption()
+    }
+  }, [groupId, session?.user?.email, isCreator])
 
   // Check if user can send messages
   useEffect(() => {
@@ -188,15 +249,34 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
       if (result?.status === 'success') {
         const fetchedMessages = result.result || []
         
+        // Decrypt messages if encryption is ready
+        const decryptedMessages = await Promise.all(
+          fetchedMessages.map(async (msg) => {
+            if (msg.message && encryptionReadyRef.current) {
+              try {
+                const decrypted = await ChatEncryption.decryptIfEncrypted(
+                  msg.message,
+                  (encrypted) => ChatEncryption.decryptGroupMessage(encrypted, groupId)
+                )
+                return { ...msg, message: decrypted }
+              } catch (error) {
+                console.warn('[Encryption] Failed to decrypt message:', error)
+                return msg
+              }
+            }
+            return msg
+          })
+        )
+        
         if (before) {
-          setMessages(prev => [...fetchedMessages, ...prev])
-          setHasMore(fetchedMessages.length === 50)
+          setMessages(prev => [...decryptedMessages, ...prev])
+          setHasMore(decryptedMessages.length === 50)
         } else {
-          setMessages(fetchedMessages)
-          setHasMore(fetchedMessages.length === 50)
+          setMessages(decryptedMessages)
+          setHasMore(decryptedMessages.length === 50)
           
           // Mark all messages as read when opening chat
-          if (fetchedMessages.length > 0) {
+          if (decryptedMessages.length > 0) {
             markAllMessagesAsRead()
           }
         }
@@ -257,7 +337,7 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
         markAllMessagesAsRead()
       }
 
-      wsRef.onmessage = event => {
+      wsRef.onmessage = async event => {
         try {
           const msg = JSON.parse(event.data)
           
@@ -266,27 +346,121 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
           } else if (msg.type === 'newMessage' || msg.type === 'newChatMessage') {
             const message = msg.data
             
+            // Decrypt message if encrypted (try even if encryptionReadyRef is false)
+            let decryptedMessage = message
+            if (message.message) {
+              const isMessageEncrypted = ChatEncryption.isEncrypted(message.message)
+              try {
+                const decrypted = await ChatEncryption.decryptIfEncrypted(
+                  message.message,
+                  (encrypted) => ChatEncryption.decryptGroupMessage(encrypted, groupId)
+                )
+                // Check if decryption actually succeeded (message changed)
+                if (decrypted !== message.message) {
+                  decryptedMessage = { ...message, message: decrypted }
+                } else if (isMessageEncrypted) {
+                  // Message is encrypted but decryption returned the same value (failed)
+                  // This means the key might not be ready yet - retry after a delay
+                  console.log('[Encryption] Decryption failed for encrypted message, will retry:', message._id)
+                  const isOwnMessage = message.senderEmail === session?.user?.email
+                  // Retry decryption after a short delay, especially for own messages
+                  setTimeout(async () => {
+                    try {
+                      const retryDecrypted = await ChatEncryption.decryptIfEncrypted(
+                        message.message,
+                        (encrypted) => ChatEncryption.decryptGroupMessage(encrypted, groupId)
+                      )
+                      if (retryDecrypted !== message.message) {
+                        // Decryption succeeded, update the message in state
+                        setMessages(prev => {
+                          return prev.map(m => 
+                            m._id === message._id 
+                              ? { ...m, message: retryDecrypted }
+                              : m
+                          )
+                        })
+                        console.log('[Encryption] Retry decryption succeeded for message:', message._id)
+                      } else {
+                        // Still failed, try one more time after a longer delay
+                        if (isOwnMessage) {
+                          setTimeout(async () => {
+                            try {
+                              const finalRetry = await ChatEncryption.decryptIfEncrypted(
+                                message.message,
+                                (encrypted) => ChatEncryption.decryptGroupMessage(encrypted, groupId)
+                              )
+                              if (finalRetry !== message.message) {
+                                setMessages(prev => {
+                                  return prev.map(m => 
+                                    m._id === message._id 
+                                      ? { ...m, message: finalRetry }
+                                      : m
+                                  )
+                                })
+                                console.log('[Encryption] Final retry decryption succeeded for message:', message._id)
+                              }
+                            } catch (finalError) {
+                              console.warn('[Encryption] Final retry decryption failed:', finalError)
+                            }
+                          }, 1000)
+                        }
+                      }
+                    } catch (retryError) {
+                      console.warn('[Encryption] Retry decryption failed:', retryError)
+                    }
+                  }, isOwnMessage ? 100 : 500) // Retry faster for own messages
+                }
+              } catch (error) {
+                console.warn('[Encryption] Failed to decrypt incoming message:', error)
+                // If message appears encrypted, retry after a delay
+                if (isMessageEncrypted) {
+                  const isOwnMessage = message.senderEmail === session?.user?.email
+                  setTimeout(async () => {
+                    try {
+                      const retryDecrypted = await ChatEncryption.decryptIfEncrypted(
+                        message.message,
+                        (encrypted) => ChatEncryption.decryptGroupMessage(encrypted, groupId)
+                      )
+                      if (retryDecrypted !== message.message) {
+                        setMessages(prev => {
+                          return prev.map(m => 
+                            m._id === message._id 
+                              ? { ...m, message: retryDecrypted }
+                              : m
+                          )
+                        })
+                        console.log('[Encryption] Retry decryption succeeded for message:', message._id)
+                      }
+                    } catch (retryError) {
+                      console.warn('[Encryption] Retry decryption failed:', retryError)
+                    }
+                  }, isOwnMessage ? 100 : 500)
+                }
+                // Continue with original message (backward compatibility)
+              }
+            }
+            
             // Store message for notification sound (will be played in useEffect outside WebSocket)
             if (
               soundEnabledRef.current &&
-              message.senderEmail !== session?.user?.email &&
-              !message.deletedFor?.some(d => d.userEmail === session?.user?.email) &&
-              !message.deletedForEveryone
+              decryptedMessage.senderEmail !== session?.user?.email &&
+              !decryptedMessage.deletedFor?.some(d => d.userEmail === session?.user?.email) &&
+              !decryptedMessage.deletedForEveryone
             ) {
-              setNewMessageForNotification(message)
+              setNewMessageForNotification(decryptedMessage)
             }
             
             setMessages(prev => {
-              const exists = prev.some(m => m._id === message._id)
+              const exists = prev.some(m => m._id === decryptedMessage._id)
               if (exists) return prev
               // Filter out if deleted for this user, but keep messages deleted for everyone (to show with banned icon)
-              const isDeletedForMe = message.deletedFor?.some(d => d.userEmail === session?.user?.email)
+              const isDeletedForMe = decryptedMessage.deletedFor?.some(d => d.userEmail === session?.user?.email)
               if (isDeletedForMe) return prev
-              const updated = [...prev, message]
+              const updated = [...prev, decryptedMessage]
               // Mark new message as read (only if not deleted for everyone and not own message)
-              if (!message.deletedForEveryone && message.senderEmail !== session?.user?.email) {
+              if (!decryptedMessage.deletedForEveryone && decryptedMessage.senderEmail !== session?.user?.email) {
                 setTimeout(() => {
-                  markMessageAsRead(message._id)
+                  markMessageAsRead(decryptedMessage._id)
                 }, 100)
               }
               return updated
@@ -422,9 +596,22 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
     if (editingMessage) {
       setSending(true)
       try {
+        // Encrypt message if encryption is ready
+        let messageToSend = messageText
+        if (encryptionReadyRef.current) {
+          try {
+            messageToSend = await ChatEncryption.encryptGroupMessage(messageText, groupId)
+          } catch (error) {
+            console.error('[Encryption] Failed to encrypt edited message:', error)
+            toast.error('Failed to encrypt message. Please try again.')
+            setSending(false)
+            return
+          }
+        }
+
         const result = await RestApi.put(API_URLS.v0.USERS_GROUP_CHAT, {
           messageId: editingMessage._id,
-          message: messageText
+          message: messageToSend
         })
 
         if (result?.status === 'success') {
@@ -459,9 +646,23 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
     setSending(true)
 
     try {
+      // Encrypt message if encryption is ready
+      let messageToSend = messageText
+      if (encryptionReadyRef.current) {
+        try {
+          messageToSend = await ChatEncryption.encryptGroupMessage(messageText, groupId)
+        } catch (error) {
+          console.error('[Encryption] Failed to encrypt message:', error)
+          toast.error('Failed to encrypt message. Please try again.')
+          setSending(false)
+          setNewMessage(messageText)
+          return
+        }
+      }
+
       const result = await RestApi.post(API_URLS.v0.USERS_GROUP_CHAT, {
         groupId,
-        message: messageText,
+        message: messageToSend,
         messageType: 'text'
       })
 
@@ -1189,6 +1390,7 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
           onMoreOptionsClick={(e) => setMenuAnchor(e.currentTarget)}
           isGroup={true}
           avatarColor={groupData?.groupName ? getColorFromString(groupData.groupName) : null}
+          encryptionReady={encryptionReady}
         />
         <Menu
           anchorEl={menuAnchor}
@@ -1331,9 +1533,18 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
           handleMessageMenuClose()
         }}
         onSelectMode={() => handleSelectMode(menuMessage)}
-        onEditClick={() => {
+        onEditClick={async () => {
           setEditingMessage(menuMessage)
-          const messageText = menuMessage.message
+          // Ensure message is decrypted before editing
+          let messageText = menuMessage.message
+          if (encryptionReadyRef.current && ChatEncryption.isEncrypted(messageText)) {
+            try {
+              messageText = await ChatEncryption.decryptGroupMessage(messageText, groupId)
+            } catch (error) {
+              console.warn('[Encryption] Failed to decrypt message for editing:', error)
+              // Continue with original message if decryption fails
+            }
+          }
           setNewMessage(messageText) // Prepopulate input with message text
           handleMessageMenuClose()
           // Focus input and set cursor to end after a short delay to ensure it's rendered

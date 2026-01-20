@@ -112,7 +112,18 @@ export const userSchema = new mongoose.Schema(
           }
         }
       }
-    ]
+    ],
+    // End-to-end encryption public key (base64 encoded)
+    publicEncryptionKey: {
+      type: String,
+      default: null,
+      index: false
+    },
+    // Timestamp when encryption key was last updated
+    encryptionKeyUpdatedAt: {
+      type: Date,
+      default: null
+    }
   },
   { timestamps: true }
 )
