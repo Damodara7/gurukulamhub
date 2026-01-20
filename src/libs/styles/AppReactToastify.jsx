@@ -5,7 +5,7 @@ import Box from '@mui/material/Box'
 import { styled } from '@mui/material/styles'
 
 // Third-party Imports
-import 'react-toastify/dist/ReactToastify.css'
+// Note: react-toastify CSS is imported in globals.css to avoid server-side parsing issues
 import { ToastContainer } from 'react-toastify'
 
 // Hook Imports

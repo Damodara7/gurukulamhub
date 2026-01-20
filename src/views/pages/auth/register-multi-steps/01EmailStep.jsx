@@ -23,7 +23,7 @@ import { Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined'
 import PasswordValidation from './PasswordValidation'
 import * as AppCodes from '@/configs/appErrorCodes'
-import 'react-toastify/dist/ReactToastify.css'
+// Note: react-toastify CSS is imported in globals.css to avoid server-side parsing issues
 import * as clientApi from '@/app/api/client/client.api'
 import Loading from '@/components/Loading'
 import OtpForm from './OTPForm'

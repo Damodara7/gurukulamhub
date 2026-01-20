@@ -309,5 +309,11 @@ export const config = {
      *    - icons (PWA icons)
      */
     '/((?!api|_next/static|_next/image|favicon.ico|.+?/hook-examples|.+?/menu-examples|images|sounds|animations|next.svg|vercel.svg|sample_music.mp3|manifest.json|sw.js|offline|offline.html|icons|workbox-|fallback-).*)'
+  ],
+  // Allow dynamic code evaluation for Next.js middleware loader
+  // This is a workaround for Next.js's middleware loader using eval()
+  unstable_allowDynamic: [
+    '/node_modules/next/dist/build/webpack/loaders/next-middleware-loader.js',
+    '**/next-middleware-loader.js'
   ]
 }
