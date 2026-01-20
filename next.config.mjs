@@ -30,14 +30,14 @@ const nextConfig = {
   // especially in production, as it allows requests from any origin.
   // If you intend to allow all origins for development or testing, it is technically valid,
   // but you should avoid this in production environments.
-  allowedDevOrigins: [
-    'https://gurukulamhub.com',
-    'https://gurukulamhub.org',
-    'https://www.gurukulamhub.org',
-    'https://localhost:3000',
-    // '*' is allowed, but use with caution!
-    '*'
-  ],
+  // allowedDevOrigins: [
+  //   'https://gurukulamhub.com',
+  //   'https://gurukulamhub.org',
+  //   'https://www.gurukulamhub.org',
+  //   'https://localhost:3000',
+  //   // '*' is allowed, but use with caution!
+  //   '*'
+  // ],
   reactStrictMode: false,
   // Disable ESLint during builds (for Docker/production builds)
   eslint: {
@@ -47,23 +47,15 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '2mb'
     },
-    // Enable instrumentation hook to run code once on server startup
-    instrumentationHook: true
+    // Disable instrumentation hook to avoid Edge runtime eval() errors
+    // The SUPER_ADMIN initialization is now handled in src/app/[lang]/layout.jsx
+    // which only runs in Node.js runtime
+    instrumentationHook: false
   },
-  webpack: (config, { isServer, webpack }) => {
+  webpack: (config, { isServer }) => {
     if (isServer) {
       config.externals = [...(config.externals || []), 'ws']
     }
-    
-    // Exclude instrumentation from Edge runtime compilation
-    // This prevents the EvalError when Next.js tries to compile instrumentation for Edge runtime
-    // Check if this is an Edge runtime build (middleware or edge routes)
-    const isEdgeRuntime = config.name === 'edge-server' || 
-                         config.name === 'middleware' ||
-                         (config.target && config.target.includes('edge'))
-    
-    // No special handling needed - instrumentation.ts is now minimal and Edge-safe
-    
     return config
   },
   // Temporarily ignore build errors to allow WebSocket routes with next-ws
