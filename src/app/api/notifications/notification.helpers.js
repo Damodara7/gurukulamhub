@@ -1832,3 +1832,342 @@ export const createSponsorshipRejectedNotification = async (sponsorUserId, spons
     }
   }
 }
+
+export const createSponsorshipPaymentPendingNotification = async (sponsorUserId, sponsorshipData) => {
+  try {
+    console.log('[Notification Helper] Creating sponsorship payment pending notification for sponsor:', sponsorUserId)
+    
+    if (!sponsorUserId) {
+      console.error('[Notification Helper] ❌ sponsorUserId is missing or invalid')
+      return {
+        status: 'error',
+        result: null,
+        message: 'Sponsor user ID is required'
+      }
+    }
+
+    if (typeof sponsorUserId === 'string' && !mongoose.Types.ObjectId.isValid(sponsorUserId)) {
+      console.error('[Notification Helper] ❌ sponsorUserId is not a valid ObjectId string')
+      return {
+        status: 'error',
+        result: null,
+        message: 'Invalid sponsor user ID format'
+      }
+    }
+
+    const sponsorshipId = sponsorshipData._id?.toString() || sponsorshipData.id || sponsorshipData._id
+    const amount = sponsorshipData.sponsorshipAmount || 0
+    const currency = sponsorshipData.currency || 'INR'
+    const paymentId = sponsorshipData.paymentId || null
+    const initiatedAt = sponsorshipData.initiatedAt || new Date()
+
+    // Format currency
+    const formatCurrency = (value, curr) => {
+      return new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: curr || 'INR',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(value || 0)
+    }
+
+    console.log('[Notification Helper] Prepared data:', {
+      sponsorUserId,
+      sponsorshipId,
+      amount,
+      currency,
+      paymentId
+    })
+
+    const notificationData = {
+      userId: sponsorUserId,
+      type: 'SPONSORSHIP_PAYMENT_PENDING',
+      title: `Payment Initiated: ${formatCurrency(amount, currency)}`,
+      message: `Your sponsorship payment of ${formatCurrency(amount, currency)} has been initiated. Please complete the payment to finalize your sponsorship.`,
+      relatedEntity: {
+        entityType: 'sponsorship',
+        entityId: sponsorshipId
+      },
+      metadata: {
+        sponsorshipId,
+        amount,
+        currency,
+        paymentId,
+        initiatedAt: initiatedAt instanceof Date ? initiatedAt.toISOString() : initiatedAt,
+        paymentStatus: 'pending'
+      },
+      actionUrl: `/sponsor/${sponsorshipId}/payment`,
+      actionLabel: 'Complete Payment'
+    }
+
+    console.log('[Notification Helper] Notification data prepared:', notificationData)
+    const result = await NotificationService.addOne(notificationData)
+    console.log('[Notification Helper] ✅ NotificationService.addOne result:', result)
+    return result
+  } catch (error) {
+    console.error('[Notification Helper] ❌❌❌ ERROR in createSponsorshipPaymentPendingNotification ❌❌❌')
+    console.error('[Notification Helper] Error message:', error.message)
+    console.error('[Notification Helper] Error stack:', error.stack)
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to create sponsorship payment pending notification'
+    }
+  }
+}
+
+export const createSponsorshipPaymentCompletedNotification = async (sponsorUserId, sponsorshipData) => {
+  try {
+    console.log('[Notification Helper] Creating sponsorship payment completed notification for sponsor:', sponsorUserId)
+    
+    if (!sponsorUserId) {
+      console.error('[Notification Helper] ❌ sponsorUserId is missing or invalid')
+      return {
+        status: 'error',
+        result: null,
+        message: 'Sponsor user ID is required'
+      }
+    }
+
+    if (typeof sponsorUserId === 'string' && !mongoose.Types.ObjectId.isValid(sponsorUserId)) {
+      console.error('[Notification Helper] ❌ sponsorUserId is not a valid ObjectId string')
+      return {
+        status: 'error',
+        result: null,
+        message: 'Invalid sponsor user ID format'
+      }
+    }
+
+    const sponsorshipId = sponsorshipData._id?.toString() || sponsorshipData.id || sponsorshipData._id
+    const amount = sponsorshipData.sponsorshipAmount || 0
+    const currency = sponsorshipData.currency || 'INR'
+    const paymentId = sponsorshipData.paymentId || null
+    const completedAt = sponsorshipData.completedAt || new Date()
+
+    // Format currency
+    const formatCurrency = (value, curr) => {
+      return new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: curr || 'INR',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(value || 0)
+    }
+
+    console.log('[Notification Helper] Prepared data:', {
+      sponsorUserId,
+      sponsorshipId,
+      amount,
+      currency,
+      paymentId
+    })
+
+    const notificationData = {
+      userId: sponsorUserId,
+      type: 'SPONSORSHIP_PAYMENT_COMPLETED',
+      title: `Payment Successful: ${formatCurrency(amount, currency)}`,
+      message: `Your sponsorship payment of ${formatCurrency(amount, currency)} has been completed successfully! Thank you for your generous support.`,
+      relatedEntity: {
+        entityType: 'sponsorship',
+        entityId: sponsorshipId
+      },
+      metadata: {
+        sponsorshipId,
+        amount,
+        currency,
+        paymentId,
+        completedAt: completedAt instanceof Date ? completedAt.toISOString() : completedAt,
+        paymentStatus: 'completed'
+      },
+      actionUrl: `/sponsor/${sponsorshipId}/success`,
+      actionLabel: 'View Sponsorship'
+    }
+
+    console.log('[Notification Helper] Notification data prepared:', notificationData)
+    const result = await NotificationService.addOne(notificationData)
+    console.log('[Notification Helper] ✅ NotificationService.addOne result:', result)
+    return result
+  } catch (error) {
+    console.error('[Notification Helper] ❌❌❌ ERROR in createSponsorshipPaymentCompletedNotification ❌❌❌')
+    console.error('[Notification Helper] Error message:', error.message)
+    console.error('[Notification Helper] Error stack:', error.stack)
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to create sponsorship payment completed notification'
+    }
+  }
+}
+
+export const createSponsorshipPaymentFailedNotification = async (sponsorUserId, sponsorshipData) => {
+  try {
+    console.log('[Notification Helper] Creating sponsorship payment failed notification for sponsor:', sponsorUserId)
+    
+    if (!sponsorUserId) {
+      console.error('[Notification Helper] ❌ sponsorUserId is missing or invalid')
+      return {
+        status: 'error',
+        result: null,
+        message: 'Sponsor user ID is required'
+      }
+    }
+
+    if (typeof sponsorUserId === 'string' && !mongoose.Types.ObjectId.isValid(sponsorUserId)) {
+      console.error('[Notification Helper] ❌ sponsorUserId is not a valid ObjectId string')
+      return {
+        status: 'error',
+        result: null,
+        message: 'Invalid sponsor user ID format'
+      }
+    }
+
+    const sponsorshipId = sponsorshipData._id?.toString() || sponsorshipData.id || sponsorshipData._id
+    const amount = sponsorshipData.sponsorshipAmount || 0
+    const currency = sponsorshipData.currency || 'INR'
+    const paymentId = sponsorshipData.paymentId || null
+    const failureReason = sponsorshipData.failureReason || sponsorshipData.errorMessage || null
+    const failedAt = sponsorshipData.failedAt || new Date()
+
+    // Format currency
+    const formatCurrency = (value, curr) => {
+      return new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: curr || 'INR',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(value || 0)
+    }
+
+    console.log('[Notification Helper] Prepared data:', {
+      sponsorUserId,
+      sponsorshipId,
+      amount,
+      currency,
+      paymentId,
+      hasFailureReason: !!failureReason
+    })
+
+    // Build message with optional failure reason
+    let message = `Your sponsorship payment of ${formatCurrency(amount, currency)} failed. Please try again.`
+    if (failureReason && failureReason.trim()) {
+      message += ` Reason: ${failureReason.trim()}`
+    }
+
+    const notificationData = {
+      userId: sponsorUserId,
+      type: 'SPONSORSHIP_PAYMENT_FAILED',
+      title: `Payment Failed: ${formatCurrency(amount, currency)}`,
+      message: message,
+      relatedEntity: {
+        entityType: 'sponsorship',
+        entityId: sponsorshipId
+      },
+      metadata: {
+        sponsorshipId,
+        amount,
+        currency,
+        paymentId,
+        failedAt: failedAt instanceof Date ? failedAt.toISOString() : failedAt,
+        failureReason: failureReason || null,
+        paymentStatus: 'failed'
+      },
+      actionUrl: `/sponsor/${sponsorshipId}/payment`,
+      actionLabel: 'Retry Payment'
+    }
+
+    console.log('[Notification Helper] Notification data prepared:', notificationData)
+    const result = await NotificationService.addOne(notificationData)
+    console.log('[Notification Helper] ✅ NotificationService.addOne result:', result)
+    return result
+  } catch (error) {
+    console.error('[Notification Helper] ❌❌❌ ERROR in createSponsorshipPaymentFailedNotification ❌❌❌')
+    console.error('[Notification Helper] Error message:', error.message)
+    console.error('[Notification Helper] Error stack:', error.stack)
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to create sponsorship payment failed notification'
+    }
+  }
+}
+
+export const createSponsorshipPaymentExpiredNotification = async (sponsorUserId, sponsorshipData) => {
+  try {
+    console.log('[Notification Helper] Creating sponsorship payment expired notification for sponsor:', sponsorUserId)
+    
+    if (!sponsorUserId) {
+      console.error('[Notification Helper] ❌ sponsorUserId is missing or invalid')
+      return {
+        status: 'error',
+        result: null,
+        message: 'Sponsor user ID is required'
+      }
+    }
+
+    if (typeof sponsorUserId === 'string' && !mongoose.Types.ObjectId.isValid(sponsorUserId)) {
+      console.error('[Notification Helper] ❌ sponsorUserId is not a valid ObjectId string')
+      return {
+        status: 'error',
+        result: null,
+        message: 'Invalid sponsor user ID format'
+      }
+    }
+
+    const sponsorshipId = sponsorshipData._id?.toString() || sponsorshipData.id || sponsorshipData._id
+    const amount = sponsorshipData.sponsorshipAmount || 0
+    const currency = sponsorshipData.currency || 'INR'
+    const expiredAt = sponsorshipData.expiredAt || sponsorshipData.sponsorshipExpiresAt || new Date()
+
+    // Format currency
+    const formatCurrency = (value, curr) => {
+      return new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: curr || 'INR',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(value || 0)
+    }
+
+    console.log('[Notification Helper] Prepared data:', {
+      sponsorUserId,
+      sponsorshipId,
+      amount,
+      currency,
+      expiredAt
+    })
+
+    const notificationData = {
+      userId: sponsorUserId,
+      type: 'SPONSORSHIP_PAYMENT_EXPIRED',
+      title: `Payment Expired: ${formatCurrency(amount, currency)}`,
+      message: `Your sponsorship payment session for ${formatCurrency(amount, currency)} has expired. Please create a new sponsorship to proceed with your contribution.`,
+      relatedEntity: {
+        entityType: 'sponsorship',
+        entityId: sponsorshipId
+      },
+      metadata: {
+        sponsorshipId,
+        amount,
+        currency,
+        expiredAt: expiredAt instanceof Date ? expiredAt.toISOString() : expiredAt,
+        paymentStatus: 'expired'
+      },
+      actionUrl: `/sponsor/quizzes`,
+      actionLabel: 'Create New Sponsorship'
+    }
+
+    console.log('[Notification Helper] Notification data prepared:', notificationData)
+    const result = await NotificationService.addOne(notificationData)
+    console.log('[Notification Helper] ✅ NotificationService.addOne result:', result)
+    return result
+  } catch (error) {
+    console.error('[Notification Helper] ❌❌❌ ERROR in createSponsorshipPaymentExpiredNotification ❌❌❌')
+    console.error('[Notification Helper] Error message:', error.message)
+    console.error('[Notification Helper] Error stack:', error.stack)
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to create sponsorship payment expired notification'
+    }
+  }
+}

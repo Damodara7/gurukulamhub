@@ -37,7 +37,11 @@ const notificationSchema = new mongoose.Schema(
         'PROFILE_COMPLETION_REMINDER',
         'SPONSORSHIP_PENDING_APPROVAL',
         'SPONSORSHIP_APPROVED',
-        'SPONSORSHIP_REJECTED'
+        'SPONSORSHIP_REJECTED',
+        'SPONSORSHIP_PAYMENT_PENDING',
+        'SPONSORSHIP_PAYMENT_COMPLETED',
+        'SPONSORSHIP_PAYMENT_FAILED',
+        'SPONSORSHIP_PAYMENT_EXPIRED'
       ],
       index: true
     },

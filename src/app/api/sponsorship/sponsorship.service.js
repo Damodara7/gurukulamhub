@@ -7,7 +7,8 @@ import { ROLES_LOOKUP } from '@/configs/roles-lookup.js'
 import {
   createPhysicalGiftSponsorshipPendingNotification,
   createSponsorshipApprovedNotification,
-  createSponsorshipRejectedNotification
+  createSponsorshipRejectedNotification,
+  createSponsorshipPaymentExpiredNotification
 } from '../notifications/notification.helpers.js'
 
 export async function getOne({ queryParams }) {
@@ -371,6 +372,95 @@ export async function updateOne({ data }) {
       } catch (notificationError) {
         console.error('[Sponsorship Service] Error creating sponsor notifications:', notificationError)
         // Don't fail the sponsorship update if notification fails
+      }
+    }
+
+    // ✅ NOTIFICATION: If cash sponsorship status changed to expired, notify sponsor
+    if (
+      sponsorship.rewardType === 'cash' &&
+      oldSponsorship &&
+      oldSponsorship.sponsorshipStatus !== 'expired' &&
+      sponsorship.sponsorshipStatus === 'expired'
+    ) {
+      try {
+        console.log(
+          '[Sponsorship Service] Cash sponsorship status changed to expired:',
+          oldSponsorship.sponsorshipStatus,
+          '->',
+          'expired'
+        )
+
+        // Find sponsor user by email
+        const sponsorEmail = sponsorship.accountHolderEmail || sponsorship.email
+        if (sponsorEmail) {
+          const sponsorUser = await User.findOne({ email: sponsorEmail })
+            .select('_id email')
+            .lean()
+
+          if (sponsorUser) {
+            const notificationResult = await createSponsorshipPaymentExpiredNotification(sponsorUser._id, {
+              _id: sponsorship._id,
+              id: sponsorship._id,
+              sponsorshipAmount: sponsorship.sponsorshipAmount,
+              currency: sponsorship.currency || 'INR',
+              expiredAt: sponsorship.sponsorshipExpiresAt || new Date()
+            })
+            console.log('[Sponsorship Service] Created payment expired notification for sponsor:', notificationResult)
+          } else {
+            console.warn('[Sponsorship Service] Sponsor user not found for email:', sponsorEmail)
+          }
+        } else {
+          console.warn('[Sponsorship Service] No sponsor email found in sponsorship')
+        }
+      } catch (notificationError) {
+        console.error('[Sponsorship Service] Error creating expired notification:', notificationError)
+        // Don't fail the sponsorship update if notification fails
+      }
+    }
+
+    // ✅ NOTIFICATION: Auto-check for expired cash sponsorships (if status is still pending/created but expired)
+    if (
+      sponsorship.rewardType === 'cash' &&
+      sponsorship.sponsorshipStatus &&
+      (sponsorship.sponsorshipStatus === 'pending' || sponsorship.sponsorshipStatus === 'created') &&
+      sponsorship.sponsorshipExpiresAt &&
+      new Date() > new Date(sponsorship.sponsorshipExpiresAt)
+    ) {
+      // Check if status was not already expired
+      if (!oldSponsorship || oldSponsorship.sponsorshipStatus !== 'expired') {
+        try {
+          console.log('[Sponsorship Service] Sponsorship expired, updating status and notifying sponsor...')
+          
+          // Update status to expired
+          sponsorship.sponsorshipStatus = 'expired'
+          await sponsorship.save()
+
+          // Find sponsor user by email
+          const sponsorEmail = sponsorship.accountHolderEmail || sponsorship.email
+          if (sponsorEmail) {
+            const sponsorUser = await User.findOne({ email: sponsorEmail })
+              .select('_id email')
+              .lean()
+
+            if (sponsorUser) {
+              const notificationResult = await createSponsorshipPaymentExpiredNotification(sponsorUser._id, {
+                _id: sponsorship._id,
+                id: sponsorship._id,
+                sponsorshipAmount: sponsorship.sponsorshipAmount,
+                currency: sponsorship.currency || 'INR',
+                expiredAt: sponsorship.sponsorshipExpiresAt
+              })
+              console.log('[Sponsorship Service] Created payment expired notification for sponsor:', notificationResult)
+            } else {
+              console.warn('[Sponsorship Service] Sponsor user not found for email:', sponsorEmail)
+            }
+          } else {
+            console.warn('[Sponsorship Service] No sponsor email found in sponsorship')
+          }
+        } catch (notificationError) {
+          console.error('[Sponsorship Service] Error creating expired notification:', notificationError)
+          // Don't fail the sponsorship update if notification fails
+        }
       }
     }
 

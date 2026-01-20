@@ -1,6 +1,8 @@
 import connectMongo from '@/utils/dbConnect-mongo'
 import SponsorshipPayment from './sponsorship-payment.model'
 import Sponsorship from '../sponsorship/sponsorship.model'
+import User from '@/app/models/user.model.js'
+import { createSponsorshipPaymentPendingNotification } from '../notifications/notification.helpers.js'
 import Stripe from 'stripe'
 
 // Lazy initialization to avoid build-time errors
@@ -53,6 +55,39 @@ export async function create({ data }) {
     // Change Sponsorship status to pending for payment
     sponsorship.sponsorshipStatus = 'pending'
     await sponsorship.save()
+
+    // ✅ NOTIFICATION: Notify sponsor that payment has been initiated
+    if (sponsorship.rewardType === 'cash') {
+      try {
+        console.log('[Sponsorship Payment Service] Payment initiated, finding sponsor user...')
+        // Find sponsor user by email
+        const sponsorEmail = sponsorship.accountHolderEmail || sponsorship.email
+        if (sponsorEmail) {
+          const sponsorUser = await User.findOne({ email: sponsorEmail })
+            .select('_id email')
+            .lean()
+
+          if (sponsorUser) {
+            const notificationResult = await createSponsorshipPaymentPendingNotification(sponsorUser._id, {
+              _id: sponsorship._id,
+              id: sponsorship._id,
+              sponsorshipAmount: sponsorship.sponsorshipAmount,
+              currency: sponsorship.currency || 'INR',
+              paymentId: paymentIntent.id,
+              initiatedAt: new Date()
+            })
+            console.log('[Sponsorship Payment Service] Created payment pending notification for sponsor:', notificationResult)
+          } else {
+            console.warn('[Sponsorship Payment Service] Sponsor user not found for email:', sponsorEmail)
+          }
+        } else {
+          console.warn('[Sponsorship Payment Service] No sponsor email found in sponsorship')
+        }
+      } catch (notificationError) {
+        console.error('[Sponsorship Payment Service] Error creating payment pending notification:', notificationError)
+        // Don't fail the payment creation if notification fails
+      }
+    }
 
     return {
       status: 'success',

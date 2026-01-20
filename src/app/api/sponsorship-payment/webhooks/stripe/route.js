@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server'
 import Sponsorship from '@/app/api/sponsorship/sponsorship.model'
+import User from '@/app/models/user.model.js'
+import {
+  createSponsorshipPaymentCompletedNotification,
+  createSponsorshipPaymentFailedNotification
+} from '@/app/api/notifications/notification.helpers.js'
 import Stripe from 'stripe'
 
 // depricated
@@ -63,6 +68,38 @@ export async function POST(request) {
 
         sponsorship.sponsorshipStatus = 'completed'
         await sponsorship.save()
+
+        // ✅ NOTIFICATION: Notify sponsor that payment was completed
+        if (sponsorship.rewardType === 'cash') {
+          try {
+            console.log('[Webhook] Payment succeeded, finding sponsor user...')
+            const sponsorEmail = sponsorship.accountHolderEmail || sponsorship.email
+            if (sponsorEmail) {
+              const sponsorUser = await User.findOne({ email: sponsorEmail })
+                .select('_id email')
+                .lean()
+
+              if (sponsorUser) {
+                const notificationResult = await createSponsorshipPaymentCompletedNotification(sponsorUser._id, {
+                  _id: sponsorship._id,
+                  id: sponsorship._id,
+                  sponsorshipAmount: sponsorship.sponsorshipAmount,
+                  currency: sponsorship.currency || 'INR',
+                  paymentId: paymentIntentSucceeded.id,
+                  completedAt: new Date()
+                })
+                console.log('[Webhook] Created payment completed notification for sponsor:', notificationResult)
+              } else {
+                console.warn('[Webhook] Sponsor user not found for email:', sponsorEmail)
+              }
+            } else {
+              console.warn('[Webhook] No sponsor email found in sponsorship')
+            }
+          } catch (notificationError) {
+            console.error('[Webhook] Error creating payment completed notification:', notificationError)
+            // Don't fail the webhook if notification fails
+          }
+        }
         break
 
       case 'payment_intent.payment_failed':
@@ -77,6 +114,46 @@ export async function POST(request) {
 
         sponsorshipFailed.sponsorshipStatus = 'failed'
         await sponsorshipFailed.save()
+
+        // ✅ NOTIFICATION: Notify sponsor that payment failed
+        if (sponsorshipFailed.rewardType === 'cash') {
+          try {
+            console.log('[Webhook] Payment failed, finding sponsor user...')
+            const sponsorEmail = sponsorshipFailed.accountHolderEmail || sponsorshipFailed.email
+            if (sponsorEmail) {
+              const sponsorUser = await User.findOne({ email: sponsorEmail })
+                .select('_id email')
+                .lean()
+
+              if (sponsorUser) {
+                // Extract failure reason from Stripe payment intent
+                const failureReason =
+                  paymentIntentFailed.last_payment_error?.message ||
+                  paymentIntentFailed.last_payment_error?.decline_code ||
+                  paymentIntentFailed.outcome?.reason ||
+                  null
+
+                const notificationResult = await createSponsorshipPaymentFailedNotification(sponsorUser._id, {
+                  _id: sponsorshipFailed._id,
+                  id: sponsorshipFailed._id,
+                  sponsorshipAmount: sponsorshipFailed.sponsorshipAmount,
+                  currency: sponsorshipFailed.currency || 'INR',
+                  paymentId: paymentIntentFailed.id,
+                  failureReason: failureReason,
+                  failedAt: new Date()
+                })
+                console.log('[Webhook] Created payment failed notification for sponsor:', notificationResult)
+              } else {
+                console.warn('[Webhook] Sponsor user not found for email:', sponsorEmail)
+              }
+            } else {
+              console.warn('[Webhook] No sponsor email found in sponsorship')
+            }
+          } catch (notificationError) {
+            console.error('[Webhook] Error creating payment failed notification:', notificationError)
+            // Don't fail the webhook if notification fails
+          }
+        }
         break
 
       default:
