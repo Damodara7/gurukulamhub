@@ -3,10 +3,6 @@ import withPWA from '@ducanh2912/next-pwa'
 import fs from 'fs'
 import path from 'path'
 import crypto from 'crypto'
-import { fileURLToPath } from 'url'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
 
 const nextConfig = {
   staticPageGenerationTimeout: 180,
@@ -30,14 +26,14 @@ const nextConfig = {
   // especially in production, as it allows requests from any origin.
   // If you intend to allow all origins for development or testing, it is technically valid,
   // but you should avoid this in production environments.
-  // allowedDevOrigins: [
-  //   'https://gurukulamhub.com',
-  //   'https://gurukulamhub.org',
-  //   'https://www.gurukulamhub.org',
-  //   'https://localhost:3000',
-  //   // '*' is allowed, but use with caution!
-  //   '*'
-  // ],
+  allowedDevOrigins: [
+    'https://gurukulamhub.com',
+    'https://gurukulamhub.org',
+    'https://www.gurukulamhub.org',
+    'https://localhost:3000',
+    // '*' is allowed, but use with caution!
+    '*'
+  ],
   reactStrictMode: false,
   // Disable ESLint during builds (for Docker/production builds)
   eslint: {
@@ -47,21 +43,13 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '2mb'
     },
-    // Disable instrumentation hook to avoid Edge runtime eval() errors
-    // The SUPER_ADMIN initialization is now handled in src/app/[lang]/layout.jsx
-    // which only runs in Node.js runtime
-    instrumentationHook: false
+    // Enable instrumentation hook to run code once on server startup
+    instrumentationHook: true
   },
   webpack: (config, { isServer }) => {
     if (isServer) {
       config.externals = [...(config.externals || []), 'ws']
     }
-    
-    // In production, Next.js handles CSS differently
-    // Most CSS imports should work fine - CSS modules and client component imports are OK
-    // The errors we see are from CSS in server components, which we've already fixed
-    // This config ensures CSS is handled properly for both client and server
-    
     return config
   },
   // Temporarily ignore build errors to allow WebSocket routes with next-ws

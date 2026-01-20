@@ -11,8 +11,10 @@ import { i18n } from '@configs/i18n'
 // Util Imports
 import { getLocalizedUrl, isUrlMissingLocale } from '@/utils/i18n'
 import { ensurePrefix, withoutSuffix } from '@/utils/string'
-// Note: Auth removed from middleware to avoid Edge runtime eval() errors
-// Authentication is now handled in route layouts and API route handlers
+// import NextAuth from 'next-auth'
+// import { authConfig } from './libs/authConfig'
+import { auth } from './libs/auth'
+import { ADMIN_ROUTES, USER_ROUTES } from './routes'
 
 // const { auth } = NextAuth(authConfig)
 
@@ -108,8 +110,106 @@ export default async function middleware(request) {
     return NextResponse.next()
   }
 
-  // Middleware now only handles locale routing
-  // Authentication is handled in route layouts (Node.js runtime)
+  // console.log('pathname:', pathname)
+  // retrieve the current response
+  //const res = NextResponse.next()
+  // if the origin is an allowed one,
+  // add it to the 'Access-Control-Allow-Origin' header
+  //if (allowedOrigins.includes(origin)) {
+  // res.headers.append('Access-Control-Allow-Origin', origin);
+  // }
+
+  const session = await auth()
+
+  const searchParams = request.nextUrl.searchParams
+  const redirectTo = searchParams.get('redirectTo')
+  //console.log('Session in Middleware:', session)
+
+  // If the user is logged in, `token` will be an object containing the user's details
+  // const token = request.auth
+
+  // Check if the user is logged in
+  // const isUserLoggedIn = !!token
+
+  // Guest routes (Routes that can be accessed by guest users who are not logged in)
+  const guestRoutes = [
+    'welcome',
+    'join-game',
+    'auth/login',
+    'auth/register',
+    'event-registration',
+    'forgot-password',
+    'reset-password',
+    'termsofservice',
+    'privacypolicy'
+  ]
+
+  // Shared routes (Routes that can be accessed by both guest and logged in users)
+  const sharedRoutes = ['shared-route']
+
+  // Private routes (All routes except guest and shared routes that can only be accessed by logged in users)
+  const privateRoute = ![...guestRoutes, ...sharedRoutes].some(route => pathname.endsWith(route))
+
+  // If the user is not logged in and is trying to access a private route, redirect to the login page
+  // if (!isUserLoggedIn && privateRoute) {
+  // if (!session?.user && privateRoute) {
+  //   let redirectUrl = '/login'
+  //   return NextResponse.redirect(redirectUrl)
+  // }
+  let isApiAuthRoute = pathname.startsWith('/api/auth')
+  if (isApiAuthRoute) {
+    // console.log('API Auth ROUTE')
+    return NextResponse.next()
+  }
+
+  // Handle redirect after login
+  if (session?.user && redirectTo) {
+    console.log('redirect to ', redirectTo)
+
+    // Create a new URL object to manipulate the search params
+    const requestUrl = new URL(request.url)
+    const searchParams = new URLSearchParams(requestUrl.search)
+
+    // Remove the redirectTo parameter
+    searchParams.delete('redirectTo')
+
+    // Update the request URL without the redirectTo parameter
+    requestUrl.search = searchParams.toString()
+    const cleanedRequest = new Request(requestUrl.toString(), request)
+
+    console.log('total data', localizedRedirect(redirectTo, locale, cleanedRequest))
+    return localizedRedirect(redirectTo, locale, cleanedRequest)
+  }
+
+  if (!session?.user && privateRoute) {
+    let redirectUrl = '/welcome' // /auth/login
+
+    // if (!(pathname === '/' || pathname === `/${locale}`)) {
+    //   const searchParamsStr = new URLSearchParams({ redirectTo: withoutSuffix(pathname, '/') }).toString()
+
+    //   redirectUrl += `?${searchParamsStr}`
+    // }
+
+    return localizedRedirect(redirectUrl, locale, request)
+  }
+
+  // If the user is logged in and is trying to access a guest route, redirect to the root page
+  const isRequestedRouteIsGuestRoute = guestRoutes.some(route => pathname.endsWith(route))
+
+  // if (isUserLoggedIn && isRequestedRouteIsGuestRoute) {
+  if (session?.user && isRequestedRouteIsGuestRoute) {
+    // Check for corner cases, e.g., based on user roles or certain flags
+    if (session?.user.role === 'admin') {
+      const adminDashboardUrl = '/admin/dashboard'
+      return localizedRedirect(adminDashboardUrl, locale, request) // Admin-specific redirect
+    }
+    return localizedRedirect(HOME_PAGE_URL, locale, request)
+  }
+
+  // If the user is logged in and is trying to access root page, redirect to the home page
+  if (pathname === '/' || pathname === `/${locale}`) {
+    return localizedRedirect(HOME_PAGE_URL, locale, request)
+  }
 
   // If pathname already contains a locale, return next() else redirect with localized URL
   return isUrlMissingLocale(pathname) ? localizedRedirect(pathname, locale, request) : NextResponse.next()
@@ -201,6 +301,5 @@ export const config = {
      *    - icons (PWA icons)
      */
     '/((?!api|_next/static|_next/image|favicon.ico|.+?/hook-examples|.+?/menu-examples|images|sounds|animations|next.svg|vercel.svg|sample_music.mp3|manifest.json|sw.js|offline|offline.html|icons|workbox-|fallback-).*)'
-  ],
-  // No need for unstable_allowDynamic since we removed auth() from middleware
+  ]
 }
