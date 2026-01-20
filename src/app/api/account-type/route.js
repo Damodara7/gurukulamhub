@@ -2,6 +2,8 @@ import * as AccountTypeService from './account-type.service.js';
 import { HttpStatusCode } from '@/utils/HttpStatusCodes';
 import * as ApiResponseUtils from '@/utils/apiResponses';
 
+export const dynamic = 'force-dynamic'
+
 const Artifact = 'Account Type';
 
 // **GET Request**
