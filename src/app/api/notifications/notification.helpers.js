@@ -327,6 +327,8 @@ export const createRoleRemovedNotification = async (userId, roleData) => {
 
 export const createProfileCompletionNotification = async (userId, profileData) => {
   try {
+    await connectMongo()
+    
     const completionPercentage = profileData.completionPercentage || 0
     const missingFields = profileData.missingFields || []
     const totalFields = profileData.totalFields || 0
@@ -344,6 +346,37 @@ export const createProfileCompletionNotification = async (userId, profileData) =
         status: 'success',
         result: null,
         message: 'Now ur profile is not 100% complete. Please fill in more details to unlock features.'
+      }
+    }
+
+    // ✅ SAFEGUARD: Check for existing PROFILE_COMPLETION_REMINDER notifications to prevent duplicates
+    // For scheduled reminders, check if notification was already sent today
+    // For manual triggers, check if notification was sent in the last 24 hours
+    const checkTimeWindow = isScheduledReminder 
+      ? (() => {
+          // For scheduled reminders, check today's date range
+          const todayStart = new Date()
+          todayStart.setHours(0, 0, 0, 0)
+          const todayEnd = new Date()
+          todayEnd.setHours(23, 59, 59, 999)
+          return { $gte: todayStart, $lte: todayEnd }
+        })()
+      : new Date(Date.now() - 24 * 60 * 60 * 1000) // Last 24 hours for manual triggers
+
+    const existingNotification = await Notification.findOne({
+      userId: userId,
+      type: 'PROFILE_COMPLETION_REMINDER',
+      createdAt: isScheduledReminder ? checkTimeWindow : { $gte: checkTimeWindow }
+    }).lean()
+
+    if (existingNotification) {
+      console.log(
+        `[Notification Helper] ⚠️ PROFILE_COMPLETION_REMINDER notification already exists for user ${userId}${isScheduledReminder ? ' (today)' : ' (last 24 hours)'}, skipping duplicate`
+      )
+      return {
+        status: 'success',
+        result: null,
+        message: 'Notification already sent (duplicate prevented)'
       }
     }
 
