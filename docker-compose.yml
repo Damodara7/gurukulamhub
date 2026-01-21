@@ -26,8 +26,13 @@ services:
       - NEXT_PUBLIC_STRIPE_SECRET_KEY=${NEXT_PUBLIC_STRIPE_SECRET_KEY}
       - NEXT_PUBLIC_SOCKET_IO_SERVER=${NEXT_PUBLIC_SOCKET_IO_SERVER:-http://localhost:3000}
       - SOCKET_SERVER_URL=${SOCKET_SERVER_URL:-http://localhost:3000}
+    # Environment variables can be provided via:
+    # 1. .env.production file (if exists)
+    # 2. Environment variables passed directly
+    # 3. GitHub Secrets (via CI/CD)
     env_file:
       - .env.production
+    # Note: env_file is optional - if file doesn't exist, use environment variables directly
     depends_on:
       - redis
     restart: unless-stopped
