@@ -15,13 +15,21 @@ export async function POST(request: NextRequest) {
     var result = await UserService.srvSendPhoneOtp(email, phone, name)
     console.log('Sending response....', result)
     // Only include testingOtp if SMS sending failed
-    const shouldShowTestingOtp = result?.error || result?.status === 'error'
+    // Use optional chaining and nullish coalescing to handle TypeScript type checking
+    const smsSent = (result as any)?.smsSent ?? false
+    const shouldShowTestingOtp = result?.error || result?.status === 'error' || !smsSent
     const json_response = {
       success: result,
       results: 3,
       testingOtp: shouldShowTestingOtp ? (result?.testingOtp || null) : null,
       smsOtpError: shouldShowTestingOtp
     }
+    console.log('Phone OTP response:', {
+      hasTestingOtp: !!json_response.testingOtp,
+      shouldShow: shouldShowTestingOtp,
+      smsSent: smsSent,
+      status: result?.status
+    })
     var finalResult = ApiResponseUtils.createSuccessResponse("Sucessfuly sent otp", json_response)
     return ApiResponseUtils.sendSuccessResponse(finalResult)
   } catch (error) {

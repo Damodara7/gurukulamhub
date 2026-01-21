@@ -19,7 +19,7 @@ export async function POST(request) {
     // Match the structure expected by frontend: { status: 'success', message: '...', result: { testingOtp: '...' } }
     if (finalResult && finalResult.testingOtp) {
       // Only include testingOtp if email sending failed
-      const shouldShowTestingOtp = finalResult.status === 'error' || finalResult.error
+      const shouldShowTestingOtp = finalResult.status === 'error' || finalResult.error || !finalResult.emailSent
       // Structure the response to match what frontend expects: result.result.testingOtp
       const responseResult = {
         success: finalResult,
@@ -30,7 +30,9 @@ export async function POST(request) {
       console.log("Sending response with testingOtp:", {
         hasTestingOtp: !!responseResult.testingOtp,
         testingOtp: responseResult.testingOtp,
-        shouldShow: shouldShowTestingOtp
+        shouldShow: shouldShowTestingOtp,
+        emailSent: finalResult.emailSent,
+        status: finalResult.status
       })
       const successResponse = createSuccessResponse('Email sent successfully', responseResult)
       return sendSuccessResponse(successResponse);

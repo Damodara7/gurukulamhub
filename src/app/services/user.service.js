@@ -250,12 +250,19 @@ export async function updateOne({ email, data: updatedData }) {
         console.log('[User Service] No roles were removed')
       }
     } else {
-      console.log('[User Service] Roles not updated or missing data:', {
-        hasUpdatedRoles: !!updatedData.roles,
-        hasOldUser: !!oldUser,
-        isArrayUpdated: Array.isArray(updatedData.roles),
-        isArrayOld: Array.isArray(oldUser?.roles)
-      })
+      // This is not an error - just informational. Only log if roles were expected but not found
+      // (i.e., when updating user data that doesn't include roles, which is normal)
+      if (updatedData.roles === undefined) {
+        // Normal case: roles not being updated, no need to log
+      } else {
+        // Unusual case: roles were provided but something else is wrong
+        console.log('[User Service] Roles update skipped (missing data):', {
+          hasUpdatedRoles: !!updatedData.roles,
+          hasOldUser: !!oldUser,
+          isArrayUpdated: Array.isArray(updatedData.roles),
+          isArrayOld: Array.isArray(oldUser?.roles)
+        })
+      }
     }
 
     return { status: 'success', result: updatedUser, message: 'User updated successfully' }
@@ -298,10 +305,11 @@ export async function add({ data: userData }) {
         hasTestingOtp: !!emailOtpResult?.testingOtp,
         testingOtp: emailOtpResult?.testingOtp,
         status: emailOtpResult?.status,
-        error: emailOtpResult?.error
+        error: emailOtpResult?.error,
+        emailSent: emailOtpResult?.emailSent
       })
       // Only include testingOtp if email sending failed
-      const shouldShowTestingOtp = emailOtpResult?.status === 'error' || emailOtpResult?.error
+      const shouldShowTestingOtp = emailOtpResult?.status === 'error' || emailOtpResult?.error || !emailOtpResult?.emailSent
       return {
         status: 'success',
         result: {
@@ -512,10 +520,11 @@ export async function addOrUpdate({ email, data }) {
           hasTestingOtp: !!emailOtpResult?.testingOtp,
           testingOtp: emailOtpResult?.testingOtp,
           status: emailOtpResult?.status,
-          error: emailOtpResult?.error
+          error: emailOtpResult?.error,
+          emailSent: emailOtpResult?.emailSent
         })
         // Only include testingOtp if email sending failed
-        const shouldShowTestingOtp = emailOtpResult?.status === 'error' || emailOtpResult?.error
+        const shouldShowTestingOtp = emailOtpResult?.status === 'error' || emailOtpResult?.error || !emailOtpResult?.emailSent
         return {
           status: 'success',
           result: {
@@ -767,26 +776,38 @@ export async function srvSendEmailOtp(email, purpose) {
 
     // Send the email
     let mailResponse = {}
+    let emailSentSuccessfully = false
     try {
       mailResponse = await MailService.srvSendEmail({
         email,
         subject: 'OTP: ' + otp + ' to ' + purposeDetail,
         content
       })
-      console.log(`[srvSendEmailOtp] Email sent successfully to ${email}`)
+      // Check if mailResponse indicates success (nodemailer returns an object with messageId on success)
+      emailSentSuccessfully = mailResponse && mailResponse.messageId
+      if (emailSentSuccessfully) {
+        console.log(`[srvSendEmailOtp] Email sent successfully to ${email}, messageId: ${mailResponse.messageId}`)
+      } else {
+        console.warn(`[srvSendEmailOtp] Email sending may have failed for ${email} - no messageId in response`)
+        mailResponse = { error: 'Email service did not return a messageId - email may not have been sent' }
+      }
     } catch (emailError) {
       console.error(`[srvSendEmailOtp] Error sending email to ${email}:`, emailError.message)
+      console.error(`[srvSendEmailOtp] Error stack:`, emailError.stack)
       // Continue even if email fails - we still want to return the testingOtp
       mailResponse = { error: emailError.message }
+      emailSentSuccessfully = false
     }
     // console.log('Mail Response:', mailResponse)
 
     // Add testing OTP to the response for development/testing purposes
-    // Always include testingOtp even if email sending fails
+    // Only include testingOtp if email sending failed
+    const emailFailed = !emailSentSuccessfully || mailResponse.error
     return {
       ...mailResponse,
-      testingOtp: otp,
-      status: mailResponse.error ? 'error' : 'success'
+      testingOtp: otp, // Always generate, but only show in UI if email failed
+      status: emailFailed ? 'error' : 'success',
+      emailSent: emailSentSuccessfully
     }
   } catch (error) {
     console.error(`[srvSendEmailOtp] Error occurred while sending OTP to ${email}:`, error.message)
@@ -1065,22 +1086,36 @@ export async function srvSendPhoneOtp(email, phone, name) {
     let content = SMSService.getOTPTemplate(phone, otp, name)
     // Send the sms
     let smsResponse = {}
+    let smsSentSuccessfully = false
     try {
       smsResponse = await SMSService.srvSendSMS(content)
-      console.log(`[srvSendPhoneOtp] SMS sent successfully to ${phone}`)
+      // Check if SMS was sent successfully (srvSendSMS returns true/false or throws error)
+      // Note: The current implementation may not properly return success status
+      // We'll treat it as failed if we don't get a clear success indicator
+      smsSentSuccessfully = smsResponse === true || (smsResponse && !smsResponse.error)
+      if (smsSentSuccessfully) {
+        console.log(`[srvSendPhoneOtp] SMS sent successfully to ${phone}`)
+      } else {
+        console.warn(`[srvSendPhoneOtp] SMS sending may have failed for ${phone} - unclear success status`)
+        smsResponse = { error: 'SMS service did not confirm successful delivery' }
+      }
     } catch (smsError) {
       console.error(`[srvSendPhoneOtp] Error sending SMS to ${phone}:`, smsError.message)
+      console.error(`[srvSendPhoneOtp] Error stack:`, smsError.stack)
       // Continue even if SMS fails - we still want to return the testingOtp
       smsResponse = { error: smsError.message }
+      smsSentSuccessfully = false
     }
     // console.log('SMS Response:', smsResponse)
 
     // Add testing OTP to the response for development/testing purposes
-    // Always include testingOtp even if SMS sending fails
+    // Only include testingOtp if SMS sending failed
+    const smsFailed = !smsSentSuccessfully || smsResponse.error
     return {
       ...smsResponse,
-      testingOtp: otp,
-      status: smsResponse.error ? 'error' : 'success'
+      testingOtp: otp, // Always generate, but only show in UI if SMS failed
+      status: smsFailed ? 'error' : 'success',
+      smsSent: smsSentSuccessfully
     }
   } catch (error) {
     console.error(`[srvSendPhoneOtp] Error occurred while sending OTP to ${email}:`, error.message)
@@ -1088,7 +1123,8 @@ export async function srvSendPhoneOtp(email, phone, name) {
     return {
       error: error.message,
       testingOtp: otp,
-      status: 'error'
+      status: 'error',
+      smsSent: false
     }
   }
 }
