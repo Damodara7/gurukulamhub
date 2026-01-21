@@ -219,9 +219,14 @@ const ForgotPasswordV2 = ({ mode }) => {
         if (result?.success) {
           setOtpSent(true)
           setSuccessMessage('OTP sent successfully.')
-          setTestingOtp(result?.result?.testingOtp) // Store testing OTP from result
+          // Only show testing OTP if SMS sending failed
+          if (result?.result?.testingOtp && (result?.result?.smsOtpError || result?.result?.success?.error || result?.result?.success?.status === 'error')) {
+            setTestingOtp(result.result.testingOtp)
+            console.log('Testing OTP received (SMS sending failed):', result.result.testingOtp)
+          } else {
+            setTestingOtp(null)
+          }
           console.log('OTP sent to: ', mobileValue)
-          console.log('Testing OTP: ', result?.result?.testingOtp)
           setErrorMessage('')
         } else {
           setErrorMessage('Failed to send OTP. Please try again.')

@@ -10,15 +10,42 @@ export async function POST(request) {
   try {
     // Given incoming request /home
     var finalResult = await sendEmail(request)
-    // Generate new event id
-    //event['id'] = events[events.length - 1].id + 1
-    const json_response = {
-      success: finalResult,
-      results: 3
+    console.log("Email send result:", finalResult)
+    
+    // Import createSuccessResponse
+    const { createSuccessResponse } = await import('../../../utils/apiResponses')
+    
+    // If it's an OTP email, preserve the testingOtp in the response only if email sending failed
+    // Match the structure expected by frontend: { status: 'success', message: '...', result: { testingOtp: '...' } }
+    if (finalResult && finalResult.testingOtp) {
+      // Only include testingOtp if email sending failed
+      const shouldShowTestingOtp = finalResult.status === 'error' || finalResult.error
+      // Structure the response to match what frontend expects: result.result.testingOtp
+      const responseResult = {
+        success: finalResult,
+        results: 3,
+        testingOtp: shouldShowTestingOtp ? finalResult.testingOtp : null,
+        emailOtpError: shouldShowTestingOtp
+      }
+      console.log("Sending response with testingOtp:", {
+        hasTestingOtp: !!responseResult.testingOtp,
+        testingOtp: responseResult.testingOtp,
+        shouldShow: shouldShowTestingOtp
+      })
+      const successResponse = createSuccessResponse('Email sent successfully', responseResult)
+      return sendSuccessResponse(successResponse);
+    } else {
+      // Generate new event id
+      //event['id'] = events[events.length - 1].id + 1
+      const json_response = {
+        success: finalResult,
+        results: 3
+      }
+      console.log("Sending response....", json_response)
+      const successResponse = createSuccessResponse('Email sent successfully', json_response)
+      // return new event
+      return sendSuccessResponse(successResponse);
     }
-    console.log("Sending response....", json_response)
-    // return new event
-    return sendSuccessResponse(json_response);
   } catch (error) {
     console.log('[SENDMAIL]', error);
     return sendErrorResponse(error.message);
@@ -33,8 +60,13 @@ async function sendEmail(req) {
   console.log("Inside the nodemailer......", email, subject, text)
 
   if (action === "verifyEmail") {
-    var result = await UserService.srvSendEmailOtp(email,action);
-    console.log("Email OTP result:", result);
+    var result = await UserService.srvSendEmailOtp(email, action);
+    console.log("Email OTP result:", {
+      hasTestingOtp: !!result?.testingOtp,
+      testingOtp: result?.testingOtp,
+      status: result?.status,
+      error: result?.error
+    });
     return result;
   }
   else{ //normal email

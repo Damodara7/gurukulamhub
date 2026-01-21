@@ -130,10 +130,12 @@ const EmailStep = ({
         setTimer(60)
         setCurrStatus('CONFIRM_SIGN_UP')
         setResendEnabled(false)
-        // Check if there's a testing OTP in the response
-        if (result?.result?.testingOtp) {
+        // Only show testing OTP if email sending failed
+        if (result?.result?.testingOtp && (result?.result?.emailOtpError || result?.result?.success?.error || result?.result?.success?.status === 'error')) {
           setTestingOtp(result.result.testingOtp)
-          console.log('Testing OTP received on resend:', result.result.testingOtp)
+          console.log('Testing OTP received on resend (email sending failed):', result.result.testingOtp)
+        } else {
+          setTestingOtp(null)
         }
       } else {
         toast.error('Failed to send OTP. Please try again.')
@@ -177,10 +179,12 @@ const EmailStep = ({
           setErrorMessage('')
           setNextPage('')
           setCurrStatus('CONFIRM_SIGN_UP')
-          // Check if there's a testing OTP in the response
-          if (result?.result?.testingOtp) {
+          // Only show testing OTP if email sending failed
+          if (result?.result?.testingOtp && result?.result?.emailOtpError) {
             setTestingOtp(result.result.testingOtp)
-            console.log('Testing OTP received:', result.result.testingOtp)
+            console.log('Testing OTP received (email sending failed):', result.result.testingOtp)
+          } else {
+            setTestingOtp(null)
           }
         }
       }

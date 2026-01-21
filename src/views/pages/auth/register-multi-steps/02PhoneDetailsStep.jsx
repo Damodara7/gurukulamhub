@@ -122,10 +122,12 @@ const PhoneDetailsStep = ({
       })
       if (result) {
         // toast.success('Updated Phone Details & OTP Sent Successfully.')
-        // Check if there's a testing OTP in the response
-        if (result?.result?.testingOtp) {
+        // Only show testing OTP if SMS sending failed
+        if (result?.result?.testingOtp && (result?.result?.smsOtpError || result?.result?.success?.error || result?.result?.success?.status === 'error')) {
           setTestingOtp(result.result.testingOtp)
-          console.log('Testing OTP received:', result.result.testingOtp)
+          console.log('Testing OTP received (SMS sending failed):', result.result.testingOtp)
+        } else {
+          setTestingOtp(null)
         }
       }
     } catch (error) {

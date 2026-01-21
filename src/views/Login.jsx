@@ -433,9 +433,14 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
         if (result?.success) {
           setOtpSent(true)
           setSuccessMsg('OTP sent successfully.')
-          setTestingOtp(result?.result?.testingOtp) // Store testing OTP from result
+          // Only show testing OTP if SMS sending failed
+          if (result?.result?.testingOtp && (result?.result?.smsOtpError || result?.result?.success?.error || result?.result?.success?.status === 'error')) {
+            setTestingOtp(result.result.testingOtp)
+            console.log('Testing OTP received (SMS sending failed):', result.result.testingOtp)
+          } else {
+            setTestingOtp(null)
+          }
           console.log('OTP sent to: ', mobileValue)
-          console.log('Testing OTP: ', result?.result?.testingOtp)
           setErrorMsg('')
         } else {
           setErrorMsg('Failed to send OTP. Please try again.')

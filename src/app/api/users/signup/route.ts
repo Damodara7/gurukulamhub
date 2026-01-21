@@ -18,8 +18,19 @@ export async function POST(request: NextRequest) {
     const { email, password, firstname, lastname, phone } = reqBody
 
     const result = await UserService.addOrUpdate({ email, data: { ...reqBody } })
+    console.log(`[signup/route] UserService.addOrUpdate result for ${email}:`, {
+      status: result.status,
+      hasResult: !!result.result,
+      hasTestingOtp: !!result.result?.testingOtp,
+      testingOtp: result.result?.testingOtp
+    })
     if (result.status === 'success') {
       const successResponse = createSuccessResponse(result.message, result.result)
+      console.log(`[signup/route] Success response for ${email}:`, {
+        hasResult: !!successResponse.result,
+        hasTestingOtp: !!successResponse.result?.testingOtp,
+        testingOtp: successResponse.result?.testingOtp
+      })
       return sendSuccessResponse(successResponse)
     } else {
       const errorResponse = createErrorResponse(result?.message, result.result)

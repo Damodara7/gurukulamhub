@@ -294,11 +294,20 @@ export async function add({ data: userData }) {
 
     if (savedNewUser) {
       const emailOtpResult = await srvSendEmailOtp(userData.email, 'verifyEmail')
+      console.log(`[add] Email OTP result for ${userData.email}:`, {
+        hasTestingOtp: !!emailOtpResult?.testingOtp,
+        testingOtp: emailOtpResult?.testingOtp,
+        status: emailOtpResult?.status,
+        error: emailOtpResult?.error
+      })
+      // Only include testingOtp if email sending failed
+      const shouldShowTestingOtp = emailOtpResult?.status === 'error' || emailOtpResult?.error
       return {
         status: 'success',
         result: {
           ...savedNewUser.toObject(),
-          testingOtp: emailOtpResult?.testingOtp || null
+          testingOtp: shouldShowTestingOtp ? (emailOtpResult?.testingOtp || null) : null,
+          emailOtpError: shouldShowTestingOtp
         },
         message: 'User added successfully'
       }
@@ -499,11 +508,20 @@ export async function addOrUpdate({ email, data }) {
 
       if (!user.isVerified) {
         const emailOtpResult = await srvSendEmailOtp(email, 'verifyEmail')
+        console.log(`[addOrUpdate] Email OTP result for unverified user ${email}:`, {
+          hasTestingOtp: !!emailOtpResult?.testingOtp,
+          testingOtp: emailOtpResult?.testingOtp,
+          status: emailOtpResult?.status,
+          error: emailOtpResult?.error
+        })
+        // Only include testingOtp if email sending failed
+        const shouldShowTestingOtp = emailOtpResult?.status === 'error' || emailOtpResult?.error
         return {
           status: 'success',
           result: {
             ...user.toObject(),
-            testingOtp: emailOtpResult?.testingOtp || null
+            testingOtp: shouldShowTestingOtp ? (emailOtpResult?.testingOtp || null) : null,
+            emailOtpError: shouldShowTestingOtp
           },
           message: 'Otp resent successfully'
         }
@@ -716,9 +734,11 @@ export async function login({ email, password }) {
 
 export async function srvSendEmailOtp(email, purpose) {
   await connectMongo()
+  let otp = null
   try {
     // Create a hash token based on the user's ID
-    const otp = OtpService.generateOTP()
+    otp = OtpService.generateOTP()
+    console.log(`[srvSendEmailOtp] Generated OTP for ${email}: ${otp}`)
     // const otp = await bcryptjs.hash(email.toString(), 10)
     var updatedData = {}
     var result = {}
@@ -730,6 +750,7 @@ export async function srvSendEmailOtp(email, purpose) {
         currentStatus: 'VERIFY_OTP_SENT'
       }
       result = await updateOne({ email, data: updatedData })
+      console.log(`[srvSendEmailOtp] User updated with OTP token:`, result.status)
     } else if (purpose === 'resetPassword') {
       updatedData = {
         forgotPasswordToken: otp,
@@ -745,23 +766,35 @@ export async function srvSendEmailOtp(email, purpose) {
     var content = MailService.srvGetVerifyEmailOtpContent(purposeDetail, otp)
 
     // Send the email
-    const mailResponse = await MailService.srvSendEmail({
-      email,
-      subject: 'OTP: ' + otp + ' to ' + purposeDetail,
-      content
-    })
+    let mailResponse = {}
+    try {
+      mailResponse = await MailService.srvSendEmail({
+        email,
+        subject: 'OTP: ' + otp + ' to ' + purposeDetail,
+        content
+      })
+      console.log(`[srvSendEmailOtp] Email sent successfully to ${email}`)
+    } catch (emailError) {
+      console.error(`[srvSendEmailOtp] Error sending email to ${email}:`, emailError.message)
+      // Continue even if email fails - we still want to return the testingOtp
+      mailResponse = { error: emailError.message }
+    }
     // console.log('Mail Response:', mailResponse)
 
     // Add testing OTP to the response for development/testing purposes
+    // Always include testingOtp even if email sending fails
     return {
       ...mailResponse,
-      testingOtp: otp
+      testingOtp: otp,
+      status: mailResponse.error ? 'error' : 'success'
     }
   } catch (error) {
-    // console.log('Error occurred while sending', error.message)
+    console.error(`[srvSendEmailOtp] Error occurred while sending OTP to ${email}:`, error.message)
+    // Always return testingOtp even on error
     return {
       error: error.message,
-      testingOtp: otp || null
+      testingOtp: otp,
+      status: 'error'
     }
   }
 }
@@ -1008,10 +1041,13 @@ export async function srvSendRoleRemovedNotification({ userEmail, roleName, rema
 
 export async function srvSendPhoneOtp(email, phone, name) {
   await connectMongo()
+  let otp = null
   try {
+    console.log(`[srvSendPhoneOtp] Generating OTP for ${email}, phone: ${phone}`)
     // console.log('mobile number', phone)
     // Create a hash token based on the user's ID
-    const otp = OtpService.generateOTP()
+    otp = OtpService.generateOTP()
+    console.log(`[srvSendPhoneOtp] Generated OTP: ${otp}`)
     // const otp = await bcryptjs.hash(email.toString(), 10)
     var updatedData = {}
     let result = {}
@@ -1022,24 +1058,37 @@ export async function srvSendPhoneOtp(email, phone, name) {
       currentStatus: 'VERIFY_PHONE_OTP_SENT'
     }
     result = await updateOne({ email, data: updatedData })
+    console.log(`[srvSendPhoneOtp] User updated with OTP token:`, result.status)
 
     // console.log('Result:', result)
 
     let content = SMSService.getOTPTemplate(phone, otp, name)
     // Send the sms
-    const smsResponse = await SMSService.srvSendSMS(content)
+    let smsResponse = {}
+    try {
+      smsResponse = await SMSService.srvSendSMS(content)
+      console.log(`[srvSendPhoneOtp] SMS sent successfully to ${phone}`)
+    } catch (smsError) {
+      console.error(`[srvSendPhoneOtp] Error sending SMS to ${phone}:`, smsError.message)
+      // Continue even if SMS fails - we still want to return the testingOtp
+      smsResponse = { error: smsError.message }
+    }
     // console.log('SMS Response:', smsResponse)
 
     // Add testing OTP to the response for development/testing purposes
+    // Always include testingOtp even if SMS sending fails
     return {
       ...smsResponse,
-      testingOtp: otp
+      testingOtp: otp,
+      status: smsResponse.error ? 'error' : 'success'
     }
   } catch (error) {
-    // console.log('Error occurred while sending sms', error.message)
+    console.error(`[srvSendPhoneOtp] Error occurred while sending OTP to ${email}:`, error.message)
+    // Always return testingOtp even on error
     return {
       error: error.message,
-      testingOtp: otp || null
+      testingOtp: otp,
+      status: 'error'
     }
   }
 }

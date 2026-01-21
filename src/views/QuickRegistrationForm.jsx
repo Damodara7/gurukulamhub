@@ -173,9 +173,14 @@ const QuickRegistrationForm = ({ mode, toggleAuthMode }) => {
       if (result?.success) {
         setIsPhoneOtpSent(true)
         setSuccessMsg('OTP sent successfully.')
-        setTestingOtp(result?.result?.testingOtp) // Store testing OTP from result
+        // Only show testing OTP if SMS sending failed
+        if (result?.result?.testingOtp && (result?.result?.smsOtpError || result?.result?.success?.error || result?.result?.success?.status === 'error')) {
+          setTestingOtp(result.result.testingOtp)
+          console.log('Testing OTP received (SMS sending failed):', result.result.testingOtp)
+        } else {
+          setTestingOtp(null)
+        }
         console.log('OTP sent to: ', phone)
-        console.log('Testing OTP: ', result?.result?.testingOtp)
         setErrorMsg('')
       } else {
         setErrorMsg('Failed to send OTP. Please try again.')
@@ -197,10 +202,12 @@ const QuickRegistrationForm = ({ mode, toggleAuthMode }) => {
     const result = await RestApi.post(API_URLS.v0.USERS_SEND_EMAIL_OTP, { email, action: 'verifyEmail' })
     if (result) {
       console.log('resendOtp called. recieved result', result)
-      // Check if there's a testing OTP in the response
-      if (result?.result?.testingOtp) {
+      // Only show testing OTP if email sending failed
+      if (result?.result?.testingOtp && (result?.result?.emailOtpError || result?.result?.success?.error || result?.result?.success?.status === 'error')) {
         setTestingOtp(result.result.testingOtp)
-        console.log('Testing OTP received on resend:', result.result.testingOtp)
+        console.log('Testing OTP received on resend (email sending failed):', result.result.testingOtp)
+      } else {
+        setTestingOtp(null)
       }
     }
     setLoading(prev => ({ ...prev, resendEmailOtp: false }))

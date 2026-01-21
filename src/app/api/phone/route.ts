@@ -14,10 +14,13 @@ export async function POST(request: NextRequest) {
     if (name == null) name = email
     var result = await UserService.srvSendPhoneOtp(email, phone, name)
     console.log('Sending response....', result)
+    // Only include testingOtp if SMS sending failed
+    const shouldShowTestingOtp = result?.error || result?.status === 'error'
     const json_response = {
       success: result,
       results: 3,
-      testingOtp: result?.testingOtp || null
+      testingOtp: shouldShowTestingOtp ? (result?.testingOtp || null) : null,
+      smsOtpError: shouldShowTestingOtp
     }
     var finalResult = ApiResponseUtils.createSuccessResponse("Sucessfuly sent otp", json_response)
     return ApiResponseUtils.sendSuccessResponse(finalResult)
