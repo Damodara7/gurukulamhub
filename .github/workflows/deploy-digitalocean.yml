@@ -28,6 +28,13 @@ jobs:
           echo "${{ secrets.DROPLET_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ env.DROPLET_IP }} >> ~/.ssh/known_hosts
+          # Configure SSH keepalive to prevent connection timeout during long builds
+          cat >> ~/.ssh/config << 'SSHCONFIG'
+          Host *
+            ServerAliveInterval 60
+            ServerAliveCountMax 3
+          SSHCONFIG
+          chmod 600 ~/.ssh/config
 
       - name: Copy files to server
         run: |
@@ -37,12 +44,12 @@ jobs:
             --exclude '.git' \
             --exclude '.env*' \
             --exclude '*.log' \
-            -e "ssh -i ~/.ssh/id_rsa" \
+            -e "ssh -i ~/.ssh/id_rsa -o ServerAliveInterval=60 -o ServerAliveCountMax=3" \
             ./ ${{ env.DROPLET_USER }}@${{ env.DROPLET_IP }}:${{ env.APP_DIR }}/
 
       - name: Create .env.production on server
         run: |
-          ssh -i ~/.ssh/id_rsa ${{ env.DROPLET_USER }}@${{ env.DROPLET_IP }} << 'EOF'
+          ssh -i ~/.ssh/id_rsa -o ServerAliveInterval=60 -o ServerAliveCountMax=3 ${{ env.DROPLET_USER }}@${{ env.DROPLET_IP }} << 'EOF'
             cd ${{ env.APP_DIR }}
             
             # Always create/update .env.production with latest values
@@ -142,7 +149,7 @@ jobs:
 
       - name: Deploy on server
         run: |
-          ssh -i ~/.ssh/id_rsa ${{ env.DROPLET_USER }}@${{ env.DROPLET_IP }} << 'EOF'
+          ssh -i ~/.ssh/id_rsa -o ServerAliveInterval=60 -o ServerAliveCountMax=3 ${{ env.DROPLET_USER }}@${{ env.DROPLET_IP }} << 'EOF'
             set -e
             cd ${{ env.APP_DIR }}
             
@@ -157,9 +164,11 @@ jobs:
             echo "⏹️  Stopping containers..."
             docker compose down || true
             
-            # Build and start containers
+            # Build and start containers with progress output
             echo "🔨 Building and starting containers..."
-            docker compose up -d --build
+            # Use --progress=plain to ensure build output is streamed in real-time
+            docker compose build --progress=plain
+            docker compose up -d
             
             # Wait for app to be ready
             echo "⏳ Waiting for app to be ready..."
