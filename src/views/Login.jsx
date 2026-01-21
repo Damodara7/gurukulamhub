@@ -49,6 +49,7 @@ import Illustrations from '@components/Illustrations'
 import { handleCredentialsLogin, handleSocialLogin, handleMobileLogin } from '@/actions'
 import { getAccountsWithMobile, sendPhoneOtp } from '@/actions/mobile'
 import LoadingDialog from '@/components/LoadingDialog'
+import TestingOtp from '@/components/TestingOtp'
 
 // Config Imports
 import themeConfig from '@configs/themeConfig'
@@ -433,10 +434,10 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
         if (result?.success) {
           setOtpSent(true)
           setSuccessMsg('OTP sent successfully.')
-          // Only show testing OTP if SMS sending failed
-          if (result?.result?.testingOtp && (result?.result?.smsOtpError || result?.result?.success?.error || result?.result?.success?.status === 'error')) {
+          // Only show testing OTP if TEST_MODE is enabled
+          if (process.env.NEXT_PUBLIC_TEST_MODE === 'true' && result?.result?.testingOtp) {
             setTestingOtp(result.result.testingOtp)
-            console.log('Testing OTP received (SMS sending failed):', result.result.testingOtp)
+            console.log('Testing OTP received (TEST_MODE enabled):', result.result.testingOtp)
           } else {
             setTestingOtp(null)
           }
@@ -1249,31 +1250,14 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
                   )}
 
                   {/* Testing OTP Display for Mobile Login */}
-                  {otpSent && testingOtp && (
-                    <Box
-                      sx={{
-                        bgcolor: isDarkMode
-                          ? alpha(theme.palette.info.main, 0.15)
-                          : alpha(theme.palette.info.light, 0.2),
-                        border: `1px solid ${isDarkMode ? alpha(theme.palette.info.main, 0.3) : alpha(theme.palette.info.main, 0.4)}`,
-                        borderRadius: { xs: 1, sm: 1.5 },
-                        p: { xs: 2, sm: 3 },
-                        mt: { xs: 2, sm: 3 }
-                      }}
-                    >
-                      <Box sx={{ textAlign: 'center' }}>
-                        <Typography
-                          variant='body2'
-                          sx={{
-                            fontSize: { xs: '0.8125rem', sm: '0.875rem' },
-                            color: 'text.primary',
-                            fontWeight: 500
-                          }}
-                        >
-                          <strong>Testing OTP:</strong> {testingOtp}
-                        </Typography>
-                      </Box>
-                    </Box>
+                  {otpSent && (
+                    <TestingOtp 
+                      testingOtp={testingOtp} 
+                      setOtpValue={setOtpValue}
+                      setIsDirty={() => {}}
+                      isDarkMode={isDarkMode}
+                      theme={theme}
+                    />
                   )}
                 </>
               )}

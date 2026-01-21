@@ -25,6 +25,8 @@ import { useSearchParams } from 'next/navigation'
 import { getAccountsWithMobile, sendPhoneOtp } from '@/actions/mobile'
 import OtpForm from '@/views/pages/auth/register-multi-steps/OTPForm'
 import { API_URLS } from '@/configs/apiConfig'
+import { toast } from 'react-toastify'
+import TestingOtp from '@/components/TestingOtp'
 
 const initialLoadingState = {
   findAccounts: false,
@@ -219,10 +221,10 @@ const ForgotPasswordV2 = ({ mode }) => {
         if (result?.success) {
           setOtpSent(true)
           setSuccessMessage('OTP sent successfully.')
-          // Only show testing OTP if SMS sending failed
-          if (result?.result?.testingOtp && (result?.result?.smsOtpError || result?.result?.success?.error || result?.result?.success?.status === 'error')) {
+          // Only show testing OTP if TEST_MODE is enabled
+          if (process.env.NEXT_PUBLIC_TEST_MODE === 'true' && result?.result?.testingOtp) {
             setTestingOtp(result.result.testingOtp)
-            console.log('Testing OTP received (SMS sending failed):', result.result.testingOtp)
+            console.log('Testing OTP received (TEST_MODE enabled):', result.result.testingOtp)
           } else {
             setTestingOtp(null)
           }
@@ -547,14 +549,12 @@ const ForgotPasswordV2 = ({ mode }) => {
                   )}
 
                   {/* Testing OTP Display for Forgot Password Mobile Verification */}
-                  {otpSent && testingOtp && (
-                    <div className='bg-blue-50 border border-blue-200 rounded p-3 mt-2'>
-                      <div className='text-center'>
-                        <Typography variant='body2'>
-                          <strong>Testing OTP:</strong> {testingOtp}
-                        </Typography>
-                      </div>
-                    </div>
+                  {otpSent && (
+                    <TestingOtp 
+                      testingOtp={testingOtp} 
+                      setOtpValue={setOtpValue}
+                      setIsDirty={() => {}}
+                    />
                   )}
 
                   {errorMessage && (

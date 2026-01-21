@@ -7,6 +7,7 @@ import { API_URLS } from '@/configs/apiConfig'
 import { useSession } from 'next-auth/react'
 import OtpForm from '@/views/pages/auth/register-multi-steps/OTPForm'
 import { toast } from 'react-toastify'
+import TestingOtp from '@/components/TestingOtp'
 
 const PhoneVerification = ({ phoneValid, phoneInput, country, onChange, setIsPhoneVerified, dbPhone }) => {
   const { data: session } = useSession()
@@ -23,6 +24,7 @@ const PhoneVerification = ({ phoneValid, phoneInput, country, onChange, setIsPho
   const [resendOtpStatus, setResendOtpStatus] = useState('idle') // idle | loading | success | error
 
   const [errorMessage, setErrorMessage] = useState('')
+  const [testingOtp, setTestingOtp] = useState(null) // State to store testing OTP
 
   const handleOpenModal = () => setOpenModal(true)
   const handleCloseModal = () => {
@@ -33,6 +35,7 @@ const PhoneVerification = ({ phoneValid, phoneInput, country, onChange, setIsPho
     setSendOtpStatus('idle')
     setResendOtpStatus('idle')
     setErrorMessage('')
+    setTestingOtp(null)
   }
 
   const resendOtp = async () => {
@@ -42,12 +45,21 @@ const PhoneVerification = ({ phoneValid, phoneInput, country, onChange, setIsPho
       setResendOtpStatus('loading')
       setErrorMessage('')
       setOtpValue('')
-      await RestApi.post(API_URLS.v0.USERS_SEND_PHONE_OTP, {
+      const result = await RestApi.post(API_URLS.v0.USERS_SEND_PHONE_OTP, {
         email: session?.user?.email,
         name: session?.user?.name || 'GurukulamHub User',
         countryDialCode: country,
         phone: phoneInput
       })
+      
+      // Only show testing OTP if TEST_MODE is enabled
+      if (process.env.NEXT_PUBLIC_TEST_MODE === 'true' && result?.result?.testingOtp) {
+        setTestingOtp(result.result.testingOtp)
+        console.log('Testing OTP received (TEST_MODE enabled):', result.result.testingOtp)
+      } else {
+        setTestingOtp(null)
+      }
+      
       setResendOtpStatus('success')
     } catch (error) {
       console.error('Error resending OTP:', error)
@@ -94,12 +106,21 @@ const PhoneVerification = ({ phoneValid, phoneInput, country, onChange, setIsPho
     try {
       setSendOtpStatus('loading')
       setErrorMessage('')
-      await RestApi.post(API_URLS.v0.USERS_SEND_PHONE_OTP, {
+      const result = await RestApi.post(API_URLS.v0.USERS_SEND_PHONE_OTP, {
         email: session?.user?.email,
         name: session?.user?.name || ' User',
         countryDialCode: country,
         phone: phoneInput
       })
+      
+      // Only show testing OTP if TEST_MODE is enabled
+      if (process.env.NEXT_PUBLIC_TEST_MODE === 'true' && result?.result?.testingOtp) {
+        setTestingOtp(result.result.testingOtp)
+        console.log('Testing OTP received (TEST_MODE enabled):', result.result.testingOtp)
+      } else {
+        setTestingOtp(null)
+      }
+      
       setSendOtpStatus('success')
       handleOpenModal()
     } catch (error) {
@@ -320,12 +341,21 @@ const PhoneVerification = ({ phoneValid, phoneInput, country, onChange, setIsPho
             We have sent an OTP to your phone number. Enter the OTP below to verify.
           </Typography>
           <Box
-            mt={{ xs: 2, sm: 2.5 }}
-            mb={{ xs: 2, sm: 2.5 }}
+            my={1}
             sx={{ display: 'flex', justifyContent: 'center' }}
           >
             <OtpForm otpValue={otpValue} setOtpValue={setOtpValue} setIsDirty={() => {}} />
           </Box>
+          
+          {/* Testing OTP Display for Phone Verification */}
+          <TestingOtp 
+            testingOtp={testingOtp} 
+            setOtpValue={setOtpValue}
+            setIsDirty={() => {}}
+            isDarkMode={isDarkMode}
+            theme={theme}
+          />
+          
           {errorMessage && (
             <Box mb={2}>
               <Alert

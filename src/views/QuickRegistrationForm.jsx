@@ -42,6 +42,9 @@ import Illustrations from '@components/Illustrations'
 import { handleCredentialsLogin, handleSocialLogin, handleMobileLogin, signInWithMobile } from '@/actions'
 import { getAccountsWithMobile, sendPhoneOtp } from '@/actions/mobile'
 import LoadingDialog from '@/components/LoadingDialog'
+import TestingOtp from '@/components/TestingOtp'
+import * as RestApi from '@/utils/restApiUtil'
+import { API_URLS } from '@/configs/apiConfig'
 
 // Config Imports
 import themeConfig from '@configs/themeConfig'
@@ -53,9 +56,7 @@ import { useImageVariant } from '@core/hooks/useImageVariant'
 import { getLocalizedUrl } from '@/utils/i18n'
 import RecaptchaComponent from './RecaptchaComponent'
 import CenterBox from '@/components/CenterBox'
-import * as RestApi from '@/utils/restApiUtil'
 import * as clientApi from '@/app/api/client/client.api'
-import { API_URLS } from '@/configs/apiConfig'
 import PasswordValidation from './pages/auth/register-multi-steps/PasswordValidation'
 import * as AppCodes from '@/configs/appErrorCodes'
 
@@ -100,7 +101,8 @@ const QuickRegistrationForm = ({ mode, toggleAuthMode }) => {
   const [isPhoneOtpSent, setIsPhoneOtpSent] = useState(false)
   const [formSubmitted, setFormSubmitted] = useState(false)
   const [loading, setLoading] = useState(initialLoadingState)
-  const [testingOtp, setTestingOtp] = useState(null) // State to store testing OTP
+  const [emailTestingOtp, setEmailTestingOtp] = useState(null) // State to store email testing OTP
+  const [phoneTestingOtp, setPhoneTestingOtp] = useState(null) // State to store phone testing OTP
 
   // Vars
   const darkImg = '/images/pages/auth-v2-mask-dark.png'
@@ -157,6 +159,13 @@ const QuickRegistrationForm = ({ mode, toggleAuthMode }) => {
         setErrorMsg('')
         setIsEmailOtpSent(true)
         setFormSubmitted(true)
+        // Only show testing OTP if TEST_MODE is enabled
+        if (process.env.NEXT_PUBLIC_TEST_MODE === 'true' && result?.result?.testingOtp) {
+          setEmailTestingOtp(result.result.testingOtp)
+          console.log('Testing OTP received (TEST_MODE enabled):', result.result.testingOtp)
+        } else {
+          setEmailTestingOtp(null)
+        }
       }
     } catch (error) {
       console.log('Credentials signin error (Catch block)(Something went wrong): ', error)
@@ -173,12 +182,12 @@ const QuickRegistrationForm = ({ mode, toggleAuthMode }) => {
       if (result?.success) {
         setIsPhoneOtpSent(true)
         setSuccessMsg('OTP sent successfully.')
-        // Only show testing OTP if SMS sending failed
-        if (result?.result?.testingOtp && (result?.result?.smsOtpError || result?.result?.success?.error || result?.result?.success?.status === 'error')) {
-          setTestingOtp(result.result.testingOtp)
-          console.log('Testing OTP received (SMS sending failed):', result.result.testingOtp)
+        // Only show testing OTP if TEST_MODE is enabled
+        if (process.env.NEXT_PUBLIC_TEST_MODE === 'true' && result?.result?.testingOtp) {
+          setPhoneTestingOtp(result.result.testingOtp)
+          console.log('Testing OTP received (TEST_MODE enabled):', result.result.testingOtp)
         } else {
-          setTestingOtp(null)
+          setPhoneTestingOtp(null)
         }
         console.log('OTP sent to: ', phone)
         setErrorMsg('')
@@ -202,12 +211,12 @@ const QuickRegistrationForm = ({ mode, toggleAuthMode }) => {
     const result = await RestApi.post(API_URLS.v0.USERS_SEND_EMAIL_OTP, { email, action: 'verifyEmail' })
     if (result) {
       console.log('resendOtp called. recieved result', result)
-      // Only show testing OTP if email sending failed
-      if (result?.result?.testingOtp && (result?.result?.emailOtpError || result?.result?.success?.error || result?.result?.success?.status === 'error')) {
-        setTestingOtp(result.result.testingOtp)
-        console.log('Testing OTP received on resend (email sending failed):', result.result.testingOtp)
+      // Only show testing OTP if TEST_MODE is enabled
+      if (process.env.NEXT_PUBLIC_TEST_MODE === 'true' && result?.result?.testingOtp) {
+        setEmailTestingOtp(result.result.testingOtp)
+        console.log('Testing OTP received (TEST_MODE enabled):', result.result.testingOtp)
       } else {
-        setTestingOtp(null)
+        setEmailTestingOtp(null)
       }
     }
     setLoading(prev => ({ ...prev, resendEmailOtp: false }))
@@ -380,15 +389,11 @@ const QuickRegistrationForm = ({ mode, toggleAuthMode }) => {
             </Button>
 
             {/* Testing OTP Display for Email Verification */}
-            {testingOtp && (
-              <div className='bg-blue-50 border border-blue-200 rounded p-3 mt-2'>
-                <div className='text-center'>
-                  <Typography variant='body2'>
-                    <strong>Testing OTP:</strong> {testingOtp}
-                  </Typography>
-                </div>
-              </div>
-            )}
+            <TestingOtp 
+              testingOtp={emailTestingOtp} 
+              setOtpValue={setEmailOtpValue}
+              setIsDirty={() => {}}
+            />
           </>
         )}
         {isPhoneOtpSent && (
@@ -416,15 +421,11 @@ const QuickRegistrationForm = ({ mode, toggleAuthMode }) => {
             </Button>
 
             {/* Testing OTP Display for Phone Verification */}
-            {testingOtp && (
-              <div className='bg-blue-50 border border-blue-200 rounded p-3 mt-2'>
-                <div className='text-center'>
-                  <Typography variant='body2'>
-                    <strong>Testing OTP:</strong> {testingOtp}
-                  </Typography>
-                </div>
-              </div>
-            )}
+            <TestingOtp 
+              testingOtp={phoneTestingOtp} 
+              setOtpValue={setPhoneOtpValue}
+              setIsDirty={() => {}}
+            />
           </>
         )}
 

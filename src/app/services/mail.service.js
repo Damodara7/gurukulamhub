@@ -30,9 +30,49 @@ export const srvSendEmail = async ({ email, subject, content }) => {
     }
     // Send the email
     const mailResponse = await transporter.sendMail(mailOptions)
-    return mailResponse
+    console.log('[srvSendEmail] Email response:', {
+      messageId: mailResponse.messageId,
+      response: mailResponse.response,
+      accepted: mailResponse.accepted,
+      rejected: mailResponse.rejected
+    })
+    
+    // Check if email was actually accepted by the server
+    // nodemailer returns accepted/rejected arrays
+    const wasAccepted = mailResponse.accepted && mailResponse.accepted.length > 0
+    const wasRejected = mailResponse.rejected && mailResponse.rejected.length > 0
+    const hasMessageId = !!mailResponse.messageId
+    
+    // Email is successful if it has a messageId and was accepted (not rejected)
+    const isSuccess = hasMessageId && wasAccepted && !wasRejected
+    
+    if (isSuccess) {
+      console.log('[srvSendEmail] Email sent successfully to:', email)
+      return { success: true, response: mailResponse, messageId: mailResponse.messageId }
+    } else {
+      const errorMsg = wasRejected 
+        ? `Email was rejected by server: ${mailResponse.rejected.join(', ')}`
+        : !hasMessageId
+        ? 'Email service did not return a messageId - email may not have been sent'
+        : 'Email sending failed - unknown error'
+      console.error('[srvSendEmail] Email sending failed for:', email, errorMsg)
+      return { 
+        success: false, 
+        error: errorMsg, 
+        response: mailResponse,
+        rejected: mailResponse.rejected,
+        accepted: mailResponse.accepted
+      }
+    }
   } catch (error) {
-    throw new Error(error.message)
+    console.error('[srvSendEmail] Error sending email to:', email, error.message)
+    console.error('[srvSendEmail] Error stack:', error.stack)
+    // Return structured error instead of throwing
+    return { 
+      success: false, 
+      error: error.message || 'Unknown error sending email',
+      response: null
+    }
   }
 }
 
@@ -44,7 +84,7 @@ function getSMTPCredentials(config) {
       port: 587, // SMTP port (e.g., 587 for Gmail)
       secure: false, // true for 465, false for other ports
       auth: {
-        user: 'emailer@triesoltech.com', // Your email address
+        user: 'emailer@triesoltech1.com', // Your email address
         pass: 'RQ3DZHW4YoXcDBv2' // Your email password or application-specific password
       },
       tls: {
@@ -58,7 +98,7 @@ function getSMTPCredentials(config) {
       port: 465, // SMTP port (e.g., 587 for Gmail)
       secure: true, // true for 465, false for other ports
       auth: {
-        user: 'pvr@triesoltech.com',
+        user: 'pvr@triesoltech1.com',
         pass: '2024@Triesoltech'
       },
       tls: {

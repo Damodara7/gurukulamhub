@@ -15,22 +15,22 @@ export async function POST(request) {
     // Import createSuccessResponse
     const { createSuccessResponse } = await import('../../../utils/apiResponses')
     
-    // If it's an OTP email, preserve the testingOtp in the response only if email sending failed
+    // If it's an OTP email, preserve the testingOtp in the response if TEST_MODE is enabled
     // Match the structure expected by frontend: { status: 'success', message: '...', result: { testingOtp: '...' } }
     if (finalResult && finalResult.testingOtp) {
-      // Only include testingOtp if email sending failed
-      const shouldShowTestingOtp = finalResult.status === 'error' || finalResult.error || !finalResult.emailSent
+      // Always include testingOtp if TEST_MODE is enabled, regardless of email success/failure
+      const isTestMode = process.env.TEST_MODE === 'true' || process.env.NEXT_PUBLIC_TEST_MODE === 'true'
       // Structure the response to match what frontend expects: result.result.testingOtp
       const responseResult = {
         success: finalResult,
         results: 3,
-        testingOtp: shouldShowTestingOtp ? finalResult.testingOtp : null,
-        emailOtpError: shouldShowTestingOtp
+        testingOtp: isTestMode ? finalResult.testingOtp : null,
+        emailSent: finalResult.emailSent
       }
       console.log("Sending response with testingOtp:", {
         hasTestingOtp: !!responseResult.testingOtp,
         testingOtp: responseResult.testingOtp,
-        shouldShow: shouldShowTestingOtp,
+        isTestMode: isTestMode,
         emailSent: finalResult.emailSent,
         status: finalResult.status
       })

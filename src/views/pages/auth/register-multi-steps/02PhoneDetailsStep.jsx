@@ -29,6 +29,7 @@ import 'react-phone-input-2/lib/style.css'
 import DirectionalIcon from '@components/DirectionalIcon'
 import OtpForm from './OTPForm'
 import Form from '@components/Form'
+import TestingOtp from '@/components/TestingOtp'
 
 import { useRouter } from 'next/navigation'
 
@@ -122,10 +123,10 @@ const PhoneDetailsStep = ({
       })
       if (result) {
         // toast.success('Updated Phone Details & OTP Sent Successfully.')
-        // Only show testing OTP if SMS sending failed
-        if (result?.result?.testingOtp && (result?.result?.smsOtpError || result?.result?.success?.error || result?.result?.success?.status === 'error')) {
+        // Only show testing OTP if TEST_MODE is enabled
+        if (process.env.NEXT_PUBLIC_TEST_MODE === 'true' && result?.result?.testingOtp) {
           setTestingOtp(result.result.testingOtp)
-          console.log('Testing OTP received (SMS sending failed):', result.result.testingOtp)
+          console.log('Testing OTP received (TEST_MODE enabled):', result.result.testingOtp)
         } else {
           setTestingOtp(null)
         }
@@ -485,7 +486,7 @@ const PhoneDetailsStep = ({
                     sx={{
                       display: 'flex',
                       flexDirection: 'column',
-                      gap: { xs: 3, sm: 4 }
+                      gap: 2
                     }}
                   >
                     <CenterBox>
@@ -500,14 +501,26 @@ const PhoneDetailsStep = ({
                         Type in your 6 digit security code
                       </Typography>
                     </CenterBox>
-                    <CenterBox>
-                      <OtpForm
-                        setOtpValue={setOtpValue}
-                        otpValue={otpValue}
-                        currStatus={currStatus}
-                        setIsDirty={setIsDirty}
-                      />
-                    </CenterBox>
+                    <Box sx={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      mb: 3
+                    }}>
+                        <OtpForm
+                          setOtpValue={setOtpValue}
+                          otpValue={otpValue}
+                          currStatus={currStatus}
+                          setIsDirty={setIsDirty}
+                        />
+                    </Box>
+                    {/* Testing OTP Display for Phone Verification */}
+                    <TestingOtp 
+                      testingOtp={testingOtp} 
+                      setOtpValue={setOtpValue}
+                      setIsDirty={setIsDirty}
+                      isDarkMode={isDarkMode}
+                      theme={theme}
+                    />
                     {loading.verifyOtp ? (
                       <CenterBox>
                         <CircularProgress size={isMobile ? 24 : 32} />
@@ -584,34 +597,6 @@ const PhoneDetailsStep = ({
                         </Button>
                       </Typography>
                     </Box>
-
-                    {/* Testing OTP Display for Phone Verification */}
-                    {testingOtp && (
-                      <Box
-                        sx={{
-                          bgcolor: isDarkMode
-                            ? alpha(theme.palette.info.main, 0.15)
-                            : alpha(theme.palette.info.light, 0.2),
-                          border: `1px solid ${isDarkMode ? alpha(theme.palette.info.main, 0.3) : alpha(theme.palette.info.main, 0.4)}`,
-                          borderRadius: { xs: 1, sm: 1.5 },
-                          p: { xs: 2, sm: 3 },
-                          mt: { xs: 1, sm: 2 }
-                        }}
-                      >
-                        <Box sx={{ textAlign: 'center' }}>
-                          <Typography
-                            variant='body2'
-                            sx={{
-                              fontSize: { xs: '0.8125rem', sm: '0.875rem' },
-                              color: 'text.primary',
-                              fontWeight: 500
-                            }}
-                          >
-                            <strong>Testing OTP:</strong> {testingOtp}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    )}
                   </Form>
                 </Box>
               </Box>

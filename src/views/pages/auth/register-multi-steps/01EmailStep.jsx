@@ -28,6 +28,7 @@ import * as clientApi from '@/app/api/client/client.api'
 import Loading from '@/components/Loading'
 import OtpForm from './OTPForm'
 import ConfirmPassword from '@/components/passwords/ConfirmPassword'
+import TestingOtp from '@/components/TestingOtp'
 
 const EmailStep = ({
   signUp,
@@ -130,10 +131,10 @@ const EmailStep = ({
         setTimer(60)
         setCurrStatus('CONFIRM_SIGN_UP')
         setResendEnabled(false)
-        // Only show testing OTP if email sending failed
-        if (result?.result?.testingOtp && (result?.result?.emailOtpError || result?.result?.success?.error || result?.result?.success?.status === 'error')) {
+        // Only show testing OTP if TEST_MODE is enabled
+        if (process.env.NEXT_PUBLIC_TEST_MODE === 'true' && result?.result?.testingOtp) {
           setTestingOtp(result.result.testingOtp)
-          console.log('Testing OTP received on resend (email sending failed):', result.result.testingOtp)
+          console.log('Testing OTP received (TEST_MODE enabled):', result.result.testingOtp)
         } else {
           setTestingOtp(null)
         }
@@ -179,10 +180,10 @@ const EmailStep = ({
           setErrorMessage('')
           setNextPage('')
           setCurrStatus('CONFIRM_SIGN_UP')
-          // Only show testing OTP if email sending failed
-          if (result?.result?.testingOtp && result?.result?.emailOtpError) {
+          // Only show testing OTP if TEST_MODE is enabled
+          if (process.env.NEXT_PUBLIC_TEST_MODE === 'true' && result?.result?.testingOtp) {
             setTestingOtp(result.result.testingOtp)
-            console.log('Testing OTP received (email sending failed):', result.result.testingOtp)
+            console.log('Testing OTP received (TEST_MODE enabled):', result.result.testingOtp)
           } else {
             setTestingOtp(null)
           }
@@ -468,7 +469,7 @@ const EmailStep = ({
                     {/* <Typography variant='h4'>Two Step Verification 💬</Typography> */}
                     <Typography>We have sent a verification code to your email.</Typography>
                   </div>
-                  <Form noValidate autoComplete='off' className='flex flex-col gap-5'>
+                  <Form noValidate autoComplete='off' className='flex flex-col gap-2'>
                     <CenterBox>
                       <Typography>Type in your 6 digit security code </Typography>
                     </CenterBox>
@@ -480,6 +481,13 @@ const EmailStep = ({
                         setIsDirty={setIsDirty}
                       />
                     </CenterBox>
+                    <TestingOtp 
+                      testingOtp={testingOtp} 
+                      setOtpValue={setOtpValue}
+                      setIsDirty={setIsDirty}
+                      isDarkMode={isDarkMode}
+                      theme={theme}
+                    />
                     {errorMessage && (
                       <Alert
                         sx={{ padding: '0.5rem' }}
@@ -514,34 +522,6 @@ const EmailStep = ({
                         </Button>{' '}
                       </Typography>
                     </div>
-
-                    {/* Testing OTP Display for Email Verification */}
-                    {testingOtp && (
-                      <Box
-                        sx={{
-                          bgcolor: isDarkMode
-                            ? alpha(theme.palette.info.main, 0.15)
-                            : alpha(theme.palette.info.light, 0.2),
-                          border: `1px solid ${isDarkMode ? alpha(theme.palette.info.main, 0.3) : alpha(theme.palette.info.main, 0.4)}`,
-                          borderRadius: { xs: 1, sm: 1.5 },
-                          p: { xs: 2, sm: 3 },
-                          mt: { xs: 1, sm: 2 }
-                        }}
-                      >
-                        <Box sx={{ textAlign: 'center' }}>
-                          <Typography
-                            variant='body2'
-                            sx={{
-                              fontSize: { xs: '0.8125rem', sm: '0.875rem' },
-                              color: 'text.primary',
-                              fontWeight: 500
-                            }}
-                          >
-                            <strong>Testing OTP:</strong> {testingOtp}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    )}
                   </Form>
                 </div>
               </div>

@@ -778,18 +778,28 @@ export async function srvSendEmailOtp(email, purpose) {
     let mailResponse = {}
     let emailSentSuccessfully = false
     try {
-      mailResponse = await MailService.srvSendEmail({
+      const emailResult = await MailService.srvSendEmail({
         email,
         subject: 'OTP: ' + otp + ' to ' + purposeDetail,
         content
       })
-      // Check if mailResponse indicates success (nodemailer returns an object with messageId on success)
-      emailSentSuccessfully = mailResponse && mailResponse.messageId
+      console.log(`[srvSendEmailOtp] Email service result:`, emailResult)
+      
+      // Check if email was sent successfully
+      emailSentSuccessfully = emailResult.success === true
+      
       if (emailSentSuccessfully) {
-        console.log(`[srvSendEmailOtp] Email sent successfully to ${email}, messageId: ${mailResponse.messageId}`)
+        console.log(`[srvSendEmailOtp] Email sent successfully to ${email}, messageId: ${emailResult.messageId}`)
+        mailResponse = { ...emailResult.response }
       } else {
-        console.warn(`[srvSendEmailOtp] Email sending may have failed for ${email} - no messageId in response`)
-        mailResponse = { error: 'Email service did not return a messageId - email may not have been sent' }
+        const errorMsg = emailResult.error || 'Email service did not confirm successful delivery'
+        console.warn(`[srvSendEmailOtp] Email sending failed for ${email}:`, errorMsg)
+        mailResponse = { 
+          error: errorMsg, 
+          ...emailResult.response,
+          rejected: emailResult.rejected,
+          accepted: emailResult.accepted
+        }
       }
     } catch (emailError) {
       console.error(`[srvSendEmailOtp] Error sending email to ${email}:`, emailError.message)
@@ -803,6 +813,12 @@ export async function srvSendEmailOtp(email, purpose) {
     // Add testing OTP to the response for development/testing purposes
     // Only include testingOtp if email sending failed
     const emailFailed = !emailSentSuccessfully || mailResponse.error
+    console.log(`[srvSendEmailOtp] Final email status for ${email}:`, {
+      emailSentSuccessfully,
+      emailFailed,
+      hasError: !!mailResponse.error,
+      status: emailFailed ? 'error' : 'success'
+    })
     return {
       ...mailResponse,
       testingOtp: otp, // Always generate, but only show in UI if email failed
@@ -1088,16 +1104,19 @@ export async function srvSendPhoneOtp(email, phone, name) {
     let smsResponse = {}
     let smsSentSuccessfully = false
     try {
-      smsResponse = await SMSService.srvSendSMS(content)
-      // Check if SMS was sent successfully (srvSendSMS returns true/false or throws error)
-      // Note: The current implementation may not properly return success status
-      // We'll treat it as failed if we don't get a clear success indicator
-      smsSentSuccessfully = smsResponse === true || (smsResponse && !smsResponse.error)
+      const smsResult = await SMSService.srvSendSMS(content)
+      console.log(`[srvSendPhoneOtp] SMS service result:`, smsResult)
+      
+      // Check if SMS was sent successfully
+      smsSentSuccessfully = smsResult.success === true
+      
       if (smsSentSuccessfully) {
         console.log(`[srvSendPhoneOtp] SMS sent successfully to ${phone}`)
+        smsResponse = { ...smsResult.response }
       } else {
-        console.warn(`[srvSendPhoneOtp] SMS sending may have failed for ${phone} - unclear success status`)
-        smsResponse = { error: 'SMS service did not confirm successful delivery' }
+        const errorMsg = smsResult.error || 'SMS service did not confirm successful delivery'
+        console.warn(`[srvSendPhoneOtp] SMS sending failed for ${phone}:`, errorMsg)
+        smsResponse = { error: errorMsg, ...smsResult.response }
       }
     } catch (smsError) {
       console.error(`[srvSendPhoneOtp] Error sending SMS to ${phone}:`, smsError.message)
@@ -1111,6 +1130,12 @@ export async function srvSendPhoneOtp(email, phone, name) {
     // Add testing OTP to the response for development/testing purposes
     // Only include testingOtp if SMS sending failed
     const smsFailed = !smsSentSuccessfully || smsResponse.error
+    console.log(`[srvSendPhoneOtp] Final SMS status for ${phone}:`, {
+      smsSentSuccessfully,
+      smsFailed,
+      hasError: !!smsResponse.error,
+      status: smsFailed ? 'error' : 'success'
+    })
     return {
       ...smsResponse,
       testingOtp: otp, // Always generate, but only show in UI if SMS failed
