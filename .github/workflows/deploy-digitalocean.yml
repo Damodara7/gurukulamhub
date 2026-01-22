@@ -7,10 +7,6 @@ on:
       - production
   workflow_dispatch: # Allow manual trigger
 
-concurrency:
-  group: deploy-${{ github.ref }}
-  cancel-in-progress: true
-
 env:
   DROPLET_IP: 139.59.6.209
   DROPLET_USER: root
