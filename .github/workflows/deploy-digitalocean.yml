@@ -13,6 +13,10 @@ env:
   APP_DIR: /var/www/gurukulamhub
   DOMAIN: gurukulamhub.org
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: false
+
 jobs:
   deploy:
     name: Deploy to Digital Ocean
