@@ -774,15 +774,21 @@ export async function srvSendEmailOtp(email, purpose) {
     var purposeDetail = MailService.getPurposeDetail(purpose)
     var content = MailService.srvGetVerifyEmailOtpContent(purposeDetail, otp)
 
-    // Send the email
+    // Send the email (with timeout protection)
     let mailResponse = {}
     let emailSentSuccessfully = false
     try {
-      const emailResult = await MailService.srvSendEmail({
-        email,
-        subject: 'OTP: ' + otp + ' to ' + purposeDetail,
-        content
-      })
+      // Wrap email sending in a timeout to ensure it fails fast (8 seconds max)
+      const emailResult = await Promise.race([
+        MailService.srvSendEmail({
+          email,
+          subject: 'OTP: ' + otp + ' to ' + purposeDetail,
+          content
+        }),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Email service timeout after 8 seconds')), 8000)
+        )
+      ])
       console.log(`[srvSendEmailOtp] Email service result:`, emailResult)
       
       // Check if email was sent successfully

@@ -18,8 +18,15 @@ export const getPurposeDetail = (purpose) => {
 
 export const srvSendEmail = async ({ email, subject, content }) => {
   try {
-    // Create a nodemailer transport
-    const transporter = nodemailer.createTransport(getSMTPCredentials('mailer91'))
+    // Create a nodemailer transport with timeout
+    const smtpConfig = getSMTPCredentials('mailer91')
+    // Add connection timeout to fail fast (10 seconds max)
+    const transporter = nodemailer.createTransport({
+      ...smtpConfig,
+      connectionTimeout: 10000, // 10 seconds connection timeout
+      greetingTimeout: 10000, // 10 seconds greeting timeout
+      socketTimeout: 10000, // 10 seconds socket timeout
+    })
 
     // Compose email options
     const mailOptions = {
@@ -28,8 +35,13 @@ export const srvSendEmail = async ({ email, subject, content }) => {
       subject: subject,
       html: content
     }
-    // Send the email
-    const mailResponse = await transporter.sendMail(mailOptions)
+    // Send the email with a timeout wrapper
+    const mailResponse = await Promise.race([
+      transporter.sendMail(mailOptions),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Email service timeout after 10 seconds')), 10000)
+      )
+    ])
     console.log('[srvSendEmail] Email response:', {
       messageId: mailResponse.messageId,
       response: mailResponse.response,
