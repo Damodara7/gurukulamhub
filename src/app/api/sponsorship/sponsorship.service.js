@@ -2,6 +2,13 @@ import Quizzes from '../../api/quiz/quiz.model'
 
 import connectMongo from '@/utils/dbConnect-mongo'
 import Sponsorship from './sponsorship.model'
+import User from '@/app/models/user.model.js'
+import { ROLES_LOOKUP } from '@/configs/roles-lookup.js'
+import {
+  createPhysicalGiftSponsorshipPendingNotification,
+  createSponsorshipApprovedNotification,
+  createSponsorshipRejectedNotification
+} from '../notifications/notification.helpers.js'
 
 export async function getOne({ queryParams }) {
   console.log({ queryParams })
@@ -228,6 +235,58 @@ export async function addOne({ data }) {
 
     console.log(sponsorship)
 
+    // ✅ NOTIFICATION: If physical gift sponsorship, notify admins
+    if (data.rewardType === 'physicalGift') {
+      try {
+        console.log('[Sponsorship Service] Physical gift sponsorship created, finding admins...')
+        // Find all admin users (SUPER_ADMIN, ADMIN roles)
+        const adminUsers = await User.find({
+          $and: [
+            {
+              $or: [
+                { roles: { $in: [ROLES_LOOKUP.SUPER_ADMIN, ROLES_LOOKUP.ADMIN] } },
+                { isAdmin: true }
+              ]
+            },
+            {
+              $or: [{ isActive: true }, { isActive: { $exists: false } }]
+            }
+          ]
+        })
+          .select('_id email roles isAdmin isActive')
+          .lean()
+
+        console.log('[Sponsorship Service] Found admin users:', adminUsers?.length || 0)
+        if (adminUsers && adminUsers.length > 0) {
+          console.log(
+            '[Sponsorship Service] Admin users:',
+            adminUsers.map(u => ({ id: u._id, email: u.email, roles: u.roles }))
+          )
+          const adminUserIds = adminUsers.map(admin => admin._id)
+          const notificationResult = await createPhysicalGiftSponsorshipPendingNotification(adminUserIds, {
+            _id: sponsorship._id,
+            id: sponsorship._id,
+            fullname: sponsorship.fullname,
+            email: sponsorship.email || sponsorship.accountHolderEmail,
+            accountHolderEmail: sponsorship.accountHolderEmail,
+            nonCashItem: sponsorship.nonCashItem,
+            numberOfNonCashItems: sponsorship.numberOfNonCashItems,
+            rewardValue: sponsorship.rewardValue,
+            rewardValuePerItem: sponsorship.rewardValuePerItem
+          })
+          console.log(
+            `[Sponsorship Service] Created pending approval notifications for ${adminUserIds.length} admins`,
+            notificationResult
+          )
+        } else {
+          console.warn('[Sponsorship Service] No admin users found to notify')
+        }
+      } catch (notificationError) {
+        console.error('[Sponsorship Service] Error creating admin notifications:', notificationError)
+        // Don't fail the sponsorship creation if notification fails
+      }
+    }
+
     return { status: 'success', message: 'Sponsorship created successfully', result: sponsorship }
   } catch (err) {
     console.error(err)
@@ -241,6 +300,9 @@ export async function updateOne({ data }) {
 
     const { id, ...updateData } = data
 
+    // Get the old sponsorship to check status changes
+    const oldSponsorship = await Sponsorship.findById(id).lean()
+
     const sponsorship = await Sponsorship.findByIdAndUpdate(
       id,
       updateData,
@@ -249,6 +311,67 @@ export async function updateOne({ data }) {
 
     if (!sponsorship) {
       return { status: 'error', message: 'Sponsorship not found', result: null }
+    }
+
+    // ✅ NOTIFICATION: If physical gift sponsorship status changed to completed or rejected, notify sponsor
+    if (
+      sponsorship.rewardType === 'physicalGift' &&
+      oldSponsorship &&
+      oldSponsorship.nonCashSponsorshipStatus !== sponsorship.nonCashSponsorshipStatus
+    ) {
+      try {
+        const statusChanged = sponsorship.nonCashSponsorshipStatus
+        console.log(
+          '[Sponsorship Service] Physical gift sponsorship status changed:',
+          oldSponsorship.nonCashSponsorshipStatus,
+          '->',
+          statusChanged
+        )
+
+        // Find sponsor user by email
+        const sponsorEmail = sponsorship.accountHolderEmail || sponsorship.email
+        if (sponsorEmail) {
+          const sponsorUser = await User.findOne({ email: sponsorEmail })
+            .select('_id email')
+            .lean()
+
+          if (sponsorUser) {
+            if (statusChanged === 'completed') {
+              // Notify sponsor that sponsorship was approved
+              const notificationResult = await createSponsorshipApprovedNotification(sponsorUser._id, {
+                _id: sponsorship._id,
+                id: sponsorship._id,
+                nonCashItem: sponsorship.nonCashItem,
+                numberOfNonCashItems: sponsorship.numberOfNonCashItems,
+                rewardValue: sponsorship.rewardValue,
+                approvedBy: updateData.approvedBy || updateData.approverEmail || 'Admin',
+                approvedAt: new Date()
+              })
+              console.log('[Sponsorship Service] Created approval notification for sponsor:', notificationResult)
+            } else if (statusChanged === 'rejected') {
+              // Notify sponsor that sponsorship was rejected
+              const notificationResult = await createSponsorshipRejectedNotification(sponsorUser._id, {
+                _id: sponsorship._id,
+                id: sponsorship._id,
+                nonCashItem: sponsorship.nonCashItem,
+                numberOfNonCashItems: sponsorship.numberOfNonCashItems,
+                rewardValue: sponsorship.rewardValue,
+                rejectedBy: updateData.rejectorEmail || 'Admin',
+                nonCashSponsorshipRejectionReason: updateData.nonCashSponsorshipRejectionReason,
+                rejectedAt: new Date()
+              })
+              console.log('[Sponsorship Service] Created rejection notification for sponsor:', notificationResult)
+            }
+          } else {
+            console.warn('[Sponsorship Service] Sponsor user not found for email:', sponsorEmail)
+          }
+        } else {
+          console.warn('[Sponsorship Service] No sponsor email found in sponsorship')
+        }
+      } catch (notificationError) {
+        console.error('[Sponsorship Service] Error creating sponsor notifications:', notificationError)
+        // Don't fail the sponsorship update if notification fails
+      }
     }
 
     return { status: 'success', message: 'Sponsorship updated successfully', result: sponsorship }

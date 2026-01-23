@@ -34,7 +34,10 @@ const notificationSchema = new mongoose.Schema(
         'GROUP_REQUEST_REJECTED',
         'ROLE_ASSIGNED',
         'ROLE_REMOVED',
-        'PROFILE_COMPLETION_REMINDER'
+        'PROFILE_COMPLETION_REMINDER',
+        'SPONSORSHIP_PENDING_APPROVAL',
+        'SPONSORSHIP_APPROVED',
+        'SPONSORSHIP_REJECTED'
       ],
       index: true
     },
@@ -71,7 +74,7 @@ const notificationSchema = new mongoose.Schema(
     relatedEntity: {
       entityType: {
         type: String,
-        enum: ['quiz', 'game', 'group', 'user', 'role', 'profile'],
+        enum: ['quiz', 'game', 'group', 'user', 'role', 'profile', 'sponsorship'],
         required: false
       },
       entityId: {
