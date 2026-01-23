@@ -392,6 +392,8 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
   }
 
   async function findAccountsWithMobile(mobileValue) {
+    console.log('TEST_MODE: ', process.env.NEXT_PUBLIC_TEST_MODE)
+    console.log('TEST_MODE: ', process.env.TEST_MODE)
     try {
       setLoading(prev => ({ ...prev, findAccounts: true }))
       setLoading(prev => ({ ...prev, accountsFetched: false }))
