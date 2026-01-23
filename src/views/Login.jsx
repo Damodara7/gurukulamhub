@@ -392,8 +392,9 @@ const Login = ({ mode, gamePin = null, initialSearchParams = {} }) => {
   }
 
   async function findAccountsWithMobile(mobileValue) {
-    console.log('TEST_MODE: ', process.env.NEXT_PUBLIC_TEST_MODE)
-    console.log('TEST_MODE: ', process.env.TEST_MODE)
+    // Note: process.env.TEST_MODE is undefined in client components (server-only)
+    // Only NEXT_PUBLIC_* variables are available in client components
+    console.log('TEST_MODE (NEXT_PUBLIC): ', process.env.NEXT_PUBLIC_TEST_MODE)
     try {
       setLoading(prev => ({ ...prev, findAccounts: true }))
       setLoading(prev => ({ ...prev, accountsFetched: false }))

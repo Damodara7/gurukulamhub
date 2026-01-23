@@ -6,6 +6,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_TEST_MODE: ${NEXT_PUBLIC_TEST_MODE:-true}
     container_name: gurukulamhub-app
     ports:
       - "3000:3000"

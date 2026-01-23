@@ -146,8 +146,8 @@ jobs:
           # -----------------------------------------------------------------------------
           # TEST_MODE
           # -----------------------------------------------------------------------------
-          NEXT_PUBLIC_TEST_MODE=${{ secrets.TEST_MODE }}
-          TEST_MODE=${{ secrets.TEST_MODE }}
+          NEXT_PUBLIC_TEST_MODE=${{ secrets.TEST_MODE || 'true' }}
+          TEST_MODE=${{ secrets.TEST_MODE || 'true' }}
 
           # -----------------------------------------------------------------------------
           # VAPID Keys (Web Push Notifications)
@@ -175,9 +175,16 @@ jobs:
             echo "⏹️  Stopping containers..."
             docker compose down || true
             
+            # Export environment variables from .env.production for build args
+            echo "📦 Loading environment variables for build..."
+            set -a
+            source .env.production 2>/dev/null || true
+            set +a
+            
             # Build and start containers with progress output
             echo "🔨 Building and starting containers..."
             # Use --progress=plain to ensure build output is streamed in real-time
+            # NEXT_PUBLIC_TEST_MODE is read from environment (loaded from .env.production above)
             docker compose build --progress=plain
             docker compose up -d
             
