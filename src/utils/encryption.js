@@ -20,6 +20,52 @@ export async function generateEncryptionKey() {
 }
 
 /**
+ * Derive a deterministic AES-GCM key from a string.
+ *
+ * This is used for chat keys so that all participants can independently
+ * derive the same encryption key from a shared identifier (e.g. chatId
+ * or groupId) without needing an additional key exchange.
+ *
+ * NOTE: This is a pragmatic solution for this app. In a production
+ * system you would typically distribute a random key via a secure
+ * channel rather than deriving it directly from an identifier.
+ *
+ * @param {string} source - String to derive the key from
+ * @returns {Promise<CryptoKey>} Derived encryption key
+ */
+export async function deriveDeterministicKeyFromString(source) {
+  const encoder = new TextEncoder()
+  const salt = encoder.encode('gurukulamhub-chat-encryption-v1')
+  const passwordData = encoder.encode(source || 'default')
+
+  // Import the source string as key material for PBKDF2
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    passwordData,
+    { name: 'PBKDF2' },
+    false,
+    ['deriveKey']
+  )
+
+  // Derive a stable AES-GCM key from the key material
+  return await crypto.subtle.deriveKey(
+    {
+      name: 'PBKDF2',
+      salt,
+      iterations: 100000,
+      hash: 'SHA-256'
+    },
+    keyMaterial,
+    {
+      name: 'AES-GCM',
+      length: 256
+    },
+    true,
+    ['encrypt', 'decrypt']
+  )
+}
+
+/**
  * Generate an ECDH key pair for key exchange
  * @returns {Promise<{publicKey: CryptoKey, privateKey: CryptoKey}>} Key pair
  */

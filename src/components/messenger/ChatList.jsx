@@ -38,6 +38,7 @@ import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { toast } from 'react-toastify'
 import { stringToColor } from '@/utils/stringToColor'
+import * as ChatEncryption from '@/utils/chatEncryption'
 
 // Helper function to get avatar background color with contrast adjustment (same as in chat pages)
 const getAvatarBackgroundColor = (inputString) => {
@@ -154,13 +155,64 @@ const ChatList = () => {
       const result = await RestApi.get(API_URLS.v0.MESSENGER_COMBINED_CHATS)
 
       if (result?.status === 'success') {
-        const fetchedChats = (result.result || []).map(chat => ({
-          ...chat,
-          unreadCount: typeof chat.unreadCount === 'number' ? chat.unreadCount : 0,
-          avatarColor: chat.avatarColor || (chat.type === 'individual' 
-            ? getAvatarBackgroundColor(chat.email || 'user')
-            : getAvatarBackgroundColor(chat.name || 'group'))
-        }))
+        // Decrypt last messages for each chat
+        const fetchedChats = await Promise.all(
+          (result.result || []).map(async (chat) => {
+            let decryptedLastMessage = chat.lastMessage
+            if (chat.lastMessage?.message) {
+              try {
+                if (chat.type === 'individual') {
+                  // Use the exact same approach as IndividualChatPage for consistency
+                  const originalMessage = chat.lastMessage.message
+                  try {
+                    const decrypted = await ChatEncryption.decryptIfEncrypted(
+                      originalMessage,
+                      (encrypted) => ChatEncryption.decryptIndividualMessage(encrypted, chat.id)
+                    )
+                    if (decrypted !== originalMessage) {
+                      decryptedLastMessage = { ...chat.lastMessage, message: decrypted }
+                      console.log('[ChatList] ✓ Successfully decrypted last message for chat:', chat.id, 'decrypted preview:', decrypted.substring(0, 50))
+                    }
+                  } catch (error) {
+                    console.warn('[ChatList] Failed to decrypt last message:', error, 'chatId:', chat.id)
+                    // Keep original message if decryption fails
+                  }
+                } else if (chat.type === 'group') {
+                  // Always try to decrypt - decryptGroupMessage will auto-derive key if needed
+                  const decrypted = await ChatEncryption.decryptGroupMessage(
+                    chat.lastMessage.message,
+                    chat.id
+                  )
+                  // Only update if decryption succeeded (message changed)
+                  if (decrypted !== chat.lastMessage.message) {
+                    decryptedLastMessage = { ...chat.lastMessage, message: decrypted }
+                    console.log('[ChatList] Successfully decrypted last group message for group:', chat.id)
+                  } else {
+                    // If message looks encrypted but didn't decrypt, log for debugging
+                    if (ChatEncryption.isEncrypted(chat.lastMessage.message)) {
+                      console.warn('[ChatList] Group message appears encrypted but decryption returned same value for group:', chat.id)
+                    }
+                  }
+                }
+              } catch (error) {
+                console.error('[ChatList] Failed to decrypt last message:', error, 'chatId:', chat.id, 'error details:', {
+                  message: error?.message,
+                  stack: error?.stack
+                })
+                // Keep original message if decryption fails
+              }
+            }
+            
+            return {
+              ...chat,
+              lastMessage: decryptedLastMessage,
+              unreadCount: typeof chat.unreadCount === 'number' ? chat.unreadCount : 0,
+              avatarColor: chat.avatarColor || (chat.type === 'individual' 
+                ? getAvatarBackgroundColor(chat.email || 'user')
+                : getAvatarBackgroundColor(chat.name || 'group'))
+            }
+          })
+        )
 
         setChats(fetchedChats)
       }
@@ -182,6 +234,73 @@ const ChatList = () => {
     }
   }, [session?.user?.email, fetchChats])
 
+  // Re-decrypt all last messages after a delay to ensure keys are ready (only once after initial load)
+  const hasRedecryptedRef = useRef(false)
+  useEffect(() => {
+    if (chats.length === 0 || hasRedecryptedRef.current) return
+
+    const redecryptLastMessages = async () => {
+      console.log('[ChatList] Re-decrypting last messages for all chats, chat count:', chats.length)
+      
+      const updatedChats = await Promise.all(
+        chats.map(async (chat) => {
+          if (!chat.lastMessage?.message) return chat
+          
+          try {
+            if (chat.type === 'individual') {
+              const originalMessage = chat.lastMessage.message
+              const decrypted = await ChatEncryption.decryptIfEncrypted(
+                originalMessage,
+                (encrypted) => ChatEncryption.decryptIndividualMessage(encrypted, chat.id)
+              )
+              
+              if (decrypted !== originalMessage) {
+                console.log('[ChatList] Re-decryption succeeded for chat:', chat.id, 'decrypted preview:', decrypted.substring(0, 50))
+                return {
+                  ...chat,
+                  lastMessage: { ...chat.lastMessage, message: decrypted }
+                }
+              }
+            } else if (chat.type === 'group') {
+              const originalMessage = chat.lastMessage.message
+              const decrypted = await ChatEncryption.decryptIfEncrypted(
+                originalMessage,
+                (encrypted) => ChatEncryption.decryptGroupMessage(encrypted, chat.id)
+              )
+              
+              if (decrypted !== originalMessage) {
+                console.log('[ChatList] Re-decryption succeeded for group:', chat.id)
+                return {
+                  ...chat,
+                  lastMessage: { ...chat.lastMessage, message: decrypted }
+                }
+              }
+            }
+          } catch (error) {
+            console.warn('[ChatList] Re-decryption failed for chat:', chat.id, error)
+          }
+          
+          return chat
+        })
+      )
+      
+      // Check if any messages were actually decrypted
+      const hasChanges = updatedChats.some((updated, index) => 
+        updated.lastMessage?.message !== chats[index].lastMessage?.message
+      )
+      
+      if (hasChanges) {
+        console.log('[ChatList] Updating chats with re-decrypted last messages')
+        setChats(updatedChats)
+        hasRedecryptedRef.current = true
+      }
+    }
+
+    // Delay to ensure encryption keys are ready
+    const timeoutId = setTimeout(redecryptLastMessages, 2000)
+    return () => clearTimeout(timeoutId)
+  }, [chats.length]) // Only run when chat count changes (after initial load)
+
   // WebSocket connection for real-time updates
   useEffect(() => {
     if (!session?.user?.email) return
@@ -200,7 +319,7 @@ const ChatList = () => {
       messengerSocketRef.current = ws
     }
 
-    ws.onmessage = event => {
+    ws.onmessage = async event => {
       try {
         const msg = JSON.parse(event.data)
 
@@ -211,8 +330,25 @@ const ChatList = () => {
           const isDeletedForUser = message.deletedFor?.some(d => d.userEmail === session.user.email)
           const isRead = message.readBy?.some(reader => reader.userEmail === session.user.email)
           
-          // Normalize chatId for comparison
+          // Normalize chatId for comparison and decryption
           const normalizedChatId = normalizeChatIdForComparison(chatId)
+          
+          // Decrypt message - use same approach as IndividualChatPage for consistency
+          let decryptedMessageText = message.message
+          if (message.message) {
+            try {
+              const decrypted = await ChatEncryption.decryptIfEncrypted(
+                message.message,
+                (encrypted) => ChatEncryption.decryptIndividualMessage(encrypted, normalizedChatId)
+              )
+              if (decrypted !== message.message) {
+                decryptedMessageText = decrypted
+              }
+            } catch (error) {
+              console.warn('[ChatList] Failed to decrypt individual message:', error)
+              // Keep original message if decryption fails
+            }
+          }
           
           // Message is unread if:
           // 1. Not from current user
@@ -247,7 +383,7 @@ const ChatList = () => {
                   ...c,
                   lastMessage: {
                     _id: message._id,
-                    message: message.message,
+                    message: decryptedMessageText,
                     senderEmail: message.senderEmail,
                     createdAt: message.createdAt,
                     isEdited: message.isEdited,
@@ -301,6 +437,38 @@ const ChatList = () => {
           // Normalize chatId for comparison
           const normalizedChatId = normalizeChatIdForComparison(chatId)
 
+          // Decrypt message - use same approach as IndividualChatPage for consistency
+          let decryptedMessageText = updatedMessage.message
+          if (updatedMessage.message) {
+            (async () => {
+              try {
+                const decrypted = await ChatEncryption.decryptIfEncrypted(
+                  updatedMessage.message,
+                  (encrypted) => ChatEncryption.decryptIndividualMessage(encrypted, normalizedChatId)
+                )
+                if (decrypted !== updatedMessage.message) {
+                  decryptedMessageText = decrypted
+                  // Update the chat with decrypted message
+                  setChats(prev => {
+                    return prev.map(c => {
+                      const normalizedCId = normalizeChatIdForComparison(c.id)
+                      const matches = normalizedCId === normalizedChatId || c.id === chatId || c.id === normalizedChatId
+                      if (matches && c.type === 'individual' && c.lastMessage?._id === updatedMessage._id) {
+                        return {
+                          ...c,
+                          lastMessage: { ...c.lastMessage, message: decrypted }
+                        }
+                      }
+                      return c
+                    })
+                  })
+                }
+              } catch (error) {
+                console.warn('[ChatList] Failed to decrypt updated individual message:', error)
+              }
+            })()
+          }
+
           setChats(prev => {
             const updated = prev.map(c => {
               // Match by normalized chatId
@@ -323,7 +491,7 @@ const ChatList = () => {
                 }
 
                 const updatedLastMessage = c.lastMessage?._id === updatedMessage._id
-                  ? { ...c.lastMessage, ...updatedMessage }
+                  ? { ...c.lastMessage, ...updatedMessage, message: decryptedMessageText || updatedMessage.message }
                   : c.lastMessage
 
                 // If message was marked as read and it's from another user, decrement unread count
@@ -387,6 +555,23 @@ const ChatList = () => {
           const isFromCurrentUser = message.senderEmail === session.user.email
           const isRead = message.readBy?.some(reader => reader.userEmail === session.user.email)
           
+          // Decrypt message - always try to decrypt (decryptGroupMessage will auto-derive key if needed)
+          let decryptedMessageText = message.message
+          if (message.message) {
+            try {
+              const decrypted = await ChatEncryption.decryptGroupMessage(
+                message.message,
+                groupId
+              )
+              if (decrypted !== message.message) {
+                decryptedMessageText = decrypted
+              }
+            } catch (error) {
+              console.warn('[ChatList] Failed to decrypt group message:', error)
+              // Keep original message if decryption fails
+            }
+          }
+          
           // Message is unread if:
           // 1. Not from current user
           // 2. Not deleted for everyone
@@ -416,7 +601,7 @@ const ChatList = () => {
                   ...c,
                   lastMessage: {
                     _id: message._id,
-                    message: message.message,
+                    message: decryptedMessageText,
                     senderEmail: message.senderEmail,
                     createdAt: message.createdAt,
                     isEdited: message.isEdited,
@@ -455,6 +640,36 @@ const ChatList = () => {
           const isRead = updatedMessage.readBy?.some(reader => reader.userEmail === session.user.email)
           const isFromOtherUser = updatedMessage.senderEmail !== session.user.email
 
+          // Decrypt message - always try to decrypt (decryptGroupMessage will auto-derive key if needed)
+          let decryptedMessageText = updatedMessage.message
+          if (updatedMessage.message) {
+            (async () => {
+              try {
+                const decrypted = await ChatEncryption.decryptGroupMessage(
+                  updatedMessage.message,
+                  groupId
+                )
+                if (decrypted !== updatedMessage.message) {
+                  decryptedMessageText = decrypted
+                  // Update the chat with decrypted message
+                  setChats(prev => {
+                    return prev.map(c => {
+                      if (c.id === groupId && c.type === 'group' && c.lastMessage?._id === updatedMessage._id) {
+                        return {
+                          ...c,
+                          lastMessage: { ...c.lastMessage, message: decrypted }
+                        }
+                      }
+                      return c
+                    })
+                  })
+                }
+              } catch (error) {
+                console.warn('[ChatList] Failed to decrypt updated group message:', error)
+              }
+            })()
+          }
+
           setChats(prev => {
             const updated = prev.map(c => {
               if (c.id === groupId && c.type === 'group') {
@@ -463,7 +678,7 @@ const ChatList = () => {
                 }
 
                 const updatedLastMessage = c.lastMessage?._id === updatedMessage._id
-                  ? { ...c.lastMessage, ...updatedMessage }
+                  ? { ...c.lastMessage, ...updatedMessage, message: decryptedMessageText || updatedMessage.message }
                   : c.lastMessage
 
                 // If message was marked as read and it's from another user, decrement unread count

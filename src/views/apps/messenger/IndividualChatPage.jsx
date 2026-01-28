@@ -191,59 +191,24 @@ const IndividualChatPage = ({ chatId, backPath = '/messanger' }) => {
       if (!chatId || !session?.user?.email || !otherUserEmail) return
 
       try {
-        // Check if we already have a shared key for this chat
-        const existingKey = await KeyManagement.getIndividualChatKey(chatId)
-        if (existingKey) {
+        // Deterministic key setup – no need to fetch other user's public key anymore.
+        const success = await ChatEncryption.setupIndividualChatEncryption(
+          chatId,
+          session.user.email
+        )
+
+        if (success) {
           setEncryptionReady(true)
           encryptionReadyRef.current = true
+          console.log('[Encryption] Chat encryption set up successfully')
           // Clear retry interval if encryption is ready
           if (retryInterval) {
             clearInterval(retryInterval)
             retryInterval = null
           }
           return true
-        }
-
-        // Get other user's public key from server
-        try {
-          const keyResponse = await RestApi.get(`/encryption/keys?userId=${otherUserEmail}`)
-          if (keyResponse?.result?.publicKey) {
-            // Setup encryption with other user's public key
-            const success = await ChatEncryption.setupIndividualChatEncryption(
-              chatId,
-              session.user.email,
-              keyResponse.result.publicKey
-            )
-
-            if (success) {
-              setEncryptionReady(true)
-              encryptionReadyRef.current = true
-              console.log('[Encryption] Chat encryption set up successfully')
-              // Clear retry interval if encryption is ready
-              if (retryInterval) {
-                clearInterval(retryInterval)
-                retryInterval = null
-              }
-              return true
-            } else {
-              console.warn('[Encryption] Failed to set up chat encryption')
-              // Continue without encryption (backward compatibility)
-              setEncryptionReady(false)
-              encryptionReadyRef.current = false
-              return false
-            }
-          } else {
-            // Other user hasn't set up encryption yet
-            if (!isRetry) {
-              console.log('[Encryption] Other user has not set up encryption yet. Will retry...')
-            }
-            setEncryptionReady(false)
-            encryptionReadyRef.current = false
-            return false
-          }
-        } catch (error) {
-          console.warn('[Encryption] Failed to get other user\'s public key:', error)
-          // Continue without encryption (backward compatibility)
+        } else {
+          console.warn('[Encryption] Failed to set up chat encryption')
           setEncryptionReady(false)
           encryptionReadyRef.current = false
           return false
@@ -563,30 +528,6 @@ const IndividualChatPage = ({ chatId, backPath = '/messanger' }) => {
           } else if (msg.type === 'newMessage' || msg.type === 'newChatMessage') {
             const message = msg.data
             
-            // If encryption is not ready, try to set it up again (other user might have just set up encryption)
-            if (!encryptionReadyRef.current && message.senderEmail === otherUserEmail) {
-              // Trigger encryption setup check when receiving a message from the other user
-              setTimeout(async () => {
-                try {
-                  const keyResponse = await RestApi.get(`/encryption/keys?userId=${otherUserEmail}`)
-                  if (keyResponse?.result?.publicKey) {
-                    const success = await ChatEncryption.setupIndividualChatEncryption(
-                      chatId,
-                      session.user.email,
-                      keyResponse.result.publicKey
-                    )
-                    if (success) {
-                      setEncryptionReady(true)
-                      encryptionReadyRef.current = true
-                      console.log('[Encryption] Chat encryption set up successfully (after receiving message)')
-                    }
-                  }
-                } catch (error) {
-                  // Silently fail - encryption setup will retry on its own
-                }
-              }, 500)
-            }
-            
             // Decrypt message if encrypted (try even if encryptionReadyRef is false)
             let decryptedMessage = message
             if (message.message) {
@@ -604,7 +545,8 @@ const IndividualChatPage = ({ chatId, backPath = '/messanger' }) => {
                   // This means the key might not be ready yet - retry after a delay
                   console.log('[Encryption] Decryption failed for encrypted message, will retry:', message._id)
                   const isOwnMessage = message.senderEmail === session?.user?.email
-                  // Retry decryption after a short delay, especially for own messages
+                  
+                  // Retry decryption after a short delay
                   setTimeout(async () => {
                     try {
                       const retryDecrypted = await ChatEncryption.decryptIfEncrypted(
@@ -623,39 +565,38 @@ const IndividualChatPage = ({ chatId, backPath = '/messanger' }) => {
                         console.log('[Encryption] Retry decryption succeeded for message:', message._id)
                       } else {
                         // Still failed, try one more time after a longer delay
-                        if (isOwnMessage) {
-                          setTimeout(async () => {
-                            try {
-                              const finalRetry = await ChatEncryption.decryptIfEncrypted(
-                                message.message,
-                                (encrypted) => ChatEncryption.decryptIndividualMessage(encrypted, chatId)
-                              )
-                              if (finalRetry !== message.message) {
-                                setMessages(prev => {
-                                  return prev.map(m => 
-                                    m._id === message._id 
-                                      ? { ...m, message: finalRetry }
-                                      : m
-                                  )
-                                })
-                                console.log('[Encryption] Final retry decryption succeeded for message:', message._id)
-                              }
-                            } catch (finalError) {
-                              console.warn('[Encryption] Final retry decryption failed:', finalError)
+                        setTimeout(async () => {
+                          try {
+                            const finalRetry = await ChatEncryption.decryptIfEncrypted(
+                              message.message,
+                              (encrypted) => ChatEncryption.decryptIndividualMessage(encrypted, chatId)
+                            )
+                            if (finalRetry !== message.message) {
+                              setMessages(prev => {
+                                return prev.map(m => 
+                                  m._id === message._id 
+                                    ? { ...m, message: finalRetry }
+                                    : m
+                                )
+                              })
+                              console.log('[Encryption] Final retry decryption succeeded for message:', message._id)
                             }
-                          }, 1000)
-                        }
+                          } catch (finalError) {
+                            console.warn('[Encryption] Final retry decryption failed:', finalError)
+                          }
+                        }, 1000)
                       }
                     } catch (retryError) {
                       console.warn('[Encryption] Retry decryption failed:', retryError)
                     }
-                  }, isOwnMessage ? 100 : 500) // Retry faster for own messages
+                  }, isOwnMessage ? 100 : 1000) // Longer delay for receiver messages to allow encryption setup
                 }
               } catch (error) {
                 console.warn('[Encryption] Failed to decrypt incoming message:', error)
                 // If message appears encrypted, retry after a delay
                 if (isMessageEncrypted) {
                   const isOwnMessage = message.senderEmail === session?.user?.email
+                  
                   setTimeout(async () => {
                     try {
                       const retryDecrypted = await ChatEncryption.decryptIfEncrypted(
@@ -675,7 +616,7 @@ const IndividualChatPage = ({ chatId, backPath = '/messanger' }) => {
                     } catch (retryError) {
                       console.warn('[Encryption] Retry decryption failed:', retryError)
                     }
-                  }, isOwnMessage ? 100 : 500)
+                  }, isOwnMessage ? 100 : 1000) // Longer delay for receiver messages
                 }
                 // Continue with original message (backward compatibility)
               }

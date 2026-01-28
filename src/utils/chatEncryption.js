@@ -89,7 +89,7 @@ export async function initializeUserEncryption(userEmail) {
  * Setup encryption for individual chat
  * @param {string} chatId - Chat ID (email1_email2)
  * @param {string} userEmail - Current user's email
- * @param {string} otherUserPublicKey - Other user's public key (base64)
+ * @param {string} otherUserPublicKey - Other user's public key (base64) - kept for backward compatibility, not used in deterministic mode
  * @returns {Promise<boolean>} True if successful
  */
 export async function setupIndividualChatEncryption(chatId, userEmail, otherUserPublicKey) {
@@ -97,28 +97,17 @@ export async function setupIndividualChatEncryption(chatId, userEmail, otherUser
     // Normalize chatId to ensure consistent format
     const normalizedChatId = normalizeChatId(chatId)
     
-    // Check if we already have a shared key
-    let sharedKey = await KeyManagement.getIndividualChatKey(normalizedChatId)
+    // Always derive the same deterministic key from the normalized chatId.
+    // This guarantees both participants end up with IDENTICAL keys for the
+    // same chat, regardless of who created or joined first, and also
+    // overwrites any old mismatched keys that may exist in IndexedDB.
+    const derivedKey = await EncryptionUtils.deriveDeterministicKeyFromString(
+      `individual:${normalizedChatId}`
+    )
 
-    if (!sharedKey) {
-      // Get user's private key
-      const keyPair = await KeyManagement.getUserKeyPair(userEmail)
-      if (!keyPair) {
-        throw new Error('User key pair not found. Please initialize encryption first.')
-      }
-
-      // Import keys
-      const privateKey = await EncryptionUtils.importPrivateKey(keyPair.privateKey)
-      const publicKey = await EncryptionUtils.importPublicKey(otherUserPublicKey)
-
-      // Derive shared key
-      const derivedKey = await EncryptionUtils.deriveSharedKey(privateKey, publicKey)
-
-      // Export and store shared key
-      sharedKey = await EncryptionUtils.exportKey(derivedKey)
-      await KeyManagement.storeIndividualChatKey(normalizedChatId, userEmail, sharedKey)
-      console.log('[Encryption] Shared key stored for chatId:', normalizedChatId)
-    }
+    const sharedKey = await EncryptionUtils.exportKey(derivedKey)
+    await KeyManagement.storeIndividualChatKey(normalizedChatId, userEmail, sharedKey)
+    console.log('[Encryption] Deterministic shared key stored for chatId:', normalizedChatId)
 
     return true
   } catch (error) {
@@ -135,25 +124,18 @@ export async function setupIndividualChatEncryption(chatId, userEmail, otherUser
  */
 export async function setupGroupChatEncryption(groupId, isCreator = false) {
   try {
-    // Check if we already have a group key
-    let sharedKey = await KeyManagement.getGroupChatKey(groupId)
-
-    if (!sharedKey) {
-      if (isCreator) {
-        // Creator generates a new group key
-        const groupKey = await EncryptionUtils.generateEncryptionKey()
-        sharedKey = await EncryptionUtils.exportKey(groupKey)
-        await KeyManagement.storeGroupChatKey(groupId, sharedKey)
-      } else {
-        // Non-creator waits for key from creator
-        // In production, this would be fetched from server or received via secure channel
-        // For now, we'll generate a temporary key that will be replaced
-        const groupKey = await EncryptionUtils.generateEncryptionKey()
-        sharedKey = await EncryptionUtils.exportKey(groupKey)
-        await KeyManagement.storeGroupChatKey(groupId, sharedKey)
-        // TODO: In production, fetch actual group key from creator via secure channel
-      }
-    }
+    // Derive a deterministic key from the groupId so that all members
+    // independently arrive at the same encryption key.
+    //
+    // This replaces the old behaviour where each client generated its own
+    // random key and stored it, which meant only the sender could decrypt
+    // their own messages.
+    const groupKey = await EncryptionUtils.deriveDeterministicKeyFromString(
+      `group:${groupId}`
+    )
+    const sharedKey = await EncryptionUtils.exportKey(groupKey)
+    await KeyManagement.storeGroupChatKey(groupId, sharedKey)
+    console.log('[Encryption] Deterministic group key stored for groupId:', groupId)
 
     return true
   } catch (error) {
@@ -197,18 +179,59 @@ export async function decryptIndividualMessage(encryptedMessage, chatId) {
   try {
     // Normalize chatId to ensure consistent format
     const normalizedChatId = normalizeChatId(chatId)
-    const sharedKeyBase64 = await KeyManagement.getIndividualChatKey(normalizedChatId)
-    if (!sharedKeyBase64) {
-      // If no key, try to set up encryption first (might not be initialized yet)
-      console.log('[Encryption] No shared key found, attempting to set up encryption...')
-      // Return original for now - will be retried when encryption is set up
+    let sharedKeyBase64 = await KeyManagement.getIndividualChatKey(normalizedChatId)
+    
+    // Always derive and use the deterministic key (for new messages)
+    // This ensures all clients use the same key
+    console.log('[Encryption] Deriving deterministic key for chatId:', normalizedChatId)
+    try {
+      const derivedKey = await EncryptionUtils.deriveDeterministicKeyFromString(
+        `individual:${normalizedChatId}`
+      )
+      const deterministicKeyBase64 = await EncryptionUtils.exportKey(derivedKey)
+      
+      // Try decrypting with deterministic key first (for new messages)
+      try {
+        const deterministicKey = await EncryptionUtils.importKey(deterministicKeyBase64)
+        const decrypted = await EncryptionUtils.decryptMessage(encryptedMessage, deterministicKey)
+        console.log('[Encryption] Successfully decrypted with deterministic key for chatId:', normalizedChatId)
+        // Store the deterministic key for future use
+        if (!sharedKeyBase64 || sharedKeyBase64 !== deterministicKeyBase64) {
+          await KeyManagement.storeIndividualChatKey(normalizedChatId, 'system', deterministicKeyBase64)
+        }
+        return decrypted
+      } catch (deterministicError) {
+        console.log('[Encryption] Deterministic key decryption failed, trying stored key if available:', deterministicError.message)
+        
+        // If deterministic key fails and we have a stored key, try that (for old messages)
+        if (sharedKeyBase64 && sharedKeyBase64 !== deterministicKeyBase64) {
+          try {
+            const storedKey = await EncryptionUtils.importKey(sharedKeyBase64)
+            const decrypted = await EncryptionUtils.decryptMessage(encryptedMessage, storedKey)
+            console.log('[Encryption] Successfully decrypted with stored key for chatId:', normalizedChatId)
+            return decrypted
+          } catch (storedError) {
+            console.warn('[Encryption] Both deterministic and stored keys failed for chatId:', normalizedChatId)
+            // Fall through to return original
+          }
+        }
+        // If no stored key or stored key also failed, return original
+        return encryptedMessage
+      }
+    } catch (setupError) {
+      console.error('[Encryption] Failed to derive deterministic key:', setupError)
+      // If we have a stored key, try that as fallback
+      if (sharedKeyBase64) {
+        try {
+          const storedKey = await EncryptionUtils.importKey(sharedKeyBase64)
+          const decrypted = await EncryptionUtils.decryptMessage(encryptedMessage, storedKey)
+          return decrypted
+        } catch (storedError) {
+          console.warn('[Encryption] Stored key also failed:', storedError)
+        }
+      }
       return encryptedMessage
     }
-
-    const sharedKey = await EncryptionUtils.importKey(sharedKeyBase64)
-    const decrypted = await EncryptionUtils.decryptMessage(encryptedMessage, sharedKey)
-
-    return decrypted
   } catch (error) {
     console.error('[Encryption] Error decrypting individual message:', error)
     console.error('[Encryption] Error details:', {
@@ -252,10 +275,21 @@ export async function encryptGroupMessage(message, groupId) {
  */
 export async function decryptGroupMessage(encryptedMessage, groupId) {
   try {
-    const sharedKeyBase64 = await KeyManagement.getGroupChatKey(groupId)
+    let sharedKeyBase64 = await KeyManagement.getGroupChatKey(groupId)
+    
+    // If no key exists, automatically derive the deterministic key
     if (!sharedKeyBase64) {
-      // If no key, return original (backward compatibility)
-      return encryptedMessage
+      console.log('[Encryption] No group key found, deriving deterministic key for groupId:', groupId)
+      try {
+        const groupKey = await EncryptionUtils.deriveDeterministicKeyFromString(
+          `group:${groupId}`
+        )
+        sharedKeyBase64 = await EncryptionUtils.exportKey(groupKey)
+        await KeyManagement.storeGroupChatKey(groupId, sharedKeyBase64)
+      } catch (setupError) {
+        console.error('[Encryption] Failed to derive deterministic group key:', setupError)
+        return encryptedMessage
+      }
     }
 
     const sharedKey = await EncryptionUtils.importKey(sharedKeyBase64)

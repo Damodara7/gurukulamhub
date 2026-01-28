@@ -133,6 +133,23 @@ export const addMessage = async (messageData) => {
 
     const savedMessage = await IndividualChatMessage.findById(newMessage._id).lean()
 
+    // If this chat was previously deleted for either participant, reactivate it
+    // by removing the DeletedChat entry. Old messages stay hidden because
+    // deleteChat() already marked them as deletedFor the user, and getMessagesByChatId
+    // filters those out.
+    try {
+      const normalizedSender = senderEmail.toLowerCase().trim()
+      const normalizedReceiver = receiverEmail.toLowerCase().trim()
+
+      await DeletedChat.deleteMany({
+        chatId,
+        userEmail: { $in: [normalizedSender, normalizedReceiver] }
+      })
+    } catch (cleanupError) {
+      console.error('Error clearing DeletedChat entries on new message:', cleanupError)
+      // Do not fail message send if cleanup fails
+    }
+
     // Broadcast to both users via WebSocket
     try {
       const { broadcastIndividualChatMessage } = await import('../ws/individual-chat/[chatId]/publishers')
