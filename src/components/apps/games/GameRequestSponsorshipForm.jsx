@@ -351,10 +351,11 @@ const GameRequestSponsorshipForm = ({ onSubmit, quizzes, onCancel, data = null }
 
     // Check if rewards are added
     if (!formData.rewards || formData.rewards.length === 0) {
-      const errorMsg = "To request sponsorship, you need to add rewards. If you want to create a game without rewards, use 'Create Game & Schedule' instead."
+      const errorMsg =
+        "To request sponsorship, you need to add rewards. If you want to create a game without rewards, use 'Create Game & Schedule' instead."
       setErrorMessage(errorMsg)
       setShowErrorSnackbar(true)
-      
+
       // Scroll to rewards section
       if (fieldRefs.tags && fieldRefs.tags.current) {
         fieldRefs.tags.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -580,7 +581,15 @@ const GameRequestSponsorshipForm = ({ onSubmit, quizzes, onCancel, data = null }
 
       {/* Main Content */}
       <Box
-        sx={{px: { xs: 1, sm: 2, md: 3, lg: 4 }, py: { xs: 2, sm: 3, md: 4 }, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}
+        sx={{
+          px: { xs: 1, sm: 2, md: 3, lg: 4 },
+          py: { xs: 2, sm: 3, md: 4 },
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          minHeight: 0
+        }}
       >
         <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
           <Card
@@ -979,7 +988,11 @@ const GameRequestSponsorshipForm = ({ onSubmit, quizzes, onCancel, data = null }
                       {/* Video Section */}
                       <Grid item xs={12} md={6}>
                         <Box sx={{ height: '100%' }}>
-                          <Typography variant='subtitle2' gutterBottom sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
+                          <Typography
+                            variant='subtitle2'
+                            gutterBottom
+                            sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+                          >
                             Promotional Video
                           </Typography>
                           <TextField
@@ -1057,7 +1070,11 @@ const GameRequestSponsorshipForm = ({ onSubmit, quizzes, onCancel, data = null }
                       {/* Image Upload Section */}
                       <Grid item xs={12} md={6}>
                         <Box sx={{ height: '100%' }}>
-                          <Typography variant='subtitle2' gutterBottom sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
+                          <Typography
+                            variant='subtitle2'
+                            gutterBottom
+                            sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+                          >
                             Thumbnail Image
                           </Typography>
                           <input
@@ -1087,7 +1104,7 @@ const GameRequestSponsorshipForm = ({ onSubmit, quizzes, onCancel, data = null }
                                 style={{
                                   width: '100%',
                                   height: '100%',
-                                  objectFit: 'cover',
+                                  objectFit: 'contain',
                                   borderRadius: 4,
                                   border: `1px solid ${alpha(
                                     theme.palette.divider,

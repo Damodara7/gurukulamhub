@@ -382,7 +382,7 @@ const CreateQuizForm = ({
                               style={{
                                 width: '100%',
                                 height: '200px',
-                                objectFit: 'cover',
+                                objectFit: 'contain',
                                 borderRadius: 4,
                                 border: `1px solid ${theme.palette.divider}`,
                                 position: 'absolute'

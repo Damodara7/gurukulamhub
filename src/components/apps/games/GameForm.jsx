@@ -818,13 +818,13 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
 
   return (
     <Box
-        sx={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: 0,
-          overflow: 'hidden',
-          background: `radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 50%),
+      sx={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: 0,
+        overflow: 'hidden',
+        background: `radial-gradient(circle at 20% 20%, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 50%),
                       radial-gradient(circle at 80% 80%, ${alpha(
                         theme.palette.secondary.main,
                         0.05
@@ -942,7 +942,14 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
 
       {/* Main Content */}
       <Box
-        sx={{ p: { xs: 1, sm: 2, md: 3 }, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}
+        sx={{
+          p: { xs: 1, sm: 2, md: 3 },
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          minHeight: 0
+        }}
       >
         <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
           <Card
@@ -1356,7 +1363,8 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
                                     : 'rgba(0, 0, 0, 0.23)'
                               },
                               '&:hover fieldset': {
-                                borderColor: theme.palette.mode === 'dark' ? theme.palette.divider : 'rgba(0, 0, 0, 0.87)'
+                                borderColor:
+                                  theme.palette.mode === 'dark' ? theme.palette.divider : 'rgba(0, 0, 0, 0.87)'
                               }
                             }
                           }}
@@ -1654,7 +1662,11 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
                       {/* Video Section - Full width on xs, half on md+ */}
                       <Grid item xs={12} md={6}>
                         <Box sx={{ height: '100%' }}>
-                          <Typography variant='subtitle2' gutterBottom sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
+                          <Typography
+                            variant='subtitle2'
+                            gutterBottom
+                            sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+                          >
                             Promotional Video
                           </Typography>
                           <TextField
@@ -1732,7 +1744,11 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
                       {/* Image Upload Section - Full width on xs, half on md+ */}
                       <Grid item xs={12} md={6}>
                         <Box sx={{ height: '100%' }}>
-                          <Typography variant='subtitle2' gutterBottom sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
+                          <Typography
+                            variant='subtitle2'
+                            gutterBottom
+                            sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+                          >
                             Thumbnail Image
                           </Typography>
                           <input
@@ -1762,7 +1778,7 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
                                 style={{
                                   width: '100%',
                                   height: '100%',
-                                  objectFit: 'cover',
+                                  objectFit: 'contain',
                                   borderRadius: 4,
                                   border: `1px solid ${alpha(
                                     theme.palette.divider,
@@ -2034,7 +2050,9 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
                                             sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
                                           >
                                             {reward.rewardType === 'cash'
-                                              ? `Contributed: ${sponsor.currency} ${(sponsor.allocated || 0).toFixed(2)}`
+                                              ? `Contributed: ${sponsor.currency} ${(sponsor.allocated || 0).toFixed(
+                                                  2
+                                                )}`
                                               : `Provided: ${sponsor.allocated || 0} items`}
                                           </Typography>
                                           <Typography
