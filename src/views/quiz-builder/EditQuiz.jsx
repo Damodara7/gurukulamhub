@@ -251,6 +251,10 @@ function EditQuiz({ quiz, isAdmin = false }) {
     }, 3000)
 
     try {
+      // If admin is editing, record admin email as editedBy
+      if (isAdmin) {
+        formValues.editedBy = session?.user?.email
+      }
       const result = await RestApi.put(`${ApiUrls.v0.USERS_QUIZ}/${quiz._id}`, formValues)
       if (result?.status === 'success') {
         await uploadQuizDocs()

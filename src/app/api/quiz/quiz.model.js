@@ -107,7 +107,18 @@ const QuizSchema1_0_0 = new mongoose.Schema({
   },
   approvedBy: {
     type: String,
+    required: false
+  },
+  // Email of the last user (admin) who edited or approved this quiz
+  lastEditedBy: {
+    type: String,
+    required: false
+  },
+  // Flag indicating the last edit was performed by an admin
+  isEditedByAdmin: {
+    type: Boolean,
     required: false,
+    default: false
   },
   nodeType: {
     type: String,

@@ -124,10 +124,46 @@ export async function updateById(id, updateData) {
     // Get the quiz before update to check if approvalState is changing
     const oldQuiz = await ArtifactModel.findById(id).lean()
 
+    // Prevent owner edits when quiz is already submitted for approval (pending)
+    // Allow updates that change approvalState (admins or approval actions) or that include approvedBy
+    if (oldQuiz && oldQuiz.approvalState === 'pending' && !updateData.approvalState && !updateData.approvedBy) {
+      console.warn('[Quiz Service] Edit rejected: quiz is pending approval and cannot be edited by the owner')
+      return {
+        status: 'error',
+        result: null,
+        message: 'Quiz is pending approval and cannot be edited',
+        statusCode: 403
+      }
+    }
+
+    // If an admin action marks the quiz as 'approved' consider publishing it immediately
+    if (updateData && updateData.approvalState === 'approved') {
+      // Promote approved -> published and make quiz active
+      updateData.approvalState = 'published'
+      updateData.status = updateData.status || 'active'
+      updateData.approvedBy = updateData.approvedBy || 'Admin'
+    }
+
     const updatedArtifact = await ArtifactModel.findByIdAndUpdate(id, updateData, { new: true }) // Return updated document
     if (!updatedArtifact) {
       console.error(`${Artifact}` + 'not found for update.')
       return { status: 'error', result: null, message: `${Artifact}` + 'not found for update.', statusCode: 404 }
+    }
+
+    // Record last editor email if provided (admin edited or approved)
+    try {
+      const editorEmail = updateData.editedBy || updateData.approvedBy || null
+      if (editorEmail) {
+        updatedArtifact.lastEditedBy = editorEmail
+        // Mark as edited by admin when approval or approvedBy is present
+        if (updateData.approvalState === 'approved' || updateData.approvedBy) {
+          updatedArtifact.isEditedByAdmin = true
+        }
+        // Save the change (updatedArtifact is a mongoose document because { new: true } was used)
+        await updatedArtifact.save()
+      }
+    } catch (e) {
+      console.error('[Quiz Service] Failed to record lastEditedBy:', e)
     }
 
     // Check if approvalState changed
@@ -309,10 +345,21 @@ export async function updateById(id, updateData) {
 export async function saveQuiz(id, updateData) {
   try {
     await connectMongo()
-    const foundArtifact = await ArtifactModel.findOne({ _id: id, approvalState: 'draft' }) // Return updated document
+    // Allow saving drafts normally.
+    // Additionally allow admins to save/approve quizzes even if the quiz is in 'pending' state:
+    // - If updateData.approvalState === 'approved' we permit the save operation (admin flow).
+    let foundArtifact = null
+    if (updateData && updateData.approvalState === 'approved') {
+      // Admin save/approve flow - find by id irrespective of current approvalState
+      foundArtifact = await ArtifactModel.findOne({ _id: id })
+    } else {
+      // Owner save flow - only allow saving when in draft
+      foundArtifact = await ArtifactModel.findOne({ _id: id, approvalState: 'draft' })
+    }
+
     if (!foundArtifact) {
-      console.error(`${Artifact}` + 'not found for update.')
-      return { status: 'error', result: null, message: `${Artifact}` + 'not found for update.', statusCode: 404 }
+      console.error(`${Artifact}` + ' not found for save/update.')
+      return { status: 'error', result: null, message: `${Artifact}` + ' not found for save/update.', statusCode: 404 }
     }
 
     console.log('Quiz found')
@@ -334,7 +381,30 @@ export async function saveQuiz(id, updateData) {
     }
 
     // Update to saved if all questions are validated
-    let updatedArtifact = await ArtifactModel.findOneAndUpdate({ _id: id, approvalState: 'draft' }, updateData)
+    let updatedArtifact = null
+    if (updateData && updateData.approvalState === 'approved') {
+      // Admin approving - promote to published and mark active (handled by updateById logic)
+      // Perform a direct update (no approvalState constraint)
+      updatedArtifact = await ArtifactModel.findOneAndUpdate({ _id: id }, updateData, { new: true })
+    } else {
+      updatedArtifact = await ArtifactModel.findOneAndUpdate({ _id: id, approvalState: 'draft' }, updateData, {
+        new: true
+      })
+    }
+
+    // Record last editor email if provided (admin save)
+    try {
+      const editorEmail = updateData.editedBy || updateData.approvedBy || null
+      if (editorEmail && updatedArtifact) {
+        updatedArtifact.lastEditedBy = editorEmail
+        if (updateData.approvalState === 'approved' || updateData.approvedBy) {
+          updatedArtifact.isEditedByAdmin = true
+        }
+        await updatedArtifact.save()
+      }
+    } catch (e) {
+      console.error('[Quiz Service] Failed to record lastEditedBy on saveQuiz:', e)
+    }
 
     return {
       status: 'success',

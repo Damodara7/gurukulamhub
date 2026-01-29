@@ -25,6 +25,7 @@ import {
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
 import SearchIcon from '@mui/icons-material/Search'
+import { useRouter } from 'next/navigation'
 import {
   createColumnHelper,
   flexRender,
@@ -46,7 +47,8 @@ import { approveQuiz, rejectQuiz, moveQuizToPending } from '@/actions/quiz'
 import classnames from 'classnames'
 import {
   NewReleasesOutlined as NewReleasesOutlinedIcon,
-  VerifiedOutlined as VerifiedOutlinedIcon
+  VerifiedOutlined as VerifiedOutlinedIcon,
+  EditOutlined as EditOutlinedIcon
 } from '@mui/icons-material'
 import Link from 'next/link'
 import ConfirmationDialog from '@/components/dialogs/confirmation-dialog/index'
@@ -135,6 +137,19 @@ const ActionsMenu = ({ anchorEl, handleClose, handleAction, isMobile = false }) 
       </ListItemIcon>
       <ListItemText primary='Reject' />
     </MenuItem>
+    <MenuItem
+      dense
+      onClick={() => handleAction('edit')}
+      sx={{
+        fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+        py: { xs: 1, sm: 0.75 }
+      }}
+    >
+      <ListItemIcon>
+        <EditOutlinedIcon sx={{ fontSize: { xs: '1.125rem', sm: '1.25rem' } }} />
+      </ListItemIcon>
+      <ListItemText primary='Edit' />
+    </MenuItem>
   </Menu>
 )
 
@@ -144,7 +159,7 @@ const AdminPendingQuizzesTable = ({ data, refreshData }) => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const [globalFilter, setGlobalFilter] = useState('')
   const [rowSelection, setRowSelection] = useState({})
-
+  const router = useRouter()
   const [anchorEl, setAnchorEl] = useState(null)
   const [selectedRow, setSelectedRow] = useState(null)
   const [currentRow, setCurrentRow] = useState(null) // row.original
@@ -169,6 +184,8 @@ const AdminPendingQuizzesTable = ({ data, refreshData }) => {
       // Add delete logic here, e.g., call a delete function with selectedRow.id
     } else if (action === 'reject') {
       handleRejecQuiztConfirmation()
+    } else if (action === 'edit') {
+      handleEditQuiz()
     }
     handleCloseActionsMenu()
   }
@@ -195,6 +212,11 @@ const AdminPendingQuizzesTable = ({ data, refreshData }) => {
 
   async function handleRejecQuiztConfirmation() {
     setConfirmationDialogOpen(true)
+  }
+
+  async function handleEditQuiz() {
+    // Navigate to the builder with isAdmin flag so builder treats the user as admin
+    router.push(`/myquizzes/builder/${currentRow._id}?isAdmin=true`)
   }
 
   async function handleApproveQuiz() {
@@ -392,7 +414,7 @@ const AdminPendingQuizzesTable = ({ data, refreshData }) => {
   return (
     <Card
       sx={{
-        flex:1,
+        flex: 1,
         display: 'flex',
         overflow: 'hidden',
         minHeight: 0,
@@ -408,7 +430,7 @@ const AdminPendingQuizzesTable = ({ data, refreshData }) => {
           display: 'flex',
           justifyContent: 'center',
           py: { xs: 2, sm: 3 },
-          px: { xs: 1.5, sm: 3 },
+          px: { xs: 1.5, sm: 3 }
         }}
       >
         <DebouncedInput
@@ -459,7 +481,17 @@ const AdminPendingQuizzesTable = ({ data, refreshData }) => {
           }}
         />
       </CardContent>
-      <CardContent sx={{ px: { xs: 1.5, sm: 3 }, pb: { xs: 2, sm: 3 }, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+      <CardContent
+        sx={{
+          px: { xs: 1.5, sm: 3 },
+          pb: { xs: 2, sm: 3 },
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0,
+          overflow: 'hidden'
+        }}
+      >
         {filteredRows.length === 0 ? (
           <Box
             sx={{
@@ -662,7 +694,9 @@ const AdminPendingQuizzesTable = ({ data, refreshData }) => {
           <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
             <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'auto', minHeight: 0 }}>
               <table className={tableStyles.table} style={{ width: '100%' }}>
-                <thead style={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: theme.palette.background.paper }}>
+                <thead
+                  style={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: theme.palette.background.paper }}
+                >
                   {table.getHeaderGroups().map(headerGroup => (
                     <tr key={headerGroup.id}>
                       {headerGroup.headers.map(header => (
@@ -688,84 +722,84 @@ const AdminPendingQuizzesTable = ({ data, refreshData }) => {
                   ))}
                 </thead>
                 <tbody>
-                {filteredRows.length === 0 ? (
-                  <tr>
-                    <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
-                      <Box
-                        sx={{
-                          padding: '48px 16px',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          gap: '12px'
-                        }}
-                      >
-                        <i className='ri-quiz-line' style={{ fontSize: 48, opacity: 0.5 }} />
-                        <Typography variant='h6' color='text.secondary'>
-                          No quizzes found
-                        </Typography>
-                        <Typography variant='body2' color='text.disabled'>
-                          Try adjusting your search or filter criteria
-                        </Typography>
-                      </Box>
-                    </td>
-                  </tr>
-                ) : (
-                  filteredRows
-                    .slice(
-                      table.getState().pagination.pageIndex * table.getState().pagination.pageSize,
-                      (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize
-                    )
-                    .map((row, index) => (
-                      <tr
-                        key={row.id}
-                        className={classnames({ selected: row.getIsSelected() })}
-                        style={{
-                          background: row.getIsSelected()
-                            ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.15)} 0%, ${alpha(
-                                theme.palette.secondary.main,
-                                0.15
-                              )} 100%)`
-                            : index % 2 === 0
-                              ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.03)} 0%, ${alpha(
+                  {filteredRows.length === 0 ? (
+                    <tr>
+                      <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
+                        <Box
+                          sx={{
+                            padding: '48px 16px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '12px'
+                          }}
+                        >
+                          <i className='ri-quiz-line' style={{ fontSize: 48, opacity: 0.5 }} />
+                          <Typography variant='h6' color='text.secondary'>
+                            No quizzes found
+                          </Typography>
+                          <Typography variant='body2' color='text.disabled'>
+                            Try adjusting your search or filter criteria
+                          </Typography>
+                        </Box>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredRows
+                      .slice(
+                        table.getState().pagination.pageIndex * table.getState().pagination.pageSize,
+                        (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize
+                      )
+                      .map((row, index) => (
+                        <tr
+                          key={row.id}
+                          className={classnames({ selected: row.getIsSelected() })}
+                          style={{
+                            background: row.getIsSelected()
+                              ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.15)} 0%, ${alpha(
                                   theme.palette.secondary.main,
-                                  0.03
+                                  0.15
                                 )} 100%)`
-                              : theme.palette.mode === 'dark'
-                                ? theme.palette.background.default
-                                : theme.palette.background.paper,
-                          borderLeft: '3px solid transparent'
-                        }}
-                        onMouseEnter={e => {
-                          e.currentTarget.style.background = `linear-gradient(135deg, ${alpha(
-                            theme.palette.primary.main,
-                            0.1
-                          )} 0%, ${alpha(theme.palette.secondary.main, 0.1)} 100%)`
-                          e.currentTarget.style.borderLeft = `3px solid ${theme.palette.primary.main}`
-                        }}
-                        onMouseLeave={e => {
-                          if (!row.getIsSelected()) {
-                            e.currentTarget.style.background =
-                              index % 2 === 0
+                              : index % 2 === 0
                                 ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.03)} 0%, ${alpha(
                                     theme.palette.secondary.main,
                                     0.03
                                   )} 100%)`
                                 : theme.palette.mode === 'dark'
                                   ? theme.palette.background.default
-                                  : theme.palette.background.paper
-                            e.currentTarget.style.borderLeft = '3px solid transparent'
-                          }
-                        }}
-                      >
-                        {row.getVisibleCells().map(cell => (
-                          <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
-                        ))}
-                      </tr>
-                    ))
-                )}
-              </tbody>
-            </table>
+                                  : theme.palette.background.paper,
+                            borderLeft: '3px solid transparent'
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.background = `linear-gradient(135deg, ${alpha(
+                              theme.palette.primary.main,
+                              0.1
+                            )} 0%, ${alpha(theme.palette.secondary.main, 0.1)} 100%)`
+                            e.currentTarget.style.borderLeft = `3px solid ${theme.palette.primary.main}`
+                          }}
+                          onMouseLeave={e => {
+                            if (!row.getIsSelected()) {
+                              e.currentTarget.style.background =
+                                index % 2 === 0
+                                  ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.03)} 0%, ${alpha(
+                                      theme.palette.secondary.main,
+                                      0.03
+                                    )} 100%)`
+                                  : theme.palette.mode === 'dark'
+                                    ? theme.palette.background.default
+                                    : theme.palette.background.paper
+                              e.currentTarget.style.borderLeft = '3px solid transparent'
+                            }
+                          }}
+                        >
+                          {row.getVisibleCells().map(cell => (
+                            <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                          ))}
+                        </tr>
+                      ))
+                  )}
+                </tbody>
+              </table>
             </Box>
           </Box>
         )}

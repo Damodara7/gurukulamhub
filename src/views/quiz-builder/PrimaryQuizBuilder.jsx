@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useRef, useState } from 'react'
+import { useSession } from 'next-auth/react'
 import QuizDetails from '@/components/quiz-builder-1/QuizDetails'
 import QuestionBuilderArea from '@/components/quiz-builder-1/QuestionBuilderArea'
 import { Box, Button, Snackbar, Alert, Typography, Container, Stack, useTheme, alpha } from '@mui/material'
@@ -18,6 +19,7 @@ function PrimaryQuizBuilder({ quiz, isAdmin = false }) {
   const [errors, setErrors] = useState([])
   const [snackbar, setSnackbar] = useState({ open: false, message: '' })
   const [questionsLength, setQuestionsLength] = useState(0) // Add state for questions length
+  const { data: session } = useSession()
 
   function validateQuizQuestionsFunc(questions = null) {
     console.log({ questions })
@@ -95,9 +97,11 @@ function PrimaryQuizBuilder({ quiz, isAdmin = false }) {
     }
 
     try {
-      const res = await RestApi.put(`${API_URLS.v0.USERS_QUIZ}/${quiz._id || quiz.id}/save`, {
-        approvalState: isAdmin ? 'approved' : 'saved'
-      })
+      const reqBody = { approvalState: isAdmin ? 'approved' : 'saved' }
+      if (isAdmin) {
+        reqBody.editedBy = session?.user?.email
+      }
+      const res = await RestApi.put(`${API_URLS.v0.USERS_QUIZ}/${quiz._id || quiz.id}/save`, reqBody)
       if (res.status === 'success') {
         setSnackbar({
           open: true,
@@ -133,7 +137,15 @@ function PrimaryQuizBuilder({ quiz, isAdmin = false }) {
   }, [builderAreaRef.current]) // Run when ref changes
 
   return (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: theme.palette.background.default, minHeight: 0}}>
+    <Box
+      sx={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        bgcolor: theme.palette.background.default,
+        minHeight: 0
+      }}
+    >
       {/* Header Section */}
       <Box
         sx={{
@@ -200,21 +212,33 @@ function PrimaryQuizBuilder({ quiz, isAdmin = false }) {
       </Box>
 
       {/* Main Content */}
-      <Box sx={{flex: 1, gap: 4, display: 'flex', flexDirection: 'column', minHeight: 0, 
-      // overflow: 'hidden'
-
-      }}>
-          <QuizDetails quiz={quiz} />
-          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, 
-            // overflow: 'hidden' 
-            }}>
-            <QuestionBuilderArea
-              ref={builderAreaRef}
-              quiz={quiz}
-              setQuestionsLength={setQuestionsLength}
-              validateQuizQuestions={validateQuizQuestionsFunc}
-              validationErrors={errors}
-            />
+      <Box
+        sx={{
+          flex: 1,
+          gap: 4,
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0
+          // overflow: 'hidden'
+        }}
+      >
+        <QuizDetails quiz={quiz} />
+        <Box
+          sx={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: 0
+            // overflow: 'hidden'
+          }}
+        >
+          <QuestionBuilderArea
+            ref={builderAreaRef}
+            quiz={quiz}
+            setQuestionsLength={setQuestionsLength}
+            validateQuizQuestions={validateQuizQuestionsFunc}
+            validationErrors={errors}
+          />
         </Box>
       </Box>
 

@@ -9,7 +9,7 @@ import { isValidObjectId } from 'mongoose'
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined'
 import LoadingDialog from '@/components/LoadingDialog'
 
-export default async function SelectedQuizPage({ params }) {
+export default async function SelectedQuizPage({ params, searchParams }) {
   const { id } = params
 
   if (!isValidObjectId(id)) {
@@ -41,8 +41,9 @@ export default async function SelectedQuizPage({ params }) {
   }
 
   const quiz = await getQuizData()
+  const isAdmin = searchParams?.isAdmin === 'true'
 
-  if(!quiz){
+  if (!quiz) {
     return (
       <CenterBox>
         <Alert
@@ -58,6 +59,6 @@ export default async function SelectedQuizPage({ params }) {
     )
   }
 
-  return <PrimaryQuizBuilder quiz={quiz} />
+  return <PrimaryQuizBuilder quiz={quiz} isAdmin={isAdmin} />
   // return <SelectedQuiz quiz={quiz} />
 }
