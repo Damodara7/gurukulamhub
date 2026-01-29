@@ -21,7 +21,8 @@ import {
   createGameMissedNotificationsForRegisteredUsers,
   createGameCancelledNotificationsForRegisteredUsers,
   createGameAccessRemovedNotification,
-  createGameDeletedNotification
+  createGameDeletedNotification,
+  createGameSponsorshipRequestNotification
 } from '../notifications/notification.helpers.js'
 
 // Helper to enrich a single game with registeredUsers, participatedUsers, and questions
@@ -394,19 +395,66 @@ export const addOne = async gameData => {
     })()
 
     // ✅ NON-BLOCKING: Create notifications for eligible users when game is created
-    // Fire and forget - don't await, let it run in background
-    ;(async () => {
-      try {
-        let eligibleUserIds = []
+    // Skip notifications for sponsorship-related games (awaiting_sponsorship or sponsored)
+    if (savedGame.status !== 'awaiting_sponsorship' && savedGame.status !== 'sponsored') {
+      // Fire and forget - don't await, let it run in background
+      ;(async () => {
+        try {
+          let eligibleUserIds = []
 
-        // If game has a group, notify all members of that group
-        if (savedGame.groupId) {
-          const group = await Group.findById(savedGame.groupId).populate('members').lean()
-          if (group && group.members) {
-            eligibleUserIds = group.members.map(member => member._id || member)
+          // If game has a group, notify all members of that group
+          if (savedGame.groupId) {
+            const group = await Group.findById(savedGame.groupId).populate('members').lean()
+            if (group && group.members) {
+              eligibleUserIds = group.members.map(member => member._id || member)
+            }
+          } else {
+            // If no group, notify all active users (game is public)
+            const allActiveUsers = await User.find({
+              isActive: true,
+              isVerified: true
+            })
+              .select('_id')
+              .lean()
+
+            if (allActiveUsers && allActiveUsers.length > 0) {
+              eligibleUserIds = allActiveUsers.map(user => user._id)
+              console.log(`Game created without group - notifying ${eligibleUserIds.length} active users`)
+            }
           }
-        } else {
-          // If no group, notify all active users (game is public)
+
+          // Create notifications for eligible users
+          if (eligibleUserIds.length > 0) {
+            // Get group name if game has a group
+            let groupName = null
+            if (savedGame.groupId) {
+              const group = await Group.findById(savedGame.groupId).select('groupName').lean()
+              groupName = group?.groupName || null
+            }
+
+            await createGameCreatedNotification(eligibleUserIds, {
+              _id: savedGame._id,
+              title: savedGame.title,
+              groupName: groupName,
+              createdBy: savedGame.creatorEmail,
+              registrationDeadline: savedGame.registrationEndTime || savedGame.endTime,
+              maxParticipants: savedGame.maxPlayers,
+              thumbnailPoster: savedGame.thumbnailPoster || savedGame.thumbnailUrl,
+              quiz: savedGame.quiz
+            })
+            console.log(
+              `[Game Service] ✅ Sent game created notifications to ${eligibleUserIds.length} user(s) in background`
+            )
+          }
+        } catch (notificationError) {
+          console.error('[Game Service] ❌ Error creating game notifications:', notificationError)
+          // Don't fail the game creation if notification creation fails
+        }
+      })()
+    } else {
+      // For sponsorship-related games, notify all active users that this game needs sponsors
+      ;(async () => {
+        try {
           const allActiveUsers = await User.find({
             isActive: true,
             isVerified: true
@@ -414,40 +462,31 @@ export const addOne = async gameData => {
             .select('_id')
             .lean()
 
-          if (allActiveUsers && allActiveUsers.length > 0) {
-            eligibleUserIds = allActiveUsers.map(user => user._id)
-            console.log(`Game created without group - notifying ${eligibleUserIds.length} active users`)
-          }
-        }
+          const eligibleUserIds = allActiveUsers && allActiveUsers.length > 0 ? allActiveUsers.map(u => u._id) : []
 
-        // Create notifications for eligible users
-        if (eligibleUserIds.length > 0) {
-          // Get group name if game has a group
-          let groupName = null
-          if (savedGame.groupId) {
-            const group = await Group.findById(savedGame.groupId).select('groupName').lean()
-            groupName = group?.groupName || null
+          if (eligibleUserIds.length > 0) {
+            await createGameSponsorshipRequestNotification(eligibleUserIds, {
+              _id: savedGame._id,
+              title: savedGame.title,
+              createdBy: savedGame.creatorEmail,
+              registrationDeadline: savedGame.registrationEndTime || savedGame.endTime,
+              maxParticipants: savedGame.maxPlayers,
+              thumbnailPoster: savedGame.thumbnailPoster || savedGame.thumbnailUrl,
+              quiz: savedGame.quiz
+            })
+            console.log(
+              `[Game Service] ✅ Sent sponsorship-request notifications to ${eligibleUserIds.length} active user(s) for game ${savedGame._id}`
+            )
+          } else {
+            console.log(
+              `[Game Service] ⏭️ No active users found to notify for sponsorship request of game ${savedGame._id}`
+            )
           }
-
-          await createGameCreatedNotification(eligibleUserIds, {
-            _id: savedGame._id,
-            title: savedGame.title,
-            groupName: groupName,
-            createdBy: savedGame.creatorEmail,
-            registrationDeadline: savedGame.registrationEndTime || savedGame.endTime,
-            maxParticipants: savedGame.maxPlayers,
-            thumbnailPoster: savedGame.thumbnailPoster || savedGame.thumbnailUrl,
-            quiz: savedGame.quiz
-          })
-          console.log(
-            `[Game Service] ✅ Sent game created notifications to ${eligibleUserIds.length} user(s) in background`
-          )
+        } catch (err) {
+          console.error('[Game Service] ❌ Error creating sponsorship-request notifications:', err)
         }
-      } catch (notificationError) {
-        console.error('[Game Service] ❌ Error creating game notifications:', notificationError)
-        // Don't fail the game creation if notification creation fails
-      }
-    })()
+      })()
+    }
 
     return {
       status: 'success',

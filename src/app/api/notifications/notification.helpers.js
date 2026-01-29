@@ -165,6 +165,64 @@ export const createGameCreatedNotification = async (userIds, gameData) => {
   }
 }
 
+// Notify users that a game needs sponsorship (sent when admin creates a sponsorship request)
+export const createGameSponsorshipRequestNotification = async (userIds, gameData) => {
+  console.log('[Notification Helper] ===== createGameSponsorshipRequestNotification START =====')
+  try {
+    if (!Array.isArray(userIds) || userIds.length === 0) {
+      console.log('[Notification Helper] ⚠️ No users to notify (empty array)')
+      return {
+        status: 'success',
+        result: null,
+        message: 'No users to notify'
+      }
+    }
+
+    const gameId = gameData._id?.toString() || gameData.id || gameData._id
+    const gameTitle = gameData.title || gameData.quiz?.title || 'Game'
+    const createdBy = gameData.createdBy || gameData.creatorEmail || 'Admin'
+    const gameThumbnail = gameData.thumbnailPoster || gameData.thumbnail || gameData.quiz?.thumbnail || null
+
+    const message = `A new game "${gameTitle}" needs sponsors. You can sponsor this game and make publicity for your brand.`
+
+    const notificationsData = userIds.map(userId => ({
+      userId: userId,
+      type: 'GAME_SPONSOR_REQUEST',
+      title: `You Can Sponsor: "${gameTitle}"`,
+      message: message,
+      relatedEntity: {
+        entityType: 'game',
+        entityId: gameId
+      },
+      metadata: {
+        gameTitle,
+        gameId,
+        createdBy,
+        avatarImage: gameThumbnail
+      },
+      actionUrl: `/sponsor/games`,
+      actionLabel: 'Sponsor Now'
+    }))
+
+    console.log(
+      '[Notification Helper] Calling NotificationService.addMany for sponsorship requests with',
+      notificationsData.length,
+      'notifications'
+    )
+    const result = await NotificationService.addMany(notificationsData)
+    console.log('[Notification Helper] ✅ createGameSponsorshipRequestNotification result:', result)
+    console.log('[Notification Helper] ===== createGameSponsorshipRequestNotification END =====')
+    return result
+  } catch (error) {
+    console.error('[Notification Helper] ❌ Error in createGameSponsorshipRequestNotification:', error)
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to create sponsorship request notifications'
+    }
+  }
+}
+
 export const createGroupJoinedNotification = async (userId, groupData) => {
   try {
     const groupId = groupData._id?.toString() || groupData.id || groupData._id
@@ -328,7 +386,7 @@ export const createRoleRemovedNotification = async (userId, roleData) => {
 export const createProfileCompletionNotification = async (userId, profileData) => {
   try {
     await connectMongo()
-    
+
     const completionPercentage = profileData.completionPercentage || 0
     const missingFields = profileData.missingFields || []
     const totalFields = profileData.totalFields || 0
@@ -352,7 +410,7 @@ export const createProfileCompletionNotification = async (userId, profileData) =
     // ✅ SAFEGUARD: Check for existing PROFILE_COMPLETION_REMINDER notifications to prevent duplicates
     // For scheduled reminders, check if notification was already sent today
     // For manual triggers, check if notification was sent in the last 24 hours
-    const checkTimeWindow = isScheduledReminder 
+    const checkTimeWindow = isScheduledReminder
       ? (() => {
           // For scheduled reminders, check today's date range
           const todayStart = new Date()
@@ -371,7 +429,9 @@ export const createProfileCompletionNotification = async (userId, profileData) =
 
     if (existingNotification) {
       console.log(
-        `[Notification Helper] ⚠️ PROFILE_COMPLETION_REMINDER notification already exists for user ${userId}${isScheduledReminder ? ' (today)' : ' (last 24 hours)'}, skipping duplicate`
+        `[Notification Helper] ⚠️ PROFILE_COMPLETION_REMINDER notification already exists for user ${userId}${
+          isScheduledReminder ? ' (today)' : ' (last 24 hours)'
+        }, skipping duplicate`
       )
       return {
         status: 'success',
@@ -1622,7 +1682,10 @@ export const createGameStartedNotificationsForRegisteredUsers = async (gameId, g
 
 export const createPhysicalGiftSponsorshipPendingNotification = async (adminUserIds, sponsorshipData) => {
   try {
-    console.log('[Notification Helper] Creating physical gift sponsorship pending approval notifications for admins:', adminUserIds)
+    console.log(
+      '[Notification Helper] Creating physical gift sponsorship pending approval notifications for admins:',
+      adminUserIds
+    )
     if (!Array.isArray(adminUserIds) || adminUserIds.length === 0) {
       console.warn('[Notification Helper] No admin user IDs provided')
       return {
@@ -1668,7 +1731,10 @@ export const createPhysicalGiftSponsorshipPendingNotification = async (adminUser
     console.log('[Notification Helper] Notification creation result:', result)
     return result
   } catch (error) {
-    console.error('[Notification Helper] Error creating physical gift sponsorship pending approval notifications:', error)
+    console.error(
+      '[Notification Helper] Error creating physical gift sponsorship pending approval notifications:',
+      error
+    )
     console.error('[Notification Helper] Error stack:', error.stack)
     return {
       status: 'error',
@@ -1681,7 +1747,7 @@ export const createPhysicalGiftSponsorshipPendingNotification = async (adminUser
 export const createSponsorshipApprovedNotification = async (sponsorUserId, sponsorshipData) => {
   try {
     console.log('[Notification Helper] Creating sponsorship approved notification for sponsor:', sponsorUserId)
-    
+
     if (!sponsorUserId) {
       console.error('[Notification Helper] ❌ sponsorUserId is missing or invalid')
       return {
@@ -1754,7 +1820,7 @@ export const createSponsorshipApprovedNotification = async (sponsorUserId, spons
 export const createSponsorshipRejectedNotification = async (sponsorUserId, sponsorshipData) => {
   try {
     console.log('[Notification Helper] Creating sponsorship rejected notification for sponsor:', sponsorUserId)
-    
+
     if (!sponsorUserId) {
       console.error('[Notification Helper] ❌ sponsorUserId is missing or invalid')
       return {

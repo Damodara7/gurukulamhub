@@ -19,6 +19,7 @@ const notificationSchema = new mongoose.Schema(
         'QUIZ_PENDING_APPROVAL',
         'QUIZ_PUBLISHED',
         'GAME_CREATED',
+        'GAME_SPONSOR_REQUEST',
         'GAME_ACCESS_REMOVED',
         'GAME_DELETED',
         'GAME_REGISTERED',
@@ -37,7 +38,8 @@ const notificationSchema = new mongoose.Schema(
         'PROFILE_COMPLETION_REMINDER',
         'SPONSORSHIP_PENDING_APPROVAL',
         'SPONSORSHIP_APPROVED',
-        'SPONSORSHIP_REJECTED'
+        'SPONSORSHIP_REJECTED',
+        'SPONSORSHIP_SUBMITTED'
       ],
       index: true
     },
