@@ -2,11 +2,11 @@ import mongoose from 'mongoose'
 
 const notificationSchema = new mongoose.Schema(
   {
-    // **Required Fields**
+    // **Required Fields** (userId optional for announcement templates)
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'users',
-      required: true,
+      required: false,
       index: true
     },
 
@@ -39,7 +39,8 @@ const notificationSchema = new mongoose.Schema(
         'SPONSORSHIP_PENDING_APPROVAL',
         'SPONSORSHIP_APPROVED',
         'SPONSORSHIP_REJECTED',
-        'SPONSORSHIP_SUBMITTED'
+        'SPONSORSHIP_SUBMITTED',
+        'ADMIN_NOTIFICATION'
       ],
       index: true
     },
@@ -116,6 +117,47 @@ const notificationSchema = new mongoose.Schema(
       required: false,
       index: true
       // Example: Game registration deadline
+    },
+
+    // **Admin notification grouping (for "send to all" + seen/total)**
+    adminNotificationId: {
+      type: String,
+      required: false,
+      index: true
+      // Same value on all notifications created in one "announcement" batch
+    },
+    createdByEmail: {
+      type: String,
+      required: false,
+      index: true
+      // Admin who created this notification (for admin list + grouping)
+    },
+    announcementId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'announcements',
+      required: false,
+      index: true
+      // Legacy: link to announcement collection; single-model uses adminNotificationId only
+    },
+
+    // **Announcement template (single-model: announcement stored as notification)**
+    isAnnouncementTemplate: {
+      type: Boolean,
+      default: false,
+      index: true
+      // true = this doc is the announcement template (no userId); used for "send to all" + new users
+    },
+    isActive: {
+      type: Boolean,
+      default: false,
+      index: true
+      // For templates: whether announcement is still active (new users get it)
+    },
+    activeUntil: {
+      type: Date,
+      default: null,
+      index: true
+      // For templates: optional expiry
     }
   },
   {
@@ -147,6 +189,13 @@ notificationSchema.index(
 
 // Index for type-based queries
 notificationSchema.index({ userId: 1, type: 1, createdAt: -1 })
+
+// Index for admin list: notifications created by this admin (ADMIN_NOTIFICATION)
+notificationSchema.index({ createdByEmail: 1, type: 1, createdAt: -1 })
+notificationSchema.index({ adminNotificationId: 1 })
+
+// Index for active announcement templates (single-model: new users get past announcements)
+notificationSchema.index({ isAnnouncementTemplate: 1, isActive: 1, activeUntil: 1, createdAt: -1 })
 
 const Notification = mongoose.models?.notifications || mongoose.model('notifications', notificationSchema)
 

@@ -107,7 +107,8 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
     {key:'hasManageGroupsViewPermission' , feature: FEATURES_LOOKUP.USERS_GROUP},
     {key:'hasManageAudiencesViewPermission' , feature: FEATURES_LOOKUP.USERS_AUDIENCE},
     {key:'hasPublicGroupsViewPermission' , feature: FEATURES_LOOKUP.PUBLIC_GROUPS},
-    {key:'hasMyGroupsViewPermission' , feature: FEATURES_LOOKUP.MY_GROUPS}
+    {key:'hasMyGroupsViewPermission' , feature: FEATURES_LOOKUP.MY_GROUPS},
+    {key:'hasAdminNotificationViewPermission' , feature: FEATURES_LOOKUP.ADMIN_NOTIFICATION}
   ]
 
   // Generate permission variables dynamically
@@ -149,7 +150,8 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
     hasRaiseSupportViewPermission,
     hasDonationViewPermission,
     hasContextViewPermission,
-    hasManageSponsorshipViewPermission
+    hasManageSponsorshipViewPermission,
+    hasAdminNotificationViewPermission
   } = permissions
 
   // Create composite permissions based on individual feature permissions
@@ -326,7 +328,10 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
               </MenuItem>
               <MenuItem href={`/${locale}/management/quizzes/create`}>{dictionary['navigation'].create}</MenuItem>
             </SubMenu>
-
+           <SubMenu label={dictionary['navigation'].adminNotification} icon={<i className='ri-notification-3-line' />}>
+            <MenuItem href={`/${locale}/management/admin-notification`}>{dictionary['navigation'].all}</MenuItem>
+            <MenuItem href={`/${locale}/management/admin-notification/create`}>{dictionary['navigation'].create}</MenuItem>
+           </SubMenu>
             <SubMenu label={dictionary['navigation'].manageGames} icon={<i className='ri-gamepad-line' />}>
               <MenuItem href={`/${locale}/management/games`}>{dictionary['navigation'].all}</MenuItem>
               <MenuItem href={`/${locale}/management/games/create`}>{dictionary['navigation'].create}</MenuItem>

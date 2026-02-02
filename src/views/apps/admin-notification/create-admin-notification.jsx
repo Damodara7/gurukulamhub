@@ -1,0 +1,85 @@
+'use client'
+
+import React, { useState } from 'react'
+import * as RestApi from '@/utils/restApiUtil'
+import { API_URLS } from '@/configs/apiConfig'
+import { useRouter } from 'next/navigation'
+import { toast } from 'react-toastify'
+import { useSession } from 'next-auth/react'
+import CreateAdminNotificationForm from '@/components/admin-notification/CreateAdminNotificationForm'
+
+function CreateAdminNotificationPage() {
+  const { data: session } = useSession()
+  const [loading, setLoading] = useState(false)
+  const router = useRouter()
+
+  const handleSubmit = async values => {
+    const userId = session?.user?.id
+    if (!userId) {
+      toast.error('You must be signed in to create a notification.')
+      return
+    }
+
+    setLoading(true)
+    try {
+      const sendToAll = values.sendTo === 'all'
+
+      if (sendToAll) {
+        const payload = {
+          title: values.title,
+          message: values.message,
+          sendToAll: true
+        }
+        if (values.actionUrl) payload.actionUrl = values.actionUrl
+        if (values.actionLabel) payload.actionLabel = values.actionLabel
+
+        const result = await RestApi.post(API_URLS.v0.ANNOUNCEMENT, payload)
+
+        if (result?.status === 'success') {
+          const sentCount = result?.result?.sentCount
+          toast.success(
+            sentCount != null
+              ? `Announcement created and sent to ${sentCount} user(s). New users will also receive it.`
+              : 'Announcement created successfully.'
+          )
+          router.push('/management/admin-notification')
+        } else {
+          toast.error(result?.message || result?.error || 'Failed to create announcement')
+        }
+      } else {
+        const payload = {
+          userId: String(userId),
+          type: 'ADMIN_NOTIFICATION',
+          title: values.title,
+          message: values.message
+        }
+        if (values.actionUrl) payload.actionUrl = values.actionUrl
+        if (values.actionLabel) payload.actionLabel = values.actionLabel
+
+        const result = await RestApi.post(API_URLS.v0.NOTIFICATIONS, payload)
+
+        if (result?.status === 'success') {
+          toast.success('Notification created successfully.')
+          router.push('/management/admin-notification')
+        } else {
+          toast.error(result?.message || result?.error || 'Failed to create notification')
+        }
+      }
+    } catch (error) {
+      console.error('Error creating admin notification:', error)
+      toast.error(
+        error?.message || error?.response?.data?.message || 'An error occurred while creating the notification'
+      )
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCancel = () => {
+    router.push('/management/admin-notification')
+  }
+
+  return <CreateAdminNotificationForm onSubmit={handleSubmit} onCancel={handleCancel} />
+}
+
+export default CreateAdminNotificationPage

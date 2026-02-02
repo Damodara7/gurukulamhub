@@ -54,7 +54,8 @@ export const API_URLS = {
     MESSENGER_COMBINED_CHATS: `${API_BASE_URL}/messenger/combined-chats`,
     GAME_SPONSORSHIP: `${API_BASE_URL}/game-sponsorship`,
     GAME_SPONSORSHIP_PAYMENT: `${API_BASE_URL}/game-sponsorship-payment`,
-    NOTIFICATIONS: `${API_BASE_URL}/notifications`
+    NOTIFICATIONS: `${API_BASE_URL}/notifications`,
+    ANNOUNCEMENT: `${API_BASE_URL}/announcement`
     // Add more URLs for API version 1
   },
   v1: {
@@ -97,7 +98,8 @@ export const API_URLS = {
     USER_LEARNING: `${API_BASE_URL}/v1/user-learning`,
     SPONSORSHIP: `${API_BASE_URL}/v1/sponsorship`,
     SPONSORSHIP_PAYMENT: `${API_BASE_URL}/v1/sponsorship-payment`,
-    USERS_GROUP_REQUEST: `${API_BASE_URL}/v1/group-request`
+    USERS_GROUP_REQUEST: `${API_BASE_URL}/v1/group-request`,
+    ANNOUNCEMENT: `${API_BASE_URL}/v1/announcement`
 
     // Add more URLs for API version 1
   },

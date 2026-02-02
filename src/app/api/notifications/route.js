@@ -1,3 +1,4 @@
+import mongoose from 'mongoose'
 import * as NotificationService from './notification.service.js'
 import * as ApiResponseUtils from '@/utils/apiResponses'
 import { auth } from '@/libs/auth'
@@ -28,7 +29,7 @@ export async function GET(req) {
     const searchParams = new URLSearchParams(url.searchParams)
     const queryParamsObj = Object.fromEntries(searchParams.entries())
 
-    const { id, userId, unread, favorite, count, ...rest } = queryParamsObj
+    const { id, userId, unread, favorite, count, createdByEmail, ...rest } = queryParamsObj
 
     // Get session for authentication
     const session = await auth()
@@ -141,6 +142,14 @@ export async function GET(req) {
 
       artifact = await ArtifactService.getFavorite(targetUserId, rest)
     }
+    // Get admin notifications created by this user (for admin list: creator sees only what they created)
+    else if (createdByEmail) {
+      if (createdByEmail !== session.user.email) {
+        const errorResponse = ApiResponseUtils.createErrorResponse('Unauthorized to access notifications by creator')
+        return ApiResponseUtils.sendErrorResponse(errorResponse)
+      }
+      artifact = await ArtifactService.getByCreatedBy(createdByEmail, { type: 'ADMIN_NOTIFICATION', ...rest })
+    }
     // Get all notifications
     else {
       // Determine target userId
@@ -247,6 +256,12 @@ export async function POST(request) {
           'Unauthorized to create notifications for other users'
         )
         return ApiResponseUtils.sendErrorResponse(errorResponse)
+      }
+
+      // For ADMIN_NOTIFICATION: set createdByEmail and adminNotificationId for grouping + seen/total
+      if (reqBody.type === 'ADMIN_NOTIFICATION') {
+        reqBody.createdByEmail = session.user.email
+        reqBody.adminNotificationId = reqBody.adminNotificationId || new mongoose.Types.ObjectId().toString()
       }
 
       const newArtifact = await ArtifactService.addOne(reqBody)
@@ -368,7 +383,7 @@ export async function PUT(request) {
 
 /**
  * DELETE /api/notifications?id=notificationId
- * Delete a notification
+ * DELETE /api/notifications?adminNotificationId=xxx (admin only: delete all notifications in that announcement)
  */
 export async function DELETE(req) {
   try {
@@ -378,11 +393,7 @@ export async function DELETE(req) {
     const url = new URL(req.url)
     const searchParams = new URLSearchParams(url.searchParams)
     const id = searchParams.get('id')
-
-    if (!id) {
-      const errorResponse = ApiResponseUtils.createErrorResponse('Notification ID is required')
-      return ApiResponseUtils.sendErrorResponse(errorResponse)
-    }
+    const adminNotificationId = searchParams.get('adminNotificationId')
 
     // Get session for authentication
     const session = await auth()
@@ -394,6 +405,26 @@ export async function DELETE(req) {
     const currentUser = await User.findOne({ email: session.user.email })
     const currentUserId = currentUser?._id?.toString()
     const isAdmin = session.user.roles?.includes('SUPER_ADMIN') || session.user.isAdmin
+
+    // Delete by adminNotificationId (admin only, deletes entire announcement)
+    if (adminNotificationId) {
+      if (!isAdmin) {
+        const errorResponse = ApiResponseUtils.createErrorResponse('Only admins can delete by adminNotificationId')
+        return ApiResponseUtils.sendErrorResponse(errorResponse)
+      }
+      const deleteResult = await ArtifactService.deleteByAdminNotificationId(adminNotificationId, session.user.email)
+      if (deleteResult.status === 'success') {
+        const successResponse = ApiResponseUtils.createSuccessResponse(deleteResult.message, deleteResult.result)
+        return ApiResponseUtils.sendSuccessResponse(successResponse)
+      }
+      const errorResponse = ApiResponseUtils.createErrorResponse(deleteResult.message)
+      return ApiResponseUtils.sendErrorResponse(errorResponse)
+    }
+
+    if (!id) {
+      const errorResponse = ApiResponseUtils.createErrorResponse('Notification ID or adminNotificationId is required')
+      return ApiResponseUtils.sendErrorResponse(errorResponse)
+    }
 
     // Security check: ensure user can only delete their own notifications
     if (!isAdmin) {

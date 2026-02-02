@@ -199,6 +199,48 @@ export const getCount = async userId => {
   }
 }
 
+/**
+ * Get notifications created by an admin (for admin list with seen/total)
+ */
+export const getByCreatedBy = async (createdByEmail, options = {}) => {
+  await connectMongo()
+  try {
+    if (!createdByEmail) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'createdByEmail is required'
+      }
+    }
+
+    const limit = options.limit ? parseInt(options.limit) : 500
+    const sortBy = options.sortBy || 'createdAt'
+    let sortOrder = -1
+    if (options.sortOrder === 'asc') sortOrder = 1
+
+    const filter = { createdByEmail: String(createdByEmail).trim(), type: 'ADMIN_NOTIFICATION' }
+    const sort = { [sortBy]: sortOrder }
+
+    const notifications = await Notification.find(filter)
+      .sort(sort)
+      .limit(parseInt(limit))
+      .populate('userId', 'email')
+      .lean()
+
+    return {
+      status: 'success',
+      result: notifications,
+      message: `Found ${notifications.length} notifications`
+    }
+  } catch (error) {
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to get notifications by creator'
+    }
+  }
+}
+
 export const addOne = async notificationData => {
   await connectMongo()
   try {
@@ -746,6 +788,39 @@ export const deleteOne = async (notificationId, userId = null) => {
   }
 }
 
+/**
+ * Delete all notifications for an admin announcement (by adminNotificationId). Admin only; optionally scoped by createdByEmail.
+ */
+export const deleteByAdminNotificationId = async (adminNotificationId, createdByEmail = null) => {
+  await connectMongo()
+  try {
+    if (!adminNotificationId) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'adminNotificationId is required'
+      }
+    }
+
+    const filter = { adminNotificationId: String(adminNotificationId), type: 'ADMIN_NOTIFICATION' }
+    if (createdByEmail) filter.createdByEmail = String(createdByEmail).trim()
+
+    const result = await Notification.deleteMany(filter)
+
+    return {
+      status: 'success',
+      result: { deletedCount: result.deletedCount },
+      message: `Deleted ${result.deletedCount} notification(s) successfully`
+    }
+  } catch (error) {
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to delete notifications by adminNotificationId'
+    }
+  }
+}
+
 export const getByType = async (userId, type, options = {}) => {
   await connectMongo()
   try {
@@ -859,6 +934,156 @@ export const deleteExpired = async () => {
       status: 'error',
       result: null,
       message: error.message || 'Failed to delete expired notifications'
+    }
+  }
+}
+
+// ——— Single-model announcements (stored as notification templates) ———
+
+/**
+ * Create an announcement (template notification) and optionally send to all users.
+ * Template doc: isAnnouncementTemplate true, no userId; user docs: same adminNotificationId.
+ */
+export const createAnnouncement = async ({
+  title,
+  message,
+  actionUrl,
+  actionLabel,
+  createdByEmail,
+  sendToAll = false
+}) => {
+  await connectMongo()
+  try {
+    const adminNotificationId = new mongoose.Types.ObjectId().toString()
+
+    const template = new Notification({
+      type: 'ADMIN_NOTIFICATION',
+      title,
+      message,
+      actionUrl: actionUrl || null,
+      actionLabel: actionLabel || null,
+      createdByEmail,
+      adminNotificationId,
+      isAnnouncementTemplate: true,
+      isActive: true,
+      activeUntil: null
+      // userId omitted for template
+    })
+    const savedTemplate = await template.save()
+
+    let sentCount = 0
+    if (sendToAll) {
+      const users = await User.find({}).select('_id').lean()
+      const userIds = users.map(u => u._id.toString()).filter(Boolean)
+      sentCount = userIds.length
+      if (userIds.length > 0) {
+        const payloads = userIds.map(uid => ({
+          userId: uid,
+          type: 'ADMIN_NOTIFICATION',
+          title,
+          message,
+          actionUrl: actionUrl || undefined,
+          actionLabel: actionLabel || undefined,
+          adminNotificationId,
+          createdByEmail
+        }))
+        const batchResult = await addMany(payloads)
+        if (batchResult.status !== 'success') {
+          console.error('[Notification Service] createAnnouncement batch failed:', batchResult.message)
+        }
+      }
+    }
+
+    return {
+      status: 'success',
+      result: {
+        announcement: savedTemplate,
+        adminNotificationId,
+        sendToAll,
+        sentCount
+      },
+      message: sendToAll ? `Announcement created and sent to ${sentCount} user(s)` : 'Announcement created successfully'
+    }
+  } catch (error) {
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to create announcement'
+    }
+  }
+}
+
+/**
+ * Get all active announcement templates (single-model: stored as notifications with isAnnouncementTemplate true).
+ */
+export const getActiveAnnouncementTemplates = async () => {
+  await connectMongo()
+  try {
+    const now = new Date()
+    const templates = await Notification.find({
+      isAnnouncementTemplate: true,
+      isActive: true,
+      $or: [{ activeUntil: null }, { activeUntil: { $gt: now } }]
+    })
+      .sort({ createdAt: -1 })
+      .lean()
+
+    return {
+      status: 'success',
+      result: templates,
+      message: `Found ${templates.length} active announcement(s)`
+    }
+  } catch (error) {
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to get active announcements'
+    }
+  }
+}
+
+/**
+ * For a new user: create one notification per active announcement template (single-model).
+ */
+export const sendActiveAnnouncementsToUser = async userId => {
+  await connectMongo()
+  try {
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return { status: 'error', result: null, message: 'Invalid user ID' }
+    }
+
+    const activeResult = await getActiveAnnouncementTemplates()
+    if (activeResult.status !== 'success' || !activeResult.result?.length) {
+      return { status: 'success', result: { count: 0 }, message: 'No active announcements' }
+    }
+
+    const payloads = activeResult.result.map(t => ({
+      userId: userId.toString(),
+      type: 'ADMIN_NOTIFICATION',
+      title: t.title,
+      message: t.message,
+      actionUrl: t.actionUrl || undefined,
+      actionLabel: t.actionLabel || undefined,
+      adminNotificationId: t.adminNotificationId,
+      createdByEmail: t.createdByEmail
+    }))
+
+    const batchResult = await addMany(payloads)
+    if (batchResult.status !== 'success') {
+      return { status: 'error', result: null, message: batchResult.message || 'Failed to send announcements' }
+    }
+
+    return {
+      status: 'success',
+      result: { count: payloads.length },
+      message: `Sent ${payloads.length} announcement(s) to new user`
+    }
+  } catch (error) {
+    console.error('[Notification Service] sendActiveAnnouncementsToUser error:', error)
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to send announcements to user'
     }
   }
 }

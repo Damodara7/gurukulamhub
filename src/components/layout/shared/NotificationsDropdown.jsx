@@ -94,7 +94,8 @@ const getNotificationIcon = type => {
     GROUP_REMOVED: 'ri-group-2-line',
     ROLE_ASSIGNED: 'ri-shield-user-line',
     ROLE_REMOVED: 'ri-shield-cross-line',
-    PROFILE_COMPLETION_REMINDER: 'ri-user-settings-line'
+    PROFILE_COMPLETION_REMINDER: 'ri-user-settings-line',
+    ADMIN_NOTIFICATION: 'ri-notification-3-line'
   }
   return iconMap[type] || 'ri-notification-line'
 }
@@ -116,7 +117,8 @@ const getNotificationColor = type => {
     GROUP_REMOVED: 'error',
     ROLE_ASSIGNED: 'warning',
     ROLE_REMOVED: 'error',
-    PROFILE_COMPLETION_REMINDER: 'secondary'
+    PROFILE_COMPLETION_REMINDER: 'secondary',
+    ADMIN_NOTIFICATION: 'primary'
   }
   return colorMap[type] || 'primary'
 }

@@ -7,6 +7,7 @@ import User from '../models/user.model'
 import UserProfile from '../api/profile/profile.model'
 import Notification from '../api/notifications/notification.model'
 import * as UserProfileService from '../api/profile/profile.service'
+import * as NotificationService from '../api/notifications/notification.service.js'
 import crypto from 'crypto'
 
 // Utility to generate password
@@ -300,6 +301,10 @@ export async function add({ data: userData }) {
     var savedNewUser = await newUserData.save()
 
     if (savedNewUser) {
+      // Send active announcements to new user (fire-and-forget so signup isn't delayed)
+      NotificationService.sendActiveAnnouncementsToUser(savedNewUser._id.toString()).catch(err =>
+        console.error('[User Service] sendActiveAnnouncementsToUser error:', err)
+      )
       const emailOtpResult = await srvSendEmailOtp(userData.email, 'verifyEmail')
       console.log(`[add] Email OTP result for ${userData.email}:`, {
         hasTestingOtp: !!emailOtpResult?.testingOtp,
@@ -309,12 +314,13 @@ export async function add({ data: userData }) {
         emailSent: emailOtpResult?.emailSent
       })
       // Only include testingOtp if email sending failed
-      const shouldShowTestingOtp = emailOtpResult?.status === 'error' || emailOtpResult?.error || !emailOtpResult?.emailSent
+      const shouldShowTestingOtp =
+        emailOtpResult?.status === 'error' || emailOtpResult?.error || !emailOtpResult?.emailSent
       return {
         status: 'success',
         result: {
           ...savedNewUser.toObject(),
-          testingOtp: shouldShowTestingOtp ? (emailOtpResult?.testingOtp || null) : null,
+          testingOtp: shouldShowTestingOtp ? emailOtpResult?.testingOtp || null : null,
           emailOtpError: shouldShowTestingOtp
         },
         message: 'User added successfully'
@@ -360,6 +366,9 @@ export async function addByAdmin({ data: userData }) {
     var savedNewUser = await newUserData.save()
 
     if (savedNewUser) {
+      NotificationService.sendActiveAnnouncementsToUser(savedNewUser._id.toString()).catch(err =>
+        console.error('[User Service] sendActiveAnnouncementsToUser error:', err)
+      )
       // await srvSendEmailOtp(userData.email, 'verifyEmail')
       const sendCredentialsResponse = await srvSendCredentials(userData)
       return { status: 'success', result: savedNewUser, message: 'User added successfully' }
@@ -432,6 +441,9 @@ export async function bulkAddByAdmin({ usersData }) {
           const savedNewUser = await newUserData.save()
 
           if (savedNewUser) {
+            NotificationService.sendActiveAnnouncementsToUser(savedNewUser._id.toString()).catch(err =>
+              console.error('[User Service] sendActiveAnnouncementsToUser error:', err)
+            )
             // Send credentials email (optional - can be done async)
             // Don't await to speed up bulk import
             srvSendCredentials(userData).catch(err => {
@@ -524,12 +536,13 @@ export async function addOrUpdate({ email, data }) {
           emailSent: emailOtpResult?.emailSent
         })
         // Only include testingOtp if email sending failed
-        const shouldShowTestingOtp = emailOtpResult?.status === 'error' || emailOtpResult?.error || !emailOtpResult?.emailSent
+        const shouldShowTestingOtp =
+          emailOtpResult?.status === 'error' || emailOtpResult?.error || !emailOtpResult?.emailSent
         return {
           status: 'success',
           result: {
             ...user.toObject(),
-            testingOtp: shouldShowTestingOtp ? (emailOtpResult?.testingOtp || null) : null,
+            testingOtp: shouldShowTestingOtp ? emailOtpResult?.testingOtp || null : null,
             emailOtpError: shouldShowTestingOtp
           },
           message: 'Otp resent successfully'
@@ -581,6 +594,9 @@ export async function addByGoogleSignin({ email, data }) {
       savedUser.profile = createdUserProfileResult?.result?._id
 
       await savedUser.save()
+      NotificationService.sendActiveAnnouncementsToUser(savedUser._id.toString()).catch(err =>
+        console.error('[User Service] sendActiveAnnouncementsToUser error:', err)
+      )
       return { status: 'success', result: savedUser, message: 'User added successfully by google signin' }
     } else {
       if (!user.isVerified) {
@@ -611,7 +627,9 @@ export async function addByGoogleSignin({ email, data }) {
 
         newUserData.profile = createdUserProfileResult?.result?._id
         await newUserData.save()
-
+        NotificationService.sendActiveAnnouncementsToUser(newUserData._id.toString()).catch(err =>
+          console.error('[User Service] sendActiveAnnouncementsToUser error:', err)
+        )
         return { status: 'success', result: newUserData, message: 'User added successfully by google signin' }
       }
       // Increase user login count
@@ -785,23 +803,21 @@ export async function srvSendEmailOtp(email, purpose) {
           subject: 'OTP: ' + otp + ' to ' + purposeDetail,
           content
         }),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Email service timeout after 8 seconds')), 8000)
-        )
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Email service timeout after 8 seconds')), 8000))
       ])
       console.log(`[srvSendEmailOtp] Email service result:`, emailResult)
-      
+
       // Check if email was sent successfully
       emailSentSuccessfully = emailResult.success === true
-      
+
       if (emailSentSuccessfully) {
         console.log(`[srvSendEmailOtp] Email sent successfully to ${email}, messageId: ${emailResult.messageId}`)
         mailResponse = { ...emailResult.response }
       } else {
         const errorMsg = emailResult.error || 'Email service did not confirm successful delivery'
         console.warn(`[srvSendEmailOtp] Email sending failed for ${email}:`, errorMsg)
-        mailResponse = { 
-          error: errorMsg, 
+        mailResponse = {
+          error: errorMsg,
           ...emailResult.response,
           rejected: emailResult.rejected,
           accepted: emailResult.accepted
@@ -1112,10 +1128,10 @@ export async function srvSendPhoneOtp(email, phone, name) {
     try {
       const smsResult = await SMSService.srvSendSMS(content)
       console.log(`[srvSendPhoneOtp] SMS service result:`, smsResult)
-      
+
       // Check if SMS was sent successfully
       smsSentSuccessfully = smsResult.success === true
-      
+
       if (smsSentSuccessfully) {
         console.log(`[srvSendPhoneOtp] SMS sent successfully to ${phone}`)
         smsResponse = { ...smsResult.response }

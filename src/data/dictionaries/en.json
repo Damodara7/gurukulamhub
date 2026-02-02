@@ -138,6 +138,7 @@
     "superUserPages": "Super User",
     "userQuizzes": "User Quizzes",
     "my":"My",
-    "messanger": "Messanger"
+    "messanger": "Messanger",
+    "adminNotification": "Admin Notification"
   }
 }

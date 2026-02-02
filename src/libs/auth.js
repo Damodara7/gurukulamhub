@@ -196,6 +196,9 @@ export const authOptions = {
         if (token.roles) {
           session.user.roles = token.roles
         }
+        if (token.isAdmin !== undefined) {
+          session.user.isAdmin = token.isAdmin
+        }
         if (token.geoRoles) {
           session.user.geoRoles = token.roles
         }
