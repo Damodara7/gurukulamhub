@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { toast } from 'react-toastify'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
@@ -18,40 +18,89 @@ function AllAdminNotificationPage({ isAdmin = false }) {
   const { data: session } = useSession()
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
+  const adminWsRef = useRef(null)
 
-  const fetchNotifications = useCallback(async () => {
-    if (!session?.user?.email) return
-    setLoading(true)
-    try {
-      const res = await RestApi.get(
-        `${API_URLS.v0.NOTIFICATIONS}?createdByEmail=${encodeURIComponent(
-          session.user.email
-        )}&type=ADMIN_NOTIFICATION&limit=500&sortBy=createdAt&sortOrder=desc`
-      )
-      if (res?.status === 'success') {
-        const data = res.result
-        const list =
-          data?.notifications && Array.isArray(data.notifications)
-            ? data.notifications
-            : Array.isArray(data)
-              ? data
-              : []
-        setNotifications(list)
-      } else {
-        toast.error(res?.message || 'Failed to load notifications')
+  const fetchNotifications = useCallback(
+    async (showLoading = true) => {
+      if (!session?.user?.email) return
+      if (showLoading) setLoading(true)
+      try {
+        const res = await RestApi.get(
+          `${API_URLS.v0.NOTIFICATIONS}?createdByEmail=${encodeURIComponent(
+            session.user.email
+          )}&type=ADMIN_NOTIFICATION&limit=500&sortBy=createdAt&sortOrder=desc`
+        )
+        if (res?.status === 'success') {
+          const data = res.result
+          const list =
+            data?.notifications && Array.isArray(data.notifications)
+              ? data.notifications
+              : Array.isArray(data)
+                ? data
+                : []
+          setNotifications(list)
+        } else {
+          if (showLoading) toast.error(res?.message || 'Failed to load notifications')
+          setNotifications([])
+        }
+      } catch (error) {
+        console.error('Error fetching admin notifications:', error)
+        if (showLoading) toast.error('An error occurred while loading notifications')
         setNotifications([])
+      } finally {
+        setLoading(false)
       }
-    } catch (error) {
-      console.error('Error fetching admin notifications:', error)
-      toast.error('An error occurred while loading notifications')
-      setNotifications([])
-    } finally {
-      setLoading(false)
-    }
-  }, [session?.user?.email])
+    },
+    [session?.user?.email]
+  )
 
+  // Initial fetch
   useEffect(() => {
     fetchNotifications()
+  }, [fetchNotifications])
+
+  // WebSocket: real-time "Seen: X / Y users" when another user marks the notification as read
+  useEffect(() => {
+    const email = session?.user?.email
+    if (!email || typeof window === 'undefined') return
+
+    const wsUrl = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${
+      window.location.host
+    }/api/ws/users/${encodeURIComponent(email)}`
+    let ws
+    try {
+      ws = new WebSocket(wsUrl)
+      adminWsRef.current = ws
+
+      ws.onmessage = event => {
+        try {
+          const msg = JSON.parse(event.data)
+          if (msg.type === 'userUpdate' && msg.data?.kind === 'adminNotificationSeenUpdate') {
+            fetchNotifications(false)
+          }
+        } catch (_) {}
+      }
+
+      ws.onclose = () => {
+        adminWsRef.current = null
+      }
+    } catch (err) {
+      console.error('[Admin notifications WS]', err)
+    }
+
+    return () => {
+      if (adminWsRef.current) {
+        adminWsRef.current.close(1000, 'Component unmounting')
+        adminWsRef.current = null
+      }
+    }
+  }, [session?.user?.email, fetchNotifications])
+
+  // Refetch when admin returns to this tab (fallback if WebSocket missed an event)
+  useEffect(() => {
+    const onFocus = () => fetchNotifications(false)
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
   }, [fetchNotifications])
 
   const handleCreateNotification = () => {

@@ -4,6 +4,16 @@ import * as ApiResponseUtils from '@/utils/apiResponses'
 import { auth } from '@/libs/auth'
 import User from '@/app/models/user.model.js'
 import connectMongo from '@/utils/dbConnect-mongo'
+import { ROLES_LOOKUP } from '@/configs/roles-lookup'
+
+/** Admin = SUPER_ADMIN or ADMIN role, or session.user.isAdmin. Used for admin-notification delete by adminNotificationId. */
+function isAdminUser(session) {
+  return (
+    session?.user?.roles?.includes(ROLES_LOOKUP.SUPER_ADMIN) ||
+    session?.user?.roles?.includes(ROLES_LOOKUP.ADMIN) ||
+    session?.user?.isAdmin === true
+  )
+}
 
 const Artifact = 'Notifications'
 const ArtifactService = NotificationService
@@ -142,9 +152,11 @@ export async function GET(req) {
 
       artifact = await ArtifactService.getFavorite(targetUserId, rest)
     }
-    // Get admin notifications created by this user (for admin list: creator sees only what they created)
+    // Get admin notifications: creator sees their own; SUPER_ADMIN can see any admin's list (by createdByEmail)
     else if (createdByEmail) {
-      if (createdByEmail !== session.user.email) {
+      const isSuperAdmin = session.user.roles?.includes(ROLES_LOOKUP.SUPER_ADMIN)
+      const isCreator = createdByEmail === session.user.email
+      if (!isCreator && !isSuperAdmin) {
         const errorResponse = ApiResponseUtils.createErrorResponse('Unauthorized to access notifications by creator')
         return ApiResponseUtils.sendErrorResponse(errorResponse)
       }
@@ -406,13 +418,21 @@ export async function DELETE(req) {
     const currentUserId = currentUser?._id?.toString()
     const isAdmin = session.user.roles?.includes('SUPER_ADMIN') || session.user.isAdmin
 
-    // Delete by adminNotificationId (admin only, deletes entire announcement)
+    // Delete by adminNotificationId: creator can delete their own; SUPER_ADMIN can delete any announcement
     if (adminNotificationId) {
-      if (!isAdmin) {
+      const canDeleteAnnouncement = isAdminUser(session)
+      if (!canDeleteAnnouncement) {
         const errorResponse = ApiResponseUtils.createErrorResponse('Only admins can delete by adminNotificationId')
         return ApiResponseUtils.sendErrorResponse(errorResponse)
       }
-      const deleteResult = await ArtifactService.deleteByAdminNotificationId(adminNotificationId, session.user.email)
+      // Creator passes their email (deletes only their announcement); SUPER_ADMIN passes null (can delete any)
+      const isSuperAdmin = session.user.roles?.includes(ROLES_LOOKUP.SUPER_ADMIN)
+      const createdByEmailForDelete = isSuperAdmin ? null : session.user.email
+      const deleteResult = await ArtifactService.deleteByAdminNotificationId(
+        adminNotificationId,
+        createdByEmailForDelete,
+        session.user.email
+      )
       if (deleteResult.status === 'success') {
         const successResponse = ApiResponseUtils.createSuccessResponse(deleteResult.message, deleteResult.result)
         return ApiResponseUtils.sendSuccessResponse(successResponse)
@@ -426,19 +446,36 @@ export async function DELETE(req) {
       return ApiResponseUtils.sendErrorResponse(errorResponse)
     }
 
-    // Security check: ensure user can only delete their own notifications
+    // Security: fetch notification to check ownership / creator / SUPER_ADMIN
+    const notification = await ArtifactService.getOne({ _id: id })
+    if (notification.status !== 'success' || !notification.result) {
+      const errorResponse = ApiResponseUtils.createErrorResponse('Notification not found')
+      return ApiResponseUtils.sendErrorResponse(errorResponse)
+    }
+    const notificationUserId = notification.result.userId?._id?.toString() || notification.result.userId?.toString()
+    const notificationCreatedByEmail = notification.result.createdByEmail
+    const isAdminNotification = notification.result.type === 'ADMIN_NOTIFICATION'
+    const isSuperAdmin = session.user.roles?.includes(ROLES_LOOKUP.SUPER_ADMIN)
+    const isCreator = notificationCreatedByEmail && notificationCreatedByEmail === session.user.email
+
     if (!isAdmin) {
-      const notification = await ArtifactService.getOne({ _id: id })
-      if (notification.status === 'success' && notification.result) {
-        const notificationUserId = notification.result.userId?._id?.toString() || notification.result.userId?.toString()
-        if (notificationUserId !== currentUserId) {
-          const errorResponse = ApiResponseUtils.createErrorResponse('Unauthorized to delete this notification')
-          return ApiResponseUtils.sendErrorResponse(errorResponse)
-        }
+      // Non-admin: can only delete notifications sent to them
+      if (notificationUserId !== currentUserId) {
+        const errorResponse = ApiResponseUtils.createErrorResponse('Unauthorized to delete this notification')
+        return ApiResponseUtils.sendErrorResponse(errorResponse)
+      }
+    } else if (isAdminNotification) {
+      // Admin notification: only creator or SUPER_ADMIN can delete
+      if (!isCreator && !isSuperAdmin) {
+        const errorResponse = ApiResponseUtils.createErrorResponse(
+          'Only the creator or Super Admin can delete this admin notification'
+        )
+        return ApiResponseUtils.sendErrorResponse(errorResponse)
       }
     }
+    // Other notification types: any admin can delete
 
-    const deletedNotification = await ArtifactService.deleteOne(id, isAdmin ? null : currentUserId)
+    const deletedNotification = await ArtifactService.deleteOne(id, isAdmin ? null : currentUserId, session.user.email)
 
     if (deletedNotification.status === 'success') {
       const successResponse = ApiResponseUtils.createSuccessResponse(

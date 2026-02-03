@@ -7,6 +7,7 @@ import {
   broadcastNotificationCount,
   broadcastNotificationUpdate
 } from '../ws/notifications/[userId]/publishers.js'
+import { broadcastToUser } from '../ws/users/[userEmail]/publishers.js'
 import { sendPushNotification } from './push.service.js'
 
 export const getOne = async (filter = {}) => {
@@ -593,6 +594,19 @@ export const markAsRead = async (notificationId, userId = null) => {
         const countResult = await getCount(notificationUserId)
         if (countResult.status === 'success') {
           broadcastNotificationCount(notificationUserId, countResult.result)
+        }
+      }
+
+      // Notify admin (creator) so "Seen: X / Y users" updates in real time on admin list
+      const createdByEmail = notification.createdByEmail
+      if (createdByEmail && notification.type === 'ADMIN_NOTIFICATION') {
+        try {
+          broadcastToUser(createdByEmail, {
+            kind: 'adminNotificationSeenUpdate',
+            adminNotificationId: notification.adminNotificationId
+          })
+        } catch (adminWsError) {
+          console.error('Error broadcasting admin notification seen update via WebSocket:', adminWsError)
         }
       }
     } catch (wsError) {
