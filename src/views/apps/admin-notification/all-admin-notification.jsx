@@ -8,6 +8,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import AdminNotificationCard from '@/components/admin-notification/AdminNotificationCard'
 import AdminNotificationFallBackCard from '@/components/admin-notification/AdminNotificationFallBackCard'
+import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
 import { Add as AddIcon } from '@mui/icons-material'
 import { Box, Button, CircularProgress, Container, Typography, useTheme } from '@mui/material'
 import { alpha } from '@mui/material/styles'
@@ -19,6 +20,9 @@ function AllAdminNotificationPage({ isAdmin = false }) {
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
   const adminWsRef = useRef(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [notificationToDelete, setNotificationToDelete] = useState(null)
+  const notificationToDeleteRef = useRef(null)
 
   const fetchNotifications = useCallback(
     async (showLoading = true) => {
@@ -118,6 +122,41 @@ function AllAdminNotificationPage({ isAdmin = false }) {
       setNotifications(prev => prev.filter(n => n._id !== idOrAdminNotificationId))
     }
   }
+
+  const openDeleteDialog = useCallback(group => {
+    setNotificationToDelete(group)
+    notificationToDeleteRef.current = group
+    setDeleteDialogOpen(true)
+  }, [])
+
+  const handleDeleteConfirm = useCallback(async () => {
+    const group = notificationToDeleteRef.current || notificationToDelete
+    if (!group) return
+    const isGroup = group.total > 1 || group.adminNotificationId
+    if (isGroup && group.adminNotificationId) {
+      const result = await RestApi.del(
+        `${API_URLS.v0.NOTIFICATIONS}?adminNotificationId=${encodeURIComponent(group.adminNotificationId)}`
+      )
+      if (result?.status !== 'success') {
+        throw new Error(result?.message || 'Failed to delete')
+      }
+      handleDelete(group.adminNotificationId, true)
+      fetchNotifications(false)
+      setNotificationToDelete(null)
+      notificationToDeleteRef.current = null
+    } else {
+      const firstId = group.notifications?.[0]?._id
+      if (!firstId) throw new Error('Notification not found')
+      const result = await RestApi.del(`${API_URLS.v0.NOTIFICATIONS}?id=${firstId}`)
+      if (result?.status !== 'success') {
+        throw new Error(result?.message || 'Failed to delete')
+      }
+      handleDelete(firstId, false)
+      fetchNotifications(false)
+      setNotificationToDelete(null)
+      notificationToDeleteRef.current = null
+    }
+  }, [notificationToDelete, fetchNotifications])
 
   // Group by adminNotificationId for seen/total; fallback: one notification = one group (by _id)
   const groups = React.useMemo(() => {
@@ -277,9 +316,27 @@ function AllAdminNotificationPage({ isAdmin = false }) {
             onMarkRead={handleMarkRead}
             onDelete={handleDelete}
             onRefresh={fetchNotifications}
+            onDeleteClick={openDeleteDialog}
           />
         )}
       </Box>
+
+      {/* Delete confirmation dialog in parent so it stays mounted when list becomes empty (e.g. delete last item) */}
+      <ConfirmationDialog
+        open={deleteDialogOpen}
+        setOpen={open => {
+          setDeleteDialogOpen(open)
+          if (!open) setNotificationToDelete(null)
+          // Do not clear notificationToDeleteRef here - it's cleared after successful delete so onConfirm has the notification
+        }}
+        type={
+          notificationToDelete && (notificationToDelete.total > 1 || notificationToDelete.adminNotificationId)
+            ? 'delete-admin-announcement'
+            : 'delete-admin-notification'
+        }
+        affectedUserCount={notificationToDelete?.total ?? 0}
+        onConfirm={handleDeleteConfirm}
+      />
 
       {/* Create button - same pattern as group */}
       <Box

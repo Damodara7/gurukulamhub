@@ -1,7 +1,7 @@
 'use client'
 
 // React Imports
-import { Fragment, useState } from 'react'
+import { Fragment, useState, useEffect } from 'react'
 
 // MUI Imports
 import Dialog from '@mui/material/Dialog'
@@ -29,10 +29,19 @@ const ConfirmationDialog = ({ open, setOpen, type, onConfirm, affectedUserCount,
 
   const handleSecondDialogClose = () => {
     setSecondDialog(false)
-    setOperationSuccess(false)
-    setOperationError(false)
     setOpen(false)
+    // Do not reset operationSuccess/operationError here - otherwise during MUI Dialog exit
+    // animation the second dialog re-renders with both false and briefly shows "Cancelled"
   }
+
+  // Reset result state when the first dialog is opened again (so next use starts clean)
+  useEffect(() => {
+    if (open) {
+      setOperationSuccess(false)
+      setOperationError(false)
+      setUserInput(false)
+    }
+  }, [open])
 
   const handleConfirmation = async value => {
     setUserInput(value)
@@ -162,6 +171,20 @@ const ConfirmationDialog = ({ open, setOpen, type, onConfirm, affectedUserCount,
       error: 'Failed to delete advertisement. Please try again.',
       status: 'Advertisement Deleted!'
     },
+    'delete-admin-notification': {
+      title: 'Are you sure you want to delete this notification?',
+      success: 'Notification has been deleted successfully.',
+      cancel: 'Deletion cancelled.',
+      error: 'Failed to delete notification. Please try again.',
+      status: 'Notification Deleted!'
+    },
+    'delete-admin-announcement': {
+      title: 'Are you sure you want to delete this announcement?',
+      success: 'Announcement has been deleted for all recipients.',
+      cancel: 'Deletion cancelled.',
+      error: 'Failed to delete announcement. Please try again.',
+      status: 'Announcement Deleted!'
+    },
     // Add other types as needed
     default: {
       title: 'Are you sure?',
@@ -204,8 +227,13 @@ const ConfirmationDialog = ({ open, setOpen, type, onConfirm, affectedUserCount,
             )}
             {(type === 'delete-role' || type === 'delete-role-with-users') && affectedUserCount > 0 && (
               <Typography color='warning.main' sx={{ mt: 2, fontWeight: 600 }}>
-                ⚠️ Warning: This role is assigned to {affectedUserCount} user{affectedUserCount !== 1 ? 's' : ''}. 
+                ⚠️ Warning: This role is assigned to {affectedUserCount} user{affectedUserCount !== 1 ? 's' : ''}.
                 {affectedUserCount > 0 && ' The role will be removed from all affected users.'}
+              </Typography>
+            )}
+            {type === 'delete-admin-announcement' && affectedUserCount > 0 && (
+              <Typography color='text.secondary' sx={{ mt: 2 }}>
+                This will remove the announcement for {affectedUserCount} user{affectedUserCount !== 1 ? 's' : ''}.
               </Typography>
             )}
           </Wrapper>

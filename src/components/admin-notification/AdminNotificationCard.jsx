@@ -29,7 +29,7 @@ const formatDate = dateStr => {
   return d.toLocaleDateString()
 }
 
-const AdminNotificationCard = ({ groups, onMarkRead, onDelete, onRefresh, isAdmin = false }) => {
+const AdminNotificationCard = ({ groups, onMarkRead, onDelete, onRefresh, onDeleteClick, isAdmin = false }) => {
   const theme = useTheme()
 
   const handleMarkRead = async notification => {
@@ -44,39 +44,6 @@ const AdminNotificationCard = ({ groups, onMarkRead, onDelete, onRefresh, isAdmi
       }
     } catch (err) {
       toast.error(err?.message || 'Failed to mark as read')
-    }
-  }
-
-  const handleDelete = async group => {
-    const isGroup = group.total > 1 || group.adminNotificationId
-    const message = isGroup ? `Delete this announcement for all ${group.total} user(s)?` : 'Delete this notification?'
-    if (!confirm(message)) return
-    try {
-      if (isGroup && group.adminNotificationId) {
-        const result = await RestApi.del(
-          `${API_URLS.v0.NOTIFICATIONS}?adminNotificationId=${encodeURIComponent(group.adminNotificationId)}`
-        )
-        if (result?.status === 'success') {
-          onDelete?.(group.adminNotificationId, true)
-          onRefresh?.()
-          toast.success(result?.message || 'Announcement deleted')
-        } else {
-          toast.error(result?.message || 'Failed to delete')
-        }
-      } else {
-        const firstId = group.notifications?.[0]?._id
-        if (!firstId) return
-        const result = await RestApi.del(`${API_URLS.v0.NOTIFICATIONS}?id=${firstId}`)
-        if (result?.status === 'success') {
-          onDelete?.(firstId, false)
-          onRefresh?.()
-          toast.success('Notification deleted')
-        } else {
-          toast.error(result?.message || 'Failed to delete')
-        }
-      }
-    } catch (err) {
-      toast.error(err?.message || 'Failed to delete')
     }
   }
 
@@ -185,11 +152,6 @@ const AdminNotificationCard = ({ groups, onMarkRead, onDelete, onRefresh, isAdmi
                         Seen: {seen} / {total} user{total !== 1 ? 's' : ''}
                       </Typography>
                     </Stack>
-                    {(group.actionUrl || group.actionLabel) && (
-                      <Typography variant='caption' color='primary' sx={{ mt: 0.5, display: 'block' }}>
-                        {group.actionLabel || 'View'} {group.actionUrl && ` → ${group.actionUrl}`}
-                      </Typography>
-                    )}
                   </Box>
                   <Stack direction='row' spacing={0.5}>
                     {isSingle && firstNotification && !isRead && (
@@ -226,7 +188,7 @@ const AdminNotificationCard = ({ groups, onMarkRead, onDelete, onRefresh, isAdmi
                     <Tooltip title={group.total > 1 ? 'Delete announcement' : 'Delete'}>
                       <IconButton
                         size='small'
-                        onClick={() => handleDelete(group)}
+                        onClick={() => onDeleteClick?.(group)}
                         sx={{
                           color: theme.palette.error.main,
                           '&:hover': { bgcolor: alpha(theme.palette.error.main, 0.08) }
