@@ -25,7 +25,9 @@ import {
   Tabs,
   Tab,
   Button,
-  Tooltip
+  Tooltip,
+  TextField,
+  InputAdornment
 } from '@mui/material'
 
 // Third Party Components
@@ -169,6 +171,7 @@ const NotificationDropdown = () => {
   const [socket, setSocket] = useState(null)
   const [isConnected, setIsConnected] = useState(false)
   const [activeTab, setActiveTab] = useState(0) // 0: All, 1: Unread, 2: Read, 3: Favourite
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Refs
   const anchorRef = useRef(null)
@@ -410,10 +413,11 @@ const NotificationDropdown = () => {
     }
   }, [userId, fetchNotifications])
 
-  // Reset to All tab when opening and refresh notifications if needed
+  // Reset to All tab and clear search when opening; refresh notifications if needed
   useEffect(() => {
     if (open) {
       setActiveTab(0) // Always open to All tab
+      setSearchQuery('') // Clear search when opening
 
       // Only refresh if data is stale (older than 30 seconds)
       const timeSinceLastFetch = Date.now() - lastFetchTimeRef.current
@@ -504,13 +508,20 @@ const NotificationDropdown = () => {
     setActiveTab(newValue)
   }
 
-  // Filter notifications based on active tab
+  // Filter notifications based on active tab, then by search query (title + message)
   const getFilteredNotifications = () => {
-    if (activeTab === 0) return notifications // All
-    if (activeTab === 1) return notifications.filter(n => !n.isRead) // Unread
-    if (activeTab === 2) return notifications.filter(n => n.isRead) // Read
-    if (activeTab === 3) return notifications.filter(n => n.isFavorite) // Favourite
-    return notifications
+    let list = notifications
+    if (activeTab === 1) list = notifications.filter(n => !n.isRead) // Unread
+    else if (activeTab === 2) list = notifications.filter(n => n.isRead) // Read
+    else if (activeTab === 3) list = notifications.filter(n => n.isFavorite) // Favourite
+
+    const query = searchQuery?.trim?.() || ''
+    if (!query) return list
+
+    const lower = query.toLowerCase()
+    return list.filter(
+      n => (n.title && n.title.toLowerCase().includes(lower)) || (n.message && n.message.toLowerCase().includes(lower))
+    )
   }
 
   // Delete notification
@@ -714,6 +725,30 @@ const NotificationDropdown = () => {
             <Tab label={`Read (${tabCounts.read})`} />
             <Tab label={`Favourite (${tabCounts.favorite})`} />
           </Tabs>
+          <TextField
+            fullWidth
+            size='small'
+            placeholder='Search notifications...'
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            sx={{
+              mt: 2,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+                backgroundColor: settings.mode === 'dark' ? 'action.hover' : 'grey.50'
+              }
+            }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position='start'>
+                  <i
+                    className='ri-search-line'
+                    style={{ fontSize: '1.1rem', color: 'var(--mui-palette-text-secondary)' }}
+                  />
+                </InputAdornment>
+              )
+            }}
+          />
         </DialogTitle>
         <DialogContent
           sx={{
@@ -737,7 +772,7 @@ const NotificationDropdown = () => {
             ) : filteredNotifications.length === 0 ? (
               <div className='flex items-center justify-center p-8'>
                 <Typography variant='body2' color='text.secondary'>
-                  No notifications
+                  {searchQuery.trim() ? 'No notifications match your search' : 'No notifications'}
                 </Typography>
               </div>
             ) : (
