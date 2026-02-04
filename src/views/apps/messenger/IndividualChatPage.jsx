@@ -77,6 +77,10 @@ const IndividualChatPage = ({ chatId, backPath = '/messanger' }) => {
   const [deleteChatDialogOpen, setDeleteChatDialogOpen] = useState(false)
   const [encryptionReady, setEncryptionReady] = useState(false)
   const encryptionReadyRef = useRef(false)
+  const wsRefRef = useRef(null)
+  const pingIntervalRef = useRef(null)
+  const reconnectTimeoutRef = useRef(null)
+  const reconnectAttemptsRef = useRef(0)
 
   // Extract emails from chatId and decode them (chatId may be URL-encoded)
   const extractAndDecodeEmail = (email) => {
@@ -495,9 +499,15 @@ const IndividualChatPage = ({ chatId, backPath = '/messanger' }) => {
     }
   }
 
-  // WebSocket connection
+  // WebSocket connection with keepalive and reconnection
   useEffect(() => {
     if (!chatId || !session?.user?.email) return
+
+    // Clear any existing reconnection timeout
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current)
+      reconnectTimeoutRef.current = null
+    }
 
     // Normalize chatId to match the format used in service layer
     const normalizedChatId = normalizeChatIdForWS(chatId)
@@ -509,19 +519,51 @@ const IndividualChatPage = ({ chatId, backPath = '/messanger' }) => {
           }/api/ws/individual-chat/${encodeURIComponent(normalizedChatId)}`
         : ''
 
-    if (wsUrl) {
-      const wsRef = new WebSocket(wsUrl)
+    if (!wsUrl) return
 
-      wsRef.onopen = () => {
-        console.log('[WS] Connected to individual chat')
-        setIsConnected(true)
-        setSocket(wsRef)
-        markAllMessagesAsRead()
+    const connectWebSocket = () => {
+      // Don't create new connection if one already exists and is open
+      if (wsRefRef.current && wsRefRef.current.readyState === WebSocket.OPEN) {
+        return
       }
 
-      wsRef.onmessage = async event => {
+      try {
+        const wsRef = new WebSocket(wsUrl)
+        wsRefRef.current = wsRef
+
+        wsRef.onopen = () => {
+          console.log('[WS] Connected to individual chat')
+          setIsConnected(true)
+          setSocket(wsRef)
+          markAllMessagesAsRead()
+          
+          // Reset reconnection attempts on successful connection
+          reconnectAttemptsRef.current = 0
+
+          // Start keepalive ping (send ping every 30 seconds)
+          if (pingIntervalRef.current) {
+            clearInterval(pingIntervalRef.current)
+          }
+          pingIntervalRef.current = setInterval(() => {
+            if (wsRef.readyState === WebSocket.OPEN) {
+              try {
+                wsRef.send(JSON.stringify({ type: 'ping' }))
+              } catch (error) {
+                console.warn('[WS] Failed to send ping:', error)
+              }
+            }
+          }, 30000) // 30 seconds
+        }
+
+        wsRef.onmessage = async event => {
         try {
           const msg = JSON.parse(event.data)
+          
+          // Handle pong response for keepalive
+          if (msg.type === 'pong') {
+            // Connection is alive, do nothing
+            return
+          }
           
           if (msg.type === 'connected') {
             console.log('[WS] Chat connection confirmed')
@@ -758,19 +800,84 @@ const IndividualChatPage = ({ chatId, backPath = '/messanger' }) => {
         }
       }
 
-      wsRef.onerror = err => {
-        console.error('[WS] Chat WebSocket error', err)
+        wsRef.onerror = err => {
+          console.error('[WS] Chat WebSocket error', err)
+          setIsConnected(false)
+        }
+
+        wsRef.onclose = (event) => {
+          console.log('[WS] Chat WebSocket connection closed', {
+            code: event.code,
+            reason: event.reason,
+            wasClean: event.wasClean
+          })
+          setIsConnected(false)
+          
+          // Clear ping interval
+          if (pingIntervalRef.current) {
+            clearInterval(pingIntervalRef.current)
+            pingIntervalRef.current = null
+          }
+
+          // Don't reconnect if it was a clean close or component is unmounting
+          if (event.code === 1000 || event.wasClean) {
+            console.log('[WS] Connection closed cleanly, not reconnecting')
+            return
+          }
+
+          // Attempt to reconnect with exponential backoff
+          const maxAttempts = 5
+          if (reconnectAttemptsRef.current < maxAttempts) {
+            reconnectAttemptsRef.current++
+
+            // Exponential backoff: 1s, 2s, 4s, 8s, 16s (max 30s)
+            const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current - 1), 30000)
+
+            console.log(
+              `[WS] Attempting to reconnect in ${delay}ms (attempt ${reconnectAttemptsRef.current}/${maxAttempts})`
+            )
+
+            reconnectTimeoutRef.current = setTimeout(() => {
+              console.log(`[WS] Reconnecting... (attempt ${reconnectAttemptsRef.current})`)
+              connectWebSocket()
+            }, delay)
+          } else {
+            console.log('[WS] Max reconnection attempts reached. Please refresh the page to reconnect.')
+          }
+        }
+      } catch (error) {
+        console.error('[WS] Error creating WebSocket connection:', error)
         setIsConnected(false)
       }
+    }
 
-      wsRef.onclose = () => {
-        console.log('[WS] Chat WebSocket connection closed')
-        setIsConnected(false)
+    // Initial connection
+    connectWebSocket()
+
+    // Cleanup function
+    return () => {
+      // Clear reconnection timeout
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current)
+        reconnectTimeoutRef.current = null
       }
 
-      return () => {
-        wsRef.close()
+      // Clear ping interval
+      if (pingIntervalRef.current) {
+        clearInterval(pingIntervalRef.current)
+        pingIntervalRef.current = null
       }
+
+      // Close WebSocket connection
+      if (wsRefRef.current) {
+        wsRefRef.current.close(1000, 'Component unmounting')
+        wsRefRef.current = null
+      }
+
+      // Reset reconnection attempts
+      reconnectAttemptsRef.current = 0
+      setIsConnected(false)
+      setSocket(null)
     }
   }, [chatId, session?.user?.email])
 
