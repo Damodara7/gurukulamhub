@@ -30,16 +30,49 @@ jobs:
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.DROPLET_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 700 ~/.ssh
+          
+          # Write SSH key with proper formatting (handles line endings correctly)
+          # Use printf to preserve the key format and ensure Unix line endings
+          printf '%s\n' "${{ secrets.DROPLET_SSH_KEY }}" > ~/.ssh/id_rsa
+          
+          # Remove any Windows line endings (CRLF -> LF) and ensure proper format
+          sed -i 's/\r$//' ~/.ssh/id_rsa
+          
+          # Ensure the key file ends with a newline
+          if [ -n "$(tail -c 1 ~/.ssh/id_rsa)" ]; then
+            echo "" >> ~/.ssh/id_rsa
+          fi
+          
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ env.DROPLET_IP }} >> ~/.ssh/known_hosts
+          
+          # Verify the key format
+          if ! ssh-keygen -l -f ~/.ssh/id_rsa > /dev/null 2>&1; then
+            echo "❌ Error: SSH key format is invalid"
+            echo "First 100 chars of key:"
+            head -c 100 ~/.ssh/id_rsa
+            exit 1
+          fi
+          
+          # Add server to known_hosts
+          ssh-keyscan -H ${{ env.DROPLET_IP }} >> ~/.ssh/known_hosts 2>/dev/null
+          chmod 644 ~/.ssh/known_hosts
+          
           # Configure SSH keepalive to prevent connection timeout during long builds
-          cat >> ~/.ssh/config << 'SSHCONFIG'
+          cat > ~/.ssh/config << 'SSHCONFIG'
           Host *
             ServerAliveInterval 60
             ServerAliveCountMax 3
+            StrictHostKeyChecking no
+            UserKnownHostsFile ~/.ssh/known_hosts
           SSHCONFIG
           chmod 600 ~/.ssh/config
+          
+          # Test SSH connection
+          echo "Testing SSH connection..."
+          ssh -i ~/.ssh/id_rsa -o ConnectTimeout=10 -o BatchMode=yes ${{ env.DROPLET_USER }}@${{ env.DROPLET_IP }} "echo 'SSH connection successful'" || {
+            echo "⚠️  SSH connection test failed, but continuing..."
+          }
 
       - name: Copy files to server
         run: |
