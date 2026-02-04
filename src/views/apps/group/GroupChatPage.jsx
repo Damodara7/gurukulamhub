@@ -90,6 +90,14 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
   const [exitGroupDialogOpen, setExitGroupDialogOpen] = useState(false)
   const [encryptionReady, setEncryptionReady] = useState(false)
   const encryptionReadyRef = useRef(false)
+  const wsRefRef = useRef(null)
+  const groupWsRefRef = useRef(null)
+  const pingIntervalRef = useRef(null)
+  const groupPingIntervalRef = useRef(null)
+  const reconnectTimeoutRef = useRef(null)
+  const groupReconnectTimeoutRef = useRef(null)
+  const reconnectAttemptsRef = useRef(0)
+  const groupReconnectAttemptsRef = useRef(0)
 
   // Sound hooks
   const [playSoundOn] = useSound('/sounds/sound-on.mp3', { volume: 0.7 })
@@ -316,9 +324,15 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
     }
   }
 
-  // WebSocket connection for chat messages
+  // WebSocket connection for chat messages with keepalive and reconnection
   useEffect(() => {
     if (!groupId || !session?.user?.email) return
+
+    // Clear any existing reconnection timeout
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current)
+      reconnectTimeoutRef.current = null
+    }
 
     const wsUrl =
       typeof window !== 'undefined'
@@ -327,19 +341,51 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
           }/api/ws/groups/${groupId}/chat`
         : ''
 
-    if (wsUrl) {
-      const wsRef = new WebSocket(wsUrl)
+    if (!wsUrl) return
 
-      wsRef.onopen = () => {
-        console.log('[WS] Connected to group chat')
-        setIsConnected(true)
-        setSocket(wsRef)
-        markAllMessagesAsRead()
+    const connectWebSocket = () => {
+      // Don't create new connection if one already exists and is open
+      if (wsRefRef.current && wsRefRef.current.readyState === WebSocket.OPEN) {
+        return
       }
 
-      wsRef.onmessage = async event => {
+      try {
+        const wsRef = new WebSocket(wsUrl)
+        wsRefRef.current = wsRef
+
+        wsRef.onopen = () => {
+          console.log('[WS] Connected to group chat')
+          setIsConnected(true)
+          setSocket(wsRef)
+          markAllMessagesAsRead()
+          
+          // Reset reconnection attempts on successful connection
+          reconnectAttemptsRef.current = 0
+
+          // Start keepalive ping (send ping every 30 seconds)
+          if (pingIntervalRef.current) {
+            clearInterval(pingIntervalRef.current)
+          }
+          pingIntervalRef.current = setInterval(() => {
+            if (wsRef.readyState === WebSocket.OPEN) {
+              try {
+                wsRef.send(JSON.stringify({ type: 'ping' }))
+              } catch (error) {
+                console.warn('[WS] Failed to send ping:', error)
+              }
+            }
+          }, 30000) // 30 seconds
+        }
+
+        wsRef.onmessage = async event => {
         try {
           const msg = JSON.parse(event.data)
+          
+          // Handle pong response for keepalive
+          if (msg.type === 'pong') {
+            // Connection is alive, do nothing
+            return
+          }
           
           if (msg.type === 'connected') {
             console.log('[WS] Chat connection confirmed')
@@ -501,20 +547,91 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
         setIsConnected(false)
       }
 
-      wsRef.onclose = () => {
-        console.log('[WS] Chat WebSocket connection closed')
+      wsRef.onclose = (event) => {
+          console.log('[WS] Chat WebSocket connection closed', {
+            code: event.code,
+            reason: event.reason,
+            wasClean: event.wasClean
+          })
+          setIsConnected(false)
+          
+          // Clear ping interval
+          if (pingIntervalRef.current) {
+            clearInterval(pingIntervalRef.current)
+            pingIntervalRef.current = null
+          }
+
+          // Don't reconnect if it was a clean close or component is unmounting
+          if (event.code === 1000 || event.wasClean) {
+            console.log('[WS] Connection closed cleanly, not reconnecting')
+            return
+          }
+
+          // Attempt to reconnect with exponential backoff
+          const maxAttempts = 5
+          if (reconnectAttemptsRef.current < maxAttempts) {
+            reconnectAttemptsRef.current++
+
+            // Exponential backoff: 1s, 2s, 4s, 8s, 16s (max 30s)
+            const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current - 1), 30000)
+
+            console.log(
+              `[WS] Attempting to reconnect in ${delay}ms (attempt ${reconnectAttemptsRef.current}/${maxAttempts})`
+            )
+
+            reconnectTimeoutRef.current = setTimeout(() => {
+              console.log(`[WS] Reconnecting... (attempt ${reconnectAttemptsRef.current})`)
+              connectWebSocket()
+            }, delay)
+          } else {
+            console.log('[WS] Max reconnection attempts reached. Please refresh the page to reconnect.')
+          }
+        }
+      } catch (error) {
+        console.error('[WS] Error creating WebSocket connection:', error)
         setIsConnected(false)
       }
+    }
 
-      return () => {
-        wsRef.close()
+    // Initial connection
+    connectWebSocket()
+
+    // Cleanup function
+    return () => {
+      // Clear reconnection timeout
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current)
+        reconnectTimeoutRef.current = null
       }
+
+      // Clear ping interval
+      if (pingIntervalRef.current) {
+        clearInterval(pingIntervalRef.current)
+        pingIntervalRef.current = null
+      }
+
+      // Close WebSocket connection
+      if (wsRefRef.current) {
+        wsRefRef.current.close(1000, 'Component unmounting')
+        wsRefRef.current = null
+      }
+
+      // Reset reconnection attempts
+      reconnectAttemptsRef.current = 0
+      setIsConnected(false)
+      setSocket(null)
     }
   }, [groupId, session?.user?.email])
 
-  // WebSocket connection for group updates (settings, members, etc.)
+  // WebSocket connection for group updates (settings, members, etc.) with keepalive and reconnection
   useEffect(() => {
     if (!groupId || !session?.user?.email) return
+
+    // Clear any existing reconnection timeout
+    if (groupReconnectTimeoutRef.current) {
+      clearTimeout(groupReconnectTimeoutRef.current)
+      groupReconnectTimeoutRef.current = null
+    }
 
     const wsUrl =
       typeof window !== 'undefined'
@@ -523,39 +640,134 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
           }/api/ws/groups/${groupId}`
         : ''
 
-    if (wsUrl) {
-      const wsRef = new WebSocket(wsUrl)
+    if (!wsUrl) return
 
-      wsRef.onopen = () => {
-        console.log('[WS] Connected to group updates')
-        setGroupSocket(wsRef)
+    const connectGroupWebSocket = () => {
+      // Don't create new connection if one already exists and is open
+      if (groupWsRefRef.current && groupWsRefRef.current.readyState === WebSocket.OPEN) {
+        return
       }
 
-      wsRef.onmessage = event => {
-        try {
-          const msg = JSON.parse(event.data)
+      try {
+        const wsRef = new WebSocket(wsUrl)
+        groupWsRefRef.current = wsRef
+
+        wsRef.onopen = () => {
+          console.log('[WS] Connected to group updates')
+          setGroupSocket(wsRef)
           
-          if (msg.type === 'groupDetails') {
-            console.log('[WS] Received group update:', msg.data)
-            // Update group data in real-time (replace entire object to ensure proper updates)
-            setGroupData(msg.data)
+          // Reset reconnection attempts on successful connection
+          groupReconnectAttemptsRef.current = 0
+
+          // Start keepalive ping (send ping every 30 seconds)
+          if (groupPingIntervalRef.current) {
+            clearInterval(groupPingIntervalRef.current)
           }
-        } catch (e) {
-          console.error('[WS] Error parsing group update message', e)
+          groupPingIntervalRef.current = setInterval(() => {
+            if (wsRef.readyState === WebSocket.OPEN) {
+              try {
+                wsRef.send(JSON.stringify({ type: 'ping' }))
+              } catch (error) {
+                console.warn('[WS] Failed to send ping (group updates):', error)
+              }
+            }
+          }, 30000) // 30 seconds
         }
-      }
+
+        wsRef.onmessage = event => {
+          try {
+            const msg = JSON.parse(event.data)
+            
+            // Handle pong response for keepalive
+            if (msg.type === 'pong') {
+              // Connection is alive, do nothing
+              return
+            }
+            
+            if (msg.type === 'groupDetails') {
+              console.log('[WS] Received group update:', msg.data)
+              // Update group data in real-time (replace entire object to ensure proper updates)
+              setGroupData(msg.data)
+            }
+          } catch (e) {
+            console.error('[WS] Error parsing group update message', e)
+          }
+        }
 
       wsRef.onerror = err => {
         console.error('[WS] Group WebSocket error', err)
       }
 
-      wsRef.onclose = () => {
-        console.log('[WS] Group WebSocket connection closed')
+      wsRef.onclose = (event) => {
+        console.log('[WS] Group WebSocket connection closed', {
+          code: event.code,
+          reason: event.reason,
+          wasClean: event.wasClean
+        })
+        
+        // Clear ping interval
+        if (groupPingIntervalRef.current) {
+          clearInterval(groupPingIntervalRef.current)
+          groupPingIntervalRef.current = null
+        }
+
+        // Don't reconnect if it was a clean close or component is unmounting
+        if (event.code === 1000 || event.wasClean) {
+          console.log('[WS] Group connection closed cleanly, not reconnecting')
+          return
+        }
+
+        // Attempt to reconnect with exponential backoff
+        const maxAttempts = 5
+        if (groupReconnectAttemptsRef.current < maxAttempts) {
+          groupReconnectAttemptsRef.current++
+
+          // Exponential backoff: 1s, 2s, 4s, 8s, 16s (max 30s)
+          const delay = Math.min(1000 * Math.pow(2, groupReconnectAttemptsRef.current - 1), 30000)
+
+          console.log(
+            `[WS] Attempting to reconnect group updates in ${delay}ms (attempt ${groupReconnectAttemptsRef.current}/${maxAttempts})`
+          )
+
+          groupReconnectTimeoutRef.current = setTimeout(() => {
+            console.log(`[WS] Reconnecting group updates... (attempt ${groupReconnectAttemptsRef.current})`)
+            connectGroupWebSocket()
+          }, delay)
+        } else {
+          console.log('[WS] Max reconnection attempts reached for group updates. Please refresh the page to reconnect.')
+        }
+      }
+      } catch (error) {
+        console.error('[WS] Error creating group WebSocket connection:', error)
+      }
+    }
+
+    // Initial connection
+    connectGroupWebSocket()
+
+    // Cleanup function
+    return () => {
+      // Clear reconnection timeout
+      if (groupReconnectTimeoutRef.current) {
+        clearTimeout(groupReconnectTimeoutRef.current)
+        groupReconnectTimeoutRef.current = null
       }
 
-      return () => {
-        wsRef.close()
+      // Clear ping interval
+      if (groupPingIntervalRef.current) {
+        clearInterval(groupPingIntervalRef.current)
+        groupPingIntervalRef.current = null
       }
+
+      // Close WebSocket connection
+      if (groupWsRefRef.current) {
+        groupWsRefRef.current.close(1000, 'Component unmounting')
+        groupWsRefRef.current = null
+      }
+
+      // Reset reconnection attempts
+      groupReconnectAttemptsRef.current = 0
+      setGroupSocket(null)
     }
   }, [groupId, session?.user?.email])
 
