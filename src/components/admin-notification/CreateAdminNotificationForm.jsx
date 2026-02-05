@@ -6,8 +6,10 @@ import {
   Card,
   CardContent,
   Collapse,
+  FormControlLabel,
   Grid,
   IconButton,
+  Switch,
   TextField,
   Typography,
   Snackbar,
@@ -44,7 +46,8 @@ const CreateAdminNotificationForm = ({ onSubmit, onCancel, showHeader = true }) 
     title: '',
     message: '',
     actionUrl: '',
-    actionLabel: ''
+    actionLabel: '',
+    includeForNewUsers: false
   })
   const [errors, setErrors] = useState({})
   const [touches, setTouches] = useState({})
@@ -55,10 +58,10 @@ const CreateAdminNotificationForm = ({ onSubmit, onCancel, showHeader = true }) 
   const fieldRefs = { title: useRef(), message: useRef() }
 
   const handleChange = e => {
-    const { name, value } = e.target
+    const { name, value, type, checked } = e.target
     setTouches(prev => ({ ...prev, [name]: true }))
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: undefined }))
-    setFormData(prev => ({ ...prev, [name]: value }))
+    setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? !!checked : value }))
   }
 
   const handleBlur = e => {
@@ -95,7 +98,8 @@ const CreateAdminNotificationForm = ({ onSubmit, onCancel, showHeader = true }) 
         message: formData.message.trim(),
         actionUrl: formData.actionUrl?.trim() || undefined,
         actionLabel: formData.actionLabel?.trim() || undefined,
-        sendTo: 'all'
+        sendTo: 'all',
+        includeForNewUsers: formData.includeForNewUsers === true || formData.includeForNewUsers === 'true'
       })
     } catch (err) {
       setErrorMessage(err.message || 'Failed to create notification')
@@ -282,6 +286,42 @@ const CreateAdminNotificationForm = ({ onSubmit, onCancel, showHeader = true }) 
                     onChange={handleChange}
                     placeholder='View'
                   />
+                </Grid>
+                <Grid item xs={12}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={formData.includeForNewUsers === true || formData.includeForNewUsers === 'true'}
+                        onChange={handleChange}
+                        name='includeForNewUsers'
+                        color='primary'
+                      />
+                    }
+                    label={
+                      <Typography
+                        variant='body1'
+                        sx={{
+                          fontWeight: 500,
+                          color: 'text.primary',
+                          fontSize: { xs: '0.875rem', sm: '0.9375rem' }
+                        }}
+                      >
+                        Include new users
+                      </Typography>
+                    }
+                  />
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                    sx={{
+                      display: 'block',
+                      mt: 0.5,
+                      ml: 4.5,
+                      fontSize: { xs: '0.75rem', sm: '0.8125rem' }
+                    }}
+                  >
+                    New users who sign up later will also receive this notification.
+                  </Typography>
                 </Grid>
                 <Grid item xs={12} mt={4}>
                   <Stack direction='row' spacing={2} justifyContent='center'>

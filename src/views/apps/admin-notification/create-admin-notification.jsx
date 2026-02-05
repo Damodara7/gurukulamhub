@@ -25,10 +25,12 @@ function CreateAdminNotificationPage() {
       const sendToAll = values.sendTo === 'all'
 
       if (sendToAll) {
+        const includeForNewUsers = values.includeForNewUsers !== false && values.includeForNewUsers !== 'false'
         const payload = {
           title: values.title,
           message: values.message,
-          sendToAll: true
+          sendToAll: true,
+          includeForNewUsers
         }
         if (values.actionUrl) payload.actionUrl = values.actionUrl
         if (values.actionLabel) payload.actionLabel = values.actionLabel
@@ -37,11 +39,14 @@ function CreateAdminNotificationPage() {
 
         if (result?.status === 'success') {
           const sentCount = result?.result?.sentCount
-          toast.success(
-            sentCount != null
-              ? `Announcement created and sent to ${sentCount} user(s). New users will also receive it.`
-              : 'Announcement created successfully.'
-          )
+          const message = includeForNewUsers
+            ? (sentCount != null
+                ? `Announcement created and sent to ${sentCount} user(s). New users who join later will also receive it.`
+                : 'Announcement created successfully.')
+            : (sentCount != null
+                ? `Notification sent to ${sentCount} existing user(s). New users who join later will not receive it.`
+                : 'Notification sent to existing users.')
+          toast.success(message)
           router.push('/management/admin-notification')
         } else {
           toast.error(result?.message || result?.error || 'Failed to create announcement')

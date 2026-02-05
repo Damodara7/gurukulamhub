@@ -955,8 +955,9 @@ export const deleteExpired = async () => {
 // ——— Single-model announcements (stored as notification templates) ———
 
 /**
- * Create an announcement (template notification) and optionally send to all users.
- * Template doc: isAnnouncementTemplate true, no userId; user docs: same adminNotificationId.
+ * Create an announcement and optionally send to all users.
+ * includeForNewUsers true: save a template (isAnnouncementTemplate) so new users get it later; send to current users.
+ * includeForNewUsers false: do NOT save a template; only create one notification per current user (no extra doc).
  */
 export const createAnnouncement = async ({
   title,
@@ -964,26 +965,30 @@ export const createAnnouncement = async ({
   actionUrl,
   actionLabel,
   createdByEmail,
-  sendToAll = false
+  sendToAll = false,
+  includeForNewUsers = true
 }) => {
   await connectMongo()
   try {
     const adminNotificationId = new mongoose.Types.ObjectId().toString()
+    const isActiveForNewUsers = includeForNewUsers === true || includeForNewUsers === 'true'
 
-    const template = new Notification({
-      type: 'ADMIN_NOTIFICATION',
-      title,
-      message,
-      actionUrl: actionUrl || null,
-      actionLabel: actionLabel || null,
-      createdByEmail,
-      adminNotificationId,
-      isAnnouncementTemplate: true,
-      isActive: true,
-      activeUntil: null
-      // userId omitted for template
-    })
-    const savedTemplate = await template.save()
+    let savedTemplate = null
+    if (isActiveForNewUsers) {
+      const template = new Notification({
+        type: 'ADMIN_NOTIFICATION',
+        title,
+        message,
+        actionUrl: actionUrl || null,
+        actionLabel: actionLabel || null,
+        createdByEmail,
+        adminNotificationId,
+        isAnnouncementTemplate: true,
+        isActive: true,
+        activeUntil: null
+      })
+      savedTemplate = await template.save()
+    }
 
     let sentCount = 0
     if (sendToAll) {
