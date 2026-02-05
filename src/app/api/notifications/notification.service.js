@@ -1092,6 +1092,16 @@ export const sendActiveAnnouncementsToUser = async userId => {
       return { status: 'error', result: null, message: batchResult.message || 'Failed to send announcements' }
     }
 
+    // Notify each announcement creator so admin list "Seen: X / Y" total updates in real time via WebSocket
+    try {
+      const creatorEmails = [...new Set(activeResult.result.map(t => t.createdByEmail).filter(Boolean))]
+      for (const email of creatorEmails) {
+        broadcastToUser(email, { kind: 'adminNotificationSeenUpdate' })
+      }
+    } catch (wsError) {
+      console.error('[Notification Service] Error broadcasting admin notification total update via WebSocket:', wsError)
+    }
+
     return {
       status: 'success',
       result: { count: payloads.length },
