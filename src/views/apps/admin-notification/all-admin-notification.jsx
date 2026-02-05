@@ -306,9 +306,9 @@ function AllAdminNotificationPage({ isAdmin = false }) {
       <Box sx={{ p: { xs: 3, md: 4 }, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
         {groups.length === 0 ? (
           <AdminNotificationFallBackCard
-            content='No admin notifications yet. Create one to get started.'
-            path='/management/Admin-Notification'
-            btnText='Back to Admin Notifications'
+            content='No Admin Notifications found. Create one to get started.'
+            path='/home'
+            btnText='Back to Home Page'
           />
         ) : (
           <AdminNotificationCard

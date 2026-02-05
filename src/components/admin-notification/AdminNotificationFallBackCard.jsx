@@ -4,7 +4,12 @@ import React from 'react'
 import { Box, Button, Card, CardContent, Typography } from '@mui/material'
 import { useRouter } from 'next/navigation'
 
-const AdminNotificationFallBackCard = ({ error = null, path = '/management/Admin-Notification', content = null, btnText = 'Back to Admin Notifications' }) => {
+const AdminNotificationFallBackCard = ({
+  error = null,
+  path = '/home',
+  content = null,
+  btnText = 'Back to Home Page'
+}) => {
   const router = useRouter()
   return (
     <Box display='flex' flexDirection='column' alignItems='center' px={2} py={4} gap={4}>
