@@ -38,14 +38,15 @@ export const getMessagesByGroupId = async (groupId, options = {}) => {
       .limit(parseInt(limit))
       .lean()
 
-    // Filter out messages deleted for this user (but keep messages deleted for everyone)
+    // Filter out messages deleted for this user
+    // If a message is deleted for the user (e.g., via clear chat), hide it even if it was deleted for everyone
     const filteredMessages = messages.filter(msg => {
       if (!userEmail) return true
-      // Don't filter if deleted for everyone (we'll show deleted text in UI)
-      if (msg.deletedForEveryone) return true
-      // Filter if deleted for this user
+      // First check if deleted for this user - if yes, always filter out regardless of deletedForEveryone
       const isDeletedForUser = msg.deletedFor?.some(d => d.userEmail === userEmail)
-      return !isDeletedForUser
+      if (isDeletedForUser) return false
+      // If not deleted for user, show it (even if deleted for everyone, we'll show deleted text in UI)
+      return true
     })
 
     // Reverse to get chronological order (oldest first)

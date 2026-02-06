@@ -1457,7 +1457,12 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
   }
 
   const handleDeleteClick = (messageId, fromMenu = false) => {
-    setSelectedMessages(new Set([messageId]))
+    // If messageId is provided (from menu), set it as selected
+    // Otherwise (from selection bar), preserve existing selected messages
+    if (messageId !== false && messageId !== null && messageId !== undefined) {
+      setSelectedMessages(new Set([messageId]))
+    }
+    // If called from selection bar, selectedMessages already contains the selected messages
     setDeleteFromMenu(fromMenu) // Mark if delete dialog is opened from menu
     setDeleteDialogOpen(true)
     if (fromMenu) {
@@ -1708,7 +1713,7 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
       {selectionMode ? (
         <SelectionActionBar
           selectedCount={selectedMessages.size}
-          onDelete={() => handleDeleteClick(false)} // Not from menu
+          onDelete={() => handleDeleteClick(null, false)} // Not from menu, preserve selected messages
           onCancel={handleCancelSelection}
         />
       ) : (
@@ -1789,7 +1794,7 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
           setDeleteDialogOpen(false)
           setDeleteType(null)
           setDeleteFromMenu(false)
-          setSelectedMessages(new Set())
+          // Don't clear selected messages on cancel - keep them selected
         }}
         selectedCount={selectedMessages.size}
         menuMessage={menuMessage}
