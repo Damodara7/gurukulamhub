@@ -32,7 +32,7 @@ function AllAdminNotificationPage({ isAdmin = false }) {
         const res = await RestApi.get(
           `${API_URLS.v0.NOTIFICATIONS}?createdByEmail=${encodeURIComponent(
             session.user.email
-          )}&type=ADMIN_NOTIFICATION&limit=500&sortBy=createdAt&sortOrder=desc`
+          )}&type=ADMIN_NOTIFICATION&sortBy=createdAt&sortOrder=desc`
         )
         if (res?.status === 'success') {
           const data = res.result
@@ -58,7 +58,6 @@ function AllAdminNotificationPage({ isAdmin = false }) {
     [session?.user?.email]
   )
 
-  // Initial fetch
   useEffect(() => {
     fetchNotifications()
   }, [fetchNotifications])
@@ -315,7 +314,7 @@ function AllAdminNotificationPage({ isAdmin = false }) {
             groups={groups}
             onMarkRead={handleMarkRead}
             onDelete={handleDelete}
-            onRefresh={fetchNotifications}
+            onRefresh={() => fetchNotifications(false)}
             onDeleteClick={openDeleteDialog}
           />
         )}

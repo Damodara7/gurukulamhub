@@ -201,7 +201,8 @@ export const getCount = async userId => {
 }
 
 /**
- * Get notifications created by an admin (for admin list with seen/total)
+ * Get notifications created by an admin (for admin list with seen/total).
+ * No limit by default (same as games): returns all. Optional options.limit / options.page for pagination.
  */
 export const getByCreatedBy = async (createdByEmail, options = {}) => {
   await connectMongo()
@@ -214,7 +215,6 @@ export const getByCreatedBy = async (createdByEmail, options = {}) => {
       }
     }
 
-    const limit = options.limit ? parseInt(options.limit) : 500
     const sortBy = options.sortBy || 'createdAt'
     let sortOrder = -1
     if (options.sortOrder === 'asc') sortOrder = 1
@@ -222,11 +222,27 @@ export const getByCreatedBy = async (createdByEmail, options = {}) => {
     const filter = { createdByEmail: String(createdByEmail).trim(), type: 'ADMIN_NOTIFICATION' }
     const sort = { [sortBy]: sortOrder }
 
-    const notifications = await Notification.find(filter)
-      .sort(sort)
-      .limit(parseInt(limit))
-      .populate('userId', 'email')
-      .lean()
+    const hasLimit = options.limit != null && options.limit !== ''
+    let notifications, total
+
+    if (hasLimit) {
+      const page = Math.max(1, options.page ? parseInt(options.page) : 1)
+      const limit = Math.min(1000, Math.max(1, parseInt(options.limit) || 20))
+      const skip = (page - 1) * limit
+      ;[notifications, total] = await Promise.all([
+        Notification.find(filter).sort(sort).skip(skip).limit(limit).populate('userId', 'email').lean(),
+        Notification.countDocuments(filter)
+      ])
+      const totalPages = Math.ceil(total / limit)
+      return {
+        status: 'success',
+        result: notifications,
+        pagination: { page, limit, total, totalPages },
+        message: `Found ${notifications.length} notifications`
+      }
+    }
+
+    notifications = await Notification.find(filter).sort(sort).populate('userId', 'email').lean()
 
     return {
       status: 'success',
