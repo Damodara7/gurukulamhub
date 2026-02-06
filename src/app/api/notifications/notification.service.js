@@ -258,6 +258,35 @@ export const getByCreatedBy = async (createdByEmail, options = {}) => {
   }
 }
 
+/**
+ * Get all admin notifications (no createdByEmail filter). For SUPER_ADMIN only.
+ */
+export const getAllAdminNotifications = async (options = {}) => {
+  await connectMongo()
+  try {
+    const sortBy = options.sortBy || 'createdAt'
+    let sortOrder = -1
+    if (options.sortOrder === 'asc') sortOrder = 1
+
+    const filter = { type: 'ADMIN_NOTIFICATION' }
+    const sort = { [sortBy]: sortOrder }
+
+    const notifications = await Notification.find(filter).sort(sort).populate('userId', 'email').lean()
+
+    return {
+      status: 'success',
+      result: notifications,
+      message: `Found ${notifications.length} admin notifications`
+    }
+  } catch (error) {
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to get all admin notifications'
+    }
+  }
+}
+
 export const addOne = async notificationData => {
   await connectMongo()
   try {

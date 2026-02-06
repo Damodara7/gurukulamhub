@@ -24,16 +24,24 @@ function AllAdminNotificationPage({ isAdmin = false }) {
   const [notificationToDelete, setNotificationToDelete] = useState(null)
   const notificationToDeleteRef = useRef(null)
 
+  const isSuperAdmin = session?.user?.roles?.includes('SUPER_ADMIN')
+
   const fetchNotifications = useCallback(
     async (showLoading = true) => {
       if (!session?.user?.email) return
       if (showLoading) setLoading(true)
       try {
-        const res = await RestApi.get(
-          `${API_URLS.v0.NOTIFICATIONS}?createdByEmail=${encodeURIComponent(
-            session.user.email
-          )}&type=ADMIN_NOTIFICATION&sortBy=createdAt&sortOrder=desc`
-        )
+        const params = new URLSearchParams({
+          type: 'ADMIN_NOTIFICATION',
+          sortBy: 'createdAt',
+          sortOrder: 'desc'
+        })
+        if (isSuperAdmin) {
+          params.set('allAdminNotifications', 'true')
+        } else {
+          params.set('createdByEmail', session.user.email)
+        }
+        const res = await RestApi.get(`${API_URLS.v0.NOTIFICATIONS}?${params.toString()}`)
         if (res?.status === 'success') {
           const data = res.result
           const list =
@@ -55,7 +63,7 @@ function AllAdminNotificationPage({ isAdmin = false }) {
         setLoading(false)
       }
     },
-    [session?.user?.email]
+    [session?.user?.email, isSuperAdmin]
   )
 
   useEffect(() => {

@@ -39,7 +39,7 @@ export async function GET(req) {
     const searchParams = new URLSearchParams(url.searchParams)
     const queryParamsObj = Object.fromEntries(searchParams.entries())
 
-    const { id, userId, unread, favorite, count, createdByEmail, ...rest } = queryParamsObj
+    const { id, userId, unread, favorite, count, createdByEmail, allAdminNotifications, ...rest } = queryParamsObj
 
     // Get session for authentication
     const session = await auth()
@@ -151,6 +151,15 @@ export async function GET(req) {
       }
 
       artifact = await ArtifactService.getFavorite(targetUserId, rest)
+    }
+    // Get all admin notifications (SUPER_ADMIN only): notifications from all admins
+    else if (allAdminNotifications === 'true' || allAdminNotifications === true) {
+      const isSuperAdmin = session.user.roles?.includes(ROLES_LOOKUP.SUPER_ADMIN)
+      if (!isSuperAdmin) {
+        const errorResponse = ApiResponseUtils.createErrorResponse('Only Super Admin can view all admin notifications')
+        return ApiResponseUtils.sendErrorResponse(errorResponse)
+      }
+      artifact = await ArtifactService.getAllAdminNotifications({ type: 'ADMIN_NOTIFICATION', ...rest })
     }
     // Get admin notifications: creator sees their own; SUPER_ADMIN can see any admin's list (by createdByEmail)
     else if (createdByEmail) {
