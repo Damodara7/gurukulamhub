@@ -5,8 +5,8 @@ import connectMongo from '@/utils/dbConnect-mongo'
 
 /**
  * POST /api/announcement
- * Create announcement (single-model: stored as notification template) and optionally send to all users.
- * Body: { title, message, actionUrl?, actionLabel?, sendToAll: boolean }
+ * Create announcement and send to all current users; optionally save template for new users.
+ * Body: { title, message, actionUrl?, actionLabel?, includeForNewUsers?: boolean }
  * Admin only.
  */
 export async function POST(request) {
@@ -26,7 +26,7 @@ export async function POST(request) {
     }
 
     const body = await request.json()
-    const { title, message, actionUrl, actionLabel, sendToAll = false, includeForNewUsers = true } = body
+    const { title, message, actionUrl, actionLabel, includeForNewUsers = true } = body
 
     if (!title?.trim() || !message?.trim()) {
       const errorResponse = ApiResponseUtils.createErrorResponse('Title and message are required')
@@ -39,7 +39,6 @@ export async function POST(request) {
       actionUrl: actionUrl?.trim() || null,
       actionLabel: actionLabel?.trim() || null,
       createdByEmail: session.user.email,
-      sendToAll: !!sendToAll,
       includeForNewUsers: includeForNewUsers !== false && includeForNewUsers !== 'false'
     })
 

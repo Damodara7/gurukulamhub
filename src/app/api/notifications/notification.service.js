@@ -2,6 +2,9 @@ import connectMongo from '@/utils/dbConnect-mongo'
 import mongoose from 'mongoose'
 import Notification from './notification.model.js'
 import User from '@/app/models/user.model.js'
+
+/** Default expiry for non-admin notifications (90 days). Admin notifications omit expiresAt so they are not TTL-deleted. */
+const DEFAULT_EXPIRY_MS = 90 * 24 * 60 * 60 * 1000
 import {
   broadcastNotificationToUser,
   broadcastNotificationCount,
@@ -276,8 +279,14 @@ export const addOne = async notificationData => {
       }
     }
 
+    // Non-admin notifications: set 90-day expiry so TTL will remove them. Admin notifications keep no expiresAt.
+    const dataToSave = { ...notificationData }
+    if (dataToSave.type !== 'ADMIN_NOTIFICATION' && !dataToSave.expiresAt) {
+      dataToSave.expiresAt = new Date(Date.now() + DEFAULT_EXPIRY_MS)
+    }
+
     // Create new notification instance
-    const newNotification = new Notification(notificationData)
+    const newNotification = new Notification(dataToSave)
 
     // Validate the notification
     const validationError = newNotification.validateSync()
@@ -386,7 +395,7 @@ export const addMany = async notificationsData => {
       }
     }
 
-    // Validate all notifications
+    // Validate all notifications and set 90-day expiry for non-admin (admin notifications keep no expiresAt)
     const notifications = []
     for (const notificationData of notificationsData) {
       const requiredFields = ['userId', 'type', 'title', 'message']
@@ -408,7 +417,11 @@ export const addMany = async notificationsData => {
         }
       }
 
-      notifications.push(new Notification(notificationData))
+      const dataToSave = { ...notificationData }
+      if (dataToSave.type !== 'ADMIN_NOTIFICATION' && !dataToSave.expiresAt) {
+        dataToSave.expiresAt = new Date(Date.now() + DEFAULT_EXPIRY_MS)
+      }
+      notifications.push(new Notification(dataToSave))
     }
 
     // Verify all users exist before creating notifications
@@ -955,9 +968,9 @@ export const deleteExpired = async () => {
 // ——— Single-model announcements (stored as notification templates) ———
 
 /**
- * Create an announcement and optionally send to all users.
- * includeForNewUsers true: save a template (isAnnouncementTemplate) so new users get it later; send to current users.
- * includeForNewUsers false: do NOT save a template; only create one notification per current user (no extra doc).
+ * Create an announcement: always send to all current users; optionally save template for new users.
+ * includeForNewUsers true: save a template (isAnnouncementTemplate) so new users get it later.
+ * includeForNewUsers false: do NOT save a template; new users who join later will not get it.
  */
 export const createAnnouncement = async ({
   title,
@@ -965,7 +978,6 @@ export const createAnnouncement = async ({
   actionUrl,
   actionLabel,
   createdByEmail,
-  sendToAll = false,
   includeForNewUsers = true
 }) => {
   await connectMongo()
@@ -990,26 +1002,23 @@ export const createAnnouncement = async ({
       savedTemplate = await template.save()
     }
 
-    let sentCount = 0
-    if (sendToAll) {
-      const users = await User.find({}).select('_id').lean()
-      const userIds = users.map(u => u._id.toString()).filter(Boolean)
-      sentCount = userIds.length
-      if (userIds.length > 0) {
-        const payloads = userIds.map(uid => ({
-          userId: uid,
-          type: 'ADMIN_NOTIFICATION',
-          title,
-          message,
-          actionUrl: actionUrl || undefined,
-          actionLabel: actionLabel || undefined,
-          adminNotificationId,
-          createdByEmail
-        }))
-        const batchResult = await addMany(payloads)
-        if (batchResult.status !== 'success') {
-          console.error('[Notification Service] createAnnouncement batch failed:', batchResult.message)
-        }
+    const users = await User.find({}).select('_id').lean()
+    const userIds = users.map(u => u._id.toString()).filter(Boolean)
+    let sentCount = userIds.length
+    if (userIds.length > 0) {
+      const payloads = userIds.map(uid => ({
+        userId: uid,
+        type: 'ADMIN_NOTIFICATION',
+        title,
+        message,
+        actionUrl: actionUrl || undefined,
+        actionLabel: actionLabel || undefined,
+        adminNotificationId,
+        createdByEmail
+      }))
+      const batchResult = await addMany(payloads)
+      if (batchResult.status !== 'success') {
+        console.error('[Notification Service] createAnnouncement batch failed:', batchResult.message)
       }
     }
 
@@ -1018,10 +1027,9 @@ export const createAnnouncement = async ({
       result: {
         announcement: savedTemplate,
         adminNotificationId,
-        sendToAll,
         sentCount
       },
-      message: sendToAll ? `Announcement created and sent to ${sentCount} user(s)` : 'Announcement created successfully'
+      message: `Announcement created and sent to ${sentCount} user(s)`
     }
   } catch (error) {
     return {

@@ -176,13 +176,13 @@ notificationSchema.index({ userId: 1, isRead: 1, createdAt: -1 })
 // Compound index for favorite notifications
 notificationSchema.index({ userId: 1, isFavorite: 1, createdAt: -1 })
 
-// TTL Index - Auto-delete notifications older than 90 days
-// Note: MongoDB TTL indexes work on date fields and delete documents after the specified seconds
-// We'll set this to expire 90 days (7776000 seconds) after createdAt
+// TTL Index - Auto-delete only documents that have expiresAt set and in the past.
+// Documents without expiresAt (e.g. admin notifications) are never deleted by TTL.
+// expireAfterSeconds: 0 means "delete when expiresAt < current time".
 notificationSchema.index(
-  { createdAt: 1 },
+  { expiresAt: 1 },
   {
-    expireAfterSeconds: 7776000, // 90 days in seconds
+    expireAfterSeconds: 0,
     name: 'notification_ttl_index'
   }
 )

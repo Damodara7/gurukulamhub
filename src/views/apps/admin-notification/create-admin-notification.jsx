@@ -29,7 +29,6 @@ function CreateAdminNotificationPage() {
         const payload = {
           title: values.title,
           message: values.message,
-          sendToAll: true,
           includeForNewUsers
         }
         if (values.actionUrl) payload.actionUrl = values.actionUrl
