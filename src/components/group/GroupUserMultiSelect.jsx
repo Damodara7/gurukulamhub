@@ -72,7 +72,14 @@ const getAge = user => {
   return age ? `${age} years` : 'No age'
 }
 
-const GroupUserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUserIds = [], unmatchedUserIds = [] }) => {
+const GroupUserMultiSelect = ({
+  users,
+  selectedUsers,
+  onSelectChange,
+  matchedUserIds = [],
+  unmatchedUserIds = [],
+  title = 'Group Members'
+}) => {
   const theme = useTheme()
   const [open, setOpen] = useState(false)
   const [selectAll, setSelectAll] = useState(true)
@@ -665,7 +672,7 @@ const GroupUserMultiSelect = ({ users, selectedUsers, onSelectChange, matchedUse
           >
             <Stack spacing={0.5} sx={{ flex: 1 }}>
               <Typography variant='h6' sx={{ fontWeight: 600, fontSize: { xs: '1.1rem', sm: '1.25rem' } }}>
-                Group Members
+                {title}
               </Typography>
               <Typography variant='body2' color='text.secondary' sx={{ fontSize: { xs: '0.875rem', sm: '0.9375rem' } }}>
                 {selectedUsers.length > 0

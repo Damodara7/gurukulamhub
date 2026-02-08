@@ -1,5 +1,15 @@
 import mongoose from 'mongoose'
 
+// Same structure as audience model - for Scenario 2 (include new users + filters)
+const announcementFilterSchema = new mongoose.Schema(
+  {
+    type: { type: String, required: true, trim: true },
+    criteria: { type: mongoose.Schema.Types.Mixed, required: true },
+    operator: { type: String, enum: ['AND', 'OR', 'NOT'], required: false }
+  },
+  { _id: false }
+)
+
 const notificationSchema = new mongoose.Schema(
   {
     // **Required Fields** (userId optional for announcement templates)
@@ -158,6 +168,12 @@ const notificationSchema = new mongoose.Schema(
       default: null,
       index: true
       // For templates: optional expiry
+    },
+    // Filters for Scenario 2: when includeForNewUsers + filters, new users matching these get the notification
+    // Same format as audience model (canonical filters)
+    filters: {
+      type: [announcementFilterSchema],
+      default: null
     }
   },
   {

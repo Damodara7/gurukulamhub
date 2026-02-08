@@ -1000,9 +1000,63 @@ export const deleteExpired = async () => {
 // ——— Single-model announcements (stored as notification templates) ———
 
 /**
- * Create an announcement and optionally send to all users.
- * includeForNewUsers true: save a template (isAnnouncementTemplate) so new users get it later; send to current users.
- * includeForNewUsers false: do NOT save a template; only create one notification per current user (no extra doc).
+ * Check if a user matches the filters array (Audience canonical format).
+ * user must have profile populated (age, gender, locality, region, country).
+ */
+export const userMatchesFilters = (user, filters) => {
+  if (!Array.isArray(filters) || filters.length === 0) return true
+  const profile = user?.profile || {}
+
+  let result = null
+  for (let i = 0; i < filters.length; i++) {
+    const f = filters[i]
+    let matches = false
+    if (f.type === 'age' && f.criteria) {
+      const age = profile?.age
+      const hasAge = age != null
+      const { min, max } = f.criteria
+      matches = hasAge && age >= min && age <= max
+    } else if (f.type === 'location' && f.criteria) {
+      const c = f.criteria
+      const countryMatch = !c.country || (profile?.country?.toLowerCase() === c.country?.toLowerCase())
+      const regionMatch = !c.region || (profile?.region?.toLowerCase() === c.region?.toLowerCase())
+      const cityMatch = !c.city || (profile?.locality?.toLowerCase() === c.city?.toLowerCase())
+      matches = countryMatch && regionMatch && cityMatch
+    } else if (f.type === 'gender' && f.criteria) {
+      // Canonical format: { values: ['male','female'] } or legacy: array/object
+      let genders = []
+      if (Array.isArray(f.criteria?.values)) {
+        genders = f.criteria.values
+      } else if (Array.isArray(f.criteria)) {
+        genders = f.criteria
+      } else if (f.criteria && typeof f.criteria === 'object') {
+        genders = Object.entries(f.criteria)
+          .filter(([k, v]) => k !== 'values' && Boolean(v))
+          .map(([k]) => k)
+      }
+      const userGender = profile?.gender?.toLowerCase()
+      matches = Boolean(userGender) && genders.some(g => String(g).toLowerCase() === userGender)
+    }
+
+    if (i === 0) {
+      result = matches
+    } else {
+      const op = (f.operator || 'AND').toUpperCase()
+      if (op === 'AND') result = result && matches
+      else if (op === 'OR') result = result || matches
+      else if (op === 'NOT') result = result && !matches
+      else result = result && matches
+    }
+  }
+  return result === null ? true : !!result
+}
+
+/**
+ * Create an announcement with 4-scenario logic:
+ * Scenario 1: Filters + No include new users → No template, send to targetUserIds only
+ * Scenario 2: Filters + Yes include new users → Save template WITH filters, send to targetUserIds
+ * Scenario 3: No filters + No include new users → No template, send to all current users
+ * Scenario 4: No filters + Yes include new users → Save template filters:null, send to all
  */
 export const createAnnouncement = async ({
   title,
@@ -1011,15 +1065,26 @@ export const createAnnouncement = async ({
   actionLabel,
   createdByEmail,
   sendToAll = false,
-  includeForNewUsers = true
+  includeForNewUsers = true,
+  targetUserIds,
+  filters
 }) => {
   await connectMongo()
   try {
     const adminNotificationId = new mongoose.Types.ObjectId().toString()
-    const isActiveForNewUsers = includeForNewUsers === true || includeForNewUsers === 'true'
+    const isIncludeForNewUsers = includeForNewUsers === true || includeForNewUsers === 'true'
+    const hasFilters = Array.isArray(filters) && filters.length > 0
+    const hasTargetUsers = Array.isArray(targetUserIds) && targetUserIds.length > 0
+
+    // Determine scenario and whether to save template
+    // Scenario 1 & 3: don't save template
+    // Scenario 2: save template with filters
+    // Scenario 4: save template with filters: null
+    const shouldSaveTemplate = isIncludeForNewUsers
+    const templateFilters = shouldSaveTemplate && hasFilters ? filters : null
 
     let savedTemplate = null
-    if (isActiveForNewUsers) {
+    if (shouldSaveTemplate) {
       const template = new Notification({
         type: 'ADMIN_NOTIFICATION',
         title,
@@ -1030,31 +1095,36 @@ export const createAnnouncement = async ({
         adminNotificationId,
         isAnnouncementTemplate: true,
         isActive: true,
-        activeUntil: null
+        activeUntil: null,
+        filters: templateFilters
       })
       savedTemplate = await template.save()
     }
 
-    let sentCount = 0
-    if (sendToAll) {
+    // Determine who to send to now
+    let userIds = []
+    if (hasTargetUsers) {
+      userIds = targetUserIds.filter(id => id && mongoose.Types.ObjectId.isValid(id))
+    } else {
       const users = await User.find({}).select('_id').lean()
-      const userIds = users.map(u => u._id.toString()).filter(Boolean)
-      sentCount = userIds.length
-      if (userIds.length > 0) {
-        const payloads = userIds.map(uid => ({
-          userId: uid,
-          type: 'ADMIN_NOTIFICATION',
-          title,
-          message,
-          actionUrl: actionUrl || undefined,
-          actionLabel: actionLabel || undefined,
-          adminNotificationId,
-          createdByEmail
-        }))
-        const batchResult = await addMany(payloads)
-        if (batchResult.status !== 'success') {
-          console.error('[Notification Service] createAnnouncement batch failed:', batchResult.message)
-        }
+      userIds = users.map(u => u._id.toString()).filter(Boolean)
+    }
+
+    const sentCount = userIds.length
+    if (userIds.length > 0) {
+      const payloads = userIds.map(uid => ({
+        userId: uid,
+        type: 'ADMIN_NOTIFICATION',
+        title,
+        message,
+        actionUrl: actionUrl || undefined,
+        actionLabel: actionLabel || undefined,
+        adminNotificationId,
+        createdByEmail
+      }))
+      const batchResult = await addMany(payloads)
+      if (batchResult.status !== 'success') {
+        console.error('[Notification Service] createAnnouncement batch failed:', batchResult.message)
       }
     }
 
@@ -1063,10 +1133,12 @@ export const createAnnouncement = async ({
       result: {
         announcement: savedTemplate,
         adminNotificationId,
-        sendToAll,
         sentCount
       },
-      message: sendToAll ? `Announcement created and sent to ${sentCount} user(s)` : 'Announcement created successfully'
+      message:
+        sentCount > 0
+          ? `Announcement created and sent to ${sentCount} user(s)`
+          : 'Announcement created successfully'
     }
   } catch (error) {
     return {
@@ -1108,6 +1180,8 @@ export const getActiveAnnouncementTemplates = async () => {
 
 /**
  * For a new user: create one notification per active announcement template (single-model).
+ * - Templates with filters:null (Scenario 4) → send to all new users
+ * - Templates with filters (Scenario 2) → send only if user matches filters
  */
 export const sendActiveAnnouncementsToUser = async userId => {
   await connectMongo()
@@ -1121,16 +1195,66 @@ export const sendActiveAnnouncementsToUser = async userId => {
       return { status: 'success', result: { count: 0 }, message: 'No active announcements' }
     }
 
-    const payloads = activeResult.result.map(t => ({
-      userId: userId.toString(),
-      type: 'ADMIN_NOTIFICATION',
-      title: t.title,
-      message: t.message,
-      actionUrl: t.actionUrl || undefined,
-      actionLabel: t.actionLabel || undefined,
-      adminNotificationId: t.adminNotificationId,
-      createdByEmail: t.createdByEmail
-    }))
+    const templates = activeResult.result
+    const userIdStr = userId.toString()
+
+    // Skip templates the user already received (e.g. from signup or previous profile update)
+    const existingForUser = await Notification.find(
+      { userId: userIdStr, type: 'ADMIN_NOTIFICATION' },
+      { adminNotificationId: 1 }
+    ).lean()
+    const alreadyReceivedIds = new Set(
+      (existingForUser || [])
+        .map(n => n.adminNotificationId)
+        .filter(Boolean)
+    )
+
+    // Fetch user with profile for filter evaluation (needed for templates with filters)
+    let user = null
+    const templatesWithFilters = templates.filter(t => Array.isArray(t.filters) && t.filters.length > 0)
+    if (templatesWithFilters.length > 0) {
+      user = await User.findById(userId).populate('profile').lean()
+      if (!user) {
+        return { status: 'error', result: null, message: 'User not found' }
+      }
+    }
+
+    const payloads = []
+    for (const t of templates) {
+      if (alreadyReceivedIds.has(t.adminNotificationId)) continue
+
+      if (!t.filters || t.filters.length === 0) {
+        // Scenario 4: no filters → send to all new users
+        payloads.push({
+          userId: userIdStr,
+          type: 'ADMIN_NOTIFICATION',
+          title: t.title,
+          message: t.message,
+          actionUrl: t.actionUrl || undefined,
+          actionLabel: t.actionLabel || undefined,
+          adminNotificationId: t.adminNotificationId,
+          createdByEmail: t.createdByEmail
+        })
+      } else {
+        // Scenario 2: has filters → send only if user matches
+        if (user && userMatchesFilters(user, t.filters)) {
+          payloads.push({
+            userId: userIdStr,
+            type: 'ADMIN_NOTIFICATION',
+            title: t.title,
+            message: t.message,
+            actionUrl: t.actionUrl || undefined,
+            actionLabel: t.actionLabel || undefined,
+            adminNotificationId: t.adminNotificationId,
+            createdByEmail: t.createdByEmail
+          })
+        }
+      }
+    }
+
+    if (payloads.length === 0) {
+      return { status: 'success', result: { count: 0 }, message: 'No matching announcements for new user' }
+    }
 
     const batchResult = await addMany(payloads)
     if (batchResult.status !== 'success') {

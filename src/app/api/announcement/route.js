@@ -26,7 +26,16 @@ export async function POST(request) {
     }
 
     const body = await request.json()
-    const { title, message, actionUrl, actionLabel, sendToAll = false, includeForNewUsers = true } = body
+    const {
+      title,
+      message,
+      actionUrl,
+      actionLabel,
+      sendToAll = false,
+      includeForNewUsers = true,
+      targetUserIds,
+      filters
+    } = body
 
     if (!title?.trim() || !message?.trim()) {
       const errorResponse = ApiResponseUtils.createErrorResponse('Title and message are required')
@@ -40,7 +49,9 @@ export async function POST(request) {
       actionLabel: actionLabel?.trim() || null,
       createdByEmail: session.user.email,
       sendToAll: !!sendToAll,
-      includeForNewUsers: includeForNewUsers !== false && includeForNewUsers !== 'false'
+      includeForNewUsers: includeForNewUsers !== false && includeForNewUsers !== 'false',
+      targetUserIds: Array.isArray(targetUserIds) ? targetUserIds : undefined,
+      filters: Array.isArray(filters) ? filters : undefined
     })
 
     if (result.status === 'success') {
