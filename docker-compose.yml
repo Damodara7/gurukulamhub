@@ -28,6 +28,9 @@ services:
       - NEXT_PUBLIC_STRIPE_SECRET_KEY=${NEXT_PUBLIC_STRIPE_SECRET_KEY}
       - NEXT_PUBLIC_SOCKET_IO_SERVER=${NEXT_PUBLIC_SOCKET_IO_SERVER:-http://localhost:3000}
       - SOCKET_SERVER_URL=${SOCKET_SERVER_URL:-http://localhost:3000}
+      - NEXT_PUBLIC_VAPID_PUBLIC_KEY=${NEXT_PUBLIC_VAPID_PUBLIC_KEY}
+      - VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY}
+      - VAPID_EMAIL=${VAPID_EMAIL:-mailto:rnoonegen@gmail.com}
     # Environment variables can be provided via:
     # 1. .env.production file (if exists)
     # 2. Environment variables passed directly
