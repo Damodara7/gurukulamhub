@@ -50,7 +50,14 @@ const validateForm = formData => {
   return errors
 }
 
-const CreateAdminNotificationForm = ({ onSubmit, onCancel, showHeader = true }) => {
+const CreateAdminNotificationForm = ({
+  onSubmit,
+  onCancel,
+  showHeader = true,
+  editMode = false,
+  adminNotificationId = null,
+  initialData = null
+}) => {
   const theme = useTheme()
   const [formData, setFormData] = useState({
     title: '',
@@ -92,6 +99,26 @@ const CreateAdminNotificationForm = ({ onSubmit, onCancel, showHeader = true }) 
     }
     fetchUsers()
   }, [])
+
+  useEffect(() => {
+    if (editMode && initialData) {
+      setFormData({
+        title: initialData.title || '',
+        message: initialData.message || '',
+        actionUrl: initialData.actionUrl || '',
+        actionLabel: initialData.actionLabel || '',
+        includeForNewUsers: initialData.includeForNewUsers === true || initialData.includeForNewUsers === 'true'
+      })
+      setCanonicalFilters(Array.isArray(initialData.filters) ? initialData.filters : [])
+      if (users.length > 0 && Array.isArray(initialData.recipientUserIds) && initialData.recipientUserIds.length > 0) {
+        const allIds = users.map(u => u._id).filter(Boolean)
+        const validIds = initialData.recipientUserIds.filter(id =>
+          allIds.some(uid => String(uid) === String(id))
+        )
+        setSelectedUsers(validIds.length > 0 ? validIds : allIds)
+      }
+    }
+  }, [editMode, initialData, users.length])
 
   const handleFilterChange = (filteredUserIds, _criteria, operationsData = {}) => {
     setSelectedUsers(filteredUserIds)
@@ -165,15 +192,19 @@ const CreateAdminNotificationForm = ({ onSubmit, onCancel, showHeader = true }) 
 
     try {
       const hasFilters = canonicalFilters && canonicalFilters.length > 0
-      const isFilteredOrManual = hasFilters
+      const allUserIds = users.map(u => u._id).filter(Boolean)
+      const isAllSelected = selectedUsers.length === allUserIds.length
+      const isFilteredOrManual =
+        hasFilters || (selectedUsers.length > 0 && selectedUsers.length < allUserIds.length)
+      const sendToAll = !hasFilters && isAllSelected
       await onSubmit({
         title: formData.title.trim(),
         message: formData.message.trim(),
         actionUrl: formData.actionUrl?.trim() || undefined,
         actionLabel: formData.actionLabel?.trim() || undefined,
-        sendTo: isFilteredOrManual ? 'filtered' : 'all',
+        sendTo: sendToAll ? 'all' : 'filtered',
         includeForNewUsers: formData.includeForNewUsers === true || formData.includeForNewUsers === 'true',
-        ...(isFilteredOrManual && {
+        ...(!sendToAll && {
           targetUserIds: selectedUsers,
           filters: hasFilters ? canonicalFilters : undefined
         })
@@ -263,7 +294,7 @@ const CreateAdminNotificationForm = ({ onSubmit, onCancel, showHeader = true }) 
                     letterSpacing: '-0.02em'
                   }}
                 >
-                  Create Admin Notification
+                  {editMode ? 'Edit Admin Notification' : 'Create Admin Notification'}
                 </Typography>
               </Box>
               <Collapse in={isHeaderExpanded} timeout={300}>
@@ -272,7 +303,9 @@ const CreateAdminNotificationForm = ({ onSubmit, onCancel, showHeader = true }) 
                   color='text.secondary'
                   sx={{ fontSize: '1.05rem', lineHeight: 1.8, maxWidth: 600, mx: 'auto', mt: 2 }}
                 >
-                  Compose a new admin notification. It will appear in the admin notification list.
+                  {editMode
+                    ? 'Update the notification. Changes will be sent to the new recipient set.'
+                    : 'Compose a new admin notification. It will appear in the admin notification list.'}
                 </Typography>
               </Collapse>
             </Box>
@@ -475,7 +508,7 @@ const CreateAdminNotificationForm = ({ onSubmit, onCancel, showHeader = true }) 
                       disabled={isSubmitting || selectedUsers.length === 0}
                       sx={{ color: 'white' }}
                     >
-                      {isSubmitting ? 'Creating...' : 'Create Notification'}
+                      {isSubmitting ? (editMode ? 'Updating...' : 'Creating...') : editMode ? 'Update Notification' : 'Create Notification'}
                     </Button>
                   </Stack>
                 </Grid>

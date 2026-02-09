@@ -130,6 +130,14 @@ function AllAdminNotificationPage({ isAdmin = false }) {
     setDeleteDialogOpen(true)
   }, [])
 
+  const handleEditClick = useCallback(
+    group => {
+      const id = group?.adminNotificationId
+      if (id) router.push(`/management/admin-notification/edit/${id}`)
+    },
+    [router]
+  )
+
   const handleDeleteConfirm = useCallback(async () => {
     const group = notificationToDeleteRef.current || notificationToDelete
     if (!group) return
@@ -318,6 +326,7 @@ function AllAdminNotificationPage({ isAdmin = false }) {
             onDelete={handleDelete}
             onRefresh={() => fetchNotifications(false)}
             onDeleteClick={openDeleteDialog}
+            onEditClick={handleEditClick}
           />
         )}
       </Box>

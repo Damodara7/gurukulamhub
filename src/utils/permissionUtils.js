@@ -11,9 +11,9 @@ export function hasPermission(roles, userRoles, featureName, permissionName) {
         return true
     }
     
-    // ADMIN and SUPER_ADMIN: allow VIEW and CREATE for ADMIN_NOTIFICATION even if not in role features (avoids "Access Denied" until role is configured in DB)
+    // ADMIN and SUPER_ADMIN: allow VIEW, CREATE, and UPDATE for ADMIN_NOTIFICATION even if not in role features (avoids "Access Denied" until role is configured in DB)
     if (featureName === FEATURES_LOOKUP.ADMIN_NOTIFICATION && userRoles.includes(ROLES_LOOKUP.ADMIN)) {
-        if (permissionName === 'VIEW' || permissionName === 'CREATE') {
+        if (permissionName === 'VIEW' || permissionName === 'CREATE' || permissionName === 'UPDATE') {
             return true
         }
     }

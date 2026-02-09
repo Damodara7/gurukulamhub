@@ -1052,11 +1052,101 @@ export const userMatchesFilters = (user, filters) => {
 }
 
 /**
+ * Get announcement data by adminNotificationId for edit mode.
+ * Returns title, message, actionUrl, actionLabel, filters, includeForNewUsers, recipientUserIds.
+ * We always save a config doc now, so template exists; template.isActive = includeForNewUsers.
+ */
+export const getAnnouncementByAdminNotificationId = async (adminNotificationId, createdByEmail = null) => {
+  await connectMongo()
+  try {
+    if (!adminNotificationId) {
+      return { status: 'error', result: null, message: 'adminNotificationId is required' }
+    }
+
+    const filter = { adminNotificationId: String(adminNotificationId), type: 'ADMIN_NOTIFICATION' }
+    if (createdByEmail) filter.createdByEmail = String(createdByEmail).trim()
+
+    const docs = await Notification.find(filter).lean()
+    if (!docs?.length) {
+      return { status: 'error', result: null, message: 'Announcement not found' }
+    }
+
+    const template = docs.find(d => d.isAnnouncementTemplate === true)
+    const userNotifications = docs.filter(d => d.userId && !d.isAnnouncementTemplate)
+
+    const contentSource = template || userNotifications[0]
+    const title = contentSource?.title || ''
+    const message = contentSource?.message || ''
+    const actionUrl = contentSource?.actionUrl || null
+    const actionLabel = contentSource?.actionLabel || null
+
+    let filters = []
+    let includeForNewUsers = false
+    let recipientUserIds = []
+
+    if (template) {
+      includeForNewUsers = template.isActive === true
+      filters = Array.isArray(template.filters) && template.filters.length > 0 ? template.filters : []
+
+      if (filters.length > 0) {
+        // Scenario 1 or 2: has filters → re-apply to current users
+        const users = await User.find({}).populate('profile').lean()
+        recipientUserIds = users
+          .filter(u => userMatchesFilters(u, filters))
+          .map(u => u._id?.toString())
+          .filter(Boolean)
+      } else {
+        // Scenario 3 or 4: no filters
+        if (includeForNewUsers) {
+          // Scenario 4: include new users, send to all → current all users
+          const users = await User.find({}).select('_id').lean()
+          recipientUserIds = users.map(u => u._id?.toString()).filter(Boolean)
+        } else {
+          // Scenario 3: no include, was sent to all at create time → use user notifications
+          recipientUserIds = userNotifications
+            .map(n => n.userId?.toString?.() || n.userId)
+            .filter(Boolean)
+        }
+      }
+    } else {
+      // Legacy: no template (old announcements before we always saved config)
+      recipientUserIds = userNotifications
+        .map(n => n.userId?.toString?.() || n.userId)
+        .filter(Boolean)
+    }
+
+    return {
+      status: 'success',
+      result: {
+        adminNotificationId: String(adminNotificationId),
+        title,
+        message,
+        actionUrl,
+        actionLabel,
+        filters,
+        includeForNewUsers,
+        recipientUserIds
+      },
+      message: 'Announcement retrieved successfully'
+    }
+  } catch (error) {
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to get announcement'
+    }
+  }
+}
+
+/**
  * Create an announcement with 4-scenario logic:
- * Scenario 1: Filters + No include new users → No template, send to targetUserIds only
- * Scenario 2: Filters + Yes include new users → Save template WITH filters, send to targetUserIds
- * Scenario 3: No filters + No include new users → No template, send to all current users
- * Scenario 4: No filters + Yes include new users → Save template filters:null, send to all
+ * Scenario 1: Filters + No include new users → Save config (isActive=false) with filters, send to targetUserIds only
+ * Scenario 2: Filters + Yes include new users → Save template WITH filters (isActive=true), send to targetUserIds
+ * Scenario 3: No filters + No include new users → Save config (isActive=false) with filters:null, send to all
+ * Scenario 4: No filters + Yes include new users → Save template filters:null (isActive=true), send to all
+ * We always save a config/template doc so edit mode can retrieve filters; isActive=false means "don't send to new users".
+ * @param {Object} options
+ * @param {string} [options.existingAdminNotificationId] - For edit: reuse this ID instead of creating new
  */
 export const createAnnouncement = async ({
   title,
@@ -1067,39 +1157,32 @@ export const createAnnouncement = async ({
   sendToAll = false,
   includeForNewUsers = true,
   targetUserIds,
-  filters
+  filters,
+  existingAdminNotificationId = null
 }) => {
   await connectMongo()
   try {
-    const adminNotificationId = new mongoose.Types.ObjectId().toString()
+    const adminNotificationId = existingAdminNotificationId || new mongoose.Types.ObjectId().toString()
     const isIncludeForNewUsers = includeForNewUsers === true || includeForNewUsers === 'true'
     const hasFilters = Array.isArray(filters) && filters.length > 0
     const hasTargetUsers = Array.isArray(targetUserIds) && targetUserIds.length > 0
 
-    // Determine scenario and whether to save template
-    // Scenario 1 & 3: don't save template
-    // Scenario 2: save template with filters
-    // Scenario 4: save template with filters: null
-    const shouldSaveTemplate = isIncludeForNewUsers
-    const templateFilters = shouldSaveTemplate && hasFilters ? filters : null
-
-    let savedTemplate = null
-    if (shouldSaveTemplate) {
-      const template = new Notification({
-        type: 'ADMIN_NOTIFICATION',
-        title,
-        message,
-        actionUrl: actionUrl || null,
-        actionLabel: actionLabel || null,
-        createdByEmail,
-        adminNotificationId,
-        isAnnouncementTemplate: true,
-        isActive: true,
-        activeUntil: null,
-        filters: templateFilters
-      })
-      savedTemplate = await template.save()
-    }
+    // Always save a config doc for edit-time retrieval of filters; isActive controls whether new users get it
+    const templateFilters = hasFilters ? filters : null
+    const template = new Notification({
+      type: 'ADMIN_NOTIFICATION',
+      title,
+      message,
+      actionUrl: actionUrl || null,
+      actionLabel: actionLabel || null,
+      createdByEmail,
+      adminNotificationId,
+      isAnnouncementTemplate: true,
+      isActive: isIncludeForNewUsers,
+      activeUntil: null,
+      filters: templateFilters
+    })
+    const savedTemplate = await template.save()
 
     // Determine who to send to now
     let userIds = []
@@ -1145,6 +1228,64 @@ export const createAnnouncement = async ({
       status: 'error',
       result: null,
       message: error.message || 'Failed to create announcement'
+    }
+  }
+}
+
+/**
+ * Update an announcement: delete all existing (user notifications + template), then create fresh with same adminNotificationId.
+ */
+export const updateAnnouncement = async ({
+  adminNotificationId,
+  createdByEmail,
+  title,
+  message,
+  actionUrl,
+  actionLabel,
+  includeForNewUsers = true,
+  targetUserIds,
+  filters
+}) => {
+  await connectMongo()
+  try {
+    if (!adminNotificationId) {
+      return { status: 'error', result: null, message: 'adminNotificationId is required' }
+    }
+
+    const deleteResult = await deleteByAdminNotificationId(adminNotificationId, createdByEmail)
+    if (deleteResult.status !== 'success') {
+      return deleteResult
+    }
+
+    const hasTargetUsers = Array.isArray(targetUserIds) && targetUserIds.length > 0
+    const result = await createAnnouncement({
+      title,
+      message,
+      actionUrl,
+      actionLabel,
+      createdByEmail,
+      sendToAll: !hasTargetUsers,
+      includeForNewUsers,
+      targetUserIds: hasTargetUsers ? targetUserIds : undefined,
+      filters,
+      existingAdminNotificationId: adminNotificationId
+    })
+
+    if (result.status === 'success') {
+      return {
+        ...result,
+        message:
+          result.result?.sentCount > 0
+            ? `Announcement updated and sent to ${result.result.sentCount} user(s)`
+            : 'Announcement updated successfully'
+      }
+    }
+    return result
+  } catch (error) {
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to update announcement'
     }
   }
 }
