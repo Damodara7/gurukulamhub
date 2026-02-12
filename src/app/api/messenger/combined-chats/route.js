@@ -157,7 +157,8 @@ export async function GET(req) {
           unreadCount: unreadCount || 0,
           avatar: null,
           avatarColor: null,
-          isAnnouncementOnly: group.isAnnouncementOnly
+          isAnnouncementOnly: group.isAnnouncementOnly,
+          groupType: group.groupType || 'normal'
         })
       }
     }
