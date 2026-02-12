@@ -31,7 +31,9 @@ const MessagesArea = ({
   session,
   theme,
   isMobile,
-  isIndividualChat = false // Flag to indicate individual chat
+  isIndividualChat = false,
+  needApprovalForMessages = false,
+  isGroupManager = false
 }) => {
   const isDarkMode = theme.palette.mode === 'dark'
 
@@ -262,6 +264,8 @@ const MessagesArea = ({
                   getAllMembers={getAllMembers}
                   theme={theme}
                   isMobile={isMobile}
+                  needApprovalForMessages={needApprovalForMessages}
+                  isGroupManager={isGroupManager}
                 />
               )}
             </React.Fragment>

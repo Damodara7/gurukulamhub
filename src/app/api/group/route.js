@@ -17,7 +17,11 @@ export async function GET(req) {
     let artifact
 
     if (id) {
-      artifact = await ArtifactService.getOne({ _id: id, ...rest })
+      const session = await auth()
+      artifact = await ArtifactService.getOne(
+        { _id: id, ...rest },
+        { viewerEmail: session?.user?.email }
+      )
     } else {
       // Get session to check user role
       const session = await auth()

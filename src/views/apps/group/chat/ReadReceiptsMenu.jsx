@@ -30,6 +30,8 @@ const ReadReceiptsMenu = ({
 
   if (!message) return null
 
+  const isPendingOrRejected = message.approvalStatus === 'pending' || message.approvalStatus === 'rejected'
+
   // Filter out sender's own read receipt
   const readByExcludingSender = message.readBy?.filter(reader => reader.userEmail !== message.senderEmail) || []
   // Total members excluding sender
@@ -56,7 +58,17 @@ const ReadReceiptsMenu = ({
       anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
     >
       <Box sx={{ p: { xs: 1.5, sm: 2 } }}>
-        {isIndividualChat ? (
+        {isPendingOrRejected ? (
+          <Typography
+            variant='body2'
+            sx={{
+              color: 'text.secondary',
+              fontSize: { xs: '0.8125rem', sm: '0.875rem' }
+            }}
+          >
+            Read info is not available for pending or rejected messages.
+          </Typography>
+        ) : isIndividualChat ? (
           <>
             {isRead ? (
               <Box>

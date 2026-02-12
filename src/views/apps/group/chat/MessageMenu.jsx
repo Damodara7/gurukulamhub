@@ -5,7 +5,9 @@ import {
   Info as InfoIcon,
   CheckBoxOutlineBlank as CheckboxOutlineBlankIcon,
   Edit as EditIcon,
-  Delete as DeleteIcon
+  Delete as DeleteIcon,
+  Check as CheckIcon,
+  Cancel as CancelIcon
 } from '@mui/icons-material'
 
 const MessageMenu = ({
@@ -19,7 +21,11 @@ const MessageMenu = ({
   onEditClick,
   onDeleteClick,
   isMessageDeletedForEveryone,
-  isMessageDeletedForMe
+  isMessageDeletedForMe,
+  isGroupManager = false,
+  onApproveMessage,
+  onRejectMessage,
+  onEditByManagerClick
 }) => {
   const theme = useTheme()
   const isDarkMode = theme.palette.mode === 'dark'
@@ -38,12 +44,12 @@ const MessageMenu = ({
   const oneHour = 60 * 60 * 1000
   const isOlderThanOneHour = messageAge > oneHour
 
-  // Info should be available for own messages (not others') that are not deleted for everyone
-  // Show Info even if no one has seen it yet
-  const canShowInfo = isMenuMessageOwn && !isDeletedForEveryone
-  
-  // Edit is only available for own messages that are not deleted and not older than 1 hour
-  const canEdit = isMenuMessageOwn && !isDeletedForMe && !isOlderThanOneHour
+  // Info (read receipts) not shown for pending/rejected messages
+  const isPendingOrRejected = menuMessage.approvalStatus === 'pending' || menuMessage.approvalStatus === 'rejected'
+  const canShowInfo = isMenuMessageOwn && !isDeletedForEveryone && !isPendingOrRejected
+
+  // Edit is only available for own messages that are not deleted, not rejected, and not older than 1 hour
+  const canEdit = isMenuMessageOwn && !isDeletedForMe && !isOlderThanOneHour && menuMessage.approvalStatus !== 'rejected'
 
   // If deleted for everyone, only show "Delete for me" option
   if (isDeletedForEveryone) {
@@ -75,6 +81,9 @@ const MessageMenu = ({
     )
   }
 
+  const isPending = menuMessage.approvalStatus === 'pending'
+  const showManagerActions = isGroupManager && isPending && onApproveMessage && onRejectMessage && onEditByManagerClick
+
   return (
     <Menu
       anchorEl={anchorEl}
@@ -88,6 +97,31 @@ const MessageMenu = ({
         }
       }}
     >
+      {showManagerActions && (
+        <>
+          <MenuItem
+            onClick={() => { onApproveMessage(menuMessage._id); onClose(); }}
+            sx={{ py: { xs: 1, sm: 1.25 }, fontSize: { xs: '0.875rem', sm: '0.9375rem' }, color: 'success.main' }}
+          >
+            <CheckIcon sx={{ mr: 1.5, fontSize: { xs: 18, sm: 20 } }} />
+            Approve
+          </MenuItem>
+          <MenuItem
+            onClick={() => { onRejectMessage(menuMessage); onClose(); }}
+            sx={{ py: { xs: 1, sm: 1.25 }, fontSize: { xs: '0.875rem', sm: '0.9375rem' }, color: 'error.main' }}
+          >
+            <CancelIcon sx={{ mr: 1.5, fontSize: { xs: 18, sm: 20 } }} />
+            Reject
+          </MenuItem>
+          <MenuItem
+            onClick={() => { onEditByManagerClick(menuMessage); onClose(); }}
+            sx={{ py: { xs: 1, sm: 1.25 }, fontSize: { xs: '0.875rem', sm: '0.9375rem' } }}
+          >
+            <EditIcon sx={{ mr: 1.5, fontSize: { xs: 18, sm: 20 } }} />
+            Edit (approve)
+          </MenuItem>
+        </>
+      )}
       {canShowInfo && (
         <MenuItem
           onClick={onInfoClick}

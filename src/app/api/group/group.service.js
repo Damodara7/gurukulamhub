@@ -13,7 +13,79 @@ import {
   createGameCreatedNotification
 } from '../notifications/notification.helpers.js'
 
-export const getOne = async (filter = {}) => {
+/**
+ * Masks email: first 2 characters of local part + *'s + @domain (e.g. johndoe@gmail.com -> jo******@gmail.com)
+ */
+function maskEmail(email) {
+  if (!email || typeof email !== 'string') return '***@***'
+  const at = email.indexOf('@')
+  if (at === -1) return '***'
+  const local = email.slice(0, at)
+  const domain = email.slice(at)
+  if (local.length <= 2) return local + domain
+  return local.slice(0, 2) + '*'.repeat(local.length - 2) + domain
+}
+
+/**
+ * For classroom groups: returns a copy of the group with members sanitized by role.
+ * - Creator / Manager: see full group (no masking).
+ * - Trainer: sees creator & manager with name + full email; students with name + masked email.
+ * - Student: sees trainer, manager, and other students with name + masked email; self with full.
+ */
+export function sanitizeGroupMembersForViewer(group, viewerEmail) {
+  if (!group || group.groupType !== 'classroom' || !viewerEmail) return group
+
+  const isCreator = group.creatorEmail === viewerEmail
+  const isGroupManager = group.groupManagerEmail === viewerEmail
+  const isTrainer = group.trainerEmail === viewerEmail
+
+  if (isCreator || isGroupManager) return group
+
+  const members = (group.members || []).map((member) => {
+    const mem = typeof member.toObject === 'function' ? member.toObject() : { ...member }
+    const email = mem.email || (mem.profile && mem.profile.email)
+    if (!email) return mem
+
+    const isViewer = email === viewerEmail
+    const isCreatorMember = email === group.creatorEmail
+    const isManagerMember = email === group.groupManagerEmail
+    const isTrainerMember = email === group.trainerEmail
+
+    if (isTrainer) {
+      // Trainer sees: creator & manager with name + full email; self full; students with name + masked email
+      if (isViewer || isCreatorMember || isManagerMember) return mem
+      const firstName = mem.profile?.firstname || ''
+      const lastName = mem.profile?.lastname || ''
+      return {
+        _id: mem._id,
+        email: maskEmail(email),
+        profile: { firstname: firstName, lastname: lastName },
+        masked: true
+      }
+    }
+
+    // Viewer is student: creator & manager with name + full email; trainer & other students with name + masked email; self stays full
+    if (isViewer) return mem
+    if (isCreatorMember || isManagerMember) return mem
+    const firstName = mem.profile?.firstname || ''
+    const lastName = mem.profile?.lastname || ''
+    let role = null
+    if (isCreatorMember) role = 'creator'
+    else if (isManagerMember) role = 'manager'
+    else if (isTrainerMember) role = 'trainer'
+    return {
+      _id: mem._id,
+      email: maskEmail(email),
+      profile: { firstname: firstName, lastname: lastName },
+      masked: true,
+      role
+    }
+  })
+
+  return { ...group, members }
+}
+
+export const getOne = async (filter = {}, options = {}) => {
   await connectMongo()
   try {
     if (filter._id && !mongoose.Types.ObjectId.isValid(filter._id)) {
@@ -42,9 +114,11 @@ export const getOne = async (filter = {}) => {
       }
     }
 
+    const result = options.viewerEmail ? sanitizeGroupMembersForViewer(group, options.viewerEmail) : group
+
     return {
       status: 'success',
-      result: group,
+      result,
       message: 'Group retrieved successfully'
     }
   } catch (error) {
@@ -130,10 +204,12 @@ export const getUserGroups = async (userEmail) => {
         }
       ])
 
+    const sanitizedGroups = groups.map(g => sanitizeGroupMembersForViewer(g, userEmail))
+
     return {
       status: 'success',
-      result: groups,
-      message: `Found ${groups.length} user groups`
+      result: sanitizedGroups,
+      message: `Found ${sanitizedGroups.length} user groups`
     }
   } catch (error) {
     return {
@@ -231,6 +307,17 @@ export const addOne = async groupData => {
       }
     }
 
+    // Classroom: set role fields and memberAddedBy (creator adds everyone on create)
+    if (groupData.groupType === 'classroom') {
+      groupData.trainerId = groupData.trainerId || null
+      groupData.trainerEmail = groupData.trainerEmail || null
+      groupData.groupManagerId = groupData.groupManagerId || null
+      groupData.groupManagerEmail = groupData.groupManagerEmail || null
+      groupData.needApprovalForMessages = groupData.needApprovalForMessages === true
+    } else {
+      groupData.groupType = 'normal'
+    }
+
     // Create new group instance
     const newGroup = new Group(groupData)
 
@@ -268,6 +355,18 @@ export const addOne = async groupData => {
       console.error('[Group Service] Error adding creator to group:', creatorError)
       // This is critical - rethrow to let main catch handle it
       throw new Error(`Failed to add creator to group: ${creatorError.message}`)
+    }
+
+    // Classroom: set memberAddedBy for all members (creator adds everyone on create)
+    if (groupData.groupType === 'classroom' && savedGroup.members && savedGroup.members.length > 0) {
+      const memberAddedBy = {}
+      savedGroup.members.forEach(m => {
+        const id = m.toString?.() || m
+        if (id) memberAddedBy[id] = groupData.creatorEmail
+      })
+      savedGroup.memberAddedBy = memberAddedBy
+      if (savedGroup.trainerEmail) savedGroup.trainerAddedBy = groupData.creatorEmail
+      await savedGroup.save()
     }
 
     // Update all selected users' groupIds arrays with the new group ID
@@ -369,6 +468,18 @@ export const updateOne = async (groupId, updateData) => {
       }
     }
 
+    // Classroom: allow updating trainer, manager, needApprovalForMessages
+    if (existingGroup.groupType === 'classroom') {
+      if (updateData.trainerId !== undefined) existingGroup.trainerId = updateData.trainerId || null
+      if (updateData.trainerEmail !== undefined) existingGroup.trainerEmail = updateData.trainerEmail || null
+      if (updateData.trainerId !== undefined || updateData.trainerEmail !== undefined) {
+        existingGroup.trainerAddedBy = (updateData.trainerEmail && updateData.updatorEmail) ? updateData.updatorEmail : null
+      }
+      if (updateData.groupManagerId !== undefined) existingGroup.groupManagerId = updateData.groupManagerId || null
+      if (updateData.groupManagerEmail !== undefined) existingGroup.groupManagerEmail = updateData.groupManagerEmail || null
+      if (updateData.needApprovalForMessages !== undefined) existingGroup.needApprovalForMessages = updateData.needApprovalForMessages === true
+    }
+
     // Handle member synchronization if members array is provided
     if (updateData.members !== undefined) {
       try {
@@ -432,6 +543,20 @@ export const updateOne = async (groupId, updateData) => {
           const usersToAddObjectIds = usersToAdd.map(id => new mongoose.Types.ObjectId(id))
           await User.updateMany({ _id: { $in: usersToAddObjectIds } }, { $addToSet: { groupIds: groupId } })
           console.log(`Added group to ${usersToAdd.length} users`)
+
+          // Classroom: track who added each new member (creator or group manager)
+          if (existingGroup.groupType === 'classroom') {
+            const addedByEmail = updateData.updatorEmail || existingGroup.creatorEmail
+            const memberAddedBy = existingGroup.memberAddedBy
+              ? (existingGroup.memberAddedBy instanceof Map
+                  ? Object.fromEntries(existingGroup.memberAddedBy)
+                  : { ...existingGroup.memberAddedBy })
+              : {}
+            usersToAdd.forEach(uid => {
+              memberAddedBy[uid] = addedByEmail
+            })
+            existingGroup.memberAddedBy = memberAddedBy
+          }
 
           // Create system messages for added members
           const adminEmail = updateData.updatorEmail || existingGroup.creatorEmail

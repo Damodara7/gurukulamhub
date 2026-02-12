@@ -19,6 +19,7 @@ const ChatHeader = ({
   groupData,
   isConnected,
   isCreator,
+  isGroupManager = false,
   onBack,
   onMembersClick,
   onSettingsClick,
@@ -326,7 +327,7 @@ const ChatHeader = ({
               <InfoIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />
             </IconButton>
           )}
-          {isCreator && (
+          {(isCreator || isGroupManager) && (
             <IconButton
               onClick={onSettingsClick}
               size={isMobile ? 'small' : 'medium'}

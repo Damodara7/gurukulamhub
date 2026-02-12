@@ -554,7 +554,10 @@ const ChatList = () => {
 
           const isFromCurrentUser = message.senderEmail === session.user.email
           const isRead = message.readBy?.some(reader => reader.userEmail === session.user.email)
-          
+          const isPendingOrRejected = (message.approvalStatus === 'pending' || message.approvalStatus === 'rejected')
+          // For others: do not show pending/rejected as last message; keep previous last message
+          const skipAsLastMessage = !isFromCurrentUser && isPendingOrRejected
+
           // Decrypt message - always try to decrypt (decryptGroupMessage will auto-derive key if needed)
           let decryptedMessageText = message.message
           if (message.message) {
@@ -597,6 +600,16 @@ const ChatList = () => {
                 }
                 // If from current user, unread count stays the same (their own message doesn't count as unread)
 
+                // For others: do not set pending/rejected as last message; keep previous (but still bump timestamp for sort order)
+                if (skipAsLastMessage) {
+                  return {
+                    ...c,
+                    lastMessage: c.lastMessage,
+                    lastMessageTimestamp: message.createdAt,
+                    unreadCount: newUnreadCount
+                  }
+                }
+
                 return {
                   ...c,
                   lastMessage: {
@@ -605,7 +618,8 @@ const ChatList = () => {
                     senderEmail: message.senderEmail,
                     createdAt: message.createdAt,
                     isEdited: message.isEdited,
-                    deletedForEveryone: message.deletedForEveryone
+                    deletedForEveryone: message.deletedForEveryone,
+                    approvalStatus: message.approvalStatus
                   },
                   // Update lastMessageTimestamp for sorting (even if message is cleared later)
                   lastMessageTimestamp: message.createdAt,
@@ -677,8 +691,14 @@ const ChatList = () => {
                   return { ...c, lastMessage: null }
                 }
 
+                // If this was our lastMessage and it became rejected and we're not the sender, clear lastMessage (others don't show rejected)
+                const isRejected = updatedMessage.approvalStatus === 'rejected'
+                if (c.lastMessage?._id === updatedMessage._id && isRejected && isFromOtherUser) {
+                  return { ...c, lastMessage: null }
+                }
+
                 const updatedLastMessage = c.lastMessage?._id === updatedMessage._id
-                  ? { ...c.lastMessage, ...updatedMessage, message: decryptedMessageText || updatedMessage.message }
+                  ? { ...c.lastMessage, ...updatedMessage, message: decryptedMessageText || updatedMessage.message, approvalStatus: updatedMessage.approvalStatus }
                   : c.lastMessage
 
                 // If message was marked as read and it's from another user, decrement unread count
@@ -1068,11 +1088,55 @@ const ChatList = () => {
                                 minWidth: 0,
                                 maxWidth: '100%'
                               }}
+                              component='span'
+                              display='block'
                             >
                               {chat.lastMessage
                                 ? chat.lastMessage.deletedForEveryone
                                   ? 'This message was deleted'
-                                  : chat.lastMessage.message
+                                  : (() => {
+                                      const lm = chat.lastMessage
+                                      const isGroup = chat.type === 'group'
+                                      const isSender = lm.senderEmail === session?.user?.email
+                                      const msg = lm.message || ''
+                                      if (isGroup && isSender && lm.approvalStatus === 'pending') {
+                                        return (
+                                          <>
+                                            {msg}
+                                            <Box
+                                              component='span'
+                                              sx={{
+                                                color: 'warning.main',
+                                                fontWeight: 600,
+                                                fontStyle: 'italic',
+                                                ml: 0.25
+                                              }}
+                                            >
+                                              (pending)
+                                            </Box>
+                                          </>
+                                        )
+                                      }
+                                      if (isGroup && isSender && lm.approvalStatus === 'rejected') {
+                                        return (
+                                          <>
+                                            {msg}
+                                            <Box
+                                              component='span'
+                                              sx={{
+                                                color: 'error.main',
+                                                fontWeight: 600,
+                                                fontStyle: 'italic',
+                                                ml: 0.25
+                                              }}
+                                            >
+                                              (Rejected)
+                                            </Box>
+                                          </>
+                                        )
+                                      }
+                                      return msg
+                                    })()
                                 : 'No messages yet'}
                             </Typography>
                           </Stack>

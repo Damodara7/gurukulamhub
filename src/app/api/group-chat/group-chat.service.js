@@ -25,10 +25,8 @@ export const getMessagesByGroupId = async (groupId, options = {}) => {
 
     let query = {
       groupId: new mongoose.Types.ObjectId(groupId)
-      // Include all messages, including deletedForEveryone (we'll show them with banned icon in UI)
     }
 
-    // If 'before' timestamp is provided, fetch messages before that time
     if (before) {
       query.createdAt = { $lt: new Date(before) }
     }
@@ -38,18 +36,30 @@ export const getMessagesByGroupId = async (groupId, options = {}) => {
       .limit(parseInt(limit))
       .lean()
 
-    // Filter out messages deleted for this user
-    // If a message is deleted for the user (e.g., via clear chat), hide it even if it was deleted for everyone
-    const filteredMessages = messages.filter(msg => {
+    let filteredMessages = messages.filter(msg => {
       if (!userEmail) return true
-      // First check if deleted for this user - if yes, always filter out regardless of deletedForEveryone
       const isDeletedForUser = msg.deletedFor?.some(d => d.userEmail === userEmail)
       if (isDeletedForUser) return false
-      // If not deleted for user, show it (even if deleted for everyone, we'll show deleted text in UI)
       return true
     })
 
-    // Reverse to get chronological order (oldest first)
+    // Classroom message approval: filter by approval status and viewer role
+    const group = await Group.findOne({ _id: groupId, isDeleted: false }).lean()
+    if (group?.groupType === 'classroom' && group.needApprovalForMessages && userEmail) {
+      const isCreator = group.creatorEmail === userEmail
+      const isManager = group.groupManagerEmail === userEmail
+      filteredMessages = filteredMessages.filter(msg => {
+        const status = msg.approvalStatus || null
+        if (status === 'pending') {
+          return msg.senderEmail === userEmail || isManager || isCreator
+        }
+        if (status === 'rejected') {
+          return msg.senderEmail === userEmail || isManager || isCreator
+        }
+        return true
+      })
+    }
+
     const reversedMessages = filteredMessages.reverse()
 
     return {
@@ -118,13 +128,25 @@ export const addMessage = async (messageData) => {
       }
     }
 
-    // Create message - preserve newlines in content, only trim leading whitespace
-    const newMessage = await GroupChatMessage.create({
+    const isCreator = group.creatorEmail === senderEmail
+    const isManager = group.groupType === 'classroom' && group.groupManagerEmail === senderEmail
+    const needApproval =
+      group.groupType === 'classroom' &&
+      group.needApprovalForMessages &&
+      !isCreator &&
+      !isManager
+
+    const createPayload = {
       groupId: new mongoose.Types.ObjectId(groupId),
       senderEmail,
       message: trimLeadingNewlines(message),
       messageType
-    })
+    }
+    if (needApproval) {
+      createPayload.approvalStatus = 'pending'
+    }
+
+    const newMessage = await GroupChatMessage.create(createPayload)
 
     const savedMessage = await GroupChatMessage.findById(newMessage._id).lean()
 
@@ -677,6 +699,126 @@ export const createSystemMessage = async (groupId, systemMessage, adminEmail) =>
       result: null,
       message: error.message || 'Failed to create system message'
     }
+  }
+}
+
+// --- Classroom message approval: approve / reject / edit by manager ---
+export const approveMessage = async (messageId, managerEmail) => {
+  await connectMongo()
+  try {
+    const message = await GroupChatMessage.findById(messageId).lean()
+    if (!message || message.approvalStatus !== 'pending') {
+      return { status: 'error', result: null, message: 'Message not found or not pending' }
+    }
+    const group = await Group.findOne({ _id: message.groupId, isDeleted: false }).lean()
+    if (!group || group.groupType !== 'classroom' || group.groupManagerEmail !== managerEmail) {
+      return { status: 'error', result: null, message: 'Only the group manager can approve messages' }
+    }
+    const updated = await GroupChatMessage.findByIdAndUpdate(
+      messageId,
+      { approvalStatus: 'approved', approvedAt: new Date(), approvedBy: managerEmail },
+      { new: true }
+    ).lean()
+    try {
+      const { broadcastMessageUpdate } = await import('../ws/groups/[groupId]/chat/publishers')
+      if (broadcastMessageUpdate) {
+        broadcastMessageUpdate(message.groupId.toString(), updated)
+      }
+    } catch (e) {}
+    return { status: 'success', result: updated, message: 'Message approved' }
+  } catch (error) {
+    return { status: 'error', result: null, message: error.message || 'Failed to approve message' }
+  }
+}
+
+export const rejectMessage = async (messageId, managerEmail, rejectedReason) => {
+  await connectMongo()
+  try {
+    const message = await GroupChatMessage.findById(messageId).lean()
+    if (!message || message.approvalStatus !== 'pending') {
+      return { status: 'error', result: null, message: 'Message not found or not pending' }
+    }
+    const group = await Group.findOne({ _id: message.groupId, isDeleted: false }).lean()
+    if (!group || group.groupType !== 'classroom' || group.groupManagerEmail !== managerEmail) {
+      return { status: 'error', result: null, message: 'Only the group manager can reject messages' }
+    }
+    const updated = await GroupChatMessage.findByIdAndUpdate(
+      messageId,
+      {
+        approvalStatus: 'rejected',
+        rejectedAt: new Date(),
+        rejectedBy: managerEmail,
+        rejectedReason: rejectedReason || ''
+      },
+      { new: true }
+    ).lean()
+    try {
+      const { broadcastMessageUpdate } = await import('../ws/groups/[groupId]/chat/publishers')
+      if (broadcastMessageUpdate) {
+        broadcastMessageUpdate(message.groupId.toString(), updated)
+      }
+    } catch (e) {}
+    return { status: 'success', result: updated, message: 'Message rejected' }
+  } catch (error) {
+    return { status: 'error', result: null, message: error.message || 'Failed to reject message' }
+  }
+}
+
+export const editMessageByManager = async (messageId, newMessageText, managerEmail) => {
+  await connectMongo()
+  try {
+    const message = await GroupChatMessage.findById(messageId).lean()
+    if (!message) {
+      return { status: 'error', result: null, message: 'Message not found' }
+    }
+    const group = await Group.findOne({ _id: message.groupId, isDeleted: false }).lean()
+    if (!group || group.groupType !== 'classroom' || group.groupManagerEmail !== managerEmail) {
+      return { status: 'error', result: null, message: 'Only the group manager can edit messages for approval' }
+    }
+    const originalMessage = message.approvalStatus === 'pending' ? message.message : message.originalMessage || message.message
+    const updated = await GroupChatMessage.findByIdAndUpdate(
+      messageId,
+      {
+        message: trimLeadingNewlines(newMessageText),
+        approvalStatus: 'approved',
+        approvedAt: new Date(),
+        approvedBy: managerEmail,
+        editedByManager: true,
+        originalMessage: originalMessage,
+        isEdited: true,
+        editedAt: new Date()
+      },
+      { new: true }
+    ).lean()
+    try {
+      const { broadcastMessageUpdate } = await import('../ws/groups/[groupId]/chat/publishers')
+      if (broadcastMessageUpdate) {
+        broadcastMessageUpdate(message.groupId.toString(), updated)
+      }
+    } catch (e) {}
+    return { status: 'success', result: updated, message: 'Message edited and approved' }
+  } catch (error) {
+    return { status: 'error', result: null, message: error.message || 'Failed to edit message' }
+  }
+}
+
+export const getPendingMessagesForGroup = async (groupId, managerEmail) => {
+  await connectMongo()
+  try {
+    const group = await Group.findOne({ _id: groupId, isDeleted: false }).lean()
+    if (!group || group.groupType !== 'classroom' || group.groupManagerEmail !== managerEmail) {
+      return { status: 'error', result: null, message: 'Only the group manager can list pending messages' }
+    }
+    const messages = await GroupChatMessage.find({
+      groupId: new mongoose.Types.ObjectId(groupId),
+      approvalStatus: 'pending',
+      deletedForEveryone: { $ne: true }
+    })
+      .sort({ createdAt: -1 })
+      .lean()
+    return { status: 'success', result: messages, message: `Found ${messages.length} pending messages` }
+  } catch (error) {
+    return { status: 'error', result: null, message: error.message || 'Failed to get pending messages' }
   }
 }
 

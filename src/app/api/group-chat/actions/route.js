@@ -20,7 +20,16 @@ export async function POST(request) {
     }
 
     const reqBody = await request.json()
-    const { action, messageId, groupId, memberEmail, isAnnouncementOnly } = reqBody
+    const {
+      action,
+      messageId,
+      groupId,
+      memberEmail,
+      isAnnouncementOnly,
+      needApprovalForMessages,
+      rejectedReason,
+      newMessage: newMessageText
+    } = reqBody
 
     if (action === 'markAsRead') {
       if (!messageId) {
@@ -68,8 +77,7 @@ export async function POST(request) {
           ApiResponseUtils.createErrorResponse('Group ID and member email are required')
         )
       }
-      
-      // Verify user is the creator
+
       const group = await Group.findOne({ _id: groupId, isDeleted: false }).lean()
       if (!group) {
         return ApiResponseUtils.sendErrorResponse(
@@ -77,9 +85,12 @@ export async function POST(request) {
         )
       }
 
-      if (group.creatorEmail !== session.user.email) {
+      const isCreator = group.creatorEmail === session.user.email
+      const isGroupManager = group.groupType === 'classroom' && group.groupManagerEmail === session.user.email
+
+      if (!isCreator && !isGroupManager) {
         return ApiResponseUtils.sendErrorResponse(
-          ApiResponseUtils.createErrorResponse('Only the group creator can remove members')
+          ApiResponseUtils.createErrorResponse('Only the group creator or group manager can remove members')
         )
       }
 
@@ -95,6 +106,18 @@ export async function POST(request) {
         return ApiResponseUtils.sendErrorResponse(
           ApiResponseUtils.createErrorResponse('User not found')
         )
+      }
+
+      // Classroom: group manager can only remove members they added
+      if (group.groupType === 'classroom' && isGroupManager && !isCreator) {
+        const memberAddedBy = group.memberAddedBy || {}
+        const addedByMap = memberAddedBy instanceof Map ? Object.fromEntries(memberAddedBy) : memberAddedBy
+        const addedBy = addedByMap[userToRemove._id.toString()]
+        if (addedBy !== session.user.email) {
+          return ApiResponseUtils.sendErrorResponse(
+            ApiResponseUtils.createErrorResponse('You can only remove members you added')
+          )
+        }
       }
 
       // Get user's profile for name
@@ -118,13 +141,17 @@ export async function POST(request) {
         }
       }
 
-      // Remove member from group
+      const updatePayload = {
+        $pull: { members: userToRemove._id },
+        $inc: { membersCount: -1 }
+      }
+      if (group.groupType === 'classroom' && group.memberAddedBy) {
+        updatePayload.$unset = { [`memberAddedBy.${userToRemove._id.toString()}`]: 1 }
+      }
+
       const updatedGroupDoc = await Group.findByIdAndUpdate(
         groupId,
-        {
-          $pull: { members: userToRemove._id },
-          $inc: { membersCount: -1 }
-        },
+        updatePayload,
         { new: true }
       )
         .populate({
@@ -160,13 +187,12 @@ export async function POST(request) {
     }
 
     if (action === 'updateSettings') {
-      if (!groupId || isAnnouncementOnly === undefined) {
+      if (!groupId) {
         return ApiResponseUtils.sendErrorResponse(
-          ApiResponseUtils.createErrorResponse('Group ID and isAnnouncementOnly are required')
+          ApiResponseUtils.createErrorResponse('Group ID is required')
         )
       }
 
-      // Verify user is the creator
       const group = await Group.findOne({ _id: groupId, isDeleted: false }).lean()
       if (!group) {
         return ApiResponseUtils.sendErrorResponse(
@@ -174,16 +200,29 @@ export async function POST(request) {
         )
       }
 
-      if (group.creatorEmail !== session.user.email) {
+      const isCreator = group.creatorEmail === session.user.email
+      const isGroupManager = group.groupType === 'classroom' && group.groupManagerEmail === session.user.email
+
+      if (!isCreator && !isGroupManager) {
         return ApiResponseUtils.sendErrorResponse(
-          ApiResponseUtils.createErrorResponse('Only the group creator can update settings')
+          ApiResponseUtils.createErrorResponse('Only the group creator or group manager can update settings')
         )
       }
 
-      // Update group
+      const updatePayload = {}
+      if (isCreator && isAnnouncementOnly !== undefined) updatePayload.isAnnouncementOnly = isAnnouncementOnly
+      if (group.groupType === 'classroom' && needApprovalForMessages !== undefined) {
+        updatePayload.needApprovalForMessages = needApprovalForMessages
+      }
+      if (Object.keys(updatePayload).length === 0) {
+        return ApiResponseUtils.sendErrorResponse(
+          ApiResponseUtils.createErrorResponse('No settings to update')
+        )
+      }
+
       const updatedGroupDoc = await Group.findByIdAndUpdate(
         groupId,
-        { isAnnouncementOnly },
+        updatePayload,
         { new: true }
       )
         .populate({
@@ -194,10 +233,17 @@ export async function POST(request) {
       const updatedGroup = updatedGroupDoc ? updatedGroupDoc.toObject() : null
 
       // Create system message
-      const settingText = isAnnouncementOnly
-        ? 'Group settings changed: Only admins can send messages'
-        : 'Group settings changed: All members can send messages'
-      
+      let settingText = 'Group settings updated'
+      if (updatePayload.isAnnouncementOnly !== undefined) {
+        settingText = updatePayload.isAnnouncementOnly
+          ? 'Group settings changed: Only admins can send messages'
+          : 'Group settings changed: All members can send messages'
+      } else if (updatePayload.needApprovalForMessages !== undefined) {
+        settingText = updatePayload.needApprovalForMessages
+          ? 'Message approval is now required (manager must approve messages)'
+          : 'Message approval is now disabled'
+      }
+
       await GroupChatService.createSystemMessage(
         groupId,
         settingText,
@@ -257,6 +303,82 @@ export async function POST(request) {
           ApiResponseUtils.createErrorResponse(result.message)
         )
       }
+    }
+
+    if (action === 'getPendingMessages') {
+      if (!groupId) {
+        return ApiResponseUtils.sendErrorResponse(
+          ApiResponseUtils.createErrorResponse('Group ID is required')
+        )
+      }
+      const result = await GroupChatService.getPendingMessagesForGroup(groupId, session.user.email)
+      if (result.status === 'success') {
+        return ApiResponseUtils.sendSuccessResponse(
+          ApiResponseUtils.createSuccessResponse(result.message, result.result)
+        )
+      }
+      return ApiResponseUtils.sendErrorResponse(
+        ApiResponseUtils.createErrorResponse(result.message)
+      )
+    }
+
+    if (action === 'approveMessage') {
+      if (!messageId) {
+        return ApiResponseUtils.sendErrorResponse(
+          ApiResponseUtils.createErrorResponse('Message ID is required')
+        )
+      }
+      const result = await GroupChatService.approveMessage(messageId, session.user.email)
+      if (result.status === 'success') {
+        return ApiResponseUtils.sendSuccessResponse(
+          ApiResponseUtils.createSuccessResponse(result.message, result.result)
+        )
+      }
+      return ApiResponseUtils.sendErrorResponse(
+        ApiResponseUtils.createErrorResponse(result.message)
+      )
+    }
+
+    if (action === 'rejectMessage') {
+      if (!messageId) {
+        return ApiResponseUtils.sendErrorResponse(
+          ApiResponseUtils.createErrorResponse('Message ID is required')
+        )
+      }
+      const result = await GroupChatService.rejectMessage(
+        messageId,
+        session.user.email,
+        rejectedReason || ''
+      )
+      if (result.status === 'success') {
+        return ApiResponseUtils.sendSuccessResponse(
+          ApiResponseUtils.createSuccessResponse(result.message, result.result)
+        )
+      }
+      return ApiResponseUtils.sendErrorResponse(
+        ApiResponseUtils.createErrorResponse(result.message)
+      )
+    }
+
+    if (action === 'editMessageByManager') {
+      if (!messageId || newMessageText === undefined) {
+        return ApiResponseUtils.sendErrorResponse(
+          ApiResponseUtils.createErrorResponse('Message ID and new message are required')
+        )
+      }
+      const result = await GroupChatService.editMessageByManager(
+        messageId,
+        newMessageText,
+        session.user.email
+      )
+      if (result.status === 'success') {
+        return ApiResponseUtils.sendSuccessResponse(
+          ApiResponseUtils.createSuccessResponse(result.message, result.result)
+        )
+      }
+      return ApiResponseUtils.sendErrorResponse(
+        ApiResponseUtils.createErrorResponse(result.message)
+      )
     }
 
     return ApiResponseUtils.sendErrorResponse(

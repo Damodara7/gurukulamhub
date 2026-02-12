@@ -44,6 +44,45 @@ export const groupSchema = new mongoose.Schema(
         ref: 'users'
       }
     ],
+    // --- Classroom group fields ---
+    groupType: {
+      type: String,
+      enum: ['normal', 'classroom'],
+      default: 'normal'
+    },
+    trainerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'users',
+      default: null
+    },
+    trainerEmail: {
+      type: String,
+      default: null
+    },
+    groupManagerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'users',
+      default: null
+    },
+    groupManagerEmail: {
+      type: String,
+      default: null
+    },
+    needApprovalForMessages: {
+      type: Boolean,
+      default: false
+    },
+    // For classroom: who added each member (creator or groupManager). Used for manager's delete/edit scope.
+    memberAddedBy: {
+      type: Map,
+      of: String,
+      default: {}
+    },
+    // Email of who set the trainer (creator or group manager). Used so only that role can change trainer.
+    trainerAddedBy: {
+      type: String,
+      default: null
+    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'users',

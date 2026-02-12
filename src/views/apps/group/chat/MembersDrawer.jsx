@@ -21,7 +21,8 @@ import {
 import {
   ArrowBack as ArrowBackIcon,
   PersonAdd as PersonAddIcon,
-  PersonRemove as PersonRemoveIcon
+  PersonRemove as PersonRemoveIcon,
+  SwapHoriz as ChangeIcon
 } from '@mui/icons-material'
 
 const MembersDrawer = ({
@@ -29,27 +30,52 @@ const MembersDrawer = ({
   onClose,
   members,
   isCreator,
+  isGroupManager = false,
   onAddMember,
-  onRemoveMember
+  onRemoveMember,
+  groupData = null,
+  currentUserEmail = null,
+  onChangeTrainer = null,
+  onChangeManager = null,
+  onAddTrainer = null
 }) => {
+  const isClassroom = groupData?.groupType === 'classroom'
+  const isGroupManagerEmail = (email) => email && groupData?.groupManagerEmail === email
+  const isTrainerEmail = (email) => email && groupData?.trainerEmail === email
+  const canAddMember = isCreator || isGroupManager
+  const hasNoTrainer = isClassroom && !groupData?.trainerEmail
+  const showAddTrainerForManager = isClassroom && isGroupManager && hasNoTrainer && onAddTrainer
+  const memberAddedBy = groupData?.memberAddedBy && typeof groupData.memberAddedBy === 'object' ? groupData.memberAddedBy : {}
+  const wasAddedByManager = (member) => {
+    if (!member?._id || !currentUserEmail || !isGroupManager) return false
+    const id = member._id.toString?.() || member._id
+    return memberAddedBy[id] === currentUserEmail
+  }
   const theme = useTheme()
   const isDarkMode = theme.palette.mode === 'dark'
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const [visibleCount, setVisibleCount] = useState(15)
 
-  // Reset visible count when drawer opens or members change
+  // Sort so current user is first
+  const sortedMembers = React.useMemo(() => {
+    if (!currentUserEmail || !members.length) return members
+    const current = members.find(m => m.email === currentUserEmail)
+    const rest = members.filter(m => m.email !== currentUserEmail)
+    return current ? [current, ...rest] : members
+  }, [members, currentUserEmail])
+
   useEffect(() => {
     if (open) {
       setVisibleCount(15)
     }
-  }, [open, members.length])
+  }, [open, sortedMembers.length])
 
   const handleShowMore = () => {
-    setVisibleCount(prev => Math.min(prev + 10, members.length))
+    setVisibleCount(prev => Math.min(prev + 10, sortedMembers.length))
   }
 
-  const visibleMembers = members.slice(0, visibleCount)
-  const hasMore = members.length > visibleCount
+  const visibleMembers = sortedMembers.slice(0, visibleCount)
+  const hasMore = sortedMembers.length > visibleCount
 
   return (
     <Drawer
@@ -95,11 +121,11 @@ const MembersDrawer = ({
                 fontWeight: 600
               }}
             >
-              {members.length}
+              {sortedMembers.length}
             </Box>
           </Stack>
           <Stack direction='row' spacing={{ xs: 0.5, sm: 1 }}>
-            {isCreator && (
+            {canAddMember && onAddMember && (
               <Tooltip title='Add new member' arrow>
                 <IconButton
                   onClick={onAddMember}
@@ -134,27 +160,101 @@ const MembersDrawer = ({
         display: 'flex',
         flexDirection: 'column'
       }}>
+        {showAddTrainerForManager && (
+          <Box sx={{ p: 2, borderBottom: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.12 : 0.08)}` }}>
+            <Button
+              fullWidth
+              variant='outlined'
+              startIcon={<ChangeIcon />}
+              onClick={onAddTrainer}
+              sx={{ textTransform: 'none' }}
+            >
+              Add trainer
+            </Button>
+          </Box>
+        )}
         <List sx={{ py: 0, flex: 1 }}>
-          {visibleMembers.map((member, index) => (
+          {visibleMembers.map((member, index) => {
+            const isYou = currentUserEmail && member.email === currentUserEmail
+            const isCreatorMember = member.role === 'creator' || (!member.masked && groupData?.creatorEmail && member.email === groupData.creatorEmail)
+            const isManagerMember = member.role === 'manager' || (isClassroom && !member.masked && member.email && isGroupManagerEmail(member.email))
+            const isTrainerMember = member.role === 'trainer' || (isClassroom && !member.masked && member.email && isTrainerEmail(member.email))
+            return (
             <ListItem
-              key={member.email || index}
+              key={member._id || member.email || index}
+              sx={isYou ? {
+                background: alpha(theme.palette.primary.main, isDarkMode ? 0.15 : 0.08),
+                borderLeft: `3px solid ${theme.palette.primary.main}`,
+                borderRadius: 1,
+                mb: 0.5
+              } : undefined}
               secondaryAction={
-                isCreator && !member.isCreator && (
-                  <Tooltip title='Remove user' arrow>
-                    <IconButton
-                      edge='end'
-                      onClick={(e) => onRemoveMember(member, e)}
-                      color='error'
-                      size={isMobile ? 'small' : 'medium'}
-                      sx={{
-                        minWidth: { xs: 40, sm: 48 },
-                        minHeight: { xs: 40, sm: 48 }
-                      }}
-                    >
-                      <PersonRemoveIcon sx={{ fontSize: { xs: 18, sm: 20 } }} />
-                    </IconButton>
-                  </Tooltip>
-                )
+                (() => {
+                  if (isCreatorMember) return null
+                  const isTrainer = isTrainerMember
+                  const isManager = isManagerMember
+                  if (isTrainer && onChangeTrainer && isCreator) {
+                    return (
+                      <Tooltip title='Change trainer' arrow>
+                        <IconButton
+                          edge='end'
+                          onClick={(e) => onChangeTrainer(member, e)}
+                          color='primary'
+                          size={isMobile ? 'small' : 'medium'}
+                          sx={{ minWidth: { xs: 40, sm: 48 }, minHeight: { xs: 40, sm: 48 } }}
+                        >
+                          <ChangeIcon sx={{ fontSize: { xs: 18, sm: 20 } }} />
+                        </IconButton>
+                      </Tooltip>
+                    )
+                  }
+                  if (isManager && onChangeManager && isCreator) {
+                    return (
+                      <Tooltip title='Change group manager' arrow>
+                        <IconButton
+                          edge='end'
+                          onClick={(e) => onChangeManager(member, e)}
+                          color='primary'
+                          size={isMobile ? 'small' : 'medium'}
+                          sx={{ minWidth: { xs: 40, sm: 48 }, minHeight: { xs: 40, sm: 48 } }}
+                        >
+                          <ChangeIcon sx={{ fontSize: { xs: 18, sm: 20 } }} />
+                        </IconButton>
+                      </Tooltip>
+                    )
+                  }
+                  if (isCreator && !isTrainer && !isManager && onRemoveMember) {
+                    return (
+                      <Tooltip title='Remove user' arrow>
+                        <IconButton
+                          edge='end'
+                          onClick={(e) => onRemoveMember(member, e)}
+                          color='error'
+                          size={isMobile ? 'small' : 'medium'}
+                          sx={{ minWidth: { xs: 40, sm: 48 }, minHeight: { xs: 40, sm: 48 } }}
+                        >
+                          <PersonRemoveIcon sx={{ fontSize: { xs: 18, sm: 20 } }} />
+                        </IconButton>
+                      </Tooltip>
+                    )
+                  }
+                  if (isGroupManager && !isTrainer && !isManager && wasAddedByManager(member) && onRemoveMember) {
+                    return (
+                      <Tooltip title='Remove user (added by you)' arrow>
+                        <IconButton
+                          edge='end'
+                          onClick={(e) => onRemoveMember(member, e)}
+                          color='error'
+                          size={isMobile ? 'small' : 'medium'}
+                          sx={{ minWidth: { xs: 40, sm: 48 }, minHeight: { xs: 40, sm: 48 } }}
+                        >
+                          <PersonRemoveIcon sx={{ fontSize: { xs: 18, sm: 20 } }} />
+                        </IconButton>
+                      </Tooltip>
+                    )
+                  }
+                  return null
+                })()
               }
             >
               <ListItemAvatar>
@@ -188,7 +288,20 @@ const MembersDrawer = ({
                         ? `${member.profile.firstname || ''} ${member.profile.lastname || ''}`.trim() || member.email.split('@')[0]
                         : member.email.split('@')[0]}
                     </Typography>
-                    {member.isCreator && (
+                    {isYou && (
+                      <Chip
+                        label='You'
+                        size='small'
+                        sx={{
+                          height: { xs: 18, sm: 20 },
+                          fontSize: { xs: '0.6rem', sm: '0.65rem' },
+                          fontWeight: 600,
+                          background: theme.palette.primary.main,
+                          color: theme.palette.primary.contrastText
+                        }}
+                      />
+                    )}
+                    {isCreatorMember && (
                       <Chip
                         label='Admin'
                         size='small'
@@ -197,6 +310,30 @@ const MembersDrawer = ({
                           fontSize: { xs: '0.6rem', sm: '0.65rem' },
                           background: alpha(theme.palette.primary.main, isDarkMode ? 0.2 : 0.12),
                           color: theme.palette.primary.main
+                        }}
+                      />
+                    )}
+                    {isClassroom && isManagerMember && (
+                      <Chip
+                        label='Group Manager'
+                        size='small'
+                        sx={{
+                          height: { xs: 18, sm: 20 },
+                          fontSize: { xs: '0.6rem', sm: '0.65rem' },
+                          background: alpha(theme.palette.secondary.main, isDarkMode ? 0.2 : 0.12),
+                          color: theme.palette.secondary.main
+                        }}
+                      />
+                    )}
+                    {isClassroom && isTrainerMember && (
+                      <Chip
+                        label='Trainer'
+                        size='small'
+                        sx={{
+                          height: { xs: 18, sm: 20 },
+                          fontSize: { xs: '0.6rem', sm: '0.65rem' },
+                          background: alpha(theme.palette.info.main, isDarkMode ? 0.2 : 0.12),
+                          color: theme.palette.info.main
                         }}
                       />
                     )}
@@ -214,12 +351,12 @@ const MembersDrawer = ({
                       maxWidth: { xs: '200px', sm: '250px', md: '300px' }
                     }}
                   >
-                    {member.email}
+                    {member.email || (member.masked && member.displayId ? `ID: ${member.displayId}` : '')}
                   </Typography>
                 }
               />
             </ListItem>
-          ))}
+          )})}
         </List>
         {hasMore && (
           <Box sx={{ 
@@ -236,7 +373,7 @@ const MembersDrawer = ({
                 fontSize: { xs: '0.875rem', sm: '0.9375rem' }
               }}
             >
-              Show More ({members.length - visibleCount} remaining)
+              Show More ({sortedMembers.length - visibleCount} remaining)
             </Button>
           </Box>
         )}

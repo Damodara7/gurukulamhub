@@ -19,9 +19,17 @@ import {
   Typography,
   Stack,
   IconButton,
-  Divider
+  Divider,
+  Drawer,
+  List,
+  ListItem,
+  ListItemText,
+  TextField,
+  Autocomplete,
+  Chip,
+  Paper
 } from '@mui/material'
-import { ArrowBack as ArrowBackIcon, PersonRemove as PersonRemoveIcon, DoneAll as DoneAllIcon, CheckCircle as CheckCircleIcon, MoreVert as MoreVertIcon, ExitToApp as ExitToAppIcon, DeleteForever as DeleteForeverIcon } from '@mui/icons-material'
+import { ArrowBack as ArrowBackIcon, PersonRemove as PersonRemoveIcon, DoneAll as DoneAllIcon, CheckCircle as CheckCircleIcon, MoreVert as MoreVertIcon, ExitToApp as ExitToAppIcon, DeleteForever as DeleteForeverIcon, Check as CheckIcon, Cancel as CancelIcon, Edit as EditIcon } from '@mui/icons-material'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { format, formatDistanceToNow, isToday, isYesterday } from 'date-fns'
@@ -88,8 +96,24 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
   const [menuAnchor, setMenuAnchor] = useState(null)
   const [clearChatDialogOpen, setClearChatDialogOpen] = useState(false)
   const [exitGroupDialogOpen, setExitGroupDialogOpen] = useState(false)
+  const [pendingMessages, setPendingMessages] = useState([])
+  const [pendingDrawerOpen, setPendingDrawerOpen] = useState(false)
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false)
+  const [rejectReason, setRejectReason] = useState('')
+  const [messageToReject, setMessageToReject] = useState(null)
+  const [editByManagerDialogOpen, setEditByManagerDialogOpen] = useState(false)
+  const [messageToEditByManager, setMessageToEditByManager] = useState(null)
+  const [editByManagerText, setEditByManagerText] = useState('')
+  const [rejectedMessagesDialogOpen, setRejectedMessagesDialogOpen] = useState(false)
+  const [editedByManagerDialogOpen, setEditedByManagerDialogOpen] = useState(false)
+  const [changeRoleDialogOpen, setChangeRoleDialogOpen] = useState(false)
+  const [changeRoleType, setChangeRoleType] = useState(null) // 'trainer' | 'manager'
+  const [changeRoleSelectedMember, setChangeRoleSelectedMember] = useState(null)
+  const [changeRoleSecondSelectedMember, setChangeRoleSecondSelectedMember] = useState(null) // new manager when trainer chosen is current manager; new trainer when manager chosen is current trainer
   const [encryptionReady, setEncryptionReady] = useState(false)
   const encryptionReadyRef = useRef(false)
+  const messagesRef = useRef([])
+  const groupDataRef = useRef(null)
   const wsRefRef = useRef(null)
   const groupWsRefRef = useRef(null)
   const pingIntervalRef = useRef(null)
@@ -105,6 +129,10 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
   const [playNotificationSound] = useSound('/sounds/notification.mp3', { volume: 0.7 })
 
   const isCreator = groupData?.creatorEmail === session?.user?.email
+  const isGroupManager =
+    groupData?.groupType === 'classroom' && groupData?.groupManagerEmail === session?.user?.email
+  const isClassroom = groupData?.groupType === 'classroom'
+  const needApprovalForMessages = isClassroom && groupData?.needApprovalForMessages
 
   // Play notification sound when new message arrives (outside WebSocket handler)
   useEffect(() => {
@@ -204,6 +232,46 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
     }
   }, [groupId, session?.user?.email, isCreator])
 
+  messagesRef.current = messages
+  groupDataRef.current = groupData
+
+  // When encryption becomes ready, ensure all messages in state are decrypted (e.g. initial fetch before key was ready)
+  useEffect(() => {
+    if (!encryptionReady || !groupId) return
+    const current = messagesRef.current
+    if (current.length === 0) return
+    const hasEncrypted = current.some(m =>
+      (m.message && ChatEncryption.isEncrypted(m.message)) ||
+      (m.originalMessage && ChatEncryption.isEncrypted(m.originalMessage))
+    )
+    if (!hasEncrypted) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const decrypted = await Promise.all(
+          current.map(async (msg) => {
+            const needMessage = msg.message && ChatEncryption.isEncrypted(msg.message)
+            const needOriginal = msg.originalMessage && ChatEncryption.isEncrypted(msg.originalMessage)
+            if (!needMessage && !needOriginal) return msg
+            try {
+              let message = msg.message
+              let originalMessage = msg.originalMessage
+              if (needMessage) message = await ChatEncryption.decryptGroupMessage(msg.message, groupId)
+              if (needOriginal) originalMessage = await ChatEncryption.decryptGroupMessage(msg.originalMessage, groupId)
+              return { ...msg, message, originalMessage }
+            } catch {
+              return msg
+            }
+          })
+        )
+        if (!cancelled) setMessages(decrypted)
+      } catch (e) {
+        console.warn('[Encryption] Failed to decrypt existing messages:', e)
+      }
+    })()
+    return () => { cancelled = true }
+  }, [encryptionReady, groupId])
+
   // Check if user can send messages
   useEffect(() => {
     if (!groupData || !session?.user?.email) return
@@ -232,6 +300,60 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
     checkCanSend()
   }, [groupData, session?.user?.email, isCreator])
 
+  // Fetch pending messages for group manager (classroom with needApproval); decrypt before setting
+  const fetchPendingMessages = useCallback(async () => {
+    if (!groupId || !isGroupManager || !needApprovalForMessages) return
+    try {
+      const result = await RestApi.post(API_URLS.v0.USERS_GROUP_CHAT_ACTIONS, {
+        action: 'getPendingMessages',
+        groupId
+      })
+      if (result?.status === 'success') {
+        const list = result.result || []
+        const decrypted = await Promise.all(
+          list.map(async (msg) => {
+            let message = msg.message
+            let originalMessage = msg.originalMessage
+            try {
+              if (msg.message) {
+                message = await ChatEncryption.decryptIfEncrypted(
+                  msg.message,
+                  (encrypted) => ChatEncryption.decryptGroupMessage(encrypted, groupId)
+                )
+              }
+              if (msg.originalMessage) {
+                originalMessage = await ChatEncryption.decryptIfEncrypted(
+                  msg.originalMessage,
+                  (encrypted) => ChatEncryption.decryptGroupMessage(encrypted, groupId)
+                )
+              }
+              return { ...msg, message, originalMessage }
+            } catch (err) {
+              console.warn('[Encryption] Failed to decrypt pending message:', err)
+              return msg
+            }
+          })
+        )
+        setPendingMessages(decrypted)
+      }
+    } catch (e) {
+      console.error('Error fetching pending messages:', e)
+    }
+  }, [groupId, isGroupManager, needApprovalForMessages])
+
+  // Fetch pending count/list when manager lands on group chat so "Needs approval (N)" is correct from the start
+  useEffect(() => {
+    if (groupId && isGroupManager && needApprovalForMessages) {
+      fetchPendingMessages()
+    }
+  }, [groupId, isGroupManager, needApprovalForMessages, fetchPendingMessages])
+
+  useEffect(() => {
+    if (pendingDrawerOpen && isGroupManager) {
+      fetchPendingMessages()
+    }
+  }, [pendingDrawerOpen, isGroupManager, fetchPendingMessages])
+
   // Fetch initial messages
   const fetchMessages = useCallback(async (before = null) => {
     try {
@@ -257,27 +379,43 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
       if (result?.status === 'success') {
         const fetchedMessages = result.result || []
         
-        // Decrypt messages if encryption is ready
+        // Decrypt messages (and originalMessage) if encryption is ready
         const decryptedMessages = await Promise.all(
           fetchedMessages.map(async (msg) => {
-            if (msg.message && encryptionReadyRef.current) {
-              try {
-                const decrypted = await ChatEncryption.decryptIfEncrypted(
+            if (!encryptionReadyRef.current) return msg
+            let message = msg.message
+            let originalMessage = msg.originalMessage
+            try {
+              if (msg.message) {
+                message = await ChatEncryption.decryptIfEncrypted(
                   msg.message,
                   (encrypted) => ChatEncryption.decryptGroupMessage(encrypted, groupId)
                 )
-                return { ...msg, message: decrypted }
-              } catch (error) {
-                console.warn('[Encryption] Failed to decrypt message:', error)
-                return msg
               }
+              if (msg.originalMessage) {
+                originalMessage = await ChatEncryption.decryptIfEncrypted(
+                  msg.originalMessage,
+                  (encrypted) => ChatEncryption.decryptGroupMessage(encrypted, groupId)
+                )
+              }
+              return { ...msg, message, originalMessage }
+            } catch (error) {
+              console.warn('[Encryption] Failed to decrypt message:', error)
+              return msg
             }
-            return msg
           })
         )
         
         if (before) {
-          setMessages(prev => [...decryptedMessages, ...prev])
+          setMessages(prev => {
+            const combined = [...decryptedMessages, ...prev]
+            const byId = new Map()
+            combined.forEach(m => byId.set(m._id, m))
+            const deduped = [...byId.values()].sort(
+              (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+            )
+            return deduped
+          })
           setHasMore(decryptedMessages.length === 50)
         } else {
           setMessages(decryptedMessages)
@@ -485,7 +623,18 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
                 // Continue with original message (backward compatibility)
               }
             }
-            
+
+            // When need manager approval: students & trainer see only approved messages (or their own)
+            const g = groupDataRef.current
+            const needApproval = g?.groupType === 'classroom' && g?.needApprovalForMessages
+            const isCreatorOrManager = g?.creatorEmail === session?.user?.email || g?.groupManagerEmail === session?.user?.email
+            if (needApproval && !isCreatorOrManager) {
+              const status = decryptedMessage.approvalStatus || null
+              const isOwn = decryptedMessage.senderEmail === session?.user?.email
+              if (status === 'pending' && !isOwn) return
+              if (status === 'rejected' && !isOwn) return
+            }
+
             // Store message for notification sound (will be played in useEffect outside WebSocket)
             if (
               soundEnabledRef.current &&
@@ -495,14 +644,16 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
             ) {
               setNewMessageForNotification(decryptedMessage)
             }
-            
+
             setMessages(prev => {
               const exists = prev.some(m => m._id === decryptedMessage._id)
               if (exists) return prev
               // Filter out if deleted for this user, but keep messages deleted for everyone (to show with banned icon)
               const isDeletedForMe = decryptedMessage.deletedFor?.some(d => d.userEmail === session?.user?.email)
               if (isDeletedForMe) return prev
-              const updated = [...prev, decryptedMessage]
+              const updated = [...prev, decryptedMessage].sort(
+                (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+              )
               // Mark new message as read (only if not deleted for everyone and not own message)
               if (!decryptedMessage.deletedForEveryone && decryptedMessage.senderEmail !== session?.user?.email) {
                 setTimeout(() => {
@@ -511,31 +662,65 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
               }
               return updated
             })
+            // Keep manager pending list in sync: add new pending message
+            const isGroupManager = g?.groupManagerEmail === session?.user?.email
+            if (needApproval && isGroupManager && decryptedMessage.approvalStatus === 'pending') {
+              setPendingMessages(prev => {
+                if (prev.some(m => m._id === decryptedMessage._id)) return prev
+                return [...prev, decryptedMessage].sort(
+                  (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+                )
+              })
+            }
             setTimeout(() => {
               messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
             }, 100)
           } else if (msg.type === 'messageUpdate') {
-            setMessages(prev => {
-              // Update existing message or add if it doesn't exist (shouldn't happen, but handle it)
-              const messageExists = prev.some(m => m._id === msg.data._id)
-              let updated
-              
-              if (messageExists) {
-                // Update existing message
-                updated = prev.map(m =>
-                  m._id === msg.data._id ? { ...m, ...msg.data } : m
-                )
-              } else {
-                // Message doesn't exist in current list, just return previous (shouldn't happen for updates)
-                updated = prev
+            let data = msg.data
+            try {
+              if (data?.message && ChatEncryption.isEncrypted(data.message)) {
+                const decrypted = await ChatEncryption.decryptGroupMessage(data.message, groupId)
+                data = { ...data, message: decrypted }
               }
-              
-              // Filter out messages deleted for this user, but keep messages deleted for everyone (to show with banned icon)
+              if (data?.originalMessage && ChatEncryption.isEncrypted(data.originalMessage)) {
+                const decryptedOriginal = await ChatEncryption.decryptGroupMessage(data.originalMessage, groupId)
+                data = { ...data, originalMessage: decryptedOriginal }
+              }
+            } catch (err) {
+              console.warn('[Encryption] Failed to decrypt messageUpdate:', err)
+            }
+            const g = groupDataRef.current
+            const needApproval = g?.groupType === 'classroom' && g?.needApprovalForMessages
+            const isCreatorOrManager = g?.creatorEmail === session?.user?.email || g?.groupManagerEmail === session?.user?.email
+            setMessages(prev => {
+              const messageExists = prev.some(m => m._id === data._id)
+              let updated
+              if (messageExists) {
+                updated = prev.map(m => (m._id === data._id ? { ...m, ...data } : m))
+              } else {
+                // For students/trainer: when a message is approved, add it so they see it (they never had the pending one)
+                if (needApproval && !isCreatorOrManager && data.approvalStatus === 'approved') {
+                  const isDeletedForMe = data.deletedFor?.some(d => d.userEmail === session?.user?.email)
+                  if (!isDeletedForMe) {
+                    updated = [...prev, data].sort(
+                      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+                    )
+                  } else {
+                    updated = prev
+                  }
+                } else {
+                  updated = prev
+                }
+              }
               return updated.filter(m => {
                 const isDeletedForMe = m.deletedFor?.some(d => d.userEmail === session?.user?.email)
-                return !isDeletedForMe // Keep deletedForEveryone messages to show with banned icon
+                return !isDeletedForMe
               })
             })
+            // Keep manager pending list in sync: remove when approved, rejected, edited by manager, or deleted for everyone
+            if (data.approvalStatus === 'approved' || data.approvalStatus === 'rejected' || data.editedByManager || data.deletedForEveryone) {
+              setPendingMessages(prev => prev.filter(m => m._id !== data._id))
+            }
           }
         } catch (e) {
           console.error('[WS] Error parsing chat message', e)
@@ -968,6 +1153,20 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
       
       return 'Creator'
     }
+
+    if (senderEmail === groupData?.groupManagerEmail && groupData?.groupType === 'classroom') {
+      const managerMember = groupData?.members?.find(m => {
+        const email = typeof m === 'object' && (m.email || m.profile?.email)
+        return email === senderEmail
+      })
+      if (managerMember?.profile) {
+        const firstName = managerMember.profile.firstname || ''
+        const lastName = managerMember.profile.lastname || ''
+        const fullName = `${firstName} ${lastName}`.trim()
+        return fullName ? `${fullName}` : 'Group Manager'
+      }
+      return 'Group Manager'
+    }
     
     const member = groupData?.members?.find(m => {
       if (typeof m === 'object' && m.email === senderEmail) {
@@ -1067,9 +1266,9 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
     return members
   }
 
-  // Handle member removal
+  // Handle member removal (creator can remove anyone; manager only those they added - enforced by API)
   const handleRemoveMember = async () => {
-    if (!selectedMember || !isCreator) return
+    if (!selectedMember || (!isCreator && !isGroupManager)) return
 
     try {
       const result = await RestApi.post(API_URLS.v0.USERS_GROUP_CHAT_ACTIONS, {
@@ -1092,16 +1291,15 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
     }
   }
 
-  // Handle settings update
-  const handleSettingsUpdate = async (newIsAnnouncementOnly) => {
-    if (!isCreator) return
+  // Handle settings update (creator: announcement; creator/manager: needApproval for classroom)
+  const handleSettingsUpdate = async (newIsAnnouncementOnly, newNeedApprovalForMessages) => {
+    if (!isCreator && !isGroupManager) return
 
     try {
-      const result = await RestApi.post(API_URLS.v0.USERS_GROUP_CHAT_ACTIONS, {
-        action: 'updateSettings',
-        groupId,
-        isAnnouncementOnly: newIsAnnouncementOnly
-      })
+      const body = { action: 'updateSettings', groupId }
+      if (isCreator && newIsAnnouncementOnly !== undefined) body.isAnnouncementOnly = newIsAnnouncementOnly
+      if (isClassroom && newNeedApprovalForMessages !== undefined) body.needApprovalForMessages = newNeedApprovalForMessages
+      const result = await RestApi.post(API_URLS.v0.USERS_GROUP_CHAT_ACTIONS, body)
 
       if (result?.status === 'success') {
         setGroupData(result.result)
@@ -1140,9 +1338,154 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
     }
   }
 
-  // Handle add member form submit
+  const handleApproveMessage = async (messageId) => {
+    try {
+      const result = await RestApi.post(API_URLS.v0.USERS_GROUP_CHAT_ACTIONS, {
+        action: 'approveMessage',
+        messageId
+      })
+      if (result?.status === 'success') {
+        setMessages(prev => prev.map(m => (m._id === messageId ? { ...m, approvalStatus: 'approved', approvedAt: new Date(), approvedBy: session?.user?.email } : m)))
+        setPendingMessages(prev => prev.filter(m => m._id !== messageId))
+        toast.success('Message approved')
+      } else toast.error(result?.message || 'Failed to approve')
+    } catch (e) {
+      toast.error('Failed to approve message')
+    }
+  }
+
+  const handleRejectMessage = async () => {
+    if (!messageToReject) return
+    try {
+      const result = await RestApi.post(API_URLS.v0.USERS_GROUP_CHAT_ACTIONS, {
+        action: 'rejectMessage',
+        messageId: messageToReject._id,
+        rejectedReason: rejectReason
+      })
+      if (result?.status === 'success') {
+        setMessages(prev => prev.map(m => (m._id === messageToReject._id ? { ...m, approvalStatus: 'rejected', rejectedReason: rejectReason } : m)))
+        setPendingMessages(prev => prev.filter(m => m._id !== messageToReject._id))
+        setRejectDialogOpen(false)
+        setMessageToReject(null)
+        setRejectReason('')
+        toast.success('Message rejected')
+      } else toast.error(result?.message || 'Failed to reject')
+    } catch (e) {
+      toast.error('Failed to reject message')
+    }
+  }
+
+  const handleEditByManager = async () => {
+    if (!messageToEditByManager || !editByManagerText.trim()) return
+    try {
+      const result = await RestApi.post(API_URLS.v0.USERS_GROUP_CHAT_ACTIONS, {
+        action: 'editMessageByManager',
+        messageId: messageToEditByManager._id,
+        newMessage: editByManagerText.trim()
+      })
+      if (result?.status === 'success') {
+        let merged = result.result
+        if (encryptionReadyRef.current) {
+          try {
+            if (merged?.message && ChatEncryption.isEncrypted(merged.message)) {
+              const decrypted = await ChatEncryption.decryptGroupMessage(merged.message, groupId)
+              merged = { ...merged, message: decrypted }
+            }
+            if (merged?.originalMessage && ChatEncryption.isEncrypted(merged.originalMessage)) {
+              const decryptedOriginal = await ChatEncryption.decryptGroupMessage(merged.originalMessage, groupId)
+              merged = { ...merged, originalMessage: decryptedOriginal }
+            }
+          } catch (err) {
+            console.warn('[Encryption] Failed to decrypt edited message:', err)
+          }
+        }
+        setMessages(prev => prev.map(m => (m._id === messageToEditByManager._id ? { ...m, ...merged } : m)))
+        setPendingMessages(prev => prev.filter(m => m._id !== messageToEditByManager._id))
+        setEditByManagerDialogOpen(false)
+        setMessageToEditByManager(null)
+        setEditByManagerText('')
+        toast.success('Message edited and approved')
+      } else toast.error(result?.message || 'Failed to edit')
+    } catch (e) {
+      toast.error('Failed to edit message')
+    }
+  }
+
+  const handleApproveAllPending = async () => {
+    if (pendingMessages.length === 0) return
+    let success = 0
+    let fail = 0
+    for (const msg of pendingMessages) {
+      try {
+        const result = await RestApi.post(API_URLS.v0.USERS_GROUP_CHAT_ACTIONS, {
+          action: 'approveMessage',
+          messageId: msg._id
+        })
+        if (result?.status === 'success') {
+          success++
+          setMessages(prev => prev.map(m => (m._id === msg._id ? { ...m, approvalStatus: 'approved', approvedAt: new Date(), approvedBy: session?.user?.email } : m)))
+        } else fail++
+      } catch (e) {
+        fail++
+      }
+    }
+    setPendingMessages([])
+    if (success) toast.success(`${success} message(s) approved`)
+    if (fail) toast.error(`${fail} failed to approve`)
+  }
+
+  const handleChangeRoleConfirm = async () => {
+    if (!changeRoleType || !changeRoleSelectedMember?.email || !groupId || !isCreator) return
+    const needsSecond = (changeRoleType === 'trainer' && changeRoleSelectedMember.email === groupData?.groupManagerEmail) ||
+      (changeRoleType === 'manager' && changeRoleSelectedMember.email === groupData?.trainerEmail)
+    if (needsSecond && !changeRoleSecondSelectedMember?.email) return
+
+    const payload = {
+      _id: groupId,
+      groupName: groupData?.groupName,
+      description: groupData?.description,
+      filters: groupData?.filters || [],
+      status: groupData?.status,
+      isAnnouncementOnly: groupData?.isAnnouncementOnly,
+      members: groupData?.members?.map(m => m._id || m) || [],
+      membersCount: groupData?.membersCount ?? 0,
+      updatorEmail: session?.user?.email
+    }
+    if (groupData?.groupType === 'classroom') {
+      payload.groupType = 'classroom'
+      payload.needApprovalForMessages = groupData?.needApprovalForMessages
+      if (changeRoleType === 'trainer') {
+        payload.trainerId = changeRoleSelectedMember._id || changeRoleSelectedMember._id?.toString?.()
+        payload.trainerEmail = changeRoleSelectedMember.email
+        payload.groupManagerId = needsSecond ? (changeRoleSecondSelectedMember._id || changeRoleSecondSelectedMember._id?.toString?.()) : (groupData?.groupManagerId || null)
+        payload.groupManagerEmail = needsSecond ? changeRoleSecondSelectedMember.email : (groupData?.groupManagerEmail || null)
+      } else {
+        payload.groupManagerId = changeRoleSelectedMember._id || changeRoleSelectedMember._id?.toString?.()
+        payload.groupManagerEmail = changeRoleSelectedMember.email
+        payload.trainerId = needsSecond ? (changeRoleSecondSelectedMember._id || changeRoleSecondSelectedMember._id?.toString?.()) : (groupData?.trainerId || null)
+        payload.trainerEmail = needsSecond ? changeRoleSecondSelectedMember.email : (groupData?.trainerEmail || null)
+      }
+    }
+    try {
+      const result = await RestApi.put(API_URLS.v0.USERS_GROUP, payload)
+      if (result?.status === 'success') {
+        setGroupData(result.result)
+        setChangeRoleDialogOpen(false)
+        setChangeRoleType(null)
+        setChangeRoleSelectedMember(null)
+        setChangeRoleSecondSelectedMember(null)
+        toast.success(needsSecond ? 'Trainer and group manager updated' : (changeRoleType === 'trainer' ? 'Trainer updated' : 'Group manager updated'))
+      } else {
+        toast.error(result?.message || 'Failed to update')
+      }
+    } catch (e) {
+      toast.error('Failed to update role')
+    }
+  }
+
+  // Handle add member form submit (creator or group manager)
   const handleAddMemberSubmit = async (values) => {
-    if (!isCreator) return
+    if (!isCreator && !isGroupManager) return
 
     try {
       // Transform members to IDs if they're objects
@@ -1163,7 +1506,16 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
         members: memberIds,
         membersCount: memberIds.length,
         updatedBy: session?.user?.id,
-        updaterEmail: session?.user?.email
+        updaterEmail: session?.user?.email,
+        updatorEmail: session?.user?.email
+      }
+      if (groupData?.groupType === 'classroom') {
+        payload.groupType = 'classroom'
+        payload.trainerId = groupData.trainerId
+        payload.trainerEmail = groupData.trainerEmail
+        payload.groupManagerId = groupData.groupManagerId
+        payload.groupManagerEmail = groupData.groupManagerEmail
+        payload.needApprovalForMessages = groupData.needApprovalForMessages
       }
 
       const result = await RestApi.put(API_URLS.v0.USERS_GROUP, payload)
@@ -1599,6 +1951,7 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
           groupData={groupData}
           isConnected={isConnected}
           isCreator={isCreator}
+          isGroupManager={isGroupManager}
           onBack={() => router.push(backPath)}
           onMembersClick={() => setMembersDrawerOpen(true)}
           onSettingsClick={() => setSettingsDialogOpen(true)}
@@ -1614,6 +1967,38 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
           open={Boolean(menuAnchor)}
           onClose={() => setMenuAnchor(null)}
         >
+          {needApprovalForMessages && isGroupManager && (
+            <MenuItem
+              onClick={() => {
+                setMenuAnchor(null)
+                setPendingDrawerOpen(true)
+                fetchPendingMessages()
+              }}
+            >
+              <DoneAllIcon sx={{ mr: 1, fontSize: 20 }} />
+              Needs approval ({pendingMessages.length})
+            </MenuItem>
+          )}
+          {needApprovalForMessages && session?.user?.email && !isGroupManager && !isCreator && (
+            <>
+              <MenuItem
+                onClick={() => {
+                  setMenuAnchor(null)
+                  setRejectedMessagesDialogOpen(true)
+                }}
+              >
+                Your Rejected Messages
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  setMenuAnchor(null)
+                  setEditedByManagerDialogOpen(true)
+                }}
+              >
+                Your Messages Edited by Manager
+              </MenuItem>
+            </>
+          )}
           <MenuItem onClick={() => {
             setMenuAnchor(null)
             setClearChatDialogOpen(true)
@@ -1679,6 +2064,352 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
         </DialogActions>
       </Dialog>
 
+      {/* Pending messages drawer (manager) */}
+      <Drawer
+        anchor='right'
+        open={pendingDrawerOpen}
+        onClose={() => setPendingDrawerOpen(false)}
+        PaperProps={{ sx: { width: { xs: '100%', sm: 360 } } }}
+      >
+        <Box sx={{ p: 2 }}>
+          <Stack direction='row' alignItems='center' justifyContent='space-between' sx={{ mb: 2 }}>
+            <Typography variant='h6'>Pending messages</Typography>
+            <IconButton onClick={() => setPendingDrawerOpen(false)}><ArrowBackIcon /></IconButton>
+          </Stack>
+          {pendingMessages.length === 0 ? (
+            <Typography color='text.secondary'>No pending messages.</Typography>
+          ) : (
+            <>
+              <Button
+                fullWidth
+                variant='contained'
+                color='success'
+                startIcon={<CheckIcon />}
+                onClick={handleApproveAllPending}
+                sx={{ mb: 2 }}
+              >
+                Approve all ({pendingMessages.length})
+              </Button>
+              <List>
+              {pendingMessages.map((msg) => {
+                const isTrainer = msg.senderEmail === groupData?.trainerEmail
+                const roleLabel = isTrainer ? 'TRAINER' : 'STUDENT'
+                const sentAt = msg.createdAt ? (isToday(new Date(msg.createdAt)) ? format(new Date(msg.createdAt), 'p') : isYesterday(new Date(msg.createdAt)) ? `Yesterday ${format(new Date(msg.createdAt), 'p')}` : format(new Date(msg.createdAt), 'MMM d, p')) : ''
+                return (
+                  <ListItem key={msg._id} sx={{ flexDirection: 'column', alignItems: 'stretch', borderBottom: 1, borderColor: 'divider' }}>
+                    <ListItemText
+                      primary={msg.message}
+                      secondary={
+                        <Stack direction='row' alignItems='center' flexWrap='wrap' spacing={0.5} sx={{ mt: 0.25 }}>
+                          <Typography component='span' variant='body2' color='text.secondary'>
+                            {getSenderName(msg.senderEmail)}
+                          </Typography>
+                          <Chip label={roleLabel} size='small' sx={{ height: 18, fontSize: '0.65rem' }} />
+                          {sentAt && (
+                            <Typography component='span' variant='caption' color='text.secondary'>
+                              · {sentAt}
+                            </Typography>
+                          )}
+                        </Stack>
+                      }
+                    />
+                    <Stack direction='row' spacing={1} sx={{ mt: 1 }}>
+                      <Button size='small' variant='contained' color='success' startIcon={<CheckIcon />} onClick={() => handleApproveMessage(msg._id)}>Approve</Button>
+                      <Button size='small' variant='outlined' color='error' startIcon={<CancelIcon />} onClick={() => { setMessageToReject(msg); setRejectDialogOpen(true); }}>Reject</Button>
+                      <Button size='small' variant='outlined' startIcon={<EditIcon />} onClick={() => { setMessageToEditByManager(msg); setEditByManagerText(msg.message || ''); setEditByManagerDialogOpen(true); }}>Edit</Button>
+                    </Stack>
+                  </ListItem>
+                )
+              })}
+            </List>
+            </>
+          )}
+        </Box>
+      </Drawer>
+
+      {/* Reject message dialog */}
+      <Dialog open={rejectDialogOpen} onClose={() => { setRejectDialogOpen(false); setMessageToReject(null); setRejectReason(''); }}>
+        <DialogTitle>Reject message</DialogTitle>
+        <DialogContent>
+          <TextField fullWidth label='Reason (optional)' value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} multiline rows={2} sx={{ mt: 1 }} />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => { setRejectDialogOpen(false); setMessageToReject(null); setRejectReason(''); }}>Cancel</Button>
+          <Button variant='contained' color='error' onClick={handleRejectMessage}>Reject</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Edit by manager dialog */}
+      <Dialog open={editByManagerDialogOpen} onClose={() => { setEditByManagerDialogOpen(false); setMessageToEditByManager(null); setEditByManagerText(''); }} maxWidth='sm' fullWidth>
+        <DialogTitle>Edit message (will be approved)</DialogTitle>
+        <DialogContent>
+          <TextField fullWidth multiline rows={4} value={editByManagerText} onChange={(e) => setEditByManagerText(e.target.value)} sx={{ mt: 1 }} />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => { setEditByManagerDialogOpen(false); setMessageToEditByManager(null); setEditByManagerText(''); }}>Cancel</Button>
+          <Button variant='contained' onClick={handleEditByManager} disabled={!editByManagerText.trim()}>Save & approve</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Your Rejected Messages dialog - one message bubble per item (message + reason inside) */}
+      <Dialog open={rejectedMessagesDialogOpen} onClose={() => setRejectedMessagesDialogOpen(false)} maxWidth='sm' fullWidth>
+        <DialogTitle>Your rejected messages</DialogTitle>
+        <DialogContent>
+          {messages.filter(m => m.senderEmail === session?.user?.email && m.approvalStatus === 'rejected').length === 0 ? (
+            <Typography color='text.secondary'>No rejected messages.</Typography>
+          ) : (
+            <Stack spacing={1.5} sx={{ py: 0.5 }} direction='column' alignItems='stretch'>
+              {messages.filter(m => m.senderEmail === session?.user?.email && m.approvalStatus === 'rejected').map((m) => (
+                <Paper
+                  key={m._id}
+                  elevation={0}
+                  sx={{
+                    p: 1.25,
+                    borderRadius: 2,
+                    width: '100%',
+                    background: isDarkMode ? alpha(theme.palette.grey[700], 0.25) : alpha(theme.palette.grey[300], 0.6),
+                    border: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.2 : 0.15)}`
+                  }}
+                >
+                  <Typography variant='body2' sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: 'text.primary' }}>
+                    {m.message}
+                  </Typography>
+                  <Typography variant='caption' sx={{ display: 'block', mt: 0.75, color: 'text.secondary' }}>
+                    Reason: {m.rejectedReason || 'No reason provided'}
+                  </Typography>
+                </Paper>
+              ))}
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRejectedMessagesDialogOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Your Messages Edited by Manager dialog - one message bubble per item (original + edited inside) */}
+      <Dialog open={editedByManagerDialogOpen} onClose={() => setEditedByManagerDialogOpen(false)} maxWidth='sm' fullWidth>
+        <DialogTitle>Your messages edited by manager</DialogTitle>
+        <DialogContent>
+          {messages.filter(m => m.senderEmail === session?.user?.email && m.editedByManager).length === 0 ? (
+            <Typography color='text.secondary'>None.</Typography>
+          ) : (
+            <Stack spacing={1.5} sx={{ py: 0.5 }} direction='column' alignItems='stretch'>
+              {messages.filter(m => m.senderEmail === session?.user?.email && m.editedByManager).map((m) => (
+                <Paper
+                  key={m._id}
+                  elevation={0}
+                  sx={{
+                    p: 1.25,
+                    borderRadius: 2,
+                    width: '100%',
+                    background: isDarkMode ? alpha(theme.palette.grey[700], 0.25) : alpha(theme.palette.grey[300], 0.6),
+                    border: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.2 : 0.15)}`
+                  }}
+                >
+                  <Typography variant='caption' sx={{ display: 'block', color: 'text.secondary' }}>Original</Typography>
+                  <Typography variant='body2' sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: 'text.primary' }}>
+                    {m.originalMessage || m.message}
+                  </Typography>
+                  <Typography variant='caption' sx={{ display: 'block', mt: 0.75, color: 'text.secondary' }}>Edited by manager</Typography>
+                  <Typography variant='body2' sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: 'text.primary' }}>
+                    {m.message}
+                  </Typography>
+                </Paper>
+              ))}
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditedByManagerDialogOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Change Trainer / Change Group Manager dialog — same dialog; if current manager chosen as trainer (or vice versa), second dropdown appears for the other role */}
+      <Dialog
+        open={changeRoleDialogOpen}
+        onClose={() => {
+          setChangeRoleDialogOpen(false)
+          setChangeRoleType(null)
+          setChangeRoleSelectedMember(null)
+          setChangeRoleSecondSelectedMember(null)
+        }}
+        maxWidth='sm'
+        fullWidth
+      >
+        <DialogTitle>
+          {changeRoleType === 'trainer' ? 'Change trainer' : 'Change group manager'}
+        </DialogTitle>
+        <DialogContent sx={{ pt: 1 }}>
+          <Autocomplete
+            options={(groupData?.members || []).filter(m => {
+              const email = m.email || (typeof m === 'object' && m.profile && m.profile.email)
+              if (!email) return false
+              if (changeRoleType === 'trainer' && email === groupData?.trainerEmail) return false
+              if (changeRoleType === 'manager') {
+                if (email === groupData?.groupManagerEmail) return false
+                if (email === groupData?.creatorEmail || email === session?.user?.email) return false
+              }
+              return true
+            })}
+            getOptionLabel={(m) => {
+              const name = m.profile?.firstname && m.profile?.lastname
+                ? `${m.profile.firstname} ${m.profile.lastname}`.trim()
+                : null
+              return name || m.email || ''
+            }}
+            value={changeRoleSelectedMember}
+            onChange={(_, val) => {
+              setChangeRoleSelectedMember(val)
+              setChangeRoleSecondSelectedMember(null)
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label={changeRoleType === 'trainer' ? 'Select new trainer' : 'Select new group manager'}
+                placeholder='Search...'
+              />
+            )}
+            renderOption={(props, m) => {
+              const email = m.email || m.profile?.email
+              const name = m.profile?.firstname && m.profile?.lastname
+                ? `${m.profile.firstname} ${m.profile.lastname}`.trim()
+                : null
+              const isCurrentManager = email === groupData?.groupManagerEmail
+              const isCurrentTrainer = email === groupData?.trainerEmail
+              return (
+                <li {...props} key={m._id || m.email}>
+                  <Stack direction='row' alignItems='center' spacing={1} sx={{ width: '100%' }}>
+                    <Typography variant='body2' sx={{ flex: 1 }}>{name || email}</Typography>
+                    {changeRoleType === 'trainer' && isCurrentManager && (
+                      <Chip label='Group Manager' size='small' color='secondary' sx={{ height: 22, fontSize: '0.7rem' }} />
+                    )}
+                    {changeRoleType === 'manager' && isCurrentTrainer && (
+                      <Chip label='Trainer' size='small' color='info' sx={{ height: 22, fontSize: '0.7rem' }} />
+                    )}
+                  </Stack>
+                </li>
+              )
+            }}
+            isOptionEqualToValue={(opt, val) => (opt._id || opt.email) === (val?._id || val?.email)}
+          />
+          {changeRoleType === 'trainer' && changeRoleSelectedMember?.email === groupData?.groupManagerEmail && (
+            <>
+              <Typography variant='body2' color='text.secondary' sx={{ mt: 2, mb: 1 }}>
+                The current group manager will become the trainer. Select the new group manager:
+              </Typography>
+              <Autocomplete
+                options={(groupData?.members || []).filter(m => {
+                  const email = m.email || m.profile?.email
+                  if (!email) return false
+                  if (email === (changeRoleSelectedMember?.email || changeRoleSelectedMember?.profile?.email)) return false
+                  if (email === groupData?.creatorEmail || email === session?.user?.email) return false
+                  return true
+                })}
+                getOptionLabel={(m) => {
+                  const name = m.profile?.firstname && m.profile?.lastname
+                    ? `${m.profile.firstname} ${m.profile.lastname}`.trim()
+                    : null
+                  return name || m.email || m.profile?.email || ''
+                }}
+                value={changeRoleSecondSelectedMember}
+                onChange={(_, val) => setChangeRoleSecondSelectedMember(val)}
+                renderInput={(params) => (
+                  <TextField {...params} label='Select new group manager' placeholder='Search...' />
+                )}
+                renderOption={(props, m) => {
+                  const email = m.email || m.profile?.email
+                  const name = m.profile?.firstname && m.profile?.lastname
+                    ? `${m.profile.firstname} ${m.profile.lastname}`.trim()
+                    : null
+                  const isCurrentTrainer = email === groupData?.trainerEmail
+                  return (
+                    <li {...props} key={m._id || m.email}>
+                      <Stack direction='row' alignItems='center' spacing={1} sx={{ width: '100%' }}>
+                        <Typography variant='body2' sx={{ flex: 1 }}>{name || email}</Typography>
+                        {isCurrentTrainer && (
+                          <Chip label='Trainer' size='small' color='info' sx={{ height: 22, fontSize: '0.7rem' }} />
+                        )}
+                      </Stack>
+                    </li>
+                  )
+                }}
+                isOptionEqualToValue={(opt, val) => (opt._id || opt.email) === (val?._id || val?.email)}
+              />
+            </>
+          )}
+          {changeRoleType === 'manager' && changeRoleSelectedMember?.email === groupData?.trainerEmail && (
+            <>
+              <Typography variant='body2' color='text.secondary' sx={{ mt: 2, mb: 1 }}>
+                The current trainer will become the group manager. Select the new trainer:
+              </Typography>
+              <Autocomplete
+                options={(groupData?.members || []).filter(m => {
+                  const email = m.email || m.profile?.email
+                  if (!email) return false
+                  if (email === (changeRoleSelectedMember?.email || changeRoleSelectedMember?.profile?.email)) return false
+                  return true
+                })}
+                getOptionLabel={(m) => {
+                  const name = m.profile?.firstname && m.profile?.lastname
+                    ? `${m.profile.firstname} ${m.profile.lastname}`.trim()
+                    : null
+                  return name || m.email || m.profile?.email || ''
+                }}
+                value={changeRoleSecondSelectedMember}
+                onChange={(_, val) => setChangeRoleSecondSelectedMember(val)}
+                renderInput={(params) => (
+                  <TextField {...params} label='Select new trainer' placeholder='Search...' />
+                )}
+                renderOption={(props, m) => {
+                  const email = m.email || m.profile?.email
+                  const name = m.profile?.firstname && m.profile?.lastname
+                    ? `${m.profile.firstname} ${m.profile.lastname}`.trim()
+                    : null
+                  const isCurrentManager = email === groupData?.groupManagerEmail
+                  return (
+                    <li {...props} key={m._id || m.email}>
+                      <Stack direction='row' alignItems='center' spacing={1} sx={{ width: '100%' }}>
+                        <Typography variant='body2' sx={{ flex: 1 }}>{name || email}</Typography>
+                        {isCurrentManager && (
+                          <Chip label='Group Manager' size='small' color='secondary' sx={{ height: 22, fontSize: '0.7rem' }} />
+                        )}
+                      </Stack>
+                    </li>
+                  )
+                }}
+                isOptionEqualToValue={(opt, val) => (opt._id || opt.email) === (val?._id || val?.email)}
+              />
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setChangeRoleDialogOpen(false)
+              setChangeRoleType(null)
+              setChangeRoleSelectedMember(null)
+              setChangeRoleSecondSelectedMember(null)
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant='contained'
+            onClick={handleChangeRoleConfirm}
+            disabled={
+              !changeRoleSelectedMember ||
+              ((changeRoleType === 'trainer' && changeRoleSelectedMember?.email === groupData?.groupManagerEmail) ||
+                (changeRoleType === 'manager' && changeRoleSelectedMember?.email === groupData?.trainerEmail))
+                ? !changeRoleSecondSelectedMember
+                : false
+            }
+          >
+            Change
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* Messages Area */}
       <MessagesArea
         messages={messages}
@@ -1707,6 +2438,8 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
         session={session}
         theme={theme}
         isMobile={isMobile}
+        needApprovalForMessages={needApprovalForMessages}
+        isGroupManager={isGroupManager}
       />
 
       {/* Input Area or Selection Action Bar */}
@@ -1752,29 +2485,23 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
         onSelectMode={() => handleSelectMode(menuMessage)}
         onEditClick={async () => {
           setEditingMessage(menuMessage)
-          // Ensure message is decrypted before editing
           let messageText = menuMessage.message
           if (encryptionReadyRef.current && ChatEncryption.isEncrypted(messageText)) {
             try {
               messageText = await ChatEncryption.decryptGroupMessage(messageText, groupId)
             } catch (error) {
               console.warn('[Encryption] Failed to decrypt message for editing:', error)
-              // Continue with original message if decryption fails
             }
           }
-          setNewMessage(messageText) // Prepopulate input with message text
+          setNewMessage(messageText)
           handleMessageMenuClose()
-          // Focus input and set cursor to end after a short delay to ensure it's rendered
           setTimeout(() => {
             if (inputRef.current) {
-              // For MUI TextField with inputRef, the ref points directly to the input/textarea element
               inputRef.current.focus()
-              // Set cursor position to end of text
               const length = messageText.length
               if (inputRef.current.setSelectionRange) {
                 inputRef.current.setSelectionRange(length, length)
               } else if (inputRef.current.createTextRange) {
-                // Fallback for IE
                 const range = inputRef.current.createTextRange()
                 range.collapse(false)
                 range.select()
@@ -1782,9 +2509,20 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
             }
           }, 100)
         }}
-        onDeleteClick={() => handleDeleteClick(menuMessage._id, true)} // From menu
+        onDeleteClick={() => handleDeleteClick(menuMessage._id, true)}
         isMessageDeletedForEveryone={isMessageDeletedForEveryone}
         isMessageDeletedForMe={isMessageDeletedForMe}
+        isGroupManager={needApprovalForMessages && isGroupManager}
+        onApproveMessage={handleApproveMessage}
+        onRejectMessage={(msg) => {
+          setMessageToReject(msg)
+          setRejectDialogOpen(true)
+        }}
+        onEditByManagerClick={(msg) => {
+          setMessageToEditByManager(msg)
+          setEditByManagerText(msg?.message || '')
+          setEditByManagerDialogOpen(true)
+        }}
       />
 
       {/* Delete Confirmation Dialog */}
@@ -1806,17 +2544,23 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
         groupData={groupData}
       />
 
-      {/* Members Drawer */}
+      {/* Members Drawer: creator and group manager can add; creator remove only users they added, manager remove only users they added (backend enforces); change trainer only if creator added trainer */}
       <MembersDrawer
         open={membersDrawerOpen}
         onClose={() => setMembersDrawerOpen(false)}
         members={getAllMembers()}
         isCreator={isCreator}
-        onAddMember={() => setAddMemberDialogOpen(true)}
+        isGroupManager={isGroupManager}
+        onAddMember={(isCreator || isGroupManager) ? () => setAddMemberDialogOpen(true) : undefined}
         onRemoveMember={(member, event) => {
           setSelectedMember(member)
           setMemberMenuAnchor(event?.currentTarget || event)
         }}
+        groupData={groupData}
+        currentUserEmail={session?.user?.email}
+        onChangeTrainer={isClassroom && isCreator ? (member) => { setChangeRoleType('trainer'); setChangeRoleSelectedMember(null); setChangeRoleDialogOpen(true); } : undefined}
+        onChangeManager={isClassroom && isCreator ? (member) => { setChangeRoleType('manager'); setChangeRoleSelectedMember(null); setChangeRoleDialogOpen(true); } : undefined}
+        onAddTrainer={isClassroom && isGroupManager ? () => { setChangeRoleType('trainer'); setChangeRoleSelectedMember(null); setChangeRoleDialogOpen(true); } : undefined}
       />
 
       {/* Add Member Dialog */}
@@ -1859,7 +2603,8 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
         <DialogContent sx={{ p: { xs: 1.5, sm: 2 } }}>
           {getGroupDataForForm() && (
             <CreateGroupForm
-                showHeader={false}
+              showHeader={false}
+              groupType={groupData?.groupType || 'normal'}
               data={getGroupDataForForm()}
               onSubmit={handleAddMemberSubmit}
               onCancel={() => setAddMemberDialogOpen(false)}
@@ -1926,87 +2671,110 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
           </Typography>
         </DialogTitle>
         <DialogContent sx={{ p: { xs: 1.5, sm: 2 } }}>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={groupData?.isAnnouncementOnly || false}
-                onChange={(e) => handleSettingsUpdate(e.target.checked)}
-                color='primary'
-                size={isMobile ? 'small' : 'medium'}
-              />
-            }
-            label={
-              <Typography
-                sx={{
-                  fontSize: { xs: '0.875rem', sm: '0.9375rem' }
-                }}
-              >
-                Announcement mode (Only admins can send messages)
-              </Typography>
-            }
-          />
-          <Typography 
-            variant='caption' 
-            color='text.secondary' 
-            sx={{ 
-              display: 'block', 
-              mt: 1,
-              mb: 2,
-              fontSize: { xs: '0.75rem', sm: '0.8125rem' }
-            }}
-          >
-            When enabled, only the group creator can send messages. Other members can only view messages.
-          </Typography>
-          
-          {/* Divider between sections */}
-          <Divider 
-            sx={{ 
-              my: { xs: 2, sm: 2.5 },
-              borderColor: alpha(theme.palette.divider, isDarkMode ? 0.12 : 0.08)
-            }} 
-          />
-          
-          {/* Delete Group Section */}
-          <Box>
-            <Typography 
-              variant='subtitle2'
-              color='error'
-              sx={{ 
-                mb: 1.5,
-                fontSize: { xs: '0.875rem', sm: '0.9375rem' },
-                fontWeight: 600
-              }}
-            >
-              Warning!
-            </Typography>
-            <Typography 
-              variant='body2' 
-              color='text.secondary' 
-              sx={{ 
-                mb: 2,
-                fontSize: { xs: '0.75rem', sm: '0.8125rem' }
-              }}
-            >
-              Once you delete a group, there is no going back. Please be certain.
-            </Typography>
-            <Button
-              variant='outlined'
-              color='error'
-              onClick={() => setDeleteGroupDialogOpen(true)}
-              size={isMobile ? 'small' : 'medium'}
-              fullWidth
-              sx={{
-                fontSize: { xs: '0.8125rem', sm: '0.875rem' },
-                borderColor: alpha(theme.palette.error.main, 0.3),
-                '&:hover': {
-                  borderColor: theme.palette.error.main,
-                  background: alpha(theme.palette.error.main, 0.08)
+          {isCreator && (
+            <>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={groupData?.isAnnouncementOnly || false}
+                    onChange={(e) => handleSettingsUpdate(e.target.checked, undefined)}
+                    color='primary'
+                    size={isMobile ? 'small' : 'medium'}
+                  />
                 }
-              }}
-            >
-              Delete Group
-            </Button>
-          </Box>
+                label={
+                  <Typography sx={{ fontSize: { xs: '0.875rem', sm: '0.9375rem' } }}>
+                    Announcement mode (Only admins can send messages)
+                  </Typography>
+                }
+              />
+              <Typography
+                variant='caption'
+                color='text.secondary'
+                sx={{ display: 'block', mt: 1, mb: 2, fontSize: { xs: '0.75rem', sm: '0.8125rem' } }}
+              >
+                When enabled, only the group creator can send messages. Other members can only view messages.
+              </Typography>
+            </>
+          )}
+          {isClassroom && (isCreator || isGroupManager) && (
+            <>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={groupData?.needApprovalForMessages || false}
+                    onChange={(e) => handleSettingsUpdate(undefined, e.target.checked)}
+                    color='primary'
+                    size={isMobile ? 'small' : 'medium'}
+                  />
+                }
+                label={
+                  <Typography sx={{ fontSize: { xs: '0.875rem', sm: '0.9375rem' } }}>
+                    Need approval for messages
+                  </Typography>
+                }
+              />
+              <Typography
+                variant='caption'
+                color='text.secondary'
+                sx={{ display: 'block', mt: 0.5, mb: 2, fontSize: { xs: '0.75rem', sm: '0.8125rem' } }}
+              >
+                When enabled, trainer/student messages stay pending until the group manager approves, rejects, or edits them.
+              </Typography>
+            </>
+          )}
+          {/* Divider between sections */}
+          {isCreator && (
+            <>
+              <Divider 
+                sx={{ 
+                  my: { xs: 2, sm: 2.5 },
+                  borderColor: alpha(theme.palette.divider, isDarkMode ? 0.12 : 0.08)
+                }} 
+              />
+              {/* Delete Group Section - creator only */}
+              <Box>
+                <Typography 
+                  variant='subtitle2'
+                  color='error'
+                  sx={{ 
+                    mb: 1.5,
+                    fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+                    fontWeight: 600
+                  }}
+                >
+                  Warning!
+                </Typography>
+                <Typography 
+                  variant='body2' 
+                  color='text.secondary' 
+                  sx={{ 
+                    mb: 2,
+                    fontSize: { xs: '0.75rem', sm: '0.8125rem' }
+                  }}
+                >
+                  Once you delete a group, there is no going back. Please be certain.
+                </Typography>
+                <Button
+                  variant='outlined'
+                  color='error'
+                  onClick={() => setDeleteGroupDialogOpen(true)}
+                  size={isMobile ? 'small' : 'medium'}
+                  fullWidth
+                  sx={{
+                    fontSize: { xs: '0.8125rem', sm: '0.875rem' },
+                    borderColor: alpha(theme.palette.error.main, 0.3),
+                    '&:hover': {
+                      borderColor: theme.palette.error.main,
+                      background: alpha(theme.palette.error.main, 0.08)
+                    }
+                  }}
+                >
+                  Delete Group
+                </Button>
+              </Box>
+            </>
+          )}
         </DialogContent>
         <DialogActions
           sx={{

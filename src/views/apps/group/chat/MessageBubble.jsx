@@ -11,11 +11,16 @@ import {
   useTheme,
   alpha,
   Checkbox,
-  useMediaQuery
+  useMediaQuery,
+  Tooltip
 } from '@mui/material'
 import {
   MoreVert as MoreVertIcon,
-  Block as BlockIcon
+  Block as BlockIcon,
+  Schedule as ScheduleIcon,
+  Cancel as CancelIcon,
+  Edit as EditIcon,
+  CheckCircle as CheckCircleIcon
 } from '@mui/icons-material'
 
 const MessageBubble = ({
@@ -37,9 +42,34 @@ const MessageBubble = ({
   groupData,
   getAllMembers,
   theme,
-  isMobile
+  isMobile,
+  needApprovalForMessages = false,
+  isGroupManager = false
 }) => {
   const isDarkMode = theme.palette.mode === 'dark'
+  const status = message.approvalStatus || null
+  const editedByManager = message.editedByManager && status !== 'rejected'
+
+  // Status icon for sender (student/trainer): pending / rejected / edited by manager / approved
+  const showSenderStatusIcon = needApprovalForMessages && !isGroupManager && isOwnMessage &&
+    !isMessageDeletedForMe(message) && !isMessageDeletedForEveryone(message)
+  const senderStatusIcon = showSenderStatusIcon && (() => {
+    if (status === 'pending') return { Icon: ScheduleIcon, label: 'Pending approval', color: 'warning.main' }
+    if (status === 'rejected') return { Icon: CancelIcon, label: 'Rejected', color: 'error.main' }
+    if (editedByManager) return { Icon: EditIcon, label: 'Edited by manager', color: 'info.main' }
+    if (status === 'approved') return { Icon: CheckCircleIcon, label: 'Approved', color: 'success.main' }
+    return null
+  })()
+
+  // Status icon for group manager: pending / rejected / approved (on any message, to grab attention)
+  const showManagerStatusIcon = needApprovalForMessages && isGroupManager &&
+    !isMessageDeletedForMe(message) && !isMessageDeletedForEveryone(message) && status
+  const managerStatusIcon = showManagerStatusIcon && (() => {
+    if (status === 'pending') return { Icon: ScheduleIcon, label: 'Pending', color: 'warning.main' }
+    if (status === 'rejected') return { Icon: CancelIcon, label: 'Rejected', color: 'error.main' }
+    if (status === 'approved') return { Icon: CheckCircleIcon, label: 'Approved', color: 'success.main' }
+    return null
+  })()
 
   return (
     <Box
@@ -138,9 +168,10 @@ const MessageBubble = ({
           sx={{
             maxWidth: { xs: '85%', sm: '75%', md: '60%' },
             display: 'flex',
-            flexDirection: 'column',
-            alignItems: isOwnMessage ? 'flex-end' : 'flex-start',
-            position: 'relative'
+            flexDirection: 'row',
+            alignItems: 'flex-end',
+            gap: 0.5,
+            flexWrap: 'nowrap'
           }}
         >
           <Paper
@@ -152,6 +183,8 @@ const MessageBubble = ({
               }
             }}
             sx={{
+              flex: '1 1 auto',
+              minWidth: 0,
               p: { xs: 1.25, sm: 1.5 },
               borderRadius: { xs: 1.5, sm: 2 },
               background: isOwnMessage
@@ -162,7 +195,7 @@ const MessageBubble = ({
               color: isOwnMessage ? 'white' : 'text.primary',
               wordBreak: 'break-word',
               position: 'relative',
-              cursor: selectionMode ? 'pointer' : (isOwnMessage && message.readBy?.length > 0 ? 'pointer' : 'default'),
+              cursor: selectionMode ? 'pointer' : (isOwnMessage && message.readBy?.length > 0 && message.approvalStatus !== 'pending' && message.approvalStatus !== 'rejected' ? 'pointer' : 'default'),
               border: isOwnMessage
                 ? 'none'
                 : isDarkMode
@@ -241,6 +274,32 @@ const MessageBubble = ({
                         }}
                       />
                     )}
+                    {groupData?.groupType === 'classroom' && message.senderEmail === groupData?.groupManagerEmail && (
+                      <Chip
+                        label='Manager'
+                        size='small'
+                        sx={{
+                          height: { xs: 14, sm: 16 },
+                          fontSize: { xs: '0.55rem', sm: '0.6rem' },
+                          ml: 0.5,
+                          background: alpha(theme.palette.secondary.main, isDarkMode ? 0.2 : 0.12),
+                          color: theme.palette.secondary.main
+                        }}
+                      />
+                    )}
+                    {groupData?.groupType === 'classroom' && message.senderEmail === groupData?.trainerEmail && (
+                      <Chip
+                        label='Trainer'
+                        size='small'
+                        sx={{
+                          height: { xs: 14, sm: 16 },
+                          fontSize: { xs: '0.55rem', sm: '0.6rem' },
+                          ml: 0.5,
+                          background: alpha(theme.palette.info.main, isDarkMode ? 0.2 : 0.12),
+                          color: theme.palette.info.main
+                        }}
+                      />
+                    )}
                   </Typography>
                 )}
                 <Typography
@@ -257,6 +316,47 @@ const MessageBubble = ({
                 >
                   {message.message}
                 </Typography>
+                {/* Classroom: approval status for own messages (pending / rejected / edited by manager) */}
+                {isOwnMessage && (message.approvalStatus === 'pending' || message.approvalStatus === 'rejected' || message.editedByManager) && (
+                  <Box sx={{ mt: 0.5 }}>
+                    {message.approvalStatus === 'pending' && (
+                      <Chip
+                        label='Pending approval'
+                        size='small'
+                        sx={{
+                          height: 20,
+                          fontSize: '0.7rem',
+                          background: alpha(theme.palette.warning.main, 0.3),
+                          color: isOwnMessage ? 'white' : theme.palette.warning.dark
+                        }}
+                      />
+                    )}
+                    {message.approvalStatus === 'rejected' && (
+                      <Chip
+                        label={message.rejectedReason ? `Rejected: ${message.rejectedReason}` : 'Rejected'}
+                        size='small'
+                        sx={{
+                          height: 20,
+                          fontSize: '0.7rem',
+                          background: alpha(theme.palette.error.main, 0.3),
+                          color: isOwnMessage ? 'white' : theme.palette.error.dark
+                        }}
+                      />
+                    )}
+                    {message.editedByManager && message.approvalStatus !== 'rejected' && (
+                      <Chip
+                        label='Edited by manager'
+                        size='small'
+                        sx={{
+                          height: 20,
+                          fontSize: '0.7rem',
+                          background: alpha(theme.palette.info.main, 0.3),
+                          color: isOwnMessage ? 'white' : theme.palette.info.dark
+                        }}
+                      />
+                    )}
+                  </Box>
+                )}
                 {/* Three dots menu - appears on hover for all messages, span not IconButton */}
                 {!selectionMode && !isMessageDeletedForMe(message) && !isMessageDeletedForEveryone(message) && (
                   <Box
@@ -318,7 +418,7 @@ const MessageBubble = ({
                   >
                     {formatMessageTime(message.createdAt)}
                   </Typography>
-                  {isOwnMessage && (
+                  {isOwnMessage && message.approvalStatus !== 'pending' && message.approvalStatus !== 'rejected' && (
                     <Box
                       sx={{
                         ml: 0.25,
@@ -344,6 +444,30 @@ const MessageBubble = ({
               </>
             )}
           </Paper>
+          {/* Approval status icon to the right of bubble (no overlap) */}
+          {(senderStatusIcon || managerStatusIcon) && (() => {
+            const statusInfo = senderStatusIcon || managerStatusIcon
+            const StatusIcon = statusInfo.Icon
+            return (
+              <Box
+                sx={{
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  alignSelf: 'flex-end',
+                  color: statusInfo.color,
+                  pb: 0.25
+                }}
+              >
+                <Tooltip title={statusInfo.label} arrow placement='top'>
+                  <Box component='span' sx={{ lineHeight: 0, display: 'inline-flex' }}>
+                    <StatusIcon sx={{ fontSize: 14, opacity: 0.95 }} />
+                  </Box>
+                </Tooltip>
+              </Box>
+            )
+          })()}
         </Box>
       </Box>
     </Box>

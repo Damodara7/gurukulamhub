@@ -24,6 +24,7 @@ import {
   MenuItem,
   FormControlLabel,
   Switch,
+  Autocomplete,
   useTheme
 } from '@mui/material'
 import { alpha } from '@mui/material/styles'
@@ -59,8 +60,9 @@ const validateForm = formData => {
 
 const formFieldOrder = ['groupName', 'description']
 
-const CreateGroupForm = ({ onSubmit, onCancel, data = null, showHeader = true }) => {
+const CreateGroupForm = ({ onSubmit, onCancel, data = null, showHeader = true, groupType = 'normal' }) => {
   const theme = useTheme()
+  const isClassroom = groupType === 'classroom'
   const initialFormData = {
     groupName: '',
     description: '',
@@ -82,9 +84,12 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null, showHeader = true })
   const [selectedUsers, setSelectedUsers] = useState([])
   const [matchedUserIds, setMatchedUserIds] = useState([])
   const [unmatchedUserIds, setUnmatchedUserIds] = useState([])
-  // Add this state to track the filters array in new format
   const [filters, setFilters] = useState([])
   const [isHeaderExpanded, setIsHeaderExpanded] = useState(true)
+  // Classroom-only: TRAINER, GROUP_MANAGER, needApprovalForMessages
+  const [trainerId, setTrainerId] = useState(null)
+  const [groupManagerId, setGroupManagerId] = useState(null)
+  const [needApprovalForMessages, setNeedApprovalForMessages] = useState(false)
   console.log('selected user in the creategroup form ', selectedUsers)
   //if edit group?
 
@@ -99,10 +104,20 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null, showHeader = true })
         isAnnouncementOnly: data.isAnnouncementOnly || false,
         members: data.members || []
       })
-      // Set initial filters from group data
       setFilters(data.filters || [])
-      // Set initial selected users
-      setSelectedUsers(data.members || [])
+      if (data.groupType === 'classroom') {
+        setTrainerId(data.trainerId || null)
+        setGroupManagerId(data.groupManagerId || null)
+        setNeedApprovalForMessages(data.needApprovalForMessages ?? false)
+        const trainerIdStr = data.trainerId?.toString?.() || data.trainerId
+        const managerIdStr = data.groupManagerId?.toString?.() || data.groupManagerId
+        const studentIds = (data.members || []).filter(
+          m => m?.toString?.() !== trainerIdStr && m?.toString?.() !== managerIdStr
+        )
+        setSelectedUsers(studentIds)
+      } else {
+        setSelectedUsers(data.members || [])
+      }
 
       // Calculate matched users based on filters if they exist
       if (data.filters && data.filters.length > 0) {
@@ -303,17 +318,31 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null, showHeader = true })
     }
 
     // Prepare submission data
+    let members = selectedUsers
+    if (isClassroom) {
+      const allIds = [trainerId, groupManagerId, ...selectedUsers].filter(Boolean)
+      members = [...new Set(allIds.map(id => id?.toString?.() ? id.toString() : id))]
+    }
+
     const submission = {
-      _id: data?._id || null, // Include ID for updates
+      _id: data?._id || null,
       groupName: formData.groupName.trim(),
       description: formData.description.trim(),
       status: formData.status,
       isAnnouncementOnly: formData.isAnnouncementOnly,
-      filters: filters, // Include the filters array
+      filters: filters,
       createdBy: data?.createdBy || session?.user?.id || null,
       creatorEmail: data?.creatorEmail || session?.user?.email || null,
-      members: selectedUsers,
-      membersCount: selectedUsers.length
+      members,
+      membersCount: members.length
+    }
+
+    if (isClassroom) {
+      submission.trainerId = trainerId || null
+      submission.trainerEmail = trainerId ? (users.find(u => u._id?.toString() === trainerId?.toString())?.email || null) : null
+      submission.groupManagerId = groupManagerId || null
+      submission.groupManagerEmail = groupManagerId ? (users.find(u => u._id?.toString() === groupManagerId?.toString())?.email || null) : null
+      submission.needApprovalForMessages = needApprovalForMessages
     }
 
     try {
@@ -342,6 +371,17 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null, showHeader = true })
   const handleUserSelection = newSelectedUsers => {
     setSelectedUsers(newSelectedUsers)
   }
+
+  // For classroom, members multi-select only shows potential students (exclude trainer & manager)
+  const usersForMembers = isClassroom
+    ? users.filter(
+        u =>
+          u._id?.toString() !== trainerId?.toString() &&
+          u._id?.toString() !== groupManagerId?.toString()
+      )
+    : users
+
+  const canSubmitClassroom = !isClassroom || (trainerId && groupManagerId)
 
   console.log('selected user in the creategroup form after the handleUserSelection ', selectedUsers)
   return (
@@ -615,10 +655,74 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null, showHeader = true })
                   </Typography>
                 </Grid>
 
+                {isClassroom && (
+                  <>
+                    <Grid item xs={12}>
+                      <Divider sx={{ my: 1 }} />
+                      <Typography variant='subtitle2' color='primary' sx={{ fontWeight: 600, mb: 1 }}>
+                        Classroom roles (select Group Manager first, then Trainer)
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <Autocomplete
+                        size='small'
+                        options={users.filter(u => u._id?.toString() !== trainerId?.toString())}
+                        getOptionLabel={(u) =>
+                          u.profile?.firstname && u.profile?.lastname
+                            ? `${u.profile.firstname} ${u.profile.lastname}`
+                            : u.email || ''
+                        }
+                        value={users.find(u => u._id?.toString() === groupManagerId?.toString()) || null}
+                        onChange={(_, val) => setGroupManagerId(val?._id || null)}
+                        renderInput={(params) => (
+                          <TextField {...params} label='GROUP MANAGER' placeholder='Search user...' />
+                        )}
+                        isOptionEqualToValue={(opt, val) => opt._id?.toString() === val?._id?.toString()}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <Autocomplete
+                        size='small'
+                        options={users.filter(u => u._id?.toString() !== groupManagerId?.toString())}
+                        getOptionLabel={(u) =>
+                          u.profile?.firstname && u.profile?.lastname
+                            ? `${u.profile.firstname} ${u.profile.lastname}`
+                            : u.email || ''
+                        }
+                        value={users.find(u => u._id?.toString() === trainerId?.toString()) || null}
+                        onChange={(_, val) => setTrainerId(val?._id || null)}
+                        renderInput={(params) => (
+                          <TextField {...params} label='TRAINER' placeholder='Search user...' />
+                        )}
+                        isOptionEqualToValue={(opt, val) => opt._id?.toString() === val?._id?.toString()}
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={needApprovalForMessages}
+                            onChange={e => setNeedApprovalForMessages(e.target.checked)}
+                            color='primary'
+                          />
+                        }
+                        label={
+                          <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                            Need approval for messages
+                          </Typography>
+                        }
+                      />
+                      <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mt: 0.5, ml: 4.5 }}>
+                        When enabled, trainer/student messages stay pending until the group manager approves, rejects, or edits them.
+                      </Typography>
+                    </Grid>
+                  </>
+                )}
+
                 <Grid item xs={12}>
                   <GroupByFilter
-                    users={users}
-                    key={data}
+                    users={usersForMembers}
+                    key={data ? `${data._id}-${trainerId}-${groupManagerId}` : `create-${trainerId}-${groupManagerId}`}
                     onFilterChange={(userIds, filtersArray) => handleFilterChange(userIds, filtersArray)}
                     initialFilters={filters}
                   />
@@ -629,10 +733,10 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null, showHeader = true })
                     <PeopleIcon
                       sx={{ fontSize: 20, mr: 1, verticalAlign: 'middle', color: theme.palette.primary.main }}
                     />
-                    Group Members
+                    {isClassroom ? 'Students' : 'Group Members'}
                   </Typography>
                   <GroupUserMultiSelect
-                    users={users}
+                    users={usersForMembers}
                     selectedUsers={selectedUsers}
                     onSelectChange={handleUserSelection}
                     matchedUserIds={matchedUserIds}
@@ -657,7 +761,7 @@ const CreateGroupForm = ({ onSubmit, onCancel, data = null, showHeader = true })
                       variant='contained'
                       color='primary'
                       style={{ color: 'white' }}
-                      disabled={isSubmitting || selectedUsers.length === 0}
+                      disabled={isSubmitting || selectedUsers.length === 0 || !canSubmitClassroom}
                     >
                       {isSubmitting ? 'Saving...' : data ? 'Update ' : 'Submit'}
                     </Button>

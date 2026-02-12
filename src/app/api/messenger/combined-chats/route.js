@@ -69,7 +69,7 @@ export async function GET(req) {
       const groups = groupsResult.result || []
 
       for (const group of groups) {
-        // Get last message for this group
+        // Get last message for this group (chronologically latest)
         const lastMessageResult = await GroupChatMessage.findOne({
           groupId: group._id,
           isDeleted: false,
@@ -78,18 +78,56 @@ export async function GET(req) {
           .sort({ createdAt: -1 })
           .lean()
 
+        const needApproval = group.needApprovalForMessages === true
+        const actualLastTimestamp = lastMessageResult?.createdAt || null
+
         let lastMessage = null
         if (lastMessageResult) {
-          // Check if deleted for this user
           const isDeletedForUser = lastMessageResult.deletedFor?.some(d => d.userEmail === userEmail)
           if (!isDeletedForUser) {
-            lastMessage = {
-              _id: lastMessageResult._id,
-              message: lastMessageResult.message,
-              senderEmail: lastMessageResult.senderEmail,
-              createdAt: lastMessageResult.createdAt,
-              isEdited: lastMessageResult.isEdited,
-              deletedForEveryone: lastMessageResult.deletedForEveryone
+            const isFromRequester = lastMessageResult.senderEmail === userEmail
+            const isPendingOrRejected = (lastMessageResult.approvalStatus === 'pending' || lastMessageResult.approvalStatus === 'rejected')
+
+            // For others: pending/rejected must not be shown as last message; use last non-pending, non-rejected
+            if (needApproval && isPendingOrRejected && !isFromRequester) {
+              const lastVisibleResult = await GroupChatMessage.findOne({
+                groupId: group._id,
+                isDeleted: false,
+                'deletedFor.userEmail': { $ne: userEmail },
+                _id: { $ne: lastMessageResult._id },
+                $or: [
+                  { senderEmail: userEmail },
+                  { approvalStatus: { $nin: ['pending', 'rejected'] } },
+                  { approvalStatus: null }
+                ]
+              })
+                .sort({ createdAt: -1 })
+                .lean()
+              if (lastVisibleResult) {
+                const deletedForUser = lastVisibleResult.deletedFor?.some(d => d.userEmail === userEmail)
+                if (!deletedForUser) {
+                  lastMessage = {
+                    _id: lastVisibleResult._id,
+                    message: lastVisibleResult.message,
+                    senderEmail: lastVisibleResult.senderEmail,
+                    createdAt: lastVisibleResult.createdAt,
+                    isEdited: lastVisibleResult.isEdited,
+                    deletedForEveryone: lastVisibleResult.deletedForEveryone,
+                    approvalStatus: lastVisibleResult.approvalStatus || undefined
+                  }
+                }
+              }
+              // else lastMessage stays null; sort will use actualLastTimestamp
+            } else {
+              lastMessage = {
+                _id: lastMessageResult._id,
+                message: lastMessageResult.message,
+                senderEmail: lastMessageResult.senderEmail,
+                createdAt: lastMessageResult.createdAt,
+                isEdited: lastMessageResult.isEdited,
+                deletedForEveryone: lastMessageResult.deletedForEveryone,
+                approvalStatus: lastMessageResult.approvalStatus || undefined
+              }
             }
           }
         }
@@ -115,6 +153,7 @@ export async function GET(req) {
           id: group._id,
           name: group.groupName || 'Unnamed Group',
           lastMessage,
+          lastMessageTimestamp: actualLastTimestamp,
           unreadCount: unreadCount || 0,
           avatar: null,
           avatarColor: null,

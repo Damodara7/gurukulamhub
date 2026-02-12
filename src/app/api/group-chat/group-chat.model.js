@@ -62,6 +62,25 @@ export const groupChatMessageSchema = new mongoose.Schema(
     isEdited: {
       type: Boolean,
       default: false
+    },
+    // --- Classroom message approval (when group.needApprovalForMessages is true) ---
+    approvalStatus: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: null
+    },
+    approvedAt: Date,
+    approvedBy: String,
+    rejectedAt: Date,
+    rejectedBy: String,
+    rejectedReason: String,
+    editedByManager: {
+      type: Boolean,
+      default: false
+    },
+    originalMessage: {
+      type: String,
+      default: null
     }
   },
   { timestamps: true }
