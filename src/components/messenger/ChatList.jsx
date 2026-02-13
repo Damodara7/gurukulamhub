@@ -121,14 +121,14 @@ const ChatList = () => {
   const [searchEmail, setSearchEmail] = useState('')
   const [searching, setSearching] = useState(false)
   const [searchResult, setSearchResult] = useState(null)
-  const [activeTab, setActiveTab] = useState(0) // 0: All, 1: Individual, 2: Classroom groups, 3: Groups, 4: Unread
+  const [activeTab, setActiveTab] = useState(0) // 0: All, 1: Individual, 2: Groups, 3: Classroom groups, 4: Unread
 
   // Calculate counts for each tab
   const tabCounts = useMemo(() => {
     const allCount = chats.length
     const individualCount = chats.filter(chat => chat.type === 'individual').length
     const classroomGroupsCount = chats.filter(chat => chat.type === 'group' && chat.groupType === 'classroom').length
-    const groupsCount = chats.filter(chat => chat.type === 'group').length
+    const groupsCount = chats.filter(chat => chat.type === 'group' && chat.groupType==='normal').length
     const unreadCount = chats.filter(chat => (chat.unreadCount || 0) > 0).length
     
     return {
@@ -800,9 +800,9 @@ const ChatList = () => {
     if (activeTab === 1) {
       sorted = sorted.filter(chat => chat.type === 'individual')
     } else if (activeTab === 2) {
-      sorted = sorted.filter(chat => chat.type === 'group' && chat.groupType === 'classroom')
+      sorted = sorted.filter(chat => chat.type === 'group' && chat.groupType==='normal')
     } else if (activeTab === 3) {
-      sorted = sorted.filter(chat => chat.type === 'group')
+      sorted = sorted.filter(chat => chat.type === 'group' && chat.groupType === 'classroom')
     } else if (activeTab === 4) {
       sorted = sorted.filter(chat => (chat.unreadCount || 0) > 0)
     }
@@ -990,9 +990,9 @@ const ChatList = () => {
                 : activeTab === 1 
                   ? 'No individual chats yet' 
                   : activeTab === 2 
-                    ? 'No classroom groups yet' 
+                    ? 'No groups yet' 
                     : activeTab === 3 
-                      ? 'No groups yet' 
+                      ? 'No classroom groups yet' 
                       : activeTab === 4 
                         ? 'No unread messages' 
                         : 'No chats yet. Start a new conversation!'}
