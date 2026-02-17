@@ -878,6 +878,15 @@ const ChatList = () => {
     }
   }
 
+  // Check if we already have a chat with the searched user
+  const existingChatWithSearchUser = useMemo(() => {
+    if (!searchResult?.email || !chats.length) return null
+    const otherEmail = searchResult.email.toLowerCase()
+    return chats.find(
+      c => c.type === 'individual' && (c.email || '').toLowerCase() === otherEmail
+    ) || null
+  }, [searchResult, chats])
+
   // Handle start new chat
   const handleStartChat = () => {
     if (!searchResult) return
@@ -888,7 +897,16 @@ const ChatList = () => {
     setSearchDialogOpen(false)
     setSearchEmail('')
     setSearchResult(null)
-    router.push(`/messanger/${chatId}`)
+    router.push(`/messanger/${encodeURIComponent(chatId)}`)
+  }
+
+  // Handle continue existing chat (when user is already in chat list)
+  const handleContinueChat = () => {
+    if (!existingChatWithSearchUser) return
+    setSearchDialogOpen(false)
+    setSearchEmail('')
+    setSearchResult(null)
+    handleChatClick(existingChatWithSearchUser)
   }
 
   if (loading) {
@@ -1250,47 +1268,54 @@ const ChatList = () => {
             />
 
             {searchResult && (
-              <Box
-                sx={{
-                  p: 2,
-                  borderRadius: 2,
-                  bgcolor: isDarkMode
-                    ? alpha(theme.palette.primary.main, 0.1)
-                    : alpha(theme.palette.primary.main, 0.05),
-                  border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`
-                }}
-              >
-                <Stack direction='row' spacing={2} alignItems='center'>
-                  <Avatar
-                    sx={{
-                      bgcolor: stringToColor(searchResult.email),
-                      color: 'white',
-                      fontWeight: 700,
-                      width: 48,
-                      height: 48
-                    }}
-                  >
-                    {searchResult.profile
-                      ? (
-                          searchResult.profile.firstname?.[0] ||
-                          searchResult.profile.lastname?.[0] ||
-                          searchResult.email[0]
-                        ).toUpperCase()
-                      : searchResult.email[0].toUpperCase()}
-                  </Avatar>
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant='subtitle1' fontWeight={600}>
+              <>
+                {existingChatWithSearchUser && (
+                  <Typography variant='body2' color='text.secondary' sx={{ fontStyle: 'italic' }}>
+                    You already have a chat with this user.
+                  </Typography>
+                )}
+                <Box
+                  sx={{
+                    p: 2,
+                    borderRadius: 2,
+                    bgcolor: isDarkMode
+                      ? alpha(theme.palette.primary.main, 0.1)
+                      : alpha(theme.palette.primary.main, 0.05),
+                    border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`
+                  }}
+                >
+                  <Stack direction='row' spacing={2} alignItems='center'>
+                    <Avatar
+                      sx={{
+                        bgcolor: stringToColor(searchResult.email),
+                        color: 'white',
+                        fontWeight: 700,
+                        width: 48,
+                        height: 48
+                      }}
+                    >
                       {searchResult.profile
-                        ? `${searchResult.profile.firstname || ''} ${searchResult.profile.lastname || ''}`.trim() ||
-                          searchResult.email.split('@')[0]
-                        : searchResult.email.split('@')[0]}
-                    </Typography>
-                    <Typography variant='body2' color='text.secondary'>
-                      {searchResult.email}
-                    </Typography>
-                  </Box>
-                </Stack>
-              </Box>
+                        ? (
+                            searchResult.profile.firstname?.[0] ||
+                            searchResult.profile.lastname?.[0] ||
+                            searchResult.email[0]
+                          ).toUpperCase()
+                        : searchResult.email[0].toUpperCase()}
+                    </Avatar>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant='subtitle1' fontWeight={600}>
+                        {searchResult.profile
+                          ? `${searchResult.profile.firstname || ''} ${searchResult.profile.lastname || ''}`.trim() ||
+                            searchResult.email.split('@')[0]
+                          : searchResult.email.split('@')[0]}
+                      </Typography>
+                      <Typography variant='body2' color='text.secondary'>
+                        {searchResult.email}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </Box>
+              </>
             )}
           </Stack>
         </DialogContent>
@@ -1315,7 +1340,12 @@ const ChatList = () => {
           >
             Search
           </Button>
-          {searchResult && (
+          {searchResult && existingChatWithSearchUser && (
+            <Button variant='contained' color='primary' component='label' onClick={handleContinueChat} startIcon={<SendIcon />} sx={{ ml: 1, color: 'white' }}>
+              Continue chat
+            </Button>
+          )}
+          {searchResult && !existingChatWithSearchUser && (
             <Button variant='contained' color='success' component='label' onClick={handleStartChat} startIcon={<SendIcon />} sx={{ ml: 1, color: 'white' }}>
               Start Chat
             </Button>
