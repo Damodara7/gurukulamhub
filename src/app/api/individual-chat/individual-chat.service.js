@@ -67,14 +67,15 @@ export const getMessagesByChatId = async (chatId, options = {}) => {
 export const addMessage = async (messageData) => {
   await connectMongo()
   try {
-    const { senderEmail, receiverEmail, message, messageType = 'text' } = messageData
+    const { senderEmail, receiverEmail, message, messageType = 'text', attachments } = messageData
 
-    // Validate required fields
-    if (!senderEmail || !receiverEmail || !message) {
+    // Validate required fields (message can be empty if attachments present)
+    const hasContent = (message && message.trim()) || (attachments && attachments.length > 0)
+    if (!senderEmail || !receiverEmail || !hasContent) {
       return {
         status: 'error',
         result: null,
-        message: 'Missing required fields: senderEmail, receiverEmail, and message are required'
+        message: 'Missing required fields: senderEmail, receiverEmail, and either message or attachments are required'
       }
     }
 
@@ -124,13 +125,17 @@ export const addMessage = async (messageData) => {
     const chatId = generateChatId(senderEmail, receiverEmail)
 
     // Create message - preserve newlines in content, only trim leading whitespace
-    const newMessage = await IndividualChatMessage.create({
+    const createPayload = {
       chatId,
       senderEmail,
       receiverEmail,
-      message: trimLeadingNewlines(message),
-      messageType
-    })
+      message: message ? trimLeadingNewlines(message) : '',
+      messageType: attachments?.length ? 'file' : messageType
+    }
+    if (attachments && attachments.length > 0) {
+      createPayload.attachments = attachments
+    }
+    const newMessage = await IndividualChatMessage.create(createPayload)
 
     const savedMessage = await IndividualChatMessage.findById(newMessage._id).lean()
 
@@ -611,7 +616,10 @@ export const getUserChats = async (userEmail) => {
             senderEmail: lastMessage.senderEmail,
             createdAt: lastMessage.createdAt,
             isEdited: lastMessage.isEdited,
-            deletedForEveryone: lastMessage.deletedForEveryone
+            deletedForEveryone: lastMessage.deletedForEveryone,
+            attachments: lastMessage.attachments || [],
+            messageType: lastMessage.messageType,
+            readBy: lastMessage.readBy || []
           } : null,
           // Store actual last message timestamp for sorting (even if cleared for user)
           lastMessageTimestamp: actualLastMessage?.createdAt || null,

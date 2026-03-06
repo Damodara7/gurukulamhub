@@ -79,18 +79,20 @@ export async function POST(request) {
     }
 
     const reqBody = await request.json()
-    const { groupId, message, messageType = 'text' } = reqBody
+    const { groupId, message, messageType = 'text', attachments } = reqBody
 
-    if (!groupId || !message) {
-      const errorResponse = ApiResponseUtils.createErrorResponse('Group ID and message are required')
+    const hasContent = (message != null && String(message).trim()) || (Array.isArray(attachments) && attachments.length > 0)
+    if (!groupId || !hasContent) {
+      const errorResponse = ApiResponseUtils.createErrorResponse('Group ID and either message or attachments are required')
       return ApiResponseUtils.sendErrorResponse(errorResponse)
     }
 
     const newMessage = await ArtifactService.addMessage({
       groupId,
       senderEmail: session.user.email,
-      message,
-      messageType
+      message: message != null ? message : '',
+      messageType,
+      attachments: Array.isArray(attachments) ? attachments : undefined
     })
 
     if (newMessage?.status === 'success') {

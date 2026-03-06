@@ -70,6 +70,7 @@ export const API_URLS = {
     USERS_INDIVIDUAL_CHAT_ACTIONS: `${API_BASE_URL}/individual-chat/actions`,
     USERS_INDIVIDUAL_CHAT_CHATS: `${API_BASE_URL}/individual-chat/chats`,
     USERS_INDIVIDUAL_CHAT_SEARCH: `${API_BASE_URL}/individual-chat/search`,
+    CHAT_UPLOAD: `${API_BASE_URL}/chat-upload`,
     MESSENGER_COMBINED_CHATS: `${API_BASE_URL}/messenger/combined-chats`
   },
   v1: {

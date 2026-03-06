@@ -19,14 +19,24 @@ export const individualChatMessageSchema = new mongoose.Schema(
     },
     message: {
       type: String,
-      required: true,
-      trim: true
+      trim: true,
+      default: ''
     },
     messageType: {
       type: String,
       enum: ['text', 'image', 'file', 'system'],
       default: 'text'
     },
+    attachments: [
+      {
+        fileName: { type: String, required: true },
+        fileType: { type: String, required: true },
+        fileSize: { type: Number, default: 0 },
+        url: { type: String, required: true },
+        key: { type: String, default: null },
+        uploadedAt: { type: Date, default: Date.now }
+      }
+    ],
     readBy: [
       {
         userEmail: {

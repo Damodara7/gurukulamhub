@@ -29,7 +29,10 @@ import {
   Search as SearchIcon, 
   Group as GroupIcon, 
   Person as PersonIcon, 
-  Send as SendIcon
+  Send as SendIcon,
+  Photo as PhotoIcon,
+  Done as DoneIcon,
+  DoneAll as DoneAllIcon
 } from '@mui/icons-material'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
@@ -391,7 +394,10 @@ const ChatList = () => {
                     senderEmail: message.senderEmail,
                     createdAt: message.createdAt,
                     isEdited: message.isEdited,
-                    deletedForEveryone: message.deletedForEveryone
+                    deletedForEveryone: message.deletedForEveryone,
+                    attachments: message.attachments || [],
+                    messageType: message.messageType,
+                    readBy: message.readBy || []
                   },
                   // Update lastMessageTimestamp for sorting (even if message is cleared later)
                   lastMessageTimestamp: message.createdAt,
@@ -623,7 +629,9 @@ const ChatList = () => {
                     createdAt: message.createdAt,
                     isEdited: message.isEdited,
                     deletedForEveryone: message.deletedForEveryone,
-                    approvalStatus: message.approvalStatus
+                    approvalStatus: message.approvalStatus,
+                    attachments: message.attachments || [],
+                    messageType: message.messageType
                   },
                   // Update lastMessageTimestamp for sorting (even if message is cleared later)
                   lastMessageTimestamp: message.createdAt,
@@ -1129,43 +1137,97 @@ const ChatList = () => {
                                       const isGroup = chat.type === 'group'
                                       const isSender = lm.senderEmail === session?.user?.email
                                       const msg = lm.message || ''
-                                      if (isGroup && isSender && lm.approvalStatus === 'pending') {
+                                      const hasImageAttachments =
+                                        (lm.attachments || []).some(
+                                          a => (a.fileType || '').startsWith('image/') || /\.(jpe?g|png|webp|gif)$/i.test(a.fileName || '')
+                                        ) ||
+                                        lm.messageType === 'image'
+                                      const readByReceiver = chat.type === 'individual' && (lm.readBy || []).some(
+                                        r => (r.userEmail || r) === (chat.email || '')
+                                      )
+                                      const ReadByStatusIcon = readByReceiver ? DoneAllIcon : DoneIcon
+                                      const textContent = (() => {
+                                        if (isGroup && isSender && lm.approvalStatus === 'pending') {
+                                          return (
+                                            <>
+                                              {msg}
+                                              <Box
+                                                component='span'
+                                                sx={{
+                                                  color: 'warning.main',
+                                                  fontWeight: 600,
+                                                  fontStyle: 'italic',
+                                                  ml: 0.25
+                                                }}
+                                              >
+                                                (pending)
+                                              </Box>
+                                            </>
+                                          )
+                                        }
+                                        if (isGroup && isSender && lm.approvalStatus === 'rejected') {
+                                          return (
+                                            <>
+                                              {msg}
+                                              <Box
+                                                component='span'
+                                                sx={{
+                                                  color: 'error.main',
+                                                  fontWeight: 600,
+                                                  fontStyle: 'italic',
+                                                  ml: 0.25
+                                                }}
+                                              >
+                                                (Rejected)
+                                              </Box>
+                                            </>
+                                          )
+                                        }
+                                        return msg
+                                      })()
+                                      if (hasImageAttachments) {
                                         return (
                                           <>
-                                            {msg}
-                                            <Box
-                                              component='span'
+                                            {isSender && (
+                                              <ReadByStatusIcon
+                                                sx={{
+                                                  fontSize: '1rem',
+                                                  verticalAlign: 'middle',
+                                                  mr: 0.5,
+                                                  flexShrink: 0,
+                                                  color: readByReceiver ? '#25D366' : 'text.secondary'
+                                                }}
+                                              />
+                                            )}
+                                            <PhotoIcon
                                               sx={{
-                                                color: 'warning.main',
-                                                fontWeight: 600,
-                                                fontStyle: 'italic',
-                                                ml: 0.25
+                                                fontSize: '1rem',
+                                                verticalAlign: 'middle',
+                                                mr: 0.5,
+                                                flexShrink: 0
                                               }}
-                                            >
-                                              (pending)
-                                            </Box>
+                                            />
+                                            {textContent || 'Photo'}
                                           </>
                                         )
                                       }
-                                      if (isGroup && isSender && lm.approvalStatus === 'rejected') {
+                                      if (isSender) {
                                         return (
                                           <>
-                                            {msg}
-                                            <Box
-                                              component='span'
+                                            <ReadByStatusIcon
                                               sx={{
-                                                color: 'error.main',
-                                                fontWeight: 600,
-                                                fontStyle: 'italic',
-                                                ml: 0.25
+                                                fontSize: '1rem',
+                                                verticalAlign: 'middle',
+                                                mr: 0.5,
+                                                flexShrink: 0,
+                                                color: readByReceiver ? '#25D366' : 'text.secondary'
                                               }}
-                                            >
-                                              (Rejected)
-                                            </Box>
+                                            />
+                                            {textContent}
                                           </>
                                         )
                                       }
-                                      return msg
+                                      return textContent
                                     })()
                                 : 'No messages yet'}
                             </Typography>

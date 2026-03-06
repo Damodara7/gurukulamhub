@@ -112,6 +112,8 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
   const [changeRoleSecondSelectedMember, setChangeRoleSecondSelectedMember] = useState(null) // new manager when trainer chosen is current manager; new trainer when manager chosen is current trainer
   const [encryptionReady, setEncryptionReady] = useState(false)
   const encryptionReadyRef = useRef(false)
+  const [selectedFiles, setSelectedFiles] = useState([])
+  const [uploadProgress, setUploadProgress] = useState(null)
   const messagesRef = useRef([])
   const groupDataRef = useRef(null)
   const wsRefRef = useRef(null)
@@ -983,11 +985,11 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
     return text.replace(/^[\n\r\s]+/, '').trimEnd()
   }
 
-  const handleSendMessage = async () => {
-    if (!newMessage.trim() || !canSend || sending) return
-
-    // Trim only leading newlines, preserve newlines in the message content
-    const messageText = trimLeadingNewlines(newMessage)
+  const handleSendMessage = async (textOrUndefined, filesOrUndefined) => {
+    const messageText = trimLeadingNewlines(typeof textOrUndefined === 'string' ? textOrUndefined : newMessage)
+    const files = Array.isArray(filesOrUndefined) ? filesOrUndefined : selectedFiles
+    const hasContent = messageText.trim() || (files && files.length > 0)
+    if (!hasContent || !canSend || sending) return
 
     // If editing, update the message instead of sending new one
     if (editingMessage) {
@@ -1041,11 +1043,38 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
     // Normal send message flow
     setNewMessage('')
     setSending(true)
+    setSelectedFiles([])
 
     try {
-      // Encrypt message if encryption is ready
+      let attachments = []
+      if (files && files.length > 0) {
+        setUploadProgress(0)
+        const formData = new FormData()
+        formData.append('conversationId', groupId)
+        formData.append('conversationType', 'group')
+        files.forEach(f => formData.append('files', f))
+        const uploadRes = await fetch(API_URLS.v0.CHAT_UPLOAD, {
+          method: 'POST',
+          body: formData,
+          credentials: 'include'
+        })
+        setUploadProgress(100)
+        const uploadData = await uploadRes.json()
+        if (uploadData?.status !== 'success' || !uploadData?.result?.uploaded) {
+          toast.error(uploadData?.message || 'File upload failed')
+          setNewMessage(messageText)
+          setSelectedFiles(files)
+          setSending(false)
+          setUploadProgress(null)
+          return
+        }
+        attachments = uploadData.result.uploaded
+        setUploadProgress(null)
+      }
+
+      // Encrypt message if encryption is ready (only text part)
       let messageToSend = messageText
-      if (encryptionReadyRef.current) {
+      if (messageText && encryptionReadyRef.current) {
         try {
           messageToSend = await ChatEncryption.encryptGroupMessage(messageText, groupId)
         } catch (error) {
@@ -1053,46 +1082,55 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
           toast.error('Failed to encrypt message. Please try again.')
           setSending(false)
           setNewMessage(messageText)
+          if (files?.length) setSelectedFiles(files)
           return
         }
       }
 
       const result = await RestApi.post(API_URLS.v0.USERS_GROUP_CHAT, {
         groupId,
-        message: messageToSend,
-        messageType: 'text'
+        message: messageToSend || '',
+        messageType: attachments.length ? 'file' : 'text',
+        attachments: attachments.length ? attachments : undefined
       })
 
       if (result?.status === 'success') {
-        // Focus input after sending message
         setTimeout(() => {
           if (inputRef.current) {
-            const inputElement = inputRef.current.querySelector('textarea') || 
+            const inputElement = inputRef.current.querySelector('textarea') ||
                                  inputRef.current.querySelector('input') ||
                                  inputRef.current
-            if (inputElement) {
-              inputElement.focus()
-            }
+            if (inputElement) inputElement.focus()
           }
         }, 100)
       } else {
         toast.error(result?.message || 'Failed to send message')
         setNewMessage(messageText)
+        if (files?.length) setSelectedFiles(files)
       }
     } catch (error) {
       console.error('Error sending message:', error)
       toast.error('An error occurred while sending message')
       setNewMessage(messageText)
+      if (files?.length) setSelectedFiles(files)
     } finally {
       setSending(false)
+      setUploadProgress(null)
     }
   }
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      handleSendMessage()
+      handleSendMessage(undefined, undefined)
     }
+  }
+
+  const handleFilesSelected = (newFiles) => {
+    setSelectedFiles(prev => [...prev, ...(newFiles || [])])
+  }
+  const handleRemoveFile = (index) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index))
   }
 
   const formatMessageTime = (timestamp) => {
@@ -2467,6 +2505,10 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
           }}
           formatMessageTime={formatMessageTime}
           getSenderName={getSenderName}
+          selectedFiles={selectedFiles}
+          onRemoveFile={handleRemoveFile}
+          onFilesSelected={handleFilesSelected}
+          uploadProgress={uploadProgress}
         />
       )}
 

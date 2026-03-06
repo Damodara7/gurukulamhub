@@ -113,7 +113,9 @@ export async function GET(req) {
                     createdAt: lastVisibleResult.createdAt,
                     isEdited: lastVisibleResult.isEdited,
                     deletedForEveryone: lastVisibleResult.deletedForEveryone,
-                    approvalStatus: lastVisibleResult.approvalStatus || undefined
+                    approvalStatus: lastVisibleResult.approvalStatus || undefined,
+                    attachments: lastVisibleResult.attachments || [],
+                    messageType: lastVisibleResult.messageType
                   }
                 }
               }
@@ -126,7 +128,9 @@ export async function GET(req) {
                 createdAt: lastMessageResult.createdAt,
                 isEdited: lastMessageResult.isEdited,
                 deletedForEveryone: lastMessageResult.deletedForEveryone,
-                approvalStatus: lastMessageResult.approvalStatus || undefined
+                approvalStatus: lastMessageResult.approvalStatus || undefined,
+                attachments: lastMessageResult.attachments || [],
+                messageType: lastMessageResult.messageType
               }
             }
           }

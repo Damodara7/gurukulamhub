@@ -79,14 +79,15 @@ export const getMessagesByGroupId = async (groupId, options = {}) => {
 export const addMessage = async (messageData) => {
   await connectMongo()
   try {
-    const { groupId, senderEmail, message, messageType = 'text' } = messageData
+    const { groupId, senderEmail, message, messageType = 'text', attachments } = messageData
 
-    // Validate required fields
-    if (!groupId || !senderEmail || !message) {
+    // Validate required fields (message can be empty if attachments present)
+    const hasContent = (message && message.trim()) || (attachments && attachments.length > 0)
+    if (!groupId || !senderEmail || !hasContent) {
       return {
         status: 'error',
         result: null,
-        message: 'Missing required fields: groupId, senderEmail, and message are required'
+        message: 'Missing required fields: groupId, senderEmail, and either message or attachments are required'
       }
     }
 
@@ -139,8 +140,11 @@ export const addMessage = async (messageData) => {
     const createPayload = {
       groupId: new mongoose.Types.ObjectId(groupId),
       senderEmail,
-      message: trimLeadingNewlines(message),
-      messageType
+      message: message ? trimLeadingNewlines(message) : '',
+      messageType: attachments?.length ? 'file' : messageType
+    }
+    if (attachments && attachments.length > 0) {
+      createPayload.attachments = attachments
     }
     if (needApproval) {
       createPayload.approvalStatus = 'pending'

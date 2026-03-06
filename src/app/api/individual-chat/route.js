@@ -111,10 +111,11 @@ export async function POST(request) {
     }
 
     const reqBody = await request.json()
-    let { receiverEmail, message, messageType = 'text' } = reqBody
+    let { receiverEmail, message, messageType = 'text', attachments } = reqBody
 
-    if (!receiverEmail || !message) {
-      const errorResponse = ApiResponseUtils.createErrorResponse('Receiver email and message are required')
+    const hasContent = (message != null && String(message).trim()) || (Array.isArray(attachments) && attachments.length > 0)
+    if (!receiverEmail || !hasContent) {
+      const errorResponse = ApiResponseUtils.createErrorResponse('Receiver email and either message or attachments are required')
       return ApiResponseUtils.sendErrorResponse(errorResponse)
     }
 
@@ -159,8 +160,9 @@ export async function POST(request) {
     const newMessage = await ArtifactService.addMessage({
       senderEmail: session.user.email,
       receiverEmail,
-      message,
-      messageType
+      message: message != null ? message : '',
+      messageType,
+      attachments: Array.isArray(attachments) ? attachments : undefined
     })
 
     if (newMessage?.status === 'success') {

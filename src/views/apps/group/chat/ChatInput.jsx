@@ -1,7 +1,12 @@
 'use client'
-import React, { useEffect } from 'react'
-import { Paper, Box, Stack, TextField, IconButton, Typography, CircularProgress, useTheme, alpha, useMediaQuery, Chip } from '@mui/material'
-import { Send as SendIcon, Close as CloseIcon } from '@mui/icons-material'
+import React, { useEffect, useRef, useState, useMemo } from 'react'
+import { Paper, Box, Stack, TextField, IconButton, Typography, CircularProgress, useTheme, alpha, useMediaQuery, Chip, InputAdornment } from '@mui/material'
+import { Send as SendIcon, AttachFile as AttachFileIcon, Close as CloseIcon } from '@mui/icons-material'
+import AttachmentPreviewRow from './AttachmentPreviewRow'
+import ImageViewerModal from './ImageViewerModal'
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+const ACCEPT_FILE_TYPES = 'image/jpeg,image/png,image/webp,image/gif,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,video/mp4,video/webm,video/quicktime'
 
 const ChatInput = ({
   newMessage,
@@ -16,11 +21,59 @@ const ChatInput = ({
   editingMessage,
   onCancelEdit,
   formatMessageTime,
-  getSenderName
+  getSenderName,
+  selectedFiles = [],
+  onRemoveFile,
+  onFilesSelected,
+  uploadProgress
 }) => {
   const theme = useTheme()
   const isDarkMode = theme.palette.mode === 'dark'
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+  const fileInputRef = useRef(null)
+
+  const handleAttachmentClick = () => {
+    if (!canSend || !isConnected || sending || editingMessage) return
+    fileInputRef.current?.click()
+  }
+
+  const handleFileChange = (e) => {
+    const files = e.target.files ? Array.from(e.target.files) : []
+    if (!files.length) return
+    const valid = []
+    for (const file of files) {
+      if (file.size > MAX_FILE_SIZE) continue
+      valid.push(file)
+    }
+    if (valid.length) onFilesSelected?.(valid)
+    e.target.value = ''
+  }
+
+  const isImage = (file) => file?.type?.startsWith('image/')
+  const canSubmit = (newMessage?.trim() || selectedFiles?.length) && isConnected && !sending
+
+  const imageFilesOnly = useMemo(
+    () => (selectedFiles || []).filter((f) => isImage(f)),
+    [selectedFiles]
+  )
+  const imageFileIndices = useMemo(() => {
+    const inds = []
+    ;(selectedFiles || []).forEach((f, i) => {
+      if (isImage(f)) inds.push(i)
+    })
+    return inds
+  }, [selectedFiles])
+  const [viewerOpen, setViewerOpen] = useState(false)
+  const [viewerIndex, setViewerIndex] = useState(0)
+  const openViewer = (imageIndex) => {
+    setViewerIndex(imageIndex)
+    setViewerOpen(true)
+  }
+  const handleRemoveImageInModal = (imageIndex) => {
+    const fileIndex = imageFileIndices[imageIndex]
+    if (fileIndex != null) onRemoveFile?.(fileIndex)
+    if (imageFilesOnly.length <= 1) setViewerOpen(false)
+  }
 
   // Helper function to focus the input
   const focusInput = React.useCallback(() => {
@@ -174,42 +227,86 @@ const ChatInput = ({
           </Typography>
         </Box>
       ) : (
-        <Stack direction='row' spacing={{ xs: 0.75, sm: 1 }} alignItems='flex-end'>
-          <TextField
-            inputRef={inputRef}
-            fullWidth
-            multiline
-            maxRows={isMobile ? 3 : 4}
-            value={newMessage}
-            onChange={e => setNewMessage(e.target.value)}
-            onKeyPress={onKeyPress}
-            placeholder={editingMessage ? 'Edit your message...' : 'Type a message...'}
-            disabled={!isConnected || sending}
-            variant='outlined'
-            size={isMobile ? 'small' : 'medium'}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: { xs: 2, sm: 3 },
-                background: isDarkMode
-                  ? alpha(theme.palette.background.default, 0.7)
-                  : alpha(theme.palette.background.default, 0.5),
-                fontSize: { xs: '0.875rem', sm: '0.9375rem' },
-                '& fieldset': {
-                  borderColor: alpha(theme.palette.divider, isDarkMode ? 0.4 : 0.3)
-                },
-                '&:hover fieldset': {
-                  borderColor: alpha(theme.palette.primary.main, isDarkMode ? 0.6 : 0.5)
-                },
-                '&.Mui-focused fieldset': {
-                  borderColor: theme.palette.primary.main
-                }
-              }
-            }}
+        <>
+          <input
+            type='file'
+            ref={fileInputRef}
+            accept={ACCEPT_FILE_TYPES}
+            multiple
+            style={{ display: 'none' }}
+            onChange={handleFileChange}
           />
-          <IconButton
-            onClick={onSend}
-            disabled={!newMessage.trim() || !isConnected || sending}
-            component='span'
+          {selectedFiles?.length > 0 && (
+            <AttachmentPreviewRow
+              selectedFiles={selectedFiles}
+              onRemoveFile={onRemoveFile}
+              onPreviewImage={openViewer}
+            />
+          )}
+          <ImageViewerModal
+            open={viewerOpen}
+            onClose={() => setViewerOpen(false)}
+            imageFiles={imageFilesOnly}
+            initialIndex={viewerIndex}
+            onRemoveImage={handleRemoveImageInModal}
+          />
+          {uploadProgress != null && uploadProgress < 100 && (
+            <Box sx={{ mb: 0.5 }}>
+              <Typography variant='caption' color='text.secondary'>Uploading… {uploadProgress}%</Typography>
+            </Box>
+          )}
+          <Stack direction='row' spacing={{ xs: 0.75, sm: 1 }} alignItems='flex-end'>
+            <TextField
+              inputRef={inputRef}
+              fullWidth
+              multiline
+              maxRows={isMobile ? 3 : 4}
+              value={newMessage}
+              onChange={e => setNewMessage(e.target.value)}
+              onKeyPress={onKeyPress}
+              placeholder={editingMessage ? 'Edit your message...' : 'Type a message...'}
+              disabled={!isConnected || sending}
+              variant='outlined'
+              size={isMobile ? 'small' : 'medium'}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position='start' sx={{ alignSelf: 'center', mr: 0 }}>
+                    <IconButton
+                      size='small'
+                      onClick={handleAttachmentClick}
+                      disabled={!isConnected || sending || !!editingMessage}
+                      sx={{ color: theme.palette.text.secondary }}
+                      aria-label='Attach file'
+                    >
+                      <AttachFileIcon sx={{ fontSize: { xs: 22, sm: 24 } }} />
+                    </IconButton>
+                  </InputAdornment>
+                )
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  alignItems: 'center',
+                  borderRadius: { xs: 2, sm: 3 },
+                  background: isDarkMode
+                    ? alpha(theme.palette.background.default, 0.7)
+                    : alpha(theme.palette.background.default, 0.5),
+                  fontSize: { xs: '0.875rem', sm: '0.9375rem' },
+                  '& fieldset': {
+                    borderColor: alpha(theme.palette.divider, isDarkMode ? 0.4 : 0.3)
+                  },
+                  '&:hover fieldset': {
+                    borderColor: alpha(theme.palette.primary.main, isDarkMode ? 0.6 : 0.5)
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: theme.palette.primary.main
+                  }
+                }
+              }}
+            />
+            <IconButton
+              onClick={() => onSend(newMessage?.trim() ?? '', selectedFiles)}
+              disabled={!canSubmit}
+              component='span'
             sx={{
               background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
               color: 'white',
@@ -248,6 +345,7 @@ const ChatInput = ({
             )}
           </IconButton>
         </Stack>
+        </>
       )}
       </Paper>
     </Box>
