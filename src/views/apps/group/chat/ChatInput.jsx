@@ -274,7 +274,8 @@ const ChatInput = ({
                     <IconButton
                       size='small'
                       onClick={handleAttachmentClick}
-                      disabled={!isConnected || sending || !!editingMessage}
+                      // disabled={!isConnected || sending || !!editingMessage}
+                      disabled={true}
                       sx={{ color: theme.palette.text.secondary }}
                       aria-label='Attach file'
                     >
