@@ -380,6 +380,8 @@ const CreateQuizForm = ({
                               src={formData.thumbnail}
                               alt='Game thumbnail'
                               style={{
+                                // height: '100%',
+                                // objectFit: 'cover',
                                 width: '100%',
                                 height: '200px',
                                 objectFit: 'contain',
