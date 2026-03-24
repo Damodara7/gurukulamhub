@@ -33,11 +33,13 @@
     "@fullcalendar/list": "^6.1.13",
     "@fullcalendar/react": "^6.1.13",
     "@fullcalendar/timegrid": "^6.1.13",
+    "@google/genai": "^1.46.0",
     "@hookform/resolvers": "^3.3.4",
     "@iconify/iconify": "3.1.1",
     "@iconify/json": "2.2.167",
     "@iconify/tools": "4.0.0",
     "@iconify/utils": "2.1.14",
+    "@modelcontextprotocol/sdk": "^1.27.1",
     "@mui/icons-material": "^5.15.12",
     "@mui/lab": "5.0.0-alpha.160",
     "@mui/material": "^5.17.1",
@@ -103,6 +105,7 @@
     "next-ws": "^2.1.2",
     "node-cron": "^3.0.3",
     "nodemailer": "^6.9.13",
+    "openai": "^6.32.0",
     "os-utils": "^0.0.14",
     "pnpm": "^9.1.4",
     "postcss": "8.4.33",
@@ -162,7 +165,7 @@
     "ws": "^8.18.3",
     "xlsx": "^0.18.5",
     "yup": "^1.4.0",
-    "zod": "^3.22.4"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
