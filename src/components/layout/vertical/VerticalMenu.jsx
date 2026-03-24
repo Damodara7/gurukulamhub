@@ -280,7 +280,9 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
           <MenuItem href={`/${locale}/messanger`} icon={<i className='ri-message-line' />}>
             {dictionary['navigation'].messanger}
           </MenuItem>
-          <MenuItem href={`/${locale}/ai`} icon={<i className='ri-robot-line' />}>{dictionary['navigation'].ai}</MenuItem>
+
+          {/* AI Chat */}
+          {/* <MenuItem href={`/${locale}/ai`} icon={<i className='ri-robot-line' />}>{dictionary['navigation'].ai}</MenuItem> */}
 
           {/* <SubMenu label={dictionary['navigation'].mysettings} icon={<i className='ri-earth-fill' />}>
             <MenuItem href={`/${locale}/pages/account-settings`}>{dictionary['navigation'].accountSettings}</MenuItem>
