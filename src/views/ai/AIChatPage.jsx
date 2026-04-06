@@ -365,7 +365,7 @@ export default function AIChatPage({ userEmail: _userEmail, userRoles: _userRole
           onChange={setInput}
           onKeyDown={handleKeyDown}
           onSend={sendMessage}
-          disabled={isThinking || process.env.NEXT_PUBLIC_TEST_MODE === 'true'}
+          disabled={isThinking}
           canSend={Boolean(input.trim())}
           isMobile={isMobile}
           theme={theme}
