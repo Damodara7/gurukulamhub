@@ -38,6 +38,34 @@ export default function AIChatPage({ userEmail: _userEmail, userRoles: _userRole
   const wsRef = useRef(null)
   const wsPingRef = useRef(null)
 
+  const normalizeAssistantText = useCallback((text) => {
+    if (!text) return ''
+    const value = String(text)
+      .replace(/\\r\\n/g, '\n')
+      .replace(/\\n/g, '\n')
+      .replace(/\u00a0/g, ' ')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim()
+    return value
+  }, [])
+
+  const mapMessagesForUi = useCallback(
+    (rawMessages = []) => {
+      const list = Array.isArray(rawMessages) ? rawMessages : []
+      return list.map((m, idx) => {
+        const role = m?.role === 'user' ? 'user' : 'assistant'
+        const normalizedContent =
+          role === 'assistant' ? normalizeAssistantText(m?.content) : String(m?.content || '')
+        return {
+          id: m?.id || `${role}-${idx}-${Date.now()}`,
+          role,
+          content: normalizedContent
+        }
+      })
+    },
+    [normalizeAssistantText]
+  )
+
   const scrollToBottom = useCallback(() => {
     requestAnimationFrame(() => {
       bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
@@ -64,7 +92,7 @@ export default function AIChatPage({ userEmail: _userEmail, userRoles: _userRole
         const historyRes = await fetch(`/api/ai/chat?sessionId=${encodeURIComponent(sid)}`)
         const historyData = await historyRes.json()
         if (historyRes.ok && historyData?.status === 'success') {
-          const loadedMessages = Array.isArray(historyData?.result?.messages) ? historyData.result.messages : []
+          const loadedMessages = mapMessagesForUi(historyData?.result?.messages)
           setMessages(loadedMessages.length > 0 ? loadedMessages : [welcomeMessage])
         }
       } catch (error) {
@@ -73,7 +101,7 @@ export default function AIChatPage({ userEmail: _userEmail, userRoles: _userRole
     }
 
     setupSessionAndHistory()
-  }, [])
+  }, [mapMessagesForUi])
 
   useEffect(() => {
     if (!sessionReady || typeof window === 'undefined') return
@@ -96,7 +124,7 @@ export default function AIChatPage({ userEmail: _userEmail, userRoles: _userRole
       try {
         const payload = JSON.parse(event.data)
         if (payload?.type === 'sessionUpdate') {
-          const incoming = Array.isArray(payload.messages) ? payload.messages : []
+          const incoming = mapMessagesForUi(payload?.messages)
           setMessages(incoming.length > 0 ? incoming : [welcomeMessage])
           setIsThinking(false)
           setThinkingStatus('')
@@ -120,7 +148,7 @@ export default function AIChatPage({ userEmail: _userEmail, userRoles: _userRole
         wsRef.current = null
       }
     }
-  }, [sessionReady])
+  }, [sessionReady, mapMessagesForUi])
 
   const sendMessage = useCallback(async () => {
     const trimmed = input.trim()
@@ -210,10 +238,16 @@ export default function AIChatPage({ userEmail: _userEmail, userRoles: _userRole
             // Fallback/final sync: if no token chunks arrived, use final message payload.
             // Also protects against any dropped token events.
             if (event.message) {
+              const normalizedDoneMessage = normalizeAssistantText(event.message)
               setMessages((prev) =>
                 prev.map((m) =>
                   m.id === assistantId
-                    ? { ...m, content: receivedAnyToken ? (m.content || event.message) : event.message }
+                    ? {
+                        ...m,
+                        content: receivedAnyToken
+                          ? normalizeAssistantText(m.content || normalizedDoneMessage)
+                          : normalizedDoneMessage
+                      }
                     : m
                 )
               )
@@ -239,7 +273,7 @@ export default function AIChatPage({ userEmail: _userEmail, userRoles: _userRole
       setThinkingStatus('')
       inputRef.current?.focus()
     }
-  }, [input, isThinking])
+  }, [input, isThinking, normalizeAssistantText])
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
