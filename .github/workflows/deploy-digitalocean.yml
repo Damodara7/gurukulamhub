@@ -188,6 +188,16 @@ jobs:
           NEXT_PUBLIC_VAPID_PUBLIC_KEY=${{ secrets.VAPID_PUBLIC_KEY }}
           VAPID_PRIVATE_KEY=${{ secrets.VAPID_PRIVATE_KEY }}
           VAPID_EMAIL=${{ secrets.VAPID_EMAIL }}
+
+          # -----------------------------------------------------------------------------
+          # AI / LLM
+          # -----------------------------------------------------------------------------
+          # If not explicitly set, app defaults to OPENAI and needs OPENAI_API_KEY.
+          LLM_PROVIDER=${{ secrets.LLM_PROVIDER || 'gemini' }}
+          OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+          OPENAI_MODEL=${{ secrets.OPENAI_MODEL || 'gpt-4o-mini' }}
+          GEMINI_MODEL=${{ secrets.GEMINI_MODEL || 'gemini-2.5-flash' }}
           ENVFILE
           EOF
 
