@@ -14,13 +14,21 @@ function getProviderFromEnv() {
   return provider === 'gemini' ? 'gemini' : 'openai'
 }
 
+function normalizeAssistantText(content) {
+  return String(content || '')
+    .replace(/\r\n/g, '\n')
+    .replace(/\u00a0/g, ' ')
+    .replace(/\n{4,}/g, '\n\n\n')
+    .trim()
+}
+
 function toUiMessages(messages = []) {
   return (Array.isArray(messages) ? messages : [])
     .filter(m => m?.role === 'user' || m?.role === 'assistant')
     .map((m, index) => ({
       id: m.id || `${m.role}-${index}`,
       role: m.role,
-      content: String(m.content || '')
+      content: m.role === 'assistant' ? normalizeAssistantText(m.content) : String(m.content || '')
     }))
 }
 
@@ -119,7 +127,7 @@ export async function POST(req) {
         push({
           type: 'done',
           sessionId: session.sessionId,
-          message: result.text,
+          message: normalizeAssistantText(result.text),
           toolLogs: result.toolLogs
         })
       } catch (error) {

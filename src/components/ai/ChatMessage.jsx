@@ -1,6 +1,8 @@
 'use client'
 
 import React from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { Box, Paper, Typography, Stack, Fade, Tooltip, IconButton, alpha, keyframes, Link } from '@mui/material'
 import { ContentCopy as ContentCopyIcon, Edit as EditIcon } from '@mui/icons-material'
 
@@ -18,125 +20,6 @@ const fadeInUp = keyframes`
 function ChatMessage({ role, content, theme, isDarkMode, onCopy, onEdit }) {
   const isUser = role === 'user'
   const rawContent = String(content || '')
-
-  const renderInline = text => {
-    const parts = text.split(/(`[^`]+`)/g)
-    return parts.map((part, idx) => {
-      if (part.startsWith('`') && part.endsWith('`')) {
-        return (
-          <Box
-            key={`inline-code-${idx}`}
-            component='code'
-            sx={{
-              px: 0.5,
-              py: 0.15,
-              borderRadius: 0.75,
-              fontSize: '0.82em',
-              fontFamily: 'monospace',
-              bgcolor: alpha(theme.palette.primary.main, isDarkMode ? 0.25 : 0.12)
-            }}
-          >
-            {part.slice(1, -1)}
-          </Box>
-        )
-      }
-
-      const chunks = part.split(/(https?:\/\/[^\s]+)/g)
-      return chunks.map((chunk, chunkIdx) =>
-        /^https?:\/\//.test(chunk) ? (
-          <Link
-            key={`link-${idx}-${chunkIdx}`}
-            href={chunk}
-            target='_blank'
-            rel='noopener noreferrer'
-            underline='hover'
-            sx={{ fontSize: 'inherit' }}
-          >
-            {chunk}
-          </Link>
-        ) : (
-          <React.Fragment key={`txt-${idx}-${chunkIdx}`}>{chunk}</React.Fragment>
-        )
-      )
-    })
-  }
-
-  const renderAssistantContent = text => {
-    const codeAwareParts = text.split(/(```[\s\S]*?```)/g)
-
-    return codeAwareParts.map((part, partIdx) => {
-      if (part.startsWith('```') && part.endsWith('```')) {
-        const inner = part.replace(/^```[\w-]*\n?/, '').replace(/```$/, '')
-        return (
-          <Box
-            key={`code-block-${partIdx}`}
-            component='pre'
-            sx={{
-              m: 0,
-              p: 1.25,
-              borderRadius: 1.25,
-              overflowX: 'auto',
-              border: `1px solid ${alpha(theme.palette.divider, 0.25)}`,
-              bgcolor: alpha(theme.palette.common.black, isDarkMode ? 0.28 : 0.06),
-              fontFamily: 'monospace',
-              fontSize: '0.82rem',
-              lineHeight: 1.55
-            }}
-          >
-            {inner}
-          </Box>
-        )
-      }
-
-      const lines = part.split('\n')
-      return (
-        <Stack key={`text-block-${partIdx}`} spacing={0.5}>
-          {lines.map((line, lineIdx) => {
-            const trimmed = line.trim()
-            if (!trimmed) return <Box key={`sp-${partIdx}-${lineIdx}`} sx={{ height: 4 }} />
-
-            if (/^#{1,6}\s+/.test(trimmed)) {
-              const level = Math.min(6, (trimmed.match(/^#+/) || [''])[0].length)
-              const textValue = trimmed.replace(/^#{1,6}\s+/, '')
-              const variant = level <= 2 ? 'subtitle1' : 'subtitle2'
-              return (
-                <Typography key={`h-${partIdx}-${lineIdx}`} variant={variant} sx={{ fontWeight: 700, mt: 0.2 }}>
-                  {renderInline(textValue)}
-                </Typography>
-              )
-            }
-
-            if (/^(\-|\*|\d+\.)\s+/.test(trimmed)) {
-              const bulletText = trimmed.replace(/^(\-|\*|\d+\.)\s+/, '')
-              return (
-                <Box key={`li-${partIdx}-${lineIdx}`} sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.9 }}>
-                  <Box
-                    sx={{
-                      mt: 0.75,
-                      width: 5,
-                      height: 5,
-                      borderRadius: '50%',
-                      bgcolor: alpha(theme.palette.text.primary, 0.75),
-                      flexShrink: 0
-                    }}
-                  />
-                  <Typography variant='body2' sx={{ lineHeight: 1.65 }}>
-                    {renderInline(bulletText)}
-                  </Typography>
-                </Box>
-              )
-            }
-
-            return (
-              <Typography key={`p-${partIdx}-${lineIdx}`} variant='body2' sx={{ lineHeight: 1.65 }}>
-                {renderInline(line)}
-              </Typography>
-            )
-          })}
-        </Stack>
-      )
-    })
-  }
 
   return (
     <Fade in timeout={320}>
@@ -201,7 +84,128 @@ function ChatMessage({ role, content, theme, isDarkMode, onCopy, onEdit }) {
                   wordBreak: 'break-word'
                 }}
               >
-                {renderAssistantContent(rawContent)}
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    p: ({ children }) => (
+                      <Typography variant='body2' sx={{ lineHeight: 1.68, mb: 0.8 }}>
+                        {children}
+                      </Typography>
+                    ),
+                    h1: ({ children }) => (
+                      <Typography variant='h6' sx={{ fontWeight: 700, mt: 0.5, mb: 0.8 }}>
+                        {children}
+                      </Typography>
+                    ),
+                    h2: ({ children }) => (
+                      <Typography variant='subtitle1' sx={{ fontWeight: 700, mt: 0.5, mb: 0.7 }}>
+                        {children}
+                      </Typography>
+                    ),
+                    h3: ({ children }) => (
+                      <Typography variant='subtitle2' sx={{ fontWeight: 700, mt: 0.4, mb: 0.6 }}>
+                        {children}
+                      </Typography>
+                    ),
+                    ul: ({ children }) => <Box component='ul' sx={{ mt: 0.3, mb: 0.8, pl: 2.2 }}>{children}</Box>,
+                    ol: ({ children }) => <Box component='ol' sx={{ mt: 0.3, mb: 0.8, pl: 2.2 }}>{children}</Box>,
+                    li: ({ children }) => (
+                      <Typography component='li' variant='body2' sx={{ lineHeight: 1.65, mb: 0.35 }}>
+                        {children}
+                      </Typography>
+                    ),
+                    code: ({ inline, children }) =>
+                      inline ? (
+                        <Box
+                          component='code'
+                          sx={{
+                            px: 0.55,
+                            py: 0.2,
+                            borderRadius: 0.75,
+                            fontSize: '0.82em',
+                            fontFamily: 'monospace',
+                            bgcolor: alpha(theme.palette.primary.main, isDarkMode ? 0.25 : 0.12)
+                          }}
+                        >
+                          {children}
+                        </Box>
+                      ) : (
+                        <Box
+                          component='pre'
+                          sx={{
+                            m: 0,
+                            mb: 0.9,
+                            p: 1.25,
+                            borderRadius: 1.25,
+                            overflowX: 'auto',
+                            border: `1px solid ${alpha(theme.palette.divider, 0.25)}`,
+                            bgcolor: alpha(theme.palette.common.black, isDarkMode ? 0.28 : 0.06),
+                            fontFamily: 'monospace',
+                            fontSize: '0.82rem',
+                            lineHeight: 1.55
+                          }}
+                        >
+                          <Box component='code'>{children}</Box>
+                        </Box>
+                      ),
+                    a: ({ href, children }) => (
+                      <Link href={href} target='_blank' rel='noopener noreferrer' underline='hover'>
+                        {children}
+                      </Link>
+                    ),
+                    blockquote: ({ children }) => (
+                      <Box
+                        sx={{
+                          borderLeft: `3px solid ${alpha(theme.palette.primary.main, 0.6)}`,
+                          pl: 1.2,
+                          ml: 0.2,
+                          my: 0.8,
+                          color: 'text.secondary'
+                        }}
+                      >
+                        {children}
+                      </Box>
+                    ),
+                    table: ({ children }) => (
+                      <Box sx={{ overflowX: 'auto', mb: 0.9 }}>
+                        <Box component='table' sx={{ borderCollapse: 'collapse', minWidth: 420, width: '100%' }}>
+                          {children}
+                        </Box>
+                      </Box>
+                    ),
+                    th: ({ children }) => (
+                      <Box
+                        component='th'
+                        sx={{
+                          textAlign: 'left',
+                          fontWeight: 700,
+                          fontSize: '0.78rem',
+                          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.4)}`,
+                          py: 0.6,
+                          px: 0.7
+                        }}
+                      >
+                        {children}
+                      </Box>
+                    ),
+                    td: ({ children }) => (
+                      <Box
+                        component='td'
+                        sx={{
+                          fontSize: '0.78rem',
+                          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.22)}`,
+                          py: 0.5,
+                          px: 0.7,
+                          verticalAlign: 'top'
+                        }}
+                      >
+                        {children}
+                      </Box>
+                    )
+                  }}
+                >
+                  {rawContent}
+                </ReactMarkdown>
               </Stack>
             )}
           </Paper>
