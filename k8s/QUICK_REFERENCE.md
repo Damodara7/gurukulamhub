@@ -19,6 +19,9 @@ kubectl create secret generic gurukulamhub-secrets \
   --from-literal=NEXT_PUBLIC_STRIPE_SECRET_KEY='...' \
   --from-literal=NEXT_PUBLIC_AWS_S3_ACCESS_KEY_ID='...' \
   --from-literal=NEXT_PUBLIC_AWS_S3_ACCESS_KEY_SECRET='...' \
+  --from-literal=LLM_PROVIDER='gemini' \
+  --from-literal=GEMINI_API_KEY='...' \
+  --from-literal=OPENAI_API_KEY='...' \
   -n gurukulamhub
 
 # 3. Deploy application

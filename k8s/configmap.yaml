@@ -32,6 +32,14 @@ data:
   NEXT_PUBLIC_AWS_S3_USERPROFILE_UPLOAD_BUCKET: "squizme-userprofile"
   NEXT_PUBLIC_AWS_S3_QUIZ_UPLOAD_BUCKET: "squizme-quiz"
   
+  # -----------------------------------------------------------------------------
+  # AI / LLM (non-secret: provider and model names)
+  # API keys: set OPENAI_API_KEY and/or GEMINI_API_KEY in k8s/secret or SealedSecrets.
+  # -----------------------------------------------------------------------------
+  LLM_PROVIDER: "gemini"
+  OPENAI_MODEL: "gpt-4o-mini"
+  GEMINI_MODEL: "gemini-2.5-flash"
+  
   # Note: All sensitive data (passwords, secrets, API keys) MUST be in Secrets
   # See k8s/secret.yaml.template for sensitive variables
   # 

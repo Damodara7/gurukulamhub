@@ -28,9 +28,11 @@ spec:
         envFrom:
         - configMapRef:
             name: gurukulamhub-config
-        # Uncomment below if using Secrets instead of configmap-all.yaml
-        # - secretRef:
-        #     name: gurukulamhub-secrets
+        # Optional: API keys and other secrets (LLM, DB, etc.). Values override ConfigMap.
+        - secretRef:
+            name: gurukulamhub-secrets
+            optional: true
+        # If you use only configmap-all.yaml (all env in one ConfigMap), the secret can stay absent.
         resources:
           requests:
             memory: "512Mi"
