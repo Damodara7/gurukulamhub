@@ -124,6 +124,7 @@ const ChatList = () => {
   const [searchEmail, setSearchEmail] = useState('')
   const [searching, setSearching] = useState(false)
   const [searchResult, setSearchResult] = useState(null)
+  const [searchError, setSearchError] = useState('')
   const [activeTab, setActiveTab] = useState(0) // 0: All, 1: Individual, 2: Groups, 3: Classroom groups, 4: Unread
 
   // Calculate counts for each tab
@@ -854,14 +855,18 @@ const ChatList = () => {
 
   // Handle search user by email
   const handleSearchUser = async () => {
+    setSearchError('')
+
     if (!searchEmail.trim()) {
       toast.error('Please enter an email address')
+      setSearchResult(null)
       return
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(searchEmail.trim())) {
       toast.error('Please enter a valid email address')
+      setSearchResult(null)
       return
     }
 
@@ -874,12 +879,13 @@ const ChatList = () => {
       if (result?.status === 'success') {
         setSearchResult(result.result)
       } else {
-        toast.error(result?.message || 'User not found')
+        setSearchError(result?.message || 'User not found')
         setSearchResult(null)
       }
     } catch (error) {
       console.error('Error searching user:', error)
       toast.error('Failed to search user')
+      setSearchError('Failed to search user')
       setSearchResult(null)
     } finally {
       setSearching(false)
@@ -1296,6 +1302,7 @@ const ChatList = () => {
           setSearchDialogOpen(false)
           setSearchEmail('')
           setSearchResult(null)
+          setSearchError('')
         }}
         maxWidth='sm'
         fullWidth
@@ -1316,7 +1323,11 @@ const ChatList = () => {
               label='Email Address'
               type='email'
               value={searchEmail}
-              onChange={e => setSearchEmail(e.target.value)}
+              onChange={e => {
+                setSearchEmail(e.target.value)
+                setSearchResult(null)
+                setSearchError('')
+              }}
               onKeyPress={e => {
                 if (e.key === 'Enter') {
                   handleSearchUser()
@@ -1324,6 +1335,8 @@ const ChatList = () => {
               }}
               placeholder='user@example.com'
               disabled={searching}
+              error={Boolean(searchError)}
+              helperText={searchError}
               InputProps={{
                 endAdornment: searching && <CircularProgress size={20} />
               }}
@@ -1387,6 +1400,7 @@ const ChatList = () => {
               setSearchDialogOpen(false)
               setSearchEmail('')
               setSearchResult(null)
+              setSearchError('')
             }}
           >
             Cancel
