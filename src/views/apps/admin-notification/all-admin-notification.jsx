@@ -29,11 +29,13 @@ function AllAdminNotificationPage({ isAdmin = false }) {
       if (!session?.user?.email) return
       if (showLoading) setLoading(true)
       try {
-        const res = await RestApi.get(
-          `${API_URLS.v0.NOTIFICATIONS}?createdByEmail=${encodeURIComponent(
-            session.user.email
-          )}&type=ADMIN_NOTIFICATION&limit=500&sortBy=createdAt&sortOrder=desc`
-        )
+        const params = new URLSearchParams({
+          type: 'ADMIN_NOTIFICATION',
+          sortBy: 'createdAt',
+          sortOrder: 'desc',
+          createdByEmail: session.user.email
+        })
+        const res = await RestApi.get(`${API_URLS.v0.NOTIFICATIONS}?${params.toString()}`)
         if (res?.status === 'success') {
           const data = res.result
           const list =
@@ -58,7 +60,6 @@ function AllAdminNotificationPage({ isAdmin = false }) {
     [session?.user?.email]
   )
 
-  // Initial fetch
   useEffect(() => {
     fetchNotifications()
   }, [fetchNotifications])
@@ -128,6 +129,14 @@ function AllAdminNotificationPage({ isAdmin = false }) {
     notificationToDeleteRef.current = group
     setDeleteDialogOpen(true)
   }, [])
+
+  const handleEditClick = useCallback(
+    group => {
+      const id = group?.adminNotificationId
+      if (id) router.push(`/management/admin-notification/edit/${id}`)
+    },
+    [router]
+  )
 
   const handleDeleteConfirm = useCallback(async () => {
     const group = notificationToDeleteRef.current || notificationToDelete
@@ -306,17 +315,18 @@ function AllAdminNotificationPage({ isAdmin = false }) {
       <Box sx={{ p: { xs: 3, md: 4 }, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
         {groups.length === 0 ? (
           <AdminNotificationFallBackCard
-            content='No admin notifications yet. Create one to get started.'
-            path='/management/Admin-Notification'
-            btnText='Back to Admin Notifications'
+            content='No Admin Notifications found. Create one to get started.'
+            path='/home'
+            btnText='Back to Home Page'
           />
         ) : (
           <AdminNotificationCard
             groups={groups}
             onMarkRead={handleMarkRead}
             onDelete={handleDelete}
-            onRefresh={fetchNotifications}
+            onRefresh={() => fetchNotifications(false)}
             onDeleteClick={openDeleteDialog}
+            onEditClick={handleEditClick}
           />
         )}
       </Box>

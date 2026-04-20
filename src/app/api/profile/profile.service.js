@@ -2,6 +2,7 @@ import connectMongo from '@/utils/dbConnect-mongo'
 import UserProfile from './profile.model'
 import User from '../../models/user.model'
 import { createProfileCompletionNotification } from '../notifications/notification.helpers.js'
+import * as NotificationService from '../notifications/notification.service.js'
 
 export async function getAll() {
   await connectMongo()
@@ -208,6 +209,13 @@ export const addOrUpdate = async ({ email, data: updateData }) => {
       }
       profile = new UserProfile({ email, ...updateData })
       await profile.save()
+    }
+
+    // If user now matches any active announcement filters (e.g. added gender/location/age), send those announcements
+    if (existedUser?._id) {
+      NotificationService.sendActiveAnnouncementsToUser(existedUser._id.toString()).catch(err =>
+        console.error('[Profile Service] sendActiveAnnouncementsToUser error (addOrUpdate):', err)
+      )
     }
 
     return { status: 'success', result: profile, message: 'User profile added/updated successfully' }
@@ -558,6 +566,13 @@ export const updateProfileByEmail = async ({ email, data }) => {
       } catch (completionError) {
         console.error('Error calculating profile completion:', completionError)
         // Don't fail the profile update if completion calculation fails
+      }
+
+      // If user now matches any active announcement filters (e.g. added gender/location/age), send those announcements
+      if (existedUser?._id) {
+        NotificationService.sendActiveAnnouncementsToUser(existedUser._id.toString()).catch(err =>
+          console.error('[Profile Service] sendActiveAnnouncementsToUser error:', err)
+        )
       }
 
       return { status: 'success', result: profile, message: 'User profile updated successfully' }

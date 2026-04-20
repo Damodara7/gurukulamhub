@@ -24,24 +24,38 @@ function CreateAdminNotificationPage() {
     try {
       const sendToAll = values.sendTo === 'all'
 
-      if (sendToAll) {
+      if (sendToAll || values.sendTo === 'filtered') {
+        const includeForNewUsers = values.includeForNewUsers !== false && values.includeForNewUsers !== 'false'
         const payload = {
           title: values.title,
           message: values.message,
-          sendToAll: true
+          sendToAll: values.sendTo !== 'filtered',
+          includeForNewUsers
         }
         if (values.actionUrl) payload.actionUrl = values.actionUrl
         if (values.actionLabel) payload.actionLabel = values.actionLabel
+        if (values.sendTo === 'filtered' && values.targetUserIds?.length) {
+          payload.targetUserIds = values.targetUserIds
+          if (values.filters?.length) payload.filters = values.filters
+        }
 
         const result = await RestApi.post(API_URLS.v0.ANNOUNCEMENT, payload)
 
         if (result?.status === 'success') {
           const sentCount = result?.result?.sentCount
-          toast.success(
-            sentCount != null
-              ? `Announcement created and sent to ${sentCount} user(s). New users will also receive it.`
-              : 'Announcement created successfully.'
-          )
+          const isFiltered = values.sendTo === 'filtered'
+          const message = isFiltered
+            ? (sentCount != null
+                ? `Notification sent to ${sentCount} filtered user(s).${includeForNewUsers ? ' New users who match filters will also receive it.' : ''}`
+                : 'Notification sent to filtered users.')
+            : includeForNewUsers
+              ? (sentCount != null
+                  ? `Announcement created and sent to ${sentCount} user(s). New users who join later will also receive it.`
+                  : 'Announcement created successfully.')
+              : (sentCount != null
+                  ? `Notification sent to ${sentCount} existing user(s). New users who join later will not receive it.`
+                  : 'Notification sent to existing users.')
+          toast.success(message)
           router.push('/management/admin-notification')
         } else {
           toast.error(result?.message || result?.error || 'Failed to create announcement')

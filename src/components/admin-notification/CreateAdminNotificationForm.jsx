@@ -1,13 +1,19 @@
 'use client'
 
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
+import * as RestApi from '@/utils/restApiUtil'
+import { API_URLS } from '@/configs/apiConfig'
+import AudienceByFilter from '@/components/audience/AudienceByFilter'
+import AudienceUserMultiSelect from '@/components/audience/AudienceUserMultiSelect'
 import {
   Button,
   Card,
   CardContent,
   Collapse,
+  FormControlLabel,
   Grid,
   IconButton,
+  Switch,
   TextField,
   Typography,
   Snackbar,
@@ -17,7 +23,13 @@ import {
   useTheme
 } from '@mui/material'
 import { alpha } from '@mui/material/styles'
-import { ExpandLess, ExpandMore, NotificationsActive as NotificationIcon } from '@mui/icons-material'
+import {
+  ExpandLess,
+  ExpandMore,
+  NotificationsActive as NotificationIcon,
+  FilterList as FilterListIcon,
+  People as PeopleIcon
+} from '@mui/icons-material'
 
 const validateForm = formData => {
   const errors = {}
@@ -38,13 +50,21 @@ const validateForm = formData => {
   return errors
 }
 
-const CreateAdminNotificationForm = ({ onSubmit, onCancel, showHeader = true }) => {
+const CreateAdminNotificationForm = ({
+  onSubmit,
+  onCancel,
+  showHeader = true,
+  editMode = false,
+  adminNotificationId = null,
+  initialData = null
+}) => {
   const theme = useTheme()
   const [formData, setFormData] = useState({
     title: '',
     message: '',
     actionUrl: '',
-    actionLabel: ''
+    actionLabel: '',
+    includeForNewUsers: false
   })
   const [errors, setErrors] = useState({})
   const [touches, setTouches] = useState({})
@@ -52,13 +72,94 @@ const CreateAdminNotificationForm = ({ onSubmit, onCancel, showHeader = true }) 
   const [errorMessage, setErrorMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isHeaderExpanded, setIsHeaderExpanded] = useState(true)
+  const [users, setUsers] = useState([])
+  const [canonicalFilters, setCanonicalFilters] = useState([])
+  const [selectedUsers, setSelectedUsers] = useState([])
+  const [loadingUsers, setLoadingUsers] = useState(true)
   const fieldRefs = { title: useRef(), message: useRef() }
 
+  useEffect(() => {
+    const fetchUsers = async () => {
+      setLoadingUsers(true)
+      try {
+        const result = await RestApi.get(`${API_URLS.v0.USER}?isVerified=true`)
+        if (result?.status === 'success') {
+          const userList = result.result || []
+          setUsers(userList)
+          const allIds = userList.map(u => u._id).filter(Boolean)
+          setSelectedUsers(allIds)
+        }
+      } catch (error) {
+        console.error('Error fetching users:', error)
+        setErrorMessage('Failed to load users')
+        setShowErrorSnackbar(true)
+      } finally {
+        setLoadingUsers(false)
+      }
+    }
+    fetchUsers()
+  }, [])
+
+  useEffect(() => {
+    if (editMode && initialData) {
+      setFormData({
+        title: initialData.title || '',
+        message: initialData.message || '',
+        actionUrl: initialData.actionUrl || '',
+        actionLabel: initialData.actionLabel || '',
+        includeForNewUsers: initialData.includeForNewUsers === true || initialData.includeForNewUsers === 'true'
+      })
+      setCanonicalFilters(Array.isArray(initialData.filters) ? initialData.filters : [])
+      if (users.length > 0 && Array.isArray(initialData.recipientUserIds) && initialData.recipientUserIds.length > 0) {
+        const allIds = users.map(u => u._id).filter(Boolean)
+        const validIds = initialData.recipientUserIds.filter(id =>
+          allIds.some(uid => String(uid) === String(id))
+        )
+        setSelectedUsers(validIds.length > 0 ? validIds : allIds)
+      }
+    }
+  }, [editMode, initialData, users.length])
+
+  const handleFilterChange = (filteredUserIds, _criteria, operationsData = {}) => {
+    setSelectedUsers(filteredUserIds)
+    setCanonicalFilters(operationsData?.canonicalFilters || [])
+  }
+
+  const convertCanonicalToLegacyFormat = filters => {
+    if (!Array.isArray(filters) || filters.length === 0) {
+      return { ageGroup: null, location: null, gender: null }
+    }
+    let ageGroup = null
+    let location = null
+    let gender = null
+    filters.forEach((filter, index) => {
+      const operation = index === 0 ? undefined : filter.operator
+      switch (filter.type) {
+        case 'age':
+          ageGroup = { ...filter.criteria, operation }
+          break
+        case 'location':
+          location = { ...filter.criteria, operation }
+          break
+        case 'gender':
+          gender = {
+            values: Array.isArray(filter.criteria?.values) ? filter.criteria.values : [],
+            operation
+          }
+          break
+        default:
+          break
+      }
+    })
+    return { ageGroup, location, gender }
+  }
+
+
   const handleChange = e => {
-    const { name, value } = e.target
+    const { name, value, type, checked } = e.target
     setTouches(prev => ({ ...prev, [name]: true }))
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: undefined }))
-    setFormData(prev => ({ ...prev, [name]: value }))
+    setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? !!checked : value }))
   }
 
   const handleBlur = e => {
@@ -90,12 +191,23 @@ const CreateAdminNotificationForm = ({ onSubmit, onCancel, showHeader = true }) 
     }
 
     try {
+      const hasFilters = canonicalFilters && canonicalFilters.length > 0
+      const allUserIds = users.map(u => u._id).filter(Boolean)
+      const isAllSelected = selectedUsers.length === allUserIds.length
+      const isFilteredOrManual =
+        hasFilters || (selectedUsers.length > 0 && selectedUsers.length < allUserIds.length)
+      const sendToAll = !hasFilters && isAllSelected
       await onSubmit({
         title: formData.title.trim(),
         message: formData.message.trim(),
         actionUrl: formData.actionUrl?.trim() || undefined,
         actionLabel: formData.actionLabel?.trim() || undefined,
-        sendTo: 'all'
+        sendTo: sendToAll ? 'all' : 'filtered',
+        includeForNewUsers: formData.includeForNewUsers === true || formData.includeForNewUsers === 'true',
+        ...(!sendToAll && {
+          targetUserIds: selectedUsers,
+          filters: hasFilters ? canonicalFilters : undefined
+        })
       })
     } catch (err) {
       setErrorMessage(err.message || 'Failed to create notification')
@@ -182,7 +294,7 @@ const CreateAdminNotificationForm = ({ onSubmit, onCancel, showHeader = true }) 
                     letterSpacing: '-0.02em'
                   }}
                 >
-                  Create Admin Notification
+                  {editMode ? 'Edit Admin Notification' : 'Create Admin Notification'}
                 </Typography>
               </Box>
               <Collapse in={isHeaderExpanded} timeout={300}>
@@ -191,7 +303,9 @@ const CreateAdminNotificationForm = ({ onSubmit, onCancel, showHeader = true }) 
                   color='text.secondary'
                   sx={{ fontSize: '1.05rem', lineHeight: 1.8, maxWidth: 600, mx: 'auto', mt: 2 }}
                 >
-                  Compose a new admin notification. It will appear in the admin notification list.
+                  {editMode
+                    ? 'Update the notification. Changes will be sent to the new recipient set.'
+                    : 'Compose a new admin notification. It will appear in the admin notification list.'}
                 </Typography>
               </Collapse>
             </Box>
@@ -283,6 +397,104 @@ const CreateAdminNotificationForm = ({ onSubmit, onCancel, showHeader = true }) 
                     placeholder='View'
                   />
                 </Grid>
+                <Grid item xs={12}>
+                  <Typography variant='subtitle1' gutterBottom sx={{ fontWeight: 600, mb: 1.5 }}>
+                    <FilterListIcon
+                      sx={{ fontSize: 20, mr: 1, verticalAlign: 'middle', color: theme.palette.primary.main }}
+                    />
+                    Filter users
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                    sx={{ mb: 2, fontSize: { xs: '0.8125rem', sm: '0.875rem' } }}
+                  >
+                    Target specific users by age, gender, or location. Combine filters with AND, OR, or NOT operators.
+                    Leave empty to send to all users.
+                  </Typography>
+                  {loadingUsers ? (
+                    <Typography variant='body2' color='text.secondary'>
+                      Loading users...
+                    </Typography>
+                  ) : (
+                    <>
+                      <AudienceByFilter
+                        users={users}
+                        onFilterChange={handleFilterChange}
+                        initialCriteria={{ ageGroup: null, location: null, gender: null }}
+                        initialCanonicalFilters={canonicalFilters}
+                      />
+                      {canonicalFilters.length > 0 && selectedUsers.length === 0 && (
+                        <Alert severity='warning' sx={{ mt: 2 }}>
+                          No users match the selected filters. Add or adjust filters to target users.
+                        </Alert>
+                      )}
+                    </>
+                  )}
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant='subtitle1' gutterBottom sx={{ fontWeight: 600 }}>
+                    <PeopleIcon
+                      sx={{ fontSize: 20, mr: 1, verticalAlign: 'middle', color: theme.palette.primary.main }}
+                    />
+                    Recipients
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                    sx={{ mb: 2, fontSize: { xs: '0.8125rem', sm: '0.875rem' } }}
+                  >
+                    Users who will receive this notification (determined by filters above).
+                  </Typography>
+                  {loadingUsers ? (
+                    <Typography variant='body2' color='text.secondary'>
+                      Loading users...
+                    </Typography>
+                  ) : (
+                    <AudienceUserMultiSelect
+                      users={users}
+                      matchedUserIds={selectedUsers}
+                      hasFilters={canonicalFilters.length > 0}
+                      filterCriteria={convertCanonicalToLegacyFormat(canonicalFilters)}
+                    />
+                  )}
+                </Grid>
+                <Grid item xs={12}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={formData.includeForNewUsers === true || formData.includeForNewUsers === 'true'}
+                        onChange={handleChange}
+                        name='includeForNewUsers'
+                        color='primary'
+                      />
+                    }
+                    label={
+                      <Typography
+                        variant='body1'
+                        sx={{
+                          fontWeight: 500,
+                          color: 'text.primary',
+                          fontSize: { xs: '0.875rem', sm: '0.9375rem' }
+                        }}
+                      >
+                        Include new users
+                      </Typography>
+                    }
+                  />
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                    sx={{
+                      display: 'block',
+                      mt: 0.5,
+                      ml: 4.5,
+                      fontSize: { xs: '0.75rem', sm: '0.8125rem' }
+                    }}
+                  >
+                    New users who sign up later will also receive this notification.
+                  </Typography>
+                </Grid>
                 <Grid item xs={12} mt={4}>
                   <Stack direction='row' spacing={2} justifyContent='center'>
                     <Button variant='outlined' onClick={onCancel} disabled={isSubmitting}>
@@ -293,10 +505,10 @@ const CreateAdminNotificationForm = ({ onSubmit, onCancel, showHeader = true }) 
                       component='label'
                       variant='contained'
                       color='primary'
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || selectedUsers.length === 0}
                       sx={{ color: 'white' }}
                     >
-                      {isSubmitting ? 'Creating...' : 'Create Notification'}
+                      {isSubmitting ? (editMode ? 'Updating...' : 'Creating...') : editMode ? 'Update Notification' : 'Create Notification'}
                     </Button>
                   </Stack>
                 </Grid>

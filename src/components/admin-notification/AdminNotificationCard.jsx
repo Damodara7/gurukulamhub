@@ -8,6 +8,7 @@ import {
   RadioButtonUnchecked as UnreadIcon,
   OpenInNew as OpenIcon,
   Delete as DeleteIcon,
+  Edit as EditIcon,
   Visibility as SeenIcon
 } from '@mui/icons-material'
 import * as RestApi from '@/utils/restApiUtil'
@@ -29,7 +30,7 @@ const formatDate = dateStr => {
   return d.toLocaleDateString()
 }
 
-const AdminNotificationCard = ({ groups, onMarkRead, onDelete, onRefresh, onDeleteClick, isAdmin = false }) => {
+const AdminNotificationCard = ({ groups, onMarkRead, onDelete, onRefresh, onDeleteClick, onEditClick, isAdmin = false }) => {
   const theme = useTheme()
 
   const handleMarkRead = async notification => {
@@ -182,6 +183,20 @@ const AdminNotificationCard = ({ groups, onMarkRead, onDelete, onRefresh, onDele
                           }}
                         >
                           <OpenIcon fontSize='small' />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                    {onEditClick && (
+                      <Tooltip title='Edit'>
+                        <IconButton
+                          size='small'
+                          onClick={() => onEditClick(group)}
+                          sx={{
+                            color: theme.palette.primary.main,
+                            '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.08) }
+                          }}
+                        >
+                          <EditIcon fontSize='small' />
                         </IconButton>
                       </Tooltip>
                     )}
