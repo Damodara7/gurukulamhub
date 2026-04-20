@@ -1,16 +1,6 @@
-import React from 'react';
-import {
-  Grid,
-  Card,
-  CardContent,
-  Typography,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Divider
-} from '@mui/material';
-import { Place } from '@mui/icons-material';
+import React from 'react'
+import { Grid, Card, CardContent, Typography, List, ListItem, ListItemIcon, ListItemText, Divider } from '@mui/material'
+import { Place } from '@mui/icons-material'
 
 function AdminForwardLocationInfo({ game }) {
   const cardstyle = game?.status === 'approved' || game?.status === 'lobby' || game?.status === 'cancelled'
@@ -51,3 +41,5 @@ function AdminForwardLocationInfo({ game }) {
 }
 
 export default AdminForwardLocationInfo
+
+// demo code dummy text
