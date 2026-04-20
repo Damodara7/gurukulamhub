@@ -214,22 +214,18 @@ jobs:
               git pull origin main || true
             fi
             
-            # Stop existing containers
-            echo "⏹️  Stopping containers..."
-            docker compose down || true
-            
             # Export environment variables from .env.production for build args
             echo "📦 Loading environment variables for build..."
             set -a
             source .env.production 2>/dev/null || true
             set +a
             
-            # Build and start containers with progress output
-            echo "🔨 Building and starting containers..."
-            # Use --progress=plain to ensure build output is streamed in real-time
-            # NEXT_PUBLIC_TEST_MODE is read from environment (loaded from .env.production above)
+            # Zero-downtime friendly update: do NOT bring the stack down first.
+            # Recreate only changed containers in-place.
+            echo "🔨 Building and updating containers without full shutdown..."
+            docker compose pull || true
             docker compose build --progress=plain
-            docker compose up -d
+            docker compose up -d --remove-orphans
             
             # Wait for app to be ready
             echo "⏳ Waiting for app to be ready..."
@@ -241,14 +237,23 @@ jobs:
             
             # Check app health
             echo "🏥 Checking app health..."
-            for i in {1..30}; do
+            APP_HEALTHY=false
+            for i in {1..45}; do
               if curl -f http://localhost:3000/api/health > /dev/null 2>&1; then
                 echo "✅ App is healthy!"
+                APP_HEALTHY=true
                 break
               fi
-              echo "Waiting for app to be ready... ($i/30)"
+              echo "Waiting for app to be ready... ($i/45)"
               sleep 2
             done
+
+            if [ "$APP_HEALTHY" != "true" ]; then
+              echo "❌ App failed health check after deployment"
+              docker compose ps || true
+              docker compose logs --tail=200 app || true
+              exit 1
+            fi
             
             # Clean up old images
             echo "🧹 Cleaning up old Docker images..."
