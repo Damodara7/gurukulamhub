@@ -121,6 +121,7 @@ export async function updateById(id, updateData) {
   await connectMongo()
 
   try {
+    const requestedApprovalState = updateData?.approvalState
     // Get the quiz before update to check if approvalState is changing
     const oldQuiz = await ArtifactModel.findById(id).lean()
 
@@ -136,11 +137,10 @@ export async function updateById(id, updateData) {
       }
     }
 
-    // If an admin action marks the quiz as 'approved' consider publishing it immediately
-    if (updateData && updateData.approvalState === 'approved') {
-      // Promote approved -> published and make quiz active
-      updateData.approvalState = 'published'
-      updateData.status = updateData.status || 'active'
+    // Keep admin approval as `approved` only.
+    // Publishing must be a separate explicit action by the quiz owner.
+    if (updateData && requestedApprovalState === 'approved') {
+      updateData.approvalState = 'approved'
       updateData.approvedBy = updateData.approvedBy || 'Admin'
     }
 
@@ -156,7 +156,7 @@ export async function updateById(id, updateData) {
       if (editorEmail) {
         updatedArtifact.lastEditedBy = editorEmail
         // Mark as edited by admin when approval or approvedBy is present
-        if (updateData.approvalState === 'approved' || updateData.approvedBy) {
+        if (requestedApprovalState === 'approved' || updateData.approvedBy) {
           updatedArtifact.isEditedByAdmin = true
         }
         // Save the change (updatedArtifact is a mongoose document because { new: true } was used)
@@ -215,12 +215,12 @@ export async function updateById(id, updateData) {
         }
 
         // If quiz is approved or rejected, notify the quiz owner
-        if (updateData.approvalState === 'approved' || updateData.approvalState === 'rejected') {
+        if (requestedApprovalState === 'approved' || requestedApprovalState === 'rejected') {
           // Get the quiz owner's user ID
           const ownerUser = await User.findOne({ email: updatedArtifact.owner || updatedArtifact.createdBy })
 
           if (ownerUser) {
-            if (updateData.approvalState === 'approved') {
+            if (requestedApprovalState === 'approved') {
               // Create approved notification
               await createQuizApprovedNotification(ownerUser._id, {
                 _id: updatedArtifact._id,
@@ -229,7 +229,7 @@ export async function updateById(id, updateData) {
                 approvedBy: updateData.approvedBy || 'Admin',
                 thumbnail: updatedArtifact.thumbnail
               })
-            } else if (updateData.approvalState === 'rejected') {
+            } else if (requestedApprovalState === 'rejected') {
               // Create rejected notification
               await createQuizRejectedNotification(ownerUser._id, {
                 _id: updatedArtifact._id,
@@ -237,7 +237,7 @@ export async function updateById(id, updateData) {
                 title: updatedArtifact.title,
                 approvedBy: updateData.approvedBy || 'Admin',
                 rejectedBy: updateData.approvedBy || 'Admin',
-                remarks: updatedArtifact.remarks || [],
+                remarks: updateData.remarks || updatedArtifact.remarks || [],
                 thumbnail: updatedArtifact.thumbnail
               })
             }
@@ -269,33 +269,10 @@ export async function updateById(id, updateData) {
               const allActiveUserIds = allActiveUsers.map(user => user._id.toString())
               console.log(`[Quiz Service] Found ${allActiveUserIds.length} active users`)
 
-              // Find users who already have QUIZ_PUBLISHED notification for this quiz
-              const Notification = mongoose.model('notifications')
-              const existingNotifications = await Notification.find({
-                type: 'QUIZ_PUBLISHED',
-                'relatedEntity.entityType': 'quiz',
-                'relatedEntity.entityId': updatedArtifact._id.toString()
-              })
-                .select('userId')
-                .lean()
-
-              const usersWithExistingNotifications = existingNotifications.map(n => n.userId.toString())
-              console.log(
-                `[Quiz Service] Found ${usersWithExistingNotifications.length} users who already have notifications`
-              )
-
-              // Exclude users who already have notifications
-              const usersToNotify = allActiveUserIds.filter(userId => !usersWithExistingNotifications.includes(userId))
-
-              console.log('[Quiz Service] Users to notify:', {
-                totalActive: allActiveUserIds.length,
-                alreadyHaveNotification: usersWithExistingNotifications.length,
-                toNotify: usersToNotify.length
-              })
-
-              // Send notifications to all users who don't already have one
-              if (usersToNotify.length > 0) {
-                const notificationResult = await createQuizPublishedNotification(usersToNotify, {
+              // Send publish notifications for every explicit publish action.
+              // Do not skip by historical QUIZ_PUBLISHED records; owner may unpublish/edit and publish again.
+              if (allActiveUserIds.length > 0) {
+                const notificationResult = await createQuizPublishedNotification(allActiveUserIds, {
                   _id: updatedArtifact._id,
                   id: updatedArtifact.id,
                   title: updatedArtifact.title,
@@ -305,11 +282,11 @@ export async function updateById(id, updateData) {
                   thumbnail: updatedArtifact.thumbnail
                 })
                 console.log(
-                  `[Quiz Service] ✅ Sent published notifications to ${usersToNotify.length} users:`,
+                  `[Quiz Service] ✅ Sent published notifications to ${allActiveUserIds.length} users:`,
                   notificationResult
                 )
               } else {
-                console.log('[Quiz Service] ⏭️ All users already have notifications for this quiz')
+                console.log('[Quiz Service] ⏭️ No active users found to notify')
               }
             } catch (publishNotificationError) {
               console.error('[Quiz Service] ❌❌❌ ERROR in quiz published notification ❌❌❌')
@@ -349,7 +326,9 @@ export async function saveQuiz(id, updateData) {
     // Additionally allow admins to save/approve quizzes even if the quiz is in 'pending' state:
     // - If updateData.approvalState === 'approved' we permit the save operation (admin flow).
     let foundArtifact = null
-    if (updateData && updateData.approvalState === 'approved') {
+    const requestedApprovalState = updateData?.approvalState
+
+    if (updateData && requestedApprovalState === 'approved') {
       // Admin save/approve flow - find by id irrespective of current approvalState
       foundArtifact = await ArtifactModel.findOne({ _id: id })
     } else {
@@ -382,10 +361,15 @@ export async function saveQuiz(id, updateData) {
 
     // Update to saved if all questions are validated
     let updatedArtifact = null
-    if (updateData && updateData.approvalState === 'approved') {
-      // Admin approving - promote to published and mark active (handled by updateById logic)
-      // Perform a direct update (no approvalState constraint)
-      updatedArtifact = await ArtifactModel.findOneAndUpdate({ _id: id }, updateData, { new: true })
+    if (updateData && requestedApprovalState === 'approved') {
+      // Admin approving via save flow should remain in `approved` state.
+      // Publishing is done separately by the quiz owner.
+      const adminUpdateData = {
+        ...updateData,
+        approvalState: 'approved',
+        approvedBy: updateData.approvedBy || updateData.editedBy || 'Admin'
+      }
+      updatedArtifact = await ArtifactModel.findOneAndUpdate({ _id: id }, adminUpdateData, { new: true })
     } else {
       updatedArtifact = await ArtifactModel.findOneAndUpdate({ _id: id, approvalState: 'draft' }, updateData, {
         new: true
@@ -397,13 +381,31 @@ export async function saveQuiz(id, updateData) {
       const editorEmail = updateData.editedBy || updateData.approvedBy || null
       if (editorEmail && updatedArtifact) {
         updatedArtifact.lastEditedBy = editorEmail
-        if (updateData.approvalState === 'approved' || updateData.approvedBy) {
+        if (requestedApprovalState === 'approved' || updateData.approvedBy) {
           updatedArtifact.isEditedByAdmin = true
         }
         await updatedArtifact.save()
       }
     } catch (e) {
       console.error('[Quiz Service] Failed to record lastEditedBy on saveQuiz:', e)
+    }
+
+    // Notify quiz owner when admin approves via save flow (edit + save).
+    if (requestedApprovalState === 'approved' && updatedArtifact) {
+      try {
+        const ownerUser = await User.findOne({ email: updatedArtifact.owner || updatedArtifact.createdBy })
+        if (ownerUser) {
+          await createQuizApprovedNotification(ownerUser._id, {
+            _id: updatedArtifact._id,
+            id: updatedArtifact.id,
+            title: updatedArtifact.title,
+            approvedBy: updateData.approvedBy || updateData.editedBy || 'Admin',
+            thumbnail: updatedArtifact.thumbnail
+          })
+        }
+      } catch (notificationError) {
+        console.error('[Quiz Service] Error creating quiz approved notification from saveQuiz:', notificationError)
+      }
     }
 
     return {

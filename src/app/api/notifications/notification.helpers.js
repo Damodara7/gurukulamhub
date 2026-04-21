@@ -49,11 +49,13 @@ export const createQuizRejectedNotification = async (userId, quizData) => {
     const remarks = quizData.remarks || []
     const quizThumbnail = quizData.thumbnail || quizData.quiz?.thumbnail || null
 
+    const normalizedRemarks = Array.isArray(remarks) ? remarks : [remarks]
+    const rejectionReason = normalizedRemarks.find(item => typeof item === 'string' && item.trim()) || ''
     const notificationData = {
       userId: userId,
       type: 'QUIZ_REJECTED',
       title: `Quiz "${quizTitle}" Rejected`,
-      message: `Now ur quiz "${quizTitle}" is rejected.${remarks.length > 0 ? ' Please review the remarks.' : ''}`,
+      message: `Now ur quiz "${quizTitle}" is rejected.${rejectionReason ? ` Reason: ${rejectionReason}` : ''}`,
       relatedEntity: {
         entityType: 'quiz',
         entityId: quizId
@@ -62,7 +64,7 @@ export const createQuizRejectedNotification = async (userId, quizData) => {
         quizTitle,
         quizId,
         rejectedBy,
-        remarks: Array.isArray(remarks) ? remarks : [remarks],
+        remarks: normalizedRemarks,
         rejectedAt: new Date().toISOString(),
         avatarImage: quizThumbnail
       },

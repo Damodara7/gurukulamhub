@@ -10,6 +10,7 @@ import DialogActions from '@mui/material/DialogActions'
 import Typography from '@mui/material/Typography'
 import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
+import TextField from '@mui/material/TextField'
 import { useTheme } from '@mui/material/styles'
 
 // Third-party Imports
@@ -23,6 +24,7 @@ const ConfirmationDialog = ({ open, setOpen, type, onConfirm, affectedUserCount,
   const [loading, setLoading] = useState(false)
   const [operationSuccess, setOperationSuccess] = useState(false)
   const [operationError, setOperationError] = useState(false)
+  const [rejectionReason, setRejectionReason] = useState('')
 
   // Vars
   const Wrapper = type === 'suspend-account' ? 'div' : Fragment
@@ -40,6 +42,7 @@ const ConfirmationDialog = ({ open, setOpen, type, onConfirm, affectedUserCount,
       setOperationSuccess(false)
       setOperationError(false)
       setUserInput(false)
+      setRejectionReason('')
     }
   }, [open])
 
@@ -51,7 +54,11 @@ const ConfirmationDialog = ({ open, setOpen, type, onConfirm, affectedUserCount,
       // Perform async operation (like delete request)
       setLoading(true)
       try {
-        await onConfirm() // Pass the async operation prop
+        if (type === 'reject-quiz') {
+          await onConfirm({ rejectionReason: rejectionReason.trim() })
+        } else {
+          await onConfirm() // Pass the async operation prop
+        }
         setOperationSuccess(true)
       } catch (error) {
         setOperationError(true)
@@ -225,6 +232,20 @@ const ConfirmationDialog = ({ open, setOpen, type, onConfirm, affectedUserCount,
             {type === 'suspend-account' && (
               <Typography color='text.primary'>You won&#39;t be able to revert this action!</Typography>
             )}
+            {type === 'reject-quiz' && (
+              <TextField
+                fullWidth
+                multiline
+                minRows={3}
+                label='Rejection reason'
+                placeholder='Enter reason for rejecting this quiz'
+                value={rejectionReason}
+                onChange={e => setRejectionReason(e.target.value)}
+                error={!rejectionReason.trim()}
+                helperText={!rejectionReason.trim() ? 'Rejection reason is required' : ''}
+                sx={{ mt: 2, textAlign: 'left' }}
+              />
+            )}
             {(type === 'delete-role' || type === 'delete-role-with-users') && affectedUserCount > 0 && (
               <Typography color='warning.main' sx={{ mt: 2, fontWeight: 600 }}>
                 ⚠️ Warning: This role is assigned to {affectedUserCount} user{affectedUserCount !== 1 ? 's' : ''}.
@@ -244,7 +265,7 @@ const ConfirmationDialog = ({ open, setOpen, type, onConfirm, affectedUserCount,
             component={'label'}
             style={{ color: 'white' }}
             onClick={() => handleConfirmation(true)}
-            disabled={loading}
+            disabled={loading || (type === 'reject-quiz' && !rejectionReason.trim())}
           >
             {loading ? (
               <CircularProgress size={24} color='inherit' />
