@@ -203,7 +203,7 @@ const PublicGamesList = ({ games, loading, error, setGames }) => {
         <Grid container spacing={{ xs: 2, sm: 3, md: 4 }}>
           {filteredGames.map((game) => (
             <Grid item key={game._id || game.id} xs={12} sm={6} md={4}>
-              <GameCard game={game} currentUsergroupIdsIds={currentUserGroupIdIds} />
+              <GameCard game={game} currentUsergroupIds={currentUserGroupIdIds} />
             </Grid>
           ))}
         </Grid>

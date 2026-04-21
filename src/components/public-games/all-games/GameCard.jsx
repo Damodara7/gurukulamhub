@@ -39,7 +39,7 @@ import {
   Share as ShareIcon
 } from '@mui/icons-material'
 
-const GameCard = ({ game, currentUsergroupIds = [] }) => {
+const GameCard = ({ game, currentUsergroupIds = [], currentUsergroupIdsIds = [] }) => {
   const { data: session } = useSession()
   const router = useRouter()
   const theme = useTheme()
@@ -51,9 +51,12 @@ const GameCard = ({ game, currentUsergroupIds = [] }) => {
   const groupObj = game?.groupId && (game.groupId._id ? game.groupId : null)
   const groupIdStr = game?.groupId ? (game.groupId._id || game.groupId).toString() : null
   const isGroupRestricted = Boolean(groupIdStr)
+  const userGroupIds = (currentUsergroupIds?.length ? currentUsergroupIds : currentUsergroupIdsIds) || []
   const isUserMemberOfGroup = !isGroupRestricted
     ? true
-    : (currentUsergroupIds || []).map(g => (g?._id ? g._id.toString() : g.toString())).includes(groupIdStr)
+    : userGroupIds
+        .map(g => (g?._id ? g._id.toString() : g?.toString?.() || ''))
+        .includes(groupIdStr)
   const showGroupRestriction = isGroupRestricted && !isUserMemberOfGroup
 
   // Build compact filters text safely
