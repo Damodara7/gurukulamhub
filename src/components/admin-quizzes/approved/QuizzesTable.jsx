@@ -198,11 +198,13 @@ const AdminApprovedQuizzesTable = ({ data, refreshData }) => {
     setConfirmationDialogOpen(prev => ({ ...prev, pending: true }))
   }
 
-  async function handleRejectQuiz() {
+  async function handleRejectQuiz(payload = {}) {
+    const rejectionReason = payload?.rejectionReason?.trim()
     const reqBody = {
       id: currentRow._id,
       approvalState: 'rejected',
-      approvedBy: session?.user?.email
+      approvedBy: session?.user?.email,
+      remarks: rejectionReason ? [rejectionReason] : []
     }
     try {
       const result = await rejectQuiz(reqBody)

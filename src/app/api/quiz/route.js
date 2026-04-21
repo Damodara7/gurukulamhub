@@ -97,7 +97,7 @@ export async function POST(request) {
 export async function PUT(request) {
   try {
     const reqBody = await request.json();
-    const { id, approvalState } = reqBody;  // Extract ID and approval state
+    const { id, approvalState, approvedBy, remarks } = reqBody;  // Extract update fields
     let ids = reqBody.ids;  // Use let here to allow reassignment
 
     // Check if 'id' is provided, and convert it to an array
@@ -118,6 +118,12 @@ export async function PUT(request) {
     const updateData = {};
     if (approvalState !== undefined) {
       updateData.approvalState = approvalState; // Add approvalState only if it is provided
+    }
+    if (approvedBy !== undefined) {
+      updateData.approvedBy = approvedBy;
+    }
+    if (remarks !== undefined) {
+      updateData.remarks = remarks;
     }
 
     // Update each artifact based on the provided IDs

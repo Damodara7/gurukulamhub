@@ -100,6 +100,7 @@ function PrimaryQuizBuilder({ quiz, isAdmin = false }) {
       const reqBody = { approvalState: isAdmin ? 'approved' : 'saved' }
       if (isAdmin) {
         reqBody.editedBy = session?.user?.email
+        reqBody.approvedBy = session?.user?.email
       }
       const res = await RestApi.put(`${API_URLS.v0.USERS_QUIZ}/${quiz._id || quiz.id}/save`, reqBody)
       if (res.status === 'success') {
