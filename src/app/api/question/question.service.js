@@ -7,6 +7,15 @@ const Artifact = 'Question'
 const ArtifactModel = Question
 const CreateRequestDtoSchema = questionCreateRequestDtoSchema
 
+const downgradeQuizToDraftIfSaved = async quizId => {
+  if (!quizId) return
+  try {
+    await Quiz.findOneAndUpdate({ _id: quizId, approvalState: 'saved' }, { approvalState: 'draft' }, { new: true })
+  } catch (error) {
+    console.error('[Question Service] Failed to downgrade quiz to draft:', error)
+  }
+}
+
 // **Add Artifact**
 export async function add(addRequestData) {
   //await createRootDocument();
@@ -23,6 +32,7 @@ export async function add(addRequestData) {
   try {
     const newArtifact = new ArtifactModel({ ...addRequestData })
     await newArtifact.save()
+    await downgradeQuizToDraftIfSaved(addRequestData.quizId)
 
     // Update the quiz's secondary languages count if the question is not the primary language
     if (addRequestData.isPrimary === false) {
@@ -77,12 +87,13 @@ export async function addMany(addRequestDataArray) {
   await connectMongo();
 
   try {
+    const { quizId, language, isPrimary } = addRequestDataArray[0];
     // Insert all artifacts in one go
     const newArtifacts = await ArtifactModel.insertMany(addRequestDataArray);
     console.log('Artifacts added successfully:', newArtifacts);
+    await downgradeQuizToDraftIfSaved(quizId)
 
     // Process secondary language update only once
-    const { quizId, language, isPrimary } = addRequestDataArray[0];
     if (isPrimary === false) {
       const [langCode, langName] = language.split('|');
 
@@ -130,6 +141,7 @@ export async function update(id, updateData) {
       console.error(`${Artifact}` + 'not found for update.')
       return { status: 'error', result: null, message: `${Artifact}` + 'not found for update.' }
     }
+    await downgradeQuizToDraftIfSaved(updatedArtifact.quizId)
     const allArtifacts = await ArtifactModel.find({quizId: updatedArtifact.quizId})
     // if(allAds)
     return { status: 'success', result: allArtifacts, message: `${Artifact}` + ' Updated Successfully' }
@@ -149,6 +161,7 @@ export async function softDelete(id) {
       console.error('`${Artifact}` not found for deletion.')
       return { status: 'error', result: null, message: '`${Artifact}` not found for deletion.' }
     }
+    await downgradeQuizToDraftIfSaved(updatedArtifact.quizId)
     const allArtifacts = await ArtifactModel.find({quizId: updatedArtifact.quizId})
     // if(allAds)
     return { status: 'success', result: allArtifacts, message: '`${Artifact}` Marked Deleted Successfully' }
@@ -163,6 +176,7 @@ export async function deleteArtifact(id) {
   await connectMongo()
   try {
     const result = await ArtifactModel.findByIdAndDelete(id)
+    await downgradeQuizToDraftIfSaved(result?.quizId)
 
     const quizId = result.quizId;
     // Delete Sec Lang in Quiz

@@ -1,0 +1,179 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36">
+  <diagram id="C5RBs43oDa-KdzZeNtuy" name="Page-1">
+    <mxGraphModel dx="3947" dy="828" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="WIyWlLk6GJQsqaUBKTNV-0" />
+        <mxCell id="WIyWlLk6GJQsqaUBKTNV-1" parent="WIyWlLk6GJQsqaUBKTNV-0" />
+        <mxCell id="WIyWlLk6GJQsqaUBKTNV-3" parent="WIyWlLk6GJQsqaUBKTNV-1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;glass=0;strokeWidth=1;shadow=0;" value="&lt;h2&gt;RBAC (route protection)&lt;/h2&gt;" vertex="1">
+          <mxGeometry height="40" width="230" x="-460" y="10" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-0" parent="WIyWlLk6GJQsqaUBKTNV-1" style="rounded=1;whiteSpace=wrap;html=1;" value="&lt;h2 style=&quot;text-align: left;&quot;&gt;&lt;font face=&quot;docs-Calibri&quot;&gt;&lt;span style=&quot;font-size: 15px; white-space-collapse: preserve; background-color: rgb(255, 255, 255);&quot;&gt;2. Protect Routes( if the user searching the route in url )&lt;/span&gt;&lt;/font&gt;&lt;/h2&gt;" vertex="1">
+          <mxGeometry height="60" width="370" x="90" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-3" edge="1" parent="WIyWlLk6GJQsqaUBKTNV-1" source="D724WjvKDvsJ2faTojJQ-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="D724WjvKDvsJ2faTojJQ-2" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-1" parent="WIyWlLk6GJQsqaUBKTNV-1" style="rounded=1;whiteSpace=wrap;html=1;" value="Login" vertex="1">
+          <mxGeometry height="60" width="120" x="160" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-5" edge="1" parent="WIyWlLk6GJQsqaUBKTNV-1" source="D724WjvKDvsJ2faTojJQ-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="D724WjvKDvsJ2faTojJQ-4" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-6" connectable="0" parent="D724WjvKDvsJ2faTojJQ-5" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="no" vertex="1">
+          <mxGeometry relative="1" x="-0.1778" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-8" edge="1" parent="WIyWlLk6GJQsqaUBKTNV-1" source="D724WjvKDvsJ2faTojJQ-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="D724WjvKDvsJ2faTojJQ-7" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-9" connectable="0" parent="D724WjvKDvsJ2faTojJQ-8" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="yes" vertex="1">
+          <mxGeometry relative="1" x="-0.3739" y="2" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-2" parent="WIyWlLk6GJQsqaUBKTNV-1" style="rhombus;whiteSpace=wrap;html=1;rounded=1;" value="is&lt;div&gt;user&lt;/div&gt;&lt;div&gt;active&lt;/div&gt;&lt;div&gt;(not&lt;/div&gt;&lt;div&gt;inactive)&lt;/div&gt;" vertex="1">
+          <mxGeometry height="130" width="140" x="150" y="295" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-4" parent="WIyWlLk6GJQsqaUBKTNV-1" style="whiteSpace=wrap;html=1;rounded=1;" value="Display Access Denied Error message" vertex="1">
+          <mxGeometry height="60" width="120" x="380" y="330" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-11" edge="1" parent="WIyWlLk6GJQsqaUBKTNV-1" source="D724WjvKDvsJ2faTojJQ-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="D724WjvKDvsJ2faTojJQ-10" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-7" parent="WIyWlLk6GJQsqaUBKTNV-1" style="whiteSpace=wrap;html=1;rounded=1;" value="Login successful &amp;amp; Redirects to Home page" vertex="1">
+          <mxGeometry height="60" width="120" x="160" y="470" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-13" edge="1" parent="WIyWlLk6GJQsqaUBKTNV-1" source="D724WjvKDvsJ2faTojJQ-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="D724WjvKDvsJ2faTojJQ-12" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-10" parent="WIyWlLk6GJQsqaUBKTNV-1" style="whiteSpace=wrap;html=1;rounded=1;" value="&lt;span style=&quot;color: rgb(156, 220, 254); font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px; white-space: pre; background-color: rgb(31, 31, 31);&quot;&gt;userRoles: &lt;/span&gt;user session will have roles&amp;nbsp;&lt;div&gt;(ex: [&quot;USER&quot;, &quot;ADMIN&quot;, &quot;SUPER_USER&quot;])&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="260" x="90" y="570" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-21" edge="1" parent="WIyWlLk6GJQsqaUBKTNV-1" source="D724WjvKDvsJ2faTojJQ-12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="D724WjvKDvsJ2faTojJQ-20" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-12" parent="WIyWlLk6GJQsqaUBKTNV-1" style="whiteSpace=wrap;html=1;rounded=1;" value="&lt;span style=&quot;color: rgb(156, 220, 254); font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px; white-space: pre; background-color: rgb(31, 31, 31);&quot;&gt;roles: &lt;/span&gt;In Database roles will be like&lt;div&gt;[ {name:&quot;&lt;font face=&quot;Consolas, Courier New, monospace&quot; color=&quot;#4fc1ff&quot;&gt;&lt;span style=&quot;font-size: 14px; white-space: pre; background-color: rgb(31, 31, 31);&quot;&gt;ADMIN&lt;/span&gt;&lt;/font&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;&quot;, features:[ {name: &quot;&lt;/span&gt;&lt;span style=&quot;color: rgb(79, 193, 255); background-color: rgb(31, 31, 31); font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px; white-space: pre;&quot;&gt;MANAGE_ADVT&lt;/span&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;&quot;, permissions: [&quot;&lt;/span&gt;&lt;span style=&quot;color: rgb(79, 193, 255); background-color: rgb(31, 31, 31); font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px; white-space: pre;&quot;&gt;VIEW&lt;/span&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;&quot;, &quot;&lt;/span&gt;&lt;font face=&quot;Consolas, Courier New, monospace&quot; color=&quot;#4fc1ff&quot;&gt;&lt;span style=&quot;font-size: 14px; white-space: pre; background-color: rgb(31, 31, 31);&quot;&gt;CREATE&lt;/span&gt;&lt;/font&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;&quot;] } ] } ]&lt;/span&gt;&lt;br&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="535" x="-47.5" y="660" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-17" edge="1" parent="WIyWlLk6GJQsqaUBKTNV-1" source="D724WjvKDvsJ2faTojJQ-14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="D724WjvKDvsJ2faTojJQ-16" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-14" parent="WIyWlLk6GJQsqaUBKTNV-1" style="whiteSpace=wrap;html=1;rounded=1;" value="&lt;div style=&quot;color: rgb(204, 204, 204); background-color: rgb(31, 31, 31); font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px; line-height: 19px; white-space: pre;&quot;&gt;&lt;div&gt;&lt;span style=&quot;color: #808080;&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&quot;color: #4ec9b0;&quot;&gt;WithPermission&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; &lt;span style=&quot;color: #9cdcfe;&quot;&gt;roles&lt;/span&gt;&lt;span style=&quot;color: #d4d4d4;&quot;&gt;=&lt;/span&gt;&lt;span style=&quot;color: #569cd6;&quot;&gt;{&lt;/span&gt;&lt;span style=&quot;color: #4fc1ff;&quot;&gt;roles&lt;/span&gt;&lt;span style=&quot;color: #569cd6;&quot;&gt;}&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; &lt;span style=&quot;color: #9cdcfe;&quot;&gt;userRoles&lt;/span&gt;&lt;span style=&quot;color: #d4d4d4;&quot;&gt;=&lt;/span&gt;&lt;span style=&quot;color: #569cd6;&quot;&gt;{&lt;/span&gt;&lt;span style=&quot;color: #4fc1ff;&quot;&gt;userRoles&lt;/span&gt;&lt;span style=&quot;color: #569cd6;&quot;&gt;}&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; &lt;span style=&quot;color: #9cdcfe;&quot;&gt;featureName&lt;/span&gt;&lt;span style=&quot;color: #d4d4d4;&quot;&gt;=&lt;/span&gt;&lt;span style=&quot;color: #569cd6;&quot;&gt;{&lt;/span&gt;&lt;span style=&quot;color: #4fc1ff;&quot;&gt;FEATURES_LOOKUP&lt;/span&gt;&lt;span style=&quot;color: #d4d4d4;&quot;&gt;.&lt;/span&gt;&lt;span style=&quot;color: #4fc1ff;&quot;&gt;MANAGE_ADVT&lt;/span&gt;&lt;span style=&quot;color: #569cd6;&quot;&gt;}&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; &lt;span style=&quot;color: #9cdcfe;&quot;&gt;permissionName&lt;/span&gt;&lt;span style=&quot;color: #d4d4d4;&quot;&gt;=&lt;/span&gt;&lt;span style=&quot;color: #569cd6;&quot;&gt;{&lt;/span&gt;&lt;span style=&quot;color: #4fc1ff;&quot;&gt;PERMISSIONS_LOOKUP&lt;/span&gt;&lt;span style=&quot;color: #d4d4d4;&quot;&gt;.&lt;/span&gt;&lt;span style=&quot;color: #4fc1ff;&quot;&gt;VIEW&lt;/span&gt;&lt;span style=&quot;color: #569cd6;&quot;&gt;}&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&amp;nbsp; &amp;nbsp; &lt;span style=&quot;color: #808080;&quot;&gt;&amp;gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; &lt;span style=&quot;color: #569cd6;&quot;&gt;{&lt;/span&gt;&lt;span style=&quot;color: #9cdcfe;&quot;&gt;children&lt;/span&gt;&lt;span style=&quot;color: #569cd6;&quot;&gt;}&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&amp;nbsp; &amp;nbsp; &lt;span style=&quot;color: #808080;&quot;&gt;&amp;lt;/&lt;/span&gt;&lt;span style=&quot;color: #4ec9b0;&quot;&gt;WithPermission&lt;/span&gt;&lt;span style=&quot;color: #808080;&quot;&gt;&amp;gt;&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="150" width="355" x="621.25" y="620" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-16" parent="WIyWlLk6GJQsqaUBKTNV-1" style="whiteSpace=wrap;html=1;rounded=1;" value="&lt;div style=&quot;color: rgb(204, 204, 204); background-color: rgb(31, 31, 31); font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px; line-height: 19px; white-space: pre;&quot;&gt;&lt;div&gt;&lt;span style=&quot;color: #569cd6;&quot;&gt;const&lt;/span&gt; &lt;span style=&quot;color: #dcdcaa;&quot;&gt;WithPermission&lt;/span&gt; &lt;span style=&quot;color: #d4d4d4;&quot;&gt;=&lt;/span&gt; ({ &lt;span style=&quot;color: #9cdcfe;&quot;&gt;roles&lt;/span&gt;, &lt;span style=&quot;color: #9cdcfe;&quot;&gt;userRoles&lt;/span&gt;, &lt;span style=&quot;color: #9cdcfe;&quot;&gt;featureName&lt;/span&gt;, &lt;span style=&quot;color: #9cdcfe;&quot;&gt;permissionName&lt;/span&gt;, &lt;span style=&quot;color: #9cdcfe;&quot;&gt;children&lt;/span&gt; }) &lt;span style=&quot;color: #569cd6;&quot;&gt;=&amp;gt;&lt;/span&gt; {&lt;/div&gt;&lt;div&gt;&amp;nbsp; &lt;span style=&quot;color: #6a9955;&quot;&gt;// &amp;nbsp; console.log(&#39;roles:&#39;, roles)&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&amp;nbsp; &lt;span style=&quot;color: #6a9955;&quot;&gt;// &amp;nbsp; console.log(&#39;user roles:&#39;, userRoles)&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&amp;nbsp; &lt;span style=&quot;color: #569cd6;&quot;&gt;const&lt;/span&gt; &lt;span style=&quot;color: #4fc1ff;&quot;&gt;isAuthorized&lt;/span&gt; &lt;span style=&quot;color: #d4d4d4;&quot;&gt;=&lt;/span&gt; &lt;span style=&quot;color: #9cdcfe;&quot;&gt;permissionUtils&lt;/span&gt;.&lt;span style=&quot;color: #dcdcaa;&quot;&gt;hasPermission&lt;/span&gt;(&lt;span style=&quot;color: #9cdcfe;&quot;&gt;roles&lt;/span&gt;, &lt;span style=&quot;color: #9cdcfe;&quot;&gt;userRoles&lt;/span&gt;, &lt;span style=&quot;color: #9cdcfe;&quot;&gt;featureName&lt;/span&gt;, &lt;span style=&quot;color: #9cdcfe;&quot;&gt;permissionName&lt;/span&gt;)&lt;/div&gt;&lt;div&gt;&amp;nbsp; &lt;span style=&quot;color: #6a9955;&quot;&gt;// &amp;nbsp; console.log(&#39;Is authorized:&#39;, isAuthorized)&lt;/span&gt;&lt;/div&gt;&lt;br&gt;&lt;div&gt;&amp;nbsp; &lt;span style=&quot;color: #c586c0;&quot;&gt;return&lt;/span&gt; &lt;span style=&quot;color: #4fc1ff;&quot;&gt;isAuthorized&lt;/span&gt; &lt;span style=&quot;color: #d4d4d4;&quot;&gt;?&lt;/span&gt; &lt;span style=&quot;color: #9cdcfe;&quot;&gt;children&lt;/span&gt; &lt;span style=&quot;color: #d4d4d4;&quot;&gt;:&lt;/span&gt; &lt;span style=&quot;color: #808080;&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span style=&quot;color: #4ec9b0;&quot;&gt;AccessDenied&lt;/span&gt; &lt;span style=&quot;color: #808080;&quot;&gt;/&amp;gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;}&lt;/div&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="150" width="757.5" x="420" y="800" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-23" edge="1" parent="WIyWlLk6GJQsqaUBKTNV-1" source="D724WjvKDvsJ2faTojJQ-20" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="D724WjvKDvsJ2faTojJQ-22" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-20" parent="WIyWlLk6GJQsqaUBKTNV-1" style="whiteSpace=wrap;html=1;rounded=1;" value="In layouts of every page(feature) check if the user has view permission. (By using WithPermission component)" vertex="1">
+          <mxGeometry height="60" width="320" x="60" y="760" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-25" edge="1" parent="WIyWlLk6GJQsqaUBKTNV-1" source="D724WjvKDvsJ2faTojJQ-22" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="D724WjvKDvsJ2faTojJQ-24" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-26" connectable="0" parent="D724WjvKDvsJ2faTojJQ-25" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="no" vertex="1">
+          <mxGeometry relative="1" x="0.12" y="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-28" edge="1" parent="WIyWlLk6GJQsqaUBKTNV-1" source="D724WjvKDvsJ2faTojJQ-22" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="D724WjvKDvsJ2faTojJQ-27" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-29" connectable="0" parent="D724WjvKDvsJ2faTojJQ-28" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="yes" vertex="1">
+          <mxGeometry relative="1" x="-0.45" y="2" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-22" parent="WIyWlLk6GJQsqaUBKTNV-1" style="rhombus;whiteSpace=wrap;html=1;rounded=1;" value="has&lt;div&gt;permission?&lt;/div&gt;" vertex="1">
+          <mxGeometry height="80" width="110" x="165" y="970" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-24" parent="WIyWlLk6GJQsqaUBKTNV-1" style="whiteSpace=wrap;html=1;rounded=1;" value="Display Access Denied page" vertex="1">
+          <mxGeometry height="60" width="180" x="350" y="980" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-27" parent="WIyWlLk6GJQsqaUBKTNV-1" style="whiteSpace=wrap;html=1;rounded=1;" value="Display the page(feature)" vertex="1">
+          <mxGeometry height="60" width="120" x="160" y="1090" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-30" parent="WIyWlLk6GJQsqaUBKTNV-1" style="rounded=1;whiteSpace=wrap;html=1;" value="&lt;h3&gt;&lt;span style=&quot;font-family: docs-Calibri; font-size: 15px; text-align: left; white-space-collapse: preserve; background-color: rgb(255, 255, 255);&quot;&gt;1. Controll Sidebar menuItems&lt;/span&gt;&lt;/h3&gt;" vertex="1">
+          <mxGeometry height="60" width="260" x="-720" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-31" edge="1" parent="WIyWlLk6GJQsqaUBKTNV-1" source="D724WjvKDvsJ2faTojJQ-32" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="D724WjvKDvsJ2faTojJQ-37" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-32" parent="WIyWlLk6GJQsqaUBKTNV-1" style="rounded=1;whiteSpace=wrap;html=1;" value="Login" vertex="1">
+          <mxGeometry height="60" width="120" x="-712.5" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-33" edge="1" parent="WIyWlLk6GJQsqaUBKTNV-1" source="D724WjvKDvsJ2faTojJQ-37" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="D724WjvKDvsJ2faTojJQ-38" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-34" connectable="0" parent="D724WjvKDvsJ2faTojJQ-33" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="no" vertex="1">
+          <mxGeometry relative="1" x="-0.1778" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-35" edge="1" parent="WIyWlLk6GJQsqaUBKTNV-1" source="D724WjvKDvsJ2faTojJQ-37" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="D724WjvKDvsJ2faTojJQ-40" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-36" connectable="0" parent="D724WjvKDvsJ2faTojJQ-35" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="yes" vertex="1">
+          <mxGeometry relative="1" x="-0.3739" y="2" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-37" parent="WIyWlLk6GJQsqaUBKTNV-1" style="rhombus;whiteSpace=wrap;html=1;rounded=1;" value="is&lt;div&gt;user&lt;/div&gt;&lt;div&gt;active&lt;/div&gt;&lt;div&gt;(not&lt;/div&gt;&lt;div&gt;inactive)&lt;/div&gt;" vertex="1">
+          <mxGeometry height="130" width="140" x="-722.5" y="275" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-38" parent="WIyWlLk6GJQsqaUBKTNV-1" style="whiteSpace=wrap;html=1;rounded=1;" value="Display Access Denied Error message" vertex="1">
+          <mxGeometry height="60" width="120" x="-492.5" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-39" edge="1" parent="WIyWlLk6GJQsqaUBKTNV-1" source="D724WjvKDvsJ2faTojJQ-40" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="D724WjvKDvsJ2faTojJQ-42" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-40" parent="WIyWlLk6GJQsqaUBKTNV-1" style="whiteSpace=wrap;html=1;rounded=1;" value="Login successful &amp;amp; Redirects to Home page" vertex="1">
+          <mxGeometry height="60" width="120" x="-712.5" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-41" edge="1" parent="WIyWlLk6GJQsqaUBKTNV-1" source="D724WjvKDvsJ2faTojJQ-42" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="D724WjvKDvsJ2faTojJQ-43" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-42" parent="WIyWlLk6GJQsqaUBKTNV-1" style="whiteSpace=wrap;html=1;rounded=1;" value="&lt;span style=&quot;color: rgb(156, 220, 254); font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px; white-space: pre; background-color: rgb(31, 31, 31);&quot;&gt;userRoles: &lt;/span&gt;user session will have roles&amp;nbsp;&lt;div&gt;(ex: [&quot;USER&quot;, &quot;ADMIN&quot;, &quot;SUPER_USER&quot;])&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="260" x="-782.5" y="550" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-45" edge="1" parent="WIyWlLk6GJQsqaUBKTNV-1" source="D724WjvKDvsJ2faTojJQ-43" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="D724WjvKDvsJ2faTojJQ-44" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-43" parent="WIyWlLk6GJQsqaUBKTNV-1" style="whiteSpace=wrap;html=1;rounded=1;" value="&lt;span style=&quot;color: rgb(156, 220, 254); font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px; white-space: pre; background-color: rgb(31, 31, 31);&quot;&gt;roles: &lt;/span&gt;In Database roles will be like&lt;div&gt;[ {name:&quot;&lt;font face=&quot;Consolas, Courier New, monospace&quot; color=&quot;#4fc1ff&quot;&gt;&lt;span style=&quot;font-size: 14px; white-space: pre; background-color: rgb(31, 31, 31);&quot;&gt;ADMIN&lt;/span&gt;&lt;/font&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;&quot;, features:[ {name: &quot;&lt;/span&gt;&lt;span style=&quot;color: rgb(79, 193, 255); background-color: rgb(31, 31, 31); font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px; white-space: pre;&quot;&gt;MANAGE_ADVT&lt;/span&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;&quot;, permissions: [&quot;&lt;/span&gt;&lt;span style=&quot;color: rgb(79, 193, 255); background-color: rgb(31, 31, 31); font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px; white-space: pre;&quot;&gt;VIEW&lt;/span&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;&quot;, &quot;&lt;/span&gt;&lt;font face=&quot;Consolas, Courier New, monospace&quot; color=&quot;#4fc1ff&quot;&gt;&lt;span style=&quot;font-size: 14px; white-space: pre; background-color: rgb(31, 31, 31);&quot;&gt;CREATE&lt;/span&gt;&lt;/font&gt;&lt;span style=&quot;background-color: initial;&quot;&gt;&quot;] } ] } ]&lt;/span&gt;&lt;br&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="535" x="-920" y="640" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-47" edge="1" parent="WIyWlLk6GJQsqaUBKTNV-1" source="D724WjvKDvsJ2faTojJQ-44" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="D724WjvKDvsJ2faTojJQ-46" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-48" connectable="0" parent="D724WjvKDvsJ2faTojJQ-47" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="no" vertex="1">
+          <mxGeometry relative="1" x="-0.2095" y="-1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-50" edge="1" parent="WIyWlLk6GJQsqaUBKTNV-1" source="D724WjvKDvsJ2faTojJQ-44" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="D724WjvKDvsJ2faTojJQ-49" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-51" connectable="0" parent="D724WjvKDvsJ2faTojJQ-50" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="yes" vertex="1">
+          <mxGeometry relative="1" x="-0.4667" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-44" parent="WIyWlLk6GJQsqaUBKTNV-1" style="rhombus;whiteSpace=wrap;html=1;rounded=1;" value="has View Permission&lt;div&gt;For the Feature?&lt;/div&gt;" vertex="1">
+          <mxGeometry height="80" width="170" x="-737.5" y="730" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-46" parent="WIyWlLk6GJQsqaUBKTNV-1" style="whiteSpace=wrap;html=1;rounded=1;" value="Do not display the menu item" vertex="1">
+          <mxGeometry height="60" width="120" x="-462.5" y="740" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-49" parent="WIyWlLk6GJQsqaUBKTNV-1" style="whiteSpace=wrap;html=1;rounded=1;" value="Display the menu item" vertex="1">
+          <mxGeometry height="60" width="120" x="-712.5" y="900" as="geometry" />
+        </mxCell>
+        <mxCell id="D724WjvKDvsJ2faTojJQ-52" parent="WIyWlLk6GJQsqaUBKTNV-1" style="text;whiteSpace=wrap;html=1;" value="&lt;div style=&quot;color: #cccccc;background-color: #1f1f1f;font-family: Consolas, &#39;Courier New&#39;, monospace;font-weight: normal;font-size: 14px;line-height: 19px;white-space: pre;&quot;&gt;&lt;div&gt;&lt;span style=&quot;color: #9cdcfe;&quot;&gt;{&lt;/span&gt;&lt;span style=&quot;color: #4fc1ff;&quot;&gt;hasManageAdvtViewPermission&lt;/span&gt;&lt;span style=&quot;color: #9cdcfe;&quot;&gt; &amp;amp;&amp;amp; (&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;color: #9cdcfe;&quot;&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;lt;MenuItem href={`/${&lt;/span&gt;&lt;span style=&quot;color: #4fc1ff;&quot;&gt;locale&lt;/span&gt;&lt;span style=&quot;color: #9cdcfe;&quot;&gt;}/apps/advertisements/list`} icon={&amp;lt;i className=&#39;ri-advertisement-line&#39;&amp;gt;&amp;lt;/i&amp;gt;}&amp;gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;color: #9cdcfe;&quot;&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; {&lt;/span&gt;&lt;span style=&quot;color: #9cdcfe;&quot;&gt;dictionary&lt;/span&gt;&lt;span style=&quot;color: #9cdcfe;&quot;&gt;[&lt;/span&gt;&lt;span style=&quot;color: #ce9178;&quot;&gt;&#39;navigation&#39;&lt;/span&gt;&lt;span style=&quot;color: #9cdcfe;&quot;&gt;].manageAdvt}&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;color: #9cdcfe;&quot;&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;lt;/MenuItem&amp;gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;color: #9cdcfe;&quot;&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; )}&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="120" width="910" x="-1660" y="720" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
