@@ -9,6 +9,7 @@ import IconButton from '@mui/material/IconButton'
 import Button from '@mui/material/Button'
 import TextField from '@mui/material/TextField'
 import Chip from '@mui/material/Chip'
+import MenuItem from '@mui/material/MenuItem'
 import { useEffect, useState } from 'react'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
@@ -20,32 +21,24 @@ import { Box, FormControl, FormControlLabel, Switch, Tooltip } from '@mui/materi
 import { alpha, useTheme } from '@mui/material/styles'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
 import { toast } from 'react-toastify'
+import { PERMISSIONS_LOOKUP } from '@/configs/permissions-lookup'
 
 // AddContent Component
 const AddContent = ({ handleClose, onCreate }) => {
   const theme = useTheme()
+  const permissionOptions = Object.values(PERMISSIONS_LOOKUP)
   const [featureName, setFeatureName] = useState('')
-  const [permissions, setPermissions] = useState('')
   const [permissionChips, setPermissionChips] = useState([])
   const [featureNameError, setFeatureNameError] = useState('')
   const [permissionsError, setPermissionsError] = useState('')
   const [featureNameTouched, setFeatureNameTouched] = useState(false)
   const [permissionsTouched, setPermissionsTouched] = useState(false)
 
-  const handleAddPermission = () => {
-    if (permissions.trim()) {
-      setPermissionChips([...permissionChips, permissions.trim()])
-      setPermissions('')
-      setPermissionsError('')
-      // Keep permissionsTouched as true so validation persists if chips are removed later
-    }
-  }
-
   const handleRemoveChip = chipToRemove => {
     const updatedChips = permissionChips.filter(chip => chip !== chipToRemove)
     setPermissionChips(updatedChips)
     // Re-validate permissions if field was touched
-    if (permissionsTouched && updatedChips.length === 0 && !permissions.trim()) {
+    if (permissionsTouched && updatedChips.length === 0) {
       setPermissionsError('At least one permission is required')
     } else {
       setPermissionsError('')
@@ -55,12 +48,6 @@ const AddContent = ({ handleClose, onCreate }) => {
   const handleCreateFeature = () => {
     onCreate({ name: featureName.toUpperCase().replace(/\s+/g, '_'), permissions: permissionChips })
     handleClose()
-  }
-
-  const handleKeyDown = event => {
-    if (event.key === 'Enter' && permissions.trim()) {
-      handleAddPermission()
-    }
   }
 
   const handleFeatureNameBlur = () => {
@@ -74,7 +61,7 @@ const AddContent = ({ handleClose, onCreate }) => {
 
   const handlePermissionsBlur = () => {
     setPermissionsTouched(true)
-    if (permissionChips.length === 0 && !permissions.trim()) {
+    if (permissionChips.length === 0) {
       setPermissionsError('At least one permission is required')
     } else {
       setPermissionsError('')
@@ -117,36 +104,32 @@ const AddContent = ({ handleClose, onCreate }) => {
         />
         <TextField
           fullWidth
+          select
           label='Permissions'
           variant='outlined'
-          placeholder='Enter Permission'
-          value={permissions}
+          value={permissionChips}
           error={!!permissionsError}
           helperText={permissionsError}
           onChange={e => {
-            const formattedName = e.target.value.toUpperCase().replace(/\s+/g, '_')
-            setPermissions(formattedName)
-            if (permissionsTouched && (formattedName.trim() || permissionChips.length > 0)) {
+            const selectedPermissions = e.target.value
+            setPermissionChips(typeof selectedPermissions === 'string' ? selectedPermissions.split(',') : selectedPermissions)
+            if (permissionsTouched && selectedPermissions.length > 0) {
               setPermissionsError('')
             }
           }}
           onBlur={handlePermissionsBlur}
-          onKeyDown={handleKeyDown}
           required
-          InputProps={{
-            endAdornment: (
-              <Button
-                size='small'
-                onClick={handleAddPermission}
-                color='primary'
-                variant='text'
-                disabled={!permissions.trim()}
-              >
-                Add
-              </Button>
-            )
+          SelectProps={{
+            multiple: true,
+            renderValue: selected => selected.join(', ')
           }}
-        />
+        >
+          {permissionOptions.map(option => (
+            <MenuItem key={option} value={option}>
+              {option}
+            </MenuItem>
+          ))}
+        </TextField>
         {permissionChips.length > 0 && (
           <Box
             sx={{
@@ -224,21 +207,14 @@ const AddContent = ({ handleClose, onCreate }) => {
 // EditContent Component
 const EditContent = ({ handleClose, data, onUpdate }) => {
   const theme = useTheme()
+  const permissionOptions = Object.values(PERMISSIONS_LOOKUP)
   const [featureName, setFeatureName] = useState(data.name)
-  const [permissions, setPermissions] = useState('')
   const [permissionChips, setPermissionChips] = useState(data.permissions || [])
   const [showTooltip, setShowTooltip] = useState(false)
   const [isActive, setIsActive] = useState(data?.isActive || false)
 
   const handleStatusChange = event => {
     setIsActive(event.target.checked)
-  }
-
-  const handleAddPermission = () => {
-    if (permissions.trim()) {
-      setPermissionChips([...permissionChips, permissions.trim()])
-      setPermissions('')
-    }
   }
 
   const handleRemoveChip = chipToRemove => {
@@ -253,12 +229,6 @@ const EditContent = ({ handleClose, data, onUpdate }) => {
       isActive: isActive
     })
     handleClose()
-  }
-
-  const handleKeyDown = event => {
-    if (event.key === 'Enter' && permissions.trim()) {
-      handleAddPermission()
-    }
   }
 
   return (
@@ -296,29 +266,25 @@ const EditContent = ({ handleClose, data, onUpdate }) => {
         </Tooltip>
         <TextField
           fullWidth
+          select
           label='Permissions'
           variant='outlined'
-          placeholder='Enter Permission'
-          value={permissions}
+          value={permissionChips}
           onChange={e => {
-            const formattedName = e.target.value.toUpperCase().replace(/\s+/g, '_')
-            setPermissions(formattedName)
+            const selectedPermissions = e.target.value
+            setPermissionChips(typeof selectedPermissions === 'string' ? selectedPermissions.split(',') : selectedPermissions)
           }}
-          onKeyDown={handleKeyDown}
-          InputProps={{
-            endAdornment: (
-              <Button
-                size='small'
-                onClick={handleAddPermission}
-                color='primary'
-                variant='text'
-                disabled={!permissions.trim()}
-              >
-                Add
-              </Button>
-            )
+          SelectProps={{
+            multiple: true,
+            renderValue: selected => selected.join(', ')
           }}
-        />
+        >
+          {permissionOptions.map(option => (
+            <MenuItem key={option} value={option}>
+              {option}
+            </MenuItem>
+          ))}
+        </TextField>
         {permissionChips.length > 0 && (
           <Box
             sx={{
