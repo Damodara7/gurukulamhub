@@ -23,6 +23,21 @@ function sanitizeFileName(fileName) {
   return safe.length > 120 ? safe.slice(-120) : safe
 }
 
+function extractKeyFromImageUrl(imageUrl, bucket) {
+  if (!imageUrl || !bucket) return ''
+  try {
+    const parsed = new URL(imageUrl)
+    const pathName = decodeURIComponent(parsed.pathname || '')
+    const bucketPrefix = `/${bucket}/`
+    if (pathName.startsWith(bucketPrefix)) {
+      return pathName.slice(bucketPrefix.length)
+    }
+    return pathName.replace(/^\/+/, '')
+  } catch (error) {
+    return ''
+  }
+}
+
 async function tryDeleteObjectIfExists(client, bucket, key) {
   if (!key) return
   try {
@@ -197,7 +212,19 @@ export async function GET(request) {
       return ApiResponseUtils.sendErrorResponse(ApiResponseUtils.createErrorResponse('Profile not found'))
     }
 
-    const metadata = profile?.[categoryConfig.field]
+    let metadata = profile?.[categoryConfig.field]
+    if (!metadata?.key && category === 'profilePhoto' && profile?.image) {
+      const bucket = getBucketName()
+      const imageKey = extractKeyFromImageUrl(profile.image, bucket)
+      if (imageKey) {
+        metadata = {
+          key: imageKey,
+          url: profile.image,
+          fileName: imageKey.split('/').pop() || 'profile-photo',
+          mimeType: 'image/jpeg'
+        }
+      }
+    }
     if (!metadata?.key) {
       return ApiResponseUtils.sendErrorResponse(ApiResponseUtils.createErrorResponse('File not found'))
     }

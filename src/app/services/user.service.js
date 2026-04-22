@@ -1383,11 +1383,7 @@ export const doesUserHavePassword = async (userId, idType = 'email') => {
 export async function cleanupUnverifiedUsers() {
   await connectMongo()
   try {
-    // Find unverified users older than 1 day
-    const users = await User.find({
-      isVerified: false,
-      createdAt: { $lt: new Date(Date.now() - 24 * 60 * 60 * 1000) } // Older than 1 day
-    })
+    const users = await getCleanupEligibleUnverifiedUsers()
 
     if (users.length > 0) {
       // Extract user emails
@@ -1424,6 +1420,50 @@ export async function cleanupUnverifiedUsers() {
       result: null
     }
   }
+}
+
+export async function getUnverifiedUsersForCleanup() {
+  await connectMongo()
+  try {
+    const users = await User.find({ isVerified: false })
+      .select('firstname lastname email phone createdAt isVerified')
+      .sort({ createdAt: 1 })
+      .lean()
+
+    const now = Date.now()
+    const usersWithEligibility = users.map(user => ({
+      ...user,
+      isCleanupEligible: now - new Date(user.createdAt).getTime() >= 24 * 60 * 60 * 1000
+    }))
+
+    const cleanupEligibleCount = usersWithEligibility.filter(user => user.isCleanupEligible).length
+
+    return {
+      status: 'success',
+      message: usersWithEligibility.length > 0 ? 'Unverified users fetched successfully' : 'No unverified users found',
+      result: {
+        users: usersWithEligibility,
+        cleanupEligibleCount
+      }
+    }
+  } catch (error) {
+    console.error('getUnverifiedUsersForCleanup function -> Error while fetching unverified users: ', error)
+    return {
+      status: 'error',
+      message: error.message,
+      result: null
+    }
+  }
+}
+
+async function getCleanupEligibleUnverifiedUsers() {
+  return User.find({
+    isVerified: false,
+    createdAt: { $lt: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+  })
+    .select('firstname lastname email phone createdAt isVerified')
+    .sort({ createdAt: 1 })
+    .lean()
 }
 
 /*************** UNUSED ****************/

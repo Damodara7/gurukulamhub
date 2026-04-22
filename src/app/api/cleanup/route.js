@@ -16,3 +16,22 @@ export async function POST(req) {
         return ApiResponseUtils.sendErrorResponse(errorResponse);
     }
 }
+
+export async function GET() {
+    try {
+        const response = await UserProfileService.getUnverifiedUsersForCleanup()
+        if (response.status === 'success') {
+            const successResponse = ApiResponseUtils.createSuccessResponse(response.message, response.result || {
+                users: [],
+                cleanupEligibleCount: 0
+            });
+            return ApiResponseUtils.sendSuccessResponse(successResponse);
+        } else {
+            const errorResponse = ApiResponseUtils.createErrorResponse(response.message);
+            return ApiResponseUtils.sendErrorResponse(errorResponse);
+        }
+    } catch (error) {
+        const errorResponse = ApiResponseUtils.createErrorResponse(error.message);
+        return ApiResponseUtils.sendErrorResponse(errorResponse);
+    }
+}

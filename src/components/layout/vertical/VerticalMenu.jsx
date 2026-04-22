@@ -352,6 +352,9 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
 
             <SubMenu label={dictionary['navigation'].manageUsers} icon={<i className='ri-group-line' />}>
               <MenuItem href={`/${locale}/management/user/list`}>{dictionary['navigation'].list}</MenuItem>
+              <MenuItem href={`/${locale}/management/unverified-users`}>
+                {dictionary['navigation'].unverifiedUsers}
+              </MenuItem>
             </SubMenu>
 
             <SubMenu label={dictionary['navigation'].manageSponsorships} icon={<i className='ri-wallet-3-line' />}>

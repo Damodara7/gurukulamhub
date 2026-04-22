@@ -1,7 +1,7 @@
 'use client'
 
 // React Imports
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 // Next Imports
 import { useParams, useRouter } from 'next/navigation'
@@ -31,6 +31,7 @@ import { useSettings } from '@core/hooks/useSettings'
 
 // Util Imports
 import { getLocalizedUrl } from '@/utils/i18n'
+import * as RestApi from '@/utils/restApiUtil'
 
 // Styled component for badge content
 const BadgeContentSpan = styled('span')({
@@ -46,6 +47,7 @@ const UserDropdown = () => {
   // States
   const [open, setOpen] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const [avatarSrc, setAvatarSrc] = useState('')
 
   // Refs
   const anchorRef = useRef(null)
@@ -55,6 +57,42 @@ const UserDropdown = () => {
   const { data: session } = useSession()
   const { settings } = useSettings()
   const { lang: locale } = useParams()
+
+  useEffect(() => {
+    const defaultAvatar = session?.user?.image || ''
+    if (!session?.user?.email) {
+      setAvatarSrc(defaultAvatar)
+      return
+    }
+
+    let isMounted = true
+
+    const fetchLatestProfilePhoto = async () => {
+      try {
+        const response = await RestApi.get('/profile', { email: session.user.email })
+        const profile = response?.result?.profile
+
+        const latestAvatar =
+          profile?.profilePhotoFile?.key
+            ? `/api/profile/files?email=${encodeURIComponent(session.user.email)}&category=profilePhoto&action=content&_t=${Date.now()}`
+            : profile?.image || defaultAvatar
+
+        if (isMounted) {
+          setAvatarSrc(latestAvatar || '')
+        }
+      } catch (error) {
+        if (isMounted) {
+          setAvatarSrc(defaultAvatar)
+        }
+      }
+    }
+
+    fetchLatestProfilePhoto()
+
+    return () => {
+      isMounted = false
+    }
+  }, [session?.user?.email, session?.user?.image])
 
   const handleDropdownOpen = () => {
     !open ? setOpen(true) : setOpen(false)
@@ -102,7 +140,7 @@ const UserDropdown = () => {
         <Avatar
           ref={anchorRef}
           alt={session?.user?.name || session?.user?.firstname + ' ' + session?.user?.lastname || session?.user?.email}
-          src={session?.user?.image || ''}
+          src={avatarSrc}
           onClick={handleDropdownOpen}
           className='cursor-pointer bs-[38px] is-[38px]'
         />
@@ -132,7 +170,7 @@ const UserDropdown = () => {
                         session?.user?.firstname + ' ' + session?.user?.lastname ||
                         session?.user?.email
                       }
-                      src={session?.user?.image || ''}
+                      src={avatarSrc}
                     />
                     <div className='flex items-start flex-col'>
                       <Typography className='font-medium' color='text.primary'>

@@ -135,6 +135,29 @@ const UsersTable = ({ tableData, refreshUsers }) => {
   // Hooks
   const { lang: locale } = useParams()
 
+  const UserAvatar = ({ src, fallbackLetter }) => {
+    const [hasLoadError, setHasLoadError] = useState(false)
+
+    if (src && !hasLoadError) {
+      return (
+        <CustomAvatar
+          src={src}
+          skin='light'
+          size={34}
+          imgProps={{
+            onError: () => setHasLoadError(true)
+          }}
+        />
+      )
+    }
+
+    return (
+      <CustomAvatar skin='light' size={34}>
+        {fallbackLetter.toUpperCase()}
+      </CustomAvatar>
+    )
+  }
+
   const columns = useMemo(
     () => [
       {
@@ -166,7 +189,9 @@ const UsersTable = ({ tableData, refreshUsers }) => {
           return (
             <div className='flex items-center gap-4'>
               {getAvatar({
-                avatar: row.original.image,
+                avatar: row.original.email
+                  ? `/api/profile/files?email=${encodeURIComponent(row.original.email)}&category=profilePhoto&action=content`
+                  : row.original.profilePhotoFile?.url || row.original.image,
                 fullName: fullname,
                 firstname: row.original.firstname,
                 lastname: row.original.lastname,
@@ -421,18 +446,10 @@ const UsersTable = ({ tableData, refreshUsers }) => {
   const getAvatar = params => {
     const { avatar, fullName, firstname, lastname, email } = params
 
-    if (avatar) {
-      return <CustomAvatar src={avatar} skin='light' size={34} />
-    }
-
     const fallbackLetter =
       firstname?.trim()?.[0] || lastname?.trim()?.[0] || fullName?.trim()?.[0] || email?.trim()?.[0] || '?'
 
-    return (
-      <CustomAvatar skin='light' size={34}>
-        {fallbackLetter.toUpperCase()}
-      </CustomAvatar>
-    )
+    return <UserAvatar src={avatar} fallbackLetter={fallbackLetter} />
   }
 
   // Fetch the roles from the API
