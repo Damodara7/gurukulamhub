@@ -41,12 +41,16 @@ export async function PUT(request) {
     console.log('Body Details...', updateDataRequest)
 
     if (updateDataRequest.referredBy) {
-      await UserProfileService.updateReferral({
+      const updateResult = await UserProfileService.updateReferral({
         email: updateDataRequest.email,
         data: { referredBy: updateDataRequest.referredBy }
       })
+      if (updateResult?.status !== 'success') {
+        const errorResponse = createErrorResponse(updateResult?.message || 'Failed to update referrer details.')
+        return sendErrorResponse(errorResponse)
+      }
     } else {
-      await setNetworkLevel(updateDataRequest.email, 0)
+      await UserProfileService.setNetworkLevel(updateDataRequest.email, 0)
     }
 
     console.log('Referrer details updated Successfully.')

@@ -137,6 +137,14 @@ export async function getByReferralToken({ referralToken }) {
   }
 }
 
+async function resolveReferredByFromToken({ referralToken, email }) {
+  if (!referralToken) return null
+  const referrer = await User.findOne({ referralToken, isActive: true }).select('email').lean()
+  if (!referrer?.email) return null
+  if (referrer.email === email) return null
+  return referrer.email
+}
+
 export async function addGroupToUser(userId, groupId) {
   await connectMongo()
   try {
@@ -283,9 +291,16 @@ export async function add({ data: userData }) {
     const referralToken = crypto.randomBytes(20).toString('hex')
     const memberId = await generateUniqueMemberId()
 
+    const referredByFromToken = await resolveReferredByFromToken({
+      referralToken: userData.referralToken,
+      email: userData.email
+    })
+    const referredBy = userData.referredBy || referredByFromToken || 'none@gurukulamhub.org'
+
     var newUserData = new User({
       email: userData.email,
       ...userData,
+      referredBy,
       password: hashedPassword,
       memberId,
       referralToken
@@ -294,7 +309,7 @@ export async function add({ data: userData }) {
 
     // const userProfile = new UserProfile({ email: userData.email, ...userData, password: hashedPassword })
     // await userProfile.save()
-    const userProfileResult = await UserProfileService.add({ data: { email: userData.email, ...userData } })
+    const userProfileResult = await UserProfileService.add({ data: { email: userData.email, ...userData, referredBy } })
     console.log('User profile result:', userProfileResult)
 
     newUserData.profile = userProfileResult?.result?._id
@@ -517,6 +532,17 @@ export async function addOrUpdate({ email, data }) {
       console.log('Created user result:', createdUserResult)
       return createdUserResult
     } else {
+      const referredByFromToken = await resolveReferredByFromToken({
+        referralToken: data?.referralToken,
+        email
+      })
+      if (referredByFromToken && (!user?.referredBy || user.referredBy === 'none@gurukulamhub.org')) {
+        await UserProfileService.updateReferral({
+          email,
+          data: { referredBy: referredByFromToken }
+        })
+      }
+
       // Only update if there's any missing field
       if (Object.keys(data).length > 0) {
         try {

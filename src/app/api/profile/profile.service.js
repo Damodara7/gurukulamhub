@@ -39,7 +39,7 @@ export async function getByEmail({ email }) {
         lastname: user.lastname || '',
         image: user.image || '',
         gender: '',
-        referredBy: 'none@gurukulamhub.org',
+        referredBy: user.referredBy || 'none@gurukulamhub.org',
         phone: '',
         accountType: 'INDIVIDUAL',
         nickname: '',
@@ -235,8 +235,9 @@ export const updateReferral = async ({ email, data }) => {
   await connectMongo()
   try {
     let profile = await UserProfile.findOne({ email })
-    if (!profile) {
-      return { status: 'error', result: null, message: 'No user profile exists with this email.' }
+    const user = await User.findOne({ email }).lean()
+    if (!user) {
+      return { status: 'error', result: null, message: 'No user exists with this email.' }
     }
 
     let referrer = await UserProfile.findOne({ email: data.referredBy })
@@ -256,12 +257,21 @@ export const updateReferral = async ({ email, data }) => {
       networkLevel = referrerNetworkLevel + 1
     }
 
-    // Update the referred user's profile
-    profile = await UserProfile.findOneAndUpdate(
-      { email },
-      { referredBy: data.referredBy, networkLevel },
-      { new: true }
-    )
+    // Create profile if missing, then update referredBy + networkLevel in profile
+    if (!profile) {
+      profile = new UserProfile({
+        email,
+        referredBy: data.referredBy,
+        networkLevel
+      })
+      await profile.save()
+      await User.findOneAndUpdate({ email }, { profile: profile._id })
+    } else {
+      profile = await UserProfile.findOneAndUpdate({ email }, { referredBy: data.referredBy, networkLevel }, { new: true })
+    }
+
+    // Keep users collection in sync (source used by multiple UIs/APIs)
+    await User.findOneAndUpdate({ email }, { referredBy: data.referredBy }, { new: true })
 
     // Distribute referral points up to 4 levels
     let points = 500

@@ -1685,6 +1685,87 @@ function UserDetailsPage({ data }) {
                       </Typography>
                     </Box>
                   </Grid>
+                  {user?.referredBy && user?.referredBy !== 'none@gurukulamhub.org' && (
+                    <Grid item xs={12}>
+                      <Box
+                        sx={{
+                          position: 'relative',
+                          background: theme.palette.background.paper,
+                          borderRadius: { xs: 2, sm: 3 },
+                          p: { xs: 2, sm: 2.5 },
+                          border: `2px solid ${alpha(
+                            theme.palette.success.main,
+                            theme.palette.mode === 'dark' ? 0.35 : 0.22
+                          )}`,
+                          textAlign: 'center',
+                          overflow: 'hidden',
+                          transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                          '&::before': {
+                            content: '""',
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            height: '4px',
+                            background: `linear-gradient(90deg, ${theme.palette.success.main}, ${theme.palette.primary.main})`
+                          },
+                          '&:hover': {
+                            transform: { xs: 'none', sm: 'translateY(-6px)' },
+                            boxShadow: `0 12px 28px ${alpha(
+                              theme.palette.success.main,
+                              theme.palette.mode === 'dark' ? 0.35 : 0.2
+                            )}`,
+                            borderColor: theme.palette.success.main
+                          }
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            width: { xs: 38, sm: 44 },
+                            height: { xs: 38, sm: 44 },
+                            borderRadius: '10px',
+                            background: `linear-gradient(135deg, ${theme.palette.success.main}, ${theme.palette.primary.main})`,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            mx: 'auto',
+                            mb: { xs: 1, sm: 1.5 },
+                            boxShadow: `0 4px 14px ${alpha(
+                              theme.palette.success.main,
+                              theme.palette.mode === 'dark' ? 0.4 : 0.3
+                            )}`
+                          }}
+                        >
+                          <i className='ri-user-shared-line' style={{ fontSize: isMobile ? 18 : 21, color: 'white' }} />
+                        </Box>
+                        <Typography
+                          variant='caption'
+                          sx={{
+                            color: 'text.secondary',
+                            fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                            textTransform: 'uppercase',
+                            letterSpacing: { xs: '1px', sm: '1.5px' },
+                            fontWeight: 700,
+                            display: 'block',
+                            mb: 0.8
+                          }}
+                        >
+                          Referred By
+                        </Typography>
+                        <Typography
+                          variant='h6'
+                          sx={{
+                            fontWeight: 700,
+                            color: 'text.primary',
+                            fontSize: { xs: '0.92rem', sm: '1.05rem' },
+                            wordBreak: 'break-word'
+                          }}
+                        >
+                          {user?.referredBy}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                  )}
                 </Grid>
               </Grid>
             </Grid>

@@ -157,7 +157,8 @@ const EmailStep = ({
       if (validEmail) {
         const result = await RestApi.post(ApiUrls.v0.USERS_SIGNUP, {
           email,
-          password
+          password,
+          referralToken: ref || undefined
         })
         setOtpValue('')
         // const result = await clientApi.addOrUpdateUser({
@@ -237,10 +238,26 @@ const EmailStep = ({
 
         console.log('Response of updateUserProfile in Email Step: ', result)
 
-        if (isReferralValid && referrer?.email) {
-          // await clientApi.updateReferral(email, { referredBy: referrer.email })
+        if (isReferralValid && ref) {
+          let referredByEmail = referrer?.email
+          if (!referredByEmail) {
+            const referralLookupResult = await RestApi.get(`${API_URLS.v0.USER}?referralToken=${ref}`)
+            if (referralLookupResult?.status === 'success') {
+              referredByEmail = referralLookupResult?.result?.email
+            }
+          }
 
-          await RestApi.put(`${ApiUrls.v0.USERS_REFERRER_PROFILE}`, { email, referredBy: referrer.email })
+          if (referredByEmail) {
+            const referralUpdateResult = await RestApi.put(`${ApiUrls.v0.USERS_REFERRER_PROFILE}`, {
+              email,
+              referredBy: referredByEmail
+            })
+
+            if (referralUpdateResult?.status !== 'success') {
+              console.error('Referral update failed:', referralUpdateResult)
+              toast.error(referralUpdateResult?.message || 'Failed to save referral details.')
+            }
+          }
         }
         statusOutcome = 'CONFIRMED'
         setIsDirty(false)
@@ -289,7 +306,6 @@ const EmailStep = ({
         setIsReferralValid(false)
         setReferrer(null)
       } finally {
-        setReferrer(null)
         setLoading(prev => ({ ...prev, validateReferralToken: false }))
       }
     }

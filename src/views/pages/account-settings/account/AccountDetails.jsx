@@ -94,6 +94,7 @@ import IconButtonTooltip from '@/components/IconButtonTooltip'
 // Vars
 const initialData = {
   email: '',
+  referredBy: '',
   password: '',
   firstname: '',
   lastname: '',
@@ -320,6 +321,7 @@ const AccountDetails = () => {
             ...formData,
             ...filteredProfile,
             memberId: user?.memberId,
+            referredBy: user?.referredBy || profile?.referredBy || '',
             knownLanguageIds: updatedKnownLanguageIds
           })
           setProfileData(profile) // Keep original profile data for other purposes
@@ -1890,6 +1892,13 @@ const AccountDetails = () => {
     }, 1500)
   }
 
+  const referredByValue = formData?.referredBy
+  const hasReferrer = Boolean(
+    referredByValue &&
+      referredByValue.trim() &&
+      referredByValue.toLowerCase() !== 'none@gurukulamhub.org'
+  )
+
   return (
     <Card
       sx={{
@@ -2239,6 +2248,67 @@ const AccountDetails = () => {
                   </Box>
                 </Stack>
               </Box>
+
+              {/* Referred By */}
+              {hasReferrer && (
+                <Box
+                  sx={{
+                    p: 3,
+                    borderRadius: 2.5,
+                    bgcolor: alpha(theme.palette.success.main, theme.palette.mode === 'dark' ? 0.12 : 0.05),
+                    border: `1px solid ${alpha(
+                      theme.palette.success.main,
+                      theme.palette.mode === 'dark' ? 0.2 : 0.15
+                    )}`,
+                    transition: 'all 0.25s ease',
+                    '&:hover': {
+                      bgcolor: alpha(theme.palette.success.main, theme.palette.mode === 'dark' ? 0.16 : 0.08),
+                      borderColor: alpha(theme.palette.success.main, theme.palette.mode === 'dark' ? 0.3 : 0.25),
+                      transform: 'translateY(-2px)'
+                    }
+                  }}
+                >
+                  <Stack direction='row' spacing={1.5} alignItems='center' sx={{ mb: 2.5 }}>
+                    <Box
+                      sx={{
+                        p: 1.25,
+                        borderRadius: 2,
+                        bgcolor: alpha(theme.palette.success.main, theme.palette.mode === 'dark' ? 0.3 : 0.15),
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      <i className='ri-user-follow-line' style={{ fontSize: 20, color: theme.palette.success.main }} />
+                    </Box>
+                    <Typography
+                      variant='caption'
+                      sx={{
+                        color: theme.palette.success.main,
+                        fontWeight: 700,
+                        letterSpacing: 1.2,
+                        textTransform: 'uppercase',
+                        fontSize: '0.7rem'
+                      }}
+                    >
+                      Referred By
+                    </Typography>
+                  </Stack>
+
+                  <Typography
+                    variant='h6'
+                    sx={{
+                      color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary,
+                      fontWeight: 700,
+                      letterSpacing: '-0.01em',
+                      wordBreak: 'break-word',
+                      fontSize: { xs: '1rem', sm: '1.1rem' }
+                    }}
+                  >
+                    {referredByValue}
+                  </Typography>
+                </Box>
+              )}
             </Box>
           </Stack>
         </Stack>
