@@ -1,16 +1,45 @@
 import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, ListObjectsV2Command, S3Client } from "@aws-sdk/client-s3";
 
-export const awsS3Region = process.env.NEXT_PUBLIC_AWS_S3_REGION;
-export const userProfileBucketName = process.env.NEXT_PUBLIC_AWS_S3_USERPROFILE_UPLOAD_BUCKET
-export const quizBucketName = process.env.NEXT_PUBLIC_AWS_S3_QUIZ_UPLOAD_BUCKET
+const validDoRegions = new Set(['nyc3', 'sfo3', 'ams3', 'sgp1', 'fra1', 'tor1', 'blr1', 'syd1'])
+const requestedRegion = process.env.NEXT_PUBLIC_S3_REGION || process.env.NEXT_PUBLIC_AWS_S3_REGION || 'nyc3'
+const spacesRegion = validDoRegions.has(requestedRegion) ? requestedRegion : 'nyc3'
+const spacesEndpoint = process.env.NEXT_PUBLIC_ORIGIN_ENDPOINT || (spacesRegion ? `https://${spacesRegion}.digitaloceanspaces.com` : '');
+const spacesCdnEndpoint = process.env.NEXT_PUBLIC_CDN_ENDPOINT || process.env.NEXT_PUBLIC_S3_CDN_ENDPOINT || '';
+
+export const awsS3Region = spacesRegion;
+export const userProfileBucketName =
+    process.env.NEXT_PUBLIC_S3_SPACE_NAME || process.env.NEXT_PUBLIC_AWS_S3_USERPROFILE_UPLOAD_BUCKET;
+export const quizBucketName =
+    process.env.NEXT_PUBLIC_S3_SPACE_NAME || process.env.NEXT_PUBLIC_AWS_S3_QUIZ_UPLOAD_BUCKET;
+const publicAccessKeyId = process.env.NEXT_PUBLIC_S3_ACCESS_KEY_ID || process.env.NEXT_PUBLIC_AWS_S3_ACCESS_KEY_ID
+const publicSecretAccessKey = process.env.NEXT_PUBLIC_S3_ACCESS_KEY_SECRET || process.env.NEXT_PUBLIC_AWS_S3_ACCESS_KEY_SECRET
+
+if (!publicAccessKeyId || !publicSecretAccessKey) {
+    console.warn('[awsS3Utils] Missing NEXT_PUBLIC S3 credentials. File operations from browser may fail.')
+}
 
 export const s3Client = new S3Client({
-    region: process.env.NEXT_PUBLIC_AWS_S3_REGION, // from AWS S3 Bucket properties
+    region: spacesRegion || 'nyc3',
+    endpoint: spacesEndpoint || undefined,
+    forcePathStyle: false,
     credentials: {
-        accessKeyId: process.env.NEXT_PUBLIC_AWS_S3_ACCESS_KEY_ID,
-        secretAccessKey: process.env.NEXT_PUBLIC_AWS_S3_ACCESS_KEY_SECRET,
+        accessKeyId: publicAccessKeyId,
+        secretAccessKey: publicSecretAccessKey,
     },
 });
+
+function getPublicFileUrl({ bucketName, key }) {
+    if (spacesCdnEndpoint) {
+        return `${spacesCdnEndpoint.replace(/\/$/, '')}/${key}?rsc_${getRandomNumber()}`;
+    }
+
+    if (spacesEndpoint) {
+        const normalizedEndpoint = spacesEndpoint.replace(/\/$/, '');
+        return `${normalizedEndpoint}/${bucketName}/${key}?rsc_${getRandomNumber()}`;
+    }
+
+    return `https://${bucketName}.s3.${awsS3Region}.amazonaws.com/${key}?rsc_${getRandomNumber()}`;
+}
 
 // Utility function to upload file to S3
 export async function uploadFileToS3({ bucketName, fileBuffer,
@@ -135,7 +164,7 @@ export async function deleteAllMatchingFilesWithUnknownExtension({ bucketName, f
 
 export async function getFileUrlFromS3({ fileName: key, bucketName }) {
     try {
-        return "https://" + bucketName + ".s3." + awsS3Region + ".amazonaws.com/" + key + "?rsc_" + getRandomNumber();
+        return getPublicFileUrl({ bucketName, key });
     } catch (error) {
         console.error("Error fetching file from S3:", error);
         throw new Error("Failed to fetch file from S3");
@@ -160,7 +189,7 @@ export async function getFileUrlFromS3WithUnknownExtension({ bucketName, fileNam
 
             if (matchedObject) {
                 // Step 3: Generate the URL for the matched object
-                const fileUrl = `https://${bucketName}.s3.${awsS3Region}.amazonaws.com/${matchedObject.Key}?rsc_${getRandomNumber()}`;
+                const fileUrl = getPublicFileUrl({ bucketName, key: matchedObject.Key });
                 return fileUrl;
             } else {
                 console.log(`No object found with prefix: ${fileNamePrefix}`);
@@ -193,7 +222,7 @@ export async function getAllMatchingFileUrlsFromS3WithUnknownExtension({ bucketN
                 .filter(obj => obj.Key.startsWith(fileNamePrefix)) // Filter objects that match the prefix
                 .map(matchedObject => {
                     // Step 3: Construct the URL for each matched object
-                    return `https://${bucketName}.s3.${awsS3Region}.amazonaws.com/${matchedObject.Key}?rsc_${getRandomNumber()}`;
+                    return getPublicFileUrl({ bucketName, key: matchedObject.Key });
                 });
 
             // Step 4: Return all generated URLs
@@ -228,7 +257,7 @@ export async function getFileUrlWithUnknownExtension({ bucketName, fileNamePrefi
 
             if (matchedObject) {
                 // Step 3: Generate the URL for the matched object
-                const fileUrl = `https://${bucketName}.s3.${awsS3Region}.amazonaws.com/${matchedObject.Key}?rsc_${getRandomNumber()}`;
+                const fileUrl = getPublicFileUrl({ bucketName, key: matchedObject.Key });
                 return fileUrl;
             } else {
                 console.log(`No object found with prefix: ${fileNamePrefix}`);

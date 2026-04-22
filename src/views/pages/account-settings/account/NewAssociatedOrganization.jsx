@@ -1,11 +1,13 @@
 import {
   Button,
+  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   DialogContentText,
   FormControl,
+  FormControlLabel,
   Grid,
   InputLabel,
   MenuItem,
@@ -21,7 +23,10 @@ import { Edit as EditIcon } from '@mui/icons-material'
 const initialFormData = {
   organization: '',
   organizationType: '',
-  websiteUrl: ''
+  websiteUrl: '',
+  isCurrentlyInAssociation: true,
+  associationStartDate: '',
+  associationEndDate: ''
 }
 
 const associatedOrganizationTypeOptions = [
@@ -53,7 +58,10 @@ function NewAssociatedOrganization({
       setFormData({
         organization: editingAssociatedOrganization.organization || '',
         organizationType: editingAssociatedOrganization.organizationType || '',
-        websiteUrl: editingAssociatedOrganization.websiteUrl || ''
+        websiteUrl: editingAssociatedOrganization.websiteUrl || '',
+        isCurrentlyInAssociation: editingAssociatedOrganization.isCurrentlyInAssociation ?? true,
+        associationStartDate: editingAssociatedOrganization.associationStartDate || '',
+        associationEndDate: editingAssociatedOrganization.associationEndDate || ''
       })
     } else {
       setFormData(initialFormData)
@@ -67,13 +75,27 @@ function NewAssociatedOrganization({
   }
 
   const handleFormChange = (field, value) => {
+    if (field === 'isCurrentlyInAssociation') {
+      setFormData(prev => ({
+        ...prev,
+        isCurrentlyInAssociation: value,
+        associationEndDate: value ? '' : prev.associationEndDate
+      }))
+      return
+    }
+
     setFormData({ ...formData, [field]: value })
   }
   function handleSubmit() {
     // Validate form
     setIsFormSubmitting(true)
 
-    if (!formData.organization || !formData.websiteUrl) {
+    if (
+      !formData.organization ||
+      !formData.websiteUrl ||
+      !formData.associationStartDate ||
+      (!formData.isCurrentlyInAssociation && !formData.associationEndDate)
+    ) {
       setIsFormValid(false)
       setIsFormSubmitting(false)
       return
@@ -88,7 +110,10 @@ function NewAssociatedOrganization({
           _id: editingAssociatedOrganization._id,
           organization: formData.organization,
           organizationType: formData.organizationType,
-          websiteUrl: formData.websiteUrl
+          websiteUrl: formData.websiteUrl,
+          isCurrentlyInAssociation: formData.isCurrentlyInAssociation,
+          associationStartDate: formData.associationStartDate,
+          associationEndDate: formData.isCurrentlyInAssociation ? '' : formData.associationEndDate
         }
         onUpdateOrganizationInState(updatedOrganization)
       } else {
@@ -97,7 +122,10 @@ function NewAssociatedOrganization({
           _id: `temp_${Date.now()}`, // Temporary ID for state management
           organization: formData.organization,
           organizationType: formData.organizationType,
-          websiteUrl: formData.websiteUrl
+          websiteUrl: formData.websiteUrl,
+          isCurrentlyInAssociation: formData.isCurrentlyInAssociation,
+          associationStartDate: formData.associationStartDate,
+          associationEndDate: formData.isCurrentlyInAssociation ? '' : formData.associationEndDate
         }
         onAddOrganizationToState(newOrganization)
       }
@@ -169,6 +197,48 @@ function NewAssociatedOrganization({
                   }
                 />
               </Grid>
+
+              <Grid item xs={12}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={Boolean(formData.isCurrentlyInAssociation)}
+                      onChange={(e, checked) => handleFormChange('isCurrentlyInAssociation', checked)}
+                    />
+                  }
+                  label='Currently in Association'
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label='Start Date'
+                  type='date'
+                  required
+                  value={formData.associationStartDate}
+                  onChange={e => handleFormChange('associationStartDate', e.target.value)}
+                  error={!isFormValid && !formData.associationStartDate}
+                  helperText={!isFormValid && !formData.associationStartDate ? 'Start Date is required!' : ''}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+
+              {!formData.isCurrentlyInAssociation && (
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label='End Date'
+                    type='date'
+                    required
+                    value={formData.associationEndDate}
+                    onChange={e => handleFormChange('associationEndDate', e.target.value)}
+                    error={!isFormValid && !formData.associationEndDate}
+                    helperText={!isFormValid && !formData.associationEndDate ? 'End Date is required!' : ''}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </Grid>
+              )}
             </Grid>
           </form>
         </DialogContent>
@@ -244,6 +314,33 @@ export function AssociatedOrganizationViewModal({ open, onClose, organization, o
                       {organization.websiteUrl}
                     </a>
                   </Typography>
+                </Box>
+              )}
+
+              <Box sx={{ mb: 2 }}>
+                <Typography variant='h6' sx={{ fontWeight: 'bold', mb: 1 }}>
+                  Currently in Association
+                </Typography>
+                <Typography variant='body1'>
+                  {organization.isCurrentlyInAssociation === false ? 'No' : 'Yes'}
+                </Typography>
+              </Box>
+
+              {organization.associationStartDate && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant='h6' sx={{ fontWeight: 'bold', mb: 1 }}>
+                    Start Date
+                  </Typography>
+                  <Typography variant='body1'>{organization.associationStartDate}</Typography>
+                </Box>
+              )}
+
+              {organization.isCurrentlyInAssociation === false && organization.associationEndDate && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant='h6' sx={{ fontWeight: 'bold', mb: 1 }}>
+                    End Date
+                  </Typography>
+                  <Typography variant='body1'>{organization.associationEndDate}</Typography>
                 </Box>
               )}
             </DialogContentText>

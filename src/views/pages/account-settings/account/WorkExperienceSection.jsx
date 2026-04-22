@@ -55,17 +55,6 @@ const WorkExperienceSection = ({
             gap: 2
           }}
         >
-          {/* Add New Position Button - Left Side */}
-          <Button
-            startIcon={<RiAddFill />}
-            variant='text'
-            color='primary'
-            onClick={() => handleOpenModal('workingPosition')}
-            sx={{ flexShrink: 0 }}
-          >
-            Add New Position
-          </Button>
-
           {/* Open To Work for Individual - Right Side */}
           {formData.accountType === 'INDIVIDUAL' && (
             <FormGroup sx={{ flexShrink: 0 }}>
@@ -293,6 +282,13 @@ const WorkExperienceSection = ({
           </Box>
         </Grid>
       )}
+
+      {/* Add New Position Button */}
+      <Grid item xs={12}>
+        <Button startIcon={<RiAddFill />} variant='text' color='primary' onClick={() => handleOpenModal('workingPosition')}>
+          Add New Position
+        </Button>
+      </Grid>
 
       {/* Working Position Modal */}
       {isModalOpen.workingPosition && (

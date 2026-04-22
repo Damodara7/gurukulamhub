@@ -52,6 +52,20 @@ function SocialMediaInfo({ formData, handleFormChange, isUrlsValid }) {
           onChange={e => handleFormChange('instagramUrl', e.target.value)}
         />
       </Grid>
+
+      {/* Youtube */}
+      <Grid item xs={12} sm={6}>
+        <TextField
+          fullWidth
+          name='youtubeUrl'
+          label='Youtube'
+          value={formData.youtubeUrl}
+          placeholder='Ex: https://www.youtube.com/@your-channel'
+          error={formData.youtubeUrl && !isUrlsValid.youtubeUrl}
+          helperText={formData.youtubeUrl && !isUrlsValid.youtubeUrl ? 'Invalid Url' : ''}
+          onChange={e => handleFormChange('youtubeUrl', e.target.value)}
+        />
+      </Grid>
     </>
   )
 }

@@ -8,8 +8,20 @@ import { useSession } from 'next-auth/react'
 import OtpForm from '@/views/pages/auth/register-multi-steps/OTPForm'
 import { toast } from 'react-toastify'
 import TestingOtp from '@/components/TestingOtp'
+import IconButtonTooltip from '@/components/IconButtonTooltip'
+import UndoIcon from '@mui/icons-material/Undo'
 
-const PhoneVerification = ({ phoneValid, phoneInput, country, onChange, setIsPhoneVerified, dbPhone }) => {
+const PhoneVerification = ({
+  phoneValid,
+  phoneInput,
+  country,
+  onChange,
+  setIsPhoneVerified,
+  originalDbPhone,
+  phoneDialCode,
+  onRestoreVerifiedPhone,
+  onPhoneVerified
+}) => {
   const { data: session } = useSession()
   const theme = useTheme()
   const isDarkMode = theme.palette.mode === 'dark'
@@ -25,6 +37,8 @@ const PhoneVerification = ({ phoneValid, phoneInput, country, onChange, setIsPho
 
   const [errorMessage, setErrorMessage] = useState('')
   const [testingOtp, setTestingOtp] = useState(null) // State to store testing OTP
+  const [showSaveAfterVerifyHint, setShowSaveAfterVerifyHint] = useState(false)
+  const hasPhoneChangedFromVerified = Boolean(originalDbPhone) && phoneInput !== originalDbPhone
 
   const handleOpenModal = () => setOpenModal(true)
   const handleCloseModal = () => {
@@ -71,14 +85,15 @@ const PhoneVerification = ({ phoneValid, phoneInput, country, onChange, setIsPho
   useEffect(() => {
     setSendOtpStatus('idle')
     setVerifyOtpStatus('idle')
+    setShowSaveAfterVerifyHint(false)
   }, [phoneInput])
 
   useEffect(() => {
-    console.log({ phoneValid, phoneInput, dbPhone })
-    if (phoneValid && phoneInput === dbPhone) {
+    console.log({ phoneValid, phoneInput, originalDbPhone })
+    if (phoneValid && phoneInput === originalDbPhone) {
       setVerifyOtpStatus('success')
     }
-  }, [phoneValid, phoneInput, dbPhone])
+  }, [phoneValid, phoneInput, originalDbPhone])
 
   useEffect(() => {
     if (verifyOtpStatus === 'success') {
@@ -141,8 +156,15 @@ const PhoneVerification = ({ phoneValid, phoneInput, country, onChange, setIsPho
         action: 'verifyPhoneOtp'
       })
       if (result.status === 'success') {
+        const isNewPhoneComparedToCurrent = phoneInput !== originalDbPhone
+
+        if (onPhoneVerified) {
+          await onPhoneVerified({ fullPhone: phoneInput, dialCode: phoneDialCode })
+        }
         setVerifyOtpStatus('success')
-        // console.log('OTP verified successfully')
+        if (isNewPhoneComparedToCurrent) {
+          setShowSaveAfterVerifyHint(true)
+        }
         toast.success('Phone number is verified.')
         handleCloseModal()
       } else {
@@ -153,7 +175,7 @@ const PhoneVerification = ({ phoneValid, phoneInput, country, onChange, setIsPho
     } catch (error) {
       console.error('Error verifying OTP:', error)
       setVerifyOtpStatus('error')
-      setErrorMessage('Invalid OTP. Please try again.')
+      setErrorMessage(error?.message || 'Invalid OTP. Please try again.')
     }
   }
 
@@ -255,54 +277,67 @@ const PhoneVerification = ({ phoneValid, phoneInput, country, onChange, setIsPho
             onChange={onChange}
           />
         </Box>
+        {showSaveAfterVerifyHint && (
+          <Typography sx={{ mt: 1, fontSize: '0.8rem', color: 'success.main' }}>
+            Verified. Click Save Changes to save this update.
+          </Typography>
+        )}
       </Grid>
       <Grid item xs={12} sm={3}>
-        <Button
-          variant='contained'
-          component={'label'}
-          fullWidth={isMobile}
-          onClick={handleSendPhoneOtp}
-          disabled={!phoneValid || sendOtpStatus === 'loading' || verifyOtpStatus === 'success'}
-          color={
-            verifyOtpStatus === 'success'
-              ? 'success'
-              : sendOtpStatus === 'loading'
-                ? 'warning'
-                : sendOtpStatus === 'success'
-                  ? 'info'
-                  : 'primary'
-          }
-          sx={{
-            color: 'white',
-            py: { xs: 1.25, sm: 1.5 },
-            fontSize: { xs: '0.85rem', sm: '0.9rem', md: '1rem' },
-            borderRadius: { xs: 1.5, sm: 2 },
-            boxShadow: isDarkMode && verifyOtpStatus !== 'success'
-              ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`
-              : undefined,
-            '&:hover': {
-              boxShadow: isDarkMode && verifyOtpStatus !== 'success'
-                ? `0 6px 16px ${alpha(theme.palette.primary.main, 0.4)}`
-                : undefined
-            },
-            '&:disabled': {
-              opacity: 0.6
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
+          <Button
+            variant='contained'
+            component={'label'}
+            fullWidth={isMobile}
+            onClick={handleSendPhoneOtp}
+            disabled={!phoneValid || sendOtpStatus === 'loading' || verifyOtpStatus === 'success'}
+            color={
+              verifyOtpStatus === 'success'
+                ? 'success'
+                : sendOtpStatus === 'loading'
+                  ? 'warning'
+                  : sendOtpStatus === 'success'
+                    ? 'info'
+                    : 'primary'
             }
-          }}
-        >
-          {sendOtpStatus === 'loading' ? (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <CircularProgress size={16} sx={{ color: 'white' }} />
-              Sending...
-            </Box>
-          ) : verifyOtpStatus === 'success' ? (
-            'Verified!'
-          ) : sendOtpStatus === 'success' ? (
-            'Sent'
-          ) : (
-            'Verify'
+            sx={{
+              color: 'white',
+              py: { xs: 1.25, sm: 1.5 },
+              fontSize: { xs: '0.85rem', sm: '0.9rem', md: '1rem' },
+              borderRadius: { xs: 1.5, sm: 2 },
+              boxShadow: isDarkMode && verifyOtpStatus !== 'success'
+                ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`
+                : undefined,
+              '&:hover': {
+                boxShadow: isDarkMode && verifyOtpStatus !== 'success'
+                  ? `0 6px 16px ${alpha(theme.palette.primary.main, 0.4)}`
+                  : undefined
+              },
+              '&:disabled': {
+                opacity: 0.6
+              }
+            }}
+          >
+            {sendOtpStatus === 'loading' ? (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <CircularProgress size={16} sx={{ color: 'white' }} />
+                Sending...
+              </Box>
+            ) : verifyOtpStatus === 'success' ? (
+              'Verified!'
+            ) : sendOtpStatus === 'success' ? (
+              'Sent'
+            ) : (
+              'Verify'
+            )}
+          </Button>
+
+          {hasPhoneChangedFromVerified && onRestoreVerifiedPhone && (
+            <IconButtonTooltip title='Restore verified number' onClick={onRestoreVerifiedPhone} color='primary'>
+              <UndoIcon />
+            </IconButtonTooltip>
           )}
-        </Button>
+        </Box>
       </Grid>
 
       {/* Modal */}

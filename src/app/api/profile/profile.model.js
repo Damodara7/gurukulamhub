@@ -11,7 +11,10 @@ const languageSchema = new mongoose.Schema({
 const associatedOrganizationSchema = new mongoose.Schema({
   organization: { type: String, required: true },
   organizationType: { type: String },
-  websiteUrl: { type: String, required: true }
+  websiteUrl: { type: String, required: true },
+  isCurrentlyInAssociation: { type: Boolean, default: true },
+  associationStartDate: { type: String },
+  associationEndDate: { type: String }
 })
 
 const schoolSchema = new mongoose.Schema({
@@ -37,6 +40,18 @@ const workingPositionSchema = new mongoose.Schema({
   description: { type: String },
   type: { type: String, default: 'work' }
 })
+
+const fileMetaSchema = new mongoose.Schema(
+  {
+    key: { type: String, required: true },
+    url: { type: String, required: true },
+    fileName: { type: String, required: true },
+    mimeType: { type: String },
+    size: { type: Number },
+    uploadedAt: { type: Date, default: Date.now }
+  },
+  { _id: false }
+)
 
 const userProfileSchema = new mongoose.Schema(
   {
@@ -95,6 +110,7 @@ const userProfileSchema = new mongoose.Schema(
     linkedInUrl: { type: String },
     facebookUrl: { type: String },
     instagramUrl: { type: String },
+    youtubeUrl: { type: String },
     openToWork: { type: Boolean },
     hiring: { type: Boolean },
     organization: { type: String },
@@ -102,6 +118,11 @@ const userProfileSchema = new mongoose.Schema(
     organizationGSTNumber: { type: String },
     organizationPANNumber: { type: String },
     websiteUrl: { type: String },
+    profilePhotoFile: { type: fileMetaSchema, default: null },
+    resumeFile: { type: fileMetaSchema, default: null },
+    organizationRegistrationFile: { type: fileMetaSchema, default: null },
+    organizationGSTFile: { type: fileMetaSchema, default: null },
+    organizationPANFile: { type: fileMetaSchema, default: null },
     coordinates: {
       type: [Number],
       index: '2d'

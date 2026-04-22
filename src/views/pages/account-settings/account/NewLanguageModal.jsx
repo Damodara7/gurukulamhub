@@ -14,7 +14,7 @@ import {
   Select,
   Stack
 } from '@mui/material'
-import React, { useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 
 const languageOptions = [
   'Arabic',
@@ -52,10 +52,52 @@ const initialFormData = {
   canSpeak: false
 }
 
-function NewLanguageModal({ open, onClose, email, onAddLanguageToState }) {
+function NewLanguageModal({
+  open,
+  onClose,
+  email,
+  onAddLanguageToState,
+  onUpdateLanguageInState,
+  editingLanguage = null,
+  existingLanguageNames = []
+}) {
   const [formData, setFormData] = useState(initialFormData)
   const [isFormValid, setIsFormValid] = useState(true)
   const [isFormSubmitting, setIsFormSubmitting] = useState(false)
+
+  const normalizedExistingLanguages = useMemo(
+    () => existingLanguageNames.map(lang => String(lang).trim().toLowerCase()).filter(Boolean),
+    [existingLanguageNames]
+  )
+
+  const filteredLanguageOptions = useMemo(() => {
+    const editingLanguageName = editingLanguage?.language?.trim().toLowerCase()
+
+    return languageOptions.filter(option => {
+      const normalizedOption = option.trim().toLowerCase()
+      if (editingLanguageName && normalizedOption === editingLanguageName) return true
+
+      return !normalizedExistingLanguages.includes(normalizedOption)
+    })
+  }, [editingLanguage, normalizedExistingLanguages])
+
+  useEffect(() => {
+    if (!open) return
+
+    if (editingLanguage) {
+      setFormData({
+        language: editingLanguage.language || '',
+        canRead: Boolean(editingLanguage.canRead),
+        canWrite: Boolean(editingLanguage.canWrite),
+        canSpeak: Boolean(editingLanguage.canSpeak)
+      })
+    } else {
+      setFormData(initialFormData)
+    }
+
+    setIsFormValid(true)
+    setIsFormSubmitting(false)
+  }, [open, editingLanguage])
 
   function handleClose() {
     setFormData(initialFormData)
@@ -79,17 +121,21 @@ function NewLanguageModal({ open, onClose, email, onAddLanguageToState }) {
     setIsFormValid(true)
 
     try {
-      // Add language to state instead of hitting endpoint
-      const newLanguage = {
-        _id: `temp_${Date.now()}`, // Temporary ID for state management
+      const languagePayload = {
+        _id: editingLanguage?._id || `temp_${Date.now()}`, // Existing ID in edit mode, temp ID in add mode
         language: formData.language,
         canRead: formData.canRead,
         canWrite: formData.canWrite,
         canSpeak: formData.canSpeak
       }
 
-      onAddLanguageToState(newLanguage)
-      console.log('Language added to state:', newLanguage)
+      if (editingLanguage && onUpdateLanguageInState) {
+        onUpdateLanguageInState(languagePayload)
+        console.log('Language updated in state:', languagePayload)
+      } else {
+        onAddLanguageToState(languagePayload)
+        console.log('Language added to state:', languagePayload)
+      }
       onClose()
     } catch (error) {
       console.error('Unexpected error:', error)
@@ -101,7 +147,7 @@ function NewLanguageModal({ open, onClose, email, onAddLanguageToState }) {
   return (
     <Grid xs={12} sm={8} md={6}>
       <Dialog sx={{ width: '100%', margin: 'auto' }} open={open} onClose={handleClose}>
-        <DialogTitle>Add a New Language</DialogTitle>
+        <DialogTitle>{editingLanguage ? 'Edit Language' : 'Add a New Language'}</DialogTitle>
 
         <DialogContent>
           <form>
@@ -117,7 +163,7 @@ function NewLanguageModal({ open, onClose, email, onAddLanguageToState }) {
                     error={!isFormValid && !formData.language.trim()}
                     onChange={e => handleFormChange('language', e.target.value)}
                   >
-                    {languageOptions.map(lang => (
+                    {filteredLanguageOptions.map(lang => (
                       <MenuItem key={lang} value={lang}>
                         {lang}
                       </MenuItem>
@@ -195,7 +241,7 @@ function NewLanguageModal({ open, onClose, email, onAddLanguageToState }) {
                 style={{ color: 'white' }}
                 disabled={isFormSubmitting}
               >
-                {isFormSubmitting ? 'Saving...' : 'Save language'}
+                {isFormSubmitting ? 'Saving...' : editingLanguage ? 'Update language' : 'Save language'}
               </Button>
             </Stack>
           </Grid>

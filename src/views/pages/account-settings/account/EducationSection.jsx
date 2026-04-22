@@ -33,17 +33,6 @@ const EducationSection = ({
           <Grid item xs={12} marginLeft={'0.25rem'}>
             <Divider>Education</Divider>
           </Grid>
-          {/* Add New Education Button */}
-          <Grid item xs={12}>
-            <Button
-              startIcon={<RiAddFill />}
-              variant='text'
-              color='primary'
-              onClick={() => handleOpenModal('education')}
-            >
-              Add New Education
-            </Button>
-          </Grid>
 
           {/* Display Education List */}
           {((profileData?.schools && profileData.schools.length > 0) || pendingEducations.length > 0) && (
@@ -250,6 +239,18 @@ const EducationSection = ({
               </Box>
             </Grid>
           )}
+
+          {/* Add New Education Button */}
+          <Grid item xs={12}>
+            <Button
+              startIcon={<RiAddFill />}
+              variant='text'
+              color='primary'
+              onClick={() => handleOpenModal('education')}
+            >
+              Add New Education
+            </Button>
+          </Grid>
 
           {/* Education Modal */}
           {isModalOpen.education && (

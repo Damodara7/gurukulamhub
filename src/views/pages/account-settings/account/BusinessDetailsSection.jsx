@@ -1,8 +1,9 @@
 import React from 'react'
-import { Grid, Divider, TextField, FormControl, InputLabel, Select, MenuItem, Box, Typography } from '@mui/material'
+import { Grid, Divider, TextField, FormControl, Box, Typography, Link, Stack, IconButton } from '@mui/material'
 import { MuiFileInput } from 'mui-file-input'
 import { RiCloseFill } from 'react-icons/ri'
 import { IoMdAttach } from 'react-icons/io'
+import DeleteIcon from '@mui/icons-material/Delete'
 
 const BusinessDetailsSection = ({
   formData,
@@ -10,6 +11,13 @@ const BusinessDetailsSection = ({
   organizationRegistrationDocument,
   organizationGSTDocument,
   organizationPANDocument,
+  existingOrganizationRegistrationFile,
+  existingOrganizationGSTFile,
+  existingOrganizationPANFile,
+  profileFileViewUrlBuilder,
+  onDeleteOrganizationRegistrationFile,
+  onDeleteOrganizationGSTFile,
+  onDeleteOrganizationPANFile,
   handleOrganizationRegistrationDocumentChange,
   handleOrganizationGSTDocumentChange,
   handleOrganizationPANDocumentChange,
@@ -66,6 +74,8 @@ const BusinessDetailsSection = ({
           <Grid item xs={12} sm={6}>
             <FormControl fullWidth>
               <MuiFileInput
+                label={formData.accountType === 'NGO' ? 'Organization Registration Document' : 'Business Registration Document'}
+                name='organizationRegistrationDocument'
                 placeholder={
                   formData.accountType === 'NGO'
                     ? 'Upload Organization Registration Document'
@@ -73,50 +83,52 @@ const BusinessDetailsSection = ({
                 }
                 value={organizationRegistrationDocument}
                 onChange={handleOrganizationRegistrationDocumentChange}
-                hideSizeText
+                fullWidth
+                clearIconButtonProps={{
+                  title: 'Remove',
+                  children: <RiCloseFill />
+                }}
                 InputProps={{
                   inputProps: {
                     accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
-                  }
+                  },
+                  startAdornment: <IoMdAttach />
                 }}
-                getInputText={value => (value ? value.name : '')}
-                startAdornment={<IoMdAttach />}
-                endAdornment={
-                  organizationRegistrationDocument && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography variant='body2' color='text.secondary'>
-                        {organizationRegistrationDocument.name}
-                      </Typography>
-                      <RiCloseFill
-                        onClick={() => {
-                          handleOrganizationRegistrationDocumentChange(null)
-                          if (formData.organizationRegistrationDocument) {
-                            deleteFileFromS3Handler(formData.organizationRegistrationDocument)
-                          }
-                        }}
-                        style={{ cursor: 'pointer', color: 'red' }}
-                      />
-                    </Box>
-                  )
-                }
               />
             </FormControl>
-            {organizationRegistrationDocument && (
+            {!organizationRegistrationDocument && existingOrganizationRegistrationFile?.url && (
               <Box sx={{ mt: 1 }}>
-                <button
-                  type='button'
-                  onClick={uploadOrganizationRegistrationDocToS3}
-                  style={{
-                    padding: '8px 16px',
-                    backgroundColor: '#1976d2',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Upload Registration Document
-                </button>
+                <Typography variant='caption' color='text.secondary'>
+                  Existing file: {existingOrganizationRegistrationFile.fileName || 'Registration document'}
+                </Typography>
+                <Stack direction='row' spacing={1.5} sx={{ mt: 0.5 }}>
+                  <Link
+                    href={profileFileViewUrlBuilder?.('organizationRegistration') || existingOrganizationRegistrationFile.url}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    underline='hover'
+                  >
+                    View
+                  </Link>
+                  <Link
+                    href={profileFileViewUrlBuilder?.('organizationRegistration') || existingOrganizationRegistrationFile.url}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    underline='hover'
+                    download={existingOrganizationRegistrationFile.fileName || 'registration-document'}
+                  >
+                    Download
+                  </Link>
+                  <IconButton
+                    size='small'
+                    color='error'
+                    onClick={onDeleteOrganizationRegistrationFile}
+                    sx={{ p: 0.25 }}
+                    title='Delete registration document'
+                  >
+                    <DeleteIcon fontSize='small' />
+                  </IconButton>
+                </Stack>
               </Box>
             )}
           </Grid>
@@ -136,53 +148,57 @@ const BusinessDetailsSection = ({
           <Grid item xs={12} sm={6}>
             <FormControl fullWidth>
               <MuiFileInput
+                label='GST Document'
+                name='organizationGSTDocument'
                 placeholder='Upload GST Document'
                 value={organizationGSTDocument}
                 onChange={handleOrganizationGSTDocumentChange}
-                hideSizeText
+                fullWidth
+                clearIconButtonProps={{
+                  title: 'Remove',
+                  children: <RiCloseFill />
+                }}
                 InputProps={{
                   inputProps: {
                     accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
-                  }
+                  },
+                  startAdornment: <IoMdAttach />
                 }}
-                getInputText={value => (value ? value.name : '')}
-                startAdornment={<IoMdAttach />}
-                endAdornment={
-                  organizationGSTDocument && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography variant='body2' color='text.secondary'>
-                        {organizationGSTDocument.name}
-                      </Typography>
-                      <RiCloseFill
-                        onClick={() => {
-                          handleOrganizationGSTDocumentChange(null)
-                          if (formData.organizationGSTDocument) {
-                            deleteFileFromS3Handler(formData.organizationGSTDocument)
-                          }
-                        }}
-                        style={{ cursor: 'pointer', color: 'red' }}
-                      />
-                    </Box>
-                  )
-                }
               />
             </FormControl>
-            {organizationGSTDocument && (
+            {!organizationGSTDocument && existingOrganizationGSTFile?.url && (
               <Box sx={{ mt: 1 }}>
-                <button
-                  type='button'
-                  onClick={uploadOrganizationGSTDocToS3}
-                  style={{
-                    padding: '8px 16px',
-                    backgroundColor: '#1976d2',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Upload GST Document
-                </button>
+                <Typography variant='caption' color='text.secondary'>
+                  Existing file: {existingOrganizationGSTFile.fileName || 'GST document'}
+                </Typography>
+                <Stack direction='row' spacing={1.5} sx={{ mt: 0.5 }}>
+                  <Link
+                    href={profileFileViewUrlBuilder?.('organizationGST') || existingOrganizationGSTFile.url}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    underline='hover'
+                  >
+                    View
+                  </Link>
+                  <Link
+                    href={profileFileViewUrlBuilder?.('organizationGST') || existingOrganizationGSTFile.url}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    underline='hover'
+                    download={existingOrganizationGSTFile.fileName || 'gst-document'}
+                  >
+                    Download
+                  </Link>
+                  <IconButton
+                    size='small'
+                    color='error'
+                    onClick={onDeleteOrganizationGSTFile}
+                    sx={{ p: 0.25 }}
+                    title='Delete GST document'
+                  >
+                    <DeleteIcon fontSize='small' />
+                  </IconButton>
+                </Stack>
               </Box>
             )}
           </Grid>
@@ -202,53 +218,57 @@ const BusinessDetailsSection = ({
           <Grid item xs={12} sm={6}>
             <FormControl fullWidth>
               <MuiFileInput
+                label='PAN Document'
+                name='organizationPANDocument'
                 placeholder='Upload PAN Document'
                 value={organizationPANDocument}
                 onChange={handleOrganizationPANDocumentChange}
-                hideSizeText
+                fullWidth
+                clearIconButtonProps={{
+                  title: 'Remove',
+                  children: <RiCloseFill />
+                }}
                 InputProps={{
                   inputProps: {
                     accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
-                  }
+                  },
+                  startAdornment: <IoMdAttach />
                 }}
-                getInputText={value => (value ? value.name : '')}
-                startAdornment={<IoMdAttach />}
-                endAdornment={
-                  organizationPANDocument && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography variant='body2' color='text.secondary'>
-                        {organizationPANDocument.name}
-                      </Typography>
-                      <RiCloseFill
-                        onClick={() => {
-                          handleOrganizationPANDocumentChange(null)
-                          if (formData.organizationPANDocument) {
-                            deleteFileFromS3Handler(formData.organizationPANDocument)
-                          }
-                        }}
-                        style={{ cursor: 'pointer', color: 'red' }}
-                      />
-                    </Box>
-                  )
-                }
               />
             </FormControl>
-            {organizationPANDocument && (
+            {!organizationPANDocument && existingOrganizationPANFile?.url && (
               <Box sx={{ mt: 1 }}>
-                <button
-                  type='button'
-                  onClick={uploadOrganizationPANDocToS3}
-                  style={{
-                    padding: '8px 16px',
-                    backgroundColor: '#1976d2',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Upload PAN Document
-                </button>
+                <Typography variant='caption' color='text.secondary'>
+                  Existing file: {existingOrganizationPANFile.fileName || 'PAN document'}
+                </Typography>
+                <Stack direction='row' spacing={1.5} sx={{ mt: 0.5 }}>
+                  <Link
+                    href={profileFileViewUrlBuilder?.('organizationPAN') || existingOrganizationPANFile.url}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    underline='hover'
+                  >
+                    View
+                  </Link>
+                  <Link
+                    href={profileFileViewUrlBuilder?.('organizationPAN') || existingOrganizationPANFile.url}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    underline='hover'
+                    download={existingOrganizationPANFile.fileName || 'pan-document'}
+                  >
+                    Download
+                  </Link>
+                  <IconButton
+                    size='small'
+                    color='error'
+                    onClick={onDeleteOrganizationPANFile}
+                    sx={{ p: 0.25 }}
+                    title='Delete PAN document'
+                  >
+                    <DeleteIcon fontSize='small' />
+                  </IconButton>
+                </Stack>
               </Box>
             )}
           </Grid>

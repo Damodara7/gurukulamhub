@@ -1,7 +1,25 @@
 import React from 'react'
-import { Button, Chip, Divider, FormControl, Grid, InputLabel, MenuItem, Select, TextField } from '@mui/material'
+import {
+  Box,
+  Button,
+  Chip,
+  Divider,
+  FormControl,
+  Grid,
+  IconButton,
+  InputLabel,
+  MenuItem,
+  Select,
+  TextField,
+  Typography
+} from '@mui/material'
 import PhoneVerification from './PhoneVerification'
 import { motherTongueLanguagesData } from '@/data/userprofile/mothertonguelanguage'
+import MenuBookIcon from '@mui/icons-material/MenuBook'
+import EditNoteIcon from '@mui/icons-material/EditNote'
+import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver'
+import EditIcon from '@mui/icons-material/Edit'
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 // react-icons Imports
 import { RiAddFill, RiCloseFill } from 'react-icons/ri'
 import { IoMdAttach } from 'react-icons/io'
@@ -47,7 +65,9 @@ function PersonelInfo({
   handleDeleteChipFromMultiSelect,
   handleDeleteLanguage,
   handleOpenModal,
-  languageOptions
+  languageOptions,
+  languageDetails,
+  handleEditLanguage
 }) {
   return (
     <>
@@ -192,7 +212,7 @@ function PersonelInfo({
             name='knownLanguageIds'
             label='Languages'
             value={formData.knownLanguageIds}
-            onChange={e => handleFormChange('knownLanguageIds', e.target.value)}
+            onChange={() => {}}
             renderValue={selected => (
               <div className='flex flex-wrap gap-2'>
                 {selected &&
@@ -212,9 +232,42 @@ function PersonelInfo({
               </div>
             )}
           >
-            {languageOptions.map(each => (
-              <MenuItem key={each.value} value={each.value}>
-                {each.label}
+            {languageDetails.map(each => (
+              <MenuItem key={each._id} value={each._id} onClick={event => event.preventDefault()}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, minWidth: 0 }}>
+                    <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                      {each.language}
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, color: 'text.secondary' }}>
+                      {each.canSpeak && <RecordVoiceOverIcon fontSize='small' titleAccess='Can speak' />}
+                      {each.canRead && <MenuBookIcon fontSize='small' titleAccess='Can read' />}
+                      {each.canWrite && <EditNoteIcon fontSize='small' titleAccess='Can write' />}
+                    </Box>
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <IconButton
+                      size='small'
+                      onClick={event => {
+                        event.preventDefault()
+                        event.stopPropagation()
+                        handleEditLanguage(each._id)
+                      }}
+                    >
+                      <EditIcon fontSize='small' />
+                    </IconButton>
+                    <IconButton
+                      size='small'
+                      onClick={event => {
+                        event.preventDefault()
+                        event.stopPropagation()
+                        handleDeleteLanguage(each._id)
+                      }}
+                    >
+                      <DeleteOutlineIcon fontSize='small' />
+                    </IconButton>
+                  </Box>
+                </Box>
               </MenuItem>
             ))}
           </Select>

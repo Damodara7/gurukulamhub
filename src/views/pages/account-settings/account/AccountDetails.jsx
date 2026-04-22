@@ -30,8 +30,6 @@ import { countries } from '@/data/countries'
 import { countriesWithRegex } from '../../../../data/countries-regex'
 
 // react-phone-input-2 Imports
-import PhoneInput from 'react-phone-input-2'
-import 'react-phone-input-2/lib/style.css'
 
 // Mui-file-input Imports
 import { MuiFileInput } from 'mui-file-input'
@@ -84,17 +82,6 @@ import {
   Typography,
   useTheme
 } from '@mui/material'
-import {
-  getFileFromS3,
-  convertFileToBufferFile,
-  deleteFileFromS3,
-  uploadFileToS3,
-  deleteFileWithUnknownExtension,
-  userProfileBucketName,
-  getFileFromS3WithUnknownExtension,
-  getFileExtension,
-  getFileUrlFromS3WithUnknownExtension
-} from '@/utils/awsS3Utils'
 import * as clientApi from '@/app/api/client/client.api'
 import { calculateProfileCompletion } from '@/utils/profileUtils'
 
@@ -142,6 +129,7 @@ const initialData = {
   linkedInUrl: '',
   facebookUrl: '',
   instagramUrl: '',
+  youtubeUrl: '',
   openToWork: false,
   hiring: false,
   organization: '',
@@ -167,6 +155,8 @@ const AccountDetails = () => {
   const [isPhoneVerified, setIsPhoneVerified] = useState(false)
   const [countryDialCode, setCountryDialCode] = useState('')
   const [countryCode, setCountryCode] = useState('')
+  const [originalDbPhone, setOriginalDbPhone] = useState('')
+  const [originalDbDialCode, setOriginalDbDialCode] = useState('')
 
   // Location-related states
   const [selectedCountry, setSelectedCountry] = useState('')
@@ -223,7 +213,12 @@ const AccountDetails = () => {
   const memberIdCopyTimerRef = useRef(null)
 
   // Validation and modal states
-  const [isUrlsValid, setIsUrlsValid] = useState({ instagramUrl: true, linkedInUrl: true, facebookUrl: true })
+  const [isUrlsValid, setIsUrlsValid] = useState({
+    instagramUrl: true,
+    linkedInUrl: true,
+    facebookUrl: true,
+    youtubeUrl: true
+  })
   const [isEpicValid, setIsEpicValid] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState({
     language: false,
@@ -234,6 +229,7 @@ const AccountDetails = () => {
 
   // Editing/viewing states
   const [editingEducation, setEditingEducation] = useState(null)
+  const [editingLanguage, setEditingLanguage] = useState(null)
   const [editingWorkingPosition, setEditingWorkingPosition] = useState(null)
   const [editingAssociatedOrganization, setEditingAssociatedOrganization] = useState(null)
   const [viewingPosition, setViewingPosition] = useState(null)
@@ -267,105 +263,26 @@ const AccountDetails = () => {
   }, [selectedRegion])
   // Removed conflicting useEffect hooks - zipcode/locality are now handled by country-specific logic
 
-  async function getProfilePhoto() {
-    // image url
-    try {
-      const fileUrl = await getFileUrlFromS3WithUnknownExtension({
-        bucketName: userProfileBucketName,
-        fileNamePrefix: `${session?.user?.email}/profile_photo`
-      })
-      console.log('Profile photo url: ', fileUrl)
-      if (fileUrl) {
-        setImgSrc(fileUrl)
-      }
-    } catch (error) {
-      console.log('Error getting profile photo url: ', error)
-    }
+  const getProfileFileViewUrl = category => {
+    if (!session?.user?.email) return ''
+    return `/api/profile/files?email=${encodeURIComponent(session.user.email)}&category=${encodeURIComponent(
+      category
+    )}&action=content`
+  }
 
-    // actual file
-    try {
-      const file = await getFileFromS3WithUnknownExtension({
-        bucketName: userProfileBucketName,
-        fileNamePrefix: `${session?.user?.email}/profile_photo`
-      })
-      console.log('Profile photo file: ', file)
-      if (file) {
-        setFileInput(file)
-      } else {
-        console.log('No profile photo file found')
-        setFileInput(null)
-      }
-    } catch (err) {
-      console.log('Error getting profile photo file: ', err)
-    }
-  }
-  async function getResumeFile() {
-    try {
-      const file = await getFileFromS3WithUnknownExtension({
-        bucketName: userProfileBucketName,
-        fileNamePrefix: `${session?.user?.email}/resume`
-      })
-      console.log('Resume file: ', file)
-      if (file) {
-        setResumeFileInput(file)
-      } else {
-        console.log('No resume file found')
-        setResumeFileInput(null)
-      }
-    } catch (err) {
-      console.log('Error getting resume file: ', err)
-    }
-  }
-  async function getOrganizationRegistrationDoc() {
-    try {
-      const file = await getFileFromS3WithUnknownExtension({
-        bucketName: userProfileBucketName,
-        fileNamePrefix: `${session?.user?.email}/organization_registration`
-      })
-      console.log('Reg file: ', file)
-      if (file) {
-        setOrganizationRegistrationDocument(file)
-      } else {
-        console.log('No reg file found')
-        setOrganizationRegistrationDocument(null)
-      }
-    } catch (err) {
-      console.log('Error getting reg file: ', err)
-    }
-  }
-  async function getOrganizationGSTDoc() {
-    try {
-      const file = await getFileFromS3WithUnknownExtension({
-        bucketName: userProfileBucketName,
-        fileNamePrefix: `${session?.user?.email}/organization_gst`
-      })
-      console.log('GST file: ', file)
-      if (file) {
-        setOrganizationGSTDocument(file)
-      } else {
-        console.log('No GST file found')
-        setOrganizationGSTDocument(null)
-      }
-    } catch (error) {
-      console.log('Error getting GST file: ', error)
-    }
-  }
-  async function getOrganizationPANDoc() {
-    try {
-      const file = await getFileFromS3WithUnknownExtension({
-        bucketName: userProfileBucketName,
-        fileNamePrefix: `${session?.user?.email}/organization_pan`
-      })
-      console.log('PAN file: ', file)
-      if (file) {
-        setOrganizationPANDocument(file)
-      } else {
-        console.log('No PAN file found')
-        setOrganizationPANDocument(null)
-      }
-    } catch (error) {
-      console.log('Error getting PAN file: ', error)
-    }
+  function setExistingFilesFromProfile(profile) {
+    setImgSrc(
+      profile?.profilePhotoFile?.key
+        ? `${getProfileFileViewUrl('profilePhoto')}&_t=${Date.now()}`
+        : profile?.image || session?.user?.image || '/images/avatars/1.png'
+    )
+
+    // Keep file input values for newly selected files only.
+    setFileInput(null)
+    setResumeFileInput(null)
+    setOrganizationRegistrationDocument(null)
+    setOrganizationGSTDocument(null)
+    setOrganizationPANDocument(null)
   }
 
   useEffect(() => {
@@ -528,8 +445,14 @@ const AccountDetails = () => {
             }
           }
           if (profile?.phone && profile?.countryDialCode) {
-            setPhoneInput(profile?.countryDialCode + profile?.phone)
-            validatePhone(profile?.countryDialCode + profile?.phone, profile?.countryDialCode)
+            const dbPhoneWithDialCode = `${profile.countryDialCode}${profile.phone}`
+            setPhoneInput(dbPhoneWithDialCode)
+            setOriginalDbPhone(dbPhoneWithDialCode)
+            setOriginalDbDialCode(String(profile.countryDialCode))
+            validatePhone(dbPhoneWithDialCode, profile?.countryDialCode)
+          } else {
+            setOriginalDbPhone('')
+            setOriginalDbDialCode('')
           }
           if (profile?.countryCode) {
             setCountryCode(profile.countryCode)
@@ -548,17 +471,8 @@ const AccountDetails = () => {
             setCountryDialCode(profile.countryDialCode)
           }
 
-          // Getting files as per account type
-
-          await getProfilePhoto() // Common for Individual & Organization
-
-          if (profile?.accountType === 'INDIVIDUAL') {
-            await getResumeFile()
-          } else {
-            await getOrganizationRegistrationDoc()
-            await getOrganizationGSTDoc()
-            await getOrganizationPANDoc()
-          }
+          // Populate file previews and rely on profile file metadata for existing files
+          setExistingFilesFromProfile(profile)
           // handleClose();
         } else {
           // toast.error('Error:' + result.message)
@@ -762,6 +676,33 @@ const AccountDetails = () => {
     setIsModalOpen(prev => ({ ...prev, [identifier]: true }))
   }
 
+  function normalizeLanguageId(id) {
+    if (id === null || id === undefined) return ''
+    return String(id)
+  }
+
+  function isSameLanguageId(idA, idB) {
+    return normalizeLanguageId(idA) === normalizeLanguageId(idB)
+  }
+
+  function getLanguageById(languageId) {
+    const pendingLanguage = pendingLanguages.find(language => isSameLanguageId(language._id, languageId))
+    if (pendingLanguage) return pendingLanguage
+
+    const profileLanguage = profileData?.languages?.find(language => isSameLanguageId(language._id, languageId))
+    if (profileLanguage) return profileLanguage
+
+    return null
+  }
+
+  function handleEditLanguage(languageId) {
+    const language = getLanguageById(languageId)
+    if (!language) return
+
+    setEditingLanguage(language)
+    setIsModalOpen(prev => ({ ...prev, language: true }))
+  }
+
   function handleEditEducation(school) {
     setEditingEducation(school)
     setIsModalOpen(prev => ({ ...prev, education: true }))
@@ -878,7 +819,7 @@ const AccountDetails = () => {
     if (!languageId) return
 
     // Check if it's a pending language (starts with 'temp_')
-    if (languageId.startsWith('temp_')) {
+    if (normalizeLanguageId(languageId).startsWith('temp_')) {
       handleRemovePendingLanguage(languageId)
       return
     }
@@ -897,6 +838,9 @@ const AccountDetails = () => {
     } else if (field === 'instagramUrl') {
       const instagramRegex = /^https:\/\/(www\.)?instagram\.com\/[a-zA-Z0-9._]+\/?$/
       return instagramRegex.test(value)
+    } else if (field === 'youtubeUrl') {
+      const youtubeRegex = /^https:\/\/(www\.)?(youtube\.com|youtu\.be)\/.+$/
+      return youtubeRegex.test(value)
     }
   }
 
@@ -906,6 +850,19 @@ const AccountDetails = () => {
 
   // Function to add language to pending state
   function handleAddLanguageToState(newLanguage) {
+    const normalizedLanguage = newLanguage?.language?.trim().toLowerCase()
+    const activeProfileLanguages = (profileData?.languages || []).filter(
+      language => !removedLanguageIds.includes(language._id)
+    )
+    const duplicateLanguageExists = [...activeProfileLanguages, ...pendingLanguages].some(language => {
+      return language.language?.trim().toLowerCase() === normalizedLanguage
+    })
+
+    if (duplicateLanguageExists) {
+      toast.error('This language is already added.')
+      return
+    }
+
     setPendingLanguages(prev => [...prev, newLanguage])
 
     // Also update the language options for display
@@ -920,24 +877,86 @@ const AccountDetails = () => {
 
   // Function to remove language from pending state
   function handleRemovePendingLanguage(languageId) {
-    setPendingLanguages(prev => prev.filter(lang => lang._id !== languageId))
-    setLanguageOptions(prev => prev.filter(option => option.value !== languageId))
+    setPendingLanguages(prev => prev.filter(lang => !isSameLanguageId(lang._id, languageId)))
+    setLanguageOptions(prev => prev.filter(option => !isSameLanguageId(option.value, languageId)))
     setFormData(prev => ({
       ...prev,
-      knownLanguageIds: prev.knownLanguageIds.filter(id => id !== languageId)
+      knownLanguageIds: prev.knownLanguageIds.filter(id => !isSameLanguageId(id, languageId))
     }))
   }
 
   // Function to remove existing language from state (mark for removal)
   function handleRemoveExistingLanguage(languageId) {
     // Add to removed languages list
-    setRemovedLanguageIds(prev => [...prev, languageId])
+    setRemovedLanguageIds(prev =>
+      prev.some(existingId => isSameLanguageId(existingId, languageId)) ? prev : [...prev, languageId]
+    )
 
     // Remove from UI immediately
-    setLanguageOptions(prev => prev.filter(option => option.value !== languageId))
+    setLanguageOptions(prev => prev.filter(option => !isSameLanguageId(option.value, languageId)))
     setFormData(prev => ({
       ...prev,
-      knownLanguageIds: prev.knownLanguageIds.filter(id => id !== languageId)
+      knownLanguageIds: prev.knownLanguageIds.filter(id => !isSameLanguageId(id, languageId))
+    }))
+  }
+
+  function handleUpdateLanguageInState(updatedLanguage) {
+    if (!updatedLanguage?._id) return
+
+    const normalizedLanguage = updatedLanguage.language?.trim().toLowerCase()
+    const removedLanguageIdSet = new Set(removedLanguageIds.map(id => normalizeLanguageId(id)))
+    const activeProfileLanguages = (profileData?.languages || []).filter(
+      language => !removedLanguageIdSet.has(normalizeLanguageId(language._id))
+    )
+    const duplicateLanguageExists = [...activeProfileLanguages, ...pendingLanguages].some(language => {
+      if (isSameLanguageId(language._id, updatedLanguage._id)) return false
+
+      return language.language?.trim().toLowerCase() === normalizedLanguage
+    })
+
+    if (duplicateLanguageExists) {
+      toast.error('This language is already added.')
+      return
+    }
+
+    // Update pending language directly if it is already pending
+    if (normalizeLanguageId(updatedLanguage._id).startsWith('temp_')) {
+      setPendingLanguages(prev =>
+        prev.map(language =>
+          isSameLanguageId(language._id, updatedLanguage._id) ? { ...language, ...updatedLanguage } : language
+        )
+      )
+      setLanguageOptions(prev =>
+        prev.map(option =>
+          isSameLanguageId(option.value, updatedLanguage._id)
+            ? { ...option, label: updatedLanguage.language }
+            : option
+        )
+      )
+      return
+    }
+
+    // Existing language edited: mark old as removed, add updated version as pending
+    const tempUpdatedLanguage = {
+      ...updatedLanguage,
+      _id: `temp_${Date.now()}`
+    }
+
+    setRemovedLanguageIds(prev =>
+      prev.some(existingId => isSameLanguageId(existingId, updatedLanguage._id))
+        ? prev
+        : [...prev, updatedLanguage._id]
+    )
+    setPendingLanguages(prev => [...prev, tempUpdatedLanguage])
+    setLanguageOptions(prev => [
+      ...prev.filter(option => !isSameLanguageId(option.value, updatedLanguage._id)),
+      { value: tempUpdatedLanguage._id, label: tempUpdatedLanguage.language }
+    ])
+    setFormData(prev => ({
+      ...prev,
+      knownLanguageIds: prev.knownLanguageIds.map(id =>
+        isSameLanguageId(id, updatedLanguage._id) ? tempUpdatedLanguage._id : id
+      )
     }))
   }
 
@@ -1066,6 +1085,9 @@ const AccountDetails = () => {
     if (field === 'instagramUrl') {
       setIsUrlsValid(prev => ({ ...prev, [field]: validateUrl(field, value) }))
     }
+    if (field === 'youtubeUrl') {
+      setIsUrlsValid(prev => ({ ...prev, [field]: validateUrl(field, value) }))
+    }
     setFormData(prev => ({ ...prev, [field]: value }))
     console.log('Value: ', value, typeof value)
   }
@@ -1143,6 +1165,35 @@ const AccountDetails = () => {
 
     return 'Unknown'
   }
+
+  const languageDetails = useMemo(() => {
+    return (formData?.knownLanguageIds || [])
+      .map(id => {
+        const pendingLanguage = pendingLanguages.find(language => language._id === id)
+        if (pendingLanguage) return pendingLanguage
+
+        const profileLanguage = profileData?.languages?.find(language => language._id === id)
+        if (profileLanguage) return profileLanguage
+
+        const option = languageOptions.find(each => each.value === id)
+        if (option) {
+          return {
+            _id: id,
+            language: option.label,
+            canRead: false,
+            canWrite: false,
+            canSpeak: false
+          }
+        }
+
+        return null
+      })
+      .filter(Boolean)
+  }, [formData?.knownLanguageIds, pendingLanguages, profileData?.languages, languageOptions])
+
+  const existingLanguageNames = useMemo(() => {
+    return languageDetails.map(language => language.language).filter(Boolean)
+  }, [languageDetails])
 
   function getAssocaiatedOrganizationLabel(value) {
     return associatedOrganizationOptions.find(option => option.value === value)?.label || 'Unknown'
@@ -1280,7 +1331,8 @@ const AccountDetails = () => {
         (formData.age && (+formData.age > 120 || +formData.age < 6 || formData.age.toString().length > 3)) ||
         (formData.linkedInUrl && !isUrlsValid.linkedInUrl) ||
         (formData.facebookUrl && !isUrlsValid.facebookUrl) ||
-        (formData.instagramUrl && !isUrlsValid.instagramUrl)
+        (formData.instagramUrl && !isUrlsValid.instagramUrl) ||
+        (formData.youtubeUrl && !isUrlsValid.youtubeUrl)
       ) {
         setIsFormValid(false)
         setIsFormSubmitting(false)
@@ -1441,7 +1493,14 @@ const AccountDetails = () => {
         removedOrganizationIds,
         profileData?.associatedOrganizations || [],
         'associatedOrganizations',
-        ['organization', 'organizationType', 'websiteUrl']
+        [
+          'organization',
+          'organizationType',
+          'websiteUrl',
+          'isCurrentlyInAssociation',
+          'associationStartDate',
+          'associationEndDate'
+        ]
       )
 
       console.log('User profile data sending to POST:', data)
@@ -1452,18 +1511,11 @@ const AccountDetails = () => {
         console.log('Updated  result', result.result)
         toast.success('Profile updated successfully!')
         console.log('user profile updating result', result.result)
-        if (result.result.accountType === 'INDIVIDUAL') {
-          // Handle S3 uploads for other documents
-          await handleUploadResumeFileToS3()
-
-          await handleDeleteFileFromS3(`${session?.user?.email}/organization_registration`)
-          await handleDeleteFileFromS3(`${session?.user?.email}/organization_gst`)
-          await handleDeleteFileFromS3(`${session?.user?.email}/organization_pan`)
-        } else {
-          await handleUploadOrganizationRegistrationDocToS3()
-          await handleUploadOrganizationGSTDocToS3()
-          await handleUploadOrganizationPANDocToS3()
-        }
+        // Upload files based on user selections (independent of account type)
+        await handleUploadResumeFileToS3()
+        await handleUploadOrganizationRegistrationDocToS3()
+        await handleUploadOrganizationGSTDocToS3()
+        await handleUploadOrganizationPANDocToS3()
 
         await handleUploadProfilePhotoToS3()
 
@@ -1524,7 +1576,10 @@ const AccountDetails = () => {
           const newOrganizations = pendingOrganizations.map(org => ({
             organization: org.organization,
             organizationType: org.organizationType,
-            websiteUrl: org.websiteUrl
+            websiteUrl: org.websiteUrl,
+            isCurrentlyInAssociation: org.isCurrentlyInAssociation,
+            associationStartDate: org.associationStartDate,
+            associationEndDate: org.associationEndDate
           }))
           updatedProfile.associatedOrganizations = [...filteredOrganizations, ...newOrganizations]
         }
@@ -1578,197 +1633,135 @@ const AccountDetails = () => {
     }
   }
 
+  async function uploadProfileFileByCategory({ category, file }) {
+    if (!file || !session?.user?.email) return null
+
+    const formData = new FormData()
+    formData.append('email', session.user.email)
+    formData.append('category', category)
+    formData.append('file', file)
+
+    const response = await RestApi.submitFormData('/profile/files', formData)
+    if (response?.status !== 'success') {
+      throw new Error(response?.message || `Failed to upload ${category}`)
+    }
+    return response?.result
+  }
+
+  async function deleteProfileFileByCategory(category) {
+    if (!session?.user?.email) return
+    const response = await RestApi.del('/profile/files', { email: session.user.email, category })
+    if (response?.status !== 'success') {
+      throw new Error(response?.message || `Failed to delete ${category}`)
+    }
+  }
+
   async function handleUploadProfilePhotoToS3() {
-    const fileNameWithoutExtension = `${session?.user?.email}/profile_photo`
-
-    if (fileInput && fileInput.name.startsWith(fileNameWithoutExtension)) {
-      return // Don't reupload the same file
-    }
-
-    try {
-      await deleteFileWithUnknownExtension({
-        bucketName: userProfileBucketName,
-        fileNamePrefix: fileNameWithoutExtension
-      })
-    } catch (error) {
-      console.error('Error in handleDeleteProfilePhotoToS3:', error)
-    }
-
-    if (fileInput) {
-      const bufferFile = await convertFileToBufferFile(fileInput)
-      const fileType = getFileExtension(fileInput.name)
-      const fileName = `${session?.user?.email}/profile_photo.${fileType}`
-
-      try {
-        await uploadFileToS3({
-          bucketName: userProfileBucketName,
-          fileBuffer: bufferFile,
-          fileName,
-          fileType
-        })
-        console.log('Profile photo uploaded to S3 successfully.')
-      } catch (error) {
-        console.error('Error in handleUploadProfilePhotoToS3:', error)
-        // toast.error('Error uploading profile photo to S3:', error.message)
-      }
+    if (!fileInput) return
+    const uploadedMeta = await uploadProfileFileByCategory({ category: 'profilePhoto', file: fileInput })
+    if (uploadedMeta?.key) {
+      setImgSrc(`${getProfileFileViewUrl('profilePhoto')}&_t=${Date.now()}`)
     }
   }
 
   async function handleUploadResumeFileToS3() {
-    const fileNameWithoutExtension = `${session?.user?.email}/resume`
-
-    if (resumeFileInput && resumeFileInput.name.startsWith(fileNameWithoutExtension)) {
-      return // Don't reupload the same file
-    }
-
-    try {
-      await deleteFileWithUnknownExtension({
-        bucketName: userProfileBucketName,
-        fileNamePrefix: fileNameWithoutExtension
-      })
-    } catch (error) {
-      console.error('Error in handleDeleteResumeFileToS3:', error)
-    }
-
-    if (resumeFileInput) {
-      const bufferFile = await convertFileToBufferFile(resumeFileInput)
-      const fileType = getFileExtension(resumeFileInput.name) // organizationRegistrationDocument.type.split('/')[1]
-      const fileName = `${session?.user?.email}/resume.${fileType}`
-
-      try {
-        await uploadFileToS3({
-          bucketName: userProfileBucketName,
-          fileBuffer: bufferFile,
-          fileName,
-          fileType
-        })
-        console.log('Resume Doc uploaded to S3 successfully.')
-      } catch (error) {
-        console.error('Error in handleUploadResumeToS3:', error)
-        // toast.error('Error uploading profile photo to S3:', error.message)
-      }
-    }
+    if (!resumeFileInput) return
+    await uploadProfileFileByCategory({ category: 'resume', file: resumeFileInput })
   }
 
   async function handleUploadOrganizationRegistrationDocToS3() {
-    const fileNameWithoutExtension = `${session?.user?.email}/organization_registration`
-
-    if (
-      organizationRegistrationDocument &&
-      organizationRegistrationDocument.name.startsWith(fileNameWithoutExtension)
-    ) {
-      return // Don't reupload the same file
-    }
-
-    try {
-      await deleteFileWithUnknownExtension({
-        bucketName: userProfileBucketName,
-        fileNamePrefix: fileNameWithoutExtension
-      })
-    } catch (error) {
-      console.error('Error in handleDeleteOrganizationRegistrationDocToS3:', error)
-    }
-
-    if (organizationRegistrationDocument) {
-      const bufferFile = await convertFileToBufferFile(organizationRegistrationDocument)
-      const fileType = getFileExtension(organizationRegistrationDocument.name) // organizationRegistrationDocument.type.split('/')[1]
-      const fileName = `${session?.user?.email}/organization_registration.${fileType}`
-
-      try {
-        await uploadFileToS3({
-          bucketName: userProfileBucketName,
-          fileBuffer: bufferFile,
-          fileName,
-          fileType
-        })
-        console.log('Organization Registartion Doc uploaded to S3 successfully.')
-      } catch (error) {
-        console.error('Error in handleUploadOrganizationRegistrationDocToS3:', error)
-        // toast.error('Error uploading profile photo to S3:', error.message)
-      }
-    }
+    if (!organizationRegistrationDocument) return
+    await uploadProfileFileByCategory({ category: 'organizationRegistration', file: organizationRegistrationDocument })
   }
 
   async function handleUploadOrganizationGSTDocToS3() {
-    const fileNameWithoutExtension = `${session?.user?.email}/organization_gst`
-
-    if (organizationGSTDocument && organizationGSTDocument.name.startsWith(fileNameWithoutExtension)) {
-      return // Don't reupload the same file
-    }
-
-    try {
-      await deleteFileWithUnknownExtension({
-        bucketName: userProfileBucketName,
-        fileNamePrefix: fileNameWithoutExtension
-      })
-    } catch (error) {
-      console.error('Error in handleDeleteOrganizationGSTDocToS3:', error)
-    }
-
-    if (organizationGSTDocument) {
-      const bufferFile = await convertFileToBufferFile(organizationGSTDocument)
-      const fileType = getFileExtension(organizationGSTDocument.name) // organizationGSTDocument.type.split('/')[1]
-      const fileName = `${session?.user?.email}/organization_gst.${fileType}`
-
-      try {
-        await uploadFileToS3({
-          bucketName: userProfileBucketName,
-          fileBuffer: bufferFile,
-          fileName,
-          fileType
-        })
-        console.log('Organization GST Doc uploaded to S3 successfully.')
-      } catch (error) {
-        console.error('Error in handleUploadOrganizationGSTDocToS3:', error)
-        // toast.error('Error uploading profile photo to S3:', error.message)
-      }
-    }
+    if (!organizationGSTDocument) return
+    await uploadProfileFileByCategory({ category: 'organizationGST', file: organizationGSTDocument })
   }
 
   async function handleUploadOrganizationPANDocToS3() {
-    const fileNameWithoutExtension = `${session?.user?.email}/organization_pan`
+    if (!organizationPANDocument) return
+    await uploadProfileFileByCategory({ category: 'organizationPAN', file: organizationPANDocument })
+  }
 
-    if (organizationPANDocument && organizationPANDocument.name.startsWith(fileNameWithoutExtension)) {
-      return // Don't reupload the same file
-    }
+  async function handleDeleteFileFromS3(fileCategory) {
+    if (!fileCategory) return
+    await deleteProfileFileByCategory(fileCategory)
+  }
 
+  async function handleDeleteResumeFile() {
     try {
-      await deleteFileWithUnknownExtension({
-        bucketName: userProfileBucketName,
-        fileNamePrefix: fileNameWithoutExtension
-      })
+      await handleDeleteFileFromS3('resume')
+      setResumeFileInput(null)
+      setProfileData(prev =>
+        prev
+          ? {
+              ...prev,
+              resumeFile: null
+            }
+          : prev
+      )
+      toast.success('Resume deleted successfully.')
     } catch (error) {
-      console.error('Error in handleDeleteOrganizationPANDocToS3:', error)
-    }
-
-    if (organizationPANDocument) {
-      const bufferFile = await convertFileToBufferFile(organizationPANDocument)
-      const fileType = getFileExtension(organizationPANDocument.name) // organizationPANDocument.type.split('/')[1]
-      const fileName = `${session?.user?.email}/organization_pan.${fileType}`
-
-      try {
-        await uploadFileToS3({
-          bucketName: userProfileBucketName,
-          fileBuffer: bufferFile,
-          fileName,
-          fileType
-        })
-        console.log('Organization PAN Doc uploaded to S3 successfully.')
-      } catch (error) {
-        console.error('Error in handleUploadOrganizationPANDocToS3:', error)
-        // toast.error('Error uploading profile photo to S3:', error.message)
-      }
+      console.error('Failed to delete resume:', error)
+      toast.error(error?.message || 'Failed to delete resume.')
     }
   }
 
-  async function handleDeleteFileFromS3(fileNameWithoutExtension) {
+  async function handleDeleteOrganizationRegistrationFile() {
     try {
-      await deleteFileWithUnknownExtension({
-        bucketName: userProfileBucketName,
-        fileNamePrefix: fileNameWithoutExtension
-      })
+      await handleDeleteFileFromS3('organizationRegistration')
+      setOrganizationRegistrationDocument(null)
+      setProfileData(prev =>
+        prev
+          ? {
+              ...prev,
+              organizationRegistrationFile: null
+            }
+          : prev
+      )
+      toast.success('Registration document deleted successfully.')
     } catch (error) {
-      console.error(`Error in delete ${fileNameWithoutExtension}:`, error)
+      console.error('Failed to delete registration document:', error)
+      toast.error(error?.message || 'Failed to delete registration document.')
+    }
+  }
+
+  async function handleDeleteOrganizationGSTFile() {
+    try {
+      await handleDeleteFileFromS3('organizationGST')
+      setOrganizationGSTDocument(null)
+      setProfileData(prev =>
+        prev
+          ? {
+              ...prev,
+              organizationGSTFile: null
+            }
+          : prev
+      )
+      toast.success('GST document deleted successfully.')
+    } catch (error) {
+      console.error('Failed to delete GST document:', error)
+      toast.error(error?.message || 'Failed to delete GST document.')
+    }
+  }
+
+  async function handleDeleteOrganizationPANFile() {
+    try {
+      await handleDeleteFileFromS3('organizationPAN')
+      setOrganizationPANDocument(null)
+      setProfileData(prev =>
+        prev
+          ? {
+              ...prev,
+              organizationPANFile: null
+            }
+          : prev
+      )
+      toast.success('PAN document deleted successfully.')
+    } catch (error) {
+      console.error('Failed to delete PAN document:', error)
+      toast.error(error?.message || 'Failed to delete PAN document.')
     }
   }
 
@@ -1856,6 +1849,21 @@ const AccountDetails = () => {
       // Note: Removed automatic country mapping to address section
       // The mobile number country selection should not affect the address country dropdown
     }
+  }
+
+  const handleRestoreVerifiedPhone = () => {
+    if (!originalDbPhone || !originalDbDialCode) return
+
+    const restoredPhone = originalDbPhone
+    setPhoneInput(restoredPhone)
+    setCountryDialCode(originalDbDialCode)
+    validatePhone(restoredPhone, originalDbDialCode)
+    setIsPhoneVerified(true)
+  }
+
+  const handlePhoneVerified = async () => {
+    // Phone is intentionally persisted only on "Save Changes".
+    setIsPhoneVerified(true)
   }
 
   const handleCopyMemberId = async () => {
@@ -2248,7 +2256,10 @@ const AccountDetails = () => {
                 phoneValid: phoneValid,
                 onChange: handlePhoneInputChange,
                 setIsPhoneVerified: setIsPhoneVerified,
-                dbPhone: formData.countryDialCode + formData.phone
+                phoneDialCode: countryDialCode,
+                originalDbPhone: originalDbPhone,
+                onRestoreVerifiedPhone: handleRestoreVerifiedPhone,
+                onPhoneVerified: handlePhoneVerified
               }}
               formData={formData}
               getLanguageLabel={getLanguageLabel}
@@ -2258,6 +2269,8 @@ const AccountDetails = () => {
               languageOptions={languageOptions}
               handleDeleteChipFromMultiSelect={handleDeleteChipFromMultiSelect}
               handleDeleteLanguage={handleDeleteLanguage}
+              handleEditLanguage={handleEditLanguage}
+              languageDetails={languageDetails}
             />
 
             {/* ----Voter Id---- */}
@@ -2371,6 +2384,13 @@ const AccountDetails = () => {
               organizationRegistrationDocument={organizationRegistrationDocument}
               organizationGSTDocument={organizationGSTDocument}
               organizationPANDocument={organizationPANDocument}
+              existingOrganizationRegistrationFile={profileData?.organizationRegistrationFile}
+              existingOrganizationGSTFile={profileData?.organizationGSTFile}
+              existingOrganizationPANFile={profileData?.organizationPANFile}
+              profileFileViewUrlBuilder={getProfileFileViewUrl}
+              onDeleteOrganizationRegistrationFile={handleDeleteOrganizationRegistrationFile}
+              onDeleteOrganizationGSTFile={handleDeleteOrganizationGSTFile}
+              onDeleteOrganizationPANFile={handleDeleteOrganizationPANFile}
               handleOrganizationRegistrationDocumentChange={e =>
                 handleFileInputChangeByFieldName('organizationRegistrationDocument', e)
               }
@@ -2386,6 +2406,9 @@ const AccountDetails = () => {
             <ResumeSection
               formData={formData}
               resumeFileInput={resumeFileInput}
+              existingResumeFile={profileData?.resumeFile}
+              profileFileViewUrlBuilder={getProfileFileViewUrl}
+              onDeleteResumeFile={handleDeleteResumeFile}
               handleResumeFileInputChange={handleResumeFileInputChange}
               uploadResumeFileToS3={handleUploadResumeFileToS3}
               deleteFileFromS3Handler={handleDeleteFileFromS3}
@@ -2398,8 +2421,14 @@ const AccountDetails = () => {
               <NewLanguageModal
                 email={session?.user?.email}
                 open={isModalOpen.language}
-                onClose={() => handleCloseModal('language')}
+                onClose={() => {
+                  setEditingLanguage(null)
+                  handleCloseModal('language')
+                }}
                 onAddLanguageToState={handleAddLanguageToState}
+                onUpdateLanguageInState={handleUpdateLanguageInState}
+                editingLanguage={editingLanguage}
+                existingLanguageNames={existingLanguageNames}
               />
             )}
             {isModalOpen.associatedOrganization && (
@@ -2481,7 +2510,8 @@ const AccountDetails = () => {
                     !isEpicValid ||
                     (formData.facebookUrl && !isUrlsValid.facebookUrl) ||
                     (formData.instagramUrl && !isUrlsValid.instagramUrl) ||
-                    (formData.linkedInUrl && !isUrlsValid.linkedInUrl)
+                    (formData.linkedInUrl && !isUrlsValid.linkedInUrl) ||
+                    (formData.youtubeUrl && !isUrlsValid.youtubeUrl)
                   }
                   variant='contained'
                   type='submit'

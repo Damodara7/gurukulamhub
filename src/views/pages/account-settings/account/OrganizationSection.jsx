@@ -31,17 +31,6 @@ const OrganizationSection = ({
       <Grid item xs={12} marginLeft={'0.25rem'}>
         <Divider>Associated Organizations</Divider>
       </Grid>
-      {/* Add New Organization Button */}
-      <Grid item xs={12}>
-        <Button
-          startIcon={<RiAddFill />}
-          variant='text'
-          color='primary'
-          onClick={() => handleOpenModal('associatedOrganization')}
-        >
-          Add New Organization
-        </Button>
-      </Grid>
 
       {/* Display Organizations List */}
       {((profileData?.associatedOrganizations && profileData.associatedOrganizations.length > 0) ||
@@ -108,6 +97,9 @@ const OrganizationSection = ({
                                     }
                                   }}
                                 />
+                                {organization.isCurrentlyInAssociation && (
+                                  <Chip label='Current' size='small' color='success' />
+                                )}
                               </Box>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                 <Typography
@@ -198,6 +190,9 @@ const OrganizationSection = ({
                                   }
                                 }}
                               />
+                              {organization.isCurrentlyInAssociation && (
+                                <Chip label='Current' size='small' color='success' />
+                              )}
                             </Box>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                               <Typography
@@ -255,6 +250,18 @@ const OrganizationSection = ({
           </Box>
         </Grid>
       )}
+
+      {/* Add New Organization Button */}
+      <Grid item xs={12}>
+        <Button
+          startIcon={<RiAddFill />}
+          variant='text'
+          color='primary'
+          onClick={() => handleOpenModal('associatedOrganization')}
+        >
+          Add New Organization
+        </Button>
+      </Grid>
 
       {/* Associated Organization Modal */}
       {isModalOpen.associatedOrganization && (
