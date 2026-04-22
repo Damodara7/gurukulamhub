@@ -58,7 +58,9 @@ ENV NODE_ENV=production
 # NOTE: These are embedded in the client bundle at build time
 # Use ARG to allow passing values at build time, with ENV as fallback
 ARG NEXT_PUBLIC_TEST_MODE=true
+ARG NEXT_PUBLIC_VAPID_PUBLIC_KEY
 ENV NEXT_PUBLIC_TEST_MODE=${NEXT_PUBLIC_TEST_MODE}
+ENV NEXT_PUBLIC_VAPID_PUBLIC_KEY=${NEXT_PUBLIC_VAPID_PUBLIC_KEY}
 ENV NEXT_PUBLIC_RECAPTCHA_SITE_KEY=6LdybtIrAAAAAB1ZeuTJ-m-okYqu4tN2YN2Fkjms
 ENV NEXT_PUBLIC_APP_URL=https://gurukulamhub.org
 ENV NEXT_PUBLIC_API_URL=https://gurukulamhub.org/api

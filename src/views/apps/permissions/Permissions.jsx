@@ -106,7 +106,7 @@ const Permissions = ({ permissionsData }) => {
         cell: ({ row }) => <Typography color='text.primary'>{row.original.name}</Typography>
       }),
       columnHelper.accessor('assignedTo', {
-        header: 'Assigned To',
+        header: 'Assigned Roles',
         cell: ({ row }) =>
           typeof row.original.assignedTo === 'string' ? (
             <Chip
