@@ -24,9 +24,10 @@ import NetworkTreeTable from './NetworkTreeTable'
 import { useSession } from 'next-auth/react'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS as ApiUrls } from '@/configs/apiConfig'
-import { toast } from 'react-toastify'
 import Loading from '../security/Loading'
 import TreeComponent from '@/components/TreeComponent'
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
+import { useParams, useRouter } from 'next/navigation'
 
 function findUserByEmail(email, userNode) {
   if (userNode?.email === email) return userNode
@@ -94,6 +95,8 @@ function NetworkTreeNodes({ networkData }) {
   const theme = useTheme()
   const isDarkMode = theme.palette.mode === 'dark'
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+  const router = useRouter()
+  const { lang: locale } = useParams()
   const { data: session, status, update } = useSession()
   const [currentUserNodeEmail, setCurrentUserNodeEmail] = useState(session?.user?.email)
   const [profileAndNetworkData, setProfileAndNetworkData] = useState(null)
@@ -185,15 +188,13 @@ function NetworkTreeNodes({ networkData }) {
         bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.6) : 'white',
         border: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.1)}`,
         borderRadius: { xs: 1.5, sm: 2 },
-        boxShadow: isDarkMode
-          ? `0 2px 12px ${alpha(theme.palette.common.black, 0.3)}`
-          : '0 2px 12px rgba(0,0,0,0.04)'
+        boxShadow: isDarkMode ? `0 2px 12px ${alpha(theme.palette.common.black, 0.3)}` : '0 2px 12px rgba(0,0,0,0.04)'
       }}
     >
       <CardHeader
         title={
           <Typography
-            variant="h6"
+            variant='h6'
             sx={{
               fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' },
               color: isDarkMode ? theme.palette.common.white : 'text.primary',
@@ -204,7 +205,13 @@ function NetworkTreeNodes({ networkData }) {
           </Typography>
         }
         sx={{ alignItems: 'flex-start' }}
-        action={<StyledReferralPointsStack profileAndNetworkData={profileAndNetworkData} isDarkMode={isDarkMode} theme={theme} />}
+        action={
+          <StyledReferralPointsStack
+            profileAndNetworkData={profileAndNetworkData}
+            isDarkMode={isDarkMode}
+            theme={theme}
+          />
+        }
       />
       <CardContent>
         <Grid container spacing={4}>
@@ -279,9 +286,7 @@ function NetworkTreeNodes({ networkData }) {
             width: '100%',
             height: { xs: '300px', sm: '400px' },
             overflow: 'auto',
-            backgroundColor: isDarkMode
-              ? alpha(theme.palette.background.paper, 0.4)
-              : 'rgba(0,4,0,0.05)',
+            backgroundColor: isDarkMode ? alpha(theme.palette.background.paper, 0.4) : 'rgba(0,4,0,0.05)',
             border: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.2)}`,
             borderRadius: { xs: 1, sm: 1.25 },
             padding: { xs: 1.5, sm: 2 }
@@ -290,6 +295,113 @@ function NetworkTreeNodes({ networkData }) {
           <TreeComponent tree={rootTree} />
         </Box>
       </CardContent>
+      {/* Referral Points Distribution */}
+      <Card
+        sx={{
+          borderRadius: { xs: 1.5, sm: 2 },
+          bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.6) : 'white',
+          border: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.1)}`,
+          boxShadow: isDarkMode
+            ? `0 2px 12px ${alpha(theme.palette.common.black, 0.3)}`
+            : '0 2px 12px rgba(0,0,0,0.04)',
+          overflow: 'hidden'
+        }}
+      >
+        <Box
+          sx={{
+            p: 2,
+            bgcolor: alpha(theme.palette.primary.main, 0.05),
+            borderBottom: '2px solid',
+            borderColor: 'primary.main'
+          }}
+        >
+          <Stack direction='row' alignItems='center' spacing={1.5}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: 1.5,
+                bgcolor: 'primary.main',
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <EmojiEventsIcon sx={{ fontSize: 22 }} />
+            </Box>
+            <Typography variant='h6' fontWeight={700}>
+              Referral Points Distribution
+            </Typography>
+          </Stack>
+        </Box>
+
+        <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
+          <Stack spacing={1.75}>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+              sx={{ fontSize: { xs: '0.88rem', sm: '0.9rem', md: '0.95rem' }, lineHeight: 1.65 }}
+            >
+              Invite more friends to grow your network tree and gain more referral points. Once your friend completes
+              registration, they are added to your network automatically.
+            </Typography>
+
+            <Typography
+              variant='body2'
+              color='text.secondary'
+              sx={{ fontSize: { xs: '0.88rem', sm: '0.9rem', md: '0.95rem' }, lineHeight: 1.65 }}
+            >
+              Their Network Level (NWL) is calculated as:
+              <strong> NWL = Referrer NWL + 1</strong>
+            </Typography>
+
+            <Box
+              sx={{
+                p: { xs: 1.5, sm: 2 },
+                borderRadius: 1.5,
+                bgcolor: isDarkMode ? alpha(theme.palette.primary.main, 0.14) : alpha(theme.palette.primary.main, 0.08),
+                border: `1px dashed ${alpha(theme.palette.primary.main, 0.45)}`
+              }}
+            >
+              <Stack spacing={0.75}>
+                <Typography variant='subtitle2' fontWeight={700}>
+                  Points are distributed up the referral chain:
+                </Typography>
+                <Typography variant='body2'>Level 1 (Direct Referrer): 500 points</Typography>
+                <Typography variant='body2'>Level 2 (Referrer&apos;s Referrer): 250 points</Typography>
+                <Typography variant='body2'>Level 3: 125 points</Typography>
+                <Typography variant='body2'>Level 4: 62.5 points</Typography>
+              </Stack>
+            </Box>
+
+            <Typography
+              variant='body2'
+              color='text.secondary'
+              sx={{ fontSize: { xs: '0.85rem', sm: '0.88rem', md: '0.92rem' }, lineHeight: 1.65 }}
+            >
+              The reward halves at each next level (500, 250, 125, 62.5, ...), so everyone in your active network
+              benefits when new members join.
+            </Typography>
+
+            <Box sx={{ pt: 0.5 }}>
+              <Button
+                variant='contained'
+                color='primary'
+                component='label'
+                onClick={() => router.push(`/${locale}/pages/dialog-examples`)}
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  color: 'white'
+                }}
+              >
+                Refer & Earn
+              </Button>
+            </Box>
+          </Stack>
+        </CardContent>
+      </Card>
     </Card>
   )
 }

@@ -445,9 +445,9 @@ const ReferAndEarn = () => {
               <Box
                 sx={{
                   p: 2,
-                  bgcolor: alpha(theme.palette.secondary.main, 0.05),
+                  bgcolor: alpha(theme.palette.primary.main, 0.05),
                   borderBottom: '2px solid',
-                  borderColor: 'secondary.main'
+                  borderColor: 'primary.main'
                 }}
               >
                 <Stack direction='row' alignItems='center' spacing={1.5}>
@@ -456,7 +456,7 @@ const ReferAndEarn = () => {
                       width: 40,
                       height: 40,
                       borderRadius: 1.5,
-                      bgcolor: 'secondary.main',
+                      bgcolor: 'primary.main',
                       color: 'white',
                       display: 'flex',
                       alignItems: 'center',
@@ -633,6 +633,100 @@ const ReferAndEarn = () => {
                       </LinkedinShareButton>
                     </Stack>
                   </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+
+            {/* Referral Points Distribution */}
+            <Card
+              sx={{
+                borderRadius: { xs: 1.5, sm: 2 },
+                bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.6) : 'white',
+                border: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.1)}`,
+                boxShadow: isDarkMode
+                  ? `0 2px 12px ${alpha(theme.palette.common.black, 0.3)}`
+                  : '0 2px 12px rgba(0,0,0,0.04)',
+                overflow: 'hidden'
+              }}
+            >
+              <Box
+                sx={{
+                  p: 2,
+                  bgcolor: alpha(theme.palette.primary.main, 0.05),
+                  borderBottom: '2px solid',
+                  borderColor: 'primary.main'
+                }}
+              >
+                <Stack direction='row' alignItems='center' spacing={1.5}>
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 1.5,
+                      bgcolor: 'primary.main',
+                      color: 'white',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <EmojiEventsIcon sx={{ fontSize: 22 }} />
+                  </Box>
+                  <Typography variant='h6' fontWeight={700}>
+                    Referral Points Distribution
+                  </Typography>
+                </Stack>
+              </Box>
+
+              <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
+                <Stack spacing={1.75}>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                    sx={{ fontSize: { xs: '0.88rem', sm: '0.9rem', md: '0.95rem' }, lineHeight: 1.65 }}
+                  >
+                    Once your invited friend completes registration, they are added to your network tree. Your network grows,
+                    and you start earning referral points based on the referral level.
+                  </Typography>
+
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                    sx={{ fontSize: { xs: '0.88rem', sm: '0.9rem', md: '0.95rem' }, lineHeight: 1.65 }}
+                  >
+                    Their Network Level (NWL) is calculated as:
+                    <strong> NWL = Referrer NWL + 1</strong>
+                  </Typography>
+
+                  <Box
+                    sx={{
+                      p: { xs: 1.5, sm: 2 },
+                      borderRadius: 1.5,
+                      bgcolor: isDarkMode
+                        ? alpha(theme.palette.primary.main, 0.14)
+                        : alpha(theme.palette.primary.main, 0.08),
+                      border: `1px dashed ${alpha(theme.palette.primary.main, 0.45)}`
+                    }}
+                  >
+                    <Stack spacing={0.75}>
+                      <Typography variant='subtitle2' fontWeight={700}>
+                        Points are distributed up the referral chain:
+                      </Typography>
+                      <Typography variant='body2'>Level 1 (Direct Referrer): 500 points</Typography>
+                      <Typography variant='body2'>Level 2 (Referrer&apos;s Referrer): 250 points</Typography>
+                      <Typography variant='body2'>Level 3: 125 points</Typography>
+                      <Typography variant='body2'>Level 4: 62.5 points</Typography>
+                    </Stack>
+                  </Box>
+
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                    sx={{ fontSize: { xs: '0.85rem', sm: '0.88rem', md: '0.92rem' }, lineHeight: 1.65 }}
+                  >
+                    The reward halves at each next level (500, 250, 125, 62.5, ...), so everyone in your active network
+                    benefits when new members join.
+                  </Typography>
                 </Stack>
               </CardContent>
             </Card>
