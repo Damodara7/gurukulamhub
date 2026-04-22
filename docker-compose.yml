@@ -8,6 +8,7 @@ services:
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_TEST_MODE: ${NEXT_PUBLIC_TEST_MODE:-true}
+        NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${NEXT_PUBLIC_VAPID_PUBLIC_KEY}
     container_name: gurukulamhub-app
     ports:
       - "3000:3000"

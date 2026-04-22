@@ -305,7 +305,7 @@ const FeaturesTable = () => {
       }),
 
       columnHelper.accessor('assignedTo', {
-        header: 'Assigned To',
+        header: 'Assigned Roles',
         cell: ({ row }) => {
           const featureId = row.original._id
           const rolesForFeature = getRolesForFeature(featureId) // Get roles for the specific feature
@@ -557,7 +557,16 @@ const FeaturesTable = () => {
       </Box>
 
       {/* Content Area */}
-      <Box sx={{ p: { xs: 3, md: 4 }, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
+      <Box
+        sx={{
+          p: { xs: 3, md: 4 },
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          minHeight: 0
+        }}
+      >
         <Card
           sx={{
             background: theme.palette.background.paper,
@@ -618,7 +627,17 @@ const FeaturesTable = () => {
               Total {data?.length || 0} feature{data?.length !== 1 ? 's' : ''}
             </Typography>
           </div>
-          <Box sx={{ px: { xs: 2, sm: 3 }, py: { xs: 2, sm: 3 }, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
+          <Box
+            sx={{
+              px: { xs: 2, sm: 3 },
+              py: { xs: 2, sm: 3 },
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              minHeight: 0
+            }}
+          >
             {table.getFilteredRowModel().rows.length === 0 ? (
               <Box
                 sx={{
@@ -732,7 +751,7 @@ const FeaturesTable = () => {
                         {rolesForFeature.length > 0 && (
                           <Stack spacing={0.5}>
                             <Typography variant='caption' color='text.secondary' sx={{ fontWeight: 600 }}>
-                              Assigned To
+                              Assigned Roles
                             </Typography>
                             <Stack direction='row' spacing={0.75} flexWrap='wrap'>
                               {rolesForFeature.map((role, index) => {
@@ -810,64 +829,71 @@ const FeaturesTable = () => {
             ) : (
               <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
                 <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
-                <table className={tableStyles.table}>
-                  <thead style={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: theme.palette.background.paper }}>
-                    {table.getHeaderGroups().map(headerGroup => (
-                      <tr key={headerGroup.id}>
-                        {headerGroup.headers.map(header => (
-                          <th key={header.id}>
-                            {header.isPlaceholder ? null : (
-                              <>
-                                <div
-                                  className={classnames({
-                                    'flex items-center': header.column.getIsSorted(),
-                                    'cursor-pointer select-none': header.column.getCanSort()
-                                  })}
-                                  onClick={header.column.getToggleSortingHandler()}
-                                >
-                                  {flexRender(header.column.columnDef.header, header.getContext())}
-                                  {{
-                                    asc: <i className='ri-arrow-up-s-line text-xl' />,
-                                    desc: <i className='ri-arrow-down-s-line text-xl' />
-                                  }[header.column.getIsSorted()] ?? null}
-                                </div>
-                              </>
-                            )}
-                          </th>
-                        ))}
-                      </tr>
-                    ))}
-                  </thead>
-                  <tbody>
-                    {table.getRowModel().rows.map(row => (
-                      <tr
-                        key={row.id}
-                        className={classnames({ selected: row.getIsSelected() })}
-                        style={{
-                          cursor: 'pointer'
-                        }}
-                        onMouseEnter={e => {
-                          e.currentTarget.style.backgroundColor = alpha(
-                            theme.palette.primary.main,
-                            theme.palette.mode === 'dark' ? 0.15 : 0.08
-                          )
-                          e.currentTarget.style.boxShadow = `0 2px 8px ${alpha(
-                            theme.palette.primary.main,
-                            theme.palette.mode === 'dark' ? 0.25 : 0.15
-                          )}`
-                        }}
-                        onMouseLeave={e => {
-                          if (!row.getIsSelected()) {
-                            e.currentTarget.style.backgroundColor = 'transparent'
-                          }
-                          e.currentTarget.style.boxShadow = 'none'
-                        }}
-                      >
-                        {row.getVisibleCells().map(cell => (
-                          <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
-                        ))}
-                      </tr>
-                    ))}
+                  <table className={tableStyles.table}>
+                    <thead
+                      style={{
+                        position: 'sticky',
+                        top: 0,
+                        zIndex: 10,
+                        backgroundColor: theme.palette.background.paper
+                      }}
+                    >
+                      {table.getHeaderGroups().map(headerGroup => (
+                        <tr key={headerGroup.id}>
+                          {headerGroup.headers.map(header => (
+                            <th key={header.id}>
+                              {header.isPlaceholder ? null : (
+                                <>
+                                  <div
+                                    className={classnames({
+                                      'flex items-center': header.column.getIsSorted(),
+                                      'cursor-pointer select-none': header.column.getCanSort()
+                                    })}
+                                    onClick={header.column.getToggleSortingHandler()}
+                                  >
+                                    {flexRender(header.column.columnDef.header, header.getContext())}
+                                    {{
+                                      asc: <i className='ri-arrow-up-s-line text-xl' />,
+                                      desc: <i className='ri-arrow-down-s-line text-xl' />
+                                    }[header.column.getIsSorted()] ?? null}
+                                  </div>
+                                </>
+                              )}
+                            </th>
+                          ))}
+                        </tr>
+                      ))}
+                    </thead>
+                    <tbody>
+                      {table.getRowModel().rows.map(row => (
+                        <tr
+                          key={row.id}
+                          className={classnames({ selected: row.getIsSelected() })}
+                          style={{
+                            cursor: 'pointer'
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.backgroundColor = alpha(
+                              theme.palette.primary.main,
+                              theme.palette.mode === 'dark' ? 0.15 : 0.08
+                            )
+                            e.currentTarget.style.boxShadow = `0 2px 8px ${alpha(
+                              theme.palette.primary.main,
+                              theme.palette.mode === 'dark' ? 0.25 : 0.15
+                            )}`
+                          }}
+                          onMouseLeave={e => {
+                            if (!row.getIsSelected()) {
+                              e.currentTarget.style.backgroundColor = 'transparent'
+                            }
+                            e.currentTarget.style.boxShadow = 'none'
+                          }}
+                        >
+                          {row.getVisibleCells().map(cell => (
+                            <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                          ))}
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </Box>

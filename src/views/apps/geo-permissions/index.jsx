@@ -299,7 +299,7 @@ const GeoFeaturesTable = () => {
       }),
 
       columnHelper.accessor('assignedTo', {
-        header: 'Assigned To',
+        header: 'Assigned Geo-Roles',
         cell: ({ row }) => {
           const featureId = row.original._id
           const rolesForFeature = getRolesForFeature(featureId) // Get roles for the specific feature
@@ -696,7 +696,7 @@ const GeoFeaturesTable = () => {
                         {rolesForFeature.length > 0 && (
                           <Stack spacing={0.5}>
                             <Typography variant='caption' color='text.secondary' sx={{ fontWeight: 600 }}>
-                              Assigned To
+                              Assigned Geo-Roles
                             </Typography>
                             <Stack direction='row' spacing={0.75} flexWrap='wrap'>
                               {rolesForFeature.map((role, index) => {
