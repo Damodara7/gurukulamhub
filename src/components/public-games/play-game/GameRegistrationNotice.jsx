@@ -22,7 +22,8 @@ import {
   School,
   YouTube,
   AccessTime,
-  Videocam
+  Videocam,
+  EmojiEvents
 } from '@mui/icons-material'
 import ChevronToggleComponent from '@/components/media-viewer/ChevronToggleComponent'
 import Language from '@mui/icons-material/Language'
@@ -87,6 +88,7 @@ const GameRegistrationNotice = ({ game }) => {
 
           <Box display='flex' gap={6} flexWrap='wrap' mt={2} alignItems='center' justifyContent='center'>
             <Chip icon={<Schedule />} label={`Duration: ${durationText}`} color='info' variant='outlined' />
+            <Chip icon={<EmojiEvents />} label={`Points: ${Number(game?.totalPoints || 0)}`} color='warning' variant='outlined' />
 
             {game.location && (
               <Chip

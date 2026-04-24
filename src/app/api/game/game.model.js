@@ -131,6 +131,16 @@ const gameSchema = new mongoose.Schema(
     },
     maxScore: Number,
     questionsCount: Number,
+    pointsWeightage: {
+      type: Number,
+      min: 1,
+      max: 10,
+      default: 1
+    },
+    totalPoints: {
+      type: Number,
+      default: 0
+    },
     location: locationSchema,
     startTime: {
       type: Date,
