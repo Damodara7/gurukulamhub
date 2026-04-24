@@ -96,6 +96,19 @@ const StyledReferralPointsStack = ({ profileAndNetworkData, isDarkMode, theme })
             {profileAndNetworkData?.totalGamePoints || 0}
           </Typography>
         </Typography>
+        <Typography
+          variant='body2'
+          sx={{
+            fontWeight: 600,
+            fontSize: { xs: '0.78rem', sm: '0.85rem' },
+            color: isDarkMode ? alpha(theme.palette.common.white, 0.9) : 'text.primary'
+          }}
+        >
+          Learning Points:{' '}
+          <Typography component='span' color='success.main'>
+            {profileAndNetworkData?.totalLearningPoints || 0}
+          </Typography>
+        </Typography>
       </Stack>
     </Stack>
   )
@@ -244,7 +257,9 @@ function NetworkTreeNodes({ networkData }) {
                     placement='top'
                     title={`Referral Points: ${
                       findUserByEmail(nodeEmail, networkData)?.referralPoints || 0
-                    } | Game Points : ${findUserByEmail(nodeEmail, networkData)?.totalGamePoints || 0}`}
+                    } | Game Points: ${findUserByEmail(nodeEmail, networkData)?.totalGamePoints || 0} | Learning Points: ${
+                      findUserByEmail(nodeEmail, networkData)?.totalLearningPoints || 0
+                    }`}
                   >
                     <Box
                       sx={{
@@ -271,7 +286,9 @@ function NetworkTreeNodes({ networkData }) {
                 placement='top'
                 title={`Referral Points: ${
                   findUserByEmail(currentUserNodeEmail, networkData)?.referralPoints || 0
-                } | Game Points: ${findUserByEmail(currentUserNodeEmail, networkData)?.totalGamePoints || 0}`}
+                } | Game Points: ${findUserByEmail(currentUserNodeEmail, networkData)?.totalGamePoints || 0} | Learning Points: ${
+                  findUserByEmail(currentUserNodeEmail, networkData)?.totalLearningPoints || 0
+                }`}
               >
                 <Box
                   sx={{

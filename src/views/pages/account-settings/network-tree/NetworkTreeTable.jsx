@@ -188,6 +188,11 @@ const NetworkTreeTable = ({ currentUserNode, handleChangeNode }) => {
         header: 'Game Points ',
         cell: ({ row }) => Number(row.original.totalGamePoints || 0)
       }),
+      columnHelper.accessor('totalLearningPoints', {
+        id: 'totalLearningPoints',
+        header: 'Learning Points',
+        cell: ({ row }) => Number(row.original.totalLearningPoints || 0)
+      }),
       columnHelper.accessor('cumulativePoints', {
         id: 'cumulativePoints',
         header: 'Cumulative Points',
@@ -214,6 +219,9 @@ const NetworkTreeTable = ({ currentUserNode, handleChangeNode }) => {
           friend.phoneNumber.toString().toLowerCase().includes(globalFilter.toLowerCase()) ||
           friend.referralPoints.toString().includes(globalFilter) ||
           Number(friend.totalGamePoints || 0)
+            .toString()
+            .includes(globalFilter) ||
+          Number(friend.totalLearningPoints || 0)
             .toString()
             .includes(globalFilter) ||
           Number(friend.cumulativePoints || 0)

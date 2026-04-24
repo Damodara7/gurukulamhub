@@ -1,6 +1,7 @@
 import connectMongo from '@/utils/dbConnect-mongo'
 import UserProfile from '../api/profile/profile.model'
 import User from '../models/user.model'
+import UserLearning from '../api/user-learning/user-learning.model'
 
 export const getUserNetworkTree = async email => {
   await connectMongo()
@@ -62,13 +63,25 @@ export const getUserNetworkTree = async email => {
       })
     )
 
+    const learningRecords = await UserLearning.find({ email: { $in: uniqueEmails } }).select('email learning').lean()
+
+    const learningPointsByEmail = new Map(
+      learningRecords.map(record => {
+        const learning = Array.isArray(record.learning) ? record.learning : []
+        const totalLearningPoints = learning.reduce((sum, entry) => sum + Number(entry?.learningPoints || 0), 0)
+        return [record.email, totalLearningPoints]
+      })
+    )
+
     const attachGamePointMetrics = node => {
       const metrics = gamePointsByEmail.get(node.email) || { totalGamePoints: 0, totalGamesPlayed: 0 }
+      const totalLearningPoints = Number(learningPointsByEmail.get(node.email) || 0)
       const referralPoints = Number(node?.referralPoints || 0)
-      const cumulativePoints = referralPoints + Number(metrics.totalGamePoints || 0)
+      const cumulativePoints = referralPoints + Number(metrics.totalGamePoints || 0) + totalLearningPoints
       return {
         ...node,
         totalGamePoints: metrics.totalGamePoints,
+        totalLearningPoints,
         totalGamesPlayed: metrics.totalGamesPlayed,
         cumulativePoints,
         network: Array.isArray(node.network) ? node.network.map(attachGamePointMetrics) : []
