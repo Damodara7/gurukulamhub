@@ -35,6 +35,8 @@ const playerSchema = new mongoose.Schema(
     finishedAt: Date,
     score: { type: Number, default: 0 },
     fffPoints: { type: Number, default: 0 },
+    awardedGamePoints: { type: Number, default: 0 },
+    pointsAwardedAt: Date,
     answers: { type: [answerSchema], default: [] },
     completed: { type: Boolean, default: false },
     status: { type: String, enum: ['registered', 'participated', 'completed'], default: 'registered' },

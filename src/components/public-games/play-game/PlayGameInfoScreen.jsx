@@ -537,6 +537,37 @@ const PlayGameInfoScreen = ({ game, setShouldStartGame }) => {
                       💡 Pro Tip: Stay focused and avoid refreshing the page once the game starts.
                     </Typography>
                   </Box>
+
+                  {/* Points to Earn */}
+                  <Box
+                    sx={{
+                      p: 2,
+                      borderRadius: 2,
+                      bgcolor: alpha(theme.palette.warning.main, theme.palette.mode === 'dark' ? 0.1 : 0.05),
+                      border: `1px solid ${alpha(theme.palette.warning.main, 0.2)}`
+                    }}
+                  >
+                    <Typography
+                      variant='caption'
+                      sx={{
+                        color: 'text.secondary',
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        letterSpacing: 0.5,
+                        fontSize: '0.7rem',
+                        mb: 1,
+                        display: 'block'
+                      }}
+                    >
+                      Points You Can Earn
+                    </Typography>
+                    <Stack direction='row' alignItems='center' spacing={1.5}>
+                      <EmojiEvents sx={{ color: 'warning.main', fontSize: 20 }} />
+                      <Typography variant='body1' sx={{ fontWeight: 600, color: 'text.primary' }}>
+                        {Number(game?.totalPoints || 0)} points
+                      </Typography>
+                    </Stack>
+                  </Box>
                 </Stack>
               </CardContent>
             </Card>

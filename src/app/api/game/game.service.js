@@ -58,6 +58,43 @@ async function enrichGamesWithDetails(games) {
   return Promise.all((games || []).map(enrichGameWithDetails))
 }
 
+async function awardGamePointsToUser({ player, game, userIdOverride = null }) {
+  if (!player || !game) return
+
+  const questionsCount = Number(game?.questionsCount || 0)
+  const pointsWeightage = Number(game?.pointsWeightage || 1)
+  const totalPossiblePoints = Number(game?.totalPoints || questionsCount * pointsWeightage || 0)
+  const earnedAt = new Date()
+  const userId = userIdOverride || player.user
+
+  player.awardedGamePoints = totalPossiblePoints
+  player.pointsAwardedAt = earnedAt
+  await player.save()
+
+  await User.updateOne(
+    { _id: userId },
+    {
+      $pull: { gamePointHistory: { game: game._id } }
+    }
+  )
+
+  await User.updateOne(
+    { _id: userId },
+    {
+      $push: {
+        gamePointHistory: {
+          game: game._id,
+          pointsEarned: totalPossiblePoints,
+          pointsWeightage,
+          questionsCount,
+          totalPossiblePoints,
+          earnedAt
+        }
+      }
+    }
+  )
+}
+
 export const getOne = async (filter = {}) => {
   await connectMongo()
   try {
@@ -259,6 +296,8 @@ export const addOne = async gameData => {
     const questions = await QuestionsModel.find({ quizId, languageCode }).lean()
     // Adding questions count field to gameData
     gameData.questionsCount = questions?.length
+    gameData.pointsWeightage = Number(gameData?.pointsWeightage || 1)
+    gameData.totalPoints = Number(gameData.questionsCount || 0) * gameData.pointsWeightage
 
     // If live mode, calculate duration from questions
     if (gameData.gameMode === 'live') {
@@ -544,6 +583,8 @@ export const updateOne = async (gameId, updateData) => {
     const questions = await QuestionsModel.find({ quizId, languageCode }).lean()
     // Adding questions count field to gameData
     updateData.questionsCount = questions?.length
+    updateData.pointsWeightage = Number(updateData?.pointsWeightage || existingGame?.pointsWeightage || 1)
+    updateData.totalPoints = Number(updateData.questionsCount || 0) * updateData.pointsWeightage
 
     // If live mode, calculate duration from questions
     if (updateData.gameMode === 'live') {
@@ -1572,6 +1613,10 @@ export const updatePlayerProgress = async (gameId, { user, userAnswer, finish })
 
     await player.save()
 
+    if (wasJustCompleted) {
+      await awardGamePointsToUser({ player, game })
+    }
+
     // Fetch latest game, registeredUsers, and participatedUsers
     const [registeredUsers, participatedUsers] = await Promise.all([
       Player.find({ game: gameId, status: { $in: ['registered', 'participated', 'completed'] } })
@@ -2077,6 +2122,14 @@ export const forwardQuestion = async (gameId, user, currentQuestionIndex) => {
           { $set: { status: 'completed', completed: true, finishedAt: now } }
         )
         console.log(`[Game Service] ✅ Updated ${participatedUserIds.length} participated user(s) to completed status`)
+
+        const completedPlayers = await Player.find({
+          game: gameId,
+          user: { $in: participatedUserIds.map(id => new mongoose.Types.ObjectId(id)) }
+        })
+        for (const player of completedPlayers) {
+          await awardGamePointsToUser({ player, game, userIdOverride: player.user })
+        }
       }
 
       // ✅ NON-BLOCKING: Send notifications in background (fire-and-forget)

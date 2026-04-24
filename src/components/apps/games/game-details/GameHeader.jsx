@@ -1,7 +1,7 @@
 import React from 'react'
 import { Card, Box, Avatar, Typography, Chip, Stack, useTheme } from '@mui/material'
 import { alpha } from '@mui/material/styles'
-import { Schedule, People, Quiz as QuizIcon } from '@mui/icons-material'
+import { Schedule, People, Quiz as QuizIcon, EmojiEvents } from '@mui/icons-material'
 import imagePlaceholder from '/public/images/misc/image-placeholder.png'
 
 const statusConfig = {
@@ -219,6 +219,25 @@ function GameHeader({ game }) {
                   }}
                 />
               )}
+              <Chip
+                icon={<EmojiEvents sx={{ fontSize: { xs: 16, sm: 18 } }} />}
+                label={`${Number(game?.totalPoints || 0)} Points`}
+                size='small'
+                sx={{
+                  bgcolor:
+                    theme.palette.mode === 'dark'
+                      ? alpha(theme.palette.primary.main, 0.15)
+                      : alpha(theme.palette.primary.main, 0.08),
+                  color: theme.palette.primary.main,
+                  fontWeight: 600,
+                  borderRadius: '12px',
+                  fontSize: { xs: '0.7rem', sm: '0.875rem' },
+                  height: { xs: 28, sm: 32 },
+                  '& .MuiChip-icon': {
+                    color: theme.palette.primary.main
+                  }
+                }}
+              />
             </Stack>
           </Box>
         </Stack>

@@ -20,6 +20,7 @@ import { useRouter } from 'next/navigation'
 import HourglassBottomIcon from '@mui/icons-material/HourglassBottom'
 import LocationOnIcon from '@mui/icons-material/LocationOn'
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
+import MilitaryTechIcon from '@mui/icons-material/MilitaryTech'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
@@ -364,6 +365,10 @@ const GameCard = ({ game, currentUsergroupIds = [], currentUsergroupIdsIds = [] 
                     ? `Reg closes on ${format(new Date(game?.registrationEndTime), 'Pp')}`
                     : 'No registartion required'}
                 </Typography>
+              </Stack>
+              <Stack direction='row' alignItems='flex-start' spacing={1}>
+                <MilitaryTechIcon fontSize='small' color='action' />
+                <Typography variant='body2'>Points: {Number(game?.totalPoints || 0)}</Typography>
               </Stack>
             </Stack>
           </Box>

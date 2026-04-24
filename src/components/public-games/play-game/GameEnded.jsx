@@ -14,6 +14,7 @@ const GameEnded = ({ onExit, game = null, isAdmin = false }) => {
   const { data: session } = useSession()
   const theme = useTheme()
   const hasParticipated = game?.participatedUsers?.find(p => p.email === session?.user?.email)
+  const gainedPoints = Number(hasParticipated?.awardedGamePoints || game?.totalPoints || 0)
 
   return (
     <Box
@@ -160,6 +161,16 @@ const GameEnded = ({ onExit, game = null, isAdmin = false }) => {
                   >
                     The game has concluded. Check the leaderboard below to see how you ranked among all participants!
                   </Typography>
+                  <Typography
+                    variant='h6'
+                    sx={{
+                      fontWeight: 800,
+                      color: theme.palette.warning.main,
+                      fontSize: { xs: '1.05rem', md: '1.2rem' }
+                    }}
+                  >
+                    Total game points: {Number(game?.totalPoints || 0)}
+                  </Typography>
                 </Stack>
               </CardContent>
             </Card>
@@ -291,6 +302,16 @@ const GameEnded = ({ onExit, game = null, isAdmin = false }) => {
                   }}
                 >
                   Your participation makes this community stronger. Keep playing, keep learning, and keep improving!
+                </Typography>
+                <Typography
+                  variant='h6'
+                  sx={{
+                    fontWeight: 800,
+                    color: theme.palette.success.main,
+                    fontSize: { xs: '1.1rem', md: '1.3rem' }
+                  }}
+                >
+                  You gained {gainedPoints} points.
                 </Typography>
               </Stack>
             </CardContent>

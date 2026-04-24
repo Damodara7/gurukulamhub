@@ -123,6 +123,37 @@ export const userSchema = new mongoose.Schema(
     encryptionKeyUpdatedAt: {
       type: Date,
       default: null
+    },
+    gamePointHistory: {
+      type: [
+        {
+          game: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'game'
+          },
+          pointsEarned: {
+            type: Number,
+            default: 0
+          },
+          pointsWeightage: {
+            type: Number,
+            default: 1
+          },
+          questionsCount: {
+            type: Number,
+            default: 0
+          },
+          totalPossiblePoints: {
+            type: Number,
+            default: 0
+          },
+          earnedAt: {
+            type: Date,
+            default: Date.now
+          }
+        }
+      ],
+      default: []
     }
   },
   { timestamps: true }

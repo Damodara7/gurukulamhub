@@ -29,6 +29,7 @@ import {
   Delete as DeleteIcon
 } from '@mui/icons-material'
 import SettingsIcon from '@mui/icons-material/Settings'
+import MilitaryTechIcon from '@mui/icons-material/MilitaryTech'
 import { useSession } from 'next-auth/react'
 import imagePlaceholder from '/public/images/misc/image-placeholder.png'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
@@ -290,6 +291,13 @@ const CreatorGameCard = ({
                   }}
                 >
                   {game.creatorEmail}
+                </Typography>
+              </Stack>
+
+              <Stack direction='row' alignItems='center' spacing={{ xs: 0.75, sm: 1 }}>
+                <MilitaryTechIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' }, color: 'action' }} />
+                <Typography variant='body2' sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
+                  Points: {Number(game?.totalPoints || 0)}
                 </Typography>
               </Stack>
             </Stack>

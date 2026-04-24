@@ -432,6 +432,43 @@ const ViewDetails = ({ game }) => {
                   </Box>
                     </Stack>
                   )}
+
+                  <Stack direction="row" spacing={{ xs: 0.6, sm: 0.75 }} alignItems="center">
+                    <Box
+                      sx={{
+                        width: { xs: 24, sm: 28 },
+                        height: { xs: 24, sm: 28 },
+                        borderRadius: 1.25,
+                        bgcolor: alpha(theme.palette.success.main, theme.palette.mode === 'dark' ? 0.2 : 0.1),
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      <EmojiEvents sx={{ fontSize: { xs: 14, sm: 16 }, color: 'success.main' }} />
+                    </Box>
+                    <Box>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: 'text.secondary',
+                          fontSize: { xs: '0.6rem', sm: '0.65rem' }
+                        }}
+                      >
+                        POINTS
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        fontWeight={600}
+                        sx={{
+                          color: 'text.primary',
+                          fontSize: { xs: '0.75rem', sm: '0.8rem' }
+                        }}
+                      >
+                        {Number(game?.totalPoints || 0)}
+                      </Typography>
+                    </Box>
+                  </Stack>
                 </Stack>
               </>
             )}
