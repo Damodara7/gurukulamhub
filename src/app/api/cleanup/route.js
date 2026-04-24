@@ -3,7 +3,16 @@ import * as UserProfileService from '../../services/user.service';
 
 export async function POST(req) {
     try {
-        const response = await UserProfileService.cleanupUnverifiedUsers()
+        let requestBody = {}
+        try {
+            requestBody = await req.json()
+        } catch (error) {
+            requestBody = {}
+        }
+
+        const response = await UserProfileService.cleanupUnverifiedUsers({
+            allowManualDeleteBefore24hrs: Boolean(requestBody?.allowManualDeleteBefore24hrs)
+        })
         if (response.status === 'success') {
             const successResponse = ApiResponseUtils.createSuccessResponse(response.message, response.result);
             return ApiResponseUtils.sendSuccessResponse(successResponse);

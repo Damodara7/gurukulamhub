@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
-import { Alert, Box, Button, Card, CardContent, Chip, CircularProgress, Container, Grid, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material'
+import { Alert, Box, Button, Card, CardContent, Chip, CircularProgress, Container, FormControlLabel, Grid, Stack, Switch, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 
 import * as RestApi from '@/utils/restApiUtil'
@@ -25,6 +25,7 @@ const UnverifiedUsersManagement = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [isCleaning, setIsCleaning] = useState(false)
   const [filterType, setFilterType] = useState('all')
+  const [allowManualDeleteBefore24hrs, setAllowManualDeleteBefore24hrs] = useState(false)
 
   const filteredUsers = users.filter(user => {
     if (filterType === 'gt24') return user.isCleanupEligible
@@ -55,10 +56,12 @@ const UnverifiedUsersManagement = () => {
     }
   }
 
-  const handleCleanup = async () => {
+  const handleCleanup = async (isManualCleanup = false) => {
     setIsCleaning(true)
     try {
-      const response = await RestApi.post(API_URLS.v0.CLEANUP)
+      const response = await RestApi.post(API_URLS.v0.CLEANUP, {
+        allowManualDeleteBefore24hrs: isManualCleanup
+      })
       if (response?.status === 'success') toast.success(response?.message || 'Cleanup completed successfully')
       else toast.error(response?.message || 'Cleanup failed')
       await fetchUnverifiedUsers()
@@ -151,7 +154,17 @@ const UnverifiedUsersManagement = () => {
         </Container>
       </Box>
 
-      <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', p: { xs: 3, md: 4 } }}>
+      <Box
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          p: { xs: 2, sm: 3, md: 4 }
+        }}
+      >
         <Container maxWidth='lg'>
           <Grid container spacing={{ xs: 3, sm: 4, md: 4 }}>
             <Grid item xs={12} sm={6} md={4}>
@@ -192,10 +205,50 @@ const UnverifiedUsersManagement = () => {
             </Grid>
 
             <Grid item xs={12}>
+              <Stack alignItems='center' justifyContent='center' sx={{ mt: { xs: -1, md: 0 }, mb: 0.5 }}>
+                <FormControlLabel
+                  sx={{
+                    mx: 0,
+                    px: 1.5,
+                    py: 0.5,
+                    borderRadius: 2,
+                    bgcolor: alpha(theme.palette.background.paper, 0.75),
+                    border: `1px solid ${alpha(theme.palette.divider, 0.35)}`
+                  }}
+                  control={
+                    <Switch
+                      size='small'
+                      checked={allowManualDeleteBefore24hrs}
+                      onChange={event => setAllowManualDeleteBefore24hrs(event.target.checked)}
+                    />
+                  }
+                  label={
+                    <Typography variant='body2' sx={{ fontWeight: 600 }}>
+                      Can delete manually before 24 hrs
+                    </Typography>
+                  }
+                />
+              </Stack>
+            </Grid>
+
+            <Grid item xs={12}>
               <Card>
                 <CardContent>
-                  <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} alignItems={{ xs: 'flex-start', md: 'center' }} justifyContent='space-between' sx={{ mb: 2 }}>
-                    <Stack direction='row' spacing={1} alignItems='center' flexWrap='wrap' useFlexGap>
+                  <Stack
+                    direction={{ xs: 'column', lg: 'row' }}
+                    spacing={1.5}
+                    alignItems={{ xs: 'stretch', lg: 'center' }}
+                    justifyContent='space-between'
+                    sx={{ mb: 2 }}
+                  >
+                    <Stack
+                      direction='row'
+                      spacing={1}
+                      alignItems='center'
+                      flexWrap='wrap'
+                      useFlexGap
+                      sx={{ width: '100%' }}
+                    >
                       {filterButtons.map(button => (
                         <Chip
                           key={button.key}
@@ -204,21 +257,45 @@ const UnverifiedUsersManagement = () => {
                           onClick={() => setFilterType(button.key)}
                           color={filterType === button.key ? 'primary' : 'default'}
                           variant={filterType === button.key ? 'filled' : 'outlined'}
-                          sx={{ fontWeight: 600 }}
+                          sx={{ fontWeight: 600, width: { xs: '100%', sm: 'auto' }, justifyContent: 'center' }}
                         />
                       ))}
                     </Stack>
 
-                    <Stack direction='row' spacing={1.2} alignItems='center'>
-                      <Chip color={cleanupEligibleCount > 0 ? 'warning' : 'default'} label={`${cleanupEligibleCount} pending cleanup`} sx={{ fontWeight: 600 }} />
+                    <Stack
+                      direction={{ xs: 'column', sm: 'row' }}
+                      spacing={1.2}
+                      alignItems={{ xs: 'stretch', sm: 'center' }}
+                      justifyContent='flex-end'
+                      sx={{ width: '100%' }}
+                    >
+                      <Chip
+                        color={cleanupEligibleCount > 0 ? 'warning' : 'default'}
+                        label={`${cleanupEligibleCount} pending cleanup`}
+                        sx={{ fontWeight: 600, width: { xs: 'fit-content', sm: 'auto' }, alignSelf: { xs: 'flex-start', sm: 'center' } }}
+                      />
                       <Button
                         variant='contained'
                         color='error'
-                        onClick={handleCleanup}
+                        onClick={() => handleCleanup(false)}
                         disabled={isCleaning || cleanupEligibleCount === 0}
                         startIcon={isCleaning ? <CircularProgress size={16} color='inherit' /> : <i className='ri-delete-bin-6-line' />}
+                        fullWidth={true}
+                        sx={{ maxWidth: { xs: '100%', sm: 260 } }}
                       >
                         {isCleaning ? 'Cleaning...' : 'Cleanup Now'}
+                      </Button>
+                      <Button
+                        variant='contained'
+                        color='warning'
+                        component='label'
+                        onClick={() => handleCleanup(true)}
+                        disabled={isCleaning || !allowManualDeleteBefore24hrs || users.length === 0}
+                        startIcon={isCleaning ? <CircularProgress size={16} color='inherit' /> : <i className='ri-alert-line' />}
+                        fullWidth={true}
+                        sx={{ maxWidth: { xs: '100%', sm: 260 } }}
+                      >
+                        {isCleaning ? 'Cleaning...' : 'Cleanup Manually'}
                       </Button>
                     </Stack>
                   </Stack>
@@ -238,7 +315,14 @@ const UnverifiedUsersManagement = () => {
                           ? `${cleanupEligibleCount} user(s) are eligible for cleanup (older than 24 hours).`
                           : 'No users are eligible for cleanup yet (less than 24 hours old).'}
                       </Alert>
-                      <TableContainer sx={{ border: `1px solid ${alpha(theme.palette.divider, 0.4)}`, borderRadius: 2 }}>
+                      <TableContainer
+                        sx={{
+                          border: `1px solid ${alpha(theme.palette.divider, 0.4)}`,
+                          borderRadius: 2,
+                          width: '100%',
+                          overflowX: 'auto'
+                        }}
+                      >
                         <Table size='small'>
                           <TableHead sx={{ bgcolor: alpha(theme.palette.primary.main, 0.06) }}>
                             <TableRow>

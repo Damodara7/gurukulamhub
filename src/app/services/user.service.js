@@ -1406,20 +1406,21 @@ export const doesUserHavePassword = async (userId, idType = 'email') => {
 }
 
 /*************** CLEANUP RELATED ****************/
-export async function cleanupUnverifiedUsers() {
+export async function cleanupUnverifiedUsers({ allowManualDeleteBefore24hrs = false } = {}) {
   await connectMongo()
   try {
-    const users = await getCleanupEligibleUnverifiedUsers()
+    const users = await getCleanupEligibleUnverifiedUsers({ allowManualDeleteBefore24hrs })
 
     if (users.length > 0) {
       // Extract user emails
       const userEmails = users.map(user => user.email)
 
       // Delete the unverified users
-      await User.deleteMany({
-        isVerified: false,
-        createdAt: { $lt: new Date(Date.now() - 24 * 60 * 60 * 1000) } // Older than 1 day
-      })
+      const deleteQuery = { isVerified: false }
+      if (!allowManualDeleteBefore24hrs) {
+        deleteQuery.createdAt = { $lt: new Date(Date.now() - 24 * 60 * 60 * 1000) } // Older than 1 day
+      }
+      await User.deleteMany(deleteQuery)
 
       // Delete associated user profiles
       await UserProfile.deleteMany({ email: { $in: userEmails } })
@@ -1482,11 +1483,12 @@ export async function getUnverifiedUsersForCleanup() {
   }
 }
 
-async function getCleanupEligibleUnverifiedUsers() {
-  return User.find({
-    isVerified: false,
-    createdAt: { $lt: new Date(Date.now() - 24 * 60 * 60 * 1000) }
-  })
+async function getCleanupEligibleUnverifiedUsers({ allowManualDeleteBefore24hrs = false } = {}) {
+  const query = { isVerified: false }
+  if (!allowManualDeleteBefore24hrs) {
+    query.createdAt = { $lt: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+  }
+  return User.find(query)
     .select('firstname lastname email phone createdAt isVerified')
     .sort({ createdAt: 1 })
     .lean()
