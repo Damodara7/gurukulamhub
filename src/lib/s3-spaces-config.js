@@ -10,18 +10,35 @@ const VALID_DO_SPACES_REGIONS = new Set(['nyc3', 'sfo3', 'ams3', 'sgp1', 'fra1',
 
 const requestedRegion =
   process.env.S3_REGION ||
+  process.env.DO_SPACES_REGION ||
   process.env.NEXT_PUBLIC_S3_REGION ||
+  process.env.NEXT_PUBLIC_DO_SPACES_REGION ||
   process.env.REGION ||
+  process.env.AWS_REGION ||
   process.env.NEXT_PUBLIC_AWS_S3_REGION ||
   'nyc3'
 const REGION = VALID_DO_SPACES_REGIONS.has(requestedRegion) ? requestedRegion : 'nyc3'
 const SPACE_NAME =
   process.env.S3_SPACE_NAME ||
+  process.env.S3_BUCKET ||
+  process.env.AWS_S3_BUCKET ||
+  process.env.AWS_S3_USERPROFILE_UPLOAD_BUCKET ||
+  process.env.DO_SPACES_BUCKET ||
   process.env.NEXT_PUBLIC_S3_SPACE_NAME ||
+  process.env.NEXT_PUBLIC_S3_BUCKET ||
+  process.env.NEXT_PUBLIC_AWS_S3_BUCKET ||
+  process.env.NEXT_PUBLIC_DO_SPACES_BUCKET ||
   process.env.SPACE_NAME ||
   process.env.NEXT_PUBLIC_AWS_S3_USERPROFILE_UPLOAD_BUCKET ||
   ''
-const requestedOriginEndpoint = process.env.ORIGIN_ENDPOINT || process.env.NEXT_PUBLIC_ORIGIN_ENDPOINT || ''
+const requestedOriginEndpoint =
+  process.env.ORIGIN_ENDPOINT ||
+  process.env.S3_ENDPOINT ||
+  process.env.DO_SPACES_ENDPOINT ||
+  process.env.NEXT_PUBLIC_ORIGIN_ENDPOINT ||
+  process.env.NEXT_PUBLIC_S3_ENDPOINT ||
+  process.env.NEXT_PUBLIC_DO_SPACES_ENDPOINT ||
+  ''
 
 function resolveOriginEndpoint() {
   if (!requestedOriginEndpoint) {
@@ -45,13 +62,19 @@ function resolveOriginEndpoint() {
 const ORIGIN_ENDPOINT = resolveOriginEndpoint()
 const ACCESS_KEY_ID =
   process.env.S3_ACCESS_KEY_ID ||
+  process.env.AWS_ACCESS_KEY_ID ||
+  process.env.DO_SPACES_ACCESS_KEY_ID ||
   process.env.NEXT_PUBLIC_S3_ACCESS_KEY_ID ||
+  process.env.NEXT_PUBLIC_DO_SPACES_ACCESS_KEY_ID ||
   process.env.ACCESS_KEY_ID ||
   process.env.NEXT_PUBLIC_AWS_S3_ACCESS_KEY_ID ||
   ''
 const ACCESS_KEY_SECRET =
   process.env.S3_ACCESS_KEY_SECRET ||
+  process.env.AWS_SECRET_ACCESS_KEY ||
+  process.env.DO_SPACES_ACCESS_KEY_SECRET ||
   process.env.NEXT_PUBLIC_S3_ACCESS_KEY_SECRET ||
+  process.env.NEXT_PUBLIC_DO_SPACES_ACCESS_KEY_SECRET ||
   process.env.ACCESS_KEY_SECRET ||
   process.env.NEXT_PUBLIC_AWS_S3_ACCESS_KEY_SECRET ||
   ''
@@ -69,7 +92,19 @@ export function isS3Configured() {
 }
 
 if (!isS3Configured()) {
-  console.warn('[s3-spaces-config] Spaces not configured. Expected bucket/region/access keys in server env.')
+  const maskValue = value => {
+    const normalized = String(value || '')
+    if (!normalized) return '<empty>'
+    if (normalized.length <= 6) return `${normalized.slice(0, 1)}***${normalized.slice(-1)}`
+    return `${normalized.slice(0, 3)}***${normalized.slice(-3)}`
+  }
+  console.warn('[s3-spaces-config] Spaces not configured. Expected bucket/region/access keys in server env.', {
+    region: REGION,
+    endpoint: ORIGIN_ENDPOINT,
+    spaceName: maskValue(SPACE_NAME),
+    accessKeyId: maskValue(ACCESS_KEY_ID),
+    accessKeySecret: maskValue(ACCESS_KEY_SECRET)
+  })
 }
 
 /**

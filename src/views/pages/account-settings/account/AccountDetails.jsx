@@ -143,6 +143,8 @@ const initialData = {
   organizationPANNumber: ''
 }
 
+const PROFILE_PHOTO_UPLOAD_TARGET_BYTES = 900 * 1024 // ~900KB to stay under strict proxy/body limits in prod
+
 const AccountDetails = () => {
   const { data: session } = useSession()
   const theme = useTheme()
@@ -1102,15 +1104,72 @@ const AccountDetails = () => {
     if (files && files.length > 0) {
       const file = files[0] // Get the first file object
 
-      // Use FileReader to preview the image
-      const reader = new FileReader()
-      reader.onload = () => {
-        setImgSrc(reader.result) // Set image preview
-      }
-      reader.readAsDataURL(file) // Read file for preview
+      const optimizeProfilePhoto = async originalFile => {
+        // Keep non-image files unchanged (should not happen due accept attr, but safe fallback)
+        if (!originalFile?.type?.startsWith('image/')) return originalFile
+        if (originalFile.size <= PROFILE_PHOTO_UPLOAD_TARGET_BYTES) return originalFile
 
-      // Set the actual file object as fileInput
-      setFileInput(file)
+        const imageElement = await new Promise((resolve, reject) => {
+          const img = new Image()
+          const objectUrl = URL.createObjectURL(originalFile)
+          img.onload = () => {
+            URL.revokeObjectURL(objectUrl)
+            resolve(img)
+          }
+          img.onerror = () => {
+            URL.revokeObjectURL(objectUrl)
+            reject(new Error('Unable to process selected image'))
+          }
+          img.src = objectUrl
+        })
+
+        const canvas = document.createElement('canvas')
+        const maxDimension = 1280
+        const ratio = Math.min(1, maxDimension / imageElement.width, maxDimension / imageElement.height)
+        canvas.width = Math.max(1, Math.round(imageElement.width * ratio))
+        canvas.height = Math.max(1, Math.round(imageElement.height * ratio))
+        const context = canvas.getContext('2d')
+        if (!context) {
+          return originalFile
+        }
+        context.drawImage(imageElement, 0, 0, canvas.width, canvas.height)
+
+        let quality = 0.9
+        let optimizedFile = null
+
+        // Iteratively reduce quality until size target is reached.
+        while (quality >= 0.5) {
+          const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality))
+          if (!blob) break
+
+          optimizedFile = new File([blob], `${originalFile.name.replace(/\.[^/.]+$/, '')}.jpg`, {
+            type: 'image/jpeg',
+            lastModified: Date.now()
+          })
+
+          if (optimizedFile.size <= PROFILE_PHOTO_UPLOAD_TARGET_BYTES) {
+            break
+          }
+          quality -= 0.1
+        }
+
+        return optimizedFile || originalFile
+      }
+
+      ;(async () => {
+        try {
+          const optimizedFile = await optimizeProfilePhoto(file)
+          const reader = new FileReader()
+          reader.onload = () => {
+            setImgSrc(reader.result) // Set image preview
+          }
+          reader.readAsDataURL(optimizedFile)
+          setFileInput(optimizedFile)
+        } catch (error) {
+          console.error('Error processing profile image:', error)
+          toast.error('Unable to process selected image. Please try a smaller image.')
+        }
+      })()
     }
   }
 
@@ -1643,11 +1702,18 @@ const AccountDetails = () => {
     formData.append('category', category)
     formData.append('file', file)
 
-    const response = await RestApi.submitFormData('/profile/files', formData)
-    if (response?.status !== 'success') {
-      throw new Error(response?.message || `Failed to upload ${category}`)
+    try {
+      const response = await RestApi.submitFormData('/profile/files', formData)
+      if (response?.status !== 'success') {
+        throw new Error(response?.message || `Failed to upload ${category}`)
+      }
+      return response?.result
+    } catch (error) {
+      if (error?.status === 413) {
+        throw new Error('Selected file is too large for upload. Please choose a smaller file.')
+      }
+      throw new Error(error?.message || `Failed to upload ${category}`)
     }
-    return response?.result
   }
 
   async function deleteProfileFileByCategory(category) {
@@ -1975,6 +2041,10 @@ const AccountDetails = () => {
               component='img'
               src={imgSrc || session?.user?.image || '/images/avatars/1.png'}
               alt='Profile'
+              onError={event => {
+                event.currentTarget.onerror = null
+                event.currentTarget.src = '/images/avatars/1.png'
+              }}
               sx={{
                 width: { xs: 112, md: 132 },
                 height: { xs: 112, md: 132 },

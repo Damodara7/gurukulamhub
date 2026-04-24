@@ -115,7 +115,13 @@ export const submitFormData = async (url, formData) => {
 
     return response.data
   } catch (error) {
-    throw new Error(error.message)
+    const serverStatus = error?.response?.status
+    const serverMessage = error?.response?.data?.message
+    const finalMessage = serverMessage || error?.message || 'Failed to submit form data'
+    const wrappedError = new Error(finalMessage)
+    wrappedError.status = serverStatus
+    wrappedError.response = error?.response?.data
+    throw wrappedError
   }
 }
 
