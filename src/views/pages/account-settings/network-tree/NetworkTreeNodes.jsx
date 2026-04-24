@@ -47,7 +47,7 @@ async function fetchUserProfileAndNetwork(email) {
 const StyledReferralPointsStack = ({ profileAndNetworkData, isDarkMode, theme }) => {
   return (
     <Stack
-      alignItems='center'
+      spacing={0.75}
       sx={{
         backgroundColor: isDarkMode ? alpha(theme.palette.background.paper, 0.6) : 'background.paper',
         borderRadius: { xs: 1.5, sm: 2 },
@@ -56,7 +56,6 @@ const StyledReferralPointsStack = ({ profileAndNetworkData, isDarkMode, theme })
         animation: 'fadeIn 1s ease-in-out'
       }}
     >
-      {/* Title */}
       <Typography
         variant='caption'
         sx={{
@@ -64,29 +63,40 @@ const StyledReferralPointsStack = ({ profileAndNetworkData, isDarkMode, theme })
           color: isDarkMode ? alpha(theme.palette.common.white, 0.8) : 'text.primary',
           letterSpacing: '0.05em',
           textTransform: 'uppercase',
-          fontSize: { xs: '0.7rem', sm: '0.75rem' }
+          fontSize: { xs: '0.65rem', sm: '0.75rem' }
         }}
       >
-        My Referral Points
+        My Points
       </Typography>
 
-      {/* Referral Points */}
-      <Typography
-        variant='h6'
-        color='primary'
-        sx={{
-          fontWeight: 700,
-          fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' },
-          transform: 'scale(1)',
-          transition: 'transform 0.3s ease, color 0.3s ease',
-          '&:hover': {
-            transform: 'scale(1.05)',
-            color: 'primary.main'
-          }
-        }}
-      >
-        {profileAndNetworkData?.referralPoints || 0}
-      </Typography>
+      <Stack direction='column' spacing={0.5} alignItems='flex-start'>
+        <Typography
+          variant='body2'
+          sx={{
+            fontWeight: 600,
+            fontSize: { xs: '0.78rem', sm: '0.85rem' },
+            color: isDarkMode ? alpha(theme.palette.common.white, 0.9) : 'text.primary'
+          }}
+        >
+          Referral Points:{' '}
+          <Typography component='span' color='primary.main'>
+            {profileAndNetworkData?.referralPoints || 0}
+          </Typography>
+        </Typography>
+        <Typography
+          variant='body2'
+          sx={{
+            fontWeight: 600,
+            fontSize: { xs: '0.78rem', sm: '0.85rem' },
+            color: isDarkMode ? alpha(theme.palette.common.white, 0.9) : 'text.primary'
+          }}
+        >
+          Game Points:{' '}
+          <Typography component='span' color='secondary.main'>
+            {profileAndNetworkData?.totalGamePoints || 0}
+          </Typography>
+        </Typography>
+      </Stack>
     </Stack>
   )
 }
@@ -232,7 +242,9 @@ function NetworkTreeNodes({ networkData }) {
                   {/* Referral Points */}
                   <Tooltip
                     placement='top'
-                    title={`Referral Points: ${findUserByEmail(nodeEmail, networkData)?.referralPoints}`}
+                    title={`Referral Points: ${
+                      findUserByEmail(nodeEmail, networkData)?.referralPoints || 0
+                    } | Game Points : ${findUserByEmail(nodeEmail, networkData)?.totalGamePoints || 0}`}
                   >
                     <Box
                       sx={{
@@ -257,7 +269,9 @@ function NetworkTreeNodes({ networkData }) {
               {/* Referral Points for Current User */}
               <Tooltip
                 placement='top'
-                title={`Referral Points: ${findUserByEmail(currentUserNodeEmail, networkData)?.referralPoints}`}
+                title={`Referral Points: ${
+                  findUserByEmail(currentUserNodeEmail, networkData)?.referralPoints || 0
+                } | Game Points: ${findUserByEmail(currentUserNodeEmail, networkData)?.totalGamePoints || 0}`}
               >
                 <Box
                   sx={{

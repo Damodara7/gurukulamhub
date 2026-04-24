@@ -59,8 +59,30 @@ const GameRegistrationNotice = ({ game }) => {
   // Determine location text
 
   return (
-    <Box display='flex' flexDirection='column' alignItems='center' bgcolor='#f5f5f5' px={2} py={4} gap={4} sx={{ flex: 1, height: '100%', display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
-      <Card sx={{ maxWidth: 500, p: 3, textAlign: 'center' }}>
+    <Box
+      display='flex'
+      flexDirection='column'
+      alignItems='center'
+      bgcolor='#f5f5f5'
+      px={{ xs: 1.5, sm: 2 }}
+      py={{ xs: 2, sm: 4 }}
+      gap={{ xs: 2, sm: 4 }}
+      sx={{
+        flex: 1,
+        minHeight: '100%',
+        overflowY: 'auto',
+        overflowX: 'hidden'
+      }}
+    >
+      <Card
+        sx={{
+          width: '100%',
+          maxWidth: { xs: '100%', sm: 500 },
+          p: { xs: 1, sm: 3 },
+          textAlign: 'center',
+          flexShrink: 0
+        }}
+      >
         <CardContent>
           <Typography variant='h5' gutterBottom>
             🎉🎉 You are registered! 🎉🎉
@@ -88,7 +110,12 @@ const GameRegistrationNotice = ({ game }) => {
 
           <Box display='flex' gap={6} flexWrap='wrap' mt={2} alignItems='center' justifyContent='center'>
             <Chip icon={<Schedule />} label={`Duration: ${durationText}`} color='info' variant='outlined' />
-            <Chip icon={<EmojiEvents />} label={`Points: ${Number(game?.totalPoints || 0)}`} color='warning' variant='outlined' />
+            <Chip
+              icon={<EmojiEvents />}
+              label={`Points: ${Number(game?.totalPoints || 0)}`}
+              color='warning'
+              variant='outlined'
+            />
 
             {game.location && (
               <Chip
@@ -117,10 +144,10 @@ const GameRegistrationNotice = ({ game }) => {
         </CardContent>
       </Card>
 
-      <Grid container spacing={3}>
+      <Grid container spacing={3} sx={{ width: '100%', flexShrink: 0 }}>
         {/* First Column (Details Card) */}
         <Grid item xs={12} md={6}>
-          <Card sx={{ borderRadius: 2, p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
+          <Card sx={{ borderRadius: 2, p: { xs: 1, sm: 3 }, height: '100%', display: 'flex', flexDirection: 'column' }}>
             <CardContent sx={{ flex: 1 }}>
               {/* Quiz Details */}
               <Stack spacing={3}>
@@ -178,7 +205,7 @@ const GameRegistrationNotice = ({ game }) => {
 
         {/* Second Column (Video Card) */}
         <Grid item xs={12} md={6}>
-          <Card sx={{ borderRadius: 2, p: 3, height: '100%', minHeight: '300px' }}>
+          <Card sx={{ borderRadius: 2, p: { xs: 1, sm: 3 }, height: '100%', minHeight: '300px' }}>
             <Stack spacing={3} height='100%'>
               <Typography variant='h6' sx={{ mb: 2 }}>
                 <Videocam sx={{ mr: 1, verticalAlign: 'middle' }} />
@@ -199,7 +226,8 @@ const GameRegistrationNotice = ({ game }) => {
           width: '100%',
           display: 'flex',
           justifyContent: 'center',
-          mt: 4 // Adds margin above the button
+          mt: 4, // Adds margin above the button
+          flexShrink: 0
         }}
       >
         <Button

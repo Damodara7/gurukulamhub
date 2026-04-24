@@ -183,6 +183,16 @@ const NetworkTreeTable = ({ currentUserNode, handleChangeNode }) => {
         id: 'referralPoints',
         header: 'Referral Points'
       }),
+      columnHelper.accessor('totalGamePoints', {
+        id: 'totalGamePoints',
+        header: 'Game Points ',
+        cell: ({ row }) => Number(row.original.totalGamePoints || 0)
+      }),
+      columnHelper.accessor('cumulativePoints', {
+        id: 'cumulativePoints',
+        header: 'Cumulative Points',
+        cell: ({ row }) => Number(row.original.cumulativePoints || 0)
+      }),
       columnHelper.display({
         id: 'actions',
         header: 'Actions',
@@ -203,7 +213,12 @@ const NetworkTreeTable = ({ currentUserNode, handleChangeNode }) => {
         ? friend.name.toLowerCase().includes(globalFilter.toLowerCase()) ||
           friend.phoneNumber.toString().toLowerCase().includes(globalFilter.toLowerCase()) ||
           friend.referralPoints.toString().includes(globalFilter) ||
-          friend.age.toString().includes(globalFilter) ||
+          Number(friend.totalGamePoints || 0)
+            .toString()
+            .includes(globalFilter) ||
+          Number(friend.cumulativePoints || 0)
+            .toString()
+            .includes(globalFilter) ||
           friend.gender.toLowerCase().includes(globalFilter.toLowerCase())
         : true
 
@@ -399,7 +414,7 @@ const NetworkTreeTable = ({ currentUserNode, handleChangeNode }) => {
         }}
         title={
           <Typography
-            variant="h6"
+            variant='h6'
             sx={{
               fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' },
               color: isDarkMode ? theme.palette.common.white : 'text.primary',
@@ -434,7 +449,12 @@ const NetworkTreeTable = ({ currentUserNode, handleChangeNode }) => {
             </Button>
             {(ageFilters.length > 0 || genderFilters.length > 0) && (
               <Tooltip title={showFilters ? 'Hide Filters' : 'Show Filters'} arrow placement='top'>
-                <IconButtonTooltip title={showFilters ? 'Hide' : 'Show'} size='small' color='primary' onClick={() => setShowFilters(!showFilters)}>
+                <IconButtonTooltip
+                  title={showFilters ? 'Hide' : 'Show'}
+                  size='small'
+                  color='primary'
+                  onClick={() => setShowFilters(!showFilters)}
+                >
                   {showFilters ? <VisibilityOffIcon color='primary' /> : <VisibilityIcon color='primary' />}
                 </IconButtonTooltip>
               </Tooltip>
