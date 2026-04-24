@@ -6,22 +6,43 @@
 
 import { S3Client } from '@aws-sdk/client-s3'
 
-const REGION =
+const VALID_DO_SPACES_REGIONS = new Set(['nyc3', 'sfo3', 'ams3', 'sgp1', 'fra1', 'tor1', 'blr1', 'syd1'])
+
+const requestedRegion =
   process.env.S3_REGION ||
   process.env.NEXT_PUBLIC_S3_REGION ||
   process.env.REGION ||
   process.env.NEXT_PUBLIC_AWS_S3_REGION ||
   'nyc3'
+const REGION = VALID_DO_SPACES_REGIONS.has(requestedRegion) ? requestedRegion : 'nyc3'
 const SPACE_NAME =
   process.env.S3_SPACE_NAME ||
   process.env.NEXT_PUBLIC_S3_SPACE_NAME ||
   process.env.SPACE_NAME ||
   process.env.NEXT_PUBLIC_AWS_S3_USERPROFILE_UPLOAD_BUCKET ||
   ''
-const ORIGIN_ENDPOINT =
-  process.env.ORIGIN_ENDPOINT ||
-  process.env.NEXT_PUBLIC_ORIGIN_ENDPOINT ||
-  `https://${REGION}.digitaloceanspaces.com`
+const requestedOriginEndpoint = process.env.ORIGIN_ENDPOINT || process.env.NEXT_PUBLIC_ORIGIN_ENDPOINT || ''
+
+function resolveOriginEndpoint() {
+  if (!requestedOriginEndpoint) {
+    return `https://${REGION}.digitaloceanspaces.com`
+  }
+
+  try {
+    const parsed = new URL(requestedOriginEndpoint)
+    const hostMatch = parsed.hostname.match(/^([a-z0-9-]+)\.digitaloceanspaces\.com$/i)
+    if (hostMatch && VALID_DO_SPACES_REGIONS.has(hostMatch[1])) {
+      return `${parsed.protocol}//${parsed.hostname}`
+    }
+  } catch (error) {
+    // Fallback to region-based endpoint below
+  }
+
+  // Invalid endpoint configured (e.g., ap-south-1). Use safe fallback.
+  return `https://${REGION}.digitaloceanspaces.com`
+}
+
+const ORIGIN_ENDPOINT = resolveOriginEndpoint()
 const ACCESS_KEY_ID =
   process.env.S3_ACCESS_KEY_ID ||
   process.env.NEXT_PUBLIC_S3_ACCESS_KEY_ID ||

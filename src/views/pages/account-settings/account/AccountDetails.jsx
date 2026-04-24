@@ -1896,7 +1896,8 @@ const AccountDetails = () => {
   const hasReferrer = Boolean(
     referredByValue &&
       referredByValue.trim() &&
-      referredByValue.toLowerCase() !== 'none@gurukulamhub.org'
+      referredByValue.toLowerCase() !== 'none@gurukulamhub.org' &&
+      referredByValue.toLowerCase() !== 'none@gurukulamhub.com'
   )
 
   return (
