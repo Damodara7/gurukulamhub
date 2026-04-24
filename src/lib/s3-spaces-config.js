@@ -6,11 +6,34 @@
 
 import { S3Client } from '@aws-sdk/client-s3'
 
-const REGION = process.env.S3_REGION || process.env.REGION || 'nyc3'
-const SPACE_NAME = process.env.S3_SPACE_NAME || process.env.SPACE_NAME || ''
-const ORIGIN_ENDPOINT = process.env.ORIGIN_ENDPOINT || `https://${REGION}.digitaloceanspaces.com`
-const ACCESS_KEY_ID = process.env.S3_ACCESS_KEY_ID || process.env.ACCESS_KEY_ID || ''
-const ACCESS_KEY_SECRET = process.env.S3_ACCESS_KEY_SECRET || process.env.ACCESS_KEY_SECRET || ''
+const REGION =
+  process.env.S3_REGION ||
+  process.env.NEXT_PUBLIC_S3_REGION ||
+  process.env.REGION ||
+  process.env.NEXT_PUBLIC_AWS_S3_REGION ||
+  'nyc3'
+const SPACE_NAME =
+  process.env.S3_SPACE_NAME ||
+  process.env.NEXT_PUBLIC_S3_SPACE_NAME ||
+  process.env.SPACE_NAME ||
+  process.env.NEXT_PUBLIC_AWS_S3_USERPROFILE_UPLOAD_BUCKET ||
+  ''
+const ORIGIN_ENDPOINT =
+  process.env.ORIGIN_ENDPOINT ||
+  process.env.NEXT_PUBLIC_ORIGIN_ENDPOINT ||
+  `https://${REGION}.digitaloceanspaces.com`
+const ACCESS_KEY_ID =
+  process.env.S3_ACCESS_KEY_ID ||
+  process.env.NEXT_PUBLIC_S3_ACCESS_KEY_ID ||
+  process.env.ACCESS_KEY_ID ||
+  process.env.NEXT_PUBLIC_AWS_S3_ACCESS_KEY_ID ||
+  ''
+const ACCESS_KEY_SECRET =
+  process.env.S3_ACCESS_KEY_SECRET ||
+  process.env.NEXT_PUBLIC_S3_ACCESS_KEY_SECRET ||
+  process.env.ACCESS_KEY_SECRET ||
+  process.env.NEXT_PUBLIC_AWS_S3_ACCESS_KEY_SECRET ||
+  ''
 
 /**
  * Whether S3/Spaces is configured and usable
@@ -22,6 +45,10 @@ export function isS3Configured() {
       ACCESS_KEY_SECRET &&
       REGION
   )
+}
+
+if (!isS3Configured()) {
+  console.warn('[s3-spaces-config] Spaces not configured. Expected bucket/region/access keys in server env.')
 }
 
 /**
@@ -55,7 +82,12 @@ export function getBucketName() {
  * @returns {string} Public URL
  */
 export function getPublicUrl(key) {
-  const cdn = process.env.CDN_ENDPOINT || process.env.S3_CDN_ENDPOINT || ''
+  const cdn =
+    process.env.CDN_ENDPOINT ||
+    process.env.S3_CDN_ENDPOINT ||
+    process.env.NEXT_PUBLIC_CDN_ENDPOINT ||
+    process.env.NEXT_PUBLIC_S3_CDN_ENDPOINT ||
+    ''
   const base = cdn.trim() || ORIGIN_ENDPOINT.replace(/^https?:\/\//, '')
   const protocol = base.startsWith('http') ? '' : 'https://'
   return `${protocol}${base}/${SPACE_NAME}/${key}`
