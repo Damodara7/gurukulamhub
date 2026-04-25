@@ -48,7 +48,7 @@ export const getUserNetworkTree = async email => {
 
     const uniqueEmails = [...new Set(collectEmails({ ...profile, network: networkTree }))]
 
-    const users = await User.find({ email: { $in: uniqueEmails } }).select('email gamePointHistory').lean()
+    const users = await User.find({ email: { $in: uniqueEmails } }).select('email gamePointHistory isVerified').lean()
 
     const gamePointsByEmail = new Map(
       users.map(user => {
@@ -63,6 +63,7 @@ export const getUserNetworkTree = async email => {
         ]
       })
     )
+    const verificationByEmail = new Map(users.map(user => [user.email, Boolean(user?.isVerified)]))
 
     const learningRecords = await UserLearning.find({ email: { $in: uniqueEmails } }).select('email learning').lean()
 
@@ -84,6 +85,7 @@ export const getUserNetworkTree = async email => {
         totalGamePoints: metrics.totalGamePoints,
         totalLearningPoints,
         totalGamesPlayed: metrics.totalGamesPlayed,
+        isVerified: Boolean(verificationByEmail.get(node.email)),
         cumulativePoints,
         network: Array.isArray(node.network) ? node.network.map(attachGamePointMetrics) : []
       }

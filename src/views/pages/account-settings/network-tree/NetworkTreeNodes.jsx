@@ -30,6 +30,7 @@ import Loading from '../security/Loading'
 import TreeComponent from '@/components/TreeComponent'
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
 import { useParams, useRouter } from 'next/navigation'
+import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis } from '@/libs/Recharts'
 
 const formatDateTime = value => {
   if (!value) return '-'
@@ -41,6 +42,220 @@ const statusToChipColor = status => {
   if (status === 'Joined but Unverified') return 'warning'
   if (status === 'Not Joined Yet') return 'default'
   return 'info'
+}
+
+const formatDateLabel = value =>
+  new Date(value).toLocaleDateString(undefined, {
+    day: '2-digit',
+    month: 'short'
+  })
+
+const buildReferralTrend = referralHistory => {
+  const items = Array.isArray(referralHistory?.items) ? referralHistory.items : []
+  const sentByDate = new Map()
+  const successByDate = new Map()
+
+  items.forEach(item => {
+    if (item?.lastSentAt) {
+      const key = new Date(item.lastSentAt).toISOString().slice(0, 10)
+      sentByDate.set(key, (sentByDate.get(key) || 0) + Math.max(1, Number(item.sentCount || 1)))
+    }
+    if (item?.joinedAt && (item.status === 'Joined & Verified' || item.status === 'Joined but Unverified')) {
+      const key = new Date(item.joinedAt).toISOString().slice(0, 10)
+      successByDate.set(key, (successByDate.get(key) || 0) + 1)
+    }
+  })
+
+  const allDates = [...new Set([...sentByDate.keys(), ...successByDate.keys()])].sort()
+  const categories = allDates.map(date => formatDateLabel(date))
+
+  return {
+    categories: categories.filter(Boolean),
+    sentSeries: allDates.map(date => {
+      const value = Number(sentByDate.get(date) || 0)
+      return Number.isFinite(value) ? value : 0
+    }),
+    successSeries: allDates.map(date => {
+      const value = Number(successByDate.get(date) || 0)
+      return Number.isFinite(value) ? value : 0
+    })
+  }
+}
+
+const flattenNetworkUsers = rootNode => {
+  if (!rootNode) return []
+  const output = []
+  const walk = node => {
+    const children = Array.isArray(node?.network) ? node.network : []
+    children.forEach(child => {
+      output.push(child)
+      walk(child)
+    })
+  }
+  walk(rootNode)
+  return output
+}
+
+const ReferralStatsChartsSection = ({ rootData, isDarkMode, theme }) => {
+  const referralTrend = useMemo(() => buildReferralTrend(rootData?.referralHistory), [rootData?.referralHistory])
+  const networkUsers = useMemo(() => flattenNetworkUsers(rootData), [rootData])
+
+  const networkSummary = useMemo(() => {
+    const total = networkUsers.length
+    const verified = networkUsers.filter(user => Boolean(user?.isVerified)).length
+    const unverified = Math.max(0, total - verified)
+    const totalReferralPoints = networkUsers.reduce((sum, user) => sum + Number(user?.referralPoints || 0), 0)
+    return { total, verified, unverified, totalReferralPoints }
+  }, [networkUsers])
+
+  const topUsers = useMemo(
+    () =>
+      [...networkUsers]
+        .sort((a, b) => Number(b?.cumulativePoints || 0) - Number(a?.cumulativePoints || 0))
+        .slice(0, 5),
+    [networkUsers]
+  )
+
+  const sanitizedCategories = Array.isArray(referralTrend.categories) ? referralTrend.categories.filter(Boolean) : []
+  const sanitizedSentSeries = Array.isArray(referralTrend.sentSeries)
+    ? referralTrend.sentSeries.map(value => (Number.isFinite(Number(value)) ? Number(value) : 0))
+    : []
+  const sanitizedSuccessSeries = Array.isArray(referralTrend.successSeries)
+    ? referralTrend.successSeries.map(value => (Number.isFinite(Number(value)) ? Number(value) : 0))
+    : []
+
+  const chartLength = Math.min(sanitizedCategories.length, sanitizedSentSeries.length, sanitizedSuccessSeries.length)
+  const chartCategories = sanitizedCategories.slice(0, chartLength)
+  const chartSentSeries = sanitizedSentSeries.slice(0, chartLength)
+  const chartSuccessSeries = sanitizedSuccessSeries.slice(0, chartLength)
+  const canRenderTrendChart = chartLength > 0
+  const chartData = useMemo(
+    () =>
+      chartCategories.map((label, index) => ({
+        label,
+        referralsSent: chartSentSeries[index] || 0,
+        successfulJoins: chartSuccessSeries[index] || 0
+      })),
+    [chartCategories, chartSentSeries, chartSuccessSeries]
+  )
+
+  return (
+    <Card
+      sx={{
+        mt: 3,
+        borderRadius: { xs: 1.5, sm: 2 },
+        bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.6) : 'white',
+        border: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.1)}`,
+        boxShadow: isDarkMode ? `0 2px 12px ${alpha(theme.palette.common.black, 0.3)}` : '0 2px 12px rgba(0,0,0,0.04)'
+      }}
+    >
+      <CardHeader title='Referral & Network Stats' subheader='Track your referral performance over time and network quality.' />
+      <CardContent sx={{ pt: 0 }}>
+        <Grid container spacing={1.5} sx={{ mb: 2 }}>
+          <Grid item xs={6} sm={3}>
+            <Box sx={{ p: 1.5, borderRadius: 1.5, bgcolor: alpha(theme.palette.primary.main, 0.08) }}>
+              <Typography variant='caption'>Network Users</Typography>
+              <Typography variant='h6'>{networkSummary.total}</Typography>
+            </Box>
+          </Grid>
+          <Grid item xs={6} sm={3}>
+            <Box sx={{ p: 1.5, borderRadius: 1.5, bgcolor: alpha(theme.palette.success.main, 0.08) }}>
+              <Typography variant='caption'>Verified</Typography>
+              <Typography variant='h6'>{networkSummary.verified}</Typography>
+            </Box>
+          </Grid>
+          <Grid item xs={6} sm={3}>
+            <Box sx={{ p: 1.5, borderRadius: 1.5, bgcolor: alpha(theme.palette.warning.main, 0.1) }}>
+              <Typography variant='caption'>Unverified</Typography>
+              <Typography variant='h6'>{networkSummary.unverified}</Typography>
+            </Box>
+          </Grid>
+          <Grid item xs={6} sm={3}>
+            <Box sx={{ p: 1.5, borderRadius: 1.5, bgcolor: alpha(theme.palette.secondary.main, 0.1) }}>
+              <Typography variant='caption'>Referral Points (Network)</Typography>
+              <Typography variant='h6'>{Number(networkSummary.totalReferralPoints.toFixed(2))}</Typography>
+            </Box>
+          </Grid>
+        </Grid>
+
+        {canRenderTrendChart ? (
+          <Box sx={{ border: `1px solid ${alpha(theme.palette.divider, 0.3)}`, borderRadius: 2, p: 1.5 }}>
+            <ResponsiveContainer width='100%' height={300}>
+              <LineChart data={chartData} margin={{ top: 10, right: 14, left: 0, bottom: 10 }}>
+                <CartesianGrid strokeDasharray='3 3' stroke={alpha(theme.palette.divider, 0.5)} />
+                <XAxis dataKey='label' tick={{ fill: theme.palette.text.secondary, fontSize: 12 }} />
+                <YAxis allowDecimals={false} tick={{ fill: theme.palette.text.secondary, fontSize: 12 }} />
+                <RechartsTooltip
+                  contentStyle={{
+                    borderRadius: 10,
+                    border: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+                    background: theme.palette.background.paper
+                  }}
+                />
+                <Legend />
+                <Line type='monotone' dataKey='referralsSent' name='Referrals Sent' stroke={theme.palette.primary.main} strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+                <Line type='monotone' dataKey='successfulJoins' name='Successful Joins' stroke={theme.palette.success.main} strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </Box>
+        ) : (
+          <Alert severity='info' sx={{ mb: 2 }}>
+            No referral trend data yet.
+          </Alert>
+        )}
+
+        <Box sx={{ mt: 2 }}>
+          <Typography variant='subtitle2' sx={{ fontWeight: 700, mb: 1 }}>
+            Top Users in Your Network
+          </Typography>
+          {topUsers.length === 0 ? (
+            <Typography variant='body2' color='text.secondary'>
+              No network users found yet.
+            </Typography>
+          ) : (
+            <Box sx={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: 'left', padding: '10px', borderBottom: `1px solid ${alpha(theme.palette.divider, 0.45)}` }}>
+                      Name
+                    </th>
+                    <th style={{ textAlign: 'left', padding: '10px', borderBottom: `1px solid ${alpha(theme.palette.divider, 0.45)}` }}>
+                      Email
+                    </th>
+                    <th style={{ textAlign: 'left', padding: '10px', borderBottom: `1px solid ${alpha(theme.palette.divider, 0.45)}` }}>
+                      Cumulative Points
+                    </th>
+                    <th style={{ textAlign: 'left', padding: '10px', borderBottom: `1px solid ${alpha(theme.palette.divider, 0.45)}` }}>
+                      Referral Points
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topUsers.map(user => (
+                    <tr key={user.email}>
+                      <td style={{ padding: '10px', borderBottom: `1px solid ${alpha(theme.palette.divider, 0.25)}` }}>
+                        {user?.name || `${user?.firstname || ''} ${user?.lastname || ''}`.trim() || 'Unknown'}
+                      </td>
+                      <td style={{ padding: '10px', borderBottom: `1px solid ${alpha(theme.palette.divider, 0.25)}` }}>
+                        {user?.email || '-'}
+                      </td>
+                      <td style={{ padding: '10px', borderBottom: `1px solid ${alpha(theme.palette.divider, 0.25)}` }}>
+                        {Number(user?.cumulativePoints || 0)}
+                      </td>
+                      <td style={{ padding: '10px', borderBottom: `1px solid ${alpha(theme.palette.divider, 0.25)}` }}>
+                        {Number(user?.referralPoints || 0)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Box>
+          )}
+        </Box>
+      </CardContent>
+    </Card>
+  )
 }
 
 const ReferralHistorySection = ({ referralHistory, isDarkMode, theme }) => {
@@ -477,6 +692,11 @@ function NetworkTreeNodes({ networkData }) {
         </Box>
         <ReferralHistorySection
           referralHistory={profileAndNetworkData?.referralHistory || networkData?.referralHistory}
+          isDarkMode={isDarkMode}
+          theme={theme}
+        />
+        <ReferralStatsChartsSection
+          rootData={profileAndNetworkData || networkData}
           isDarkMode={isDarkMode}
           theme={theme}
         />
