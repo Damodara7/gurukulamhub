@@ -4,6 +4,7 @@ import * as MailService from './mail.service'
 import * as OtpService from './otp.service'
 import * as SMSService from './sms.service'
 import User from '../models/user.model'
+import ReferralInvite from '../models/referral-invite.model'
 import UserProfile from '../api/profile/profile.model'
 import Notification from '../api/notifications/notification.model'
 import * as UserProfileService from '../api/profile/profile.service'
@@ -966,6 +967,28 @@ export async function srvSendReferralLink({ fromEmail, toEmail, locale }) {
 
     // Create the referral link
     const referralLink = `${process.env.NEXT_PUBLIC_APP_URL}/${locale}/auth/register?ref=${referralToken}`
+
+    const inviterEmail = String(fromEmail || '').trim().toLowerCase()
+    const inviteeEmail = String(toEmail || '').trim().toLowerCase()
+
+    if (inviterEmail && inviteeEmail) {
+      await ReferralInvite.findOneAndUpdate(
+        { inviterEmail, inviteeEmail },
+        {
+          $set: {
+            referralToken,
+            referralLink,
+            locale: locale || 'en',
+            lastSentAt: new Date()
+          },
+          $setOnInsert: {
+            firstSentAt: new Date()
+          },
+          $inc: { sentCount: 1 }
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      )
+    }
 
     // Construct the email content using the referral template
     const messageTemplate = sendReferralLinkTemplate(

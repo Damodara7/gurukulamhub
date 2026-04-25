@@ -2,6 +2,7 @@ import connectMongo from '@/utils/dbConnect-mongo'
 import UserProfile from '../api/profile/profile.model'
 import User from '../models/user.model'
 import UserLearning from '../api/user-learning/user-learning.model'
+import ReferralInvite from '../models/referral-invite.model'
 
 export const getUserNetworkTree = async email => {
   await connectMongo()
@@ -88,11 +89,83 @@ export const getUserNetworkTree = async email => {
       }
     }
 
+    const inviterEmail = String(email || '').trim().toLowerCase()
+    const invites = await ReferralInvite.find({ inviterEmail }).sort({ lastSentAt: -1 }).lean()
+    const invitedEmails = [...new Set(invites.map(invite => String(invite.inviteeEmail || '').trim().toLowerCase()).filter(Boolean))]
+    const invitedUsers = invitedEmails.length
+      ? await User.find({ email: { $in: invitedEmails } }).select('email firstname lastname isVerified referredBy createdAt').lean()
+      : []
+    const invitedUsersByEmail = new Map(invitedUsers.map(user => [String(user.email || '').trim().toLowerCase(), user]))
+
+    const referralHistoryItems = invites.map(invite => {
+      const inviteeEmail = String(invite.inviteeEmail || '').trim().toLowerCase()
+      const inviteeUser = invitedUsersByEmail.get(inviteeEmail)
+      const joinedWithThisReferral = Boolean(
+        inviteeUser && String(inviteeUser.referredBy || '').trim().toLowerCase() === inviterEmail
+      )
+      const isVerified = Boolean(inviteeUser?.isVerified)
+      let status = 'Not Joined Yet'
+      if (joinedWithThisReferral && isVerified) status = 'Joined & Verified'
+      else if (joinedWithThisReferral && !isVerified) status = 'Joined but Unverified'
+      else if (inviteeUser) status = 'Joined (Different Referral)'
+
+      return {
+        inviteeEmail,
+        inviteeName: inviteeUser ? `${inviteeUser.firstname || ''} ${inviteeUser.lastname || ''}`.trim() : '',
+        status,
+        sentCount: Number(invite.sentCount || 1),
+        firstSentAt: invite.firstSentAt || invite.createdAt,
+        lastSentAt: invite.lastSentAt || invite.updatedAt,
+        joinedAt: inviteeUser?.createdAt || null
+      }
+    })
+
+    const directlyReferredUsers = await User.find({ referredBy: inviterEmail })
+      .select('email firstname lastname isVerified createdAt')
+      .lean()
+
+    const referralItemsByEmail = new Map(referralHistoryItems.map(item => [item.inviteeEmail, item]))
+    directlyReferredUsers.forEach(user => {
+      const joinedEmail = String(user.email || '').trim().toLowerCase()
+      if (!joinedEmail || referralItemsByEmail.has(joinedEmail)) return
+      referralHistoryItems.push({
+        inviteeEmail: joinedEmail,
+        inviteeName: `${user.firstname || ''} ${user.lastname || ''}`.trim(),
+        status: user.isVerified ? 'Joined & Verified' : 'Joined but Unverified',
+        sentCount: 0,
+        firstSentAt: null,
+        lastSentAt: null,
+        joinedAt: user.createdAt || null
+      })
+    })
+
+    const referralHistorySummary = referralHistoryItems.reduce(
+      (acc, item) => {
+        acc.totalSent += 1
+        if (item.status === 'Joined & Verified') acc.joinedAndVerified += 1
+        else if (item.status === 'Joined but Unverified') acc.joinedButUnverified += 1
+        else if (item.status === 'Not Joined Yet') acc.notJoinedYet += 1
+        else acc.joinedWithDifferentReferral += 1
+        return acc
+      },
+      {
+        totalSent: 0,
+        joinedAndVerified: 0,
+        joinedButUnverified: 0,
+        notJoinedYet: 0,
+        joinedWithDifferentReferral: 0
+      }
+    )
+
     const data = {
       // profile: profile,
       ...profile,
       name: profile.firstname + ' ' + profile.lastname,
-      network: networkTree
+      network: networkTree,
+      referralHistory: {
+        summary: referralHistorySummary,
+        items: referralHistoryItems
+      }
     }
 
     const enrichedData = attachGamePointMetrics(data)

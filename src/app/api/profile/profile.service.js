@@ -3,6 +3,19 @@ import UserProfile from './profile.model'
 import User from '../../models/user.model'
 import { createProfileCompletionNotification } from '../notifications/notification.helpers.js'
 import * as NotificationService from '../notifications/notification.service.js'
+import ReferralSettings, { DEFAULT_REFERRAL_SETTINGS } from '../referral-settings/referral-settings.model'
+
+async function getReferralSettingsConfig() {
+  const settings = await ReferralSettings.findOne().lean()
+  if (!settings) return DEFAULT_REFERRAL_SETTINGS
+  return {
+    directReferrerPoints: Number(settings.directReferrerPoints ?? DEFAULT_REFERRAL_SETTINGS.directReferrerPoints),
+    maxDistributionLevels: Number(settings.maxDistributionLevels ?? DEFAULT_REFERRAL_SETTINGS.maxDistributionLevels),
+    promotionPointsThreshold: Number(
+      settings.promotionPointsThreshold ?? DEFAULT_REFERRAL_SETTINGS.promotionPointsThreshold
+    )
+  }
+}
 
 export async function getAll() {
   await connectMongo()
@@ -273,23 +286,37 @@ export const updateReferral = async ({ email, data }) => {
     // Keep users collection in sync (source used by multiple UIs/APIs)
     await User.findOneAndUpdate({ email }, { referredBy: data.referredBy }, { new: true })
 
-    // Distribute referral points up to 4 levels
-    let points = 500
+    const referralSettings = await getReferralSettingsConfig()
+    const directPoints = Math.max(0, Number(referralSettings.directReferrerPoints) || 0)
+    const maxLevels = Math.max(1, Number(referralSettings.maxDistributionLevels) || 1)
+    const promotionThreshold = Math.max(1, Number(referralSettings.promotionPointsThreshold) || 1)
+
+    // Distribute referral points based on admin configuration.
+    let points = directPoints
     let currentReferrer = referrer
     let levelCount = 0
 
-    while (currentReferrer && levelCount < 4) {
+    while (currentReferrer && levelCount < maxLevels) {
       // Calculate points for the current referrer (half of the previous level)
       const pointsForReferrer = points / Math.pow(2, levelCount)
 
-      // Update referrer's referral points
-      await UserProfile.findOneAndUpdate(
-        { email: currentReferrer.email },
-        { $inc: { referralPoints: pointsForReferrer } }
-      )
+      const latestReferrerProfile = await UserProfile.findOne({ email: currentReferrer.email })
+      if (!latestReferrerProfile) break
+
+      const previousPoints = Number(latestReferrerProfile.referralPoints || 0)
+      const updatedPoints = previousPoints + pointsForReferrer
+      const previousMilestone = Math.floor(previousPoints / promotionThreshold)
+      const updatedMilestone = Math.floor(updatedPoints / promotionThreshold)
+      const levelIncrease = Math.max(0, updatedMilestone - previousMilestone)
+
+      latestReferrerProfile.referralPoints = updatedPoints
+      if (levelIncrease > 0) {
+        latestReferrerProfile.networkLevel = Number(latestReferrerProfile.networkLevel || 0) + levelIncrease
+      }
+      await latestReferrerProfile.save()
 
       // Move up the referral chain
-      currentReferrer = await UserProfile.findOne({ email: currentReferrer.referredBy })
+      currentReferrer = await UserProfile.findOne({ email: latestReferrerProfile.referredBy })
       levelCount++
     }
 

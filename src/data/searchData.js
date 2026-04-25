@@ -254,7 +254,7 @@ const data = [
   {
     id: '37',
     name: 'Dialog Examples',
-    url: '/pages/dialog-examples',
+    url: '/refer-earn',
     icon: 'ri-tv-2-line',
     section: 'Pages'
   },

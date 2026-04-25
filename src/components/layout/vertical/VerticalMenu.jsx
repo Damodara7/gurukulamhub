@@ -272,7 +272,7 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
           <MenuItem href={`/${locale}/my-learning`} icon={<i className='ri-macbook-line' />}>
             {dictionary['navigation'].myLearning}
           </MenuItem>
-          <MenuItem href={`/${locale}/pages/dialog-examples`} icon={<i className='ri-user-received-line' />}>
+          <MenuItem href={`/${locale}/refer-earn`} icon={<i className='ri-user-received-line' />}>
             {dictionary['navigation'].refer}
           </MenuItem>
           
@@ -356,6 +356,9 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
                 {dictionary['navigation'].unverifiedUsers}
               </MenuItem>
             </SubMenu>
+            <MenuItem href={`/${locale}/management/referral`} icon={<i className='ri-gift-2-line' />}>
+              {dictionary['navigation'].manageReferralPoints}
+            </MenuItem>
 
             <SubMenu label={dictionary['navigation'].manageSponsorships} icon={<i className='ri-wallet-3-line' />}>
               <MenuItem href={`/${locale}/management/sponsorships`}>{dictionary['navigation'].list}</MenuItem>

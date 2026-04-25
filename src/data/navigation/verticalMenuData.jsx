@@ -291,7 +291,7 @@ const verticalMenuData = (dictionary, params) => [
       {
         label: dictionary['navigation'].dialogExamples,
         icon: 'ri-tv-2-line',
-        href: '/pages/dialog-examples'
+        href: '/refer-earn'
       },
       {
         label: dictionary['navigation'].widgetExamples,

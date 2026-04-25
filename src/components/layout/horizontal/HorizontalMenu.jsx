@@ -204,7 +204,7 @@ const HorizontalMenu = ({ dictionary }) => {
               {dictionary['navigation'].createDeal}
             </MenuItem>
           </SubMenu>
-          <MenuItem href={`/${locale}/pages/dialog-examples`} icon={<i className='ri-tv-2-line' />}>
+          <MenuItem href={`/${locale}/refer-earn`} icon={<i className='ri-tv-2-line' />}>
             {dictionary['navigation'].dialogExamples}
           </MenuItem>
           <SubMenu label={dictionary['navigation'].widgetExamples} icon={<i className='ri-bar-chart-box-line' />}>

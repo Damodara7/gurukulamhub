@@ -15,7 +15,9 @@ import {
   Tooltip,
   useTheme,
   alpha,
-  useMediaQuery
+  useMediaQuery,
+  Chip,
+  TablePagination
 } from '@mui/material'
 import React, { useState, useEffect, useMemo } from 'react'
 import EastIcon from '@mui/icons-material/East'
@@ -28,6 +30,154 @@ import Loading from '../security/Loading'
 import TreeComponent from '@/components/TreeComponent'
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
 import { useParams, useRouter } from 'next/navigation'
+
+const formatDateTime = value => {
+  if (!value) return '-'
+  return new Date(value).toLocaleString()
+}
+
+const statusToChipColor = status => {
+  if (status === 'Joined & Verified') return 'success'
+  if (status === 'Joined but Unverified') return 'warning'
+  if (status === 'Not Joined Yet') return 'default'
+  return 'info'
+}
+
+const ReferralHistorySection = ({ referralHistory, isDarkMode, theme }) => {
+  const [page, setPage] = useState(0)
+  const [rowsPerPage, setRowsPerPage] = useState(5)
+  const summary = referralHistory?.summary || {
+    totalSent: 0,
+    joinedAndVerified: 0,
+    joinedButUnverified: 0,
+    notJoinedYet: 0
+  }
+  const items = Array.isArray(referralHistory?.items) ? referralHistory.items : []
+  const paginatedItems = items.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+
+  return (
+    <Card
+      sx={{
+        mt: 3,
+        borderRadius: { xs: 1.5, sm: 2 },
+        bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.6) : 'white',
+        border: `1px solid ${alpha(theme.palette.divider, isDarkMode ? 0.3 : 0.1)}`,
+        boxShadow: isDarkMode ? `0 2px 12px ${alpha(theme.palette.common.black, 0.3)}` : '0 2px 12px rgba(0,0,0,0.04)'
+      }}
+    >
+      <CardHeader
+        title={
+          <Typography variant='h6' sx={{ fontWeight: 700 }}>
+            My Referral History
+          </Typography>
+        }
+        subheader='Track who joined, who is still unverified, and who has not joined yet.'
+      />
+      <CardContent sx={{ pt: 0 }}>
+        <Grid container spacing={1.5} sx={{ mb: 2 }}>
+          <Grid item xs={12} sm={6} md={3}>
+            <Box sx={{ p: 1.5, borderRadius: 1.5, bgcolor: alpha(theme.palette.primary.main, 0.08) }}>
+              <Typography variant='caption'>Total referrals sent</Typography>
+              <Typography variant='h6'>{summary.totalSent || 0}</Typography>
+            </Box>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Box sx={{ p: 1.5, borderRadius: 1.5, bgcolor: alpha(theme.palette.success.main, 0.08) }}>
+              <Typography variant='caption'>Joined & verified</Typography>
+              <Typography variant='h6'>{summary.joinedAndVerified || 0}</Typography>
+            </Box>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Box sx={{ p: 1.5, borderRadius: 1.5, bgcolor: alpha(theme.palette.warning.main, 0.1) }}>
+              <Typography variant='caption'>Joined but unverified</Typography>
+              <Typography variant='h6'>{summary.joinedButUnverified || 0}</Typography>
+            </Box>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Box sx={{ p: 1.5, borderRadius: 1.5, bgcolor: alpha(theme.palette.grey[500], 0.12) }}>
+              <Typography variant='caption'>Not joined yet</Typography>
+              <Typography variant='h6'>{summary.notJoinedYet || 0}</Typography>
+            </Box>
+          </Grid>
+        </Grid>
+
+        <Box sx={{ overflowX: 'auto', maxHeight: 380, overflowY: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr>
+                <th style={{ textAlign: 'left', padding: '10px', borderBottom: `1px solid ${alpha(theme.palette.divider, 0.45)}` }}>
+                  Referred To
+                </th>
+                <th style={{ textAlign: 'left', padding: '10px', borderBottom: `1px solid ${alpha(theme.palette.divider, 0.45)}` }}>
+                  Status
+                </th>
+                <th style={{ textAlign: 'left', padding: '10px', borderBottom: `1px solid ${alpha(theme.palette.divider, 0.45)}` }}>
+                  Sent Count
+                </th>
+                <th style={{ textAlign: 'left', padding: '10px', borderBottom: `1px solid ${alpha(theme.palette.divider, 0.45)}` }}>
+                  Last Sent
+                </th>
+                <th style={{ textAlign: 'left', padding: '10px', borderBottom: `1px solid ${alpha(theme.palette.divider, 0.45)}` }}>
+                  Joined At
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.length === 0 ? (
+                <tr>
+                  <td colSpan={5} style={{ padding: '14px', textAlign: 'center', color: theme.palette.text.secondary }}>
+                    No referral history available yet.
+                  </td>
+                </tr>
+              ) : (
+                paginatedItems.map(item => (
+                  <tr key={`${item.inviteeEmail}-${item.lastSentAt || ''}`}>
+                    <td style={{ padding: '10px', borderBottom: `1px solid ${alpha(theme.palette.divider, 0.25)}` }}>
+                      <Stack spacing={0.25}>
+                        <Typography variant='body2' sx={{ fontWeight: 600 }}>
+                          {item.inviteeName || 'Unknown'}
+                        </Typography>
+                        <Typography variant='caption' color='text.secondary'>
+                          {item.inviteeEmail}
+                        </Typography>
+                      </Stack>
+                    </td>
+                    <td style={{ padding: '10px', borderBottom: `1px solid ${alpha(theme.palette.divider, 0.25)}` }}>
+                      <Chip size='small' label={item.status} color={statusToChipColor(item.status)} variant='outlined' />
+                    </td>
+                    <td style={{ padding: '10px', borderBottom: `1px solid ${alpha(theme.palette.divider, 0.25)}` }}>
+                      {item.sentCount || 1}
+                    </td>
+                    <td style={{ padding: '10px', borderBottom: `1px solid ${alpha(theme.palette.divider, 0.25)}` }}>
+                      {formatDateTime(item.lastSentAt)}
+                    </td>
+                    <td style={{ padding: '10px', borderBottom: `1px solid ${alpha(theme.palette.divider, 0.25)}` }}>
+                      {formatDateTime(item.joinedAt)}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </Box>
+        {items.length > 0 && (
+          <TablePagination
+            component='div'
+            rowsPerPageOptions={[5, 10, 25]}
+            count={items.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={(_, newPage) => setPage(newPage)}
+            onRowsPerPageChange={event => {
+              setRowsPerPage(parseInt(event.target.value, 10))
+              setPage(0)
+            }}
+          />
+        )}
+      </CardContent>
+    </Card>
+  )
+}
 
 function findUserByEmail(email, userNode) {
   if (userNode?.email === email) return userNode
@@ -325,6 +475,11 @@ function NetworkTreeNodes({ networkData }) {
         >
           <TreeComponent tree={rootTree} />
         </Box>
+        <ReferralHistorySection
+          referralHistory={profileAndNetworkData?.referralHistory || networkData?.referralHistory}
+          isDarkMode={isDarkMode}
+          theme={theme}
+        />
       </CardContent>
       {/* Referral Points Distribution */}
       <Card
@@ -420,7 +575,7 @@ function NetworkTreeNodes({ networkData }) {
                 variant='contained'
                 color='primary'
                 component='label'
-                onClick={() => router.push(`/${locale}/pages/dialog-examples`)}
+                onClick={() => router.push(`/${locale}/refer-earn`)}
                 sx={{
                   textTransform: 'none',
                   fontWeight: 600,
