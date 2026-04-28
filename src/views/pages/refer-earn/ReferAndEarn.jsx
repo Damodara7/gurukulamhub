@@ -72,6 +72,21 @@ const options = [
   }
 ]
 
+const DEFAULT_REFERRAL_SETTINGS = {
+  directReferrerPoints: 500,
+  maxDistributionLevels: 4,
+  promotionPointsThreshold: 1000
+}
+
+const buildDistributionLevels = ({ directReferrerPoints, maxDistributionLevels }) => {
+  const direct = Math.max(0, Number(directReferrerPoints) || 0)
+  const levels = Math.max(1, Number(maxDistributionLevels) || 1)
+  return Array.from({ length: levels }, (_, index) => ({
+    level: index + 1,
+    points: direct / Math.pow(2, index)
+  }))
+}
+
 const ReferAndEarn = () => {
   const { lang: locale } = useParams()
   const { data: session } = useSession()
@@ -79,6 +94,7 @@ const ReferAndEarn = () => {
   const [toEmail, setToEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [referralToken, setReferralToken] = useState(session?.user?.referralToken || '')
+  const [referralSettings, setReferralSettings] = useState(DEFAULT_REFERRAL_SETTINGS)
 
   const fromEmail = session?.user?.email
 
@@ -131,6 +147,30 @@ const ReferAndEarn = () => {
     }
   }, [])
 
+  useEffect(() => {
+    async function fetchReferralSettings() {
+      try {
+        const response = await RestApi.get(API_URLS.v0.REFERRAL_SETTINGS)
+        if (response?.status === 'success' && response?.result) {
+          setReferralSettings({
+            directReferrerPoints: Number(
+              response.result.directReferrerPoints ?? DEFAULT_REFERRAL_SETTINGS.directReferrerPoints
+            ),
+            maxDistributionLevels: Number(
+              response.result.maxDistributionLevels ?? DEFAULT_REFERRAL_SETTINGS.maxDistributionLevels
+            ),
+            promotionPointsThreshold: Number(
+              response.result.promotionPointsThreshold ?? DEFAULT_REFERRAL_SETTINGS.promotionPointsThreshold
+            )
+          })
+        }
+      } catch (settingsError) {
+        console.error('Failed to fetch referral settings for refer-earn view:', settingsError)
+      }
+    }
+    fetchReferralSettings()
+  }, [])
+
   const referralLink = `${process.env.NEXT_PUBLIC_APP_URL}/${locale}/auth/register?ref=${referralToken}`
 
   const copyLinkToClipboard = async () => {
@@ -143,6 +183,7 @@ const ReferAndEarn = () => {
   }
 
   const isDarkMode = theme.palette.mode === 'dark'
+  const distributionLevels = buildDistributionLevels(referralSettings)
 
   return (
     <Box
@@ -712,10 +753,12 @@ const ReferAndEarn = () => {
                       <Typography variant='subtitle2' fontWeight={700}>
                         Points are distributed up the referral chain:
                       </Typography>
-                      <Typography variant='body2'>Level 1 (Direct Referrer): 500 points</Typography>
-                      <Typography variant='body2'>Level 2 (Referrer&apos;s Referrer): 250 points</Typography>
-                      <Typography variant='body2'>Level 3: 125 points</Typography>
-                      <Typography variant='body2'>Level 4: 62.5 points</Typography>
+                      {distributionLevels.map(item => (
+                        <Typography key={item.level} variant='body2'>
+                          Level {item.level}
+                          {item.level === 1 ? ' (Direct Referrer)' : ''}: {Number(item.points.toFixed(2))} points
+                        </Typography>
+                      ))}
                     </Stack>
                   </Box>
 
@@ -724,8 +767,17 @@ const ReferAndEarn = () => {
                     color='text.secondary'
                     sx={{ fontSize: { xs: '0.85rem', sm: '0.88rem', md: '0.92rem' }, lineHeight: 1.65 }}
                   >
-                    The reward halves at each next level (500, 250, 125, 62.5, ...), so everyone in your active network
-                    benefits when new members join.
+                    The reward halves at each next level starting from{' '}
+                    {Number(referralSettings.directReferrerPoints || 0)} points for the direct referrer, up to{' '}
+                    {Number(referralSettings.maxDistributionLevels || 1)} levels.
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                    sx={{ fontSize: { xs: '0.85rem', sm: '0.88rem', md: '0.92rem' }, lineHeight: 1.65 }}
+                  >
+                    Threshold Rule: For every {Number(referralSettings.promotionPointsThreshold || 0)} referral points
+                    earned, you unlock +1 extra distribution level (beyond base max levels).
                   </Typography>
                 </Stack>
               </CardContent>

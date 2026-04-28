@@ -18,6 +18,11 @@ const getFullName = user => {
   return fullName || '-'
 }
 
+const getHistoryEntryId = (entry, index) => {
+  if (entry?._id) return String(entry._id)
+  return `${entry?.initiatedAt || 'unknown-time'}-${entry?.initiatedByEmail || 'unknown-user'}-${index}`
+}
+
 const UnverifiedUsersManagement = () => {
   const theme = useTheme()
   const [users, setUsers] = useState([])
@@ -26,6 +31,8 @@ const UnverifiedUsersManagement = () => {
   const [isCleaning, setIsCleaning] = useState(false)
   const [filterType, setFilterType] = useState('all')
   const [allowManualDeleteBefore24hrs, setAllowManualDeleteBefore24hrs] = useState(false)
+  const [cleanupHistory, setCleanupHistory] = useState([])
+  const [expandedHistoryEntryId, setExpandedHistoryEntryId] = useState(null)
 
   const filteredUsers = users.filter(user => {
     if (filterType === 'gt24') return user.isCleanupEligible
@@ -41,14 +48,17 @@ const UnverifiedUsersManagement = () => {
         const payload = response?.result || {}
         setUsers(payload?.users || [])
         setCleanupEligibleCount(payload?.cleanupEligibleCount || 0)
+        setCleanupHistory(Array.isArray(payload?.cleanupHistory) ? payload.cleanupHistory : [])
       } else {
         setUsers([])
         setCleanupEligibleCount(0)
+        setCleanupHistory([])
         if (response?.message) toast.error(response.message)
       }
     } catch (error) {
       setUsers([])
       setCleanupEligibleCount(0)
+      setCleanupHistory([])
       toast.error('Failed to fetch unverified users')
       console.error('Failed to fetch unverified users: ', error)
     } finally {
@@ -355,6 +365,137 @@ const UnverifiedUsersManagement = () => {
                       </TableContainer>
                     </Stack>
                   )}
+                </CardContent>
+              </Card>
+            </Grid>
+
+            <Grid item xs={12}>
+              <Card>
+                <CardContent>
+                  <Stack spacing={1.5}>
+                    <Box>
+                      <Typography variant='h6' sx={{ fontWeight: 700 }}>
+                        Cleanup History
+                      </Typography>
+                      <Typography variant='body2' color='text.secondary'>
+                        Includes manual cleanup and automatic batch cleanup with actor, time, count, and deleted users.
+                      </Typography>
+                    </Box>
+
+                    {cleanupHistory.length === 0 ? (
+                      <Alert severity='info'>No cleanup history available yet.</Alert>
+                    ) : (
+                      <Stack spacing={1.25}>
+                        {cleanupHistory.map((entry, index) => {
+                          const entryId = getHistoryEntryId(entry, index)
+                          const isExpanded = expandedHistoryEntryId === entryId
+                          const deletedUsers = Array.isArray(entry?.deletedUsers) ? entry.deletedUsers : []
+                          const isManualCleanup = entry?.cleanupType === 'manual'
+                          const cleanupType = entry?.cleanupType === 'manual' ? 'Manual Cleanup' : 'Automatic Batch Cleanup'
+
+                          return (
+                            <Box
+                              key={entryId}
+                              sx={{
+                                p: 1.5,
+                                borderRadius: 2,
+                                border: `2px solid ${alpha(theme.palette.primary.main, 0.24)}`,
+                                bgcolor: alpha(theme.palette.background.paper, 0.92)
+                              }}
+                            >
+                              <Stack
+                                direction={{ xs: 'column', md: 'row' }}
+                                spacing={1}
+                                alignItems={{ xs: 'flex-start', md: 'center' }}
+                                justifyContent='space-between'
+                              >
+                                <Stack spacing={0.5}>
+                                  <Stack direction='row' spacing={1} alignItems='center' flexWrap='wrap' useFlexGap>
+                                    <Chip
+                                      size='small'
+                                      color={entry?.cleanupType === 'manual' ? 'warning' : 'primary'}
+                                      label={cleanupType}
+                                    />
+                                    <Chip size='small' variant='outlined' label={`${entry?.deletedCount || 0} deleted`} />
+                                  </Stack>
+                                  {isManualCleanup ? (
+                                    <Typography variant='body2' sx={{ fontWeight: 600 }}>
+                                      {entry?.initiatedByName || 'Unknown'}
+                                      {entry?.initiatedByEmail ? ` (${entry.initiatedByEmail})` : ''}
+                                    </Typography>
+                                  ) : (
+                                    <Typography variant='body2' sx={{ fontWeight: 600 }}>
+                                      System (Cron Job)
+                                    </Typography>
+                                  )}
+                                  <Typography variant='caption' color='text.secondary'>
+                                    {formatDate(entry?.initiatedAt)}
+                                  </Typography>
+                                </Stack>
+                                <Button
+                                  size='small'
+                                  variant='outlined'
+                                  onClick={() => setExpandedHistoryEntryId(isExpanded ? null : entryId)}
+                                >
+                                  {isExpanded ? 'Hide Details' : 'See Details'}
+                                </Button>
+                              </Stack>
+
+                              {isExpanded && (
+                                <Stack spacing={1.25} sx={{ mt: 1.5 }}>
+                                  {deletedUsers.length === 0 ? (
+                                    <Alert severity='info'>No deleted users captured for this cleanup.</Alert>
+                                  ) : (
+                                    <TableContainer
+                                      sx={{
+                                        border: `1px solid ${alpha(theme.palette.divider, 0.4)}`,
+                                        borderRadius: 2,
+                                        overflowX: 'auto'
+                                      }}
+                                    >
+                                      <Table size='small'>
+                                        <TableHead sx={{ bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
+                                          <TableRow>
+                                            <TableCell sx={{ fontWeight: 700 }}>Name</TableCell>
+                                            <TableCell sx={{ fontWeight: 700 }}>Email</TableCell>
+                                            <TableCell sx={{ fontWeight: 700 }}>Phone</TableCell>
+                                            <TableCell sx={{ fontWeight: 700 }}>Created At</TableCell>
+                                            <TableCell sx={{ fontWeight: 700 }}>Age At Cleanup</TableCell>
+                                          </TableRow>
+                                        </TableHead>
+                                        <TableBody>
+                                          {deletedUsers.map((user, userIndex) => (
+                                            <TableRow
+                                              key={`${entryId}-user-${user?.userId || user?.email || userIndex}`}
+                                              hover
+                                              sx={{ '&:last-child td': { borderBottom: 0 } }}
+                                            >
+                                              <TableCell>{getFullName(user)}</TableCell>
+                                              <TableCell>{user?.email || '-'}</TableCell>
+                                              <TableCell>{user?.phone || '-'}</TableCell>
+                                              <TableCell>{formatDate(user?.createdAt)}</TableCell>
+                                              <TableCell>
+                                                <Chip
+                                                  size='small'
+                                                  color={user?.wasOlderThan24Hours ? 'warning' : 'info'}
+                                                  variant={user?.wasOlderThan24Hours ? 'filled' : 'outlined'}
+                                                  label={user?.wasOlderThan24Hours ? 'Older than 24h' : 'Less than 24h'}
+                                                />
+                                              </TableCell>
+                                            </TableRow>
+                                          ))}
+                                        </TableBody>
+                                      </Table>
+                                    </TableContainer>
+                                  )}
+                                </Stack>
+                              )}
+                            </Box>
+                          )
+                        })}
+                      </Stack>
+                    )}
+                  </Stack>
                 </CardContent>
               </Card>
             </Grid>

@@ -23,6 +23,32 @@ const referralSettingsSchema = new mongoose.Schema(
       type: Number,
       default: DEFAULT_REFERRAL_SETTINGS.promotionPointsThreshold,
       min: 1
+    },
+    history: {
+      type: [
+        new mongoose.Schema(
+          {
+            editedAt: { type: Date, default: Date.now },
+            editedByName: { type: String, default: '' },
+            editedByEmail: { type: String, default: '' },
+            changes: {
+              type: [
+                new mongoose.Schema(
+                  {
+                    field: { type: String, required: true },
+                    previousValue: { type: mongoose.Schema.Types.Mixed, default: null },
+                    newValue: { type: mongoose.Schema.Types.Mixed, default: null }
+                  },
+                  { _id: false }
+                )
+              ],
+              default: []
+            }
+          },
+          { _id: true }
+        )
+      ],
+      default: []
     }
   },
   { timestamps: true }

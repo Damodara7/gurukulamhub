@@ -5,6 +5,7 @@ import * as OtpService from './otp.service'
 import * as SMSService from './sms.service'
 import User from '../models/user.model'
 import ReferralInvite from '../models/referral-invite.model'
+import UnverifiedCleanupHistory from '../models/unverified-cleanup-history.model'
 import UserProfile from '../api/profile/profile.model'
 import Notification from '../api/notifications/notification.model'
 import * as UserProfileService from '../api/profile/profile.service'
@@ -1429,7 +1430,11 @@ export const doesUserHavePassword = async (userId, idType = 'email') => {
 }
 
 /*************** CLEANUP RELATED ****************/
-export async function cleanupUnverifiedUsers({ allowManualDeleteBefore24hrs = false } = {}) {
+export async function cleanupUnverifiedUsers({
+  allowManualDeleteBefore24hrs = false,
+  initiatedByName = 'System',
+  initiatedByEmail = ''
+} = {}) {
   await connectMongo()
   try {
     const users = await getCleanupEligibleUnverifiedUsers({ allowManualDeleteBefore24hrs })
@@ -1452,9 +1457,40 @@ export async function cleanupUnverifiedUsers({ allowManualDeleteBefore24hrs = fa
       const userIds = users.map(user => user._id)
       await Notification.deleteMany({ userId: { $in: userIds } })
 
+      const now = Date.now()
+      const deletedUsers = users.map(user => {
+        const createdAt = user?.createdAt ? new Date(user.createdAt) : null
+        const wasOlderThan24Hours = createdAt ? now - createdAt.getTime() >= 24 * 60 * 60 * 1000 : false
+        return {
+          userId: String(user?._id || ''),
+          firstname: user?.firstname || '',
+          lastname: user?.lastname || '',
+          email: user?.email || '',
+          phone: user?.phone || '',
+          createdAt,
+          wasOlderThan24Hours
+        }
+      })
+
+      const cleanupType = allowManualDeleteBefore24hrs ? 'manual' : 'automatic'
+      const isManualCleanup = cleanupType === 'manual'
+
+      await UnverifiedCleanupHistory.create({
+        cleanupType,
+        deletedCount: users.length,
+        deletedUsers,
+        initiatedByName: isManualCleanup ? initiatedByName || 'Unknown' : 'System (Cron Job)',
+        initiatedByEmail: isManualCleanup ? String(initiatedByEmail || '').trim().toLowerCase() : '',
+        initiatedAt: new Date()
+      })
+
       return {
         status: 'success',
-        message: `${users.length} unverified users, their profiles, and notifications deleted successfully`
+        message: `${users.length} unverified users, their profiles, and notifications deleted successfully`,
+        result: {
+          deletedCount: users.length,
+          cleanupType
+        }
       }
     } else {
       return {
@@ -1487,13 +1523,18 @@ export async function getUnverifiedUsersForCleanup() {
     }))
 
     const cleanupEligibleCount = usersWithEligibility.filter(user => user.isCleanupEligible).length
+    const cleanupHistory = await UnverifiedCleanupHistory.find({})
+      .sort({ initiatedAt: -1 })
+      .limit(100)
+      .lean()
 
     return {
       status: 'success',
       message: usersWithEligibility.length > 0 ? 'Unverified users fetched successfully' : 'No unverified users found',
       result: {
         users: usersWithEligibility,
-        cleanupEligibleCount
+        cleanupEligibleCount,
+        cleanupHistory
       }
     }
   } catch (error) {

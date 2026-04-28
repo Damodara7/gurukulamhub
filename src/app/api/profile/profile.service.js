@@ -292,28 +292,27 @@ export const updateReferral = async ({ email, data }) => {
     const promotionThreshold = Math.max(1, Number(referralSettings.promotionPointsThreshold) || 1)
 
     // Distribute referral points based on admin configuration.
-    let points = directPoints
+    // Threshold points unlock additional distribution depth (+1 level per threshold crossed) for each referrer.
     let currentReferrer = referrer
     let levelCount = 0
+    const maxTraversalLimit = 50
 
-    while (currentReferrer && levelCount < maxLevels) {
+    while (currentReferrer && levelCount < maxTraversalLimit) {
       // Calculate points for the current referrer (half of the previous level)
-      const pointsForReferrer = points / Math.pow(2, levelCount)
+      const pointsForReferrer = directPoints / Math.pow(2, levelCount)
 
       const latestReferrerProfile = await UserProfile.findOne({ email: currentReferrer.email })
       if (!latestReferrerProfile) break
 
       const previousPoints = Number(latestReferrerProfile.referralPoints || 0)
-      const updatedPoints = previousPoints + pointsForReferrer
-      const previousMilestone = Math.floor(previousPoints / promotionThreshold)
-      const updatedMilestone = Math.floor(updatedPoints / promotionThreshold)
-      const levelIncrease = Math.max(0, updatedMilestone - previousMilestone)
+      const additionalDistributionLevels = Math.floor(previousPoints / promotionThreshold)
+      const allowedDistributionLevels = maxLevels + additionalDistributionLevels
+      const referralDistanceFromNewUser = levelCount + 1
 
-      latestReferrerProfile.referralPoints = updatedPoints
-      if (levelIncrease > 0) {
-        latestReferrerProfile.networkLevel = Number(latestReferrerProfile.networkLevel || 0) + levelIncrease
+      if (referralDistanceFromNewUser <= allowedDistributionLevels) {
+        latestReferrerProfile.referralPoints = previousPoints + pointsForReferrer
+        await latestReferrerProfile.save()
       }
-      await latestReferrerProfile.save()
 
       // Move up the referral chain
       currentReferrer = await UserProfile.findOne({ email: latestReferrerProfile.referredBy })
