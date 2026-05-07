@@ -386,7 +386,7 @@ const SingleChoiceQuestionTemplate = ({
           </Box>
           <Box sx={{ flex: 1 }}>
             <Typography variant='h6' fontWeight={700} sx={{ color: theme.palette.text.primary }}>
-              Single Choice Question
+              Multiple Choice Question
             </Typography>
             <Typography variant='caption' sx={{ color: 'text.secondary' }}>
               Language: {language}

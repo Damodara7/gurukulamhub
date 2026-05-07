@@ -8,8 +8,8 @@ import ToggleOnIcon from "@mui/icons-material/ToggleOn";
 import IconButtonTooltip from '@/components/IconButtonTooltip'
 
 const templateIdsInfoObj = {
-  "single-choice": { name: "Single choice", icon: <i className="ri-radio-button-line" /> },
-  "multiple-choice": { name: "Multiple choice", icon: <i className="ri-checkbox-line" /> },
+  "single-choice": { name: "Multiple choice", icon: <i className="ri-radio-button-line" /> },
+  "multiple-choice": { name: "Multi answer", icon: <i className="ri-checkbox-line" /> },
   "true-or-false": { name: "True or false", icon: <ToggleOnIcon /> },
   "fill-in-blank": { name: "Fill in blanks", icon: <i className="ri-input-field" /> },
 };

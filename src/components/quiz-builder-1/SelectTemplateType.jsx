@@ -10,12 +10,12 @@ import CancelIcon from '@mui/icons-material/Cancel'
 const TEMPLATE_TYPES = [
   {
     key: 'single-choice',
-    label: 'Single Choice',
+    label: 'Multiple Choice',
     icon: <RadioButtonCheckedIcon fontSize='large' color='primary' />
   },
   {
     key: 'multiple-choice',
-    label: 'Multiple Choice',
+    label: 'Multi Answer',
     icon: <CheckBoxIcon fontSize='large' color='primary' />
   },
   {

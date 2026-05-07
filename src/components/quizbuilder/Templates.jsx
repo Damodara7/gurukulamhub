@@ -73,7 +73,7 @@ export const SingleChoiceTemplate = ({ question }) => {
                 borderRadius: 2
               }}
             />
-            Single Choice Question
+            Multiple Choice Question
           </Typography>
           {questionObj?.mediaType && (
             <Chip
@@ -369,7 +369,7 @@ export const MultipleChoiceTemplate = ({ question }) => {
                 borderRadius: 2
               }}
             />
-            Multiple Choice Question
+            Multi Answer Question
           </Typography>
           {questionObj?.mediaType && (
             <Chip
@@ -1202,7 +1202,7 @@ export const DummySingleChoiceTemplate = ({ question, title, questionNumber }) =
 
         {/* Type Badge */}
         <Chip
-          label='Single Choice'
+          label='Multiple Choice'
           size='small'
           sx={{
             width: 'fit-content',
@@ -1334,7 +1334,7 @@ export const DummyMultipleChoiceTemplate = ({ question, title, questionNumber })
 
         {/* Type Badge */}
         <Chip
-          label='Multiple Choice'
+          label='Multi Answer'
           size='small'
           sx={{
             width: 'fit-content',

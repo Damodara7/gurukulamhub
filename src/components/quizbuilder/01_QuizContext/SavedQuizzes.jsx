@@ -37,6 +37,7 @@ import QuizIcon from '@mui/icons-material/Quiz'
 
 import { useRouter } from 'next/navigation'
 import Loading from '@/components/Loading'
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 
 export default function SavedQuizzes({ isAdmin = false }) {
   const router = useRouter()
@@ -563,7 +564,7 @@ export default function SavedQuizzes({ isAdmin = false }) {
                         size='small'
                         variant='contained'
                         component='label'
-                        startIcon={<BuildOutlinedIcon fontSize='small' />}
+                        startIcon={<EditOutlinedIcon fontSize='small' />}
                         onClick={e => {
                           e.stopPropagation()
                           handleBuildQuiz(item)
@@ -576,7 +577,7 @@ export default function SavedQuizzes({ isAdmin = false }) {
                           color: 'white'
                         }}
                       >
-                        Build
+                        Update
                       </Button>
                       {!isAdmin && (
                         <Tooltip title='Send for Approval' arrow>

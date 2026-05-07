@@ -369,8 +369,8 @@ const InsertedVideoQuestions = forwardRef(
               {editIndex !== null ? 'Edit Question' : 'New Question'}
             </Typography>
             <RadioGroup row value={currentQuestion.type} onChange={e => handleInputChange('type', e.target.value)}>
-              <FormControlLabel value='single-choice' control={<Radio />} label='Single Choice' />
-              <FormControlLabel value='multiple-choice' control={<Radio />} label='Multiple Choice' />
+              <FormControlLabel value='single-choice' control={<Radio />} label='Multiple Choice' />
+              <FormControlLabel value='multiple-choice' control={<Radio />} label='Multi Answer' />
             </RadioGroup>
 
             <TextField
@@ -977,8 +977,8 @@ const EndVideoQuestions = forwardRef(
               {editIndex !== null ? 'Edit Question' : 'New Question'}
             </Typography>
             <RadioGroup row value={currentQuestion.type} onChange={e => handleInputChange('type', e.target.value)}>
-              <FormControlLabel value='single-choice' control={<Radio />} label='Single Choice' />
-              <FormControlLabel value='multiple-choice' control={<Radio />} label='Multiple Choice' />
+              <FormControlLabel value='single-choice' control={<Radio />} label='Multiple Choice' />
+              <FormControlLabel value='multiple-choice' control={<Radio />} label='Multi Answer' />
             </RadioGroup>
 
             <TextField

@@ -52,14 +52,14 @@ const calculateQuestionMarks = (question, selectedAnswer, hintUsed) => {
   const correctAnswerIds = question.data?.options?.filter(option => option.correct).map(option => option.id) || []
   let gainedMarks = 0
 
-  // Single Choice/True or False
+  // Multiple Choice/True or False
   if (question.templateId === 'single-choice' || question.templateId === 'true-or-false') {
     if (selectedAnswer === correctAnswerIds[0]) {
       gainedMarks += Number(question.data?.marks) || 0
     }
   }
 
-  // Multiple Choice
+  // Multi Answer
   else if (question.templateId === 'multiple-choice') {
     const selectedAnswerIds = Array.isArray(selectedAnswer) ? selectedAnswer : [selectedAnswer]
     const correctSelected = selectedAnswerIds.filter(answerId => correctAnswerIds.includes(answerId)).length

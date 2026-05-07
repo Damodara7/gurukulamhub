@@ -619,9 +619,9 @@ const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time
                         <Chip
                           label={
                             question.templateId === 'single-choice'
-                              ? 'Single Choice'
+                              ? 'Multiple Choice'
                               : question.templateId === 'multiple-choice'
-                                ? 'Multiple Choice'
+                                ? 'Multi Answer'
                                 : question.templateId === 'true-or-false'
                                   ? 'True or False'
                                   : question.templateId === 'fill-in-blank'
