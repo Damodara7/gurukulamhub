@@ -111,6 +111,16 @@ const flattenNetworkUsers = rootNode => {
   return output
 }
 
+const getTotalQuizPoints = user => Number(user?.totalQuizPoints || 0)
+const getComputedCumulativePoints = user =>
+  Number(
+    user?.cumulativePoints ??
+      (Number(user?.referralPoints || 0) +
+        Number(user?.totalGamePoints || 0) +
+        Number(user?.totalLearningPoints || 0) +
+        getTotalQuizPoints(user))
+  )
+
 const ReferralStatsChartsSection = ({ rootData, isDarkMode, theme }) => {
   const referralTrend = useMemo(() => buildReferralTrend(rootData?.referralHistory), [rootData?.referralHistory])
   const networkUsers = useMemo(() => flattenNetworkUsers(rootData), [rootData])
@@ -120,13 +130,15 @@ const ReferralStatsChartsSection = ({ rootData, isDarkMode, theme }) => {
     const verified = networkUsers.filter(user => Boolean(user?.isVerified)).length
     const unverified = Math.max(0, total - verified)
     const totalReferralPoints = networkUsers.reduce((sum, user) => sum + Number(user?.referralPoints || 0), 0)
-    return { total, verified, unverified, totalReferralPoints }
+    const totalQuizPoints = networkUsers.reduce((sum, user) => sum + getTotalQuizPoints(user), 0)
+    const totalCumulativePoints = networkUsers.reduce((sum, user) => sum + getComputedCumulativePoints(user), 0)
+    return { total, verified, unverified, totalReferralPoints, totalQuizPoints, totalCumulativePoints }
   }, [networkUsers])
 
   const topUsers = useMemo(
     () =>
       [...networkUsers]
-        .sort((a, b) => Number(b?.cumulativePoints || 0) - Number(a?.cumulativePoints || 0))
+        .sort((a, b) => getComputedCumulativePoints(b) - getComputedCumulativePoints(a))
         .slice(0, 5),
     [networkUsers]
   )
@@ -191,6 +203,18 @@ const ReferralStatsChartsSection = ({ rootData, isDarkMode, theme }) => {
               <Typography variant='h6'>{Number(networkSummary.totalReferralPoints.toFixed(2))}</Typography>
             </Box>
           </Grid>
+          <Grid item xs={6} sm={3}>
+            <Box sx={{ p: 1.5, borderRadius: 1.5, bgcolor: alpha(theme.palette.info.main, 0.1) }}>
+              <Typography variant='caption'>Quiz Points (Network)</Typography>
+              <Typography variant='h6'>{Number(networkSummary.totalQuizPoints.toFixed(2))}</Typography>
+            </Box>
+          </Grid>
+          <Grid item xs={6} sm={3}>
+            <Box sx={{ p: 1.5, borderRadius: 1.5, bgcolor: alpha(theme.palette.success.main, 0.1) }}>
+              <Typography variant='caption'>Cumulative Points</Typography>
+              <Typography variant='h6'>{Number(networkSummary.totalCumulativePoints.toFixed(2))}</Typography>
+            </Box>
+          </Grid>
         </Grid>
 
         {canRenderTrendChart ? (
@@ -239,6 +263,9 @@ const ReferralStatsChartsSection = ({ rootData, isDarkMode, theme }) => {
                       Email
                     </th>
                     <th style={{ textAlign: 'left', padding: '10px', borderBottom: `1px solid ${alpha(theme.palette.divider, 0.45)}` }}>
+                      Quiz Points
+                    </th>
+                    <th style={{ textAlign: 'left', padding: '10px', borderBottom: `1px solid ${alpha(theme.palette.divider, 0.45)}` }}>
                       Cumulative Points
                     </th>
                     <th style={{ textAlign: 'left', padding: '10px', borderBottom: `1px solid ${alpha(theme.palette.divider, 0.45)}` }}>
@@ -256,7 +283,10 @@ const ReferralStatsChartsSection = ({ rootData, isDarkMode, theme }) => {
                         {user?.email || '-'}
                       </td>
                       <td style={{ padding: '10px', borderBottom: `1px solid ${alpha(theme.palette.divider, 0.25)}` }}>
-                        {Number(user?.cumulativePoints || 0)}
+                        {getTotalQuizPoints(user)}
+                      </td>
+                      <td style={{ padding: '10px', borderBottom: `1px solid ${alpha(theme.palette.divider, 0.25)}` }}>
+                        {getComputedCumulativePoints(user)}
                       </td>
                       <td style={{ padding: '10px', borderBottom: `1px solid ${alpha(theme.palette.divider, 0.25)}` }}>
                         {Number(user?.referralPoints || 0)}
@@ -425,6 +455,14 @@ async function fetchUserProfileAndNetwork(email) {
 }
 
 const StyledReferralPointsStack = ({ profileAndNetworkData, isDarkMode, theme }) => {
+  const totalReferralPoints = Number(profileAndNetworkData?.referralPoints || 0)
+  const totalGamePoints = Number(profileAndNetworkData?.totalGamePoints || 0)
+  const totalLearningPoints = Number(profileAndNetworkData?.totalLearningPoints || 0)
+  const totalQuizPoints = getTotalQuizPoints(profileAndNetworkData)
+  const cumulativePoints =
+    profileAndNetworkData?.cumulativePoints ??
+    totalReferralPoints + totalGamePoints + totalLearningPoints + totalQuizPoints
+
   return (
     <Stack
       spacing={0.75}
@@ -487,6 +525,32 @@ const StyledReferralPointsStack = ({ profileAndNetworkData, isDarkMode, theme })
           Learning Points:{' '}
           <Typography component='span' color='success.main'>
             {profileAndNetworkData?.totalLearningPoints || 0}
+          </Typography>
+        </Typography>
+        <Typography
+          variant='body2'
+          sx={{
+            fontWeight: 600,
+            fontSize: { xs: '0.78rem', sm: '0.85rem' },
+            color: isDarkMode ? alpha(theme.palette.common.white, 0.9) : 'text.primary'
+          }}
+        >
+          Quiz Points:{' '}
+          <Typography component='span' color='info.main'>
+            {totalQuizPoints}
+          </Typography>
+        </Typography>
+        <Typography
+          variant='body2'
+          sx={{
+            fontWeight: 700,
+            fontSize: { xs: '0.8rem', sm: '0.9rem' },
+            color: isDarkMode ? alpha(theme.palette.common.white, 0.95) : 'text.primary'
+          }}
+        >
+          Cumulative:{' '}
+          <Typography component='span' color='success.main'>
+            {Number(cumulativePoints || 0)}
           </Typography>
         </Typography>
       </Stack>
@@ -665,7 +729,7 @@ function NetworkTreeNodes({ networkData }) {
                       findUserByEmail(nodeEmail, networkData)?.referralPoints || 0
                     } | Game Points: ${findUserByEmail(nodeEmail, networkData)?.totalGamePoints || 0} | Learning Points: ${
                       findUserByEmail(nodeEmail, networkData)?.totalLearningPoints || 0
-                    }`}
+                    } | Quiz Points: ${getTotalQuizPoints(findUserByEmail(nodeEmail, networkData))} | Cumulative: ${getComputedCumulativePoints(findUserByEmail(nodeEmail, networkData))}`}
                   >
                     <Box
                       sx={{
@@ -694,7 +758,7 @@ function NetworkTreeNodes({ networkData }) {
                   findUserByEmail(currentUserNodeEmail, networkData)?.referralPoints || 0
                 } | Game Points: ${findUserByEmail(currentUserNodeEmail, networkData)?.totalGamePoints || 0} | Learning Points: ${
                   findUserByEmail(currentUserNodeEmail, networkData)?.totalLearningPoints || 0
-                }`}
+                } | Quiz Points: ${getTotalQuizPoints(findUserByEmail(currentUserNodeEmail, networkData))} | Cumulative: ${getComputedCumulativePoints(findUserByEmail(currentUserNodeEmail, networkData))}`}
               >
                 <Box
                   sx={{

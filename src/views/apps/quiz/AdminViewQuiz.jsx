@@ -780,7 +780,7 @@ const AdminViewQuiz = ({ quizId }) => {
                 )}
 
                 {/* Secondary Questions */}
-                <Card
+                {/* <Card
                   sx={{
                     borderRadius: 2,
                     bgcolor: theme.palette.background.paper,
@@ -913,7 +913,7 @@ const AdminViewQuiz = ({ quizId }) => {
                       </Box>
                     )}
                   </Box>
-                </Card>
+                </Card> */}
                     </Stack>
                   </Box>
                 </Box>

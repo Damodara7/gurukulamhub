@@ -65,7 +65,15 @@ const HeroStat = ({ icon, label, value, tone }) => (
   </Stack>
 )
 
-function QuizPosterScreen({ quizData, onClickStart, language = null, quizLanguages = [] }) {
+function QuizPosterScreen({
+  quizData,
+  onClickStart,
+  language = null,
+  quizLanguages = [],
+  resolvedQuestionCount = 0,
+  possibleQuizPoints = 0,
+  quizWeightage = 1
+}) {
   const theme = useTheme()
   const isDarkMode = theme.palette.mode === 'dark'
   const {
@@ -81,6 +89,8 @@ function QuizPosterScreen({ quizData, onClickStart, language = null, quizLanguag
     difficulty,
     questionCount
   } = quizData
+  const effectiveQuestionCount = resolvedQuestionCount || questionCount || 0
+  const totalQuizPoints = possibleQuizPoints || effectiveQuestionCount * quizWeightage
 
   const sectionShell = (children, key, sx = {}) => (
     <Box
@@ -180,7 +190,7 @@ function QuizPosterScreen({ quizData, onClickStart, language = null, quizLanguag
     {
       icon: <QuizOutlinedIcon fontSize='small' />,
       label: 'Questions',
-      value: questionCount ? `${questionCount} questions` : 'Curated set',
+      value: effectiveQuestionCount ? `${effectiveQuestionCount} questions` : 'Curated set',
       tone: theme.palette.primary
     },
     {
@@ -209,6 +219,12 @@ function QuizPosterScreen({ quizData, onClickStart, language = null, quizLanguag
       value: contextIds || 'Not specified',
       tone: theme.palette.warning,
       icon: <FingerprintRoundedIcon fontSize='small' />
+    },
+    {
+      label: 'Quiz Points',
+      value: `${totalQuizPoints}`,
+      tone: theme.palette.success,
+      icon: <WorkspacePremiumOutlinedIcon fontSize='small' />
     }
   ]
 

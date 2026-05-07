@@ -474,7 +474,7 @@ function ViewQuiz({ quiz, isAdmin = false }) {
                   </Card>
 
                   {/* Secondary Questions Section */}
-                  <Card
+                  {/* <Card
                     sx={{
                       borderRadius: 2,
                       bgcolor: theme.palette.background.paper,
@@ -597,7 +597,8 @@ function ViewQuiz({ quiz, isAdmin = false }) {
                         </Box>
                       )}
                     </Box>
-                  </Card>
+                  </Card> */}
+                  
                 </Stack>
               ) : (
                 <Card

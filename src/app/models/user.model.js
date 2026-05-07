@@ -154,6 +154,37 @@ export const userSchema = new mongoose.Schema(
         }
       ],
       default: []
+    },
+    quizPointHistory: {
+      type: [
+        {
+          quiz: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'quizzes'
+          },
+          pointsEarned: {
+            type: Number,
+            default: 0
+          },
+          pointsWeightage: {
+            type: Number,
+            default: 1
+          },
+          questionsCount: {
+            type: Number,
+            default: 0
+          },
+          totalPossiblePoints: {
+            type: Number,
+            default: 0
+          },
+          earnedAt: {
+            type: Date,
+            default: Date.now
+          }
+        }
+      ],
+      default: []
     }
   },
   { timestamps: true }

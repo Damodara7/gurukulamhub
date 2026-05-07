@@ -304,6 +304,35 @@ const CreateQuizForm = ({
             )}
           />
         </Grid>
+        <Grid item xs={12} md={6}>
+          <Controller
+            name='weightage'
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label='⭐ Quiz Weightage (1-10)'
+                select
+                fullWidth
+                required
+                disabled={loading}
+                value={field.value ?? 1}
+                onChange={e => {
+                  const selected = Number(e.target.value || 1)
+                  field.onChange(selected)
+                  setTheFormValue('weightage', selected)
+                }}
+                helperText='Final points = number of questions x weightage'
+              >
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(value => (
+                  <MenuItem key={value} value={value}>
+                    {value}
+                  </MenuItem>
+                ))}
+              </TextField>
+            )}
+          />
+        </Grid>
 
         {/* <Grid item xs={12} md={6}>
           <FormControl fullWidth>
