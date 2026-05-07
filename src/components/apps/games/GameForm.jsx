@@ -1082,11 +1082,15 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
                     value={formData.pin}
                     onChange={handleChange}
                     onBlur={handleBlur}
+                    inputProps={{
+                      readOnly: true,
+                      maxLength: 6,
+                      pattern: '\\d{6}'
+                    }}
                     onFocus={() => setErrors(prev => ({ ...prev, pin: '' }))}
                     error={!!errors.pin && touches.pin}
                     helperText={errors.pin || 'Enter a unique 6-digit PIN'}
                     required
-                    inputProps={{ maxLength: 6, pattern: '\\d{6}' }}
                     inputRef={fieldRefs.pin}
                   />
                 </Grid>
@@ -1263,7 +1267,9 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
                     fullWidth
                     label='No. of Questions'
                     value={formData.questionsCount || 0}
-                    helperText={loading.fetchingQuestionCount ? 'Counting questions...' : 'Auto-filled from selected quiz'}
+                    helperText={
+                      loading.fetchingQuestionCount ? 'Counting questions...' : 'Auto-filled from selected quiz'
+                    }
                     InputProps={{ readOnly: true }}
                   />
                 </Grid>

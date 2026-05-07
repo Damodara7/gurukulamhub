@@ -32,6 +32,7 @@ import BuildOutlinedIcon from '@mui/icons-material/BuildOutlined'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import LanguageIcon from '@mui/icons-material/Language'
 import QuizIcon from '@mui/icons-material/Quiz'
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 
 import { useRouter } from 'next/navigation'
 import Loading from '@/components/Loading'
@@ -445,7 +446,7 @@ export default function QuizCardList({ isAdmin = false }) {
                         size='small'
                         variant='contained'
                         component='label'
-                        startIcon={<BuildOutlinedIcon fontSize='small' />}
+                        startIcon={<EditOutlinedIcon fontSize='small' />}
                         onClick={e => {
                           e.stopPropagation()
                           handleBuildQuiz(item)
@@ -458,7 +459,7 @@ export default function QuizCardList({ isAdmin = false }) {
                           color: 'white'
                         }}
                       >
-                        Build
+                        Update
                       </Button>
                       <Tooltip title='Delete Quiz' arrow sx={{ width: 'auto' }}>
                         <Button
