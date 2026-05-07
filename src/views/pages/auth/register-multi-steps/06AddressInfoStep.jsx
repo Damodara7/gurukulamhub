@@ -17,6 +17,7 @@ import DirectionalIcon from '@components/DirectionalIcon'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { handleLoginAfterRegister } from '../../../../actions'
+import MapAddressPicker from '@/components/google-maps/MapAddressPicker'
 
 // Utils imports
 import { getLocalizedUrl } from '@/utils/i18n'
@@ -36,9 +37,12 @@ const AddressInfoStep = ({
   const searchParams = useSearchParams()
   const { lang: locale } = useParams()
   const router = useRouter()
-  const [street, setStreet] = useState()
+  const [street, setStreet] = useState('')
   const [colony, setColony] = useState('')
   const [village, setVillage] = useState('')
+  // Picked location from Google Map (search/click/drag). Stored alongside text fields.
+  // Shape: { address, lat, lng, street, colony, village, region, country, countryCode, zipcode }
+  const [pickedLocation, setPickedLocation] = useState(null)
 
   const [isButtonEnabled, setIsButtonEnabled] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -119,6 +123,31 @@ const AddressInfoStep = ({
     setIsButtonEnabled(validateName(colony) && validateName(village) && validateName(colony))
   }
 
+  // Triggered when the user picks a location from the map (search / click / drag / current location).
+  // We prefill the text fields from reverse-geocoded components when available so the existing
+  // validation passes naturally; the formatted address + coordinates are persisted on save.
+  const handleLocationChange = location => {
+    if (!location) {
+      setPickedLocation(null)
+      return
+    }
+    setPickedLocation(location)
+
+    if (location.street && validateName(location.street.replace(/[^A-Za-z]/g, ''))) {
+      const sanitized = location.street.replace(/[^A-Za-z]/g, '')
+      if (sanitized.length >= 3) setStreet(sanitized)
+    }
+    if (location.colony && validateName(location.colony.replace(/[^A-Za-z]/g, ''))) {
+      const sanitized = location.colony.replace(/[^A-Za-z]/g, '')
+      if (sanitized.length >= 3) setColony(sanitized)
+    }
+    if (location.village && validateName(location.village.replace(/[^A-Za-z]/g, ''))) {
+      const sanitized = location.village.replace(/[^A-Za-z]/g, '')
+      if (sanitized.length >= 3) setVillage(sanitized)
+    }
+    setErrors({})
+  }
+
   const handleSaveName = () => {
     // Add verification logic here
     updateAddressDetails()
@@ -146,17 +175,27 @@ const AddressInfoStep = ({
   const updateAddressDetails = async () => {
     setLoading(true)
     try {
-      const result = await RestApi.put(ApiUrls.v0.USERS_PROFILE, {
+      // Build payload. Include map-derived fields only when a location was picked.
+      // `coordinates` follows MongoDB 2d-index convention: [longitude, latitude].
+      const payload = {
         email,
-        street: street,
-        colony: colony,
-        village: village
-      })
-      // const result = await clientApi.updateUserProfile(email, {
-      //   street,
-      //   colony,
-      //   village
-      // })
+        street,
+        colony,
+        village
+      }
+
+      if (pickedLocation && typeof pickedLocation.lat === 'number' && typeof pickedLocation.lng === 'number') {
+        payload.address = pickedLocation.address || ''
+        payload.coordinates = [pickedLocation.lng, pickedLocation.lat]
+
+        // Opportunistically persist any region/country/zip the picker resolved.
+        if (pickedLocation.country) payload.country = pickedLocation.country
+        if (pickedLocation.countryCode) payload.countryCode = pickedLocation.countryCode
+        if (pickedLocation.region) payload.region = pickedLocation.region
+        if (pickedLocation.zipcode) payload.zipcode = pickedLocation.zipcode
+      }
+
+      const result = await RestApi.put(ApiUrls.v0.USERS_PROFILE, payload)
       if (result?.status === 'success') {
         // toast.success('Updated Address Details Successfully.')
         // handleNext()
@@ -191,6 +230,16 @@ const AddressInfoStep = ({
             </Typography>
           </div>
         </Grid>
+
+        <Grid item xs={12}>
+          <MapAddressPicker value={pickedLocation} onChange={handleLocationChange} height={300} />
+          {pickedLocation?.address ? (
+            <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mt: 1 }}>
+              <strong>Selected:</strong> {pickedLocation.address}
+            </Typography>
+          ) : null}
+        </Grid>
+
         <Grid item xs={12} sm={6}>
           <TextField
             label='Street Name'
@@ -239,15 +288,14 @@ const AddressInfoStep = ({
                 color={'primary'}
                 component='button'
                 onClick={handleSaveName}
-                disabled={
-                  errors.street ||
-                  errors.village ||
-                  errors.colony ||
-                  street?.length < 3 ||
-                  colony?.length < 3 ||
-                  village?.length < 3 ||
-                  loading
-                }
+                disabled={(() => {
+                  if (loading) return true
+                  if (errors.street || errors.village || errors.colony) return true
+                  // If user picked a location on the map, allow proceeding even when
+                  // some text fields are still empty (we have address + coordinates).
+                  if (pickedLocation?.lat && pickedLocation?.lng) return false
+                  return street?.length < 3 || colony?.length < 3 || village?.length < 3
+                })()}
               >
                 <span style={{ color: '#ffff', fontStyle: 'italic', letterSpacing: '1px' }}>
                   <b>GO!</b>

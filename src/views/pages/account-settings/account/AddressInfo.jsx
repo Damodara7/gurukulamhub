@@ -1,12 +1,14 @@
-import React from 'react'
-import { Autocomplete, Divider, Grid, InputLabel, Select, TextField, FormControl, MenuItem } from '@mui/material'
+import React, { useMemo } from 'react'
+import { Autocomplete, Divider, Grid, TextField, FormControl, Typography } from '@mui/material'
 import CountryRegionDropdown from '../../auth/register-multi-steps/CountryRegionDropdown'
 import AutocompletePostOffice from '../../auth/register-multi-steps/AutocompletePostOffice'
 import AutocompletePincode from '../../auth/register-multi-steps/AutocompletePincode'
+import MapAddressPicker from '@/components/google-maps/MapAddressPicker'
 
 function AddressInfo({
   formData,
   handleFormChange,
+  handleMapAddressChange = () => {},
   setSelectedRegion,
   setCountryCode,
   handleChangeCountry,
@@ -28,11 +30,34 @@ function AddressInfo({
   setLocalityFromDb,
   filteredTimezones
 }) {
+  const mapPickerValue = useMemo(() => {
+    if (Array.isArray(formData.coordinates) && formData.coordinates.length >= 2) {
+      return {
+        lat: formData.coordinates[1],
+        lng: formData.coordinates[0],
+        address: formData.address || ''
+      }
+    }
+    if (formData.address) {
+      return { address: formData.address }
+    }
+    return null
+  }, [formData.coordinates, formData.address])
+
   return (
     <>
       {/* ----Address---- */}
       <Grid item xs={12} marginLeft={'0.25rem'}>
         <Divider> Address </Divider>
+      </Grid>
+
+      <Grid item xs={12}>
+        <MapAddressPicker value={mapPickerValue} onChange={handleMapAddressChange} height={300} />
+        {formData.address ? (
+          <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mt: 1 }}>
+            <strong>Selected on map:</strong> {formData.address}
+          </Typography>
+        ) : null}
       </Grid>
 
       {/* Country */}

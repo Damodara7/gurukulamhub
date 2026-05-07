@@ -412,7 +412,9 @@ export const updateProfileByEmail = async ({ email, data }) => {
         colony: data.colony,
         village: data.village,
         countryCode: data.countryCode,
-        countryDialCode: data.countryDialCode
+        countryDialCode: data.countryDialCode,
+        address: data.address,
+        coordinates: data.coordinates
       })
 
       // Languages array is handled directly - no special processing needed
@@ -432,7 +434,10 @@ export const updateProfileByEmail = async ({ email, data }) => {
           locality: beforeUpdate.locality
         })
 
-        // Try updating individual address fields explicitly
+        // Try updating individual address fields explicitly.
+        // We also include map-derived `address` (formatted) and `coordinates` ([lng, lat])
+        // here so that BOTH the main update path AND the fallback findOneAndUpdate below
+        // persist them — otherwise the fallback path would silently drop them.
         const addressUpdateData = {
           country: data.country,
           countryCode: data.countryCode,
@@ -445,6 +450,12 @@ export const updateProfileByEmail = async ({ email, data }) => {
           street: data.street,
           colony: data.colony,
           village: data.village
+        }
+        if (data.address !== undefined) {
+          addressUpdateData.address = data.address
+        }
+        if (Array.isArray(data.coordinates)) {
+          addressUpdateData.coordinates = data.coordinates
         }
 
         console.log('Address update data:', addressUpdateData)
@@ -501,7 +512,9 @@ export const updateProfileByEmail = async ({ email, data }) => {
           locality: verifyProfile.locality,
           street: verifyProfile.street,
           colony: verifyProfile.colony,
-          village: verifyProfile.village
+          village: verifyProfile.village,
+          address: verifyProfile.address,
+          coordinates: verifyProfile.coordinates
         })
       } catch (updateError) {
         console.error('Error during profile update:', updateError)

@@ -105,6 +105,7 @@ const initialData = {
   street: '',
   colony: '',
   village: '',
+  address: '',
   country: '',
   countryCode: '',
   countryDialCode: '',
@@ -1096,6 +1097,26 @@ const AccountDetails = () => {
     console.log('Value: ', value, typeof value)
   }
 
+  /** Sync map search / pin selection with profile fields saved via PUT /profile */
+  function handleMapAddressChange(location) {
+    setFormData(prev => {
+      if (!location) {
+        return { ...prev, address: '', coordinates: [] }
+      }
+      const next = {
+        ...prev,
+        address: location.address || ''
+      }
+      if (typeof location.lat === 'number' && typeof location.lng === 'number') {
+        next.coordinates = [location.lng, location.lat]
+      }
+      if (location.street) next.street = location.street
+      if (location.colony) next.colony = location.colony
+      if (location.village) next.village = location.village
+      return next
+    })
+  }
+
   const handleFileInputChange = event => {
     console.log('photo file event', event)
     const { files } = event.target
@@ -1308,6 +1329,8 @@ const AccountDetails = () => {
     handleFormChange('street', '')
     handleFormChange('colony', '')
     handleFormChange('village', '')
+    handleFormChange('address', '')
+    handleFormChange('coordinates', [])
 
     setCountryCode(countryValue?.countryCode || '')
 
@@ -1333,7 +1356,9 @@ const AccountDetails = () => {
         postoffice: '',
         street: '',
         colony: '',
-        village: ''
+        village: '',
+        address: '',
+        coordinates: []
       }))
       return
     }
@@ -1405,6 +1430,14 @@ const AccountDetails = () => {
 
       // Efficiently process form data using Object.entries and reduce
       const allFormData = Object.entries(formData).reduce((acc, [key, value]) => {
+        if (key === 'coordinates') {
+          if (Array.isArray(value) && value.length === 2) {
+            acc[key] = value
+          } else if (Array.isArray(value) && value.length === 0) {
+            acc[key] = []
+          }
+          return acc
+        }
         // Always include address fields even if empty (to allow clearing them)
         const addressFields = [
           'country',
@@ -1416,7 +1449,8 @@ const AccountDetails = () => {
           'postoffice',
           'street',
           'colony',
-          'village'
+          'village',
+          'address'
         ]
         if (addressFields.includes(key)) {
           acc[key] = value || '' // Include address fields even if empty
@@ -1446,7 +1480,9 @@ const AccountDetails = () => {
         locality: data.locality,
         street: data.street,
         colony: data.colony,
-        village: data.village
+        village: data.village,
+        address: data.address,
+        coordinates: data.coordinates
       })
 
       if (phoneInput && phoneValid && isPhoneVerified) {
@@ -2432,6 +2468,7 @@ const AccountDetails = () => {
             <AddressInfo
               formData={formData}
               handleFormChange={handleFormChange}
+              handleMapAddressChange={handleMapAddressChange}
               setSelectedRegion={setSelectedRegion}
               setCountryCode={setCountryCode}
               handleChangeCountry={handleChangeCountry}
