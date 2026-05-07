@@ -33,10 +33,6 @@ function VoterIdInfo({
 
   return (
     <>
-      <Grid item xs={12} marginLeft={'0.25rem'}>
-        <Divider> Voter Id </Divider>
-      </Grid>
-
       {/* Voter Id Front-Side */}
       <Grid
         item

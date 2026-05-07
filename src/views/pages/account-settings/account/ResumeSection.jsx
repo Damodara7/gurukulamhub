@@ -17,11 +17,6 @@ const ResumeSection = ({
 }) => {
   return (
     <>
-      {/* ----Resume---- */}
-      <Grid item xs={12} marginLeft={'0.25rem'}>
-        <Divider>Upload Resume</Divider>
-      </Grid>
-
       <Grid item xs={12} sm={6}>
         <FormControl fullWidth>
           <MuiFileInput

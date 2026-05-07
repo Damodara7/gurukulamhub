@@ -31,10 +31,6 @@ const BusinessDetailsSection = ({
       {/* ----Business Details---- */}
       {(formData.accountType === 'BUSINESS' || formData.accountType === 'NGO') && (
         <>
-          <Grid item xs={12} marginLeft={'0.25rem'}>
-            <Divider>{formData.accountType === 'NGO' ? 'Organization Details' : 'Business Details'}</Divider>
-          </Grid>
-
           {/* Organization */}
           <Grid item xs={12} sm={6}>
             <TextField

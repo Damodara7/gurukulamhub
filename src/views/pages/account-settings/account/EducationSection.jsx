@@ -30,10 +30,6 @@ const EducationSection = ({
       {/* ----Education---- */}
       {formData.accountType === 'INDIVIDUAL' && (
         <>
-          <Grid item xs={12} marginLeft={'0.25rem'}>
-            <Divider>Education</Divider>
-          </Grid>
-
           {/* Display Education List */}
           {((profileData?.schools && profileData.schools.length > 0) || pendingEducations.length > 0) && (
             <Grid item xs={12}>

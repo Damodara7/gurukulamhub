@@ -39,10 +39,6 @@ const WorkExperienceSection = ({
 }) => {
   return (
     <>
-      {/* ----Work History---- */}
-      <Grid item xs={12} marginLeft={'0.25rem'}>
-        <Divider> Work History </Divider>
-      </Grid>
       {/* Add New Position Button and Open To Work / Hiring */}
       <Grid item xs={12}>
         <Box

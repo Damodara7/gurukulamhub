@@ -27,11 +27,6 @@ const OrganizationSection = ({
 }) => {
   return (
     <>
-      {/* ----Associated Organizations---- */}
-      <Grid item xs={12} marginLeft={'0.25rem'}>
-        <Divider>Associated Organizations</Divider>
-      </Grid>
-
       {/* Display Organizations List */}
       {((profileData?.associatedOrganizations && profileData.associatedOrganizations.length > 0) ||
         pendingOrganizations.length > 0) && (

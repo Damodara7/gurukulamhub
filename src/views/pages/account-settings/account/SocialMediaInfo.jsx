@@ -4,10 +4,6 @@ import { Divider, Grid, TextField } from '@mui/material'
 function SocialMediaInfo({ formData, handleFormChange, isUrlsValid }) {
   return (
     <>
-      {/* ----Socaial Media Profiles---- */}
-      <Grid item xs={12} marginLeft={'0.25rem'}>
-        <Divider> Social Media Profiles </Divider>
-      </Grid>
       {/* Linkedin */}
       <Grid item xs={12} sm={6}>
         <TextField

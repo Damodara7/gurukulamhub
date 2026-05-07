@@ -62,6 +62,9 @@ import Select from '@mui/material/Select'
 import MenuItem from '@mui/material/MenuItem'
 import Chip from '@mui/material/Chip'
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Autocomplete,
   Box,
   Button,
@@ -82,6 +85,7 @@ import {
   Typography,
   useTheme
 } from '@mui/material'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import * as clientApi from '@/app/api/client/client.api'
 import { calculateProfileCompletion } from '@/utils/profileUtils'
 
@@ -1277,6 +1281,128 @@ const AccountDetails = () => {
     return languageDetails.map(language => language.language).filter(Boolean)
   }, [languageDetails])
 
+  // ---------------------------------------------------------------------------
+  // Dirty tracking: enable Reset / Save Changes only when the form has been
+  // modified relative to the most recently loaded profile snapshot.
+  //
+  // Sources of "change" we treat as dirty:
+  //   1. Any user-editable field in `formData` differs from `profileData`.
+  //   2. Any in-flight collection edits (pending* / removed* arrays).
+  //   3. Any new file picked but not yet saved (profile photo, resume,
+  //      voter ID photos, organization KYC docs).
+  //   4. Phone input changed relative to what was originally loaded.
+  // ---------------------------------------------------------------------------
+  const isDirty = useMemo(() => {
+    // Still loading the baseline -> nothing to save yet.
+    if (!profileData) return false
+
+    const COMPARISON_FIELDS = [
+      'firstname',
+      'lastname',
+      'gender',
+      'age',
+      'accountType',
+      'nickname',
+      'phone',
+      'countryCode',
+      'countryDialCode',
+      'street',
+      'colony',
+      'village',
+      'address',
+      'country',
+      'region',
+      'zipcode',
+      'pincode',
+      'postoffice',
+      'locality',
+      'religion',
+      'caste',
+      'category',
+      'motherTongue',
+      'knownLanguageIds',
+      'voterId',
+      'currentSchoolId',
+      'currentWorkingPositionId',
+      'linkedInUrl',
+      'facebookUrl',
+      'instagramUrl',
+      'youtubeUrl',
+      'openToWork',
+      'hiring',
+      'organization',
+      'websiteUrl',
+      'activeAssociatedOrganizationIds',
+      'organizationRegistrationNumber',
+      'organizationGSTNumber',
+      'organizationPANNumber',
+      'coordinates'
+    ]
+
+    const normalizeForCompare = src => {
+      if (!src) return ''
+      const obj = {}
+      for (const key of COMPARISON_FIELDS) {
+        let value = src[key]
+        if (value === undefined || value === null) value = ''
+        if (key === 'voterId' && typeof value === 'object') {
+          value = {
+            epicNumber: value.epicNumber || '',
+            frontImage: value.frontImage || '',
+            backImage: value.backImage || ''
+          }
+        }
+        if (key === 'age') value = value === '' ? '' : Number(value) || 0
+        if (Array.isArray(value)) value = [...value]
+        obj[key] = value
+      }
+      return JSON.stringify(obj)
+    }
+
+    if (normalizeForCompare(formData) !== normalizeForCompare(profileData)) return true
+
+    // Pending collection edits queued for the next save.
+    if (pendingLanguages.length > 0 || removedLanguageIds.length > 0) return true
+    if (pendingEducations.length > 0 || removedEducationIds.length > 0) return true
+    if (pendingPositions.length > 0 || removedPositionIds.length > 0) return true
+    if (pendingOrganizations.length > 0 || removedOrganizationIds.length > 0) return true
+
+    // New files picked but not yet uploaded/saved.
+    if (fileInput) return true
+    if (resumeFileInput) return true
+    if (organizationRegistrationDocument || organizationGSTDocument || organizationPANDocument) return true
+    if (voterIdPhotoFiles?.front || voterIdPhotoFiles?.back) return true
+
+    // Voter ID metadata edits buffered for save.
+    if (pendingVoterId) return true
+
+    // Phone input is tracked outside formData; compare against the originally
+    // loaded value so a typed-but-not-saved phone change still counts as dirty.
+    if ((phoneInput || '') !== (originalDbPhone || '')) return true
+
+    return false
+  }, [
+    formData,
+    profileData,
+    pendingLanguages,
+    removedLanguageIds,
+    pendingEducations,
+    removedEducationIds,
+    pendingPositions,
+    removedPositionIds,
+    pendingOrganizations,
+    removedOrganizationIds,
+    fileInput,
+    resumeFileInput,
+    organizationRegistrationDocument,
+    organizationGSTDocument,
+    organizationPANDocument,
+    voterIdPhotoFiles,
+    pendingVoterId,
+    phoneInput,
+    originalDbPhone
+  ])
+
   function getAssocaiatedOrganizationLabel(value) {
     return associatedOrganizationOptions.find(option => option.value === value)?.label || 'Unknown'
   }
@@ -2424,176 +2550,263 @@ const AccountDetails = () => {
       </CardContent>
       <CardContent sx={{ pt: { xs: 4, md: 5 } }}>
         <form onSubmit={handleSubmit}>
-          <Grid container spacing={5}>
-            {/* Personal Information */}
-            <PersonalInfo
-              phoneProps={{
-                phoneInput: phoneInput,
-                country: selectedCountryObject?.countryCode?.toLowerCase(),
-                phoneValid: phoneValid,
-                onChange: handlePhoneInputChange,
-                setIsPhoneVerified: setIsPhoneVerified,
-                phoneDialCode: countryDialCode,
-                originalDbPhone: originalDbPhone,
-                onRestoreVerifiedPhone: handleRestoreVerifiedPhone,
-                onPhoneVerified: handlePhoneVerified
-              }}
-              formData={formData}
-              getLanguageLabel={getLanguageLabel}
-              isFormValid={isFormValid}
-              handleFormChange={handleFormChange}
-              handleOpenModal={handleOpenModal}
-              languageOptions={languageOptions}
-              handleDeleteChipFromMultiSelect={handleDeleteChipFromMultiSelect}
-              handleDeleteLanguage={handleDeleteLanguage}
-              handleEditLanguage={handleEditLanguage}
-              languageDetails={languageDetails}
-            />
+          {/* Each form section is wrapped in a collapsible Accordion (see <SectionAccordion> below).
+              Form state is unchanged — accordions are purely UI organization, so the existing
+              submit/validation logic in handleSubmit continues to work. */}
+          <Stack spacing={2} mt={3}>
+            {/* 1. Personal Information (account type lives inside this section) */}
+            <SectionAccordion
+              id='section-personal'
+              icon='ri-user-3-line'
+              title='Personal Information'
+              subtitle='Your name, contact details, languages and account type.'
+              defaultExpanded
+              theme={theme}
+            >
+              <PersonalInfo
+                phoneProps={{
+                  phoneInput: phoneInput,
+                  country: selectedCountryObject?.countryCode?.toLowerCase(),
+                  phoneValid: phoneValid,
+                  onChange: handlePhoneInputChange,
+                  setIsPhoneVerified: setIsPhoneVerified,
+                  phoneDialCode: countryDialCode,
+                  originalDbPhone: originalDbPhone,
+                  onRestoreVerifiedPhone: handleRestoreVerifiedPhone,
+                  onPhoneVerified: handlePhoneVerified
+                }}
+                formData={formData}
+                getLanguageLabel={getLanguageLabel}
+                isFormValid={isFormValid}
+                handleFormChange={handleFormChange}
+                handleOpenModal={handleOpenModal}
+                languageOptions={languageOptions}
+                handleDeleteChipFromMultiSelect={handleDeleteChipFromMultiSelect}
+                handleDeleteLanguage={handleDeleteLanguage}
+                handleEditLanguage={handleEditLanguage}
+                languageDetails={languageDetails}
+              />
+            </SectionAccordion>
 
-            {/* ----Voter Id---- */}
-            <VoterIdInfo
-              voterIdPhotos={voterIdPhotos}
-              handleVoterIdPhotoDelete={handleVoterIdPhotoDelete}
-              handleVoterIdPhotosInputChange={handleVoterIdPhotosInputChange}
-              setVoterIdPhotoFiles={setVoterIdPhotoFiles}
-              setVoterIdPhotos={setVoterIdPhotos}
-              setIsCropMode={setIsCropMode}
-              isCropMode={isCropMode}
-              isEpicValid={isEpicValid}
-              formData={formData}
-              handleFormChange={handleFormChange}
-              handleVoterIdImageCrop={handleVoterIdImageCrop}
-            />
-            {/* ----Address---- */}
-            <AddressInfo
-              formData={formData}
-              handleFormChange={handleFormChange}
-              handleMapAddressChange={handleMapAddressChange}
-              setSelectedRegion={setSelectedRegion}
-              setCountryCode={setCountryCode}
-              handleChangeCountry={handleChangeCountry}
-              selectedCountryObject={selectedCountryObject}
-              selectedCountry={selectedCountry}
-              setSelectedCountry={setSelectedCountry}
-              setSelectedCountryObject={setSelectedCountryObject}
-              selectedRegion={selectedRegion}
-              postOffices={postOffices}
-              fetchPostOffices={fetchPostOffices}
-              fetchPinCodesForState={fetchPinCodesForState}
-              loadingPincodesOrPostOffices={loadingPincodesOrPostOffices}
-              selectedZipcode={selectedZipcode}
-              setSelectedZipcode={setSelectedZipcode}
-              pinCodes={pinCodes}
-              setSelectedLocality={setSelectedLocality}
-              selectedLocality={selectedLocality}
-              setZipcodeFromDb={setZipcodeFromDb}
-              setLocalityFromDb={setLocalityFromDb}
-              // filteredTimezones={filteredTimezones}
-            />
+            {/* 2. Business / Organization Details — only meaningful for BUSINESS or NGO accounts */}
+            {(formData.accountType === 'BUSINESS' || formData.accountType === 'NGO') && (
+              <SectionAccordion
+                id='section-business'
+                icon='ri-building-2-line'
+                title={formData.accountType === 'NGO' ? 'Organization Details' : 'Business Details'}
+                subtitle='Registration, GST/PAN and supporting documents.'
+                theme={theme}
+              >
+                <BusinessDetailsSection
+                  formData={formData}
+                  handleFormChange={handleFormChange}
+                  organizationRegistrationDocument={organizationRegistrationDocument}
+                  organizationGSTDocument={organizationGSTDocument}
+                  organizationPANDocument={organizationPANDocument}
+                  existingOrganizationRegistrationFile={profileData?.organizationRegistrationFile}
+                  existingOrganizationGSTFile={profileData?.organizationGSTFile}
+                  existingOrganizationPANFile={profileData?.organizationPANFile}
+                  profileFileViewUrlBuilder={getProfileFileViewUrl}
+                  onDeleteOrganizationRegistrationFile={handleDeleteOrganizationRegistrationFile}
+                  onDeleteOrganizationGSTFile={handleDeleteOrganizationGSTFile}
+                  onDeleteOrganizationPANFile={handleDeleteOrganizationPANFile}
+                  handleOrganizationRegistrationDocumentChange={e =>
+                    handleFileInputChangeByFieldName('organizationRegistrationDocument', e)
+                  }
+                  handleOrganizationGSTDocumentChange={e =>
+                    handleFileInputChangeByFieldName('organizationGSTDocument', e)
+                  }
+                  handleOrganizationPANDocumentChange={e =>
+                    handleFileInputChangeByFieldName('organizationPANDocument', e)
+                  }
+                  uploadOrganizationRegistrationDocToS3={handleUploadOrganizationRegistrationDocToS3}
+                  uploadOrganizationGSTDocToS3={handleUploadOrganizationGSTDocToS3}
+                  uploadOrganizationPANDocToS3={handleUploadOrganizationPANDocToS3}
+                  deleteFileFromS3Handler={handleDeleteFileFromS3}
+                />
+              </SectionAccordion>
+            )}
 
-            {/* Education Section */}
-            <EducationSection
-              formData={formData}
-              profileData={profileData}
-              pendingEducations={pendingEducations}
-              removedEducationIds={removedEducationIds}
-              isModalOpen={isModalOpen}
-              editingEducation={editingEducation}
-              viewingEducation={viewingEducation}
-              isViewEducationModalOpen={isViewEducationModalOpen}
-              handleOpenModal={handleOpenModal}
-              handleCloseModal={handleCloseModal}
-              handleCloseViewEducationModal={handleCloseViewEducationModal}
-              handleEditEducation={handleEditEducation}
-              handleViewEducation={handleViewEducation}
-              handleDeleteEducation={handleDeleteEducation}
-              handleAddEducationToState={handleAddEducationToState}
-              handleUpdateEducationInState={handleUpdateEducationInState}
-              session={session}
-            />
+            {/* 3. Address & Location */}
+            <SectionAccordion
+              id='section-address'
+              icon='ri-map-pin-2-line'
+              title='Address & Location'
+              subtitle='Country, region and exact location on the map.'
+              theme={theme}
+            >
+              <AddressInfo
+                formData={formData}
+                handleFormChange={handleFormChange}
+                handleMapAddressChange={handleMapAddressChange}
+                setSelectedRegion={setSelectedRegion}
+                setCountryCode={setCountryCode}
+                handleChangeCountry={handleChangeCountry}
+                selectedCountryObject={selectedCountryObject}
+                selectedCountry={selectedCountry}
+                setSelectedCountry={setSelectedCountry}
+                setSelectedCountryObject={setSelectedCountryObject}
+                selectedRegion={selectedRegion}
+                postOffices={postOffices}
+                fetchPostOffices={fetchPostOffices}
+                fetchPinCodesForState={fetchPinCodesForState}
+                loadingPincodesOrPostOffices={loadingPincodesOrPostOffices}
+                selectedZipcode={selectedZipcode}
+                setSelectedZipcode={setSelectedZipcode}
+                pinCodes={pinCodes}
+                setSelectedLocality={setSelectedLocality}
+                selectedLocality={selectedLocality}
+                setZipcodeFromDb={setZipcodeFromDb}
+                setLocalityFromDb={setLocalityFromDb}
+              />
+            </SectionAccordion>
 
-            {/* Work Experience Section */}
-            <WorkExperienceSection
-              formData={formData}
-              profileData={profileData}
-              pendingPositions={pendingPositions}
-              removedPositionIds={removedPositionIds}
-              isModalOpen={isModalOpen}
-              editingWorkingPosition={editingWorkingPosition}
-              viewingPosition={viewingPosition}
-              isViewWorkingPositionModalOpen={isViewModalOpen}
-              handleOpenModal={handleOpenModal}
-              handleCloseModal={handleCloseModal}
-              handleCloseViewWorkingPositionModal={handleCloseViewModal}
-              handleEditWorkingPosition={handleEditWorkingPosition}
-              handleViewWorkingPosition={handleViewWorkingPosition}
-              handleDeleteWorkingPosition={handleDeleteWorkingPosition}
-              handleAddWorkingPositionToState={handleAddPositionToState}
-              handleUpdateWorkingPositionInState={handleUpdatePositionInState}
-              handleFormChange={handleFormChange}
-              session={session}
-            />
+            {/* 4. Voter ID */}
+            <SectionAccordion
+              id='section-voter'
+              icon='ri-bank-card-line'
+              title='Voter ID'
+              subtitle='Optional — EPIC number and ID photos.'
+              theme={theme}
+            >
+              <VoterIdInfo
+                voterIdPhotos={voterIdPhotos}
+                handleVoterIdPhotoDelete={handleVoterIdPhotoDelete}
+                handleVoterIdPhotosInputChange={handleVoterIdPhotosInputChange}
+                setVoterIdPhotoFiles={setVoterIdPhotoFiles}
+                setVoterIdPhotos={setVoterIdPhotos}
+                setIsCropMode={setIsCropMode}
+                isCropMode={isCropMode}
+                isEpicValid={isEpicValid}
+                formData={formData}
+                handleFormChange={handleFormChange}
+                handleVoterIdImageCrop={handleVoterIdImageCrop}
+              />
+            </SectionAccordion>
 
-            {/* Organization Section */}
-            <OrganizationSection
-              formData={formData}
-              profileData={profileData}
-              pendingOrganizations={pendingOrganizations}
-              removedOrganizationIds={removedOrganizationIds}
-              isModalOpen={isModalOpen}
-              editingAssociatedOrganization={editingAssociatedOrganization}
-              viewingOrganization={viewingOrganization}
-              isViewAssociatedOrganizationModalOpen={isViewOrgModalOpen}
-              handleOpenModal={handleOpenModal}
-              handleCloseModal={handleCloseModal}
-              handleCloseViewAssociatedOrganizationModal={handleCloseViewOrgModal}
-              handleEditAssociatedOrganization={handleEditAssociatedOrganization}
-              handleViewAssociatedOrganization={handleViewAssociatedOrganization}
-              handleDeleteAssociatedOrganization={handleDeleteAssociatedOrganization}
-              handleAddAssociatedOrganizationToState={handleAddOrganizationToState}
-              handleUpdateAssociatedOrganizationInState={handleUpdateOrganizationInState}
-              session={session}
-            />
+            {/* 5. Education — INDIVIDUAL accounts only (matches submit-time normalization) */}
+            {formData.accountType === 'INDIVIDUAL' && (
+              <SectionAccordion
+                id='section-education'
+                icon='ri-graduation-cap-line'
+                title='Education'
+                subtitle='Schools, degrees and fields of study.'
+                theme={theme}
+              >
+                <EducationSection
+                  formData={formData}
+                  profileData={profileData}
+                  pendingEducations={pendingEducations}
+                  removedEducationIds={removedEducationIds}
+                  isModalOpen={isModalOpen}
+                  editingEducation={editingEducation}
+                  viewingEducation={viewingEducation}
+                  isViewEducationModalOpen={isViewEducationModalOpen}
+                  handleOpenModal={handleOpenModal}
+                  handleCloseModal={handleCloseModal}
+                  handleCloseViewEducationModal={handleCloseViewEducationModal}
+                  handleEditEducation={handleEditEducation}
+                  handleViewEducation={handleViewEducation}
+                  handleDeleteEducation={handleDeleteEducation}
+                  handleAddEducationToState={handleAddEducationToState}
+                  handleUpdateEducationInState={handleUpdateEducationInState}
+                  session={session}
+                />
+              </SectionAccordion>
+            )}
 
-            {/* Business Details Section */}
-            <BusinessDetailsSection
-              formData={formData}
-              handleFormChange={handleFormChange}
-              organizationRegistrationDocument={organizationRegistrationDocument}
-              organizationGSTDocument={organizationGSTDocument}
-              organizationPANDocument={organizationPANDocument}
-              existingOrganizationRegistrationFile={profileData?.organizationRegistrationFile}
-              existingOrganizationGSTFile={profileData?.organizationGSTFile}
-              existingOrganizationPANFile={profileData?.organizationPANFile}
-              profileFileViewUrlBuilder={getProfileFileViewUrl}
-              onDeleteOrganizationRegistrationFile={handleDeleteOrganizationRegistrationFile}
-              onDeleteOrganizationGSTFile={handleDeleteOrganizationGSTFile}
-              onDeleteOrganizationPANFile={handleDeleteOrganizationPANFile}
-              handleOrganizationRegistrationDocumentChange={e =>
-                handleFileInputChangeByFieldName('organizationRegistrationDocument', e)
-              }
-              handleOrganizationGSTDocumentChange={e => handleFileInputChangeByFieldName('organizationGSTDocument', e)}
-              handleOrganizationPANDocumentChange={e => handleFileInputChangeByFieldName('organizationPANDocument', e)}
-              uploadOrganizationRegistrationDocToS3={handleUploadOrganizationRegistrationDocToS3}
-              uploadOrganizationGSTDocToS3={handleUploadOrganizationGSTDocToS3}
-              uploadOrganizationPANDocToS3={handleUploadOrganizationPANDocToS3}
-              deleteFileFromS3Handler={handleDeleteFileFromS3}
-            />
+            {/* 6. Work Experience — INDIVIDUAL accounts only */}
+            {formData.accountType === 'INDIVIDUAL' && (
+              <SectionAccordion
+                id='section-work'
+                icon='ri-briefcase-line'
+                title='Work Experience'
+                subtitle='Past and current positions.'
+                theme={theme}
+              >
+                <WorkExperienceSection
+                  formData={formData}
+                  profileData={profileData}
+                  pendingPositions={pendingPositions}
+                  removedPositionIds={removedPositionIds}
+                  isModalOpen={isModalOpen}
+                  editingWorkingPosition={editingWorkingPosition}
+                  viewingPosition={viewingPosition}
+                  isViewWorkingPositionModalOpen={isViewModalOpen}
+                  handleOpenModal={handleOpenModal}
+                  handleCloseModal={handleCloseModal}
+                  handleCloseViewWorkingPositionModal={handleCloseViewModal}
+                  handleEditWorkingPosition={handleEditWorkingPosition}
+                  handleViewWorkingPosition={handleViewWorkingPosition}
+                  handleDeleteWorkingPosition={handleDeleteWorkingPosition}
+                  handleAddWorkingPositionToState={handleAddPositionToState}
+                  handleUpdateWorkingPositionInState={handleUpdatePositionInState}
+                  handleFormChange={handleFormChange}
+                  session={session}
+                />
+              </SectionAccordion>
+            )}
 
-            {/* Resume Section */}
-            <ResumeSection
-              formData={formData}
-              resumeFileInput={resumeFileInput}
-              existingResumeFile={profileData?.resumeFile}
-              profileFileViewUrlBuilder={getProfileFileViewUrl}
-              onDeleteResumeFile={handleDeleteResumeFile}
-              handleResumeFileInputChange={handleResumeFileInputChange}
-              uploadResumeFileToS3={handleUploadResumeFileToS3}
-              deleteFileFromS3Handler={handleDeleteFileFromS3}
-            />
+            {/* 7. Associated Organizations */}
+            <SectionAccordion
+              id='section-org'
+              icon='ri-team-line'
+              title='Associated Organizations'
+              subtitle='Organizations you have worked with or volunteered for.'
+              theme={theme}
+            >
+              <OrganizationSection
+                formData={formData}
+                profileData={profileData}
+                pendingOrganizations={pendingOrganizations}
+                removedOrganizationIds={removedOrganizationIds}
+                isModalOpen={isModalOpen}
+                editingAssociatedOrganization={editingAssociatedOrganization}
+                viewingOrganization={viewingOrganization}
+                isViewAssociatedOrganizationModalOpen={isViewOrgModalOpen}
+                handleOpenModal={handleOpenModal}
+                handleCloseModal={handleCloseModal}
+                handleCloseViewAssociatedOrganizationModal={handleCloseViewOrgModal}
+                handleEditAssociatedOrganization={handleEditAssociatedOrganization}
+                handleViewAssociatedOrganization={handleViewAssociatedOrganization}
+                handleDeleteAssociatedOrganization={handleDeleteAssociatedOrganization}
+                handleAddAssociatedOrganizationToState={handleAddOrganizationToState}
+                handleUpdateAssociatedOrganizationInState={handleUpdateOrganizationInState}
+                session={session}
+              />
+            </SectionAccordion>
 
-            {/* ----Socaial Media Profiles---- */}
-            <SocialMediaInfo formData={formData} handleFormChange={handleFormChange} isUrlsValid={isUrlsValid} />
+            {/* 8. Resume */}
+            <SectionAccordion
+              id='section-resume'
+              icon='ri-file-paper-line'
+              title='Resume / CV'
+              subtitle='Upload a PDF resume to share with recruiters.'
+              theme={theme}
+            >
+              <ResumeSection
+                formData={formData}
+                resumeFileInput={resumeFileInput}
+                existingResumeFile={profileData?.resumeFile}
+                profileFileViewUrlBuilder={getProfileFileViewUrl}
+                onDeleteResumeFile={handleDeleteResumeFile}
+                handleResumeFileInputChange={handleResumeFileInputChange}
+                uploadResumeFileToS3={handleUploadResumeFileToS3}
+                deleteFileFromS3Handler={handleDeleteFileFromS3}
+              />
+            </SectionAccordion>
+
+            {/* 9. Social Media */}
+            <SectionAccordion
+              id='section-social'
+              icon='ri-share-line'
+              title='Social Media Profiles'
+              subtitle='LinkedIn, Facebook, Instagram and YouTube links.'
+              theme={theme}
+            >
+              <SocialMediaInfo formData={formData} handleFormChange={handleFormChange} isUrlsValid={isUrlsValid} />
+            </SectionAccordion>
+          </Stack>
 
             {isModalOpen.language && (
               <NewLanguageModal
@@ -2675,36 +2888,124 @@ const AccountDetails = () => {
               onEdit={handleEditEducation}
             />
 
-            {/* Actions */}
-            <Grid item xs={12} mt={4}>
+            {/* Sticky action bar — keeps Save Changes always reachable while the user
+                edits any of the collapsible sections above. */}
+            <Box
+              sx={{
+                position: 'sticky',
+                bottom: 0,
+                zIndex: 2,
+                py: 2,
+                mt: 2,
+                bgcolor: 'background.paper',
+                borderTop: 1,
+                borderColor: 'divider'
+              }}
+            >
               <Stack direction='row' spacing={2} justifyContent='center'>
-                <Button variant='outlined' type='reset' onClick={handleResetForm}>
-                  Reset
-                </Button>
-                <Button
-                  disabled={
-                    isFormSubmitting ||
-                    getLoading ||
-                    !isEpicValid ||
-                    (formData.facebookUrl && !isUrlsValid.facebookUrl) ||
-                    (formData.instagramUrl && !isUrlsValid.instagramUrl) ||
-                    (formData.linkedInUrl && !isUrlsValid.linkedInUrl) ||
-                    (formData.youtubeUrl && !isUrlsValid.youtubeUrl)
-                  }
-                  variant='contained'
-                  type='submit'
-                  color='primary'
-                  style={{ color: 'white', backgroundColor: theme.palette.primary.main }}
-                >
-                  {isFormSubmitting ? 'Saving...' : 'Save Changes'}
-                </Button>
+                <Tooltip title={!isDirty ? 'No changes to discard' : ''} disableHoverListener={isDirty}>
+                  <span>
+                    <Button
+                      variant='outlined'
+                      type='reset'
+                      onClick={handleResetForm}
+                      disabled={!isDirty || isFormSubmitting || getLoading}
+                    >
+                      Reset
+                    </Button>
+                  </span>
+                </Tooltip>
+                <Tooltip title={!isDirty ? 'No changes to save' : ''} disableHoverListener={isDirty}>
+                  <span>
+                    <Button
+                      disabled={
+                        !isDirty ||
+                        isFormSubmitting ||
+                        getLoading ||
+                        !isEpicValid ||
+                        (formData.facebookUrl && !isUrlsValid.facebookUrl) ||
+                        (formData.instagramUrl && !isUrlsValid.instagramUrl) ||
+                        (formData.linkedInUrl && !isUrlsValid.linkedInUrl) ||
+                        (formData.youtubeUrl && !isUrlsValid.youtubeUrl)
+                      }
+                      variant='contained'
+                      type='submit'
+                      color='primary'
+                      style={{ color: 'white', backgroundColor: theme.palette.primary.main }}
+                    >
+                      {isFormSubmitting ? 'Saving...' : 'Save Changes'}
+                    </Button>
+                  </span>
+                </Tooltip>
               </Stack>
-            </Grid>
-          </Grid>
+            </Box>
         </form>
       </CardContent>
     </Card>
   )
 }
+
+// Collapsible section wrapper used by AccountDetails. Each form section returns
+// `<Grid item>` children, so we wrap them in a Grid container inside AccordionDetails
+// to preserve their existing layout while giving each section its own collapsible card.
+const SectionAccordion = ({ id, icon, title, subtitle, defaultExpanded = false, theme, children }) => (
+  <Accordion
+    defaultExpanded={defaultExpanded}
+    disableGutters
+    elevation={0}
+    sx={{
+      border: '1px solid',
+      borderColor: 'divider',
+      borderRadius: 2,
+      overflow: 'hidden',
+      '&:before': { display: 'none' }
+    }}
+  >
+    <AccordionSummary
+      expandIcon={<ExpandMoreIcon />}
+      aria-controls={`${id}-content`}
+      id={`${id}-header`}
+      sx={{
+        px: { xs: 2, sm: 2.5 },
+        '& .MuiAccordionSummary-content': { my: 1.25, alignItems: 'center', gap: 1.5 }
+      }}
+    >
+      {icon && (
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 36,
+            height: 36,
+            borderRadius: 1.5,
+            bgcolor: theme ? alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.18 : 0.1) : 'action.hover',
+            flex: 'none'
+          }}
+        >
+          <i
+            className={icon}
+            style={{ fontSize: 18, color: theme ? theme.palette.primary.main : undefined }}
+          />
+        </Box>
+      )}
+      <Box sx={{ minWidth: 0 }}>
+        <Typography variant='subtitle1' sx={{ fontWeight: 600, lineHeight: 1.2 }} noWrap>
+          {title}
+        </Typography>
+        {subtitle && (
+          <Typography variant='caption' color='text.secondary' sx={{ display: 'block', lineHeight: 1.3 }}>
+            {subtitle}
+          </Typography>
+        )}
+      </Box>
+    </AccordionSummary>
+    <AccordionDetails sx={{ px: { xs: 2, sm: 3 }, py: { xs: 2.5, sm: 3 } }}>
+      <Grid container spacing={3}>
+        {children}
+      </Grid>
+    </AccordionDetails>
+  </Accordion>
+)
 
 export default AccountDetails

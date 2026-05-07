@@ -71,10 +71,6 @@ function PersonelInfo({
 }) {
   return (
     <>
-      {/* ----Personal Information---- */}
-      <Grid item xs={12} marginLeft={'0.25rem'}>
-        <Divider> Personal Information </Divider>
-      </Grid>
       {/* First Name */}
       <Grid item xs={12} sm={6}>
         <TextField

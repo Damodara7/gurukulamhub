@@ -46,11 +46,6 @@ function AddressInfo({
 
   return (
     <>
-      {/* ----Address---- */}
-      <Grid item xs={12} marginLeft={'0.25rem'}>
-        <Divider> Address </Divider>
-      </Grid>
-
       <Grid item xs={12}>
         <MapAddressPicker value={mapPickerValue} onChange={handleMapAddressChange} height={300} />
         {formData.address ? (
