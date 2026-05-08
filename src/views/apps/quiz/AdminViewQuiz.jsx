@@ -219,7 +219,16 @@ const AdminViewQuiz = ({ quizId }) => {
   const statusConfig = getStatusConfig()
 
   return (
-    <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', bgcolor: theme.palette.background.default }}>
+    <Box
+      sx={{
+        flex: 1,
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        bgcolor: theme.palette.background.default
+      }}
+    >
       {/* Header Section */}
       <Box
         sx={{
@@ -335,7 +344,16 @@ const AdminViewQuiz = ({ quizId }) => {
       </Box>
 
       {/* Main Content */}
-      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', px: { xs: 2, md: 3 } }}>
+      <Box
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0,
+          overflow: 'hidden',
+          px: { xs: 2, md: 3 }
+        }}
+      >
         <Stack spacing={4} sx={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           {/* Quiz Details Card */}
           <Card
@@ -702,85 +720,113 @@ const AdminViewQuiz = ({ quizId }) => {
               </Grid>
 
               {/* Main Content Area */}
-              <Grid item xs={12} md={9} sx={{ display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%', flex: 1 }}>
-                <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', height: '100%' }}>
-                  <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', minHeight: 0, WebkitOverflowScrolling: 'touch', pr: 1 }}>
-                    <Stack spacing={3}>
-                {/* Selected Primary Question */}
-                {selectedPrimaryQuestionId && (
-                  <Card
+              <Grid
+                item
+                xs={12}
+                md={9}
+                sx={{ display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%', flex: 1 }}
+              >
+                <Box
+                  sx={{
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    minHeight: 0,
+                    overflow: 'hidden',
+                    height: '100%'
+                  }}
+                >
+                  <Box
                     sx={{
-                      borderRadius: 2,
-                      bgcolor: theme.palette.background.paper,
-                      border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.12 : 0.08)}`,
-                      boxShadow:
-                        theme.palette.mode === 'dark' ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.04)',
-                      flexShrink: 0
+                      flex: 1,
+                      overflowY: 'auto',
+                      overflowX: 'hidden',
+                      minHeight: 0,
+                      WebkitOverflowScrolling: 'touch',
+                      pr: 1
                     }}
                   >
-                    <Box
-                      sx={{
-                        p: 2,
-                        bgcolor: alpha(theme.palette.primary.main, 0.05),
-                        borderBottom: '1px solid',
-                        borderColor: 'divider'
-                      }}
-                    >
-                      <Stack direction='row' justifyContent='space-between' alignItems='center'>
-                        <Typography variant='subtitle1' fontWeight={600}>
-                          Primary Question
-                        </Typography>
-                        {primaryQuestions.map(question => {
-                          if (question._id === selectedPrimaryQuestionId) {
-                            return (
-                              <Chip
-                                key={question._id}
-                                icon={<LanguageIcon />}
-                                label={question.language.split('|')[1]}
-                                size='small'
-                                sx={{
-                                  bgcolor: theme.palette.primary.main,
-                                  color: 'white',
-                                  fontWeight: 600,
-                                  '& .MuiChip-icon': {
-                                    color: 'white'
-                                  }
-                                }}
-                              />
-                            )
-                          }
-                          return null
-                        })}
-                      </Stack>
-                    </Box>
-                    {primaryQuestions.map(question => {
-                      if (question._id === selectedPrimaryQuestionId) {
-                        return (
-                          <Box key={question._id}>
-                            {(() => {
-                              switch (question.templateId) {
-                                case 'single-choice':
-                                  return <SingleChoiceTemplate question={question} />
-                                case 'multiple-choice':
-                                  return <MultipleChoiceTemplate question={question} />
-                                case 'true-or-false':
-                                  return <TrueOrFalseTemplate question={question} />
-                                case 'fill-in-blank':
-                                  return <FillInTheBlanksTemplate question={question} />
-                                default:
-                                  return <Typography>No Template Found</Typography>
-                              }
-                            })()}
+                    <Stack spacing={3}>
+                      {/* Selected Primary Question */}
+                      {selectedPrimaryQuestionId && (
+                        <Card
+                          sx={{
+                            borderRadius: 2,
+                            bgcolor: theme.palette.background.paper,
+                            border: `1px solid ${alpha(
+                              theme.palette.divider,
+                              theme.palette.mode === 'dark' ? 0.12 : 0.08
+                            )}`,
+                            boxShadow:
+                              theme.palette.mode === 'dark'
+                                ? '0 2px 12px rgba(0,0,0,0.3)'
+                                : '0 2px 12px rgba(0,0,0,0.04)',
+                            flexShrink: 0
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              p: 2,
+                              bgcolor: alpha(theme.palette.primary.main, 0.05),
+                              borderBottom: '1px solid',
+                              borderColor: 'divider'
+                            }}
+                          >
+                            <Stack direction='row' justifyContent='space-between' alignItems='center'>
+                              <Typography variant='subtitle1' fontWeight={600}>
+                                Primary Question
+                              </Typography>
+                              {primaryQuestions.map(question => {
+                                if (question._id === selectedPrimaryQuestionId) {
+                                  return (
+                                    <Chip
+                                      key={question._id}
+                                      icon={<LanguageIcon />}
+                                      label={question.language.split('|')[1]}
+                                      size='small'
+                                      sx={{
+                                        bgcolor: theme.palette.primary.main,
+                                        color: 'white',
+                                        fontWeight: 600,
+                                        '& .MuiChip-icon': {
+                                          color: 'white'
+                                        }
+                                      }}
+                                    />
+                                  )
+                                }
+                                return null
+                              })}
+                            </Stack>
                           </Box>
-                        )
-                      }
-                      return null
-                    })}
-                  </Card>
-                )}
+                          {primaryQuestions.map(question => {
+                            if (question._id === selectedPrimaryQuestionId) {
+                              return (
+                                <Box key={question._id}>
+                                  {(() => {
+                                    switch (question.templateId) {
+                                      case 'single-choice':
+                                        return <SingleChoiceTemplate question={question} />
+                                      case 'multiple-choice':
+                                        return <MultipleChoiceTemplate question={question} />
+                                      case 'true-or-false':
+                                        return <TrueOrFalseTemplate question={question} />
+                                      case 'fill-in-blank':
+                                        return <FillInTheBlanksTemplate question={question} />
+                                      default:
+                                        return <Typography>No Template Found</Typography>
+                                    }
+                                  })()}
+                                </Box>
+                              )
+                            }
+                            return null
+                          })}
+                        </Card>
+                      )}
 
-                {/* Secondary Questions */}
-                {/* <Card
+                      {/* Secondary Questions */}
+                      {/* <Card
                   sx={{
                     borderRadius: 2,
                     bgcolor: theme.palette.background.paper,

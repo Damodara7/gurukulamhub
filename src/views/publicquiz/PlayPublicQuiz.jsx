@@ -35,7 +35,6 @@ import Timer from '@/components/Timer'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { toast } from 'react-toastify'
-import { getAllMatchingFileUrlsFromS3WithUnknownExtension, quizBucketName } from '@/utils/awsS3Utils'
 import { useSession } from 'next-auth/react'
 
 export const fetchQuestionsByLanguage = async (quizId, languageCode) => {
@@ -79,29 +78,6 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
     }
   }, [languageCode, selectedLanguage])
 
-  async function getQuizDocUrls(quizUUID) {
-    try {
-      const fileUrls = await getAllMatchingFileUrlsFromS3WithUnknownExtension({
-        bucketName: quizBucketName,
-        fileNamePrefix: `${quizUUID}/documents`
-      })
-      if (!fileUrls) return []
-
-      return fileUrls.map(fileUrl => {
-        const match = fileUrl.match(/\/documents\/([0-9a-fA-F-]+)\./)
-        const id = match ? match[1] : null
-        return {
-          id,
-          description: `document-${id || 'unknown'}`,
-          document: fileUrl
-        }
-      })
-    } catch (error) {
-      console.log('Error getting quiz docs: ', error)
-      return []
-    }
-  }
-
   useEffect(() => {
     async function getQuizData() {
       setLoading(true)
@@ -115,19 +91,14 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
             fetchedQuestionCount = questionCountRes.result.length
           }
         }
-        const quizDocs = await getQuizDocUrls(result.result.id)
-        const mergedDocuments =
-          result.result.documents?.map(doc => {
-            const matchingDoc = quizDocs?.find(quizDoc => quizDoc.id === doc.id)
-            return {
-              description: doc.description,
-              document: matchingDoc?.document || doc.document || null
-            }
-          }) || []
+
+        // Documents now contain their S3/Spaces URL directly in the DB (under `url` and `document`),
+        // so we just pass them through. The poster screen handles the display + open behaviour.
+        const dbDocuments = Array.isArray(result.result.documents) ? result.result.documents : []
 
         setQuiz({
           ...result.result,
-          documents: mergedDocuments
+          documents: dbDocuments
         })
         setResolvedQuestionCount(fetchedQuestionCount)
       } else {

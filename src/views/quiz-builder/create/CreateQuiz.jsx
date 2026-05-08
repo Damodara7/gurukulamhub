@@ -4,19 +4,10 @@ import { useSession } from 'next-auth/react'
 import { useForm, Controller } from 'react-hook-form'
 import useUUID from '@/app/hooks/useUUID'
 import * as RestApi from '@/utils/restApiUtil'
-import {
-  convertFileToBufferFile,
-  deleteAllMatchingFilesWithUnknownExtension,
-  deleteFileWithUnknownExtension,
-  getAllMatchingFilesFromS3WithUnknownExtension,
-  getFileExtension,
-  getFileFromS3WithUnknownExtension,
-  quizBucketName,
-  uploadFileToS3
-} from '@/utils/awsS3Utils'
 import { API_URLS as ApiUrls } from '@/configs/apiConfig'
 import { toast } from 'react-toastify'
 import CreateQuizForm from '@/components/quizbuilder/01_QuizContext/CreateQuizForm'
+import { uploadPendingDocuments } from '@/utils/quizDocumentsClient'
 
 import {
   Alert,
@@ -101,76 +92,6 @@ function CreateQuiz({ isAdmin = false }) {
     defaultValues: { ...createQuizDefaultValues }
   })
 
-  // async function handleDeleteQuizDocuments() {
-  //   const fileNameWithoutExtension = `${getValues().id}/documents` // deleting the folder of quiz documents
-
-  //   try {
-  //     await deleteAllMatchingFilesWithUnknownExtension({
-  //       bucketName: quizBucketName,
-  //       fileNamePrefix: fileNameWithoutExtension
-  //     })
-  //   } catch (error) {
-  //     console.error('Error in handleDeleteQuizDocuments:', error)
-  //   }
-  // }
-
-  async function handleUploadQuizDocToS3(docObj) {
-    // const fileNameWithoutExtension = `${getValues().id}/documents/${docObj.id}`
-
-    // console.log(docObj.document.name, fileNameWithoutExtension)
-
-    // if (docObj.document.name && docObj.document.name.startsWith(fileNameWithoutExtension)) {
-    //   return // Don't reupload the same file
-    // }
-
-    // try {
-    //   await deleteFileWithUnknownExtension({
-    //     bucketName: quizBucketName,
-    //     fileNamePrefix: fileNameWithoutExtension
-    //   })
-    // } catch (error) {
-    //   console.error(`Error in handleDelete QuizDoc-${docObj.document.id} from S3:`, error)
-    // }
-
-    if (docObj.document) {
-      const bufferFile = await convertFileToBufferFile(docObj.document)
-      const fileType = getFileExtension(docObj.document.name) // docObj.document.type.split('/')[1]
-      const fileName = `${getValues().id}/documents/${docObj.id}.${fileType}`
-
-      try {
-        await uploadFileToS3({
-          bucketName: quizBucketName,
-          fileBuffer: bufferFile,
-          fileName,
-          fileType
-        })
-        console.log('quiz Doc uploaded to S3 successfully.')
-      } catch (error) {
-        console.error('Error in handleUploadQuizDocToS3:', error)
-        // toast.error('Error uploading profile photo to S3:', error.message)
-      }
-    }
-  }
-
-  async function uploadQuizDocs() {
-    try {
-      // await handleDeleteQuizDocuments()
-
-      const quizDocs = getValues().documents
-
-      for (let i = 0; i < quizDocs.length; i++) {
-        if (quizDocs[i].document) {
-          await handleUploadQuizDocToS3(quizDocs[i])
-        }
-      }
-
-      console.log('Quiz Docs uploaded successfully')
-    } catch (error) {
-      console.error('Error in uploadQuizDocs:', error)
-      toast.error('Error uploading quiz docs to S3.')
-    }
-  }
-
   const [fieldErrors, setFieldErrors] = useState({
     title: false,
     contextIds: false,
@@ -214,10 +135,20 @@ function CreateQuiz({ isAdmin = false }) {
     const formValues = getValues()
 
     try {
+      // Upload any staged document files to S3/Spaces first. If any upload
+      // fails, abort the quiz save so we don't end up with broken doc entries.
+      try {
+        const persistedDocs = await uploadPendingDocuments(formValues.documents, formValues.id)
+        formValues.documents = persistedDocs
+      } catch (uploadError) {
+        console.error('Document upload failed:', uploadError)
+        toast.error(uploadError?.message || 'Failed to upload one or more documents. Quiz was not created.')
+        setLoading(false)
+        return
+      }
+
       const result = await RestApi.post(ApiUrls.v0.USERS_QUIZ, formValues)
       if (result?.status === 'success') {
-        await uploadQuizDocs()
-
         console.log('Quiz Added result', result)
         toast.success('Quiz Added Successfully .')
         reset()

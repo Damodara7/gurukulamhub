@@ -168,7 +168,15 @@ function ViewQuiz({ quiz, isAdmin = false }) {
   console.log('Secondary questions:', secQuestions)
 
   return (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: theme.palette.background.default, pb: 6 }}>
+    <Box
+      sx={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        bgcolor: theme.palette.background.default,
+        pb: 6
+      }}
+    >
       {/* Header Section */}
       <Box
         sx={{
@@ -239,9 +247,7 @@ function ViewQuiz({ quiz, isAdmin = false }) {
             >
               <VisibilityIcon
                 sx={{
-                  fontSize: isHeaderExpanded
-                    ? { xs: 28, md: 36 }
-                    : { xs: 20, sm: 22, md: 24 },
+                  fontSize: isHeaderExpanded ? { xs: 28, md: 36 } : { xs: 20, sm: 22, md: 24 },
                   color: 'primary.main',
                   transition: 'font-size 0.3s ease'
                 }}
@@ -598,7 +604,6 @@ function ViewQuiz({ quiz, isAdmin = false }) {
                       )}
                     </Box>
                   </Card> */}
-                  
                 </Stack>
               ) : (
                 <Card
