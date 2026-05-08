@@ -23,7 +23,8 @@ export const quizCreateRequestDtoSchema = yup.object({
   nodeType: yup.string(),
   tags: yup.array().of(yup.string()), // Assuming tags is an array of strings
   status: yup.string(),
-  language: languageSchema
+  language: languageSchema,
+  weightage: yup.number().min(1).max(10).default(1)
 });
 
 
@@ -174,14 +175,14 @@ export function validateQuizQuestions(questions) {
             questionErrors.push({
               questionId,
               field: 'options',
-              message: 'Exactly one correct option required for single-choice'
+              message: 'Exactly one correct option required for multiple-choice'
             })
           }
           if (templateId === 'multiple-choice' && correctOptions < 1) {
             questionErrors.push({
               questionId,
               field: 'options',
-              message: 'At least one correct option required for multiple-choice'
+              message: 'At least one correct option required for multi-answer'
             })
           }
         }

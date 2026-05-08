@@ -259,8 +259,8 @@ function QuestionDialog({
         </div>
 
         <RadioGroup row value={currentQuestion.type} onChange={e => handleInputChange('type', e.target.value)}>
-          <FormControlLabel value='single-choice' control={<Radio />} label='Single Choice' />
-          <FormControlLabel value='multiple-choice' control={<Radio />} label='Multiple Choice' />
+          <FormControlLabel value='single-choice' control={<Radio />} label='Multiple Choice' />
+          <FormControlLabel value='multiple-choice' control={<Radio />} label='Multi Answer' />
         </RadioGroup>
 
         <TextField

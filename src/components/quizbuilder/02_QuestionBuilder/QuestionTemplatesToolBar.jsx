@@ -41,7 +41,7 @@ const QuestionTemplatesToolBar = ({
           </span>
           <span className='qb-toolbox__item-banner qb-item__banner'>
             <span className='qb-toolbox__item-icon ri-radio-button-line' />
-            <span className='qb-toolbox__item-title'>Single Choice</span>
+            <span className='qb-toolbox__item-title'>Multiple Choice</span>
           </span>
         </div>
         <div
@@ -54,7 +54,7 @@ const QuestionTemplatesToolBar = ({
           </span>
           <span className='qb-toolbox__item-banner qb-item__banner'>
             <span className='qb-toolbox__item-icon ri-checkbox-line' />
-            <span className='qb-toolbox__item-title'>Multiple Choice</span>
+            <span className='qb-toolbox__item-title'>Multi Answer</span>
           </span>
         </div>
         <div

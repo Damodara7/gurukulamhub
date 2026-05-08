@@ -33,7 +33,17 @@ import { useRouter } from 'next/navigation'
 import { formatTime, formatTimeWithUnits } from '../Timer'
 import ReactPlayer from 'react-player'
 
-const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time }) => {
+const QuizSummary = ({
+  questions,
+  selectedAnswers,
+  usedHints,
+  handleReplay,
+  time,
+  quiz,
+  completionResult,
+  estimatedQuizPoints = 0,
+  isPointsPending = false
+}) => {
   const router = useRouter()
   const theme = useTheme()
   const isDarkMode = theme.palette.mode === 'dark'
@@ -231,6 +241,10 @@ const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time
       palette: theme.palette.success
     }
   ]
+  const totalQuizPoints =
+    completionResult?.totalPossiblePoints ?? estimatedQuizPoints ?? (questions?.length || 0) * Number(quiz?.weightage || 1)
+  const awardedPoints = completionResult?.pointsAwarded ?? totalQuizPoints
+  const isFirstAward = completionResult ? !completionResult?.alreadyAwarded : false
 
   return (
     <Container maxWidth='lg' sx={{ py: { xs: 4, md: 6 }, px: { xs: 2, sm: 3, md: 4 } }}>
@@ -379,9 +393,36 @@ const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time
                       {formatTimeWithUnits(time)}
                     </Typography>
                   </Stack>
+                  <Stack spacing={0.3}>
+                    <Typography variant='caption' sx={{ letterSpacing: '0.08em', color: alpha(heroTextColor, 0.7) }}>
+                      Quiz Points
+                    </Typography>
+                    <Typography variant='subtitle1' fontWeight={700}>
+                      {awardedPoints} / {totalQuizPoints}
+                    </Typography>
+                  </Stack>
                 </Stack>
               </Stack>
             </Box>
+            {completionResult && (
+              <Chip
+                icon={<WorkspacePremiumOutlinedIcon sx={{ fontSize: 16 }} />}
+                color={isFirstAward ? 'success' : 'warning'}
+                label={
+                  isFirstAward
+                    ? `Congrats! You earned ${awardedPoints} quiz points on first completion`
+                    : 'You already completed this quiz earlier and already received points'
+                }
+                sx={{ alignSelf: 'flex-start', borderRadius: 999, fontWeight: 700, px: 1 }}
+              />
+            )}
+            {isPointsPending && (
+              <Chip
+                color='info'
+                label='Saving points in background...'
+                sx={{ alignSelf: 'flex-start', borderRadius: 999, fontWeight: 700, px: 1 }}
+              />
+            )}
 
             <Grid container spacing={{ xs: 1.2, md: 1.8 }}>
               {detailMetrics.map(detail => (
@@ -619,9 +660,9 @@ const QuizSummary = ({ questions, selectedAnswers, usedHints, handleReplay, time
                         <Chip
                           label={
                             question.templateId === 'single-choice'
-                              ? 'Single Choice'
+                              ? 'Multiple Choice'
                               : question.templateId === 'multiple-choice'
-                                ? 'Multiple Choice'
+                                ? 'Multi Answer'
                                 : question.templateId === 'true-or-false'
                                   ? 'True or False'
                                   : question.templateId === 'fill-in-blank'

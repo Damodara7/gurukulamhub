@@ -145,14 +145,14 @@ export function validateQuizQuestions(questions) {
             questionErrors.push({
               questionId,
               field: 'options',
-              message: 'Exactly one correct option required for single-choice'
+              message: 'Exactly one correct option required for multiple-choice'
             })
           }
           if (templateId === 'multiple-choice' && correctOptions < 1) {
             questionErrors.push({
               questionId,
               field: 'options',
-              message: 'At least one correct option required for multiple-choice'
+              message: 'At least one correct option required for multi-answer'
             })
           }
         }

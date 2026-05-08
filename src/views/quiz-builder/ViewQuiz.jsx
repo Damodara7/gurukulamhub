@@ -222,7 +222,15 @@ function ViewQuiz({ quiz, isAdmin = false }) {
   console.log('Secondary questions:', secQuestions)
 
   return (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: theme.palette.background.default, pb: 6 }}>
+    <Box
+      sx={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        bgcolor: theme.palette.background.default,
+        pb: 6
+      }}
+    >
       {/* Header Section */}
       <Box
         sx={{

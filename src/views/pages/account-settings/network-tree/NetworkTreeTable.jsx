@@ -57,6 +57,16 @@ import IconButtonTooltip from '@/components/IconButtonTooltip'
 
 const columnHelper = createColumnHelper()
 
+const getTotalQuizPoints = user => Number(user?.totalQuizPoints || 0)
+const getComputedCumulativePoints = user =>
+  Number(
+    user?.cumulativePoints ??
+      (Number(user?.referralPoints || 0) +
+        Number(user?.totalGamePoints || 0) +
+        Number(user?.totalLearningPoints || 0) +
+        getTotalQuizPoints(user))
+  )
+
 const ActionsMenu = ({ anchorEl, handleClose, handleAction }) => (
   <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
     <MenuItem dense onClick={() => handleAction('chat')}>
@@ -193,10 +203,15 @@ const NetworkTreeTable = ({ currentUserNode, handleChangeNode }) => {
         header: 'Learning Points',
         cell: ({ row }) => Number(row.original.totalLearningPoints || 0)
       }),
+      columnHelper.accessor('totalQuizPoints', {
+        id: 'totalQuizPoints',
+        header: 'Quiz Points',
+        cell: ({ row }) => getTotalQuizPoints(row.original)
+      }),
       columnHelper.accessor('cumulativePoints', {
         id: 'cumulativePoints',
         header: 'Cumulative Points',
-        cell: ({ row }) => Number(row.original.cumulativePoints || 0)
+        cell: ({ row }) => getComputedCumulativePoints(row.original)
       }),
       columnHelper.display({
         id: 'actions',
@@ -224,7 +239,10 @@ const NetworkTreeTable = ({ currentUserNode, handleChangeNode }) => {
           Number(friend.totalLearningPoints || 0)
             .toString()
             .includes(globalFilter) ||
-          Number(friend.cumulativePoints || 0)
+          Number(getTotalQuizPoints(friend))
+            .toString()
+            .includes(globalFilter) ||
+          Number(getComputedCumulativePoints(friend))
             .toString()
             .includes(globalFilter) ||
           friend.gender.toLowerCase().includes(globalFilter.toLowerCase())

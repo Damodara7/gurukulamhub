@@ -65,7 +65,15 @@ const HeroStat = ({ icon, label, value, tone }) => (
   </Stack>
 )
 
-function QuizPosterScreen({ quizData, onClickStart, language = null, quizLanguages = [] }) {
+function QuizPosterScreen({
+  quizData,
+  onClickStart,
+  language = null,
+  quizLanguages = [],
+  resolvedQuestionCount = 0,
+  possibleQuizPoints = 0,
+  quizWeightage = 1
+}) {
   const theme = useTheme()
   const isDarkMode = theme.palette.mode === 'dark'
   const {
@@ -81,6 +89,8 @@ function QuizPosterScreen({ quizData, onClickStart, language = null, quizLanguag
     difficulty,
     questionCount
   } = quizData
+  const effectiveQuestionCount = resolvedQuestionCount || questionCount || 0
+  const totalQuizPoints = possibleQuizPoints || effectiveQuestionCount * quizWeightage
 
   const sectionShell = (children, key, sx = {}) => (
     <Box
@@ -180,7 +190,7 @@ function QuizPosterScreen({ quizData, onClickStart, language = null, quizLanguag
     {
       icon: <QuizOutlinedIcon fontSize='small' />,
       label: 'Questions',
-      value: questionCount ? `${questionCount} questions` : 'Curated set',
+      value: effectiveQuestionCount ? `${effectiveQuestionCount} questions` : 'Curated set',
       tone: theme.palette.primary
     },
     {
@@ -209,6 +219,12 @@ function QuizPosterScreen({ quizData, onClickStart, language = null, quizLanguag
       value: contextIds || 'Not specified',
       tone: theme.palette.warning,
       icon: <FingerprintRoundedIcon fontSize='small' />
+    },
+    {
+      label: 'Quiz Points',
+      value: `${totalQuizPoints}`,
+      tone: theme.palette.success,
+      icon: <WorkspacePremiumOutlinedIcon fontSize='small' />
     }
   ]
 
@@ -493,43 +509,62 @@ function QuizPosterScreen({ quizData, onClickStart, language = null, quizLanguag
           <ChevronToggleComponent heading='Documents' minimizedSubHeading='View reference documents'>
             {documents?.length > 0 ? (
               <Stack spacing={1.6}>
-                {documents.map((document, index) => (
-                  <Stack
-                    key={index}
-                    direction='row'
-                    spacing={1.6}
-                    alignItems='center'
-                    justifyContent='space-between'
-                    sx={{
-                      borderRadius: 2,
-                      border: `1px dashed ${alpha(theme.palette.primary.main, 0.28)}`,
-                      px: 2,
-                      py: 1.4,
-                      bgcolor: alpha(theme.palette.primary.main, 0.04)
-                    }}
-                  >
-                    <Stack spacing={0.4}>
-                      <Typography variant='subtitle2' fontWeight={600}>
-                        {document.description || `Document ${index + 1}`}
-                      </Typography>
-                      <Typography variant='caption' color='text.secondary'>
-                        {document.mediaType?.toUpperCase() || 'Resource'}
-                      </Typography>
-                    </Stack>
-                    <Button
-                      component={Link}
-                      href={document?.document || ''}
-                      target='_blank'
-                      rel='noopener noreferrer'
-                      variant='outlined'
-                      size='small'
-                      startIcon={<LaunchRoundedIcon fontSize='small' />}
-                      sx={{ textTransform: 'none', fontWeight: 600 }}
+                {documents.map((document, index) => {
+                  const docUrl = document?.url || document?.document || ''
+                  const isValidUrl = typeof docUrl === 'string' && docUrl.trim().length > 0
+                  const docTitle = document?.description || document?.fileName || `Document ${index + 1}`
+                  const docTypeLabel = (document?.mediaType || document?.mimeType || '')
+                    .toString()
+                    .split('/')
+                    .pop()
+                    ?.toUpperCase()
+                  return (
+                    <Stack
+                      key={document?.id || index}
+                      direction='row'
+                      spacing={1.6}
+                      alignItems='center'
+                      justifyContent='space-between'
+                      sx={{
+                        borderRadius: 2,
+                        border: `1px dashed ${alpha(theme.palette.primary.main, 0.28)}`,
+                        px: 2,
+                        py: 1.4,
+                        bgcolor: alpha(theme.palette.primary.main, 0.04)
+                      }}
                     >
-                      Open
-                    </Button>
-                  </Stack>
-                ))}
+                      <Stack spacing={0.4} sx={{ minWidth: 0, flex: 1 }}>
+                        <Typography variant='subtitle2' fontWeight={600} noWrap>
+                          {docTitle}
+                        </Typography>
+                        <Typography variant='caption' color='text.secondary' noWrap>
+                          {docTypeLabel || 'Resource'}
+                          {document?.fileName && document?.description ? ` • ${document.fileName}` : ''}
+                        </Typography>
+                      </Stack>
+                      <Tooltip
+                        title={isValidUrl ? 'Open in new tab' : 'This document is unavailable'}
+                        placement='top'
+                      >
+                        <span>
+                          <Button
+                            component={isValidUrl ? Link : 'button'}
+                            href={isValidUrl ? docUrl : undefined}
+                            target={isValidUrl ? '_blank' : undefined}
+                            rel={isValidUrl ? 'noopener noreferrer' : undefined}
+                            variant='outlined'
+                            size='small'
+                            disabled={!isValidUrl}
+                            startIcon={<LaunchRoundedIcon fontSize='small' />}
+                            sx={{ textTransform: 'none', fontWeight: 600 }}
+                          >
+                            Open
+                          </Button>
+                        </span>
+                      </Tooltip>
+                    </Stack>
+                  )
+                })}
               </Stack>
             ) : (
               <Stack spacing={1} alignItems='center' py={4}>

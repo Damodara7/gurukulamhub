@@ -23,6 +23,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
+import WorkspacePremiumOutlinedIcon from '@mui/icons-material/WorkspacePremiumOutlined'
 import { useRouter } from 'next/navigation'
 
 import languageNotations from '@components/quizbuilder/05_Components/languageNotation.en.json'
@@ -34,7 +35,7 @@ import Timer from '@/components/Timer'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { toast } from 'react-toastify'
-import { getAllMatchingFileUrlsFromS3WithUnknownExtension, quizBucketName } from '@/utils/awsS3Utils'
+import { useSession } from 'next-auth/react'
 
 export const fetchQuestionsByLanguage = async (quizId, languageCode) => {
   const result = await RestApi.get(`${API_URLS.v0.USERS_QUIZ_QUESTION}?quizId=${quizId}&languageCode=${languageCode}`)
@@ -67,6 +68,9 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
   const [isTimerActive, setIsTimerActive] = useState(false)
   const [time, setTime] = useState(0)
   const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false)
+  const [quizCompletionResult, setQuizCompletionResult] = useState(null)
+  const [resolvedQuestionCount, setResolvedQuestionCount] = useState(0)
+  const { data: session } = useSession()
 
   useEffect(() => {
     if (languageCode && languageCode !== selectedLanguage) {
@@ -74,48 +78,29 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
     }
   }, [languageCode, selectedLanguage])
 
-  async function getQuizDocUrls(quizUUID) {
-    try {
-      const fileUrls = await getAllMatchingFileUrlsFromS3WithUnknownExtension({
-        bucketName: quizBucketName,
-        fileNamePrefix: `${quizUUID}/documents`
-      })
-      if (!fileUrls) return []
-
-      return fileUrls.map(fileUrl => {
-        const match = fileUrl.match(/\/documents\/([0-9a-fA-F-]+)\./)
-        const id = match ? match[1] : null
-        return {
-          id,
-          description: `document-${id || 'unknown'}`,
-          document: fileUrl
-        }
-      })
-    } catch (error) {
-      console.log('Error getting quiz docs: ', error)
-      return []
-    }
-  }
-
   useEffect(() => {
     async function getQuizData() {
       setLoading(true)
       const result = await fetchQuizData(quizId)
       if (result?.status === 'success') {
-        const quizDocs = await getQuizDocUrls(result.result.id)
-        const mergedDocuments =
-          result.result.documents?.map(doc => {
-            const matchingDoc = quizDocs?.find(quizDoc => quizDoc.id === doc.id)
-            return {
-              description: doc.description,
-              document: matchingDoc?.document || doc.document || null
-            }
-          }) || []
+        const primaryLanguageCode = result?.result?.language?.code
+        let fetchedQuestionCount = 0
+        if (result?.result?._id && primaryLanguageCode) {
+          const questionCountRes = await fetchQuestionsByLanguage(result.result._id, primaryLanguageCode)
+          if (questionCountRes?.status === 'success' && Array.isArray(questionCountRes?.result)) {
+            fetchedQuestionCount = questionCountRes.result.length
+          }
+        }
+
+        // Documents now contain their S3/Spaces URL directly in the DB (under `url` and `document`),
+        // so we just pass them through. The poster screen handles the display + open behaviour.
+        const dbDocuments = Array.isArray(result.result.documents) ? result.result.documents : []
 
         setQuiz({
           ...result.result,
-          documents: mergedDocuments
+          documents: dbDocuments
         })
+        setResolvedQuestionCount(fetchedQuestionCount)
       } else {
         toast.error('Error:' + result?.message)
       }
@@ -133,12 +118,15 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
     : []
 
   const overallQuestionCount =
-    quiz?.questionCount ??
-    quiz?.totalQuestions ??
-    quiz?.language?.questionCount ??
-    quiz?.questions?.length ??
-    quizLanguages.reduce((sum, lang) => sum + (lang?.questionCount || 0), 0) ??
-    0
+    resolvedQuestionCount ||
+    (quiz?.questionCount ??
+      quiz?.totalQuestions ??
+      quiz?.language?.questionCount ??
+      quiz?.questions?.length ??
+      quizLanguages.reduce((sum, lang) => sum + (lang?.questionCount || 0), 0) ??
+      0)
+  const quizWeightage = Number(quiz?.weightage || 1)
+  const possibleQuizPoints = overallQuestionCount * quizWeightage
 
   const getLanguageByCode = code => quizLanguages.find(lang => lang.code === code)
 
@@ -209,6 +197,23 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
     } else {
       setShowSummary(true)
       setIsTimerActive(false)
+      submitQuizCompletion()
+    }
+  }
+
+  const submitQuizCompletion = async () => {
+    try {
+      if (!quiz?._id || !session?.user?.email) return
+
+      const result = await RestApi.post(`${API_URLS.v0.USERS_QUIZ}/${quiz._id}/complete`, {
+        email: session.user.email,
+        languageCode: selectedLanguage
+      })
+      if (result?.status === 'success') {
+        setQuizCompletionResult(result?.result || null)
+      }
+    } catch (error) {
+      console.log('Error submitting quiz completion:', error)
     }
   }
 
@@ -291,6 +296,10 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
           usedHints={usedHints}
           handleReplay={handleReplay}
           time={time}
+          quiz={quiz}
+          completionResult={quizCompletionResult}
+          estimatedQuizPoints={currentQuestionCount * quizWeightage}
+          isPointsPending={!quizCompletionResult}
         />
       </Box>
     )
@@ -337,11 +346,21 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
             }}
           />
           <Chip
-            label={`${quiz.questionCount || questions.length || 0} questions`}
+            label={`${overallQuestionCount} questions`}
             sx={{
               bgcolor: alpha(theme.palette.success.main, 0.12),
               color: theme.palette.success.main,
               fontWeight: 600,
+              borderRadius: 2
+            }}
+          />
+          <Chip
+            icon={<WorkspacePremiumOutlinedIcon sx={{ fontSize: 16 }} />}
+            label={`${possibleQuizPoints} points`}
+            sx={{
+              bgcolor: alpha(theme.palette.warning.main, 0.12),
+              color: theme.palette.warning.main,
+              fontWeight: 700,
               borderRadius: 2
             }}
           />
@@ -470,6 +489,9 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
           quizLanguages={quizLanguages}
           language={getLanguageByCode(selectedLanguage) || null}
           quizData={quiz}
+          resolvedQuestionCount={overallQuestionCount}
+          possibleQuizPoints={possibleQuizPoints}
+          quizWeightage={quizWeightage}
           onClickStart={handleStartQuiz}
         />
       )
@@ -733,6 +755,19 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
                       }}
                     />
                   )}
+                  {selectedLanguage && (
+                    <Chip
+                      label={`${currentQuestionCount * quizWeightage} Points`}
+                      size='small'
+                      sx={{
+                        bgcolor: alpha(theme.palette.warning.main, 0.14),
+                        color: theme.palette.warning.main,
+                        fontWeight: 600,
+                        height: { xs: 20, sm: 24 },
+                        fontSize: { xs: '0.7rem', sm: '0.75rem' }
+                      }}
+                    />
+                  )}
                 </Stack>
               </Stack>
             ) : (
@@ -830,6 +865,19 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
                           sx={{
                             bgcolor: alpha(theme.palette.success.main, 0.12),
                             color: theme.palette.success.main,
+                            fontWeight: 600,
+                            fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                            height: { xs: 22, sm: 24 }
+                          }}
+                        />
+                      )}
+                      {selectedLanguage && (
+                        <Chip
+                          label={`${currentQuestionCount * quizWeightage} Points`}
+                          size='small'
+                          sx={{
+                            bgcolor: alpha(theme.palette.warning.main, 0.12),
+                            color: theme.palette.warning.main,
                             fontWeight: 600,
                             fontSize: { xs: '0.7rem', sm: '0.75rem' },
                             height: { xs: 22, sm: 24 }

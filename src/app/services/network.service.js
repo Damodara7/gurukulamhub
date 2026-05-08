@@ -48,7 +48,9 @@ export const getUserNetworkTree = async email => {
 
     const uniqueEmails = [...new Set(collectEmails({ ...profile, network: networkTree }))]
 
-    const users = await User.find({ email: { $in: uniqueEmails } }).select('email gamePointHistory isVerified').lean()
+    const users = await User.find({ email: { $in: uniqueEmails } })
+      .select('email gamePointHistory quizPointHistory isVerified')
+      .lean()
 
     const gamePointsByEmail = new Map(
       users.map(user => {
@@ -65,6 +67,17 @@ export const getUserNetworkTree = async email => {
     )
     const verificationByEmail = new Map(users.map(user => [user.email, Boolean(user?.isVerified)]))
 
+    const quizPointsByEmail = new Map(
+      users.map(user => {
+        const history = Array.isArray(user.quizPointHistory) ? user.quizPointHistory : []
+        const totalQuizPoints = history.reduce(
+          (sum, entry) => sum + Number(entry?.pointsEarned ?? entry?.totalPossiblePoints ?? 0),
+          0
+        )
+        return [user.email, totalQuizPoints]
+      })
+    )
+
     const learningRecords = await UserLearning.find({ email: { $in: uniqueEmails } }).select('email learning').lean()
 
     const learningPointsByEmail = new Map(
@@ -78,12 +91,14 @@ export const getUserNetworkTree = async email => {
     const attachGamePointMetrics = node => {
       const metrics = gamePointsByEmail.get(node.email) || { totalGamePoints: 0, totalGamesPlayed: 0 }
       const totalLearningPoints = Number(learningPointsByEmail.get(node.email) || 0)
+      const totalQuizPoints = Number(quizPointsByEmail.get(node.email) || 0)
       const referralPoints = Number(node?.referralPoints || 0)
-      const cumulativePoints = referralPoints + Number(metrics.totalGamePoints || 0) + totalLearningPoints
+      const cumulativePoints = referralPoints + Number(metrics.totalGamePoints || 0) + totalLearningPoints + totalQuizPoints
       return {
         ...node,
         totalGamePoints: metrics.totalGamePoints,
         totalLearningPoints,
+        totalQuizPoints,
         totalGamesPlayed: metrics.totalGamesPlayed,
         isVerified: Boolean(verificationByEmail.get(node.email)),
         cumulativePoints,

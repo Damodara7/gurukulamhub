@@ -806,3 +806,111 @@ export async function getDocuments(queryParams) {
     return { status: 'error', result: null, message: err.message, statusCode: 500 }
   }
 }
+
+export async function completeQuizAndAwardPoints({ quizId, email, languageCode = null }) {
+  await connectMongo()
+  try {
+    if (!quizId || !email) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'quizId and email are required',
+        statusCode: 400
+      }
+    }
+
+    const [quiz, user] = await Promise.all([
+      ArtifactModel.findById(quizId).lean(),
+      User.findOne({ email }).select('_id email quizPointHistory').lean()
+    ])
+
+    if (!quiz) {
+      return { status: 'error', result: null, message: 'Quiz not found', statusCode: 404 }
+    }
+    if (!user) {
+      return { status: 'error', result: null, message: 'User not found', statusCode: 404 }
+    }
+
+    const existingPointEntry = (user.quizPointHistory || []).find(entry => entry?.quiz?.toString?.() === quizId.toString())
+    const hasAlreadyEarned = Boolean(existingPointEntry)
+    const pointsWeightage = Number(quiz?.weightage || 1)
+
+    // Fast path for replay:
+    // If user already has points for this quiz, return stored values immediately.
+    // This avoids recounting questions and avoids any DB write on repeated plays.
+    if (hasAlreadyEarned) {
+      return {
+        status: 'success',
+        result: {
+          pointsAwarded: Number(existingPointEntry?.pointsEarned || existingPointEntry?.totalPossiblePoints || 0),
+          alreadyAwarded: true,
+          questionsCount: Number(existingPointEntry?.questionsCount || 0),
+          pointsWeightage: Number(existingPointEntry?.pointsWeightage || pointsWeightage || 1),
+          totalPossiblePoints: Number(
+            existingPointEntry?.totalPossiblePoints ||
+              (existingPointEntry?.questionsCount || 0) * (existingPointEntry?.pointsWeightage || pointsWeightage || 1)
+          )
+        },
+        message: 'Quiz already completed earlier. Points are awarded only for first completion.',
+        statusCode: 200
+      }
+    }
+
+    const primaryLanguageCode = languageCode || quiz?.language?.code
+    let questionsCount = 0
+    if (primaryLanguageCode) {
+      questionsCount = await QuestionModel.countDocuments({
+        quizId,
+        languageCode: primaryLanguageCode,
+        status: { $ne: 'deleted' }
+      })
+    }
+    if (!questionsCount) {
+      questionsCount = await QuestionModel.countDocuments({ quizId, isPrimary: true, status: { $ne: 'deleted' } })
+    }
+    if (!questionsCount) {
+      questionsCount = await QuestionModel.countDocuments({ quizId, status: { $ne: 'deleted' } })
+    }
+
+    const totalPossiblePoints = Number(questionsCount) * pointsWeightage
+
+    const earnedAt = new Date()
+    const pushResult = await User.updateOne(
+      { _id: user._id, 'quizPointHistory.quiz': { $ne: quiz._id } },
+      {
+        $push: {
+          quizPointHistory: {
+            quiz: quiz._id,
+            pointsEarned: totalPossiblePoints,
+            pointsWeightage,
+            questionsCount,
+            totalPossiblePoints,
+            earnedAt
+          }
+        }
+      }
+    )
+
+    const wasAwardedNow = pushResult?.modifiedCount > 0
+
+    return {
+      status: 'success',
+      result: {
+        pointsAwarded: wasAwardedNow
+          ? totalPossiblePoints
+          : Number(existingPointEntry?.pointsEarned || existingPointEntry?.totalPossiblePoints || totalPossiblePoints),
+        alreadyAwarded: !wasAwardedNow,
+        questionsCount,
+        pointsWeightage,
+        totalPossiblePoints
+      },
+      message: wasAwardedNow
+        ? 'Quiz completion recorded and points awarded successfully'
+        : 'Quiz already completed earlier. Points are awarded only for first completion.',
+      statusCode: 200
+    }
+  } catch (err) {
+    console.error('Error completing quiz and awarding points:', err)
+    return { status: 'error', result: null, message: err.message, statusCode: 500 }
+  }
+}
