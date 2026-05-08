@@ -59,7 +59,7 @@ const GoogleMapAddressPicker = props => {
   return <GoogleMapAddressPickerInner {...props} apiKey={apiKey} />
 }
 
-const GoogleMapAddressPickerInner = ({ value, onChange, height = 320, apiKey }) => {
+const GoogleMapAddressPickerInner = ({ value, onChange, height = 350, apiKey }) => {
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'gmaps-script-loader',
     googleMapsApiKey: apiKey,

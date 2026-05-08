@@ -16,7 +16,7 @@ import {
 const OsmMapInner = dynamic(() => import('./_OsmMapInner'), {
   ssr: false,
   loading: () => (
-    <Box sx={{ height: 320, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <Box sx={{ height: 350, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <CircularProgress size={24} />
     </Box>
   )
@@ -131,7 +131,7 @@ const fetchNominatim = async (path, params) => {
   return res.json()
 }
 
-const OsmMapAddressPicker = ({ value, onChange, height = 320 }) => {
+const OsmMapAddressPicker = ({ value, onChange, height = 350 }) => {
   const [marker, setMarker] = useState(
     value && typeof value.lat === 'number' && typeof value.lng === 'number' ? { lat: value.lat, lng: value.lng } : null
   )

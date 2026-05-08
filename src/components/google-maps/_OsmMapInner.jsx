@@ -39,7 +39,7 @@ const Recenter = ({ marker }) => {
   return null
 }
 
-const OsmMapInner = ({ marker, onMapClick, onMarkerDragEnd, height = 320 }) => {
+const OsmMapInner = ({ marker, onMapClick, onMarkerDragEnd, height = 350 }) => {
   const center = marker ? [marker.lat, marker.lng] : DEFAULT_CENTER
   const initialZoom = marker ? 15 : 5
 
