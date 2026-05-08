@@ -31,9 +31,11 @@ import {
   alpha,
   CircularProgress,
   Collapse,
-  IconButton
+  IconButton,
+  Menu,
+  MenuItem
 } from '@mui/material'
-import { Alert, Stack, Grid, Card, Typography, CardContent, CardHeader, Divider, Box } from '@mui/material'
+import { Alert, Stack, Grid, Card, Typography, CardContent, CardHeader, Divider, Box, Tooltip } from '@mui/material'
 import Loading from '@/components/Loading'
 import QuizDetails from '@/components/quiz-builder-1/QuizDetails'
 import { useRouter } from 'next/navigation'
@@ -57,6 +59,7 @@ import {
   DummyTrueOrFalseTemplate,
   DummyFillInTheBlanksTemplate
 } from '@/components/quizbuilder/Templates'
+import ViewQuizQuestionParametersPanel from '@/components/quizbuilder/ViewQuizQuestionParametersPanel'
 
 function ViewQuiz({ quiz, isAdmin = false }) {
   const router = useRouter()
@@ -66,8 +69,10 @@ function ViewQuiz({ quiz, isAdmin = false }) {
   const [primaryQuestions, setPrimaryQuestions] = useState([])
   const [secQuestions, setSecQuestions] = useState([])
   const [selectedPrimaryQuestion, setSelectedPrimaryQuestion] = useState(null)
+  const [primaryQuestionEditing, setPrimaryQuestionEditing] = useState(false)
   const [secQuestionsLoading, setSecQuestionsLoading] = useState(false)
   const [isHeaderExpanded, setIsHeaderExpanded] = useState(true)
+  const [headerEditMenuAnchor, setHeaderEditMenuAnchor] = useState(null)
 
   const theme = useTheme()
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'))
@@ -110,6 +115,10 @@ function ViewQuiz({ quiz, isAdmin = false }) {
     }
   }, [selectedPrimaryQuestion])
 
+  useEffect(() => {
+    setPrimaryQuestionEditing(false)
+  }, [selectedPrimaryQuestion?._id])
+
   const fetchSecondaryQuestions = async questionId => {
     setSecQuestionsLoading(true)
     console.log('Fetching secondary questions...')
@@ -127,6 +136,51 @@ function ViewQuiz({ quiz, isAdmin = false }) {
   }
   function handleEditQuizQuestions() {
     router.push(`/${isAdmin ? 'management/quizzes' : 'myquizzes'}/builder/${quiz._id}`)
+  }
+
+  const canEditQuestionParams = quiz?.approvalState === 'draft' || quiz?.approvalState === 'saved'
+  const showHeaderQuizEditMenu = quiz?.approvalState === 'draft' || quiz?.approvalState === 'saved'
+
+  const closeHeaderEditMenu = () => setHeaderEditMenuAnchor(null)
+
+  const refreshAfterQuestionSave = async primaryQuestionId => {
+    const pRes = await RestApi.get(`${API_URLS.v0.USERS_QUIZ_QUESTION}?quizId=${quiz._id}&isPrimary=true`)
+    if (pRes.status !== 'success') return
+
+    const newList = pRes.result || []
+    // Snapshot of the list as it was BEFORE this refresh — used to pick a
+    // neighbour when the currently-selected question was deleted.
+    const previousList = primaryQuestions
+
+    setSelectedPrimaryQuestion(prev => {
+      if (!prev) return prev
+      const stillExists = newList.find(q => q._id === prev._id)
+      if (stillExists) return stillExists
+
+      // The selected question was deleted — pick a sensible neighbour:
+      //   1. The question that took its place (same index → next question)
+      //   2. Failing that, the question above it
+      //   3. Otherwise null (deleted question was the only one)
+      const oldIndex = previousList.findIndex(q => q._id === prev._id)
+      if (oldIndex < 0) return newList[0] || null
+      return newList[oldIndex] || newList[oldIndex - 1] || null
+    })
+    setPrimaryQuestions(newList)
+
+    // Only refresh secondary questions if the active primary question still exists.
+    // If it was deleted, the useEffect watching selectedPrimaryQuestion will fetch
+    // them for the newly-selected neighbour, and clearing here avoids a flash of
+    // stale data tied to the deleted question.
+    if (primaryQuestionId && newList.some(q => q._id === primaryQuestionId)) {
+      const sRes = await RestApi.get(
+        `${API_URLS.v0.USERS_QUIZ_QUESTION}?quizId=${quiz._id}&primaryQuestionId=${primaryQuestionId}`
+      )
+      if (sRes.status === 'success') {
+        setSecQuestions(sRes.result || [])
+      }
+    } else {
+      setSecQuestions([])
+    }
   }
 
   if (isLoading) {
@@ -180,117 +234,160 @@ function ViewQuiz({ quiz, isAdmin = false }) {
           transition: 'padding 0.3s ease'
         }}
       >
-        <Container maxWidth='xl' sx={{ position: 'relative' }}>
-          {/* Chevron Toggle Button - Right side, vertically centered */}
-          <IconButton
-            onClick={() => setIsHeaderExpanded(!isHeaderExpanded)}
-            sx={{
-              position: 'absolute',
-              right: 0,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              color: theme.palette.text.secondary,
-              transition: 'all 0.2s ease',
-              '&:hover': {
-                bgcolor: alpha(theme.palette.primary.main, 0.1),
-                color: theme.palette.primary.main
-              }
-            }}
-          >
-            {isHeaderExpanded ? <ExpandLess /> : <ExpandMore />}
-          </IconButton>
-
-          <Stack spacing={2} sx={{ pr: { xs: 6, sm: 7, md: 8 } }}>
-            {/* Back Button */}
-            <Button
-              startIcon={<ArrowBackIcon />}
-              onClick={() => router.back()}
+        <Container maxWidth='xl'>
+          <Stack spacing={isHeaderExpanded ? 2 : 1.5}>
+            {/* Top row: always visible — Back + title (left), Edit + expand (right). Collapsed = compact bar only. */}
+            <Stack
+              direction='row'
+              alignItems='center'
+              spacing={{ xs: 1, sm: 2 }}
               sx={{
-                textTransform: 'none',
-                fontWeight: 600,
-                color: 'text.secondary',
-                alignSelf: 'flex-start',
-                px: 0,
-                '&:hover': {
-                  bgcolor: 'transparent',
-                  color: 'primary.main'
-                }
+                flexWrap: 'nowrap',
+                gap: 1,
+                minHeight: { xs: 44, sm: 48 }
               }}
             >
-              Back
-            </Button>
-
-            {/* Title */}
-            <Typography
-              variant='h4'
-              fontWeight={800}
-              sx={{
-                fontSize: isHeaderExpanded
-                  ? { xs: '1.5rem', md: '2rem' }
-                  : { xs: '1.125rem', sm: '1.25rem', md: '1.5rem' },
-                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                display: 'flex',
-                alignItems: 'center',
-                gap: isHeaderExpanded ? 2 : 1.5,
-                transition: 'all 0.3s ease'
-              }}
-            >
-              <VisibilityIcon
+              <Button
+                startIcon={<ArrowBackIcon />}
+                onClick={() => router.back()}
                 sx={{
-                  fontSize: isHeaderExpanded
-                    ? { xs: 28, md: 36 }
-                    : { xs: 20, sm: 22, md: 24 },
-                  color: 'primary.main',
-                  transition: 'font-size 0.3s ease'
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  color: 'text.secondary',
+                  flexShrink: 0,
+                  px: { xs: 0.5, sm: 1 },
+                  minWidth: 'auto',
+                  '&:hover': {
+                    bgcolor: 'transparent',
+                    color: 'primary.main'
+                  }
                 }}
-              />
-              View Quiz
-            </Typography>
+              >
+                Back
+              </Button>
 
-            {/* Collapsible Content */}
-            <Collapse in={isHeaderExpanded} timeout={300}>
-              <Stack spacing={2}>
-                {/* Description */}
+              <Typography
+                component='h1'
+                variant='h4'
+                fontWeight={800}
+                sx={{
+                  flex: 1,
+                  minWidth: 0,
+                  fontSize: isHeaderExpanded
+                    ? { xs: '1.35rem', sm: '1.5rem', md: '2rem' }
+                    : { xs: '1.05rem', sm: '1.2rem', md: '1.45rem' },
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: isHeaderExpanded ? 1.5 : 1,
+                  transition: 'all 0.3s ease',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                <VisibilityIcon
+                  sx={{
+                    fontSize: isHeaderExpanded
+                      ? { xs: 26, md: 34 }
+                      : { xs: 20, sm: 22, md: 24 },
+                    color: 'primary.main',
+                    flexShrink: 0,
+                    transition: 'font-size 0.3s ease'
+                  }}
+                />
+                View Quiz
+              </Typography>
+
+              <Stack direction='row' alignItems='center' spacing={0.5} sx={{ flexShrink: 0 }}>
+                {showHeaderQuizEditMenu && (
+                  <>
+                    <Tooltip title='Edit questions or quiz details'>
+                      <Button
+                        variant='outlined'
+                        size='small'
+                        color='primary'
+                        startIcon={<EditIcon sx={{ fontSize: { xs: 18, sm: 20 } }} />}
+                        aria-label='Open edit menu'
+                        aria-controls={headerEditMenuAnchor ? 'view-quiz-header-edit-menu' : undefined}
+                        aria-haspopup='true'
+                        aria-expanded={Boolean(headerEditMenuAnchor) ? 'true' : undefined}
+                        onClick={e => setHeaderEditMenuAnchor(e.currentTarget)}
+                        sx={{
+                          textTransform: 'none',
+                          fontWeight: 700,
+                          borderRadius: 2,
+                          whiteSpace: 'nowrap',
+                          px: { xs: 1, sm: 1.5 },
+                          py: 0.75,
+                          flexShrink: 0
+                        }}
+                      >
+                        Edit
+                      </Button>
+                    </Tooltip>
+                    <Menu
+                      id='view-quiz-header-edit-menu'
+                      anchorEl={headerEditMenuAnchor}
+                      open={Boolean(headerEditMenuAnchor)}
+                      onClose={closeHeaderEditMenu}
+                      anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                      transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                      slotProps={{ paper: { sx: { minWidth: 200, borderRadius: 2 } } }}
+                    >
+                      <MenuItem
+                        onClick={() => {
+                          handleEditQuizQuestions()
+                          closeHeaderEditMenu()
+                        }}
+                        sx={{ py: 1.25, fontWeight: 600 }}
+                      >
+                        Edit Questions
+                      </MenuItem>
+                      <MenuItem
+                        onClick={() => {
+                          handleEditQuizDetails()
+                          closeHeaderEditMenu()
+                        }}
+                        sx={{ py: 1.25, fontWeight: 600 }}
+                      >
+                        Edit Quiz Details
+                      </MenuItem>
+                    </Menu>
+                  </>
+                )}
+                <Tooltip title={isHeaderExpanded ? 'Collapse header' : 'Expand header'}>
+                  <IconButton
+                    onClick={() => setIsHeaderExpanded(!isHeaderExpanded)}
+                    edge='end'
+                    sx={{
+                      color: theme.palette.text.secondary,
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        bgcolor: alpha(theme.palette.primary.main, 0.1),
+                        color: theme.palette.primary.main
+                      }
+                    }}
+                  >
+                    {isHeaderExpanded ? <ExpandLess /> : <ExpandMore />}
+                  </IconButton>
+                </Tooltip>
+              </Stack>
+            </Stack>
+
+            {/* Description + hints — only when expanded (never in collapsed mode) */}
+            <Collapse in={isHeaderExpanded} timeout={300} unmountOnExit>
+              <Stack spacing={2} sx={{ pt: 0.5 }}>
                 <Typography variant='body1' sx={{ color: theme.palette.text.secondary, maxWidth: '800px' }}>
                   Review your quiz details and questions. View primary and secondary language questions.
                 </Typography>
 
-                {/* Action Buttons */}
-                {quiz.approvalState === 'draft' && (
-                  <Stack direction='row' spacing={2} flexWrap='wrap' sx={{ pt: 1 }}>
-                    <Button
-                      variant='contained'
-                      size='medium'
-                      component='label'
-                      startIcon={<EditIcon />}
-                      onClick={handleEditQuizDetails}
-                      sx={{
-                        textTransform: 'none',
-                        fontWeight: 600,
-                        color: 'white',
-                        boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`,
-                        '&:hover': {
-                          boxShadow: `0 6px 16px ${alpha(theme.palette.primary.main, 0.4)}`
-                        }
-                      }}
-                    >
-                      Edit Details
-                    </Button>
-                    <Button
-                      variant='outlined'
-                      size='medium'
-                      startIcon={<EditIcon />}
-                      onClick={handleEditQuizQuestions}
-                      sx={{
-                        textTransform: 'none',
-                        fontWeight: 600
-                      }}
-                    >
-                      Edit Questions
-                    </Button>
-                  </Stack>
+                {showHeaderQuizEditMenu && (
+                  <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                    Use <strong>Edit</strong> to open <strong>Edit Questions</strong> or <strong>Edit Quiz Details</strong>.
+                  </Typography>
                 )}
               </Stack>
             </Collapse>
@@ -384,6 +481,7 @@ function ViewQuiz({ quiz, isAdmin = false }) {
                           <Card
                             key={question._id}
                             sx={{
+                              position: 'relative',
                               cursor: 'pointer',
                               width: '100%',
                               border: '2px solid',
@@ -408,6 +506,30 @@ function ViewQuiz({ quiz, isAdmin = false }) {
                             }}
                             onClick={() => setSelectedPrimaryQuestion(question)}
                           >
+                            {selectedPrimaryQuestion?._id === question._id && canEditQuestionParams ? (
+                              <Tooltip title='Edit question in place'>
+                                <IconButton
+                                  size='small'
+                                  aria-label='Edit question'
+                                  onClick={e => {
+                                    e.stopPropagation()
+                                    setSelectedPrimaryQuestion(question)
+                                    setPrimaryQuestionEditing(true)
+                                  }}
+                                  component='label'
+                                  color='primary'
+                                  sx={{
+                                    position: 'absolute',
+                                    top: 8,
+                                    right: 8,
+                                    zIndex: 2,
+                                    boxShadow: 2,
+                                  }}
+                                >
+                                  <EditIcon sx={{ fontSize: 18 }} />
+                                </IconButton>
+                              </Tooltip>
+                            ) : null}
                             {renderDummyTemplate(
                               question,
                               `${index + 1}. ${question?.data?.question || '* Question is not completed!'}`,
@@ -443,7 +565,7 @@ function ViewQuiz({ quiz, isAdmin = false }) {
                       overflow: 'hidden'
                     }}
                   >
-                    <Box
+                    {/* <Box
                       sx={{
                         p: 2,
                         bgcolor: alpha(theme.palette.primary.main, 0.05),
@@ -469,12 +591,19 @@ function ViewQuiz({ quiz, isAdmin = false }) {
                           '& .MuiChip-icon': { color: 'white' }
                         }}
                       />
-                    </Box>
-                    {renderRealTemplate(selectedPrimaryQuestion)}
+                    </Box> */}
+                    {/* {renderRealTemplate(selectedPrimaryQuestion)} */}
+                    <ViewQuizQuestionParametersPanel
+                      question={selectedPrimaryQuestion}
+                      canEdit={canEditQuestionParams}
+                      editing={primaryQuestionEditing}
+                      onEditingChange={setPrimaryQuestionEditing}
+                      onSaved={() => refreshAfterQuestionSave(selectedPrimaryQuestion._id)}
+                    />
                   </Card>
 
                   {/* Secondary Questions Section */}
-                  <Card
+                  {/* <Card
                     sx={{
                       borderRadius: 2,
                       bgcolor: theme.palette.background.paper,
@@ -576,6 +705,11 @@ function ViewQuiz({ quiz, isAdmin = false }) {
                                   />
                                 </Box>
                                 {renderRealTemplate(secQuestion)}
+                                <ViewQuizQuestionParametersPanel
+                                  question={secQuestion}
+                                  canEdit={canEditQuestionParams}
+                                  onSaved={() => refreshAfterQuestionSave(selectedPrimaryQuestion?._id)}
+                                />
                               </Card>
                             ))}
                           </Stack>
@@ -597,7 +731,7 @@ function ViewQuiz({ quiz, isAdmin = false }) {
                         </Box>
                       )}
                     </Box>
-                  </Card>
+                  </Card> */}
                 </Stack>
               ) : (
                 <Card
