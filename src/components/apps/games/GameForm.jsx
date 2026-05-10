@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 
 import {
   Box,
@@ -29,6 +29,8 @@ import {
   RadioGroup,
   Radio,
   CircularProgress,
+  Tabs,
+  Tab,
   useTheme
 } from '@mui/material'
 import { alpha } from '@mui/material/styles'
@@ -49,7 +51,6 @@ import RewardDialog from './RewardDialog'
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker'
 import dayjs from 'dayjs'
 import ReactPlayer from 'react-player'
-import CountryRegionDropdown from '@/views/pages/auth/register-multi-steps/CountryRegionDropdown'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import Loading from '@/components/Loading'
@@ -61,9 +62,16 @@ import moment, { tz } from 'moment-timezone'
 import { userAgent } from 'next/server'
 import { convertWithGMTOffset } from '@/utils/timezoneconverter'
 import GroupAutocomplete from '@/components/group/GroupAutocomplete'
+import GameLocationRestrictionSection from '@/components/apps/games/GameLocationRestrictionSection'
+import { emptyGameLocation, restrictedLocationHint } from '@/utils/gameLocationAccess'
 
 // Reward position options
 const POSITION_OPTIONS = [1, 2, 3, 4, 5]
+const RESTRICTION_MODE = {
+  OPEN: 'open',
+  GROUP: 'group',
+  LOCATION: 'location'
+}
 
 //validate the form
 
@@ -152,10 +160,6 @@ const formFieldOrder = [
   'registrationEndTime',
   'limitPlayers',
   'maxPlayers',
-  'location.country',
-  'location.region',
-  'location.city',
-  'location.zipcode',
   'promotionalVideoUrl',
   'thumbnailPoster',
   'tags',
@@ -188,19 +192,14 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
     questionsCount: 0,
     pointsWeightage: 1,
     totalPoints: 0,
-    location: {
-      country: '',
-      region: '',
-      city: ''
-    },
+    location: emptyGameLocation(),
     rewards: []
   }
   const [formData, setFormData] = useState(initialFormData)
+  const [restrictionMode, setRestrictionMode] = useState(RESTRICTION_MODE.OPEN)
   const [availablePositions, setAvailablePositions] = useState(POSITION_OPTIONS)
   const [selectedCountryObject, setSelectedCountryObject] = useState(null)
   const [selectedRegion, setSelectedRegion] = useState('')
-  const [selectedCity, setSelectedCity] = useState('')
-  const [cityOptions, setCityOptions] = useState([])
   const [errors, setErrors] = useState({})
   const [touches, setTouches] = useState({})
   const [isHeaderExpanded, setIsHeaderExpanded] = useState(true)
@@ -213,7 +212,6 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
   const [localTimeDisplay, setLocalTimeDisplay] = useState(null)
   // Loading state
   const [loading, setLoading] = useState({
-    fetchCities: false,
     submitting: false,
     fetchingQuestionCount: false
   })
@@ -277,7 +275,7 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
         questionsCount: data?.questionsCount || 0,
         pointsWeightage: data?.pointsWeightage || 1,
         totalPoints: data?.totalPoints || (data?.questionsCount || 0) * (data?.pointsWeightage || 1),
-        location: data?.location || { country: '', region: '', city: '' }
+        location: { ...emptyGameLocation(), ...(data?.location || {}) }
       })
 
       // Set location data for editing
@@ -286,18 +284,20 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
           const regions = await getCountryRegions(data?.location?.country || '')
           setSelectedCountryObject({
             country: data?.location?.country,
-            countryCode: getCountryByName(data?.location?.country)?.countryCode,
-            regions: regions
+            countryCode: data?.location?.countryCode || getCountryByName(data?.location?.country)?.countryCode,
+            regions
           })
           setSelectedRegion(data?.location?.region || '')
-          setSelectedCity(data?.location?.city || '')
-
-          // Fetch cities if region exists
-          if (data?.location?.region) {
-            getCitiesData(data?.location?.region)
-          }
         }
         loadLocationData()
+      }
+
+      if (data?.groupId) {
+        setRestrictionMode(RESTRICTION_MODE.GROUP)
+      } else if (data?.location?.country) {
+        setRestrictionMode(RESTRICTION_MODE.LOCATION)
+      } else {
+        setRestrictionMode(RESTRICTION_MODE.OPEN)
       }
     }
   }, [data])
@@ -359,25 +359,6 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
     fetchQuestionCount()
   }, [formData.quiz, quizzes])
 
-  // Fetch Cities from DB
-  const getCitiesData = async (region = '') => {
-    setLoading(prev => ({ ...prev, fetchCities: true }))
-    try {
-      console.log('Fetching Cities Data now...')
-      const result = await RestApi.get(`/api/cities?state=${region}`)
-      if (result?.status === 'success') {
-        console.log('Cities Fetched result', result)
-        setCityOptions(result?.result?.map(each => each.city)) // Store the fetched cities
-      } else {
-        console.log('Error Fetching cities:', result)
-      }
-    } catch (error) {
-      console.log('Error:', error)
-    } finally {
-      setLoading(prev => ({ ...prev, fetchCities: false }))
-    }
-  }
-
   // Get country regions
   const getCountryRegions = async countryCode => {
     try {
@@ -408,53 +389,91 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
 
   // Handle country change
   const handleCountryChange = async countryObject => {
-    const regions = await getCountryRegions(countryObject?.country || '')
+    if (!countryObject?.country) {
+      setSelectedCountryObject(null)
+      setSelectedRegion('')
+      setFormData(prev => ({
+        ...prev,
+        location: emptyGameLocation()
+      }))
+      return
+    }
+    const regions = await getCountryRegions(countryObject.country)
     setSelectedCountryObject({
       ...countryObject,
-      regions: regions
+      regions
     })
     setSelectedRegion('')
-    setSelectedCity('')
     setFormData(prev => ({
       ...prev,
+      groupId: null,
       location: {
-        country: countryObject?.country || '',
-        region: '',
-        city: ''
+        ...emptyGameLocation(),
+        country: countryObject.country || '',
+        countryCode: countryObject.countryCode || ''
       }
     }))
   }
 
   // Handle region change
   const handleRegionChange = newValue => {
-    setSelectedRegion(newValue)
-    setSelectedCity('')
+    setSelectedRegion(newValue || '')
     setFormData(prev => ({
       ...prev,
       location: {
         ...prev.location,
-        region: newValue,
-        city: ''
+        region: newValue || '',
+        pincode: '',
+        postoffice: ''
       }
     }))
-    getCitiesData(newValue)
   }
 
-  // Handle city change
-  const handleCityChange = newValue => {
-    setSelectedCity(newValue)
+  const patchGameLocation = useCallback(patch => {
     setFormData(prev => ({
       ...prev,
+      groupId:
+        prev.groupId && (patch.country || patch.region || patch.pincode || patch.postoffice || patch.zipcode || patch.locality)
+          ? null
+          : prev.groupId,
       location: {
         ...prev.location,
-        city: newValue
+        ...patch
       }
     }))
-  }
-
-  useEffect(() => {
-    getCitiesData()
   }, [])
+
+  const handleRestrictionModeChange = (event, nextMode) => {
+    if (!nextMode) return
+    setRestrictionMode(nextMode)
+
+    if (nextMode === RESTRICTION_MODE.OPEN) {
+      setFormData(prev => ({
+        ...prev,
+        groupId: null,
+        location: emptyGameLocation()
+      }))
+      setSelectedCountryObject(null)
+      setSelectedRegion('')
+      return
+    }
+
+    if (nextMode === RESTRICTION_MODE.GROUP) {
+      setFormData(prev => ({
+        ...prev,
+        location: emptyGameLocation()
+      }))
+      setSelectedCountryObject(null)
+      setSelectedRegion('')
+      return
+    }
+
+    // LOCATION mode
+    setFormData(prev => ({
+      ...prev,
+      groupId: null
+    }))
+  }
 
   const handleChange = e => {
     const { name, value, type, checked } = e.target
@@ -739,10 +758,19 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
       questionsCount: Number(formData?.questionsCount || 0),
       totalPoints: Number(formData?.totalPoints || 0),
       location: {
-        country: selectedCountryObject?.country || '',
-        region: selectedRegion || '',
-        city: selectedCity || ''
+        ...formData.location,
+        country: selectedCountryObject?.country || formData.location.country || '',
+        countryCode: selectedCountryObject?.countryCode || formData.location.countryCode || '',
+        region: selectedRegion || formData.location.region || ''
       }
+    }
+    if (restrictionMode === RESTRICTION_MODE.OPEN) {
+      submission.groupId = null
+      submission.location = emptyGameLocation()
+    } else if (restrictionMode === RESTRICTION_MODE.GROUP) {
+      submission.location = emptyGameLocation()
+    } else if (restrictionMode === RESTRICTION_MODE.LOCATION) {
+      submission.groupId = null
     }
     if (formData.gameMode !== 'self-paced') {
       delete submission.duration
@@ -1057,6 +1085,114 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
                   </Alert>
                 </Snackbar>
 
+                {/* Access restriction — top of form */}
+                <Grid item xs={12}>
+                  <Paper
+                    variant='outlined'
+                    sx={{
+                      p: { xs: 2, sm: 2.5 },
+                      borderRadius: 2,
+                      borderColor: alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.2 : 0.35)
+                    }}
+                  >
+                    <Typography variant='subtitle1' sx={{ fontWeight: 700, mb: 1 }}>
+                      Access restriction
+                    </Typography>
+                    <Tabs
+                      value={restrictionMode}
+                      onChange={handleRestrictionModeChange}
+                      variant='fullWidth'
+                      sx={{
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        borderRadius: 1
+                      }}
+                    >
+                      <Tab value={RESTRICTION_MODE.OPEN} label='Open' />
+                      <Tab value={RESTRICTION_MODE.GROUP} label='Group' />
+                      <Tab value={RESTRICTION_MODE.LOCATION} label='Location' />
+                    </Tabs>
+                    <Typography variant='caption' color='text.secondary' sx={{ mt: 1, display: 'block' }}>
+                      Open: anyone can join (no location/group gate). Group or location applies one restriction mode
+                      only—not both.
+                    </Typography>
+                    {restrictionMode === RESTRICTION_MODE.GROUP && (
+                      <Stack direction='row' flexWrap='wrap' alignItems='center' spacing={1} sx={{ mt: 1.5 }}>
+                        <Typography variant='caption' color='text.secondary'>
+                          Mode:
+                        </Typography>
+                        <Chip size='small' color='primary' variant='outlined' label='Group-only access' />
+                      </Stack>
+                    )}
+                    {restrictionMode === RESTRICTION_MODE.LOCATION && (
+                      <Stack direction='row' flexWrap='wrap' alignItems='center' spacing={1} sx={{ mt: 1.5 }}>
+                        <Typography variant='caption' color='text.secondary'>
+                          Matching area:
+                        </Typography>
+                        <Chip
+                          size='small'
+                          color='primary'
+                          variant='outlined'
+                          label={
+                            restrictedLocationHint({ location: formData.location }) ||
+                            'Set country and details below — profile must match'
+                          }
+                        />
+                      </Stack>
+                    )}
+                  </Paper>
+                </Grid>
+
+                {restrictionMode === RESTRICTION_MODE.GROUP && (
+                  <Grid item xs={12}>
+                    <GroupAutocomplete
+                      value={formData.groupId}
+                      onChange={groupId => {
+                        setFormData(prev => ({
+                          ...prev,
+                          groupId
+                        }))
+                      }}
+                      label='Target Group'
+                      placeholder='Search for a group to restrict game access...'
+                    />
+                  </Grid>
+                )}
+
+                {restrictionMode === RESTRICTION_MODE.LOCATION && (
+                  <Grid item xs={12}>
+                    <Paper
+                      variant='outlined'
+                      sx={{
+                        p: { xs: 2, sm: 2.5 },
+                        borderRadius: 2,
+                        borderColor: alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.2 : 0.35)
+                      }}
+                    >
+                      <Typography
+                        variant='subtitle1'
+                        gutterBottom
+                        sx={{ fontWeight: 600, mb: 1, fontSize: { xs: '0.95rem', sm: '1rem' } }}
+                      >
+                        Game location & access area
+                      </Typography>
+                      <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
+                        Use country/region and optional PIN/post office (India) or ZIP/locality (other countries) to
+                        narrow eligible users.
+                      </Typography>
+                      <GameLocationRestrictionSection
+                        countryObject={selectedCountryObject}
+                        onCountryObjectChange={handleCountryChange}
+                        region={selectedRegion}
+                        onRegionChange={handleRegionChange}
+                        location={formData.location}
+                        onLocationPatch={patchGameLocation}
+                        showMap={false}
+                      />
+                    </Paper>
+                  </Grid>
+                )}
+
                 {/* Basic Information */}
                 <Grid item xs={12} sm={6}>
                   <TextField
@@ -1304,17 +1440,6 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
                   />
                 </Grid>
 
-                {/* Group Selection */}
-                <Grid item xs={12}>
-                  <GroupAutocomplete
-                    value={formData.groupId}
-                    onChange={groupId => {
-                      setFormData(prev => ({ ...prev, groupId }))
-                    }}
-                    label='Target Group (Optional)'
-                    placeholder='Search for a group to restrict game access...'
-                  />
-                </Grid>
                 <Grid item xs={12}>
                   {/* <Typography variant='subtitle1' gutterBottom>
             Location of Game Creator (Admin)
@@ -1631,104 +1756,6 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
                       inputRef={fieldRefs.maxPlayers}
                     />
                   )}
-                </Grid>
-
-                {/* Location Section */}
-                <Grid item xs={12}>
-                  <Typography
-                    variant='subtitle1'
-                    gutterBottom
-                    sx={{
-                      fontWeight: 600,
-                      mb: { xs: 1.5, sm: 2 },
-                      fontSize: { xs: '0.95rem', sm: '1rem' }
-                    }}
-                  >
-                    Game Location (Optional - Accessible anywhere if not specified)
-                  </Typography>
-                  <Grid container spacing={{ xs: 1.5, sm: 2 }}>
-                    <Grid item xs={12} sm={6} md={4}>
-                      <CountryRegionDropdown
-                        defaultCountryCode=''
-                        selectedCountryObject={selectedCountryObject}
-                        setSelectedCountryObject={handleCountryChange}
-                      />
-                    </Grid>
-
-                    {selectedCountryObject?.country && (
-                      <Grid item xs={12} sm={6} md={4}>
-                        <FormControl fullWidth>
-                          <Autocomplete
-                            autoHighlight
-                            onChange={(e, newValue) => handleRegionChange(newValue)}
-                            id='autocomplete-region-select'
-                            options={selectedCountryObject?.regions || []}
-                            getOptionLabel={option => option || ''}
-                            renderInput={params => (
-                              <TextField
-                                {...params}
-                                key={params.id}
-                                label='Choose a region'
-                                placeholder='Select region'
-                                inputProps={{
-                                  ...params.inputProps,
-                                  autoComplete: 'region'
-                                }}
-                              />
-                            )}
-                            value={selectedRegion}
-                            noOptionsText='No regions available'
-                          />
-                        </FormControl>
-                      </Grid>
-                    )}
-
-                    {selectedRegion && (
-                      <Grid item xs={12} sm={6} md={4}>
-                        {loading.fetchCities ? (
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 1,
-                              p: 2,
-                              bgcolor: 'action.hover',
-                              borderRadius: 1
-                            }}
-                          >
-                            <CircularProgress size={20} />
-                            <Typography variant='body2' color='text.secondary'>
-                              Loading cities...
-                            </Typography>
-                          </Box>
-                        ) : (
-                          <FormControl fullWidth>
-                            <Autocomplete
-                              autoHighlight
-                              onChange={(e, newValue) => handleCityChange(newValue)}
-                              id='autocomplete-city-select'
-                              options={cityOptions || []}
-                              getOptionLabel={option => option || ''}
-                              renderInput={params => (
-                                <TextField
-                                  {...params}
-                                  key={params.id}
-                                  label='Choose a City'
-                                  placeholder='Select city'
-                                  inputProps={{
-                                    ...params.inputProps,
-                                    autoComplete: 'city'
-                                  }}
-                                />
-                              )}
-                              value={selectedCity}
-                              noOptionsText='No cities available'
-                            />
-                          </FormControl>
-                        )}
-                      </Grid>
-                    )}
-                  </Grid>
                 </Grid>
 
                 {/* Media Section */}

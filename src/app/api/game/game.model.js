@@ -6,8 +6,20 @@ import SponsorshipModel from '../sponsorship/sponsorship.model'
 
 const locationSchema = new mongoose.Schema({
   country: String,
+  countryCode: String,
   region: String,
-  city: String
+  /** @deprecated Prefer structured pincode/postoffice (India) or zipcode/locality. Kept for older games. */
+  city: String,
+  pincode: String,
+  postoffice: String,
+  street: String,
+  colony: String,
+  village: String,
+  locality: String,
+  zipcode: String,
+  address: String,
+  /** GeoJSON-style [lng, lat] to match profile.coordinates */
+  coordinates: { type: [Number], default: undefined }
 })
 const registeredUserSchema = new mongoose.Schema({
   user: {
@@ -144,13 +156,13 @@ const gameSchema = new mongoose.Schema(
     location: locationSchema,
     startTime: {
       type: Date,
-      required: function() {
+      required: function () {
         return this.status !== 'awaiting_sponsorship' && this.status !== 'sponsored'
       }
     },
     timezone: {
       type: String,
-      required: function() {
+      required: function () {
         return this.status !== 'awaiting_sponsorship' && this.status !== 'sponsored'
       }
     },
@@ -179,7 +191,7 @@ const gameSchema = new mongoose.Schema(
     duration: {
       // In seconds
       type: Number,
-      required: function() {
+      required: function () {
         return this.status !== 'awaiting_sponsorship' && this.status !== 'sponsored' && this.gameMode === 'self-paced'
       }
     },

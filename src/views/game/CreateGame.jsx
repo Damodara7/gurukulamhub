@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import {
   Box,
   Button,
@@ -11,7 +11,6 @@ import {
   FormControl,
   Grid,
   Typography,
-  Autocomplete,
   FormControlLabel
 } from '@mui/material'
 import { toast } from 'react-toastify' // Assuming you are using react-toastify for notifications
@@ -27,10 +26,9 @@ import ImageUploader from '@/components/media-viewer/ImageUploader'
 import { useRouter } from 'next/navigation'
 
 import { generateGamePinOfSixDigit } from './gameUtils'
-import { LocationCityTwoTone } from '@mui/icons-material'
-import CountryRegionDropdown from '../pages/auth/register-multi-steps/CountryRegionDropdown'
+import GameLocationRestrictionSection from '@/components/apps/games/GameLocationRestrictionSection'
+import { emptyGameLocation } from '@/utils/gameLocationAccess'
 import MultiSelect from '@/components/MultiSelect'
-import Loading from '@/components/Loading'
 import Rewards from '@/components/game/Rewards'
 
 const urls = [
@@ -77,8 +75,6 @@ function CreateGame({ mode = 'create', quizId = '', gameId }) {
   const [selectedCountry, setSelectedCountry] = useState('')
   const [selectedCountryObject, setSelectedCountryObject] = useState(null)
   const [selectedRegion, setSelectedRegion] = useState('')
-  const [city, setCity] = useState('')
-  const [cityOptions, setCityOptions] = useState([])
   const [selectedRewardType, setSelectedRewardType] = useState('')
   const { uuid, regenerateUUID, getUUID } = useUUID()
   const router = useRouter()
@@ -88,11 +84,7 @@ function CreateGame({ mode = 'create', quizId = '', gameId }) {
   const [sponsorships, setSponsorships] = useState([])
   const [selectedSponsors, setSelectedSponsors] = useState([])
 
-  // Loading state
-  const [loading, setLoading] = useState({
-    fetchCities: false,
-    submitting: false
-  })
+  const [loading, setLoading] = useState(false)
 
   const [gameData, setGameData] = useState({
     _id: getUUID().substring(0, 32),
@@ -115,8 +107,70 @@ function CreateGame({ mode = 'create', quizId = '', gameId }) {
     remarks: '',
     remarksNotes: '',
     status: 'active',
-    gameStatus: 'active' // active/live/archived
+    gameStatus: 'active', // active/live/archived
+    location: emptyGameLocation()
   })
+
+  const getCountryRegions = async countryCode => {
+    try {
+      const { CountryRegionData } = await import('@/data/regions')
+      const countryData = CountryRegionData.find(
+        row => row[1] === countryCode || row[0].toLowerCase() === String(countryCode).toLowerCase()
+      )
+      if (countryData?.[2]) {
+        const regionsString = countryData[2]
+        return regionsString.split('|').map(regionRow => regionRow.split('~')[0])
+      }
+    } catch (e) {
+      console.error('Error fetching country regions:', e)
+    }
+    return []
+  }
+
+  const handleLocationCountryChange = async countryObject => {
+    if (!countryObject?.country) {
+      setSelectedCountryObject(null)
+      setSelectedCountry('')
+      setSelectedRegion('')
+      setGameData(prev => ({
+        ...prev,
+        location: emptyGameLocation()
+      }))
+      return
+    }
+    const regions = await getCountryRegions(countryObject.country)
+    setSelectedCountryObject({ ...countryObject, regions })
+    setSelectedCountry(countryObject.country)
+    setSelectedRegion('')
+    setGameData(prev => ({
+      ...prev,
+      location: {
+        ...emptyGameLocation(),
+        country: countryObject.country || '',
+        countryCode: countryObject.countryCode || ''
+      }
+    }))
+  }
+
+  const handleLocationRegionChange = newVal => {
+    setSelectedRegion(newVal || '')
+    setGameData(prev => ({
+      ...prev,
+      location: {
+        ...prev.location,
+        region: newVal || '',
+        pincode: '',
+        postoffice: ''
+      }
+    }))
+  }
+
+  const patchGameLocation = useCallback(patch => {
+    setGameData(prev => ({
+      ...prev,
+      location: { ...prev.location, ...patch }
+    }))
+  }, [])
 
   async function getQuizData() {
     //// toast.success('Fetching My Quiz Data now...')
@@ -155,30 +209,6 @@ function CreateGame({ mode = 'create', quizId = '', gameId }) {
     getQuizData()
   }, [])
 
-   // Fetch Cities from DB
-   const getCitiesData = async (region = '') => {
-    setLoading(prev => ({ ...prev, fetchCities: true }))
-    try {
-      console.log('Fetching Cities Data now...')
-      // const result = await clientApi.getAllCities()
-      const result = await RestApi.get(`/api/cities?state=${region}`)
-      if (result?.status === 'success') {
-        console.log('Cities Fetched result', result)
-        setCityOptions(result?.result?.map(each => each.city)) // Store the fetched cities
-      } else {
-        console.log('Error Fetching cities:', result)
-      }
-    } catch (error) {
-      console.log('Error:', error)
-    } finally {
-      setLoading(prev => ({ ...prev, fetchCities: false }))
-    }
-  }
-
-  useEffect(() => {
-    getCitiesData()
-  }, [])
-
   useEffect(() => {
     setSelectedSponsors([])
     async function getSponsorships() {
@@ -199,8 +229,12 @@ function CreateGame({ mode = 'create', quizId = '', gameId }) {
         if (selectedRegion) {
           searchParams.push(`region=${selectedRegion}`)
         }
-        if (city) {
-          searchParams.push(`city=${city}`)
+        const sponsorshipArea =
+          selectedCountryObject?.country === 'India'
+            ? gameData.location?.postoffice || gameData.location?.pincode || ''
+            : gameData.location?.locality || gameData.location?.zipcode || ''
+        if (sponsorshipArea) {
+          searchParams.push(`city=${encodeURIComponent(sponsorshipArea)}`)
         }
 
         const url = `${API_URLS.v0.SPONSORSHIP}?${searchParams.join('&')}`
@@ -223,7 +257,16 @@ function CreateGame({ mode = 'create', quizId = '', gameId }) {
     }
 
     getSponsorships()
-  }, [selectedQuiz, selectedCountry, selectedRegion, city])
+  }, [
+    selectedQuiz,
+    selectedCountry,
+    selectedRegion,
+    selectedCountryObject?.country,
+    gameData.location?.pincode,
+    gameData.location?.postoffice,
+    gameData.location?.locality,
+    gameData.location?.zipcode
+  ])
 
   const handleQuizSelect = async event => {
     setSelectedQuiz(event.target.value)
@@ -310,21 +353,17 @@ function CreateGame({ mode = 'create', quizId = '', gameId }) {
   }
 
   const onSubmit = async () => {
-    console.log('GameDataValues: ', gameData) // Access form values here
-    const result = await RestApi.post(API_URLS.v0.USERS_GAME, gameData)
-    if (result?.status === 'success') {
-      console.log('gridTemplateAreas:  Added result', result)
-      // toast.success('Game Added Successfully .')
-      setLoading(false)
-      router.push('/mygames/view')
-    } else {
-      // toast.error('Error:' + result.message)
+    setLoading(true)
+    try {
+      console.log('GameDataValues: ', gameData)
+      const result = await RestApi.post(API_URLS.v0.USERS_GAME, gameData)
+      if (result?.status === 'success') {
+        console.log('gridTemplateAreas:  Added result', result)
+        router.push('/mygames/view')
+      }
+    } finally {
       setLoading(false)
     }
-  }
-
-  const handleChangeCountry = countryValue => {
-    setSelectedRegion('')
   }
 
   return (
@@ -407,75 +446,20 @@ function CreateGame({ mode = 'create', quizId = '', gameId }) {
             </FormControl>
           </Grid>
 
-          <Grid item xs={12} md={6}>
-            <CountryRegionDropdown
-              setSelectedCountry={setSelectedCountry}
-              selectedCountryObject={selectedCountryObject}
-              setSelectedCountryObject={setSelectedCountryObject}
-              onCountryChange={handleChangeCountry}
+          <Grid item xs={12}>
+            <Typography variant='body2' color='textSecondary' gutterBottom sx={{ mb: 1 }}>
+              Matches profile fields: picking a country limits players to profiles in that country; add region and (for
+              India) PIN/post office or (elsewhere) ZIP/locality to narrow further.
+            </Typography>
+            <GameLocationRestrictionSection
+              countryObject={selectedCountryObject}
+              onCountryObjectChange={handleLocationCountryChange}
+              region={selectedRegion}
+              onRegionChange={handleLocationRegionChange}
+              location={gameData.location}
+              onLocationPatch={patchGameLocation}
             />
           </Grid>
-
-          {selectedCountryObject?.country && (
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth>
-                <Autocomplete
-                  autoHighlight
-                  onChange={(e, newValue) => {
-                    setSelectedRegion(newValue)
-                    getCitiesData(newValue)
-                    setCity('')
-                  }}
-                  id='autocomplete-region-select'
-                  options={selectedCountryObject?.regions || []}
-                  getOptionLabel={option => option || ''}
-                  renderInput={params => (
-                    <TextField
-                      {...params}
-                      key={params.id}
-                      label='Choose a region'
-                      inputProps={{
-                        ...params.inputProps,
-                        autoComplete: 'region'
-                      }}
-                    />
-                  )}
-                  value={selectedRegion}
-                />
-              </FormControl>
-            </Grid>
-          )}
-
-          {selectedRegion && (
-            <Grid item xs={12} md={6}>
-              {loading.fetchCities && <Loading />}
-              {!loading.fetchCities && (
-                <FormControl fullWidth>
-                  <Autocomplete
-                    autoHighlight
-                    onChange={(e, newValue) => {
-                      setCity(newValue)
-                    }}
-                    id='autocomplete-city-select'
-                    options={cityOptions}
-                    getOptionLabel={option => option || ''}
-                    renderInput={params => (
-                      <TextField
-                        {...params}
-                        key={params.id}
-                        label='Choose a City'
-                        inputProps={{
-                          ...params.inputProps,
-                          autoComplete: 'city'
-                        }}
-                      />
-                    )}
-                    value={city}
-                  />
-                </FormControl>
-              )}
-            </Grid>
-          )}
         </Grid>
 
         <Grid container spacing={4}>
@@ -754,7 +738,7 @@ function CreateGame({ mode = 'create', quizId = '', gameId }) {
               component='label'
               type='submit'
               onClick={handleSubmit}
-              disabled={loading.submitting || !selectedQuiz || !gameData.title}
+              disabled={loading || !selectedQuiz || !gameData.title}
             >
               Create Game
             </Button>

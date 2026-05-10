@@ -13,6 +13,7 @@ import { broadcastGamesList } from '../ws/games/publishers'
 import { broadcastGameDetails } from '../ws/games/[gameId]/publishers'
 import { broadcastSponsorGamesList } from '../ws/sponsor-games/publishers'
 import UserProfile from '@/app/api/profile/profile.model'
+import { profileMatchesGameLocation, restrictedLocationHint } from '@/utils/gameLocationAccess'
 import Group from '@/app/api/group/group.model'
 import {
   createGameCreatedNotification,
@@ -1356,6 +1357,19 @@ export const joinGame = async (gameId, userData) => {
       }
     }
 
+    // Restriction mode is exclusive: group OR location.
+    // If group is configured, only group membership is enforced.
+    if (!(game.groupId && game.groupId._id) && !profileMatchesGameLocation(profile, game)) {
+      const hint = restrictedLocationHint(game)
+      return {
+        status: 'error',
+        result: null,
+        message: hint
+          ? `You are not allowed to register/join this game. Your profile address must match this game's location: ${hint}.`
+          : "You are not allowed to register/join this game. Your profile address must match the game's configured location."
+      }
+    }
+
     // Create new player document with status 'registered'
     player = new Player({
       user: user._id,
@@ -1459,6 +1473,9 @@ export const startGame = async (gameId, userData) => {
         message: 'Game not found'
       }
     }
+
+    const profile = await UserProfile.findOne({ email: userData?.email }).lean()
+
     if (game.groupId && game.groupId._id) {
       const groupIdStr = (game.groupId._id || game.groupId).toString()
       const usergroupIds = (user.groupIds || []).map(g => g.toString())
@@ -1483,6 +1500,20 @@ export const startGame = async (gameId, userData) => {
         }
       }
     }
+
+    // Restriction mode is exclusive: group OR location.
+    // If group is configured, only group membership is enforced.
+    if (!(game.groupId && game.groupId._id) && !profileMatchesGameLocation(profile, game)) {
+      const hint = restrictedLocationHint(game)
+      return {
+        status: 'error',
+        result: null,
+        message: hint
+          ? `You are not allowed to start this game. Your profile address must match this game's location: ${hint}.`
+          : "You are not allowed to start this game. Your profile address must match the game's configured location."
+      }
+    }
+
     const enrichedGame = await enrichGameWithDetails(game)
     const leaderboard = enrichedGame?.participatedUsers?.map(p => ({
       ...p,

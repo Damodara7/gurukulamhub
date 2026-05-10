@@ -18,15 +18,28 @@ export const getLocality = async ( pinCode) => {
   }
 }
 
-export const getPinCodesForState = async (stateName) => {
+function escapeRegex(s) {
+  return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+/**
+ * Region labels from `CountryRegionData` (e.g. "Telangana") often differ in casing
+ * from stored Mongo `state` values (e.g. "TELANGANA"). Profile and game form both
+ * call this; use case-insensitive matching so PIN lists load reliably.
+ */
+export const getPinCodesForState = async stateName => {
   await connectMongo()
-  console.log('state', stateName)
+  const raw = typeof stateName === 'string' ? stateName.trim() : ''
+  console.log('state', raw)
+  if (!raw) return null
+
   try {
     const foundState = await States.findOne(
-      { state: stateName }, // Find the document for the given state
-      { 'pinCodes.pincode': 1, _id: 0 } // Project only the pincode field, exclude _id
+      { state: new RegExp(`^${escapeRegex(raw)}$`, 'i') },
+      { 'pinCodes.pincode': 1, _id: 0 }
     )
-    return foundState?.pinCodes.map(pinCodeObj=> pinCodeObj.pincode)
+    const list = foundState?.pinCodes?.map(pinCodeObj => pinCodeObj?.pincode).filter(Boolean)
+    return list?.length ? list : null
   } catch (error) {
     console.error('Error fetching  state pinCodes: ', error)
     return null

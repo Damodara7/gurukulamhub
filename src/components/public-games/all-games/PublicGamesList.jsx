@@ -20,6 +20,7 @@ const PublicGamesList = ({ games, loading, error, setGames }) => {
   const [localGames, setLocalGames] = useState(games)
   const gamesToUse = setGames ? games : localGames
   const [currentUserGroupIdIds, setCurrentUserGroupIdIds] = useState([])
+  const [currentUserProfile, setCurrentUserProfile] = useState(null)
 
   useEffect(() => {
     // console.log('games', games)
@@ -28,7 +29,7 @@ const PublicGamesList = ({ games, loading, error, setGames }) => {
 
   useEffect(() => {
     // WebSocket connection for real-time games list updates
-    const wsUrl = 
+    const wsUrl =
       typeof window !== 'undefined'
         ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/api/ws/games`
         : ''
@@ -65,46 +66,51 @@ const PublicGamesList = ({ games, loading, error, setGames }) => {
     }
   }, [])
 
-  // Fetch current user's groupIds once
+  // Fetch current user's groupIds + profile once
   useEffect(() => {
-    const fetchUserGroups = async () => {
+    const fetchUserContext = async () => {
       try {
         if (!session?.user?.email) return
-        const res = await RestApi.get(`${API_URLS.v0.USER}/${session.user.email}`)
-        if (res?.status === 'success') {
-          const user = res.result
-          console.log('Current user group Ids', user.groupIds)
+        const [userRes, profileRes] = await Promise.all([
+          RestApi.get(`${API_URLS.v0.USER}/${session.user.email}`),
+          RestApi.get(`${API_URLS.v0.USERS_PROFILE}?email=${encodeURIComponent(session.user.email)}`)
+        ])
+        if (userRes?.status === 'success') {
+          const user = userRes.result
           if (user?.groupIds) setCurrentUserGroupIdIds(user.groupIds.map(g => g?.toString?.() || g))
         }
+        if (profileRes?.status === 'success') {
+          const profilePayload = profileRes.result
+          const normalizedProfile =
+            profilePayload?.profile || (Array.isArray(profilePayload) ? profilePayload[0] : profilePayload) || null
+          setCurrentUserProfile(normalizedProfile)
+        }
       } catch (e) {
-        // silent fail
-        console.error('Error fetching user groups', e)
+        console.error('Error fetching user context', e)
       }
     }
-    fetchUserGroups()
+    fetchUserContext()
   }, [session?.user?.email])
 
-  const getUserGameStatus = (game) => {
+  const getUserGameStatus = game => {
     const userEmail = session?.user?.email
 
     // User participation checks should come first
-    const participation = game?.participatedUsers?.find((p) => p.email === userEmail)
+    const participation = game?.participatedUsers?.find(p => p.email === userEmail)
     if (participation) {
-      return participation.completed 
-        ? { status: 'completed' } 
-        : { status: 'inProgress' }
+      return participation.completed ? { status: 'completed' } : { status: 'inProgress' }
     }
 
     // Then check game status
     if (game.status === 'cancelled') return { status: 'cancelled' }
     if (game.status === 'lobby') return { status: 'lobby' }
     if (game.status === 'approved') return { status: 'upcoming' }
-    
+
     // Special handling for live games where user hasn't participated yet
     if (game.status === 'live') return { status: 'live' }
-    
+
     // Registration checks
-    const isRegistered = game?.registeredUsers?.some((r) => r.email === userEmail)
+    const isRegistered = game?.registeredUsers?.some(r => r.email === userEmail)
     if (isRegistered) {
       return game.status === 'completed' ? { status: 'missed' } : { status: 'registered' }
     }
@@ -112,7 +118,7 @@ const PublicGamesList = ({ games, loading, error, setGames }) => {
     return { status: '' }
   }
 
-  const filteredGames = gamesToUse.filter((game) => {
+  const filteredGames = gamesToUse.filter(game => {
     const userStatus = getUserGameStatus(game).status
     const userEmail = session?.user?.email
     const globalStatus = game.status
@@ -120,11 +126,10 @@ const PublicGamesList = ({ games, loading, error, setGames }) => {
     if (statusFilter === 'all') return true
     if (statusFilter === 'upcoming') return globalStatus === 'approved'
     if (statusFilter === 'registered') {
-      return globalStatus === 'approved' && game.registeredUsers?.some((r) => r.email === userEmail)
+      return globalStatus === 'approved' && game.registeredUsers?.some(r => r.email === userEmail)
     }
     if (statusFilter === 'live') {
-      return globalStatus === 'live' || 
-             (userStatus === 'completed' && globalStatus === 'live')
+      return globalStatus === 'live' || (userStatus === 'completed' && globalStatus === 'live')
     }
 
     return userStatus === statusFilter
@@ -132,12 +137,7 @@ const PublicGamesList = ({ games, loading, error, setGames }) => {
 
   if (loading) {
     return (
-      <Box 
-        p={{ xs: 2, sm: 3, md: 4 }} 
-        display='flex' 
-        justifyContent='center'
-        minHeight={200}
-      >
+      <Box p={{ xs: 2, sm: 3, md: 4 }} display='flex' justifyContent='center' minHeight={200}>
         <Loading />
       </Box>
     )
@@ -146,10 +146,10 @@ const PublicGamesList = ({ games, loading, error, setGames }) => {
   if (error) {
     return (
       <Box p={{ xs: 2, sm: 3, md: 4 }}>
-        <FallBackCard error={error} content='Error: {error}' path='/' btnText='Back To Home Page'/>
+        <FallBackCard error={error} content='Error: {error}' path='/' btnText='Back To Home Page' />
       </Box>
     )
-  } 
+  }
 
   return (
     <>
@@ -173,11 +173,11 @@ const PublicGamesList = ({ games, loading, error, setGames }) => {
           >
             🏆
           </Box>
-          <Typography 
-            variant="h5" 
-            fontWeight={700} 
-            gutterBottom 
-            sx={{ 
+          <Typography
+            variant='h5'
+            fontWeight={700}
+            gutterBottom
+            sx={{
               color: 'text.primary',
               fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
               textAlign: 'center'
@@ -185,12 +185,12 @@ const PublicGamesList = ({ games, loading, error, setGames }) => {
           >
             No Games Found
           </Typography>
-          <Typography 
-            variant="body1" 
-            color="text.secondary" 
-            textAlign="center" 
-            sx={{ 
-              maxWidth: 400, 
+          <Typography
+            variant='body1'
+            color='text.secondary'
+            textAlign='center'
+            sx={{
+              maxWidth: 400,
               lineHeight: 1.7,
               fontSize: { xs: '0.875rem', sm: '1rem' },
               px: { xs: 2, sm: 0 }
@@ -201,9 +201,9 @@ const PublicGamesList = ({ games, loading, error, setGames }) => {
         </Box>
       ) : (
         <Grid container spacing={{ xs: 2, sm: 3, md: 4 }}>
-          {filteredGames.map((game) => (
+          {filteredGames.map(game => (
             <Grid item key={game._id || game.id} xs={12} sm={6} md={4}>
-              <GameCard game={game} currentUsergroupIds={currentUserGroupIdIds} />
+              <GameCard game={game} currentUsergroupIds={currentUserGroupIdIds} currentUserProfile={currentUserProfile} />
             </Grid>
           ))}
         </Grid>

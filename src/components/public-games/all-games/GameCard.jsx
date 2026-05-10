@@ -32,6 +32,7 @@ import { format } from 'date-fns'
 import imagePlaceholder from '/public/images/misc/image-placeholder.png'
 import { useEffect, useState } from 'react'
 import ShareGamePopup from './ShareGamePopup'
+import { isGameLocationRestricted, profileMatchesGameLocation, restrictedLocationHint } from '@/utils/gameLocationAccess'
 import {
   EventAvailable as EventAvailableIcon,
   CheckCircle as CheckCircleIcon,
@@ -40,7 +41,7 @@ import {
   Share as ShareIcon
 } from '@mui/icons-material'
 
-const GameCard = ({ game, currentUsergroupIds = [], currentUsergroupIdsIds = [] }) => {
+const GameCard = ({ game, currentUsergroupIds = [], currentUsergroupIdsIds = [], currentUserProfile = null }) => {
   const { data: session } = useSession()
   const router = useRouter()
   const theme = useTheme()
@@ -55,10 +56,11 @@ const GameCard = ({ game, currentUsergroupIds = [], currentUsergroupIdsIds = [] 
   const userGroupIds = (currentUsergroupIds?.length ? currentUsergroupIds : currentUsergroupIdsIds) || []
   const isUserMemberOfGroup = !isGroupRestricted
     ? true
-    : userGroupIds
-        .map(g => (g?._id ? g._id.toString() : g?.toString?.() || ''))
-        .includes(groupIdStr)
+    : userGroupIds.map(g => (g?._id ? g._id.toString() : g?.toString?.() || '')).includes(groupIdStr)
   const showGroupRestriction = isGroupRestricted && !isUserMemberOfGroup
+  const isLocationRestricted = !isGroupRestricted && isGameLocationRestricted(game)
+  const showLocationRestriction =
+    isLocationRestricted && currentUserProfile ? !profileMatchesGameLocation(currentUserProfile, game) : false
 
   // Build compact filters text safely
   const filtersParts = []
@@ -77,6 +79,10 @@ const GameCard = ({ game, currentUsergroupIds = [], currentUsergroupIdsIds = [] 
     const loc = groupObj.location || {}
     const locParts = [loc.city, loc.region, loc.country].filter(Boolean)
     if (locParts.length > 0) filtersParts.push(`Location: ${locParts.join(', ')}`)
+  }
+  if (game?.location && isGameLocationRestricted(game)) {
+    const area = restrictedLocationHint(game)
+    if (area) filtersParts.push(`Game area (profile must match): ${area}`)
   }
 
   // Status-based UI logic
@@ -295,7 +301,7 @@ const GameCard = ({ game, currentUsergroupIds = [], currentUsergroupIdsIds = [] 
           <Box sx={{ flex: 1, my: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
             <Stack spacing={1}>
               {/* Game Status Info - Added at the top */}
-              {!showGroupRestriction && (
+              {!showGroupRestriction && !showLocationRestriction && (
                 <Stack direction='row' alignItems='flex-start' spacing={1}>
                   <Box sx={{ color: gameStatusInfo.color }}>{gameStatusInfo.icon}</Box>
                   <Typography variant='body2' sx={{ color: gameStatusInfo.color, fontWeight: 500 }}>
@@ -315,6 +321,18 @@ const GameCard = ({ game, currentUsergroupIds = [], currentUsergroupIdsIds = [] 
                   </Typography>
                 </Alert>
               )}
+              {showLocationRestriction && (
+                <Alert
+                  severity='error'
+                  variant='outlined'
+                  sx={{ my: 1, py: 0.75, px: 1, '& .MuiAlert-message': { width: '100%', py: 0, my: 0 } }}
+                >
+                  <AlertTitle sx={{ fontWeight: 700, fontSize: '0.85rem', mb: 0 }}>Restricted to location</AlertTitle>
+                  <Typography variant='caption' sx={{ display: 'block' }}>
+                    Your profile location does not match this game area.
+                  </Typography>
+                </Alert>
+              )}
 
               <Stack direction='row' alignItems='center' spacing={1}>
                 <Typography variant='body2'> Quiz on : {game?.quiz?.title}</Typography>
@@ -328,8 +346,18 @@ const GameCard = ({ game, currentUsergroupIds = [], currentUsergroupIdsIds = [] 
 
               <Stack direction='row' alignItems='center' spacing={1}>
                 <LocationOnIcon fontSize='small' color='action' />
-                <Typography variant='body2' textTransform='capitalize'>
-                  {game?.location?.city || game.location?.region || game.location?.country || 'Anywhere'}
+                <Typography variant='body2'>
+                  {[
+                    game?.location?.postoffice,
+                    game?.location?.locality,
+                    game?.location?.pincode,
+                    game?.location?.zipcode,
+                    game?.location?.city,
+                    game?.location?.region,
+                    game?.location?.country
+                  ]
+                    .filter(Boolean)
+                    .join(' · ') || 'Anywhere'}
                 </Typography>
               </Stack>
 
@@ -422,12 +450,13 @@ const GameCard = ({ game, currentUsergroupIds = [], currentUsergroupIdsIds = [] 
               <Button
                 disabled={
                   showGroupRestriction ||
+                  showLocationRestriction ||
                   (game.status !== 'lobby' &&
                     game.status !== 'approved' &&
                     !isGameLive &&
                     !game?.participatedUsers?.find(p => p.email === session?.user?.email)?.completed)
                 }
-                sx={{ cursor: showGroupRestriction ? 'not-allowed' : 'pointer' }}
+                sx={{ cursor: showGroupRestriction || showLocationRestriction ? 'not-allowed' : 'pointer' }}
                 variant='outlined'
                 color='primary'
                 size='small'
