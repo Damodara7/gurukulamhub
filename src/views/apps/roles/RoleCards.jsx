@@ -12,21 +12,23 @@ import Stack from '@mui/material/Stack'
 import { useTheme } from '@mui/material/styles'
 
 // Component Imports
-import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
 import RoleDialog from '@/components/dialogs/role-dialog'
 import OpenDialogOnElementClick from '@/components/dialogs/OpenDialogOnElementClick'
-
-// MUI Icons
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 
 // API Utils
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { useEffect, useState } from 'react'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
+import Chip from '@mui/material/Chip'
+import Switch from '@mui/material/Switch'
+import Tooltip from '@mui/material/Tooltip'
 import { useSession } from 'next-auth/react'
 import { isSuperAdmin } from '@/utils/permissionUtils'
+import { ROLES_LOOKUP } from '@/configs/roles-lookup'
 import { toast } from 'react-toastify'
+
+const CRITICAL_ROLES = [ROLES_LOOKUP.SUPER_ADMIN, ROLES_LOOKUP.ADMIN, ROLES_LOOKUP.USER]
 // Vars
 // const cardData = [
 //   { totalUsers: 4, title: 'Administrator', avatars: ['1.png', '2.png', '3.png', '4.png'] },
@@ -41,8 +43,6 @@ const RoleCards = () => {
   const { data: session } = useSession()
   const theme = useTheme()
   const [roles, setRoles] = useState([])
-  const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false) // Manage confirmation dialog
-  const [currentRole, setCurrentRole] = useState(null) // Track the role to delete
   
   const userRoles = session?.user?.roles || []
   const isUserSuperAdmin = isSuperAdmin(userRoles)
@@ -99,63 +99,34 @@ const RoleCards = () => {
     await getRolesData() // Call fetchRoles to refresh roles
   }
 
-  const [affectedUserCount, setAffectedUserCount] = useState(0)
+  const [togglingRoleId, setTogglingRoleId] = useState(null)
 
-  // Handle delete confirmation dialog
-  const handleDeleteConfirmation = async role => {
-    setCurrentRole(role)
-    
-    // Fetch user count for this role
+  // Handle toggling active/inactive status
+  const handleToggleActive = async (role) => {
+    if (!isUserSuperAdmin) {
+      toast.error('Only SUPER_ADMIN can change role status')
+      return
+    }
+
+    setTogglingRoleId(role._id)
     try {
-      const countResult = await RestApi.get(`${API_URLS.v0.ROLE}?id=${role._id}&action=userCount`)
-      if (countResult?.status === 'success') {
-        setAffectedUserCount(countResult.result?.count || 0)
+      const result = await RestApi.put(`${API_URLS.v0.ROLE}`, {
+        ...role,
+        isActive: !role.isActive,
+        updatedBy: session?.user?.email
+      })
+      if (result?.status === 'success') {
+        const newStatus = !role.isActive ? 'active' : 'inactive'
+        toast.success(`Role "${role.name}" is now ${newStatus}`)
+        await refreshRoles()
       } else {
-        setAffectedUserCount(0)
+        toast.error(result?.message || 'Failed to update role status')
       }
     } catch (error) {
-      console.error('Error fetching user count:', error)
-      setAffectedUserCount(0)
-    }
-    
-    setConfirmationDialogOpen(true)
-  }
-
-  // Handle the actual delete operation
-  const handleDelete = async () => {
-    if (currentRole) {
-      // console.log('Deleting role ' + curr)
-      try {
-        // const result = await clientApi.deleteRole(currentRole._id)
-        const result = await RestApi.del(`${API_URLS.v0.ROLE}?id=${currentRole._id}`, {
-          email: session?.user?.email || null
-        })
-        if (result?.status === 'success') {
-          console.log(`Role deleted: ${currentRole.name}`)
-          const affectedUsers = result?.result?.affectedUsers
-          const userCount = affectedUsers?.count || 0
-          
-          // Show success message with affected user count
-          if (userCount > 0) {
-            toast.success(`Role deleted successfully. Removed from ${userCount} user(s).`)
-          } else {
-            toast.success('Role deleted successfully.')
-          }
-          
-          await refreshRoles() // Refresh data after deletion
-          setCurrentRole(null)
-          setAffectedUserCount(0)
-        } else {
-          console.log('Error deleting role:', result?.message)
-          toast.error(result?.message || 'Failed to delete role')
-        }
-      } catch (error) {
-        console.error('An error occurred while deleting the role:', error)
-        toast.error(error?.message || 'An unexpected error occurred')
-        throw new Error(error) // To handle it in Confirmation 2nd dialog
-      } finally {
-        setConfirmationDialogOpen(false) // Close the confirmation dialog
-      }
+      console.error('Error toggling role status:', error)
+      toast.error(error?.message || 'An unexpected error occurred')
+    } finally {
+      setTogglingRoleId(null)
     }
   }
 
@@ -184,7 +155,9 @@ const RoleCards = () => {
                       variant='h5'
                       sx={{
                         fontWeight: 700,
-                        background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                        background: item.isActive
+                          ? `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`
+                          : theme.palette.text.disabled,
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
                         backgroundClip: 'text',
@@ -196,6 +169,13 @@ const RoleCards = () => {
                     >
                       {item.name}
                     </Typography>
+                    <Chip
+                      label={item.isActive ? 'Active' : 'Inactive'}
+                      color={item.isActive ? 'success' : 'default'}
+                      size='small'
+                      variant='outlined'
+                      sx={{ fontWeight: 600, fontSize: '0.7rem' }}
+                    />
                   </div>
                   <Stack direction='row' spacing={1} alignItems='center' sx={{ flexShrink: 0 }}>
                     <OpenDialogOnElementClick
@@ -215,22 +195,25 @@ const RoleCards = () => {
                       dialog={RoleDialog}
                       dialogProps={{ roleData: item, refreshRoles }}
                     />
-                    {isUserSuperAdmin && (
-                      <IconButtonTooltip
-                        title='Delete (Super Admin Only)'
-                        onClick={() => handleDeleteConfirmation(item)}
-                        sx={{
-                          transition: 'all 0.2s',
-                          '&:hover': {
-                            backgroundColor: 'error.light',
-                            color: 'error.main',
-                            transform: 'scale(1.1)'
-                          }
-                        }}
-                      >
-                        <DeleteOutlineIcon fontSize='small' />
-                      </IconButtonTooltip>
-                    )}
+                    <Tooltip
+                      title={
+                        CRITICAL_ROLES.includes(item.name)
+                          ? `${item.name} is a system role and cannot be deactivated`
+                          : !isUserSuperAdmin
+                            ? 'Only SUPER_ADMIN can change status'
+                            : item.isActive ? 'Deactivate Role' : 'Activate Role'
+                      }
+                    >
+                      <span>
+                        <Switch
+                          size='small'
+                          checked={item.isActive ?? true}
+                          onChange={() => handleToggleActive(item)}
+                          disabled={!isUserSuperAdmin || CRITICAL_ROLES.includes(item.name) || togglingRoleId === item._id}
+                          color='success'
+                        />
+                      </span>
+                    </Tooltip>
                   </Stack>
                 </div>
               </CardContent>
@@ -261,16 +244,6 @@ const RoleCards = () => {
           />
         </Grid>
       </Grid>
-
-      {/* Confirmation Dialog */}
-      <ConfirmationDialog
-        open={confirmationDialogOpen}
-        setOpen={setConfirmationDialogOpen}
-        type={affectedUserCount > 0 ? 'delete-role-with-users' : 'delete-role'}
-        onConfirm={handleDelete}
-        affectedUserCount={affectedUserCount}
-        roleName={currentRole?.name}
-      />
     </>
   )
 }

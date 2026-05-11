@@ -456,7 +456,7 @@ const UsersTable = ({ tableData, refreshUsers }) => {
   const getRolesData = async () => {
     console.log('Fetching Roles Data now...')
     // const result = await clientApi.getAllRoles() // Adjust this to your correct endpoint
-    const result = await RestApi.get(`${API_URLS.v0.ROLE}`)
+    const result = await RestApi.get(`${API_URLS.v0.ROLE}?activeOnly=true`)
     if (result?.status === 'success') {
       console.log('Roles Fetched result', result)
       setRolesData(result?.result || [])

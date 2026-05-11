@@ -86,7 +86,7 @@ const AddUserDrawer = ({ open, handleClose, refreshUsers }) => {
   const getRolesData = async () => {
     console.log('Fetching Roles Data now...')
     // const result = await clientApi.getAllRoles() // Change this to the correct endpoint for roles
-    const result = await RestApi.get(`${API_URLS.v0.ROLE}`)
+    const result = await RestApi.get(`${API_URLS.v0.ROLE}?activeOnly=true`)
     if (result?.status === 'success') {
       console.log('Roles Fetched result', result)
       setRolesData(result?.result || []) // Store the fetched roles data

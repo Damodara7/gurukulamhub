@@ -21,6 +21,7 @@ export function hasPermission(roles, userRoles, featureName, permissionName) {
     return roles?.some(
         role =>
             userRoles.includes(role.name) &&
+            role.isActive !== false &&
             role.features?.some(feature => feature.name === featureName && feature.permissions?.includes(permissionName))
     )
 }
@@ -37,4 +38,35 @@ export function isSuperAdmin(userRoles) {
  */
 export function isAdminOrSuperAdmin(userRoles) {
     return userRoles?.includes(ROLES_LOOKUP.ADMIN) || userRoles?.includes(ROLES_LOOKUP.SUPER_ADMIN) || false
+}
+
+/**
+ * Check if a specific role is active by looking it up in the fetched roles list.
+ * Returns false if the role is not found (means it doesn't exist or is deleted).
+ * Returns true only if roles haven't been loaded yet (graceful fallback).
+ */
+export function isRoleActive(roles, roleName) {
+    if (!roles || !Array.isArray(roles) || roles.length === 0) return true
+    const roleObj = roles.find(r => r.name === roleName)
+    if (!roleObj) return false
+    return roleObj.isActive !== false
+}
+
+/**
+ * Check if user has an active admin-level role.
+ * The user must both HAVE the role AND the role must be active.
+ */
+export function hasActiveAdminRole(roles, userRoles) {
+    if (!userRoles || userRoles.length === 0) return false
+    if (userRoles.includes(ROLES_LOOKUP.SUPER_ADMIN) && isRoleActive(roles, ROLES_LOOKUP.SUPER_ADMIN)) return true
+    if (userRoles.includes(ROLES_LOOKUP.ADMIN) && isRoleActive(roles, ROLES_LOOKUP.ADMIN)) return true
+    return false
+}
+
+/**
+ * Check if user has an active specific role.
+ */
+export function hasActiveRole(roles, userRoles, roleName) {
+    if (!userRoles || userRoles.length === 0) return false
+    return userRoles.includes(roleName) && isRoleActive(roles, roleName)
 }

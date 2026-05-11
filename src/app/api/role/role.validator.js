@@ -48,6 +48,11 @@ export function validateRoleUpdateRequestDto(data) {
         throw new Error('updatedBy is required for updates.');
     }
 
+    // Validate isActive (optional for updates)
+    if (data.isActive !== undefined && typeof data.isActive !== 'boolean') {
+        errors.isActive = 'isActive must be a boolean.';
+    }
+
     // Validate features (optional for updates)
     if (data.features && (!Array.isArray(data.features) || data.features.length === 0)) {
         errors.features = 'Features must be a non-empty array of objects if provided.';

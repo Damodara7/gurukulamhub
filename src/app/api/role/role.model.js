@@ -21,6 +21,22 @@ const roleSchema = new mongoose.Schema(
       type: Boolean,
       default: true
     },
+    activatedAt: {
+      type: Date
+    },
+    deactivatedAt: {
+      type: Date
+    },
+    statusChangedBy: {
+      type: String
+    },
+    statusHistory: [
+      {
+        status: { type: String, enum: ['active', 'inactive'] },
+        changedBy: String,
+        changedAt: { type: Date, default: Date.now }
+      }
+    ],
     isDeleted: {
       type: Boolean,
       default: false

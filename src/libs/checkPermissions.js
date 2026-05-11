@@ -9,16 +9,19 @@ import { API_URLS } from '@/configs/apiConfig';
 
 const { auth } = NextAuth(authConfig)
 
-// Singleton to cache roles fetching
-let rolesPromise = null;
+// Cache roles with a TTL so changes to isActive propagate within 60 seconds
+let rolesCache = null;
+let rolesCacheTime = 0;
+const ROLES_CACHE_TTL = 60 * 1000;
 
 const fetchRoles = async () => {
-    if (!rolesPromise) {
-        // rolesPromise = clientApi.getAllRoles().then(response => response?.result || ['USER']);
+    const now = Date.now();
+    if (!rolesCache || (now - rolesCacheTime) > ROLES_CACHE_TTL) {
         const rolesResult = await RestApi.get(`${API_URLS.v0.ROLE}`)
-        rolesPromise = rolesResult.result || null;
+        rolesCache = rolesResult.result || null;
+        rolesCacheTime = now;
     }
-    return rolesPromise;
+    return rolesCache;
 };
 
 export const checkFeaturePermission = async (feature, action) => {

@@ -27,6 +27,7 @@ import EventOutlinedIcon from '@mui/icons-material/EventOutlined'
 import { useSession } from 'next-auth/react'
 import * as clientApi from '@/app/api/client/client.api'
 import * as permissionUtils from '@/utils/permissionUtils'
+import { hasActiveAdminRole, hasActiveRole } from '@/utils/permissionUtils'
 import { ROLES_LOOKUP } from '@/configs/roles-lookup'
 import { FEATURES_LOOKUP } from '@/configs/features-lookup'
 import { PERMISSIONS_LOOKUP } from '@/configs/permissions-lookup'
@@ -232,7 +233,7 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
         </MenuItem>
 
         <MenuSection label={dictionary['navigation'].mypages}>
-          {!userRoles?.includes(ROLES_LOOKUP.ADMIN) && !userRoles?.includes(ROLES_LOOKUP.SUPER_ADMIN) && (
+          {!hasActiveAdminRole(roles, userRoles) && (
             <SubMenu label={dictionary['navigation'].myquizzes} icon={<i className='ri-dashboard-line' />}>
               <MenuItem href={`/${locale}/myquizzes/view`}>{dictionary['navigation'].view}</MenuItem>
 
@@ -306,7 +307,7 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
         )} */}
         {/* </RBACMenuWrapper> */}
 
-        {!userRoles?.includes(ROLES_LOOKUP.ADMIN) && !userRoles?.includes(ROLES_LOOKUP.SUPER_ADMIN) && userRoles?.includes(ROLES_LOOKUP.SUPER_USER) && (
+        {!hasActiveAdminRole(roles, userRoles) && hasActiveRole(roles, userRoles, ROLES_LOOKUP.SUPER_USER) && (
           <MenuSection label={dictionary['navigation'].superUserPages}>
             <SubMenu label={dictionary['navigation'].manageGames} icon={<i className='ri-gamepad-line' />}>
               <MenuItem href={`/${locale}/manage-games`}>{dictionary['navigation'].all}</MenuItem>
@@ -315,7 +316,7 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
           </MenuSection>
         )}
 
-        {(userRoles?.includes(ROLES_LOOKUP.ADMIN) || userRoles?.includes(ROLES_LOOKUP.SUPER_ADMIN)) && (
+        {hasActiveAdminRole(roles, userRoles) && (
           <MenuSection label={dictionary['navigation'].adminPages}>
             <MenuItem
               href={`/${locale}/management/advertisements/list`}

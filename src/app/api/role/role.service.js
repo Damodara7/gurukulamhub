@@ -1,10 +1,7 @@
 import connectMongo from '@/utils/dbConnect-mongo'
-import Role from './role.model.js' // Import your Role model
-import { validateRoleCreateRequestDto, validateRoleUpdateRequestDto } from './role.validator.js' // Import your DTO schema
-import User from '@/app/models/user.model.js'
+import Role from './role.model.js'
+import { validateRoleCreateRequestDto, validateRoleUpdateRequestDto } from './role.validator.js'
 import { ROLES_LOOKUP } from '@/configs/roles-lookup'
-import * as UserService from '@/app/services/user.service.js'
-// import * as ApiResponseUtils from '@/utils/apiResponses';
 
 // **Add Role**
 export async function add({ data }) {
@@ -51,10 +48,14 @@ export async function getById({ id }) {
 }
 
 // **Get All Roles**
-export async function getAll() {
+export async function getAll({ activeOnly = false } = {}) {
   await connectMongo()
   try {
-    const roles = await Role.find({ isDeleted: false }).sort({ createdAt: -1 }) // Sort by createdAt descending
+    const filter = { isDeleted: false }
+    if (activeOnly) {
+      filter.isActive = true
+    }
+    const roles = await Role.find(filter).sort({ createdAt: -1 })
     return { status: 'success', result: roles, message: 'Roles fetched successfully!' }
   } catch (err) {
     console.error('Error fetching Roles:', err)
@@ -79,6 +80,35 @@ export async function updateOne({ id, data }) {
       return { status: 'error', message: 'Role not found or already deleted', result: null }
     }
 
+    // Prevent deactivation of critical system roles
+    if (data.isActive === false && existingRole.isActive !== false) {
+      const criticalRoles = [ROLES_LOOKUP.SUPER_ADMIN, ROLES_LOOKUP.ADMIN, ROLES_LOOKUP.USER]
+      if (criticalRoles.includes(existingRole.name)) {
+        return {
+          status: 'error',
+          message: `Cannot deactivate critical role: ${existingRole.name}. This role is required for system functionality.`,
+          result: null
+        }
+      }
+    }
+
+    // Track status change if isActive is being modified
+    if (data.isActive !== undefined && data.isActive !== existingRole.isActive) {
+      const now = new Date()
+      data.statusChangedBy = data.updatedBy
+      if (!data.$push) data.$push = {}
+      data.$push.statusHistory = {
+        status: data.isActive ? 'active' : 'inactive',
+        changedBy: data.updatedBy,
+        changedAt: now
+      }
+      if (data.isActive) {
+        data.activatedAt = now
+      } else {
+        data.deactivatedAt = now
+      }
+    }
+
     const updatedRole = await Role.findByIdAndUpdate(id, data, { new: true })
     if (!updatedRole) {
       return { status: 'error', message: 'Role not found', result: null }
@@ -92,123 +122,60 @@ export async function updateOne({ id, data }) {
   }
 }
 
-// **Delete Role**
-export async function deleteOne({ id }) {
+// **Toggle Role Active Status**
+export async function toggleActive({ id, isActive, updatedBy }) {
   await connectMongo()
   try {
-    // First, get the role to check its name
-    const roleToDelete = await Role.findById(id)
-    if (!roleToDelete) {
-      return { status: 'error', message: 'Role not found', result: null }
+    const role = await Role.findOne({ _id: id, isDeleted: false })
+    if (!role) {
+      return { status: 'error', message: 'Role not found or already deleted', result: null }
     }
 
-    const roleName = roleToDelete.name
-
-    // Prevent deletion of critical/system roles
     const criticalRoles = [ROLES_LOOKUP.SUPER_ADMIN, ROLES_LOOKUP.ADMIN, ROLES_LOOKUP.USER]
-
-    if (criticalRoles.includes(roleName)) {
+    if (criticalRoles.includes(role.name) && !isActive) {
       return {
         status: 'error',
-        message: `Cannot delete critical role: ${roleName}. This role is required for system functionality.`,
+        message: `Cannot deactivate critical role: ${role.name}. This role is required for system functionality.`,
         result: null
       }
     }
 
-    // Check how many users have this role
-    const usersWithRole = await User.find({ roles: roleName })
-    const affectedUserCount = usersWithRole.length
-
-    // Remove the role from all users who have it and send notifications
-    let usersUpdated = 0
-    let emailsSent = 0
-    let emailsFailed = 0
-
-    if (affectedUserCount > 0) {
-      // Update users and collect their remaining roles for notifications
-      for (const user of usersWithRole) {
-        try {
-          // Get remaining roles before removal
-          const remainingRoles = user.roles.filter(r => r !== roleName)
-
-          // Remove the role from this user
-          await User.updateOne({ _id: user._id }, { $pull: { roles: roleName } })
-          usersUpdated++
-
-          // Send notification email to the user
-          try {
-            const notificationResult = await UserService.srvSendRoleRemovedNotification({
-              userEmail: user.email,
-              roleName: roleName,
-              remainingRoles: remainingRoles,
-              locale: 'en' // You can make this dynamic based on user preference
-            })
-
-            if (notificationResult.status === 'success') {
-              emailsSent++
-            } else {
-              emailsFailed++
-              console.error(`Failed to send notification to ${user.email}:`, notificationResult.message)
-            }
-          } catch (emailError) {
-            emailsFailed++
-            console.error(`Error sending notification email to ${user.email}:`, emailError)
-          }
-
-          // Send in-app and push notification
-          try {
-            const { createRoleRemovedNotification } = await import('../notifications/notification.helpers.js')
-            const notificationResult = await createRoleRemovedNotification(user._id, {
-              roleName: roleName,
-              removedBy: 'System',
-              remainingRoles: remainingRoles
-            })
-
-            if (notificationResult.status === 'success') {
-              console.log(`✅ In-app notification sent to ${user.email} for role removal`)
-            } else {
-              console.error(`Failed to send in-app notification to ${user.email}:`, notificationResult.message)
-            }
-          } catch (notificationError) {
-            console.error(`Error sending in-app notification to ${user.email}:`, notificationError)
-            // Don't fail the role deletion if notification fails
-          }
-        } catch (updateError) {
-          console.error(`Error updating user ${user.email}:`, updateError)
+    const now = new Date()
+    const updateData = {
+      isActive,
+      updatedBy,
+      statusChangedBy: updatedBy,
+      $push: {
+        statusHistory: {
+          status: isActive ? 'active' : 'inactive',
+          changedBy: updatedBy,
+          changedAt: now
         }
       }
-
-      console.log(
-        `Removed role ${roleName} from ${usersUpdated} users. Sent ${emailsSent} notifications, ${emailsFailed} failed.`
-      )
     }
 
-    // Now delete the role
-    const deletedRole = await Role.findByIdAndDelete(id)
-    if (!deletedRole) {
+    if (isActive) {
+      updateData.activatedAt = now
+    } else {
+      updateData.deactivatedAt = now
+    }
+
+    const updatedRole = await Role.findByIdAndUpdate(id, updateData, { new: true })
+
+    if (!updatedRole) {
       return { status: 'error', message: 'Role not found', result: null }
     }
 
-    console.log('Role deleted successfully!')
+    const statusText = isActive ? 'activated' : 'deactivated'
+    console.log(`Role ${role.name} ${statusText} successfully!`)
     return {
       status: 'success',
-      result: {
-        deletedRole,
-        affectedUsers: {
-          count: affectedUserCount,
-          updated: usersUpdated,
-          notificationsSent: emailsSent,
-          notificationsFailed: emailsFailed
-        }
-      },
-      message: `Role deleted successfully. ${
-        affectedUserCount > 0
-          ? `Removed from ${usersUpdated} user(s). ${emailsSent} notification(s) sent.`
-          : 'No users were affected.'
-      }`
+      result: updatedRole,
+      message: `Role "${role.name}" ${statusText} successfully`
     }
   } catch (err) {
-    console.error('Error deleting Role:', err)
+    console.error('Error toggling role status:', err)
     return { status: 'error', message: err.message, result: null }
   }
 }
+

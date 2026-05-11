@@ -166,18 +166,20 @@ const RoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
 
   useEffect(() => {
     if (open) {
-      getFeatureData() // Fetch data when the dialog opens
-      getAllRoles() // Fetch all existing roles to check for duplicates
-      setRoleNameError('') // Reset error when dialog opens
+      getFeatureData()
+      getAllRoles()
+      setRoleNameError('')
       if (roleData) {
         setRoleName(roleData.name)
+        setIsActive(roleData.isActive ?? true)
         const selectedPermissions = roleData.features.flatMap(feature =>
           feature.permissions.map(permission => `${feature.name}-${permission}`)
         )
         setSelectedCheckbox(selectedPermissions)
       } else {
-        setRoleName('') // Reset roleName if no roleData
-        setSelectedCheckbox([]) // Reset checkboxes if creating a new role
+        setRoleName('')
+        setIsActive(true)
+        setSelectedCheckbox([])
       }
     }
   }, [open])
@@ -583,10 +585,32 @@ const RoleDialog = ({ open, setOpen, roleData = null, refreshRoles }) => {
             )
           })}
           <FormControl margin='normal'>
-            <FormControlLabel
-              control={<Switch checked={isActive} onChange={handleStatusChange} name='statusSwitch' color='primary' />}
-              label={isActive ? 'Active' : 'Inactive'}
-            />
+            <Tooltip
+              title={
+                roleData && [ROLES_LOOKUP.SUPER_ADMIN, ROLES_LOOKUP.ADMIN, ROLES_LOOKUP.USER].includes(roleData.name)
+                  ? `${roleData.name} is a system role and cannot be deactivated`
+                  : !isUserSuperAdmin
+                    ? 'Only SUPER_ADMIN can change role status'
+                    : ''
+              }
+              placement='top'
+            >
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={isActive}
+                    onChange={handleStatusChange}
+                    name='statusSwitch'
+                    color='success'
+                    disabled={
+                      !isUserSuperAdmin ||
+                      (roleData && [ROLES_LOOKUP.SUPER_ADMIN, ROLES_LOOKUP.ADMIN, ROLES_LOOKUP.USER].includes(roleData.name))
+                    }
+                  />
+                }
+                label={isActive ? 'Active' : 'Inactive'}
+              />
+            </Tooltip>
           </FormControl>
         </DialogContent>
         <DialogActions
