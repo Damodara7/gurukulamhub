@@ -129,6 +129,17 @@ const VideoForm = ({
               <Stack spacing={2}>
                 <Stack spacing={1.5} sx={cardStyles}>
                   <Typography variant='subtitle2' sx={{ fontWeight: 600 }}>
+                    Recommended Segments
+                  </Typography>
+                  <VideoPortions
+                    videoUrl={formData.url}
+                    videoDuration={videoDuration}
+                    recommendedSegments={formData.recommendedSegments}
+                    onSetRecommendedSegments={onSetRecommendedSegments}
+                  />
+                </Stack>
+                <Stack spacing={1.5} sx={cardStyles}>
+                  <Typography variant='subtitle2' sx={{ fontWeight: 600 }}>
                     Interactive Questions
                   </Typography>
                   <VideoQuestions
@@ -139,17 +150,6 @@ const VideoForm = ({
                     videoUrl={formData.url}
                     videoDuration={videoDuration}
                     setVideoDuration={setVideoDuration}
-                  />
-                </Stack>
-                <Stack spacing={1.5} sx={cardStyles}>
-                  <Typography variant='subtitle2' sx={{ fontWeight: 600 }}>
-                    Recommended Segments
-                  </Typography>
-                  <VideoPortions
-                    videoUrl={formData.url}
-                    videoDuration={videoDuration}
-                    recommendedSegments={formData.recommendedSegments}
-                    onSetRecommendedSegments={onSetRecommendedSegments}
                   />
                 </Stack>
               </Stack>

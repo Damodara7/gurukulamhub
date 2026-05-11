@@ -27,7 +27,6 @@ import {
 } from '@mui/icons-material'
 import ReactPlayer from 'react-player'
 import { toast } from 'react-toastify'
-import { minValue } from 'valibot'
 import IconButtonTooltip from '../IconButtonTooltip'
 
 const InsertedVideoQuestions = forwardRef(
@@ -42,6 +41,7 @@ const InsertedVideoQuestions = forwardRef(
       setCurrentTime,
       playerRef,
       videoDuration,
+      playbackPrimedRef,
       isQuestionFormOpen,
       editIndex,
       setEditIndex
@@ -64,6 +64,19 @@ const InsertedVideoQuestions = forwardRef(
       conceptStartTime: 0,
       invocationTime: 1,
       invocationAtEnd: false
+    }
+
+    /** Explicit preview only — never seek while typing invocation time (YouTube iframe goes black). */
+    const previewSeekToSeconds = rawSeconds => {
+      const parsedTime = parseFloat(rawSeconds)
+      if (isNaN(parsedTime)) return
+      const t = Math.max(0, parsedTime)
+      const cap = videoDuration > 0 ? Math.min(t, videoDuration) : t
+      if (!playbackPrimedRef?.current) {
+        toast.info('Press play on the video once to enable jumping to this time.')
+        return
+      }
+      playerRef.current?.seekTo(cap, 'seconds')
     }
 
     const handleAddOption = () => {
@@ -103,13 +116,12 @@ const InsertedVideoQuestions = forwardRef(
     const handleInputChange = (field, value) => {
       let valueToBeSet = value
 
-      // Sync currentTime with invocationTime
+      // Do not seek while typing — programmatic seek on many YouTube embeds blanks the iframe until playback has started.
       if (field === 'invocationTime') {
         const parsedTime = parseFloat(value)
         valueToBeSet = parsedTime
         if (!isNaN(parsedTime)) {
-          setCurrentTime(parsedTime)
-          playerRef.current?.seekTo(parsedTime, 'seconds')
+          setCurrentTime(Math.floor(parsedTime))
         }
       } else if (field === 'marks') {
         const parsedTime = parseFloat(value)
@@ -124,11 +136,13 @@ const InsertedVideoQuestions = forwardRef(
 
     const handleSetCurrentTime = field => {
       handleInputChange(field, currentTime)
+      if (field === 'invocationTime') previewSeekToSeconds(currentTime)
     }
 
     const handleMakeAsEndQuestion = () => {
       handleInputChange('invocationTime', videoDuration)
       handleInputChange('invocationAtEnd', true)
+      previewSeekToSeconds(videoDuration)
     }
 
     // useEffect(() => {
@@ -141,24 +155,16 @@ const InsertedVideoQuestions = forwardRef(
     //   }
     // }, [currentQuestion?.invocationTime])
 
+    // Do not bind invocationTime to onProgress currentTime — that overwrote manual invocation edits and fought seekTo.
+    // Only keep end-of-video flag in sync with the playhead (deps must not include currentQuestion or every keystroke re-runs this).
     useEffect(() => {
-      // For new questions only
-      if (currentQuestion && editIndex === null) {
-        // While Adding new Question
-        setCurrentQuestion(prev => ({
-          ...prev,
-          invocationTime: currentTime,
-          invocationAtEnd: currentTime === videoDuration ? true : false
-        }))
-      } else if (currentQuestion && editIndex !== null) {
-        // While Editing Question
-        setCurrentQuestion(prev => ({
-          ...prev,
-          // invocationTime: currentTime,
-          invocationAtEnd: currentTime === videoDuration ? true : false
-        }))
-      }
-    }, [currentTime])
+      setCurrentQuestion(prev => {
+        if (!prev) return prev
+        const atEnd = videoDuration > 0 && currentTime >= videoDuration
+        if (prev.invocationAtEnd === atEnd) return prev
+        return { ...prev, invocationAtEnd: atEnd }
+      })
+    }, [currentTime, videoDuration])
 
     const validateField = (field, value) => {
       const newErrors = { ...errors }
@@ -292,8 +298,8 @@ const InsertedVideoQuestions = forwardRef(
       const currentEditingQuestion = { ...questions[index] }
       setCurrentQuestion(currentEditingQuestion)
       setCurrentTime(currentEditingQuestion.invocationTime)
-      playerRef.current?.seekTo(currentEditingQuestion.invocationTime, 'seconds')
       setEditIndex(index)
+      previewSeekToSeconds(currentEditingQuestion.invocationTime)
     }
 
     const handleRemoveQuestion = index => {
@@ -1261,6 +1267,8 @@ const VideoQuestions = ({
 
   const [currentTime, setCurrentTime] = useState(0)
   const playerRef = useRef(null)
+  /** YouTube embed: avoid programmatic seek until user has started playback (prevents persistent black frame). */
+  const playbackPrimedRef = useRef(false)
 
   const insertedQuestionsRef = useRef(null)
   const endQuestionsRef = useRef(null)
@@ -1268,16 +1276,13 @@ const VideoQuestions = ({
   const insertedQuestions = questions.filter((q, index) => !q.invocationAtEnd)
   const endQuestions = questions.filter((q, index) => q.invocationAtEnd)
 
-  useEffect(() => {
-    // Log the duration on load for debugging purposes
-    if (videoDuration > 0) {
-      console.log(`Video Duration: ${videoDuration}s`)
-    }
-  }, [videoDuration])
-
   const handleVideoReady = () => {
     const duration = playerRef.current?.getDuration() || 0
-    setVideoDuration(duration)
+    if (duration > 0) setVideoDuration(duration)
+  }
+
+  const handleVideoDuration = d => {
+    if (typeof d === 'number' && d > 0) setVideoDuration(d)
   }
 
   const onSetQuestionsByInsertedQuestions = modifiedInsertedQuestions => {
@@ -1290,6 +1295,7 @@ const VideoQuestions = ({
   // Render question icons on the video progress bar with time mentioned
   const renderMarkers = () => {
     const duration = videoDuration
+    if (!duration || duration <= 0) return null
 
     // Sort questions based on their createdAt time to maintain the order
     const sortedQuestions = [...insertedQuestions].sort((a, b) => a.createdAt - b.createdAt)
@@ -1315,7 +1321,11 @@ const VideoQuestions = ({
               color='primary'
               sx={{ color: 'white' }}
               onClick={() => {
-                playerRef.current?.seekTo(question.invocationTime, 'seconds') // Seek to the question time on click
+                if (!playbackPrimedRef.current) {
+                  toast.info('Press play on the video once before jumping to a question.')
+                  return
+                }
+                playerRef.current?.seekTo(question.invocationTime, 'seconds')
                 setCurrentInsertedQuestion(question)
                 setCurrentEndQuestion(null) // Clear currentEndQuestion
                 setInsertedQuestionEditIndex(index)
@@ -1346,6 +1356,10 @@ const VideoQuestions = ({
     setIsQuestionFormOpen(isQuestionFormOpen)
   }, [isQuestionFormOpen])
 
+  useEffect(() => {
+    playbackPrimedRef.current = false
+  }, [videoUrl])
+
   return (
     <div>
       <div style={{ position: 'relative', marginBottom: '10px' }}>
@@ -1355,8 +1369,13 @@ const VideoQuestions = ({
           controls
           width='100%'
           height='250px'
-          onReady={handleVideoReady} // Fetch duration on load
+          onReady={handleVideoReady}
+          onDuration={handleVideoDuration}
+          onPlay={() => {
+            playbackPrimedRef.current = true
+          }}
           onProgress={({ playedSeconds }) => {
+            if (playedSeconds > 0.05) playbackPrimedRef.current = true
             setCurrentTime(Math.floor(playedSeconds))
           }}
         />
@@ -1413,6 +1432,7 @@ const VideoQuestions = ({
         setCurrentTime={setCurrentTime}
         videoDuration={videoDuration}
         playerRef={playerRef}
+        playbackPrimedRef={playbackPrimedRef}
         editIndex={insertedQuestionEditIndex}
         setEditIndex={setInsertedQuestionEditIndex}
         isQuestionFormOpen={isQuestionFormOpen}

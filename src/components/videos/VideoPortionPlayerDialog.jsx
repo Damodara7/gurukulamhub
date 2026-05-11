@@ -69,6 +69,7 @@ function VideoPortionPlayerDialog({ data, open, onClose }) {
         <Button
           onClick={onClose}
           variant='contained'
+          component='label'
           startIcon={<i className='ri-close-line' />}
           sx={{
             borderRadius: 2,

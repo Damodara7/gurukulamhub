@@ -20,14 +20,13 @@ import {
   Grid,
   Tooltip
 } from '@mui/material'
-import { CheckCircle as CheckCircleIcon, Cancel as CancelIcon, PushPin as PushPinIcon } from '@mui/icons-material'
+import { CheckCircle as CheckCircleIcon, Cancel as CancelIcon, PushPin as PushPinIcon, LiveHelp as LiveHelpIcon } from '@mui/icons-material'
 
 const QuestionDialog = ({ open, question, handleAnswer, handleContinue }) => {
   const [selectedOptions, setSelectedOptions] = useState([]) // Ids
   const [submitted, setSubmitted] = useState(false)
   const [isCorrect, setIsCorrect] = useState(false)
 
-  console.log({ question, selectedOptions })
 
   const handleOptionChange = (event, optionId) => {
     if (question.type === 'single-choice') {
@@ -215,7 +214,7 @@ const QuestionDialog = ({ open, question, handleAnswer, handleContinue }) => {
 const VideoPortionPlayer = ({ data }) => {
   const playerRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
   const [duration, setDuration] = useState(0);
   const [previousTime, setPreviousTime] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
@@ -232,9 +231,7 @@ const VideoPortionPlayer = ({ data }) => {
 
   function onEnded(userAnswers) {
     setIsPlaying(false);
-    setIsMuted(false);
     setIsPaused(false);
-    console.log(userAnswers);
   }
 
   // Sort recommended segments by start time
@@ -389,27 +386,18 @@ const VideoPortionPlayer = ({ data }) => {
 
       // Check if the current time is at or beyond the end of the current segment
       const currentSegment = sortedSegments.find(segment => segment._id === currentSegmentId);
-      console.log('currentSegment: ', currentSegment);
-      console.log('currentTime: ', currentTime);
 
       if (currentSegment && currentTime >= currentSegment.endTime) {
-        console.log('Entered: if (currentSegment && currentTime >= currentSegment.endTime)');
-        // Move to the next segment
         const nextSegment = sortedSegments.find(segment => segment.startTime > currentSegment.endTime);
         if (nextSegment) {
-          console.log('Entered: if (nextSegment)');
           setCurrentSegmentId(nextSegment._id);
           playerRef.current.seekTo(nextSegment.startTime, 'seconds');
         } else {
-          console.log('Not Entered: if (nextSegment)');
-          // Loop back to the first segment
           const firstSegment = sortedSegments[0];
           setCurrentSegmentId(firstSegment._id);
           playerRef.current.seekTo(firstSegment.startTime, 'seconds');
         }
       } else {
-        console.log('Not Entered: if (currentSegment && currentTime >= currentSegment.endTime)');
-        // Resume playback from the current time + 1 second
         playerRef.current.seekTo(currentTime + 1, 'seconds');
       }
 
@@ -438,14 +426,12 @@ const VideoPortionPlayer = ({ data }) => {
   const handleOnProgress = (state) => {
     const currentTime = state.playedSeconds;
 
-    // Detect a significant change in time (indicating a seek)
     if (Math.abs(currentTime - previousTime) > 2) {
-      console.log('Seek detected:', currentTime);
-      handleSeek(currentTime); // Call your seek logic
+      handleSeek(currentTime);
     }
 
     setCurrentTime(currentTime);
-    setPreviousTime(currentTime); // Update previousTime
+    setPreviousTime(currentTime);
   };
 
   const handleOnDuration = (videoDuration) => {
@@ -453,7 +439,6 @@ const VideoPortionPlayer = ({ data }) => {
   };
 
   const handleSeek = (time) => {
-    console.log('handleSeek: ', time);
     let targetTime = time; // Default to the seek time
     let targetSegment = null;
 
@@ -590,6 +575,34 @@ const VideoPortionPlayer = ({ data }) => {
     );
   };
 
+  const renderQuestionMarkers = () => {
+    if (!duration) return null;
+    return allSortedQuestions.map((q, idx) => {
+      const position = (q.invocationTime / duration) * 100;
+      return (
+        <Tooltip key={q._id || idx} title={`Q${idx + 1}: ${q.text} (${formatTime(q.invocationTime)})`} placement='top'>
+          <div
+            style={{
+              position: 'absolute',
+              left: `${position}%`,
+              bottom: '8px',
+              transform: 'translateX(-50%)',
+              cursor: 'pointer',
+              zIndex: 2
+            }}
+            onClick={() => {
+              playerRef.current?.seekTo(q.invocationTime, 'seconds');
+              setIsPlaying(true);
+              setIsPaused(false);
+            }}
+          >
+            <LiveHelpIcon sx={{ color: '#FFD700', fontSize: 18 }} />
+          </div>
+        </Tooltip>
+      );
+    });
+  };
+
   return (
     <div>
       <div style={{ position: 'relative', marginBottom: '10px' }}>
@@ -602,6 +615,7 @@ const VideoPortionPlayer = ({ data }) => {
           playing={isPlaying}
           controls={true}
           muted={isMuted}
+          volume={0.5}
           onError={(e) => console.error('Video error occurred:', e)}
           onEnded={handleOnVideoEnd}
           onProgress={handleOnProgress}
@@ -618,6 +632,7 @@ const VideoPortionPlayer = ({ data }) => {
           }}
         >
           {renderMarkers(sortedSegments)}
+          {renderQuestionMarkers()}
         </Box>
       </div>
 

@@ -25,7 +25,6 @@ const VideoPortions = ({ videoUrl, videoDuration, onSetRecommendedSegments, reco
   const [openDialog, setOpenDialog] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [currentClip, setCurrentClip] = useState({ id: null, startTime: 0, endTime: 10, description: '' })
-  const [playingClipId, setPlayingClipId] = useState(null)
 
   const playerRef = useRef(null)
   const playerRefs = useRef({})
@@ -94,12 +93,12 @@ const VideoPortions = ({ videoUrl, videoDuration, onSetRecommendedSegments, reco
     onSetRecommendedSegments(recommendedSegments.filter(clip => clip.id !== id))
   }
 
-  // Play specific range and stop at endTime
+  // Loop only when playback passes endTime. Do NOT seek when playedSeconds < startTime — during
+  // buffering YouTube often reports 0, which would fire seekTo every progress tick and blank the player.
   const handleProgress = (id, playedSeconds) => {
-    const clip = recommendedSegments.find(clip => clip.id === id)
-    if (clip && (playedSeconds >= clip.endTime || playedSeconds < clip.startTime)) {
+    const clip = recommendedSegments.find(c => c.id === id)
+    if (clip && playedSeconds >= clip.endTime) {
       playerRefs.current[id]?.seekTo(clip.startTime, 'seconds')
-      playerRefs.current[id]?.props.onPause() // Correct way to pause
     }
   }
 
@@ -128,6 +127,7 @@ const VideoPortions = ({ videoUrl, videoDuration, onSetRecommendedSegments, reco
 
   const renderMarkers = clip => {
     const duration = videoDuration
+    if (!duration || duration <= 0) return null
 
     const startPosition = (clip.startTime / duration) * 100
     const endPosition = (clip.endTime / duration) * 100
@@ -230,14 +230,13 @@ const VideoPortions = ({ videoUrl, videoDuration, onSetRecommendedSegments, reco
                       </Typography>
                       <div style={{ position: 'relative', marginBottom: '10px' }}>
                         <ReactPlayer
+                          key={`portion-${id}-${startTime}-${endTime}`}
                           ref={el => (playerRefs.current[id] = el)}
                           url={videoUrl}
                           controls
                           width='100%'
                           height='150px'
-                          playing
                           loop={false}
-                          onStart={() => playerRefs.current[id]?.seekTo(startTime, 'seconds')}
                           progressInterval={100}
                           onProgress={({ playedSeconds }) => {
                             handleProgress(id, playedSeconds)
@@ -245,8 +244,8 @@ const VideoPortions = ({ videoUrl, videoDuration, onSetRecommendedSegments, reco
                           config={{
                             youtube: {
                               playerVars: {
-                                start: startTime,
-                                end: endTime
+                                // Integer seconds; cue start only — `end` in embeds often breaks poster / first frames.
+                                start: Math.floor(Number(startTime))
                               }
                             }
                           }}
