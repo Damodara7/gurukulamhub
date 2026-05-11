@@ -5,7 +5,6 @@ import {
   DialogContent,
   DialogTitle,
   DialogActions,
-  FormControl,
   FormControlLabel,
   Switch,
   Button,
@@ -20,21 +19,27 @@ import {
   alpha,
   useTheme,
   useMediaQuery,
-  Divider,
-  Paper
+  Paper,
+  Checkbox,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemText,
+  ListItemIcon,
+  InputAdornment
 } from '@mui/material'
 import { useEffect, useRef, useState } from 'react'
 import CloseIcon from '@mui/icons-material/Close'
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive'
 import { useSession } from 'next-auth/react'
 import MediaPreviewPopup from '../videos/MediaPreviewPopup'
-import MultiSelect from '../MultiSelect'
 import { addAlert, updateAlert } from '../../actions/alerts'
 import { getAllVideos } from '../../actions/videos'
 import { getAllAudiences, addAudience } from '../../actions/audience'
 import ReactQuillHTMLEditor from '@/components/ReactQuillHTMLEditor'
 import AddIcon from '@mui/icons-material/Add'
 import GroupsIcon from '@mui/icons-material/Groups'
+import SearchIcon from '@mui/icons-material/Search'
 import CreateAudienceForm from '../audience/CreateAudienceForm'
 
 const alertTypes = ['LOGIN_ALERT', 'FEATURE_ALERT']
@@ -160,6 +165,163 @@ const AudienceOption = ({ audience, showFilters = true }) => {
   )
 }
 
+// Audience Picker Dialog
+const AudiencePickerDialog = ({ open, onClose, audiencesList, selectedAudienceId, onSelect, onCreateNew }) => {
+  const theme = useTheme()
+  const isDarkMode = theme.palette.mode === 'dark'
+  const [search, setSearch] = useState('')
+
+  const filtered = audiencesList.filter(a =>
+    a.audienceName?.toLowerCase().includes(search.toLowerCase())
+  )
+
+  return (
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth='md'>
+      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant='h6' fontWeight={700}>Select Target Audience</Typography>
+        <IconButton onClick={onClose} size='small'>
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
+      <DialogContent dividers sx={{ p: 0 }}>
+        <Box sx={{ p: 2 }}>
+          <TextField
+            fullWidth
+            size='small'
+            placeholder='Search audiences...'
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position='start'>
+                  <SearchIcon fontSize='small' />
+                </InputAdornment>
+              )
+            }}
+          />
+        </Box>
+        <List sx={{ maxHeight: 350, overflow: 'auto', pt: 0 }}>
+          {filtered.map(audience => (
+            <ListItem
+              key={audience._id}
+              disablePadding
+              sx={{
+                bgcolor: selectedAudienceId === audience._id
+                  ? alpha(theme.palette.primary.main, isDarkMode ? 0.15 : 0.08)
+                  : 'transparent'
+              }}
+            >
+              <ListItemButton onClick={() => { onSelect(audience._id); onClose() }}>
+                <AudienceOption audience={audience} showFilters={true} />
+              </ListItemButton>
+            </ListItem>
+          ))}
+          {filtered.length === 0 && (
+            <Typography sx={{ p: 2, textAlign: 'center', color: 'text.secondary' }}>
+              No audiences found
+            </Typography>
+          )}
+        </List>
+      </DialogContent>
+      <DialogActions sx={{ justifyContent: 'space-between', px: 2, py: 1.5 }}>
+        <Button
+          variant='outlined'
+          size='small'
+          startIcon={<AddIcon fontSize='small' />}
+          onClick={() => { onClose(); onCreateNew() }}
+        >
+          New Audience
+        </Button>
+        <Button onClick={onClose} variant='text'>Cancel</Button>
+      </DialogActions>
+    </Dialog>
+  )
+}
+
+// Video Picker Dialog
+const VideoPickerDialog = ({ open, onClose, videosList, selectedVideoIds, onConfirm }) => {
+  const theme = useTheme()
+  const isDarkMode = theme.palette.mode === 'dark'
+  const [search, setSearch] = useState('')
+  const [localSelected, setLocalSelected] = useState(selectedVideoIds || [])
+
+  const filtered = videosList.filter(v =>
+    v.name?.toLowerCase().includes(search.toLowerCase())
+  )
+
+  const handleToggle = (videoId) => {
+    setLocalSelected(prev =>
+      prev.includes(videoId) ? prev.filter(id => id !== videoId) : [...prev, videoId]
+    )
+  }
+
+  const handleConfirm = () => {
+    onConfirm(localSelected)
+    onClose()
+  }
+
+  return (
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth='md'>
+      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant='h6' fontWeight={700}>Select Videos</Typography>
+        <IconButton onClick={onClose} size='small'>
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
+      <DialogContent dividers sx={{ p: 0 }}>
+        <Box sx={{ p: 2 }}>
+          <TextField
+            fullWidth
+            size='small'
+            placeholder='Search videos...'
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position='start'>
+                  <SearchIcon fontSize='small' />
+                </InputAdornment>
+              )
+            }}
+          />
+        </Box>
+        <List sx={{ maxHeight: 400, overflow: 'auto', pt: 0 }}>
+          {filtered.map(video => (
+            <ListItem key={video._id} disablePadding>
+              <ListItemButton onClick={() => handleToggle(video._id)} dense>
+                <ListItemIcon sx={{ minWidth: 36 }}>
+                  <Checkbox
+                    edge='start'
+                    checked={localSelected.includes(video._id)}
+                    disableRipple
+                  />
+                </ListItemIcon>
+                <ListItemText
+                  primary={<Typography fontWeight={500}>{video.name}</Typography>}
+                  secondary={
+                    <MediaPreviewPopup showPopup={true} url={video.url} mediaType='video' height='60px' />
+                  }
+                />
+              </ListItemButton>
+            </ListItem>
+          ))}
+          {filtered.length === 0 && (
+            <Typography sx={{ p: 2, textAlign: 'center', color: 'text.secondary' }}>
+              No videos found
+            </Typography>
+          )}
+        </List>
+      </DialogContent>
+      <DialogActions sx={{ px: 2, py: 1.5 }}>
+        <Button onClick={onClose} variant='text'>Cancel</Button>
+        <Button onClick={handleConfirm}  component = 'label' variant='contained' sx={{ color: 'white' }}>
+          Confirm ({localSelected.length} selected)
+        </Button>
+      </DialogActions>
+    </Dialog>
+  )
+}
+
 // AddContent Component
 const AddContent = ({ handleClose, onCreate, videosList = [], audiencesList = [], showCreateAudience, setShowCreateAudience, refreshAudiences }) => {
   const theme = useTheme()
@@ -175,7 +337,9 @@ const AddContent = ({ handleClose, onCreate, videosList = [], audiencesList = []
     videos: [],
     audience: ''
   })
-  const [errors, setErrors] = useState({}) // State to track errors
+  const [errors, setErrors] = useState({})
+  const [showAudiencePicker, setShowAudiencePicker] = useState(false)
+  const [showVideoPicker, setShowVideoPicker] = useState(false)
 
   const validateField = (field, value) => {
     let error = ''
@@ -350,91 +514,129 @@ const AddContent = ({ handleClose, onCreate, videosList = [], audiencesList = []
 
         {/* Audience Selection */}
         <Grid item xs={12}>
-          <Stack spacing={1}>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <Button
-                variant='outlined'
-                size='small'
-                startIcon={<AddIcon fontSize='small' />}
-                onClick={() => setShowCreateAudience(true)}
-                sx={{
-                  minWidth: 'fit-content',
-                  height: '32px',
-                  borderRadius: 1,
-                  px: 2,
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  fontSize: '0.8125rem',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                New Audience
-              </Button>
-            </Box>
-            <TextField
-              label='Select Target Audience (Optional)'
-              select
-              value={formData.audience}
-              onChange={e => handleSetFormValue('audience', e.target.value)}
-              fullWidth
-              SelectProps={{
-                renderValue: (selected) => {
-                  if (!selected) return <em>None</em>
-                  const selectedAudience = audiencesList.find(a => a._id === selected)
-                  return selectedAudience ? (
-                    <AudienceOption audience={selectedAudience} showFilters={true} />
-                  ) : <em>None</em>
-                },
-                MenuProps: {
-                  PaperProps: {
-                    sx: {
-                      maxHeight: 400,
-                      '& .MuiMenuItem-root': {
-                        whiteSpace: 'normal',
-                        py: 1.5
-                      }
-                    }
-                  }
-                }
-              }}
+          <Box
+            onClick={() => setShowAudiencePicker(true)}
+            sx={{
+              position: 'relative',
+              border: '1px solid',
+              borderColor: 'divider',
+              borderRadius: { xs: 1.5, sm: 2 },
+              p: '16.5px 14px',
+              minHeight: 56,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              '&:hover': { borderColor: theme.palette.text.primary }
+            }}
+          >
+            <Typography
+              component='label'
               sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: { xs: 1.5, sm: 2 },
-                  fontSize: { xs: '0.9375rem', sm: '1rem' }
-                }
+                position: 'absolute',
+                top: -9,
+                left: 12,
+                px: 0.5,
+                bgcolor: isDarkMode ? theme.palette.background.paper : 'white',
+                fontSize: '0.75rem',
+                color: 'text.secondary'
               }}
             >
-              <MenuItem value=''>
-                <em>None</em>
-              </MenuItem>
-              {audiencesList.map(audience => (
-                <MenuItem key={audience._id} value={audience._id}>
-                  <AudienceOption audience={audience} showFilters={true} />
-                </MenuItem>
-              ))}
-            </TextField>
-          </Stack>
+              Select Target Audience (Optional)
+            </Typography>
+            {formData.audience && audiencesList.find(a => a._id === formData.audience) ? (
+              <Box sx={{ flex: 1 }}>
+                <AudienceOption
+                  audience={audiencesList.find(a => a._id === formData.audience)}
+                  showFilters={true}
+                />
+              </Box>
+            ) : (
+              <Typography sx={{ color: 'text.disabled', fontSize: '1rem' }}>
+                Click to select audience...
+              </Typography>
+            )}
+            {formData.audience && (
+              <IconButton
+                size='medium'
+                onClick={e => { e.stopPropagation(); handleSetFormValue('audience', '') }}
+                sx={{ ml: 1 }}
+              >
+                <CloseIcon />
+              </IconButton>
+            )}
+          </Box>
+          <AudiencePickerDialog
+            open={showAudiencePicker}
+            onClose={() => setShowAudiencePicker(false)}
+            audiencesList={audiencesList}
+            selectedAudienceId={formData.audience}
+            onSelect={(id) => handleSetFormValue('audience', id)}
+            onCreateNew={() => setShowCreateAudience(true)}
+          />
         </Grid>
 
         {/* Videos Selection */}
         <Grid item xs={12}>
-          <MultiSelect
-            label='Select Videos (Optional)'
-            placeholder='Select Videos'
-            selectedValues={formData.videos}
-            onChange={values => handleSetFormValue('videos', values)}
-            options={videosList.map(videoObj => ({
-              value: videoObj._id,
-              optionLabel: (
-                <>
-                  <Box>
-                    <Typography variant='h5'>{videoObj.name}</Typography>
-                    <MediaPreviewPopup showPopup={true} url={videoObj.url} mediaType='video' height='80px' />
-                  </Box>
-                </>
-              ),
-              selectedLabel: videoObj.name
-            }))}
+          <Box
+            onClick={() => setShowVideoPicker(true)}
+            sx={{
+              position: 'relative',
+              border: '1px solid',
+              borderColor: 'divider',
+              borderRadius: { xs: 1.5, sm: 2 },
+              p: '16.5px 14px',
+              minHeight: 56,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: 1,
+              '&:hover': { borderColor: theme.palette.text.primary }
+            }}
+          >
+            <Typography
+              component='label'
+              sx={{
+                position: 'absolute',
+                top: -9,
+                left: 12,
+                px: 0.5,
+                bgcolor: isDarkMode ? theme.palette.background.paper : 'white',
+                fontSize: '0.75rem',
+                color: 'text.secondary'
+              }}
+            >
+              Select Videos (Optional)
+            </Typography>
+            {formData.videos.length > 0 ? (
+              formData.videos.map(videoId => {
+                const video = videosList.find(v => v._id === videoId)
+                return (
+                  <Chip
+                    key={videoId}
+                    label={video?.name || videoId}
+                    size='medium'
+                    onDelete={e => {
+                      e.stopPropagation()
+                      handleSetFormValue('videos', formData.videos.filter(id => id !== videoId))
+                    }}
+                    deleteIcon={<CloseIcon />}
+                  />
+                )
+              })
+            ) : (
+              <Typography sx={{ color: 'text.disabled', fontSize: '1rem' }}>
+                Click to select videos...
+              </Typography>
+            )}
+          </Box>
+          <VideoPickerDialog
+            open={showVideoPicker}
+            onClose={() => setShowVideoPicker(false)}
+            videosList={videosList}
+            selectedVideoIds={formData.videos}
+            onConfirm={(ids) => handleSetFormValue('videos', ids)}
           />
         </Grid>
       </Grid>
@@ -443,6 +645,7 @@ const AddContent = ({ handleClose, onCreate, videosList = [], audiencesList = []
       <Grid item xs={12}>
         <Paper
           sx={{
+            mt: 3,
             p: { xs: 1.5, sm: 2 },
             borderRadius: { xs: 1.5, sm: 2 },
             bgcolor: alpha(theme.palette.primary.main, isDarkMode ? 0.08 : 0.04),
@@ -532,7 +735,9 @@ const EditContent = ({ handleClose, data, onUpdate, videosList = [], audiencesLi
     audience: data?.audience?._id || ''
   })
 
-  const [errors, setErrors] = useState({}) // State to track errors
+  const [errors, setErrors] = useState({})
+  const [showAudiencePicker, setShowAudiencePicker] = useState(false)
+  const [showVideoPicker, setShowVideoPicker] = useState(false)
 
   const validateField = (field, value) => {
     let error = ''
@@ -711,91 +916,129 @@ const EditContent = ({ handleClose, data, onUpdate, videosList = [], audiencesLi
 
           {/* Audience Selection */}
           <Grid item xs={12}>
-            <Stack spacing={1}>
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <Button
-                  variant='outlined'
-                  size='small'
-                  startIcon={<AddIcon fontSize='small' />}
-                  onClick={() => setShowCreateAudience(true)}
-                  sx={{
-                    minWidth: 'fit-content',
-                    height: '32px',
-                    borderRadius: 1,
-                    px: 2,
-                    textTransform: 'none',
-                    fontWeight: 600,
-                    fontSize: '0.8125rem',
-                    whiteSpace: 'nowrap'
-                  }}
-                >
-                  New Audience
-                </Button>
-              </Box>
-              <TextField
-                label='Select Target Audience (Optional)'
-                select
-                value={formData.audience}
-                onChange={e => handleSetFormValue('audience', e.target.value)}
-                fullWidth
-                SelectProps={{
-                  renderValue: (selected) => {
-                    if (!selected) return <em>None</em>
-                    const selectedAudience = audiencesList.find(a => a._id === selected)
-                    return selectedAudience ? (
-                      <AudienceOption audience={selectedAudience} showFilters={true} />
-                    ) : <em>None</em>
-                  },
-                  MenuProps: {
-                    PaperProps: {
-                      sx: {
-                        maxHeight: 400,
-                        '& .MuiMenuItem-root': {
-                          whiteSpace: 'normal',
-                          py: 1.5
-                        }
-                      }
-                    }
-                  }
-                }}
+            <Box
+              onClick={() => setShowAudiencePicker(true)}
+              sx={{
+                position: 'relative',
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: { xs: 1.5, sm: 2 },
+                p: '16.5px 14px',
+                minHeight: 56,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                '&:hover': { borderColor: theme.palette.text.primary }
+              }}
+            >
+              <Typography
+                component='label'
                 sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: { xs: 1.5, sm: 2 },
-                    fontSize: { xs: '0.9375rem', sm: '1rem' }
-                  }
+                  position: 'absolute',
+                  top: -9,
+                  left: 12,
+                  px: 0.5,
+                  bgcolor: isDarkMode ? theme.palette.background.paper : 'white',
+                  fontSize: '0.75rem',
+                  color: 'text.secondary'
                 }}
               >
-                <MenuItem value=''>
-                  <em>None</em>
-                </MenuItem>
-                {audiencesList.map(audience => (
-                  <MenuItem key={audience._id} value={audience._id}>
-                    <AudienceOption audience={audience} showFilters={true} />
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Stack>
+                Select Target Audience (Optional)
+              </Typography>
+              {formData.audience && audiencesList.find(a => a._id === formData.audience) ? (
+                <Box sx={{ flex: 1 }}>
+                  <AudienceOption
+                    audience={audiencesList.find(a => a._id === formData.audience)}
+                    showFilters={true}
+                  />
+                </Box>
+              ) : (
+                <Typography sx={{ color: 'text.disabled', fontSize: '1rem' }}>
+                  Click to select audience...
+                </Typography>
+              )}
+              {formData.audience && (
+                <IconButton
+                  size='medium'
+                  onClick={e => { e.stopPropagation(); handleSetFormValue('audience', '') }}
+                  sx={{ ml: 1 }}
+                >
+                  <CloseIcon />
+                </IconButton>
+              )}
+            </Box>
+            <AudiencePickerDialog
+              open={showAudiencePicker}
+              onClose={() => setShowAudiencePicker(false)}
+              audiencesList={audiencesList}
+              selectedAudienceId={formData.audience}
+              onSelect={(id) => handleSetFormValue('audience', id)}
+              onCreateNew={() => setShowCreateAudience(true)}
+            />
           </Grid>
 
           {/* Videos Selection */}
           <Grid item xs={12}>
-            <MultiSelect
-              label='Select Videos (Optional)'
-              placeholder='Select Videos'
-              selectedValues={formData.videos}
-              onChange={values => handleSetFormValue('videos', values)}
-              options={videosList.map(videoObj => ({
-                value: videoObj._id,
-                selectedLabel: videoObj.name,
-                optionLabel: (
-                  <>
-                    <Box>
-                      <Typography variant='h5'>{videoObj.name}</Typography>
-                      <MediaPreviewPopup url={videoObj.url} mediaType='video' height='60px' />
-                    </Box>
-                  </>
-                )
-              }))}
+            <Box
+              onClick={() => setShowVideoPicker(true)}
+              sx={{
+                position: 'relative',
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: { xs: 1.5, sm: 2 },
+                p: '16.5px 14px',
+                minHeight: 56,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 1,
+                '&:hover': { borderColor: theme.palette.text.primary }
+              }}
+            >
+              <Typography
+                component='label'
+                sx={{
+                  position: 'absolute',
+                  top: -9,
+                  left: 12,
+                  px: 0.5,
+                  bgcolor: isDarkMode ? theme.palette.background.paper : 'white',
+                  fontSize: '0.75rem',
+                  color: 'text.secondary'
+                }}
+              >
+                Select Videos (Optional)
+              </Typography>
+              {formData.videos.length > 0 ? (
+                formData.videos.map(videoId => {
+                  const video = videosList.find(v => v._id === videoId)
+                  return (
+                    <Chip
+                      key={videoId}
+                      label={video?.name || videoId}
+                      size='medium'
+                      onDelete={e => {
+                        e.stopPropagation()
+                        handleSetFormValue('videos', formData.videos.filter(id => id !== videoId))
+                      }}
+                      deleteIcon={<CloseIcon />}
+                    />
+                  )
+                })
+              ) : (
+                <Typography sx={{ color: 'text.disabled', fontSize: '1rem' }}>
+                  Click to select videos...
+                </Typography>
+              )}
+            </Box>
+            <VideoPickerDialog
+              open={showVideoPicker}
+              onClose={() => setShowVideoPicker(false)}
+              videosList={videosList}
+              selectedVideoIds={formData.videos}
+              onConfirm={(ids) => handleSetFormValue('videos', ids)}
             />
           </Grid>
         </Grid>
@@ -803,6 +1046,7 @@ const EditContent = ({ handleClose, data, onUpdate, videosList = [], audiencesLi
         <Grid item xs={12}>
           <Paper
             sx={{
+              mt: 3,
               p: { xs: 1.5, sm: 2 },
               borderRadius: { xs: 1.5, sm: 2 },
               bgcolor: alpha(theme.palette.primary.main, isDarkMode ? 0.08 : 0.04),
