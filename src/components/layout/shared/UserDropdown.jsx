@@ -29,6 +29,9 @@ import { signOut, useSession } from 'next-auth/react'
 // Hook Imports
 import { useSettings } from '@core/hooks/useSettings'
 
+// Context Imports
+import { useActiveRole } from '@/contexts/ActiveRoleContext'
+
 // Util Imports
 import { getLocalizedUrl } from '@/utils/i18n'
 import * as RestApi from '@/utils/restApiUtil'
@@ -57,6 +60,10 @@ const UserDropdown = () => {
   const { data: session } = useSession()
   const { settings } = useSettings()
   const { lang: locale } = useParams()
+  const { activeRole, setActiveRole, clearActiveRole } = useActiveRole()
+
+  const userRoles = session?.user?.roles || []
+  const hasMultipleRoles = userRoles.length > 1
 
   useEffect(() => {
     const defaultAvatar = session?.user?.image || ''
@@ -113,19 +120,20 @@ const UserDropdown = () => {
   const handleUserLogout = async () => {
     setIsLoggingOut(true)
     try {
-      // Sign out from the app
+      clearActiveRole()
       await signOut({ redirect: false })
-
-      // Redirect to login page
       router.push(getLocalizedUrl('/login', locale))
     } catch (error) {
       console.error(error)
-
-      // Show above error in a toast like following
-      // toastService.error((err as Error).message)
     } finally {
       setIsLoggingOut(false)
     }
+  }
+
+  const handleRoleSwitch = (roleName) => {
+    setActiveRole(roleName)
+    setOpen(false)
+    router.push(getLocalizedUrl('/home', locale))
   }
 
   return (
@@ -198,6 +206,37 @@ const UserDropdown = () => {
                     <i className='ri-question-line text-[22px]' />
                     <Typography color='text.primary'>FAQ</Typography>
                   </MenuItem>
+                  {hasMultipleRoles && (
+                    <>
+                      <Divider className='mlb-1' />
+                      <div className='pli-4 plb-1'>
+                        <Typography variant='caption' color='text.secondary' sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          Switch Role
+                        </Typography>
+                      </div>
+                      <MenuItem
+                        className='gap-3'
+                        onClick={() => handleRoleSwitch(null)}
+                        selected={activeRole === null}
+                        sx={{ minHeight: 'auto', py: 1 }}
+                      >
+                        <i className={`ri-checkbox-circle-${activeRole === null ? 'fill' : 'line'} text-[18px]`} />
+                        <Typography variant='body2' color='text.primary'>All Roles</Typography>
+                      </MenuItem>
+                      {userRoles.map((role) => (
+                        <MenuItem
+                          key={role}
+                          className='gap-3'
+                          onClick={() => handleRoleSwitch(role)}
+                          selected={activeRole === role}
+                          sx={{ minHeight: 'auto', py: 1 }}
+                        >
+                          <i className={`ri-checkbox-circle-${activeRole === role ? 'fill' : 'line'} text-[18px]`} />
+                          <Typography variant='body2' color='text.primary'>{role}</Typography>
+                        </MenuItem>
+                      ))}
+                    </>
+                  )}
                   <div className='flex items-center plb-2 pli-4'>
                     <Button
                       fullWidth

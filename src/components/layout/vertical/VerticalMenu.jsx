@@ -34,6 +34,7 @@ import { PERMISSIONS_LOOKUP } from '@/configs/permissions-lookup'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import useRoles from '@/hooks/useRoles'
+import { useActiveRole } from '@/contexts/ActiveRoleContext'
 
 const RenderExpandIcon = ({ open, transitionDuration }) => (
   <StyledVerticalNavExpandIcon open={open} transitionDuration={transitionDuration}>
@@ -51,13 +52,15 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
   const { data: session } = useSession()
   // const [roles, setRoles] = useState([])
   const { roles, loading } = useRoles()
+  const { getEffectiveRoles } = useActiveRole()
 
   // Vars
   const { transitionDuration } = verticalNavOptions
   const { lang: locale, id } = params
   const ScrollWrapper = isBreakpointReached ? 'div' : PerfectScrollbar
 
-  const userRoles = session?.user?.roles || ['USER']
+  const allUserRoles = session?.user?.roles || ['USER']
+  const userRoles = getEffectiveRoles(allUserRoles)
 
   // const getRolesData = async () => {
   //   console.log('Fetching Roles Data now.....')

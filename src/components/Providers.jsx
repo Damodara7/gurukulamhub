@@ -1,5 +1,6 @@
 // Context Imports
 import { NextAuthProvider } from '@/contexts/nextAuthProvider'
+import { ActiveRoleProvider } from '@/contexts/ActiveRoleContext'
 import { GameProvider } from '@/contexts/GameContext'
 import { GroupProvider } from '@/contexts/GroupContext'
 import { VerticalNavProvider } from '@menu/contexts/verticalNavContext'
@@ -37,6 +38,7 @@ const Providers = async props => {
 
   return (
     <NextAuthProvider session={session} basePath={process.env.NEXTAUTH_BASEPATH}>
+      <ActiveRoleProvider>
       <VerticalNavProvider>
         <SettingsProvider settingsCookie={settingsCookie} mode={mode} demoName={demoName}>
           <ThemeProvider direction={direction} systemMode={systemMode}>
@@ -52,6 +54,7 @@ const Providers = async props => {
           </ThemeProvider>
         </SettingsProvider>
       </VerticalNavProvider>
+      </ActiveRoleProvider>
     </NextAuthProvider>
   )
 }

@@ -4,12 +4,15 @@ import WithPermission from '@/libs/WithPermission'
 import Loading from '@/components/Loading'
 import { useSession } from 'next-auth/react'
 import useRoles from '@/hooks/useRoles'
+import { useActiveRole } from '@/contexts/ActiveRoleContext'
 
 function PermissionLayoutWrapper({ children, featureName, permissionName }) {
   const { data: session, status } = useSession()
   const { roles, loading } = useRoles()
+  const { getEffectiveRoles } = useActiveRole()
 
-  const userRoles = session?.user?.roles || []
+  const allUserRoles = session?.user?.roles || []
+  const userRoles = getEffectiveRoles(allUserRoles)
 
   if (loading) {
     return <Loading />
