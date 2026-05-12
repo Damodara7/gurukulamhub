@@ -242,25 +242,27 @@ export const deleteMessage = async (messageId, userEmail, deleteForEveryone = fa
 
     const isSender = message.senderEmail === userEmail
     const isCreator = group.creatorEmail === userEmail
+    const isClassroomManager = group.groupType === 'classroom' && group.groupManagerEmail === userEmail
 
     if (deleteForEveryone) {
-      // Only sender can delete for everyone (within time limit, typically 1 hour)
-      if (!isSender) {
+      if (!isSender && !isClassroomManager) {
         return {
           status: 'error',
           result: null,
-          message: 'Only the message sender can delete for everyone'
+          message: 'Only the message sender or classroom manager can delete for everyone'
         }
       }
 
-      // Check time limit (1 hour)
-      const messageAge = Date.now() - new Date(message.createdAt).getTime()
-      const oneHour = 60 * 60 * 1000
-      if (messageAge > oneHour) {
-        return {
-          status: 'error',
-          result: null,
-          message: 'Cannot delete for everyone after 1 hour'
+      // Time limit applies only to regular senders, not classroom managers
+      if (isSender && !isClassroomManager) {
+        const messageAge = Date.now() - new Date(message.createdAt).getTime()
+        const oneHour = 60 * 60 * 1000
+        if (messageAge > oneHour) {
+          return {
+            status: 'error',
+            result: null,
+            message: 'Cannot delete for everyone after 1 hour'
+          }
         }
       }
 

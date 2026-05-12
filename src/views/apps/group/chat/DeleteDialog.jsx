@@ -23,8 +23,9 @@ const DeleteDialog = ({
   selectedMessages,
   onConfirm,
   isMessageDeletedForEveryone,
-  fromMenu = false, // New prop to indicate if opened from menu
-  groupData
+  fromMenu = false,
+  groupData,
+  isGroupManager = false
 }) => {
   const theme = useTheme()
   const isDarkMode = theme.palette.mode === 'dark'
@@ -51,14 +52,12 @@ const DeleteDialog = ({
     return messageAge > oneHour
   })
 
-  // Show "delete for everyone" ONLY if:
-  // 1. Not deleted for everyone
-  // 2. ALL messages are from the current user (sender) - if even one is from another user, don't show
-  // 3. No message is older than 1 hour
-  // When opened from menu, we want to show both options if the message is from the user and within 1 hour
-  const canDeleteForEveryone = !hasDeletedForEveryone && 
-    allMessagesAreFromUser && 
-    !hasMessageOlderThanOneHour
+  // Classroom manager can delete any message for everyone at any time
+  // Regular users: must be sender and within 1 hour
+  const canDeleteForEveryone = !hasDeletedForEveryone && (
+    isGroupManager || 
+    (allMessagesAreFromUser && !hasMessageOlderThanOneHour)
+  )
 
   return (
     <Dialog

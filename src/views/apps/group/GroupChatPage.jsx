@@ -1880,17 +1880,12 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
           continue
         }
 
-        // Check if user is the sender (required for delete for everyone)
         const isSender = message.senderEmail === session?.user?.email
         
-        // Only allow delete for everyone if:
-        // 1. deleteForEveryone is true
-        // 2. User is the sender
-        // 3. Message is not already deleted for everyone
-        const shouldDeleteForEveryone = deleteForEveryone && isSender && !isMessageDeletedForEveryone(message)
+        const shouldDeleteForEveryone = deleteForEveryone && (isSender || isGroupManager) && !isMessageDeletedForEveryone(message)
         
-        if (deleteForEveryone && !isSender) {
-          toast.error('Only the message sender can delete for everyone')
+        if (deleteForEveryone && !isSender && !isGroupManager) {
+          toast.error('Only the message sender or classroom manager can delete for everyone')
           errorCount++
           continue
         }
@@ -2121,10 +2116,11 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
               <Button
                 fullWidth
                 variant='contained'
+                component='label'
                 color='success'
                 startIcon={<CheckIcon />}
                 onClick={handleApproveAllPending}
-                sx={{ mb: 2 }}
+                sx={{ mb: 2, color: 'white' }}
               >
                 Approve all ({pendingMessages.length})
               </Button>
@@ -2152,9 +2148,9 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
                       }
                     />
                     <Stack direction='row' spacing={1} sx={{ mt: 1 }}>
-                      <Button size='small' variant='contained' color='success' startIcon={<CheckIcon />} onClick={() => handleApproveMessage(msg._id)}>Approve</Button>
+                      <Button size='small' variant='contained' component='label' style={{ color: 'white' }} color='success' startIcon={<CheckIcon />} onClick={() => handleApproveMessage(msg._id)}>Approve</Button>
                       <Button size='small' variant='outlined' color='error' startIcon={<CancelIcon />} onClick={() => { setMessageToReject(msg); setRejectDialogOpen(true); }}>Reject</Button>
-                      <Button size='small' variant='outlined' startIcon={<EditIcon />} onClick={() => { setMessageToEditByManager(msg); setEditByManagerText(msg.message || ''); setEditByManagerDialogOpen(true); }}>Edit</Button>
+                      <Button size='small' variant='outlined' component='label' style={{ color: 'white' }} startIcon={<EditIcon />} onClick={() => { setMessageToEditByManager(msg); setEditByManagerText(msg.message || ''); setEditByManagerDialogOpen(true); }}>Edit</Button>
                     </Stack>
                   </ListItem>
                 )
@@ -2173,7 +2169,7 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
         </DialogContent>
         <DialogActions>
           <Button onClick={() => { setRejectDialogOpen(false); setMessageToReject(null); setRejectReason(''); }}>Cancel</Button>
-          <Button variant='contained' color='error' onClick={handleRejectMessage}>Reject</Button>
+          <Button variant='contained' component='label' style={{ color: 'white' }} color='error' onClick={handleRejectMessage}>Reject</Button>
         </DialogActions>
       </Dialog>
 
@@ -2185,7 +2181,7 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
         </DialogContent>
         <DialogActions>
           <Button onClick={() => { setEditByManagerDialogOpen(false); setMessageToEditByManager(null); setEditByManagerText(''); }}>Cancel</Button>
-          <Button variant='contained' onClick={handleEditByManager} disabled={!editByManagerText.trim()}>Save & approve</Button>
+          <Button variant='contained' component='label' style={{ color: 'white' }} onClick={handleEditByManager} disabled={!editByManagerText.trim()}>Save & approve</Button>
         </DialogActions>
       </Dialog>
 
@@ -2434,6 +2430,8 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
           </Button>
           <Button
             variant='contained'
+            component='label'
+            style={{ color: 'white' }}
             onClick={handleChangeRoleConfirm}
             disabled={
               !changeRoleSelectedMember ||
@@ -2584,6 +2582,7 @@ const GroupChatPage = ({ groupId, groupData: initialGroupData, backPath = '/mana
         isMessageDeletedForEveryone={isMessageDeletedForEveryone}
         fromMenu={deleteFromMenu}
         groupData={groupData}
+        isGroupManager={isGroupManager}
       />
 
       {/* Members Drawer: creator and group manager can add; creator remove only users they added, manager remove only users they added (backend enforces); change trainer only if creator added trainer */}
