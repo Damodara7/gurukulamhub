@@ -386,9 +386,9 @@ const VerticalMenu = ({ dictionary, scrollMenu }) => {
             {/* <MenuItem href={`/${locale}/management/account-types`} icon={<i className='ri-account-circle-line' />}>
               {dictionary['navigation'].accountTypes}
             </MenuItem> */}
-            {/* <MenuItem href={`/${locale}/management/contexts/generic`} icon={<i className='ri-question-line' />}>
+            <MenuItem href={`/${locale}/management/contexts/generic`} icon={<i className='ri-node-tree' />}>
               {dictionary['navigation'].generic}
-            </MenuItem> */}
+            </MenuItem>
           </MenuSection>
         )}
 

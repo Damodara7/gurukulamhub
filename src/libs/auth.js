@@ -9,6 +9,11 @@ import * as clientApi from '@/app/api/client/client.api'
 
 //const prisma = new PrismaClient()
 
+// #region agent log
+fetch('http://127.0.0.1:7807/ingest/5483f88f-691f-4d49-acf2-5336b9e7918b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f4770a'},body:JSON.stringify({sessionId:'f4770a',runId:'pre-fix',hypothesisId:'H1,H2,H3,H4',location:'src/libs/auth.js:auth-config-load',message:'NextAuth config environment loaded',data:{nodeEnv:process.env.NODE_ENV,hasNextAuthUrl:Boolean(process.env.NEXTAUTH_URL),hasNextAuthSecret:Boolean(process.env.NEXTAUTH_SECRET),hasGoogleClientId:Boolean(process.env.GOOGLE_CLIENT_ID),hasGoogleClientSecret:Boolean(process.env.GOOGLE_CLIENT_SECRET),hasAuthTrustHost:Boolean(process.env.AUTH_TRUST_HOST),nextAuthUrlHost:process.env.NEXTAUTH_URL ? new URL(process.env.NEXTAUTH_URL).host : null},timestamp:Date.now()})}).catch(()=>{})
+console.info('[agent-auth-debug]',{runId:'pre-fix',hypothesisId:'H1,H2,H3,H4',location:'src/libs/auth.js:auth-config-load',message:'NextAuth config environment loaded',data:{nodeEnv:process.env.NODE_ENV,hasNextAuthUrl:Boolean(process.env.NEXTAUTH_URL),hasNextAuthSecret:Boolean(process.env.NEXTAUTH_SECRET),hasGoogleClientId:Boolean(process.env.GOOGLE_CLIENT_ID),hasGoogleClientSecret:Boolean(process.env.GOOGLE_CLIENT_SECRET),hasAuthTrustHost:Boolean(process.env.AUTH_TRUST_HOST),nextAuthUrlHost:process.env.NEXTAUTH_URL ? new URL(process.env.NEXTAUTH_URL).host : null}})
+// #endregion
+
 export const authOptions = {
   ...authConfig,
   // adapter: PrismaAdapter(prisma),
@@ -277,6 +282,21 @@ export const authOptions = {
         return false
       }
       return true
+    }
+  },
+  logger: {
+    error(error) {
+      // #region agent log
+      const debugData = {name:error?.name,type:error?.type,code:error?.code,message:error?.message,causeName:error?.cause?.err?.name || error?.cause?.name,causeCode:error?.cause?.err?.code || error?.cause?.code,causeMessage:error?.cause?.err?.message || error?.cause?.message}
+      fetch('http://127.0.0.1:7807/ingest/5483f88f-691f-4d49-acf2-5336b9e7918b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f4770a'},body:JSON.stringify({sessionId:'f4770a',runId:'pre-fix',hypothesisId:'H1,H2,H3,H4',location:'src/libs/auth.js:nextauth-logger-error',message:'NextAuth logger emitted error',data:debugData,timestamp:Date.now()})}).catch(()=>{})
+      console.error('[agent-auth-debug]',{runId:'pre-fix',hypothesisId:'H1,H2,H3,H4',location:'src/libs/auth.js:nextauth-logger-error',message:'NextAuth logger emitted error',data:debugData})
+      // #endregion
+    },
+    warn(code) {
+      // #region agent log
+      fetch('http://127.0.0.1:7807/ingest/5483f88f-691f-4d49-acf2-5336b9e7918b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f4770a'},body:JSON.stringify({sessionId:'f4770a',runId:'pre-fix',hypothesisId:'H1,H2,H3,H4',location:'src/libs/auth.js:nextauth-logger-warn',message:'NextAuth logger emitted warning',data:{code},timestamp:Date.now()})}).catch(()=>{})
+      console.warn('[agent-auth-debug]',{runId:'pre-fix',hypothesisId:'H1,H2,H3,H4',location:'src/libs/auth.js:nextauth-logger-warn',message:'NextAuth logger emitted warning',data:{code}})
+      // #endregion
     }
   },
   pages: {
