@@ -24,6 +24,58 @@ function cancelTask(gameId) {
   }
 }
 
+const ADMIN_FORWARD_GRACE_MS = 5 * 60 * 1000
+
+function isAdminForwardGame(game) {
+  return game?.forwardType === 'admin' || Boolean(game?.forwardingAdmin)
+}
+
+// Only auto-forward games may be moved to live by the scheduler
+const AUTO_FORWARD_LIVE_FILTER = { forwardType: 'auto' }
+
+// Admin-forward games stay in lobby until the forwarding admin starts them manually.
+// If not started within 5 minutes after scheduled startTime, they are cancelled.
+async function scheduleAdminForwardDeadline(gameId, startTime) {
+  try {
+    const now = new Date()
+    await checkAndCancelOverdueGames()
+
+    const game = await Game.findOne({ _id: gameId, isDeleted: false })
+    if (!game || ['cancelled', 'completed', 'live'].includes(game.status)) {
+      console.log(`📌 Game ${gameId} is ${game?.status || 'deleted'}, skipping admin-forward deadline`)
+      return
+    }
+
+    const cancelAt = new Date(startTime.getTime() + ADMIN_FORWARD_GRACE_MS)
+
+    if (cancelAt <= now) {
+      console.log(`📌 Admin-forward game ${gameId} past start grace, checking cancellation`)
+      await checkAndCancelOverdueGames()
+      return
+    }
+
+    cancelTask(gameId)
+
+    const task = cron.schedule(
+      convertToISOString(cancelAt),
+      async () => {
+        try {
+          console.log(`📌 Admin-forward game ${gameId} start grace elapsed, checking cancellation`)
+          await checkAndCancelOverdueGames()
+        } catch (error) {
+          console.error(`❌ Error on admin-forward deadline for game ${gameId}:`, error)
+        }
+      },
+      { scheduled: true, timezone: 'Asia/Kolkata' }
+    )
+
+    gameStatusTasks[gameId] = task
+    console.log(`📌 Scheduled admin-forward cancel check for game ${gameId} at ${cancelAt}`)
+  } catch (error) {
+    console.error(`❌ Error scheduling admin-forward deadline for game ${gameId}:`, error)
+  }
+}
+
 // ✅ Helper function to complete a game with proper notifications (used by scheduler)
 async function completeGame(gameId) {
   // ✅ IN-MEMORY LOCK: Prevent concurrent processing
@@ -144,7 +196,7 @@ async function checkAndCancelOverdueGames() {
         )
         cancelTask(game._id)
         await broadcastGamesUpdate()
-        broadcastGameDetailsUpdates(game._id)
+        await broadcastGameDetailsUpdates(game._id)
 
         // ✅ NON-BLOCKING: Send "game cancelled" notifications to all registered users
         if (updatedGame) {
@@ -205,6 +257,7 @@ export async function scheduleLobbyTransition(gameId) {
         await Game.findByIdAndUpdate(gameId, { $set: { status: 'lobby' } })
         await scheduleLiveTransition(gameId, game.startTime)
         await broadcastGamesUpdate()
+        await broadcastGameDetailsUpdates(gameId)
       }
       return
     }
@@ -227,7 +280,7 @@ export async function scheduleLobbyTransition(gameId) {
             console.log(`📌 Game ${gameId} status updated to lobby`)
             scheduleLiveTransition(gameId, game.startTime)
             await broadcastGamesUpdate()
-            broadcastGameDetailsUpdates(gameId)
+            await broadcastGameDetailsUpdates(gameId)
           }
         } catch (error) {
           console.error(`❌ Error updating game ${gameId} status:`, error)
@@ -247,12 +300,21 @@ async function scheduleLiveTransition(gameId, startTime) {
   try {
     const now = new Date()
 
+    // Clear any previously scheduled start-time task (e.g. before forwardType was admin)
+    cancelTask(gameId)
+
     // First check if the game should be cancelled
     await checkAndCancelOverdueGames()
 
     const game = await Game.findOne({ _id: gameId, isDeleted: false })
     if (!game || ['cancelled', 'completed'].includes(game.status)) {
       console.log(`📌 Game ${gameId} is ${game?.status || 'deleted'}, skipping live transition`)
+      return
+    }
+
+    if (isAdminForwardGame(game)) {
+      console.log(`📌 Game ${gameId} is admin-forward; waiting for manual start by forwarding admin`)
+      await scheduleAdminForwardDeadline(gameId, startTime)
       return
     }
 
@@ -273,6 +335,7 @@ async function scheduleLiveTransition(gameId, startTime) {
           { new: true }
         )
         await broadcastGamesUpdate()
+        await broadcastGameDetailsUpdates(gameId)
 
         // ✅ NON-BLOCKING: Send "game cancelled" notifications to all registered users
         if (updatedGame) {
@@ -305,7 +368,8 @@ async function scheduleLiveTransition(gameId, startTime) {
           {
             _id: gameId,
             isDeleted: false,
-            status: { $in: ['approved', 'lobby'] } // ✅ CRITICAL: Only update if not already 'live'
+            status: { $in: ['approved', 'lobby'] },
+            ...AUTO_FORWARD_LIVE_FILTER
           },
           { $set: { status: 'live' } },
           { new: true }
@@ -344,7 +408,7 @@ async function scheduleLiveTransition(gameId, startTime) {
           )
         }
       }
-      broadcastGameDetailsUpdates(gameId)
+      await broadcastGameDetailsUpdates(gameId)
       return
     }
 
@@ -365,15 +429,22 @@ async function scheduleLiveTransition(gameId, startTime) {
             return
           }
 
+          if (isAdminForwardGame(currentGame)) {
+            console.log(
+              `📌 Game ${gameId} is admin-forward — skipping auto live at start time (admin must start manually)`
+            )
+            await scheduleAdminForwardDeadline(gameId, new Date(currentGame.startTime))
+            return
+          }
+
           console.log(`📌 Moving game ${gameId} to live status`)
 
-          // ✅ ATOMIC CHECK: Only update if game is still 'lobby' or 'approved' (prevents duplicate notifications)
-          // This prevents race conditions where reschedulePendingGames or other processes already moved the game to 'live'
           const updatedGame = await Game.findOneAndUpdate(
             {
               _id: gameId,
               isDeleted: false,
-              status: { $in: ['approved', 'lobby'] } // ✅ CRITICAL: Only update if not already 'live'
+              status: { $in: ['approved', 'lobby'] },
+              ...AUTO_FORWARD_LIVE_FILTER
             },
             { $set: { status: 'live' } },
             { new: true }
@@ -579,6 +650,10 @@ async function scheduleCompletion(gameId, endTime) {
   }
 }
 
+export function cancelScheduledTasks(gameId) {
+  cancelTask(gameId)
+}
+
 // Call this when admin approves a game
 export async function onGameApproved(gameId) {
   console.log('📌 Inside onGameApproved Scheduler')
@@ -612,12 +687,15 @@ export async function reschedulePendingGames() {
             await Game.findByIdAndUpdate(game._id, { $set: { status: 'lobby' } })
             await scheduleLiveTransition(game._id, game.startTime)
             await broadcastGamesUpdate()
+            await broadcastGameDetailsUpdates(game._id)
           }
         } else if (game.status === 'lobby') {
-          if (game.startTime > now) {
+          if (isAdminForwardGame(game)) {
+            await scheduleAdminForwardDeadline(game._id, game.startTime)
+          } else if (game.startTime > now) {
             await scheduleLiveTransition(game._id, game.startTime)
           } else {
-            const gracePeriod = new Date(now.getTime() - 5 * 60000)
+            const gracePeriod = new Date(now.getTime() - ADMIN_FORWARD_GRACE_MS)
             if (game.startTime <= gracePeriod) {
               console.log(`📌 Game ${game._id} missed start time by more than 5 minutes, cancelling`)
               const updatedGame = await Game.findByIdAndUpdate(
@@ -631,6 +709,7 @@ export async function reschedulePendingGames() {
                 { new: true }
               )
               await broadcastGamesUpdate()
+              await broadcastGameDetailsUpdates(game._id)
 
               // ✅ NON-BLOCKING: Send "game cancelled" notifications to all registered users
               if (updatedGame) {
@@ -663,7 +742,8 @@ export async function reschedulePendingGames() {
                 {
                   _id: game._id,
                   isDeleted: false,
-                  status: { $in: ['approved', 'lobby'] } // ✅ CRITICAL: Only update if not already 'live'
+                  status: { $in: ['approved', 'lobby'] },
+                  ...AUTO_FORWARD_LIVE_FILTER
                 },
                 { $set: { status: 'live' } },
                 { new: true }

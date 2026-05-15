@@ -390,6 +390,11 @@ export const addOne = async gameData => {
 
     const savedGame = await newGame.save({ validateBeforeSave: false })
 
+    if (savedGame.forwardType === 'admin' && user?._id) {
+      savedGame.forwardingAdmin = user._id
+      await savedGame.save({ validateBeforeSave: false })
+    }
+
     // Update sponsorships
     await updateSponsorshipsForGame(savedGame)
 
@@ -1474,6 +1479,16 @@ export const startGame = async (gameId, userData) => {
       }
     }
 
+    const isAdminForward =
+      game.forwardType === 'admin' || Boolean(game.forwardingAdmin)
+    if (isAdminForward && game.status !== 'live') {
+      return {
+        status: 'error',
+        result: null,
+        message: 'This game has not started yet. Please wait for the host to start the session.'
+      }
+    }
+
     const profile = await UserProfile.findOne({ email: userData?.email }).lean()
 
     if (game.groupId && game.groupId._id) {
@@ -1968,6 +1983,153 @@ async function revertSponsorshipsForGame(game) {
   }
 }
 
+export const startAdminForwardGame = async (gameId, user) => {
+  await connectMongo()
+  try {
+    if (!user?.email) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'User email is required'
+      }
+    }
+
+    const adminUser = await User.findOne({ email: user.email })
+    if (!adminUser) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'User not found'
+      }
+    }
+
+    const game = await Game.findById(gameId)
+    if (!game) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Game not found'
+      }
+    }
+
+    if (game.forwardType !== 'admin') {
+      return {
+        status: 'error',
+        result: null,
+        message: 'This game is not an admin-forward game'
+      }
+    }
+
+    if (!game.forwardingAdmin || adminUser._id.toString() !== game.forwardingAdmin.toString()) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'User is not the forwarding admin for this game'
+      }
+    }
+
+    if (game.status === 'live') {
+      const resultGame = await getOne({ _id: game._id })
+      return {
+        status: 'success',
+        result: resultGame.result,
+        message: 'Game is already live'
+      }
+    }
+
+    if (game.status !== 'lobby') {
+      return {
+        status: 'error',
+        result: null,
+        message: `Game cannot be started from status "${game.status}"`
+      }
+    }
+
+    const now = new Date()
+    const startTime = new Date(game.startTime)
+    const graceDeadline = new Date(startTime.getTime() + 5 * 60 * 1000)
+
+    if (now < startTime) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Game cannot be started before the scheduled start time'
+      }
+    }
+
+    if (now > graceDeadline) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Game start window has expired (admin did not start within 5 minutes)'
+      }
+    }
+
+    const updatedGame = await Game.findOneAndUpdate(
+      {
+        _id: gameId,
+        isDeleted: false,
+        status: 'lobby',
+        forwardType: 'admin'
+      },
+      {
+        $set: {
+          status: 'live',
+          liveQuestionIndex: 0,
+          liveQuestionStartedAt: now
+        }
+      },
+      { new: true }
+    )
+
+    if (!updatedGame) {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Game could not be started (it may have been cancelled or already started)'
+      }
+    }
+
+    gameScheduler.cancelScheduledTasks(gameId)
+    await broadcastGamesUpdate()
+
+    ;(async () => {
+      try {
+        const { createGameStartedNotificationsForRegisteredUsers } = await import(
+          '../notifications/notification.helpers.js'
+        )
+        await createGameStartedNotificationsForRegisteredUsers(gameId.toString(), {
+          _id: updatedGame._id || gameId,
+          title: updatedGame.title,
+          thumbnailPoster: updatedGame.thumbnailPoster || updatedGame.thumbnailUrl,
+          quiz: updatedGame.quiz
+        })
+        console.log(`[Game Service] ✅ Sent game started notifications for admin-started game ${gameId}`)
+      } catch (notificationError) {
+        console.error(
+          `[Game Service] ❌ Error sending game started notifications for admin-started game ${gameId}:`,
+          notificationError
+        )
+      }
+    })()
+
+    const resultGame = await getOne({ _id: game._id })
+    broadcastGameDetailsUpdates(game._id, resultGame.result)
+
+    return {
+      status: 'success',
+      result: resultGame.result,
+      message: 'Game started successfully. Players can now access the first question.'
+    }
+  } catch (error) {
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to start game'
+    }
+  }
+}
+
 export const setForwardingAdmin = async (gameId, user) => {
   await connectMongo()
   try {
@@ -2002,7 +2164,15 @@ export const setForwardingAdmin = async (gameId, user) => {
       }
     }
     game.forwardingAdmin = adminUser._id
+    if (game.forwardType !== 'admin') {
+      game.forwardType = 'admin'
+    }
     await game.save()
+
+    gameScheduler.cancelScheduledTasks(gameId)
+    if (game.status === 'lobby' || game.status === 'approved') {
+      await gameScheduler.scheduleLobbyTransition(gameId)
+    }
 
     broadcastGameDetailsUpdates(gameId)
 
@@ -2053,6 +2223,15 @@ export const forwardQuestion = async (gameId, user, currentQuestionIndex) => {
         message: 'User is not the forwarding admin for this game'
       }
     }
+
+    if (game.forwardType === 'admin' && game.status !== 'live') {
+      return {
+        status: 'error',
+        result: null,
+        message: 'Game must be started manually before forwarding questions. Use the Start Game button first.'
+      }
+    }
+
     // Get total questions count
     const totalQuestions = game.questionsCount || 0
     if (typeof currentQuestionIndex !== 'number') {

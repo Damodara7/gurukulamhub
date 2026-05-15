@@ -1,13 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { Card, Box, Avatar, Typography, Chip, Paper, keyframes, LinearProgress, Alert, useTheme } from '@mui/material'
+import { Card, Box, Avatar, Typography, Chip, Paper, LinearProgress, Alert, useTheme } from '@mui/material'
 import { Schedule, People, AccessTime } from '@mui/icons-material'
 import imagePlaceholder from '/public/images/misc/image-placeholder.png'
 
-const blink = keyframes`
-  0% { opacity: 1; }
-  50% { opacity: 0.5; }
-  100% { opacity: 1; }
-`
 const statusColors = {
   created: 'default',
   approved: 'success',
@@ -16,11 +11,6 @@ const statusColors = {
   completed: 'primary',
   cancelled: 'error'
 }
-const pulse = keyframes`
-  0% { transform: scale(1); }
-  50% { transform: scale(1.1); }
-  100% { transform: scale(1); }
-`
 
 function AdminForwardHeader({ game }) {
   const theme = useTheme()
@@ -36,9 +26,13 @@ function AdminForwardHeader({ game }) {
       const diffInSeconds = Math.floor((startTime - now) / 1000)
 
       if (diffInSeconds <= 0) {
-        setTimeRemaining('Game is Starting Now')
-        setCountdownColor('success.main')
-        // setShouldRedirect(true)
+        if (game?.status === 'lobby' && game?.forwardType === 'admin') {
+          setTimeRemaining('Waiting for admin to start')
+          setCountdownColor('warning.main')
+        } else {
+          setTimeRemaining('Game is Starting Now')
+          setCountdownColor('success.main')
+        }
         return
       }
       // Change color based on time remaining
@@ -119,15 +113,7 @@ function AdminForwardHeader({ game }) {
             />
           </Box>
           {!gamestatus && (
-            <Box
-              sx={{
-                mt: 2,
-                mb: 1,
-                width: '100%',
-                position: 'relative',
-                overflow: 'visible'
-              }}
-            >
+            <Box sx={{ mt: 2, mb: 1, width: '100%' }}>
               <Alert
                 severity={
                   countdownColor === 'error.main' ? 'error' : countdownColor === 'warning.main' ? 'warning' : 'info'
@@ -135,74 +121,48 @@ function AdminForwardHeader({ game }) {
                 icon={false}
                 sx={{
                   p: { xs: 1.5, sm: 2 },
-                  alignItems: 'center',
-                  animation: `${blink} 1s infinite`,
-                  overflow: 'visible',
-                  '& .MuiAlert-message': {
-                    width: '100%',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    flexWrap: { xs: 'wrap', sm: 'nowrap' },
-                    gap: { xs: 1, sm: 1.5 },
-                    overflow: 'visible'
-                  }
+                  '& .MuiAlert-message': { width: '100%' }
                 }}
               >
-                <Box
-                  component='span'
-                  sx={{
-                    animation: `${pulse} 1s infinite`,
-                    display: 'inline-flex',
-                    flexShrink: 0
-                  }}
-                >
-                  <AccessTime fontSize='small' />
-                </Box>
-                <Typography
-                  variant='body2'
-                  sx={{
-                    fontWeight: 600,
-                    fontSize: { xs: '0.75rem', sm: '0.85rem' },
-                    color:
-                      countdownColor === 'error.main'
-                        ? theme.palette.error.dark
-                        : countdownColor === 'warning.main'
-                          ? theme.palette.warning.dark
-                          : theme.palette.info.dark,
-                    whiteSpace: 'nowrap',
-                    flexShrink: 0
-                  }}
-                >
-                  The game will start automatically in:
-                </Typography>
-                <Box
-                  component='span'
-                  sx={{
-                    px: { xs: 1.25, sm: 1.5 },
-                    py: { xs: 0.5, sm: 0.75 },
-                    bgcolor: 'background.default',
-                    borderRadius: 1,
-                    minWidth: { xs: '100px', sm: '120px' },
-                    textAlign: 'center',
-                    fontWeight: 700,
-                    fontSize: { xs: '0.85rem', sm: '0.95rem' },
-                    fontFamily: 'monospace',
-                    letterSpacing: '0.05em',
-                    color:
-                      countdownColor === 'error.main'
-                        ? theme.palette.error.dark
-                        : countdownColor === 'warning.main'
-                          ? theme.palette.warning.dark
-                          : theme.palette.info.dark,
-                    flexShrink: 0,
-                    overflow: 'visible',
-                    whiteSpace: 'nowrap',
-                    display: 'inline-block'
-                  }}
-                >
-                  {timeRemaining || game?.status}
-                </Box>
+                {game?.forwardType === 'admin' &&
+                game?.status === 'lobby' &&
+                timeRemaining === 'Waiting for admin to start' ? (
+                  <Typography variant='body2' fontWeight={600} textAlign='center'>
+                    Scheduled time reached — use the Start Game panel below when you are ready.
+                  </Typography>
+                ) : (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: { xs: 'column', sm: 'row' },
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 1.5
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <AccessTime fontSize='small' />
+                      <Typography variant='body2' fontWeight={600}>
+                        {game?.forwardType === 'admin' && game?.status === 'lobby'
+                          ? 'Lobby — scheduled start in:'
+                          : 'The game will start automatically in:'}
+                      </Typography>
+                    </Box>
+                    <Typography
+                      variant='body2'
+                      fontWeight={700}
+                      fontFamily='monospace'
+                      sx={{
+                        px: 1.5,
+                        py: 0.5,
+                        bgcolor: 'background.default',
+                        borderRadius: 1
+                      }}
+                    >
+                      {timeRemaining || game?.status}
+                    </Typography>
+                  </Box>
+                )}
               </Alert>
             </Box>
           )}

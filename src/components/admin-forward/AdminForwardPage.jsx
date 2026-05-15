@@ -9,10 +9,11 @@ import AdminForwardQuizCard from './AdminForwardQuizCard'
 import AdminForwardParticipatedUserCard from './AdminForwardParticipatedUserCard'
 import AdminLeaderboard from '@/components/apps/games/game-details/AdminLeaderboard'
 import AdminInstructions from './AdminInstructions'
+import AdminForwardStartPanel from './AdminForwardStartPanel'
 import { useRouter } from 'next/navigation'
 import FallBackCard from '../apps/games/FallBackCard'
 import CancelIcon from '@mui/icons-material/Cancel'
-function AdminForwardPage({ game = null }) {
+function AdminForwardPage({ game = null, setGame }) {
   const router = useRouter()
   console.log('cancel reason ', game)
   if (!game)
@@ -35,6 +36,12 @@ function AdminForwardPage({ game = null }) {
         }}
       >
         <AdminForwardHeader game={game} />
+
+        {admininstructions && setGame && (
+          <Grid container spacing={3} sx={{ mb: 3 }}>
+            <AdminForwardStartPanel game={game} setGame={setGame} />
+          </Grid>
+        )}
 
         <Grid container spacing={3} sx={{ mb: 3 }}>
           {/* First Row - Info Cards */}
@@ -122,7 +129,9 @@ function AdminForwardPage({ game = null }) {
                       ⚠️ This game has been cancelled
                     </Typography>
                     <Typography variant='body1'>
-                      {game?.cancellationReason || 'Please provide cancellation details for registered players'}
+                      {game?.cancellationReason?.toLowerCase() === 'game did not start on time'
+                        ? 'The session was not started within the allowed window and was ended automatically.'
+                        : game?.cancellationReason || 'Please provide cancellation details for registered players'}
                     </Typography>
                   </Box>
                 </CardContent>

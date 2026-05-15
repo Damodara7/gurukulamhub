@@ -57,6 +57,9 @@ function AdminInstructions({ game = null }) {
                 You play a crucial role as the key administrator for this game session.
               </Typography>
               <Typography component='li' variant='body1'>
+                Start the game manually at the scheduled time — players only see the first question after you start.
+              </Typography>
+              <Typography component='li' variant='body1'>
                 Forward questions based on higher authority instructions.
               </Typography>
               <Typography component='li' variant='body1'>
@@ -95,8 +98,8 @@ function AdminInstructions({ game = null }) {
           {/* Important Note */}
           <Box sx={{ mt: 3, p: 2, border: '1px dashed', borderColor: 'error.main', borderRadius: 1 }}>
             <Typography variant='body2' color='error' sx={{ fontWeight: 'bold' }}>
-              ⚠️ Important: The game cannot proceed without your active participation. Please remain attentive
-              throughout the session.
+              ⚠️ Important: If you do not start the game within 5 minutes after the scheduled start time, it will be
+              cancelled automatically. The game cannot proceed without your active participation.
             </Typography>
           </Box>
         </CardContent>

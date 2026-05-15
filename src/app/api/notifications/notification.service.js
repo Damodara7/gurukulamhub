@@ -850,6 +850,31 @@ export const deleteOne = async (notificationId, userId = null) => {
 /**
  * Delete all notifications for an admin announcement (by adminNotificationId). Admin only; optionally scoped by createdByEmail.
  */
+/**
+ * Delete all notification documents (all users). Super-admin / admin maintenance only.
+ * @param {{ preserveAnnouncementTemplates?: boolean }} options
+ */
+export const deleteAllNotifications = async ({ preserveAnnouncementTemplates = false } = {}) => {
+  await connectMongo()
+  try {
+    const filter = preserveAnnouncementTemplates ? { isAnnouncementTemplate: { $ne: true } } : {}
+
+    const result = await Notification.deleteMany(filter)
+
+    return {
+      status: 'success',
+      result: { deletedCount: result.deletedCount },
+      message: `Deleted ${result.deletedCount} notification(s) successfully`
+    }
+  } catch (error) {
+    return {
+      status: 'error',
+      result: null,
+      message: error.message || 'Failed to delete all notifications'
+    }
+  }
+}
+
 export const deleteByAdminNotificationId = async (adminNotificationId, createdByEmail = null) => {
   await connectMongo()
   try {

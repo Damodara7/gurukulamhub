@@ -394,6 +394,7 @@ export async function PUT(request) {
 /**
  * DELETE /api/notifications?id=notificationId
  * DELETE /api/notifications?adminNotificationId=xxx (admin only: delete all notifications in that announcement)
+ * DELETE /api/notifications?deleteAll=true (admin only: delete every notification for every user)
  */
 export async function DELETE(req) {
   try {
@@ -404,11 +405,26 @@ export async function DELETE(req) {
     const searchParams = new URLSearchParams(url.searchParams)
     const id = searchParams.get('id')
     const adminNotificationId = searchParams.get('adminNotificationId')
+    const deleteAll = searchParams.get('deleteAll') === 'true'
 
     // Get session for authentication
     const session = await auth()
     if (!session?.user?.email) {
       const errorResponse = ApiResponseUtils.createErrorResponse('Unauthorized')
+      return ApiResponseUtils.sendErrorResponse(errorResponse)
+    }
+
+    if (deleteAll) {
+      if (!isAdminUser(session)) {
+        const errorResponse = ApiResponseUtils.createErrorResponse('Only admins can delete all notifications')
+        return ApiResponseUtils.sendErrorResponse(errorResponse)
+      }
+      const deleteResult = await ArtifactService.deleteAllNotifications()
+      if (deleteResult.status === 'success') {
+        const successResponse = ApiResponseUtils.createSuccessResponse(deleteResult.message, deleteResult.result)
+        return ApiResponseUtils.sendSuccessResponse(successResponse)
+      }
+      const errorResponse = ApiResponseUtils.createErrorResponse(deleteResult.message)
       return ApiResponseUtils.sendErrorResponse(errorResponse)
     }
 

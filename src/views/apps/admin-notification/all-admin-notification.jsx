@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation'
 import AdminNotificationCard from '@/components/admin-notification/AdminNotificationCard'
 import AdminNotificationFallBackCard from '@/components/admin-notification/AdminNotificationFallBackCard'
 import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
-import { Add as AddIcon } from '@mui/icons-material'
+import { Add as AddIcon, DeleteSweep as DeleteSweepIcon } from '@mui/icons-material'
 import { Box, Button, CircularProgress, Container, Typography, useTheme } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 
@@ -21,6 +21,7 @@ function AllAdminNotificationPage({ isAdmin = false }) {
   const [loading, setLoading] = useState(true)
   const adminWsRef = useRef(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [deleteAllDialogOpen, setDeleteAllDialogOpen] = useState(false)
   const [notificationToDelete, setNotificationToDelete] = useState(null)
   const notificationToDeleteRef = useRef(null)
 
@@ -167,6 +168,17 @@ function AllAdminNotificationPage({ isAdmin = false }) {
     }
   }, [notificationToDelete, fetchNotifications])
 
+  const handleDeleteAllConfirm = useCallback(async () => {
+    const result = await RestApi.del(`${API_URLS.v0.NOTIFICATIONS}?deleteAll=true`)
+    if (result?.status !== 'success') {
+      throw new Error(result?.message || 'Failed to clear notifications')
+    }
+    const count = result?.result?.deletedCount ?? 0
+    toast.success(`Cleared ${count} notification(s) for all users`)
+    setNotifications([])
+    fetchNotifications(false)
+  }, [fetchNotifications])
+
   // Group by adminNotificationId for seen/total; fallback: one notification = one group (by _id)
   const groups = React.useMemo(() => {
     if (!notifications.length) return []
@@ -307,6 +319,19 @@ function AllAdminNotificationPage({ isAdmin = false }) {
             >
               Create and view admin notifications. New items appear here after you create them.
             </Typography>
+            {isAdmin && (
+              <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
+                <Button
+                  variant='outlined'
+                  color='error'
+                  startIcon={<DeleteSweepIcon />}
+                  onClick={() => setDeleteAllDialogOpen(true)}
+                  sx={{ borderRadius: '12px', px: 3 }}
+                >
+                  Clear all notifications (all users)
+                </Button>
+              </Box>
+            )}
           </Box>
         </Container>
       </Box>
@@ -346,6 +371,13 @@ function AllAdminNotificationPage({ isAdmin = false }) {
         }
         affectedUserCount={notificationToDelete?.total ?? 0}
         onConfirm={handleDeleteConfirm}
+      />
+
+      <ConfirmationDialog
+        open={deleteAllDialogOpen}
+        setOpen={setDeleteAllDialogOpen}
+        type='delete-all-notifications'
+        onConfirm={handleDeleteAllConfirm}
       />
 
       {/* Create button - same pattern as group */}

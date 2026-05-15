@@ -11,7 +11,6 @@ import {
   Stack,
   Typography,
   useTheme,
-  keyframes,
   Alert,
   IconButton,
   Tooltip,
@@ -34,13 +33,9 @@ import {
 import ReactPlayer from 'react-player'
 import { format, formatDistanceToNow } from 'date-fns'
 import ShareGamePopup from '@components/public-games/all-games/ShareGamePopup'
-const blink = keyframes`
-  0% { opacity: 1; }
-  50% { opacity: 0.5; }
-  100% { opacity: 1; }
-`
+import GameLobbyParticipants from '@/components/games/GameLobbyParticipants'
 
-const PlayGameInfoScreen = ({ game, setShouldStartGame }) => {
+const PlayGameInfoScreen = ({ game, setShouldStartGame, setGame }) => {
   const theme = useTheme()
   const [timeRemaining, setTimeRemaining] = useState('')
   const [isVideoReady, setIsVideoReady] = useState(false)
@@ -49,6 +44,11 @@ const PlayGameInfoScreen = ({ game, setShouldStartGame }) => {
   const [sharePopupOpen, setSharePopupOpen] = useState(false)
   const [pinCopied, setPinCopied] = useState(false)
   const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false)
+  const isAdminForward =
+    game?.forwardType === 'admin' || Boolean(game?.forwardingAdmin)
+  const isAdminForwardLobby = isAdminForward && game?.status === 'lobby'
+  const isWaitingForAdmin =
+    isAdminForwardLobby && timeRemaining === 'Waiting for host to start the game...'
 
   const handleCopyPin = async () => {
     try {
@@ -75,9 +75,17 @@ const PlayGameInfoScreen = ({ game, setShouldStartGame }) => {
       const diffInSeconds = Math.floor((startTime - now) / 1000)
 
       if (diffInSeconds <= 0) {
-        setTimeRemaining('Game is starting now!')
-        setCountdownColor('success.main')
-        setShouldStartGame(true)
+        if (isAdminForward) {
+          setTimeRemaining('Waiting for host to start the game...')
+          setCountdownColor('warning.main')
+        } else if (game?.status === 'live') {
+          setTimeRemaining('Game is starting now!')
+          setCountdownColor('success.main')
+          setShouldStartGame(true)
+        } else {
+          setTimeRemaining('Game is starting soon...')
+          setCountdownColor('warning.main')
+        }
         return
       }
 
@@ -101,7 +109,7 @@ const PlayGameInfoScreen = ({ game, setShouldStartGame }) => {
     const interval = setInterval(updateTimer, 1000)
 
     return () => clearInterval(interval)
-  }, [game.startTime, setShouldStartGame])
+  }, [game.startTime, game.forwardType, game.forwardingAdmin, game.status, setShouldStartGame, isAdminForward])
 
   const getStatusChip = () => {
     const statusConfig = {
@@ -130,12 +138,6 @@ const PlayGameInfoScreen = ({ game, setShouldStartGame }) => {
       />
     )
   }
-
-  const pulse = keyframes`
-  0% { transform: scale(1); }
-  50% { transform: scale(1.1); }
-  100% { transform: scale(1); }
-`
 
   return (
     <Box sx={{ height: '100%', width: '100%', display: 'flex', flexDirection: 'column', bgcolor: theme.palette.background.default, pb: 6 }}>
@@ -241,18 +243,16 @@ const PlayGameInfoScreen = ({ game, setShouldStartGame }) => {
         </Container>
       </Box>
 
-      {/* Countdown Banner */}
-      <Container maxWidth='lg' sx={{ mt: 3, overflow: 'hidden' }}>
+      {/* Countdown / waiting banner */}
+      <Container maxWidth='lg' sx={{ mt: 3 }}>
         <Alert
           severity={countdownColor === 'error.main' ? 'error' : countdownColor === 'warning.main' ? 'warning' : 'info'}
           icon={false}
           sx={{
-            mb: 4,
+            mb: isAdminForwardLobby ? 2 : 4,
             p: { xs: 2, md: 2.5 },
             borderRadius: 3,
             alignItems: 'center',
-            animation: `${blink} 1s infinite`,
-            overflow: 'hidden',
             bgcolor: alpha(
               countdownColor === 'error.main'
                 ? theme.palette.error.main
@@ -269,86 +269,70 @@ const PlayGameInfoScreen = ({ game, setShouldStartGame }) => {
                   : theme.palette.info.main,
               0.4
             )}`,
-            '& .MuiAlert-message': {
-              width: '100%',
-              display: 'flex',
-              justifyContent: 'center',
-              overflow: 'hidden'
-            }
+            '& .MuiAlert-message': { width: '100%' }
           }}
         >
-          <Box
-            sx={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              gap: { xs: 1.5, md: 2 },
-              flexWrap: 'wrap',
-              justifyContent: 'center',
-              overflow: 'hidden'
-            }}
-          >
+          {isWaitingForAdmin ? (
+            <Box sx={{ width: '100%', textAlign: 'center', py: 0.5 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
+                <AccessTime fontSize='large' />
+              </Box>
+              <Typography variant='h6' fontWeight={700} sx={{ mb: 0.5 }}>
+                Waiting for admin to start the game
+              </Typography>
+              <Typography variant='body2' color='text.secondary'>
+                The host will begin the session shortly. You will see the first question once the game goes live.
+              </Typography>
+            </Box>
+          ) : (
             <Box
-              component='span'
               sx={{
-                animation: `${pulse} 1s infinite`,
-                display: 'inline-flex',
-                flexShrink: 0
+                width: '100%',
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                alignItems: 'center',
+                gap: { xs: 1.5, md: 2 },
+                justifyContent: 'center'
               }}
             >
-              <AccessTime fontSize='large' />
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <AccessTime fontSize='large' />
+                <Typography fontWeight={600} sx={{ fontSize: { xs: '0.9rem', md: '1rem' } }}>
+                  {isAdminForwardLobby
+                    ? 'Lobby opens — scheduled start in:'
+                    : 'The game will start automatically in:'}
+                </Typography>
+              </Box>
+              <Typography
+                sx={{
+                  px: { xs: 2, md: 2.5 },
+                  py: { xs: 0.75, md: 1 },
+                  bgcolor:
+                    theme.palette.mode === 'dark'
+                      ? alpha(theme.palette.common.white, 0.15)
+                      : alpha(theme.palette.common.white, 0.9),
+                  borderRadius: 2,
+                  fontWeight: 900,
+                  fontSize: { xs: '1rem', md: '1.15rem' },
+                  fontFamily: 'monospace',
+                  letterSpacing: '0.05em'
+                }}
+              >
+                {timeRemaining}
+              </Typography>
             </Box>
-            <Box
-              component='span'
-              sx={{
-                textAlign: 'center',
-                flexShrink: 0,
-                fontWeight: 600,
-                fontSize: { xs: '0.9rem', md: '1rem' },
-                color:
-                  countdownColor === 'error.main'
-                    ? theme.palette.error.dark
-                    : countdownColor === 'warning.main'
-                      ? theme.palette.warning.dark
-                      : theme.palette.info.dark
-              }}
-            >
-              The game will start automatically in:
-            </Box>
-            <Box
-              component='span'
-              sx={{
-                px: { xs: 2, md: 2.5 },
-                py: { xs: 0.75, md: 1 },
-                bgcolor:
-                  theme.palette.mode === 'dark'
-                    ? alpha(theme.palette.common.white, 0.15)
-                    : alpha(theme.palette.common.white, 0.9),
-                borderRadius: 2,
-                width: { xs: '120px', sm: '160px' },
-                minWidth: { xs: '120px', sm: '160px' },
-                textAlign: 'center',
-                fontWeight: 900,
-                fontSize: { xs: '0.95rem', md: '1.1rem' },
-                boxShadow: `0 4px 12px ${alpha(theme.palette.common.black, 0.15)}`,
-                fontFamily: 'monospace',
-                letterSpacing: '0.05em',
-                flexShrink: 0,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                color:
-                  countdownColor === 'error.main'
-                    ? theme.palette.error.dark
-                    : countdownColor === 'warning.main'
-                      ? theme.palette.warning.dark
-                      : theme.palette.info.dark
-              }}
-            >
-              {timeRemaining}
-            </Box>
-          </Box>
+          )}
         </Alert>
+
+        {isAdminForwardLobby && (
+          <Box sx={{ mb: 4 }}>
+            <GameLobbyParticipants
+              registeredUsers={game?.registeredUsers}
+              title='Players in the lobby'
+              subtitle='Registered players waiting for the host to start — view only, like a meeting room.'
+            />
+          </Box>
+        )}
       </Container>
 
       <Box sx={{ flex: 1, overflow: 'auto' }}>

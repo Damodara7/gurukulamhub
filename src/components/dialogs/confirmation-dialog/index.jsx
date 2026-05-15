@@ -192,6 +192,13 @@ const ConfirmationDialog = ({ open, setOpen, type, onConfirm, affectedUserCount,
       error: 'Failed to delete announcement. Please try again.',
       status: 'Announcement Deleted!'
     },
+    'delete-all-notifications': {
+      title: 'Delete ALL notifications for every user?',
+      success: 'All notifications have been cleared from the system.',
+      cancel: 'Bulk deletion cancelled.',
+      error: 'Failed to clear notifications. Please try again.',
+      status: 'Notifications Cleared!'
+    },
     // Add other types as needed
     default: {
       title: 'Are you sure?',
@@ -255,6 +262,12 @@ const ConfirmationDialog = ({ open, setOpen, type, onConfirm, affectedUserCount,
             {type === 'delete-admin-announcement' && affectedUserCount > 0 && (
               <Typography color='text.secondary' sx={{ mt: 2 }}>
                 This will remove the announcement for {affectedUserCount} user{affectedUserCount !== 1 ? 's' : ''}.
+              </Typography>
+            )}
+            {type === 'delete-all-notifications' && (
+              <Typography color='error.main' sx={{ mt: 2, fontWeight: 600 }}>
+                This permanently removes every notification for all users (game alerts, admin messages, reminders,
+                etc.). This cannot be undone.
               </Typography>
             )}
           </Wrapper>
