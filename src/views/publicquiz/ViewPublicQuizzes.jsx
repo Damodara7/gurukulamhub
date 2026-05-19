@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import {
   Box,
   Container,
@@ -18,7 +18,9 @@ import {
   alpha,
   Skeleton,
   Fade,
-  Divider
+  Divider,
+  Pagination,
+  CircularProgress
 } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
@@ -27,52 +29,64 @@ import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { useRouter } from 'next/navigation'
 import imagePlaceholder from '/public/images/misc/image-placeholder.png'
+import { QUIZ_GRID_PAGE_SIZE } from '@/constants/quizListPagination'
+import { normalizeQuizListResult } from '@/utils/quizListApi'
 
 export default function ViewPublicQuizzes() {
   const router = useRouter()
   const theme = useTheme()
   const [publishedQuizzes, setPublishedQuizzes] = useState([])
-  const [filteredQuizzes, setFilteredQuizzes] = useState([])
   const [loading, setLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(0)
+  const [totalCount, setTotalCount] = useState(0)
   const [hoveredCard, setHoveredCard] = useState(null)
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false)
 
   async function handlePlayQuiz(quiz) {
     router.push(`/publicquiz/play/${quiz._id}`)
   }
 
-  async function getPublishedQuizzes() {
+  const getPublishedQuizzes = useCallback(async () => {
     setLoading(true)
-    const result = await RestApi.get(`${API_URLS.v0.USERS_QUIZ}?approvalState=published&privacyFilter=PUBLIC`)
+    const params = new URLSearchParams({
+      approvalState: 'published',
+      privacyFilter: 'PUBLIC',
+      limit: String(QUIZ_GRID_PAGE_SIZE),
+      page: String(page)
+    })
+    const q = debouncedSearch.trim()
+    if (q) params.set('search', q)
+    const result = await RestApi.get(`${API_URLS.v0.USERS_QUIZ}?${params.toString()}`)
     if (result?.status === 'success') {
-      setLoading(false)
-      setPublishedQuizzes(result.result)
-      setFilteredQuizzes(result.result)
+      const { items, totalPages: tp, total } = normalizeQuizListResult(result.result)
+      setPublishedQuizzes(items)
+      setTotalPages(tp)
+      setTotalCount(total)
+      setHasLoadedOnce(true)
     } else {
-      setLoading(false)
       setPublishedQuizzes([])
-      setFilteredQuizzes([])
+      setTotalPages(0)
+      setTotalCount(0)
     }
-  }
+    setLoading(false)
+  }, [page, debouncedSearch])
+
+  useEffect(() => {
+    const trimmed = searchQuery.trim()
+    if (trimmed === debouncedSearch) return
+    const t = setTimeout(() => {
+      setDebouncedSearch(trimmed)
+      setPage(1)
+    }, 400)
+    return () => clearTimeout(t)
+  }, [searchQuery, debouncedSearch])
 
   useEffect(() => {
     getPublishedQuizzes()
-  }, [])
-
-  // Search functionality
-  useEffect(() => {
-    if (searchQuery.trim() === '') {
-      setFilteredQuizzes(publishedQuizzes)
-    } else {
-      const filtered = publishedQuizzes.filter(
-        quiz =>
-          quiz.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          quiz.details?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          quiz.syllabus?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-      setFilteredQuizzes(filtered)
-    }
-  }, [searchQuery, publishedQuizzes])
+  }, [getPublishedQuizzes])
 
   const renderSkeletonCards = () => {
     return Array(9)
@@ -105,6 +119,22 @@ export default function ViewPublicQuizzes() {
         </Grid>
       ))
   }
+
+  const renderCenteredLoader = () => (
+    <Grid item xs={12}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: { xs: 360, sm: 420, md: 480 },
+          py: 8
+        }}
+      >
+        <CircularProgress size={48} thickness={4} />
+      </Box>
+    </Grid>
+  )
 
   return (
     <Box 
@@ -230,7 +260,8 @@ export default function ViewPublicQuizzes() {
                       fontSize: '0.875rem'
                     }}
                   >
-                    {filteredQuizzes.length} result{filteredQuizzes.length !== 1 ? 's' : ''}
+                    {totalCount} result{totalCount !== 1 ? 's' : ''}
+                    {totalPages > 1 ? ` · page ${page} of ${totalPages}` : ''}
                   </Typography>
                 </Fade>
               )}
@@ -242,10 +273,12 @@ export default function ViewPublicQuizzes() {
       {/* Quiz Cards */}
       <Box width="100%" sx={{ py: { xs: 4, sm: 5, md: 8 }, px: { xs: 2, sm: 3, md: 4 }, flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
         <Grid container spacing={{ xs: 2, sm: 3, md: 4 }}>
-          {loading ? (
+          {loading && !hasLoadedOnce ? (
             renderSkeletonCards()
-          ) : filteredQuizzes.length > 0 ? (
-            filteredQuizzes.map((quiz, index) => (
+          ) : loading ? (
+            renderCenteredLoader()
+          ) : publishedQuizzes.length > 0 ? (
+            publishedQuizzes.map((quiz, index) => (
               <Grid item xs={12} sm={6} md={4} key={quiz._id}>
                 <Fade in timeout={200 + index * 40}>
                   <Card
@@ -593,6 +626,21 @@ export default function ViewPublicQuizzes() {
             </Grid>
           )}
         </Grid>
+
+        {totalPages > 1 && (
+          <Stack alignItems='center' sx={{ pt: 4, pb: 2 }}>
+            <Pagination
+              color='primary'
+              count={totalPages}
+              page={page}
+              disabled={loading}
+              onChange={(_, value) => setPage(value)}
+              showFirstButton
+              showLastButton
+              size='large'
+            />
+          </Stack>
+        )}
       </Box>
     </Box>
   )

@@ -12,7 +12,8 @@ import {
   Card,
   CardContent,
   alpha,
-  CircularProgress
+  CircularProgress,
+  Pagination
 } from '@mui/material'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import UndoIcon from '@mui/icons-material/Undo'
@@ -27,6 +28,8 @@ import DeleteConfirmationDialog from '@/components/dialogs/DeleteConfirmationDia
 // utils
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
+import { QUIZ_GRID_PAGE_SIZE, ADMIN_MY_QUIZZES_GRID_PAGE_SIZE } from '@/constants/quizListPagination'
+import { normalizeQuizListResult } from '@/utils/quizListApi'
 
 import './QuizCardList.css'
 import { useSession } from 'next-auth/react'
@@ -37,6 +40,7 @@ import { useRouter } from 'next/navigation'
 export default function PublishedQuizzes({ isAdmin = false }) {
   const router = useRouter()
   const { data: session, status } = useSession()
+  const pageSize = isAdmin ? ADMIN_MY_QUIZZES_GRID_PAGE_SIZE : QUIZ_GRID_PAGE_SIZE
   const [publishedQuizzes, setPublishedQuizzes] = useState([])
   const [movingToDraftQuizId, setMovingToDraftQuizId] = useState(null)
   const [movingToDraftSelectedQuizIds, setMovingToDraftSelectedQuizIds] = useState(null)
@@ -44,11 +48,14 @@ export default function PublishedQuizzes({ isAdmin = false }) {
   const [invalidateQuizzes, setInvalidateQuizzes] = useState(false)
   const [privacyType, setPrivacyType] = useState('PUBLIC')
   const [selectedQuizIds, setSelectedQuizIds] = useState([])
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(0)
 
   const theme = useTheme()
 
   function handlePrivacyTypeChange(privacyType) {
     setPrivacyType(privacyType)
+    setPage(1)
   }
 
   async function handleViewQuiz(quiz) {
@@ -57,21 +64,29 @@ export default function PublishedQuizzes({ isAdmin = false }) {
 
   async function getPublishedQuizzes() {
     setLoading(true)
-    const result = await RestApi.get(
-      `${API_URLS.v0.USERS_QUIZ}?email=${session?.user?.email}&approvalState=published&privacyFilter=${privacyType}`
-    )
+    const params = new URLSearchParams({
+      email: session?.user?.email || '',
+      approvalState: 'published',
+      privacyFilter: privacyType,
+      limit: String(pageSize),
+      page: String(page)
+    })
+    const result = await RestApi.get(`${API_URLS.v0.USERS_QUIZ}?${params.toString()}`)
     if (result?.status === 'success') {
+      const { items, totalPages: tp } = normalizeQuizListResult(result.result)
       setLoading(false)
-      setPublishedQuizzes(result.result)
+      setPublishedQuizzes(items)
+      setTotalPages(tp)
     } else {
       setLoading(false)
       setPublishedQuizzes([])
+      setTotalPages(0)
     }
   }
 
   useEffect(() => {
     getPublishedQuizzes()
-  }, [privacyType, invalidateQuizzes])
+  }, [privacyType, invalidateQuizzes, page])
 
   function handleStartMoveToDraft(quiz, e) {
     e.stopPropagation()
@@ -86,6 +101,7 @@ export default function PublishedQuizzes({ isAdmin = false }) {
       })
       if (response.status === 'success') {
         setInvalidateQuizzes(prev => !prev)
+        setPage(1)
       }
     } catch (error) {
       // Handle error
@@ -129,6 +145,7 @@ export default function PublishedQuizzes({ isAdmin = false }) {
 
       if (response.status === 'success') {
         setInvalidateQuizzes(prev => !prev)
+        setPage(1)
       }
     } catch (error) {
       // Handle error
@@ -180,15 +197,11 @@ export default function PublishedQuizzes({ isAdmin = false }) {
 
       {loading ? (
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
-          <Stack spacing={2} alignItems='center'>
-            <CircularProgress size={48} />
-            <Typography variant='body1' color='text.secondary' fontWeight={500}>
-              Loading quizzes...
-            </Typography>
-          </Stack>
+          <CircularProgress size={48} thickness={4} />
         </Box>
       ) : publishedQuizzes.length > 0 ? (
-        <Grid container spacing={3}>
+        <>
+          <Grid container spacing={3}>
           {publishedQuizzes.map(item => {
             const thumbnail =
               item.thumbnail?.length > 0
@@ -443,7 +456,21 @@ export default function PublishedQuizzes({ isAdmin = false }) {
               </Grid>
             )
           })}
-        </Grid>
+          </Grid>
+          {totalPages > 1 ? (
+            <Stack alignItems='center' sx={{ pt: 3, pb: 1 }}>
+              <Pagination
+                color='primary'
+                count={totalPages}
+                page={page}
+                disabled={loading}
+                onChange={(_, value) => setPage(value)}
+                showFirstButton
+                showLastButton
+              />
+            </Stack>
+          ) : null}
+        </>
       ) : (
         <Box
           sx={{

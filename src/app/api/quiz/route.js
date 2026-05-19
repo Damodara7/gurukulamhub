@@ -11,6 +11,9 @@ export async function GET(req, { filter }) {
     const privacyFilter = searchParams.get('privacyFilter')
     const email = searchParams.get('email')
     const approvalState = searchParams.get('approvalState')
+    const limitParam = searchParams.get('limit')
+    const pageParam = searchParams.get('page')
+    const search = searchParams.get('search')
 
     const queryParams = {}
 
@@ -29,10 +32,23 @@ export async function GET(req, { filter }) {
       queryParams.approvalState = approvalState
     }
 
+    const pagination = {}
+    if (limitParam != null && limitParam !== '') {
+      const lim = parseInt(limitParam, 10)
+      if (!Number.isNaN(lim) && lim > 0) {
+        pagination.limit = lim
+        const p = parseInt(pageParam ?? '1', 10)
+        pagination.page = !Number.isNaN(p) && p > 0 ? p : 1
+      }
+    }
+    if (search != null && search !== '') {
+      pagination.search = search
+    }
+
     console.log('email: ' + email)
     let artifact = {}
 
-    artifact = await QuizService.getDocuments(queryParams);
+    artifact = await QuizService.getDocuments(queryParams, pagination)
 
     // if (showFilter && showFilter === 'allEvenDeleted') {
     //   if (email) {

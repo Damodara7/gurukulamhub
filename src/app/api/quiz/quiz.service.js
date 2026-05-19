@@ -785,10 +785,56 @@ export async function getAllEvenDeletedByEmail(email, queryParams = {}) {
   }
 }
 
-export async function getDocuments(queryParams) {
+function escapeRegex(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+/**
+ * List quizzes with optional filters. When pagination.limit is set, returns
+ * { items, total, page, limit, totalPages } instead of a bare array (backward compatible when limit is omitted).
+ */
+export async function getDocuments(queryParams, pagination = {}) {
   await connectMongo()
   try {
-    const allArtifacts = await ArtifactModel.find({ ...queryParams })
+    const filter = { ...queryParams }
+    const rawSearch = pagination?.search
+    if (rawSearch && String(rawSearch).trim()) {
+      const q = escapeRegex(String(rawSearch).trim())
+      const rx = new RegExp(q, 'i')
+      filter.$or = [{ title: rx }, { details: rx }, { syllabus: rx }]
+    }
+
+    const limitRaw = pagination?.limit
+    const hasPagination = limitRaw != null && limitRaw !== '' && Number(limitRaw) > 0
+
+    if (hasPagination) {
+      const lim = Math.min(Math.max(1, Math.floor(Number(limitRaw))), 100)
+      const pageNum = Math.max(1, Math.floor(Number(pagination?.page) || 1))
+      const skip = (pageNum - 1) * lim
+
+      const [items, total] = await Promise.all([
+        ArtifactModel.find(filter).sort({ _id: -1 }).skip(skip).limit(lim).lean(),
+        ArtifactModel.countDocuments(filter)
+      ])
+      const totalPages = total === 0 ? 0 : Math.ceil(total / lim)
+      const message =
+        total === 0
+          ? `No ${Artifact} Exists`
+          : `${Artifact}s (${items.length} of ${total} retrieved, page ${pageNum} of ${totalPages || 1})`
+      return {
+        status: 'success',
+        result: {
+          items,
+          total,
+          page: pageNum,
+          limit: lim,
+          totalPages
+        },
+        message
+      }
+    }
+
+    const allArtifacts = await ArtifactModel.find(filter).sort({ _id: -1 })
     if (allArtifacts.length === 0) {
       console.log(`No ${Artifact} found.`)
       const finalResult = { status: 'success', result: [], message: `No ${Artifact} Exists` }

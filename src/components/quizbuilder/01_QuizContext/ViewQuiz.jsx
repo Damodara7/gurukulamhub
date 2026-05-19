@@ -1,7 +1,7 @@
 'use client'
 // Import Swiper React components
 import { Swiper, SwiperSlide } from 'swiper/react'
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 
 // Import Swiper styles
 import 'swiper/css'
@@ -30,15 +30,11 @@ import {
 import { alpha } from '@mui/material/styles'
 import useMediaQuery from '@mui/material/useMediaQuery'
 
-import * as RestApi from '@/utils/restApiUtil'
-import { API_URLS as ApiUrls } from '@/configs/apiConfig'
-import { toast } from 'react-toastify'
 import QuizCardList from './QuizCardList'
 import PendingQuizzesForApproval from './PendingQuizzesForApproval'
 import ApprovedQuizzes from './ApprovedQuizzes'
 import RejectedQuizzes from './RejectedQuizzes'
 import PublishedQuizzes from './PublishedQuizzes'
-import { useSession } from 'next-auth/react'
 import TabContext from '@mui/lab/TabContext'
 import CustomTabList from '@/@core/components/mui/TabList'
 
@@ -55,82 +51,16 @@ import TabPanel from '@mui/lab/TabPanel'
 const ViewQuiz = ({ data, theme: themeFromProps, onSelectQuiz, isAdmin = false }) => {
   const theme = useTheme()
   const isSmDown = useMediaQuery(theme.breakpoints.down('sm'))
-  const { data: session, status } = useSession()
-  const [privacyType, setPrivacyType] = useState('PUBLIC')
-  const [invalidateQuizzes, setInvalidateQuizzes] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [myQuizzes, setMyQuizzes] = useState([])
   const [activeTab, setActiveTab] = useState('drafts')
 
-  function handleChangePrivacyType(newPrivacyType) {
-    setPrivacyType(newPrivacyType)
-  }
-
   const tabPanelObject = {
-    drafts: (
-      <QuizCardList
-        setInvalidateQuizzes={setInvalidateQuizzes}
-        onChangePrivacyType={handleChangePrivacyType}
-        onSelectQuiz={onSelectQuiz}
-        itemData={myQuizzes}
-        isAdmin={isAdmin}
-      />
-    ),
-    saved: (
-      <SavedQuizzes
-        setInvalidateQuizzes={setInvalidateQuizzes}
-        onChangePrivacyType={handleChangePrivacyType}
-        onSelectQuiz={onSelectQuiz}
-        itemData={myQuizzes}
-        isAdmin={isAdmin}
-      />
-    ),
-    pending: (
-      <PendingQuizzesForApproval
-        setInvalidateQuizzes={setInvalidateQuizzes}
-        onSelectQuiz={onSelectQuiz}
-        itemData={myQuizzes}
-      />
-    ),
-    approved: (
-      <ApprovedQuizzes setInvalidateQuizzes={setInvalidateQuizzes} onSelectQuiz={onSelectQuiz} itemData={myQuizzes} />
-    ),
-    rejected: (
-      <RejectedQuizzes setInvalidateQuizzes={setInvalidateQuizzes} onSelectQuiz={onSelectQuiz} itemData={myQuizzes} />
-    ),
-    published: (
-      <PublishedQuizzes
-        setInvalidateQuizzes={setInvalidateQuizzes}
-        onChangePrivacyType={handleChangePrivacyType}
-        onSelectQuiz={onSelectQuiz}
-        itemData={myQuizzes}
-        isAdmin={isAdmin}
-      />
-    )
+    drafts: <QuizCardList isAdmin={isAdmin} />,
+    saved: <SavedQuizzes isAdmin={isAdmin} />,
+    pending: <PendingQuizzesForApproval />,
+    approved: <ApprovedQuizzes isAdmin={isAdmin} />,
+    rejected: <RejectedQuizzes />,
+    published: <PublishedQuizzes isAdmin={isAdmin} />
   }
-
-  async function getQuizData() {
-    // toast.success('Fetching My Quiz Data now...')
-    setLoading(true)
-    const result = await RestApi.get(
-      `${ApiUrls.v0.USERS_QUIZ}?email=${session?.user?.email}&privacyFilter=${privacyType}`
-    )
-    if (result?.status === 'success') {
-      console.log('Quizzes Fetched result', result)
-      // toast.success('Quizzes Fetched Successfully .')
-      setLoading(false)
-      setMyQuizzes(result.result)
-    } else {
-      // toast.error('Error:' + result?.result?.message)
-      console.log('Error Fetching quizes:', result)
-      setLoading(false)
-      setMyQuizzes([])
-    }
-  }
-
-  useEffect(() => {
-    getQuizData()
-  }, [privacyType, invalidateQuizzes])
 
   const handleChangeTab = (event, newValue) => {
     setActiveTab(newValue)

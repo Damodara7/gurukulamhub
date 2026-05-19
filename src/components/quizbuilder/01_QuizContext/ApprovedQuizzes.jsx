@@ -12,7 +12,8 @@ import {
   Card,
   CardContent,
   alpha,
-  CircularProgress
+  CircularProgress,
+  Pagination
 } from '@mui/material'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import UndoIcon from '@mui/icons-material/Undo'
@@ -24,6 +25,8 @@ import useMediaQuery from '@mui/material/useMediaQuery'
 // utils
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
+import { QUIZ_GRID_PAGE_SIZE, ADMIN_MY_QUIZZES_GRID_PAGE_SIZE } from '@/constants/quizListPagination'
+import { normalizeQuizListResult } from '@/utils/quizListApi'
 
 import './QuizCardList.css'
 import { useSession } from 'next-auth/react'
@@ -35,12 +38,15 @@ import DeleteConfirmationDialog from '@/components/dialogs/DeleteConfirmationDia
 export default function ApprovedQuizzes({ isAdmin = false }) {
   const router = useRouter()
   const { data: session, status } = useSession()
+  const pageSize = isAdmin ? ADMIN_MY_QUIZZES_GRID_PAGE_SIZE : QUIZ_GRID_PAGE_SIZE
   const [approvedQuizzes, setApprovedQuizzes] = useState([])
   const [loading, setLoading] = useState(false)
   const [invalidateQuizzes, setInvalidateQuizzes] = useState(false)
   const [selectedQuizIds, setSelectedQuizIds] = useState([])
   const [movingToDraftQuizId, setMovingToDraftQuizId] = useState(null)
   const [movingToDraftSelectedQuizIds, setMovingToDraftSelectedQuizIds] = useState(null)
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(0)
 
   const theme = useTheme()
 
@@ -50,13 +56,22 @@ export default function ApprovedQuizzes({ isAdmin = false }) {
 
   async function getApprovedQuizzes() {
     setLoading(true)
-    const result = await RestApi.get(`${API_URLS.v0.USERS_QUIZ}?email=${session?.user?.email}&approvalState=approved`)
+    const params = new URLSearchParams({
+      email: session?.user?.email || '',
+      approvalState: 'approved',
+      limit: String(pageSize),
+      page: String(page)
+    })
+    const result = await RestApi.get(`${API_URLS.v0.USERS_QUIZ}?${params.toString()}`)
     if (result?.status === 'success') {
+      const { items, totalPages: tp } = normalizeQuizListResult(result.result)
       setLoading(false)
-      setApprovedQuizzes(result.result)
+      setApprovedQuizzes(items)
+      setTotalPages(tp)
     } else {
       setLoading(false)
       setApprovedQuizzes([])
+      setTotalPages(0)
     }
   }
 
@@ -68,6 +83,7 @@ export default function ApprovedQuizzes({ isAdmin = false }) {
       })
       if (response.status === 'success') {
         setInvalidateQuizzes(prev => !prev)
+        setPage(1)
       }
     } catch (error) {
       // Handle error
@@ -76,7 +92,7 @@ export default function ApprovedQuizzes({ isAdmin = false }) {
 
   useEffect(() => {
     getApprovedQuizzes()
-  }, [invalidateQuizzes])
+  }, [invalidateQuizzes, page])
 
   const handleSelectAllChange = event => {
     if (event.target.checked) {
@@ -106,6 +122,7 @@ export default function ApprovedQuizzes({ isAdmin = false }) {
 
       if (response.status === 'success') {
         setInvalidateQuizzes(prev => !prev)
+        setPage(1)
       }
     } catch (error) {
       // Handle error
@@ -127,6 +144,7 @@ export default function ApprovedQuizzes({ isAdmin = false }) {
       })
       if (response.status === 'success') {
         setInvalidateQuizzes(prev => !prev)
+        setPage(1)
       }
     } catch (error) {
       // Handle error
@@ -152,6 +170,7 @@ export default function ApprovedQuizzes({ isAdmin = false }) {
 
       if (response.status === 'success') {
         setInvalidateQuizzes(prev => !prev)
+        setPage(1)
       }
     } catch (error) {
       // Handle error
@@ -216,15 +235,11 @@ export default function ApprovedQuizzes({ isAdmin = false }) {
 
       {loading ? (
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
-          <Stack spacing={2} alignItems='center'>
-            <CircularProgress size={48} />
-            <Typography variant='body1' color='text.secondary' fontWeight={500}>
-              Loading quizzes...
-            </Typography>
-          </Stack>
+          <CircularProgress size={48} thickness={4} />
         </Box>
       ) : approvedQuizzes.length > 0 ? (
-        <Grid container spacing={3}>
+        <>
+          <Grid container spacing={3}>
           {approvedQuizzes.map(item => {
             const thumbnail =
               item.thumbnail?.length > 0
@@ -496,7 +511,21 @@ export default function ApprovedQuizzes({ isAdmin = false }) {
               </Grid>
             )
           })}
-        </Grid>
+          </Grid>
+          {totalPages > 1 ? (
+            <Stack alignItems='center' sx={{ pt: 3, pb: 1 }}>
+              <Pagination
+                color='primary'
+                count={totalPages}
+                page={page}
+                disabled={loading}
+                onChange={(_, value) => setPage(value)}
+                showFirstButton
+                showLastButton
+              />
+            </Stack>
+          ) : null}
+        </>
       ) : (
         <Box
           sx={{

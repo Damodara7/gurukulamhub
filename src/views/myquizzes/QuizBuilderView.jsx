@@ -13,7 +13,8 @@ import {
   useTheme,
   alpha,
   CircularProgress,
-  Chip
+  Chip,
+  Pagination
 } from '@mui/material'
 import ViewQuizzesPopup from '../../components/quizbuilder/01_QuizContext/ViewQuizzesPopup'
 import ViewQuiz from '@/components/quizbuilder/01_QuizContext/ViewQuiz'
@@ -35,6 +36,8 @@ import QuizIcon from '@mui/icons-material/Quiz'
 
 import TabContext from '@mui/lab/TabContext'
 import * as RestApi from '@/utils/restApiUtil'
+import { QUIZ_GRID_PAGE_SIZE } from '@/constants/quizListPagination'
+import { normalizeQuizListResult } from '@/utils/quizListApi'
 
 const QuizBuilderView = ({ isAdmin = false }) => {
   const router = useRouter()
@@ -42,6 +45,8 @@ const QuizBuilderView = ({ isAdmin = false }) => {
   const [loading, setLoading] = useState(false)
   const [myQuizzes, setMyQuizzes] = useState([])
   const [activeTab, setActiveTab] = useState('PUBLIC')
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(0)
   const mdScreenMatches = useMediaQuery('(min-width:768px)')
   const theme = useTheme()
 
@@ -56,28 +61,35 @@ const QuizBuilderView = ({ isAdmin = false }) => {
   async function getQuizData() {
     // toast.success('Fetching My Quiz Data now...')
     setLoading(true)
-    const result = await RestApi.get(
-      `${API_URLS.v0.USERS_QUIZ}?email=${session?.user?.email}&approvalState=draft&privacyFilter=${activeTab}`
-    )
+    const params = new URLSearchParams({
+      email: session?.user?.email || '',
+      approvalState: 'draft',
+      privacyFilter: activeTab,
+      limit: String(QUIZ_GRID_PAGE_SIZE),
+      page: String(page)
+    })
+    const result = await RestApi.get(`${API_URLS.v0.USERS_QUIZ}?${params.toString()}`)
     if (result?.status === 'success') {
+      const { items, totalPages: tp } = normalizeQuizListResult(result.result)
       console.log('Quizzes Fetched result', result)
-      // toast.success('Quizzes Fetched Successfully .')
       setLoading(false)
-      setMyQuizzes(result.result)
+      setMyQuizzes(items)
+      setTotalPages(tp)
     } else {
-      // toast.error('Error:' + result?.result?.message)
       console.log('Error Fetching quizes:', result)
       setLoading(false)
       setMyQuizzes([])
+      setTotalPages(0)
     }
   }
 
   useEffect(() => {
     getQuizData()
-  }, [activeTab])
+  }, [activeTab, page])
 
   const handleChangeTab = (event, newValue) => {
     setActiveTab(newValue)
+    setPage(1)
   }
 
   return (
@@ -183,17 +195,14 @@ const QuizBuilderView = ({ isAdmin = false }) => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  flex: 1
+                  flex: 1,
+                  minHeight: '400px'
                 }}
               >
-                <Stack spacing={2} alignItems='center'>
-                  <CircularProgress size={48} />
-                  <Typography variant='body1' color='text.secondary' fontWeight={500}>
-                    Loading quizzes...
-                  </Typography>
-                </Stack>
+                <CircularProgress size={48} thickness={4} />
               </Box>
             ) : myQuizzes.length > 0 ? (
+              <>
               <Grid container spacing={3}>
                 {myQuizzes.map(item => {
                   const thumbnail =
@@ -428,6 +437,20 @@ const QuizBuilderView = ({ isAdmin = false }) => {
                   )
                 })}
               </Grid>
+              {totalPages > 1 ? (
+                <Stack alignItems='center' sx={{ pt: 3, pb: 2 }}>
+                  <Pagination
+                    color='primary'
+                    count={totalPages}
+                    page={page}
+                    disabled={loading}
+                    onChange={(_, value) => setPage(value)}
+                    showFirstButton
+                    showLastButton
+                  />
+                </Stack>
+              ) : null}
+              </>
             ) : (
               <Box
                 sx={{

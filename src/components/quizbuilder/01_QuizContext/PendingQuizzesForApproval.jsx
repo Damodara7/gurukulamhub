@@ -12,7 +12,8 @@ import {
   Card,
   CardContent,
   alpha,
-  CircularProgress
+  CircularProgress,
+  Pagination
 } from '@mui/material'
 import useMediaQuery from '@mui/material/useMediaQuery'
 
@@ -21,6 +22,8 @@ import PrivacySelectFilter from './PrivacySelectFilter'
 import './QuizCardList.css'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
+import { QUIZ_GRID_PAGE_SIZE } from '@/constants/quizListPagination'
+import { normalizeQuizListResult } from '@/utils/quizListApi'
 import { toast } from 'react-toastify'
 import DeleteConfirmationDialog from '@/components/dialogs/DeleteConfirmationDialog'
 import { useSession } from 'next-auth/react'
@@ -42,6 +45,8 @@ export default function PendingForApproval({}) {
   const [invalidateQuizzes, setInvalidateQuizzes] = useState(false)
   const [selectedQuizIds, setSelectedQuizIds] = useState([])
   const [movingToDraftSelectedQuizIds, setMovingToDraftSelectedQuizIds] = useState(null)
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(0)
 
   const theme = useTheme()
 
@@ -51,19 +56,28 @@ export default function PendingForApproval({}) {
 
   async function getPendingQuizzes() {
     setLoading(true)
-    const result = await RestApi.get(`${API_URLS.v0.USERS_QUIZ}?email=${session?.user?.email}&approvalState=pending`)
+    const params = new URLSearchParams({
+      email: session?.user?.email || '',
+      approvalState: 'pending',
+      limit: String(QUIZ_GRID_PAGE_SIZE),
+      page: String(page)
+    })
+    const result = await RestApi.get(`${API_URLS.v0.USERS_QUIZ}?${params.toString()}`)
     if (result?.status === 'success') {
+      const { items, totalPages: tp } = normalizeQuizListResult(result.result)
       setLoading(false)
-      setPendingQuizzes(result.result)
+      setPendingQuizzes(items)
+      setTotalPages(tp)
     } else {
       setLoading(false)
       setPendingQuizzes([])
+      setTotalPages(0)
     }
   }
 
   useEffect(() => {
     getPendingQuizzes()
-  }, [invalidateQuizzes])
+  }, [invalidateQuizzes, page])
 
   function handleStartMoveToDraft(quiz, e) {
     e.stopPropagation()
@@ -78,6 +92,7 @@ export default function PendingForApproval({}) {
       })
       if (response.status === 'success') {
         setInvalidateQuizzes(prev => !prev)
+        setPage(1)
       }
     } catch (error) {
       // Handle error
@@ -121,6 +136,7 @@ export default function PendingForApproval({}) {
 
       if (response.status === 'success') {
         setInvalidateQuizzes(prev => !prev)
+        setPage(1)
       }
     } catch (error) {
       // Handle error
@@ -172,15 +188,11 @@ export default function PendingForApproval({}) {
 
       {loading ? (
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
-          <Stack spacing={2} alignItems='center'>
-            <CircularProgress size={48} />
-            <Typography variant='body1' color='text.secondary' fontWeight={500}>
-              Loading quizzes...
-            </Typography>
-          </Stack>
+          <CircularProgress size={48} thickness={4} />
         </Box>
       ) : pendingQuizzes.length > 0 ? (
-        <Grid container spacing={3}>
+        <>
+          <Grid container spacing={3}>
           {pendingQuizzes.map(item => {
             const thumbnail =
               item.thumbnail?.length > 0
@@ -435,7 +447,21 @@ export default function PendingForApproval({}) {
               </Grid>
             )
           })}
-        </Grid>
+          </Grid>
+          {totalPages > 1 ? (
+            <Stack alignItems='center' sx={{ pt: 3, pb: 1 }}>
+              <Pagination
+                color='primary'
+                count={totalPages}
+                page={page}
+                disabled={loading}
+                onChange={(_, value) => setPage(value)}
+                showFirstButton
+                showLastButton
+              />
+            </Stack>
+          ) : null}
+        </>
       ) : (
         <Box
           sx={{

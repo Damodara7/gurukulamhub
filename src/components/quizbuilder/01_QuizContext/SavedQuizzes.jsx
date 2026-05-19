@@ -12,7 +12,8 @@ import {
   Card,
   CardContent,
   alpha,
-  CircularProgress
+  CircularProgress,
+  Pagination
 } from '@mui/material'
 import useMediaQuery from '@mui/material/useMediaQuery'
 
@@ -22,6 +23,8 @@ import PrivacySelectFilter from './PrivacySelectFilter'
 import './QuizCardList.css'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
+import { QUIZ_GRID_PAGE_SIZE, ADMIN_MY_QUIZZES_GRID_PAGE_SIZE } from '@/constants/quizListPagination'
+import { normalizeQuizListResult } from '@/utils/quizListApi'
 import { toast } from 'react-toastify'
 import DeleteConfirmationDialog from '@/components/dialogs/DeleteConfirmationDialog'
 import { useSession } from 'next-auth/react'
@@ -42,6 +45,7 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 export default function SavedQuizzes({ isAdmin = false }) {
   const router = useRouter()
   const { data: session, status } = useSession()
+  const pageSize = isAdmin ? ADMIN_MY_QUIZZES_GRID_PAGE_SIZE : QUIZ_GRID_PAGE_SIZE
   const [myQuizzes, setMyQuizzes] = useState([])
   const [privacyType, setPrivacyType] = useState('PUBLIC')
   const [loading, setLoading] = useState(false)
@@ -50,6 +54,8 @@ export default function SavedQuizzes({ isAdmin = false }) {
   const [deletingQuizId, setDeletingQuizId] = useState(null)
   const [deletingSelectedQuizIds, setDeletingSelectedQuizIds] = useState(null)
   const [sendingSelectedQuizIdsForApproval, setSendingSelectedQuizIdsForApproval] = useState(null)
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(0)
 
   const theme = useTheme()
 
@@ -59,26 +65,35 @@ export default function SavedQuizzes({ isAdmin = false }) {
 
   async function getQuizData() {
     setLoading(true)
-    const result = await RestApi.get(
-      `${API_URLS.v0.USERS_QUIZ}?email=${session?.user?.email}&approvalState=saved&privacyFilter=${privacyType}`
-    )
+    const params = new URLSearchParams({
+      email: session?.user?.email || '',
+      approvalState: 'saved',
+      privacyFilter: privacyType,
+      limit: String(pageSize),
+      page: String(page)
+    })
+    const result = await RestApi.get(`${API_URLS.v0.USERS_QUIZ}?${params.toString()}`)
     if (result?.status === 'success') {
       console.log('Quizzes Fetched result', result)
+      const { items, totalPages: tp } = normalizeQuizListResult(result.result)
       setLoading(false)
-      setMyQuizzes(result.result)
+      setMyQuizzes(items)
+      setTotalPages(tp)
     } else {
       console.log('Error Fetching quizes:', result)
       setLoading(false)
       setMyQuizzes([])
+      setTotalPages(0)
     }
   }
 
   useEffect(() => {
     getQuizData()
-  }, [privacyType, invalidateQuizzes])
+  }, [privacyType, invalidateQuizzes, page])
 
   function handlePrivacyTypeChange(newPrivacyType) {
     setPrivacyType(newPrivacyType)
+    setPage(1)
   }
 
   function handleStartDeleteQuiz(quiz, e) {
@@ -94,6 +109,7 @@ export default function SavedQuizzes({ isAdmin = false }) {
       if (response.status === 'success') {
         console.log('Quiz deleted successfully')
         setInvalidateQuizzes(prev => !prev)
+        setPage(1)
       } else {
         console.log('Error:', response.message)
       }
@@ -116,6 +132,7 @@ export default function SavedQuizzes({ isAdmin = false }) {
       })
       if (response.status === 'success') {
         setInvalidateQuizzes(prev => !prev)
+        setPage(1)
       }
     } catch (error) {
       // Handle error
@@ -148,6 +165,7 @@ export default function SavedQuizzes({ isAdmin = false }) {
       })
       if (response.status === 'success') {
         setInvalidateQuizzes(prev => !prev)
+        setPage(1)
       }
     } catch (error) {
       // Handle error
@@ -172,6 +190,7 @@ export default function SavedQuizzes({ isAdmin = false }) {
 
       if (response.status === 'success') {
         setInvalidateQuizzes(prev => !prev)
+        setPage(1)
       }
     } catch (error) {
       // Handle error
@@ -198,6 +217,7 @@ export default function SavedQuizzes({ isAdmin = false }) {
       if (response.status === 'success') {
         console.log('Quizzes deleted successfully')
         setInvalidateQuizzes(prev => !prev)
+        setPage(1)
         setSelectedQuizIds([])
       } else {
         console.log('Error:', response.message)
@@ -221,6 +241,7 @@ export default function SavedQuizzes({ isAdmin = false }) {
       })
       if (response.status === 'success') {
         setInvalidateQuizzes(prev => !prev)
+        setPage(1)
       }
     } catch (error) {
       // Handle error
@@ -237,6 +258,7 @@ export default function SavedQuizzes({ isAdmin = false }) {
 
       if (response.status === 'success') {
         setInvalidateQuizzes(prev => !prev)
+        setPage(1)
       }
     } catch (error) {
       // Handle error
@@ -320,15 +342,11 @@ export default function SavedQuizzes({ isAdmin = false }) {
 
       {loading ? (
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
-          <Stack spacing={2} alignItems='center'>
-            <CircularProgress size={48} />
-            <Typography variant='body1' color='text.secondary' fontWeight={500}>
-              Loading quizzes...
-            </Typography>
-          </Stack>
+          <CircularProgress size={48} thickness={4} />
         </Box>
       ) : myQuizzes.length > 0 ? (
-        <Grid container spacing={3}>
+        <>
+          <Grid container spacing={3}>
           {myQuizzes.map(item => {
             const thumbnail =
               item.thumbnail?.length > 0
@@ -639,7 +657,21 @@ export default function SavedQuizzes({ isAdmin = false }) {
               </Grid>
             )
           })}
-        </Grid>
+          </Grid>
+          {totalPages > 1 ? (
+            <Stack alignItems='center' sx={{ pt: 3, pb: 1 }}>
+              <Pagination
+                color='primary'
+                count={totalPages}
+                page={page}
+                disabled={loading}
+                onChange={(_, value) => setPage(value)}
+                showFirstButton
+                showLastButton
+              />
+            </Stack>
+          ) : null}
+        </>
       ) : (
         <Box
           sx={{

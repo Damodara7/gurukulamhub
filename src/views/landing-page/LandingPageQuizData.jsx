@@ -22,6 +22,8 @@ import { useRouter } from 'next/navigation'
 import LanguageIcon from '@mui/icons-material/Language'
 import LibraryBooksIcon from '@mui/icons-material/LibraryBooks'
 import { useSession } from 'next-auth/react'
+import { QUIZ_LANDING_PREVIEW_LIMIT } from '@/constants/quizListPagination'
+import { normalizeQuizListResult } from '@/utils/quizListApi'
 
 function LandingPageQuizData({ isAuthenticated = false }) {
   const [quizData, setQuizData] = useState([])
@@ -38,10 +40,16 @@ function LandingPageQuizData({ isAuthenticated = false }) {
   useEffect(() => {
     const fetchQuizData = async () => {
       try {
-        const res = await RestApi.get(`${API_URLS.v0.USERS_QUIZ}`)
+        const params = new URLSearchParams({
+          approvalState: 'published',
+          privacyFilter: 'PUBLIC',
+          limit: String(QUIZ_LANDING_PREVIEW_LIMIT),
+          page: '1'
+        })
+        const res = await RestApi.get(`${API_URLS.v0.USERS_QUIZ}?${params.toString()}`)
         if (res.status === 'success') {
-          // console.log('quiz data', res.result)
-          setQuizData(res?.result || [])
+          const { items } = normalizeQuizListResult(res?.result)
+          setQuizData(items || [])
         } else {
           setError(res.message)
         }
@@ -283,7 +291,7 @@ function LandingPageQuizData({ isAuthenticated = false }) {
               alignItems: 'center'
             }}
           >
-            {quizData.slice(0, 7).map(quiz => (
+            {quizData.map(quiz => (
               <Box
                 key={quiz._id}
                 sx={{

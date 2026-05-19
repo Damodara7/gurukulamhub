@@ -20,7 +20,8 @@ import {
   Button,
   useTheme,
   useMediaQuery,
-  alpha
+  alpha,
+  CircularProgress
 } from '@mui/material'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
@@ -125,11 +126,13 @@ const ActionsMenu = ({ anchorEl, handleClose, handleAction, isMobile = false }) 
   </Menu>
 )
 
-const AdminPublishedQuizzesTable = ({ data, refreshData }) => {
+const AdminPublishedQuizzesTable = ({ data, refreshData, serverPagination }) => {
   const { data: session } = useSession()
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+  const isServer = Boolean(serverPagination)
   const [globalFilter, setGlobalFilter] = useState('')
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 })
   const [rowSelection, setRowSelection] = useState({})
 
   const [anchorEl, setAnchorEl] = useState(null)
@@ -289,29 +292,53 @@ const AdminPublishedQuizzesTable = ({ data, refreshData }) => {
     },
     state: {
       rowSelection,
-      globalFilter
+      globalFilter: isServer ? serverPagination.search : globalFilter,
+      pagination: isServer
+        ? { pageIndex: serverPagination.page, pageSize: serverPagination.rowsPerPage }
+        : pagination
     },
-    initialState: {
-      pagination: {
-        pageSize: 10
-      }
-    },
+    onPaginationChange: isServer
+      ? updater => {
+          const prev = { pageIndex: serverPagination.page, pageSize: serverPagination.rowsPerPage }
+          const next = typeof updater === 'function' ? updater(prev) : updater
+          if (next.pageSize !== prev.pageSize) serverPagination.onRowsPerPageChange(next.pageSize)
+          if (next.pageIndex !== prev.pageIndex) serverPagination.onPageChange(next.pageIndex)
+        }
+      : setPagination,
+    onGlobalFilterChange: isServer
+      ? updater => {
+          const prev = serverPagination.search
+          const next = typeof updater === 'function' ? updater(prev) : updater
+          serverPagination.onSearchChange(String(next ?? ''))
+        }
+      : setGlobalFilter,
+    manualPagination: isServer,
+    pageCount: isServer
+      ? Math.max(1, Math.ceil(serverPagination.total / serverPagination.rowsPerPage))
+      : undefined,
+    initialState: isServer
+      ? undefined
+      : {
+          pagination: {
+            pageSize: 10
+          }
+        },
     enableRowSelection: true,
 
     // enableRowSelection: row => row.original.age > 18, // or enable row selection conditionally per row
-    globalFilterFn: fuzzyFilter,
+    globalFilterFn: isServer ? () => true : fuzzyFilter,
     onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
-    onGlobalFilterChange: setGlobalFilter,
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
+    ...(isServer ? {} : { getPaginationRowModel: getPaginationRowModel() }),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
     getFacetedMinMaxValues: getFacetedMinMaxValues()
   })
 
   const filteredRows = table.getFilteredRowModel().rows
+  const displayRows = isServer ? filteredRows : table.getRowModel().rows
 
   return (
     <Card
@@ -336,8 +363,11 @@ const AdminPublishedQuizzesTable = ({ data, refreshData }) => {
         }}
       >
         <DebouncedInput
-          value={globalFilter ?? ''}
-          onChange={value => setGlobalFilter(String(value))}
+          value={isServer ? serverPagination.search : globalFilter ?? ''}
+          onChange={value => {
+            if (isServer) serverPagination.onSearchChange(String(value))
+            else setGlobalFilter(String(value))
+          }}
           placeholder='Search quizzes...'
           InputProps={{
             startAdornment: (
@@ -384,7 +414,19 @@ const AdminPublishedQuizzesTable = ({ data, refreshData }) => {
         />
       </CardContent>
       <CardContent sx={{ px: { xs: 1.5, sm: 3 }, pb: { xs: 2, sm: 3 }, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
-        {filteredRows.length === 0 ? (
+        {isServer && serverPagination.isLoading ? (
+          <Box
+            sx={{
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: { xs: 320, sm: 400 }
+            }}
+          >
+            <CircularProgress size={48} thickness={4} />
+          </Box>
+        ) : displayRows.length === 0 ? (
           <Box
             sx={{
               textAlign: 'center',
@@ -424,7 +466,7 @@ const AdminPublishedQuizzesTable = ({ data, refreshData }) => {
             }}
           >
             <Stack spacing={2}>
-              {filteredRows.map(row => {
+              {displayRows.map(row => {
                 const languages = [
                   row.original.language?.name,
                   ...(row.original.secondaryLanguages || []).map(lang => lang.name)
@@ -607,7 +649,7 @@ const AdminPublishedQuizzesTable = ({ data, refreshData }) => {
                   ))}
                 </thead>
                 <tbody>
-                  {filteredRows.length === 0 ? (
+                  {displayRows.length === 0 ? (
                     <tr>
                       <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
                         <Box
@@ -630,12 +672,7 @@ const AdminPublishedQuizzesTable = ({ data, refreshData }) => {
                       </td>
                     </tr>
                   ) : (
-                    filteredRows
-                      .slice(
-                        table.getState().pagination.pageIndex * table.getState().pagination.pageSize,
-                        (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize
-                      )
-                      .map((row, index) => (
+                    displayRows.map((row, index) => (
                         <tr
                           key={row.id}
                           className={classnames({ selected: row.getIsSelected() })}
@@ -695,16 +732,24 @@ const AdminPublishedQuizzesTable = ({ data, refreshData }) => {
             <TablePagination
               rowsPerPageOptions={[10, 25, 50]}
               component='div'
-              count={filteredRows.length}
-              rowsPerPage={table.getState().pagination.pageSize}
-              page={table.getState().pagination.pageIndex}
+              disabled={isServer && serverPagination.isLoading}
+              count={isServer ? serverPagination.total : filteredRows.length}
+              rowsPerPage={
+                isServer ? serverPagination.rowsPerPage : table.getState().pagination.pageSize
+              }
+              page={isServer ? serverPagination.page : table.getState().pagination.pageIndex}
               SelectProps={{
                 inputProps: { 'aria-label': 'rows per page' }
               }}
-              onPageChange={(_, page) => {
-                table.setPageIndex(page)
+              onPageChange={(_, p) => {
+                if (isServer) serverPagination.onPageChange(p)
+                else table.setPageIndex(p)
               }}
-              onRowsPerPageChange={e => table.setPageSize(Number(e.target.value))}
+              onRowsPerPageChange={e => {
+                const n = Number(e.target.value)
+                if (isServer) serverPagination.onRowsPerPageChange(n)
+                else table.setPageSize(n)
+              }}
               sx={{
                 '& .MuiTablePagination-toolbar': {
                   px: { xs: 1, sm: 2 },
