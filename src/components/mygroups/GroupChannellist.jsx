@@ -41,6 +41,8 @@ import { API_URLS } from '@/configs/apiConfig'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'react-toastify'
+import ManagementPaginatedCards from '@/components/management/ManagementPaginatedCards'
+import { MY_GROUPS_LIST_PAGE_SIZE } from '@/constants/managementCardPagination'
 
 const GroupChannellist = ({ groups = [], channels = [], viewMode: externalViewMode = 'groups', searchQuery: externalSearchQuery = '' }) => {
   const theme = useTheme()
@@ -1003,9 +1005,7 @@ const GroupChannellist = ({ groups = [], channels = [], viewMode: externalViewMo
   const currentData = viewMode === 'groups' ? filteredGroups : filteredChannels
 
   return (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* Content with scrollable area */}
-      <Box sx={{ flex: 1, overflow: 'hidden' }}>
+    <Box sx={{ width: '100%' }}>
         {currentData.length === 0 ? (
           <Box
             sx={{
@@ -1016,7 +1016,7 @@ const GroupChannellist = ({ groups = [], channels = [], viewMode: externalViewMo
               flexDirection: 'column',
               alignItems: 'center',
               gap: { xs: 2.5, sm: 2.75, md: 3 },
-              height: '100%',
+              minHeight: { xs: 280, sm: 320 },
               justifyContent: 'center'
             }}
           >
@@ -1087,38 +1087,26 @@ const GroupChannellist = ({ groups = [], channels = [], viewMode: externalViewMo
         ) : (
           <Box
             sx={{
-              height: '100%',
-              overflow: 'auto',
               px: { xs: 1.5, sm: 2 },
               py: { xs: 2, sm: 2.5 },
-              '&::-webkit-scrollbar': {
-                width: '8px'
-              },
-              '&::-webkit-scrollbar-track': {
-                background: isDarkMode
-                  ? alpha(theme.palette.background.default, 0.5)
-                  : '#f1f1f1',
-                borderRadius: '4px'
-              },
-              '&::-webkit-scrollbar-thumb': {
-                background: isDarkMode
-                  ? alpha(theme.palette.divider, 0.5)
-                  : '#c1c1c1',
-                borderRadius: '4px',
-                '&:hover': {
-                  background: isDarkMode
-                    ? alpha(theme.palette.divider, 0.7)
-                    : '#a8a8a8'
-                }
-              }
+              pb: { xs: 3, sm: 4 }
             }}
           >
-            {viewMode === 'groups'
-              ? filteredGroups.map(item => renderGroupItem(item))
-              : filteredChannels.map(item => renderChannelItem(item))}
+            <ManagementPaginatedCards
+              key={viewMode}
+              variant='list'
+              pageSize={MY_GROUPS_LIST_PAGE_SIZE}
+              items={currentData}
+              renderContent={paginatedItems => (
+                <List disablePadding sx={{ width: '100%' }}>
+                  {viewMode === 'groups'
+                    ? paginatedItems.map(item => renderGroupItem(item))
+                    : paginatedItems.map(item => renderChannelItem(item))}
+                </List>
+              )}
+            />
           </Box>
         )}
-      </Box>
     </Box>
   )
 }

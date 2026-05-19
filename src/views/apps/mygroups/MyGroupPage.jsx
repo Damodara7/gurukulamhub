@@ -185,9 +185,10 @@ export default function MyGroupsPage() {
     <Box
       component='main'
       sx={{
-        minHeight: '100%',
+        height: '100%',
         display: 'flex',
         flexDirection: 'column',
+        minHeight: 0,
         background: isDarkMode
           ? `
           radial-gradient(circle at 20% 18%, ${alpha(theme.palette.primary.main, 0.15)} 0%, transparent 55%),
@@ -445,15 +446,29 @@ export default function MyGroupsPage() {
         </Container>
       </Box>
 
-      {/* Content Area */}
+      {/* Content Area — scrollable like admin notifications */}
       <Box
         sx={{
           flex: 1,
+          minHeight: 0,
           display: 'flex',
-          justifyContent: 'center',
+          flexDirection: 'column',
+          overflow: 'auto',
           px: { xs: 1.5, sm: 2.5, md: 3, lg: 4 },
           py: { xs: 2.5, sm: 3, md: 3.5, lg: 4 },
-          overflow: 'hidden'
+          pb: { xs: 4, sm: 5 },
+          '&::-webkit-scrollbar': { width: '8px' },
+          '&::-webkit-scrollbar-track': {
+            background: isDarkMode ? alpha(theme.palette.background.default, 0.5) : '#f1f1f1',
+            borderRadius: '4px'
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: isDarkMode ? alpha(theme.palette.divider, 0.5) : '#c1c1c1',
+            borderRadius: '4px',
+            '&:hover': {
+              background: isDarkMode ? alpha(theme.palette.divider, 0.7) : '#a8a8a8'
+            }
+          }
         }}
       >
         <Box
@@ -461,22 +476,15 @@ export default function MyGroupsPage() {
             width: '100%',
             maxWidth: { xs: '100%', sm: '1100px', md: '1200px', lg: '1280px' },
             mx: 'auto',
-            bgcolor: isDarkMode
-              ? alpha(theme.palette.background.paper, 0.9)
-              : undefined,
-            overflow: 'hidden',
-            display: 'flex',
-            flexDirection: 'column'
+            bgcolor: isDarkMode ? alpha(theme.palette.background.paper, 0.9) : undefined
           }}
         >
-          <Box sx={{ flex: 1, overflow: 'auto' }}>
-            <GroupChannellist 
-              groups={userGroups} 
-              channels={channels} 
-              viewMode={viewMode}
-              searchQuery={searchQuery}
-            />
-          </Box>
+          <GroupChannellist
+            groups={userGroups}
+            channels={channels}
+            viewMode={viewMode}
+            searchQuery={searchQuery}
+          />
         </Box>
       </Box>
     </Box>
