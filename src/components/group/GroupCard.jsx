@@ -5,7 +5,6 @@ import {
   Typography,
   Stack,
   Chip,
-  Grid,
   Box,
   Divider,
   Tooltip,
@@ -33,6 +32,8 @@ import {
   Chat as ChatIcon
 } from '@mui/icons-material'
 import GroupFallBackCard from './GroupFallBackCard'
+import ManagementCardGrid from '@/components/management/ManagementCardGrid'
+import { MANAGEMENT_CARD_FILTER_BOX_SX } from '@/constants/managementCardGrid'
 import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
@@ -327,13 +328,8 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup }) => {
   }
 
   return (
-    <Box
-      sx={{
-        flex: 1,
-        height: '100%',
-      }}
-    >
-      <Grid container spacing={{ xs: 2, sm: 3, md: 3 }}>
+    <Box sx={{ width: '100%' }}>
+      <ManagementCardGrid>
         {groups.map(group => {
           // Capitalize first letter of group name
           const groupName = group?.groupName
@@ -343,9 +339,12 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup }) => {
           const unreadCount = unreadCounts[group._id] || 0
 
           return (
-            <Grid item xs={12} sm={6} md={4} lg={3} xl={3} key={group?._id || group?.groupName}>
-              <Card
+            <Card
+                key={group?._id || group?.groupName}
                 sx={{
+                  width: '100%',
+                  minWidth: 0,
+                  height: '100%',
                   display: 'flex',
                   flexDirection: 'column',
                   position: 'relative',
@@ -459,13 +458,8 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup }) => {
                     </Stack>
                   </Box>
 
-                  {/* Description - Fixed Height for 2 Lines with Ellipsis */}
-                  <Box
-                    sx={{
-                      height: { xs: 36, sm: 42 },
-                      mb: { xs: 0.75, sm: 0.5 }
-                    }}
-                  >
+                  {/* Description — fluid height, max 2 lines */}
+                  <Box sx={{ mb: { xs: 0.75, sm: 0.5 } }}>
                     <Tooltip title={group?.description || 'No description'} arrow>
                       <Typography
                         variant='body2'
@@ -564,16 +558,13 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup }) => {
                     </Stack>
                     <Box
                       sx={{
-                        p: { xs: 1, sm: 1.5 },
+                        ...MANAGEMENT_CARD_FILTER_BOX_SX,
                         borderRadius: 1,
                         background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.03)}, ${alpha(
                           theme.palette.secondary.main,
                           0.03
                         )})`,
-                        border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
-                        minHeight: { xs: 60, sm: 78 },
-                        maxHeight: { xs: 80, sm: 100 },
-                        overflowY: 'auto'
+                        border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`
                       }}
                     >
                       <Stack
@@ -896,8 +887,8 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup }) => {
                             color: theme.palette.success.main,
                             background: alpha(theme.palette.success.main, 0.08),
                             border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
-                            width: { xs: 44, sm: 48 },
-                            height: { xs: 44, sm: 48 },
+                            width: { xs: 40, sm: 44, md: 48 },
+                            height: { xs: 40, sm: 44, md: 48 },
                             transition: 'all 0.3s ease',
                             '&:hover': {
                               background: alpha(theme.palette.success.main, 0.15),
@@ -907,7 +898,7 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup }) => {
                             }
                           }}
                         >
-                          <ChatIcon sx={{ fontSize: { xs: 22, sm: 24 } }} />
+                          <ChatIcon sx={{ fontSize: { xs: 20, sm: 22, md: 24 } }} />
                         </IconButton>
                       </Badge>
                     </Tooltip>
@@ -920,8 +911,8 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup }) => {
                           color: theme.palette.info.main,
                           background: alpha(theme.palette.info.main, 0.08),
                           border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`,
-                          width: { xs: 44, sm: 48 },
-                          height: { xs: 44, sm: 48 },
+                          width: { xs: 40, sm: 44, md: 48 },
+                          height: { xs: 40, sm: 44, md: 48 },
                           transition: 'all 0.3s ease',
                           '&:hover': {
                             background: alpha(theme.palette.info.main, 0.15),
@@ -943,8 +934,8 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup }) => {
                           color: theme.palette.warning.main,
                           background: alpha(theme.palette.warning.main, 0.08),
                           border: `1px solid ${alpha(theme.palette.warning.main, 0.2)}`,
-                          width: { xs: 44, sm: 48 },
-                          height: { xs: 44, sm: 48 },
+                          width: { xs: 40, sm: 44, md: 48 },
+                          height: { xs: 40, sm: 44, md: 48 },
                           transition: 'all 0.3s ease',
                           '&:hover': {
                             background: alpha(theme.palette.warning.main, 0.15),
@@ -966,8 +957,8 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup }) => {
                           color: theme.palette.error.main,
                           background: alpha(theme.palette.error.main, 0.08),
                           border: `1px solid ${alpha(theme.palette.error.main, 0.2)}`,
-                          width: { xs: 44, sm: 48 },
-                          height: { xs: 44, sm: 48 },
+                          width: { xs: 40, sm: 44, md: 48 },
+                          height: { xs: 40, sm: 44, md: 48 },
                           transition: 'all 0.3s ease',
                           '&:hover': {
                             background: alpha(theme.palette.error.main, 0.15),
@@ -1005,7 +996,7 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup }) => {
                               background: alpha(theme.palette.primary.main, 0.08),
                               border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
                               width: { xs: 44, sm: 48 },
-                              height: { xs: 44, sm: 48 },
+                              height: { xs: 40, sm: 44, md: 48 },
                               transition: 'all 0.3s ease',
                               '&:hover': {
                                 background: alpha(theme.palette.primary.main, 0.15),
@@ -1023,11 +1014,11 @@ const GroupCard = ({ groups, onEditGroup, onViewGroup }) => {
                   </Stack>
                 </CardContent>
               </Card>
-            </Grid>
           )
         })}
-      </Grid>
-        {/* Confirmation Dialog */}
+      </ManagementCardGrid>
+
+      {/* Confirmation Dialog */}
         <ConfirmationDialog
           open={confirmationDialogOpen}
           setOpen={setConfirmationDialogOpen}

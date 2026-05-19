@@ -9,6 +9,8 @@ import GroupCard from '@/components/group/GroupCard'
 import { Add as AddIcon } from '@mui/icons-material'
 import { Box, Button, CircularProgress, Container, Typography, useTheme } from '@mui/material'
 import { alpha } from '@mui/material/styles'
+import ManagementPaginatedCards from '@/components/management/ManagementPaginatedCards'
+import { MANAGEMENT_CONTENT_BOTTOM_PADDING } from '@/constants/managementCardPagination'
 
 const AllGroupPage = () => {
   const theme = useTheme()
@@ -228,9 +230,24 @@ const AllGroupPage = () => {
         </Container>
       </Box>
 
-      {/* Content Area */}
-      <Box sx={{ p: { xs: 3, md: 4 }, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
-        <GroupCard groups={groups} onEditGroup={handleEditGroup} onViewGroup={handleViewGroup} />
+      {/* Content Area — document-flow grid + pagination (quiz-style); extra bottom pad for fixed FAB */}
+      <Box
+        sx={{
+          p: { xs: 3, md: 4 },
+          pb: MANAGEMENT_CONTENT_BOTTOM_PADDING,
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'auto'
+        }}
+      >
+        <ManagementPaginatedCards
+          variant='grid'
+          items={groups}
+          renderContent={paginatedGroups => (
+            <GroupCard groups={paginatedGroups} onEditGroup={handleEditGroup} onViewGroup={handleViewGroup} />
+          )}
+        />
       </Box>
 
       {/* Create Group Button - Responsive: below cards on mobile, fixed on desktop */}

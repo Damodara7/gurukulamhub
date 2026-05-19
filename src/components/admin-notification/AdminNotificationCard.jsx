@@ -53,8 +53,8 @@ const AdminNotificationCard = ({ groups, onMarkRead, onDelete, onRefresh, onDele
   }
 
   return (
-    <Box sx={{ flex: 1, height: '100%' }}>
-      <Stack direction='column' spacing={2}>
+    <Box sx={{ width: '100%' }}>
+      <Stack direction='column' spacing={{ xs: 2, sm: 2.5 }}>
         {groups.map(group => {
           const title = group.title || 'No title'
           const message = group.message || ''
@@ -67,6 +67,8 @@ const AdminNotificationCard = ({ groups, onMarkRead, onDelete, onRefresh, onDele
             <Card
               key={group.adminNotificationId}
               sx={{
+                width: '100%',
+                minWidth: 0,
                 display: 'flex',
                 flexDirection: 'column',
                 borderRadius: { xs: 2, sm: 3 },
@@ -86,75 +88,115 @@ const AdminNotificationCard = ({ groups, onMarkRead, onDelete, onRefresh, onDele
                 }
               }}
             >
-              <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
-                <Stack direction='row' alignItems='flex-start' spacing={1.5}>
-                  <Box
-                    sx={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: '10px',
-                      background: alpha(theme.palette.primary.main, 0.12),
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0
-                    }}
-                  >
-                    <NotificationIcon sx={{ fontSize: 22, color: theme.palette.primary.main }} />
-                  </Box>
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Stack direction='row' alignItems='center' spacing={1} flexWrap='wrap' sx={{ mb: 0.5 }}>
-                      <Typography
-                        variant='subtitle1'
-                        sx={{
-                          fontWeight: 700,
-                          fontSize: { xs: '0.9375rem', sm: '1rem' },
-                          color: 'text.primary',
-                          opacity: isSingle && isRead ? 0.85 : 1
-                        }}
-                      >
-                        {title}
-                      </Typography>
-                      {isSingle && !isRead && (
-                        <Chip
-                          size='small'
-                          label='Unread'
-                          sx={{
-                            height: 22,
-                            fontSize: '0.7rem',
-                            fontWeight: 600,
-                            bgcolor: alpha(theme.palette.info.main, 0.12),
-                            color: theme.palette.info.main
-                          }}
-                        />
-                      )}
-                      <Typography variant='caption' color='text.secondary' sx={{ ml: 'auto' }}>
-                        {formatDate(group.createdAt)}
-                      </Typography>
-                    </Stack>
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
+              <CardContent sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
+                <Stack
+                  direction={{ xs: 'column', sm: 'row' }}
+                  alignItems={{ xs: 'stretch', sm: 'flex-start' }}
+                  spacing={{ xs: 1.5, sm: 2 }}
+                >
+                  <Stack direction='row' spacing={1.5} sx={{ flex: 1, minWidth: 0 }}>
+                    <Box
                       sx={{
-                        fontSize: { xs: '0.8125rem', sm: '0.875rem' },
-                        lineHeight: 1.5,
-                        display: '-webkit-box',
-                        WebkitLineClamp: 3,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden'
+                        width: { xs: 36, sm: 40 },
+                        height: { xs: 36, sm: 40 },
+                        borderRadius: '10px',
+                        background: alpha(theme.palette.primary.main, 0.12),
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
                       }}
                     >
-                      {message}
-                    </Typography>
-                    {/* Seen / Total users - dynamic */}
-                    <Stack direction='row' alignItems='center' spacing={0.5} sx={{ mt: 1 }}>
-                      <SeenIcon sx={{ fontSize: 16, color: theme.palette.text.secondary }} />
-                      <Typography variant='caption' color='text.secondary' sx={{ fontWeight: 600 }}>
-                        Seen: {seen} / {total} user{total !== 1 ? 's' : ''}
+                      <NotificationIcon
+                        sx={{ fontSize: { xs: 20, sm: 22 }, color: theme.palette.primary.main }}
+                      />
+                    </Box>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Stack
+                        direction='row'
+                        alignItems='flex-start'
+                        flexWrap='wrap'
+                        gap={0.5}
+                        sx={{ mb: 0.5 }}
+                      >
+                        <Typography
+                          variant='subtitle1'
+                          sx={{
+                            fontWeight: 700,
+                            fontSize: { xs: '0.875rem', sm: '0.9375rem', md: '1rem' },
+                            color: 'text.primary',
+                            opacity: isSingle && isRead ? 0.85 : 1,
+                            flex: '1 1 auto',
+                            minWidth: 0,
+                            wordBreak: 'break-word'
+                          }}
+                        >
+                          {title}
+                        </Typography>
+                        {isSingle && !isRead && (
+                          <Chip
+                            size='small'
+                            label='Unread'
+                            sx={{
+                              height: 22,
+                              fontSize: '0.7rem',
+                              fontWeight: 600,
+                              bgcolor: alpha(theme.palette.info.main, 0.12),
+                              color: theme.palette.info.main
+                            }}
+                          />
+                        )}
+                        <Typography
+                          variant='caption'
+                          color='text.secondary'
+                          sx={{ flexShrink: 0, ml: { xs: 0, sm: 'auto' } }}
+                        >
+                          {formatDate(group.createdAt)}
+                        </Typography>
+                      </Stack>
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                        sx={{
+                          fontSize: { xs: '0.8125rem', sm: '0.875rem' },
+                          lineHeight: 1.5,
+                          display: '-webkit-box',
+                          WebkitLineClamp: { xs: 4, sm: 3 },
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          wordBreak: 'break-word'
+                        }}
+                      >
+                        {message}
                       </Typography>
-                    </Stack>
-                  </Box>
-                  <Stack direction='row' spacing={0.5}>
+                      <Stack direction='row' alignItems='center' spacing={0.5} sx={{ mt: 1 }}>
+                        <SeenIcon sx={{ fontSize: { xs: 14, sm: 16 }, color: theme.palette.text.secondary }} />
+                        <Typography
+                          variant='caption'
+                          color='text.secondary'
+                          sx={{ fontWeight: 600, fontSize: { xs: '0.7rem', sm: '0.75rem' } }}
+                        >
+                          Seen: {seen} / {total} user{total !== 1 ? 's' : ''}
+                        </Typography>
+                      </Stack>
+                    </Box>
+                  </Stack>
+
+                  <Stack
+                    direction='row'
+                    spacing={0.5}
+                    flexWrap='wrap'
+                    useFlexGap
+                    justifyContent={{ xs: 'flex-end', sm: 'flex-start' }}
+                    sx={{
+                      flexShrink: 0,
+                      pt: { xs: 0.5, sm: 0 },
+                      borderTop: {
+                        xs: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+                        sm: 'none'
+                      }
+                    }}
+                  >
                     {isSingle && firstNotification && !isRead && (
                       <Tooltip title='Mark as read'>
                         <IconButton

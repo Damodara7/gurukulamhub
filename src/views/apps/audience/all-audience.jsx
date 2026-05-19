@@ -9,6 +9,8 @@ import AudienceCard from '@/components/audience/AudienceCard'
 import { Add as AddIcon } from '@mui/icons-material'
 import { Box, Button, CircularProgress, Container, Typography, useTheme } from '@mui/material'
 import { alpha } from '@mui/material/styles'
+import ManagementPaginatedCards from '@/components/management/ManagementPaginatedCards'
+import { MANAGEMENT_CONTENT_BOTTOM_PADDING } from '@/constants/managementCardPagination'
 const AllAudiencePage = () => {
   const theme = useTheme()
   const router = useRouter()
@@ -289,48 +291,61 @@ const AllAudiencePage = () => {
         </Container>
       </Box>
 
-      {/* Content Area */}
-      <Box sx={{ p: { xs: 3, md: 4 }, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
-        <AudienceCard
-          audiences={audiences}
-          onEditAudience={handleEditAudience}
-          onViewAudience={handleViewAudience}
-          dynamicCounts={dynamicCounts}
-          loadingCounts={loadingCounts}
+      {/* Content Area — document-flow grid + pagination; extra bottom pad for fixed FAB */}
+      <Box
+        sx={{
+          p: { xs: 3, md: 4 },
+          pb: MANAGEMENT_CONTENT_BOTTOM_PADDING,
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'auto'
+        }}
+      >
+        <ManagementPaginatedCards
+          variant='grid'
+          items={audiences}
+          renderContent={paginatedAudiences => (
+            <AudienceCard
+              audiences={paginatedAudiences}
+              onEditAudience={handleEditAudience}
+              onViewAudience={handleViewAudience}
+              dynamicCounts={dynamicCounts}
+              loadingCounts={loadingCounts}
+            />
+          )}
         />
+      </Box>
 
-        {/* Create Audience Button - Responsive: below cards on mobile, fixed on desktop */}
-        <Box
+      {/* Create Audience Button - below scroll area on mobile; fixed on desktop */}
+      <Box
+        sx={{
+          display: { xs: 'flex', sm: 'block' },
+          justifyContent: 'center',
+          mt: { xs: 3, sm: 0 },
+          mb: { xs: 0, sm: 0 }
+        }}
+      >
+        <Button
+          variant='contained'
+          component='label'
+          onClick={handleCreateNewAudience}
+          startIcon={<AddIcon />}
           sx={{
-            display: { xs: 'flex', sm: 'block' },
-            justifyContent: 'center',
-            mt: { xs: 3, sm: 0 },
-            mb: { xs: 0, sm: 0 }
+            color: 'white',
+            position: { xs: 'static', sm: 'fixed' },
+            bottom: { xs: 'auto', sm: 24 },
+            right: { xs: 'auto', sm: 24 },
+            zIndex: { xs: 'auto', sm: 1001 },
+            fontSize: { xs: '1rem', sm: '1.2rem' },
+            borderRadius: '12px',
+            px: { xs: 3, sm: 4 },
+            py: { xs: 1.25, sm: 1.5 },
+            minWidth: { xs: 200, sm: 220 }
           }}
         >
-          <Button
-            variant='contained'
-            component='label'
-            onClick={handleCreateNewAudience}
-            startIcon={<AddIcon />}
-            sx={{
-              color: 'white',
-              // Mobile: normal flow, below cards
-              position: { xs: 'static', sm: 'fixed' },
-              bottom: { xs: 'auto', sm: 24 },
-              right: { xs: 'auto', sm: 24 },
-              zIndex: { xs: 'auto', sm: 1001 },
-              // Responsive sizing
-              fontSize: { xs: '1rem', sm: '1.2rem' },
-              borderRadius: '12px',
-              px: { xs: 3, sm: 4 },
-              py: { xs: 1.25, sm: 1.5 },
-              minWidth: { xs: 200, sm: 220 }
-            }}
-          >
-            Create Audience
-          </Button>
-        </Box>
+          Create Audience
+        </Button>
       </Box>
     </Box>
   )

@@ -5,7 +5,6 @@ import {
   Typography,
   Stack,
   Chip,
-  Grid,
   Box,
   Divider,
   Tooltip,
@@ -27,6 +26,8 @@ import {
   LocationOn as LocationIcon
 } from '@mui/icons-material'
 import AudienceFallBackCard from './AudienceFallBackCard'
+import ManagementCardGrid from '@/components/management/ManagementCardGrid'
+import { MANAGEMENT_CARD_FILTER_BOX_SX } from '@/constants/managementCardGrid'
 import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
@@ -78,7 +79,7 @@ const AudienceCard = ({ audiences, onEditAudience, onViewAudience, dynamicCounts
         pr: { xs: 0, sm: 0 },
       }}
     >
-      <Grid container spacing={{ xs: 2, sm: 3, md: 3 }}>
+      <ManagementCardGrid>
         {audiences.map(audience => {
           // Capitalize first letter of audience name
           const audienceName = audience?.audienceName
@@ -88,9 +89,11 @@ const AudienceCard = ({ audiences, onEditAudience, onViewAudience, dynamicCounts
           const memberCount = dynamicCounts[audience._id] || 0
 
           return (
-            <Grid item xs={12} sm={6} md={4} lg={3} key={audience?._id || audience?.audienceName}>
-              <Card
+            <Card
+                key={audience?._id || audience?.audienceName}
                 sx={{
+                  width: '100%',
+                  minWidth: 0,
                   height: '100%',
                   display: 'flex',
                   flexDirection: 'column',
@@ -159,13 +162,8 @@ const AudienceCard = ({ audiences, onEditAudience, onViewAudience, dynamicCounts
                     </Stack>
                   </Box>
 
-                  {/* Description - Fixed Height for 2 Lines with Ellipsis */}
-                  <Box
-                    sx={{
-                      height: { xs: 36, sm: 42 },
-                      mb: { xs: 0.75, sm: 0.5 }
-                    }}
-                  >
+                  {/* Description — fluid height, max 2 lines */}
+                  <Box sx={{ mb: { xs: 0.75, sm: 0.5 } }}>
                     <Tooltip title={audience?.description || 'No description'} arrow>
                       <Typography
                         variant='body2'
@@ -241,16 +239,13 @@ const AudienceCard = ({ audiences, onEditAudience, onViewAudience, dynamicCounts
                     </Stack>
                     <Box
                       sx={{
-                        p: { xs: 1, sm: 1.5 },
+                        ...MANAGEMENT_CARD_FILTER_BOX_SX,
                         borderRadius: 1,
                         background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.03)}, ${alpha(
                           theme.palette.secondary.main,
                           0.03
                         )})`,
-                        border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
-                        minHeight: { xs: 60, sm: 78 },
-                        maxHeight: { xs: 80, sm: 100 },
-                        overflowY: 'auto'
+                        border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`
                       }}
                     >
                       <Stack
@@ -541,7 +536,14 @@ const AudienceCard = ({ audiences, onEditAudience, onViewAudience, dynamicCounts
 
                   {/* Action Buttons - With Text Labels */}
                   <Divider sx={{ my: { xs: 1, sm: 1.5 } }} />
-                  <Stack direction='row' spacing={{ xs: 0.5, sm: 1 }} justifyContent='space-between'>
+                  <Stack
+                    direction='row'
+                    spacing={{ xs: 0.5, sm: 1 }}
+                    justifyContent='space-between'
+                    flexWrap='wrap'
+                    useFlexGap
+                    sx={{ gap: { xs: 0.5, sm: 1 } }}
+                  >
                     <Button
                       size='small'
                       variant='outlined'
@@ -623,10 +625,9 @@ const AudienceCard = ({ audiences, onEditAudience, onViewAudience, dynamicCounts
                   </Stack>
                 </CardContent>
               </Card>
-            </Grid>
           )
         })}
-      </Grid>
+      </ManagementCardGrid>
 
       {/* Confirmation Dialog */}
       <ConfirmationDialog

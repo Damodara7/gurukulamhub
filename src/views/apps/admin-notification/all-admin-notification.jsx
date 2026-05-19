@@ -12,6 +12,8 @@ import ConfirmationDialog from '@/components/dialogs/confirmation-dialog'
 import { Add as AddIcon, DeleteSweep as DeleteSweepIcon } from '@mui/icons-material'
 import { Box, Button, CircularProgress, Container, Typography, useTheme } from '@mui/material'
 import { alpha } from '@mui/material/styles'
+import ManagementPaginatedCards from '@/components/management/ManagementPaginatedCards'
+import { MANAGEMENT_CONTENT_BOTTOM_PADDING } from '@/constants/managementCardPagination'
 
 function AllAdminNotificationPage({ isAdmin = false }) {
   const theme = useTheme()
@@ -336,8 +338,17 @@ function AllAdminNotificationPage({ isAdmin = false }) {
         </Container>
       </Box>
 
-      {/* Content */}
-      <Box sx={{ p: { xs: 3, md: 4 }, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
+      {/* Content — full-width list rows + pagination below (not overlapping) */}
+      <Box
+        sx={{
+          p: { xs: 3, md: 4 },
+          pb: MANAGEMENT_CONTENT_BOTTOM_PADDING,
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'auto'
+        }}
+      >
         {groups.length === 0 ? (
           <AdminNotificationFallBackCard
             content='No Admin Notifications found. Create one to get started.'
@@ -345,13 +356,19 @@ function AllAdminNotificationPage({ isAdmin = false }) {
             btnText='Back to Home Page'
           />
         ) : (
-          <AdminNotificationCard
-            groups={groups}
-            onMarkRead={handleMarkRead}
-            onDelete={handleDelete}
-            onRefresh={() => fetchNotifications(false)}
-            onDeleteClick={openDeleteDialog}
-            onEditClick={handleEditClick}
+          <ManagementPaginatedCards
+            variant='list'
+            items={groups}
+            renderContent={paginatedGroups => (
+              <AdminNotificationCard
+                groups={paginatedGroups}
+                onMarkRead={handleMarkRead}
+                onDelete={handleDelete}
+                onRefresh={() => fetchNotifications(false)}
+                onDeleteClick={openDeleteDialog}
+                onEditClick={handleEditClick}
+              />
+            )}
           />
         )}
       </Box>
