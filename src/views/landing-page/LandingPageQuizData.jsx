@@ -62,14 +62,22 @@ function LandingPageQuizData({ isAuthenticated = false }) {
     fetchQuizData()
   }, [])
 
-  // HANDLE VIEW ALL QUIZZES
-  const handleViewAll = async () => {
-    setIsCheckingAuth(true)
+  const navigateWithAuth = path => {
     if (isAuthenticated || status === 'authenticated') {
-      router.push('/publicquiz/view')
+      router.push(path)
     } else {
-      router.push(`/auth/login?redirectTo=publicquiz/view`)
+      router.push(`/auth/login?redirectTo=${encodeURIComponent(path.replace(/^\//, ''))}`)
     }
+  }
+
+  const handleQuizClick = quiz => {
+    navigateWithAuth(`/publicquiz/play/${quiz._id}`)
+  }
+
+  // HANDLE VIEW ALL QUIZZES
+  const handleViewAll = () => {
+    setIsCheckingAuth(true)
+    navigateWithAuth('/publicquiz/view')
   }
 
   // ========== RENDER CONDITIONS (AFTER HOOKS) ==========
@@ -304,6 +312,15 @@ function LandingPageQuizData({ isAuthenticated = false }) {
                 }}
               >
                 <Card
+                  onClick={() => handleQuizClick(quiz)}
+                  role='button'
+                  tabIndex={0}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      handleQuizClick(quiz)
+                    }
+                  }}
                   sx={{
                     width: { xs: cardWidth.xs, sm: cardWidth.sm, md: cardWidth.md },
                     height: { xs: cardHeight.xs, sm: cardHeight.sm, md: cardHeight.md },

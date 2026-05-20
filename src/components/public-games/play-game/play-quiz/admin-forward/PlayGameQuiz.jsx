@@ -37,6 +37,44 @@ const calculateQuestionMarks = (question, selectedAnswer, hintUsed) => {
   return gainedMarks + hintMarks
 }
 
+/** Same FFF rules as auto-forward: speed × marks ratio, max 1000 per question. */
+function calculateFffPoints(currentQuestion, calculatedMarks, answerTimeMs) {
+  const maxFFF = 1000
+  if (!calculatedMarks || calculatedMarks <= 0) return 0
+
+  const maxMarks = Number(currentQuestion?.data?.marks) || 0
+  if (!maxMarks) return 0
+
+  const marksRatio = calculatedMarks / maxMarks
+  const questionDurationMs = (Number(currentQuestion?.data?.timerSeconds) || 0) * 1000
+
+  if (!questionDurationMs || answerTimeMs == null) {
+    return maxFFF * marksRatio
+  }
+
+  const speedFactor = Math.max(0, 1 - answerTimeMs / questionDurationMs)
+  return maxFFF * speedFactor * marksRatio
+}
+
+function getQuestionStartTime(idx, game, questionStartTimesRef) {
+  return (
+    questionStartTimesRef.current[idx] ||
+    (game?.liveQuestionStartedAt && idx === game?.liveQuestionIndex
+      ? new Date(game.liveQuestionStartedAt)
+      : null) ||
+    (game?.startTime ? new Date(game.startTime) : new Date())
+  )
+}
+
+function getAnswerTimeMs(question, questionStart, lastAnswerTimesRef) {
+  const lastAnswerTime = lastAnswerTimesRef.current[question._id]
+  const start = questionStart instanceof Date ? questionStart : new Date(questionStart)
+  if (lastAnswerTime && start) {
+    return lastAnswerTime - start
+  }
+  return new Date() - start
+}
+
 async function updateUserScore(gameId, { user, userAnswer, finish }) {
   try {
     const res = await RestApi.post(`${API_URLS.v0.USERS_GAME}/${gameId}/player`, {
@@ -146,12 +184,14 @@ export default function AdminForwardPlayGame({ game: initialGame }) {
   const quiz = game?.quiz
   // const storageKey = `game-${game._id}-quiz-${quiz._id}-admin-state`
 
-  // Ensure the start time for the first question is set to game.startTime
+  // Track per-question start (Q0 uses live start when game is live)
   useEffect(() => {
-    if (game?.startTime) {
-      questionStartTimesRef.current[0] = new Date(game?.startTime)
+    if (game?.status === 'live' && game?.liveQuestionStartedAt != null && typeof game?.liveQuestionIndex === 'number') {
+      questionStartTimesRef.current[game.liveQuestionIndex] = new Date(game.liveQuestionStartedAt)
+    } else if (game?.startTime) {
+      questionStartTimesRef.current[0] = new Date(game.startTime)
     }
-  }, [game?.startTime])
+  }, [game?.status, game?.startTime, game?.liveQuestionIndex, game?.liveQuestionStartedAt])
 
   useEffect(() => {
     if (gameId) {
@@ -188,7 +228,7 @@ export default function AdminForwardPlayGame({ game: initialGame }) {
               if (typeof liveIdx === 'number' && liveIdx !== prevLiveIdx && liveIdx > 0 && liveIdx < totalQuestions) {
                 // Record the start time for the new question
                 if (!(liveIdx in questionStartTimesRef.current)) {
-                  questionStartTimesRef.current[liveIdx] = data?.liveQuestionStartedAt || new Date()
+                  questionStartTimesRef.current[liveIdx] = new Date(data?.liveQuestionStartedAt || Date.now())
                 }
                 setCurrentQuestionIndex(liveIdx)
               }
@@ -221,11 +261,13 @@ export default function AdminForwardPlayGame({ game: initialGame }) {
   }, [gameId])
 
   useEffect(() => {
-    setCurrentQuestionIndex(game?.liveQuestionIndex)
-    if (game?.liveQuestionIndex > 0) {
-      questionStartTimesRef.current[game?.liveQuestionIndex] = new Date(game?.liveQuestionStartedAt)
+    if (typeof game?.liveQuestionIndex === 'number') {
+      setCurrentQuestionIndex(game.liveQuestionIndex)
+      if (game?.liveQuestionStartedAt != null) {
+        questionStartTimesRef.current[game.liveQuestionIndex] = new Date(game.liveQuestionStartedAt)
+      }
     }
-  }, [game?.liveQuestionIndex])
+  }, [game?.liveQuestionIndex, game?.liveQuestionStartedAt])
 
   function handleAnswerSelect(questionId, optionId) {
     selectedAnswersRef.current = { ...selectedAnswersRef.current, [questionId]: optionId }
@@ -246,29 +288,19 @@ export default function AdminForwardPlayGame({ game: initialGame }) {
     forceUpdate(n => n + 1)
   }
 
-  async function calculateAndUpdateUserScore({ finish, index, liveQuestionStartedAt }) {
+  async function calculateAndUpdateUserScore({ finish, index }) {
     const idx = typeof index === 'number' ? index : currentQuestionIndex
     const currentQuestion = mappedQuestions[idx]
-    // Use the tracked question start time if available
-    const questionStart = questionStartTimesRef.current[idx] || new Date()
-    const lastAnswerTime = lastAnswerTimesRef.current[currentQuestion._id]
-    const answerTime = lastAnswerTime && questionStart ? lastAnswerTime - questionStart : null
-    const answeredAt = lastAnswerTimesRef.current[currentQuestion._id] || null
+    if (!currentQuestion) return
+
+    const questionStart = getQuestionStartTime(idx, game, questionStartTimesRef)
     const selectedAnswer = selectedAnswersRef.current[currentQuestion._id]
     const hintUsed = usedHintsRef.current[currentQuestion._id] || false
-
     const calculatedMarks = calculateQuestionMarks(currentQuestion, selectedAnswer, hintUsed)
-    const curQuestionTimerSeconds = new Date(liveQuestionStartedAt).getTime() - new Date(questionStart).getTime() || 0
+    const answerTime = getAnswerTimeMs(currentQuestion, questionStart, lastAnswerTimesRef)
+    const answeredAt = lastAnswerTimesRef.current[currentQuestion._id] || new Date()
+    const fffPoints = calculateFffPoints(currentQuestion, calculatedMarks, answerTime)
 
-    console.log('answerTime:', answerTime)
-    console.log('questionStart:', questionStart)
-    console.log('liveQuestionStartedAt:', liveQuestionStartedAt)
-    console.log('curQuestionTimerSeconds:', curQuestionTimerSeconds)
-
-    // const maxScore = game?.maxScore || mappedQuestions?.reduce((acc, q) => acc + q?.data?.marks, 0)
-
-    const maxFFF = 1000
-    const fffPoints = calculatedMarks > 0 ? maxFFF * (calculatedMarks / Number(currentQuestion?.data?.marks)) : 0
     try {
       await updateUserScore(game?._id, {
         user: { id: session.user.id, email: session.user.email },
@@ -294,22 +326,13 @@ export default function AdminForwardPlayGame({ game: initialGame }) {
     if (!currentQuestion || hasSubmittedCurrent || submitting) return
     setSubmitting(true)
     const idx = currentQuestionIndex
-    const questionStart = questionStartTimesRef.current[idx] || new Date()
+    const questionStart = getQuestionStartTime(idx, game, questionStartTimesRef)
     const now = new Date()
-    const answerTime = now - questionStart
     const selectedAnswer = selectedAnswersRef.current[currentQuestion._id]
     const hintUsed = usedHintsRef.current[currentQuestion._id] || false
     const calculatedMarks = calculateQuestionMarks(currentQuestion, selectedAnswer, hintUsed)
-    // Use a fallback for curQuestionTimerSeconds if not available
-    const curQuestionTimerSeconds =
-      (game?.liveQuestionStartedAt ? now.getTime() - new Date(game.liveQuestionStartedAt).getTime() : answerTime) ||
-      answerTime ||
-      1
-
-    console.log('answerTime: ', answerTime)
-    console.log('curQuestionTimerSeconds: ', curQuestionTimerSeconds)
-    const maxFFF = 1000
-    const fffPoints = calculatedMarks > 0 ? maxFFF * (calculatedMarks / Number(currentQuestion?.data?.marks)) : 0
+    const answerTime = getAnswerTimeMs(currentQuestion, questionStart, lastAnswerTimesRef)
+    const fffPoints = calculateFffPoints(currentQuestion, calculatedMarks, answerTime)
     const isLastQuestion = currentQuestionIndex === mappedQuestions.length - 1
     try {
       await updateUserScore(game?._id, {

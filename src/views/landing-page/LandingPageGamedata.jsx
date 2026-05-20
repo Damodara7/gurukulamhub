@@ -24,6 +24,8 @@ import LocationOnIcon from '@mui/icons-material/LocationOn'
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
+import { GAME_LANDING_PREVIEW_LIMIT } from '@/constants/gameListPagination'
+import { normalizeGameListResult } from '@/utils/gameListApi'
 
 function LandingPageGamedata({ isAuthenticated = false }) {
   const [gameData, setGameData] = useState([])
@@ -36,13 +38,19 @@ function LandingPageGamedata({ isAuthenticated = false }) {
   const router = useRouter()
   const isLargeScreen = useMediaQuery(theme.breakpoints.up('lg'))
 
-  // DATA FETCHING
+  // DATA FETCHING — same pattern as LandingPageQuizData: small paginated public preview
   useEffect(() => {
     const fetchGameData = async () => {
       try {
-        const res = await RestApi.get(`${API_URLS.v0.USERS_GAME}`)
+        const params = new URLSearchParams({
+          limit: String(GAME_LANDING_PREVIEW_LIMIT),
+          page: '1',
+          preview: 'true'
+        })
+        const res = await RestApi.get(`${API_URLS.v0.USERS_GAME}/public?${params.toString()}`)
         if (res.status === 'success') {
-          setGameData(res?.result || [])
+          const { items } = normalizeGameListResult(res?.result)
+          setGameData(items || [])
         } else {
           setError(res.message)
         }
@@ -56,15 +64,22 @@ function LandingPageGamedata({ isAuthenticated = false }) {
     fetchGameData()
   }, [])
 
-  // HANDLE VIEW ALL GAMES
-  const handleViewAll = async () => {
-    setIsCheckingAuth(true)
-
+  const navigateWithAuth = path => {
     if (isAuthenticated || status === 'authenticated') {
-      router.push('/public-games')
+      router.push(path)
     } else {
-      router.push(`/auth/login?redirectTo=public-games`)
+      router.push(`/auth/login?redirectTo=${encodeURIComponent(path.replace(/^\//, ''))}`)
     }
+  }
+
+  const handleGameClick = game => {
+    navigateWithAuth(`/public-games/${game._id}`)
+  }
+
+  // HANDLE VIEW ALL GAMES
+  const handleViewAll = () => {
+    setIsCheckingAuth(true)
+    navigateWithAuth('/public-games')
   }
 
   const formatGameDate = dateString => {
@@ -292,7 +307,7 @@ function LandingPageGamedata({ isAuthenticated = false }) {
               alignItems: 'center'
             }}
           >
-            {gameData.slice(0, 7).map(game => (
+            {gameData.map(game => (
               <Box
                 key={game._id}
                 sx={{
@@ -305,6 +320,15 @@ function LandingPageGamedata({ isAuthenticated = false }) {
                 }}
               >
                 <Card
+                  onClick={() => handleGameClick(game)}
+                  role='button'
+                  tabIndex={0}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      handleGameClick(game)
+                    }
+                  }}
                   sx={{
                     width: { xs: cardWidth.xs, sm: cardWidth.sm, md: cardWidth.md },
                     height: { xs: cardHeight.xs, sm: cardHeight.sm, md: cardHeight.md },

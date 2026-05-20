@@ -274,7 +274,8 @@ const CreatorGameCard = ({
               <Stack direction='row' alignItems='center' spacing={{ xs: 0.75, sm: 1 }}>
                 <PeopleIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' }, color: 'action' }} />
                 <Typography variant='body2' sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-                  {game.participatedUsers?.length || 0} / {game.maxPlayers || '∞'} players
+                  {game.participatedCount ?? game.participatedUsers?.length ?? 0} / {game.maxPlayers || '∞'}{' '}
+                  players
                 </Typography>
               </Stack>
 

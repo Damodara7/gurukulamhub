@@ -59,6 +59,188 @@ async function enrichGamesWithDetails(games) {
   return Promise.all((games || []).map(enrichGameWithDetails))
 }
 
+const GAME_LIST_QUERY_KEYS = ['limit', 'page', 'viewerEmail', 'listStatus', 'preview']
+
+function parseGameListPagination(filter = {}) {
+  const limitRaw = filter.limit
+  const hasPagination = limitRaw != null && limitRaw !== '' && Number(limitRaw) > 0
+  const limit = hasPagination ? Math.min(Math.max(1, Math.floor(Number(limitRaw))), 100) : null
+  const page = hasPagination ? Math.max(1, Math.floor(Number(filter.page) || 1)) : 1
+  const preview = filter.preview === 'true' || filter.preview === true
+  return {
+    hasPagination,
+    limit,
+    page,
+    viewerEmail: filter.viewerEmail || null,
+    listStatus: filter.listStatus || null,
+    preview
+  }
+}
+
+function stripGameListQueryKeys(filter = {}) {
+  const rest = { ...filter }
+  GAME_LIST_QUERY_KEYS.forEach(key => delete rest[key])
+  return rest
+}
+
+const gameListPopulate = [
+  { path: 'quiz' },
+  { path: 'groupId' },
+  { path: 'createdBy', select: 'email firstName lastName roles' },
+  { path: 'forwardingAdmin', select: 'email firstName lastName roles' },
+  { path: 'rewards.sponsors.sponsorshipId' }
+]
+
+/** Landing / carousel: card fields only — no players, questions, or heavy joins. */
+const gamePreviewPopulate = [{ path: 'rewards.sponsors.sponsorshipId' }]
+
+/** List views: counts + current viewer player only (no questions, no full player lists). */
+async function enrichGamesForList(games, { viewerEmail } = {}) {
+  if (!games?.length) return []
+
+  const gameIds = games.map(g => g._id)
+  const [participatedAgg, viewerPlayers] = await Promise.all([
+    Player.aggregate([
+      { $match: { game: { $in: gameIds }, status: { $in: ['participated', 'completed'] } } },
+      { $group: { _id: '$game', count: { $sum: 1 } } }
+    ]),
+    viewerEmail
+      ? Player.find({
+          game: { $in: gameIds },
+          email: viewerEmail,
+          status: { $in: ['registered', 'participated', 'completed'] }
+        }).lean()
+      : Promise.resolve([])
+  ])
+
+  const participatedCountByGame = Object.fromEntries(
+    participatedAgg.map(row => [String(row._id), row.count])
+  )
+  const viewerPlayerByGame = Object.fromEntries(viewerPlayers.map(p => [String(p.game), p]))
+
+  return games.map(game => {
+    const gameId = String(game._id)
+    const participatedCount = participatedCountByGame[gameId] || 0
+    const viewerPlayer = viewerPlayerByGame[gameId]
+
+    const registeredUsers =
+      viewerPlayer && ['registered', 'participated', 'completed'].includes(viewerPlayer.status)
+        ? [{ email: viewerPlayer.email, completed: viewerPlayer.completed, status: viewerPlayer.status }]
+        : []
+
+    const participatedUsers =
+      viewerPlayer && ['participated', 'completed'].includes(viewerPlayer.status)
+        ? [{ email: viewerPlayer.email, completed: viewerPlayer.completed, status: viewerPlayer.status }]
+        : []
+
+    return {
+      ...game,
+      questions: [],
+      participatedCount,
+      registeredUsers,
+      participatedUsers
+    }
+  })
+}
+
+async function buildPublicListMongoFilter(filter = {}, listStatus, viewerEmail) {
+  const base = stripGameListQueryKeys(filter)
+  const mongoFilter = {
+    ...base,
+    isDeleted: false,
+    status: { $in: ['approved', 'lobby', 'live', 'completed', 'cancelled'] }
+  }
+
+  if (!listStatus || listStatus === 'all') return mongoFilter
+  if (listStatus === 'upcoming') return { ...mongoFilter, status: 'approved' }
+  if (listStatus === 'lobby') return { ...mongoFilter, status: 'lobby' }
+  if (listStatus === 'live') return { ...mongoFilter, status: 'live' }
+  if (listStatus === 'cancelled') return { ...mongoFilter, status: 'cancelled' }
+
+  if (!viewerEmail) return { ...mongoFilter, _id: { $in: [] } }
+
+  const players = await Player.find({
+    email: viewerEmail,
+    status: { $in: ['registered', 'participated', 'completed'] }
+  }).lean()
+
+  if (listStatus === 'registered') {
+    const gameIds = players.filter(p => p.status === 'registered').map(p => p.game)
+    return { ...mongoFilter, status: 'approved', _id: { $in: gameIds } }
+  }
+
+  if (listStatus === 'completed') {
+    const gameIds = players
+      .filter(p => ['participated', 'completed'].includes(p.status) && p.completed)
+      .map(p => p.game)
+    return { ...mongoFilter, _id: { $in: gameIds } }
+  }
+
+  if (listStatus === 'missed') {
+    const gameIds = players.filter(p => p.status === 'registered').map(p => p.game)
+    return { ...mongoFilter, status: 'completed', _id: { $in: gameIds } }
+  }
+
+  return mongoFilter
+}
+
+async function queryGamesPaginated({
+  mongoFilter,
+  sort,
+  pagination,
+  viewerEmail,
+  usePublicListFilter = false,
+  listStatus = null,
+  isPreview = false
+}) {
+  const { hasPagination, limit, page } = pagination
+  let filter = mongoFilter
+
+  if (usePublicListFilter) {
+    filter = await buildPublicListMongoFilter(mongoFilter, listStatus, viewerEmail)
+  }
+
+  const populate = isPreview ? gamePreviewPopulate : gameListPopulate
+  const query = Game.find(filter).populate(populate).sort(sort)
+
+  if (!hasPagination) {
+    const games = await query.lean()
+    const enriched = isPreview
+      ? games.map(g => ({ ...g, questions: [], registeredUsers: [], participatedUsers: [] }))
+      : await enrichGamesWithDetails(games)
+    return {
+      status: 'success',
+      result: enriched,
+      message: `Found ${games.length} games`
+    }
+  }
+
+  const skip = (page - 1) * limit
+  const [games, total] = await Promise.all([
+    query.skip(skip).limit(limit).lean(),
+    Game.countDocuments(filter)
+  ])
+  const enriched = isPreview
+    ? games.map(g => ({ ...g, questions: [], registeredUsers: [], participatedUsers: [] }))
+    : await enrichGamesForList(games, { viewerEmail })
+  const totalPages = total === 0 ? 0 : Math.ceil(total / limit)
+
+  return {
+    status: 'success',
+    result: {
+      items: enriched,
+      total,
+      page,
+      limit,
+      totalPages
+    },
+    message:
+      total === 0
+        ? 'No games found'
+        : `Found ${total} games (page ${page} of ${totalPages || 1})`
+  }
+}
+
 async function awardGamePointsToUser({ player, game, userIdOverride = null }) {
   if (!player || !game) return
 
@@ -150,22 +332,14 @@ export const getOne = async (filter = {}) => {
 export const getAll = async (filter = {}) => {
   await connectMongo()
   try {
-    const games = await Game.find({ ...filter, isDeleted: false })
-      .populate('quiz')
-      .populate('groupId')
-      .populate('createdBy', 'email firstName lastName roles')
-      .populate('forwardingAdmin', 'email firstName lastName roles')
-      .populate('rewards.sponsors.sponsorshipId')
-      .sort({ createdAt: -1 })
-      .lean()
-
-    const enrichedGames = await enrichGamesWithDetails(games)
-
-    return {
-      status: 'success',
-      result: enrichedGames,
-      message: `Found ${games.length} games`
-    }
+    const pagination = parseGameListPagination(filter)
+    const mongoFilter = { ...stripGameListQueryKeys(filter), isDeleted: false }
+    return await queryGamesPaginated({
+      mongoFilter,
+      sort: { createdAt: -1 },
+      pagination,
+      viewerEmail: null
+    })
   } catch (error) {
     return {
       status: 'error',
@@ -178,26 +352,19 @@ export const getAll = async (filter = {}) => {
 export const getAllPublic = async (filter = {}) => {
   await connectMongo()
   try {
-    const games = await Game.find({
-      ...filter,
-      isDeleted: false,
-      status: { $in: ['approved', 'lobby', 'live', 'completed', 'cancelled'] }
+    const pagination = parseGameListPagination(filter)
+    const { listStatus, viewerEmail, preview } = pagination
+    const mongoFilter = stripGameListQueryKeys(filter)
+
+    return await queryGamesPaginated({
+      mongoFilter,
+      sort: { createdAt: -1 },
+      pagination,
+      viewerEmail: preview ? null : viewerEmail,
+      usePublicListFilter: true,
+      listStatus: preview ? 'all' : listStatus,
+      isPreview: preview
     })
-      .populate('quiz')
-      .populate('groupId')
-      .populate('createdBy', 'email firstName lastName')
-      .populate('forwardingAdmin', 'email firstName lastName roles')
-      .populate('rewards.sponsors.sponsorshipId')
-      .sort({ createdAt: -1 })
-      .lean()
-
-    const enrichedGames = await enrichGamesWithDetails(games)
-
-    return {
-      status: 'success',
-      result: enrichedGames,
-      message: `Found ${games.length} games`
-    }
   } catch (error) {
     return {
       status: 'error',
@@ -218,22 +385,15 @@ export const getAllByEmail = async (email, filter = {}) => {
       }
     }
 
-    const games = await Game.find({ creatorEmail: email, isDeleted: false, ...filter })
-      .populate('quiz')
-      .populate('groupId')
-      .populate('createdBy', 'email firstName lastName roles')
-      .populate('forwardingAdmin', 'email firstName lastName roles')
-      .populate('rewards.sponsors.sponsorshipId')
-      .sort({ startTime: -1 })
-      .lean()
+    const pagination = parseGameListPagination(filter)
+    const mongoFilter = { creatorEmail: email, isDeleted: false, ...stripGameListQueryKeys(filter) }
 
-    const enrichedGames = await enrichGamesWithDetails(games)
-
-    return {
-      status: 'success',
-      result: enrichedGames,
-      message: `Found ${games.length} games for ${email}`
-    }
+    return await queryGamesPaginated({
+      mongoFilter,
+      sort: { startTime: -1 },
+      pagination,
+      viewerEmail: null
+    })
   } catch (error) {
     return {
       status: 'error',

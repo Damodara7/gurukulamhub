@@ -38,7 +38,9 @@ const CreatorGameList = ({ games = [], loading = false, onRefresh, setGames, isS
         try {
           const msg = JSON.parse(event.data)
           if (msg.type === 'gamesList') {
-            if (setGames) {
+            if (onRefresh) {
+              onRefresh()
+            } else if (setGames) {
               setGames(msg.data)
             } else {
               setLocalGames(msg.data)
@@ -60,7 +62,7 @@ const CreatorGameList = ({ games = [], loading = false, onRefresh, setGames, isS
         wsRef.current.close()
       }
     }
-  }, [])
+  }, [onRefresh, setGames])
 
   const handleApproveGame = async gameId => {
     try {

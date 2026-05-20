@@ -3,19 +3,15 @@
 
 import React, { useRef, useEffect, useState } from 'react'
 import GameCard from './GameCard'
-import { Box, Grid, Typography, useTheme } from '@mui/material'
+import { Box, Grid, Typography } from '@mui/material'
 import { useSession } from 'next-auth/react'
-import { useSearchParams } from 'next/navigation'
 import Loading from '@/components/Loading'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import FallBackCard from '@/components/apps/games/FallBackCard'
-const PublicGamesList = ({ games, loading, error, setGames }) => {
-  const searchParams = useSearchParams()
+const PublicGamesList = ({ games, loading, error, setGames, onRefresh }) => {
   const { data: session } = useSession()
-  const statusFilter = searchParams.get('status') || 'all'
   const wsRef = useRef(null)
-  const theme = useTheme()
   // If setGames is not provided, use local state for demonstration
   const [localGames, setLocalGames] = useState(games)
   const gamesToUse = setGames ? games : localGames
@@ -42,7 +38,9 @@ const PublicGamesList = ({ games, loading, error, setGames }) => {
         try {
           const msg = JSON.parse(event.data)
           if (msg.type === 'gamesList') {
-            if (setGames) {
+            if (onRefresh) {
+              onRefresh()
+            } else if (setGames) {
               setGames(msg.data)
             } else {
               setLocalGames(msg.data)
@@ -64,7 +62,7 @@ const PublicGamesList = ({ games, loading, error, setGames }) => {
         wsRef.current.close()
       }
     }
-  }, [])
+  }, [onRefresh, setGames])
 
   // Fetch current user's groupIds + profile once
   useEffect(() => {
@@ -92,48 +90,8 @@ const PublicGamesList = ({ games, loading, error, setGames }) => {
     fetchUserContext()
   }, [session?.user?.email])
 
-  const getUserGameStatus = game => {
-    const userEmail = session?.user?.email
-
-    // User participation checks should come first
-    const participation = game?.participatedUsers?.find(p => p.email === userEmail)
-    if (participation) {
-      return participation.completed ? { status: 'completed' } : { status: 'inProgress' }
-    }
-
-    // Then check game status
-    if (game.status === 'cancelled') return { status: 'cancelled' }
-    if (game.status === 'lobby') return { status: 'lobby' }
-    if (game.status === 'approved') return { status: 'upcoming' }
-
-    // Special handling for live games where user hasn't participated yet
-    if (game.status === 'live') return { status: 'live' }
-
-    // Registration checks
-    const isRegistered = game?.registeredUsers?.some(r => r.email === userEmail)
-    if (isRegistered) {
-      return game.status === 'completed' ? { status: 'missed' } : { status: 'registered' }
-    }
-
-    return { status: '' }
-  }
-
-  const filteredGames = gamesToUse.filter(game => {
-    const userStatus = getUserGameStatus(game).status
-    const userEmail = session?.user?.email
-    const globalStatus = game.status
-
-    if (statusFilter === 'all') return true
-    if (statusFilter === 'upcoming') return globalStatus === 'approved'
-    if (statusFilter === 'registered') {
-      return globalStatus === 'approved' && game.registeredUsers?.some(r => r.email === userEmail)
-    }
-    if (statusFilter === 'live') {
-      return globalStatus === 'live' || (userStatus === 'completed' && globalStatus === 'live')
-    }
-
-    return userStatus === statusFilter
-  })
+  // Status tabs are filtered server-side via listStatus; quiz/location filters apply to the current page.
+  const filteredGames = gamesToUse
 
   if (loading) {
     return (

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
@@ -8,9 +8,21 @@ import { useSession } from 'next-auth/react'
 import CreatorGamesList from '@/components/apps/games/all-games/CreatorGamesList'
 import { useSearchParams, useRouter } from 'next/navigation'
 import ReusableTabsList from '@/components/public-games/ReusableTabsList'
-import { Box, Button, Container, Stack, Typography, useTheme, alpha } from '@mui/material'
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Container,
+  Pagination,
+  Stack,
+  Typography,
+  useTheme,
+  alpha
+} from '@mui/material'
 import { Add as AddIcon, Games as GamesIcon } from '@mui/icons-material'
 import ReusablePopUpList from '@/components/public-games/ReusableFiltersList'
+import { GAME_GRID_PAGE_SIZE } from '@/constants/gameListPagination'
+import { normalizeGameListResult } from '@/utils/gameListApi'
 
 const gamestatuses = [
   { value: 'all', label: 'All' },
@@ -28,6 +40,9 @@ const AllGamesPage = ({ creatorEmail = '', isSuperUser = false }) => {
   const router = useRouter()
   const [games, setGames] = useState([])
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(0)
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false)
   const { data: session } = useSession()
   const searchParams = useSearchParams()
   const gameStatusFilter = searchParams.get('status') || 'all'
@@ -35,44 +50,50 @@ const AllGamesPage = ({ creatorEmail = '', isSuperUser = false }) => {
   const [selectedLocations, setSelectedLocations] = useState([])
   const theme = useTheme()
 
-  const fetchGames = async () => {
+  const fetchGames = useCallback(async () => {
     setLoading(true)
     try {
-      const params = []
+      const params = new URLSearchParams({
+        limit: String(GAME_GRID_PAGE_SIZE),
+        page: String(page)
+      })
       if (creatorEmail) {
-        params.push(`email=${creatorEmail}`)
+        params.set('email', creatorEmail)
       }
       if (gameStatusFilter && gameStatusFilter !== 'all') {
-        params.push(`status=${gameStatusFilter}`)
-      }
-      let url = `${API_URLS.v0.USERS_GAME}`
-      // Only add ? if there are any parameters
-
-      if (params.length > 0) {
-        url += `?${params.join('&')}`
+        params.set('status', gameStatusFilter)
       }
 
-      const result = await RestApi.get(url)
+      const result = await RestApi.get(`${API_URLS.v0.USERS_GAME}?${params.toString()}`)
 
       if (result?.status === 'success') {
-        setGames(result.result || [])
+        const { items, totalPages: tp } = normalizeGameListResult(result.result)
+        setGames(items)
+        setTotalPages(tp)
+        setHasLoadedOnce(true)
       } else {
         console.error('Error fetching games:', result)
         toast.error('Failed to load games')
         setGames([])
+        setTotalPages(0)
       }
     } catch (error) {
       console.error('Error fetching games:', error)
       toast.error('An error occurred while loading games')
       setGames([])
+      setTotalPages(0)
     } finally {
       setLoading(false)
     }
-  }
+  }, [page, gameStatusFilter, creatorEmail])
+
+  useEffect(() => {
+    setPage(1)
+  }, [gameStatusFilter, creatorEmail])
 
   useEffect(() => {
     fetchGames()
-  }, [gameStatusFilter, creatorEmail])
+  }, [fetchGames])
 
   async function handleCreateNewGame() {
     console.log('Clicked Create new game')
@@ -82,6 +103,7 @@ const AllGamesPage = ({ creatorEmail = '', isSuperUser = false }) => {
   const handleGameStatusChange = newStatus => {
     const params = new URLSearchParams(searchParams.toString())
     newStatus === 'all' ? params.delete('status') : params.set('status', newStatus)
+    setPage(1)
     router.push(`?${params.toString()}`)
   }
 
@@ -215,13 +237,38 @@ const AllGamesPage = ({ creatorEmail = '', isSuperUser = false }) => {
 
       {/* Games List */}
       <Box sx={{ p: { xs: 2, sm: 3, md: 4 }, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
-        <CreatorGamesList
-          games={filteredGames}
-          isSuperUser={isSuperUser}
-          setGames={setGames}
-          onRefresh={fetchGames}
-          loading={loading}
-        />
+        {loading && !hasLoadedOnce ? (
+          <Box display='flex' justifyContent='center' py={8}>
+            <CircularProgress size={48} thickness={4} />
+          </Box>
+        ) : loading ? (
+          <Box display='flex' justifyContent='center' py={8} minHeight={360}>
+            <CircularProgress size={48} thickness={4} />
+          </Box>
+        ) : (
+          <>
+            <CreatorGamesList
+              games={filteredGames}
+              isSuperUser={isSuperUser}
+              setGames={setGames}
+              onRefresh={fetchGames}
+              loading={false}
+            />
+            {totalPages > 1 && !loading && (
+              <Stack alignItems='center' sx={{ pt: 4, pb: 2 }}>
+                <Pagination
+                  color='primary'
+                  count={totalPages}
+                  page={page}
+                  onChange={(_, value) => setPage(value)}
+                  showFirstButton
+                  showLastButton
+                  size='large'
+                />
+              </Stack>
+            )}
+          </>
+        )}
       </Box>
 
       {/* Create New Button - Mobile: Below cards, Desktop: Fixed position */}
