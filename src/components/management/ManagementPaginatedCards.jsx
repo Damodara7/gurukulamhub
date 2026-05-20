@@ -75,7 +75,7 @@ export default function ManagementPaginatedCards({
         {renderContent(paginatedItems)}
       </Box>
 
-      {showPagination ? (
+      {showPagination && !pageChanging ? (
         <Stack
           ref={paginationRef}
           alignItems='center'
@@ -93,7 +93,6 @@ export default function ManagementPaginatedCards({
             color='primary'
             count={totalPages}
             page={page}
-            disabled={pageChanging}
             onChange={handlePageChange}
             showFirstButton
             showLastButton

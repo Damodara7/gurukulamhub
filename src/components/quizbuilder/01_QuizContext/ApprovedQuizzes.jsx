@@ -512,13 +512,12 @@ export default function ApprovedQuizzes({ isAdmin = false }) {
             )
           })}
           </Grid>
-          {totalPages > 1 ? (
+          {totalPages > 1 && !loading ? (
             <Stack alignItems='center' sx={{ pt: 3, pb: 1 }}>
               <Pagination
                 color='primary'
                 count={totalPages}
                 page={page}
-                disabled={loading}
                 onChange={(_, value) => setPage(value)}
                 showFirstButton
                 showLastButton

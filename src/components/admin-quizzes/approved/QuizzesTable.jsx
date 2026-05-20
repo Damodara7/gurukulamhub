@@ -818,12 +818,11 @@ const AdminApprovedQuizzesTable = ({ data, refreshData, serverPagination }) => {
         )}
 
         {/* Pagination component - Only show on desktop/tablet */}
-        {!isMobile && (
+        {!isMobile && !(isServer && serverPagination.isLoading) && (
           <Box sx={{ borderTop: `1px solid ${alpha(theme.palette.divider, 0.08)}` }}>
             <TablePagination
               rowsPerPageOptions={[10, 25, 50]}
               component='div'
-              disabled={isServer && serverPagination.isLoading}
               count={isServer ? serverPagination.total : filteredRows.length}
               rowsPerPage={
                 isServer ? serverPagination.rowsPerPage : table.getState().pagination.pageSize
