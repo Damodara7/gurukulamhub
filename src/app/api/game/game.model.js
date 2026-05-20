@@ -7,6 +7,8 @@ import SponsorshipModel from '../sponsorship/sponsorship.model'
 const locationSchema = new mongoose.Schema({
   country: String,
   countryCode: String,
+  /** IANA timezone for location restriction (optional) */
+  timezone: String,
   region: String,
   /** @deprecated Prefer structured pincode/postoffice (India) or zipcode/locality. Kept for older games. */
   city: String,
@@ -160,12 +162,6 @@ const gameSchema = new mongoose.Schema(
         return this.status !== 'awaiting_sponsorship' && this.status !== 'sponsored'
       }
     },
-    timezone: {
-      type: String,
-      required: function () {
-        return this.status !== 'awaiting_sponsorship' && this.status !== 'sponsored'
-      }
-    },
     gameMode: {
       type: String,
       enum: ['live', 'self-paced'],
@@ -275,6 +271,11 @@ const gameSchema = new mongoose.Schema(
   { timestamps: true }
 )
 
-const Game = mongoose.models.game || mongoose.model('game', gameSchema)
+// Re-register in dev when schema changes (avoids stale required `timezone` on cached model).
+if (mongoose.models.game) {
+  delete mongoose.models.game
+}
+
+const Game = mongoose.model('game', gameSchema)
 
 export default Game

@@ -14,7 +14,7 @@ import {
   Tooltip
 } from '@mui/material'
 import { alpha } from '@mui/material/styles'
-import { format } from 'date-fns'
+import { getGameStartDisplay } from '@/utils/formatGameVenueTime'
 import {
   AccessTime as AccessTimeIcon,
   People as PeopleIcon,
@@ -77,6 +77,7 @@ const CreatorGameCard = ({
 }) => {
   const { data: session } = useSession()
   const theme = useTheme()
+  const startDisplay = getGameStartDisplay(game?.startTime, game)
 
   return (
     <Card
@@ -257,7 +258,7 @@ const CreatorGameCard = ({
                       flex: 1
                     }}
                   >
-                    {format(new Date(game.startTime), 'PPpp')}
+                    {startDisplay.cardText}
                   </Typography>
                 </Stack>
               )}

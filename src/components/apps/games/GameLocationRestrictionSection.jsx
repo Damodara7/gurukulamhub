@@ -7,6 +7,7 @@ import CountryRegionDropdown from '@/views/pages/auth/register-multi-steps/Count
 import AutocompletePincode from '@/views/pages/auth/register-multi-steps/AutocompletePincode'
 import AutocompletePostOffice from '@/views/pages/auth/register-multi-steps/AutocompletePostOffice'
 import MapAddressPicker from '@/components/google-maps/MapAddressPicker'
+import { getIanaTimezonesForCountry } from '@/utils/locationTimezones'
 
 async function fetchPinCodesForStateApi(stateName) {
   const res = await fetch(`/api/pincodes/${encodeURIComponent(stateName)}`)
@@ -22,8 +23,8 @@ async function fetchPostOfficesForPin(pin) {
 
 /**
  * Map + structured address fields (same pattern as profile AddressInfo).
- * When country + region + (India: pincode + post office) or (non-India: zip + locality)
- * are all set on the saved game, the API restricts join/start to profiles that match.
+ * When country + timezone + region + (India: pincode + post office) or (non-India: zip + locality)
+ * are set on the saved game, the API restricts join/start to profiles that match address fields.
  */
 export default function GameLocationRestrictionSection({
   countryObject,
@@ -41,6 +42,22 @@ export default function GameLocationRestrictionSection({
   const [loadingPins, setLoadingPins] = useState(false)
 
   const isIndia = countryObject?.country === 'India'
+
+  const timezoneOptions = useMemo(
+    () => getIanaTimezonesForCountry(countryObject?.countryCode),
+    [countryObject?.countryCode]
+  )
+
+  /** Older games may have region/ZIP without `location.timezone`; still show the region step when those exist. */
+  const hasLegacyLocationDetail = !!(
+    location.region ||
+    location.pincode ||
+    location.postoffice ||
+    location.zipcode ||
+    location.locality
+  )
+  const showRegionStep =
+    !!countryObject?.country && (!!location.timezone || hasLegacyLocationDetail)
 
   const mapPickerValue = useMemo(() => {
     if (Array.isArray(location.coordinates) && location.coordinates.length >= 2) {
@@ -155,6 +172,44 @@ export default function GameLocationRestrictionSection({
             <Autocomplete
               disabled={disabled}
               autoHighlight
+              options={timezoneOptions}
+              value={location.timezone || null}
+              onChange={(e, newValue) => {
+                const tz = newValue || ''
+                onLocationPatch({
+                  timezone: tz,
+                  region: '',
+                  pincode: '',
+                  postoffice: '',
+                  zipcode: '',
+                  locality: '',
+                  street: '',
+                  colony: '',
+                  village: ''
+                })
+                onRegionChange('')
+              }}
+              getOptionLabel={option => option || ''}
+              renderInput={params => (
+                <TextField
+                  {...params}
+                  label='Timezone (IANA)'
+                  helperText='Pick the venue timezone for start-time display (does not affect who can join).'
+                  inputProps={{ ...params.inputProps, autoComplete: 'off' }}
+                />
+              )}
+              noOptionsText='No timezones for this country'
+            />
+          </FormControl>
+        </Grid>
+      ) : null}
+
+      {countryObject?.country && showRegionStep ? (
+        <Grid item xs={12} sm={6}>
+          <FormControl fullWidth>
+            <Autocomplete
+              disabled={disabled}
+              autoHighlight
               onChange={(e, newValue) => {
                 const r = newValue || ''
                 onRegionChange(r)
@@ -244,7 +299,7 @@ export default function GameLocationRestrictionSection({
         </>
       ) : null}
 
-      {!isIndia && countryObject?.country ? (
+      {!isIndia && countryObject?.country && showRegionStep && region ? (
         <>
           <Grid item xs={12} sm={6}>
             <TextField

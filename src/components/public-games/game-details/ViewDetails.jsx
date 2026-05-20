@@ -57,6 +57,7 @@ import Leaderboard from '../play-game/Leaderboard'
 import { useSession } from 'next-auth/react'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
+import { getGameStartDisplay } from '@/utils/formatGameVenueTime'
 
 const ViewDetails = ({ game }) => {
   const theme = useTheme()
@@ -117,6 +118,8 @@ const ViewDetails = ({ game }) => {
       </Box>
     )
   }
+
+  const startDisplay = getGameStartDisplay(game.startTime, game)
 
   const getStatusChip = () => {
     const statusConfig = {
@@ -345,7 +348,7 @@ const ViewDetails = ({ game }) => {
                           fontSize: { xs: '0.6rem', sm: '0.65rem' }
                         }}
                       >
-                        STARTS
+                        {startDisplay.label.toUpperCase()}
                       </Typography>
                       <Typography
                         variant='body2'
@@ -355,7 +358,7 @@ const ViewDetails = ({ game }) => {
                           fontSize: { xs: '0.75rem', sm: '0.8rem' }
                         }}
                       >
-                        {format(new Date(game.startTime), 'MMM d, h:mm a')}
+                        {startDisplay.shortText}
                       </Typography>
                     </Box>
                   </Stack>
@@ -857,7 +860,7 @@ const ViewDetails = ({ game }) => {
                               fontSize: { xs: '0.65rem', sm: '0.7rem' }
                             }}
                           >
-                            Starts
+                            {startDisplay.label}
                           </Typography>
                           <Typography
                             variant='body2'
@@ -867,7 +870,7 @@ const ViewDetails = ({ game }) => {
                               fontSize: { xs: '0.875rem', sm: '1rem' }
                             }}
                           >
-                            {format(new Date(game.startTime), 'MMM d, yyyy')}
+                            {startDisplay.dateText}
                           </Typography>
                           <Typography
                             variant='caption'
@@ -876,7 +879,7 @@ const ViewDetails = ({ game }) => {
                               fontSize: { xs: '0.7rem', sm: '0.75rem' }
                             }}
                           >
-                            {format(new Date(game.startTime), 'h:mm a')}
+                            {startDisplay.timeText}
                           </Typography>
                         </Box>
                       </Stack>

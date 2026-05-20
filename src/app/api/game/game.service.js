@@ -26,6 +26,13 @@ import {
   createGameSponsorshipRequestNotification
 } from '../notifications/notification.helpers.js'
 
+/** Removed from schema; venue IANA is stored on `location.timezone`. */
+function omitLegacyTopLevelTimezone(payload) {
+  if (payload && typeof payload === 'object' && 'timezone' in payload) {
+    delete payload.timezone
+  }
+}
+
 // Helper to enrich a single game with registeredUsers, participatedUsers, and questions
 async function enrichGameWithDetails(game) {
   if (!game) return game
@@ -442,6 +449,7 @@ export const getAllByGroupId = async (groupId, filter = {}) => {
 export const addOne = async gameData => {
   await connectMongo()
   try {
+    omitLegacyTopLevelTimezone(gameData)
     const user = await User.findOne({ email: gameData.creatorEmail })
     gameData.createdBy = user._id
     if (user?.roles?.includes('ADMIN')) {
@@ -720,6 +728,7 @@ export const addOne = async gameData => {
 export const updateOne = async (gameId, updateData) => {
   await connectMongo()
   try {
+    omitLegacyTopLevelTimezone(updateData)
     const user = await User.findOne({ email: updateData?.updaterEmail })
     if (!user) {
       return {

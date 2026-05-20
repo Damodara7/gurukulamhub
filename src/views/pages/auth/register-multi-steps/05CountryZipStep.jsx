@@ -1,29 +1,25 @@
 // MUI Imports
 /********** Standard imports.*********************/
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import Grid from '@mui/material/Grid'
-import { TextField, Button, FormControl, RadioGroup, Radio, FormControlLabel, Link, Autocomplete } from '@mui/material'
+import { TextField, Button, FormControl, Autocomplete } from '@mui/material'
 import CenterBox from '@components/CenterBox'
 import Typography from '@mui/material/Typography'
 import * as RestApi from '@/utils/restApiUtil'
-import * as clientApi from '@/app/api/client/client.api'
 import { API_URLS as ApiUrls } from '@/configs/apiConfig'
-import { toast } from 'react-toastify'
 import CircularProgress from '@mui/material/CircularProgress'
 /********************************************/
 import AutocompletePostOffice from './AutocompletePostOffice'
 import AutocompletePincode from './AutocompletePincode'
-import 'react-phone-input-2/lib/style.css'
-// Component Imports
-import DirectionalIcon from '@components/DirectionalIcon'
 import CountryRegionDropdown from './CountryRegionDropdown'
+import { getIanaTimezonesForCountry } from '@/utils/locationTimezones'
 
-const StepCountryZipInfo = ({ handleNext, handlePrev, stepIndex, totalSteps, activeStep, email }) => {
-  // const [selectedPincode, setSelectedPincode] = useState(null)
+const StepCountryZipInfo = ({ handleNext, email }) => {
   const [loading, setLoading] = useState(false)
   const [selectedCountry, setSelectedCountry] = useState('')
   const [selectedCountryObject, setSelectedCountryObject] = useState(null)
   const [countryCode, setCountryCode] = useState('')
+  const [selectedTimezone, setSelectedTimezone] = useState('')
   const [selectedRegion, setSelectedRegion] = useState('')
   const [selectedZipcode, setSelectedZipcode] = useState('')
   const [selectedLocality, setSelectedLocality] = useState('')
@@ -32,34 +28,57 @@ const StepCountryZipInfo = ({ handleNext, handlePrev, stepIndex, totalSteps, act
   const [loadingPincodesOrPostOffices, setLoadingPincodesOrPostOffices] = useState(false)
   const [pinCodes, setPinCodes] = useState([])
 
-  //https://api.postalpincode.in/pincode/500091
+  const isIndia = selectedCountryObject?.country === 'India'
+
+  const timezoneOptions = useMemo(
+    () => getIanaTimezonesForCountry(selectedCountryObject?.countryCode),
+    [selectedCountryObject?.countryCode]
+  )
+
+  useEffect(() => {
+    if (timezoneOptions.length === 1 && !selectedTimezone) {
+      setSelectedTimezone(timezoneOptions[0])
+    }
+  }, [timezoneOptions, selectedTimezone])
+
+  const resetLocationDependents = () => {
+    setSelectedRegion('')
+    setSelectedZipcode('')
+    setSelectedLocality('')
+    setPinCodes([])
+    setPostOffices([])
+  }
 
   const updateCountryDetails = async () => {
     setLoading(true)
     try {
-      const result = await RestApi.put(ApiUrls.v0.USERS_PROFILE, {
+      const payload = {
         email,
         country: selectedCountry,
         countryCode,
         region: selectedRegion,
-        zipcode: selectedZipcode,
-        locality: selectedLocality
-      })
-      // const result = await clientApi.updateUserProfile(email, {
-      //   country: selectedCountry,
-      //   region: selectedRegion,
-      //   zipcode: selectedZipcode,
-      //   locality: selectedLocality
-      // })
+        timezone: selectedTimezone
+      }
 
-      if (result?.status == 'success') {
-        // toast.success('Updated Country Details Successfully.')
-        handleNext()
+      if (isIndia) {
+        payload.pincode = selectedZipcode
+        payload.postoffice = selectedLocality
+        payload.zipcode = ''
+        payload.locality = ''
       } else {
-        // toast.error(result?.message || 'Failed to update country details.')
+        payload.zipcode = selectedZipcode
+        payload.locality = selectedLocality
+        payload.pincode = ''
+        payload.postoffice = ''
+      }
+
+      const result = await RestApi.put(ApiUrls.v0.USERS_PROFILE, payload)
+
+      if (result?.status === 'success') {
+        handleNext()
       }
     } catch (error) {
-      // toast.error('Error occurred while updating country details, Please retry')
+      console.error('Error updating country details:', error)
     } finally {
       setLoading(false)
     }
@@ -71,35 +90,28 @@ const StepCountryZipInfo = ({ handleNext, handlePrev, stepIndex, totalSteps, act
       setPostOffices([])
       return
     }
-    console.log('Selected selectedStateName:', selectedStateName)
     setLoadingPincodesOrPostOffices(true)
     try {
-      const response = await fetch(`/api/pincodes/${selectedStateName}`)
-
+      const response = await fetch(`/api/pincodes/${encodeURIComponent(selectedStateName)}`)
       const data = await response.json()
-      console.log('pinCodes data...', data)
       setPinCodes(data?.pinCodes || [])
     } catch (e) {
-      setLoadingPincodesOrPostOffices(false)
+      console.error('Error fetching pincodes:', e)
     } finally {
       setLoadingPincodesOrPostOffices(false)
     }
   }
 
-  const fetchPostOffices = async selectedZipcode => {
-    if (!selectedZipcode) {
+  const fetchPostOffices = async pin => {
+    if (!pin) {
       setPostOffices([])
       return
     }
-    console.log('Selected selectedZipcode:', selectedZipcode?.Pincode)
     setLoadingPincodesOrPostOffices(true)
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/localities/${selectedZipcode}`)
-
+      const response = await fetch(`/api/localities/${encodeURIComponent(pin)}`)
       const data = await response.json()
-      console.log('pincode data...', data)
-
-      setPostOffices(data?.localities || []) // Assuming data is an array of post office objects
+      setPostOffices(data?.localities || [])
     } catch (error) {
       console.error('Error fetching post offices:', error)
     } finally {
@@ -108,14 +120,21 @@ const StepCountryZipInfo = ({ handleNext, handlePrev, stepIndex, totalSteps, act
   }
 
   function handleChangeCountry(countryValue) {
-    setSelectedRegion('') // Reset region when country changes
     setCountryCode(countryValue?.countryCode || '')
+    setSelectedTimezone('')
+    resetLocationDependents()
   }
+
+  const canSubmit =
+    selectedCountry &&
+    selectedTimezone &&
+    selectedRegion &&
+    selectedZipcode &&
+    selectedLocality
 
   return (
     <>
       <Grid container spacing={2}>
-        {/* <Typography>Enter your Country details</Typography> */}
         <Grid item xs={12}>
           <div style={{ margin: 'auto', display: 'flex', justifyContent: 'center' }}>
             <Typography fontSize={30} fontStyle={'italic'} color={'#6066d0'}>
@@ -130,9 +149,8 @@ const StepCountryZipInfo = ({ handleNext, handlePrev, stepIndex, totalSteps, act
             </Typography>
           </div>
         </Grid>
+
         <Grid item xs={12} sm={6}>
-          {/* <AutocompleteCountry ></AutocompleteCountry> */}
-          {/* <RegionDropdown></RegionDropdown> */}
           <CountryRegionDropdown
             setSelectedCountry={setSelectedCountry}
             selectedCountryObject={selectedCountryObject}
@@ -141,18 +159,44 @@ const StepCountryZipInfo = ({ handleNext, handlePrev, stepIndex, totalSteps, act
           />
         </Grid>
 
-        {selectedCountryObject?.country && (
+        {selectedCountryObject?.country ? (
+          <Grid item xs={12} sm={6}>
+            <FormControl fullWidth>
+              <Autocomplete
+                autoHighlight
+                options={timezoneOptions}
+                value={selectedTimezone || null}
+                onChange={(e, newValue) => {
+                  setSelectedTimezone(newValue || '')
+                  resetLocationDependents()
+                }}
+                getOptionLabel={option => option || ''}
+                renderInput={params => (
+                  <TextField
+                    {...params}
+                    label='Timezone (IANA)'
+                    helperText='Pick your local timezone for quizzes and games in your area.'
+                    inputProps={{ ...params.inputProps, autoComplete: 'off' }}
+                  />
+                )}
+                noOptionsText='No timezones for this country'
+              />
+            </FormControl>
+          </Grid>
+        ) : null}
+
+        {selectedCountryObject?.country && selectedTimezone ? (
           <Grid item xs={12} sm={6}>
             <FormControl fullWidth>
               <Autocomplete
                 autoHighlight
                 onChange={(e, newValue) => {
-                  setSelectedRegion(newValue)
+                  setSelectedRegion(newValue || '')
                   setPinCodes([])
                   setPostOffices([])
                   setSelectedLocality('')
                   setSelectedZipcode('')
-                  fetchPinCodesForState(newValue)
+                  if (newValue) fetchPinCodesForState(newValue)
                 }}
                 id='autocomplete-region-select'
                 options={selectedCountryObject?.regions || []}
@@ -168,13 +212,13 @@ const StepCountryZipInfo = ({ handleNext, handlePrev, stepIndex, totalSteps, act
                     }}
                   />
                 )}
-                value={selectedRegion}
+                value={selectedRegion || null}
               />
             </FormControl>
           </Grid>
-        )}
+        ) : null}
 
-        {selectedCountryObject?.country === 'India' && (
+        {isIndia && selectedRegion ? (
           <Grid item xs={12} sm={6}>
             <FormControl fullWidth>
               <AutocompletePincode
@@ -182,12 +226,16 @@ const StepCountryZipInfo = ({ handleNext, handlePrev, stepIndex, totalSteps, act
                 loading={loadingPincodesOrPostOffices}
                 pinCodes={pinCodes}
                 selectedZipcode={selectedZipcode}
-                setSelectedZipcode={setSelectedZipcode}
+                setSelectedZipcode={val => {
+                  setSelectedZipcode(val || '')
+                  setSelectedLocality('')
+                }}
               />
             </FormControl>
           </Grid>
-        )}
-        {selectedCountryObject?.country === 'India' && (
+        ) : null}
+
+        {isIndia && selectedZipcode ? (
           <Grid item xs={12} sm={6}>
             <FormControl fullWidth>
               <AutocompletePostOffice
@@ -198,35 +246,33 @@ const StepCountryZipInfo = ({ handleNext, handlePrev, stepIndex, totalSteps, act
               />
             </FormControl>
           </Grid>
-        )}
-        {selectedCountryObject?.country !== 'India' && (
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth>
-              <TextField
-                value={selectedZipcode}
-                fullWidth
-                label='Enter Your Zip Code'
-                onChange={e => {
-                  setSelectedZipcode(e.target.value)
-                }}
-              />
-            </FormControl>
-          </Grid>
-        )}
-        {selectedCountryObject?.country !== 'India' && (
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth>
-              <TextField
-                value={selectedLocality}
-                onChange={e => {
-                  setSelectedLocality(e.target.value)
-                }}
-                fullWidth
-                label='Enter Your Locality/City/Village'
-              />
-            </FormControl>
-          </Grid>
-        )}
+        ) : null}
+
+        {!isIndia && selectedCountryObject?.country && selectedTimezone && selectedRegion ? (
+          <>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <TextField
+                  value={selectedZipcode}
+                  fullWidth
+                  label='Enter Your Zip Code'
+                  onChange={e => setSelectedZipcode(e.target.value)}
+                />
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <TextField
+                  value={selectedLocality}
+                  onChange={e => setSelectedLocality(e.target.value)}
+                  fullWidth
+                  label='Enter Your Locality/City/Village'
+                />
+              </FormControl>
+            </Grid>
+          </>
+        ) : null}
+
         <Grid item xs={12}>
           {loading ? (
             <CenterBox>
@@ -236,11 +282,10 @@ const StepCountryZipInfo = ({ handleNext, handlePrev, stepIndex, totalSteps, act
             <CenterBox>
               <Button
                 variant='contained'
-                color={'primary'}
+                color='primary'
                 component='button'
-                disabled={!(selectedCountry && selectedRegion && selectedZipcode && selectedLocality)}
+                disabled={!canSubmit}
                 onClick={updateCountryDetails}
-                //disabled={errors.firstName || errors.lastName || lastName.length < 1 || firstName.length < 1}
               >
                 <span style={{ color: '#ffff', fontStyle: 'italic', letterSpacing: '1px' }}>
                   <b>GO!</b>
@@ -249,25 +294,6 @@ const StepCountryZipInfo = ({ handleNext, handlePrev, stepIndex, totalSteps, act
             </CenterBox>
           )}
         </Grid>
-
-        {/* <Grid item xs={12} className='flex justify-end'>
-          <Button
-            disabled={activeStep === 0}
-            variant='outlined'
-            color='secondary'
-            onClick={handlePrev}
-            startIcon={<DirectionalIcon ltrIconClass='ri-arrow-left-line' rtlIconClass='ri-arrow-right-line' />}
-          >
-            Previous
-          </Button>
-          <Button
-            variant='contained'
-            onClick={handleNext}
-            endIcon={<DirectionalIcon ltrIconClass='ri-arrow-right-line' rtlIconClass='ri-arrow-left-line' />}
-          >
-            Skip
-          </Button>
-        </Grid> */}
       </Grid>
     </>
   )

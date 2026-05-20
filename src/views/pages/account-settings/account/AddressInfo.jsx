@@ -1,9 +1,10 @@
 import React, { useMemo } from 'react'
-import { Autocomplete, Divider, Grid, TextField, FormControl, Typography } from '@mui/material'
+import { Autocomplete, Grid, TextField, FormControl, Typography } from '@mui/material'
 import CountryRegionDropdown from '../../auth/register-multi-steps/CountryRegionDropdown'
 import AutocompletePostOffice from '../../auth/register-multi-steps/AutocompletePostOffice'
 import AutocompletePincode from '../../auth/register-multi-steps/AutocompletePincode'
 import MapAddressPicker from '@/components/google-maps/MapAddressPicker'
+import { getIanaTimezonesForCountry } from '@/utils/locationTimezones'
 
 function AddressInfo({
   formData,
@@ -27,9 +28,38 @@ function AddressInfo({
   setSelectedLocality,
   selectedLocality,
   setZipcodeFromDb,
-  setLocalityFromDb,
-  filteredTimezones
+  setLocalityFromDb
 }) {
+  const isIndia = selectedCountryObject?.country === 'India'
+
+  const timezoneOptions = useMemo(
+    () => getIanaTimezonesForCountry(selectedCountryObject?.countryCode),
+    [selectedCountryObject?.countryCode]
+  )
+
+  const hasLegacyLocationDetail = !!(
+    selectedRegion ||
+    formData.pincode ||
+    formData.postoffice ||
+    formData.zipcode ||
+    formData.locality
+  )
+  const showRegionStep =
+    !!selectedCountryObject?.country && (!!formData.timezone || hasLegacyLocationDetail)
+
+  const clearLocationDependents = () => {
+    setSelectedRegion('')
+    setSelectedZipcode('')
+    setSelectedLocality('')
+    setZipcodeFromDb('')
+    setLocalityFromDb('')
+    handleFormChange('region', '')
+    handleFormChange('pincode', '')
+    handleFormChange('postoffice', '')
+    handleFormChange('zipcode', '')
+    handleFormChange('locality', '')
+  }
+
   const mapPickerValue = useMemo(() => {
     if (Array.isArray(formData.coordinates) && formData.coordinates.length >= 2) {
       return {
@@ -67,8 +97,34 @@ function AddressInfo({
         />
       </Grid>
 
+      {selectedCountryObject?.country ? (
+        <Grid item xs={12} sm={6}>
+          <FormControl fullWidth>
+            <Autocomplete
+              autoHighlight
+              options={timezoneOptions}
+              value={formData.timezone || null}
+              onChange={(e, newValue) => {
+                handleFormChange('timezone', newValue || '')
+                clearLocationDependents()
+              }}
+              getOptionLabel={option => option || ''}
+              renderInput={params => (
+                <TextField
+                  {...params}
+                  label='Timezone (IANA)'
+                  helperText='Used for games and events in your local time.'
+                  inputProps={{ ...params.inputProps, autoComplete: 'off' }}
+                />
+              )}
+              noOptionsText='No timezones for this country'
+            />
+          </FormControl>
+        </Grid>
+      ) : null}
+
       {/* Region */}
-      {selectedCountryObject?.country && (
+      {showRegionStep ? (
         <Grid item xs={12} sm={6}>
           <FormControl fullWidth>
             <Autocomplete
@@ -110,10 +166,10 @@ function AddressInfo({
             />
           </FormControl>
         </Grid>
-      )}
+      ) : null}
 
       {/* PinCode */}
-      {selectedCountryObject?.country === 'India' && selectedRegion && (
+      {isIndia && selectedRegion ? (
         <Grid item xs={12} sm={6}>
           <FormControl fullWidth>
             <AutocompletePincode
@@ -128,10 +184,10 @@ function AddressInfo({
             />
           </FormControl>
         </Grid>
-      )}
+      ) : null}
 
       {/* Locality - PostOffice */}
-      {selectedCountryObject?.country === 'India' && selectedZipcode && (
+      {isIndia && selectedZipcode ? (
         <Grid item xs={12} sm={6}>
           <FormControl fullWidth>
             <AutocompletePostOffice
@@ -145,10 +201,10 @@ function AddressInfo({
             />
           </FormControl>
         </Grid>
-      )}
+      ) : null}
 
       {/* Additional fields for India - Street, Colony, Village */}
-      {selectedCountryObject?.country === 'India' && selectedLocality && (
+      {isIndia && selectedLocality ? (
         <>
           {/* Street */}
           <Grid item xs={12} sm={6}>
@@ -186,59 +242,36 @@ function AddressInfo({
             />
           </Grid>
         </>
-      )}
+      ) : null}
 
-      {selectedCountryObject?.country && selectedCountryObject?.country !== 'India' && (
-        <Grid item xs={12} sm={6}>
-          <FormControl fullWidth>
-            <TextField
-              value={formData.zipcode}
-              fullWidth
-              label='Enter Your Zip Code'
-              onChange={e => {
-                handleFormChange('zipcode', e.target.value)
-              }}
-            />
-          </FormControl>
-        </Grid>
-      )}
-
-      {selectedCountryObject?.country && selectedCountryObject?.country !== 'India' && (
-        <Grid item xs={12} sm={6}>
-          <FormControl fullWidth>
-            <TextField
-              value={formData.locality}
-              onChange={e => {
-                handleFormChange('locality', e.target.value)
-              }}
-              fullWidth
-              label='Enter Your Locality/City/Village'
-            ></TextField>
-          </FormControl>
-        </Grid>
-      )}
-
-      {/* TimeZone */}
-      {/* <Grid item xs={12} sm={6}>
-        <FormControl fullWidth>
-          <InputLabel>TimeZone</InputLabel>
-          <Select
-            name='timezone'
-            label='TimeZone'
-            value={formData.timezone}
-            onChange={e => handleFormChange('timezone', e.target.value)}
-            MenuProps={{ PaperProps: { style: { maxHeight: 250 } } }}
-          >
-            {filteredTimezones &&
-              filteredTimezones.length > 0 &&
-              filteredTimezones.map(timezone => (
-                <MenuItem key={timezone.timezoneWithGMT} value={timezone.timezoneWithGMT}>
-                  {timezone.timezoneWithGMT} - {timezone.country}
-                </MenuItem>
-              ))}
-          </Select>
-        </FormControl>
-      </Grid> */}
+      {!isIndia && showRegionStep && selectedRegion ? (
+        <>
+          <Grid item xs={12} sm={6}>
+            <FormControl fullWidth>
+              <TextField
+                value={formData.zipcode}
+                fullWidth
+                label='Enter Your Zip Code'
+                onChange={e => {
+                  handleFormChange('zipcode', e.target.value)
+                }}
+              />
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <FormControl fullWidth>
+              <TextField
+                value={formData.locality}
+                onChange={e => {
+                  handleFormChange('locality', e.target.value)
+                }}
+                fullWidth
+                label='Enter Your Locality/City/Village'
+              />
+            </FormControl>
+          </Grid>
+        </>
+      ) : null}
     </>
   )
 }

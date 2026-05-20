@@ -62,7 +62,6 @@ function CreateGamePage({ isSuperUser = false }) {
           ...payload,
           startTime: values.startTime,
           registrationEndTime: values.requireRegistration ? values.registrationEndTime : null,
-          timezone: values.timezone,
           duration: Number(values.duration) * 60,
           maxPlayers: values.limitPlayers ? Number(values.maxPlayers) : 100000,
           rewards:

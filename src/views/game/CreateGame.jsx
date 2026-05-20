@@ -448,8 +448,8 @@ function CreateGame({ mode = 'create', quizId = '', gameId }) {
 
           <Grid item xs={12}>
             <Typography variant='body2' color='textSecondary' gutterBottom sx={{ mb: 1 }}>
-              Matches profile fields: picking a country limits players to profiles in that country; add region and (for
-              India) PIN/post office or (elsewhere) ZIP/locality to narrow further.
+              Matches profile fields: country, then IANA timezone, then region; add (for India) PIN/post office or
+              (elsewhere) ZIP/locality to narrow further when needed.
             </Typography>
             <GameLocationRestrictionSection
               countryObject={selectedCountryObject}

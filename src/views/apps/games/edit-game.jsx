@@ -61,7 +61,6 @@ function EditGamePage({ gameData = null, gameId = null, isSuperUser = false }) {
           ...payload,
           startTime: values.startTime,
           registrationEndTime: values.requireRegistration ? values.registrationEndTime : null,
-          timezone: values.timezone,
           duration: Number(values.duration) * 60,
           maxPlayers: values.limitPlayers ? Number(values.maxPlayers) : 100000,
           rewards:
@@ -139,7 +138,6 @@ function EditGamePage({ gameData = null, gameId = null, isSuperUser = false }) {
           approvedAt: new Date(),
           startTime: values.startTime,
           registrationEndTime: values.requireRegistration ? values.registrationEndTime : null,
-          timezone: values.timezone,
           duration: values.gameMode === 'self-paced' ? Number(values.duration) * 60 : null,
           maxPlayers: values.limitPlayers ? Number(values.maxPlayers) : 100000
         }

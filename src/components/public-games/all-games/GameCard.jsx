@@ -33,6 +33,7 @@ import imagePlaceholder from '/public/images/misc/image-placeholder.png'
 import { useEffect, useState } from 'react'
 import ShareGamePopup from './ShareGamePopup'
 import { isGameLocationRestricted, profileMatchesGameLocation, restrictedLocationHint } from '@/utils/gameLocationAccess'
+import { getGameStartDisplay } from '@/utils/formatGameVenueTime'
 import {
   EventAvailable as EventAvailableIcon,
   CheckCircle as CheckCircleIcon,
@@ -45,6 +46,7 @@ const GameCard = ({ game, currentUsergroupIds = [], currentUsergroupIdsIds = [],
   const { data: session } = useSession()
   const router = useRouter()
   const theme = useTheme()
+  const startDisplay = getGameStartDisplay(game?.startTime, game)
   const [timeRemaining, setTimeRemaining] = useState(null)
   const [copied, setCopied] = useState(false)
   const [sharePopupOpen, setSharePopupOpen] = useState(false)
@@ -340,7 +342,7 @@ const GameCard = ({ game, currentUsergroupIds = [], currentUsergroupIdsIds = [],
               <Stack direction='row' alignItems='center' spacing={1}>
                 <EventIcon fontSize='small' color='action' />
                 <Typography variant='body2'>
-                  {format(new Date(game.startTime), 'PPpp') || 'time is not Specified'}
+                  {game.startTime ? startDisplay.cardText : 'Time not specified'}
                 </Typography>
               </Stack>
 

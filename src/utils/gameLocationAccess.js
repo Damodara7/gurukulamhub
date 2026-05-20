@@ -2,12 +2,16 @@
  * Location-based game access must stay aligned with user profile fields
  * (@/app/api/profile/profile.model): country, region, pincode, postoffice
  * for India and zipcode, locality elsewhere.
+ *
+ * `location.timezone` (IANA) is for venue time display only — not used for join/register gates.
  */
 
 export function emptyGameLocation() {
   return {
     country: '',
     countryCode: '',
+    /** IANA zone for venue time display (not used for access matching) */
+    timezone: '',
     region: '',
     city: '',
     pincode: '',

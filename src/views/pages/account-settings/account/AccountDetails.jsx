@@ -118,7 +118,7 @@ const initialData = {
   pincode: '',
   postoffice: '',
   locality: '',
-  // timezone: '',
+  timezone: '',
   religion: '',
   caste: '',
   category: '',
@@ -937,9 +937,7 @@ const AccountDetails = () => {
       )
       setLanguageOptions(prev =>
         prev.map(option =>
-          isSameLanguageId(option.value, updatedLanguage._id)
-            ? { ...option, label: updatedLanguage.language }
-            : option
+          isSameLanguageId(option.value, updatedLanguage._id) ? { ...option, label: updatedLanguage.language } : option
         )
       )
       return
@@ -952,9 +950,7 @@ const AccountDetails = () => {
     }
 
     setRemovedLanguageIds(prev =>
-      prev.some(existingId => isSameLanguageId(existingId, updatedLanguage._id))
-        ? prev
-        : [...prev, updatedLanguage._id]
+      prev.some(existingId => isSameLanguageId(existingId, updatedLanguage._id)) ? prev : [...prev, updatedLanguage._id]
     )
     setPendingLanguages(prev => [...prev, tempUpdatedLanguage])
     setLanguageOptions(prev => [
@@ -1452,6 +1448,7 @@ const AccountDetails = () => {
     handleFormChange('locality', '')
     handleFormChange('pincode', '')
     handleFormChange('postoffice', '')
+    handleFormChange('timezone', '')
     handleFormChange('street', '')
     handleFormChange('colony', '')
     handleFormChange('village', '')
@@ -1480,6 +1477,7 @@ const AccountDetails = () => {
         locality: '',
         pincode: '',
         postoffice: '',
+        timezone: '',
         street: '',
         colony: '',
         village: '',
@@ -1569,6 +1567,7 @@ const AccountDetails = () => {
           'country',
           'countryCode',
           'region',
+          'timezone',
           'zipcode',
           'locality',
           'pincode',
@@ -2159,9 +2158,10 @@ const AccountDetails = () => {
             position: 'absolute',
             inset: 0,
             borderRadius: 'inherit',
-            border: theme.palette.mode === 'dark'
-              ? `1px solid ${alpha(theme.palette.primary.light, 0.25)}`
-              : `1px solid ${alpha(theme.palette.common.white, 0.35)}`,
+            border:
+              theme.palette.mode === 'dark'
+                ? `1px solid ${alpha(theme.palette.primary.light, 0.25)}`
+                : `1px solid ${alpha(theme.palette.common.white, 0.35)}`,
             pointerEvents: 'none'
           }
         }}
@@ -2184,7 +2184,10 @@ const AccountDetails = () => {
                 transform: 'translateX(-50%)',
                 width: 54,
                 height: 54,
-                bgcolor: alpha(theme.palette.mode === 'dark' ? theme.palette.grey[900] : theme.palette.common.white, 0.9),
+                bgcolor: alpha(
+                  theme.palette.mode === 'dark' ? theme.palette.grey[900] : theme.palette.common.white,
+                  0.9
+                ),
                 borderRadius: '50%',
                 display: 'flex',
                 alignItems: 'center',
@@ -2228,7 +2231,13 @@ const AccountDetails = () => {
               htmlFor='account-settings-upload-image'
             >
               <CloudUploadIcon />
-              <input hidden type='file' accept='.jpg, .png, .jpeg' onChange={handleFileInputChange} id='account-settings-upload-image' />
+              <input
+                hidden
+                type='file'
+                accept='.jpg, .png, .jpeg'
+                onChange={handleFileInputChange}
+                id='account-settings-upload-image'
+              />
             </IconButtonTooltip>
           </Box>
 
@@ -2289,20 +2298,11 @@ const AccountDetails = () => {
                 sx={{
                   p: 3,
                   borderRadius: 2.5,
-                  bgcolor: alpha(
-                    theme.palette.primary.main,
-                    theme.palette.mode === 'dark' ? 0.12 : 0.05
-                  ),
-                  border: `1px solid ${alpha(
-                    theme.palette.primary.main,
-                    theme.palette.mode === 'dark' ? 0.2 : 0.15
-                  )}`,
+                  bgcolor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.12 : 0.05),
+                  border: `1px solid ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.2 : 0.15)}`,
                   transition: 'all 0.25s ease',
                   '&:hover': {
-                    bgcolor: alpha(
-                      theme.palette.primary.main,
-                      theme.palette.mode === 'dark' ? 0.16 : 0.08
-                    ),
+                    bgcolor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.16 : 0.08),
                     borderColor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.3 : 0.25),
                     transform: 'translateY(-2px)'
                   }
@@ -2393,20 +2393,14 @@ const AccountDetails = () => {
                 sx={{
                   p: 3,
                   borderRadius: 2.5,
-                  bgcolor: alpha(
-                    theme.palette.secondary.main,
-                    theme.palette.mode === 'dark' ? 0.12 : 0.05
-                  ),
+                  bgcolor: alpha(theme.palette.secondary.main, theme.palette.mode === 'dark' ? 0.12 : 0.05),
                   border: `1px solid ${alpha(
                     theme.palette.secondary.main,
                     theme.palette.mode === 'dark' ? 0.2 : 0.15
                   )}`,
                   transition: 'all 0.25s ease',
                   '&:hover': {
-                    bgcolor: alpha(
-                      theme.palette.secondary.main,
-                      theme.palette.mode === 'dark' ? 0.16 : 0.08
-                    ),
+                    bgcolor: alpha(theme.palette.secondary.main, theme.palette.mode === 'dark' ? 0.16 : 0.08),
                     borderColor: alpha(theme.palette.secondary.main, theme.palette.mode === 'dark' ? 0.3 : 0.25),
                     transform: 'translateY(-2px)'
                   }
@@ -2443,7 +2437,12 @@ const AccountDetails = () => {
                     Profile Completion
                   </Typography>
                 </Stack>
-                <Stack direction='row' spacing={2.5} alignItems='center' sx={{ flexWrap: { xs: 'wrap', sm: 'nowrap' } }}>
+                <Stack
+                  direction='row'
+                  spacing={2.5}
+                  alignItems='center'
+                  sx={{ flexWrap: { xs: 'wrap', sm: 'nowrap' } }}
+                >
                   <Box sx={{ position: 'relative', flexShrink: 0 }}>
                     <CircularProgressWithValueLabel
                       value={profilePercentage}
@@ -2469,7 +2468,8 @@ const AccountDetails = () => {
                     <Typography
                       variant='body2'
                       sx={{
-                        color: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.75) : 'text.secondary',
+                        color:
+                          theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.75) : 'text.secondary',
                         lineHeight: 1.6,
                         fontSize: '0.875rem'
                       }}
@@ -2808,137 +2808,137 @@ const AccountDetails = () => {
             </SectionAccordion>
           </Stack>
 
-            {isModalOpen.language && (
-              <NewLanguageModal
-                email={session?.user?.email}
-                open={isModalOpen.language}
-                onClose={() => {
-                  setEditingLanguage(null)
-                  handleCloseModal('language')
-                }}
-                onAddLanguageToState={handleAddLanguageToState}
-                onUpdateLanguageInState={handleUpdateLanguageInState}
-                editingLanguage={editingLanguage}
-                existingLanguageNames={existingLanguageNames}
-              />
-            )}
-            {isModalOpen.associatedOrganization && (
-              <NewAssociatedOrganization
-                email={session?.user?.email}
-                open={isModalOpen.associatedOrganization}
-                onClose={() => {
-                  setEditingAssociatedOrganization(null)
-                  handleCloseModal('associatedOrganization')
-                }}
-                onAddOrganizationToState={handleAddOrganizationToState}
-                onUpdateOrganizationInState={handleUpdateOrganizationInState}
-                editingAssociatedOrganization={editingAssociatedOrganization}
-              />
-            )}
-            {isModalOpen.education && (
-              <EducationModal
-                email={session?.user?.email}
-                open={isModalOpen.education}
-                onClose={() => {
-                  setEditingEducation(null)
-                  handleCloseModal('education')
-                }}
-                onAddEducationToState={handleAddEducationToState}
-                onUpdateEducationInState={handleUpdateEducationInState}
-                existingSchools={profileData?.schools || []}
-                editingEducation={editingEducation}
-              />
-            )}
-            {isModalOpen.workingPosition && (
-              <CurrentWorkingPositionModal
-                email={session?.user?.email}
-                open={isModalOpen.workingPosition}
-                onClose={() => {
-                  setEditingWorkingPosition(null)
-                  handleCloseModal('workingPosition')
-                }}
-                onAddPositionToState={handleAddPositionToState}
-                onUpdatePositionInState={handleUpdatePositionInState}
-                existingPositions={profileData?.workingPositions || []}
-                editingWorkingPosition={editingWorkingPosition}
-              />
-            )}
-
-            {/* View Working Position Modal */}
-            <WorkingPositionViewModal
-              open={isViewModalOpen}
-              onClose={handleCloseViewModal}
-              position={viewingPosition}
-              onEdit={handleEditWorkingPosition}
-            />
-
-            {/* View Associated Organization Modal */}
-            <AssociatedOrganizationViewModal
-              open={isViewOrgModalOpen}
-              onClose={handleCloseViewOrgModal}
-              organization={viewingOrganization}
-              onEdit={handleEditAssociatedOrganization}
-            />
-
-            {/* View Education Modal */}
-            <EducationViewModal
-              open={isViewEducationModalOpen}
-              onClose={handleCloseViewEducationModal}
-              education={viewingEducation}
-              onEdit={handleEditEducation}
-            />
-
-            {/* Sticky action bar — keeps Save Changes always reachable while the user
-                edits any of the collapsible sections above. */}
-            <Box
-              sx={{
-                position: 'sticky',
-                bottom: 0,
-                zIndex: 2,
-                py: 2,
-                mt: 2,
-                bgcolor: 'background.paper',
-                borderTop: 1,
-                borderColor: 'divider'
+          {isModalOpen.language && (
+            <NewLanguageModal
+              email={session?.user?.email}
+              open={isModalOpen.language}
+              onClose={() => {
+                setEditingLanguage(null)
+                handleCloseModal('language')
               }}
-            >
-              <Stack direction='row' spacing={2} justifyContent='center'>
-                <Tooltip title={!isDirty ? 'No changes to discard' : ''} disableHoverListener={isDirty}>
-                  <span>
-                    <Button
-                      variant='outlined'
-                      type='reset'
-                      onClick={handleResetForm}
-                      disabled={!isDirty || isFormSubmitting || getLoading}
-                    >
-                      Reset
-                    </Button>
-                  </span>
-                </Tooltip>
-                <Tooltip title={!isDirty ? 'No changes to save' : ''} disableHoverListener={isDirty}>
-                  <span>
-                    <Button
-                      disabled={
-                        !isDirty ||
-                        isFormSubmitting ||
-                        getLoading ||
-                        !isEpicValid ||
-                        (formData.facebookUrl && !isUrlsValid.facebookUrl) ||
-                        (formData.instagramUrl && !isUrlsValid.instagramUrl) ||
-                        (formData.linkedInUrl && !isUrlsValid.linkedInUrl) ||
-                        (formData.youtubeUrl && !isUrlsValid.youtubeUrl)
-                      }
-                      variant='contained'
-                      type='submit'
-                      color='primary'
-                      style={{ color: 'white', backgroundColor: theme.palette.primary.main }}
-                    >
-                      {isFormSubmitting ? 'Saving...' : 'Save Changes'}
-                    </Button>
-                  </span>
-                </Tooltip>
-              </Stack>
-            </Box>
+              onAddLanguageToState={handleAddLanguageToState}
+              onUpdateLanguageInState={handleUpdateLanguageInState}
+              editingLanguage={editingLanguage}
+              existingLanguageNames={existingLanguageNames}
+            />
+          )}
+          {isModalOpen.associatedOrganization && (
+            <NewAssociatedOrganization
+              email={session?.user?.email}
+              open={isModalOpen.associatedOrganization}
+              onClose={() => {
+                setEditingAssociatedOrganization(null)
+                handleCloseModal('associatedOrganization')
+              }}
+              onAddOrganizationToState={handleAddOrganizationToState}
+              onUpdateOrganizationInState={handleUpdateOrganizationInState}
+              editingAssociatedOrganization={editingAssociatedOrganization}
+            />
+          )}
+          {isModalOpen.education && (
+            <EducationModal
+              email={session?.user?.email}
+              open={isModalOpen.education}
+              onClose={() => {
+                setEditingEducation(null)
+                handleCloseModal('education')
+              }}
+              onAddEducationToState={handleAddEducationToState}
+              onUpdateEducationInState={handleUpdateEducationInState}
+              existingSchools={profileData?.schools || []}
+              editingEducation={editingEducation}
+            />
+          )}
+          {isModalOpen.workingPosition && (
+            <CurrentWorkingPositionModal
+              email={session?.user?.email}
+              open={isModalOpen.workingPosition}
+              onClose={() => {
+                setEditingWorkingPosition(null)
+                handleCloseModal('workingPosition')
+              }}
+              onAddPositionToState={handleAddPositionToState}
+              onUpdatePositionInState={handleUpdatePositionInState}
+              existingPositions={profileData?.workingPositions || []}
+              editingWorkingPosition={editingWorkingPosition}
+            />
+          )}
+
+          {/* View Working Position Modal */}
+          <WorkingPositionViewModal
+            open={isViewModalOpen}
+            onClose={handleCloseViewModal}
+            position={viewingPosition}
+            onEdit={handleEditWorkingPosition}
+          />
+
+          {/* View Associated Organization Modal */}
+          <AssociatedOrganizationViewModal
+            open={isViewOrgModalOpen}
+            onClose={handleCloseViewOrgModal}
+            organization={viewingOrganization}
+            onEdit={handleEditAssociatedOrganization}
+          />
+
+          {/* View Education Modal */}
+          <EducationViewModal
+            open={isViewEducationModalOpen}
+            onClose={handleCloseViewEducationModal}
+            education={viewingEducation}
+            onEdit={handleEditEducation}
+          />
+
+          {/* Sticky action bar — keeps Save Changes always reachable while the user
+                edits any of the collapsible sections above. */}
+          <Box
+            sx={{
+              position: 'sticky',
+              bottom: 0,
+              zIndex: 2,
+              py: 2,
+              mt: 2,
+              bgcolor: 'background.paper',
+              borderTop: 1,
+              borderColor: 'divider'
+            }}
+          >
+            <Stack direction='row' spacing={2} justifyContent='center'>
+              <Tooltip title={!isDirty ? 'No changes to discard' : ''} disableHoverListener={isDirty}>
+                <span>
+                  <Button
+                    variant='outlined'
+                    type='reset'
+                    onClick={handleResetForm}
+                    disabled={!isDirty || isFormSubmitting || getLoading}
+                  >
+                    Reset
+                  </Button>
+                </span>
+              </Tooltip>
+              <Tooltip title={!isDirty ? 'No changes to save' : ''} disableHoverListener={isDirty}>
+                <span>
+                  <Button
+                    disabled={
+                      !isDirty ||
+                      isFormSubmitting ||
+                      getLoading ||
+                      !isEpicValid ||
+                      (formData.facebookUrl && !isUrlsValid.facebookUrl) ||
+                      (formData.instagramUrl && !isUrlsValid.instagramUrl) ||
+                      (formData.linkedInUrl && !isUrlsValid.linkedInUrl) ||
+                      (formData.youtubeUrl && !isUrlsValid.youtubeUrl)
+                    }
+                    variant='contained'
+                    type='submit'
+                    color='primary'
+                    style={{ color: 'white', backgroundColor: theme.palette.primary.main }}
+                  >
+                    {isFormSubmitting ? 'Saving...' : 'Save Changes'}
+                  </Button>
+                </span>
+              </Tooltip>
+            </Stack>
+          </Box>
         </form>
       </CardContent>
     </Card>
@@ -2979,14 +2979,13 @@ const SectionAccordion = ({ id, icon, title, subtitle, defaultExpanded = false, 
             width: 36,
             height: 36,
             borderRadius: 1.5,
-            bgcolor: theme ? alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.18 : 0.1) : 'action.hover',
+            bgcolor: theme
+              ? alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.18 : 0.1)
+              : 'action.hover',
             flex: 'none'
           }}
         >
-          <i
-            className={icon}
-            style={{ fontSize: 18, color: theme ? theme.palette.primary.main : undefined }}
-          />
+          <i className={icon} style={{ fontSize: 18, color: theme ? theme.palette.primary.main : undefined }} />
         </Box>
       )}
       <Box sx={{ minWidth: 0 }}>

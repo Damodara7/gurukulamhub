@@ -45,7 +45,6 @@ import ReactPlayer from 'react-player'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import Loading from '@/components/Loading'
-import { gmttimezones } from '@/data/gmttimezones'
 import GroupAutocomplete from '@/components/group/GroupAutocomplete'
 
 // Reward position options

@@ -55,12 +55,8 @@ import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import Loading from '@/components/Loading'
 import { getCountryByName } from '@/utils/countryRegionUtil'
-import { timezones } from '@/data/timezones'
-import { gmttimezones } from '@/data/gmttimezones'
-import { countryTimezones } from '@/data/country-timezones'
-import moment, { tz } from 'moment-timezone'
+import moment from 'moment-timezone'
 import { userAgent } from 'next/server'
-import { convertWithGMTOffset } from '@/utils/timezoneconverter'
 import GroupAutocomplete from '@/components/group/GroupAutocomplete'
 import GameLocationRestrictionSection from '@/components/apps/games/GameLocationRestrictionSection'
 import { emptyGameLocation, restrictedLocationHint } from '@/utils/gameLocationAccess'
@@ -75,7 +71,7 @@ const RESTRICTION_MODE = {
 
 //validate the form
 
-const validateForm = formData => {
+const validateForm = (formData, restrictionMode = RESTRICTION_MODE.OPEN) => {
   const errors = {}
   if (!formData.title) {
     errors.title = 'Game title is required.'
@@ -90,8 +86,10 @@ const validateForm = formData => {
     errors.thumbnailPoster = 'Thumbnail image is required.'
   }
 
-  if (!formData.timezone?.value) {
-    errors.timezone = 'Timezone is required.'
+  const locCountry = typeof formData.location?.country === 'string' ? formData.location.country.trim() : ''
+  const locIana = typeof formData.location?.timezone === 'string' ? formData.location.timezone.trim() : ''
+  if (restrictionMode === RESTRICTION_MODE.LOCATION && locCountry && !locIana) {
+    errors.locationTimezone = 'Pick a timezone under Game location.'
   }
   // if (!formData.zipcode) {
   //   errors.zipcode = 'Creator zipcode is required'
@@ -146,7 +144,7 @@ const validateForm = formData => {
 
 const formFieldOrder = [
   'title',
-  'timezone',
+  'locationTimezone',
   'pin',
   'description',
   'quiz',
@@ -177,7 +175,6 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
     description: '',
     quiz: '',
     startTime: null,
-    timezone: { value: '', label: '' },
     duration: null, // 10 minutes in seconds
     promotionalVideoUrl: '',
     thumbnailPoster: '',
@@ -210,6 +207,8 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
   // const [loadingPincodes, setLoadingPincodes] = useState(false)
   // const [selectedPincode, setSelectedPincode] = useState('')
   const [localTimeDisplay, setLocalTimeDisplay] = useState(null)
+  /** Same start instant in Asia/Kolkata for a common reference (always when start time is set). */
+  const [istTimeDisplay, setIstTimeDisplay] = useState(null)
   // Loading state
   const [loading, setLoading] = useState({
     submitting: false,
@@ -240,7 +239,6 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
   // Create refs for each field
   const fieldRefs = {
     title: useRef(),
-    timezone: useRef(),
     pin: useRef(),
     description: useRef(),
     quiz: useRef(),
@@ -270,7 +268,6 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
         registrationEndTime: data?.registrationEndTime ? new Date(data.registrationEndTime) : null,
         duration: data?.duration ? Math.floor(data.duration / 60) : '',
         gameMode: data?.gameMode || 'live',
-        timezone: gmttimezones.find(tz => tz.value === data?.timezone) || {},
         groupId: data?.groupId || null,
         questionsCount: data?.questionsCount || 0,
         pointsWeightage: data?.pointsWeightage || 1,
@@ -308,23 +305,46 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
   }, [formData?.rewards])
 
   useEffect(() => {
-    if (formData.startTime && formData.timezone?.value) {
-      // IST is GMT+05:30 - we pass it as an object to match your timezone data structure
-      const istOffset = { value: '+05:30' }
-
-      const localTime = convertWithGMTOffset(formData.startTime, istOffset, formData.timezone.value)
-
-      if (localTime) {
-        // Format the timezone display (e.g., "GMT+05:30")
-        const tzDisplay = formData.timezone?.value ? `GMT${formData.timezone.value}` : ''
-        //  console.log( 'formdata' , formData.timezone);
-        //  console.log('timezonevalue' , formData.timezone.value);
-        setLocalTimeDisplay(localTime.format('YYYY-MM-DD hh:mm A') + ` (${tzDisplay})`)
-      }
-    } else {
+    if (!formData.startTime) {
       setLocalTimeDisplay(null)
+      setIstTimeDisplay(null)
+      return
     }
-  }, [formData.startTime, formData.timezone])
+
+    const ist = moment(formData.startTime).tz('Asia/Kolkata')
+    setIstTimeDisplay(ist.isValid() ? ist.format('DD/MM/YYYY hh:mm A') + ' IST (India)' : null)
+
+    const iana = typeof formData.location?.timezone === 'string' ? formData.location.timezone.trim() : ''
+    if (iana) {
+      try {
+        const localTime = moment(formData.startTime).tz(iana)
+        if (localTime.isValid()) {
+          setLocalTimeDisplay(localTime.format('YYYY-MM-DD hh:mm A z') + ` (${iana})`)
+        } else {
+          setLocalTimeDisplay(null)
+        }
+      } catch {
+        setLocalTimeDisplay(null)
+      }
+      return
+    }
+
+    const hasLocationCountry = !!(formData.location?.country && String(formData.location.country).trim())
+
+    // Location mode but country cleared: do not show a stale GMT conversion; IST line is enough.
+    if (restrictionMode === RESTRICTION_MODE.LOCATION && !hasLocationCountry) {
+      setLocalTimeDisplay(null)
+      return
+    }
+
+    // Location mode with country but no IANA yet: venue line hidden until timezone is picked.
+    if (restrictionMode === RESTRICTION_MODE.LOCATION && hasLocationCountry) {
+      setLocalTimeDisplay(null)
+      return
+    }
+
+    setLocalTimeDisplay(null)
+  }, [formData.startTime, formData.location?.timezone, formData.location?.country, restrictionMode])
 
   useEffect(() => {
     const fetchQuestionCount = async () => {
@@ -424,7 +444,9 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
         ...prev.location,
         region: newValue || '',
         pincode: '',
-        postoffice: ''
+        postoffice: '',
+        zipcode: '',
+        locality: ''
       }
     }))
   }
@@ -433,7 +455,14 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
     setFormData(prev => ({
       ...prev,
       groupId:
-        prev.groupId && (patch.country || patch.region || patch.pincode || patch.postoffice || patch.zipcode || patch.locality)
+        prev.groupId &&
+        (patch.country ||
+          patch.timezone ||
+          patch.region ||
+          patch.pincode ||
+          patch.postoffice ||
+          patch.zipcode ||
+          patch.locality)
           ? null
           : prev.groupId,
       location: {
@@ -441,6 +470,13 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
         ...patch
       }
     }))
+    if (patch.timezone) {
+      setErrors(prev => {
+        const next = { ...prev }
+        delete next.locationTimezone
+        return next
+      })
+    }
   }, [])
 
   const handleRestrictionModeChange = (event, nextMode) => {
@@ -535,7 +571,7 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
   }
 
   const validateField = (fieldname, latestFormData = formData) => {
-    const fieldErrors = validateForm(latestFormData)
+    const fieldErrors = validateForm(latestFormData, restrictionMode)
     if (fieldErrors[fieldname]) {
       setErrors(prev => ({
         ...prev,
@@ -716,7 +752,7 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
 
   const handleSubmit = async e => {
     e.preventDefault()
-    const formErrors = validateForm(formData)
+    const formErrors = validateForm(formData, restrictionMode)
     setErrors(formErrors)
     const allFields = Object.keys(formData)
     const touchedFields = allFields.reduce((acc, field) => {
@@ -753,7 +789,6 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
     // Only include relevant fields
     const submission = {
       ...formData,
-      timezone: formData?.timezone?.value || '',
       pointsWeightage: Number(formData?.pointsWeightage || 1),
       questionsCount: Number(formData?.questionsCount || 0),
       totalPoints: Number(formData?.totalPoints || 0),
@@ -779,6 +814,7 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
       delete submission.forwardType
       submission.duration = Number(submission.duration)
     }
+    delete submission.timezone
     console.log('submission data: ', submission)
     await onSubmit(submission)
   }
@@ -1176,10 +1212,15 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
                       >
                         Game location & access area
                       </Typography>
-                      <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
-                        Use country/region and optional PIN/post office (India) or ZIP/locality (other countries) to
-                        narrow eligible users.
+                      <Typography variant='body2' color='text.secondary' sx={{ mb: errors.locationTimezone ? 1 : 2 }}>
+                        Use country, IANA timezone, region, then optional PIN/post office (India) or ZIP/locality (other
+                        countries) to narrow eligible users.
                       </Typography>
+                      {errors.locationTimezone ? (
+                        <Typography variant='caption' color='error' sx={{ display: 'block', mb: 2 }}>
+                          {errors.locationTimezone}
+                        </Typography>
+                      ) : null}
                       <GameLocationRestrictionSection
                         countryObject={selectedCountryObject}
                         onCountryObjectChange={handleCountryChange}
@@ -1465,24 +1506,7 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
               />
             </Grid> */}
 
-                    {/* Add a timezone display field (read-only) to show the detected timezone:
-            <Grid item xs={12} sm={4} md={4}>
-              <TextField
-                fullWidth
-                label='Timezone'
-                name='timezone'
-                value={formData.timezone || ''}
-                InputProps={{
-                  readOnly: true
-                }}
-                helperText={errors.timezone || 'Timezone will be determined from zipcode'}
-                error={!!errors.timezone && touches.timezone}
-                required
-                inputRef={fieldRefs.timezone}
-              />
-            </Grid> */}
-
-                    <Grid item xs={12} sm={6} md={6}>
+                    <Grid item xs={12} sm={istTimeDisplay ? 6 : 12} md={istTimeDisplay ? 6 : 12}>
                       <DateTimePicker
                         disablePast
                         minDateTime={dayjs().add(1, 'minute')}
@@ -1522,49 +1546,44 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
                         }}
                       />
                     </Grid>
-                    <Grid item xs={12} sm={6} md={6}>
-                      <FormControl fullWidth required error={!!errors.timezone && touches.timezone}>
-                        <Autocomplete
-                          id='timezone-autocomplete'
-                          options={gmttimezones}
-                          getOptionLabel={option => option.label}
-                          value={
-                            formData.timezone?.value
-                              ? gmttimezones.find(tz => tz.value === formData.timezone?.value)
-                              : null
-                          }
-                          onChange={(e, newValue) => {
-                            setFormData(prev => ({ ...prev, timezone: newValue || null }))
-                            setTouches(prev => ({ ...prev, timezone: true }))
-                            setErrors(prev => ({ ...prev, timezone: '' }))
+                    {istTimeDisplay ? (
+                      <Grid item xs={12} sm={6} md={6}>
+                        <TextField
+                          fullWidth
+                          label='India time (IST)'
+                          value={istTimeDisplay}
+                          InputProps={{
+                            readOnly: true,
+                            startAdornment: (
+                              <InputAdornment position='start'>
+                                <AccessTimeIcon color='action' />
+                              </InputAdornment>
+                            )
                           }}
-                          onBlur={() => {
-                            setTouches(prev => ({ ...prev, timezone: true }))
-                            validateField('timezone')
+                          helperText='Start instant in Indian Standard Time (for reference).'
+                          variant='outlined'
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              '& fieldset': {
+                                borderColor:
+                                  theme.palette.mode === 'dark'
+                                    ? alpha(theme.palette.divider, 0.3)
+                                    : 'rgba(0, 0, 0, 0.23)'
+                              },
+                              '&:hover fieldset': {
+                                borderColor:
+                                  theme.palette.mode === 'dark' ? theme.palette.divider : 'rgba(0, 0, 0, 0.87)'
+                              }
+                            }
                           }}
-                          renderInput={params => (
-                            <TextField
-                              {...params}
-                              label='Timezone'
-                              required
-                              error={!!errors.timezone && touches.timezone}
-                              helperText={errors.timezone || 'where we are conducting the game'}
-                              inputRef={fieldRefs.timezone}
-                            />
-                          )}
-                          isOptionEqualToValue={(option, value) => option === value}
-                          autoHighlight
-                          clearOnBlur
-                          clearOnEscape
-                          disableClearable={false}
                         />
-                      </FormControl>
-                    </Grid>
+                      </Grid>
+                    ) : null}
                     <Grid item xs={12}>
                       {localTimeDisplay && (
                         <TextField
                           fullWidth
-                          label='Local Time'
+                          label='Venue / converted time'
                           value={localTimeDisplay}
                           InputProps={{
                             readOnly: true,
@@ -1574,6 +1593,7 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
                               </InputAdornment>
                             )
                           }}
+                          helperText='Uses the IANA timezone selected under Game location.'
                           variant='outlined'
                           sx={{
                             '& .MuiOutlinedInput-root': {

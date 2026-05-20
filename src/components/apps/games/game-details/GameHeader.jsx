@@ -3,6 +3,7 @@ import { Card, Box, Avatar, Typography, Chip, Stack, useTheme } from '@mui/mater
 import { alpha } from '@mui/material/styles'
 import { Schedule, People, Quiz as QuizIcon, EmojiEvents } from '@mui/icons-material'
 import imagePlaceholder from '/public/images/misc/image-placeholder.png'
+import { getGameStartDisplay } from '@/utils/formatGameVenueTime'
 
 const statusConfig = {
   // created: 'default',
@@ -45,6 +46,7 @@ const statusConfig = {
 
 function GameHeader({ game }) {
   const theme = useTheme()
+  const startDisplay = getGameStartDisplay(game?.startTime, game)
   const config = statusConfig[game.status] || statusConfig.created
 
   return (
@@ -149,7 +151,7 @@ function GameHeader({ game }) {
               {game.startTime && (
                 <Chip
                   icon={<Schedule sx={{ fontSize: { xs: 16, sm: 18 } }} />}
-                  label={`${new Date(game.startTime).toLocaleString()}`}
+                  label={startDisplay.cardText}
                   size='small'
                   sx={{
                     bgcolor:
