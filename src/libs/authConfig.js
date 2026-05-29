@@ -1,9 +1,8 @@
-
 export const authConfig = {
   session: {
-    strategy: 'jwt',
+    strategy: 'jwt'
   },
   providers: [],
-  secret: process.env.NEXTAUTH_SECRET
-
+  secret: process.env.NEXTAUTH_SECRET,
+  trustHost: true // we added new one
 }

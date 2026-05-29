@@ -93,7 +93,7 @@ export const authOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      checks: ['none'], // we added new one
+      // checks: ['none'], // we added new one
       authorization: {
         params: {
           prompt: 'consent'
@@ -284,7 +284,30 @@ export const authOptions = {
     signIn: '/login'
   },
 
-  secret: process.env.NEXTAUTH_SECRET
+  secret: process.env.NEXTAUTH_SECRET,
+  // we added new one
+  cookies: {
+    pkceCodeVerifier: {
+      name: 'next-auth.pkce.code_verifier',
+      options: {
+        httpOnly: true,
+        sameSite: 'none',
+        path: '/',
+        secure: true,
+        maxAge: 60 * 15 // 15 minutes
+      }
+    },
+    state: {
+      name: 'next-auth.state',
+      options: {
+        httpOnly: true,
+        sameSite: 'none',
+        path: '/',
+        secure: true,
+        maxAge: 60 * 15 // 15 minutes
+      }
+    }
+  } // till here we added new one
 }
 
 export const { signIn, signOut, handlers, auth } = NextAuth({ ...authOptions })
