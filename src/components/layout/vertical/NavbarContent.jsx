@@ -13,6 +13,7 @@ import MetricsDropdown from '@components/layout/shared/MetricsDropdown'
 import NotificationsDropdown from '@components/layout/shared/NotificationsDropdown'
 import UserDropdown from '@components/layout/shared/UserDropdown'
 import JoinGameButton from '@components/game/JoinGameButton'
+import RoleSwitchDropdown from '@components/layout/shared/RoleSwitchDropdown'
 
 // Util Imports
 import { verticalLayoutClasses } from '@layouts/utils/layoutClasses'
@@ -187,6 +188,7 @@ const NavbarContent = () => {
         <NavSearch />
       </div>
       <div className='flex items-center'>
+        <RoleSwitchDropdown />
         <JoinGameButton
           sx={{ fontSize: 'small', padding: '5px' }}
           style={{ color: 'white' }}

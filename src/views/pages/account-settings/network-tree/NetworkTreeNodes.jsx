@@ -463,15 +463,41 @@ const StyledReferralPointsStack = ({ profileAndNetworkData, isDarkMode, theme })
     profileAndNetworkData?.cumulativePoints ??
     totalReferralPoints + totalGamePoints + totalLearningPoints + totalQuizPoints
 
+  const labelSx = {
+    fontWeight: 600,
+    fontSize: { xs: '0.78rem', sm: '0.85rem' },
+    color: isDarkMode ? alpha(theme.palette.common.white, 0.9) : 'text.primary',
+    whiteSpace: 'nowrap'
+  }
+
+  const valueSx = bold => ({
+    fontWeight: bold ? 700 : 600,
+    fontSize: { xs: '0.78rem', sm: '0.85rem' },
+    textAlign: 'right',
+    fontVariantNumeric: 'tabular-nums',
+    minWidth: 36
+  })
+
+  const pointRows = [
+    { label: 'Referral Points:', value: profileAndNetworkData?.referralPoints || 0, color: 'primary.main' },
+    { label: 'Game Points:', value: profileAndNetworkData?.totalGamePoints || 0, color: 'secondary.main' },
+    { label: 'Learning Points:', value: profileAndNetworkData?.totalLearningPoints || 0, color: 'success.main' },
+    { label: 'Quiz Points:', value: totalQuizPoints, color: 'info.main' },
+    { label: 'Cumulative:', value: Number(cumulativePoints || 0), color: 'success.main', bold: true }
+  ]
+
   return (
     <Stack
       spacing={0.75}
+      alignItems='center'
       sx={{
         backgroundColor: isDarkMode ? alpha(theme.palette.background.paper, 0.6) : 'background.paper',
         borderRadius: { xs: 1.5, sm: 2 },
         p: { xs: 1, sm: 1.5 },
         border: isDarkMode ? `1px solid ${alpha(theme.palette.divider, 0.3)}` : 'none',
-        animation: 'fadeIn 1s ease-in-out'
+        animation: 'fadeIn 1s ease-in-out',
+        width: 'fit-content',
+        maxWidth: '100%'
       }}
     >
       <Typography
@@ -481,79 +507,34 @@ const StyledReferralPointsStack = ({ profileAndNetworkData, isDarkMode, theme })
           color: isDarkMode ? alpha(theme.palette.common.white, 0.8) : 'text.primary',
           letterSpacing: '0.05em',
           textTransform: 'uppercase',
-          fontSize: { xs: '0.65rem', sm: '0.75rem' }
+          fontSize: { xs: '0.65rem', sm: '0.75rem' },
+          textAlign: 'center',
+          width: '100%'
         }}
       >
         My Points
       </Typography>
 
-      <Stack direction='column' spacing={0.5} alignItems='flex-start'>
-        <Typography
-          variant='body2'
-          sx={{
-            fontWeight: 600,
-            fontSize: { xs: '0.78rem', sm: '0.85rem' },
-            color: isDarkMode ? alpha(theme.palette.common.white, 0.9) : 'text.primary'
-          }}
-        >
-          Referral Points:{' '}
-          <Typography component='span' color='primary.main'>
-            {profileAndNetworkData?.referralPoints || 0}
-          </Typography>
-        </Typography>
-        <Typography
-          variant='body2'
-          sx={{
-            fontWeight: 600,
-            fontSize: { xs: '0.78rem', sm: '0.85rem' },
-            color: isDarkMode ? alpha(theme.palette.common.white, 0.9) : 'text.primary'
-          }}
-        >
-          Game Points:{' '}
-          <Typography component='span' color='secondary.main'>
-            {profileAndNetworkData?.totalGamePoints || 0}
-          </Typography>
-        </Typography>
-        <Typography
-          variant='body2'
-          sx={{
-            fontWeight: 600,
-            fontSize: { xs: '0.78rem', sm: '0.85rem' },
-            color: isDarkMode ? alpha(theme.palette.common.white, 0.9) : 'text.primary'
-          }}
-        >
-          Learning Points:{' '}
-          <Typography component='span' color='success.main'>
-            {profileAndNetworkData?.totalLearningPoints || 0}
-          </Typography>
-        </Typography>
-        <Typography
-          variant='body2'
-          sx={{
-            fontWeight: 600,
-            fontSize: { xs: '0.78rem', sm: '0.85rem' },
-            color: isDarkMode ? alpha(theme.palette.common.white, 0.9) : 'text.primary'
-          }}
-        >
-          Quiz Points:{' '}
-          <Typography component='span' color='info.main'>
-            {totalQuizPoints}
-          </Typography>
-        </Typography>
-        <Typography
-          variant='body2'
-          sx={{
-            fontWeight: 700,
-            fontSize: { xs: '0.8rem', sm: '0.9rem' },
-            color: isDarkMode ? alpha(theme.palette.common.white, 0.95) : 'text.primary'
-          }}
-        >
-          Cumulative:{' '}
-          <Typography component='span' color='success.main'>
-            {Number(cumulativePoints || 0)}
-          </Typography>
-        </Typography>
-      </Stack>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: 'auto auto',
+          columnGap: 0.75,
+          rowGap: 0.5,
+          alignItems: 'center'
+        }}
+      >
+        {pointRows.map(({ label, value, color, bold }) => (
+          <React.Fragment key={label}>
+            <Typography variant='body2' sx={{ ...labelSx, fontWeight: bold ? 700 : labelSx.fontWeight }}>
+              {label}
+            </Typography>
+            <Typography variant='body2' color={color} sx={valueSx(bold)}>
+              {value}
+            </Typography>
+          </React.Fragment>
+        ))}
+      </Box>
     </Stack>
   )
 }

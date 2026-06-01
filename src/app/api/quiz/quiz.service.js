@@ -12,6 +12,7 @@ import {
   createQuizPublishedNotification
 } from '../notifications/notification.helpers.js'
 import User from '@/app/models/user.model.js'
+import { sumQuestionWeightages } from '@/utils/quizPointsUtil.js'
 import { ROLES_LOOKUP } from '@/configs/roles-lookup.js'
 
 const Artifact = 'Quiz'
@@ -879,7 +880,6 @@ export async function completeQuizAndAwardPoints({ quizId, email, languageCode =
 
     const existingPointEntry = (user.quizPointHistory || []).find(entry => entry?.quiz?.toString?.() === quizId.toString())
     const hasAlreadyEarned = Boolean(existingPointEntry)
-    const pointsWeightage = Number(quiz?.weightage || 1)
 
     // Fast path for replay:
     // If user already has points for this quiz, return stored values immediately.
@@ -891,11 +891,7 @@ export async function completeQuizAndAwardPoints({ quizId, email, languageCode =
           pointsAwarded: Number(existingPointEntry?.pointsEarned || existingPointEntry?.totalPossiblePoints || 0),
           alreadyAwarded: true,
           questionsCount: Number(existingPointEntry?.questionsCount || 0),
-          pointsWeightage: Number(existingPointEntry?.pointsWeightage || pointsWeightage || 1),
-          totalPossiblePoints: Number(
-            existingPointEntry?.totalPossiblePoints ||
-              (existingPointEntry?.questionsCount || 0) * (existingPointEntry?.pointsWeightage || pointsWeightage || 1)
-          )
+          totalPossiblePoints: Number(existingPointEntry?.totalPossiblePoints || 0)
         },
         message: 'Quiz already completed earlier. Points are awarded only for first completion.',
         statusCode: 200
@@ -903,22 +899,23 @@ export async function completeQuizAndAwardPoints({ quizId, email, languageCode =
     }
 
     const primaryLanguageCode = languageCode || quiz?.language?.code
-    let questionsCount = 0
+    let questions = []
     if (primaryLanguageCode) {
-      questionsCount = await QuestionModel.countDocuments({
+      questions = await QuestionModel.find({
         quizId,
         languageCode: primaryLanguageCode,
         status: { $ne: 'deleted' }
-      })
+      }).lean()
     }
-    if (!questionsCount) {
-      questionsCount = await QuestionModel.countDocuments({ quizId, isPrimary: true, status: { $ne: 'deleted' } })
+    if (!questions.length) {
+      questions = await QuestionModel.find({ quizId, isPrimary: true, status: { $ne: 'deleted' } }).lean()
     }
-    if (!questionsCount) {
-      questionsCount = await QuestionModel.countDocuments({ quizId, status: { $ne: 'deleted' } })
+    if (!questions.length) {
+      questions = await QuestionModel.find({ quizId, status: { $ne: 'deleted' } }).lean()
     }
 
-    const totalPossiblePoints = Number(questionsCount) * pointsWeightage
+    const questionsCount = questions.length
+    const totalPossiblePoints = sumQuestionWeightages(questions)
 
     const earnedAt = new Date()
     const pushResult = await User.updateOne(
@@ -928,7 +925,6 @@ export async function completeQuizAndAwardPoints({ quizId, email, languageCode =
           quizPointHistory: {
             quiz: quiz._id,
             pointsEarned: totalPossiblePoints,
-            pointsWeightage,
             questionsCount,
             totalPossiblePoints,
             earnedAt
@@ -947,7 +943,6 @@ export async function completeQuizAndAwardPoints({ quizId, email, languageCode =
           : Number(existingPointEntry?.pointsEarned || existingPointEntry?.totalPossiblePoints || totalPossiblePoints),
         alreadyAwarded: !wasAwardedNow,
         questionsCount,
-        pointsWeightage,
         totalPossiblePoints
       },
       message: wasAwardedNow

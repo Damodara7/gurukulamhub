@@ -392,8 +392,7 @@ function PopupWindow({
     status: 'active',
     thumbnail: '',
     language: { code: 'en', name: 'English' },
-    remarks: [],
-    weightage: 1
+    remarks: []
   }
 
   const {

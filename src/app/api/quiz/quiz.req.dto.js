@@ -15,7 +15,6 @@ export const quizCreateRequestDto = {
   approvalState:"",
   tags: [], // Assuming tags is an array of strings
   status: '',
-  weightage: 1,
 };
 
 export const quizCreateRequestDto1 =

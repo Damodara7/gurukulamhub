@@ -60,6 +60,7 @@ import { userAgent } from 'next/server'
 import GroupAutocomplete from '@/components/group/GroupAutocomplete'
 import GameLocationRestrictionSection from '@/components/apps/games/GameLocationRestrictionSection'
 import { emptyGameLocation, restrictedLocationHint } from '@/utils/gameLocationAccess'
+import { sumQuestionWeightages } from '@/utils/quizPointsUtil'
 
 // Reward position options
 const POSITION_OPTIONS = [1, 2, 3, 4, 5]
@@ -143,12 +144,12 @@ const validateForm = (formData, restrictionMode = RESTRICTION_MODE.OPEN) => {
 }
 
 const formFieldOrder = [
+  'startTime',
   'title',
   'locationTimezone',
   'pin',
   'description',
   'quiz',
-  'startTime',
   // 'creatorZipcode',
   // 'creatorTimeZone',
   // 'creatorCountry',
@@ -187,7 +188,6 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
     tags: [],
     groupId: null,
     questionsCount: 0,
-    pointsWeightage: 1,
     totalPoints: 0,
     location: emptyGameLocation(),
     rewards: []
@@ -209,6 +209,7 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
   const [localTimeDisplay, setLocalTimeDisplay] = useState(null)
   /** Same start instant in Asia/Kolkata for a common reference (always when start time is set). */
   const [istTimeDisplay, setIstTimeDisplay] = useState(null)
+  const [questionsWeightageSum, setQuestionsWeightageSum] = useState(0)
   // Loading state
   const [loading, setLoading] = useState({
     submitting: false,
@@ -270,8 +271,7 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
         gameMode: data?.gameMode || 'live',
         groupId: data?.groupId || null,
         questionsCount: data?.questionsCount || 0,
-        pointsWeightage: data?.pointsWeightage || 1,
-        totalPoints: data?.totalPoints || (data?.questionsCount || 0) * (data?.pointsWeightage || 1),
+        totalPoints: data?.totalPoints || 0,
         location: { ...emptyGameLocation(), ...(data?.location || {}) }
       })
 
@@ -349,6 +349,7 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
   useEffect(() => {
     const fetchQuestionCount = async () => {
       if (!formData.quiz) {
+        setQuestionsWeightageSum(0)
         setFormData(prev => ({ ...prev, questionsCount: 0, totalPoints: 0 }))
         return
       }
@@ -362,14 +363,18 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
           ? `${API_URLS.v0.USERS_QUIZ_QUESTION}?quizId=${formData.quiz}&languageCode=${languageCode}`
           : `${API_URLS.v0.USERS_QUIZ_QUESTION}?quizId=${formData.quiz}`
         const response = await RestApi.get(query)
-        const questionCount = Array.isArray(response?.result) ? response.result.length : 0
+        const questions = Array.isArray(response?.result) ? response.result : []
+        const questionCount = questions.length
+        const weightageSum = sumQuestionWeightages(questions)
+        setQuestionsWeightageSum(weightageSum)
         setFormData(prev => ({
           ...prev,
           questionsCount: questionCount,
-          totalPoints: questionCount * Number(prev.pointsWeightage || 1)
+          totalPoints: weightageSum
         }))
       } catch (error) {
         console.error('Failed to fetch question count:', error)
+        setQuestionsWeightageSum(0)
         setFormData(prev => ({ ...prev, questionsCount: 0, totalPoints: 0 }))
       } finally {
         setLoading(prev => ({ ...prev, fetchingQuestionCount: false }))
@@ -538,9 +543,6 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
         const next = {
           ...prev,
           [name]: updatedValue
-        }
-        if (name === 'pointsWeightage') {
-          next.totalPoints = Number(prev.questionsCount || 0) * Number(updatedValue || 1)
         }
         return next
       })
@@ -789,7 +791,6 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
     // Only include relevant fields
     const submission = {
       ...formData,
-      pointsWeightage: Number(formData?.pointsWeightage || 1),
       questionsCount: Number(formData?.questionsCount || 0),
       totalPoints: Number(formData?.totalPoints || 0),
       location: {
@@ -1234,6 +1235,118 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
                   </Grid>
                 )}
 
+                {/* Start Time & related time displays */}
+                <Grid item xs={12}>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={istTimeDisplay ? 6 : 12} md={istTimeDisplay ? 6 : 12}>
+                      <DateTimePicker
+                        disablePast
+                        minDateTime={dayjs().add(1, 'minute')}
+                        timeSteps={{ hours: 1, minutes: 1 }}
+                        sx={{ width: '100%' }}
+                        label='Start Time'
+                        value={formData.startTime ? dayjs(formData.startTime) : null}
+                        onChange={newValue => {
+                          // explicitly set to 'null' if cleared
+                          const newDate = newValue ? newValue.toDate() : null
+                          handleDateChange('startTime', newDate)
+                          validateField('startTime')
+                          if (formData.requireRegistration) {
+                            validateField('registrationEndTime')
+                          }
+                        }}
+                        onClose={() => validateField('startTime')}
+                        slotProps={{
+                          textField: {
+                            error: !!errors.startTime && touches.startTime,
+                            helperText: (touches.startTime && errors.startTime) || 'Select start time of the game',
+                            required: true,
+                            onBlur: () => {
+                              setTouches(prev => ({ ...prev, startTime: true }))
+                              validateField('startTime')
+                            },
+                            onFocus: () => {
+                              setTouches(prev => ({ ...prev, startTime: true }))
+                              setErrors(prev => ({ ...prev, startTime: undefined }))
+                            },
+                            InputLabelProps: {
+                              shrink: true
+                            },
+                            inputRef: fieldRefs.startTime,
+                            size: 'medium'
+                          }
+                        }}
+                      />
+                    </Grid>
+                    {istTimeDisplay ? (
+                      <Grid item xs={12} sm={6} md={6}>
+                        <TextField
+                          fullWidth
+                          label='India time (IST)'
+                          value={istTimeDisplay}
+                          InputProps={{
+                            readOnly: true,
+                            startAdornment: (
+                              <InputAdornment position='start'>
+                                <AccessTimeIcon color='action' />
+                              </InputAdornment>
+                            )
+                          }}
+                          helperText='Start instant in Indian Standard Time (for reference).'
+                          variant='outlined'
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              '& fieldset': {
+                                borderColor:
+                                  theme.palette.mode === 'dark'
+                                    ? alpha(theme.palette.divider, 0.3)
+                                    : 'rgba(0, 0, 0, 0.23)'
+                              },
+                              '&:hover fieldset': {
+                                borderColor:
+                                  theme.palette.mode === 'dark' ? theme.palette.divider : 'rgba(0, 0, 0, 0.87)'
+                              }
+                            }
+                          }}
+                        />
+                      </Grid>
+                    ) : null}
+                    <Grid item xs={12}>
+                      {localTimeDisplay && (
+                        <TextField
+                          fullWidth
+                          label='Venue / converted time'
+                          value={localTimeDisplay}
+                          InputProps={{
+                            readOnly: true,
+                            startAdornment: (
+                              <InputAdornment position='start'>
+                                <AccessTimeIcon color='action' />
+                              </InputAdornment>
+                            )
+                          }}
+                          helperText='Uses the IANA timezone selected under Game location.'
+                          variant='outlined'
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              '& fieldset': {
+                                borderColor:
+                                  theme.palette.mode === 'dark'
+                                    ? alpha(theme.palette.divider, 0.3)
+                                    : 'rgba(0, 0, 0, 0.23)'
+                              },
+                              '&:hover fieldset': {
+                                borderColor:
+                                  theme.palette.mode === 'dark' ? theme.palette.divider : 'rgba(0, 0, 0, 0.87)'
+                              }
+                            }
+                          }}
+                        />
+                      )}
+                    </Grid>
+                  </Grid>
+                </Grid>
+
                 {/* Basic Information */}
                 <Grid item xs={12} sm={6}>
                   <TextField
@@ -1257,18 +1370,48 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
                     label='6-digit PIN'
                     name='pin'
                     value={formData.pin}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
+                    error={!!errors.pin && touches.pin}
+                    helperText={errors.pin || 'Auto-generated PIN (view only)'}
+                    required
+                    inputRef={fieldRefs.pin}
+                    InputProps={{
+                      readOnly: true
+                    }}
                     inputProps={{
                       readOnly: true,
                       maxLength: 6,
-                      pattern: '\\d{6}'
+                      tabIndex: -1
                     }}
-                    onFocus={() => setErrors(prev => ({ ...prev, pin: '' }))}
-                    error={!!errors.pin && touches.pin}
-                    helperText={errors.pin || 'Enter a unique 6-digit PIN'}
-                    required
-                    inputRef={fieldRefs.pin}
+                    onFocus={e => e.target.blur()}
+                    sx={{
+                      '& .MuiInputBase-root': {
+                        bgcolor: alpha(theme.palette.action.disabledBackground, theme.palette.mode === 'dark' ? 0.35 : 0.6),
+                        pointerEvents: 'none',
+                        cursor: 'default',
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: alpha(theme.palette.divider, 0.35),
+                          borderWidth: 1
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: alpha(theme.palette.divider, 0.35)
+                        }
+                      },
+                      '& .MuiInputBase-input': {
+                        color: theme.palette.text.disabled,
+                        WebkitTextFillColor: theme.palette.text.disabled,
+                        cursor: 'default',
+                        userSelect: 'none'
+                      },
+                      '& .MuiInputLabel-root': {
+                        color: theme.palette.text.secondary,
+                        '&.Mui-focused': {
+                          color: theme.palette.text.secondary
+                        }
+                      },
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: alpha(theme.palette.divider, 0.35)
+                      }
+                    }}
                   />
                 </Grid>
 
@@ -1439,7 +1582,7 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
                   </FormControl>
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
+                <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
                     label='No. of Questions'
@@ -1451,171 +1594,15 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
-                  <FormControl fullWidth>
-                    <InputLabel id='points-weightage-label'>Weightage</InputLabel>
-                    <Select
-                      labelId='points-weightage-label'
-                      label='Weightage'
-                      name='pointsWeightage'
-                      value={formData.pointsWeightage}
-                      onChange={handleChange}
-                    >
-                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(weight => (
-                        <MenuItem key={weight} value={weight}>
-                          {weight}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                    <FormHelperText>1 is default</FormHelperText>
-                  </FormControl>
-                </Grid>
-
-                <Grid item xs={12} sm={4}>
+                <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label='Total Points'
+                    label='Quiz Points'
                     value={formData.totalPoints || 0}
-                    helperText='Questions x Weightage'
+                    helperText='Sum of all question weightages'
                     InputProps={{ readOnly: true }}
                   />
                 </Grid>
-
-                <Grid item xs={12}>
-                  {/* <Typography variant='subtitle1' gutterBottom>
-            Location of Game Creator (Admin)
-          </Typography> */}
-                  <Grid container spacing={2}>
-                    {/* <Grid item xs={12} sm={4} md={4}>
-              <CountryRegionDropdown
-                defaultCountryCode=''
-                selectedCountryObject={selectedAdminCountry}
-                setSelectedCountryObject={setSelectedAdminCountry}
-              />
-            </Grid>
-            <Grid item xs={12} sm={4} md={4}>
-              <TextField
-                fullWidth
-                label='creator zipcode'
-                name='creatorZipcode'
-                value={formData.creatorZipcode}
-                onChange={handleChange}
-                helperText={errors.creatorZipcode || 'Enter the Creator Zipcode'}
-                required
-                inputRef={fieldRefs.creatorZipcode}
-              />
-            </Grid> */}
-
-                    <Grid item xs={12} sm={istTimeDisplay ? 6 : 12} md={istTimeDisplay ? 6 : 12}>
-                      <DateTimePicker
-                        disablePast
-                        minDateTime={dayjs().add(1, 'minute')}
-                        timeSteps={{ hours: 1, minutes: 1 }}
-                        sx={{ width: '100%' }}
-                        label='Start Time'
-                        value={formData.startTime ? dayjs(formData.startTime) : null}
-                        onChange={newValue => {
-                          // explicitly set to 'null' if cleared
-                          const newDate = newValue ? newValue.toDate() : null
-                          handleDateChange('startTime', newDate)
-                          validateField('startTime')
-                          if (formData.requireRegistration) {
-                            validateField('registrationEndTime')
-                          }
-                        }}
-                        onClose={() => validateField('startTime')}
-                        slotProps={{
-                          textField: {
-                            error: !!errors.startTime && touches.startTime,
-                            helperText: (touches.startTime && errors.startTime) || 'Select start time of the game',
-                            required: true,
-                            onBlur: () => {
-                              setTouches(prev => ({ ...prev, startTime: true }))
-                              validateField('startTime')
-                            },
-                            onFocus: () => {
-                              setTouches(prev => ({ ...prev, startTime: true }))
-                              setErrors(prev => ({ ...prev, startTime: undefined }))
-                            },
-                            InputLabelProps: {
-                              shrink: true
-                            },
-                            inputRef: fieldRefs.startTime,
-                            size: 'medium'
-                          }
-                        }}
-                      />
-                    </Grid>
-                    {istTimeDisplay ? (
-                      <Grid item xs={12} sm={6} md={6}>
-                        <TextField
-                          fullWidth
-                          label='India time (IST)'
-                          value={istTimeDisplay}
-                          InputProps={{
-                            readOnly: true,
-                            startAdornment: (
-                              <InputAdornment position='start'>
-                                <AccessTimeIcon color='action' />
-                              </InputAdornment>
-                            )
-                          }}
-                          helperText='Start instant in Indian Standard Time (for reference).'
-                          variant='outlined'
-                          sx={{
-                            '& .MuiOutlinedInput-root': {
-                              '& fieldset': {
-                                borderColor:
-                                  theme.palette.mode === 'dark'
-                                    ? alpha(theme.palette.divider, 0.3)
-                                    : 'rgba(0, 0, 0, 0.23)'
-                              },
-                              '&:hover fieldset': {
-                                borderColor:
-                                  theme.palette.mode === 'dark' ? theme.palette.divider : 'rgba(0, 0, 0, 0.87)'
-                              }
-                            }
-                          }}
-                        />
-                      </Grid>
-                    ) : null}
-                    <Grid item xs={12}>
-                      {localTimeDisplay && (
-                        <TextField
-                          fullWidth
-                          label='Venue / converted time'
-                          value={localTimeDisplay}
-                          InputProps={{
-                            readOnly: true,
-                            startAdornment: (
-                              <InputAdornment position='start'>
-                                <AccessTimeIcon color='action' />
-                              </InputAdornment>
-                            )
-                          }}
-                          helperText='Uses the IANA timezone selected under Game location.'
-                          variant='outlined'
-                          sx={{
-                            '& .MuiOutlinedInput-root': {
-                              '& fieldset': {
-                                borderColor:
-                                  theme.palette.mode === 'dark'
-                                    ? alpha(theme.palette.divider, 0.3)
-                                    : 'rgba(0, 0, 0, 0.23)'
-                              },
-                              '&:hover fieldset': {
-                                borderColor:
-                                  theme.palette.mode === 'dark' ? theme.palette.divider : 'rgba(0, 0, 0, 0.87)'
-                              }
-                            }
-                          }}
-                        />
-                      )}
-                    </Grid>
-                  </Grid>
-                </Grid>
-
-                {/* Timezone Autocomplete */}
 
                 {/* Game Mode Selection */}
                 <Grid item xs={12} sm={6}>

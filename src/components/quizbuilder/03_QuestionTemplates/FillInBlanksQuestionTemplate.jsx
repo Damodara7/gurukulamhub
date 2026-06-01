@@ -34,6 +34,7 @@ import DeleteConfirmationDialog from '@/components/dialogs/DeleteConfirmationDia
 import { toast } from 'react-toastify'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
 import { blankRegex, textRegex, filterInput, excludeBlankChars, excludesTextChars } from '@/utils/regexUtil'
+import QuestionWeightageField from '@/components/quizbuilder/QuestionWeightageField'
 
 const FillInBlanksQuestionTemplate = ({
   id: questionUUID,
@@ -52,6 +53,7 @@ const FillInBlanksQuestionTemplate = ({
   const [hint, setHint] = useState(innerData?.hint || '')
   const [hintMarks, setHintMarks] = useState(-1 * innerData?.hintMarks || '')
   const [marks, setMarks] = useState(innerData?.marks || '')
+  const [weightage, setWeightage] = useState(Number(innerData?.weightage) || 1)
   const [timerSeconds, setTimerSeconds] = useState(innerData?.timerSeconds || '')
   const [skippable, setSkippable] = useState(innerData?.skippable || false) // by default non-skippable
   const [addHint, setAddHint] = useState(innerData?.addHint || false)
@@ -96,6 +98,7 @@ const FillInBlanksQuestionTemplate = ({
         hint: hint,
         hintMarks: parseFloat(hintMarks),
         marks: +marks,
+        weightage: Number(weightage) || 1,
         timerSeconds: +timerSeconds,
         skippable: skippable,
         language: language,
@@ -119,6 +122,7 @@ const FillInBlanksQuestionTemplate = ({
         hint: hint,
         hintMarks: +hintMarks || +primaryQuestion?.data?.hintMarks,
         marks: +marks || +primaryQuestion?.data?.marks,
+        weightage: Number(weightage) || Number(primaryQuestion?.data?.weightage) || 1,
         timerSeconds: +timerSeconds || +primaryQuestion?.data?.timerSeconds,
         skippable: skippable || primaryQuestion?.data?.skippable,
         language: language,
@@ -637,7 +641,7 @@ const FillInBlanksQuestionTemplate = ({
                     <Divider sx={{ my: 1 }} />
 
                     <Grid container spacing={2}>
-                      <Grid item xs={12} sm={addHint ? 4 : 6}>
+                      <Grid item xs={12} sm={addHint ? 3 : 4}>
                         <TextField
                           disabled={loading.save || loading.delete}
                           label='Marks'
@@ -666,8 +670,18 @@ const FillInBlanksQuestionTemplate = ({
                         />
                       </Grid>
 
+                      <Grid item xs={12} sm={addHint ? 3 : 4}>
+                        <QuestionWeightageField
+                          disabled={loading.save || loading.delete}
+                          value={weightage}
+                          onChange={setWeightage}
+                          error={hasErrors && !!getErrorMessage('weightage')}
+                          helperText={getErrorMessage('weightage') || 'Sum of this value across all questions = quiz points'}
+                        />
+                      </Grid>
+
                       {addHint && (
-                        <Grid item xs={12} sm={4}>
+                        <Grid item xs={12} sm={3}>
                           <TextField
                             disabled={loading.save || loading.delete}
                             label='Hint Deduction'
@@ -702,7 +716,7 @@ const FillInBlanksQuestionTemplate = ({
                         </Grid>
                       )}
 
-                      <Grid item xs={12} sm={addHint ? 4 : 6}>
+                      <Grid item xs={12} sm={addHint ? 3 : 4}>
                         <TextField
                           disabled={loading.save || loading.delete}
                           label='Time Limit (seconds)'

@@ -36,6 +36,7 @@ import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { toast } from 'react-toastify'
 import { useSession } from 'next-auth/react'
+import { calculateQuizTotalPoints } from '@/utils/quizPointsUtil'
 
 export const fetchQuestionsByLanguage = async (quizId, languageCode) => {
   const result = await RestApi.get(`${API_URLS.v0.USERS_QUIZ_QUESTION}?quizId=${quizId}&languageCode=${languageCode}`)
@@ -70,6 +71,7 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
   const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false)
   const [quizCompletionResult, setQuizCompletionResult] = useState(null)
   const [resolvedQuestionCount, setResolvedQuestionCount] = useState(0)
+  const [primaryQuestions, setPrimaryQuestions] = useState([])
   const { data: session } = useSession()
 
   useEffect(() => {
@@ -89,6 +91,7 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
           const questionCountRes = await fetchQuestionsByLanguage(result.result._id, primaryLanguageCode)
           if (questionCountRes?.status === 'success' && Array.isArray(questionCountRes?.result)) {
             fetchedQuestionCount = questionCountRes.result.length
+            setPrimaryQuestions(questionCountRes.result)
           }
         }
 
@@ -125,8 +128,10 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
       quiz?.questions?.length ??
       quizLanguages.reduce((sum, lang) => sum + (lang?.questionCount || 0), 0) ??
       0)
-  const quizWeightage = Number(quiz?.weightage || 1)
-  const possibleQuizPoints = overallQuestionCount * quizWeightage
+  const pointsSourceQuestions = questions.length ? questions : primaryQuestions
+  const possibleQuizPoints = pointsSourceQuestions.length
+    ? calculateQuizTotalPoints(pointsSourceQuestions)
+    : overallQuestionCount
 
   const getLanguageByCode = code => quizLanguages.find(lang => lang.code === code)
 
@@ -298,7 +303,7 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
           time={time}
           quiz={quiz}
           completionResult={quizCompletionResult}
-          estimatedQuizPoints={currentQuestionCount * quizWeightage}
+          estimatedQuizPoints={possibleQuizPoints}
           isPointsPending={!quizCompletionResult}
         />
       </Box>
@@ -491,7 +496,6 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
           quizData={quiz}
           resolvedQuestionCount={overallQuestionCount}
           possibleQuizPoints={possibleQuizPoints}
-          quizWeightage={quizWeightage}
           onClickStart={handleStartQuiz}
         />
       )
@@ -757,7 +761,7 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
                   )}
                   {selectedLanguage && (
                     <Chip
-                      label={`${currentQuestionCount * quizWeightage} Points`}
+                      label={`${possibleQuizPoints} Points`}
                       size='small'
                       sx={{
                         bgcolor: alpha(theme.palette.warning.main, 0.14),
@@ -873,7 +877,7 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
                       )}
                       {selectedLanguage && (
                         <Chip
-                          label={`${currentQuestionCount * quizWeightage} Points`}
+                          label={`${possibleQuizPoints} Points`}
                           size='small'
                           sx={{
                             bgcolor: alpha(theme.palette.warning.main, 0.12),

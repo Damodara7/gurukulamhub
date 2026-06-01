@@ -71,8 +71,7 @@ function QuizPosterScreen({
   language = null,
   quizLanguages = [],
   resolvedQuestionCount = 0,
-  possibleQuizPoints = 0,
-  quizWeightage = 1
+  possibleQuizPoints = 0
 }) {
   const theme = useTheme()
   const isDarkMode = theme.palette.mode === 'dark'
@@ -90,7 +89,7 @@ function QuizPosterScreen({
     questionCount
   } = quizData
   const effectiveQuestionCount = resolvedQuestionCount || questionCount || 0
-  const totalQuizPoints = possibleQuizPoints || effectiveQuestionCount * quizWeightage
+  const totalQuizPoints = possibleQuizPoints || effectiveQuestionCount
 
   const sectionShell = (children, key, sx = {}) => (
     <Box

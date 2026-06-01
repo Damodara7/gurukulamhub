@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Grid, Typography, Box, IconButton, Collapse, Stack, useTheme, alpha } from '@mui/material'
-import { Title, Info, Translate, Key, Quiz as QuizIcon, Star } from '@mui/icons-material'
+import { Title, Info, Translate, Key, Quiz as QuizIcon } from '@mui/icons-material'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 
@@ -54,13 +54,6 @@ const QuizDetails = ({ quiz }) => {
       value: quiz.id || 'N/A',
       iconBg: theme.palette.warning.main,
       iconBgPath: 'warning.main'
-    },
-    {
-      icon: <Star sx={{ fontSize: 18, color: 'white' }} />,
-      label: 'Weightage',
-      value: quiz.weightage || 1,
-      iconBg: theme.palette.success.main,
-      iconBgPath: 'success.main'
     }
   ]
 

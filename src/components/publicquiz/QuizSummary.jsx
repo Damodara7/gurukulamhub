@@ -32,6 +32,7 @@ import ZoomInIcon from '@mui/icons-material/ZoomIn'
 import { useRouter } from 'next/navigation'
 import { formatTime, formatTimeWithUnits } from '../Timer'
 import ReactPlayer from 'react-player'
+import { calculateQuizTotalPoints } from '@/utils/quizPointsUtil'
 
 const QuizSummary = ({
   questions,
@@ -242,7 +243,9 @@ const QuizSummary = ({
     }
   ]
   const totalQuizPoints =
-    completionResult?.totalPossiblePoints ?? estimatedQuizPoints ?? (questions?.length || 0) * Number(quiz?.weightage || 1)
+    completionResult?.totalPossiblePoints ??
+    estimatedQuizPoints ??
+    calculateQuizTotalPoints(questions)
   const awardedPoints = completionResult?.pointsAwarded ?? totalQuizPoints
   const isFirstAward = completionResult ? !completionResult?.alreadyAwarded : false
 

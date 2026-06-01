@@ -25,6 +25,7 @@ import {
   createGameDeletedNotification,
   createGameSponsorshipRequestNotification
 } from '../notifications/notification.helpers.js'
+import { sumQuestionWeightages } from '@/utils/quizPointsUtil.js'
 
 /** Removed from schema; venue IANA is stored on `location.timezone`. */
 function omitLegacyTopLevelTimezone(payload) {
@@ -252,8 +253,7 @@ async function awardGamePointsToUser({ player, game, userIdOverride = null }) {
   if (!player || !game) return
 
   const questionsCount = Number(game?.questionsCount || 0)
-  const pointsWeightage = Number(game?.pointsWeightage || 1)
-  const totalPossiblePoints = Number(game?.totalPoints || questionsCount * pointsWeightage || 0)
+  const totalPossiblePoints = Number(game?.totalPoints || 0)
   const earnedAt = new Date()
   const userId = userIdOverride || player.user
 
@@ -275,7 +275,6 @@ async function awardGamePointsToUser({ player, game, userIdOverride = null }) {
         gamePointHistory: {
           game: game._id,
           pointsEarned: totalPossiblePoints,
-          pointsWeightage,
           questionsCount,
           totalPossiblePoints,
           earnedAt
@@ -465,8 +464,8 @@ export const addOne = async gameData => {
     const questions = await QuestionsModel.find({ quizId, languageCode }).lean()
     // Adding questions count field to gameData
     gameData.questionsCount = questions?.length
-    gameData.pointsWeightage = Number(gameData?.pointsWeightage || 1)
-    gameData.totalPoints = Number(gameData.questionsCount || 0) * gameData.pointsWeightage
+    gameData.totalPoints = sumQuestionWeightages(questions)
+    delete gameData.pointsWeightage
 
     // If live mode, calculate duration from questions
     if (gameData.gameMode === 'live') {
@@ -758,8 +757,8 @@ export const updateOne = async (gameId, updateData) => {
     const questions = await QuestionsModel.find({ quizId, languageCode }).lean()
     // Adding questions count field to gameData
     updateData.questionsCount = questions?.length
-    updateData.pointsWeightage = Number(updateData?.pointsWeightage || existingGame?.pointsWeightage || 1)
-    updateData.totalPoints = Number(updateData.questionsCount || 0) * updateData.pointsWeightage
+    updateData.totalPoints = sumQuestionWeightages(questions)
+    delete updateData.pointsWeightage
 
     // If live mode, calculate duration from questions
     if (updateData.gameMode === 'live') {

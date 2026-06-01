@@ -280,6 +280,18 @@ export function validateQuizQuestions(questions) {
       })
     }
 
+    if (
+      data?.weightage != null &&
+      data?.weightage !== '' &&
+      (typeof data?.weightage !== 'number' || data?.weightage < 1 || data?.weightage > 10)
+    ) {
+      questionErrors.push({
+        questionId,
+        field: 'weightage',
+        message: 'Weightage must be between 1 and 10'
+      })
+    }
+
     // Only validate hint and hintMarks if addHint is true
     if (data?.addHint) {
       // Validate hintMarks

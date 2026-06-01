@@ -71,8 +71,7 @@ function EditQuiz({ quiz, isAdmin = false }) {
     thumbnail: quiz?.thumbnail || '',
     approvalState: quiz?.approvalState || 'draft',
     language: quiz?.language || { code: 'en', name: 'English' },
-    remarks: quiz?.remarks || [],
-    weightage: quiz?.weightage || 1
+    remarks: quiz?.remarks || []
   }
 
   const {

@@ -186,7 +186,7 @@ function PrimaryQuizBuilder({ quiz, isAdmin = false }) {
                     WebkitTextFillColor: 'transparent'
                   }}
                 >
-                  Build Quiz Questions
+                  Quiz on {quiz.title}
                 </Typography>
               </Stack>
               <Typography variant='body1' sx={{ color: theme.palette.text.secondary, fontSize: '0.95rem', ml: 7 }}>

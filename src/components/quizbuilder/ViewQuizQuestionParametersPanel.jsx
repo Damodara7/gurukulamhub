@@ -21,6 +21,7 @@ import CloseIcon from '@mui/icons-material/Close'
 import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined'
 import TimerOutlinedIcon from '@mui/icons-material/TimerOutlined'
 import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined'
+import StarOutlineIcon from '@mui/icons-material/StarOutline'
 import SkipNextOutlinedIcon from '@mui/icons-material/SkipNextOutlined'
 import TranslateOutlinedIcon from '@mui/icons-material/TranslateOutlined'
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
@@ -28,6 +29,7 @@ import DoNotDisturbOnRoundedIcon from '@mui/icons-material/DoNotDisturbOnRounded
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { toast } from 'react-toastify'
+import { getQuestionWeightage } from '@/utils/quizPointsUtil'
 import {
   SingleChoiceTemplate,
   MultipleChoiceTemplate,
@@ -199,6 +201,7 @@ function MetricCard({ icon, label, value, theme, accent, badge, footer, dim }) {
 function ReadView({ question, theme }) {
   const data = question?.data
   const marks = data?.marks != null && data?.marks !== '' ? data.marks : '—'
+  const weightage = getQuestionWeightage(question)
   const timer =
     data?.timerSeconds != null && data?.timerSeconds !== '' ? `${data.timerSeconds}` : '—'
   const timerUnit = timer !== '—' ? ' sec' : ''
@@ -236,7 +239,7 @@ function ReadView({ question, theme }) {
         <SectionLabel>Parameters</SectionLabel>
         <Stack spacing={2}>
           <Grid container spacing={1.5}>
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={6} md={3}>
               <MetricCard
                 icon={<EmojiEventsOutlinedIcon />}
                 label='Marks'
@@ -245,7 +248,16 @@ function ReadView({ question, theme }) {
                 accent='primary'
               />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={6} md={3}>
+              <MetricCard
+                icon={<StarOutlineIcon />}
+                label='Weightage'
+                value={weightage}
+                theme={theme}
+                accent='warning'
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
               <MetricCard
                 icon={<TimerOutlinedIcon />}
                 label='Time limit'
@@ -254,7 +266,7 @@ function ReadView({ question, theme }) {
                 accent='warning'
               />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={6} md={3}>
               <MetricCard
                 icon={<LightbulbOutlinedIcon />}
                 label='Hint penalty'

@@ -46,6 +46,7 @@ import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import Loading from '@/components/Loading'
 import GroupAutocomplete from '@/components/group/GroupAutocomplete'
+import { sumQuestionWeightages } from '@/utils/quizPointsUtil'
 
 // Reward position options
 const POSITION_OPTIONS = [1, 2, 3, 4, 5]
@@ -106,7 +107,6 @@ const GameRequestSponsorshipForm = ({ onSubmit, quizzes, onCancel, data = null }
     tags: [],
     audienceId: null,
     questionsCount: 0,
-    pointsWeightage: 1,
     totalPoints: 0,
     rewards: []
   }
@@ -119,6 +119,7 @@ const GameRequestSponsorshipForm = ({ onSubmit, quizzes, onCancel, data = null }
   const [showErrorSnackbar, setShowErrorSnackbar] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [showScheduleFields, setShowScheduleFields] = useState(false)
+  const [questionsWeightageSum, setQuestionsWeightageSum] = useState(0)
 
   // Loading state
   const [loading, setLoading] = useState({
@@ -157,8 +158,7 @@ const GameRequestSponsorshipForm = ({ onSubmit, quizzes, onCancel, data = null }
         gameMode: data?.gameMode || 'live',
         audienceId: data?.audienceId || null,
         questionsCount: data?.questionsCount || 0,
-        pointsWeightage: data?.pointsWeightage || 1,
-        totalPoints: data?.totalPoints || (data?.questionsCount || 0) * (data?.pointsWeightage || 1)
+        totalPoints: data?.totalPoints || 0
       })
     }
   }, [data])
@@ -166,6 +166,7 @@ const GameRequestSponsorshipForm = ({ onSubmit, quizzes, onCancel, data = null }
   useEffect(() => {
     const fetchQuestionCount = async () => {
       if (!formData.quiz) {
+        setQuestionsWeightageSum(0)
         setFormData(prev => ({ ...prev, questionsCount: 0, totalPoints: 0 }))
         return
       }
@@ -179,14 +180,18 @@ const GameRequestSponsorshipForm = ({ onSubmit, quizzes, onCancel, data = null }
           ? `${API_URLS.v0.USERS_QUIZ_QUESTION}?quizId=${formData.quiz}&languageCode=${languageCode}`
           : `${API_URLS.v0.USERS_QUIZ_QUESTION}?quizId=${formData.quiz}`
         const response = await RestApi.get(query)
-        const questionCount = Array.isArray(response?.result) ? response.result.length : 0
+        const questions = Array.isArray(response?.result) ? response.result : []
+        const questionCount = questions.length
+        const weightageSum = sumQuestionWeightages(questions)
+        setQuestionsWeightageSum(weightageSum)
         setFormData(prev => ({
           ...prev,
           questionsCount: questionCount,
-          totalPoints: questionCount * Number(prev.pointsWeightage || 1)
+          totalPoints: weightageSum
         }))
       } catch (error) {
         console.error('Failed to fetch question count:', error)
+        setQuestionsWeightageSum(0)
         setFormData(prev => ({ ...prev, questionsCount: 0, totalPoints: 0 }))
       } finally {
         setLoading(prev => ({ ...prev, fetchingQuestionCount: false }))
@@ -217,9 +222,6 @@ const GameRequestSponsorshipForm = ({ onSubmit, quizzes, onCancel, data = null }
       const next = {
         ...prev,
         [name]: updatedValue
-      }
-      if (name === 'pointsWeightage') {
-        next.totalPoints = Number(prev.questionsCount || 0) * Number(updatedValue || 1)
       }
       return next
     })
@@ -893,7 +895,7 @@ const GameRequestSponsorshipForm = ({ onSubmit, quizzes, onCancel, data = null }
                   </FormControl>
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
+                <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
                     label='No. of Questions'
@@ -903,32 +905,12 @@ const GameRequestSponsorshipForm = ({ onSubmit, quizzes, onCancel, data = null }
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
-                  <FormControl fullWidth>
-                    <InputLabel id='points-weightage-request-label'>Weightage</InputLabel>
-                    <Select
-                      labelId='points-weightage-request-label'
-                      label='Weightage'
-                      name='pointsWeightage'
-                      value={formData.pointsWeightage}
-                      onChange={handleChange}
-                    >
-                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(weight => (
-                        <MenuItem key={weight} value={weight}>
-                          {weight}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                    <FormHelperText>1 is default</FormHelperText>
-                  </FormControl>
-                </Grid>
-
-                <Grid item xs={12} sm={4}>
+                <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label='Total Points'
+                    label='Quiz Points'
                     value={formData.totalPoints || 0}
-                    helperText='Questions x Weightage'
+                    helperText='Sum of all question weightages'
                     InputProps={{ readOnly: true }}
                   />
                 </Grid>

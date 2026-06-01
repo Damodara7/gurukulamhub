@@ -131,6 +131,7 @@ const QuestionBuilderArea = forwardRef(
           }),
           // other fields
           marks: '',
+          weightage: 1,
           timerSeconds: '',
           hint: '',
           hintMarks: '',

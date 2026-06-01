@@ -17,7 +17,6 @@ export const QuizDefaultValues = {
   "thumbnail": "",
   "tags": null,
   "status": "active",
-  "weightage": 1,
 }
 
 const languageSchema = new mongoose.Schema({
@@ -153,12 +152,6 @@ const QuizSchema1_0_0 = new mongoose.Schema({
   secondaryLanguages: {
     type: [secondaryLanguagesSchema],
     default: []
-  },
-  weightage: {
-    type: Number,
-    min: 1,
-    max: 10,
-    default: 1
   },
   schemaVersion: {
     type: String,
