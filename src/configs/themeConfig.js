@@ -19,7 +19,7 @@ const themeConfig = {
   templateName: 'GurukulamHub',
   homePageUrl: '/dashboards/myprogress',
   settingsCookieName: 'gurukulamhub',
-  mode: 'system',
+  mode: 'light',
   skin: 'default',
   semiDark: false,
   layout: 'vertical',
