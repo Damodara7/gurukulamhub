@@ -2,6 +2,11 @@ import cron from 'node-cron'
 import Game from './game.model' // Adjust path to your Game model
 import Player from '@/app/api/player/player.model'
 import { broadcastGameDetailsUpdates, broadcastGamesUpdate } from './game.service'
+import {
+  getAdminStartGraceMinutes,
+  getAdminStartGraceMs,
+  isAdminForwardGame
+} from '@/utils/adminStartGrace'
 
 // Object to store our scheduled tasks
 const gameStatusTasks = {}
@@ -24,17 +29,13 @@ function cancelTask(gameId) {
   }
 }
 
-const ADMIN_FORWARD_GRACE_MS = 5 * 60 * 1000
-
-function isAdminForwardGame(game) {
-  return game?.forwardType === 'admin' || Boolean(game?.forwardingAdmin)
-}
+const AUTO_FORWARD_GRACE_MS = 5 * 60 * 1000
 
 // Only auto-forward games may be moved to live by the scheduler
 const AUTO_FORWARD_LIVE_FILTER = { forwardType: 'auto' }
 
 // Admin-forward games stay in lobby until the forwarding admin starts them manually.
-// If not started within 5 minutes after scheduled startTime, they are cancelled.
+// If not started within startTime + adminStartGraceMinutes, they are cancelled.
 async function scheduleAdminForwardDeadline(gameId, startTime) {
   try {
     const now = new Date()
@@ -46,7 +47,7 @@ async function scheduleAdminForwardDeadline(gameId, startTime) {
       return
     }
 
-    const cancelAt = new Date(startTime.getTime() + ADMIN_FORWARD_GRACE_MS)
+    const cancelAt = new Date(startTime.getTime() + getAdminStartGraceMs(game))
 
     if (cancelAt <= now) {
       console.log(`📌 Admin-forward game ${gameId} past start grace, checking cancellation`)
@@ -70,7 +71,9 @@ async function scheduleAdminForwardDeadline(gameId, startTime) {
     )
 
     gameStatusTasks[gameId] = task
-    console.log(`📌 Scheduled admin-forward cancel check for game ${gameId} at ${cancelAt}`)
+    console.log(
+      `📌 Scheduled admin-forward cancel check for game ${gameId} at ${cancelAt} (grace: ${getAdminStartGraceMinutes(game)} min)`
+    )
   } catch (error) {
     console.error(`❌ Error scheduling admin-forward deadline for game ${gameId}:`, error)
   }
@@ -172,18 +175,28 @@ async function completeGame(gameId) {
 async function checkAndCancelOverdueGames() {
   try {
     const now = new Date()
-    const overdueThreshold = new Date(now.getTime() - 5 * 60000) // 5 minutes grace period
 
-    // Find games that should have started but didn't
-    const overdueGames = await Game.find({
+    // Find games past scheduled start that have not gone live yet
+    const overdueCandidates = await Game.find({
       isDeleted: false,
       status: { $in: ['created', 'approved', 'lobby'] },
-      startTime: { $lte: overdueThreshold }
+      startTime: { $lte: now }
+    })
+
+    const overdueGames = overdueCandidates.filter(game => {
+      const graceMs = isAdminForwardGame(game) ? getAdminStartGraceMs(game) : AUTO_FORWARD_GRACE_MS
+      const deadline = new Date(game.startTime.getTime() + graceMs)
+      return now > deadline
     })
 
     for (const game of overdueGames) {
       try {
-        console.log(`📌 Game ${game._id} missed start time, cancelling`)
+        const graceMinutes = isAdminForwardGame(game)
+          ? getAdminStartGraceMinutes(game)
+          : AUTO_FORWARD_GRACE_MS / 60000
+        console.log(
+          `📌 Game ${game._id} missed start time, cancelling (forwardType=${game.forwardType}, grace=${graceMinutes} min)`
+        )
         const updatedGame = await Game.findByIdAndUpdate(
           game._id,
           {
@@ -321,7 +334,7 @@ async function scheduleLiveTransition(gameId, startTime) {
     if (startTime < now) {
       console.log(`📌 Start time for game ${gameId} is in the past, checking if should cancel`)
 
-      const gracePeriod = new Date(now.getTime() - 5 * 60000) // 5 minutes grace period
+      const gracePeriod = new Date(now.getTime() - AUTO_FORWARD_GRACE_MS)
       if (startTime <= gracePeriod) {
         console.log(`📌 Game ${gameId} missed start time by more than 5 minutes, cancelling`)
         const updatedGame = await Game.findByIdAndUpdate(
@@ -654,6 +667,38 @@ export function cancelScheduledTasks(gameId) {
   cancelTask(gameId)
 }
 
+// Rebuild scheduler tasks after game timing / grace settings change
+export async function refreshGameSchedule(gameId) {
+  const game = await Game.findOne({ _id: gameId, isDeleted: false })
+  if (!game || ['cancelled', 'completed'].includes(game.status)) {
+    return
+  }
+
+  cancelTask(gameId)
+
+  if (game.status === 'approved') {
+    await scheduleLobbyTransition(gameId)
+    return
+  }
+
+  if (game.status === 'lobby') {
+    const now = new Date()
+    if (isAdminForwardGame(game)) {
+      await scheduleAdminForwardDeadline(game._id, game.startTime)
+    } else if (game.startTime > now) {
+      await scheduleLiveTransition(game._id, game.startTime)
+    }
+    return
+  }
+
+  if (game.status === 'live' && game.forwardType !== 'admin') {
+    const endTime = new Date(game.startTime.getTime() + game.duration * 1000)
+    if (endTime > new Date()) {
+      await scheduleCompletion(game._id, endTime)
+    }
+  }
+}
+
 // Call this when admin approves a game
 export async function onGameApproved(gameId) {
   console.log('📌 Inside onGameApproved Scheduler')
@@ -695,7 +740,7 @@ export async function reschedulePendingGames() {
           } else if (game.startTime > now) {
             await scheduleLiveTransition(game._id, game.startTime)
           } else {
-            const gracePeriod = new Date(now.getTime() - ADMIN_FORWARD_GRACE_MS)
+            const gracePeriod = new Date(now.getTime() - AUTO_FORWARD_GRACE_MS)
             if (game.startTime <= gracePeriod) {
               console.log(`📌 Game ${game._id} missed start time by more than 5 minutes, cancelling`)
               const updatedGame = await Game.findByIdAndUpdate(

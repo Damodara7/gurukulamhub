@@ -17,8 +17,7 @@ import { toast } from 'react-toastify'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import GameLobbyParticipants from '@/components/games/GameLobbyParticipants'
-
-const GRACE_MS = 5 * 60 * 1000
+import { formatAdminStartGraceMinutes, getAdminStartGraceMinutes, getAdminStartGraceMs } from '@/utils/adminStartGrace'
 
 function AdminForwardStartPanel({ game, setGame }) {
   const { data: session } = useSession()
@@ -28,7 +27,9 @@ function AdminForwardStartPanel({ game, setGame }) {
 
   const isForwardingAdmin = session?.user?.email === game?.forwardingAdmin?.email
   const startTime = new Date(game?.startTime)
-  const graceDeadline = new Date(startTime.getTime() + GRACE_MS)
+  const graceMinutes = getAdminStartGraceMinutes(game)
+  const graceLabel = formatAdminStartGraceMinutes(graceMinutes)
+  const graceDeadline = new Date(startTime.getTime() + getAdminStartGraceMs(game))
 
   useEffect(() => {
     const updateTimers = () => {
@@ -58,7 +59,7 @@ function AdminForwardStartPanel({ game, setGame }) {
     updateTimers()
     const interval = setInterval(updateTimers, 1000)
     return () => clearInterval(interval)
-  }, [game?.startTime])
+  }, [game?.startTime, game?.adminStartGraceMinutes])
 
   const handleStartGame = async () => {
     setStarting(true)
@@ -106,7 +107,8 @@ function AdminForwardStartPanel({ game, setGame }) {
           {timeUntilStart ? (
             <Alert severity='info' sx={{ mb: 2, textAlign: 'left' }}>
               Scheduled start is in <strong>{timeUntilStart}</strong>. You can start the game once that time is
-              reached. If you do not start within 5 minutes after that, the game will be cancelled automatically.
+              reached. If you do not start within <strong>{graceLabel}</strong> after that, the game will be
+              cancelled automatically.
             </Alert>
           ) : timeUntilCancel && timeUntilCancel !== 'expired' ? (
             <Alert severity='warning' sx={{ mb: 2, textAlign: 'left' }}>

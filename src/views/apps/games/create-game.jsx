@@ -146,6 +146,9 @@ function CreateGamePage({ isSuperUser = false }) {
       }
       if (values.gameMode !== 'live') {
         delete payload.forwardType
+        delete payload.adminStartGraceMinutes
+      } else if (values.forwardType !== 'admin') {
+        delete payload.adminStartGraceMinutes
       }
 
       console.log('payload: ', payload)

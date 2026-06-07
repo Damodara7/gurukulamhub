@@ -1,7 +1,9 @@
 import { Box, Card, CardContent, Grid, Typography, Divider, Chip } from '@mui/material'
 import React from 'react'
+import { formatAdminStartGraceMinutes, getAdminStartGraceMinutes } from '@/utils/adminStartGrace'
 
 function AdminInstructions({ game = null }) {
+  const graceLabel = formatAdminStartGraceMinutes(getAdminStartGraceMinutes(game))
   return (
     <Grid item xs={12}>
       <Card
@@ -98,8 +100,8 @@ function AdminInstructions({ game = null }) {
           {/* Important Note */}
           <Box sx={{ mt: 3, p: 2, border: '1px dashed', borderColor: 'error.main', borderRadius: 1 }}>
             <Typography variant='body2' color='error' sx={{ fontWeight: 'bold' }}>
-              ⚠️ Important: If you do not start the game within 5 minutes after the scheduled start time, it will be
-              cancelled automatically. The game cannot proceed without your active participation.
+              ⚠️ Important: If you do not start the game within {graceLabel} after the scheduled start time, it will
+              be cancelled automatically. The game cannot proceed without your active participation.
             </Typography>
           </Box>
         </CardContent>

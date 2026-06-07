@@ -173,6 +173,12 @@ const gameSchema = new mongoose.Schema(
       enum: ['auto', 'admin'],
       default: 'auto'
     },
+    adminStartGraceMinutes: {
+      type: Number,
+      min: 10,
+      max: 120,
+      default: 10
+    },
     forwardingAdmin: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'users'

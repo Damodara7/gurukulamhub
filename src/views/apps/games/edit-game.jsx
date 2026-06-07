@@ -142,6 +142,13 @@ function EditGamePage({ gameData = null, gameId = null, isSuperUser = false }) {
           maxPlayers: values.limitPlayers ? Number(values.maxPlayers) : 100000
         }
       }
+      if (values.gameMode !== 'live') {
+        delete payload.forwardType
+        delete payload.adminStartGraceMinutes
+      } else if (values.forwardType !== 'admin') {
+        delete payload.adminStartGraceMinutes
+      }
+
       console.log('payload: ', payload)
 
       let result

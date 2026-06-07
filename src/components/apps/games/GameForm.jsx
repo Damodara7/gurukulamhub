@@ -62,6 +62,11 @@ import GameLocationRestrictionSection from '@/components/apps/games/GameLocation
 import { emptyGameLocation, restrictedLocationHint } from '@/utils/gameLocationAccess'
 import { calculateGameTotalPoints, GAME_POINTS_WEIGHTAGE_OPTIONS } from '@/utils/gamePointsUtil'
 import { formatGameDurationSeconds, sumQuestionTimerSeconds } from '@/utils/formatGameDuration'
+import {
+  ADMIN_START_GRACE_OPTIONS,
+  DEFAULT_ADMIN_START_GRACE_MINUTES,
+  formatAdminStartGraceMinutes
+} from '@/utils/adminStartGrace'
 
 // Reward position options
 const POSITION_OPTIONS = [1, 2, 3, 4, 5]
@@ -133,6 +138,12 @@ const validateForm = (formData, restrictionMode = RESTRICTION_MODE.OPEN) => {
     if (!formData.forwardType) {
       errors.forwardType = 'Forward type is required for live games.'
     }
+    if (formData.forwardType === 'admin') {
+      const grace = Number(formData.adminStartGraceMinutes)
+      if (!grace || grace < 10 || grace > 120 || grace % 10 !== 0) {
+        errors.adminStartGraceMinutes = 'Excess time must be between 10 minutes and 2 hours in 10-minute steps.'
+      }
+    }
   }
 
   if (formData.limitPlayers && (!formData.maxPlayers || formData.maxPlayers <= 0)) {
@@ -164,7 +175,8 @@ const formFieldOrder = [
   'thumbnailPoster',
   'tags',
   'rewards',
-  'forwardType'
+  'forwardType',
+  'adminStartGraceMinutes'
 ]
 
 // Main Game Form component
@@ -181,6 +193,7 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
     promotionalVideoUrl: '',
     thumbnailPoster: '',
     forwardType: 'auto',
+    adminStartGraceMinutes: DEFAULT_ADMIN_START_GRACE_MINUTES,
     gameMode: 'live',
     requireRegistration: false,
     registrationEndTime: null,
@@ -253,6 +266,7 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
     thumbnailPoster: useRef(),
     tags: useRef(),
     forwardType: useRef(),
+    adminStartGraceMinutes: useRef(),
     gameMode: useRef()
     // creatorZipcode: useRef(),
     // creatorTimezone: useRef(),
@@ -558,7 +572,11 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
       }))
     } else {
       const updatedValue =
-        name === 'pointsWeightage' ? Number(value) : type === 'checkbox' ? checked : value
+        name === 'pointsWeightage' || name === 'adminStartGraceMinutes'
+          ? Number(value)
+          : type === 'checkbox'
+            ? checked
+            : value
       setFormData(prev => {
         const next = {
           ...prev,
@@ -834,7 +852,14 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
     }
     if (formData.gameMode !== 'live') {
       delete submission.forwardType
+      delete submission.adminStartGraceMinutes
       submission.duration = Number(submission.duration)
+    } else if (formData.forwardType === 'admin') {
+      submission.adminStartGraceMinutes = Number(
+        submission.adminStartGraceMinutes || DEFAULT_ADMIN_START_GRACE_MINUTES
+      )
+    } else {
+      delete submission.adminStartGraceMinutes
     }
     delete submission.calculatedDurationSeconds
     delete submission.timezone
@@ -939,6 +964,7 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
         delete newTouches.duration
       } else {
         delete newTouches.forwardType
+        delete newTouches.adminStartGraceMinutes
       }
       return newTouches
     })
@@ -948,6 +974,7 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
         delete newErrors.duration
       } else {
         delete newErrors.forwardType
+        delete newErrors.adminStartGraceMinutes
       }
       return newErrors
     })
@@ -1722,6 +1749,38 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
                         }}
                       />
                     </Grid>
+                    {formData.forwardType === 'admin' && (
+                      <Grid item xs={12} sm={6}>
+                        <FormControl
+                          fullWidth
+                          required
+                          error={!!errors.adminStartGraceMinutes && touches.adminStartGraceMinutes}
+                        >
+                          <InputLabel id='admin-start-grace-label'>Excess Time to Start</InputLabel>
+                          <Select
+                            labelId='admin-start-grace-label'
+                            id='admin-start-grace-select'
+                            name='adminStartGraceMinutes'
+                            value={formData.adminStartGraceMinutes ?? DEFAULT_ADMIN_START_GRACE_MINUTES}
+                            label='Excess Time to Start'
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                            onFocus={() => setErrors(prev => ({ ...prev, adminStartGraceMinutes: '' }))}
+                            inputRef={fieldRefs.adminStartGraceMinutes}
+                          >
+                            {ADMIN_START_GRACE_OPTIONS.map(minutes => (
+                              <MenuItem key={minutes} value={minutes}>
+                                {formatAdminStartGraceMinutes(minutes)}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                          <FormHelperText>
+                            {errors.adminStartGraceMinutes ||
+                              'Game cancels if the admin does not start within this time after the scheduled start'}
+                          </FormHelperText>
+                        </FormControl>
+                      </Grid>
+                    )}
                   </>
                 )}
 

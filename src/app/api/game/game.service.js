@@ -26,6 +26,12 @@ import {
   createGameSponsorshipRequestNotification
 } from '../notifications/notification.helpers.js'
 import { calculateGameTotalPoints, normalizeGamePointsWeightage } from '@/utils/gamePointsUtil.js'
+import {
+  formatAdminStartGraceMinutes,
+  getAdminStartGraceMinutes,
+  getAdminStartGraceMs,
+  normalizeAdminStartGraceMinutes
+} from '@/utils/adminStartGrace'
 
 /** Removed from schema; venue IANA is stored on `location.timezone`. */
 function omitLegacyTopLevelTimezone(payload) {
@@ -473,6 +479,8 @@ export const addOne = async gameData => {
       gameData.duration = questions?.reduce((sum, q) => sum + (q?.data?.timerSeconds || 0), 0)
     }
 
+    normalizeAdminStartGraceMinutes(gameData)
+
     // Validate required fields
     const requiredFields = ['title', 'pin', 'quiz', 'createdBy']
 
@@ -588,9 +596,11 @@ export const addOne = async gameData => {
       }
     }
 
-    // If the user is ADMIN - Then Schedule game scheduleres(on approval)
+    // If the user is ADMIN - Then Schedule game schedulers (on approval)
     if (user?.roles?.includes('ADMIN')) {
-      gameScheduler.onGameApproved(savedGame._id)
+      gameScheduler.onGameApproved(savedGame._id).catch(err => {
+        console.error(`Failed to schedule newly created game ${savedGame._id}:`, err)
+      })
     }
 
     // Broadcast games list update (non-blocking)
@@ -727,6 +737,7 @@ export const addOne = async gameData => {
 export const updateOne = async (gameId, updateData) => {
   await connectMongo()
   try {
+    const originalUpdateKeys = new Set(Object.keys(updateData))
     omitLegacyTopLevelTimezone(updateData)
     const user = await User.findOne({ email: updateData?.updaterEmail })
     if (!user) {
@@ -766,6 +777,18 @@ export const updateOne = async (gameId, updateData) => {
       // Sum timerSeconds from data field
       updateData.duration = questions.reduce((sum, q) => sum + (q.data?.timerSeconds || 0), 0)
     }
+
+    if (updateData.forwardType === undefined) {
+      updateData.forwardType = existingGame.forwardType
+    }
+    if (updateData.gameMode === undefined) {
+      updateData.gameMode = existingGame.gameMode
+    }
+    normalizeAdminStartGraceMinutes(updateData)
+
+    const shouldRefreshSchedule = ['startTime', 'forwardType', 'adminStartGraceMinutes', 'gameMode'].some(key =>
+      originalUpdateKeys.has(key)
+    )
 
     // Check if pin is being updated to a non-unique value
     if (updateData.pin !== undefined && updateData.pin !== existingGame.pin) {
@@ -1242,6 +1265,12 @@ export const updateOne = async (gameId, updateData) => {
     }
 
     broadcastGameDetailsUpdates(gameId)
+
+    if (shouldRefreshSchedule && ['approved', 'lobby', 'live'].includes(updatedGame.status)) {
+      gameScheduler.refreshGameSchedule(gameId).catch(err => {
+        console.error(`Failed to refresh schedule for game ${gameId}:`, err)
+      })
+    }
 
     return {
       status: 'success',
@@ -2216,7 +2245,8 @@ export const startAdminForwardGame = async (gameId, user) => {
 
     const now = new Date()
     const startTime = new Date(game.startTime)
-    const graceDeadline = new Date(startTime.getTime() + 5 * 60 * 1000)
+    const graceMinutes = getAdminStartGraceMinutes(game)
+    const graceDeadline = new Date(startTime.getTime() + getAdminStartGraceMs(game))
 
     if (now < startTime) {
       return {
@@ -2230,7 +2260,7 @@ export const startAdminForwardGame = async (gameId, user) => {
       return {
         status: 'error',
         result: null,
-        message: 'Game start window has expired (admin did not start within 5 minutes)'
+        message: `Game start window has expired (admin did not start within ${formatAdminStartGraceMinutes(graceMinutes)})`
       }
     }
 
