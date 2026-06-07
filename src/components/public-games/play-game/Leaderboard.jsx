@@ -1,5 +1,5 @@
 // components/Leaderboard.jsx
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import {
   Box,
   Typography,
@@ -36,6 +36,32 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
   const isCurrentUser = player => {
     return player?.email === session?.user?.email || player?.user?.email === session?.user?.email
   }
+
+  const getPlayerRank = player => {
+    const index = leaderboard.findIndex(p => p._id === player._id)
+    return index >= 0 ? index + 1 : null
+  }
+
+  const duringPlayDisplay = useMemo(() => {
+    if (!duringPlay || leaderboard.length === 0) {
+      return { currentUserEntry: null, topPlayers: [] }
+    }
+
+    const currentUserPlayer = leaderboard.find(isCurrentUser) || null
+    const topPlayers = []
+    for (const player of leaderboard) {
+      if (currentUserPlayer && player._id === currentUserPlayer._id) continue
+      topPlayers.push({ player, rank: getPlayerRank(player) })
+      if (topPlayers.length === 4) break
+    }
+
+    return {
+      currentUserEntry: currentUserPlayer
+        ? { player: currentUserPlayer, rank: getPlayerRank(currentUserPlayer) }
+        : null,
+      topPlayers
+    }
+  }, [duringPlay, leaderboard, session?.user?.email])
 
   console.log('data game on the leaderboard ', game)
   useEffect(() => {
@@ -243,6 +269,124 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
     return null
   }
 
+  const renderPlayerRow = (player, rank, { isYouSection = false } = {}) => {
+    const listIndex = rank - 1
+
+    return (
+      <motion.tr
+        key={isYouSection ? `you-${player._id}` : player._id}
+        layout
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 20 }}
+        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+        style={getRowAnimation(player, listIndex)}
+      >
+        <TableCell
+          sx={{
+            color: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.9) : 'text.primary',
+            fontWeight: rank <= 3 || isCurrentUser(player) ? 700 : 500,
+            borderBottom: `1px solid ${alpha(theme.palette.divider, 0.3)}`
+          }}
+        >
+          {rank}
+        </TableCell>
+        <TableCell
+          sx={{
+            color: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.9) : 'text.primary',
+            fontWeight: rank <= 3 || isCurrentUser(player) ? 700 : 500,
+            borderBottom: `1px solid ${alpha(theme.palette.divider, 0.3)}`
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {isCurrentUser(player) && (
+              <FiberManualRecord
+                sx={{
+                  fontSize: 8,
+                  color: theme.palette.primary.main,
+                  animation: 'pulse 2s ease-in-out infinite',
+                  '@keyframes pulse': {
+                    '0%, 100%': {
+                      opacity: 1,
+                      transform: 'scale(1)'
+                    },
+                    '50%': {
+                      opacity: 0.6,
+                      transform: 'scale(1.2)'
+                    }
+                  }
+                }}
+              />
+            )}
+            <Box component='span'>
+              {player?.user?.profile?.firstname && player?.user?.profile?.lastname
+                ? ` ${player?.user?.profile?.firstname} ${player?.user?.profile?.lastname}`
+                : player?.user?.profile?.firstname || player?.user?.profile?.lastname || player?.email}
+              {isCurrentUser(player) && (
+                <Typography
+                  component='span'
+                  sx={{
+                    ml: 1,
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    color: theme.palette.primary.main,
+                    fontStyle: 'italic'
+                  }}
+                >
+                  (You)
+                </Typography>
+              )}
+            </Box>
+          </Box>
+        </TableCell>
+        <TableCell
+          align='right'
+          sx={{
+            color: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.9) : 'text.primary',
+            fontWeight: rank <= 3 || isCurrentUser(player) ? 700 : 500,
+            borderBottom: `1px solid ${alpha(theme.palette.divider, 0.3)}`
+          }}
+        >
+          {player.score.toFixed(2)}
+        </TableCell>
+        <TableCell
+          align='right'
+          sx={{
+            color: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.9) : 'text.primary',
+            fontWeight: rank <= 3 || isCurrentUser(player) ? 700 : 500,
+            borderBottom: `1px solid ${alpha(theme.palette.divider, 0.3)}`
+          }}
+        >
+          {formatTime(player.totalAnswerTime / 1000)}
+        </TableCell>
+        {game?.gameMode === 'live' && (
+          <TableCell
+            align='right'
+            sx={{
+              color: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.9) : 'text.primary',
+              fontWeight: rank <= 3 || isCurrentUser(player) ? 700 : 500,
+              borderBottom: `1px solid ${alpha(theme.palette.divider, 0.3)}`
+            }}
+          >
+            {player?.fffPoints?.toFixed(3)}
+          </TableCell>
+        )}
+        {game?.gameMode === 'self-paced' && (
+          <TableCell
+            align='right'
+            sx={{
+              color: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.9) : 'text.primary',
+              fontWeight: rank <= 3 || isCurrentUser(player) ? 700 : 500,
+              borderBottom: `1px solid ${alpha(theme.palette.divider, 0.3)}`
+            }}
+          >
+            {new Date(player?.finishedAt)?.toLocaleString()}
+          </TableCell>
+        )}
+      </motion.tr>
+    )
+  }
+
   return (
     <Box
       sx={{ mx: 'auto', width: '100%', maxWidth: duringPlay || !isAdmin ? 'md' : 'md', my: 5, px: { xs: 2, md: 0 } }}
@@ -376,119 +520,61 @@ export default function Leaderboard({ game, duringPlay = false, isAdmin = false 
           </TableHead>
           <TableBody>
             <AnimatePresence>
-              {leaderboard.slice(0, duringPlay ? 5 : leaderboard.length).map((player, index) => (
-                <motion.tr
-                  key={player._id}
-                  layout
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 20 }}
-                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                  style={getRowAnimation(player, index)}
-                >
-                  <TableCell
-                    sx={{
-                      color: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.9) : 'text.primary',
-                      fontWeight: index < 3 || isCurrentUser(player) ? 700 : 500,
-                      borderBottom: `1px solid ${alpha(theme.palette.divider, 0.3)}`
-                    }}
-                  >
-                    {index + 1}
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      color: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.9) : 'text.primary',
-                      fontWeight: index < 3 || isCurrentUser(player) ? 700 : 500,
-                      borderBottom: `1px solid ${alpha(theme.palette.divider, 0.3)}`
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      {isCurrentUser(player) && (
-                        <FiberManualRecord
+              {duringPlay ? (
+                <>
+                  {duringPlayDisplay.currentUserEntry && (
+                    <>
+                      <TableRow>
+                        <TableCell
+                          colSpan={game?.gameMode === 'live' ? 5 : 4}
                           sx={{
-                            fontSize: 8,
+                            py: 1.5,
+                            fontWeight: 700,
+                            fontSize: '0.8rem',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px',
                             color: theme.palette.primary.main,
-                            animation: 'pulse 2s ease-in-out infinite',
-                            '@keyframes pulse': {
-                              '0%, 100%': {
-                                opacity: 1,
-                                transform: 'scale(1)'
-                              },
-                              '50%': {
-                                opacity: 0.6,
-                                transform: 'scale(1.2)'
-                              }
-                            }
+                            borderBottom: 'none',
+                            bgcolor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.12 : 0.06)
                           }}
-                        />
+                        >
+                          Your Standing
+                        </TableCell>
+                      </TableRow>
+                      {renderPlayerRow(
+                        duringPlayDisplay.currentUserEntry.player,
+                        duringPlayDisplay.currentUserEntry.rank,
+                        { isYouSection: true }
                       )}
-                      <Box component='span'>
-                        {player?.user?.profile?.firstname && player?.user?.profile?.lastname
-                          ? ` ${player?.user?.profile?.firstname} ${player?.user?.profile?.lastname}`
-                          : player?.user?.profile?.firstname || player?.user?.profile?.lastname || player?.email}
-                        {isCurrentUser(player) && (
-                          <Typography
-                            component='span'
-                            sx={{
-                              ml: 1,
-                              fontSize: '0.875rem',
-                              fontWeight: 600,
-                              color: theme.palette.primary.main,
-                              fontStyle: 'italic'
-                            }}
-                          >
-                            (You)
-                          </Typography>
-                        )}
-                      </Box>
-                    </Box>
-                  </TableCell>
-                  <TableCell
-                    align='right'
-                    sx={{
-                      color: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.9) : 'text.primary',
-                      fontWeight: index < 3 || isCurrentUser(player) ? 700 : 500,
-                      borderBottom: `1px solid ${alpha(theme.palette.divider, 0.3)}`
-                    }}
-                  >
-                    {player.score.toFixed(2)}
-                  </TableCell>
-                  <TableCell
-                    align='right'
-                    sx={{
-                      color: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.9) : 'text.primary',
-                      fontWeight: index < 3 || isCurrentUser(player) ? 700 : 500,
-                      borderBottom: `1px solid ${alpha(theme.palette.divider, 0.3)}`
-                    }}
-                  >
-                    {formatTime(player.totalAnswerTime / 1000)}
-                  </TableCell>
-                  {game?.gameMode === 'live' && (
-                    <TableCell
-                      align='right'
-                      sx={{
-                        color: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.9) : 'text.primary',
-                        fontWeight: index < 3 || isCurrentUser(player) ? 700 : 500,
-                        borderBottom: `1px solid ${alpha(theme.palette.divider, 0.3)}`
-                      }}
-                    >
-                      {player?.fffPoints?.toFixed(3)}
-                    </TableCell>
+                    </>
                   )}
-                  {game?.gameMode === 'self-paced' && (
-                    <TableCell
-                      align='right'
-                      sx={{
-                        color: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.9) : 'text.primary',
-                        fontWeight: index < 3 || isCurrentUser(player) ? 700 : 500,
-                        borderBottom: `1px solid ${alpha(theme.palette.divider, 0.3)}`
-                      }}
-                    >
-                      {new Date(player?.finishedAt)?.toLocaleString()}
-                    </TableCell>
+                  {duringPlayDisplay.topPlayers.length > 0 && (
+                    <TableRow>
+                      <TableCell
+                        colSpan={game?.gameMode === 'live' ? 5 : 4}
+                        sx={{
+                          py: 1.5,
+                          fontWeight: 700,
+                          fontSize: '0.8rem',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                          color: theme.palette.mode === 'dark' ? theme.palette.common.white : 'text.secondary',
+                          borderBottom: 'none',
+                          bgcolor:
+                            theme.palette.mode === 'dark'
+                              ? alpha(theme.palette.background.paper, 0.4)
+                              : alpha(theme.palette.primary.main, 0.03)
+                        }}
+                      >
+                        Top 4 Players
+                      </TableCell>
+                    </TableRow>
                   )}
-                </motion.tr>
-              ))}
+                  {duringPlayDisplay.topPlayers.map(({ player, rank }) => renderPlayerRow(player, rank))}
+                </>
+              ) : (
+                leaderboard.map((player, index) => renderPlayerRow(player, index + 1))
+              )}
             </AnimatePresence>
           </TableBody>
         </Table>
