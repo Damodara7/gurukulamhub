@@ -21,6 +21,7 @@ import QuizQuestions from './QuizQuestions'
 import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS as ApiUrls } from '@/configs/apiConfig'
 import DynamicQuestionTemplate from './DynamicQuestionTemplate'
+import { calculateQuizTotalPoints, getQuizDefaultWeightage } from '@/utils/quizPointsUtil'
 
 const questionData = [
   {
@@ -63,6 +64,8 @@ const MainQuizQuestionBuilder = ({ data, isAdmin }) => {
   const [selectedQuestion, setSelectedQuestion] = useState(null)
   const [showAddQuestion, setShowAddQuestion] = useState(false)
 
+  const quizDefaultWeightage = getQuizDefaultWeightage(data)
+  const totalQuizPoints = calculateQuizTotalPoints(questions, quizDefaultWeightage)
   const quizAndQuestionData = {
     quiz: { ...data },
     language: data?.language,
@@ -164,7 +167,10 @@ const MainQuizQuestionBuilder = ({ data, isAdmin }) => {
 
   return (
     <Card key={data.id}>
-      <CardHeader title='Primary Language Questions' />
+      <CardHeader
+        title='Primary Language Questions'
+        subheader={`Default weightage: ${quizDefaultWeightage} · Total quiz points: ${totalQuizPoints}`}
+      />
       <CardContent>
         <Grid container spacing={4}>
           <Grid item xs={12}>
@@ -199,6 +205,7 @@ const MainQuizQuestionBuilder = ({ data, isAdmin }) => {
                 data={selectedQuestion}
                 saveQuestion={saveQuestion}
                 deleteQuestion={deleteQuestion}
+                quizDefaultWeightage={quizDefaultWeightage}
                 isAdmin={isAdmin}
               />
             </Grid>

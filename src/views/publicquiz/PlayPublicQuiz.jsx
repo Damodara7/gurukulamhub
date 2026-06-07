@@ -36,7 +36,7 @@ import * as RestApi from '@/utils/restApiUtil'
 import { API_URLS } from '@/configs/apiConfig'
 import { toast } from 'react-toastify'
 import { useSession } from 'next-auth/react'
-import { calculateQuizTotalPoints } from '@/utils/quizPointsUtil'
+import { calculateQuizTotalPoints, getQuizDefaultWeightage } from '@/utils/quizPointsUtil'
 
 export const fetchQuestionsByLanguage = async (quizId, languageCode) => {
   const result = await RestApi.get(`${API_URLS.v0.USERS_QUIZ_QUESTION}?quizId=${quizId}&languageCode=${languageCode}`)
@@ -130,7 +130,7 @@ export default function PlayPublicQuiz({ quizId, languageCode = null }) {
       0)
   const pointsSourceQuestions = questions.length ? questions : primaryQuestions
   const possibleQuizPoints = pointsSourceQuestions.length
-    ? calculateQuizTotalPoints(pointsSourceQuestions)
+    ? calculateQuizTotalPoints(pointsSourceQuestions, getQuizDefaultWeightage(quiz))
     : overallQuestionCount
 
   const getLanguageByCode = code => quizLanguages.find(lang => lang.code === code)

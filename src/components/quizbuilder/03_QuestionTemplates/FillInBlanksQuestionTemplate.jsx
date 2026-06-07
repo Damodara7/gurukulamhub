@@ -35,6 +35,7 @@ import { toast } from 'react-toastify'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
 import { blankRegex, textRegex, filterInput, excludeBlankChars, excludesTextChars } from '@/utils/regexUtil'
 import QuestionWeightageField from '@/components/quizbuilder/QuestionWeightageField'
+import { resolveInitialQuestionWeightage } from '@/utils/quizPointsUtil'
 
 const FillInBlanksQuestionTemplate = ({
   id: questionUUID,
@@ -44,6 +45,7 @@ const FillInBlanksQuestionTemplate = ({
   saveQuestion,
   deleteQuestion,
   validationErrors = [],
+  quizDefaultWeightage = 1,
   isAdmin = false
 }) => {
   const innerData = data?.data
@@ -53,7 +55,7 @@ const FillInBlanksQuestionTemplate = ({
   const [hint, setHint] = useState(innerData?.hint || '')
   const [hintMarks, setHintMarks] = useState(-1 * innerData?.hintMarks || '')
   const [marks, setMarks] = useState(innerData?.marks || '')
-  const [weightage, setWeightage] = useState(Number(innerData?.weightage) || 1)
+  const [weightage, setWeightage] = useState(resolveInitialQuestionWeightage(innerData, quizDefaultWeightage))
   const [timerSeconds, setTimerSeconds] = useState(innerData?.timerSeconds || '')
   const [skippable, setSkippable] = useState(innerData?.skippable || false) // by default non-skippable
   const [addHint, setAddHint] = useState(innerData?.addHint || false)
@@ -676,7 +678,7 @@ const FillInBlanksQuestionTemplate = ({
                           value={weightage}
                           onChange={setWeightage}
                           error={hasErrors && !!getErrorMessage('weightage')}
-                          helperText={getErrorMessage('weightage') || 'Sum of this value across all questions = quiz points'}
+                          helperText={getErrorMessage('weightage') || 'Override quiz default; sum across all questions = total quiz points'}
                         />
                       </Grid>
 

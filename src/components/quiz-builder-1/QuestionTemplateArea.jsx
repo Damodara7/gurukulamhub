@@ -1,6 +1,7 @@
 import { Alert, Box, Typography, useTheme, alpha } from '@mui/material'
 import React from 'react'
 import DynamicQuestionTemplate from '../quizbuilder/02_QuestionBuilder/DynamicQuestionTemplate'
+import { getQuizDefaultWeightage } from '@/utils/quizPointsUtil'
 import QuizIcon from '@mui/icons-material/Quiz'
 
 function QuestionTemplateArea({
@@ -8,7 +9,8 @@ function QuestionTemplateArea({
   onSaveQuestion,
   onDeleteQuestion,
   validationErrors = [],
-  questionsLength = 0
+  questionsLength = 0,
+  quizDefaultWeightage = 1
 }) {
   const theme = useTheme()
 
@@ -28,6 +30,7 @@ function QuestionTemplateArea({
             saveQuestion={onSaveQuestion}
             deleteQuestion={onDeleteQuestion}
             validationErrors={validationErrors}
+            quizDefaultWeightage={quizDefaultWeightage}
           />
         </Box>
       )}

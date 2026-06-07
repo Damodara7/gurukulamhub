@@ -45,6 +45,7 @@ import { filterInput, excludeQuesstionChars } from '@/utils/regexUtil'
 import VideoAd from '@views/apps/advertisements/VideoAd/VideoAd'
 import ImagePopup from '@/components/ImagePopup'
 import QuestionWeightageField from '@/components/quizbuilder/QuestionWeightageField'
+import { resolveInitialQuestionWeightage } from '@/utils/quizPointsUtil'
 import ReactPlayer from 'react-player'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
 import DeleteConfirmationDialog from '@/components/dialogs/DeleteConfirmationDialog'
@@ -57,6 +58,7 @@ const TrueFalseQuestionTemplate = ({
   deleteQuestion,
   primaryQuestion = null,
   validationErrors = [],
+  quizDefaultWeightage = 1,
   isAdmin = false
 }) => {
   const innerData = data?.data
@@ -76,7 +78,7 @@ const TrueFalseQuestionTemplate = ({
   const [hint, setHint] = useState(innerData?.hint || '')
   const [hintMarks, setHintMarks] = useState(-1 * innerData?.hintMarks || '')
   const [marks, setMarks] = useState(innerData?.marks || '')
-  const [weightage, setWeightage] = useState(Number(innerData?.weightage) || 1)
+  const [weightage, setWeightage] = useState(resolveInitialQuestionWeightage(innerData, quizDefaultWeightage))
   const [timerSeconds, setTimerSeconds] = useState(innerData?.timerSeconds || '')
   const [skippable, setSkippable] = useState(innerData?.skippable || false) // default non-skippable
   const [correctOption, setCorrectOption] = useState(
@@ -1298,7 +1300,7 @@ const TrueFalseQuestionTemplate = ({
                           value={weightage}
                           onChange={setWeightage}
                           error={hasErrors && !!getErrorMessage('weightage')}
-                          helperText={getErrorMessage('weightage') || 'Sum of this value across all questions = quiz points'}
+                          helperText={getErrorMessage('weightage') || 'Override quiz default; sum across all questions = total quiz points'}
                         />
                       </Grid>
 

@@ -12,7 +12,7 @@ import {
   createQuizPublishedNotification
 } from '../notifications/notification.helpers.js'
 import User from '@/app/models/user.model.js'
-import { sumQuestionWeightages } from '@/utils/quizPointsUtil.js'
+import { sumQuestionWeightages, getQuizDefaultWeightage, normalizeQuizWeightage } from '@/utils/quizPointsUtil.js'
 import { ROLES_LOOKUP } from '@/configs/roles-lookup.js'
 
 const Artifact = 'Quiz'
@@ -54,6 +54,7 @@ export async function add(addRequestData) {
   //{id,name, details, owner, createdBy, privacy, parentContextId, parentType, tags, status}) {
   await connectMongo()
   try {
+    addRequestData.defaultWeightage = normalizeQuizWeightage(addRequestData.defaultWeightage)
     const newArtifact = new ArtifactModel({ ...addRequestData })
     await newArtifact.save()
     console.log(`${Artifact}` + ' added successfully!')
@@ -143,6 +144,10 @@ export async function updateById(id, updateData) {
     if (updateData && requestedApprovalState === 'approved') {
       updateData.approvalState = 'approved'
       updateData.approvedBy = updateData.approvedBy || 'Admin'
+    }
+
+    if (updateData?.defaultWeightage !== undefined) {
+      updateData.defaultWeightage = normalizeQuizWeightage(updateData.defaultWeightage)
     }
 
     const updatedArtifact = await ArtifactModel.findByIdAndUpdate(id, updateData, { new: true }) // Return updated document
@@ -915,7 +920,7 @@ export async function completeQuizAndAwardPoints({ quizId, email, languageCode =
     }
 
     const questionsCount = questions.length
-    const totalPossiblePoints = sumQuestionWeightages(questions)
+    const totalPossiblePoints = sumQuestionWeightages(questions, getQuizDefaultWeightage(quiz))
 
     const earnedAt = new Date()
     const pushResult = await User.updateOne(

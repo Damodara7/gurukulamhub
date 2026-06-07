@@ -42,6 +42,7 @@ import QuizDocuments from './QuizDocuments'
 import QuizCourseLinks from './QuizCourseLinks'
 import ContextTreeSearch from '@/components/quizbuilder/01_QuizContext/ContextTreeSearch'
 import IconButtonTooltip from '@/components/IconButtonTooltip'
+import QuestionWeightageField from '@/components/quizbuilder/QuestionWeightageField'
 
 const CreateQuizForm = ({
   control,
@@ -301,6 +302,25 @@ const CreateQuizForm = ({
                 defaultLanguage={{ code: 'en', name: 'English' }}
                 fieldName='language'
               ></LanguageSelect>
+            )}
+          />
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <Controller
+            name='defaultWeightage'
+            control={control}
+            render={({ field }) => (
+              <QuestionWeightageField
+                label='Default Question Weightage (1-10)'
+                value={field.value ?? 1}
+                onChange={val => {
+                  field.onChange(val)
+                  setTheFormValue('defaultWeightage', val)
+                }}
+                disabled={loading}
+                helperText='Applied to new questions; each question can override this value'
+              />
             )}
           />
         </Grid>

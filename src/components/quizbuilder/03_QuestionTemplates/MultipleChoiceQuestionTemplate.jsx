@@ -49,6 +49,7 @@ import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd'
 import VideoAd from '@views/apps/advertisements/VideoAd/VideoAd'
 import ImagePopup from '@/components/ImagePopup'
 import QuestionWeightageField from '@/components/quizbuilder/QuestionWeightageField'
+import { resolveInitialQuestionWeightage } from '@/utils/quizPointsUtil'
 import ReactPlayer from 'react-player'
 import { filterInput, excludeQuesstionChars } from '@/utils/regexUtil'
 
@@ -60,6 +61,7 @@ const MultipleChoiceQuestionTemplate = ({
   saveQuestion,
   deleteQuestion,
   validationErrors = [],
+  quizDefaultWeightage = 1,
   isAdmin = false
 }) => {
   const innerData = data?.data
@@ -1677,7 +1679,7 @@ const MultipleChoiceQuestionTemplate = ({
                           value={weightage}
                           onChange={setWeightage}
                           error={hasErrors && !!getErrorMessage('weightage')}
-                          helperText={getErrorMessage('weightage') || 'Sum of this value across all questions = quiz points'}
+                          helperText={getErrorMessage('weightage') || 'Override quiz default; sum across all questions = total quiz points'}
                         />
                       </Grid>
 

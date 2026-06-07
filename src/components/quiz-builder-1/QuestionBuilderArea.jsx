@@ -1,5 +1,5 @@
 import { useEffect, forwardRef, useState, useImperativeHandle } from 'react'
-import { Box, Stack, useTheme, alpha } from '@mui/material'
+import { Box, Stack, Typography, useTheme, alpha } from '@mui/material'
 import QuestionsVerticalMenu from './QuestionsVerticalMenu'
 import QuestionTemplateArea from './QuestionTemplateArea'
 import { API_URLS } from '@/configs/apiConfig'
@@ -8,6 +8,7 @@ import SelectTemplateType from './SelectTemplateType'
 import { useSession } from 'next-auth/react'
 import useUUID from '@/app/hooks/useUUID'
 import { toast } from 'react-toastify'
+import { calculateQuizTotalPoints, getQuizDefaultWeightage } from '@/utils/quizPointsUtil'
 
 const QuestionBuilderArea = forwardRef(
   ({ quiz, validationErrors = [], validateQuizQuestions, setQuestionsLength }, ref) => {
@@ -95,6 +96,9 @@ const QuestionBuilderArea = forwardRef(
       }
     }
 
+    const quizDefaultWeightage = getQuizDefaultWeightage(quiz)
+    const totalQuizPoints = calculateQuizTotalPoints(primaryQuestions, quizDefaultWeightage)
+
     async function onCreateQuestion(templateId) {
       const reqObj = {
         id: pID,
@@ -131,7 +135,7 @@ const QuestionBuilderArea = forwardRef(
           }),
           // other fields
           marks: '',
-          weightage: 1,
+          weightage: quizDefaultWeightage,
           timerSeconds: '',
           hint: '',
           hintMarks: '',
@@ -304,6 +308,9 @@ const QuestionBuilderArea = forwardRef(
               },
             }}
           >
+            <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: 1.5, px: 0.5 }}>
+              Default weightage: {quizDefaultWeightage} · Total quiz points: {totalQuizPoints}
+            </Typography>
             {!hasClickedNew && (
               <QuestionTemplateArea
                 selectedQuestion={selectedQuestion}
@@ -312,6 +319,7 @@ const QuestionBuilderArea = forwardRef(
                 hasClickedNew={hasClickedNew}
                 validationErrors={validationErrors}
                 questionsLength={primaryQuestions?.length || 0}
+                quizDefaultWeightage={quizDefaultWeightage}
               />
             )}
             {hasClickedNew && (

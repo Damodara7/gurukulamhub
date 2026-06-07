@@ -153,6 +153,12 @@ const QuizSchema1_0_0 = new mongoose.Schema({
     type: [secondaryLanguagesSchema],
     default: []
   },
+  defaultWeightage: {
+    type: Number,
+    min: 1,
+    max: 5,
+    default: 1
+  },
   schemaVersion: {
     type: String,
     default: '1.0.0', // Initial schema version

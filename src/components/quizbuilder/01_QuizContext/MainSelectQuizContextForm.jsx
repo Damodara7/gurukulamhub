@@ -392,6 +392,7 @@ function PopupWindow({
     status: 'active',
     thumbnail: '',
     language: { code: 'en', name: 'English' },
+    defaultWeightage: 1,
     remarks: []
   }
 

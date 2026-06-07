@@ -3,6 +3,7 @@ import { Grid, Typography, Box, IconButton, Collapse, Stack, useTheme, alpha } f
 import { Title, Info, Translate, Key, Quiz as QuizIcon } from '@mui/icons-material'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
+import { getQuizDefaultWeightage } from '@/utils/quizPointsUtil'
 
 const QuizDetails = ({ quiz }) => {
   const [isExpanded, setIsExpanded] = useState(true)
@@ -54,6 +55,13 @@ const QuizDetails = ({ quiz }) => {
       value: quiz.id || 'N/A',
       iconBg: theme.palette.warning.main,
       iconBgPath: 'warning.main'
+    },
+    {
+      icon: <QuizIcon sx={{ fontSize: 18, color: 'white' }} />,
+      label: 'Default Weightage',
+      value: String(getQuizDefaultWeightage(quiz)),
+      iconBg: theme.palette.success.main,
+      iconBgPath: 'success.main'
     }
   ]
 

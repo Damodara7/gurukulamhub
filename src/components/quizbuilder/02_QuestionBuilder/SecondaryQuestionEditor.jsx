@@ -23,6 +23,7 @@ import QuestionTemplatesToolBar from './QuestionTemplatesToolBar'
 import LanguageSelect from '../05_Components/LanguageSelect'
 import LanguageDropDown from '../05_Components/LanguageDropDown'
 import DynamicQuestionTemplate from './DynamicQuestionTemplate'
+import { getQuizDefaultWeightage } from '@/utils/quizPointsUtil'
 import useUUID from '@/app/hooks/useUUID'
 import { useSession } from 'next-auth/react'
 import * as RestApi from '@/utils/restApiUtil'
@@ -266,6 +267,7 @@ const SecondaryQuestionEditor = ({
             primaryQuestion={primaryQuestion}
             data={selectedSecondaryQuestion}
             deleteQuestion={deleteQuestion}
+            quizDefaultWeightage={getQuizDefaultWeightage(data?.quiz)}
           />
         </Grid>
       )}

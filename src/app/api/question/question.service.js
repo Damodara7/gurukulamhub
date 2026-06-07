@@ -2,6 +2,7 @@ import connectMongo from '@/utils/dbConnect-mongo'
 import Question from './question.model.js'
 import Quiz from '../quiz/quiz.model.js'
 import { questionCreateRequestDtoSchema } from './question.validator.js'
+import { getQuizDefaultWeightage, normalizeQuizWeightage } from '@/utils/quizPointsUtil.js'
 
 const Artifact = 'Question'
 const ArtifactModel = Question
@@ -30,6 +31,31 @@ export async function add(addRequestData) {
   //{id,name, details, owner, createdBy, privacy, parentContextId, parentType, tags, status}) {
   await connectMongo()
   try {
+    const quiz = await Quiz.findById(addRequestData.quizId).lean()
+    const defaultWeightage = getQuizDefaultWeightage(quiz)
+    let initialWeightage = defaultWeightage
+
+    if (!addRequestData.isPrimary && addRequestData.primaryQuestionId) {
+      const primaryQuestion = await ArtifactModel.findById(addRequestData.primaryQuestionId).lean()
+      if (
+        primaryQuestion?.data?.weightage !== undefined &&
+        primaryQuestion?.data?.weightage !== null &&
+        primaryQuestion?.data?.weightage !== ''
+      ) {
+        initialWeightage = normalizeQuizWeightage(primaryQuestion.data.weightage)
+      }
+    }
+
+    if (!addRequestData.data || typeof addRequestData.data !== 'object') {
+      addRequestData.data = { weightage: initialWeightage }
+    } else if (
+      addRequestData.data.weightage === undefined ||
+      addRequestData.data.weightage === null ||
+      addRequestData.data.weightage === ''
+    ) {
+      addRequestData.data.weightage = initialWeightage
+    }
+
     const newArtifact = new ArtifactModel({ ...addRequestData })
     await newArtifact.save()
     await downgradeQuizToDraftIfSaved(addRequestData.quizId)

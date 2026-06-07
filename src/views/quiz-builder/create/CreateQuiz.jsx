@@ -75,6 +75,7 @@ function CreateQuiz({ isAdmin = false }) {
     thumbnail: '',
     approvalState: 'draft',
     language: { code: 'en', name: 'English' },
+    defaultWeightage: 1,
     remarks: [],
     isAdmin: isAdmin
   }

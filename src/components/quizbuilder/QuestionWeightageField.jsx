@@ -9,6 +9,7 @@ const QuestionWeightageField = ({
   onChange,
   disabled = false,
   error = false,
+  label = 'Weightage (1-10)',
   helperText = 'Sum of this value across all questions = quiz points',
   fullWidth = true
 }) => {
@@ -17,7 +18,7 @@ const QuestionWeightageField = ({
   return (
     <TextField
       disabled={disabled}
-      label='Weightage (1-10)'
+      label={label}
       select
       fullWidth={fullWidth}
       value={value ?? 1}

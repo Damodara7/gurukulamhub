@@ -13,7 +13,8 @@ const DynamicQuestionTemplate = ({
   saveQuestion,
   deleteQuestion,
   validationErrors = [],
-  isAdmin=false
+  quizDefaultWeightage = 1,
+  isAdmin = false
 }) => {
   const componentMap = {
     'single-choice': SingleChoiceQuestionTemplate,
@@ -38,6 +39,7 @@ const DynamicQuestionTemplate = ({
       saveQuestion={saveQuestion}
       deleteQuestion={deleteQuestion}
       validationErrors={validationErrors}
+      quizDefaultWeightage={quizDefaultWeightage}
       isAdmin={isAdmin}
     />
   )

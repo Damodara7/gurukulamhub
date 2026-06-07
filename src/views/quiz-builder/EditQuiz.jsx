@@ -71,6 +71,7 @@ function EditQuiz({ quiz, isAdmin = false }) {
     thumbnail: quiz?.thumbnail || '',
     approvalState: quiz?.approvalState || 'draft',
     language: quiz?.language || { code: 'en', name: 'English' },
+    defaultWeightage: quiz?.defaultWeightage ?? 1,
     remarks: quiz?.remarks || []
   }
 
