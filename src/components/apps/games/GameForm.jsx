@@ -60,7 +60,7 @@ import { userAgent } from 'next/server'
 import GroupAutocomplete from '@/components/group/GroupAutocomplete'
 import GameLocationRestrictionSection from '@/components/apps/games/GameLocationRestrictionSection'
 import { emptyGameLocation, restrictedLocationHint } from '@/utils/gameLocationAccess'
-import { sumQuestionWeightages } from '@/utils/quizPointsUtil'
+import { calculateGameTotalPoints, GAME_POINTS_WEIGHTAGE_OPTIONS } from '@/utils/gamePointsUtil'
 
 // Reward position options
 const POSITION_OPTIONS = [1, 2, 3, 4, 5]
@@ -188,6 +188,7 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
     tags: [],
     groupId: null,
     questionsCount: 0,
+    pointsWeightage: 1,
     totalPoints: 0,
     location: emptyGameLocation(),
     rewards: []
@@ -209,7 +210,6 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
   const [localTimeDisplay, setLocalTimeDisplay] = useState(null)
   /** Same start instant in Asia/Kolkata for a common reference (always when start time is set). */
   const [istTimeDisplay, setIstTimeDisplay] = useState(null)
-  const [questionsWeightageSum, setQuestionsWeightageSum] = useState(0)
   // Loading state
   const [loading, setLoading] = useState({
     submitting: false,
@@ -271,6 +271,7 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
         gameMode: data?.gameMode || 'live',
         groupId: data?.groupId || null,
         questionsCount: data?.questionsCount || 0,
+        pointsWeightage: data?.pointsWeightage ?? 1,
         totalPoints: data?.totalPoints || 0,
         location: { ...emptyGameLocation(), ...(data?.location || {}) }
       })
@@ -349,8 +350,11 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
   useEffect(() => {
     const fetchQuestionCount = async () => {
       if (!formData.quiz) {
-        setQuestionsWeightageSum(0)
-        setFormData(prev => ({ ...prev, questionsCount: 0, totalPoints: 0 }))
+        setFormData(prev => ({
+          ...prev,
+          questionsCount: 0,
+          totalPoints: calculateGameTotalPoints(0, prev.pointsWeightage)
+        }))
         return
       }
 
@@ -365,17 +369,18 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
         const response = await RestApi.get(query)
         const questions = Array.isArray(response?.result) ? response.result : []
         const questionCount = questions.length
-        const weightageSum = sumQuestionWeightages(questions)
-        setQuestionsWeightageSum(weightageSum)
         setFormData(prev => ({
           ...prev,
           questionsCount: questionCount,
-          totalPoints: weightageSum
+          totalPoints: calculateGameTotalPoints(questionCount, prev.pointsWeightage)
         }))
       } catch (error) {
         console.error('Failed to fetch question count:', error)
-        setQuestionsWeightageSum(0)
-        setFormData(prev => ({ ...prev, questionsCount: 0, totalPoints: 0 }))
+        setFormData(prev => ({
+          ...prev,
+          questionsCount: 0,
+          totalPoints: calculateGameTotalPoints(0, prev.pointsWeightage)
+        }))
       } finally {
         setLoading(prev => ({ ...prev, fetchingQuestionCount: false }))
       }
@@ -383,6 +388,13 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
 
     fetchQuestionCount()
   }, [formData.quiz, quizzes])
+
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      totalPoints: calculateGameTotalPoints(prev.questionsCount, prev.pointsWeightage)
+    }))
+  }, [formData.pointsWeightage])
 
   // Get country regions
   const getCountryRegions = async countryCode => {
@@ -538,7 +550,8 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
         }
       }))
     } else {
-      const updatedValue = type === 'checkbox' ? checked : value
+      const updatedValue =
+        name === 'pointsWeightage' ? Number(value) : type === 'checkbox' ? checked : value
       setFormData(prev => {
         const next = {
           ...prev,
@@ -792,6 +805,7 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
     const submission = {
       ...formData,
       questionsCount: Number(formData?.questionsCount || 0),
+      pointsWeightage: Number(formData?.pointsWeightage || 1),
       totalPoints: Number(formData?.totalPoints || 0),
       location: {
         ...formData.location,
@@ -1582,7 +1596,7 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
                   </FormControl>
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={12} sm={4}>
                   <TextField
                     fullWidth
                     label='No. of Questions'
@@ -1594,12 +1608,33 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={12} sm={4}>
+                  <FormControl fullWidth>
+                    <InputLabel id='points-weightage-label'>Points Weightage</InputLabel>
+                    <Select
+                      labelId='points-weightage-label'
+                      name='pointsWeightage'
+                      value={formData.pointsWeightage ?? 1}
+                      label='Points Weightage'
+                      onChange={handleChange}
+                      disabled={!formData.quiz || loading.fetchingQuestionCount}
+                    >
+                      {GAME_POINTS_WEIGHTAGE_OPTIONS.map(option => (
+                        <MenuItem key={option} value={option}>
+                          {option}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                    <FormHelperText>Points per question (1–5, default 1)</FormHelperText>
+                  </FormControl>
+                </Grid>
+
+                <Grid item xs={12} sm={4}>
                   <TextField
                     fullWidth
-                    label='Quiz Points'
+                    label='Game Points'
                     value={formData.totalPoints || 0}
-                    helperText='Sum of all question weightages'
+                    helperText='Questions × weightage'
                     InputProps={{ readOnly: true }}
                   />
                 </Grid>
