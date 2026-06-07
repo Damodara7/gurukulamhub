@@ -684,6 +684,7 @@ function EnhancedProfileCard({ profile }) {
                     <BusinessIcon fontSize='small' color='action' />
                     <Typography variant='body2' sx={{ wordBreak: 'break-word' }}>
                       {org.organization} {org.organizationType && `(${org.organizationType})`}{' '}
+                      {org.associatedRole && `— ${org.associatedRole}`}{' '}
                       {org.websiteUrl && (
                         <a
                           href={org.websiteUrl}

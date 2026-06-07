@@ -1718,6 +1718,7 @@ const AccountDetails = () => {
         [
           'organization',
           'organizationType',
+          'associatedRole',
           'websiteUrl',
           'isCurrentlyInAssociation',
           'associationStartDate',
@@ -1798,6 +1799,7 @@ const AccountDetails = () => {
           const newOrganizations = pendingOrganizations.map(org => ({
             organization: org.organization,
             organizationType: org.organizationType,
+            associatedRole: org.associatedRole,
             websiteUrl: org.websiteUrl,
             isCurrentlyInAssociation: org.isCurrentlyInAssociation,
             associationStartDate: org.associationStartDate,

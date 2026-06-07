@@ -23,6 +23,7 @@ import { Edit as EditIcon } from '@mui/icons-material'
 const initialFormData = {
   organization: '',
   organizationType: '',
+  associatedRole: '',
   websiteUrl: '',
   isCurrentlyInAssociation: true,
   associationStartDate: '',
@@ -58,6 +59,7 @@ function NewAssociatedOrganization({
       setFormData({
         organization: editingAssociatedOrganization.organization || '',
         organizationType: editingAssociatedOrganization.organizationType || '',
+        associatedRole: editingAssociatedOrganization.associatedRole || '',
         websiteUrl: editingAssociatedOrganization.websiteUrl || '',
         isCurrentlyInAssociation: editingAssociatedOrganization.isCurrentlyInAssociation ?? true,
         associationStartDate: editingAssociatedOrganization.associationStartDate || '',
@@ -110,6 +112,7 @@ function NewAssociatedOrganization({
           _id: editingAssociatedOrganization._id,
           organization: formData.organization,
           organizationType: formData.organizationType,
+          associatedRole: formData.associatedRole,
           websiteUrl: formData.websiteUrl,
           isCurrentlyInAssociation: formData.isCurrentlyInAssociation,
           associationStartDate: formData.associationStartDate,
@@ -122,6 +125,7 @@ function NewAssociatedOrganization({
           _id: `temp_${Date.now()}`, // Temporary ID for state management
           organization: formData.organization,
           organizationType: formData.organizationType,
+          associatedRole: formData.associatedRole,
           websiteUrl: formData.websiteUrl,
           isCurrentlyInAssociation: formData.isCurrentlyInAssociation,
           associationStartDate: formData.associationStartDate,
@@ -179,6 +183,17 @@ function NewAssociatedOrganization({
                     ))}
                   </Select>
                 </FormControl>
+              </Grid>
+
+              {/* Associated Role */}
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label='Associated Role'
+                  value={formData.associatedRole}
+                  placeholder='Ex: Volunteer, Board Member, Advisor'
+                  onChange={e => handleFormChange('associatedRole', e.target.value)}
+                />
               </Grid>
 
               {/* Website Url */}
@@ -298,6 +313,15 @@ export function AssociatedOrganizationViewModal({ open, onClose, organization, o
                 </Typography>
                 <Typography variant='body1'>{organization.organizationType}</Typography>
               </Box>
+
+              {organization.associatedRole && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant='h6' sx={{ fontWeight: 'bold', mb: 1 }}>
+                    Associated Role
+                  </Typography>
+                  <Typography variant='body1'>{organization.associatedRole}</Typography>
+                </Box>
+              )}
 
               {organization.websiteUrl && (
                 <Box sx={{ mb: 2 }}>

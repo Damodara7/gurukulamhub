@@ -118,6 +118,30 @@ const OrganizationSection = ({
                                   }}
                                 />
                               </Box>
+                              {organization.associatedRole && (
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                  <Typography
+                                    variant='body2'
+                                    color='text.primary'
+                                    sx={{ fontWeight: 'bold', minWidth: 'fit-content' }}
+                                  >
+                                    Role:
+                                  </Typography>
+                                  <Chip
+                                    label={organization.associatedRole}
+                                    size='small'
+                                    variant='outlined'
+                                    sx={{
+                                      maxWidth: '200px',
+                                      '& .MuiChip-label': {
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap'
+                                      }
+                                    }}
+                                  />
+                                </Box>
+                              )}
                             </Box>
                           </Box>
                           <Box sx={{ display: 'flex', gap: 1, ml: 1 }}>
@@ -211,6 +235,30 @@ const OrganizationSection = ({
                                 }}
                               />
                             </Box>
+                            {organization.associatedRole && (
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Typography
+                                  variant='body2'
+                                  color='text.primary'
+                                  sx={{ fontWeight: 'bold', minWidth: 'fit-content' }}
+                                >
+                                  Role:
+                                </Typography>
+                                <Chip
+                                  label={organization.associatedRole}
+                                  size='small'
+                                  variant='outlined'
+                                  sx={{
+                                    maxWidth: '200px',
+                                    '& .MuiChip-label': {
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      whiteSpace: 'nowrap'
+                                    }
+                                  }}
+                                />
+                              </Box>
+                            )}
                           </Box>
                         </Box>
                         <Box sx={{ display: 'flex', gap: 1, ml: 1 }}>

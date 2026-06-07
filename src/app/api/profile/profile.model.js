@@ -11,6 +11,7 @@ const languageSchema = new mongoose.Schema({
 const associatedOrganizationSchema = new mongoose.Schema({
   organization: { type: String, required: true },
   organizationType: { type: String },
+  associatedRole: { type: String },
   websiteUrl: { type: String, required: true },
   isCurrentlyInAssociation: { type: Boolean, default: true },
   associationStartDate: { type: String },

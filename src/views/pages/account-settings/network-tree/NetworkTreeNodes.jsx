@@ -19,8 +19,9 @@ import {
   Chip,
   TablePagination
 } from '@mui/material'
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import EastIcon from '@mui/icons-material/East'
+import ShowChartIcon from '@mui/icons-material/ShowChart'
 import UserBackgroundLetterAvatar from './UserBackgroundLetterAvatar'
 import NetworkTreeTable from './NetworkTreeTable'
 import { useSession } from 'next-auth/react'
@@ -30,7 +31,16 @@ import Loading from '../security/Loading'
 import TreeComponent from '@/components/TreeComponent'
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
 import { useParams, useRouter } from 'next/navigation'
-import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis } from '@/libs/Recharts'
+import {
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip as RechartsTooltip,
+  XAxis,
+  YAxis
+} from '@/libs/Recharts'
 
 const formatDateTime = value => {
   if (!value) return '-'
@@ -115,10 +125,10 @@ const getTotalQuizPoints = user => Number(user?.totalQuizPoints || 0)
 const getComputedCumulativePoints = user =>
   Number(
     user?.cumulativePoints ??
-      (Number(user?.referralPoints || 0) +
+      Number(user?.referralPoints || 0) +
         Number(user?.totalGamePoints || 0) +
         Number(user?.totalLearningPoints || 0) +
-        getTotalQuizPoints(user))
+        getTotalQuizPoints(user)
   )
 
 const ReferralStatsChartsSection = ({ rootData, isDarkMode, theme }) => {
@@ -136,10 +146,7 @@ const ReferralStatsChartsSection = ({ rootData, isDarkMode, theme }) => {
   }, [networkUsers])
 
   const topUsers = useMemo(
-    () =>
-      [...networkUsers]
-        .sort((a, b) => getComputedCumulativePoints(b) - getComputedCumulativePoints(a))
-        .slice(0, 5),
+    () => [...networkUsers].sort((a, b) => getComputedCumulativePoints(b) - getComputedCumulativePoints(a)).slice(0, 5),
     [networkUsers]
   )
 
@@ -176,7 +183,10 @@ const ReferralStatsChartsSection = ({ rootData, isDarkMode, theme }) => {
         boxShadow: isDarkMode ? `0 2px 12px ${alpha(theme.palette.common.black, 0.3)}` : '0 2px 12px rgba(0,0,0,0.04)'
       }}
     >
-      <CardHeader title='Referral & Network Stats' subheader='Track your referral performance over time and network quality.' />
+      <CardHeader
+        title='Referral & Network Stats'
+        subheader='Track your referral performance over time and network quality.'
+      />
       <CardContent sx={{ pt: 0 }}>
         <Grid container spacing={1.5} sx={{ mb: 2 }}>
           <Grid item xs={6} sm={3}>
@@ -232,8 +242,24 @@ const ReferralStatsChartsSection = ({ rootData, isDarkMode, theme }) => {
                   }}
                 />
                 <Legend />
-                <Line type='monotone' dataKey='referralsSent' name='Referrals Sent' stroke={theme.palette.primary.main} strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 5 }} />
-                <Line type='monotone' dataKey='successfulJoins' name='Successful Joins' stroke={theme.palette.success.main} strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+                <Line
+                  type='monotone'
+                  dataKey='referralsSent'
+                  name='Referrals Sent'
+                  stroke={theme.palette.primary.main}
+                  strokeWidth={3}
+                  dot={{ r: 3 }}
+                  activeDot={{ r: 5 }}
+                />
+                <Line
+                  type='monotone'
+                  dataKey='successfulJoins'
+                  name='Successful Joins'
+                  stroke={theme.palette.success.main}
+                  strokeWidth={3}
+                  dot={{ r: 3 }}
+                  activeDot={{ r: 5 }}
+                />
               </LineChart>
             </ResponsiveContainer>
           </Box>
@@ -256,19 +282,49 @@ const ReferralStatsChartsSection = ({ rootData, isDarkMode, theme }) => {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr>
-                    <th style={{ textAlign: 'left', padding: '10px', borderBottom: `1px solid ${alpha(theme.palette.divider, 0.45)}` }}>
+                    <th
+                      style={{
+                        textAlign: 'left',
+                        padding: '10px',
+                        borderBottom: `1px solid ${alpha(theme.palette.divider, 0.45)}`
+                      }}
+                    >
                       Name
                     </th>
-                    <th style={{ textAlign: 'left', padding: '10px', borderBottom: `1px solid ${alpha(theme.palette.divider, 0.45)}` }}>
+                    <th
+                      style={{
+                        textAlign: 'left',
+                        padding: '10px',
+                        borderBottom: `1px solid ${alpha(theme.palette.divider, 0.45)}`
+                      }}
+                    >
                       Email
                     </th>
-                    <th style={{ textAlign: 'left', padding: '10px', borderBottom: `1px solid ${alpha(theme.palette.divider, 0.45)}` }}>
+                    <th
+                      style={{
+                        textAlign: 'left',
+                        padding: '10px',
+                        borderBottom: `1px solid ${alpha(theme.palette.divider, 0.45)}`
+                      }}
+                    >
                       Quiz Points
                     </th>
-                    <th style={{ textAlign: 'left', padding: '10px', borderBottom: `1px solid ${alpha(theme.palette.divider, 0.45)}` }}>
+                    <th
+                      style={{
+                        textAlign: 'left',
+                        padding: '10px',
+                        borderBottom: `1px solid ${alpha(theme.palette.divider, 0.45)}`
+                      }}
+                    >
                       Cumulative Points
                     </th>
-                    <th style={{ textAlign: 'left', padding: '10px', borderBottom: `1px solid ${alpha(theme.palette.divider, 0.45)}` }}>
+                    <th
+                      style={{
+                        textAlign: 'left',
+                        padding: '10px',
+                        borderBottom: `1px solid ${alpha(theme.palette.divider, 0.45)}`
+                      }}
+                    >
                       Referral Points
                     </th>
                   </tr>
@@ -365,19 +421,49 @@ const ReferralHistorySection = ({ referralHistory, isDarkMode, theme }) => {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
-                <th style={{ textAlign: 'left', padding: '10px', borderBottom: `1px solid ${alpha(theme.palette.divider, 0.45)}` }}>
+                <th
+                  style={{
+                    textAlign: 'left',
+                    padding: '10px',
+                    borderBottom: `1px solid ${alpha(theme.palette.divider, 0.45)}`
+                  }}
+                >
                   Referred To
                 </th>
-                <th style={{ textAlign: 'left', padding: '10px', borderBottom: `1px solid ${alpha(theme.palette.divider, 0.45)}` }}>
+                <th
+                  style={{
+                    textAlign: 'left',
+                    padding: '10px',
+                    borderBottom: `1px solid ${alpha(theme.palette.divider, 0.45)}`
+                  }}
+                >
                   Status
                 </th>
-                <th style={{ textAlign: 'left', padding: '10px', borderBottom: `1px solid ${alpha(theme.palette.divider, 0.45)}` }}>
+                <th
+                  style={{
+                    textAlign: 'left',
+                    padding: '10px',
+                    borderBottom: `1px solid ${alpha(theme.palette.divider, 0.45)}`
+                  }}
+                >
                   Sent Count
                 </th>
-                <th style={{ textAlign: 'left', padding: '10px', borderBottom: `1px solid ${alpha(theme.palette.divider, 0.45)}` }}>
+                <th
+                  style={{
+                    textAlign: 'left',
+                    padding: '10px',
+                    borderBottom: `1px solid ${alpha(theme.palette.divider, 0.45)}`
+                  }}
+                >
                   Last Sent
                 </th>
-                <th style={{ textAlign: 'left', padding: '10px', borderBottom: `1px solid ${alpha(theme.palette.divider, 0.45)}` }}>
+                <th
+                  style={{
+                    textAlign: 'left',
+                    padding: '10px',
+                    borderBottom: `1px solid ${alpha(theme.palette.divider, 0.45)}`
+                  }}
+                >
                   Joined At
                 </th>
               </tr>
@@ -403,7 +489,12 @@ const ReferralHistorySection = ({ referralHistory, isDarkMode, theme }) => {
                       </Stack>
                     </td>
                     <td style={{ padding: '10px', borderBottom: `1px solid ${alpha(theme.palette.divider, 0.25)}` }}>
-                      <Chip size='small' label={item.status} color={statusToChipColor(item.status)} variant='outlined' />
+                      <Chip
+                        size='small'
+                        label={item.status}
+                        color={statusToChipColor(item.status)}
+                        variant='outlined'
+                      />
                     </td>
                     <td style={{ padding: '10px', borderBottom: `1px solid ${alpha(theme.palette.divider, 0.25)}` }}>
                       {item.sentCount || 1}
@@ -454,7 +545,7 @@ async function fetchUserProfileAndNetwork(email) {
   return profileAndNetwork
 }
 
-const StyledReferralPointsStack = ({ profileAndNetworkData, isDarkMode, theme }) => {
+const StyledReferralPointsStack = ({ profileAndNetworkData, isDarkMode, theme, onPerformanceGraphClick }) => {
   const totalReferralPoints = Number(profileAndNetworkData?.referralPoints || 0)
   const totalGamePoints = Number(profileAndNetworkData?.totalGamePoints || 0)
   const totalLearningPoints = Number(profileAndNetworkData?.totalLearningPoints || 0)
@@ -535,6 +626,25 @@ const StyledReferralPointsStack = ({ profileAndNetworkData, isDarkMode, theme })
           </React.Fragment>
         ))}
       </Box>
+      <Box>
+        <Button
+          size='small'
+          variant='outlined'
+          color='primary'
+          startIcon={<ShowChartIcon sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }} />}
+          onClick={onPerformanceGraphClick}
+          sx={{
+            mt: 0.25,
+            fontSize: { xs: '0.68rem', sm: '0.75rem' },
+            py: 0.5,
+            px: 1.25,
+            textTransform: 'none',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          Performance Graph
+        </Button>
+      </Box>
     </Stack>
   )
 }
@@ -552,7 +662,12 @@ function NetworkTreeNodes({ networkData }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [parentUserNodes, setParentUserNodes] = useState([])
+  const referralStatsRef = useRef(null)
   const distributionLevels = useMemo(() => buildDistributionLevels(referralSettings), [referralSettings])
+
+  const scrollToPerformanceGraph = () => {
+    referralStatsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 
   const currentUserNode = useMemo(() => findUserByEmail(currentUserNodeEmail, networkData), [currentUserNodeEmail])
 
@@ -684,6 +799,7 @@ function NetworkTreeNodes({ networkData }) {
             profileAndNetworkData={profileAndNetworkData}
             isDarkMode={isDarkMode}
             theme={theme}
+            onPerformanceGraphClick={scrollToPerformanceGraph}
           />
         }
       />
@@ -708,9 +824,13 @@ function NetworkTreeNodes({ networkData }) {
                     placement='top'
                     title={`Referral Points: ${
                       findUserByEmail(nodeEmail, networkData)?.referralPoints || 0
-                    } | Game Points: ${findUserByEmail(nodeEmail, networkData)?.totalGamePoints || 0} | Learning Points: ${
+                    } | Game Points: ${
+                      findUserByEmail(nodeEmail, networkData)?.totalGamePoints || 0
+                    } | Learning Points: ${
                       findUserByEmail(nodeEmail, networkData)?.totalLearningPoints || 0
-                    } | Quiz Points: ${getTotalQuizPoints(findUserByEmail(nodeEmail, networkData))} | Cumulative: ${getComputedCumulativePoints(findUserByEmail(nodeEmail, networkData))}`}
+                    } | Quiz Points: ${getTotalQuizPoints(
+                      findUserByEmail(nodeEmail, networkData)
+                    )} | Cumulative: ${getComputedCumulativePoints(findUserByEmail(nodeEmail, networkData))}`}
                   >
                     <Box
                       sx={{
@@ -737,9 +857,13 @@ function NetworkTreeNodes({ networkData }) {
                 placement='top'
                 title={`Referral Points: ${
                   findUserByEmail(currentUserNodeEmail, networkData)?.referralPoints || 0
-                } | Game Points: ${findUserByEmail(currentUserNodeEmail, networkData)?.totalGamePoints || 0} | Learning Points: ${
+                } | Game Points: ${
+                  findUserByEmail(currentUserNodeEmail, networkData)?.totalGamePoints || 0
+                } | Learning Points: ${
                   findUserByEmail(currentUserNodeEmail, networkData)?.totalLearningPoints || 0
-                } | Quiz Points: ${getTotalQuizPoints(findUserByEmail(currentUserNodeEmail, networkData))} | Cumulative: ${getComputedCumulativePoints(findUserByEmail(currentUserNodeEmail, networkData))}`}
+                } | Quiz Points: ${getTotalQuizPoints(
+                  findUserByEmail(currentUserNodeEmail, networkData)
+                )} | Cumulative: ${getComputedCumulativePoints(findUserByEmail(currentUserNodeEmail, networkData))}`}
               >
                 <Box
                   sx={{
@@ -781,11 +905,13 @@ function NetworkTreeNodes({ networkData }) {
           isDarkMode={isDarkMode}
           theme={theme}
         />
-        <ReferralStatsChartsSection
-          rootData={profileAndNetworkData || networkData}
-          isDarkMode={isDarkMode}
-          theme={theme}
-        />
+        <Box ref={referralStatsRef} id='referral-network-stats' sx={{ scrollMarginTop: { xs: 80, sm: 96 } }}>
+          <ReferralStatsChartsSection
+            rootData={profileAndNetworkData || networkData}
+            isDarkMode={isDarkMode}
+            theme={theme}
+          />
+        </Box>
       </CardContent>
       {/* Referral Points Distribution */}
       <Card
