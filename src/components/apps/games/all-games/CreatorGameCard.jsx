@@ -15,6 +15,7 @@ import {
 } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { getGameStartDisplay } from '@/utils/formatGameVenueTime'
+import { getGameDurationLabel } from '@/utils/formatGameDuration'
 import {
   AccessTime as AccessTimeIcon,
   People as PeopleIcon,
@@ -263,11 +264,11 @@ const CreatorGameCard = ({
                 </Stack>
               )}
 
-              {game.duration && !game?.forwardType === 'admin' && (
+              {getGameDurationLabel(game) && (
                 <Stack direction='row' alignItems='center' spacing={{ xs: 0.75, sm: 1 }}>
                   <AccessTimeIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' }, color: 'action' }} />
                   <Typography variant='body2' sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-                    {Math.floor(game.duration / 60)} minutes
+                    {getGameDurationLabel(game)}
                   </Typography>
                 </Stack>
               )}

@@ -61,6 +61,7 @@ import GroupAutocomplete from '@/components/group/GroupAutocomplete'
 import GameLocationRestrictionSection from '@/components/apps/games/GameLocationRestrictionSection'
 import { emptyGameLocation, restrictedLocationHint } from '@/utils/gameLocationAccess'
 import { calculateGameTotalPoints, GAME_POINTS_WEIGHTAGE_OPTIONS } from '@/utils/gamePointsUtil'
+import { formatGameDurationSeconds, sumQuestionTimerSeconds } from '@/utils/formatGameDuration'
 
 // Reward position options
 const POSITION_OPTIONS = [1, 2, 3, 4, 5]
@@ -188,6 +189,7 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
     tags: [],
     groupId: null,
     questionsCount: 0,
+    calculatedDurationSeconds: 0,
     pointsWeightage: 1,
     totalPoints: 0,
     location: emptyGameLocation(),
@@ -271,6 +273,7 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
         gameMode: data?.gameMode || 'live',
         groupId: data?.groupId || null,
         questionsCount: data?.questionsCount || 0,
+        calculatedDurationSeconds: data?.duration || 0,
         pointsWeightage: data?.pointsWeightage ?? 1,
         totalPoints: data?.totalPoints || 0,
         location: { ...emptyGameLocation(), ...(data?.location || {}) }
@@ -353,6 +356,7 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
         setFormData(prev => ({
           ...prev,
           questionsCount: 0,
+          calculatedDurationSeconds: 0,
           totalPoints: calculateGameTotalPoints(0, prev.pointsWeightage)
         }))
         return
@@ -369,9 +373,11 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
         const response = await RestApi.get(query)
         const questions = Array.isArray(response?.result) ? response.result : []
         const questionCount = questions.length
+        const calculatedDurationSeconds = sumQuestionTimerSeconds(questions)
         setFormData(prev => ({
           ...prev,
           questionsCount: questionCount,
+          calculatedDurationSeconds,
           totalPoints: calculateGameTotalPoints(questionCount, prev.pointsWeightage)
         }))
       } catch (error) {
@@ -379,6 +385,7 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
         setFormData(prev => ({
           ...prev,
           questionsCount: 0,
+          calculatedDurationSeconds: 0,
           totalPoints: calculateGameTotalPoints(0, prev.pointsWeightage)
         }))
       } finally {
@@ -829,6 +836,7 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
       delete submission.forwardType
       submission.duration = Number(submission.duration)
     }
+    delete submission.calculatedDurationSeconds
     delete submission.timezone
     console.log('submission data: ', submission)
     await onSubmit(submission)
@@ -1688,7 +1696,32 @@ const GameForm = ({ onSubmit, quizzes = [], onCancel, data = null }) => {
                         <FormHelperText>Select how the game will be forwarded</FormHelperText>
                       </FormControl>
                     </Grid>
-                    <Grid item xs={12} sm={6}></Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label='Game Duration'
+                        value={
+                          formData.calculatedDurationSeconds
+                            ? formatGameDurationSeconds(formData.calculatedDurationSeconds)
+                            : '—'
+                        }
+                        helperText={
+                          loading.fetchingQuestionCount
+                            ? 'Calculating from quiz questions...'
+                            : formData.forwardType === 'admin'
+                              ? 'Estimated from quiz question timers; actual length depends on admin forwarding pace'
+                              : 'Auto-calculated: sum of each question timer in the selected quiz'
+                        }
+                        InputProps={{
+                          readOnly: true,
+                          endAdornment: (
+                            <InputAdornment position='end'>
+                              <AccessTimeIcon />
+                            </InputAdornment>
+                          )
+                        }}
+                      />
+                    </Grid>
                   </>
                 )}
 

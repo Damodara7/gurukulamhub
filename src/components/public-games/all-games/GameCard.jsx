@@ -34,6 +34,7 @@ import { useEffect, useState } from 'react'
 import ShareGamePopup from './ShareGamePopup'
 import { isGameLocationRestricted, profileMatchesGameLocation, restrictedLocationHint } from '@/utils/gameLocationAccess'
 import { getGameStartDisplay } from '@/utils/formatGameVenueTime'
+import { getGameDurationLabel } from '@/utils/formatGameDuration'
 import {
   EventAvailable as EventAvailableIcon,
   CheckCircle as CheckCircleIcon,
@@ -345,6 +346,13 @@ const GameCard = ({ game, currentUsergroupIds = [], currentUsergroupIdsIds = [],
                   {game.startTime ? startDisplay.cardText : 'Time not specified'}
                 </Typography>
               </Stack>
+
+              {getGameDurationLabel(game) && (
+                <Stack direction='row' alignItems='center' spacing={1}>
+                  <AccessTimeIcon fontSize='small' color='action' />
+                  <Typography variant='body2'>{getGameDurationLabel(game)}</Typography>
+                </Stack>
+              )}
 
               <Stack direction='row' alignItems='center' spacing={1}>
                 <LocationOnIcon fontSize='small' color='action' />
