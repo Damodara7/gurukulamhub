@@ -392,6 +392,8 @@ export const updateProfileByEmail = async ({ email, data }) => {
       if (data.password) {
         delete data.password
       }
+      // Email is the lookup key — never overwrite it via $set payload.
+      delete data.email
 
       // Convert countryDialCode to number if it's a string
       if (data.countryDialCode) {
@@ -477,28 +479,9 @@ export const updateProfileByEmail = async ({ email, data }) => {
         console.log('Update result:', updateResult)
 
         if (updateResult.modifiedCount === 0) {
-          console.error('No documents were modified! Trying alternative approach...')
-
-          // Try alternative approach with findOneAndUpdate
-          const alternativeResult = await UserProfile.findOneAndUpdate(
-            { email },
-            { $set: addressUpdateData },
-            {
-              new: true,
-              runValidators: false,
-              strict: false
-            }
-          )
-          console.log('Alternative update result:', alternativeResult)
-
-          if (!alternativeResult) {
-            throw new Error('Profile update failed - no documents modified with alternative approach')
-          }
-
-          profile = alternativeResult
+          console.log('Profile update completed with no field changes (data may match existing profile).')
         }
 
-        // Fetch the updated profile
         profile = await UserProfile.findOne({ email })
         console.log('Profile updated successfully')
         console.log('Updated profile keys:', Object.keys(profile))

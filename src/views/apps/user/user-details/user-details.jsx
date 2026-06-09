@@ -64,6 +64,17 @@ import SchoolIcon from '@mui/icons-material/School'
 import WorkIcon from '@mui/icons-material/Work'
 import BusinessIcon from '@mui/icons-material/Business'
 import LinkIcon from '@mui/icons-material/Link'
+import {
+  formatEducationDuration,
+  formatEducationGrade,
+  getCompletionStatusColor,
+  getCompletionStatusLabel,
+  getEducationCategoryConfig,
+  getEducationDisplayTitle,
+  getEducationSubtitle,
+  resolveEducationCategory,
+  sortEducationsByEndDate
+} from '@/utils/educationUtils'
 
 function StatCard({ icon, label, value, tooltip }) {
   const theme = useTheme()
@@ -454,8 +465,8 @@ function EnhancedProfileCard({ profile }) {
   // Languages
   const languages = Array.isArray(profile?.languages) ? profile.languages : []
 
-  // Education
-  const schools = Array.isArray(profile?.schools) ? profile.schools : []
+  // Education (highest/most recent first)
+  const schools = sortEducationsByEndDate(Array.isArray(profile?.schools) ? profile.schools : [])
 
   // Work
   const workPositions = Array.isArray(profile?.workingPositions) ? profile.workingPositions : []
@@ -641,16 +652,44 @@ function EnhancedProfileCard({ profile }) {
           {schools.length > 0 &&
             renderRow(
               'Education:',
-              <Stack spacing={1} sx={{ width: '100%' }}>
-                {schools.map((school, idx) => (
-                  <Stack key={idx} direction='row' alignItems='center' spacing={1} sx={{ wordBreak: 'break-word' }}>
-                    <SchoolIcon fontSize='small' color='action' />
-                    <Typography variant='body2' sx={{ wordBreak: 'break-word' }}>
-                      {school.school} {school.highestQualification && `- ${school.highestQualification}`}{' '}
-                      {school.degree && `- ${school.degree}`}
-                    </Typography>
-                  </Stack>
-                ))}
+              <Stack spacing={1.5} sx={{ width: '100%' }}>
+                {schools.map((school, idx) => {
+                  const status = school.isCurrentlyStudying ? 'in_progress' : school.completionStatus || 'completed'
+                  const category = resolveEducationCategory(school)
+                  const categoryLabel = getEducationCategoryConfig(category).label || school.highestQualification
+
+                  return (
+                    <Stack key={idx} spacing={0.5} sx={{ wordBreak: 'break-word' }}>
+                      <Stack direction='row' alignItems='flex-start' spacing={1}>
+                        <SchoolIcon fontSize='small' color='action' sx={{ mt: 0.25 }} />
+                        <Box>
+                          <Typography variant='body2' sx={{ fontWeight: 600 }}>
+                            {getEducationDisplayTitle(school)}
+                          </Typography>
+                          <Typography variant='body2' color='text.secondary'>
+                            {school.school}
+                            {school.fieldOfStudy ? ` · ${school.fieldOfStudy}` : ''}
+                          </Typography>
+                          <Typography variant='caption' color='text.secondary'>
+                            {formatEducationDuration(school)}
+                          </Typography>
+                        </Box>
+                      </Stack>
+                      <Stack direction='row' spacing={0.75} flexWrap='wrap' sx={{ pl: 3.5 }}>
+                        <Chip
+                          label={getCompletionStatusLabel(status)}
+                          size='small'
+                          color={getCompletionStatusColor(status)}
+                          variant='outlined'
+                        />
+                        {categoryLabel && <Chip label={categoryLabel} size='small' variant='outlined' />}
+                        {formatEducationGrade(school) && (
+                          <Chip label={formatEducationGrade(school)} size='small' variant='outlined' />
+                        )}
+                      </Stack>
+                    </Stack>
+                  )
+                })}
               </Stack>
             )}
           {schools.length > 0 && <Divider />}

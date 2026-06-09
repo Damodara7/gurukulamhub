@@ -1,10 +1,87 @@
-import React from 'react'
-import { Grid, Divider, Box, Typography, Chip, IconButton ,Button} from '@mui/material'
+import React, { useMemo } from 'react'
+import { Grid, Divider, Box, Typography, Chip, IconButton, Button } from '@mui/material'
 import { RiAddFill } from 'react-icons/ri'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import EducationModal, { EducationViewModal } from '../EducationModal'
+import {
+  formatEducationDuration,
+  formatEducationGrade,
+  getCompletionStatusColor,
+  getCompletionStatusLabel,
+  getEducationCategoryConfig,
+  getEducationDisplayTitle,
+  getEducationSubtitle,
+  getInstitutionLabel,
+  resolveEducationCategory,
+  sortEducationsByEndDate
+} from '@/utils/educationUtils'
+
+function EducationEntryCard({ education, onView, onEdit, onDelete, isPending = false }) {
+  const category = resolveEducationCategory(education)
+  const categoryConfig = getEducationCategoryConfig(category)
+  const institutionLabel = getInstitutionLabel(education.highestQualification, category)
+  const status = education.isCurrentlyStudying ? 'in_progress' : education.completionStatus || 'completed'
+
+  return (
+    <Box
+      sx={{
+        p: 2,
+        height: '100%',
+        border: '1px solid',
+        borderColor: 'divider',
+        borderRadius: 1,
+        backgroundColor: 'background.paper',
+        opacity: isPending ? 0.85 : 1
+      }}
+    >
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography variant='subtitle2' sx={{ fontWeight: 700, mb: 0.5 }}>
+            {getEducationDisplayTitle(education)}
+          </Typography>
+          <Typography variant='body2' color='text.secondary' sx={{ mb: 0.5 }}>
+            {institutionLabel}: {education.school}
+            {getEducationSubtitle(education) ? ` · ${getEducationSubtitle(education)}` : ''}
+          </Typography>
+          <Typography variant='caption' color='text.secondary' display='block' sx={{ mb: 1 }}>
+            {formatEducationDuration(education)}
+          </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+            <Chip
+              label={getCompletionStatusLabel(status)}
+              size='small'
+              color={getCompletionStatusColor(status)}
+              variant='outlined'
+            />
+            {(categoryConfig.label || education.highestQualification) && (
+              <Chip
+                label={categoryConfig.label || education.highestQualification}
+                size='small'
+                variant='outlined'
+              />
+            )}
+            {formatEducationGrade(education) && (
+              <Chip label={formatEducationGrade(education)} size='small' variant='outlined' />
+            )}
+          </Box>
+        </Box>
+        <Box sx={{ display: 'flex', gap: 0.5, ml: 1 }}>
+          <IconButton size='small' color='info' onClick={() => onView(education)}>
+            <VisibilityIcon fontSize='small' />
+          </IconButton>
+          <IconButton size='small' color='primary' onClick={() => onEdit(education)}>
+            <EditIcon fontSize='small' />
+          </IconButton>
+          <IconButton size='small' color='error' onClick={() => onDelete(education._id)}>
+            <DeleteIcon fontSize='small' />
+          </IconButton>
+        </Box>
+      </Box>
+    </Box>
+  )
+}
 
 const EducationSection = ({
   formData,
@@ -25,15 +102,21 @@ const EducationSection = ({
   handleUpdateEducationInState,
   session
 }) => {
+  const sortedEducations = useMemo(() => {
+    const existingEducations =
+      profileData?.schools?.filter(school => !removedEducationIds.includes(school._id)) || []
+
+    return sortEducationsByEndDate([...existingEducations, ...pendingEducations])
+  }, [profileData?.schools, pendingEducations, removedEducationIds])
+
   return (
     <>
-      {/* ----Education---- */}
       {formData.accountType === 'INDIVIDUAL' && (
         <>
           <Grid item xs={12} marginLeft={'0.25rem'}>
             <Divider>Education</Divider>
           </Grid>
-          {/* Add New Education Button */}
+
           <Grid item xs={12}>
             <Button
               startIcon={<RiAddFill />}
@@ -41,17 +124,16 @@ const EducationSection = ({
               color='primary'
               onClick={() => handleOpenModal('education')}
             >
-              Add New Education
+              Add Education
             </Button>
           </Grid>
 
-          {/* Display Education List */}
-          {((profileData?.schools && profileData.schools.length > 0) || pendingEducations.length > 0) && (
+          {sortedEducations.length > 0 && (
             <Grid item xs={12}>
               <Box sx={{ mt: 2 }}>
                 <Box
                   sx={{
-                    maxHeight: '160px',
+                    maxHeight: '280px',
                     overflowY: 'auto',
                     '&::-webkit-scrollbar': {
                       width: '8px'
@@ -70,173 +152,15 @@ const EducationSection = ({
                   }}
                 >
                   <Grid container spacing={2}>
-                    {/* Display existing education that are not marked for removal */}
-                    {profileData?.schools
-                      ?.filter(school => !removedEducationIds.includes(school._id))
-                      ?.map((school, index) => (
-                        <Grid item xs={12} md={6} key={school._id || index}>
-                          <Box
-                            sx={{
-                              p: 2,
-                              height: '100%',
-                              border: '1px solid',
-                              borderColor: 'divider',
-                              borderRadius: 1,
-                              backgroundColor: 'background.paper'
-                            }}
-                          >
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                              <Box sx={{ flex: 1, minWidth: 0 }}>
-                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 1 }}>
-                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                    <Typography
-                                      variant='body2'
-                                      color='text.primary'
-                                      sx={{ fontWeight: 'bold', minWidth: 'fit-content' }}
-                                    >
-                                      School:
-                                    </Typography>
-                                    <Chip
-                                      label={school.school}
-                                      size='small'
-                                      variant='outlined'
-                                      sx={{
-                                        maxWidth: '200px',
-                                        '& .MuiChip-label': {
-                                          overflow: 'hidden',
-                                          textOverflow: 'ellipsis',
-                                          whiteSpace: 'nowrap'
-                                        }
-                                      }}
-                                    />
-                                  </Box>
-                                  {school.degree && (
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                      <Typography
-                                        variant='body2'
-                                        color='text.primary'
-                                        sx={{ fontWeight: 'bold', minWidth: 'fit-content' }}
-                                      >
-                                        Degree:
-                                      </Typography>
-                                      <Chip
-                                        label={school.degree}
-                                        size='small'
-                                        variant='outlined'
-                                        sx={{
-                                          maxWidth: '200px',
-                                          '& .MuiChip-label': {
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                            whiteSpace: 'nowrap'
-                                          }
-                                        }}
-                                      />
-                                    </Box>
-                                  )}
-                                </Box>
-                              </Box>
-                              <Box sx={{ display: 'flex', gap: 1, ml: 1 }}>
-                                <IconButton size='small' color='info' onClick={() => handleViewEducation(school)}>
-                                  <VisibilityIcon fontSize='small' />
-                                </IconButton>
-                                <IconButton size='small' color='primary' onClick={() => handleEditEducation(school)}>
-                                  <EditIcon fontSize='small' />
-                                </IconButton>
-                                <IconButton
-                                  size='small'
-                                  color='error'
-                                  onClick={() => handleDeleteEducation(school._id)}
-                                >
-                                  <DeleteIcon fontSize='small' />
-                                </IconButton>
-                              </Box>
-                            </Box>
-                          </Box>
-                        </Grid>
-                      ))}
-                    {/* Display pending education */}
-                    {pendingEducations.map((education, index) => (
+                    {sortedEducations.map((education, index) => (
                       <Grid item xs={12} md={6} key={education._id || index}>
-                        <Box
-                          sx={{
-                            p: 2,
-                            height: '100%',
-                            border: '1px solid',
-                            borderColor: 'divider',
-                            borderRadius: 1,
-                            backgroundColor: 'background.paper',
-                            opacity: 0.8 // Visual indicator that it's pending
-                          }}
-                        >
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                            <Box sx={{ flex: 1, minWidth: 0 }}>
-                              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 1 }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                  <Typography
-                                    variant='body2'
-                                    color='text.primary'
-                                    sx={{ fontWeight: 'bold', minWidth: 'fit-content' }}
-                                  >
-                                    School:
-                                  </Typography>
-                                  <Chip
-                                    label={education.school}
-                                    size='small'
-                                    variant='outlined'
-                                    sx={{
-                                      maxWidth: '200px',
-                                      '& .MuiChip-label': {
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap'
-                                      }
-                                    }}
-                                  />
-                                </Box>
-                                {education.degree && (
-                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                    <Typography
-                                      variant='body2'
-                                      color='text.primary'
-                                      sx={{ fontWeight: 'bold', minWidth: 'fit-content' }}
-                                    >
-                                      Degree:
-                                    </Typography>
-                                    <Chip
-                                      label={education.degree}
-                                      size='small'
-                                      variant='outlined'
-                                      sx={{
-                                        maxWidth: '200px',
-                                        '& .MuiChip-label': {
-                                          overflow: 'hidden',
-                                          textOverflow: 'ellipsis',
-                                          whiteSpace: 'nowrap'
-                                        }
-                                      }}
-                                    />
-                                  </Box>
-                                )}
-                              </Box>
-                            </Box>
-                            <Box sx={{ display: 'flex', gap: 1, ml: 1 }}>
-                              <IconButton size='small' color='info' onClick={() => handleViewEducation(education)}>
-                                <VisibilityIcon fontSize='small' />
-                              </IconButton>
-                              <IconButton size='small' color='primary' onClick={() => handleEditEducation(education)}>
-                                <EditIcon fontSize='small' />
-                              </IconButton>
-                              <IconButton
-                                size='small'
-                                color='error'
-                                onClick={() => handleDeleteEducation(education._id)}
-                              >
-                                <DeleteIcon fontSize='small' />
-                              </IconButton>
-                            </Box>
-                          </Box>
-                        </Box>
+                        <EducationEntryCard
+                          education={education}
+                          isPending={String(education._id || '').startsWith('temp_')}
+                          onView={handleViewEducation}
+                          onEdit={handleEditEducation}
+                          onDelete={handleDeleteEducation}
+                        />
                       </Grid>
                     ))}
                   </Grid>
@@ -245,7 +169,6 @@ const EducationSection = ({
             </Grid>
           )}
 
-          {/* Education Modal */}
           {isModalOpen.education && (
             <EducationModal
               email={session?.user?.email}
@@ -258,7 +181,6 @@ const EducationSection = ({
             />
           )}
 
-          {/* Education View Modal */}
           <EducationViewModal
             open={isViewEducationModalOpen}
             onClose={() => handleCloseViewEducationModal('education')}

@@ -20,11 +20,23 @@ const associatedOrganizationSchema = new mongoose.Schema({
 
 const schoolSchema = new mongoose.Schema({
   school: { type: String, required: true },
+  educationCategory: { type: String },
   highestQualification: { type: String },
   degree: { type: String },
   fieldOfStudy: { type: String },
   startDate: { type: Date },
   endDate: { type: Date },
+  isCurrentlyStudying: { type: Boolean, default: false },
+  completionStatus: {
+    type: String,
+    enum: ['completed', 'partially_completed', 'discontinued', 'in_progress'],
+    default: 'completed'
+  },
+  grade: { type: String },
+  gradeType: { type: String, enum: ['cgpa', 'percentage', 'marks'] },
+  gradeObtained: { type: String },
+  gradeTotal: { type: String },
+  activities: { type: String },
   description: { type: String },
   type: { type: String, default: 'education' }
 })

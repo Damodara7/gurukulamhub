@@ -150,6 +150,26 @@ const initialData = {
 
 const PROFILE_PHOTO_UPLOAD_TARGET_BYTES = 900 * 1024 // ~900KB to stay under strict proxy/body limits in prod
 
+const SOCIAL_URL_FIELDS = ['linkedInUrl', 'facebookUrl', 'instagramUrl', 'youtubeUrl']
+
+const PROFILE_SAVE_SKIP_KEYS = new Set([
+  'schools',
+  'languages',
+  'workingPositions',
+  'associatedOrganizations',
+  '_id',
+  '__v',
+  'createdAt',
+  'updatedAt',
+  'memberId',
+  'password',
+  'profilePhotoFile',
+  'resumeFile',
+  'organizationRegistrationFile',
+  'organizationGSTFile',
+  'organizationPANFile'
+])
+
 const AccountDetails = () => {
   const { data: session } = useSession()
   const theme = useTheme()
@@ -324,14 +344,15 @@ const AccountDetails = () => {
           // Update knownLanguageIds to include all language IDs from the database
           const updatedKnownLanguageIds = profile?.languages?.map(lang => lang._id) || []
 
-          setFormData({
-            ...formData,
+          setFormData(prev => ({
+            ...prev,
             ...filteredProfile,
             memberId: user?.memberId,
             referredBy: user?.referredBy || profile?.referredBy || '',
             knownLanguageIds: updatedKnownLanguageIds
-          })
+          }))
           setProfileData(profile) // Keep original profile data for other purposes
+          syncSocialUrlValidation(profile)
 
           // Handle voter ID data
           if (profile?.voterId) {
@@ -838,19 +859,39 @@ const AccountDetails = () => {
   }
 
   function validateUrl(field, value) {
-    if (field === 'linkedInUrl') {
-      const linkedinRegex = /^https:\/\/(www\.)?linkedin\.com\/in\/[a-zA-Z0-9_-]+\/?$/
-      return linkedinRegex.test(value)
-    } else if (field === 'facebookUrl') {
-      const facebookRegex = /^https:\/\/(www\.)?facebook\.com\/[a-zA-Z0-9.]+\/?$/
-      return facebookRegex.test(value)
-    } else if (field === 'instagramUrl') {
-      const instagramRegex = /^https:\/\/(www\.)?instagram\.com\/[a-zA-Z0-9._]+\/?$/
-      return instagramRegex.test(value)
-    } else if (field === 'youtubeUrl') {
-      const youtubeRegex = /^https:\/\/(www\.)?(youtube\.com|youtu\.be)\/.+$/
-      return youtubeRegex.test(value)
+    const trimmed = String(value ?? '').trim()
+    if (!trimmed) return true
+
+    try {
+      const url = new URL(trimmed)
+      const host = url.hostname.replace(/^www\./, '').toLowerCase()
+
+      if (field === 'linkedInUrl') {
+        return host === 'linkedin.com' && /\/in\//i.test(url.pathname)
+      }
+      if (field === 'facebookUrl') {
+        return host === 'facebook.com' || host === 'fb.com' || host === 'm.facebook.com'
+      }
+      if (field === 'instagramUrl') {
+        return host === 'instagram.com'
+      }
+      if (field === 'youtubeUrl') {
+        return host === 'youtube.com' || host === 'youtu.be' || host === 'm.youtube.com'
+      }
+    } catch {
+      return false
     }
+
+    return false
+  }
+
+  function syncSocialUrlValidation(profile) {
+    setIsUrlsValid({
+      linkedInUrl: validateUrl('linkedInUrl', profile?.linkedInUrl),
+      facebookUrl: validateUrl('facebookUrl', profile?.facebookUrl),
+      instagramUrl: validateUrl('instagramUrl', profile?.instagramUrl),
+      youtubeUrl: validateUrl('youtubeUrl', profile?.youtubeUrl)
+    })
   }
 
   function handleRefetchUserProfileData() {
@@ -1081,16 +1122,7 @@ const AccountDetails = () => {
       setPendingVoterId(updatedVoterId)
       return
     }
-    if (field === 'linkedInUrl') {
-      setIsUrlsValid(prev => ({ ...prev, [field]: validateUrl(field, value) }))
-    }
-    if (field === 'facebookUrl') {
-      setIsUrlsValid(prev => ({ ...prev, [field]: validateUrl(field, value) }))
-    }
-    if (field === 'instagramUrl') {
-      setIsUrlsValid(prev => ({ ...prev, [field]: validateUrl(field, value) }))
-    }
-    if (field === 'youtubeUrl') {
+    if (SOCIAL_URL_FIELDS.includes(field)) {
       setIsUrlsValid(prev => ({ ...prev, [field]: validateUrl(field, value) }))
     }
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -1524,7 +1556,7 @@ const AccountDetails = () => {
   }
 
   async function handleSubmit(e) {
-    e.preventDefault()
+    e?.preventDefault?.()
     console.log(formData)
     console.log('photo file: ', fileInput)
     console.log('resume file: ', resumeFileInput)
@@ -1554,6 +1586,8 @@ const AccountDetails = () => {
 
       // Efficiently process form data using Object.entries and reduce
       const allFormData = Object.entries(formData).reduce((acc, [key, value]) => {
+        if (PROFILE_SAVE_SKIP_KEYS.has(key)) return acc
+
         if (key === 'coordinates') {
           if (Array.isArray(value) && value.length === 2) {
             acc[key] = value
@@ -1562,8 +1596,8 @@ const AccountDetails = () => {
           }
           return acc
         }
-        // Always include address fields even if empty (to allow clearing them)
-        const addressFields = [
+        // Always include these string fields even when empty so users can clear saved values.
+        const clearableStringFields = [
           'country',
           'countryCode',
           'region',
@@ -1575,10 +1609,11 @@ const AccountDetails = () => {
           'street',
           'colony',
           'village',
-          'address'
+          'address',
+          ...SOCIAL_URL_FIELDS
         ]
-        if (addressFields.includes(key)) {
-          acc[key] = value || '' // Include address fields even if empty
+        if (clearableStringFields.includes(key)) {
+          acc[key] = typeof value === 'string' ? value.trim() : value || ''
         }
         // Handle string values
         else if (typeof value === 'string' && value.trim()) {
@@ -1609,6 +1644,10 @@ const AccountDetails = () => {
         address: data.address,
         coordinates: data.coordinates
       })
+      console.log(
+        'Social URLs being sent:',
+        SOCIAL_URL_FIELDS.reduce((acc, field) => ({ ...acc, [field]: data[field] ?? '' }), {})
+      )
 
       if (phoneInput && phoneValid && isPhoneVerified) {
         console.log({ phoneInput, countryDialCode })
@@ -1654,83 +1693,113 @@ const AccountDetails = () => {
         data.voterId = pendingVoterId
       }
 
-      // Generic function to process entity changes (eliminates code duplication)
-      const processEntityChanges = (pendingItems, removedIds, currentItems, dataKey, fieldsToExtract) => {
-        if (pendingItems.length > 0 || removedIds.length > 0) {
-          // Filter out removed items
-          const filteredItems = currentItems.filter(item => !removedIds.includes(item._id))
-
-          // Extract only required fields from pending items (remove temp IDs)
-          const newItems = pendingItems.map(item => {
-            const cleanItem = {}
-            fieldsToExtract.forEach(field => {
-              cleanItem[field] = item[field]
-            })
-            return cleanItem
-          })
-
-          // Combine filtered existing items with new ones
-          data[dataKey] = [...filteredItems, ...newItems]
+      const serializeEntityFieldValue = (field, value) => {
+        const dateFields = ['startDate', 'endDate', 'associationStartDate', 'associationEndDate']
+        if (!dateFields.includes(field) || value === undefined || value === null || value === '') {
+          return value ?? ''
         }
+        if (typeof value === 'string') return value
+        if (value instanceof Date) return value.toISOString()
+        if (typeof value === 'object' && typeof value.toISOString === 'function') return value.toISOString()
+        if (typeof value === 'object' && value.$d) return new Date(value.$d).toISOString()
+        return value
       }
 
-      // Process different entity types using the generic function
-      processEntityChanges(pendingLanguages, removedLanguageIds, profileData?.languages || [], 'languages', [
-        'language',
-        'canRead',
-        'canWrite',
-        'canSpeak'
-      ])
+      const mapEntityItem = (item, fieldsToExtract, preserveId = false) => {
+        const cleanItem = {}
+        if (preserveId && item?._id && !String(item._id).startsWith('temp_')) {
+          cleanItem._id = item._id
+        }
+        fieldsToExtract.forEach(field => {
+          const value = serializeEntityFieldValue(field, item[field])
+          if (field === 'gradeType' && !value) return
+          cleanItem[field] = value ?? ''
+        })
+        return cleanItem
+      }
 
-      processEntityChanges(pendingEducations, removedEducationIds, profileData?.schools || [], 'schools', [
+      const buildEntityList = (pendingItems, removedIds, currentItems, fieldsToExtract) => {
+        const removedSet = new Set((removedIds || []).map(String))
+        const filteredItems = (currentItems || [])
+          .filter(item => !removedSet.has(String(item._id)))
+          .map(item => mapEntityItem(item, fieldsToExtract, true))
+        const newItems = (pendingItems || []).map(item => mapEntityItem(item, fieldsToExtract, false))
+        return [...filteredItems, ...newItems]
+      }
+
+      const languageFields = ['language', 'canRead', 'canWrite', 'canSpeak']
+      const educationFields = [
         'school',
+        'educationCategory',
         'degree',
         'highestQualification',
         'fieldOfStudy',
         'startDate',
         'endDate',
+        'isCurrentlyStudying',
+        'completionStatus',
+        'grade',
+        'gradeType',
+        'gradeObtained',
+        'gradeTotal',
+        'activities',
         'description'
-      ])
+      ]
+      const positionFields = [
+        'title',
+        'employmentType',
+        'companyName',
+        'location',
+        'locationType',
+        'isCurrentlyWorking',
+        'startDate',
+        'endDate',
+        'description'
+      ]
+      const organizationFields = [
+        'organization',
+        'organizationType',
+        'associatedRole',
+        'websiteUrl',
+        'isCurrentlyInAssociation',
+        'associationStartDate',
+        'associationEndDate'
+      ]
 
-      processEntityChanges(
-        pendingPositions,
-        removedPositionIds,
-        profileData?.workingPositions || [],
-        'workingPositions',
-        [
-          'title',
-          'employmentType',
-          'companyName',
-          'location',
-          'locationType',
-          'isCurrentlyWorking',
-          'startDate',
-          'endDate',
-          'description'
-        ]
+      data.languages = buildEntityList(
+        pendingLanguages,
+        removedLanguageIds,
+        profileData?.languages,
+        languageFields
       )
 
-      processEntityChanges(
+      data.associatedOrganizations = buildEntityList(
         pendingOrganizations,
         removedOrganizationIds,
-        profileData?.associatedOrganizations || [],
-        'associatedOrganizations',
-        [
-          'organization',
-          'organizationType',
-          'associatedRole',
-          'websiteUrl',
-          'isCurrentlyInAssociation',
-          'associationStartDate',
-          'associationEndDate'
-        ]
+        profileData?.associatedOrganizations,
+        organizationFields
       )
+
+      if (data.accountType === 'INDIVIDUAL') {
+        data.schools = buildEntityList(
+          pendingEducations,
+          removedEducationIds,
+          profileData?.schools,
+          educationFields
+        )
+        data.workingPositions = buildEntityList(
+          pendingPositions,
+          removedPositionIds,
+          profileData?.workingPositions,
+          positionFields
+        )
+      }
 
       console.log('User profile data sending to POST:', data)
 
       const result = await RestApi.put(API_URLS.v0.USERS_PROFILE, { email: session?.user?.email, ...data })
       // const result = await clientApi.updateUserProfile(session.user.email, data)
-      if (result.status === 'success') {
+      if (result?.status === 'success') {
         console.log('Updated  result', result.result)
         toast.success('Profile updated successfully!')
         console.log('user profile updating result', result.result)
@@ -1742,81 +1811,47 @@ const AccountDetails = () => {
 
         await handleUploadProfilePhotoToS3()
 
-        // Optimistically update profileData to prevent flicker
-        const updatedProfile = { ...profileData }
+        const savedProfile = result.result
 
-        // Update languages optimistically
-        if (pendingLanguages.length > 0 || removedLanguageIds.length > 0) {
-          const currentLanguages = profileData?.languages || []
-          const filteredLanguages = currentLanguages.filter(lang => !removedLanguageIds.includes(lang._id))
-          const newLanguages = pendingLanguages.map(lang => ({
-            language: lang.language,
-            canRead: lang.canRead,
-            canWrite: lang.canWrite,
-            canSpeak: lang.canSpeak
+        if (savedProfile) {
+          setProfileData(savedProfile)
+          syncSocialUrlValidation(savedProfile)
+          setFormData(prev => ({
+            ...prev,
+            ...savedProfile,
+            knownLanguageIds: savedProfile?.languages?.map(lang => lang._id) || []
           }))
-          updatedProfile.languages = [...filteredLanguages, ...newLanguages]
+
+          if (savedProfile?.schools?.length > 0) {
+            setSchoolOptions(savedProfile.schools.map(item => ({ value: item._id, label: item.school })))
+          } else {
+            setSchoolOptions([])
+          }
+
+          if (savedProfile?.workingPositions?.length > 0) {
+            setWorkingPositionOptions(
+              savedProfile.workingPositions.map(item => ({ value: item._id, label: item.title }))
+            )
+          }
+
+          if (savedProfile?.languages?.length > 0) {
+            setLanguageOptions(savedProfile.languages.map(item => ({ value: item._id, label: item.language })))
+          }
+
+          if (savedProfile?.associatedOrganizations?.length > 0) {
+            setAssociatedOrganizationOptions(
+              savedProfile.associatedOrganizations.map(item => ({ value: item._id, label: item.organization }))
+            )
+          }
+
+          if (savedProfile?.phone && savedProfile?.countryDialCode) {
+            const dbPhoneWithDialCode = `${savedProfile.countryDialCode}${savedProfile.phone}`
+            setPhoneInput(dbPhoneWithDialCode)
+            setOriginalDbPhone(dbPhoneWithDialCode)
+            setOriginalDbDialCode(String(savedProfile.countryDialCode))
+          }
         }
 
-        // Update education optimistically
-        if (pendingEducations.length > 0 || removedEducationIds.length > 0) {
-          const currentEducations = profileData?.schools || []
-          const filteredEducations = currentEducations.filter(edu => !removedEducationIds.includes(edu._id))
-          const newEducations = pendingEducations.map(edu => ({
-            school: edu.school,
-            degree: edu.degree,
-            highestQualification: edu.highestQualification,
-            fieldOfStudy: edu.fieldOfStudy,
-            startDate: edu.startDate,
-            endDate: edu.endDate,
-            description: edu.description
-          }))
-          updatedProfile.schools = [...filteredEducations, ...newEducations]
-        }
-
-        // Update working positions optimistically
-        if (pendingPositions.length > 0 || removedPositionIds.length > 0) {
-          const currentPositions = profileData?.workingPositions || []
-          const filteredPositions = currentPositions.filter(pos => !removedPositionIds.includes(pos._id))
-          const newPositions = pendingPositions.map(pos => ({
-            title: pos.title,
-            employmentType: pos.employmentType,
-            companyName: pos.companyName,
-            location: pos.location,
-            locationType: pos.locationType,
-            isCurrentlyWorking: pos.isCurrentlyWorking,
-            startDate: pos.startDate,
-            endDate: pos.endDate,
-            description: pos.description
-          }))
-          updatedProfile.workingPositions = [...filteredPositions, ...newPositions]
-        }
-
-        // Update organizations optimistically
-        if (pendingOrganizations.length > 0 || removedOrganizationIds.length > 0) {
-          const currentOrganizations = profileData?.associatedOrganizations || []
-          const filteredOrganizations = currentOrganizations.filter(org => !removedOrganizationIds.includes(org._id))
-          const newOrganizations = pendingOrganizations.map(org => ({
-            organization: org.organization,
-            organizationType: org.organizationType,
-            associatedRole: org.associatedRole,
-            websiteUrl: org.websiteUrl,
-            isCurrentlyInAssociation: org.isCurrentlyInAssociation,
-            associationStartDate: org.associationStartDate,
-            associationEndDate: org.associationEndDate
-          }))
-          updatedProfile.associatedOrganizations = [...filteredOrganizations, ...newOrganizations]
-        }
-
-        // Update voter ID optimistically
-        if (pendingVoterId) {
-          updatedProfile.voterId = pendingVoterId
-        }
-
-        // Update profileData immediately to prevent flicker
-        setProfileData(updatedProfile)
-
-        // Clear pending and removed states after optimistic update
         setPendingLanguages([])
         setRemovedLanguageIds([])
         setPendingVoterId(null)
@@ -1827,8 +1862,6 @@ const AccountDetails = () => {
         setPendingOrganizations([])
         setRemovedOrganizationIds([])
 
-        // Refetch user profile data in background to ensure data consistency
-        // This will update the profileData with real database IDs
         setShouldRefetchData(prev => !prev)
 
         setIsFormSubmitting(false)
@@ -2931,9 +2964,10 @@ const AccountDetails = () => {
                       (formData.youtubeUrl && !isUrlsValid.youtubeUrl)
                     }
                     variant='contained'
-                    type='submit'
+                    type='button'
                     color='primary'
                     style={{ color: 'white', backgroundColor: theme.palette.primary.main }}
+                    onClick={handleSubmit}
                   >
                     {isFormSubmitting ? 'Saving...' : 'Save Changes'}
                   </Button>
