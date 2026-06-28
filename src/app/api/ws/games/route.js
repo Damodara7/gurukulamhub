@@ -1,6 +1,10 @@
 // WebSocket endpoint for games list updates
 // This file is for use with next-ws in the Next.js app directory
 
+import { GET } from '../ws-route-helpers.js'
+
+export { GET }
+
 let gamesListClients = globalThis.__gamesListClients || new Set()
 globalThis.__gamesListClients = gamesListClients
 

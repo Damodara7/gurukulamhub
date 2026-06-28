@@ -93,6 +93,7 @@ export default async function middleware(request) {
   // Skip middleware for static files and PWA files - they should be served directly
   if (
     pathname.startsWith('/api/ws') ||
+    pathname.startsWith('/ws/') ||
     pathname === '/manifest.json' ||
     pathname === '/sw.js' ||
     pathname === '/offline.html' ||

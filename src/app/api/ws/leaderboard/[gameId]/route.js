@@ -1,6 +1,10 @@
 // WebSocket endpoint for leaderboard updates for a specific game
 // This file is for use with next-ws in the Next.js app directory
 
+import { GET } from '../../ws-route-helpers.js'
+
+export { GET }
+
 let leaderboardClientsByGame = globalThis.__leaderboardClientsByGame || {}
 globalThis.__leaderboardClientsByGame = leaderboardClientsByGame
 

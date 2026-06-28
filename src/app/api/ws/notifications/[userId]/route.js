@@ -1,10 +1,15 @@
 // WebSocket endpoint for user-specific notifications
 // This file is for use with next-ws in the Next.js app directory
 
+import { GET } from '../../ws-route-helpers.js'
+
+export { GET }
+
 let notificationClientsByUserId = globalThis.__notificationClientsByUserId || {}
 globalThis.__notificationClientsByUserId = notificationClientsByUserId
 
-export function UPGRADE(client, request, server, context) {
+// next-ws 2.x: UPGRADE(client, wsServer, request, context)
+export function UPGRADE(client, wsServer, request, context) {
   const { userId } = context.params
   
   if (!userId) {
@@ -47,6 +52,3 @@ export function UPGRADE(client, request, server, context) {
     console.error(`[WS] Notification client error for user ${userId}:`, error)
   })
 }
-
-
-

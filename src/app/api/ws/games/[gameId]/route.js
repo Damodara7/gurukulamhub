@@ -1,3 +1,7 @@
+import { GET } from '../../ws-route-helpers.js'
+
+export { GET }
+
 let clientsByGameId = globalThis.__clientsByGameId || {}
 globalThis.__clientsByGameId = clientsByGameId
 

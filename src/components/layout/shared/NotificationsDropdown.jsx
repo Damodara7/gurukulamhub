@@ -48,6 +48,7 @@ import { useSettings } from '@core/hooks/useSettings'
 // Util Imports
 import { getInitials } from '@/utils/getInitials'
 import * as RestApi from '@/utils/restApiUtil'
+import { buildWebSocketUrl } from '@/utils/buildWebSocketUrl'
 
 const ScrollWrapper = ({ children, hidden, isMobile = false }) => {
   if (hidden || isMobile) {
@@ -276,12 +277,7 @@ const NotificationDropdown = () => {
       reconnectTimeoutRef.current = null
     }
 
-    const wsUrl =
-      typeof window !== 'undefined'
-        ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${
-            window.location.host
-          }/api/ws/notifications/${userId}`
-        : ''
+    const wsUrl = buildWebSocketUrl(`/notifications/${userId}`)
 
     if (!wsUrl) return
 
